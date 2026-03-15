@@ -1,4 +1,9 @@
-import { Dialog, DialogContent, Flex } from "@webstudio-is/design-system";
+import {
+  Dialog,
+  DialogContent,
+  Flex,
+  StorySection,
+} from "@webstudio-is/design-system";
 import { About as AboutComponent } from "./about";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 
@@ -22,11 +27,13 @@ const sampleItem: MarketplaceOverviewItem = {
 };
 
 export const About = () => (
-  <Flex direction="column" gap="5" css={{ width: 320 }}>
-    <Dialog open>
-      <DialogContent>
-        <AboutComponent item={sampleItem} />
-      </DialogContent>
-    </Dialog>
-  </Flex>
+  <StorySection title="About">
+    <Flex direction="column" gap="5" css={{ width: 320 }}>
+      <Dialog open>
+        <DialogContent>
+          <AboutComponent item={sampleItem} />
+        </DialogContent>
+      </Dialog>
+    </Flex>
+  </StorySection>
 );

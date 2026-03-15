@@ -5,7 +5,7 @@ import { GapVerticalIcon } from "@webstudio-is/icons";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Select button",
+  title: "Select Button",
 };
 
 const iconLabel = (
@@ -13,6 +13,23 @@ const iconLabel = (
     <GapVerticalIcon />
   </NestedIconLabel>
 );
+
+const InteractiveDemo = () => {
+  const [clicked, setClicked] = useState(false);
+  return (
+    <StoryGrid horizontal>
+      <SelectButtonComponent onClick={() => setClicked(!clicked)}>
+        {clicked ? "Clicked!" : "Click me"}
+      </SelectButtonComponent>
+      <SelectButtonComponent
+        prefix={iconLabel}
+        onClick={() => setClicked(!clicked)}
+      >
+        {clicked ? "Clicked!" : "With prefix"}
+      </SelectButtonComponent>
+    </StoryGrid>
+  );
+};
 
 export const SelectButton = () => {
   return (
@@ -101,26 +118,9 @@ export const SelectButton = () => {
           </SelectButtonComponent>
         </StoryGrid>
       </StorySection>
+      <StorySection title="Interactive">
+        <InteractiveDemo />
+      </StorySection>
     </>
-  );
-};
-SelectButton.storyName = "Select Button";
-
-export const Interactive = () => {
-  const [clicked, setClicked] = useState(false);
-  return (
-    <StorySection title="Interactive">
-      <StoryGrid horizontal>
-        <SelectButtonComponent onClick={() => setClicked(!clicked)}>
-          {clicked ? "Clicked!" : "Click me"}
-        </SelectButtonComponent>
-        <SelectButtonComponent
-          prefix={iconLabel}
-          onClick={() => setClicked(!clicked)}
-        >
-          {clicked ? "Clicked!" : "With prefix"}
-        </SelectButtonComponent>
-      </StoryGrid>
-    </StorySection>
   );
 };

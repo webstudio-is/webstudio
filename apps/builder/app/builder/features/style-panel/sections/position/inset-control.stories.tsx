@@ -1,5 +1,5 @@
 import type { Meta } from "@storybook/react";
-import { Box, theme } from "@webstudio-is/design-system";
+import { Box, StorySection, theme } from "@webstudio-is/design-system";
 import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { InsetControl } from "./inset-control";
@@ -95,9 +95,11 @@ $awareness.set({
 
 export const Inset = () => {
   return (
-    <Box css={{ width: theme.sizes.sidebarWidth }}>
-      <InsetControl />
-    </Box>
+    <StorySection title="Inset control">
+      <Box css={{ width: theme.sizes.sidebarWidth }}>
+        <InsetControl />
+      </Box>
+    </StorySection>
   );
 };
 

@@ -10,11 +10,12 @@ import {
 } from "~/shared/nano-states";
 import { $awareness } from "~/shared/awareness";
 import { registerContainers } from "~/shared/sync/sync-stores";
+import { StorySection } from "@webstudio-is/design-system";
 import { CommandPanel as CommandPanelComponent } from "./command-panel";
 import { openCommandPanel } from "./command-state";
 
 const meta: Meta = {
-  title: "Command panel",
+  title: "Command Panel",
 };
 export default meta;
 
@@ -62,5 +63,9 @@ export const CommandPanel: StoryFn = () => {
   useEffect(() => {
     openCommandPanel();
   }, []);
-  return <CommandPanelComponent />;
+  return (
+    <StorySection title="Command Panel">
+      <CommandPanelComponent />
+    </StorySection>
+  );
 };

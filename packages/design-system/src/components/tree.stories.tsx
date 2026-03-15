@@ -9,6 +9,7 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
 } from "./tree";
+import { StorySection } from "./storybook";
 
 export default {
   title: "Tree",
@@ -195,128 +196,132 @@ export const Tree = () => {
   }, [data, expandedItems, dropTarget]);
 
   return (
-    <Box css={{ maxWidth: 300 }}>
-      <TreeRoot>
-        {flatTree.map((node) => {
-          const handleExpand = (isExpanded: boolean) => {
-            setExpandedItems((prevExpandedItems) => {
-              const newExpandedItems = new Set(prevExpandedItems);
-              if (isExpanded) {
-                newExpandedItems.add(node.name);
-              } else {
-                newExpandedItems.delete(node.name);
-              }
-              return newExpandedItems;
-            });
-          };
+    <>
+      <StorySection title="Interactive">
+        <Box css={{ maxWidth: 300 }}>
+          <TreeRoot>
+            {flatTree.map((node) => {
+              const handleExpand = (isExpanded: boolean) => {
+                setExpandedItems((prevExpandedItems) => {
+                  const newExpandedItems = new Set(prevExpandedItems);
+                  if (isExpanded) {
+                    newExpandedItems.add(node.name);
+                  } else {
+                    newExpandedItems.delete(node.name);
+                  }
+                  return newExpandedItems;
+                });
+              };
 
-          return (
-            <TreeSortableItem
-              key={node.name}
-              level={node.level}
-              isExpanded={node.isExpanded}
-              isLastChild={node.isLastChild}
-              data={node}
-              // prevent dragging root
-              canDrag={() => node.level > 0}
-              onExpand={handleExpand}
-              dropTarget={node.dropTarget}
-              onDropTargetChange={(dropTarget) => {
-                // prevent dropping into toplevel
-                if (dropTarget && dropTarget.parentLevel > 0) {
-                  setDropTarget(getStoriesDropTarget(node, dropTarget));
-                } else {
-                  setDropTarget(undefined);
-                }
-              }}
-              onDrop={(sourceNode) => {
-                if (dropTarget) {
-                  setData((data) =>
-                    move({
-                      data,
-                      sourceParentName: sourceNode.selector[1],
-                      sourceName: sourceNode.selector[0],
-                      dropTarget,
-                    })
-                  );
-                }
-                setDropTarget(undefined);
-              }}
+              return (
+                <TreeSortableItem
+                  key={node.name}
+                  level={node.level}
+                  isExpanded={node.isExpanded}
+                  isLastChild={node.isLastChild}
+                  data={node}
+                  // prevent dragging root
+                  canDrag={() => node.level > 0}
+                  onExpand={handleExpand}
+                  dropTarget={node.dropTarget}
+                  onDropTargetChange={(dropTarget) => {
+                    // prevent dropping into toplevel
+                    if (dropTarget && dropTarget.parentLevel > 0) {
+                      setDropTarget(getStoriesDropTarget(node, dropTarget));
+                    } else {
+                      setDropTarget(undefined);
+                    }
+                  }}
+                  onDrop={(sourceNode) => {
+                    if (dropTarget) {
+                      setData((data) =>
+                        move({
+                          data,
+                          sourceParentName: sourceNode.selector[1],
+                          sourceName: sourceNode.selector[0],
+                          dropTarget,
+                        })
+                      );
+                    }
+                    setDropTarget(undefined);
+                  }}
+                >
+                  <TreeNode
+                    level={node.level}
+                    isSelected={node.name === selectedItemId}
+                    isHighlighted={dropTarget?.parentName === node.name}
+                    isExpanded={node.isExpanded}
+                    onExpand={handleExpand}
+                    buttonProps={{
+                      onFocus: () => {
+                        setSelectedItemId(node.name);
+                      },
+                      onClick: () => {
+                        setSelectedItemId(node.name);
+                      },
+                    }}
+                    action={
+                      <SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />
+                    }
+                  >
+                    <TreeNodeLabel>{node.name}</TreeNodeLabel>
+                  </TreeNode>
+                </TreeSortableItem>
+              );
+            })}
+          </TreeRoot>
+        </Box>
+      </StorySection>
+
+      <StorySection title="Static nodes">
+        <div style={{ maxWidth: 300 }}>
+          <TreeRoot>
+            <TreeNode
+              level={0}
+              isSelected={false}
+              isExpanded={true}
+              onExpand={() => {}}
+              buttonProps={{}}
+              action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
             >
-              <TreeNode
-                level={node.level}
-                isSelected={node.name === selectedItemId}
-                isHighlighted={dropTarget?.parentName === node.name}
-                isExpanded={node.isExpanded}
-                onExpand={handleExpand}
-                buttonProps={{
-                  onFocus: () => {
-                    setSelectedItemId(node.name);
-                  },
-                  onClick: () => {
-                    setSelectedItemId(node.name);
-                  },
-                }}
-                action={
-                  <SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />
-                }
-              >
-                <TreeNodeLabel>{node.name}</TreeNodeLabel>
-              </TreeNode>
-            </TreeSortableItem>
-          );
-        })}
-      </TreeRoot>
-    </Box>
+              <TreeNodeLabel>Root node</TreeNodeLabel>
+            </TreeNode>
+            <TreeNode
+              level={1}
+              isSelected={true}
+              isExpanded={undefined}
+              isActionVisible
+              buttonProps={{}}
+              action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
+            >
+              <TreeNodeLabel prefix={<DotIcon />}>
+                With prefix and action visible
+              </TreeNodeLabel>
+            </TreeNode>
+            <TreeNode
+              level={1}
+              tabbable
+              isSelected={false}
+              isExpanded={false}
+              onExpand={() => {}}
+              buttonProps={{}}
+              action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
+            >
+              <TreeNodeLabel>Tabbable collapsed node</TreeNodeLabel>
+            </TreeNode>
+            <TreeNode
+              level={1}
+              isSelected={false}
+              isHighlighted
+              isExpanded={undefined}
+              buttonProps={{}}
+              action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
+            >
+              <TreeNodeLabel>Highlighted node</TreeNodeLabel>
+            </TreeNode>
+          </TreeRoot>
+        </div>
+      </StorySection>
+    </>
   );
 };
-
-export const StaticTreeNodes = () => (
-  <div style={{ maxWidth: 300 }}>
-    <TreeRoot>
-      <TreeNode
-        level={0}
-        isSelected={false}
-        isExpanded={true}
-        onExpand={() => {}}
-        buttonProps={{}}
-        action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
-      >
-        <TreeNodeLabel>Root node</TreeNodeLabel>
-      </TreeNode>
-      <TreeNode
-        level={1}
-        isSelected={true}
-        isExpanded={undefined}
-        isActionVisible
-        buttonProps={{}}
-        action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
-      >
-        <TreeNodeLabel prefix={<DotIcon />}>
-          With prefix and action visible
-        </TreeNodeLabel>
-      </TreeNode>
-      <TreeNode
-        level={1}
-        tabbable
-        isSelected={false}
-        isExpanded={false}
-        onExpand={() => {}}
-        buttonProps={{}}
-        action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
-      >
-        <TreeNodeLabel>Tabbable collapsed node</TreeNodeLabel>
-      </TreeNode>
-      <TreeNode
-        level={1}
-        isSelected={false}
-        isHighlighted
-        isExpanded={undefined}
-        buttonProps={{}}
-        action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
-      >
-        <TreeNodeLabel>Highlighted node</TreeNodeLabel>
-      </TreeNode>
-    </TreeRoot>
-  </div>
-);

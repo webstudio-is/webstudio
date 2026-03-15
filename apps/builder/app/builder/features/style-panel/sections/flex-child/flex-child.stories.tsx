@@ -1,13 +1,15 @@
-import { Box, theme } from "@webstudio-is/design-system";
+import { Box, StorySection, theme } from "@webstudio-is/design-system";
 import { Section } from "./flex-child";
 
 export const FlexChild = () => (
-  <Box css={{ width: theme.sizes.sidebarWidth }}>
-    <Section />
-  </Box>
+  <StorySection title="Flex child">
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <Section />
+    </Box>
+  </StorySection>
 );
 
 export default {
-  title: "Style panel/Flex child",
+  title: "Style panel/Flex Child",
   component: Section,
 };

@@ -5,7 +5,7 @@ import { theme } from "..";
 import { Flex } from "./flex";
 
 export default {
-  title: "Scroll area",
+  title: "Scroll Area",
 };
 
 export const ScrollArea = () => {
@@ -38,19 +38,17 @@ export const ScrollArea = () => {
           {content}
         </ScrollAreaComponent>
       </StorySection>
+
+      <StorySection title="No overflow">
+        <div style={{ height: 200, width: 200 }}>
+          <ScrollAreaComponent>
+            <Flex direction="column" gap="2" style={{ padding: 8 }}>
+              <Text>Short content</Text>
+              <Text>No scrollbar needed</Text>
+            </Flex>
+          </ScrollAreaComponent>
+        </div>
+      </StorySection>
     </>
   );
 };
-
-export const MinimalContent = () => (
-  <StorySection title="No overflow">
-    <div style={{ height: 200, width: 200 }}>
-      <ScrollAreaComponent>
-        <Flex direction="column" gap="2" style={{ padding: 8 }}>
-          <Text>Short content</Text>
-          <Text>No scrollbar needed</Text>
-        </Flex>
-      </ScrollAreaComponent>
-    </div>
-  </StorySection>
-);

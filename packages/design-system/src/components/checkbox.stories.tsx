@@ -12,6 +12,22 @@ export default {
   },
 };
 
+const ControlledCheckbox = () => {
+  const [checked, setChecked] = useState<boolean | "indeterminate">(false);
+  return (
+    <StoryGrid horizontal>
+      <CheckboxAndLabel>
+        <CheckboxComponent
+          checked={checked}
+          onCheckedChange={setChecked}
+          id="controlled"
+        />
+        <Label htmlFor="controlled">State: {String(checked)}</Label>
+      </CheckboxAndLabel>
+    </StoryGrid>
+  );
+};
+
 export const Checkbox = () => {
   return (
     <>
@@ -56,25 +72,10 @@ export const Checkbox = () => {
           <CheckboxComponent disabled />
         </Tooltip>
       </StorySection>
-    </>
-  );
-};
-Checkbox.storyName = "Checkbox";
 
-export const CheckboxControlled = () => {
-  const [checked, setChecked] = useState<boolean | "indeterminate">(false);
-  return (
-    <StorySection title="Controlled">
-      <StoryGrid horizontal>
-        <CheckboxAndLabel>
-          <CheckboxComponent
-            checked={checked}
-            onCheckedChange={setChecked}
-            id="controlled"
-          />
-          <Label htmlFor="controlled">State: {String(checked)}</Label>
-        </CheckboxAndLabel>
-      </StoryGrid>
-    </StorySection>
+      <StorySection title="Controlled">
+        <ControlledCheckbox />
+      </StorySection>
+    </>
   );
 };

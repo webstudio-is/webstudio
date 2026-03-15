@@ -1,4 +1,3 @@
-import type { ComponentProps } from "react";
 import { EyeOpenIcon, EyeClosedIcon } from "@webstudio-is/icons";
 import {
   SmallToggleButton as SmallToggleButtonComponent,
@@ -7,18 +6,8 @@ import {
 import { StorySection, StoryGrid } from "./storybook";
 import { theme } from "../stitches.config";
 
-export const SmallToggleButton = ({
-  pressed,
-  ...rest
-}: Omit<ComponentProps<typeof SmallToggleButtonComponent>, "icon">) => (
+export const SmallToggleButton = () => (
   <>
-    <StorySection title="Configurable">
-      <SmallToggleButtonComponent
-        icon={pressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
-        {...rest}
-      />
-    </StorySection>
-
     <StorySection title="Variants & States">
       <StoryGrid>
         {smallToggleButtonVariants.map((variant) => (
@@ -103,36 +92,18 @@ export const SmallToggleButton = ({
         ))}
       </StoryGrid>
     </StorySection>
+
+    <StorySection title="Controlled pressed">
+      <StoryGrid horizontal>
+        <SmallToggleButtonComponent icon={<EyeClosedIcon />} pressed={true} />
+        <SmallToggleButtonComponent icon={<EyeOpenIcon />} pressed={false} />
+      </StoryGrid>
+    </StorySection>
   </>
 );
 
-SmallToggleButton.argTypes = {
-  variant: { control: "inline-radio", options: smallToggleButtonVariants },
-  pressed: { control: "boolean" },
-  disabled: { control: "boolean" },
-  focused: { control: "boolean" },
-};
-
-SmallToggleButton.args = {
-  variant: "normal",
-  pressed: false,
-  disabled: false,
-  focused: false,
-};
-
-SmallToggleButton.storyName = "Small Toggle Button";
-
-export const ControlledPressed = () => (
-  <StorySection title="Controlled pressed">
-    <StoryGrid horizontal>
-      <SmallToggleButtonComponent icon={<EyeClosedIcon />} pressed={true} />
-      <SmallToggleButtonComponent icon={<EyeOpenIcon />} pressed={false} />
-    </StoryGrid>
-  </StorySection>
-);
-
 export default {
-  title: "Small toggle button",
+  title: "Small Toggle Button",
   parameters: {
     // to make the variant=contrast visible
     backgrounds: { default: "Panel" },

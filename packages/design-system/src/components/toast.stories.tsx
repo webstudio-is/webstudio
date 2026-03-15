@@ -132,27 +132,25 @@ export const Toast = () => {
           </ToastComponent>
         </StoryGrid>
       </StorySection>
+
+      <StorySection title="With close and copy actions">
+        <StoryGrid>
+          <ToastComponent
+            onClose={() => window.alert("Close clicked")}
+            onCopy={() => window.alert("Copy clicked")}
+          >
+            Toast with close and copy actions
+          </ToastComponent>
+          <ToastComponent
+            variant="error"
+            icon={<AlertCircleIcon size={24} />}
+            onClose={() => window.alert("Close clicked")}
+            onCopy={() => window.alert("Copy clicked")}
+          >
+            Error toast with actions
+          </ToastComponent>
+        </StoryGrid>
+      </StorySection>
     </>
   );
 };
-
-export const WithActions = () => (
-  <StorySection title="With close and copy actions">
-    <StoryGrid>
-      <ToastComponent
-        onClose={() => window.alert("Close clicked")}
-        onCopy={() => window.alert("Copy clicked")}
-      >
-        Toast with close and copy actions
-      </ToastComponent>
-      <ToastComponent
-        variant="error"
-        icon={<AlertCircleIcon size={24} />}
-        onClose={() => window.alert("Close clicked")}
-        onCopy={() => window.alert("Copy clicked")}
-      >
-        Error toast with actions
-      </ToastComponent>
-    </StoryGrid>
-  </StorySection>
-);

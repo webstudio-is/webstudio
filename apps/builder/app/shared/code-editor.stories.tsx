@@ -1,11 +1,11 @@
 import { useState } from "react";
-import type { Meta } from "@storybook/react";
+import { StorySection } from "@webstudio-is/design-system";
 import { CodeEditor as CodeEditorComponent } from "./code-editor";
 
 export default {
   title: "Code editor",
   component: CodeEditorComponent,
-} satisfies Meta;
+};
 
 const initialHtml = `
 <div>
@@ -16,7 +16,7 @@ const initialHtml = `
 </script>
 `.trim();
 
-export const BaseEditor = () => {
+const BaseEditorDemo = () => {
   const [value, setValue] = useState(initialHtml);
   return (
     <CodeEditorComponent
@@ -27,7 +27,7 @@ export const BaseEditor = () => {
   );
 };
 
-export const HtmlEditor = () => {
+const HtmlEditorDemo = () => {
   const [value, setValue] = useState(initialHtml);
   return (
     <CodeEditorComponent
@@ -38,3 +38,14 @@ export const HtmlEditor = () => {
     />
   );
 };
+
+export const CodeEditor = () => (
+  <>
+    <StorySection title="Base editor">
+      <BaseEditorDemo />
+    </StorySection>
+    <StorySection title="HTML editor">
+      <HtmlEditorDemo />
+    </StorySection>
+  </>
+);

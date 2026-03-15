@@ -9,7 +9,7 @@ import { StorySection } from "./storybook";
 import { Button } from "./button";
 
 export default {
-  title: "Enhanced tooltip",
+  title: "Enhanced Tooltip",
   component: EnhancedTooltipComponent,
 };
 
@@ -68,11 +68,7 @@ export const EnhancedTooltip = () => (
         </EnhancedTooltipComponent>
       </Flex>
     </StorySection>
-  </EnhancedTooltipProvider>
-);
 
-export const WithAlignment = () => (
-  <EnhancedTooltipProvider>
     <StorySection title="Alignment options">
       <Flex gap="6" css={{ padding: 60 }}>
         <EnhancedTooltipComponent

@@ -1,13 +1,15 @@
-import { Box, theme } from "@webstudio-is/design-system";
+import { Box, StorySection, theme } from "@webstudio-is/design-system";
 import { Section } from "./grid-child";
 
 export const GridChild = () => (
-  <Box css={{ width: theme.sizes.sidebarWidth }}>
-    <Section />
-  </Box>
+  <StorySection title="Grid child">
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <Section />
+    </Box>
+  </StorySection>
 );
 
 export default {
-  title: "Style panel/Grid child",
+  title: "Style panel/Grid Child",
   component: Section,
 };

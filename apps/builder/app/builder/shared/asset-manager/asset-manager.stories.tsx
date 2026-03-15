@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { StorySection } from "@webstudio-is/design-system";
 import { AssetManager as AssetManagerComponent } from "./asset-manager";
 import {
   ALLOWED_FILE_TYPES,
@@ -36,7 +37,7 @@ const createMockAssets = (): Asset[] => {
 };
 
 export default {
-  title: "Asset manager",
+  title: "Asset Manager",
   component: AssetManagerComponent,
 } satisfies Meta;
 
@@ -47,9 +48,11 @@ const AssetManagerStory = () => {
   }, []);
 
   return (
-    <div style={{ width: 400, display: "flex" }}>
-      <AssetManagerComponent />
-    </div>
+    <StorySection title="Asset Manager">
+      <div style={{ width: 400, display: "flex" }}>
+        <AssetManagerComponent />
+      </div>
+    </StorySection>
   );
 };
 

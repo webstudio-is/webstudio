@@ -1,8 +1,9 @@
+import { StorySection } from "@webstudio-is/design-system";
 import { $remoteDialog } from "../../shared/nano-states";
 import { RemoteDialog as RemoteDialogComponent } from "./remote-dialog";
 
 export default {
-  title: "Builder/Help/Remote dialog",
+  title: "Builder/Help/Remote Dialog",
   component: RemoteDialogComponent,
 };
 
@@ -11,4 +12,8 @@ $remoteDialog.set({
   url: "https://docs.webstudio.is",
 });
 
-export const RemoteDialog = () => <RemoteDialogComponent />;
+export const RemoteDialog = () => (
+  <StorySection title="Remote Dialog">
+    <RemoteDialogComponent />
+  </StorySection>
+);

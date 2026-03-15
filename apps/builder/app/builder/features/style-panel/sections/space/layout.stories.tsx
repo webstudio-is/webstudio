@@ -1,6 +1,12 @@
 import type { Meta } from "@storybook/react";
 import { useState } from "react";
-import { Box, Flex, Text, theme } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  StorySection,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
 
@@ -9,12 +15,27 @@ export default {
 } as Meta;
 
 export const Layout = () => (
-  <Flex direction="column" gap="3">
-    <Text variant="labels">Placeholder cells</Text>
-    <Box css={{ width: theme.sizes.sidebarWidth }}>
-      <SpaceLayout renderCell={() => <div style={{ color: "red" }}>·</div>} />
-    </Box>
-  </Flex>
+  <StorySection title="Layout">
+    <Flex direction="column" gap="5">
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Placeholder cells</Text>
+        <Box css={{ width: theme.sizes.sidebarWidth }}>
+          <SpaceLayout
+            renderCell={() => <div style={{ color: "red" }}>·</div>}
+            onHover={() => {}}
+          />
+        </Box>
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Value texts</Text>
+        <ValueTextsSection />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Active properties</Text>
+        <ActivePropertiesSection />
+      </Flex>
+    </Flex>
+  </StorySection>
 );
 
 const allSources = [
@@ -33,7 +54,7 @@ const allValues = [
   { type: "keyword" as const, value: "revert-layer" },
 ];
 
-export const ValueTexts = () => {
+const ValueTextsSection = () => {
   const [_hovered, setHovered] = useState<{ property: string }>();
   return (
     <Flex direction="column" gap="5">
@@ -73,7 +94,7 @@ export const ValueTexts = () => {
   );
 };
 
-export const ActiveProperties = () => (
+const ActivePropertiesSection = () => (
   <Flex direction="column" gap="5">
     <Flex direction="column" gap="1">
       <Text variant="labels">Active margin sides (top + bottom)</Text>

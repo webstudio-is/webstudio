@@ -14,6 +14,7 @@
   "devDependencies": {
     "@svgo/jsx": "^0.4.2",
     "@types/react": "^18.2.70",
+    "@webstudio-is/design-system": "workspace:*",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/tsconfig": "workspace:*",
     "change-case": "^5.4.4",

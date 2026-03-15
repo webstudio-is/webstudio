@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { Box, theme } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  StorySection,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import {
   $breakpoints,
@@ -124,13 +130,7 @@ const multipleShadows: StyleDecl = {
   },
 };
 
-export const BoxShadows = () => (
-  <Box css={{ width: theme.sizes.sidebarWidth }}>
-    <Section />
-  </Box>
-);
-
-export const WithOuterShadow = () => {
+const WithOuterShadowVariant = () => {
   useEffect(() => {
     $styles.set(new Map([[getStyleDeclKey(outerShadow), outerShadow]]));
   }, []);
@@ -141,7 +141,7 @@ export const WithOuterShadow = () => {
   );
 };
 
-export const WithInsetShadow = () => {
+const WithInsetShadowVariant = () => {
   useEffect(() => {
     $styles.set(new Map([[getStyleDeclKey(insetShadow), insetShadow]]));
   }, []);
@@ -152,7 +152,7 @@ export const WithInsetShadow = () => {
   );
 };
 
-export const WithMultipleShadows = () => {
+const WithMultipleShadowsVariant = () => {
   useEffect(() => {
     $styles.set(new Map([[getStyleDeclKey(multipleShadows), multipleShadows]]));
   }, []);
@@ -163,7 +163,32 @@ export const WithMultipleShadows = () => {
   );
 };
 
+export const BoxShadows = () => (
+  <StorySection title="Box Shadows">
+    <Flex direction="column" gap="5">
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Default</Text>
+        <Box css={{ width: theme.sizes.sidebarWidth }}>
+          <Section />
+        </Box>
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">With outer shadow</Text>
+        <WithOuterShadowVariant />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">With inset shadow</Text>
+        <WithInsetShadowVariant />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">With multiple shadows</Text>
+        <WithMultipleShadowsVariant />
+      </Flex>
+    </Flex>
+  </StorySection>
+);
+
 export default {
-  title: "Style panel/Box shadows",
+  title: "Style panel/Box Shadows",
   component: Section,
 };

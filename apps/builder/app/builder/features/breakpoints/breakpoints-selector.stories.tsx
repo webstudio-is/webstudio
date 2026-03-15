@@ -1,10 +1,15 @@
+import { StorySection } from "@webstudio-is/design-system";
 import { BreakpointsSelector as BreakpointsSelectorComponent } from "./breakpoints-selector";
 
 export const BreakpointsSelector = () => {
-  return <BreakpointsSelectorComponent />;
+  return (
+    <StorySection title="Breakpoints Selector">
+      <BreakpointsSelectorComponent />
+    </StorySection>
+  );
 };
 
 export default {
-  title: "Breakpoints selector",
+  title: "Breakpoints Selector",
   component: BreakpointsSelector,
 };

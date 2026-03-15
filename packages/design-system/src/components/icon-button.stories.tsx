@@ -1,17 +1,16 @@
-import type { StoryFn } from "@storybook/react";
 import { XIcon } from "@webstudio-is/icons";
-import { Flex } from "./flex";
 import { IconButton as IconButtonComponent } from "./icon-button";
+import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Icon button",
+  title: "Icon Button",
   component: IconButtonComponent,
 };
 
-export const IconButton: StoryFn<typeof IconButtonComponent> = () => {
-  return (
-    <Flex direction="column" gap={2}>
-      <Flex gap={2}>
+export const IconButton = () => (
+  <>
+    <StorySection title="Variants">
+      <StoryGrid horizontal>
         <IconButtonComponent>
           <XIcon fill="currentColor" />
         </IconButtonComponent>
@@ -27,8 +26,10 @@ export const IconButton: StoryFn<typeof IconButtonComponent> = () => {
         <IconButtonComponent variant="remote">
           <XIcon fill="currentColor" />
         </IconButtonComponent>
-      </Flex>
-      <Flex gap={2}>
+      </StoryGrid>
+    </StorySection>
+    <StorySection title="Disabled">
+      <StoryGrid horizontal>
         <IconButtonComponent disabled={true}>
           <XIcon fill="currentColor" />
         </IconButtonComponent>
@@ -44,8 +45,10 @@ export const IconButton: StoryFn<typeof IconButtonComponent> = () => {
         <IconButtonComponent variant="remote" disabled={true}>
           <XIcon fill="currentColor" />
         </IconButtonComponent>
-      </Flex>
-      <Flex gap={2}>
+      </StoryGrid>
+    </StorySection>
+    <StorySection title="Open state">
+      <StoryGrid horizontal>
         <IconButtonComponent data-state={"open"}>
           <XIcon fill="currentColor" />
         </IconButtonComponent>
@@ -61,8 +64,10 @@ export const IconButton: StoryFn<typeof IconButtonComponent> = () => {
         <IconButtonComponent variant="remote" data-state={"open"}>
           <XIcon fill="currentColor" />
         </IconButtonComponent>
-      </Flex>
-      <Flex gap={2}>
+      </StoryGrid>
+    </StorySection>
+    <StorySection title="Focused">
+      <StoryGrid horizontal>
         <IconButtonComponent data-focused={true}>
           <XIcon fill="currentColor" />
         </IconButtonComponent>
@@ -78,27 +83,26 @@ export const IconButton: StoryFn<typeof IconButtonComponent> = () => {
         <IconButtonComponent variant="remote" data-focused={true}>
           <XIcon fill="currentColor" />
         </IconButtonComponent>
-      </Flex>
-    </Flex>
-  );
-};
-
-export const Hovered = () => (
-  <Flex gap={2}>
-    <IconButtonComponent data-hovered={true}>
-      <XIcon fill="currentColor" />
-    </IconButtonComponent>
-    <IconButtonComponent variant="preset" data-hovered={true}>
-      <XIcon fill="currentColor" />
-    </IconButtonComponent>
-    <IconButtonComponent variant="local" data-hovered={true}>
-      <XIcon fill="currentColor" />
-    </IconButtonComponent>
-    <IconButtonComponent variant="overwritten" data-hovered={true}>
-      <XIcon fill="currentColor" />
-    </IconButtonComponent>
-    <IconButtonComponent variant="remote" data-hovered={true}>
-      <XIcon fill="currentColor" />
-    </IconButtonComponent>
-  </Flex>
+      </StoryGrid>
+    </StorySection>
+    <StorySection title="Hovered">
+      <StoryGrid horizontal>
+        <IconButtonComponent data-hovered={true}>
+          <XIcon fill="currentColor" />
+        </IconButtonComponent>
+        <IconButtonComponent variant="preset" data-hovered={true}>
+          <XIcon fill="currentColor" />
+        </IconButtonComponent>
+        <IconButtonComponent variant="local" data-hovered={true}>
+          <XIcon fill="currentColor" />
+        </IconButtonComponent>
+        <IconButtonComponent variant="overwritten" data-hovered={true}>
+          <XIcon fill="currentColor" />
+        </IconButtonComponent>
+        <IconButtonComponent variant="remote" data-hovered={true}>
+          <XIcon fill="currentColor" />
+        </IconButtonComponent>
+      </StoryGrid>
+    </StorySection>
+  </>
 );

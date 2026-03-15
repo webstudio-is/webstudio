@@ -1,5 +1,6 @@
 import type { Meta } from "@storybook/react";
 import { type CSSProperties, useState, useRef } from "react";
+import { StorySection } from "../../storybook";
 import { Box } from "../../box";
 import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
@@ -324,7 +325,7 @@ export const Canvas = () => {
   });
 
   return (
-    <>
+    <StorySection title="Canvas">
       <Box
         css={{
           background: "white",
@@ -355,7 +356,7 @@ export const Canvas = () => {
       {placementIndicator && (
         <PlacementIndicator placement={placementIndicator} />
       )}
-    </>
+    </StorySection>
   );
 };
 

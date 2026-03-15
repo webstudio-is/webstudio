@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { Box, theme } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  StorySection,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import {
   $breakpoints,
@@ -73,13 +79,7 @@ const outlineOffset: StyleDecl = {
   value: { type: "unit", value: 4, unit: "px" },
 };
 
-export const Outline = () => (
-  <Box css={{ width: theme.sizes.sidebarWidth }}>
-    <Section />
-  </Box>
-);
-
-export const WithSolidOutline = () => {
+const WithSolidOutlineVariant = () => {
   useEffect(() => {
     $styles.set(
       new Map([
@@ -95,7 +95,7 @@ export const WithSolidOutline = () => {
   );
 };
 
-export const WithDashedOutline = () => {
+const WithDashedOutlineVariant = () => {
   useEffect(() => {
     $styles.set(
       new Map([
@@ -112,6 +112,27 @@ export const WithDashedOutline = () => {
     </Box>
   );
 };
+
+export const Outline = () => (
+  <StorySection title="Outline">
+    <Flex direction="column" gap="5">
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Default</Text>
+        <Box css={{ width: theme.sizes.sidebarWidth }}>
+          <Section />
+        </Box>
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">With solid outline</Text>
+        <WithSolidOutlineVariant />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">With dashed outline</Text>
+        <WithDashedOutlineVariant />
+      </Flex>
+    </Flex>
+  </StorySection>
+);
 
 export default {
   title: "Style panel/Outline",

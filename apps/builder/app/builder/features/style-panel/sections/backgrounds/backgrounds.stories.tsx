@@ -1,6 +1,12 @@
 import { useEffect } from "react";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
-import { Box, theme } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  StorySection,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import {
   $breakpoints,
@@ -52,13 +58,7 @@ $awareness.set({
   instanceSelector: ["box"],
 });
 
-export const Section = () => (
-  <Box css={{ width: theme.sizes.sidebarWidth }}>
-    <SectionComponent />
-  </Box>
-);
-
-export const SingleLayer = () => {
+const SingleLayerVariant = () => {
   useEffect(() => {
     const singleBackground: StyleDecl = {
       breakpointId: "base",
@@ -85,7 +85,7 @@ export const SingleLayer = () => {
   );
 };
 
-export const EmptyBackgrounds = () => {
+const EmptyBackgroundsVariant = () => {
   useEffect(() => {
     $styles.set(new Map());
   }, []);
@@ -95,6 +95,27 @@ export const EmptyBackgrounds = () => {
     </Box>
   );
 };
+
+export const Backgrounds = () => (
+  <StorySection title="Backgrounds">
+    <Flex direction="column" gap="5">
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Default (multiple layers)</Text>
+        <Box css={{ width: theme.sizes.sidebarWidth }}>
+          <SectionComponent />
+        </Box>
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Single layer</Text>
+        <SingleLayerVariant />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Empty backgrounds</Text>
+        <EmptyBackgroundsVariant />
+      </Flex>
+    </Flex>
+  </StorySection>
+);
 
 export default {
   title: "Style panel/Backgrounds/Section",

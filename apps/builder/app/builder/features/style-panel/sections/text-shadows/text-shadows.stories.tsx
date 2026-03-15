@@ -1,13 +1,15 @@
-import { Box, theme } from "@webstudio-is/design-system";
+import { Box, StorySection, theme } from "@webstudio-is/design-system";
 import { Section } from "./text-shadows";
 
 export const TextShadows = () => (
-  <Box css={{ width: theme.sizes.sidebarWidth }}>
-    <Section />
-  </Box>
+  <StorySection title="Text shadows">
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <Section />
+    </Box>
+  </StorySection>
 );
 
 export default {
-  title: "Style panel/Text shadows",
+  title: "Style panel/Text Shadows",
   component: Section,
 };

@@ -5,13 +5,14 @@ import {
   theme,
   Dialog,
   DialogContent,
+  StorySection,
 } from "@webstudio-is/design-system";
 import { $assets, $project } from "~/shared/sync/data-stores";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { isRootFolder } from "@webstudio-is/sdk";
 
 export default {
-  title: "Pages/Page settings",
+  title: "Pages/Page Settings",
   component: PageSettingsComponent,
   parameters: {
     lostpixel: {
@@ -88,26 +89,28 @@ $project.set({
 
 export const PageSettings = () => {
   return (
-    <Dialog open>
-      <DialogContent>
-        <Grid
-          css={{
-            width: theme.spacing[35],
-            margin: "auto",
-            border: `1px solid ${theme.colors.borderMain}`,
-            boxShadow: theme.shadows.menuDropShadow,
-            background: theme.colors.backgroundPanel,
-            borderRadius: theme.borderRadius[4],
-          }}
-        >
-          <PageSettingsComponent
-            onClose={() => {}}
-            onDuplicate={() => {}}
-            onDelete={() => {}}
-            pageId="pageId"
-          />
-        </Grid>
-      </DialogContent>
-    </Dialog>
+    <StorySection title="Page Settings">
+      <Dialog open>
+        <DialogContent>
+          <Grid
+            css={{
+              width: theme.spacing[35],
+              margin: "auto",
+              border: `1px solid ${theme.colors.borderMain}`,
+              boxShadow: theme.shadows.menuDropShadow,
+              background: theme.colors.backgroundPanel,
+              borderRadius: theme.borderRadius[4],
+            }}
+          >
+            <PageSettingsComponent
+              onClose={() => {}}
+              onDuplicate={() => {}}
+              onDelete={() => {}}
+              pageId="pageId"
+            />
+          </Grid>
+        </DialogContent>
+      </Dialog>
+    </StorySection>
   );
 };

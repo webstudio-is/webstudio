@@ -1,4 +1,9 @@
-import { Flex, Text, IconButton } from "@webstudio-is/design-system";
+import {
+  Flex,
+  IconButton,
+  StorySection,
+  Text,
+} from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
 import { Card as CardComponent } from "./card";
 
@@ -16,32 +21,34 @@ const placeholderImage = `data:image/svg+xml,${encodeURIComponent(
 )}`;
 
 export const Card = () => (
-  <Flex direction="column" gap="3" css={{ width: 300 }}>
-    <Text variant="labels">Default</Text>
-    <CardComponent title="Section template" />
+  <StorySection title="Card">
+    <Flex direction="column" gap="3" css={{ width: 300 }}>
+      <Text variant="labels">Default</Text>
+      <CardComponent title="Section template" />
 
-    <Text variant="labels">With image</Text>
-    <CardComponent
-      title="Hero section"
-      image={placeholderImage}
-      suffix={
-        <IconButton>
-          <EllipsesIcon />
-        </IconButton>
-      }
-    />
+      <Text variant="labels">With image</Text>
+      <CardComponent
+        title="Hero section"
+        image={placeholderImage}
+        suffix={
+          <IconButton>
+            <EllipsesIcon />
+          </IconButton>
+        }
+      />
 
-    <Text variant="labels">No image (placeholder)</Text>
-    <CardComponent title="Untitled" image="" />
+      <Text variant="labels">No image (placeholder)</Text>
+      <CardComponent title="Untitled" image="" />
 
-    <Text variant="labels">Selected</Text>
-    <CardComponent title="Selected card" state="selected" />
+      <Text variant="labels">Selected</Text>
+      <CardComponent title="Selected card" state="selected" />
 
-    <Text variant="labels">Loading</Text>
-    <CardComponent
-      title="Loading card"
-      image={placeholderImage}
-      state="loading"
-    />
-  </Flex>
+      <Text variant="labels">Loading</Text>
+      <CardComponent
+        title="Loading card"
+        image={placeholderImage}
+        state="loading"
+      />
+    </Flex>
+  </StorySection>
 );

@@ -7,9 +7,10 @@ import {
 } from "./color-picker";
 import { Flex } from "./flex";
 import { Text } from "./text";
+import { StorySection } from "./storybook";
 
 export default {
-  title: "Color picker",
+  title: "Color Picker",
 };
 
 const initialColor: RgbValue = {
@@ -25,45 +26,48 @@ export const ColorPicker = () => {
   const [popoverValue, setPopoverValue] = useState<StyleValue>(initialColor);
 
   return (
-    <Flex gap="9" align="start">
-      <Flex direction="column" gap="2">
-        <Text variant="labels">Inline</Text>
-        <ColorPickerComponent
-          value={inlineValue}
-          onChange={(value) => {
-            if (value !== undefined) {
-              setInlineValue(value);
-            }
-          }}
-          onChangeComplete={setInlineValue}
-        />
-        <Text>{JSON.stringify(inlineValue)}</Text>
-      </Flex>
-      <Flex direction="column" gap="2">
-        <Text variant="labels">Popover</Text>
-        <ColorPickerPopover
-          value={popoverValue}
-          onChange={(value) => {
-            if (value !== undefined) {
-              setPopoverValue(value);
-            }
-          }}
-          onChangeComplete={setPopoverValue}
-        />
-        <Text>{JSON.stringify(popoverValue)}</Text>
-      </Flex>
-    </Flex>
+    <>
+      <StorySection title="Inline">
+        <Flex direction="column" gap="2">
+          <ColorPickerComponent
+            value={inlineValue}
+            onChange={(value) => {
+              if (value !== undefined) {
+                setInlineValue(value);
+              }
+            }}
+            onChangeComplete={setInlineValue}
+          />
+          <Text>{JSON.stringify(inlineValue)}</Text>
+        </Flex>
+      </StorySection>
+
+      <StorySection title="Popover">
+        <Flex direction="column" gap="2">
+          <ColorPickerPopover
+            value={popoverValue}
+            onChange={(value) => {
+              if (value !== undefined) {
+                setPopoverValue(value);
+              }
+            }}
+            onChangeComplete={setPopoverValue}
+          />
+          <Text>{JSON.stringify(popoverValue)}</Text>
+        </Flex>
+      </StorySection>
+
+      <StorySection title="Thumb">
+        <Flex gap="3" align="center">
+          <ColorThumb color="rgb(255, 0, 0)" />
+          <ColorThumb color="rgba(0, 128, 255, 0.5)" />
+          <ColorThumb color="transparent" />
+          <ColorThumb color="#00FF00" interactive />
+        </Flex>
+      </StorySection>
+    </>
   );
 };
-
-export const Thumb = () => (
-  <Flex gap="3" align="center">
-    <ColorThumb color="rgb(255, 0, 0)" />
-    <ColorThumb color="rgba(0, 128, 255, 0.5)" />
-    <ColorThumb color="transparent" />
-    <ColorThumb color="#00FF00" interactive />
-  </Flex>
-);
 
 export const PopoverPositioning = () => {
   const [value, setValue] = useState<StyleValue>(initialColor);
@@ -81,6 +85,7 @@ export const PopoverPositioning = () => {
           onChange={handleChange}
           onChangeComplete={setValue}
           side="top"
+          open={true}
         />
       </Flex>
       <Flex direction="column" gap="2" align="center">
@@ -90,6 +95,7 @@ export const PopoverPositioning = () => {
           onChange={handleChange}
           onChangeComplete={setValue}
           side="right"
+          open={true}
         />
       </Flex>
       <Flex direction="column" gap="2" align="center">
@@ -100,6 +106,7 @@ export const PopoverPositioning = () => {
           onChangeComplete={setValue}
           side="bottom"
           align="start"
+          open={true}
         />
       </Flex>
       <Flex direction="column" gap="2" align="center">
@@ -109,6 +116,7 @@ export const PopoverPositioning = () => {
           onChange={handleChange}
           onChangeComplete={setValue}
           sideOffset={16}
+          open={true}
         />
       </Flex>
     </Flex>

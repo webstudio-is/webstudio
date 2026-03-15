@@ -1,4 +1,4 @@
-import { Box, theme } from "@webstudio-is/design-system";
+import { Box, StorySection, theme } from "@webstudio-is/design-system";
 import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
 import {
   $breakpoints,
@@ -59,9 +59,11 @@ $awareness.set({
 });
 
 export const Transitions = () => (
-  <Box css={{ width: theme.sizes.sidebarWidth }}>
-    <Section />
-  </Box>
+  <StorySection title="Transitions">
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <Section />
+    </Box>
+  </StorySection>
 );
 
 export default {

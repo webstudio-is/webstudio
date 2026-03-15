@@ -1,5 +1,5 @@
 import { useState, type ComponentProps, type ReactNode } from "react";
-import { css, styled, theme } from "../stitches.config";
+import { styled, theme } from "../stitches.config";
 import {
   CssValueListArrowFocus,
   CssValueListItem,
@@ -9,21 +9,11 @@ import { Label, labelColors } from "./label";
 import { SmallToggleButton } from "./small-toggle-button";
 import { EyeOpenIcon, EyeClosedIcon, MinusIcon } from "@webstudio-is/icons";
 import { SmallIconButton } from "./small-icon-button";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
   component: CssValueListItem,
-  args: { hidden: false, labelColor: "default", focused: false },
-  argTypes: {
-    hidden: { control: "boolean" },
-    focused: { control: "boolean" },
-    labelColor: {
-      options: labelColors,
-      type: "inline-radio",
-    },
-  },
-  title: "CSS value list item",
+  title: "CSS Value List Item",
 };
 
 const Thumbnail = styled("div", {
@@ -84,54 +74,9 @@ const ListItem = (props: {
   );
 };
 
-export const CSSValueListItem = (props: {
-  hidden: boolean;
-  focused: boolean;
-  labelColor: "default";
-}) => {
-  const [pressed, onPressedChange] = useState(false);
-
+export const CSSValueListItem = () => {
   return (
     <Panel>
-      <StorySection title="Configurable">
-        <Popover>
-          <PopoverTrigger asChild>
-            <CssValueListItem
-              id="0"
-              index={0}
-              label={
-                <Label disabled={props.hidden} color={props.labelColor}>
-                  Image
-                </Label>
-              }
-              thumbnail={<Thumbnail />}
-              hidden={props.hidden}
-              focused={props.focused}
-              buttons={
-                <>
-                  <SmallToggleButton
-                    pressed={pressed}
-                    onPressedChange={onPressedChange}
-                    variant="normal"
-                    tabIndex={-1}
-                    icon={pressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
-                  />
-
-                  <SmallIconButton
-                    variant="destructive"
-                    tabIndex={-1}
-                    icon={<MinusIcon />}
-                  />
-                </>
-              }
-            />
-          </PopoverTrigger>
-          <PopoverContent>
-            <div className={css({ p: theme.spacing[10] })()}>Content</div>
-          </PopoverContent>
-        </Popover>
-      </StorySection>
-
       <StorySection title="Overflows">
         <StoryGrid>
           <>
@@ -234,89 +179,77 @@ export const CSSValueListItem = (props: {
           </CssValueListArrowFocus>
         </StoryGrid>
       </StorySection>
+
+      <StorySection title="No thumbnail">
+        <CssValueListArrowFocus>
+          <CssValueListItem
+            id="no-thumb-0"
+            index={0}
+            label={<Label>Text only item</Label>}
+            hidden={false}
+            buttons={
+              <SmallIconButton
+                variant="destructive"
+                tabIndex={-1}
+                icon={<MinusIcon />}
+              />
+            }
+            {...__testing__.listItemAttributes}
+          />
+          <CssValueListItem
+            id="no-thumb-1"
+            index={1}
+            label={<Label>Another text item</Label>}
+            hidden={false}
+            buttons={
+              <SmallIconButton
+                variant="destructive"
+                tabIndex={-1}
+                icon={<MinusIcon />}
+              />
+            }
+            {...__testing__.listItemAttributes}
+          />
+        </CssValueListArrowFocus>
+      </StorySection>
+
+      <StorySection title="Disabled state">
+        <CssValueListArrowFocus>
+          <CssValueListItem
+            id="disabled-0"
+            index={0}
+            label={<Label>Disabled item</Label>}
+            thumbnail={<Thumbnail />}
+            hidden={false}
+            disabled
+            {...__testing__.listItemAttributes}
+          />
+          <CssValueListItem
+            id="disabled-1"
+            index={1}
+            label={<Label>Enabled item</Label>}
+            thumbnail={<Thumbnail />}
+            hidden={false}
+            {...__testing__.listItemAttributes}
+          />
+        </CssValueListArrowFocus>
+      </StorySection>
+
+      <StorySection title="Arrow focus with drag item">
+        <CssValueListArrowFocus dragItemId="drag-1">
+          {labelColors.map((labelColor, index) => (
+            <ListItem
+              key={labelColor}
+              index={index}
+              hidden={false}
+              active={index === 1}
+              labelColor={labelColor}
+              state={undefined}
+              focused={false}
+            />
+          ))}
+        </CssValueListArrowFocus>
+      </StorySection>
     </Panel>
   );
 };
-
-export const WithoutThumbnail = () => (
-  <Panel>
-    <StorySection title="No thumbnail">
-      <CssValueListArrowFocus>
-        <CssValueListItem
-          id="no-thumb-0"
-          index={0}
-          label={<Label>Text only item</Label>}
-          hidden={false}
-          buttons={
-            <SmallIconButton
-              variant="destructive"
-              tabIndex={-1}
-              icon={<MinusIcon />}
-            />
-          }
-          {...__testing__.listItemAttributes}
-        />
-        <CssValueListItem
-          id="no-thumb-1"
-          index={1}
-          label={<Label>Another text item</Label>}
-          hidden={false}
-          buttons={
-            <SmallIconButton
-              variant="destructive"
-              tabIndex={-1}
-              icon={<MinusIcon />}
-            />
-          }
-          {...__testing__.listItemAttributes}
-        />
-      </CssValueListArrowFocus>
-    </StorySection>
-  </Panel>
-);
-
-export const DisabledItems = () => (
-  <Panel>
-    <StorySection title="Disabled state">
-      <CssValueListArrowFocus>
-        <CssValueListItem
-          id="disabled-0"
-          index={0}
-          label={<Label>Disabled item</Label>}
-          thumbnail={<Thumbnail />}
-          hidden={false}
-          disabled
-          {...__testing__.listItemAttributes}
-        />
-        <CssValueListItem
-          id="disabled-1"
-          index={1}
-          label={<Label>Enabled item</Label>}
-          thumbnail={<Thumbnail />}
-          hidden={false}
-          {...__testing__.listItemAttributes}
-        />
-      </CssValueListArrowFocus>
-    </StorySection>
-  </Panel>
-);
-
-export const WithDragItemId = () => (
-  <Panel>
-    <StorySection title="Arrow focus with drag item">
-      <CssValueListArrowFocus dragItemId="drag-1">
-        {labelColors.map((labelColor, index) => (
-          <ListItem
-            key={labelColor}
-            index={index}
-            hidden={false}
-            active={index === 1}
-            labelColor={labelColor}
-            state={undefined}
-            focused={false}
-          />
-        ))}
-      </CssValueListArrowFocus>
-    </StorySection>
-  </Panel>
-);

@@ -1,4 +1,5 @@
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import { StorySection } from "@webstudio-is/design-system";
 import { XmlNode } from "./xml-node";
 
 const Component = () => {
@@ -30,9 +31,9 @@ export default {
 const Story = {
   render() {
     return (
-      <>
+      <StorySection title="Xml Node">
         <Component />
-      </>
+      </StorySection>
     );
   },
 };

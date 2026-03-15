@@ -1,5 +1,6 @@
 import { Flex } from "./flex";
 import { Avatar as AvatarComponent } from "./avatar";
+import { StorySection } from "./storybook";
 
 export default {
   title: "Avatar",
@@ -15,29 +16,33 @@ const avatarImage = `data:image/svg+xml,${encodeURIComponent(
 )}`;
 
 export const Avatar = () => (
-  <Flex gap="3" align="center">
-    <AvatarComponent src={avatarImage} alt="User avatar" fallback="JD" />
-    <AvatarComponent fallback="JD" />
-    <AvatarComponent fallback="AB" />
-    <AvatarComponent fallback="WS" />
-  </Flex>
-);
+  <>
+    <StorySection title="With image and fallback">
+      <Flex gap="3" align="center">
+        <AvatarComponent src={avatarImage} alt="User avatar" fallback="JD" />
+        <AvatarComponent fallback="JD" />
+        <AvatarComponent fallback="AB" />
+        <AvatarComponent fallback="WS" />
+      </Flex>
+    </StorySection>
 
-export const AvatarFallbackVariants = () => (
-  <Flex gap="3" align="center">
-    <AvatarComponent fallback="A" />
-    <AvatarComponent fallback="JD" />
-    <AvatarComponent fallback="WEB" />
-  </Flex>
-);
+    <StorySection title="Fallback variants">
+      <Flex gap="3" align="center">
+        <AvatarComponent fallback="A" />
+        <AvatarComponent fallback="JD" />
+        <AvatarComponent fallback="WEB" />
+      </Flex>
+    </StorySection>
 
-export const AvatarBrokenImage = () => (
-  <Flex gap="3" align="center">
-    <AvatarComponent
-      src="https://broken-url.invalid/avatar.png"
-      fallback="FB"
-      alt="Broken image avatar"
-    />
-    <AvatarComponent fallback="OK" alt="No image avatar" />
-  </Flex>
+    <StorySection title="Broken image">
+      <Flex gap="3" align="center">
+        <AvatarComponent
+          src="https://broken-url.invalid/avatar.png"
+          fallback="FB"
+          alt="Broken image avatar"
+        />
+        <AvatarComponent fallback="OK" alt="No image avatar" />
+      </Flex>
+    </StorySection>
+  </>
 );

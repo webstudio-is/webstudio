@@ -1,6 +1,11 @@
 import { useEffect, useRef } from "react";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
-import { FloatingPanel } from "@webstudio-is/design-system";
+import {
+  FloatingPanel,
+  Flex,
+  StorySection,
+  Text,
+} from "@webstudio-is/design-system";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   $breakpoints,
@@ -11,7 +16,7 @@ import {
   $styleSourceSelections,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { BackgroundContent } from "./background-content";
+import { BackgroundContent as BackgroundContentPanel } from "./background-content";
 import { $awareness } from "~/shared/awareness";
 import { useComputedStyleDecl } from "../../shared/model";
 import { setRepeatedStyleItem } from "../../shared/repeated-style";
@@ -74,7 +79,7 @@ const BackgroundStory = ({ styleValue }: { styleValue: StyleValue }) => {
       <FloatingPanel
         open
         title="Background"
-        content={<BackgroundContent index={0} />}
+        content={<BackgroundContentPanel index={0} />}
       >
         <button>Trigger</button>
       </FloatingPanel>
@@ -82,66 +87,78 @@ const BackgroundStory = ({ styleValue }: { styleValue: StyleValue }) => {
   );
 };
 
-export const Image = () => {
-  const styleValue: StyleValue = { type: "keyword", value: "none" };
-  return <BackgroundStory styleValue={styleValue} />;
-};
-
-export const LinearGradient = () => {
-  const styleValue: StyleValue = {
-    type: "unparsed",
-    value:
-      "linear-gradient(135deg, rgba(255,126,95,1) 0%, rgba(254,180,123,1) 35%, rgba(134,168,231,1) 100%)",
-  };
-  return <BackgroundStory styleValue={styleValue} />;
-};
-
-export const ConicGradient = () => {
-  const styleValue: StyleValue = {
-    type: "unparsed",
-    value:
-      "conic-gradient(from 0deg at 50% 50%, rgba(255,126,95,1) 0deg, rgba(254,180,123,1) 120deg, rgba(134,168,231,1) 240deg, rgba(255,126,95,1) 360deg)",
-  };
-  return <BackgroundStory styleValue={styleValue} />;
-};
-
-export const RadialGradient = () => {
-  const styleValue: StyleValue = {
-    type: "unparsed",
-    value:
-      "radial-gradient(circle at 50% 50%, rgba(255,126,95,1) 0%, rgba(254,180,123,1) 50%, rgba(134,168,231,1) 100%)",
-  };
-  return <BackgroundStory styleValue={styleValue} />;
-};
-
-export const Solid = () => {
-  const styleValue: StyleValue = {
-    type: "unparsed",
-    value:
-      "linear-gradient(0deg, rgba(56,189,248,1) 0%, rgba(56,189,248,1) 100%)",
-  };
-  return <BackgroundStory styleValue={styleValue} />;
-};
-
-export const RepeatingLinearGradient = () => {
-  const styleValue: StyleValue = {
-    type: "unparsed",
-    value:
-      "repeating-linear-gradient(45deg, rgba(255,0,0,1) 0%, rgba(0,0,255,1) 10%, rgba(255,0,0,1) 20%)",
-  };
-  return <BackgroundStory styleValue={styleValue} />;
-};
-
-export const MultiStopGradient = () => {
-  const styleValue: StyleValue = {
-    type: "unparsed",
-    value:
-      "linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,165,0,1) 20%, rgba(255,255,0,1) 40%, rgba(0,128,0,1) 60%, rgba(0,0,255,1) 80%, rgba(128,0,128,1) 100%)",
-  };
-  return <BackgroundStory styleValue={styleValue} />;
-};
+export const BackgroundContent = () => (
+  <StorySection title="Background content">
+    <Flex direction="column" gap="5">
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Image (none)</Text>
+        <BackgroundStory styleValue={{ type: "keyword", value: "none" }} />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Linear gradient</Text>
+        <BackgroundStory
+          styleValue={{
+            type: "unparsed",
+            value:
+              "linear-gradient(135deg, rgba(255,126,95,1) 0%, rgba(254,180,123,1) 35%, rgba(134,168,231,1) 100%)",
+          }}
+        />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Conic gradient</Text>
+        <BackgroundStory
+          styleValue={{
+            type: "unparsed",
+            value:
+              "conic-gradient(from 0deg at 50% 50%, rgba(255,126,95,1) 0deg, rgba(254,180,123,1) 120deg, rgba(134,168,231,1) 240deg, rgba(255,126,95,1) 360deg)",
+          }}
+        />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Radial gradient</Text>
+        <BackgroundStory
+          styleValue={{
+            type: "unparsed",
+            value:
+              "radial-gradient(circle at 50% 50%, rgba(255,126,95,1) 0%, rgba(254,180,123,1) 50%, rgba(134,168,231,1) 100%)",
+          }}
+        />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Solid</Text>
+        <BackgroundStory
+          styleValue={{
+            type: "unparsed",
+            value:
+              "linear-gradient(0deg, rgba(56,189,248,1) 0%, rgba(56,189,248,1) 100%)",
+          }}
+        />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Repeating linear gradient</Text>
+        <BackgroundStory
+          styleValue={{
+            type: "unparsed",
+            value:
+              "repeating-linear-gradient(45deg, rgba(255,0,0,1) 0%, rgba(0,0,255,1) 10%, rgba(255,0,0,1) 20%)",
+          }}
+        />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Multi-stop gradient</Text>
+        <BackgroundStory
+          styleValue={{
+            type: "unparsed",
+            value:
+              "linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,165,0,1) 20%, rgba(255,255,0,1) 40%, rgba(0,128,0,1) 60%, rgba(0,0,255,1) 80%, rgba(128,0,128,1) 100%)",
+          }}
+        />
+      </Flex>
+    </Flex>
+  </StorySection>
+);
 
 export default {
   title: "Style panel/Backgrounds",
-  component: Image,
+  component: BackgroundContentPanel,
 };

@@ -2,6 +2,7 @@ import {
   Button,
   Flex,
   rawTheme,
+  StorySection,
   theme,
   ToolbarButton,
   Text,
@@ -77,71 +78,73 @@ export const TopbarLayouts = () => {
   $queueStatus.set({ status: "failed" });
   $authPermit.set("view");
   return (
-    <Flex direction="column" gap="5">
-      <Text variant="labels">Default</Text>
-      <TopbarLayout
-        menu={<MenuPlaceholder />}
-        left={<PagePlaceholder />}
-        center={<BreakpointsPlaceholder />}
-        right={
-          <>
-            <Button color="gradient">Share</Button>
-            <Button color="positive">Publish</Button>
-          </>
-        }
-      />
-      <Text variant="labels">With indicators</Text>
-      <TopbarLayout
-        menu={<MenuPlaceholder />}
-        left={<PagePlaceholder />}
-        center={<BreakpointsPlaceholder />}
-        right={
-          <>
-            <SafeModeIndicator />
-            <ViewModeIndicator />
-            <SyncErrorIndicator />
-            <Button color="gradient">Share</Button>
-            <Button color="positive">Publish</Button>
-            <Link
-              data-state="auto"
-              className={buttonStyle({ color: "positive" })}
-              color="contrast"
-              href="#"
-              underline="none"
-            >
-              Clone
-            </Link>
-          </>
-        }
-      />
-      <Text variant="labels">Menu only</Text>
-      <TopbarLayout menu={<MenuPlaceholder />} />
-      <Text variant="labels">Sync failed</Text>
-      <TopbarLayout
-        menu={<MenuPlaceholder />}
-        left={<PagePlaceholder />}
-        center={<BreakpointsPlaceholder />}
-        right={
-          <>
-            <SyncStatus />
-            <Button color="gradient">Share</Button>
-            <Button color="positive">Publish</Button>
-          </>
-        }
-      />
-      <Text variant="labels">View mode</Text>
-      <TopbarLayout
-        menu={<MenuPlaceholder />}
-        left={<PagePlaceholder />}
-        center={<BreakpointsPlaceholder />}
-        right={
-          <>
-            <ViewMode />
-            <Button color="gradient">Share</Button>
-            <Button color="positive">Publish</Button>
-          </>
-        }
-      />
-    </Flex>
+    <StorySection title="Topbar Layouts">
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Default</Text>
+        <TopbarLayout
+          menu={<MenuPlaceholder />}
+          left={<PagePlaceholder />}
+          center={<BreakpointsPlaceholder />}
+          right={
+            <>
+              <Button color="gradient">Share</Button>
+              <Button color="positive">Publish</Button>
+            </>
+          }
+        />
+        <Text variant="labels">With indicators</Text>
+        <TopbarLayout
+          menu={<MenuPlaceholder />}
+          left={<PagePlaceholder />}
+          center={<BreakpointsPlaceholder />}
+          right={
+            <>
+              <SafeModeIndicator />
+              <ViewModeIndicator />
+              <SyncErrorIndicator />
+              <Button color="gradient">Share</Button>
+              <Button color="positive">Publish</Button>
+              <Link
+                data-state="auto"
+                className={buttonStyle({ color: "positive" })}
+                color="contrast"
+                href="#"
+                underline="none"
+              >
+                Clone
+              </Link>
+            </>
+          }
+        />
+        <Text variant="labels">Menu only</Text>
+        <TopbarLayout menu={<MenuPlaceholder />} />
+        <Text variant="labels">Sync failed</Text>
+        <TopbarLayout
+          menu={<MenuPlaceholder />}
+          left={<PagePlaceholder />}
+          center={<BreakpointsPlaceholder />}
+          right={
+            <>
+              <SyncStatus />
+              <Button color="gradient">Share</Button>
+              <Button color="positive">Publish</Button>
+            </>
+          }
+        />
+        <Text variant="labels">View mode</Text>
+        <TopbarLayout
+          menu={<MenuPlaceholder />}
+          left={<PagePlaceholder />}
+          center={<BreakpointsPlaceholder />}
+          right={
+            <>
+              <ViewMode />
+              <Button color="gradient">Share</Button>
+              <Button color="positive">Publish</Button>
+            </>
+          }
+        />
+      </Flex>
+    </StorySection>
   );
 };

@@ -1,4 +1,4 @@
-import { Toolbar } from "@webstudio-is/design-system";
+import { StorySection, Toolbar } from "@webstudio-is/design-system";
 import { BuilderModeDropDown } from "./builder-mode";
 import {
   $builderMode,
@@ -11,7 +11,7 @@ export default {
   title: "Builder mode",
 };
 
-export const DesignMode = () => {
+export const BuilderMode = () => {
   $builderMode.set("design");
   $authPermit.set("own");
   $authToken.set(undefined);
@@ -19,50 +19,20 @@ export const DesignMode = () => {
     ...$userPlanFeatures.get(),
     allowContentMode: true,
   });
-  return (
-    <Toolbar>
-      <BuilderModeDropDown />
-    </Toolbar>
-  );
-};
 
-export const ContentMode = () => {
-  $builderMode.set("content");
-  $authPermit.set("own");
-  $authToken.set(undefined);
-  $userPlanFeatures.set({
-    ...$userPlanFeatures.get(),
-    allowContentMode: true,
-  });
   return (
-    <Toolbar>
-      <BuilderModeDropDown />
-    </Toolbar>
-  );
-};
+    <>
+      <StorySection title="Design mode">
+        <Toolbar>
+          <BuilderModeDropDown />
+        </Toolbar>
+      </StorySection>
 
-export const PreviewMode = () => {
-  $builderMode.set("preview");
-  $authPermit.set("own");
-  $authToken.set(undefined);
-  return (
-    <Toolbar>
-      <BuilderModeDropDown />
-    </Toolbar>
-  );
-};
-
-export const ContentModeOnly = () => {
-  $builderMode.set("content");
-  $authPermit.set("edit");
-  $authToken.set(undefined);
-  $userPlanFeatures.set({
-    ...$userPlanFeatures.get(),
-    allowContentMode: true,
-  });
-  return (
-    <Toolbar>
-      <BuilderModeDropDown />
-    </Toolbar>
+      <StorySection title="Preview mode">
+        <Toolbar>
+          <BuilderModeDropDown />
+        </Toolbar>
+      </StorySection>
+    </>
   );
 };

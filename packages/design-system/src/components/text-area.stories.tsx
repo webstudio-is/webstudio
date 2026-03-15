@@ -3,7 +3,7 @@ import { StorySection, StoryGrid } from "./storybook";
 import { useState } from "react";
 
 export default {
-  title: "Text area",
+  title: "Text Area",
 };
 
 const exampleValue =
@@ -95,26 +95,18 @@ export const TextArea = () => {
           <TextAreaComponent variant="mono" value={value} onChange={setValue} />
         </StoryGrid>
       </StorySection>
+
+      <StorySection title="Uncontrolled with default value">
+        <StoryGrid css={{ width: 200 }}>
+          <TextAreaComponent defaultValue="This is a default value for an uncontrolled text area" />
+        </StoryGrid>
+      </StorySection>
+
+      <StorySection title="Grow (manual resize disabled)">
+        <StoryGrid css={{ width: 200 }}>
+          <TextAreaComponent value={value} onChange={setValue} grow />
+        </StoryGrid>
+      </StorySection>
     </>
-  );
-};
-TextArea.storyName = "Text Area";
-
-export const WithDefaultValue = () => (
-  <StorySection title="Uncontrolled with default value">
-    <StoryGrid css={{ width: 200 }}>
-      <TextAreaComponent defaultValue="This is a default value for an uncontrolled text area" />
-    </StoryGrid>
-  </StorySection>
-);
-
-export const WithGrow = () => {
-  const [value, setValue] = useState(exampleValue);
-  return (
-    <StorySection title="Grow (manual resize disabled)">
-      <StoryGrid css={{ width: 200 }}>
-        <TextAreaComponent value={value} onChange={setValue} grow />
-      </StoryGrid>
-    </StorySection>
   );
 };

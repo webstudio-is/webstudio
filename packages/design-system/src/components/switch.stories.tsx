@@ -7,6 +7,20 @@ export default {
   title: "Switch",
 };
 
+const ControlledSwitch = () => {
+  const [checked, setChecked] = useState(false);
+  return (
+    <StoryGrid horizontal>
+      <Switch
+        id="switch-controlled"
+        checked={checked}
+        onCheckedChange={setChecked}
+      />
+      <Label htmlFor="switch-controlled">{checked ? "On" : "Off"}</Label>
+    </StoryGrid>
+  );
+};
+
 const Story = () => {
   return (
     <>
@@ -25,33 +39,17 @@ const Story = () => {
       <StorySection title="Focussed (initially)">
         <Switch autoFocus />
       </StorySection>
+      <StorySection title="With label">
+        <StoryGrid horizontal>
+          <Switch id="switch-label" defaultChecked />
+          <Label htmlFor="switch-label">Enable feature</Label>
+        </StoryGrid>
+      </StorySection>
+      <StorySection title="Controlled">
+        <ControlledSwitch />
+      </StorySection>
     </>
   );
 };
 
 export { Story as Switch };
-
-export const SwitchWithLabel = () => (
-  <StorySection title="With label">
-    <StoryGrid horizontal>
-      <Switch id="switch-label" defaultChecked />
-      <Label htmlFor="switch-label">Enable feature</Label>
-    </StoryGrid>
-  </StorySection>
-);
-
-export const SwitchControlled = () => {
-  const [checked, setChecked] = useState(false);
-  return (
-    <StorySection title="Controlled">
-      <StoryGrid horizontal>
-        <Switch
-          id="switch-controlled"
-          checked={checked}
-          onCheckedChange={setChecked}
-        />
-        <Label htmlFor="switch-controlled">{checked ? "On" : "Off"}</Label>
-      </StoryGrid>
-    </StorySection>
-  );
-};

@@ -1,9 +1,9 @@
-import { Flex, Text } from "@webstudio-is/design-system";
+import { Flex, StorySection, Text } from "@webstudio-is/design-system";
 import { ImageInfo as ImageInfoComponent } from "./image-info";
 import type { ImageAsset } from "@webstudio-is/sdk";
 
 export default {
-  title: "Builder/Pages/Image info",
+  title: "Builder/Pages/Image Info",
   component: ImageInfoComponent,
 };
 
@@ -34,11 +34,13 @@ const squareAsset: ImageAsset = {
 };
 
 export const ImageInfo = () => (
-  <Flex direction="column" gap="5" css={{ width: 400 }}>
-    <Text variant="labels">Landscape image</Text>
-    <ImageInfoComponent asset={mockAsset} onDelete={() => {}} />
+  <StorySection title="Image Info">
+    <Flex direction="column" gap="5" css={{ width: 400 }}>
+      <Text variant="labels">Landscape image</Text>
+      <ImageInfoComponent asset={mockAsset} onDelete={() => {}} />
 
-    <Text variant="labels">Square image</Text>
-    <ImageInfoComponent asset={squareAsset} onDelete={() => {}} />
-  </Flex>
+      <Text variant="labels">Square image</Text>
+      <ImageInfoComponent asset={squareAsset} onDelete={() => {}} />
+    </Flex>
+  </StorySection>
 );

@@ -6,7 +6,7 @@ import {
 import { StoryGrid, StorySection } from "./storybook";
 
 export default {
-  title: "Nested select button",
+  title: "Nested Select Button",
 };
 
 export const NestedSelectButton = () => {
@@ -44,25 +44,20 @@ export const NestedSelectButton = () => {
           </NestedInputButton>
         </StoryGrid>
       </StorySection>
+      <StorySection title="Unitless value">
+        <StoryGrid horizontal>
+          <NestedInputButton>{nestedSelectButtonUnitless}</NestedInputButton>
+          <NestedInputButton data-state="hover">
+            {nestedSelectButtonUnitless}
+          </NestedInputButton>
+          <NestedInputButton data-state="open">
+            {nestedSelectButtonUnitless}
+          </NestedInputButton>
+          <NestedInputButton disabled>
+            {nestedSelectButtonUnitless}
+          </NestedInputButton>
+        </StoryGrid>
+      </StorySection>
     </>
   );
 };
-
-NestedSelectButton.storyName = "Nested Select Button";
-
-export const UnitlessValue = () => (
-  <StorySection title="Unitless value">
-    <StoryGrid horizontal>
-      <NestedInputButton>{nestedSelectButtonUnitless}</NestedInputButton>
-      <NestedInputButton data-state="hover">
-        {nestedSelectButtonUnitless}
-      </NestedInputButton>
-      <NestedInputButton data-state="open">
-        {nestedSelectButtonUnitless}
-      </NestedInputButton>
-      <NestedInputButton disabled>
-        {nestedSelectButtonUnitless}
-      </NestedInputButton>
-    </StoryGrid>
-  </StorySection>
-);

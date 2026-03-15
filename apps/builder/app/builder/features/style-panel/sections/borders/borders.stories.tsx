@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { Box, theme } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  StorySection,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import {
   $breakpoints,
@@ -94,13 +100,7 @@ const borderRadius: StyleDecl = {
   value: { type: "unit", value: 8, unit: "px" },
 };
 
-export const Borders = () => (
-  <Box css={{ width: theme.sizes.sidebarWidth }}>
-    <Section />
-  </Box>
-);
-
-export const WithSolidBorder = () => {
+const WithSolidBorderVariant = () => {
   useEffect(() => {
     $styles.set(
       new Map([
@@ -119,7 +119,7 @@ export const WithSolidBorder = () => {
   );
 };
 
-export const WithMixedBorders = () => {
+const WithMixedBordersVariant = () => {
   useEffect(() => {
     $styles.set(
       new Map([
@@ -135,6 +135,27 @@ export const WithMixedBorders = () => {
     </Box>
   );
 };
+
+export const Borders = () => (
+  <StorySection title="Borders">
+    <Flex direction="column" gap="5">
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Default</Text>
+        <Box css={{ width: theme.sizes.sidebarWidth }}>
+          <Section />
+        </Box>
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">With solid border</Text>
+        <WithSolidBorderVariant />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">With mixed borders</Text>
+        <WithMixedBordersVariant />
+      </Flex>
+    </Flex>
+  </StorySection>
+);
 
 export default {
   title: "Style panel/Borders",

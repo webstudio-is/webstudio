@@ -4,6 +4,7 @@ import {
   type NumericScrubValue,
   type NumericScrubDirection,
 } from "./numeric-gesture-control";
+import { StorySection } from "../storybook";
 
 const useNumericScrubControl = ({
   ref,
@@ -53,28 +54,6 @@ const Input = ({
   return <input defaultValue={value} ref={ref} />;
 };
 
-export const NumericGestureControl = Object.assign(Input.bind({}), {
-  args: { value: 0, direction: "horizontal", acceleration: 1 },
-});
-
-export default {
-  title: "Primitives/Numeric gesture control",
-  component: Input,
-  argTypes: {
-    value: {
-      control: { type: "number" },
-    },
-    direction: {
-      options: ["horizontal", "vertical"],
-      control: { type: "radio" },
-    },
-  },
-};
-
-export const VerticalControl = Object.assign(Input.bind({}), {
-  args: { value: 0, direction: "vertical", acceleration: 1 },
-});
-
 const ConstrainedInput = ({
   value,
   direction,
@@ -111,11 +90,28 @@ const ConstrainedInput = ({
   return <input defaultValue={value} ref={ref} />;
 };
 
-export const ConstrainedControl = () => (
-  <ConstrainedInput
-    value={50}
-    direction="horizontal"
-    minValue={0}
-    maxValue={100}
-  />
+export const NumericGestureControl = () => (
+  <>
+    <StorySection title="Horizontal control">
+      <Input value={0} direction="horizontal" acceleration={1} />
+    </StorySection>
+
+    <StorySection title="Vertical control">
+      <Input value={0} direction="vertical" acceleration={1} />
+    </StorySection>
+
+    <StorySection title="Constrained control (0-100)">
+      <ConstrainedInput
+        value={50}
+        direction="horizontal"
+        minValue={0}
+        maxValue={100}
+      />
+    </StorySection>
+  </>
 );
+
+export default {
+  title: "Primitives/Numeric Gesture Control",
+  component: Input,
+};

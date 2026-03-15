@@ -294,8 +294,6 @@ export const MenuMenuItem = () => (
   </>
 );
 
-MenuMenuItem.storyName = "Menu, Menu Item";
-
 export const StandaloneMenuItems = () => (
   <StorySection title="Standalone menu list">
     <MenuList width="regular">
@@ -308,5 +306,5 @@ export const StandaloneMenuItems = () => (
 );
 
 export default {
-  title: "Menu, menu item",
+  title: "Menu, Menu Item",
 };

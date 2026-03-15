@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import type { Meta, StoryFn } from "@storybook/react";
-import { Text } from "@webstudio-is/design-system";
+import { StorySection, Text } from "@webstudio-is/design-system";
 import { ToolbarButton } from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
 import { TopbarLayout } from "~/builder/shared/topbar-layout";
@@ -62,14 +62,14 @@ const HistoryInspect = () => {
 };
 
 export default {
-  title: "Address bar",
+  title: "Address Bar",
   component: AddressBarPopover,
 } satisfies Meta;
 
 export const AddressBar: StoryFn = () => {
   $awareness.set({ pageId: "dynamicId" });
   return (
-    <>
+    <StorySection title="Address Bar">
       <TopbarLayout
         menu={
           <ToolbarButton aria-label="Menu">
@@ -80,6 +80,6 @@ export const AddressBar: StoryFn = () => {
       />
       <SystemInspect />
       <HistoryInspect />
-    </>
+    </StorySection>
   );
 };

@@ -1,7 +1,8 @@
 import { createRegularStyleSheet } from "./create-style-sheet";
+import { StorySection } from "@webstudio-is/design-system";
 
 export default {
-  title: "CSS engine",
+  title: "CSS Engine",
   component: "CssEngine",
 };
 
@@ -20,7 +21,7 @@ export const CSSEngine = () => {
   });
   sheet.render();
   return (
-    <>
+    <StorySection title="CSS Engine">
       <div className="test">Should be red</div>
       <button
         onClick={() => {
@@ -49,6 +50,6 @@ export const CSSEngine = () => {
       >
         Add rule with yellow background
       </button>
-    </>
+    </StorySection>
   );
 };

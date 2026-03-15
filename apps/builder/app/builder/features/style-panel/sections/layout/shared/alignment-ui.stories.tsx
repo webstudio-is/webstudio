@@ -1,5 +1,10 @@
-import { useState } from "react";
-import { Box, Flex, Text, theme } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  StorySection,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
 import { AlignmentUi } from "./alignment-ui";
 
 export default {
@@ -87,82 +92,54 @@ const CombinationGrid = ({
   </Flex>
 );
 
-// Flex: itemStretchWidth/Height are always false
-// (flex has no justify-items; stretch is purely from align-items)
-export const Flex_ = () => (
-  <Flex direction="column" gap="6">
-    <CombinationGrid
-      title="flex-direction: row"
-      isColumnDirection={false}
-      itemStretchWidth={() => false}
-      itemStretchHeight={() => false}
-    />
-    <CombinationGrid
-      title="flex-direction: column"
-      isColumnDirection={true}
-      itemStretchWidth={() => false}
-      itemStretchHeight={() => false}
-    />
-  </Flex>
-);
-
 const isStretchOrNormal = (ai: string) => ai === "stretch" || ai === "normal";
 
-// Grid: justify-items controls item stretch independently
-// Show both justify-items: stretch (default) and justify-items: start (no stretch)
-export const Grid_ = () => (
-  <Flex direction="column" gap="6">
-    <CombinationGrid
-      title="grid-auto-flow: row, justify-items: stretch"
-      isColumnDirection={false}
-      itemStretchWidth={isStretchOrNormal}
-      itemStretchHeight={() => false}
-    />
-    <CombinationGrid
-      title="grid-auto-flow: row, justify-items: start"
-      isColumnDirection={false}
-      itemStretchWidth={() => false}
-      itemStretchHeight={() => false}
-    />
-    <CombinationGrid
-      title="grid-auto-flow: column, justify-items: stretch"
-      isColumnDirection={true}
-      itemStretchWidth={() => false}
-      itemStretchHeight={isStretchOrNormal}
-    />
-    <CombinationGrid
-      title="grid-auto-flow: column, justify-items: start"
-      isColumnDirection={true}
-      itemStretchWidth={() => false}
-      itemStretchHeight={() => false}
-    />
-  </Flex>
-);
-
-export const Interactive = () => {
-  const [selected, setSelected] = useState<{ x: number; y: number }>();
-  return (
-    <Flex direction="column" gap="3">
-      <Text css={{ ...labelStyle }}>
-        Selected: {selected ? `(${selected.x}, ${selected.y})` : "none"}
-      </Text>
-      <Box
-        css={{
-          width: 64,
-          height: 62,
-          color: theme.colors.foregroundFlexUiMain,
-        }}
-      >
-        <AlignmentUi
-          justifyContent="start"
-          alignItems="start"
+export const AlignmentUI = () => (
+  <>
+    <StorySection title="Flex">
+      <Flex direction="column" gap="6">
+        <CombinationGrid
+          title="flex-direction: row"
           isColumnDirection={false}
-          color="currentColor"
-          itemStretchWidth={false}
-          itemStretchHeight={false}
-          onSelect={setSelected}
+          itemStretchWidth={() => false}
+          itemStretchHeight={() => false}
         />
-      </Box>
-    </Flex>
-  );
-};
+        <CombinationGrid
+          title="flex-direction: column"
+          isColumnDirection={true}
+          itemStretchWidth={() => false}
+          itemStretchHeight={() => false}
+        />
+      </Flex>
+    </StorySection>
+
+    <StorySection title="Grid">
+      <Flex direction="column" gap="6">
+        <CombinationGrid
+          title="grid-auto-flow: row, justify-items: stretch"
+          isColumnDirection={false}
+          itemStretchWidth={isStretchOrNormal}
+          itemStretchHeight={() => false}
+        />
+        <CombinationGrid
+          title="grid-auto-flow: row, justify-items: start"
+          isColumnDirection={false}
+          itemStretchWidth={() => false}
+          itemStretchHeight={() => false}
+        />
+        <CombinationGrid
+          title="grid-auto-flow: column, justify-items: stretch"
+          isColumnDirection={true}
+          itemStretchWidth={() => false}
+          itemStretchHeight={isStretchOrNormal}
+        />
+        <CombinationGrid
+          title="grid-auto-flow: column, justify-items: start"
+          isColumnDirection={true}
+          itemStretchWidth={() => false}
+          itemStretchHeight={() => false}
+        />
+      </Flex>
+    </StorySection>
+  </>
+);

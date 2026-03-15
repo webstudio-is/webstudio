@@ -3,6 +3,7 @@ import { Flex } from "./flex";
 import { Button } from "./button";
 import { Progress as ProgressComponent } from "./progress";
 import { Text } from "./text";
+import { StorySection, StoryGrid } from "./storybook";
 
 export default {
   title: "Progress",
@@ -11,34 +12,42 @@ export default {
 
 export const Progress = () => {
   const [value, setValue] = useState(50);
+  const [transitionValue, setTransitionValue] = useState(0);
   return (
-    <Flex direction="column" gap="3" css={{ width: 300 }}>
-      {[0, 25, 50, 75, 100].map((v) => (
-        <Flex key={v} gap="2" align="center">
-          <Text css={{ width: 40 }}>{v}%</Text>
-          <ProgressComponent value={v} />
-        </Flex>
-      ))}
-      <Flex gap="2" align="center">
-        <ProgressComponent value={value} />
-        <Button onClick={() => setValue(Math.max(0, value - 10))}>-10</Button>
-        <Button onClick={() => setValue(Math.min(100, value + 10))}>+10</Button>
-      </Flex>
-    </Flex>
-  );
-};
-
-export const ProgressCustomTransition = () => {
-  const [value, setValue] = useState(0);
-  return (
-    <Flex direction="column" gap="3" css={{ width: 300 }}>
-      <Text>Slow transition (1s)</Text>
-      <ProgressComponent value={value} transitionDuration="1000ms" />
-      <Flex gap="2">
-        <Button onClick={() => setValue(0)}>0%</Button>
-        <Button onClick={() => setValue(50)}>50%</Button>
-        <Button onClick={() => setValue(100)}>100%</Button>
-      </Flex>
-    </Flex>
+    <>
+      <StorySection title="Values">
+        <StoryGrid css={{ width: 300 }}>
+          {[0, 25, 50, 75, 100].map((v) => (
+            <Flex key={v} gap="2" align="center">
+              <Text css={{ width: 40 }}>{v}%</Text>
+              <ProgressComponent value={v} />
+            </Flex>
+          ))}
+          <Flex gap="2" align="center">
+            <ProgressComponent value={value} />
+            <Button onClick={() => setValue(Math.max(0, value - 10))}>
+              -10
+            </Button>
+            <Button onClick={() => setValue(Math.min(100, value + 10))}>
+              +10
+            </Button>
+          </Flex>
+        </StoryGrid>
+      </StorySection>
+      <StorySection title="Custom transition">
+        <StoryGrid css={{ width: 300 }}>
+          <Text>Slow transition (1s)</Text>
+          <ProgressComponent
+            value={transitionValue}
+            transitionDuration="1000ms"
+          />
+          <Flex gap="2">
+            <Button onClick={() => setTransitionValue(0)}>0%</Button>
+            <Button onClick={() => setTransitionValue(50)}>50%</Button>
+            <Button onClick={() => setTransitionValue(100)}>100%</Button>
+          </Flex>
+        </StoryGrid>
+      </StorySection>
+    </>
   );
 };

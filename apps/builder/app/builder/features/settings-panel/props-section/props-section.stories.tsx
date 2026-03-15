@@ -1,6 +1,12 @@
 import { useState } from "react";
 import type { PropMeta, Instance, Prop, Asset, Page } from "@webstudio-is/sdk";
-import { Box, Flex, textVariants, theme } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  StorySection,
+  textVariants,
+  theme,
+} from "@webstudio-is/design-system";
 import { PropsSection as PropsSectionComponent } from "./props-section";
 import { usePropsLogic } from "./use-props-logic";
 import {
@@ -384,32 +390,37 @@ export const PropsSection = () => {
   });
 
   return (
-    <Flex gap="3">
-      <Box
-        css={{ width: theme.sizes.sidebarWidth, border: "dashed 3px #e3e3e3" }}
-      >
-        <PropsSectionComponent
-          instanceId={instanceId}
-          propsLogic={logic}
-          propValues={new Map()}
-          component="Button"
-          selectedInstanceKey={instanceId}
-        />
-      </Box>
-      <pre style={textVariants.mono}>
-        {props
-          .map(
-            ({ name, value, type }) =>
-              `${name}: ${type} = ${JSON.stringify(value)}`
-          )
-          .join("\n")}
-      </pre>
-    </Flex>
+    <StorySection title="Props Section">
+      <Flex gap="3">
+        <Box
+          css={{
+            width: theme.sizes.sidebarWidth,
+            border: "dashed 3px #e3e3e3",
+          }}
+        >
+          <PropsSectionComponent
+            instanceId={instanceId}
+            propsLogic={logic}
+            propValues={new Map()}
+            component="Button"
+            selectedInstanceKey={instanceId}
+          />
+        </Box>
+        <pre style={textVariants.mono}>
+          {props
+            .map(
+              ({ name, value, type }) =>
+                `${name}: ${type} = ${JSON.stringify(value)}`
+            )
+            .join("\n")}
+        </pre>
+      </Flex>
+    </StorySection>
   );
 };
 
 export default {
-  title: "Settings panel/Props section",
+  title: "Settings panel/Props Section",
   component: PropsSection,
   parameters: {
     lostpixel: {

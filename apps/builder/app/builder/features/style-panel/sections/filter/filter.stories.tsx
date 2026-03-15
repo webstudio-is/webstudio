@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { Box, theme } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  StorySection,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import {
   $breakpoints,
@@ -92,13 +98,7 @@ const multipleFilterStyles: StyleDecl = {
   },
 };
 
-export const Filters = () => (
-  <Box css={{ width: theme.sizes.sidebarWidth }}>
-    <Section />
-  </Box>
-);
-
-export const WithBlurFilter = () => {
+const WithBlurFilterVariant = () => {
   useEffect(() => {
     $styles.set(new Map([[getStyleDeclKey(blurFilterStyle), blurFilterStyle]]));
   }, []);
@@ -109,7 +109,7 @@ export const WithBlurFilter = () => {
   );
 };
 
-export const WithMultipleFilters = () => {
+const WithMultipleFiltersVariant = () => {
   useEffect(() => {
     $styles.set(
       new Map([[getStyleDeclKey(multipleFilterStyles), multipleFilterStyles]])
@@ -121,6 +121,27 @@ export const WithMultipleFilters = () => {
     </Box>
   );
 };
+
+export const Filters = () => (
+  <StorySection title="Filters">
+    <Flex direction="column" gap="5">
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Default</Text>
+        <Box css={{ width: theme.sizes.sidebarWidth }}>
+          <Section />
+        </Box>
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">With blur filter</Text>
+        <WithBlurFilterVariant />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">With multiple filters</Text>
+        <WithMultipleFiltersVariant />
+      </Flex>
+    </Flex>
+  </StorySection>
+);
 
 export default {
   title: "Style panel/Filters",

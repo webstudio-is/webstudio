@@ -1,5 +1,4 @@
-import type { ComponentProps } from "react";
-import { EllipsesIcon, XIcon, TrashIcon } from "@webstudio-is/icons";
+import { TrashIcon } from "@webstudio-is/icons";
 import {
   SmallIconButton as SmallIconButtonComponent,
   smallIconButtonStates,
@@ -7,25 +6,10 @@ import {
 } from "./small-icon-button";
 import { StorySection, StoryGrid } from "./storybook";
 
-const iconsMap = {
-  "<EllipsesIcon>": <EllipsesIcon />,
-  "<XIcon>": <XIcon />,
-  "<TrashIcon>": <TrashIcon />,
-} as const;
-
 const states = [undefined, ...smallIconButtonStates];
 
-export const SmallIconButton = ({
-  icon,
-  ...rest
-}: Omit<ComponentProps<typeof SmallIconButtonComponent>, "icon"> & {
-  icon: keyof typeof iconsMap;
-}) => (
+export const SmallIconButton = () => (
   <>
-    <StorySection title="Configurable">
-      <SmallIconButtonComponent icon={iconsMap[icon]} {...rest} />
-    </StorySection>
-
     <StorySection title="Variants & States">
       <StoryGrid>
         {smallIconButtonVariants.map((variant) => (
@@ -62,43 +46,25 @@ export const SmallIconButton = ({
         ))}
       </StoryGrid>
     </StorySection>
+
+    <StorySection title="Disabled across variants">
+      <StoryGrid horizontal>
+        {smallIconButtonVariants.map((variant) => (
+          <SmallIconButtonComponent
+            key={variant}
+            title={variant}
+            icon={<TrashIcon />}
+            variant={variant}
+            disabled
+          />
+        ))}
+      </StoryGrid>
+    </StorySection>
   </>
 );
 
-SmallIconButton.argTypes = {
-  icon: { control: "inline-radio", options: Object.keys(iconsMap) },
-  variant: { control: "inline-radio", options: smallIconButtonVariants },
-  state: { control: "inline-radio", options: states },
-  focused: { control: "boolean" },
-};
-
-SmallIconButton.args = {
-  icon: "<EllipsesIcon>",
-  variant: "normal",
-  state: undefined,
-  focused: false,
-};
-
-SmallIconButton.storyName = "Small Icon Button";
-
-export const Disabled = () => (
-  <StorySection title="Disabled across variants">
-    <StoryGrid horizontal>
-      {smallIconButtonVariants.map((variant) => (
-        <SmallIconButtonComponent
-          key={variant}
-          title={variant}
-          icon={<TrashIcon />}
-          variant={variant}
-          disabled
-        />
-      ))}
-    </StoryGrid>
-  </StorySection>
-);
-
 export default {
-  title: "Small icon button",
+  title: "Small Icon Button",
   parameters: {
     // to make the variant=contrast visible
     backgrounds: { default: "Maintenance Medium" },

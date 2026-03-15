@@ -1296,6 +1296,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@webstudio-is/design-system':
+        specifier: workspace:*
+        version: link:../design-system
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -1622,6 +1625,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@webstudio-is/design-system':
+        specifier: workspace:*
+        version: link:../design-system
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -1656,6 +1662,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@webstudio-is/design-system':
+        specifier: workspace:*
+        version: link:../design-system
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -2016,6 +2025,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@webstudio-is/design-system':
+        specifier: workspace:*
+        version: link:../design-system
       '@webstudio-is/generate-arg-types':
         specifier: workspace:*
         version: link:../generate-arg-types

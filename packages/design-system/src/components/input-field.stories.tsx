@@ -9,7 +9,7 @@ import { NestedInputButton } from "./nested-input-button";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Input field",
+  title: "Input Field",
 };
 
 const prefix = (
@@ -92,57 +92,47 @@ export const InputField = () => (
         ))}
       </StoryGrid>
     </StorySection>
+
+    <StorySection title="Chromeless variant">
+      <StoryGrid horizontal>
+        <InputFieldComponent defaultValue="Chromeless" variant="chromeless" />
+        <InputFieldComponent
+          defaultValue="With prefix"
+          variant="chromeless"
+          prefix={prefix}
+          suffix={suffix}
+        />
+      </StoryGrid>
+    </StorySection>
+
+    <StorySection title="Small size (size 1)">
+      <StoryGrid horizontal>
+        <InputFieldComponent defaultValue="Size 1" size="1" />
+        <InputFieldComponent defaultValue="Size 2" size="2" />
+        <InputFieldComponent
+          defaultValue="Size 1 with prefix"
+          size="1"
+          prefix={prefix}
+          suffix={suffix}
+        />
+      </StoryGrid>
+    </StorySection>
+
+    <StorySection title="Input types">
+      <StoryGrid horizontal>
+        <InputFieldComponent type="number" defaultValue="42" />
+        <InputFieldComponent type="password" defaultValue="secret" />
+        <InputFieldComponent type="email" placeholder="email@example.com" />
+        <InputFieldComponent type="url" placeholder="https://…" />
+        <InputFieldComponent type="tel" placeholder="+1 555 0100" />
+      </StoryGrid>
+    </StorySection>
+
+    <StorySection title="Field sizing content">
+      <StoryGrid horizontal>
+        <InputFieldComponent defaultValue="Content" fieldSizing="content" />
+        <InputFieldComponent defaultValue="Fixed" fieldSizing="fixed" />
+      </StoryGrid>
+    </StorySection>
   </>
-);
-
-InputField.storyName = "Input Field";
-
-export const Chromeless = () => (
-  <StorySection title="Chromeless variant">
-    <StoryGrid horizontal>
-      <InputFieldComponent defaultValue="Chromeless" variant="chromeless" />
-      <InputFieldComponent
-        defaultValue="With prefix"
-        variant="chromeless"
-        prefix={prefix}
-        suffix={suffix}
-      />
-    </StoryGrid>
-  </StorySection>
-);
-
-export const SmallSize = () => (
-  <StorySection title="Small size (size 1)">
-    <StoryGrid horizontal>
-      <InputFieldComponent defaultValue="Size 1" size="1" />
-      <InputFieldComponent defaultValue="Size 2" size="2" />
-      <InputFieldComponent
-        defaultValue="Size 1 with prefix"
-        size="1"
-        prefix={prefix}
-        suffix={suffix}
-      />
-    </StoryGrid>
-  </StorySection>
-);
-
-export const InputTypes = () => (
-  <StorySection title="Input types">
-    <StoryGrid horizontal>
-      <InputFieldComponent type="number" defaultValue="42" />
-      <InputFieldComponent type="password" defaultValue="secret" />
-      <InputFieldComponent type="email" placeholder="email@example.com" />
-      <InputFieldComponent type="url" placeholder="https://…" />
-      <InputFieldComponent type="tel" placeholder="+1 555 0100" />
-    </StoryGrid>
-  </StorySection>
-);
-
-export const FieldSizingContent = () => (
-  <StorySection title="Field sizing content">
-    <StoryGrid horizontal>
-      <InputFieldComponent defaultValue="Content" fieldSizing="content" />
-      <InputFieldComponent defaultValue="Fixed" fieldSizing="fixed" />
-    </StoryGrid>
-  </StorySection>
 );

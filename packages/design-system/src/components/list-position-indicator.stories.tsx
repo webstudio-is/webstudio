@@ -5,7 +5,7 @@ import {
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "List position indicator",
+  title: "List Position Indicator",
   parameters: {
     // to make white outline visible
     backgrounds: { default: "Maintenance Medium" },
@@ -63,61 +63,55 @@ export const ListPositionIndicator = () => (
         </div>
       </StoryGrid>
     </StorySection>
+
+    <StorySection title="Offset positions">
+      <StoryGrid>
+        <div
+          style={{
+            background: "black",
+            position: "relative",
+            width: 250,
+            height: 50,
+          }}
+        >
+          <ListPositionIndicatorComponent x={20} y={15} length={180} />
+        </div>
+        <div
+          style={{
+            background: "black",
+            position: "relative",
+            width: 250,
+            height: 50,
+          }}
+        >
+          <TreePositionIndicator x={20} y={25} length={180} />
+        </div>
+      </StoryGrid>
+    </StorySection>
+
+    <StorySection title="String position values">
+      <StoryGrid>
+        <div
+          style={{
+            background: "black",
+            position: "relative",
+            width: 250,
+            height: 30,
+          }}
+        >
+          <ListPositionIndicatorComponent x="10%" y="50%" length="80%" />
+        </div>
+        <div
+          style={{
+            background: "black",
+            position: "relative",
+            width: 250,
+            height: 30,
+          }}
+        >
+          <TreePositionIndicator x="10%" y="50%" length="80%" />
+        </div>
+      </StoryGrid>
+    </StorySection>
   </>
-);
-
-ListPositionIndicator.storyName = "List Position Indicator";
-
-export const OffsetPositions = () => (
-  <StorySection title="Offset positions">
-    <StoryGrid>
-      <div
-        style={{
-          background: "black",
-          position: "relative",
-          width: 250,
-          height: 50,
-        }}
-      >
-        <ListPositionIndicatorComponent x={20} y={15} length={180} />
-      </div>
-      <div
-        style={{
-          background: "black",
-          position: "relative",
-          width: 250,
-          height: 50,
-        }}
-      >
-        <TreePositionIndicator x={20} y={25} length={180} />
-      </div>
-    </StoryGrid>
-  </StorySection>
-);
-
-export const StringPositions = () => (
-  <StorySection title="String position values">
-    <StoryGrid>
-      <div
-        style={{
-          background: "black",
-          position: "relative",
-          width: 250,
-          height: 30,
-        }}
-      >
-        <ListPositionIndicatorComponent x="10%" y="50%" length="80%" />
-      </div>
-      <div
-        style={{
-          background: "black",
-          position: "relative",
-          width: 250,
-          height: 30,
-        }}
-      >
-        <TreePositionIndicator x="10%" y="50%" length="80%" />
-      </div>
-    </StoryGrid>
-  </StorySection>
 );

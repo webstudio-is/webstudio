@@ -4,6 +4,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  StorySection,
 } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { nanoid } from "nanoid";
@@ -13,7 +14,7 @@ import {
 } from "./share-project";
 
 export default {
-  title: "Share project",
+  title: "Share Project",
   component: ShareProjectComponent,
 };
 
@@ -121,8 +122,10 @@ const ShareProjectPopover = ({
 };
 
 export const ShareProject = () => (
-  <Flex gap="9" css={{ padding: 100 }}>
-    <ShareProjectPopover label="Empty" />
-    <ShareProjectPopover label="With Links" linkOptions={initialLinks} />
-  </Flex>
+  <StorySection title="Share Project">
+    <Flex gap="9" css={{ padding: 100 }}>
+      <ShareProjectPopover label="Empty" />
+      <ShareProjectPopover label="With Links" linkOptions={initialLinks} />
+    </Flex>
+  </StorySection>
 );

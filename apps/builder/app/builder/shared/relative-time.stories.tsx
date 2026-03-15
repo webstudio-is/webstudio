@@ -1,8 +1,8 @@
-import { Flex, Text } from "@webstudio-is/design-system";
+import { Flex, StorySection, Text } from "@webstudio-is/design-system";
 import { RelativeTime as RelativeTimeComponent } from "./relative-time";
 
 export default {
-  title: "Builder/Shared/Relative time",
+  title: "Builder/Shared/Relative Time",
   component: RelativeTimeComponent,
 };
 
@@ -17,17 +17,19 @@ export const RelativeTime = () => {
   ];
 
   return (
-    <Flex direction="column" gap="2">
-      {times.map(({ label, date }) => (
-        <Flex key={label} gap="3" align="center">
-          <Text variant="labels" css={{ width: 120 }}>
-            {label}:
-          </Text>
-          <Text>
-            <RelativeTimeComponent time={date} />
-          </Text>
-        </Flex>
-      ))}
-    </Flex>
+    <StorySection title="Relative Time">
+      <Flex direction="column" gap="2">
+        {times.map(({ label, date }) => (
+          <Flex key={label} gap="3" align="center">
+            <Text variant="labels" css={{ width: 120 }}>
+              {label}:
+            </Text>
+            <Text>
+              <RelativeTimeComponent time={date} />
+            </Text>
+          </Flex>
+        ))}
+      </Flex>
+    </StorySection>
   );
 };

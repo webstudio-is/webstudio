@@ -6,7 +6,7 @@ import { Grid } from "./grid";
 import { Text } from "./text";
 
 export default {
-  title: "Component card",
+  title: "Component Card",
 };
 
 export const ComponentCard = () => (

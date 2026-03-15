@@ -1,5 +1,6 @@
 import type { JSX } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { StorySection } from "@webstudio-is/design-system";
 import { ProjectSettingsDialog } from "./project-settings";
 import { $pages, $project } from "~/shared/sync/data-stores";
 import type { Project } from "@webstudio-is/project";
@@ -24,7 +25,11 @@ export const General = () => {
   const router = createRouter(
     <ProjectSettingsDialog currentSection="general" />
   );
-  return <RouterProvider router={router} />;
+  return (
+    <StorySection title="General">
+      <RouterProvider router={router} />
+    </StorySection>
+  );
 };
 
 export const Redirects = () => {
@@ -53,5 +58,9 @@ export const Redirects = () => {
   const router = createRouter(
     <ProjectSettingsDialog currentSection="redirects" />
   );
-  return <RouterProvider router={router} />;
+  return (
+    <StorySection title="Redirects">
+      <RouterProvider router={router} />
+    </StorySection>
+  );
 };

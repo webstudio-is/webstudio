@@ -12,6 +12,7 @@ export default {
 };
 
 export const Radio = () => {
+  const [value, setValue] = useState("A");
   return (
     <>
       <StorySection title="Enabled">
@@ -54,30 +55,24 @@ export const Radio = () => {
           </RadioAndLabel>
         </RadioGroup>
       </StorySection>
-    </>
-  );
-};
-Radio.storyName = "Radio";
 
-export const RadioControlled = () => {
-  const [value, setValue] = useState("A");
-  return (
-    <StorySection title="Controlled">
-      <RadioGroup value={value} onValueChange={setValue}>
-        <RadioAndLabel>
-          <RadioComponent value="A" id="ctrl-A" />
-          <Label htmlFor="ctrl-A">Option A</Label>
-        </RadioAndLabel>
-        <RadioAndLabel>
-          <RadioComponent value="B" id="ctrl-B" />
-          <Label htmlFor="ctrl-B">Option B</Label>
-        </RadioAndLabel>
-        <RadioAndLabel>
-          <RadioComponent value="C" id="ctrl-C" />
-          <Label htmlFor="ctrl-C">Option C</Label>
-        </RadioAndLabel>
-      </RadioGroup>
-      <Label>Selected: {value}</Label>
-    </StorySection>
+      <StorySection title="Controlled">
+        <RadioGroup value={value} onValueChange={setValue}>
+          <RadioAndLabel>
+            <RadioComponent value="A" id="ctrl-A" />
+            <Label htmlFor="ctrl-A">Option A</Label>
+          </RadioAndLabel>
+          <RadioAndLabel>
+            <RadioComponent value="B" id="ctrl-B" />
+            <Label htmlFor="ctrl-B">Option B</Label>
+          </RadioAndLabel>
+          <RadioAndLabel>
+            <RadioComponent value="C" id="ctrl-C" />
+            <Label htmlFor="ctrl-C">Option C</Label>
+          </RadioAndLabel>
+        </RadioGroup>
+        <Label>Selected: {value}</Label>
+      </StorySection>
+    </>
   );
 };
