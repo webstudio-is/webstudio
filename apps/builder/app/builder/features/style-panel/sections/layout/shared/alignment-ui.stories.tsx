@@ -6,8 +6,9 @@ export default {
   component: AlignmentUi,
 };
 
-const alignItems = ["start", "center", "end", "stretch", "baseline"];
+const alignItems = ["normal", "start", "center", "end", "stretch", "baseline"];
 const justifyContent = [
+  "normal",
   "start",
   "center",
   "end",
@@ -15,68 +16,51 @@ const justifyContent = [
   "space-around",
 ];
 
-export const RowDirection = () => (
-  <Box css={{ width: 72, color: theme.colors.foregroundFlexUiMain }}>
-    <AlignmentUi
-      justifyContent="center"
-      alignItems="center"
-      isColumnDirection={false}
-      color="currentColor"
-      itemStretchWidth={false}
-      itemStretchHeight={false}
-      onSelect={() => {}}
-    />
-  </Box>
-);
-
-export const ColumnDirection = () => (
-  <Box css={{ width: 72, color: theme.colors.foregroundFlexUiMain }}>
-    <AlignmentUi
-      justifyContent="center"
-      alignItems="center"
-      isColumnDirection={true}
-      color="currentColor"
-      itemStretchWidth={false}
-      itemStretchHeight={false}
-      onSelect={() => {}}
-    />
-  </Box>
-);
-
-export const StretchedItems = () => (
-  <Box css={{ width: 72, color: theme.colors.foregroundFlexUiMain }}>
-    <AlignmentUi
-      justifyContent="start"
-      alignItems="stretch"
-      isColumnDirection={false}
-      color="currentColor"
-      itemStretchWidth={false}
-      itemStretchHeight={true}
-      onSelect={() => {}}
-    />
-  </Box>
-);
-
-export const AllCombinations = () => (
+const CombinationGrid = ({
+  isColumnDirection,
+}: {
+  isColumnDirection: boolean;
+}) => (
   <Flex direction="column" gap="2">
-    <Box css={{ fontSize: 10, paddingLeft: 80, fontWeight: "bold" }}>
-      justify-content
-    </Box>
+    <Flex gap="2" align="center">
+      <Box css={{ width: 70 }} />
+      {justifyContent.map((jc) => (
+        <Box
+          key={jc}
+          css={{
+            width: 64,
+            fontSize: 10,
+            textAlign: "center",
+            fontWeight: "bold",
+          }}
+        >
+          {jc}
+        </Box>
+      ))}
+    </Flex>
     {alignItems.map((ai) => (
       <Flex key={ai} gap="2" align="center">
         <Box css={{ fontSize: 10, width: 70, textAlign: "right" }}>{ai}</Box>
         {justifyContent.map((jc) => (
           <Box
             key={jc}
-            css={{ width: 72, color: theme.colors.foregroundFlexUiMain }}
+            css={{
+              width: 64,
+              height: 62,
+              color: theme.colors.foregroundFlexUiMain,
+            }}
           >
             <AlignmentUi
               justifyContent={jc}
               alignItems={ai}
-              isColumnDirection={false}
+              isColumnDirection={isColumnDirection}
               color="currentColor"
-              itemStretchWidth={ai === "stretch"}
-              itemStretchHeight={false}
+              itemStretchWidth={
+                isColumnDirection && (ai === "stretch" || ai === "normal")
+              }
+              itemStretchHeight={
+                !isColumnDirection && (ai === "stretch" || ai === "normal")
+              }
               onSelect={() => {}}
             />
           </Box>
@@ -85,3 +69,7 @@ export const AllCombinations = () => (
     ))}
   </Flex>
 );
+
+export const FlexRow = () => <CombinationGrid isColumnDirection={false} />;
+
+export const FlexColumn = () => <CombinationGrid isColumnDirection={true} />;

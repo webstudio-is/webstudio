@@ -2,27 +2,71 @@ import { Box, Flex, Grid, IconButton } from "@webstudio-is/design-system";
 import { DotIcon } from "@webstudio-is/icons";
 import { theme } from "@webstudio-is/design-system";
 
-// Sometimes we need to hide a dot that ends up at an end
-// of a line and visually extends it
+// Hide dots where flex/grid item lines overlap to avoid sub-pixel artifacts.
+// Lines have a cross-axis position (from alignItems) and main-axis positions
+// (from justifyContent). A dot is hidden when it sits at an intersection.
 const shouldHideDot = ({
   x,
   y,
   justifyContent,
   alignItems,
+  isColumnDirection,
+  itemStretchWidth,
+  itemStretchHeight,
 }: {
   x: number;
   y: number;
   justifyContent: string;
   alignItems: string;
+  isColumnDirection: boolean;
+  itemStretchWidth: boolean;
+  itemStretchHeight: boolean;
 }) => {
-  if (justifyContent === "space-between") {
-    if (alignItems === "start" || alignItems === "baseline") {
-      return x === 2 && y === 0;
-    }
-    if (alignItems === "end") {
-      return x === 2 && y === 2;
+  const crossAxis = isColumnDirection ? x : y;
+  const mainAxis = isColumnDirection ? y : x;
+
+  // Determine if the dot's cross-axis position overlaps with lines
+  const isStretched =
+    (isColumnDirection ? itemStretchWidth : itemStretchHeight) ||
+    alignItems === "stretch" ||
+    alignItems === "normal";
+
+  let crossMatch = false;
+  if (isStretched) {
+    crossMatch = true; // lines span all cross-axis positions
+  } else {
+    switch (alignItems) {
+      case "start":
+      case "baseline":
+        crossMatch = crossAxis === 0;
+        break;
+      case "center":
+        crossMatch = crossAxis === 1;
+        break;
+      case "end":
+        crossMatch = crossAxis === 2;
+        break;
     }
   }
+
+  if (!crossMatch) {
+    return false;
+  }
+
+  // Determine if the dot's main-axis position overlaps with lines
+  switch (justifyContent) {
+    case "normal":
+    case "start":
+      return mainAxis === 0;
+    case "center":
+      return mainAxis === 1;
+    case "end":
+      return mainAxis === 2;
+    case "space-between":
+    case "space-around":
+      return true;
+  }
+
   return false;
 };
 
@@ -106,16 +150,24 @@ export const AlignmentUi = ({
               }}
               onClick={() => onSelect({ x, y })}
             >
-              {shouldHideDot({
-                x,
-                y,
-                justifyContent,
-                alignItems,
-              }) === false && (
-                <Box css={{ size: 16 }}>
-                  <DotIcon size={8} />
-                </Box>
-              )}
+              <Box
+                css={{
+                  size: 16,
+                  visibility: shouldHideDot({
+                    x,
+                    y,
+                    justifyContent,
+                    alignItems,
+                    isColumnDirection,
+                    itemStretchWidth,
+                    itemStretchHeight,
+                  })
+                    ? "hidden"
+                    : "visible",
+                }}
+              >
+                <DotIcon size={8} />
+              </Box>
             </IconButton>
           </Flex>
         );
