@@ -36,7 +36,7 @@ jobs:
 
       - uses: ./.github/actions/ci-setup
 
-      - run: VISUAL_TESTING=true pnpm storybook:build
+      - run: pnpm ladle:build
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v3.16.0
