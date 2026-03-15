@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { AssetManager } from "./asset-manager";
+import { AssetManager as AssetManagerComponent } from "./asset-manager";
 import {
   ALLOWED_FILE_TYPES,
   IMAGE_EXTENSIONS,
@@ -37,7 +37,7 @@ const createMockAssets = (): Asset[] => {
 
 export default {
   title: "Asset Manager",
-  component: AssetManager,
+  component: AssetManagerComponent,
 } satisfies Meta;
 
 const AssetManagerStory = () => {
@@ -48,11 +48,11 @@ const AssetManagerStory = () => {
 
   return (
     <div style={{ width: 400, display: "flex" }}>
-      <AssetManager />
+      <AssetManagerComponent />
     </div>
   );
 };
 
-export const AllFileTypes: StoryObj = {
+export const AssetManager: StoryObj = {
   render: () => <AssetManagerStory />,
 };

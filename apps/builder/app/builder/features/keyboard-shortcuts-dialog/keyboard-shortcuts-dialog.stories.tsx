@@ -2,7 +2,7 @@ import type { Meta } from "@storybook/react";
 import { useEffect } from "react";
 import { subscribeCommands } from "~/builder/shared/commands";
 import {
-  KeyboardShortcutsDialog,
+  KeyboardShortcutsDialog as KeyboardShortcutsDialogComponent,
   openKeyboardShortcutsDialog,
 } from "./keyboard-shortcuts-dialog";
 
@@ -13,7 +13,7 @@ export default {
   title: "Keyboard Shortcuts Dialog",
 } satisfies Meta;
 
-export const KeyboardShortcuts = () => {
+export const KeyboardShortcutsDialog = () => {
   useEffect(openKeyboardShortcutsDialog, []);
-  return <KeyboardShortcutsDialog />;
+  return <KeyboardShortcutsDialogComponent />;
 };
