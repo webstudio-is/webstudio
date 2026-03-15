@@ -1,12 +1,12 @@
-import { ImportRedirectsDialog } from "./import-redirects-dialog";
+import { ImportRedirectsDialog as ImportRedirectsDialogComponent } from "./import-redirects-dialog";
 
 export default {
   title: "Builder/Project Settings/Import Redirects Dialog",
-  component: ImportRedirectsDialog,
+  component: ImportRedirectsDialogComponent,
 };
 
 export const ImportRedirectsDialog = () => (
-  <ImportRedirectsDialog
+  <ImportRedirectsDialogComponent
     isOpen={true}
     onOpenChange={() => {}}
     existingRedirects={[

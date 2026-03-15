@@ -1,20 +1,20 @@
 import { Button, Flex } from "@webstudio-is/design-system";
-import { QuestionMarkCircleIcon } from "@webstudio-is/icons";
-import { HelpCenter } from "./help-center";
+import { HelpIcon } from "@webstudio-is/icons";
+import { HelpCenter as HelpCenterComponent } from "./help-center";
 
 export default {
   title: "Builder/Help/Help Center",
-  component: HelpCenter,
+  component: HelpCenterComponent,
 };
 
 export const HelpCenter = () => (
   <Flex css={{ padding: 100 }}>
-    <HelpCenter open>
-      <HelpCenter.Trigger asChild>
-        <Button prefix={<QuestionMarkCircleIcon />} color="ghost">
+    <HelpCenterComponent open>
+      <HelpCenterComponent.Trigger asChild>
+        <Button prefix={<HelpIcon />} color="ghost">
           Help
         </Button>
-      </HelpCenter.Trigger>
-    </HelpCenter>
+      </HelpCenterComponent.Trigger>
+    </HelpCenterComponent>
   </Flex>
 );

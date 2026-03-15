@@ -1,13 +1,13 @@
 import { GapVerticalIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { NestedIconLabel } from "./nested-icon-label";
-import { Select, type SelectOption } from "./select";
+import { Select as SelectComponent, type SelectOption } from "./select";
 import { Flex } from "./flex";
 import { Text } from "./text";
 
 export default {
   title: "Select",
-  component: Select,
+  component: SelectComponent,
 };
 
 const fruits = ["Apple", "Banana", "Orange"];
@@ -53,7 +53,7 @@ export const Select = () => {
     <Flex direction="column" gap="5" css={{ maxWidth: 300 }}>
       <Flex direction="column" gap="1">
         <Text variant="labels">Simple</Text>
-        <Select
+        <SelectComponent
           name="fruit"
           options={fruits}
           value={simple}
@@ -62,15 +62,15 @@ export const Select = () => {
       </Flex>
       <Flex direction="column" gap="1">
         <Text variant="labels">Placeholder</Text>
-        <Select placeholder="Select fruit" options={fruits} />
+        <SelectComponent placeholder="Select fruit" options={fruits} />
       </Flex>
       <Flex direction="column" gap="1">
         <Text variant="labels">Disabled</Text>
-        <Select disabled options={fruits} />
+        <SelectComponent disabled options={fruits} />
       </Flex>
       <Flex direction="column" gap="1">
         <Text variant="labels">Full width</Text>
-        <Select
+        <SelectComponent
           name="fruit"
           options={["Apple", "Banana", "Orange Orange Orange Orange Orange"]}
           defaultValue="Apple"
@@ -79,7 +79,7 @@ export const Select = () => {
       </Flex>
       <Flex direction="column" gap="1">
         <Text variant="labels">With icon prefix</Text>
-        <Select
+        <SelectComponent
           prefix={
             <NestedIconLabel>
               <GapVerticalIcon />
@@ -92,7 +92,7 @@ export const Select = () => {
       </Flex>
       <Flex direction="column" gap="1">
         <Text variant="labels">Complex items (emoji)</Text>
-        <Select
+        <SelectComponent
           name="fruit"
           options={emojiOptions}
           value={emoji}
@@ -102,7 +102,7 @@ export const Select = () => {
       </Flex>
       <Flex direction="column" gap="1">
         <Text variant="labels">With descriptions</Text>
-        <Select
+        <SelectComponent
           name="fruit"
           options={descriptionOptions}
           value={desc}
@@ -116,7 +116,7 @@ export const Select = () => {
       </Flex>
       <Flex direction="column" gap="1">
         <Text variant="labels">Many items (100)</Text>
-        <Select
+        <SelectComponent
           name="fruit"
           options={manyItems}
           value={boundary}

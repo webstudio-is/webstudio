@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react";
-import { FloatingPanel } from "./floating-panel";
+import { FloatingPanel as FloatingPanelComponent } from "./floating-panel";
 import { Box } from "./box";
 import { Button } from "./button";
 import { Text } from "./text";
@@ -7,7 +7,7 @@ import { Flex } from "./flex";
 
 export default {
   title: "Floating Panel",
-  component: FloatingPanel,
+  component: FloatingPanelComponent,
 };
 
 const Container = ({ children }: { children: ReactNode }) => {
@@ -31,32 +31,36 @@ const Container = ({ children }: { children: ReactNode }) => {
 export const FloatingPanel = () => (
   <Flex direction="column" gap="9">
     <Container>
-      <FloatingPanel open title="Left (default)" content={<Text>Content</Text>}>
+      <FloatingPanelComponent
+        open
+        title="Left (default)"
+        content={<Text>Content</Text>}
+      >
         <Button>Open on the left</Button>
-      </FloatingPanel>
+      </FloatingPanelComponent>
     </Container>
     <Container>
-      <FloatingPanel
+      <FloatingPanelComponent
         placement="right-start"
         open
         title="Right"
         content={<Text>Content</Text>}
       >
         <Button>Open on the right</Button>
-      </FloatingPanel>
+      </FloatingPanelComponent>
     </Container>
     <Container>
-      <FloatingPanel
+      <FloatingPanelComponent
         placement="bottom-within"
         open
         title="Bottom"
         content={<Text>Content</Text>}
       >
         <Button>Open below</Button>
-      </FloatingPanel>
+      </FloatingPanelComponent>
     </Container>
     <Container>
-      <FloatingPanel
+      <FloatingPanelComponent
         placement="center"
         open
         maximizable
@@ -65,10 +69,10 @@ export const FloatingPanel = () => (
         content={<Text>Content</Text>}
       >
         <Button>Open screen-centered</Button>
-      </FloatingPanel>
+      </FloatingPanelComponent>
     </Container>
     <Container>
-      <FloatingPanel
+      <FloatingPanelComponent
         offset={{ mainAxis: 20, alignmentAxis: -100 }}
         width={200}
         height={300}
@@ -77,7 +81,7 @@ export const FloatingPanel = () => (
         content={<Text>Content</Text>}
       >
         <Button>Open with custom offsets</Button>
-      </FloatingPanel>
+      </FloatingPanelComponent>
     </Container>
   </Flex>
 );

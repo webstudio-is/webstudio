@@ -1,10 +1,9 @@
 import * as React from "react";
 import { Flex, InputField, Text } from "@webstudio-is/design-system";
-import type { StyleValue } from "@webstudio-is/css-engine";
+import type { StyleValue, CssProperty } from "@webstudio-is/css-engine";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
 import { action } from "@storybook/addon-actions";
 import { toValue } from "@webstudio-is/css-engine";
-import { theme } from "@webstudio-is/design-system";
 
 export default {
   title: "Style Panel/CSS Value Input",
@@ -21,7 +20,7 @@ const CssValueInputVariant = ({
 }: {
   label: string;
   initialValue: StyleValue;
-  property: string;
+  property: CssProperty;
   options?: Array<{ type: "keyword"; value: string }>;
   containerWidth?: number;
   showOutput?: boolean;

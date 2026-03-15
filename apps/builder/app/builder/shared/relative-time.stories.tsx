@@ -1,9 +1,9 @@
 import { Flex, Text } from "@webstudio-is/design-system";
-import { RelativeTime } from "./relative-time";
+import { RelativeTime as RelativeTimeComponent } from "./relative-time";
 
 export default {
   title: "Builder/Shared/Relative Time",
-  component: RelativeTime,
+  component: RelativeTimeComponent,
 };
 
 export const RelativeTime = () => {
@@ -24,7 +24,7 @@ export const RelativeTime = () => {
             {label}:
           </Text>
           <Text>
-            <RelativeTime time={date} />
+            <RelativeTimeComponent time={date} />
           </Text>
         </Flex>
       ))}

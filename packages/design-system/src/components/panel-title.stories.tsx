@@ -1,4 +1,7 @@
-import { PanelTitle, TitleSuffixSpacer } from "./panel-title";
+import {
+  PanelTitle as PanelTitleComponent,
+  TitleSuffixSpacer,
+} from "./panel-title";
 import { Button } from "./button";
 import { XIcon, CopyIcon } from "@webstudio-is/icons";
 import { StoryGrid } from "./storybook";
@@ -9,13 +12,13 @@ export default {
 
 export const PanelTitle = () => (
   <StoryGrid>
-    <PanelTitle>Without buttons</PanelTitle>
+    <PanelTitleComponent>Without buttons</PanelTitleComponent>
 
-    <PanelTitle suffix={<Button prefix={<XIcon />} color="ghost" />}>
+    <PanelTitleComponent suffix={<Button prefix={<XIcon />} color="ghost" />}>
       One icon button
-    </PanelTitle>
+    </PanelTitleComponent>
 
-    <PanelTitle
+    <PanelTitleComponent
       suffix={
         <>
           <Button prefix={<XIcon />} color="ghost" />
@@ -24,9 +27,9 @@ export const PanelTitle = () => (
       }
     >
       Many icon buttons
-    </PanelTitle>
+    </PanelTitleComponent>
 
-    <PanelTitle
+    <PanelTitleComponent
       suffix={
         <>
           <Button prefix={<XIcon />} color="ghost" />
@@ -37,7 +40,7 @@ export const PanelTitle = () => (
       }
     >
       Icon and regular buttons
-    </PanelTitle>
+    </PanelTitleComponent>
   </StoryGrid>
 );
 PanelTitle.storyName = "Panel Title";

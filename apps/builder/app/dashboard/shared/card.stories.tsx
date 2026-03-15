@@ -1,43 +1,43 @@
 import { Box, Flex, Text, theme } from "@webstudio-is/design-system";
-import { Card, CardContent, CardFooter } from "./card";
+import { Card as CardComponent, CardContent, CardFooter } from "./card";
 
 export default {
   title: "Dashboard/Card",
-  component: Card,
+  component: CardComponent,
 };
 
 export const Card = () => (
   <Flex gap="3" wrap="wrap" align="start">
     <Box css={{ width: theme.spacing[30] }}>
-      <Card>
+      <CardComponent>
         <CardContent
           css={{ background: theme.colors.brandBackgroundProjectCardFront }}
         />
         <CardFooter>
           <Text truncate>My project</Text>
         </CardFooter>
-      </Card>
+      </CardComponent>
     </Box>
     <Box css={{ width: theme.spacing[30] }}>
-      <Card aria-selected={true}>
+      <CardComponent aria-selected={true}>
         <CardContent
           css={{ background: theme.colors.brandBackgroundProjectCardFront }}
         />
         <CardFooter>
           <Text truncate>Selected project</Text>
         </CardFooter>
-      </Card>
+      </CardComponent>
     </Box>
     {["Project Alpha", "My Website", "Landing Page"].map((title) => (
       <Box key={title} css={{ width: theme.spacing[30] }}>
-        <Card>
+        <CardComponent>
           <CardContent
             css={{ background: theme.colors.brandBackgroundProjectCardFront }}
           />
           <CardFooter>
             <Text truncate>{title}</Text>
           </CardFooter>
-        </Card>
+        </CardComponent>
       </Box>
     ))}
   </Flex>

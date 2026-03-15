@@ -1,17 +1,17 @@
 import { Flex } from "./flex";
 import { Text } from "./text";
-import { SearchField } from "./search-field";
+import { SearchField as SearchFieldComponent } from "./search-field";
 
 export default {
   title: "Search Field",
-  component: SearchField,
+  component: SearchFieldComponent,
 };
 
 export const SearchField = () => (
   <Flex direction="column" gap="3" css={{ width: 240 }}>
     <Text variant="labels">Empty</Text>
-    <SearchField />
+    <SearchFieldComponent />
     <Text variant="labels">With value</Text>
-    <SearchField value="somevalue" title="Search" />
+    <SearchFieldComponent value="somevalue" title="Search" />
   </Flex>
 );

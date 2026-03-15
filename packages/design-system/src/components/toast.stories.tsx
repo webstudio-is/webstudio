@@ -34,13 +34,6 @@ const ImageIcon = () => (
   </Box>
 );
 
-const texts = [
-  `We are what repeatedly do. Excellence is not an act but a habit.`,
-  `We are what repeatedly do. Excellence is not an act but a habit.`,
-  `We are what repeatedly do. Excellence is not an act but a habit. We are what repeatedly do. Excellence is not an act but a habit. We are what repeatedly do. Excellence is not an act but a habit.`,
-  `Asset already exists`,
-];
-
 export const Design = () => {
   return (
     <>

@@ -1,5 +1,5 @@
 import {
-  SectionTitle,
+  SectionTitle as SectionTitleComponent,
   SectionTitleLabel,
   SectionTitleButton,
 } from "./section-title";
@@ -19,46 +19,46 @@ const Variants = ({
   state,
   inactive,
 }: {
-  state: ComponentProps<typeof SectionTitle>["data-state"];
-  inactive?: ComponentProps<typeof SectionTitle>["inactive"];
+  state: ComponentProps<typeof SectionTitleComponent>["data-state"];
+  inactive?: ComponentProps<typeof SectionTitleComponent>["inactive"];
 }) => (
   <>
     <Wrap>
-      <SectionTitle data-state={state} inactive={inactive}>
+      <SectionTitleComponent data-state={state} inactive={inactive}>
         <SectionTitleLabel>Simplest</SectionTitleLabel>
-      </SectionTitle>
+      </SectionTitleComponent>
     </Wrap>
     <Wrap>
-      <SectionTitle
+      <SectionTitleComponent
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
         inactive={inactive}
       >
         <SectionTitleLabel>With button</SectionTitleLabel>
-      </SectionTitle>
+      </SectionTitleComponent>
     </Wrap>
     <Wrap>
-      <SectionTitle
+      <SectionTitleComponent
         dots={["local", "remote"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
         inactive={inactive}
       >
         <SectionTitleLabel>With dots</SectionTitleLabel>
-      </SectionTitle>
+      </SectionTitleComponent>
     </Wrap>
     <Wrap>
-      <SectionTitle
+      <SectionTitleComponent
         dots={["local"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
         inactive={inactive}
       >
         <SectionTitleLabel color="local">With label</SectionTitleLabel>
-      </SectionTitle>
+      </SectionTitleComponent>
     </Wrap>
     <Wrap>
-      <SectionTitle
+      <SectionTitleComponent
         dots={["local", "remote"]}
         suffix={<SectionTitleButton prefix={<PlusIcon />} />}
         data-state={state}
@@ -67,14 +67,14 @@ const Variants = ({
         <SectionTitleLabel>
           Some title so long that it cannot possibly fit
         </SectionTitleLabel>
-      </SectionTitle>
+      </SectionTitleComponent>
     </Wrap>
     <Wrap>
-      <SectionTitle data-state={state} inactive={inactive}>
+      <SectionTitleComponent data-state={state} inactive={inactive}>
         <SectionTitleLabel>
           Some title so long that it cannot possibly fit
         </SectionTitleLabel>
-      </SectionTitle>
+      </SectionTitleComponent>
     </Wrap>
   </>
 );
@@ -84,13 +84,13 @@ export const SectionTitle = () => (
     <StorySection title="Focused (intially)">
       <StoryGrid>
         <Wrap>
-          <SectionTitle
+          <SectionTitleComponent
             dots={["local", "remote"]}
             suffix={<SectionTitleButton prefix={<PlusIcon />} />}
             autoFocus
           >
             <SectionTitleLabel>Title</SectionTitleLabel>
-          </SectionTitle>
+          </SectionTitleComponent>
         </Wrap>
       </StoryGrid>
     </StorySection>

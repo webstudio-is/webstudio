@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import { BorderRadiusIndividualIcon } from "@webstudio-is/icons";
-import { ToggleButton } from "./toggle-button";
+import { ToggleButton as ToggleButtonComponent } from "./toggle-button";
 import { StorySection, StoryGrid } from "./storybook";
 
 const toggleButtonVariants = [
@@ -14,38 +14,42 @@ const toggleButtonVariants = [
 export const ToggleButton = ({
   variant,
   disabled,
-}: ComponentProps<typeof ToggleButton>) => (
+}: ComponentProps<typeof ToggleButtonComponent>) => (
   <>
     <StorySection title="Configurable">
-      <ToggleButton variant={variant} disabled={disabled}>
+      <ToggleButtonComponent variant={variant} disabled={disabled}>
         <BorderRadiusIndividualIcon fill="currentColor" />
-      </ToggleButton>
+      </ToggleButtonComponent>
     </StorySection>
 
     <StorySection title="Variants">
       <StoryGrid horizontal>
         {toggleButtonVariants.map((variant) => (
-          <ToggleButton key={variant} variant={variant}>
+          <ToggleButtonComponent key={variant} variant={variant}>
             <BorderRadiusIndividualIcon fill="currentColor" />
-          </ToggleButton>
+          </ToggleButtonComponent>
         ))}
       </StoryGrid>
     </StorySection>
     <StorySection title="Variants disabled">
       <StoryGrid horizontal>
         {toggleButtonVariants.map((variant) => (
-          <ToggleButton key={variant} variant={variant} disabled>
+          <ToggleButtonComponent key={variant} variant={variant} disabled>
             <BorderRadiusIndividualIcon fill="currentColor" />
-          </ToggleButton>
+          </ToggleButtonComponent>
         ))}
       </StoryGrid>
     </StorySection>
     <StorySection title="Variants on">
       <StoryGrid horizontal>
         {toggleButtonVariants.map((variant) => (
-          <ToggleButton key={variant} variant={variant} data-state="on">
+          <ToggleButtonComponent
+            key={variant}
+            variant={variant}
+            data-state="on"
+          >
             <BorderRadiusIndividualIcon fill="currentColor" />
-          </ToggleButton>
+          </ToggleButtonComponent>
         ))}
       </StoryGrid>
     </StorySection>

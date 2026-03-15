@@ -2,11 +2,14 @@ import { Grid } from "../grid";
 import { Flex } from "../flex";
 import { Text } from "../text";
 import { XSmallIcon, TrashIcon, PlusIcon } from "@webstudio-is/icons";
-import { SmallButton, smallButtonVariants } from "./small-button";
+import {
+  SmallButton as SmallButtonComponent,
+  smallButtonVariants,
+} from "./small-button";
 
 export default {
   title: "Primitives/Small Button",
-  component: SmallButton,
+  component: SmallButtonComponent,
 };
 
 const icons = [
@@ -29,10 +32,12 @@ export const SmallButton = () => (
         <Text variant="labels">{variant}</Text>
         {icons.map(({ icon, label }) => (
           <Flex key={`${variant}-${label}`} gap="2" align="center">
-            <SmallButton variant={variant}>{icon}</SmallButton>
-            <SmallButton variant={variant} disabled>
+            <SmallButtonComponent variant={variant}>
               {icon}
-            </SmallButton>
+            </SmallButtonComponent>
+            <SmallButtonComponent variant={variant} disabled>
+              {icon}
+            </SmallButtonComponent>
           </Flex>
         ))}
       </>

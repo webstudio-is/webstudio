@@ -1,6 +1,6 @@
 import { StoryGrid } from "./storybook";
 import {
-  PanelTabs,
+  PanelTabs as PanelTabsComponent,
   PanelTabsList,
   PanelTabsTrigger,
   PanelTabsContent,
@@ -26,7 +26,7 @@ const Content = ({ children }: { children: React.ReactNode }) => (
 export const PanelTabs = () => (
   <StoryGrid>
     <Wrap>
-      <PanelTabs defaultValue="1">
+      <PanelTabsComponent defaultValue="1">
         <PanelTabsList>
           <PanelTabsTrigger value="1">Tab 1</PanelTabsTrigger>
           <PanelTabsTrigger value="2">Tab 2</PanelTabsTrigger>
@@ -41,7 +41,7 @@ export const PanelTabs = () => (
         <PanelTabsContent value="3">
           <Content>Content 3</Content>
         </PanelTabsContent>
-      </PanelTabs>
+      </PanelTabsComponent>
     </Wrap>
   </StoryGrid>
 );

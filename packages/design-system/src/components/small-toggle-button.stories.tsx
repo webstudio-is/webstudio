@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import { EyeOpenIcon, EyeClosedIcon } from "@webstudio-is/icons";
 import {
-  SmallToggleButton,
+  SmallToggleButton as SmallToggleButtonComponent,
   smallToggleButtonVariants,
 } from "./small-toggle-button";
 import { StorySection, StoryGrid } from "./storybook";
@@ -10,10 +10,10 @@ import { theme } from "../stitches.config";
 export const SmallToggleButton = ({
   pressed,
   ...rest
-}: Omit<ComponentProps<typeof SmallToggleButton>, "icon">) => (
+}: Omit<ComponentProps<typeof SmallToggleButtonComponent>, "icon">) => (
   <>
     <StorySection title="Configurable">
-      <SmallToggleButton
+      <SmallToggleButtonComponent
         icon={pressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
         {...rest}
       />
@@ -37,7 +37,7 @@ export const SmallToggleButton = ({
             key={variant}
           >
             {[false, true].map((defaultPressed) => (
-              <SmallToggleButton
+              <SmallToggleButtonComponent
                 key={defaultPressed ? "pressed" : "unpressed"}
                 title={`${variant} ${defaultPressed}`}
                 icon={defaultPressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
@@ -47,7 +47,7 @@ export const SmallToggleButton = ({
             ))}
 
             {[false, true].map((defaultPressed) => (
-              <SmallToggleButton
+              <SmallToggleButtonComponent
                 key={defaultPressed ? "pressed" : "unpressed"}
                 title={`${variant} ${defaultPressed}`}
                 icon={defaultPressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
@@ -79,7 +79,7 @@ export const SmallToggleButton = ({
             key={variant}
           >
             {[false, true].map((defaultPressed) => (
-              <SmallToggleButton
+              <SmallToggleButtonComponent
                 key={defaultPressed ? "pressed" : "unpressed"}
                 title={`${variant} ${defaultPressed}`}
                 icon={defaultPressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
@@ -89,7 +89,7 @@ export const SmallToggleButton = ({
               />
             ))}
             {[false, true].map((defaultPressed) => (
-              <SmallToggleButton
+              <SmallToggleButtonComponent
                 key={defaultPressed ? "pressed" : "unpressed"}
                 title={`${variant} ${defaultPressed}`}
                 icon={defaultPressed ? <EyeClosedIcon /> : <EyeOpenIcon />}

@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import { EllipsesIcon, XIcon, TrashIcon } from "@webstudio-is/icons";
 import {
-  SmallIconButton,
+  SmallIconButton as SmallIconButtonComponent,
   smallIconButtonStates,
   smallIconButtonVariants,
 } from "./small-icon-button";
@@ -18,12 +18,12 @@ const states = [undefined, ...smallIconButtonStates];
 export const SmallIconButton = ({
   icon,
   ...rest
-}: Omit<ComponentProps<typeof SmallIconButton>, "icon"> & {
+}: Omit<ComponentProps<typeof SmallIconButtonComponent>, "icon"> & {
   icon: keyof typeof iconsMap;
 }) => (
   <>
     <StorySection title="Configurable">
-      <SmallIconButton icon={iconsMap[icon]} {...rest} />
+      <SmallIconButtonComponent icon={iconsMap[icon]} {...rest} />
     </StorySection>
 
     <StorySection title="Variants & States">
@@ -31,7 +31,7 @@ export const SmallIconButton = ({
         {smallIconButtonVariants.map((variant) => (
           <StoryGrid horizontal key={variant}>
             {states.map((state) => (
-              <SmallIconButton
+              <SmallIconButtonComponent
                 key={state ?? "undefined"}
                 title={`${variant} ${state}`}
                 icon={<TrashIcon />}
@@ -49,7 +49,7 @@ export const SmallIconButton = ({
         {smallIconButtonVariants.map((variant) => (
           <StoryGrid horizontal key={variant}>
             {states.map((state) => (
-              <SmallIconButton
+              <SmallIconButtonComponent
                 key={state ?? "undefined"}
                 title={`${variant} ${state}`}
                 icon={<TrashIcon />}

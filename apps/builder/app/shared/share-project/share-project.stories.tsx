@@ -7,11 +7,14 @@ import {
 } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { nanoid } from "nanoid";
-import { type LinkOptions, ShareProject } from "./share-project";
+import {
+  type LinkOptions,
+  ShareProject as ShareProjectComponent,
+} from "./share-project";
 
 export default {
   title: "Share Project",
-  component: ShareProject,
+  component: ShareProjectComponent,
 };
 
 const initialLinks: Array<LinkOptions> = [
@@ -106,7 +109,7 @@ const ShareProjectPopover = ({
         <Button>{label}</Button>
       </PopoverTrigger>
       <PopoverContent>
-        <ShareProject
+        <ShareProjectComponent
           {...props}
           allowAdditionalPermissions={false}
           isPending={false}

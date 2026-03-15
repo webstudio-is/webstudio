@@ -1,10 +1,10 @@
 import { Dialog, DialogContent, Flex } from "@webstudio-is/design-system";
-import { About } from "./about";
+import { About as AboutComponent } from "./about";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 
 export default {
   title: "Builder/Marketplace/About",
-  component: About,
+  component: AboutComponent,
 };
 
 const sampleItem: MarketplaceOverviewItem = {
@@ -21,23 +21,11 @@ const sampleItem: MarketplaceOverviewItem = {
     "A versatile hero section template with a large heading, subheading, and a call-to-action button.",
 };
 
-const minimalItem: MarketplaceOverviewItem = {
-  projectId: "project-456",
-  category: "pageTemplates",
-  name: "Minimal page",
-  thumbnailAssetId: "asset-2",
-  author: "Community author",
-  email: "author@example.com",
-  website: "",
-  issues: "",
-  description: "A simple page template with minimal styling.",
-};
-
 export const About = () => (
   <Flex direction="column" gap="5" css={{ width: 320 }}>
     <Dialog open>
       <DialogContent>
-        <About item={sampleItem} />
+        <AboutComponent item={sampleItem} />
       </DialogContent>
     </Dialog>
   </Flex>

@@ -1,10 +1,10 @@
 import { Flex, Text, IconButton } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
-import { Card } from "./card";
+import { Card as CardComponent } from "./card";
 
 export default {
   title: "Builder/Marketplace/Card",
-  component: Card,
+  component: CardComponent,
 };
 
 const placeholderImage = `data:image/svg+xml,${encodeURIComponent(
@@ -18,10 +18,10 @@ const placeholderImage = `data:image/svg+xml,${encodeURIComponent(
 export const Card = () => (
   <Flex direction="column" gap="3" css={{ width: 300 }}>
     <Text variant="labels">Default</Text>
-    <Card title="Section template" />
+    <CardComponent title="Section template" />
 
     <Text variant="labels">With image</Text>
-    <Card
+    <CardComponent
       title="Hero section"
       image={placeholderImage}
       suffix={
@@ -32,12 +32,16 @@ export const Card = () => (
     />
 
     <Text variant="labels">No image (placeholder)</Text>
-    <Card title="Untitled" image="" />
+    <CardComponent title="Untitled" image="" />
 
     <Text variant="labels">Selected</Text>
-    <Card title="Selected card" state="selected" />
+    <CardComponent title="Selected card" state="selected" />
 
     <Text variant="labels">Loading</Text>
-    <Card title="Loading card" image={placeholderImage} state="loading" />
+    <CardComponent
+      title="Loading card"
+      image={placeholderImage}
+      state="loading"
+    />
   </Flex>
 );

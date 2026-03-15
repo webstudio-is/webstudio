@@ -1,10 +1,10 @@
 import { Flex, Text } from "@webstudio-is/design-system";
-import { ImageInfo } from "./image-info";
+import { ImageInfo as ImageInfoComponent } from "./image-info";
 import type { ImageAsset } from "@webstudio-is/sdk";
 
 export default {
   title: "Builder/Pages/Image Info",
-  component: ImageInfo,
+  component: ImageInfoComponent,
 };
 
 const mockAsset: ImageAsset = {
@@ -36,9 +36,9 @@ const squareAsset: ImageAsset = {
 export const ImageInfo = () => (
   <Flex direction="column" gap="5" css={{ width: 400 }}>
     <Text variant="labels">Landscape image</Text>
-    <ImageInfo asset={mockAsset} onDelete={() => {}} />
+    <ImageInfoComponent asset={mockAsset} onDelete={() => {}} />
 
     <Text variant="labels">Square image</Text>
-    <ImageInfo asset={squareAsset} onDelete={() => {}} />
+    <ImageInfoComponent asset={squareAsset} onDelete={() => {}} />
   </Flex>
 );

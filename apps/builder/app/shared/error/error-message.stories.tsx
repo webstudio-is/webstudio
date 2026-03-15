@@ -1,21 +1,21 @@
 import { Flex } from "@webstudio-is/design-system";
-import { ErrorMessage } from "./error-message.client";
+import { ErrorMessage as ErrorMessageComponent } from "./error-message.client";
 
 export default {
   title: "Error Message",
-  component: ErrorMessage,
+  component: ErrorMessageComponent,
 };
 
 export const ErrorMessage = () => (
   <Flex direction="column" gap="9">
-    <ErrorMessage
+    <ErrorMessageComponent
       error={{
         status: 404,
         statusText: "Not Found",
         message: "The page you're looking for doesn't exist.",
       }}
     />
-    <ErrorMessage
+    <ErrorMessageComponent
       error={{
         status: 500,
         statusText: "Internal Server Error",
@@ -24,7 +24,7 @@ export const ErrorMessage = () => (
           "Please try again later or contact support if the problem persists.",
       }}
     />
-    <ErrorMessage
+    <ErrorMessageComponent
       error={{
         status: 403,
         statusText: "Forbidden",

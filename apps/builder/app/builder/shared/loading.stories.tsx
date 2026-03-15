@@ -1,9 +1,9 @@
 import { Flex, Text, theme } from "@webstudio-is/design-system";
-import { Loading, LoadingBackground } from "./loading";
+import { Loading as LoadingComponent, LoadingBackground } from "./loading";
 
 export default {
   title: "Builder/Shared/Loading",
-  component: Loading,
+  component: LoadingComponent,
 };
 
 export const Loading = () => (
@@ -16,7 +16,7 @@ export const Loading = () => (
         background: theme.colors.backgroundTopbar,
       }}
     >
-      <Loading
+      <LoadingComponent
         state={{
           state: "loading",
           progress: 30,
@@ -37,7 +37,7 @@ export const Loading = () => (
         background: theme.colors.backgroundTopbar,
       }}
     >
-      <Loading
+      <LoadingComponent
         state={{
           state: "loading",
           progress: 80,

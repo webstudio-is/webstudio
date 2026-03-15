@@ -1,6 +1,9 @@
 import { GapVerticalIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
-import { InputField, inputFieldColors } from "./input-field";
+import {
+  InputField as InputFieldComponent,
+  inputFieldColors,
+} from "./input-field";
 import { NestedIconLabel } from "./nested-icon-label";
 import { NestedInputButton } from "./nested-input-button";
 import { StorySection, StoryGrid } from "./storybook";
@@ -22,23 +25,23 @@ export const InputField = () => (
     <StorySection title="Basic">
       <StoryGrid horizontal>
         {inputFieldColors.map((color) => (
-          <InputField key={color} defaultValue={color} color={color} />
+          <InputFieldComponent key={color} defaultValue={color} color={color} />
         ))}
-        <InputField defaultValue="disabled" disabled />
-        <InputField placeholder="Actual placeholder" />
+        <InputFieldComponent defaultValue="disabled" disabled />
+        <InputFieldComponent placeholder="Actual placeholder" />
       </StoryGrid>
     </StorySection>
 
     <StorySection title="Mono">
       <StoryGrid horizontal>
-        <InputField defaultValue="mono text" text="mono" />
+        <InputFieldComponent defaultValue="mono text" text="mono" />
       </StoryGrid>
     </StorySection>
 
     <StorySection title="Nested Controls">
       <StoryGrid horizontal>
         {inputFieldColors.map((color) => (
-          <InputField
+          <InputFieldComponent
             key={color}
             defaultValue={color}
             color={color}
@@ -46,7 +49,7 @@ export const InputField = () => (
             suffix={suffix}
           />
         ))}
-        <InputField
+        <InputFieldComponent
           defaultValue="disabled"
           prefix={
             <NestedIconLabel disabled color="local">
@@ -61,7 +64,7 @@ export const InputField = () => (
 
     <StorySection title="Focused (initially)">
       <StoryGrid horizontal>
-        <InputField
+        <InputFieldComponent
           defaultValue="Some value"
           prefix={prefix}
           suffix={suffix}
@@ -78,9 +81,13 @@ export const InputField = () => (
             <Flex
               css={{ width, justifyItems: "stretch", flexDirection: "column" }}
             >
-              <InputField prefix={prefix} suffix={suffix} />
+              <InputFieldComponent prefix={prefix} suffix={suffix} />
             </Flex>
-            <InputField prefix={prefix} suffix={suffix} css={{ width }} />
+            <InputFieldComponent
+              prefix={prefix}
+              suffix={suffix}
+              css={{ width }}
+            />
           </>
         ))}
       </StoryGrid>

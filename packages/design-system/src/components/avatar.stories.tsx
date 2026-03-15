@@ -1,9 +1,9 @@
 import { Flex } from "./flex";
-import { Avatar } from "./avatar";
+import { Avatar as AvatarComponent } from "./avatar";
 
 export default {
   title: "Avatar",
-  component: Avatar,
+  component: AvatarComponent,
 };
 
 const avatarImage = `data:image/svg+xml,${encodeURIComponent(
@@ -16,9 +16,9 @@ const avatarImage = `data:image/svg+xml,${encodeURIComponent(
 
 export const Avatar = () => (
   <Flex gap="3" align="center">
-    <Avatar src={avatarImage} alt="User avatar" fallback="JD" />
-    <Avatar fallback="JD" />
-    <Avatar fallback="AB" />
-    <Avatar fallback="WS" />
+    <AvatarComponent src={avatarImage} alt="User avatar" fallback="JD" />
+    <AvatarComponent fallback="JD" />
+    <AvatarComponent fallback="AB" />
+    <AvatarComponent fallback="WS" />
   </Flex>
 );

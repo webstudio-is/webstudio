@@ -1,5 +1,5 @@
 import { Label } from "./label";
-import { RadioGroup, Radio, RadioAndLabel } from "./radio";
+import { RadioGroup, Radio as RadioComponent, RadioAndLabel } from "./radio";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
@@ -16,8 +16,8 @@ export const Radio = () => {
       <StorySection title="Enabled">
         <RadioGroup defaultValue="A">
           <StoryGrid horizontal>
-            <Radio value="A" />
-            <Radio value="B" />
+            <RadioComponent value="A" />
+            <RadioComponent value="B" />
           </StoryGrid>
         </RadioGroup>
       </StorySection>
@@ -27,8 +27,8 @@ export const Radio = () => {
                    Because when items are disabled the group as whole is still focusable. */}
         <RadioGroup defaultValue="A" /* disabled */>
           <StoryGrid horizontal>
-            <Radio value="A" disabled />
-            <Radio value="B" disabled />
+            <RadioComponent value="A" disabled />
+            <RadioComponent value="B" disabled />
           </StoryGrid>
         </RadioGroup>
       </StorySection>
@@ -36,7 +36,7 @@ export const Radio = () => {
       <StorySection title="Focussed (initially)">
         <RadioGroup defaultValue="A">
           <StoryGrid horizontal>
-            <Radio value="A" autoFocus />
+            <RadioComponent value="A" autoFocus />
           </StoryGrid>
         </RadioGroup>
       </StorySection>
@@ -44,11 +44,11 @@ export const Radio = () => {
       <StorySection title="With lables">
         <RadioGroup defaultValue="A">
           <RadioAndLabel>
-            <Radio value="A" id="A" />
+            <RadioComponent value="A" id="A" />
             <Label htmlFor="A">Label A</Label>
           </RadioAndLabel>
           <RadioAndLabel>
-            <Radio value="B" id="B" />
+            <RadioComponent value="B" id="B" />
             <Label htmlFor="B">Label B</Label>
           </RadioAndLabel>
         </RadioGroup>

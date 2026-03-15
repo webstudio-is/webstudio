@@ -1,11 +1,15 @@
 import { nanoid } from "nanoid";
 import { useState } from "react";
 import { Flex, Text } from "@webstudio-is/design-system";
-import { type ItemSelector, type ItemSource, StyleSourceInput } from ".";
+import {
+  type ItemSelector,
+  type ItemSource,
+  StyleSourceInput as StyleSourceInputComponent,
+} from ".";
 
 export default {
   title: "Style Panel/Style Source Input",
-  component: StyleSourceInput,
+  component: StyleSourceInputComponent,
 };
 
 type Item = {
@@ -97,7 +101,7 @@ export const StyleSourceInput = () => {
     <Flex direction="column" gap="5" css={{ maxWidth: 400 }}>
       <Flex direction="column" gap="1">
         <Text variant="labels">Complete (with editing & disabling)</Text>
-        <StyleSourceInput
+        <StyleSourceInputComponent
           inputRef={() => {}}
           css={{ width: 300 }}
           items={getItems()}
@@ -141,7 +145,7 @@ export const StyleSourceInput = () => {
       </Flex>
       <Flex direction="column" gap="1">
         <Text variant="labels">Truncated item</Text>
-        <StyleSourceInput
+        <StyleSourceInputComponent
           inputRef={() => {}}
           css={{ width: 300 }}
           items={getItems()}

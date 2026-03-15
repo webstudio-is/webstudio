@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Flex } from "./flex";
 import { Button } from "./button";
 import {
-  DropdownMenu,
+  DropdownMenu as DropdownMenuComponent,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -19,7 +19,7 @@ export const DropdownMenu = () => {
   const [italic, setItalic] = useState(false);
   return (
     <Flex gap="9" css={{ padding: 100 }}>
-      <DropdownMenu open>
+      <DropdownMenuComponent open>
         <DropdownMenuTrigger asChild>
           <Button>Items</Button>
         </DropdownMenuTrigger>
@@ -30,9 +30,9 @@ export const DropdownMenu = () => {
           <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuItem disabled>Disabled item</DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>
+      </DropdownMenuComponent>
 
-      <DropdownMenu open>
+      <DropdownMenuComponent open>
         <DropdownMenuTrigger asChild>
           <Button>Checkboxes</Button>
         </DropdownMenuTrigger>
@@ -47,7 +47,7 @@ export const DropdownMenu = () => {
             Italic
           </DropdownMenuCheckboxItem>
         </DropdownMenuContent>
-      </DropdownMenu>
+      </DropdownMenuComponent>
     </Flex>
   );
 };

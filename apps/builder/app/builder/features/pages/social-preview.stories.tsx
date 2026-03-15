@@ -1,5 +1,5 @@
 import { Flex } from "@webstudio-is/design-system";
-import { SocialPreview } from "./social-preview";
+import { SocialPreview as SocialPreviewComponent } from "./social-preview";
 
 const placeholderImage = `data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
@@ -11,23 +11,23 @@ const placeholderImage = `data:image/svg+xml,${encodeURIComponent(
 
 export default {
   title: "Pages/Social Preview",
-  component: SocialPreview,
+  component: SocialPreviewComponent,
 };
 
 export const SocialPreview = () => (
   <Flex direction="column" gap="5" css={{ width: 600, margin: 20 }}>
-    <SocialPreview
+    <SocialPreviewComponent
       ogImageUrl={placeholderImage}
       ogUrl="https://webstudio.is/blog/architecture-overview"
       ogTitle="Webstudio's Architecture - An Overview"
       ogDescription="This is an introduction for developers who want to contribute to Webstudio Core."
     />
-    <SocialPreview
+    <SocialPreviewComponent
       ogUrl="https://webstudio.is/about"
       ogTitle="About Webstudio"
       ogDescription="A visual development platform for building professional websites without code."
     />
-    <SocialPreview
+    <SocialPreviewComponent
       ogUrl="https://webstudio.is/blog/very-long-url-path/that-should-be-truncated/at-some-point-because-its-too-long"
       ogTitle="This Is a Very Long Title That Should Be Truncated After a Certain Number of Characters to Prevent Layout Issues"
       ogDescription="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."

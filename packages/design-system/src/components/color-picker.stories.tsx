@@ -1,6 +1,9 @@
 import { useState } from "react";
 import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
-import { ColorPicker, ColorPickerPopover } from "./color-picker";
+import {
+  ColorPicker as ColorPickerComponent,
+  ColorPickerPopover,
+} from "./color-picker";
 import { Flex } from "./flex";
 import { Text } from "./text";
 
@@ -24,7 +27,7 @@ export const ColorPicker = () => {
     <Flex gap="9" align="start">
       <Flex direction="column" gap="2">
         <Text variant="labels">Inline</Text>
-        <ColorPicker
+        <ColorPickerComponent
           value={inlineValue}
           onChange={(value) => {
             if (value !== undefined) {

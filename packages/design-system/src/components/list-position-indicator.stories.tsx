@@ -1,5 +1,5 @@
 import {
-  ListPositionIndicator,
+  ListPositionIndicator as ListPositionIndicatorComponent,
   TreePositionIndicator,
 } from "./list-position-indicator";
 import { StorySection, StoryGrid } from "./storybook";
@@ -24,7 +24,7 @@ export const ListPositionIndicator = () => (
             height: 30,
           }}
         >
-          <ListPositionIndicator x={0} y={0} length={200} />
+          <ListPositionIndicatorComponent x={0} y={0} length={200} />
         </div>
         <div
           style={{
@@ -49,7 +49,7 @@ export const ListPositionIndicator = () => (
             height: 30,
           }}
         >
-          <ListPositionIndicator x={0} y={0} length={200} />
+          <ListPositionIndicatorComponent x={0} y={0} length={200} />
         </div>
         <div
           style={{

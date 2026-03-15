@@ -1,6 +1,9 @@
 import type { ComponentProps } from "react";
 import { BorderRadiusIndividualIcon } from "@webstudio-is/icons";
-import { ToggleGroup, ToggleGroupButton } from "./toggle-group";
+import {
+  ToggleGroup as ToggleGroupComponent,
+  ToggleGroupButton,
+} from "./toggle-group";
 import { StorySection, StoryGrid } from "./storybook";
 import { EnhancedTooltip, EnhancedTooltipProvider } from "./enhanced-tooltip";
 
@@ -49,27 +52,32 @@ export const ToggleGroup = ({
   type = "single",
   color = "default",
   disabled = false,
-}: ComponentProps<typeof ToggleGroup>) => (
+}: ComponentProps<typeof ToggleGroupComponent>) => (
   <>
     <StorySection title="Configurable">
       <StoryGrid css={{ alignItems: "flex-start" }}>
-        <ToggleGroup key={color} type={type} color={color} disabled={disabled}>
+        <ToggleGroupComponent
+          key={color}
+          type={type}
+          color={color}
+          disabled={disabled}
+        >
           <ToggleGroupButtons />
-        </ToggleGroup>
+        </ToggleGroupComponent>
       </StoryGrid>
     </StorySection>
 
     <StorySection title="Colors">
       <StoryGrid css={{ alignItems: "flex-start" }}>
         {toggleGroupColors.map((color) => (
-          <ToggleGroup
+          <ToggleGroupComponent
             key={color}
             color={color}
             type="single"
             defaultValue="one"
           >
             <ToggleGroupButtons />
-          </ToggleGroup>
+          </ToggleGroupComponent>
         ))}
       </StoryGrid>
     </StorySection>
@@ -77,7 +85,7 @@ export const ToggleGroup = ({
     <StorySection title="Variants disabled">
       <StoryGrid css={{ alignItems: "flex-start" }}>
         {toggleGroupColors.map((color) => (
-          <ToggleGroup
+          <ToggleGroupComponent
             key={color}
             color={color}
             type="single"
@@ -85,7 +93,7 @@ export const ToggleGroup = ({
             disabled={true}
           >
             <ToggleGroupButtons />
-          </ToggleGroup>
+          </ToggleGroupComponent>
         ))}
       </StoryGrid>
     </StorySection>
@@ -93,7 +101,7 @@ export const ToggleGroup = ({
     <StorySection title="With text">
       <StoryGrid css={{ alignItems: "flex-start", flexGrow: 1 }}>
         <EnhancedTooltipProvider>
-          <ToggleGroup color={color} type="single" defaultValue="one">
+          <ToggleGroupComponent color={color} type="single" defaultValue="one">
             <EnhancedTooltip content="One">
               <ToggleGroupButton value="one">One</ToggleGroupButton>
             </EnhancedTooltip>
@@ -103,7 +111,7 @@ export const ToggleGroup = ({
             <EnhancedTooltip content="Three">
               <ToggleGroupButton value="three">Three</ToggleGroupButton>
             </EnhancedTooltip>
-          </ToggleGroup>
+          </ToggleGroupComponent>
         </EnhancedTooltipProvider>
       </StoryGrid>
     </StorySection>
@@ -111,7 +119,7 @@ export const ToggleGroup = ({
     <StorySection title="With tooltips">
       <StoryGrid css={{ alignItems: "flex-start" }}>
         <EnhancedTooltipProvider>
-          <ToggleGroup color={color} type="single" defaultValue="one">
+          <ToggleGroupComponent color={color} type="single" defaultValue="one">
             <EnhancedTooltip content="One">
               <ToggleGroupButton value="one">
                 <BorderRadiusIndividualIcon fill="currentColor" />
@@ -127,7 +135,7 @@ export const ToggleGroup = ({
                 <BorderRadiusIndividualIcon fill="currentColor" />
               </ToggleGroupButton>
             </EnhancedTooltip>
-          </ToggleGroup>
+          </ToggleGroupComponent>
         </EnhancedTooltipProvider>
       </StoryGrid>
     </StorySection>

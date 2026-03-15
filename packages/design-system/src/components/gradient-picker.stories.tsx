@@ -4,7 +4,7 @@ import {
   type ParsedLinearGradient,
 } from "@webstudio-is/css-data";
 import { useState } from "react";
-import { GradientPicker } from "./gradient-picker";
+import { GradientPicker as GradientPickerComponent } from "./gradient-picker";
 import { Flex } from "./flex";
 import { Text } from "./text";
 
@@ -35,7 +35,7 @@ const GradientVariant = ({
   return (
     <Flex direction="column" gap="2">
       <Text variant="labels">{label}</Text>
-      <GradientPicker
+      <GradientPickerComponent
         gradient={gradient}
         backgroundImage={formatLinearGradient(gradient)}
         onChange={setGradient}
