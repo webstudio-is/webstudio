@@ -15,5 +15,3 @@ export const WithItems = () => (
     ]}
   />
 );
-
-export const Empty = () => <ShowMore styleConfigs={[]} />;
