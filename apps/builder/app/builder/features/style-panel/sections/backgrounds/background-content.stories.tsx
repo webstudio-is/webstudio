@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import {
-  FloatingPanel,
+  Box,
   Flex,
   StorySection,
   Text,
+  theme,
 } from "@webstudio-is/design-system";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
@@ -60,7 +61,6 @@ $awareness.set({
 });
 
 const BackgroundStory = ({ styleValue }: { styleValue: StyleValue }) => {
-  const elementRef = useRef<HTMLDivElement>(null);
   const backgroundImage = useComputedStyleDecl("background-image");
 
   useEffect(() => {
@@ -69,21 +69,9 @@ const BackgroundStory = ({ styleValue }: { styleValue: StyleValue }) => {
   }, []);
 
   return (
-    <>
-      <div
-        ref={elementRef}
-        style={{ marginLeft: "400px" }}
-        data-floating-panel-container
-      ></div>
-
-      <FloatingPanel
-        open
-        title="Background"
-        content={<BackgroundContentPanel index={0} />}
-      >
-        <button>Trigger</button>
-      </FloatingPanel>
-    </>
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <BackgroundContentPanel index={0} />
+    </Box>
   );
 };
 

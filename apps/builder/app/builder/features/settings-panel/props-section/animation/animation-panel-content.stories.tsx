@@ -15,7 +15,7 @@ export default {
         style={{
           background: theme.colors.backgroundPanel,
           padding: 16,
-          maxWidth: theme.sizes.sidebarWidth,
+          width: theme.sizes.sidebarWidth,
         }}
       >
         <Story />

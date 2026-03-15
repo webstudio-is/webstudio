@@ -6,6 +6,7 @@ import {
   ColorThumb,
 } from "./color-picker";
 import { Flex } from "./flex";
+import { Grid } from "./grid";
 import { Text } from "./text";
 import { StorySection } from "./storybook";
 
@@ -77,7 +78,13 @@ export const PopoverPositioning = () => {
     }
   };
   return (
-    <Flex gap="9" align="center" wrap="wrap" style={{ padding: 100 }}>
+    <Grid
+      columns={2}
+      gap="9"
+      align="center"
+      justify="center"
+      style={{ padding: 100, minHeight: "100vh" }}
+    >
       <Flex direction="column" gap="2" align="center">
         <Text variant="labels">Side top</Text>
         <ColorPickerPopover
@@ -119,6 +126,6 @@ export const PopoverPositioning = () => {
           open={true}
         />
       </Flex>
-    </Flex>
+    </Grid>
   );
 };

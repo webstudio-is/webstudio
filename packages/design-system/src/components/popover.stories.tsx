@@ -80,9 +80,9 @@ export const WithTitleActions = () => (
   </StorySection>
 );
 
-export const SidePlacement = () => (
-  <StorySection title="Side placement">
-    <Flex gap="9" style={{ padding: 100 }}>
+export const SideRight = () => (
+  <StorySection title="Side right">
+    <Flex style={{ padding: 100 }}>
       <Popover defaultOpen>
         <PopoverTrigger asChild>
           <Button>Right</Button>
@@ -93,6 +93,13 @@ export const SidePlacement = () => (
           </Flex>
         </PopoverContent>
       </Popover>
+    </Flex>
+  </StorySection>
+);
+
+export const SideTop = () => (
+  <StorySection title="Side top">
+    <Flex style={{ padding: 100 }}>
       <Popover defaultOpen>
         <PopoverTrigger asChild>
           <Button>Top</Button>
@@ -103,6 +110,13 @@ export const SidePlacement = () => (
           </Flex>
         </PopoverContent>
       </Popover>
+    </Flex>
+  </StorySection>
+);
+
+export const SideBottomWithOffset = () => (
+  <StorySection title="Side bottom with offset">
+    <Flex style={{ padding: 100 }}>
       <Popover defaultOpen>
         <PopoverTrigger asChild>
           <Button>Bottom</Button>
