@@ -4,7 +4,6 @@ import { Box } from "./box";
 import { StorySection } from "./storybook";
 import { Button } from "./button";
 import { Text } from "./text";
-import { Flex } from "./flex";
 import { CopyIcon } from "@webstudio-is/icons";
 
 export default {
@@ -30,63 +29,81 @@ const Container = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const FloatingPanel = () => (
-  <StorySection title="Floating panel">
-    <Flex direction="column" gap="9">
-      <Container>
-        <FloatingPanelComponent
-          open
-          title="Left (default)"
-          content={<Text>Content</Text>}
-        >
-          <Button>Open on the left</Button>
-        </FloatingPanelComponent>
-      </Container>
-      <Container>
-        <FloatingPanelComponent
-          placement="right-start"
-          open
-          title="Right"
-          content={<Text>Content</Text>}
-        >
-          <Button>Open on the right</Button>
-        </FloatingPanelComponent>
-      </Container>
-      <Container>
-        <FloatingPanelComponent
-          placement="bottom-within"
-          open
-          title="Bottom"
-          content={<Text>Content</Text>}
-        >
-          <Button>Open below</Button>
-        </FloatingPanelComponent>
-      </Container>
-      <Container>
-        <FloatingPanelComponent
-          placement="center"
-          open
-          maximizable
-          resize="both"
-          title="Center"
-          content={<Text>Content</Text>}
-        >
-          <Button>Open screen-centered</Button>
-        </FloatingPanelComponent>
-      </Container>
-      <Container>
-        <FloatingPanelComponent
-          offset={{ mainAxis: 20, alignmentAxis: -100 }}
-          width={200}
-          height={300}
-          open
-          title="Custom Offset & Size"
-          content={<Text>Content</Text>}
-        >
-          <Button>Open with custom offsets</Button>
-        </FloatingPanelComponent>
-      </Container>
-    </Flex>
+export const LeftDefault = () => (
+  <StorySection title="Left (default)">
+    <Container>
+      <FloatingPanelComponent
+        open
+        title="Left (default)"
+        content={<Text>Content</Text>}
+      >
+        <Button>Open on the left</Button>
+      </FloatingPanelComponent>
+    </Container>
+  </StorySection>
+);
+
+export const RightStart = () => (
+  <StorySection title="Right start">
+    <Container>
+      <FloatingPanelComponent
+        placement="right-start"
+        open
+        title="Right"
+        content={<Text>Content</Text>}
+      >
+        <Button>Open on the right</Button>
+      </FloatingPanelComponent>
+    </Container>
+  </StorySection>
+);
+
+export const BottomWithin = () => (
+  <StorySection title="Bottom within">
+    <Container>
+      <FloatingPanelComponent
+        placement="bottom-within"
+        open
+        title="Bottom"
+        content={<Text>Content</Text>}
+      >
+        <Button>Open below</Button>
+      </FloatingPanelComponent>
+    </Container>
+  </StorySection>
+);
+
+export const Center = () => (
+  <StorySection title="Center">
+    <Container>
+      <FloatingPanelComponent
+        placement="center"
+        open
+        maximizable
+        resize="both"
+        title="Center"
+        content={<Text>Content</Text>}
+      >
+        <Button>Open screen-centered</Button>
+      </FloatingPanelComponent>
+    </Container>
+  </StorySection>
+);
+
+export const CustomOffsetAndSize = () => (
+  <StorySection title="Custom offset and size">
+    <Container>
+      <FloatingPanelComponent
+        offset={{ mainAxis: 20, alignmentAxis: -100 }}
+        width={200}
+        height={300}
+        open
+        title="Custom Offset & Size"
+        content={<Text>Content</Text>}
+      >
+        <Button>Open with custom offsets</Button>
+      </FloatingPanelComponent>
+    </Container>
   </StorySection>
 );
 
