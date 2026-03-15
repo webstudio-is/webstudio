@@ -1,9 +1,11 @@
 import { StorySection } from "./storybook";
 import { ScrollArea as ScrollAreaComponent } from "./scroll-area";
+import { Text } from "./text";
 import { theme } from "..";
+import { Flex } from "./flex";
 
 export default {
-  title: "Scroll Area",
+  title: "Scroll area",
 };
 
 export const ScrollArea = () => {
@@ -39,3 +41,16 @@ export const ScrollArea = () => {
     </>
   );
 };
+
+export const MinimalContent = () => (
+  <StorySection title="No overflow">
+    <div style={{ height: 200, width: 200 }}>
+      <ScrollAreaComponent>
+        <Flex direction="column" gap="2" style={{ padding: 8 }}>
+          <Text>Short content</Text>
+          <Text>No scrollbar needed</Text>
+        </Flex>
+      </ScrollAreaComponent>
+    </div>
+  </StorySection>
+);

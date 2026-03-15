@@ -10,10 +10,10 @@ import {
 subscribeCommands();
 
 export default {
-  title: "Keyboard Shortcuts Dialog",
+  title: "Keyboard shortcuts dialog",
 } satisfies Meta;
 
-export const KeyboardShortcutsDialog = () => {
+export const KeyboardShortcuts = () => {
   useEffect(openKeyboardShortcutsDialog, []);
   return <KeyboardShortcutsDialogComponent />;
 };

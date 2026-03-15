@@ -1,6 +1,6 @@
 import { Alert } from "./alert";
 
-export default { title: "Blocking Alerts", component: Alert };
+export default { title: "Blocking alerts", component: Alert };
 
 export const BlockingAlerts = () => (
   <Alert

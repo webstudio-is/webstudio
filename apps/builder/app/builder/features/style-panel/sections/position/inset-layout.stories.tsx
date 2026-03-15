@@ -67,7 +67,46 @@ export const InsetLayout = () => (
   </Flex>
 );
 
+export const AdjacentSidesActive = () => (
+  <Flex direction="column" gap="3" css={{ width: theme.sizes.sidebarWidth }}>
+    <Text variant="labels">Adjacent sides active (top + right)</Text>
+    <Grid css={{ height: theme.spacing[18] }}>
+      <InsetLayoutComponent
+        renderCell={(property) => {
+          const values: Record<string, string> = {
+            top: "10px",
+            right: "20px",
+          };
+          return <Cell label={values[property] ?? "auto"} />;
+        }}
+        getActiveProperties={() => ["top", "right"] as CssProperty[]}
+        onHover={() => {}}
+      />
+    </Grid>
+  </Flex>
+);
+
+export const ThreeSidesActive = () => (
+  <Flex direction="column" gap="3" css={{ width: theme.sizes.sidebarWidth }}>
+    <Text variant="labels">Three sides active (top, right, bottom)</Text>
+    <Grid css={{ height: theme.spacing[18] }}>
+      <InsetLayoutComponent
+        renderCell={(property) => {
+          const values: Record<string, string> = {
+            top: "5px",
+            right: "10rem",
+            bottom: "15%",
+          };
+          return <Cell label={values[property] ?? "auto"} />;
+        }}
+        getActiveProperties={() => ["top", "right", "bottom"] as CssProperty[]}
+        onHover={() => {}}
+      />
+    </Grid>
+  </Flex>
+);
+
 export default {
-  title: "Style Panel/Inset Layout",
+  title: "Style panel/Inset layout",
   component: InsetLayoutComponent,
 } as Meta<typeof InsetLayoutComponent>;

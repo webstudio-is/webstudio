@@ -1,5 +1,128 @@
+import { useEffect } from "react";
 import { Box, theme } from "@webstudio-is/design-system";
+import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
+import {
+  $breakpoints,
+  $instances,
+  $pages,
+  $selectedBreakpointId,
+  $styles,
+  $styleSources,
+  $styleSourceSelections,
+} from "~/shared/nano-states";
+import { registerContainers } from "~/shared/sync/sync-stores";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { $awareness } from "~/shared/awareness";
 import { Section } from "./box-shadows";
+
+registerContainers();
+$breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
+$selectedBreakpointId.set("base");
+$styleSources.set(new Map([["local", { id: "local", type: "local" }]]));
+$styleSourceSelections.set(
+  new Map([["box", { instanceId: "box", values: ["local"] }]])
+);
+$instances.set(
+  new Map([
+    ["box", { type: "instance", id: "box", component: "Box", children: [] }],
+  ])
+);
+$pages.set(
+  createDefaultPages({
+    homePageId: "homePageId",
+    rootInstanceId: "box",
+  })
+);
+$awareness.set({
+  pageId: "homePageId",
+  instanceSelector: ["box"],
+});
+
+const outerShadow: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "boxShadow",
+  value: {
+    type: "layers",
+    value: [
+      {
+        type: "shadow",
+        position: "outset",
+        offsetX: { type: "unit", unit: "px", value: 0 },
+        offsetY: { type: "unit", unit: "px", value: 2 },
+        blur: { type: "unit", unit: "px", value: 5 },
+        spread: { type: "unit", unit: "px", value: 0 },
+        color: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 0.2,
+          components: [0, 0, 0],
+        },
+      },
+    ],
+  },
+};
+
+const insetShadow: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "boxShadow",
+  value: {
+    type: "layers",
+    value: [
+      {
+        type: "shadow",
+        position: "inset",
+        offsetX: { type: "unit", unit: "px", value: 0 },
+        offsetY: { type: "unit", unit: "px", value: 0 },
+        blur: { type: "unit", unit: "px", value: 10 },
+        color: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 0.3,
+          components: [0, 0, 0],
+        },
+      },
+    ],
+  },
+};
+
+const multipleShadows: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "boxShadow",
+  value: {
+    type: "layers",
+    value: [
+      {
+        type: "shadow",
+        position: "outset",
+        offsetX: { type: "unit", unit: "px", value: 0 },
+        offsetY: { type: "unit", unit: "px", value: 2 },
+        blur: { type: "unit", unit: "px", value: 5 },
+        color: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 0.2,
+          components: [0, 0, 0],
+        },
+      },
+      {
+        type: "shadow",
+        position: "inset",
+        offsetX: { type: "unit", unit: "px", value: 0 },
+        offsetY: { type: "unit", unit: "px", value: 0 },
+        blur: { type: "unit", unit: "px", value: 10 },
+        color: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 0.3,
+          components: [0, 0, 0],
+        },
+      },
+    ],
+  },
+};
 
 export const BoxShadows = () => (
   <Box css={{ width: theme.sizes.sidebarWidth }}>
@@ -7,7 +130,40 @@ export const BoxShadows = () => (
   </Box>
 );
 
+export const WithOuterShadow = () => {
+  useEffect(() => {
+    $styles.set(new Map([[getStyleDeclKey(outerShadow), outerShadow]]));
+  }, []);
+  return (
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <Section />
+    </Box>
+  );
+};
+
+export const WithInsetShadow = () => {
+  useEffect(() => {
+    $styles.set(new Map([[getStyleDeclKey(insetShadow), insetShadow]]));
+  }, []);
+  return (
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <Section />
+    </Box>
+  );
+};
+
+export const WithMultipleShadows = () => {
+  useEffect(() => {
+    $styles.set(new Map([[getStyleDeclKey(multipleShadows), multipleShadows]]));
+  }, []);
+  return (
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <Section />
+    </Box>
+  );
+};
+
 export default {
-  title: "Style Panel/Box Shadows",
+  title: "Style panel/Box shadows",
   component: Section,
 };

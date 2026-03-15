@@ -8,6 +8,6 @@ export const Size = () => (
 );
 
 export default {
-  title: "Style Panel/Size",
+  title: "Style panel/Size",
   component: Section,
 };

@@ -2,7 +2,7 @@ import { Flex, Text } from "@webstudio-is/design-system";
 import { RelativeTime as RelativeTimeComponent } from "./relative-time";
 
 export default {
-  title: "Builder/Shared/Relative Time",
+  title: "Builder/Shared/Relative time",
   component: RelativeTimeComponent,
 };
 

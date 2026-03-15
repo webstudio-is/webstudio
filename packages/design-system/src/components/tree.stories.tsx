@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { EllipsesIcon } from "@webstudio-is/icons";
+import { EllipsesIcon, DotIcon } from "@webstudio-is/icons";
 import { SmallIconButton } from "./small-icon-button";
 import { Box } from "./box";
 import {
@@ -270,3 +270,53 @@ export const Tree = () => {
     </Box>
   );
 };
+
+export const StaticTreeNodes = () => (
+  <div style={{ maxWidth: 300 }}>
+    <TreeRoot>
+      <TreeNode
+        level={0}
+        isSelected={false}
+        isExpanded={true}
+        onExpand={() => {}}
+        buttonProps={{}}
+        action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
+      >
+        <TreeNodeLabel>Root node</TreeNodeLabel>
+      </TreeNode>
+      <TreeNode
+        level={1}
+        isSelected={true}
+        isExpanded={undefined}
+        isActionVisible
+        buttonProps={{}}
+        action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
+      >
+        <TreeNodeLabel prefix={<DotIcon />}>
+          With prefix and action visible
+        </TreeNodeLabel>
+      </TreeNode>
+      <TreeNode
+        level={1}
+        tabbable
+        isSelected={false}
+        isExpanded={false}
+        onExpand={() => {}}
+        buttonProps={{}}
+        action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
+      >
+        <TreeNodeLabel>Tabbable collapsed node</TreeNodeLabel>
+      </TreeNode>
+      <TreeNode
+        level={1}
+        isSelected={false}
+        isHighlighted
+        isExpanded={undefined}
+        buttonProps={{}}
+        action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
+      >
+        <TreeNodeLabel>Highlighted node</TreeNodeLabel>
+      </TreeNode>
+    </TreeRoot>
+  </div>
+);

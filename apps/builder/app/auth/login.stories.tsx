@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Login as LoginComponent } from "./login";
 
 export default {
-  title: "Auth/Login",
+  title: "Auth",
   component: LoginComponent,
 };
 
@@ -17,7 +17,7 @@ const createRouter = (element: JSX.Element) =>
     },
   ]);
 
-export const Login: StoryFn<typeof LoginComponent> = () => {
+export const Auth: StoryFn<typeof LoginComponent> = () => {
   const router = createRouter(
     <LoginComponent isGoogleEnabled={false} isSecretLoginEnabled />
   );

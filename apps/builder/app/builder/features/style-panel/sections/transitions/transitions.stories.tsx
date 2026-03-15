@@ -65,6 +65,6 @@ export const Transitions = () => (
 );
 
 export default {
-  title: "Style Panel/Transitions",
+  title: "Style panel/Transitions",
   component: Transitions,
 };

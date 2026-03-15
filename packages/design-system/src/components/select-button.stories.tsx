@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { NestedIconLabel } from "./nested-icon-label";
 import { SelectButton as SelectButtonComponent } from "./select-button";
 import { GapVerticalIcon } from "@webstudio-is/icons";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Select Button",
+  title: "Select button",
 };
 
 const iconLabel = (
@@ -104,3 +105,22 @@ export const SelectButton = () => {
   );
 };
 SelectButton.storyName = "Select Button";
+
+export const Interactive = () => {
+  const [clicked, setClicked] = useState(false);
+  return (
+    <StorySection title="Interactive">
+      <StoryGrid horizontal>
+        <SelectButtonComponent onClick={() => setClicked(!clicked)}>
+          {clicked ? "Clicked!" : "Click me"}
+        </SelectButtonComponent>
+        <SelectButtonComponent
+          prefix={iconLabel}
+          onClick={() => setClicked(!clicked)}
+        >
+          {clicked ? "Clicked!" : "With prefix"}
+        </SelectButtonComponent>
+      </StoryGrid>
+    </StorySection>
+  );
+};

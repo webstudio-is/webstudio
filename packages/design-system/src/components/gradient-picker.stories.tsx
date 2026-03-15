@@ -9,7 +9,7 @@ import { Flex } from "./flex";
 import { Text } from "./text";
 
 export default {
-  title: "Gradient Picker",
+  title: "Gradient picker",
 };
 
 const parseLinearGradientOrThrow = (
@@ -63,3 +63,25 @@ export const GradientPicker = () => (
     />
   </Flex>
 );
+
+export const GradientPickerWithSelectedStop = () => {
+  const [gradient, setGradient] = useState<ParsedLinearGradient>(() =>
+    parseLinearGradientOrThrow(
+      "linear-gradient(90deg, red 0%, green 50%, blue 100%)"
+    )
+  );
+  return (
+    <Flex direction="column" gap="2">
+      <Text variant="labels">Pre-selected middle stop (index 1)</Text>
+      <GradientPickerComponent
+        gradient={gradient}
+        backgroundImage={formatLinearGradient(gradient)}
+        onChange={setGradient}
+        onChangeComplete={setGradient}
+        onThumbSelect={() => {}}
+        selectedStopIndex={1}
+      />
+      <Text>{formatLinearGradient(gradient)}</Text>
+    </Flex>
+  );
+};

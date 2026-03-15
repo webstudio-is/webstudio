@@ -69,6 +69,6 @@ export const CreateContentController = Object.assign(
 );
 
 export default {
-  title: "Primitives/Create Content Controller",
+  title: "Primitives/Create content controller",
   component: ExampleContentController,
 };

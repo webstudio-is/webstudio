@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Label } from "./label";
 import { Checkbox as CheckboxComponent, CheckboxAndLabel } from "./checkbox";
 import { StorySection, StoryGrid } from "./storybook";
@@ -59,3 +60,21 @@ export const Checkbox = () => {
   );
 };
 Checkbox.storyName = "Checkbox";
+
+export const CheckboxControlled = () => {
+  const [checked, setChecked] = useState<boolean | "indeterminate">(false);
+  return (
+    <StorySection title="Controlled">
+      <StoryGrid horizontal>
+        <CheckboxAndLabel>
+          <CheckboxComponent
+            checked={checked}
+            onCheckedChange={setChecked}
+            id="controlled"
+          />
+          <Label htmlFor="controlled">State: {String(checked)}</Label>
+        </CheckboxAndLabel>
+      </StoryGrid>
+    </StorySection>
+  );
+};

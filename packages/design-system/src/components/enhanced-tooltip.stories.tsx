@@ -9,7 +9,7 @@ import { StorySection } from "./storybook";
 import { Button } from "./button";
 
 export default {
-  title: "Enhanced Tooltip",
+  title: "Enhanced tooltip",
   component: EnhancedTooltipComponent,
 };
 
@@ -65,6 +65,32 @@ export const EnhancedTooltip = () => (
           delayDuration={500}
         >
           <InputField placeholder="Short delay (500ms)" />
+        </EnhancedTooltipComponent>
+      </Flex>
+    </StorySection>
+  </EnhancedTooltipProvider>
+);
+
+export const WithAlignment = () => (
+  <EnhancedTooltipProvider>
+    <StorySection title="Alignment options">
+      <Flex gap="6" css={{ padding: 60 }}>
+        <EnhancedTooltipComponent
+          content="Aligned start"
+          align="start"
+          defaultOpen
+        >
+          <Button>Start</Button>
+        </EnhancedTooltipComponent>
+        <EnhancedTooltipComponent
+          content="Aligned center"
+          align="center"
+          defaultOpen
+        >
+          <Button>Center</Button>
+        </EnhancedTooltipComponent>
+        <EnhancedTooltipComponent content="Aligned end" align="end" defaultOpen>
+          <Button>End</Button>
         </EnhancedTooltipComponent>
       </Flex>
     </StorySection>

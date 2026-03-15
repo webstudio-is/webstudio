@@ -2,7 +2,7 @@ import { Box, Flex, Grid } from "@webstudio-is/design-system";
 import { Outline as OutlineComponent } from "./outline";
 
 export default {
-  title: "Canvas Tools/Outline",
+  title: "Canvas tools/Outline",
   component: OutlineComponent,
 };
 

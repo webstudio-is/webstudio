@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import { Box, theme } from "@webstudio-is/design-system";
 import { registerContainers } from "~/shared/sync/sync-stores";
@@ -57,7 +58,45 @@ export const Section = () => (
   </Box>
 );
 
+export const SingleLayer = () => {
+  useEffect(() => {
+    const singleBackground: StyleDecl = {
+      breakpointId: "base",
+      styleSourceId: "local",
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unparsed",
+            value: "linear-gradient(to right, red, orange)",
+          },
+        ],
+      },
+    };
+    $styles.set(
+      new Map([[getStyleDeclKey(singleBackground), singleBackground]])
+    );
+  }, []);
+  return (
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <SectionComponent />
+    </Box>
+  );
+};
+
+export const EmptyBackgrounds = () => {
+  useEffect(() => {
+    $styles.set(new Map());
+  }, []);
+  return (
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <SectionComponent />
+    </Box>
+  );
+};
+
 export default {
-  title: "Style Panel/Backgrounds/Section",
+  title: "Style panel/Backgrounds/Section",
   component: SectionComponent,
 };

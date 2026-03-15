@@ -140,3 +140,25 @@ Button.args = {
   disabled: false,
   state: "auto",
 };
+
+export const ButtonTextOnly = () => (
+  <StorySection title="Text only">
+    <StoryGrid horizontal>
+      {colors.map((color) => (
+        <ButtonComponent key={color} color={color}>
+          {color}
+        </ButtonComponent>
+      ))}
+    </StoryGrid>
+  </StorySection>
+);
+
+export const ButtonIconOnly = () => (
+  <StorySection title="Icon only">
+    <StoryGrid horizontal>
+      {colors.map((color) => (
+        <ButtonComponent key={color} prefix={<TrashIcon />} color={color} />
+      ))}
+    </StoryGrid>
+  </StorySection>
+);

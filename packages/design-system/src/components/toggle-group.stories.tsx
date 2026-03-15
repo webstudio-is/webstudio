@@ -150,8 +150,26 @@ ToggleGroup.argTypes = {
 
 ToggleGroup.storyName = "Toggle Group";
 
+export const MultipleSelection = () => (
+  <StorySection title="Multiple selection">
+    <StoryGrid css={{ alignItems: "flex-start" }}>
+      <ToggleGroupComponent type="multiple" defaultValue={["one", "three"]}>
+        <ToggleGroupButton value="one">
+          <BorderRadiusIndividualIcon fill="currentColor" />
+        </ToggleGroupButton>
+        <ToggleGroupButton value="two">
+          <BorderRadiusIndividualIcon fill="currentColor" />
+        </ToggleGroupButton>
+        <ToggleGroupButton value="three">
+          <BorderRadiusIndividualIcon fill="currentColor" />
+        </ToggleGroupButton>
+      </ToggleGroupComponent>
+    </StoryGrid>
+  </StorySection>
+);
+
 export default {
-  title: "Toggle Group",
+  title: "Toggle group",
   parameters: {
     // to make the variant=contrast visible
     backgrounds: { default: "Panel" },

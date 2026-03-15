@@ -15,7 +15,7 @@ import {
 } from "@webstudio-is/icons";
 
 export default {
-  title: "Panel Banner",
+  title: "Panel banner",
 };
 
 export const PanelBanner = () => {
@@ -89,3 +89,23 @@ export const PanelBanner = () => {
 };
 
 PanelBanner.storyName = "Panel Banner";
+
+export const CompactBanner = () => (
+  <StorySection title="Compact banners">
+    <StoryGrid horizontal>
+      <PanelBannerComponent style={{ width: 280 }}>
+        <Text variant="regular">
+          Simple informational message without a heading.
+        </Text>
+      </PanelBannerComponent>
+      <PanelBannerComponent variant="warning" style={{ width: 280 }}>
+        <Text variant="regular">
+          A brief warning message without icons or headings.
+        </Text>
+      </PanelBannerComponent>
+      <PanelBannerComponent variant="error" style={{ width: 280 }}>
+        <Text variant="regular">Something went wrong. Please try again.</Text>
+      </PanelBannerComponent>
+    </StoryGrid>
+  </StorySection>
+);

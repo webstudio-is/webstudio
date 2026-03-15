@@ -123,7 +123,25 @@ export const Solid = () => {
   return <BackgroundStory styleValue={styleValue} />;
 };
 
+export const RepeatingLinearGradient = () => {
+  const styleValue: StyleValue = {
+    type: "unparsed",
+    value:
+      "repeating-linear-gradient(45deg, rgba(255,0,0,1) 0%, rgba(0,0,255,1) 10%, rgba(255,0,0,1) 20%)",
+  };
+  return <BackgroundStory styleValue={styleValue} />;
+};
+
+export const MultiStopGradient = () => {
+  const styleValue: StyleValue = {
+    type: "unparsed",
+    value:
+      "linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,165,0,1) 20%, rgba(255,255,0,1) 40%, rgba(0,128,0,1) 60%, rgba(0,0,255,1) 80%, rgba(128,0,128,1) 100%)",
+  };
+  return <BackgroundStory styleValue={styleValue} />;
+};
+
 export default {
-  title: "Style Panel/Backgrounds",
+  title: "Style panel/Backgrounds",
   component: Image,
 };

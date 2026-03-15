@@ -17,6 +17,7 @@ import {
   MenuCheckedIcon,
   menuItemCss,
   theme,
+  ToolbarButton,
   ToolbarToggleGroup,
   ToolbarToggleItem,
   Tooltip,
@@ -93,14 +94,13 @@ export const BuilderModeDropDown = () => {
       <DropdownMenu>
         <Tooltip content={"Choose mode"}>
           <DropdownMenuTrigger asChild>
-            <ToolbarToggleItem
+            <ToolbarButton
               tabIndex={0}
               aria-label="Choose mode"
               variant="chevron"
-              value="chevron"
             >
               <ChevronDownIcon />
-            </ToolbarToggleItem>
+            </ToolbarButton>
           </DropdownMenuTrigger>
         </Tooltip>
         <DropdownMenuContent

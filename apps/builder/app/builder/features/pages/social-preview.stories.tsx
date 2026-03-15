@@ -10,7 +10,7 @@ const placeholderImage = `data:image/svg+xml,${encodeURIComponent(
 )}`;
 
 export default {
-  title: "Pages/Social Preview",
+  title: "Pages/Social preview",
   component: SocialPreviewComponent,
 };
 

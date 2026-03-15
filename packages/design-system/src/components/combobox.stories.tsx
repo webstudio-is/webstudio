@@ -106,6 +106,71 @@ export const Complex = () => {
   );
 };
 
+export const WithPlaceholder = () => {
+  const [value, setValue] = useState("");
+  return (
+    <Combobox<string>
+      value={value}
+      itemToString={(item) => item ?? ""}
+      getItems={() => ["Apple", "Banana", "Orange"]}
+      onItemSelect={setValue}
+      onChange={(value) => setValue(value ?? "")}
+      placeholder="Search fruits…"
+    />
+  );
+};
+
+export const WithAutoFocus = () => {
+  const [value, setValue] = useState("");
+  return (
+    <Combobox<string>
+      value={value}
+      itemToString={(item) => item ?? ""}
+      getItems={() => ["Apple", "Banana", "Orange"]}
+      onItemSelect={setValue}
+      onChange={(value) => setValue(value ?? "")}
+      autoFocus
+      placeholder="Focused on mount"
+    />
+  );
+};
+
+export const WithErrorColor = () => {
+  const [value, setValue] = useState("");
+  return (
+    <Combobox<string>
+      value={value}
+      itemToString={(item) => item ?? ""}
+      getItems={() => ["Apple", "Banana", "Orange"]}
+      onItemSelect={setValue}
+      onChange={(value) => setValue(value ?? "")}
+      color="error"
+      placeholder="Error state"
+    />
+  );
+};
+
+const fruitDescriptions: Record<string, string> = {
+  Apple: "A red or green fruit",
+  Banana: "A yellow tropical fruit",
+  Orange: "A citrus fruit",
+} as const;
+
+export const WithDescription = () => {
+  const [value, setValue] = useState("");
+  return (
+    <Combobox<string>
+      value={value}
+      itemToString={(item) => item ?? ""}
+      getItems={() => ["Apple", "Banana", "Orange"]}
+      getDescription={(item) => (item ? fruitDescriptions[item] : undefined)}
+      onItemSelect={setValue}
+      onChange={(value) => setValue(value ?? "")}
+      placeholder="Pick a fruit…"
+    />
+  );
+};
+
 export default {
   title: "Combobox",
   component: Complex,

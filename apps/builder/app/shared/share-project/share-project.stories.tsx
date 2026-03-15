@@ -13,7 +13,7 @@ import {
 } from "./share-project";
 
 export default {
-  title: "Share Project",
+  title: "Share project",
   component: ShareProjectComponent,
 };
 

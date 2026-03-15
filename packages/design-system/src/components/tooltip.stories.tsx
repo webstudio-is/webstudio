@@ -64,3 +64,49 @@ export const Tooltip = () => (
     </Flex>
   </TooltipProvider>
 );
+
+export const SidePlacements = () => (
+  <TooltipProvider>
+    <Flex gap="6" wrap="wrap" css={{ padding: 60 }}>
+      <TooltipDesign content="Top tooltip" side="top" open>
+        <Button>Top</Button>
+      </TooltipDesign>
+      <TooltipDesign content="Right tooltip" side="right" open>
+        <Button>Right</Button>
+      </TooltipDesign>
+      <TooltipDesign content="Bottom tooltip" side="bottom" open>
+        <Button>Bottom</Button>
+      </TooltipDesign>
+      <TooltipDesign content="Left tooltip" side="left" open>
+        <Button>Left</Button>
+      </TooltipDesign>
+    </Flex>
+  </TooltipProvider>
+);
+
+export const ContentVariants = () => (
+  <TooltipProvider>
+    <Flex direction="column" gap="6" css={{ padding: 40 }}>
+      <Flex direction="column" gap="2">
+        <Text variant="labels">Wrapped variant</Text>
+        <TooltipDesign
+          content="This is a tooltip with the wrapped variant that constrains the max width to a smaller size for compact content display"
+          variant="wrapped"
+          open
+        >
+          <Button>Wrapped</Button>
+        </TooltipDesign>
+      </Flex>
+      <Flex direction="column" gap="2">
+        <Text variant="labels">Large variant</Text>
+        <TooltipDesign
+          content="This is a tooltip with the large variant that allows wider content before wrapping to the next line"
+          variant="large"
+          open
+        >
+          <Button>Large</Button>
+        </TooltipDesign>
+      </Flex>
+    </Flex>
+  </TooltipProvider>
+);

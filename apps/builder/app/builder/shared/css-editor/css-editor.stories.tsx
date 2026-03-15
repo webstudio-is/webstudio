@@ -35,6 +35,6 @@ export const CSSEditor = () => {
 };
 
 export default {
-  title: "Style Panel/CSS Editor",
+  title: "Style panel/CSS editor",
   component: CSSEditor,
 };

@@ -3,7 +3,7 @@ import { HelpIcon } from "@webstudio-is/icons";
 import { HelpCenter as HelpCenterComponent } from "./help-center";
 
 export default {
-  title: "Builder/Help/Help Center",
+  title: "Builder/Help/Help center",
   component: HelpCenterComponent,
 };
 

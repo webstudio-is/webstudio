@@ -2,7 +2,7 @@ import { Button, Flex } from "@webstudio-is/design-system";
 import { CopyToClipboard as CopyToClipboardComponent } from "./copy-to-clipboard";
 
 export default {
-  title: "Copy To Clipboard",
+  title: "Copy to clipboard",
   component: CopyToClipboardComponent,
 };
 

@@ -4,7 +4,7 @@ import { GapVerticalIcon } from "@webstudio-is/icons";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Nested Icon Label",
+  title: "Nested icon label",
 };
 
 export const NestedIconLabel = () => {

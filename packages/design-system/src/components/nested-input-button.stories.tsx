@@ -1,9 +1,12 @@
 import { CopyIcon } from "@webstudio-is/icons";
-import { NestedInputButton } from "./nested-input-button";
+import {
+  NestedInputButton,
+  nestedSelectButtonUnitless,
+} from "./nested-input-button";
 import { StoryGrid, StorySection } from "./storybook";
 
 export default {
-  title: "Nested Select Button",
+  title: "Nested select button",
 };
 
 export const NestedSelectButton = () => {
@@ -46,3 +49,20 @@ export const NestedSelectButton = () => {
 };
 
 NestedSelectButton.storyName = "Nested Select Button";
+
+export const UnitlessValue = () => (
+  <StorySection title="Unitless value">
+    <StoryGrid horizontal>
+      <NestedInputButton>{nestedSelectButtonUnitless}</NestedInputButton>
+      <NestedInputButton data-state="hover">
+        {nestedSelectButtonUnitless}
+      </NestedInputButton>
+      <NestedInputButton data-state="open">
+        {nestedSelectButtonUnitless}
+      </NestedInputButton>
+      <NestedInputButton disabled>
+        {nestedSelectButtonUnitless}
+      </NestedInputButton>
+    </StoryGrid>
+  </StorySection>
+);

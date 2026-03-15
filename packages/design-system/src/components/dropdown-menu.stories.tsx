@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
 import { Button } from "./button";
 import {
@@ -8,10 +9,17 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuArrow,
 } from "./dropdown-menu";
 
 export default {
-  title: "Dropdown Menu",
+  title: "Dropdown menu",
 };
 
 export const DropdownMenu = () => {
@@ -51,3 +59,59 @@ export const DropdownMenu = () => {
     </Flex>
   );
 };
+
+export const WithIcons = () => (
+  <DropdownMenuComponent defaultOpen>
+    <DropdownMenuTrigger asChild>
+      <Button>With icons</Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+      <DropdownMenuItem icon={<CopyIcon />}>Copy</DropdownMenuItem>
+      <DropdownMenuItem icon={<TrashIcon />} destructive>
+        Delete
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenuComponent>
+);
+
+export const WithRadioGroup = () => {
+  const [value, setValue] = useState("one");
+  return (
+    <DropdownMenuComponent defaultOpen>
+      <DropdownMenuTrigger asChild>
+        <Button>Radio group</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>Choose one</DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={value} onValueChange={setValue}>
+          <DropdownMenuRadioItem value="one">Option one</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="two">Option two</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="three">
+            Option three
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenuComponent>
+  );
+};
+
+export const WithSubMenu = () => (
+  <DropdownMenuComponent defaultOpen>
+    <DropdownMenuTrigger asChild>
+      <Button>Sub menu</Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+      <DropdownMenuItem>Item one</DropdownMenuItem>
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger>More options</DropdownMenuSubTrigger>
+        <DropdownMenuSubContent>
+          <DropdownMenuItem>Sub item one</DropdownMenuItem>
+          <DropdownMenuItem>Sub item two</DropdownMenuItem>
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem>Item two</DropdownMenuItem>
+      <DropdownMenuArrow />
+    </DropdownMenuContent>
+  </DropdownMenuComponent>
+);

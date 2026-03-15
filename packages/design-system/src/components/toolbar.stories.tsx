@@ -2,6 +2,7 @@ import { PlayIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { theme } from "../stitches.config";
 import {
   Toolbar,
+  ToolbarButton,
   ToolbarToggleItem,
   ToolbarToggleGroup,
   ToolbarSeparator,
@@ -45,3 +46,24 @@ const ToolbarStory = () => {
 };
 
 export { ToolbarStory as Toolbar };
+
+export const ToolbarButtonDemo = () => (
+  <Toolbar>
+    <ToolbarButton>
+      <PlayIcon size={22} />
+    </ToolbarButton>
+    <ToolbarButton variant="subtle">
+      <PlayIcon size={22} />
+    </ToolbarButton>
+    <ToolbarButton variant="preview">
+      <PlayIcon size={22} />
+    </ToolbarButton>
+    <ToolbarSeparator />
+    <ToolbarButton focused>
+      <PlayIcon size={22} />
+    </ToolbarButton>
+    <ToolbarButton variant="chevron">
+      <ChevronDownIcon />
+    </ToolbarButton>
+  </Toolbar>
+);

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default {
   component: CustomMetadataComponent,
-  title: "Pages/Custom Metadata",
+  title: "Pages/Custom metadata",
 };
 
 export const CustomMetadata = () => {

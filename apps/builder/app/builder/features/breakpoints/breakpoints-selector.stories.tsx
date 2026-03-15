@@ -5,6 +5,6 @@ export const BreakpointsSelector = () => {
 };
 
 export default {
-  title: "Breakpoints Selector",
+  title: "Breakpoints selector",
   component: BreakpointsSelector,
 };

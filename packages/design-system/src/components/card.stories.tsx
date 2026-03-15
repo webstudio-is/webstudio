@@ -17,3 +17,17 @@ export const Card = () => (
     </CardComponent>
   </Flex>
 );
+
+export const CardMultiple = () => (
+  <Flex gap="3" align="start">
+    <CardComponent size="1">
+      <Text>First card</Text>
+    </CardComponent>
+    <CardComponent size="1">
+      <Text>Second card</Text>
+    </CardComponent>
+    <CardComponent size="1">
+      <Text>Third card</Text>
+    </CardComponent>
+  </Flex>
+);

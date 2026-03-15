@@ -3,7 +3,7 @@ import { Box, Flex, Text, theme } from "@webstudio-is/design-system";
 import { StyleSourceBadge as StyleSourceBadgeComponent } from "./style-source-badge";
 
 export default {
-  title: "Style Panel/Style Source Badge",
+  title: "Style panel/Style source badge",
   component: StyleSourceBadgeComponent,
 };
 

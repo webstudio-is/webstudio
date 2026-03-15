@@ -102,6 +102,6 @@ export const Inset = () => {
 };
 
 export default {
-  title: "Style Panel/Inset",
+  title: "Style panel/Inset",
   component: Inset,
 } as Meta<typeof Inset>;

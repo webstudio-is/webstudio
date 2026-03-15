@@ -2,6 +2,7 @@ import type { StoryFn } from "@storybook/react";
 import { StorySection, StoryGrid } from "./storybook";
 import { Label } from "./label";
 import { Box } from "./box";
+import { Flex } from "./flex";
 import * as Popover from "@radix-ui/react-popover";
 import { theme } from "../stitches.config";
 
@@ -106,3 +107,43 @@ LabelStory.args = {
   color: "default",
   disabled: false,
 };
+
+export const Truncated = () => (
+  <StorySection title="Truncated">
+    <Flex direction="column" gap="2" css={{ width: 150 }}>
+      <Label truncate>
+        This is a very long label text that should be truncated at the edge
+      </Label>
+      <Label color="local" truncate>
+        This is a very long local label text that should be truncated
+      </Label>
+    </Flex>
+  </StorySection>
+);
+
+export const MonoText = () => (
+  <StorySection title="Mono text variant">
+    <StoryGrid horizontal>
+      <Label text="mono">Mono text</Label>
+      <Label text="sentence">Sentence text</Label>
+      <Label text="title">Title text</Label>
+    </StoryGrid>
+  </StorySection>
+);
+
+export const InactiveColor = () => (
+  <StorySection title="Inactive color">
+    <Label color="inactive">Inactive label</Label>
+  </StorySection>
+);
+
+export const ButtonTag = () => (
+  <StorySection title="Tag variants">
+    <StoryGrid horizontal>
+      <Label tag="button">Explicit button tag</Label>
+      <Label tag="label" color="local">
+        Explicit label tag (with color)
+      </Label>
+    </StoryGrid>
+  </StorySection>
+);

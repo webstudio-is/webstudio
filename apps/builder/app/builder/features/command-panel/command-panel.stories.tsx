@@ -14,7 +14,7 @@ import { CommandPanel as CommandPanelComponent } from "./command-panel";
 import { openCommandPanel } from "./command-state";
 
 const meta: Meta = {
-  title: "Command Panel",
+  title: "Command panel",
 };
 export default meta;
 

@@ -2,7 +2,7 @@ import { Box } from "@webstudio-is/design-system";
 import { SearchPreview as SearchPreviewComponent } from "./search-preview";
 
 export default {
-  title: "Pages/Search Preview",
+  title: "Pages/Search preview",
   component: SearchPreviewComponent,
 };
 

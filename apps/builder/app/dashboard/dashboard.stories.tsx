@@ -1,11 +1,15 @@
 import type { StoryFn } from "@storybook/react";
 import type { JSX } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
+import { Box, Flex, Text, theme } from "@webstudio-is/design-system";
 import { Dashboard, DashboardSetup } from "./dashboard";
+import { Card as CardComponent, CardContent, CardFooter } from "./shared/card";
+import { ThumbnailWithAbbr, ThumbnailLinkWithAbbr } from "./shared/thumbnail";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 
 export default {
+  title: "Dashboard",
   component: Dashboard,
 };
 
@@ -120,3 +124,48 @@ export const SearchNothingFound: StoryFn<typeof Dashboard> = () => {
   );
   return <RouterProvider router={router} />;
 };
+
+export const Card = () => (
+  <Flex gap="3" wrap="wrap" align="start">
+    <Box css={{ width: theme.spacing[30] }}>
+      <CardComponent>
+        <CardContent
+          css={{ background: theme.colors.brandBackgroundProjectCardFront }}
+        />
+        <CardFooter>
+          <Text truncate>My project</Text>
+        </CardFooter>
+      </CardComponent>
+    </Box>
+    <Box css={{ width: theme.spacing[30] }}>
+      <CardComponent aria-selected={true}>
+        <CardContent
+          css={{ background: theme.colors.brandBackgroundProjectCardFront }}
+        />
+        <CardFooter>
+          <Text truncate>Selected project</Text>
+        </CardFooter>
+      </CardComponent>
+    </Box>
+    {["Project Alpha", "My Website", "Landing Page"].map((title) => (
+      <Box key={title} css={{ width: theme.spacing[30] }}>
+        <CardComponent>
+          <CardContent
+            css={{ background: theme.colors.brandBackgroundProjectCardFront }}
+          />
+          <CardFooter>
+            <Text truncate>{title}</Text>
+          </CardFooter>
+        </CardComponent>
+      </Box>
+    ))}
+  </Flex>
+);
+
+export const Thumbnails = () => (
+  <Flex gap="3">
+    <ThumbnailWithAbbr title="My Next Project" onClick={() => {}} />
+    <ThumbnailLinkWithAbbr title="Landing Page" to="#" />
+    <ThumbnailWithAbbr title="Portfolio" onClick={() => {}} />
+  </Flex>
+);

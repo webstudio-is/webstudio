@@ -2,7 +2,7 @@ import { Flex } from "@webstudio-is/design-system";
 import { ErrorMessage as ErrorMessageComponent } from "./error-message.client";
 
 export default {
-  title: "Error Message",
+  title: "Error message",
   component: ErrorMessageComponent,
 };
 

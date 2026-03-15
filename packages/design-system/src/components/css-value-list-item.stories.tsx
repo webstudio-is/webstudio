@@ -23,7 +23,7 @@ export default {
       type: "inline-radio",
     },
   },
-  title: "CSS Value List Item",
+  title: "CSS value list item",
 };
 
 const Thumbnail = styled("div", {
@@ -237,3 +237,86 @@ export const CSSValueListItem = (props: {
     </Panel>
   );
 };
+
+export const WithoutThumbnail = () => (
+  <Panel>
+    <StorySection title="No thumbnail">
+      <CssValueListArrowFocus>
+        <CssValueListItem
+          id="no-thumb-0"
+          index={0}
+          label={<Label>Text only item</Label>}
+          hidden={false}
+          buttons={
+            <SmallIconButton
+              variant="destructive"
+              tabIndex={-1}
+              icon={<MinusIcon />}
+            />
+          }
+          {...__testing__.listItemAttributes}
+        />
+        <CssValueListItem
+          id="no-thumb-1"
+          index={1}
+          label={<Label>Another text item</Label>}
+          hidden={false}
+          buttons={
+            <SmallIconButton
+              variant="destructive"
+              tabIndex={-1}
+              icon={<MinusIcon />}
+            />
+          }
+          {...__testing__.listItemAttributes}
+        />
+      </CssValueListArrowFocus>
+    </StorySection>
+  </Panel>
+);
+
+export const DisabledItems = () => (
+  <Panel>
+    <StorySection title="Disabled state">
+      <CssValueListArrowFocus>
+        <CssValueListItem
+          id="disabled-0"
+          index={0}
+          label={<Label>Disabled item</Label>}
+          thumbnail={<Thumbnail />}
+          hidden={false}
+          disabled
+          {...__testing__.listItemAttributes}
+        />
+        <CssValueListItem
+          id="disabled-1"
+          index={1}
+          label={<Label>Enabled item</Label>}
+          thumbnail={<Thumbnail />}
+          hidden={false}
+          {...__testing__.listItemAttributes}
+        />
+      </CssValueListArrowFocus>
+    </StorySection>
+  </Panel>
+);
+
+export const WithDragItemId = () => (
+  <Panel>
+    <StorySection title="Arrow focus with drag item">
+      <CssValueListArrowFocus dragItemId="drag-1">
+        {labelColors.map((labelColor, index) => (
+          <ListItem
+            key={labelColor}
+            index={index}
+            hidden={false}
+            active={index === 1}
+            labelColor={labelColor}
+            state={undefined}
+            focused={false}
+          />
+        ))}
+      </CssValueListArrowFocus>
+    </StorySection>
+  </Panel>
+);

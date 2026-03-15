@@ -62,7 +62,7 @@ const HistoryInspect = () => {
 };
 
 export default {
-  title: "Address Bar",
+  title: "Address bar",
   component: AddressBarPopover,
 } satisfies Meta;
 

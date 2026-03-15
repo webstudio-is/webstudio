@@ -3,7 +3,7 @@ import { ImageInfo as ImageInfoComponent } from "./image-info";
 import type { ImageAsset } from "@webstudio-is/sdk";
 
 export default {
-  title: "Builder/Pages/Image Info",
+  title: "Builder/Pages/Image info",
   component: ImageInfoComponent,
 };
 

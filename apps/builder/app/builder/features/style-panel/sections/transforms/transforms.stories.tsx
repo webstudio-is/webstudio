@@ -8,6 +8,6 @@ export const Transforms = () => (
 );
 
 export default {
-  title: "Style Panel/Transforms",
+  title: "Style panel/Transforms",
   component: Section,
 };

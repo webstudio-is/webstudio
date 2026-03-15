@@ -8,6 +8,6 @@ export const Layout = () => (
 );
 
 export default {
-  title: "Style Panel/Layout",
+  title: "Style panel/Layout",
   component: Section,
 };

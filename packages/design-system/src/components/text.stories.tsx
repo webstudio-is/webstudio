@@ -64,6 +64,30 @@ export const Text = () => (
   </>
 );
 
+export const Inline = () => (
+  <StorySection title="Inline text">
+    <TextComponent>
+      This is a paragraph with{" "}
+      <TextComponent inline color="destructive">
+        inline destructive
+      </TextComponent>{" "}
+      and{" "}
+      <TextComponent inline color="success">
+        inline success
+      </TextComponent>{" "}
+      text inside.
+    </TextComponent>
+  </StorySection>
+);
+
+export const UserSelectText = () => (
+  <StorySection title="User select text">
+    <TextComponent userSelect="text">
+      This text can be selected (userSelect: text)
+    </TextComponent>
+  </StorySection>
+);
+
 export default {
   title: "Text",
 };

@@ -22,3 +22,22 @@ export const Avatar = () => (
     <AvatarComponent fallback="WS" />
   </Flex>
 );
+
+export const AvatarFallbackVariants = () => (
+  <Flex gap="3" align="center">
+    <AvatarComponent fallback="A" />
+    <AvatarComponent fallback="JD" />
+    <AvatarComponent fallback="WEB" />
+  </Flex>
+);
+
+export const AvatarBrokenImage = () => (
+  <Flex gap="3" align="center">
+    <AvatarComponent
+      src="https://broken-url.invalid/avatar.png"
+      fallback="FB"
+      alt="Broken image avatar"
+    />
+    <AvatarComponent fallback="OK" alt="No image avatar" />
+  </Flex>
+);

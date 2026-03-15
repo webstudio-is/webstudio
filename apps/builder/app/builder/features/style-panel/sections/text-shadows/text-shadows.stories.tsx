@@ -8,6 +8,6 @@ export const TextShadows = () => (
 );
 
 export default {
-  title: "Style Panel/Text Shadows",
+  title: "Style panel/Text shadows",
   component: Section,
 };

@@ -409,7 +409,7 @@ export const PropsSection = () => {
 };
 
 export default {
-  title: "Settings Panel/Props Section",
+  title: "Settings panel/Props section",
   component: PropsSection,
   parameters: {
     lostpixel: {

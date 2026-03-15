@@ -3,7 +3,7 @@ import { ExpressionEditor as ExpressionEditorComponent } from "./expression-edit
 import { useState } from "react";
 
 export default {
-  title: "Expression Editor",
+  title: "Expression editor",
   component: ExpressionEditorComponent,
 } satisfies Meta;
 

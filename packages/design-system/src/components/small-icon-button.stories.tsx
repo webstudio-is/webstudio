@@ -81,8 +81,24 @@ SmallIconButton.args = {
 
 SmallIconButton.storyName = "Small Icon Button";
 
+export const Disabled = () => (
+  <StorySection title="Disabled across variants">
+    <StoryGrid horizontal>
+      {smallIconButtonVariants.map((variant) => (
+        <SmallIconButtonComponent
+          key={variant}
+          title={variant}
+          icon={<TrashIcon />}
+          variant={variant}
+          disabled
+        />
+      ))}
+    </StoryGrid>
+  </StorySection>
+);
+
 export default {
-  title: "Small Icon Button",
+  title: "Small icon button",
   parameters: {
     // to make the variant=contrast visible
     backgrounds: { default: "Maintenance Medium" },

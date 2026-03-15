@@ -8,6 +8,6 @@ export const Typography = () => (
 );
 
 export default {
-  title: "Style Panel/Typography",
+  title: "Style panel/Typography",
   component: Section,
 };

@@ -8,7 +8,7 @@ import {
 } from "~/shared/nano-states";
 
 export default {
-  title: "Builder Mode",
+  title: "Builder mode",
 };
 
 export const DesignMode = () => {

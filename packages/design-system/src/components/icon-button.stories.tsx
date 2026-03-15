@@ -4,7 +4,7 @@ import { Flex } from "./flex";
 import { IconButton as IconButtonComponent } from "./icon-button";
 
 export default {
-  title: "Icon Button",
+  title: "Icon button",
   component: IconButtonComponent,
 };
 
@@ -82,3 +82,23 @@ export const IconButton: StoryFn<typeof IconButtonComponent> = () => {
     </Flex>
   );
 };
+
+export const Hovered = () => (
+  <Flex gap={2}>
+    <IconButtonComponent data-hovered={true}>
+      <XIcon fill="currentColor" />
+    </IconButtonComponent>
+    <IconButtonComponent variant="preset" data-hovered={true}>
+      <XIcon fill="currentColor" />
+    </IconButtonComponent>
+    <IconButtonComponent variant="local" data-hovered={true}>
+      <XIcon fill="currentColor" />
+    </IconButtonComponent>
+    <IconButtonComponent variant="overwritten" data-hovered={true}>
+      <XIcon fill="currentColor" />
+    </IconButtonComponent>
+    <IconButtonComponent variant="remote" data-hovered={true}>
+      <XIcon fill="currentColor" />
+    </IconButtonComponent>
+  </Flex>
+);

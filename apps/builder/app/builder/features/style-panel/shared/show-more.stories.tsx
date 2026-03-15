@@ -2,7 +2,7 @@ import { Box, Text, theme } from "@webstudio-is/design-system";
 import { ShowMore as ShowMoreComponent } from "./show-more";
 
 export default {
-  title: "Style Panel/Show More",
+  title: "Style panel/Show more",
   component: ShowMoreComponent,
 };
 

@@ -1,7 +1,7 @@
 import { ImportRedirectsDialog as ImportRedirectsDialogComponent } from "./import-redirects-dialog";
 
 export default {
-  title: "Builder/Project Settings/Import Redirects Dialog",
+  title: "Builder/Project settings/Import redirects dialog",
   component: ImportRedirectsDialogComponent,
 };
 

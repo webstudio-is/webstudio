@@ -4,7 +4,7 @@ import { Flex } from "./flex";
 import { useState } from "react";
 
 export default {
-  title: "Position Grid",
+  title: "Position grid",
 };
 
 export const PositionGrid = () => {
@@ -47,3 +47,18 @@ export const PositionGrid = () => {
     </Flex>
   );
 };
+
+export const PositionGridWithKeywords = () => (
+  <Flex gap="3">
+    <PositionGridComponent
+      focused
+      selectedPosition={{ x: "center", y: "bottom" }}
+      onSelect={action("onSelect")}
+    />
+    <PositionGridComponent
+      focused
+      selectedPosition={{ x: "right", y: "center" }}
+      onSelect={action("onSelect")}
+    />
+  </Flex>
+);

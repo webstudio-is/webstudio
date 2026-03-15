@@ -8,6 +8,6 @@ export const GridChild = () => (
 );
 
 export default {
-  title: "Style Panel/Grid Child",
+  title: "Style panel/Grid child",
   component: Section,
 };

@@ -26,3 +26,13 @@ export const Separator = () => (
     </StorySection>
   </>
 );
+
+export const Decorative = () => (
+  <StorySection title="Decorative (no semantic role)">
+    <Flex direction="column" gap="2" css={{ width: 200 }}>
+      <Text>Above</Text>
+      <SeparatorComponent decorative />
+      <Text>Below (separator has role=none)</Text>
+    </Flex>
+  </StorySection>
+);

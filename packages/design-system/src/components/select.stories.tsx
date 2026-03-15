@@ -126,3 +126,34 @@ export const Select = () => {
     </Flex>
   );
 };
+
+export const WithItemHighlight = () => {
+  const [value, setValue] = useState(fruits[0]);
+  const [highlighted, setHighlighted] = useState<string | undefined>();
+  return (
+    <Flex direction="column" gap="2" style={{ maxWidth: 300 }}>
+      <Text variant="labels">Highlighted: {highlighted ?? "none"}</Text>
+      <SelectComponent
+        options={fruits}
+        value={value}
+        onChange={setValue}
+        onItemHighlight={setHighlighted}
+      />
+    </Flex>
+  );
+};
+
+export const ControlledOpen = () => {
+  const [open, setOpen] = useState(false);
+  return (
+    <Flex direction="column" gap="2" style={{ maxWidth: 300 }}>
+      <Text variant="labels">Open: {String(open)}</Text>
+      <SelectComponent
+        options={fruits}
+        defaultValue="Apple"
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </Flex>
+  );
+};

@@ -7,7 +7,7 @@ import { CheckControl } from "./check";
 import { RadioControl } from "./radio";
 
 export default {
-  title: "Builder/Settings Panel/Controls",
+  title: "Builder/Settings panel/Controls",
 };
 
 const Section = ({

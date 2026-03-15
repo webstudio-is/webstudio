@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Label } from "./label";
 import { RadioGroup, Radio as RadioComponent, RadioAndLabel } from "./radio";
 import { StorySection, StoryGrid } from "./storybook";
@@ -57,3 +58,26 @@ export const Radio = () => {
   );
 };
 Radio.storyName = "Radio";
+
+export const RadioControlled = () => {
+  const [value, setValue] = useState("A");
+  return (
+    <StorySection title="Controlled">
+      <RadioGroup value={value} onValueChange={setValue}>
+        <RadioAndLabel>
+          <RadioComponent value="A" id="ctrl-A" />
+          <Label htmlFor="ctrl-A">Option A</Label>
+        </RadioAndLabel>
+        <RadioAndLabel>
+          <RadioComponent value="B" id="ctrl-B" />
+          <Label htmlFor="ctrl-B">Option B</Label>
+        </RadioAndLabel>
+        <RadioAndLabel>
+          <RadioComponent value="C" id="ctrl-C" />
+          <Label htmlFor="ctrl-C">Option C</Label>
+        </RadioAndLabel>
+      </RadioGroup>
+      <Label>Selected: {value}</Label>
+    </StorySection>
+  );
+};

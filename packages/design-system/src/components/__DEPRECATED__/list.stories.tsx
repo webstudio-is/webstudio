@@ -57,3 +57,27 @@ export const WithHook: StoryFn<typeof DeprecatedList> = () => {
     </DeprecatedList>
   );
 };
+
+export const CurrentWithoutSelected: StoryFn<typeof DeprecatedList> = () => (
+  <DeprecatedList>
+    <DeprecatedListItem>Regular item</DeprecatedListItem>
+    <DeprecatedListItem current>Current but not selected</DeprecatedListItem>
+    <DeprecatedListItem prefix={<CheckMarkIcon />}>
+      With prefix only
+    </DeprecatedListItem>
+  </DeprecatedList>
+);
+
+export const SuffixOnly: StoryFn<typeof DeprecatedList> = () => (
+  <DeprecatedList>
+    <DeprecatedListItem suffix={<EllipsesIcon />}>
+      Item with suffix
+    </DeprecatedListItem>
+    <DeprecatedListItem suffix={<EllipsesIcon />} state="selected">
+      Selected with suffix
+    </DeprecatedListItem>
+    <DeprecatedListItem suffix={<EllipsesIcon />} state="disabled">
+      Disabled with suffix
+    </DeprecatedListItem>
+  </DeprecatedList>
+);

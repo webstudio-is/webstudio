@@ -2,7 +2,7 @@ import { $remoteDialog } from "../../shared/nano-states";
 import { RemoteDialog as RemoteDialogComponent } from "./remote-dialog";
 
 export default {
-  title: "Builder/Help/Remote Dialog",
+  title: "Builder/Help/Remote dialog",
   component: RemoteDialogComponent,
 };
 

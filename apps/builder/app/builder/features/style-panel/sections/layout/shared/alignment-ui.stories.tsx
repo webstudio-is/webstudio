@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { Box, Flex, Text, theme } from "@webstudio-is/design-system";
 import { AlignmentUi } from "./alignment-ui";
 
 export default {
-  title: "Style Panel/Layout/Alignment UI",
+  title: "Style panel/Layout/Alignment UI",
   component: AlignmentUi,
 };
 
@@ -137,3 +138,31 @@ export const Grid_ = () => (
     />
   </Flex>
 );
+
+export const Interactive = () => {
+  const [selected, setSelected] = useState<{ x: number; y: number }>();
+  return (
+    <Flex direction="column" gap="3">
+      <Text css={{ ...labelStyle }}>
+        Selected: {selected ? `(${selected.x}, ${selected.y})` : "none"}
+      </Text>
+      <Box
+        css={{
+          width: 64,
+          height: 62,
+          color: theme.colors.foregroundFlexUiMain,
+        }}
+      >
+        <AlignmentUi
+          justifyContent="start"
+          alignItems="start"
+          isColumnDirection={false}
+          color="currentColor"
+          itemStretchWidth={false}
+          itemStretchHeight={false}
+          onSelect={setSelected}
+        />
+      </Box>
+    </Flex>
+  );
+};

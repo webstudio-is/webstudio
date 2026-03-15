@@ -8,6 +8,6 @@ export const FlexChild = () => (
 );
 
 export default {
-  title: "Style Panel/Flex Child",
+  title: "Style panel/Flex child",
   component: Section,
 };

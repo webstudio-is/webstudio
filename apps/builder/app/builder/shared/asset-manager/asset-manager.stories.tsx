@@ -36,7 +36,7 @@ const createMockAssets = (): Asset[] => {
 };
 
 export default {
-  title: "Asset Manager",
+  title: "Asset manager",
   component: AssetManagerComponent,
 } satisfies Meta;
 

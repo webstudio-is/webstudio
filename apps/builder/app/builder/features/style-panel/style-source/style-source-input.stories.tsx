@@ -8,7 +8,7 @@ import {
 } from ".";
 
 export default {
-  title: "Style Panel/Style Source Input",
+  title: "Style panel/Style source input",
   component: StyleSourceInputComponent,
 };
 

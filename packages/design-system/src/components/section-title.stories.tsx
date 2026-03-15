@@ -8,7 +8,7 @@ import type { ComponentProps } from "react";
 import { PlusIcon } from "@webstudio-is/icons";
 
 export default {
-  title: "Section Title",
+  title: "Section title",
 };
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
@@ -116,3 +116,43 @@ export const SectionTitle = () => (
 );
 
 SectionTitle.storyName = "Section Title";
+
+export const NonCollapsible = () => (
+  <StorySection title="Non-collapsible">
+    <StoryGrid>
+      <Wrap>
+        <SectionTitleComponent collapsible={false}>
+          <SectionTitleLabel>Not collapsible</SectionTitleLabel>
+        </SectionTitleComponent>
+      </Wrap>
+      <Wrap>
+        <SectionTitleComponent
+          collapsible={false}
+          suffix={<SectionTitleButton prefix={<PlusIcon />} />}
+        >
+          <SectionTitleLabel>With button</SectionTitleLabel>
+        </SectionTitleComponent>
+      </Wrap>
+    </StoryGrid>
+  </StorySection>
+);
+
+export const OverwrittenDots = () => (
+  <StorySection title="Overwritten dot">
+    <StoryGrid>
+      <Wrap>
+        <SectionTitleComponent dots={["overwritten"]} data-state="closed">
+          <SectionTitleLabel>Overwritten</SectionTitleLabel>
+        </SectionTitleComponent>
+      </Wrap>
+      <Wrap>
+        <SectionTitleComponent
+          dots={["local", "overwritten", "remote"]}
+          data-state="closed"
+        >
+          <SectionTitleLabel>All dots</SectionTitleLabel>
+        </SectionTitleComponent>
+      </Wrap>
+    </StoryGrid>
+  </StorySection>
+);

@@ -1,7 +1,7 @@
 import { scrollIntoView } from "./dom-utils";
 
 export default {
-  title: "DOM Utils/Scroll Into View",
+  title: "DOM utils/Scroll into view",
 };
 
 const handleClick = (selector: string) => {

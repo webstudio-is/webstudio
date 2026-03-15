@@ -4,9 +4,10 @@ import { Box } from "./box";
 import { Button } from "./button";
 import { Text } from "./text";
 import { Flex } from "./flex";
+import { CopyIcon } from "@webstudio-is/icons";
 
 export default {
-  title: "Floating Panel",
+  title: "Floating panel",
   component: FloatingPanelComponent,
 };
 
@@ -84,4 +85,30 @@ export const FloatingPanel = () => (
       </FloatingPanelComponent>
     </Container>
   </Flex>
+);
+
+export const WithTitleSuffix = () => (
+  <Container>
+    <FloatingPanelComponent
+      open
+      title="With suffix"
+      titleSuffix={<Button color="ghost" prefix={<CopyIcon />} />}
+      content={<Text>Panel with a custom title suffix button</Text>}
+    >
+      <Button>Open with title suffix</Button>
+    </FloatingPanelComponent>
+  </Container>
+);
+
+export const PersistentPanel = () => (
+  <Container>
+    <FloatingPanelComponent
+      open
+      title="Persistent"
+      closeOnInteractOutside={false}
+      content={<Text>This panel stays open when clicking outside</Text>}
+    >
+      <Button>Open persistent</Button>
+    </FloatingPanelComponent>
+  </Container>
 );

@@ -122,8 +122,17 @@ SmallToggleButton.args = {
 
 SmallToggleButton.storyName = "Small Toggle Button";
 
+export const ControlledPressed = () => (
+  <StorySection title="Controlled pressed">
+    <StoryGrid horizontal>
+      <SmallToggleButtonComponent icon={<EyeClosedIcon />} pressed={true} />
+      <SmallToggleButtonComponent icon={<EyeOpenIcon />} pressed={false} />
+    </StoryGrid>
+  </StorySection>
+);
+
 export default {
-  title: "Small Toggle Button",
+  title: "Small toggle button",
   parameters: {
     // to make the variant=contrast visible
     backgrounds: { default: "Panel" },

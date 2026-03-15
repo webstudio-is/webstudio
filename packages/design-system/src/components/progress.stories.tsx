@@ -27,3 +27,18 @@ export const Progress = () => {
     </Flex>
   );
 };
+
+export const ProgressCustomTransition = () => {
+  const [value, setValue] = useState(0);
+  return (
+    <Flex direction="column" gap="3" css={{ width: 300 }}>
+      <Text>Slow transition (1s)</Text>
+      <ProgressComponent value={value} transitionDuration="1000ms" />
+      <Flex gap="2">
+        <Button onClick={() => setValue(0)}>0%</Button>
+        <Button onClick={() => setValue(50)}>50%</Button>
+        <Button onClick={() => setValue(100)}>100%</Button>
+      </Flex>
+    </Flex>
+  );
+};
