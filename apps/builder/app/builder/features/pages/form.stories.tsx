@@ -6,7 +6,7 @@ export default {
   component: Form,
 };
 
-export const Demo = () => (
+export const Form = () => (
   <Flex direction="column" gap="3" css={{ width: 300, height: 200 }}>
     <Form onSubmit={() => window.alert("Submitted!")}>
       <Flex direction="column" gap="3" css={{ padding: 16 }}>

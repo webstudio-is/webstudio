@@ -262,7 +262,7 @@ const ComplexSelectDemo = () => {
   );
 };
 
-export const Demo = () => (
+export const MenuMenuItem = () => (
   <>
     <StorySection title="Dropdown menu">
       <div style={{ display: "flex", paddingBottom: 360 }}>
@@ -288,7 +288,7 @@ export const Demo = () => (
   </>
 );
 
-Demo.storyName = "Menu, Menu Item";
+MenuMenuItem.storyName = "Menu, Menu Item";
 
 export default {
   title: "Menu, Menu Item",

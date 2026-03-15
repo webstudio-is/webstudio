@@ -1,17 +1,14 @@
+import { Flex } from "@webstudio-is/design-system";
 import { ThumbnailWithAbbr, ThumbnailLinkWithAbbr } from "./thumbnail";
 
 export default {
   title: "Dashboard/Thumbnail",
 };
 
-export const Abbreviation = () => (
-  <ThumbnailWithAbbr title="My Next Project" onClick={() => {}} />
-);
-
-export const AbbreviationLink = () => (
-  <ThumbnailLinkWithAbbr title="Landing Page" to="#" />
-);
-
-export const SingleWord = () => (
-  <ThumbnailWithAbbr title="Portfolio" onClick={() => {}} />
+export const Thumbnail = () => (
+  <Flex gap="3">
+    <ThumbnailWithAbbr title="My Next Project" onClick={() => {}} />
+    <ThumbnailLinkWithAbbr title="Landing Page" to="#" />
+    <ThumbnailWithAbbr title="Portfolio" onClick={() => {}} />
+  </Flex>
 );

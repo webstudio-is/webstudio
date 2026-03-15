@@ -1,3 +1,4 @@
+import { Toolbar } from "@webstudio-is/design-system";
 import { Menu } from "./menu";
 import {
   $authPermit,
@@ -25,7 +26,11 @@ export const OwnerDesignMode = () => {
     allowContentMode: true,
     purchases: [{ planName: "Pro" }],
   });
-  return <Menu />;
+  return (
+    <Toolbar>
+      <Menu defaultOpen />
+    </Toolbar>
+  );
 };
 
 export const ViewerFreePlan = () => {
@@ -37,7 +42,11 @@ export const ViewerFreePlan = () => {
     canCopy: false,
     canPublish: false,
   });
-  return <Menu />;
+  return (
+    <Toolbar>
+      <Menu defaultOpen />
+    </Toolbar>
+  );
 };
 
 export const AdminContentMode = () => {
@@ -54,5 +63,9 @@ export const AdminContentMode = () => {
     allowContentMode: true,
     purchases: [{ planName: "Pro" }],
   });
-  return <Menu />;
+  return (
+    <Toolbar>
+      <Menu defaultOpen />
+    </Toolbar>
+  );
 };

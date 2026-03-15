@@ -23,7 +23,7 @@ const Content = ({ children }: { children: React.ReactNode }) => (
   </Box>
 );
 
-export const Demo = () => (
+export const PanelTabs = () => (
   <StoryGrid>
     <Wrap>
       <PanelTabs defaultValue="1">
@@ -45,4 +45,4 @@ export const Demo = () => (
     </Wrap>
   </StoryGrid>
 );
-Demo.storyName = "Panel Tabs";
+PanelTabs.storyName = "Panel Tabs";

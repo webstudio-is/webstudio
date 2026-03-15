@@ -8,7 +8,7 @@ export default {
   title: "Component Card",
 };
 
-export const Demo = () => {
+export const ComponentCard = () => {
   return (
     <TooltipProvider>
       <StorySection title="States">
@@ -57,4 +57,4 @@ export const Demo = () => {
     </TooltipProvider>
   );
 };
-Demo.storyName = "Component Card";
+ComponentCard.storyName = "Component Card";

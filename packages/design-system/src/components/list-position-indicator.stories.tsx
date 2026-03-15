@@ -12,7 +12,7 @@ export default {
   },
 };
 
-export const Demo = () => (
+export const ListPositionIndicator = () => (
   <>
     <StorySection title="Coordinates check">
       <StoryGrid>
@@ -66,4 +66,4 @@ export const Demo = () => (
   </>
 );
 
-Demo.storyName = "List Position Indicator";
+ListPositionIndicator.storyName = "List Position Indicator";

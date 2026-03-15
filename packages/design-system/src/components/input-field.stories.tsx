@@ -17,7 +17,7 @@ const prefix = (
 
 const suffix = <NestedInputButton tabIndex={-1} />;
 
-export const Demo = () => (
+export const InputField = () => (
   <>
     <StorySection title="Basic">
       <StoryGrid horizontal>
@@ -88,4 +88,4 @@ export const Demo = () => (
   </>
 );
 
-Demo.storyName = "Input Field";
+InputField.storyName = "Input Field";

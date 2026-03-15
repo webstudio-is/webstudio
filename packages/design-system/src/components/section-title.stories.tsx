@@ -79,7 +79,7 @@ const Variants = ({
   </>
 );
 
-export const Demo = () => (
+export const SectionTitle = () => (
   <>
     <StorySection title="Focused (intially)">
       <StoryGrid>
@@ -115,4 +115,4 @@ export const Demo = () => (
   </>
 );
 
-Demo.storyName = "Section Title";
+SectionTitle.storyName = "Section Title";

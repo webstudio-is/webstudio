@@ -7,7 +7,7 @@ import {
 import { StorySection, StoryGrid } from "./storybook";
 import { theme } from "../stitches.config";
 
-export const Demo = ({
+export const SmallToggleButton = ({
   pressed,
   ...rest
 }: Omit<ComponentProps<typeof SmallToggleButton>, "icon">) => (
@@ -106,21 +106,21 @@ export const Demo = ({
   </>
 );
 
-Demo.argTypes = {
+SmallToggleButton.argTypes = {
   variant: { control: "inline-radio", options: smallToggleButtonVariants },
   pressed: { control: "boolean" },
   disabled: { control: "boolean" },
   focused: { control: "boolean" },
 };
 
-Demo.args = {
+SmallToggleButton.args = {
   variant: "normal",
   pressed: false,
   disabled: false,
   focused: false,
 };
 
-Demo.storyName = "Small Toggle Button";
+SmallToggleButton.storyName = "Small Toggle Button";
 
 export default {
   title: "Small Toggle Button",

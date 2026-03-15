@@ -6,7 +6,7 @@ export default {
   component: Loading,
 };
 
-export const Demo = () => (
+export const Loading = () => (
   <Flex direction="column" gap="5">
     <Text variant="labels">Loading at 30%</Text>
     <Flex

@@ -6,9 +6,7 @@ export default {
   component: ProBadge,
 };
 
-export const Default = () => <ProBadge>Pro</ProBadge>;
-
-export const CustomText = () => (
+export const ProBadge = () => (
   <Flex gap="3" align="center">
     <ProBadge>Pro</ProBadge>
     <ProBadge>Enterprise</ProBadge>

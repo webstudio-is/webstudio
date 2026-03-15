@@ -11,7 +11,7 @@ export default {
   },
 };
 
-export const Demo = () => {
+export const Checkbox = () => {
   return (
     <>
       <StorySection title="Enabled">
@@ -58,4 +58,4 @@ export const Demo = () => {
     </>
   );
 };
-Demo.storyName = "Checkbox";
+Checkbox.storyName = "Checkbox";

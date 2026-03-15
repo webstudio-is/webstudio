@@ -7,14 +7,12 @@ export default {
   component: EnhancedTooltip,
 };
 
-export const Simple = () => {
-  return (
-    <EnhancedTooltipProvider>
-      <Flex>
-        <EnhancedTooltip content="Hello world">
-          <InputField />
-        </EnhancedTooltip>
-      </Flex>
-    </EnhancedTooltipProvider>
-  );
-};
+export const Simple = () => (
+  <EnhancedTooltipProvider>
+    <Flex css={{ padding: 40 }}>
+      <EnhancedTooltip content="Hello world" defaultOpen>
+        <InputField />
+      </EnhancedTooltip>
+    </Flex>
+  </EnhancedTooltipProvider>
+);

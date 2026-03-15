@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Flex, InputField } from "@webstudio-is/design-system";
+import { Flex, InputField, Text } from "@webstudio-is/design-system";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
 import { action } from "@storybook/addon-actions";
@@ -11,67 +11,89 @@ export default {
   component: CssValueInput,
 };
 
-export const WithKeywords = () => {
-  const [value, setValue] = React.useState<StyleValue>({
-    type: "keyword",
-    value: "auto",
-  });
-
+const CssValueInputVariant = ({
+  label,
+  initialValue,
+  property,
+  options,
+  containerWidth,
+  showOutput,
+}: {
+  label: string;
+  initialValue: StyleValue;
+  property: string;
+  options?: Array<{ type: "keyword"; value: string }>;
+  containerWidth?: number;
+  showOutput?: boolean;
+}) => {
+  const [value, setValue] = React.useState<StyleValue>(initialValue);
   const [intermediateValue, setIntermediateValue] = React.useState<
     StyleValue | IntermediateStyleValue
   >();
 
-  return (
+  const input = (
     <CssValueInput
       styleSource="preset"
-      property="width"
+      property={property}
       value={value}
       intermediateValue={intermediateValue}
-      getOptions={() => [
+      getOptions={options ? () => options : undefined}
+      onChange={setIntermediateValue}
+      onHighlight={(v) => action("onHighlight")(v)}
+      onChangeComplete={({ value: v }) => {
+        setValue(v);
+        setIntermediateValue(undefined);
+        action("onChangeComplete")(v);
+      }}
+      onAbort={() => action("onAbort")()}
+      onReset={() => action("onReset")()}
+    />
+  );
+
+  return (
+    <Flex direction="column" gap="1">
+      <Text variant="labels">{label}</Text>
+      {containerWidth ? (
+        <Flex css={{ width: containerWidth }}>
+          {input}
+          {showOutput && (
+            <InputField
+              readOnly
+              value={
+                value
+                  ? intermediateValue?.type === "intermediate"
+                    ? intermediateValue.value + intermediateValue.unit
+                    : toValue(value)
+                  : ""
+              }
+            />
+          )}
+        </Flex>
+      ) : (
+        input
+      )}
+    </Flex>
+  );
+};
+
+export const CSSValueInput = () => (
+  <Flex direction="column" gap="5" css={{ maxWidth: 300 }}>
+    <CssValueInputVariant
+      label="Keywords (width)"
+      initialValue={{ type: "keyword", value: "auto" }}
+      property="width"
+      options={[
         { type: "keyword", value: "auto" },
         { type: "keyword", value: "min-content" },
         { type: "keyword", value: "max-content" },
         { type: "keyword", value: "fit-content" },
       ]}
-      onChange={(value) => {
-        setIntermediateValue(value);
-      }}
-      onHighlight={(value) => {
-        action("onHighlight")(value);
-      }}
-      onChangeComplete={({ value }) => {
-        // on blur, select, enter etc.
-        setValue(value);
-        setIntermediateValue(undefined);
-        action("onChangeComplete")(value);
-      }}
-      onAbort={() => {
-        action("onAbort")();
-      }}
-      onReset={() => {
-        action("onReset")();
-      }}
     />
-  );
-};
-
-export const WithIcons = () => {
-  const [value, setValue] = React.useState<StyleValue>({
-    type: "keyword",
-    value: "space-around",
-  });
-
-  const [intermediateValue, setIntermediateValue] = React.useState<
-    StyleValue | IntermediateStyleValue
-  >();
-
-  return (
-    <CssValueInput
-      styleSource="preset"
+    <CssValueInputVariant
+      label="Icons (align-items)"
+      initialValue={{ type: "keyword", value: "space-around" }}
       property="align-items"
-      value={value}
-      intermediateValue={intermediateValue}
-      getOptions={() => [
+      options={[
         { type: "keyword", value: "normal" },
         { type: "keyword", value: "start" },
         { type: "keyword", value: "end" },
@@ -80,121 +102,27 @@ export const WithIcons = () => {
         { type: "keyword", value: "space-around" },
         { type: "keyword", value: "space-between" },
       ]}
-      onChange={(newValue) => {
-        setIntermediateValue(newValue);
-      }}
-      onHighlight={(value) => {
-        action("onHighlight")(value);
-      }}
-      onChangeComplete={({ value }) => {
-        // on blur, select, enter etc.
-        setValue(value);
-        setIntermediateValue(undefined);
-        action("onChangeComplete")(value);
-      }}
-      onAbort={() => {
-        action("onAbort")();
-      }}
-      onReset={() => {
-        action("onReset")();
-      }}
     />
-  );
-};
-
-export const WithUnits = () => {
-  const [value, setValue] = React.useState<StyleValue>({
-    type: "unit",
-    value: 100,
-    unit: "px",
-  });
-
-  const [intermediateValue, setIntermediateValue] = React.useState<
-    StyleValue | IntermediateStyleValue
-  >();
-
-  return (
-    <Flex css={{ gap: theme.spacing[9] }}>
-      <CssValueInput
-        styleSource="preset"
-        property="row-gap"
-        value={value}
-        intermediateValue={intermediateValue}
-        getOptions={() => [
-          { type: "keyword", value: "auto" },
-          { type: "keyword", value: "min-content" },
-          { type: "keyword", value: "max-content" },
-          { type: "keyword", value: "fit-content" },
-        ]}
-        onChange={(newValue) => {
-          setIntermediateValue(newValue);
-        }}
-        onHighlight={(value) => {
-          action("onHighlight")(value);
-        }}
-        onChangeComplete={({ value }) => {
-          // on blur, select, enter etc.
-          setValue(value);
-          setIntermediateValue(undefined);
-          action("onChangeComplete")(value);
-        }}
-        onAbort={() => {
-          action("onAbort")();
-        }}
-        onReset={() => {
-          action("onReset")();
-        }}
-      />
-      <InputField
-        readOnly
-        value={
-          value
-            ? intermediateValue?.type === "intermediate"
-              ? intermediateValue.value + intermediateValue.unit
-              : toValue(value)
-            : ""
-        }
-      />
-    </Flex>
-  );
-};
-
-export const Oversized = () => {
-  const [value, setValue] = React.useState<StyleValue>({
-    type: "var",
-    value: "start-test-test-test-test-test-test-test-end",
-  });
-
-  const [intermediateValue, setIntermediateValue] = React.useState<
-    StyleValue | IntermediateStyleValue
-  >();
-
-  return (
-    <Flex css={{ width: 100 }}>
-      <CssValueInput
-        styleSource="preset"
-        property="align-items"
-        value={value}
-        intermediateValue={intermediateValue}
-        onChange={(newValue) => {
-          setIntermediateValue(newValue);
-        }}
-        onHighlight={(value) => {
-          action("onHighlight")(value);
-        }}
-        onChangeComplete={({ value }) => {
-          // on blur, select, enter etc.
-          setValue(value);
-          setIntermediateValue(undefined);
-          action("onChangeComplete")(value);
-        }}
-        onAbort={() => {
-          action("onAbort")();
-        }}
-        onReset={() => {
-          action("onReset")();
-        }}
-      />
-    </Flex>
-  );
-};
+    <CssValueInputVariant
+      label="Units (row-gap)"
+      initialValue={{ type: "unit", value: 100, unit: "px" }}
+      property="row-gap"
+      options={[
+        { type: "keyword", value: "auto" },
+        { type: "keyword", value: "min-content" },
+        { type: "keyword", value: "max-content" },
+        { type: "keyword", value: "fit-content" },
+      ]}
+      showOutput
+    />
+    <CssValueInputVariant
+      label="Oversized (100px container)"
+      initialValue={{
+        type: "var",
+        value: "start-test-test-test-test-test-test-test-end",
+      }}
+      property="align-items"
+      containerWidth={100}
+    />
+  </Flex>
+);

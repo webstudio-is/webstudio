@@ -45,7 +45,7 @@ const ToggleGroupButtons = () => {
   );
 };
 
-export const Demo = ({
+export const ToggleGroup = ({
   type = "single",
   color = "default",
   disabled = false,
@@ -134,13 +134,13 @@ export const Demo = ({
   </>
 );
 
-Demo.argTypes = {
+ToggleGroup.argTypes = {
   type: { control: "inline-radio", options: ["single", "multiple"] },
   color: { control: "inline-radio", options: toggleGroupColors },
   disabled: { control: "boolean" },
 };
 
-Demo.storyName = "Toggle Group";
+ToggleGroup.storyName = "Toggle Group";
 
 export default {
   title: "Toggle Group",

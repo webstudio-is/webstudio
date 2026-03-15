@@ -15,7 +15,7 @@ const iconsMap = {
 
 const states = [undefined, ...smallIconButtonStates];
 
-export const Demo = ({
+export const SmallIconButton = ({
   icon,
   ...rest
 }: Omit<ComponentProps<typeof SmallIconButton>, "icon"> & {
@@ -65,21 +65,21 @@ export const Demo = ({
   </>
 );
 
-Demo.argTypes = {
+SmallIconButton.argTypes = {
   icon: { control: "inline-radio", options: Object.keys(iconsMap) },
   variant: { control: "inline-radio", options: smallIconButtonVariants },
   state: { control: "inline-radio", options: states },
   focused: { control: "boolean" },
 };
 
-Demo.args = {
+SmallIconButton.args = {
   icon: "<EllipsesIcon>",
   variant: "normal",
   state: undefined,
   focused: false,
 };
 
-Demo.storyName = "Small Icon Button";
+SmallIconButton.storyName = "Small Icon Button";
 
 export default {
   title: "Small Icon Button",

@@ -1,4 +1,3 @@
-import type { StoryFn } from "@storybook/react";
 import { useState } from "react";
 import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
 import { ColorPicker, ColorPickerPopover } from "./color-picker";
@@ -17,50 +16,38 @@ const initialColor: RgbValue = {
   alpha: 1,
 };
 
-const formatValue = (value: StyleValue) => JSON.stringify(value);
-
-const createHandlers = (setValue: (value: StyleValue) => void) => {
-  const handleChange = (value?: StyleValue) => {
-    if (value !== undefined) {
-      setValue(value);
-    }
-  };
-
-  const handleChangeComplete = (value: StyleValue) => {
-    setValue(value);
-  };
-
-  return { handleChange, handleChangeComplete };
-};
-
-export const Inline: StoryFn<typeof ColorPicker> = () => {
-  const [value, setValue] = useState<StyleValue>(initialColor);
-  const { handleChange, handleChangeComplete } = createHandlers(setValue);
+export const ColorPicker = () => {
+  const [inlineValue, setInlineValue] = useState<StyleValue>(initialColor);
+  const [popoverValue, setPopoverValue] = useState<StyleValue>(initialColor);
 
   return (
-    <Flex direction="column" gap="4">
-      <ColorPicker
-        value={value}
-        onChange={handleChange}
-        onChangeComplete={handleChangeComplete}
-      />
-      <Text>{formatValue(value)}</Text>
-    </Flex>
-  );
-};
-
-export const WithPopover: StoryFn<typeof ColorPickerPopover> = () => {
-  const [value, setValue] = useState<StyleValue>(initialColor);
-  const { handleChange, handleChangeComplete } = createHandlers(setValue);
-
-  return (
-    <Flex direction="column" gap="4">
-      <ColorPickerPopover
-        value={value}
-        onChange={handleChange}
-        onChangeComplete={handleChangeComplete}
-      />
-      <Text>{formatValue(value)}</Text>
+    <Flex gap="9" align="start">
+      <Flex direction="column" gap="2">
+        <Text variant="labels">Inline</Text>
+        <ColorPicker
+          value={inlineValue}
+          onChange={(value) => {
+            if (value !== undefined) {
+              setInlineValue(value);
+            }
+          }}
+          onChangeComplete={setInlineValue}
+        />
+        <Text>{JSON.stringify(inlineValue)}</Text>
+      </Flex>
+      <Flex direction="column" gap="2">
+        <Text variant="labels">Popover</Text>
+        <ColorPickerPopover
+          value={popoverValue}
+          onChange={(value) => {
+            if (value !== undefined) {
+              setPopoverValue(value);
+            }
+          }}
+          onChangeComplete={setPopoverValue}
+        />
+        <Text>{JSON.stringify(popoverValue)}</Text>
+      </Flex>
     </Flex>
   );
 };

@@ -5,91 +5,62 @@ import {
 } from "./tooltip";
 import { Button } from "./button";
 import { Box } from "./box";
+import { Flex } from "./flex";
 import { InputField } from "./input-field";
-import { useState } from "react";
+import { Text } from "./text";
 
 export default {
   title: "Tooltip",
 };
 
-export const TooltipDelay = () => {
-  const [error, setError] = useState<string[]>([]);
-  return (
-    <TooltipProvider>
-      <TooltipDesign content="HELLO" delayDuration={1000}>
-        <Button>Hover me</Button>
-      </TooltipDesign>
+export const Tooltip = () => (
+  <TooltipProvider>
+    <Flex direction="column" gap="6" css={{ padding: 40 }}>
+      <Flex direction="column" gap="2">
+        <Text variant="labels">Tooltip</Text>
+        <Flex gap="3" align="center">
+          <TooltipDesign content="HELLO" open>
+            <Button>With tooltip</Button>
+          </TooltipDesign>
+          <TooltipDesign content={undefined}>
+            <Button>No tooltip content</Button>
+          </TooltipDesign>
+        </Flex>
+      </Flex>
 
-      <InputErrorsTooltip errors={error} side={"right"}>
-        <InputField
-          id="input"
-          placeholder="Input"
-          css={{
-            width: 200,
-          }}
-          onChange={(event) => {
-            setError(event.target.value !== "" ? ["Error"] : []);
-          }}
-        />
-      </InputErrorsTooltip>
+      <Flex direction="column" gap="2">
+        <Text variant="labels">Input errors tooltip</Text>
+        <InputErrorsTooltip errors={["Error"]} side="right" open>
+          <InputField
+            id="input"
+            placeholder="Input with error"
+            css={{ width: 200 }}
+          />
+        </InputErrorsTooltip>
+      </Flex>
 
-      <TooltipDesign content={undefined} delayDuration={1000}>
-        <Button>Hover me</Button>
-      </TooltipDesign>
-    </TooltipProvider>
-  );
-};
-
-export const Tooltip = () => {
-  return (
-    <TooltipProvider>
-      <Box>Some content</Box>
-      {/*
-      <InputErrorsTooltip errors={["Tooltip content"]}>
-        <Button>Hover me</Button>
-      </InputErrorsTooltip>
-  */}
-      <Box>Some content</Box>
-      <Box css={{ height: 100, width: 200, overflowY: "scroll" }}>
-        <Box css={{ height: 2000 }}>
-          <InputErrorsTooltip
-            errors={["Tooltip content"]}
-            side={"right"}
-            open={true}
-          >
-            <Button css={{ width: "100%", my: 10 }}>Hover me</Button>
-          </InputErrorsTooltip>
-          <br />
-          <br />
-          <InputErrorsTooltip
-            errors={["Tooltip content"]}
-            side={"right"}
-            open={true}
-          >
-            <Button css={{ width: "100%", my: 10 }}>Hover me</Button>
-          </InputErrorsTooltip>
-          <br />
-          <br />
-          <InputErrorsTooltip
-            errors={["Tooltip content"]}
-            side={"right"}
-            open={true}
-          >
-            <Button css={{ width: "100%", my: 10 }}>Hover me</Button>
-          </InputErrorsTooltip>
-          <br />
-          <br />
-          <InputErrorsTooltip
-            errors={["Tooltip content"]}
-            side={"right"}
-            open={true}
-          >
-            <Button css={{ width: "100%", my: 10 }}>Hover me</Button>
-          </InputErrorsTooltip>
-          <br />
-          <br />
+      <Flex direction="column" gap="2">
+        <Text variant="labels">Scrollable container with tooltips</Text>
+        <Box css={{ height: 100, width: 200, overflowY: "scroll" }}>
+          <Box css={{ height: 2000 }}>
+            <InputErrorsTooltip
+              errors={["Tooltip content"]}
+              side="right"
+              open={true}
+            >
+              <Button css={{ width: "100%", my: 10 }}>Tooltip 1</Button>
+            </InputErrorsTooltip>
+            <br />
+            <InputErrorsTooltip
+              errors={["Tooltip content"]}
+              side="right"
+              open={true}
+            >
+              <Button css={{ width: "100%", my: 10 }}>Tooltip 2</Button>
+            </InputErrorsTooltip>
+          </Box>
         </Box>
-      </Box>
-    </TooltipProvider>
-  );
-};
+      </Flex>
+    </Flex>
+  </TooltipProvider>
+);

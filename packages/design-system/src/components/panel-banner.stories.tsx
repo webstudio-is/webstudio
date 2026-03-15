@@ -15,7 +15,7 @@ export default {
   title: "Panel Banner",
 };
 
-export const Demo = () => {
+export const PanelBanner = () => {
   return (
     <>
       <StorySection title="Panel Banner - Info (default)">
@@ -85,4 +85,4 @@ export const Demo = () => {
   );
 };
 
-Demo.storyName = "Panel Banner";
+PanelBanner.storyName = "Panel Banner";

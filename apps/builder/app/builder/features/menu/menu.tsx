@@ -57,7 +57,7 @@ const ViewMenuItem = () => {
   );
 };
 
-export const Menu = () => {
+export const Menu = ({ defaultOpen }: { defaultOpen?: boolean } = {}) => {
   const userPlanFeatures = useStore($userPlanFeatures);
   const hasPaidPlan = userPlanFeatures.purchases.length > 0;
   const authPermit = useStore($authPermit);
@@ -81,7 +81,7 @@ export const Menu = () => {
   const cloneIsExternal = authToken !== undefined;
 
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu modal={false} defaultOpen={defaultOpen}>
       <MenuButton />
       <DropdownMenuContent sideOffset={4} collisionPadding={4} width="regular">
         <DropdownMenuItem

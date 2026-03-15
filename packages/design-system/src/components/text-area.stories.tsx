@@ -9,7 +9,7 @@ export default {
 const exampleValue =
   "This is an example value of a text area. It's long enough to show how it wraps.";
 
-export const Demo = () => {
+export const TextArea = () => {
   const [value, setValue] = useState(exampleValue);
 
   return (
@@ -88,4 +88,4 @@ export const Demo = () => {
     </>
   );
 };
-Demo.storyName = "Text Area";
+TextArea.storyName = "Text Area";

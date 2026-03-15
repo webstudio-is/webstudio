@@ -7,7 +7,7 @@ export default {
   title: "Nested Icon Label",
 };
 
-export const Demo = () => {
+export const NestedIconLabel = () => {
   return (
     <>
       <StorySection title="Default">
@@ -40,4 +40,4 @@ export const Demo = () => {
     </>
   );
 };
-Demo.storyName = "Nested Icon Label";
+NestedIconLabel.storyName = "Nested Icon Label";

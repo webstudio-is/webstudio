@@ -6,7 +6,7 @@ export default {
   title: "Nested Select Button",
 };
 
-export const Demo = () => {
+export const NestedSelectButton = () => {
   return (
     <>
       <StorySection title="Text">
@@ -45,4 +45,4 @@ export const Demo = () => {
   );
 };
 
-Demo.storyName = "Nested Select Button";
+NestedSelectButton.storyName = "Nested Select Button";

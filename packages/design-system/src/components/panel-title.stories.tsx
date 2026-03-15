@@ -7,7 +7,7 @@ export default {
   title: "Panel Title",
 };
 
-export const Demo = () => (
+export const PanelTitle = () => (
   <StoryGrid>
     <PanelTitle>Without buttons</PanelTitle>
 
@@ -40,4 +40,4 @@ export const Demo = () => (
     </PanelTitle>
   </StoryGrid>
 );
-Demo.storyName = "Panel Title";
+PanelTitle.storyName = "Panel Title";

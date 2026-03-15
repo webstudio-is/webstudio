@@ -1,4 +1,5 @@
-import type { StoryFn } from "@storybook/react";
+import { Flex } from "./flex";
+import { Text } from "./text";
 import { SearchField } from "./search-field";
 
 export default {
@@ -6,10 +7,11 @@ export default {
   component: SearchField,
 };
 
-export const Empty: StoryFn<typeof SearchField> = () => {
-  return <SearchField />;
-};
-
-export const WithInitialValue: StoryFn<typeof SearchField> = () => {
-  return <SearchField value={"somevalue"} title="Search" />;
-};
+export const SearchField = () => (
+  <Flex direction="column" gap="3" css={{ width: 240 }}>
+    <Text variant="labels">Empty</Text>
+    <SearchField />
+    <Text variant="labels">With value</Text>
+    <SearchField value="somevalue" title="Search" />
+  </Flex>
+);

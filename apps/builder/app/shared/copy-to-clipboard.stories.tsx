@@ -1,4 +1,4 @@
-import { Button } from "@webstudio-is/design-system";
+import { Button, Flex } from "@webstudio-is/design-system";
 import { CopyToClipboard } from "./copy-to-clipboard";
 
 export default {
@@ -6,18 +6,17 @@ export default {
   component: CopyToClipboard,
 };
 
-export const Basic = () => (
-  <CopyToClipboard text="Hello, world!">
-    <Button>Click to copy</Button>
-  </CopyToClipboard>
-);
-
-export const CustomLabels = () => (
-  <CopyToClipboard
-    text="some-secret-token-123"
-    copyText="Copy token"
-    copiedText="Token copied!"
-  >
-    <Button>Copy token</Button>
-  </CopyToClipboard>
+export const CopyToClipboard = () => (
+  <Flex gap="3">
+    <CopyToClipboard text="Hello, world!">
+      <Button>Click to copy</Button>
+    </CopyToClipboard>
+    <CopyToClipboard
+      text="some-secret-token-123"
+      copyText="Copy token"
+      copiedText="Token copied!"
+    >
+      <Button>Copy token</Button>
+    </CopyToClipboard>
+  </Flex>
 );

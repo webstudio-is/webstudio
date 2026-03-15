@@ -1,4 +1,4 @@
-import { Flex, Text } from "@webstudio-is/design-system";
+import { Flex } from "@webstudio-is/design-system";
 import {
   DeletePageConfirmationDialog,
   DeleteFolderConfirmationDialog,
@@ -8,31 +8,30 @@ export default {
   title: "Builder/Pages/Confirmation Dialogs",
 };
 
-export const DeletePage = () => (
-  <DeletePageConfirmationDialog
-    page={{
-      id: "page-1",
-      name: "About us",
-      path: "/about",
-      title: "About Us",
-      rootInstanceId: "root-1",
-      systemDataSourceId: "ds-1",
-      meta: {},
-    }}
-    onClose={() => {}}
-    onConfirm={() => {}}
-  />
-);
-
-export const DeleteFolder = () => (
-  <DeleteFolderConfirmationDialog
-    folder={{
-      id: "folder-1",
-      name: "Marketing",
-      slug: "marketing",
-      children: [],
-    }}
-    onClose={() => {}}
-    onConfirm={() => {}}
-  />
+export const ConfirmationDialogs = () => (
+  <Flex direction="column" gap="5">
+    <DeletePageConfirmationDialog
+      page={{
+        id: "page-1",
+        name: "About us",
+        path: "/about",
+        title: "About Us",
+        rootInstanceId: "root-1",
+        systemDataSourceId: "ds-1",
+        meta: {},
+      }}
+      onClose={() => {}}
+      onConfirm={() => {}}
+    />
+    <DeleteFolderConfirmationDialog
+      folder={{
+        id: "folder-1",
+        name: "Marketing",
+        slug: "marketing",
+        children: [],
+      }}
+      onClose={() => {}}
+      onConfirm={() => {}}
+    />
+  </Flex>
 );

@@ -73,47 +73,45 @@ const SafeModeIndicator = () => (
   </ToolbarButton>
 );
 
-export const Default = () => (
-  <TopbarLayout
-    menu={<MenuPlaceholder />}
-    left={<PagePlaceholder />}
-    center={<BreakpointsPlaceholder />}
-    right={
-      <>
-        <Button color="gradient">Share</Button>
-        <Button color="positive">Publish</Button>
-      </>
-    }
-  />
+export const Demo = () => (
+  <Flex direction="column" gap="5">
+    <TopbarLayout
+      menu={<MenuPlaceholder />}
+      left={<PagePlaceholder />}
+      center={<BreakpointsPlaceholder />}
+      right={
+        <>
+          <Button color="gradient">Share</Button>
+          <Button color="positive">Publish</Button>
+        </>
+      }
+    />
+    <TopbarLayout
+      menu={<MenuPlaceholder />}
+      left={<PagePlaceholder />}
+      center={<BreakpointsPlaceholder />}
+      right={
+        <>
+          <SafeModeIndicator />
+          <ViewModeIndicator />
+          <SyncErrorIndicator />
+          <Button color="gradient">Share</Button>
+          <Button color="positive">Publish</Button>
+          <Link
+            data-state="auto"
+            className={buttonStyle({ color: "positive" })}
+            color="contrast"
+            href="#"
+            underline="none"
+          >
+            Clone
+          </Link>
+        </>
+      }
+    />
+    <TopbarLayout menu={<MenuPlaceholder />} />
+  </Flex>
 );
-
-export const AllIndicators = () => (
-  <TopbarLayout
-    menu={<MenuPlaceholder />}
-    left={<PagePlaceholder />}
-    center={<BreakpointsPlaceholder />}
-    right={
-      <>
-        <SafeModeIndicator />
-        <ViewModeIndicator />
-        <SyncErrorIndicator />
-        <Button color="gradient">Share</Button>
-        <Button color="positive">Publish</Button>
-        <Link
-          data-state="auto"
-          className={buttonStyle({ color: "positive" })}
-          color="contrast"
-          href="#"
-          underline="none"
-        >
-          Clone
-        </Link>
-      </>
-    }
-  />
-);
-
-export const Empty = () => <TopbarLayout menu={<MenuPlaceholder />} />;
 
 export const WithSyncStatusFailed = () => {
   $queueStatus.set({ status: "failed" });

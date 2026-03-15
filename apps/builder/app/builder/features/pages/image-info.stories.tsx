@@ -33,7 +33,7 @@ const squareAsset: ImageAsset = {
   type: "image",
 };
 
-export const Demo = () => (
+export const ImageInfo = () => (
   <Flex direction="column" gap="5" css={{ width: 400 }}>
     <Text variant="labels">Landscape image</Text>
     <ImageInfo asset={mockAsset} onDelete={() => {}} />

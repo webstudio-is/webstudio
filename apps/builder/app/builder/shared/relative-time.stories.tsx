@@ -6,7 +6,7 @@ export default {
   component: RelativeTime,
 };
 
-export const Demo = () => {
+export const RelativeTime = () => {
   const now = Date.now();
   const times = [
     { label: "Just now", date: new Date(now - 10_000) },

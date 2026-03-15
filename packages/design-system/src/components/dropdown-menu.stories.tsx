@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box } from "./box";
+import { Flex } from "./flex";
 import { Button } from "./button";
 import {
   DropdownMenu,
@@ -14,13 +14,14 @@ export default {
   title: "Dropdown Menu",
 };
 
-export const Basic = () => {
-  const [open, setOpen] = useState(true);
+export const DropdownMenu = () => {
+  const [bold, setBold] = useState(true);
+  const [italic, setItalic] = useState(false);
   return (
-    <Box css={{ padding: 100 }}>
-      <DropdownMenu open={open} onOpenChange={setOpen}>
+    <Flex gap="9" css={{ padding: 100 }}>
+      <DropdownMenu open>
         <DropdownMenuTrigger asChild>
-          <Button>Open menu</Button>
+          <Button>Items</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuItem>New file</DropdownMenuItem>
@@ -30,19 +31,10 @@ export const Basic = () => {
           <DropdownMenuItem disabled>Disabled item</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </Box>
-  );
-};
 
-export const WithCheckboxItems = () => {
-  const [bold, setBold] = useState(true);
-  const [italic, setItalic] = useState(false);
-  const [open, setOpen] = useState(true);
-  return (
-    <Box css={{ padding: 100 }}>
-      <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenu open>
         <DropdownMenuTrigger asChild>
-          <Button>Text formatting</Button>
+          <Button>Checkboxes</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuCheckboxItem checked={bold} onCheckedChange={setBold}>
@@ -56,6 +48,6 @@ export const WithCheckboxItems = () => {
           </DropdownMenuCheckboxItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </Box>
+    </Flex>
   );
 };

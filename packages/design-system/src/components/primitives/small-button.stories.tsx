@@ -15,7 +15,7 @@ const icons = [
   { icon: <PlusIcon />, label: "PlusIcon" },
 ];
 
-export const Demo = () => (
+export const SmallButton = () => (
   <Grid columns={4} gap="3" align="center" css={{ width: 400 }}>
     <Text variant="labels">Variant</Text>
     {icons.map(({ label }) => (

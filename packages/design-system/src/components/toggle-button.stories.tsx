@@ -11,7 +11,7 @@ const toggleButtonVariants = [
   "remote",
 ] as const;
 
-export const Demo = ({
+export const ToggleButton = ({
   variant,
   disabled,
 }: ComponentProps<typeof ToggleButton>) => (
@@ -52,17 +52,17 @@ export const Demo = ({
   </>
 );
 
-Demo.argTypes = {
+ToggleButton.argTypes = {
   variant: { control: "inline-radio", options: toggleButtonVariants },
   disabled: { control: "boolean" },
 };
 
-Demo.args = {
+ToggleButton.args = {
   variant: "default",
   disabled: false,
 };
 
-Demo.storyName = "Toggle Button";
+ToggleButton.storyName = "Toggle Button";
 
 export default {
   title: "Toggle Button",

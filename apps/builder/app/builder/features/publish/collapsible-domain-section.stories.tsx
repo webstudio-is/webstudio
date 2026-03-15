@@ -12,7 +12,7 @@ export default {
   component: CollapsibleDomainSection,
 };
 
-export const Demo = () => (
+export const CollapsibleDomainSection = () => (
   <Flex direction="column" gap="3" css={{ width: 320 }}>
     <CollapsibleDomainSection
       title="example.com"

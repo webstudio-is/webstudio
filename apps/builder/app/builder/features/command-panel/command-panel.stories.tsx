@@ -60,29 +60,7 @@ $awareness.set({ pageId: pages.homePage.id });
 
 export const CommandPanel: StoryFn = () => {
   useEffect(() => {
-    const controller = new AbortController();
-    addEventListener(
-      "keydown",
-      (event) => {
-        if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-          openCommandPanel();
-        }
-      },
-      { signal: controller.signal }
-    );
-    return () => {
-      controller.abort();
-    };
+    openCommandPanel();
   }, []);
-  return (
-    <>
-      <button onClick={openCommandPanel}>Open command panel</button>
-      <br />
-      <input
-        defaultValue="Press meta+k to open command panel"
-        style={{ width: 300 }}
-      />
-      <CommandPanelComponent />
-    </>
-  );
+  return <CommandPanelComponent />;
 };

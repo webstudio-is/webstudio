@@ -10,7 +10,7 @@ export default {
   },
 };
 
-export const Demo = () => {
+export const Radio = () => {
   return (
     <>
       <StorySection title="Enabled">
@@ -56,4 +56,4 @@ export const Demo = () => {
     </>
   );
 };
-Demo.storyName = "Radio";
+Radio.storyName = "Radio";

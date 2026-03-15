@@ -13,7 +13,7 @@ const iconLabel = (
   </NestedIconLabel>
 );
 
-export const Demo = () => {
+export const SelectButton = () => {
   return (
     <>
       <StorySection title="Closed">
@@ -91,4 +91,4 @@ export const Demo = () => {
     </>
   );
 };
-Demo.storyName = "Select Button";
+SelectButton.storyName = "Select Button";

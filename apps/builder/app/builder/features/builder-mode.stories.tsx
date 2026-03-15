@@ -1,3 +1,4 @@
+import { Toolbar } from "@webstudio-is/design-system";
 import { BuilderModeDropDown } from "./builder-mode";
 import {
   $builderMode,
@@ -18,7 +19,11 @@ export const DesignMode = () => {
     ...$userPlanFeatures.get(),
     allowContentMode: true,
   });
-  return <BuilderModeDropDown />;
+  return (
+    <Toolbar>
+      <BuilderModeDropDown />
+    </Toolbar>
+  );
 };
 
 export const ContentMode = () => {
@@ -29,14 +34,22 @@ export const ContentMode = () => {
     ...$userPlanFeatures.get(),
     allowContentMode: true,
   });
-  return <BuilderModeDropDown />;
+  return (
+    <Toolbar>
+      <BuilderModeDropDown />
+    </Toolbar>
+  );
 };
 
 export const PreviewMode = () => {
   $builderMode.set("preview");
   $authPermit.set("own");
   $authToken.set(undefined);
-  return <BuilderModeDropDown />;
+  return (
+    <Toolbar>
+      <BuilderModeDropDown />
+    </Toolbar>
+  );
 };
 
 export const ContentModeOnly = () => {
@@ -47,5 +60,9 @@ export const ContentModeOnly = () => {
     ...$userPlanFeatures.get(),
     allowContentMode: true,
   });
-  return <BuilderModeDropDown />;
+  return (
+    <Toolbar>
+      <BuilderModeDropDown />
+    </Toolbar>
+  );
 };

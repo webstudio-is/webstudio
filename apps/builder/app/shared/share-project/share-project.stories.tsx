@@ -1,6 +1,6 @@
-import type { StoryFn } from "@storybook/react";
 import {
   Button,
+  Flex,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -44,24 +44,24 @@ const initialLinks: Array<LinkOptions> = [
 const INITIAL_LINKS: LinkOptions[] = [];
 
 const useShareProject = (
-  initialLinks: Array<LinkOptions> = INITIAL_LINKS,
+  links: Array<LinkOptions> = INITIAL_LINKS,
   async = false
 ) => {
-  const [links, setLinks] = useState(async ? [] : initialLinks);
+  const [currentLinks, setLinks] = useState(async ? [] : links);
 
   const onChange = (updatedLink: LinkOptions) => {
     setLinks(
-      links.map((link) =>
+      currentLinks.map((link) =>
         link.token === updatedLink.token ? updatedLink : link
       )
     );
   };
   const onDelete = (deletedLink: LinkOptions) => {
-    setLinks(links.filter((link) => link.token !== deletedLink.token));
+    setLinks(currentLinks.filter((link) => link.token !== deletedLink.token));
   };
   const onCreate = () => {
     setLinks([
-      ...links,
+      ...currentLinks,
       {
         token: nanoid(),
         name: "Custom Link",
@@ -76,79 +76,50 @@ const useShareProject = (
   useEffect(() => {
     if (async) {
       setTimeout(() => {
-        setLinks(initialLinks);
+        setLinks(links);
       }, 1000);
       return;
     }
 
-    setLinks(initialLinks);
-  }, [async, initialLinks]);
+    setLinks(links);
+  }, [async, links]);
 
-  return { links, onChange, onDelete, onCreate };
+  return { links: currentLinks, onChange, onDelete, onCreate };
 };
 
-export const Empty: StoryFn<typeof ShareProject> = () => {
-  const props = useShareProject();
+const builderUrl = ({ authToken, mode }: { authToken: string; mode: string }) =>
+  `https://blabla.com/${authToken}/${mode}`;
+
+const ShareProjectPopover = ({
+  label,
+  linkOptions,
+  async,
+}: {
+  label: string;
+  linkOptions?: Array<LinkOptions>;
+  async?: boolean;
+}) => {
+  const props = useShareProject(linkOptions, async);
   return (
     <Popover modal open>
       <PopoverTrigger asChild>
-        <Button>Share</Button>
+        <Button>{label}</Button>
       </PopoverTrigger>
-
       <PopoverContent>
         <ShareProject
           {...props}
           allowAdditionalPermissions={false}
           isPending={false}
-          builderUrl={({ authToken, mode }) =>
-            `https://blabla.com/${authToken}/${mode}`
-          }
-        ></ShareProject>
+          builderUrl={builderUrl}
+        />
       </PopoverContent>
     </Popover>
   );
 };
 
-export const WithLinks: StoryFn<typeof ShareProject> = () => {
-  const props = useShareProject(initialLinks);
-  return (
-    <Popover modal open>
-      <PopoverTrigger asChild>
-        <Button>Share</Button>
-      </PopoverTrigger>
-
-      <PopoverContent>
-        <ShareProject
-          {...props}
-          allowAdditionalPermissions={false}
-          isPending={false}
-          builderUrl={({ authToken, mode }) =>
-            `https://blabla.com/${authToken}/${mode}`
-          }
-        ></ShareProject>
-      </PopoverContent>
-    </Popover>
-  );
-};
-
-export const WithAsyncLinks: StoryFn<typeof ShareProject> = () => {
-  const props = useShareProject(initialLinks, true);
-  return (
-    <Popover modal open>
-      <PopoverTrigger asChild>
-        <Button>Share</Button>
-      </PopoverTrigger>
-
-      <PopoverContent>
-        <ShareProject
-          {...props}
-          allowAdditionalPermissions={false}
-          isPending={false}
-          builderUrl={({ authToken, mode }) =>
-            `https://blabla.com/${authToken}/${mode}`
-          }
-        ></ShareProject>
-      </PopoverContent>
-    </Popover>
-  );
-};
+export const ShareProject = () => (
+  <Flex gap="9" css={{ padding: 100 }}>
+    <ShareProjectPopover label="Empty" />
+    <ShareProjectPopover label="With Links" linkOptions={initialLinks} />
+  </Flex>
+);

@@ -1,4 +1,4 @@
-import { Flex } from "@webstudio-is/design-system";
+import { Dialog, DialogContent, Flex } from "@webstudio-is/design-system";
 import { About } from "./about";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 
@@ -33,10 +33,12 @@ const minimalItem: MarketplaceOverviewItem = {
   description: "A simple page template with minimal styling.",
 };
 
-export const Demo = () => (
+export const About = () => (
   <Flex direction="column" gap="5" css={{ width: 320 }}>
-    <About item={sampleItem} />
-    <About item={minimalItem} />
-    <About item={undefined} />
+    <Dialog open>
+      <DialogContent>
+        <About item={sampleItem} />
+      </DialogContent>
+    </Dialog>
   </Flex>
 );
