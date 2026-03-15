@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Flex, InputField, Text } from "@webstudio-is/design-system";
+import { Flex, InputField, Text, theme } from "@webstudio-is/design-system";
 import type { StyleValue, CssProperty } from "@webstudio-is/css-engine";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
 import { action } from "@storybook/addon-actions";
@@ -76,7 +76,7 @@ const CssValueInputVariant = ({
 };
 
 export const CSSValueInput = () => (
-  <Flex direction="column" gap="5" css={{ maxWidth: 300 }}>
+  <Flex direction="column" gap="5" css={{ maxWidth: theme.sizes.sidebarWidth }}>
     <CssValueInputVariant
       label="Keywords (width)"
       initialValue={{ type: "keyword", value: "auto" }}

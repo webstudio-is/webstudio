@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { useState } from "react";
-import { Flex, Text } from "@webstudio-is/design-system";
+import { Flex, Text, theme } from "@webstudio-is/design-system";
 import {
   type ItemSelector,
   type ItemSource,
@@ -98,12 +98,16 @@ export const StyleSourceInput = () => {
   ]);
 
   return (
-    <Flex direction="column" gap="5" css={{ maxWidth: 400 }}>
+    <Flex
+      direction="column"
+      gap="5"
+      css={{ maxWidth: theme.sizes.sidebarWidth }}
+    >
       <Flex direction="column" gap="1">
         <Text variant="labels">Complete (with editing & disabling)</Text>
         <StyleSourceInputComponent
           inputRef={() => {}}
-          css={{ width: 300 }}
+          css={{ width: theme.sizes.sidebarWidth }}
           items={getItems()}
           value={value}
           selectedItemSelector={selectedItemSelector}
@@ -147,7 +151,7 @@ export const StyleSourceInput = () => {
         <Text variant="labels">Truncated item</Text>
         <StyleSourceInputComponent
           inputRef={() => {}}
-          css={{ width: 300 }}
+          css={{ width: theme.sizes.sidebarWidth }}
           items={getItems()}
           value={truncated}
           selectedItemSelector={{ styleSourceId: truncatedId }}

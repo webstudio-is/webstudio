@@ -1,10 +1,10 @@
-import { BreakpointsSelector } from "./breakpoints-selector";
+import { BreakpointsSelector as BreakpointsSelectorComponent } from "./breakpoints-selector";
 
-export const Basic = () => {
-  return <BreakpointsSelector />;
+export const BreakpointsSelector = () => {
+  return <BreakpointsSelectorComponent />;
 };
 
 export default {
   title: "Breakpoints Selector",
-  component: Basic,
+  component: BreakpointsSelector,
 };

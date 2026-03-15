@@ -12,7 +12,13 @@ const meta = {
   },
   decorators: [
     (Story) => (
-      <div style={{ background: theme.colors.backgroundPanel, padding: 16 }}>
+      <div
+        style={{
+          background: theme.colors.backgroundPanel,
+          padding: 16,
+          maxWidth: theme.sizes.sidebarWidth,
+        }}
+      >
         <Story />
       </div>
     ),

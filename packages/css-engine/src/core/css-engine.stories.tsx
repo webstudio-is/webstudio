@@ -8,7 +8,7 @@ export default {
 const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId = "0";
 
-export const Basic = () => {
+export const CSSEngine = () => {
   const sheet = createRegularStyleSheet();
   sheet.addMediaRule(mediaId, mediaRuleOptions0);
   const rule = sheet.addNestingRule(".test");

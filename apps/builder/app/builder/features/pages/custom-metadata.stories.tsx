@@ -1,13 +1,13 @@
 import { Box } from "@webstudio-is/design-system";
-import { CustomMetadata } from "./custom-metadata";
+import { CustomMetadata as CustomMetadataComponent } from "./custom-metadata";
 import { useState } from "react";
 
 export default {
-  component: CustomMetadata,
+  component: CustomMetadataComponent,
   title: "Pages/Custom Metadata",
 };
 
-export const Basic = () => {
+export const CustomMetadata = () => {
   const [customMetas, setCustomMetas] = useState([
     {
       property: "og:title",
@@ -17,7 +17,10 @@ export const Basic = () => {
 
   return (
     <Box css={{ width: 448, margin: 20 }}>
-      <CustomMetadata customMetas={customMetas} onChange={setCustomMetas} />
+      <CustomMetadataComponent
+        customMetas={customMetas}
+        onChange={setCustomMetas}
+      />
     </Box>
   );
 };

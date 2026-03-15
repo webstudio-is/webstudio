@@ -1,5 +1,5 @@
 import { $pages } from "~/shared/nano-states/pages";
-import { PageSettings } from "./page-settings";
+import { PageSettings as PageSettingsComponent } from "./page-settings";
 import {
   Grid,
   theme,
@@ -12,7 +12,7 @@ import { isRootFolder } from "@webstudio-is/sdk";
 
 export default {
   title: "Pages/Page Settings",
-  component: PageSettings,
+  component: PageSettingsComponent,
   parameters: {
     lostpixel: {
       // this is to fix cutting off the after scroll area in the screenshot
@@ -86,7 +86,7 @@ $project.set({
   domainsVirtual: [],
 });
 
-export const PageSettingsEdit = () => {
+export const PageSettings = () => {
   return (
     <Dialog open>
       <DialogContent>
@@ -100,7 +100,7 @@ export const PageSettingsEdit = () => {
             borderRadius: theme.borderRadius[4],
           }}
         >
-          <PageSettings
+          <PageSettingsComponent
             onClose={() => {}}
             onDuplicate={() => {}}
             onDelete={() => {}}

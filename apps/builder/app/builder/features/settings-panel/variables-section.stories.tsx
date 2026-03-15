@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Box } from "@webstudio-is/design-system";
+import { Box, theme } from "@webstudio-is/design-system";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $pages, $instances } from "~/shared/sync/data-stores";
 import { $userPlanFeatures } from "~/shared/nano-states";
@@ -28,7 +28,7 @@ $awareness.set({ pageId: "home", instanceSelector: ["box"] });
 
 export const VariablesSection: StoryObj = {
   render: () => (
-    <Box css={{ paddingLeft: 280 }}>
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
       <VariablesSectionComponent />
     </Box>
   ),

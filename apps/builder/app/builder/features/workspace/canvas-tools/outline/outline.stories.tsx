@@ -1,12 +1,12 @@
 import { Box, Flex, Grid } from "@webstudio-is/design-system";
-import { Outline } from "./outline";
+import { Outline as OutlineComponent } from "./outline";
 
 export default {
   title: "Canvas Tools/Outline",
-  component: Outline,
+  component: OutlineComponent,
 };
 
-export const Basic = () => (
+export const Outline = () => (
   <Grid gap={3} columns={2} css={{ margin: 16 }}>
     <Grid
       align="center"
@@ -16,7 +16,7 @@ export const Basic = () => (
       <Box css={{ width: "min-content", textAlign: "center" }}>
         Selected outline
       </Box>
-      <Outline
+      <OutlineComponent
         rect={new DOMRect(0, 0, 150, 150)}
         clampingRect={new DOMRect(0, 0, 150, 150)}
       />
@@ -30,7 +30,7 @@ export const Basic = () => (
       <Box css={{ width: "min-content", textAlign: "center" }}>
         Collaboration outline
       </Box>
-      <Outline
+      <OutlineComponent
         rect={new DOMRect(0, 0, 150, 150)}
         clampingRect={new DOMRect(0, 0, 150, 150)}
         variant="collaboration"
@@ -45,11 +45,11 @@ export const Basic = () => (
       <Box css={{ width: "min-content", textAlign: "center" }}>
         Collaboration outline over Selected
       </Box>
-      <Outline
+      <OutlineComponent
         rect={new DOMRect(0, 0, 150, 150)}
         clampingRect={new DOMRect(0, 0, 150, 150)}
       />
-      <Outline
+      <OutlineComponent
         rect={new DOMRect(0, 0, 150, 150)}
         clampingRect={new DOMRect(0, 0, 150, 150)}
         variant="collaboration"
@@ -64,12 +64,12 @@ export const Basic = () => (
       <Box css={{ width: "min-content", textAlign: "center" }}>
         Selected outline over Collaboration
       </Box>
-      <Outline
+      <OutlineComponent
         rect={new DOMRect(0, 0, 150, 150)}
         clampingRect={new DOMRect(0, 0, 150, 150)}
         variant="collaboration"
       />
-      <Outline
+      <OutlineComponent
         rect={new DOMRect(0, 0, 150, 150)}
         clampingRect={new DOMRect(0, 0, 150, 150)}
       />
@@ -83,7 +83,7 @@ export const Basic = () => (
       <Box css={{ width: "min-content", textAlign: "center" }}>
         Clamped left
       </Box>
-      <Outline
+      <OutlineComponent
         rect={new DOMRect(-10, 0, 150, 150)}
         clampingRect={new DOMRect(0, 0, 150, 150)}
       />
@@ -97,7 +97,7 @@ export const Basic = () => (
       <Box css={{ width: "min-content", textAlign: "center" }}>
         Clamped right
       </Box>
-      <Outline
+      <OutlineComponent
         rect={new DOMRect(0, 0, 160, 150)}
         clampingRect={new DOMRect(0, 0, 150, 150)}
       />
@@ -111,7 +111,7 @@ export const Basic = () => (
       <Box css={{ width: "min-content", textAlign: "center" }}>
         Clamped left-right
       </Box>
-      <Outline
+      <OutlineComponent
         rect={new DOMRect(-10, 0, 170, 150)}
         clampingRect={new DOMRect(0, 0, 150, 150)}
       />

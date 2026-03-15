@@ -37,7 +37,7 @@ export const Controls = () => (
   <Flex
     direction="column"
     gap="5"
-    css={{ width: 280, padding: theme.spacing[5] }}
+    css={{ width: theme.sizes.sidebarWidth, padding: theme.spacing[5] }}
   >
     <Section label="Boolean">
       <BooleanControl

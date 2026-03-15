@@ -1,83 +1,83 @@
 import type { StoryFn } from "@storybook/react";
 import { XIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
-import { IconButton } from "./icon-button";
+import { IconButton as IconButtonComponent } from "./icon-button";
 
 export default {
   title: "Icon Button",
-  component: IconButton,
+  component: IconButtonComponent,
 };
 
-export const Default: StoryFn<typeof IconButton> = () => {
+export const IconButton: StoryFn<typeof IconButtonComponent> = () => {
   return (
     <Flex direction="column" gap={2}>
       <Flex gap={2}>
-        <IconButton>
+        <IconButtonComponent>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="preset">
+        </IconButtonComponent>
+        <IconButtonComponent variant="preset">
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="local">
+        </IconButtonComponent>
+        <IconButtonComponent variant="local">
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="overwritten">
+        </IconButtonComponent>
+        <IconButtonComponent variant="overwritten">
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="remote">
+        </IconButtonComponent>
+        <IconButtonComponent variant="remote">
           <XIcon fill="currentColor" />
-        </IconButton>
+        </IconButtonComponent>
       </Flex>
       <Flex gap={2}>
-        <IconButton disabled={true}>
+        <IconButtonComponent disabled={true}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="preset" disabled={true}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="preset" disabled={true}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="local" disabled={true}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="local" disabled={true}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="overwritten" disabled={true}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="overwritten" disabled={true}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="remote" disabled={true}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="remote" disabled={true}>
           <XIcon fill="currentColor" />
-        </IconButton>
+        </IconButtonComponent>
       </Flex>
       <Flex gap={2}>
-        <IconButton data-state={"open"}>
+        <IconButtonComponent data-state={"open"}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="preset" data-state={"open"}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="preset" data-state={"open"}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="local" data-state={"open"}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="local" data-state={"open"}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="overwritten" data-state={"open"}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="overwritten" data-state={"open"}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="remote" data-state={"open"}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="remote" data-state={"open"}>
           <XIcon fill="currentColor" />
-        </IconButton>
+        </IconButtonComponent>
       </Flex>
       <Flex gap={2}>
-        <IconButton data-focused={true}>
+        <IconButtonComponent data-focused={true}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="preset" data-focused={true}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="preset" data-focused={true}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="local" data-focused={true}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="local" data-focused={true}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="overwritten" data-focused={true}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="overwritten" data-focused={true}>
           <XIcon fill="currentColor" />
-        </IconButton>
-        <IconButton variant="remote" data-focused={true}>
+        </IconButtonComponent>
+        <IconButtonComponent variant="remote" data-focused={true}>
           <XIcon fill="currentColor" />
-        </IconButton>
+        </IconButtonComponent>
       </Flex>
     </Flex>
   );

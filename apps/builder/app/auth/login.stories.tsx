@@ -1,11 +1,11 @@
 import type { JSX } from "react";
 import type { StoryFn } from "@storybook/react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { Login } from "./login";
+import { Login as LoginComponent } from "./login";
 
 export default {
   title: "Auth/Login",
-  component: Login,
+  component: LoginComponent,
 };
 
 const createRouter = (element: JSX.Element) =>
@@ -17,9 +17,9 @@ const createRouter = (element: JSX.Element) =>
     },
   ]);
 
-export const Basic: StoryFn<typeof Login> = () => {
+export const Login: StoryFn<typeof LoginComponent> = () => {
   const router = createRouter(
-    <Login isGoogleEnabled={false} isSecretLoginEnabled />
+    <LoginComponent isGoogleEnabled={false} isSecretLoginEnabled />
   );
   return <RouterProvider router={router} />;
 };

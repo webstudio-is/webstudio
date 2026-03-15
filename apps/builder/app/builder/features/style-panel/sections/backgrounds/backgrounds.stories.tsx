@@ -8,7 +8,7 @@ import {
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import { Section } from "./backgrounds";
+import { Section as SectionComponent } from "./backgrounds";
 import { $awareness } from "~/shared/awareness";
 
 const backgroundImage: StyleDecl = {
@@ -51,13 +51,13 @@ $awareness.set({
   instanceSelector: ["box"],
 });
 
-export const Backgrounds = () => (
+export const Section = () => (
   <Box css={{ width: theme.sizes.sidebarWidth }}>
-    <Section />
+    <SectionComponent />
   </Box>
 );
 
 export default {
   title: "Style Panel/Backgrounds/Section",
-  component: Section,
+  component: SectionComponent,
 };

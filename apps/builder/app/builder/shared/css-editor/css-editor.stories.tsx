@@ -1,7 +1,7 @@
 import { CssEditor as CssEditorComponent } from "./css-editor";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
-export const CssEditor = () => {
+export const CSSEditor = () => {
   const declarations = [
     [
       "background-image",
@@ -36,5 +36,5 @@ export const CssEditor = () => {
 
 export default {
   title: "Style Panel/CSS Editor",
-  component: CssEditor,
+  component: CSSEditor,
 };

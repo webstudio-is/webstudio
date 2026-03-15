@@ -84,7 +84,7 @@ const ListItem = (props: {
   );
 };
 
-export const Declarative = (props: {
+export const CSSValueListItem = (props: {
   hidden: boolean;
   focused: boolean;
   labelColor: "default";
@@ -237,4 +237,3 @@ export const Declarative = (props: {
     </Panel>
   );
 };
-Declarative.storyName = "CSS Value List Item";

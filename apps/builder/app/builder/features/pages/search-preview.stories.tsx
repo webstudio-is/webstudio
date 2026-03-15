@@ -1,9 +1,9 @@
 import { Box } from "@webstudio-is/design-system";
-import { SearchPreview } from "./search-preview";
+import { SearchPreview as SearchPreviewComponent } from "./search-preview";
 
 export default {
   title: "Pages/Search Preview",
-  component: SearchPreview,
+  component: SearchPreviewComponent,
 };
 
 const faviconDataUrl = `data:image/svg+xml,${encodeURIComponent(
@@ -14,9 +14,9 @@ const faviconDataUrl = `data:image/svg+xml,${encodeURIComponent(
   </svg>`
 )}`;
 
-export const Basic = () => (
+export const SearchPreview = () => (
   <Box css={{ width: 600, margin: 20 }}>
-    <SearchPreview
+    <SearchPreviewComponent
       pageUrl="https://webstudio.is/blog-webstudios-architecture-an-overview"
       titleLink="Blog: Webstudio's Architecture - an overview"
       siteName="Webstudio"

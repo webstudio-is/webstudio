@@ -1,6 +1,7 @@
 import type { Meta } from "@storybook/react";
 import { type ComponentProps, useState } from "react";
 import { parseCssValue } from "@webstudio-is/css-data";
+import { Box, theme } from "@webstudio-is/design-system";
 import { SpaceLayout } from "../space/layout";
 import { ValueText as ValueTextComponent } from "./value-text";
 
@@ -9,11 +10,13 @@ export const ValueText = (
 ) => {
   const [_hovered, setHovered] = useState<{ property: string }>();
   return (
-    <SpaceLayout
-      onHover={setHovered}
-      onClick={() => null}
-      renderCell={() => <ValueTextComponent {...args} />}
-    />
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <SpaceLayout
+        onHover={setHovered}
+        onClick={() => null}
+        renderCell={() => <ValueTextComponent {...args} />}
+      />
+    </Box>
   );
 };
 

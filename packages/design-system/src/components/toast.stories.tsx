@@ -1,4 +1,4 @@
-import { Toast } from "./toast";
+import { Toast as ToastComponent } from "./toast";
 import { StorySection, StoryGrid } from "./storybook";
 import { Image } from "@webstudio-is/image";
 import { Box } from "./box";
@@ -34,97 +34,104 @@ const ImageIcon = () => (
   </Box>
 );
 
-export const Design = () => {
+export const Toast = () => {
   return (
     <>
       <StorySection title="Toast Design">
         <StoryGrid>
-          <Toast>1. We are what repeatedly do.</Toast>
+          <ToastComponent>1. We are what repeatedly do.</ToastComponent>
 
-          <Toast>
+          <ToastComponent>
             2. We are what repeatedly do. Excellence is not an act but a habit.
-          </Toast>
+          </ToastComponent>
 
-          <Toast>
+          <ToastComponent>
             3. We are what repeatedly do. We are what repeatedly do. Excellence
             is not an act but a habit.
-          </Toast>
+          </ToastComponent>
 
-          <Toast>
+          <ToastComponent>
             3. We are what repeatedly do. We are what repeatedly do. Excellence
             is not an act but a habit. We are what
-          </Toast>
+          </ToastComponent>
 
-          <Toast>
+          <ToastComponent>
             4. We are what repeatedly do. We are what repeatedly do. We are what
             repeatedly do. Excellence is not an act but a habit.
-          </Toast>
+          </ToastComponent>
 
-          <Toast>
+          <ToastComponent>
             5. We are what repeatedly do. We are what repeatedly do. We are what
             repeatedly do. We are what repeatedly do. Excellence is not an act
             but a habit.
-          </Toast>
+          </ToastComponent>
 
-          <Toast>
+          <ToastComponent>
             6. We are what repeatedly do. We are what repeatedly do. We are what
             repeatedly do. We are what repeatedly do. We are what repeatedly do.
             Excellence is not an act but a habit.
-          </Toast>
+          </ToastComponent>
 
-          <Toast variant="warning">
+          <ToastComponent variant="warning">
             We are what repeatedly do. Excellence is not an act but a habit.
-          </Toast>
+          </ToastComponent>
 
-          <Toast variant="error">
+          <ToastComponent variant="error">
             We are what repeatedly do. Excellence is not an act but a habit. We
             are what repeatedly do. Excellence is not an act but a habit. We are
             what repeatedly do. Excellence is not an act but a habit.
-          </Toast>
-          <Toast variant="success">
+          </ToastComponent>
+          <ToastComponent variant="success">
             We are what repeatedly do. Excellence is not an act but a habit. We
             are what repeatedly do. Excellence is not an act but a habit. We are
             what repeatedly do. Excellence is not an act but a habit.
-          </Toast>
+          </ToastComponent>
         </StoryGrid>
       </StorySection>
 
       <StorySection title="Toast With Icon Design">
         <StoryGrid>
-          <Toast icon={<AlertCircleIcon size={24} />}>
+          <ToastComponent icon={<AlertCircleIcon size={24} />}>
             We are what repeatedly do. Excellence is not an act but a habit.
-          </Toast>
+          </ToastComponent>
 
-          <Toast icon={<AlertCircleIcon size={24} />} variant="warning">
+          <ToastComponent
+            icon={<AlertCircleIcon size={24} />}
+            variant="warning"
+          >
             We are what repeatedly do. Excellence is not an act but a habit.
-          </Toast>
+          </ToastComponent>
 
-          <Toast icon={<AlertCircleIcon size={24} />} variant="error">
+          <ToastComponent icon={<AlertCircleIcon size={24} />} variant="error">
             We are what repeatedly do. Excellence is not an act but a habit. We
             are what repeatedly do. Excellence is not an act but a habit. We are
             what repeatedly do. Excellence is not an act but a habit.
-          </Toast>
+          </ToastComponent>
 
-          <Toast variant="success" icon={<AlertCircleIcon size={24} />}>
+          <ToastComponent
+            variant="success"
+            icon={<AlertCircleIcon size={24} />}
+          >
             We are what repeatedly do. Excellence is not an act but a habit. We
             are what repeatedly do. Excellence is not an act but a habit. We are
             what repeatedly do. Excellence is not an act but a habit.
-          </Toast>
+          </ToastComponent>
 
-          <Toast icon={<ImageIcon />}>Asset already exists</Toast>
+          <ToastComponent icon={<ImageIcon />}>
+            Asset already exists
+          </ToastComponent>
         </StoryGrid>
       </StorySection>
 
       <StorySection title="Very long Toast">
         <StoryGrid>
-          <Toast icon={<AlertCircleIcon size={24} />}>
+          <ToastComponent icon={<AlertCircleIcon size={24} />}>
             {"We are what repeatedly do. Excellence is not an act but a habit.".repeat(
               100
             )}
-          </Toast>
+          </ToastComponent>
         </StoryGrid>
       </StorySection>
     </>
   );
 };
-Design.storyName = "Toast Design";

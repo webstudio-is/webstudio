@@ -53,7 +53,7 @@ const Input = ({
   return <input defaultValue={value} ref={ref} />;
 };
 
-export const NumericInput = Object.assign(Input.bind({}), {
+export const NumericGestureControl = Object.assign(Input.bind({}), {
   args: { value: 0, direction: "horizontal", acceleration: 1 },
 });
 

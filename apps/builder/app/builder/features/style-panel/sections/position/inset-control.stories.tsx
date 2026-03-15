@@ -1,5 +1,5 @@
 import type { Meta } from "@storybook/react";
-import { Box } from "@webstudio-is/design-system";
+import { Box, theme } from "@webstudio-is/design-system";
 import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { InsetControl } from "./inset-control";
@@ -14,6 +14,17 @@ import {
 } from "~/shared/nano-states";
 import { $awareness } from "~/shared/awareness";
 
+const top: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "top",
+  value: {
+    type: "unit",
+    value: 0,
+    unit: "px",
+  },
+};
+
 const right: StyleDecl = {
   breakpointId: "base",
   styleSourceId: "local",
@@ -22,6 +33,27 @@ const right: StyleDecl = {
     type: "unit",
     value: 123.27,
     unit: "rem",
+  },
+};
+
+const bottom: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "bottom",
+  value: {
+    type: "keyword",
+    value: "auto",
+  },
+};
+
+const left: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "left",
+  value: {
+    type: "unit",
+    value: -20,
+    unit: "%",
   },
 };
 
@@ -39,7 +71,14 @@ $styleSources.set(
     ],
   ])
 );
-$styles.set(new Map([[getStyleDeclKey(right), right]]));
+$styles.set(
+  new Map([
+    [getStyleDeclKey(top), top],
+    [getStyleDeclKey(right), right],
+    [getStyleDeclKey(bottom), bottom],
+    [getStyleDeclKey(left), left],
+  ])
+);
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
@@ -54,9 +93,9 @@ $awareness.set({
   instanceSelector: ["box"],
 });
 
-export const InsetControlComponent = () => {
+export const Inset = () => {
   return (
-    <Box css={{ marginLeft: 100 }}>
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
       <InsetControl />
     </Box>
   );
@@ -64,5 +103,5 @@ export const InsetControlComponent = () => {
 
 export default {
   title: "Style Panel/Inset",
-  component: InsetControlComponent,
-} as Meta<typeof InsetControlComponent>;
+  component: Inset,
+} as Meta<typeof Inset>;
