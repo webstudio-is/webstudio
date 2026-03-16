@@ -126,6 +126,7 @@ const loadDashboardData = async (request: Request) => {
 
   const templates = await dashboardProjectCaller(context).findManyByIds({
     projectIds: env.PROJECT_TEMPLATES,
+    skipApprovalCheck: true,
   });
 
   return {

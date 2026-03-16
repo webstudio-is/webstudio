@@ -16,9 +16,16 @@ const projectRouter = router({
     }),
 
   findManyByIds: procedure
-    .input(z.object({ projectIds: z.array(z.string()) }))
+    .input(
+      z.object({
+        projectIds: z.array(z.string()),
+        skipApprovalCheck: z.boolean().optional(),
+      })
+    )
     .query(async ({ input, ctx }) => {
-      return await db.findManyByIds(input.projectIds, ctx);
+      return await db.findManyByIds(input.projectIds, ctx, {
+        skipApprovalCheck: input.skipApprovalCheck,
+      });
     }),
 });
 
