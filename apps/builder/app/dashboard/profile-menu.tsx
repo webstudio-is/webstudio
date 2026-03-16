@@ -87,22 +87,18 @@ export const ProfileMenu = ({ user }: { user: User }) => {
             <DropdownMenuLabel>Plans</DropdownMenuLabel>
           </>
         )}
-        {purchases.map((purchase, index) =>
-          purchase.subscriptionId ? (
-            <DropdownMenuItem
-              key={purchase.subscriptionId}
-              onSelect={() =>
-                navigate(userPlanSubscriptionPath(purchase.subscriptionId))
+        {purchases.map((purchase, index) => (
+          <DropdownMenuItem
+            key={index}
+            onSelect={() => {
+              if (purchase.subscriptionId) {
+                navigate(userPlanSubscriptionPath(purchase.subscriptionId));
               }
-            >
-              {purchase.planName}
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuLabel key={index}>
-              {purchase.planName}
-            </DropdownMenuLabel>
-          )
-        )}
+            }}
+          >
+            {purchase.planName}
+          </DropdownMenuItem>
+        ))}
         {purchases.length === 0 && (
           <DropdownMenuItem
             onSelect={() => {

@@ -22,6 +22,6 @@ export type DashboardData = {
     id: string;
     title: string;
   };
-  workspaces?: Array<WorkspaceWithRelation>;
+  workspaces: Array<WorkspaceWithRelation>;
   currentWorkspaceId?: string;
 };

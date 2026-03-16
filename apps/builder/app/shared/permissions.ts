@@ -17,10 +17,12 @@ export const getPermissions = ({
   workspaceRelation,
   userPlanFeatures,
   authPermit,
+  workspaces,
 }: {
   workspaceRelation: WorkspaceRelation | "own";
   userPlanFeatures: UserPlanFeatures;
   authPermit?: AuthPermit;
+  workspaces: Array<{ workspaceRelation: WorkspaceRelation | "own" }>;
 }) => {
   const isOwn = workspaceRelation === "own";
   const isBuilder =
@@ -51,5 +53,9 @@ export const getPermissions = ({
     maxDomainsAllowedPerUser: userPlanFeatures.maxDomainsAllowedPerUser,
     maxPublishesAllowedPerUser: userPlanFeatures.maxPublishesAllowedPerUser,
     maxWorkspaces: userPlanFeatures.maxWorkspaces,
+    canInviteMembers: userPlanFeatures.maxWorkspaces > 1,
+    canCreateWorkspace:
+      workspaces.filter((w) => w.workspaceRelation === "own").length <
+      userPlanFeatures.maxWorkspaces,
   };
 };

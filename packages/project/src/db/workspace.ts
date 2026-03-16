@@ -372,10 +372,28 @@ export const removeMember = async (
   context: AppContext
 ) => {
   const userId = assertUser(context);
-  await assertOwner(workspaceId, userId, context);
 
-  if (memberUserId === userId) {
-    throw new Error("The workspace owner cannot be removed");
+  // A member can remove themselves (leave) without being the owner.
+  const isSelfRemoval = memberUserId === userId;
+
+  if (isSelfRemoval) {
+    // Verify the caller is NOT the owner — owners cannot leave their own workspace.
+    const workspace = await context.postgrest.client
+      .from("Workspace")
+      .select("id, userId")
+      .eq("id", workspaceId)
+      .single();
+
+    if (workspace.error) {
+      throw workspace.error;
+    }
+
+    if (workspace.data.userId === userId) {
+      throw new Error("The workspace owner cannot be removed");
+    }
+  } else {
+    // Only the owner can remove other members.
+    await assertOwner(workspaceId, userId, context);
   }
 
   const result = await context.postgrest.client
@@ -434,16 +452,17 @@ export const listMembers = async (
     throw members.error;
   }
 
-  const memberUserIds = members.data.map((m) => m.userId);
-
-  if (memberUserIds.length === 0) {
-    return [];
-  }
+  // Fetch user info for all members plus the owner
+  const allUserIds = [
+    workspace.data.userId,
+    ...members.data.map((m) => m.userId),
+  ];
+  const uniqueUserIds = [...new Set(allUserIds)];
 
   const users = await context.postgrest.client
     .from("User")
     .select("id, email, username")
-    .in("id", memberUserIds);
+    .in("id", uniqueUserIds);
 
   if (users.error) {
     throw users.error;
@@ -451,11 +470,20 @@ export const listMembers = async (
 
   const usersById = new Map(users.data.map((u) => [u.id, u]));
 
-  return members.data.map((m) => ({
-    userId: m.userId,
-    relation: m.relation,
-    createdAt: m.createdAt,
-    email: usersById.get(m.userId)?.email ?? "",
-    username: usersById.get(m.userId)?.username ?? "",
-  }));
+  const ownerUser = usersById.get(workspace.data.userId);
+
+  return {
+    owner: {
+      userId: workspace.data.userId,
+      email: ownerUser?.email ?? "",
+      username: ownerUser?.username ?? "",
+    },
+    members: members.data.map((m) => ({
+      userId: m.userId,
+      relation: m.relation,
+      createdAt: m.createdAt,
+      email: usersById.get(m.userId)?.email ?? "",
+      username: usersById.get(m.userId)?.username ?? "",
+    })),
+  };
 };

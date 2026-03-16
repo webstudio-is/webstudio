@@ -13,6 +13,8 @@ const defaultPlanPermissions = {
   maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 10,
   maxWorkspaces: 0,
+  canInviteMembers: false,
+  canCreateWorkspace: false,
 };
 
 const proPlan = {
@@ -45,7 +47,11 @@ describe("getPermissions", () => {
   describe("role-based permissions", () => {
     test("owner has full role permissions", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: freePlan,
+          workspaces: [],
+        })
       ).toEqual({
         canCreateProject: true,
         canDuplicate: true,
@@ -62,6 +68,7 @@ describe("getPermissions", () => {
       const result = getPermissions({
         workspaceRelation: "administrators",
         userPlanFeatures: freePlan,
+        workspaces: [],
       });
       expect(result).toEqual({
         canCreateProject: true,
@@ -79,6 +86,7 @@ describe("getPermissions", () => {
       const result = getPermissions({
         workspaceRelation: "builders",
         userPlanFeatures: freePlan,
+        workspaces: [],
       });
       expect(result).toEqual({
         canCreateProject: true,
@@ -96,6 +104,7 @@ describe("getPermissions", () => {
       const result = getPermissions({
         workspaceRelation: "editors",
         userPlanFeatures: freePlan,
+        workspaces: [],
       });
       expect(result).toEqual({
         canCreateProject: false,
@@ -113,6 +122,7 @@ describe("getPermissions", () => {
       const result = getPermissions({
         workspaceRelation: "viewers",
         userPlanFeatures: freePlan,
+        workspaces: [],
       });
       expect(result).toEqual({
         canCreateProject: false,
@@ -130,8 +140,11 @@ describe("getPermissions", () => {
   describe("canCreateProject by role", () => {
     test("own → true", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
-          .canCreateProject
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: freePlan,
+          workspaces: [],
+        }).canCreateProject
       ).toBe(true);
     });
 
@@ -140,6 +153,7 @@ describe("getPermissions", () => {
         getPermissions({
           workspaceRelation: "administrators",
           userPlanFeatures: freePlan,
+          workspaces: [],
         }).canCreateProject
       ).toBe(true);
     });
@@ -149,6 +163,7 @@ describe("getPermissions", () => {
         getPermissions({
           workspaceRelation: "builders",
           userPlanFeatures: freePlan,
+          workspaces: [],
         }).canCreateProject
       ).toBe(true);
     });
@@ -158,6 +173,7 @@ describe("getPermissions", () => {
         getPermissions({
           workspaceRelation: "editors",
           userPlanFeatures: freePlan,
+          workspaces: [],
         }).canCreateProject
       ).toBe(false);
     });
@@ -167,6 +183,7 @@ describe("getPermissions", () => {
         getPermissions({
           workspaceRelation: "viewers",
           userPlanFeatures: freePlan,
+          workspaces: [],
         }).canCreateProject
       ).toBe(false);
     });
@@ -177,6 +194,7 @@ describe("getPermissions", () => {
       const result = getPermissions({
         workspaceRelation: "own",
         userPlanFeatures: proPlan,
+        workspaces: [],
       });
       expect(result).toMatchObject({
         allowDynamicData: true,
@@ -187,6 +205,8 @@ describe("getPermissions", () => {
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxWorkspaces: 0,
+        canInviteMembers: false,
+        canCreateWorkspace: false,
       });
     });
 
@@ -194,6 +214,7 @@ describe("getPermissions", () => {
       const result = getPermissions({
         workspaceRelation: "own",
         userPlanFeatures: freePlan,
+        workspaces: [],
       });
       expect(result).toMatchObject({
         allowDynamicData: false,
@@ -204,6 +225,8 @@ describe("getPermissions", () => {
         maxDomainsAllowedPerUser: 0,
         maxPublishesAllowedPerUser: 10,
         maxWorkspaces: 0,
+        canInviteMembers: false,
+        canCreateWorkspace: false,
       });
     });
   });
@@ -214,6 +237,7 @@ describe("getPermissions", () => {
         workspaceRelation: "own",
         authPermit: "view",
         userPlanFeatures: freePlan,
+        workspaces: [],
       });
       expect(result.allowContentMode).toBe(true);
     });
@@ -223,6 +247,7 @@ describe("getPermissions", () => {
         workspaceRelation: "own",
         authPermit: "edit",
         userPlanFeatures: freePlan,
+        workspaces: [],
       });
       expect(result.allowContentMode).toBe(true);
     });
@@ -232,6 +257,7 @@ describe("getPermissions", () => {
         workspaceRelation: "own",
         authPermit: "build",
         userPlanFeatures: freePlan,
+        workspaces: [],
       });
       expect(result.allowContentMode).toBe(true);
     });
@@ -241,6 +267,7 @@ describe("getPermissions", () => {
         workspaceRelation: "own",
         authPermit: "admin",
         userPlanFeatures: freePlan,
+        workspaces: [],
       });
       expect(result.allowContentMode).toBe(true);
     });
@@ -250,6 +277,7 @@ describe("getPermissions", () => {
         workspaceRelation: "own",
         authPermit: "edit",
         userPlanFeatures: freePlan,
+        workspaces: [],
       });
       expect(result.allowContentMode).toBe(true);
     });
@@ -260,6 +288,7 @@ describe("getPermissions", () => {
           workspaceRelation: "own",
           authPermit: "own",
           userPlanFeatures: freePlan,
+          workspaces: [],
         }).allowContentMode
       ).toBe(false);
       expect(
@@ -267,6 +296,7 @@ describe("getPermissions", () => {
           workspaceRelation: "own",
           authPermit: "own",
           userPlanFeatures: proPlan,
+          workspaces: [],
         }).allowContentMode
       ).toBe(true);
     });
@@ -276,6 +306,7 @@ describe("getPermissions", () => {
         getPermissions({
           workspaceRelation: "own",
           userPlanFeatures: freePlan,
+          workspaces: [],
         }).allowContentMode
       ).toBe(false);
     });
@@ -284,6 +315,7 @@ describe("getPermissions", () => {
       const result = getPermissions({
         workspaceRelation: "own",
         userPlanFeatures: proPlan,
+        workspaces: [],
       });
       expect(result.allowContentMode).toBe(true);
     });
@@ -295,6 +327,7 @@ describe("getPermissions", () => {
         getPermissions({
           workspaceRelation: "viewers",
           userPlanFeatures: freePlan,
+          workspaces: [],
         })
       ).toEqual({
         canCreateProject: false,
@@ -314,6 +347,8 @@ describe("getPermissions", () => {
         maxDomainsAllowedPerUser: 0,
         maxPublishesAllowedPerUser: 10,
         maxWorkspaces: 0,
+        canInviteMembers: false,
+        canCreateWorkspace: false,
       });
     });
 
@@ -322,6 +357,7 @@ describe("getPermissions", () => {
         getPermissions({
           workspaceRelation: "builders",
           userPlanFeatures: proPlan,
+          workspaces: [],
         })
       ).toEqual({
         canCreateProject: true,
@@ -341,12 +377,18 @@ describe("getPermissions", () => {
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxWorkspaces: 0,
+        canInviteMembers: false,
+        canCreateWorkspace: false,
       });
     });
 
     test("owner on pro plan has all permissions", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: proPlan })
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: proPlan,
+          workspaces: [],
+        })
       ).toEqual({
         canCreateProject: true,
         canDuplicate: true,
@@ -365,6 +407,8 @@ describe("getPermissions", () => {
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxWorkspaces: 0,
+        canInviteMembers: false,
+        canCreateWorkspace: false,
       });
     });
 
@@ -373,6 +417,7 @@ describe("getPermissions", () => {
         getPermissions({
           workspaceRelation: "administrators",
           userPlanFeatures: freePlan,
+          workspaces: [],
         })
       ).toEqual({
         canCreateProject: true,
@@ -392,6 +437,8 @@ describe("getPermissions", () => {
         maxDomainsAllowedPerUser: 0,
         maxPublishesAllowedPerUser: 10,
         maxWorkspaces: 0,
+        canInviteMembers: false,
+        canCreateWorkspace: false,
       });
     });
 
@@ -400,6 +447,7 @@ describe("getPermissions", () => {
         getPermissions({
           workspaceRelation: "editors",
           userPlanFeatures: proPlan,
+          workspaces: [],
         })
       ).toEqual({
         canCreateProject: false,
@@ -419,6 +467,8 @@ describe("getPermissions", () => {
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxWorkspaces: 0,
+        canInviteMembers: false,
+        canCreateWorkspace: false,
       });
     });
   });
@@ -429,6 +479,7 @@ describe("getPermissions", () => {
         workspaceRelation: "viewers",
         userPlanFeatures: freePlan,
         authPermit: "edit",
+        workspaces: [],
       });
       // role: all false
       expect(result.canCreateProject).toBe(false);
@@ -450,6 +501,7 @@ describe("getPermissions", () => {
         workspaceRelation: "builders",
         userPlanFeatures: proPlan,
         authPermit: "build",
+        workspaces: [],
       });
       expect(result.canCreateProject).toBe(true);
       expect(result.canDuplicate).toBe(true);
@@ -468,15 +520,21 @@ describe("getPermissions", () => {
   describe("maxContactEmails", () => {
     test("defaults to 0 on free plan", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
-          .maxContactEmails
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: freePlan,
+          workspaces: [],
+        }).maxContactEmails
       ).toBe(0);
     });
 
     test("reflects plan value", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: proPlan })
-          .maxContactEmails
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: proPlan,
+          workspaces: [],
+        }).maxContactEmails
       ).toBe(5);
     });
   });
@@ -484,22 +542,31 @@ describe("getPermissions", () => {
   describe("maxDomainsAllowedPerUser", () => {
     test("defaults to 0 on free plan", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
-          .maxDomainsAllowedPerUser
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: freePlan,
+          workspaces: [],
+        }).maxDomainsAllowedPerUser
       ).toBe(0);
     });
 
     test("reflects plan value", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: proPlan })
-          .maxDomainsAllowedPerUser
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: proPlan,
+          workspaces: [],
+        }).maxDomainsAllowedPerUser
       ).toBe(Number.MAX_SAFE_INTEGER);
     });
 
     test("free plan has 0", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
-          .maxDomainsAllowedPerUser
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: freePlan,
+          workspaces: [],
+        }).maxDomainsAllowedPerUser
       ).toBe(0);
     });
   });
@@ -507,23 +574,133 @@ describe("getPermissions", () => {
   describe("maxPublishesAllowedPerUser", () => {
     test("defaults to 10 on free plan", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
-          .maxPublishesAllowedPerUser
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: freePlan,
+          workspaces: [],
+        }).maxPublishesAllowedPerUser
       ).toBe(10);
     });
 
     test("reflects plan value for pro", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: proPlan })
-          .maxPublishesAllowedPerUser
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: proPlan,
+          workspaces: [],
+        }).maxPublishesAllowedPerUser
       ).toBe(Number.MAX_SAFE_INTEGER);
     });
 
     test("free plan allows limited publishes", () => {
       expect(
-        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
-          .maxPublishesAllowedPerUser
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: freePlan,
+          workspaces: [],
+        }).maxPublishesAllowedPerUser
       ).toBe(10);
+    });
+  });
+
+  describe("canInviteMembers", () => {
+    test("false when maxWorkspaces is 0", () => {
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: freePlan,
+          workspaces: [],
+        }).canInviteMembers
+      ).toBe(false);
+    });
+
+    test("false when maxWorkspaces is 1", () => {
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: { ...freePlan, maxWorkspaces: 1 },
+          workspaces: [],
+        }).canInviteMembers
+      ).toBe(false);
+    });
+
+    test("true when maxWorkspaces is greater than 1", () => {
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: { ...freePlan, maxWorkspaces: 5 },
+          workspaces: [],
+        }).canInviteMembers
+      ).toBe(true);
+    });
+  });
+
+  describe("canCreateWorkspace", () => {
+    test("false when owned count equals maxWorkspaces", () => {
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: { ...freePlan, maxWorkspaces: 1 },
+          workspaces: [{ workspaceRelation: "own" }],
+        }).canCreateWorkspace
+      ).toBe(false);
+    });
+
+    test("false when owned count exceeds maxWorkspaces", () => {
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: { ...freePlan, maxWorkspaces: 1 },
+          workspaces: [
+            { workspaceRelation: "own" },
+            { workspaceRelation: "own" },
+          ],
+        }).canCreateWorkspace
+      ).toBe(false);
+    });
+
+    test("true when owned count is below maxWorkspaces", () => {
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: { ...freePlan, maxWorkspaces: 3 },
+          workspaces: [{ workspaceRelation: "own" }],
+        }).canCreateWorkspace
+      ).toBe(true);
+    });
+
+    test("counts only owned workspaces, not shared", () => {
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: { ...freePlan, maxWorkspaces: 2 },
+          workspaces: [
+            { workspaceRelation: "own" },
+            { workspaceRelation: "editors" },
+            { workspaceRelation: "viewers" },
+          ],
+        }).canCreateWorkspace
+      ).toBe(true);
+    });
+
+    test("false when maxWorkspaces is 0", () => {
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: freePlan,
+          workspaces: [],
+        }).canCreateWorkspace
+      ).toBe(false);
+    });
+
+    test("defaults to empty workspaces", () => {
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: { ...freePlan, maxWorkspaces: 5 },
+          workspaces: [],
+        }).canCreateWorkspace
+      ).toBe(true);
     });
   });
 });

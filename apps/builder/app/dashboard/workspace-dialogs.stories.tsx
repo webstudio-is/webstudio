@@ -6,6 +6,7 @@ import {
   RenameWorkspaceDialog,
   ManageMembersDialog,
   DeleteWorkspaceDialog,
+  LeaveWorkspaceDialog,
 } from "./workspace-dialogs";
 
 export default {
@@ -99,6 +100,23 @@ export const Delete: StoryFn = () => {
       isOpen={true}
       onOpenChange={() => {}}
       onDeleted={() => {}}
+    />
+  );
+  return <RouterProvider router={router} />;
+};
+
+// ---------------------------------------------------------------------------
+// Leave workspace dialog (non-owner member view)
+// ---------------------------------------------------------------------------
+
+export const Leave: StoryFn = () => {
+  const router = createRouter(
+    <LeaveWorkspaceDialog
+      workspace={createWorkspace({ userId: "owner-1" })}
+      userId="member-1"
+      isOpen={true}
+      onOpenChange={() => {}}
+      onLeft={() => {}}
     />
   );
   return <RouterProvider router={router} />;

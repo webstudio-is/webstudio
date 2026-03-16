@@ -7,6 +7,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuGroup,
   Flex,
   MenuCheckedIcon,
   Avatar,
@@ -18,11 +20,14 @@ import {
 import { ChevronDownIcon, UpgradeIcon } from "@webstudio-is/icons";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 import { useNavigate, useLocation } from "@remix-run/react";
+import { useStore } from "@nanostores/react";
+import { $permissions } from "~/shared/nano-states";
 import {
   CreateWorkspaceDialog,
   RenameWorkspaceDialog,
   ManageMembersDialog,
   DeleteWorkspaceDialog,
+  LeaveWorkspaceDialog,
 } from "./workspace-dialogs";
 
 const sortWorkspaces = (workspaces: Array<WorkspaceWithRelation>) =>
@@ -36,40 +41,45 @@ const sortWorkspaces = (workspaces: Array<WorkspaceWithRelation>) =>
     return a.name.localeCompare(b.name);
   });
 
-const canCreateWorkspace = (
-  workspaces: Array<WorkspaceWithRelation>,
-  userId: string,
-  maxWorkspaces: number
-) => {
-  const ownedCount = workspaces.filter((w) => w.userId === userId).length;
-  return ownedCount < maxWorkspaces;
+const groupWorkspaces = (workspaces: Array<WorkspaceWithRelation>) => {
+  const sorted = sortWorkspaces(workspaces);
+  const owned: Array<WorkspaceWithRelation> = [];
+  const shared: Array<WorkspaceWithRelation> = [];
+  for (const workspace of sorted) {
+    if (workspace.workspaceRelation === "own") {
+      owned.push(workspace);
+    } else {
+      shared.push(workspace);
+    }
+  }
+  return { owned, shared };
 };
 
-export const __testing__ = { sortWorkspaces, canCreateWorkspace };
+export const __testing__ = { sortWorkspaces, groupWorkspaces };
 
 export const WorkspaceSelector = ({
   workspaces,
   currentWorkspaceId,
   userId,
-  maxWorkspaces,
   onDeleted,
 }: {
   workspaces: Array<WorkspaceWithRelation>;
   currentWorkspaceId: string;
   userId: string;
-  maxWorkspaces: number;
   onDeleted: () => void;
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const sorted = sortWorkspaces(workspaces);
-  const currentWorkspace = sorted.find((w) => w.id === currentWorkspaceId);
+  const permissions = useStore($permissions);
+  const { owned, shared } = groupWorkspaces(workspaces);
+  const currentWorkspace = workspaces.find((w) => w.id === currentWorkspaceId);
   const [createOpen, setCreateOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
 
-  const canCreateMore = canCreateWorkspace(workspaces, userId, maxWorkspaces);
+  const isOwner = currentWorkspace?.userId === userId;
 
   return (
     <Flex
@@ -112,25 +122,49 @@ export const WorkspaceSelector = ({
               navigate(`${location.pathname}?workspaceId=${workspaceId}`);
             }}
           >
-            {sorted.map((workspace) => (
-              <DropdownMenuRadioItem
-                key={workspace.id}
-                value={workspace.id}
-                icon={<MenuCheckedIcon />}
-                disabled={workspace.isDowngraded}
-              >
-                {workspace.name}
-                {workspace.isDowngraded && (
-                  <>
-                    {" "}
-                    <ProBadge>Suspended</ProBadge>
-                  </>
-                )}
-              </DropdownMenuRadioItem>
-            ))}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>My workspaces</DropdownMenuLabel>
+              {owned.map((workspace) => (
+                <DropdownMenuRadioItem
+                  key={workspace.id}
+                  value={workspace.id}
+                  icon={<MenuCheckedIcon />}
+                  disabled={workspace.isDowngraded}
+                >
+                  {workspace.name}
+                  {workspace.isDowngraded && (
+                    <>
+                      {" "}
+                      <ProBadge>Suspended</ProBadge>
+                    </>
+                  )}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuGroup>
+            {shared.length > 0 && (
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Shared with me</DropdownMenuLabel>
+                {shared.map((workspace) => (
+                  <DropdownMenuRadioItem
+                    key={workspace.id}
+                    value={workspace.id}
+                    icon={<MenuCheckedIcon />}
+                    disabled={workspace.isDowngraded}
+                  >
+                    {workspace.name}
+                    {workspace.isDowngraded && (
+                      <>
+                        {" "}
+                        <ProBadge>Suspended</ProBadge>
+                      </>
+                    )}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuGroup>
+            )}
           </DropdownMenuRadioGroup>
           <DropdownMenuSeparator />
-          {canCreateMore && (
+          {permissions.canCreateWorkspace && (
             <DropdownMenuItem
               withIndicator
               onSelect={() => setCreateOpen(true)}
@@ -147,22 +181,25 @@ export const WorkspaceSelector = ({
           </DropdownMenuItem>
           <DropdownMenuItem
             withIndicator
-            disabled={maxWorkspaces <= 1}
+            disabled={permissions.canInviteMembers === false}
             onSelect={() => setInviteOpen(true)}
           >
             Members
           </DropdownMenuItem>
-          <DropdownMenuItem
-            withIndicator
-            disabled={
-              currentWorkspace?.isDefault === true ||
-              currentWorkspace?.userId !== userId
-            }
-            onSelect={() => setDeleteOpen(true)}
-          >
-            Delete
-          </DropdownMenuItem>
-          {canCreateMore === false && (
+          {isOwner ? (
+            <DropdownMenuItem
+              withIndicator
+              disabled={currentWorkspace?.isDefault === true}
+              onSelect={() => setDeleteOpen(true)}
+            >
+              Delete
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem withIndicator onSelect={() => setLeaveOpen(true)}>
+              Leave
+            </DropdownMenuItem>
+          )}
+          {permissions.canCreateWorkspace === false && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -204,6 +241,13 @@ export const WorkspaceSelector = ({
             isOpen={deleteOpen}
             onOpenChange={setDeleteOpen}
             onDeleted={onDeleted}
+          />
+          <LeaveWorkspaceDialog
+            workspace={currentWorkspace}
+            userId={userId}
+            isOpen={leaveOpen}
+            onOpenChange={setLeaveOpen}
+            onLeft={onDeleted}
           />
         </>
       )}

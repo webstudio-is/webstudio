@@ -2,7 +2,7 @@ import { describe, test, expect } from "vitest";
 import { __testing__ } from "./workspace-selector";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 
-const { sortWorkspaces, canCreateWorkspace } = __testing__;
+const { sortWorkspaces, groupWorkspaces } = __testing__;
 
 const createWorkspace = (
   overrides: Partial<WorkspaceWithRelation>
@@ -93,52 +93,96 @@ describe("sortWorkspaces", () => {
   });
 });
 
-describe("canCreateWorkspace", () => {
-  test("allows creation when owned count is below limit", () => {
+describe("groupWorkspaces", () => {
+  test("separates owned and shared workspaces", () => {
     const workspaces = [
-      createWorkspace({ id: "ws-1", userId: "user-1", isDefault: true }),
-    ];
-    expect(canCreateWorkspace(workspaces, "user-1", 3)).toBe(true);
-  });
-
-  test("disallows creation when owned count equals limit", () => {
-    const workspaces = [
-      createWorkspace({ id: "ws-1", userId: "user-1", isDefault: true }),
-    ];
-    expect(canCreateWorkspace(workspaces, "user-1", 1)).toBe(false);
-  });
-
-  test("disallows creation when owned count exceeds limit", () => {
-    const workspaces = [
-      createWorkspace({ id: "ws-1", userId: "user-1", isDefault: true }),
-      createWorkspace({ id: "ws-2", userId: "user-1" }),
-    ];
-    expect(canCreateWorkspace(workspaces, "user-1", 1)).toBe(false);
-  });
-
-  test("counts only workspaces owned by the user", () => {
-    const workspaces = [
-      createWorkspace({ id: "ws-1", userId: "user-1", isDefault: true }),
+      createWorkspace({
+        id: "ws-1",
+        name: "My workspace",
+        isDefault: true,
+        workspaceRelation: "own",
+      }),
       createWorkspace({
         id: "ws-2",
+        name: "Team workspace",
         userId: "other-user",
         workspaceRelation: "editors",
       }),
       createWorkspace({
         id: "ws-3",
-        userId: "other-user",
+        name: "Client workspace",
+        workspaceRelation: "own",
+      }),
+    ];
+
+    const { owned, shared } = groupWorkspaces(workspaces);
+    expect(owned.map((w) => w.name)).toEqual([
+      "My workspace",
+      "Client workspace",
+    ]);
+    expect(shared.map((w) => w.name)).toEqual(["Team workspace"]);
+  });
+
+  test("returns empty shared when all workspaces are owned", () => {
+    const workspaces = [
+      createWorkspace({ id: "ws-1", name: "Alpha", workspaceRelation: "own" }),
+      createWorkspace({ id: "ws-2", name: "Beta", workspaceRelation: "own" }),
+    ];
+
+    const { owned, shared } = groupWorkspaces(workspaces);
+    expect(owned).toHaveLength(2);
+    expect(shared).toHaveLength(0);
+  });
+
+  test("returns empty owned when all workspaces are shared", () => {
+    const workspaces = [
+      createWorkspace({
+        id: "ws-1",
+        name: "Shared A",
+        userId: "other",
         workspaceRelation: "viewers",
       }),
     ];
-    // User owns 1, limit is 2 → can create
-    expect(canCreateWorkspace(workspaces, "user-1", 2)).toBe(true);
+
+    const { owned, shared } = groupWorkspaces(workspaces);
+    expect(owned).toHaveLength(0);
+    expect(shared).toHaveLength(1);
   });
 
-  test("free plan with 1 default workspace cannot create", () => {
+  test("sorts within each group", () => {
     const workspaces = [
-      createWorkspace({ id: "ws-1", userId: "user-1", isDefault: true }),
+      createWorkspace({
+        id: "ws-3",
+        name: "Zebra",
+        workspaceRelation: "own",
+      }),
+      createWorkspace({
+        id: "ws-2",
+        name: "Apple",
+        workspaceRelation: "own",
+      }),
+      createWorkspace({
+        id: "ws-4",
+        name: "Mango shared",
+        userId: "other",
+        workspaceRelation: "editors",
+      }),
+      createWorkspace({
+        id: "ws-5",
+        name: "Alpha shared",
+        userId: "other",
+        workspaceRelation: "viewers",
+      }),
     ];
-    // Free plan: maxWorkspaces = 1, user already has 1 default
-    expect(canCreateWorkspace(workspaces, "user-1", 1)).toBe(false);
+
+    const { owned, shared } = groupWorkspaces(workspaces);
+    expect(owned.map((w) => w.name)).toEqual(["Apple", "Zebra"]);
+    expect(shared.map((w) => w.name)).toEqual(["Alpha shared", "Mango shared"]);
+  });
+
+  test("handles empty array", () => {
+    const { owned, shared } = groupWorkspaces([]);
+    expect(owned).toEqual([]);
+    expect(shared).toEqual([]);
   });
 });

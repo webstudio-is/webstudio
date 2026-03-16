@@ -1,6 +1,8 @@
 import type { StoryFn } from "@storybook/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
+import { defaultUserPlanFeatures } from "@webstudio-is/trpc-interface/user-plan-features";
+import { $userPlanFeatures, $workspaces } from "~/shared/nano-states";
 import { WorkspaceSelector } from "./workspace-selector";
 
 export default {
@@ -31,6 +33,12 @@ const workspaces: Array<WorkspaceWithRelation> = [
   defaultWorkspace,
   createWorkspace({ id: "ws-2", name: "Client projects" }),
   createWorkspace({ id: "ws-3", name: "Side projects" }),
+  createWorkspace({
+    id: "ws-4",
+    name: "Team workspace",
+    userId: "other-user",
+    workspaceRelation: "editors",
+  }),
 ];
 
 const createRouter = (element: React.ReactElement) =>
@@ -39,12 +47,13 @@ const createRouter = (element: React.ReactElement) =>
   });
 
 export const Default: StoryFn = () => {
+  $userPlanFeatures.set({ ...defaultUserPlanFeatures, maxWorkspaces: 20 });
+  $workspaces.set(workspaces);
   const router = createRouter(
     <WorkspaceSelector
       workspaces={workspaces}
       currentWorkspaceId="ws-default"
       userId="user-1"
-      maxWorkspaces={20}
       onDeleted={() => {}}
     />
   );
@@ -68,12 +77,13 @@ export const MemberView: StoryFn = () => {
     }),
   ];
 
+  $userPlanFeatures.set({ ...defaultUserPlanFeatures, maxWorkspaces: 20 });
+  $workspaces.set(memberWorkspaces);
   const router = createRouter(
     <WorkspaceSelector
       workspaces={memberWorkspaces}
       currentWorkspaceId="ws-shared"
       userId="member-1"
-      maxWorkspaces={20}
       onDeleted={() => {}}
     />
   );
@@ -81,12 +91,13 @@ export const MemberView: StoryFn = () => {
 };
 
 export const FreePlan: StoryFn = () => {
+  $userPlanFeatures.set({ ...defaultUserPlanFeatures, maxWorkspaces: 1 });
+  $workspaces.set([defaultWorkspace]);
   const router = createRouter(
     <WorkspaceSelector
       workspaces={[defaultWorkspace]}
       currentWorkspaceId="ws-default"
       userId="user-1"
-      maxWorkspaces={1}
       onDeleted={() => {}}
     />
   );
