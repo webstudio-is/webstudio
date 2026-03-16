@@ -5,6 +5,7 @@ import {
   $authToken,
   $authTokenPermissions,
   $builderMode,
+  $purchases,
   $userPlanFeatures,
 } from "~/shared/nano-states";
 
@@ -24,8 +25,8 @@ const OwnerDesignModeVariant = () => {
   $userPlanFeatures.set({
     ...$userPlanFeatures.get(),
     allowContentMode: true,
-    purchases: [{ planName: "Pro" }],
   });
+  $purchases.set([{ planName: "Pro" }]);
   return (
     <Toolbar>
       <Menu defaultOpen />
@@ -61,8 +62,8 @@ const AdminContentModeVariant = () => {
   $userPlanFeatures.set({
     ...$userPlanFeatures.get(),
     allowContentMode: true,
-    purchases: [{ planName: "Pro" }],
   });
+  $purchases.set([{ planName: "Pro" }]);
   return (
     <Toolbar>
       <Menu defaultOpen />
