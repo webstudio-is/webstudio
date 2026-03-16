@@ -77,6 +77,9 @@ export const workspaceRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
+        if (ctx.userPlanFeatures.maxWorkspaces <= 1) {
+          throw new Error("Upgrade your plan to invite members to workspaces.");
+        }
         await workspaceApi.addMember(input, ctx);
         // No data returned — response must be identical for existing and
         // non-existing emails to prevent email enumeration.

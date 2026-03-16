@@ -43,6 +43,7 @@ export const Default: StoryFn = () => {
       workspaces={workspaces}
       currentWorkspaceId="ws-default"
       userId="user-1"
+      maxWorkspaces={20}
       onDeleted={() => {}}
     />
   );
@@ -71,6 +72,20 @@ export const MemberView: StoryFn = () => {
       workspaces={memberWorkspaces}
       currentWorkspaceId="ws-shared"
       userId="member-1"
+      maxWorkspaces={20}
+      onDeleted={() => {}}
+    />
+  );
+  return <RouterProvider router={router} />;
+};
+
+export const FreePlan: StoryFn = () => {
+  const router = createRouter(
+    <WorkspaceSelector
+      workspaces={[defaultWorkspace]}
+      currentWorkspaceId="ws-default"
+      userId="user-1"
+      maxWorkspaces={1}
       onDeleted={() => {}}
     />
   );
