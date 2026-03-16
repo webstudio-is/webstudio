@@ -40,23 +40,19 @@ export const TemplatesGrid = ({
   );
 };
 
-type ProjectsProps = {
-  projects: Array<DashboardProject>;
-  welcome?: boolean;
-  currentWorkspaceId?: string;
-};
-
 export const Templates = ({
   projects,
-  welcome = false,
   currentWorkspaceId,
-}: ProjectsProps) => {
+}: {
+  projects: Array<DashboardProject>;
+  currentWorkspaceId?: string;
+}) => {
   const permissions = useStore($permissions);
   return (
     <Main>
       <Header variant="main">
         <Text variant="brandSectionTitle" as="h2">
-          {welcome ? "What will you create?" : "Starter templates"}
+          Starter templates
         </Text>
         {permissions.canCreateProject && (
           <Flex gap="2">

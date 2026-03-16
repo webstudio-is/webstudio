@@ -48,6 +48,11 @@ const ProfileButton = forwardRef<
         height: theme.spacing[13],
       }}
     >
+      {name && (
+        <Text variant="labels" truncate>
+          {name}
+        </Text>
+      )}
       {hasPurchases === false && <ProBadge>Free</ProBadge>}
     </Button>
   );

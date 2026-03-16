@@ -131,14 +131,13 @@ export const findMany = async (
 
 export const findManyByIds = async (
   projectIds: string[],
-  context: AppContext
+  context: AppContext,
+  { skipApprovalCheck = false }: { skipApprovalCheck?: boolean } = {}
 ) => {
   if (projectIds.length === 0) {
     return [];
   }
 
-  // Get the user ID for ownership filtering
-  // Allow service context (no authorization) to access any projects (for templates)
   const userId =
     context.authorization.type === "user"
       ? context.authorization.userId
@@ -150,8 +149,9 @@ export const findManyByIds = async (
     .in("id", projectIds)
     .eq("isDeleted", false);
 
-  // If user context, also filter by userId OR isMarketplaceApproved (public templates)
-  if (userId !== undefined) {
+  // PROJECT_TEMPLATES IDs are admin-curated via env var and skip approval.
+  // Other callers require ownership or marketplace approval.
+  if (skipApprovalCheck === false && userId !== undefined) {
     query = query.or(
       `userId.eq.${userId},marketplaceApprovalStatus.eq.APPROVED`
     );

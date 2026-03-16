@@ -29,6 +29,7 @@ import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ProfileMenu } from "./profile-menu";
 import { Projects } from "./projects/projects";
 import { Templates } from "./templates/templates";
+import { Welcome } from "./welcome/welcome";
 import { Header } from "./shared/layout";
 import { help } from "~/shared/help";
 import { SearchResults } from "./search/search-results";
@@ -239,7 +240,7 @@ export const Dashboard = () => {
             direction="column"
             gap="3"
             css={{
-              paddingInline: theme.spacing[7],
+              paddingInline: theme.spacing[5],
               paddingBottom: theme.spacing[7],
             }}
           >
@@ -314,9 +315,8 @@ export const Dashboard = () => {
           />
         )}
         {view === "welcome" && (
-          <Templates
+          <Welcome
             projects={templates}
-            welcome
             currentWorkspaceId={currentWorkspaceId}
           />
         )}

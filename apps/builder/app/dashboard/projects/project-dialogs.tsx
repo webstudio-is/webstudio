@@ -165,7 +165,7 @@ const useCreateProject = (workspaceId?: string) => {
 };
 
 export const CreateProject = ({
-  buttonText = "New blank project",
+  buttonText = "New project",
   workspaceId,
 }: {
   buttonText?: string;
