@@ -25,6 +25,7 @@ import { useStore } from "@nanostores/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import { setSharedStores } from "~/shared/nano-states";
 import { dashboardPath } from "~/shared/router-utils";
+import { $userPlanFeatures } from "~/shared/nano-states";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ProfileMenu } from "./profile-menu";
 import { Projects } from "./projects/projects";
@@ -36,7 +37,6 @@ import { SearchResults } from "./search/search-results";
 import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
 import { WorkspaceSelector } from "./workspace-selector";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const globalStyles = globalCss({
   body: {
@@ -169,10 +169,13 @@ const getView = (pathname: string, hasProjects: boolean) => {
   return "projects";
 };
 
+export const __testing__ = { getView };
+
 export const Dashboard = () => {
   const data = useStore($data);
   const location = useLocation();
   const navigate = useNavigate();
+  const { maxWorkspaces } = useStore($userPlanFeatures);
 
   if (data === undefined) {
     return null;
@@ -191,7 +194,7 @@ export const Dashboard = () => {
   const view = getView(location.pathname, hasProjects);
 
   const showWorkspaceSelector =
-    isFeatureEnabled("workspaces") &&
+    maxWorkspaces > 0 &&
     workspaces !== undefined &&
     workspaces.length > 0 &&
     currentWorkspaceId !== undefined;

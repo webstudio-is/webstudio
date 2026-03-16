@@ -50,5 +50,6 @@ export const getPermissions = ({
     maxContactEmails: userPlanFeatures.maxContactEmails,
     maxDomainsAllowedPerUser: userPlanFeatures.maxDomainsAllowedPerUser,
     maxPublishesAllowedPerUser: userPlanFeatures.maxPublishesAllowedPerUser,
+    maxWorkspaces: userPlanFeatures.maxWorkspaces,
   };
 };

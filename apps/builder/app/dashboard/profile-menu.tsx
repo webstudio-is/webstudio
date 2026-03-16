@@ -79,7 +79,7 @@ export const ProfileMenu = ({ user }: { user: User }) => {
         {purchases.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Purchases</DropdownMenuLabel>
+            <DropdownMenuLabel>Plans</DropdownMenuLabel>
           </>
         )}
         {purchases.map((purchase, index) =>

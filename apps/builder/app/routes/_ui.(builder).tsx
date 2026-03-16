@@ -17,7 +17,6 @@ import {
   type WorkspaceRelation,
 } from "@webstudio-is/project";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 import {
   AuthorizationError,
@@ -164,7 +163,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
     // so the owner's subscription governs all projects in the workspace
     let workspaceRelation: WorkspaceRelation | "own" = "own";
 
-    if (isFeatureEnabled("workspaces") && project.workspaceId !== null) {
+    if (project.workspaceId !== null) {
       const currentUserId =
         context.authorization.type === "user"
           ? context.authorization.userId

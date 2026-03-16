@@ -8,7 +8,6 @@ import { createBuild } from "@webstudio-is/project-build/index.server";
 import { MarketplaceApprovalStatus, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 import type { SetNonNullable } from "type-fest";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const findProjectIdsByUserId = async (
   userId: string,
@@ -302,7 +301,7 @@ export const clone = async (
     | undefined
     | { workspaceId: string; projectOwnerUserId: string };
 
-  if (isFeatureEnabled("workspaces") && project.workspaceId !== null) {
+  if (project.workspaceId !== null) {
     const workspace = await destinationContext.postgrest.client
       .from("Workspace")
       .select("userId")

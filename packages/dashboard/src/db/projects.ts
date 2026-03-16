@@ -2,7 +2,6 @@ import {
   AuthorizationError,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type DomainVirtual = {
   domain: string;
@@ -98,9 +97,9 @@ export const findMany = async (
     .from("DashboardProject")
     .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)");
 
-  // When filtering by workspace with flag on, show all workspace projects
+  // When filtering by workspace, show all workspace projects
   // (members can see all projects in the workspace)
-  if (workspaceId !== undefined && isFeatureEnabled("workspaces")) {
+  if (workspaceId !== undefined) {
     query = query.eq("workspaceId", workspaceId);
   } else {
     query = query.eq("userId", userId);
