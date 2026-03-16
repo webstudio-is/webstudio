@@ -12,6 +12,7 @@ import {
   ProBadge,
   DropdownMenuSeparator,
   Text,
+  Flex,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { useStore } from "@nanostores/react";
@@ -34,27 +35,31 @@ const ProfileButton = forwardRef<
   }
 >(({ image, name, hasPurchases, ...rest }, forwardedRef) => {
   return (
-    <Button
-      color="ghost"
-      aria-label="Profile Menu"
-      {...rest}
-      ref={forwardedRef}
-      prefix={
-        <Avatar src={image} fallback={getAvatarLetter(name)} alt={name} />
-      }
-      suffix={<ChevronDownIcon size={12} />}
-      css={{
-        // Exception for avatar. May need to introduce a 32px controls size later.
-        height: theme.spacing[13],
-      }}
-    >
-      {name && (
-        <Text variant="labels" truncate>
-          {name}
-        </Text>
+    <Flex gap="2" align="center">
+      <Button
+        color="ghost"
+        aria-label="Profile Menu"
+        {...rest}
+        ref={forwardedRef}
+        prefix={
+          <Avatar src={image} fallback={getAvatarLetter(name)} alt={name} />
+        }
+        suffix={<ChevronDownIcon size={12} />}
+        css={{
+          // Exception for avatar. May need to introduce a 32px controls size later.
+          height: theme.spacing[13],
+        }}
+      >
+        {name && (
+          <Text variant="labels" truncate>
+            {name}
+          </Text>
+        )}
+      </Button>
+      {hasPurchases === false && (
+        <ProBadge css={{ flexShrink: 0 }}>Free</ProBadge>
       )}
-      {hasPurchases === false && <ProBadge>Free</ProBadge>}
-    </Button>
+    </Flex>
   );
 });
 
