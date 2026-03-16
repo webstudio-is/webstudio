@@ -13,6 +13,7 @@ import {
   theme,
   Button,
   Text,
+  ProBadge,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, UpgradeIcon } from "@webstudio-is/icons";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
@@ -116,8 +117,15 @@ export const WorkspaceSelector = ({
                 key={workspace.id}
                 value={workspace.id}
                 icon={<MenuCheckedIcon />}
+                disabled={workspace.isDowngraded}
               >
                 {workspace.name}
+                {workspace.isDowngraded && (
+                  <>
+                    {" "}
+                    <ProBadge>Suspended</ProBadge>
+                  </>
+                )}
               </DropdownMenuRadioItem>
             ))}
           </DropdownMenuRadioGroup>
