@@ -307,6 +307,10 @@ export const $userPlanFeatures = atom<UserPlanFeatures>(
 
 export const $workspaceRelation = atom<WorkspaceRelation | "own">("own");
 
+export const $workspaces = atom<
+  Array<{ workspaceRelation: WorkspaceRelation | "own" }>
+>([]);
+
 export const $purchases = atom<Array<UserPurchase>>([]);
 
 /**
@@ -355,9 +359,14 @@ export const $stagingUsername = atom<string | undefined>();
 export const $stagingPassword = atom<string | undefined>();
 
 export const $permissions = computed(
-  [$userPlanFeatures, $authPermit, $workspaceRelation],
-  (userPlanFeatures, authPermit, workspaceRelation) =>
-    getPermissions({ workspaceRelation, userPlanFeatures, authPermit })
+  [$userPlanFeatures, $authPermit, $workspaceRelation, $workspaces],
+  (userPlanFeatures, authPermit, workspaceRelation, workspaces) =>
+    getPermissions({
+      workspaceRelation,
+      userPlanFeatures,
+      authPermit,
+      workspaces,
+    })
 );
 
 export const $isContentModeAllowed = computed(

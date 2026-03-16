@@ -67,6 +67,7 @@ const data = {
   publisherHost: "https://wstd.work",
   projects,
   workspaceRelation: "own" as const,
+  workspaces: [],
 };
 
 export const Welcome: StoryFn<typeof Dashboard> = () => {

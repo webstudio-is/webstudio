@@ -25,9 +25,8 @@ import {
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
-import { setSharedStores } from "~/shared/nano-states";
+import { setSharedStores, $workspaces } from "~/shared/nano-states";
 import { dashboardPath } from "~/shared/router-utils";
-import { $userPlanFeatures } from "~/shared/nano-states";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ProfileMenu } from "./profile-menu";
 import { Projects } from "./projects/projects";
@@ -151,6 +150,7 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   useEffect(() => {
     $data.set(data);
     setSharedStores(data);
+    $workspaces.set(data.workspaces);
   }, [data]);
   globalStyles();
   return null;
@@ -177,7 +177,6 @@ export const Dashboard = () => {
   const data = useStore($data);
   const location = useLocation();
   const navigate = useNavigate();
-  const { maxWorkspaces } = useStore($userPlanFeatures);
 
   if (data === undefined) {
     return null;
@@ -260,7 +259,6 @@ export const Dashboard = () => {
                     workspaces={workspaces}
                     currentWorkspaceId={currentWorkspaceId}
                     userId={user.id}
-                    maxWorkspaces={maxWorkspaces}
                     onDeleted={() => {
                       navigate(dashboardPath("projects"));
                     }}

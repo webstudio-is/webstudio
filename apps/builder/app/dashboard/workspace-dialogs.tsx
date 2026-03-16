@@ -179,6 +179,7 @@ const MemberRow = ({
         <Flex align="center" gap="1" css={{ flexShrink: 0 }}>
           {canRemove ? (
             <Select
+              color="ghost"
               options={[...workspaceRelations]}
               value={localRelation}
               getLabel={(option: WorkspaceRelation) =>
@@ -250,12 +251,16 @@ const MemberList = ({
   refreshKey,
   invitedEmails,
   onRefresh,
+  onRemoveInvited,
+  onChangeInvitedRelation,
 }: {
   workspaceId: string;
   canRemove: boolean;
   refreshKey: number;
   invitedEmails: Map<string, WorkspaceRelation>;
   onRefresh: () => void;
+  onRemoveInvited: (email: string) => void;
+  onChangeInvitedRelation: (email: string, relation: WorkspaceRelation) => void;
 }) => {
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
 
@@ -263,15 +268,17 @@ const MemberList = ({
     load({ workspaceId });
   }, [load, workspaceId, refreshKey]);
 
-  const members = data && "data" in data ? data.data : undefined;
+  const result = data && "data" in data ? data.data : undefined;
 
-  if (members === undefined) {
+  if (result === undefined) {
     return (
       <Text color="subtle" align="center">
         Loading members…
       </Text>
     );
   }
+
+  const { owner, members } = result;
 
   // Show invited emails that aren't already in the real member list.
   // This makes behavior identical for existing vs non-existing emails,
@@ -281,17 +288,26 @@ const MemberList = ({
     ([email]) => knownEmails.has(email) === false
   );
 
-  if (members.length === 0 && pendingEntries.length === 0) {
-    return (
-      <Text color="subtle" align="center">
-        No members yet
-      </Text>
-    );
-  }
+  let index = 0;
 
   return (
     <List style={{ padding: 0, margin: 0 }}>
-      {members.map((member, index) => (
+      <ListItem index={index++} asChild>
+        <Flex
+          align="center"
+          gap="2"
+          justify="between"
+          className={memberItemStyle()}
+        >
+          <Flex direction="column" css={{ minWidth: 0, flexGrow: 1 }}>
+            <Text truncate>{owner.email}</Text>
+          </Flex>
+          <Flex align="center" gap="1" css={{ flexShrink: 0 }}>
+            <Text color="subtle">Owner</Text>
+          </Flex>
+        </Flex>
+      </ListItem>
+      {members.map((member) => (
         <MemberRow
           key={member.userId}
           email={member.email ?? ""}
@@ -299,12 +315,12 @@ const MemberList = ({
           workspaceId={workspaceId}
           relation={member.relation as WorkspaceRelation}
           canRemove={canRemove}
-          index={index}
+          index={index++}
           onRefresh={onRefresh}
         />
       ))}
-      {pendingEntries.map(([email, relation], i) => (
-        <ListItem key={email} index={members.length + i} asChild>
+      {pendingEntries.map(([email, relation]) => (
+        <ListItem key={email} index={index++} asChild>
           <Flex
             align="center"
             gap="2"
@@ -314,7 +330,35 @@ const MemberList = ({
             <Flex direction="column" css={{ minWidth: 0, flexGrow: 1 }}>
               <Text truncate>{email}</Text>
             </Flex>
-            <Text color="subtle">{workspaceRelationLabels[relation]}</Text>
+            <Flex align="center" gap="1" css={{ flexShrink: 0 }}>
+              {canRemove ? (
+                <Select
+                  color="ghost"
+                  options={[...workspaceRelations]}
+                  value={relation}
+                  getLabel={(option: WorkspaceRelation) =>
+                    workspaceRelationLabels[option]
+                  }
+                  onChange={(newRelation: WorkspaceRelation) => {
+                    onChangeInvitedRelation(email, newRelation);
+                  }}
+                />
+              ) : (
+                <Text color="subtle">{workspaceRelationLabels[relation]}</Text>
+              )}
+              {canRemove && (
+                <Tooltip content="Remove member">
+                  <IconButton
+                    data-action
+                    tabIndex={-1}
+                    aria-label="Remove member"
+                    onClick={() => onRemoveInvited(email)}
+                  >
+                    <TrashIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Flex>
           </Flex>
         </ListItem>
       ))}
@@ -542,6 +586,20 @@ export const ManageMembersDialog = ({
                 refreshKey={membersKey}
                 invitedEmails={invitedEmails}
                 onRefresh={() => setMembersKey((key) => key + 1)}
+                onRemoveInvited={(email) => {
+                  setInvitedEmails((prev) => {
+                    const next = new Map(prev);
+                    next.delete(email);
+                    return next;
+                  });
+                }}
+                onChangeInvitedRelation={(email, relation) => {
+                  setInvitedEmails((prev) => {
+                    const next = new Map(prev);
+                    next.set(email, relation);
+                    return next;
+                  });
+                }}
               />
             </Flex>
           </ScrollAreaNative>
@@ -636,6 +694,88 @@ export const DeleteWorkspaceDialog = ({
           </DialogClose>
         </DialogActions>
         <DialogTitle>Delete workspace</DialogTitle>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Leave workspace (non-owner members)
+// ---------------------------------------------------------------------------
+
+export const LeaveWorkspaceDialog = ({
+  workspace,
+  userId,
+  isOpen,
+  onOpenChange,
+  onLeft,
+}: {
+  workspace: Workspace;
+  userId: string;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  onLeft: () => void;
+}) => {
+  const { send, state } = trpcClient.workspace.removeMember.useMutation();
+  const revalidator = useRevalidator();
+  const [error, setError] = useState<string>();
+
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        onOpenChange(open);
+        if (open === false) {
+          setError(undefined);
+        }
+      }}
+    >
+      <DialogContent>
+        <Flex
+          direction="column"
+          gap="2"
+          css={{
+            paddingInline: theme.spacing[9],
+            paddingTop: theme.spacing[5],
+          }}
+        >
+          <DialogDescription asChild>
+            <Text as="p">
+              Are you sure you want to leave{" "}
+              <Text as="span" variant="titles">
+                {workspace.name}
+              </Text>
+              ? You will lose access to all projects in this workspace.
+            </Text>
+          </DialogDescription>
+          {error && <Text color="destructive">{error}</Text>}
+        </Flex>
+        <DialogActions>
+          <Button
+            color="destructive"
+            state={state === "idle" ? undefined : "pending"}
+            onClick={() => {
+              send(
+                { workspaceId: workspace.id, memberUserId: userId },
+                (result) => {
+                  if (result && "error" in result) {
+                    setError(result.error);
+                    return;
+                  }
+                  onOpenChange(false);
+                  onLeft();
+                  revalidator.revalidate();
+                }
+              );
+            }}
+          >
+            Leave
+          </Button>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
+        <DialogTitle>Leave workspace</DialogTitle>
       </DialogContent>
     </Dialog>
   );
