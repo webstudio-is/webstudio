@@ -27,13 +27,11 @@ import {
   type SectionName,
 } from "~/shared/project-settings";
 import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { TagsDialog } from "./tags";
 import {
   destroyClientSync,
   initializeClientSync,
 } from "~/shared/sync/sync-client";
-import { $userPlanFeatures } from "~/shared/nano-states";
 
 export type DialogType = "rename" | "delete" | "share" | "tags" | "settings";
 
@@ -131,7 +129,7 @@ const DialogContent = ({
   );
 };
 
-const useCreateProject = () => {
+const useCreateProject = (workspaceId?: string) => {
   const { send, state } = trpcClient.dashboardProject.create.useMutation();
   const [errors, setErrors] = useState<string>();
 
@@ -143,7 +141,7 @@ const useCreateProject = () => {
         : undefined;
     setErrors(errors);
     if (parsed.success) {
-      send({ title }, (data) => {
+      send({ title, workspaceId }, (data) => {
         if (data?.id) {
           window.location.href = builderUrl({
             origin: window.origin,
@@ -168,10 +166,13 @@ const useCreateProject = () => {
 
 export const CreateProject = ({
   buttonText = "New blank project",
+  workspaceId,
 }: {
   buttonText?: string;
+  workspaceId?: string;
 }) => {
-  const { handleSubmit, handleOpenChange, state, errors } = useCreateProject();
+  const { handleSubmit, handleOpenChange, state, errors } =
+    useCreateProject(workspaceId);
 
   return (
     <Dialog
@@ -409,12 +410,10 @@ const ProjectSettingsDialogContainer = ({
   projectId,
   onOpenChange,
   isOpen,
-  userPlanFeatures,
 }: {
   projectId: string;
   onOpenChange: (isOpen: boolean) => void;
   isOpen: boolean;
-  userPlanFeatures: UserPlanFeatures;
 }) => {
   const [currentSection, setCurrentSection] = useState<
     SectionName | undefined
@@ -423,11 +422,9 @@ const ProjectSettingsDialogContainer = ({
     "idle" | "loading" | "loaded"
   >("idle");
 
-  // Set section and user plan features when dialog opens
   useEffect(() => {
     if (isOpen) {
       setCurrentSection("general");
-      $userPlanFeatures.set(userPlanFeatures);
       setLoadingState("loading");
     } else {
       setCurrentSection(undefined);
@@ -435,7 +432,7 @@ const ProjectSettingsDialogContainer = ({
       // Reset data stores and stop sync when dialog closes
       destroyClientSync();
     }
-  }, [isOpen, userPlanFeatures]);
+  }, [isOpen]);
 
   // Initialize sync when settings dialog is opened
   useEffect(() => {
@@ -478,7 +475,6 @@ type ProjectDialogsProps = {
   openDialog: DialogType | undefined;
   onOpenDialogChange: (dialog: DialogType | undefined) => void;
   onHiddenChange: (isHidden: boolean) => void;
-  userPlanFeatures: UserPlanFeatures;
   projectsTags: User["projectsTags"];
 };
 
@@ -492,7 +488,6 @@ export const ProjectDialogs = ({
   openDialog,
   onOpenDialogChange,
   onHiddenChange,
-  userPlanFeatures,
   projectsTags,
 }: ProjectDialogsProps) => {
   const projectTagsIds = (tags || [])
@@ -535,7 +530,6 @@ export const ProjectDialogs = ({
           onOpenDialogChange(open ? "settings" : undefined)
         }
         isOpen={openDialog === "settings"}
-        userPlanFeatures={userPlanFeatures}
       />
     </>
   );

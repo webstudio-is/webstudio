@@ -10,7 +10,9 @@ import {
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Header, Main } from "../shared/layout";
 import { CreateProject } from "../projects/project-dialogs";
+import { useStore } from "@nanostores/react";
 import { TemplateCard } from "./template-card";
+import { $permissions } from "~/shared/nano-states";
 
 export const TemplatesGrid = ({
   projects,
@@ -41,18 +43,26 @@ export const TemplatesGrid = ({
 type ProjectsProps = {
   projects: Array<DashboardProject>;
   welcome?: boolean;
+  currentWorkspaceId?: string;
 };
 
-export const Templates = ({ projects, welcome = false }: ProjectsProps) => {
+export const Templates = ({
+  projects,
+  welcome = false,
+  currentWorkspaceId,
+}: ProjectsProps) => {
+  const permissions = useStore($permissions);
   return (
     <Main>
       <Header variant="main">
         <Text variant="brandSectionTitle" as="h2">
           {welcome ? "What will you create?" : "Starter templates"}
         </Text>
-        <Flex gap="2">
-          <CreateProject />
-        </Flex>
+        {permissions.canCreateProject && (
+          <Flex gap="2">
+            <CreateProject workspaceId={currentWorkspaceId} />
+          </Flex>
+        )}
       </Header>
       <Flex
         direction="column"

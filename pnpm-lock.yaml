@@ -1314,6 +1314,9 @@ importers:
 
   packages/dashboard:
     dependencies:
+      '@webstudio-is/feature-flags':
+        specifier: workspace:*
+        version: link:../feature-flags
       '@webstudio-is/project':
         specifier: workspace:*
         version: link:../project
@@ -1721,6 +1724,12 @@ importers:
       '@webstudio-is/authorization-token':
         specifier: workspace:*
         version: link:../authorization-token
+      '@webstudio-is/feature-flags':
+        specifier: workspace:*
+        version: link:../feature-flags
+      '@webstudio-is/postgrest':
+        specifier: workspace:*
+        version: link:../postgrest
       '@webstudio-is/project-build':
         specifier: workspace:*
         version: link:../project-build
@@ -2233,6 +2242,9 @@ importers:
       '@trpc/server':
         specifier: ^10.45.2
         version: 10.45.2
+      '@webstudio-is/feature-flags':
+        specifier: workspace:*
+        version: link:../feature-flags
       memoize:
         specifier: ^10.0.0
         version: 10.0.0

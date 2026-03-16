@@ -241,9 +241,6 @@ export const domainRouter = router({
     .mutation(async ({ input, ctx }) => {
       try {
         const { userPlanFeatures } = ctx;
-        if (userPlanFeatures === undefined) {
-          throw new Error("Missing userPlanFeatures");
-        }
 
         return await db.create(
           {

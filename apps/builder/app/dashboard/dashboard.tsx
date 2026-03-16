@@ -14,10 +14,16 @@ import {
   buttonStyle,
 } from "@webstudio-is/design-system";
 import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
-import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
+import {
+  NavLink,
+  useLocation,
+  useNavigate,
+  useRevalidator,
+} from "@remix-run/react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
+import { setSharedStores } from "~/shared/nano-states";
 import { dashboardPath } from "~/shared/router-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ProfileMenu } from "./profile-menu";
@@ -28,6 +34,8 @@ import { help } from "~/shared/help";
 import { SearchResults } from "./search/search-results";
 import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
+import { WorkspaceSelector } from "./workspace-selector";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const globalStyles = globalCss({
   body: {
@@ -102,13 +110,22 @@ const NavigationItems = ({
     target?: string;
   }>;
 }) => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const workspaceId = searchParams.get("workspaceId");
+
   return (
     <List style={{ padding: 0, margin: 0 }}>
       {items.map((item, index) => {
+        const to =
+          workspaceId && item.target === undefined
+            ? `${item.to}?workspaceId=${workspaceId}`
+            : item.to;
+
         return (
           <ListItem asChild index={index} key={index}>
             <NavLink
-              to={item.to}
+              to={to}
               end
               target={item.target}
               className={sidebarLinkStyle()}
@@ -128,7 +145,10 @@ const NavigationItems = ({
 const $data = atom<DashboardData | undefined>();
 
 export const DashboardSetup = ({ data }: { data: DashboardData }) => {
-  $data.set(data);
+  useEffect(() => {
+    $data.set(data);
+    setSharedStores(data);
+  }, [data]);
   globalStyles();
   return null;
 };
@@ -151,6 +171,7 @@ const getView = (pathname: string, hasProjects: boolean) => {
 export const Dashboard = () => {
   const data = useStore($data);
   const location = useLocation();
+  const navigate = useNavigate();
 
   if (data === undefined) {
     return null;
@@ -158,14 +179,43 @@ export const Dashboard = () => {
 
   const {
     user,
-    userPlanFeatures,
     publisherHost,
     projectToClone,
     projects,
     templates,
+    workspaces,
+    currentWorkspaceId,
   } = data;
   const hasProjects = projects.length > 0;
   const view = getView(location.pathname, hasProjects);
+
+  const showWorkspaceSelector =
+    isFeatureEnabled("workspaces") &&
+    workspaces !== undefined &&
+    workspaces.length > 0 &&
+    currentWorkspaceId !== undefined;
+
+  const navItems =
+    view === "welcome" || hasProjects === false
+      ? [
+          {
+            to: dashboardPath(),
+            prefix: <ExtensionIcon />,
+            children: "Welcome",
+          },
+        ]
+      : [
+          {
+            to: dashboardPath("projects"),
+            prefix: <BodyIcon />,
+            children: "Projects",
+          },
+          {
+            to: dashboardPath("templates"),
+            prefix: <ExtensionIcon />,
+            children: "Starter templates",
+          },
+        ];
 
   return (
     <TooltipProvider>
@@ -183,7 +233,7 @@ export const Dashboard = () => {
           }}
         >
           <Header variant="aside">
-            <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
+            <ProfileMenu user={user} />
           </Header>
           <Flex
             direction="column"
@@ -196,32 +246,29 @@ export const Dashboard = () => {
             <Search />
           </Flex>
           <nav>
-            <CollapsibleSection label="Workspace" fullWidth>
-              <NavigationItems
-                items={
-                  view === "welcome" || hasProjects === false
-                    ? [
-                        {
-                          to: dashboardPath(),
-                          prefix: <ExtensionIcon />,
-                          children: "Welcome",
-                        },
-                      ]
-                    : [
-                        {
-                          to: dashboardPath("projects"),
-                          prefix: <BodyIcon />,
-                          children: "Projects",
-                        },
-                        {
-                          to: dashboardPath("templates"),
-                          prefix: <ExtensionIcon />,
-                          children: "Starter templates",
-                        },
-                      ]
-                }
-              />
-            </CollapsibleSection>
+            {showWorkspaceSelector ? (
+              <>
+                <Flex
+                  css={{
+                    paddingInline: theme.spacing[5],
+                  }}
+                >
+                  <WorkspaceSelector
+                    workspaces={workspaces}
+                    currentWorkspaceId={currentWorkspaceId}
+                    userId={user.id}
+                    onDeleted={() => {
+                      navigate(dashboardPath("projects"));
+                    }}
+                  />
+                </Flex>
+                <NavigationItems items={navItems} />
+              </>
+            ) : (
+              <CollapsibleSection label="Workspace" fullWidth>
+                <NavigationItems items={navItems} />
+              </CollapsibleSection>
+            )}
             <CollapsibleSection label="Help & support" fullWidth>
               <NavigationItems
                 items={help.map((item) => ({
@@ -255,13 +302,24 @@ export const Dashboard = () => {
         {view === "projects" && (
           <Projects
             projects={projects}
-            userPlanFeatures={userPlanFeatures}
             publisherHost={publisherHost}
             projectsTags={user.projectsTags}
+            currentWorkspaceId={currentWorkspaceId}
           />
         )}
-        {view === "templates" && <Templates projects={templates} />}
-        {view === "welcome" && <Templates projects={templates} welcome />}
+        {view === "templates" && (
+          <Templates
+            projects={templates}
+            currentWorkspaceId={currentWorkspaceId}
+          />
+        )}
+        {view === "welcome" && (
+          <Templates
+            projects={templates}
+            welcome
+            currentWorkspaceId={currentWorkspaceId}
+          />
+        )}
         {view === "search" && <SearchResults {...data} />}
       </Flex>
       <CloneProject projectToClone={projectToClone} />

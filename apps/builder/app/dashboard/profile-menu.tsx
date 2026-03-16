@@ -14,9 +14,10 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
+import { useStore } from "@nanostores/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { $purchases } from "~/shared/nano-states";
 
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
@@ -52,24 +53,17 @@ const ProfileButton = forwardRef<
   );
 });
 
-export const ProfileMenu = ({
-  user,
-  userPlanFeatures,
-}: {
-  user: User;
-  userPlanFeatures: UserPlanFeatures;
-}) => {
+export const ProfileMenu = ({ user }: { user: User }) => {
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
-  const purchases = userPlanFeatures.purchases;
-  const hasPaidPlan = purchases.length > 0;
+  const purchases = useStore($purchases);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <ProfileButton
           image={user.image || undefined}
           name={nameOrEmail}
-          hasPurchases={hasPaidPlan}
+          hasPurchases={purchases.length > 0}
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" width="regular">
@@ -99,7 +93,7 @@ export const ProfileMenu = ({
             </DropdownMenuLabel>
           )
         )}
-        {hasPaidPlan === false && (
+        {purchases.length === 0 && (
           <DropdownMenuItem
             onSelect={() => {
               window.open("https://webstudio.is/pricing");
