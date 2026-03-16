@@ -12,6 +12,8 @@ import {
   PanelBanner,
   Link,
   buttonStyle,
+  Separator,
+  Grid,
 } from "@webstudio-is/design-system";
 import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
 import {
@@ -224,16 +226,14 @@ export const Dashboard = () => {
   return (
     <TooltipProvider>
       <Flex css={{ height: "100vh" }}>
-        <Flex
+        <Grid
           as="aside"
-          align="stretch"
-          direction="column"
-          shrink={false}
           css={{
             width: theme.sizes.sidebarWidth,
             borderRight: `1px solid ${theme.colors.borderMain}`,
             position: "sticky",
             top: 0,
+            gridTemplateRows: `auto auto auto 1fr`,
           }}
         >
           <Header variant="aside">
@@ -267,42 +267,45 @@ export const Dashboard = () => {
                   />
                 </Flex>
                 <NavigationItems items={navItems} />
+                <Separator />
               </>
             ) : (
               <CollapsibleSection label="Workspace" fullWidth>
                 <NavigationItems items={navItems} />
               </CollapsibleSection>
             )}
-            <CollapsibleSection label="Help & support" fullWidth>
-              <NavigationItems
-                items={help.map((item) => ({
-                  to: item.url,
-                  target: "_blank",
-                  prefix: item.icon,
-                  children: item.label,
-                }))}
-              />
-            </CollapsibleSection>
           </nav>
-          <PanelBanner>
-            <Text variant="titles">Inception is live</Text>
-            <Text color="subtle">
-              An AI-powered design tool to explore ideas and instantly generate
-              HTML/CSS for Webstudio Builder or any other platform.
-            </Text>
-            <Link
-              className={buttonStyle({
-                color: "gradient",
-              })}
-              underline="none"
-              href="https://wstd.us/inception"
-              target="_blank"
-              color="contrast"
-            >
-              Get started with Inception
-            </Link>
-          </PanelBanner>
-        </Flex>
+          <div>
+            <PanelBanner variant="neutral">
+              <Text variant="titles">Inception is live</Text>
+              <Text color="subtle">
+                An AI-powered design tool to explore ideas and instantly
+                generate HTML/CSS for Webstudio Builder or any other platform.
+              </Text>
+              <Link
+                className={buttonStyle({
+                  color: "gradient",
+                })}
+                underline="none"
+                href="https://wstd.us/inception"
+                target="_blank"
+                color="contrast"
+              >
+                Get started with Inception
+              </Link>
+            </PanelBanner>
+          </div>
+          <CollapsibleSection label="Help & support" fullWidth>
+            <NavigationItems
+              items={help.map((item) => ({
+                to: item.url,
+                target: "_blank",
+                prefix: item.icon,
+                children: item.label,
+              }))}
+            />
+          </CollapsibleSection>
+        </Grid>
         {view === "projects" && (
           <Projects
             projects={projects}
