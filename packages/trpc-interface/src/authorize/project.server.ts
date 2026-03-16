@@ -82,7 +82,9 @@ const check = async (
     }
 
     if (wpaRows.data.length > 0) {
-      const relations = wpaRows.data.map((r) => r.relation);
+      const relations = wpaRows.data.flatMap((r) =>
+        r.relation !== null ? [r.relation] : []
+      );
       return { allowed: isWorkspaceRelationPermitted(relations, input.permit) };
     }
 
