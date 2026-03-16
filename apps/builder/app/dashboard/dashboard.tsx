@@ -196,7 +196,6 @@ export const Dashboard = () => {
   const view = getView(location.pathname, hasProjects);
 
   const showWorkspaceSelector =
-    maxWorkspaces > 0 &&
     workspaces !== undefined &&
     workspaces.length > 0 &&
     currentWorkspaceId !== undefined;
@@ -261,6 +260,7 @@ export const Dashboard = () => {
                     workspaces={workspaces}
                     currentWorkspaceId={currentWorkspaceId}
                     userId={user.id}
+                    maxWorkspaces={maxWorkspaces}
                     onDeleted={() => {
                       navigate(dashboardPath("projects"));
                     }}

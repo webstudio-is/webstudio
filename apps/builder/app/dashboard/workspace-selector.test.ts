@@ -2,7 +2,7 @@ import { describe, test, expect } from "vitest";
 import { __testing__ } from "./workspace-selector";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 
-const { sortWorkspaces } = __testing__;
+const { sortWorkspaces, canCreateWorkspace } = __testing__;
 
 const createWorkspace = (
   overrides: Partial<WorkspaceWithRelation>
@@ -89,5 +89,55 @@ describe("sortWorkspaces", () => {
     expect(sorted[2].name).toBe("Charlie");
     expect(sorted[0].isDefault).toBe(true);
     expect(sorted[1].isDefault).toBe(true);
+  });
+});
+
+describe("canCreateWorkspace", () => {
+  test("allows creation when owned count is below limit", () => {
+    const workspaces = [
+      createWorkspace({ id: "ws-1", userId: "user-1", isDefault: true }),
+    ];
+    expect(canCreateWorkspace(workspaces, "user-1", 3)).toBe(true);
+  });
+
+  test("disallows creation when owned count equals limit", () => {
+    const workspaces = [
+      createWorkspace({ id: "ws-1", userId: "user-1", isDefault: true }),
+    ];
+    expect(canCreateWorkspace(workspaces, "user-1", 1)).toBe(false);
+  });
+
+  test("disallows creation when owned count exceeds limit", () => {
+    const workspaces = [
+      createWorkspace({ id: "ws-1", userId: "user-1", isDefault: true }),
+      createWorkspace({ id: "ws-2", userId: "user-1" }),
+    ];
+    expect(canCreateWorkspace(workspaces, "user-1", 1)).toBe(false);
+  });
+
+  test("counts only workspaces owned by the user", () => {
+    const workspaces = [
+      createWorkspace({ id: "ws-1", userId: "user-1", isDefault: true }),
+      createWorkspace({
+        id: "ws-2",
+        userId: "other-user",
+        workspaceRelation: "editors",
+      }),
+      createWorkspace({
+        id: "ws-3",
+        userId: "other-user",
+        workspaceRelation: "viewers",
+      }),
+    ];
+    // User owns 1, limit is 2 → can create
+    expect(canCreateWorkspace(workspaces, "user-1", 2)).toBe(true);
+  });
+
+  test("free plan with 1 default workspace cannot create", () => {
+    const workspaces = [
+      createWorkspace({ id: "ws-1", userId: "user-1", isDefault: true }),
+    ];
+    // Free plan: maxWorkspaces = 1, user already has 1 default
+    expect(canCreateWorkspace(workspaces, "user-1", 1)).toBe(false);
   });
 });

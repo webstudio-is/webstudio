@@ -12,8 +12,9 @@ import {
   Avatar,
   theme,
   Button,
+  Text,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon } from "@webstudio-is/icons";
+import { ChevronDownIcon, UpgradeIcon } from "@webstudio-is/icons";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 import { useNavigate, useLocation } from "@remix-run/react";
 import {
@@ -34,17 +35,28 @@ const sortWorkspaces = (workspaces: Array<WorkspaceWithRelation>) =>
     return a.name.localeCompare(b.name);
   });
 
-export const __testing__ = { sortWorkspaces };
+const canCreateWorkspace = (
+  workspaces: Array<WorkspaceWithRelation>,
+  userId: string,
+  maxWorkspaces: number
+) => {
+  const ownedCount = workspaces.filter((w) => w.userId === userId).length;
+  return ownedCount < maxWorkspaces;
+};
+
+export const __testing__ = { sortWorkspaces, canCreateWorkspace };
 
 export const WorkspaceSelector = ({
   workspaces,
   currentWorkspaceId,
   userId,
+  maxWorkspaces,
   onDeleted,
 }: {
   workspaces: Array<WorkspaceWithRelation>;
   currentWorkspaceId: string;
   userId: string;
+  maxWorkspaces: number;
   onDeleted: () => void;
 }) => {
   const navigate = useNavigate();
@@ -55,6 +67,8 @@ export const WorkspaceSelector = ({
   const [renameOpen, setRenameOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const canCreateMore = canCreateWorkspace(workspaces, userId, maxWorkspaces);
 
   return (
     <Flex
@@ -108,9 +122,14 @@ export const WorkspaceSelector = ({
             ))}
           </DropdownMenuRadioGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem withIndicator onSelect={() => setCreateOpen(true)}>
-            Create new
-          </DropdownMenuItem>
+          {canCreateMore && (
+            <DropdownMenuItem
+              withIndicator
+              onSelect={() => setCreateOpen(true)}
+            >
+              Create new
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             withIndicator
             disabled={currentWorkspace?.userId !== userId}
@@ -118,7 +137,11 @@ export const WorkspaceSelector = ({
           >
             Rename
           </DropdownMenuItem>
-          <DropdownMenuItem withIndicator onSelect={() => setInviteOpen(true)}>
+          <DropdownMenuItem
+            withIndicator
+            disabled={maxWorkspaces <= 1}
+            onSelect={() => setInviteOpen(true)}
+          >
             Members
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -131,6 +154,21 @@ export const WorkspaceSelector = ({
           >
             Delete
           </DropdownMenuItem>
+          {canCreateMore === false && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() => {
+                  window.open("https://webstudio.is/pricing");
+                }}
+              >
+                <Flex align="center" gap="1">
+                  <UpgradeIcon />
+                  <Text truncate>Upgrade</Text>
+                </Flex>
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <CreateWorkspaceDialog

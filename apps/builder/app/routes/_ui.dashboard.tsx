@@ -86,31 +86,26 @@ const loadDashboardData = async (request: Request) => {
 
   let workspaceRelation: WorkspaceRelation | "own" = "own";
 
-  let workspaces: Awaited<ReturnType<typeof workspaceApi.findMany>> = [];
-  let currentWorkspaceId: string | undefined;
+  const workspaces = await workspaceApi.findMany(user.id, context);
 
-  if (userPlanFeatures.maxWorkspaces > 0) {
-    workspaces = await workspaceApi.findMany(user.id, context);
+  const selectedId = url.searchParams.get("workspaceId") ?? undefined;
+  const result = resolveCurrentWorkspace(workspaces, selectedId);
 
-    const selectedId = url.searchParams.get("workspaceId") ?? undefined;
-    const result = resolveCurrentWorkspace(workspaces, selectedId);
+  if (result.type === "stale") {
+    url.searchParams.delete("workspaceId");
+    const search = url.searchParams.toString();
+    throw redirect(search ? `${url.pathname}?${search}` : url.pathname);
+  }
 
-    if (result.type === "stale") {
-      url.searchParams.delete("workspaceId");
-      const search = url.searchParams.toString();
-      throw redirect(search ? `${url.pathname}?${search}` : url.pathname);
-    }
+  const currentWorkspace = result.workspace;
+  const currentWorkspaceId = currentWorkspace?.id;
 
-    const currentWorkspace = result.workspace;
-    currentWorkspaceId = currentWorkspace?.id;
+  if (currentWorkspace !== undefined) {
+    workspaceRelation = currentWorkspace.workspaceRelation;
+  }
 
-    if (currentWorkspace !== undefined) {
-      workspaceRelation = currentWorkspace.workspaceRelation;
-    }
-
-    if (currentWorkspaceId !== undefined) {
-      findManyInput.workspaceId = currentWorkspaceId;
-    }
+  if (currentWorkspaceId !== undefined) {
+    findManyInput.workspaceId = currentWorkspaceId;
   }
 
   const projects =
