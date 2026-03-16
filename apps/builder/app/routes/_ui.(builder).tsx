@@ -197,6 +197,14 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         workspaceRelation =
           (membership?.relation as WorkspaceRelation) ??
           defaultWorkspaceRelation;
+
+        // When the workspace owner has downgraded, members lose access.
+        // Data stays intact but permissions are suspended.
+        if (planResult.userPlanFeatures.maxWorkspaces <= 1) {
+          throw new AuthorizationError(
+            "The workspace owner's plan no longer supports workspace access"
+          );
+        }
       }
     }
 

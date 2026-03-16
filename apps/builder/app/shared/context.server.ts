@@ -209,6 +209,11 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   );
   const trpcCache = createTrpcCache();
 
+  const getOwnerPlanFeatures = async (userId: string) => {
+    const { userPlanFeatures } = await getUserPlanInfo(userId, postgrest);
+    return userPlanFeatures;
+  };
+
   const createTokenContext = async (authToken: string) => {
     const authorization = await createTokenAuthorizationContext(
       authToken,
@@ -229,6 +234,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
       trpcCache,
       postgrest,
       createTokenContext,
+      getOwnerPlanFeatures,
     };
   };
 
@@ -242,5 +248,6 @@ export const createContext = async (request: Request): Promise<AppContext> => {
     trpcCache,
     postgrest,
     createTokenContext,
+    getOwnerPlanFeatures,
   };
 };

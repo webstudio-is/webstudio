@@ -14,6 +14,11 @@ export type Workspace = Database["public"]["Tables"]["Workspace"]["Row"];
 export type WorkspaceWithRelation = Workspace & {
   /** The current user's relation to the workspace: "own" for owners */
   workspaceRelation: WorkspaceRelation | "own";
+  /**
+   * True when the workspace owner's plan no longer supports workspace features
+   * (maxWorkspaces <= 1). Members lose project access but workspace data stays intact.
+   */
+  isDowngraded: boolean;
 };
 
 const assertUser = (context: AppContext) => {
@@ -201,6 +206,7 @@ export const findMany = async (userId: string, context: AppContext) => {
   const ownedWithRelation: WorkspaceWithRelation[] = owned.data.map((w) => ({
     ...w,
     workspaceRelation: "own" as const,
+    isDowngraded: false,
   }));
 
   if (memberWorkspaceIds.length === 0) {
@@ -217,11 +223,32 @@ export const findMany = async (userId: string, context: AppContext) => {
     throw memberOf.error;
   }
 
+  // For member workspaces, check if the owner's plan still supports workspace features.
+  // Collect unique owner IDs and batch-check their plans.
+  const ownerIds = [...new Set(memberOf.data.map((w) => w.userId))];
+  const downgradedOwners = new Set<string>();
+
+  if (context.getOwnerPlanFeatures !== undefined) {
+    const plans = await Promise.all(
+      ownerIds.map(async (ownerId) => {
+        // getOwnerPlanFeatures is guaranteed to be defined here
+        const plan = await context.getOwnerPlanFeatures!(ownerId);
+        return { ownerId, maxWorkspaces: plan.maxWorkspaces };
+      })
+    );
+    for (const { ownerId, maxWorkspaces } of plans) {
+      if (maxWorkspaces <= 1) {
+        downgradedOwners.add(ownerId);
+      }
+    }
+  }
+
   const memberWithRelation: WorkspaceWithRelation[] = memberOf.data.map(
     (w) => ({
       ...w,
       workspaceRelation:
         relationByWorkspaceId.get(w.id) ?? defaultWorkspaceRelation,
+      isDowngraded: downgradedOwners.has(w.userId),
     })
   );
 

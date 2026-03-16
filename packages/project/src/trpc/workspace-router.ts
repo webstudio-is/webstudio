@@ -99,6 +99,11 @@ export const workspaceRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
+        if (ctx.userPlanFeatures.maxWorkspaces <= 1) {
+          throw new Error(
+            "Upgrade your plan to manage workspace member roles."
+          );
+        }
         await workspaceApi.updateWorkspaceRelation(input, ctx);
         return { success: true as const };
       } catch (error) {

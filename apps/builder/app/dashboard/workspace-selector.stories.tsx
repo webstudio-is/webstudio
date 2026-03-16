@@ -17,6 +17,7 @@ const createWorkspace = (
   createdAt: new Date().toISOString(),
   userId: "user-1",
   workspaceRelation: "own",
+  isDowngraded: false,
   ...overrides,
 });
 

@@ -226,6 +226,33 @@ export const checkProjectPermit = async (
   return allowed;
 };
 
+/**
+ * Look up the workspace owner's userId for a given project.
+ * Returns undefined when the project has no workspace.
+ */
+const getWorkspaceOwnerIdForProject = async (
+  projectId: string,
+  postgrestClient: AppContext["postgrest"]["client"]
+): Promise<string | undefined> => {
+  const project = await postgrestClient
+    .from("Project")
+    .select("workspaceId")
+    .eq("id", projectId)
+    .maybeSingle();
+
+  if (project.error || project.data?.workspaceId == null) {
+    return;
+  }
+
+  const workspace = await postgrestClient
+    .from("Workspace")
+    .select("userId")
+    .eq("id", project.data.workspaceId)
+    .maybeSingle();
+
+  return workspace.data?.userId ?? undefined;
+};
+
 export const hasProjectPermit = async (
   props: {
     projectId: string;
@@ -245,12 +272,50 @@ export const hasProjectPermit = async (
     return false;
   }
 
-  return checkProjectPermit(
+  const allowed = await checkProjectPermit(
     props.projectId,
     props.permit,
     authInfo,
     context.postgrest.client
   );
+
+  if (allowed === false) {
+    return false;
+  }
+
+  // Workspace downgrade check: when a workspace member accesses a project,
+  // verify the workspace owner's plan still supports workspace features.
+  // Direct project owners and workspace owners are not affected.
+  if (
+    authorization.type === "user" &&
+    context.getOwnerPlanFeatures !== undefined
+  ) {
+    // "own" permit is only granted to direct owners and workspace owners —
+    // both are unaffected by downgrade. This call is memoized.
+    const isOwner = await checkProjectPermit(
+      props.projectId,
+      "own",
+      authInfo,
+      context.postgrest.client
+    );
+
+    if (isOwner === false) {
+      // User is a workspace member — verify the owner's plan
+      const workspaceOwnerId = await getWorkspaceOwnerIdForProject(
+        props.projectId,
+        context.postgrest.client
+      );
+
+      if (workspaceOwnerId !== undefined) {
+        const ownerPlan = await context.getOwnerPlanFeatures(workspaceOwnerId);
+        if (ownerPlan.maxWorkspaces <= 1) {
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
 };
 
 /**
@@ -284,4 +349,7 @@ export const getProjectPermit = async (
   }
 };
 
-export const __testing__ = { isWorkspaceRelationPermitted };
+export const __testing__ = {
+  isWorkspaceRelationPermitted,
+  getWorkspaceOwnerIdForProject,
+};
