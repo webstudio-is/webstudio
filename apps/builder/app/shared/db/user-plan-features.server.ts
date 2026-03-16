@@ -72,6 +72,7 @@ export const getUserPlanInfo = async (
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+        maxWorkspaces: env.MAX_WORKSPACES,
         ...(product.meta as Partial<UserPlanFeatures>),
       };
     });
@@ -96,6 +97,9 @@ export const getUserPlanInfo = async (
         maxPublishesAllowedPerUser: Math.max(
           ...productMetas.map((item) => item.maxPublishesAllowedPerUser)
         ),
+        maxWorkspaces: Math.max(
+          ...productMetas.map((item) => item.maxWorkspaces)
+        ),
       },
       purchases,
     };
@@ -113,6 +117,7 @@ export const getUserPlanInfo = async (
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+        maxWorkspaces: env.MAX_WORKSPACES,
       },
       purchases: [{ planName: "env.USER_PLAN Pro" }],
     };
@@ -129,6 +134,7 @@ export const getUserPlanInfo = async (
       maxContactEmails: 0,
       maxDomainsAllowedPerUser: 0,
       maxPublishesAllowedPerUser: 10,
+      maxWorkspaces: env.MAX_WORKSPACES,
     },
     purchases: [],
   };

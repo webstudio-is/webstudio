@@ -12,6 +12,7 @@ const defaultPlanPermissions = {
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 10,
+  maxWorkspaces: 0,
 };
 
 const proPlan = {
@@ -24,6 +25,7 @@ const proPlan = {
   maxContactEmails: 5,
   maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
   maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+  maxWorkspaces: 0,
 };
 
 const freePlan = {
@@ -36,6 +38,7 @@ const freePlan = {
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 10,
+  maxWorkspaces: 0,
 };
 
 describe("getPermissions", () => {
@@ -183,6 +186,7 @@ describe("getPermissions", () => {
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+        maxWorkspaces: 0,
       });
     });
 
@@ -199,6 +203,7 @@ describe("getPermissions", () => {
         maxContactEmails: 0,
         maxDomainsAllowedPerUser: 0,
         maxPublishesAllowedPerUser: 10,
+        maxWorkspaces: 0,
       });
     });
   });
@@ -308,6 +313,7 @@ describe("getPermissions", () => {
         maxContactEmails: 0,
         maxDomainsAllowedPerUser: 0,
         maxPublishesAllowedPerUser: 10,
+        maxWorkspaces: 0,
       });
     });
 
@@ -334,6 +340,7 @@ describe("getPermissions", () => {
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+        maxWorkspaces: 0,
       });
     });
 
@@ -357,6 +364,7 @@ describe("getPermissions", () => {
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+        maxWorkspaces: 0,
       });
     });
 
@@ -383,6 +391,7 @@ describe("getPermissions", () => {
         maxContactEmails: 0,
         maxDomainsAllowedPerUser: 0,
         maxPublishesAllowedPerUser: 10,
+        maxWorkspaces: 0,
       });
     });
 
@@ -409,6 +418,7 @@ describe("getPermissions", () => {
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+        maxWorkspaces: 0,
       });
     });
   });

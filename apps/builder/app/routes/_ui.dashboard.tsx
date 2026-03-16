@@ -26,7 +26,7 @@ import { allowedDestinations } from "~/services/destinations.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { resolveCurrentWorkspace } from "~/dashboard/dashboard-utils";
 
 export const meta = () => {
   const metas: ReturnType<MetaFunction> = [];
@@ -84,32 +84,24 @@ const loadDashboardData = async (request: Request) => {
     userId: user.id,
   };
 
-  let workspaces: Awaited<ReturnType<typeof workspaceApi.findMany>> | undefined;
-  let currentWorkspaceId: string | undefined;
   let workspaceRelation: WorkspaceRelation | "own" = "own";
 
-  if (isFeatureEnabled("workspaces")) {
+  let workspaces: Awaited<ReturnType<typeof workspaceApi.findMany>> = [];
+  let currentWorkspaceId: string | undefined;
+
+  if (userPlanFeatures.maxWorkspaces > 0) {
     workspaces = await workspaceApi.findMany(user.id, context);
 
-    // Read selected workspace from URL, fall back to the default workspace
-    const selectedId = url.searchParams.get("workspaceId");
+    const selectedId = url.searchParams.get("workspaceId") ?? undefined;
+    const result = resolveCurrentWorkspace(workspaces, selectedId);
 
-    const matchedWorkspace =
-      selectedId === null
-        ? undefined
-        : workspaces.find((w) => w.id === selectedId);
-
-    // If the URL references a workspace that no longer exists or the user
-    // lost access to, strip the stale param and redirect so the client
-    // falls back to the default workspace.
-    if (selectedId !== null && matchedWorkspace === undefined) {
+    if (result.type === "stale") {
       url.searchParams.delete("workspaceId");
       const search = url.searchParams.toString();
       throw redirect(search ? `${url.pathname}?${search}` : url.pathname);
     }
 
-    const defaultWorkspace = workspaces.find((w) => w.isDefault);
-    const currentWorkspace = matchedWorkspace ?? defaultWorkspace;
+    const currentWorkspace = result.workspace;
     currentWorkspaceId = currentWorkspace?.id;
 
     if (currentWorkspace !== undefined) {

@@ -1,6 +1,5 @@
 import type { AppContext } from "../context/context.server";
 import type { Database } from "@webstudio-is/postgrest/index.server";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import memoize from "memoize";
 
 type Relation =
@@ -29,6 +28,26 @@ const permitToRelationRewrite: Record<TokenAuthPermit, Relation[]> = {
   admin: ["administrators"],
 };
 
+/**
+ * Pure function: checks whether a set of workspace relations grants a given
+ * permit. Used by the auth layer to evaluate workspace-based access.
+ */
+const isWorkspaceRelationPermitted = (
+  relations: string[],
+  permit: AuthPermit
+): boolean => {
+  // Workspace owner gets all permits
+  if (relations.includes("own")) {
+    return true;
+  }
+  // Only workspace owner gets "own" permit
+  if (permit === "own") {
+    return false;
+  }
+  const permitted = permitToRelationRewrite[permit] ?? [];
+  return relations.some((r) => permitted.includes(r as Relation));
+};
+
 const check = async (
   postgrestClient: AppContext["postgrest"]["client"],
   input: CheckInput
@@ -52,37 +71,19 @@ const check = async (
     }
 
     // Workspace-based authorization
-    if (isFeatureEnabled("workspaces")) {
-      const wpaRows = await postgrestClient
-        .from("WorkspaceProjectAuthorization")
-        .select("relation")
-        .eq("userId", subjectSet.id)
-        .eq("projectId", input.id);
+    const wpaRows = await postgrestClient
+      .from("WorkspaceProjectAuthorization")
+      .select("relation")
+      .eq("userId", subjectSet.id)
+      .eq("projectId", input.id);
 
-      if (wpaRows.error) {
-        throw wpaRows.error;
-      }
+    if (wpaRows.error) {
+      throw wpaRows.error;
+    }
 
-      if (wpaRows.data.length > 0) {
-        const relations = wpaRows.data.map((r) => r.relation);
-
-        // Workspace owner gets all permits
-        if (relations.includes("own")) {
-          return { allowed: true };
-        }
-
-        // Only workspace owner (above) gets "own" permit
-        if (input.permit === "own") {
-          return { allowed: false };
-        }
-
-        // Check member relations against permit hierarchy
-        const permitted = permitToRelationRewrite[input.permit] ?? [];
-        const allowed = relations.some((r) =>
-          permitted.includes(r as Relation)
-        );
-        return { allowed };
-      }
+    if (wpaRows.data.length > 0) {
+      const relations = wpaRows.data.map((r) => r.relation);
+      return { allowed: isWorkspaceRelationPermitted(relations, input.permit) };
     }
 
     return { allowed: false };
@@ -280,3 +281,5 @@ export const getProjectPermit = async (
     }
   }
 };
+
+export const __testing__ = { isWorkspaceRelationPermitted };

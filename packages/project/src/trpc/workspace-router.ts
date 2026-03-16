@@ -15,7 +15,10 @@ export const workspaceRouter = router({
     .input(z.object({ name: Name }))
     .mutation(async ({ input, ctx }) => {
       try {
-        const workspace = await workspaceApi.create(input, ctx);
+        const workspace = await workspaceApi.create(
+          { ...input, maxWorkspaces: ctx.userPlanFeatures.maxWorkspaces },
+          ctx
+        );
         return { success: true as const, data: workspace };
       } catch (error) {
         return createErrorResponse(error);

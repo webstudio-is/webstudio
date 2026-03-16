@@ -24,7 +24,7 @@ const assertUser = (context: AppContext) => {
 };
 
 export const create = async (
-  { name }: { name: string },
+  { name, maxWorkspaces }: { name: string; maxWorkspaces: number },
   context: AppContext
 ) => {
   const userId = assertUser(context);
@@ -32,6 +32,22 @@ export const create = async (
   const trimmed = name.trim();
   if (trimmed.length < 2) {
     throw new Error("Workspace name must be at least 2 characters");
+  }
+
+  // Count existing workspaces owned by the user
+  const countResult = await context.postgrest.client
+    .from("Workspace")
+    .select("id", { count: "exact", head: true })
+    .eq("userId", userId);
+
+  if (countResult.error) {
+    throw countResult.error;
+  }
+
+  if ((countResult.count ?? 0) >= maxWorkspaces) {
+    throw new Error(
+      `You have reached the maximum number of workspaces (${maxWorkspaces}).`
+    );
   }
 
   const result = await context.postgrest.client

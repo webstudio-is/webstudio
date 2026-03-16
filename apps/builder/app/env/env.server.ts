@@ -61,6 +61,11 @@ const env = {
   // current user plan features (default)
   USER_PLAN: process.env.USER_PLAN ?? "",
 
+  // Default maxWorkspaces for plans that don't specify it.
+  // Set to 20 in local/staging to enable workspace features during development.
+  // Defaults to 0 in production — only plans with explicit product.meta override get workspaces.
+  MAX_WORKSPACES: Number(process.env.MAX_WORKSPACES ?? "0"),
+
   POSTGREST_URL: process.env.POSTGREST_URL ?? "http://localhost:3000",
   POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
 
