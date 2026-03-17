@@ -26,7 +26,12 @@ export const notificationRouter = router({
   }),
 
   accept: procedure
-    .input(z.object({ notificationId: z.string() }))
+    .input(
+      z.object({
+        notificationId: z.string(),
+        targetWorkspaceId: z.string().optional(),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       try {
         await notificationApi.accept(input, ctx);

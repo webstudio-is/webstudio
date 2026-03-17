@@ -8,7 +8,7 @@ import type { UserPlanFeatures } from "@webstudio-is/trpc-interface/user-plan-fe
  *
  * Role-based permission mapping (mirrors backend checks):
  *   own              → all actions
- *   administrators   → create, duplicate, rename, tags
+ *   administrators   → create, duplicate, rename, tags, transfer
  *   builders         → create, duplicate, rename, tags
  *   editors          → rename, tags
  *   viewers          → open in safe mode only (handled by caller)
@@ -25,8 +25,8 @@ export const getPermissions = ({
   workspaces: Array<{ workspaceRelation: WorkspaceRelation | "own" }>;
 }) => {
   const isOwn = workspaceRelation === "own";
-  const isBuilder =
-    workspaceRelation === "builders" || workspaceRelation === "administrators";
+  const isAdmin = workspaceRelation === "administrators";
+  const isBuilder = workspaceRelation === "builders" || isAdmin;
   const isEditor = workspaceRelation === "editors" || isBuilder;
   // Content mode is always available in shared projects (non-owner access)
   // because content mode is a safe/restricted editing mode.
@@ -40,6 +40,7 @@ export const getPermissions = ({
     canRename: isOwn || isEditor,
     canShare: isOwn,
     canDelete: isOwn,
+    canTransfer: isOwn || isAdmin,
     canEditTags: isOwn || isEditor,
     canOpenSettings: isOwn,
     // Plan feature permissions

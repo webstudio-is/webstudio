@@ -8,7 +8,7 @@ const createNotification = (
 ): NotificationItem =>
   ({
     id: "notif-1",
-    type: "workspace_invite",
+    type: "workspaceInvite",
     status: "pending",
     payload: { workspaceId: "ws-1", relation: "viewers" },
     createdAt: "2026-03-16T00:00:00.000Z",
@@ -57,5 +57,41 @@ describe("getDescription", () => {
   test("unknown notification type", () => {
     const result = getDescription(createNotification({ type: "unknown_type" }));
     expect(result).toBe("You have a new notification");
+  });
+
+  test("project transfer with project title", () => {
+    const result = getDescription(
+      createNotification({
+        type: "projectTransfer",
+        payload: { projectId: "proj-1" },
+        projectTitle: "My Website",
+      })
+    );
+    expect(result).toBe('Alice wants to transfer "My Website" to you');
+  });
+
+  test("project transfer without project title", () => {
+    const result = getDescription(
+      createNotification({
+        type: "projectTransfer",
+        payload: { projectId: "proj-1" },
+        projectTitle: undefined,
+      })
+    );
+    expect(result).toBe('Alice wants to transfer "a project" to you');
+  });
+
+  test("project transfer with sender email fallback", () => {
+    const result = getDescription(
+      createNotification({
+        type: "projectTransfer",
+        payload: { projectId: "proj-1" },
+        projectTitle: "My Website",
+        senderName: "",
+      })
+    );
+    expect(result).toBe(
+      'alice@example.com wants to transfer "My Website" to you'
+    );
   });
 });

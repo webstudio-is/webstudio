@@ -28,12 +28,19 @@ import {
 } from "~/shared/project-settings";
 import type { User } from "~/shared/db/user.server";
 import { TagsDialog } from "./tags";
+import { TransferProjectDialog } from "./transfer-dialog";
 import {
   destroyClientSync,
   initializeClientSync,
 } from "~/shared/sync/sync-client";
 
-export type DialogType = "rename" | "delete" | "share" | "tags" | "settings";
+export type DialogType =
+  | "rename"
+  | "delete"
+  | "share"
+  | "tags"
+  | "settings"
+  | "transfer";
 
 type DialogProps = {
   title: string;
@@ -530,6 +537,14 @@ export const ProjectDialogs = ({
           onOpenDialogChange(open ? "settings" : undefined)
         }
         isOpen={openDialog === "settings"}
+      />
+      <TransferProjectDialog
+        isOpen={openDialog === "transfer"}
+        onOpenChange={(open) =>
+          onOpenDialogChange(open ? "transfer" : undefined)
+        }
+        projectId={projectId}
+        title={title}
       />
     </>
   );
