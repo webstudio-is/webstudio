@@ -177,22 +177,34 @@ const loadNotifications = async (
   }
 };
 
-export const NotificationPopover = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [pendingCount, setPendingCount] = useState(0);
+export const NotificationPopover = ({
+  defaultOpen = false,
+  initialNotifications,
+}: {
+  defaultOpen?: boolean;
+  initialNotifications?: NotificationItem[];
+} = {}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(
+    initialNotifications ?? []
+  );
+  const [pendingCount, setPendingCount] = useState(
+    initialNotifications?.length ?? 0
+  );
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   const revalidator = useRevalidator();
 
   useEffect(() => {
-    loadCount(setPendingCount);
-  }, []);
+    if (initialNotifications === undefined) {
+      loadCount(setPendingCount);
+    }
+  }, [initialNotifications]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && initialNotifications === undefined) {
       loadNotifications(setNotifications, setPendingCount);
     }
-  }, [isOpen]);
+  }, [isOpen, initialNotifications]);
 
   const handleAccept = async (notificationId: string) => {
     setLoadingIds((prev) => new Set(prev).add(notificationId));
