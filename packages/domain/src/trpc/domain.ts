@@ -143,6 +143,22 @@ export const domainRouter = router({
           logProjectName: `${project.title} - ${project.id}`,
         });
 
+        // For self-hosting + static destination: mark the build as PUBLISHED
+        // directly since the static download is synchronous.
+        // For self-hosting + saas destination: the publisher service calls back
+        // to /rest/build/:buildId/status when the vite build completes, so we
+        // leave the build in PENDING state and let the callback set PUBLISHED.
+        if (
+          result.success &&
+          env.TRPC_SERVER_URL === undefined &&
+          input.destination !== "saas"
+        ) {
+          await ctx.postgrest.client
+            .from("Build")
+            .update({ publishStatus: "PUBLISHED" })
+            .eq("id", build.id);
+        }
+
         if (input.destination === "static" && result.success) {
           return { success: true as const, name };
         }
