@@ -80,7 +80,11 @@ const loadDashboardData = async (request: Request) => {
 
   const { sourceOrigin } = parseBuilderUrl(request.url);
 
-  const findManyInput: { userId: string; workspaceId?: string } = {
+  const findManyInput: {
+    userId: string;
+    workspaceId?: string;
+    includeUnassigned?: boolean;
+  } = {
     userId: user.id,
   };
 
@@ -106,6 +110,12 @@ const loadDashboardData = async (request: Request) => {
 
   if (currentWorkspaceId !== undefined) {
     findManyInput.workspaceId = currentWorkspaceId;
+    // Include projects with NULL workspaceId when viewing the default workspace.
+    // These are pre-workspace projects that belong to the user but haven't been
+    // assigned to a workspace yet.
+    if (currentWorkspace?.isDefault) {
+      findManyInput.includeUnassigned = true;
+    }
   }
 
   const projects =

@@ -122,6 +122,7 @@ export const create = async (
         .select("userId, relation")
         .eq("workspaceId", workspaceId)
         .eq("userId", userId)
+        .is("removedAt", null)
         .maybeSingle();
 
       if (membership.error) {
@@ -322,6 +323,7 @@ export const clone = async (
           .select("userId, relation")
           .eq("workspaceId", project.workspaceId)
           .eq("userId", userId)
+          .is("removedAt", null)
           .maybeSingle();
 
         if (membership.data !== null) {

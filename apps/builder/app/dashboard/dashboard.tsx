@@ -38,6 +38,7 @@ import { SearchResults } from "./search/search-results";
 import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
 import { WorkspaceSelector } from "./workspace-selector";
+import { NotificationPopover } from "./notification-popover";
 
 const globalStyles = globalCss({
   body: {
@@ -156,12 +157,19 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   return null;
 };
 
-const getView = (pathname: string, hasProjects: boolean) => {
+const getView = (
+  pathname: string,
+  hasProjects: boolean,
+  isDefaultWorkspace: boolean
+) => {
   if (pathname === dashboardPath("search")) {
     return "search";
   }
 
-  if (hasProjects === false) {
+  // Only show the onboarding welcome page on the default workspace
+  // when the user has no projects yet. Non-default workspaces that are
+  // empty should show the normal (empty) projects view.
+  if (hasProjects === false && isDefaultWorkspace) {
     return "welcome";
   }
 
@@ -192,7 +200,10 @@ export const Dashboard = () => {
     currentWorkspaceId,
   } = data;
   const hasProjects = projects.length > 0;
-  const view = getView(location.pathname, hasProjects);
+  const isDefaultWorkspace =
+    currentWorkspaceId === undefined ||
+    workspaces?.find((w) => w.id === currentWorkspaceId)?.isDefault === true;
+  const view = getView(location.pathname, hasProjects, isDefaultWorkspace);
 
   const showWorkspaceSelector =
     workspaces !== undefined &&
@@ -200,7 +211,7 @@ export const Dashboard = () => {
     currentWorkspaceId !== undefined;
 
   const navItems =
-    view === "welcome" || hasProjects === false
+    view === "welcome"
       ? [
           {
             to: dashboardPath(),
@@ -236,6 +247,7 @@ export const Dashboard = () => {
         >
           <Header variant="aside">
             <ProfileMenu user={user} />
+            <NotificationPopover />
           </Header>
           <Flex
             direction="column"

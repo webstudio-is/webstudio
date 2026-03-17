@@ -141,29 +141,148 @@ const memberItemStyle = css({
   },
 });
 
-const MemberRow = ({
-  email,
-  userId,
-  workspaceId,
-  relation,
-  canRemove,
-  index,
-  onRefresh,
-}: {
+type MemberRowProps = {
   email: string;
-  userId: string;
-  workspaceId: string;
-  relation: WorkspaceRelation;
-  canRemove: boolean;
   index: number;
-  onRefresh: () => void;
-}) => {
+} & (
+  | { role: "owner" }
+  | {
+      role: "member";
+      userId: string;
+      workspaceId: string;
+      relation: WorkspaceRelation;
+      canRemove: boolean;
+      onRefresh: () => void;
+    }
+  | {
+      role: "pending";
+      relation: WorkspaceRelation;
+      canRemove: boolean;
+      onRemove: () => void;
+      onChangeRelation: (relation: WorkspaceRelation) => void;
+    }
+);
+
+const MemberRow = (props: MemberRowProps) => {
+  const { email, index, role } = props;
   const removeMutation = trpcClient.workspace.removeMember.useMutation();
   const updateMutation =
     trpcClient.workspace.updateWorkspaceRelation.useMutation();
   const revalidator = useRevalidator();
   const [error, setError] = useState<string>();
-  const [localRelation, setLocalRelation] = useState(relation);
+  const [localRelation, setLocalRelation] = useState<WorkspaceRelation>(
+    role !== "owner" ? props.relation : "administrators"
+  );
+
+  const selectElement = (() => {
+    if (role === "owner") {
+      return (
+        <Select color="ghost" options={["Owner"]} value="Owner" disabled />
+      );
+    }
+
+    const value = role === "pending" ? props.relation : localRelation;
+
+    const handleChange =
+      role === "pending"
+        ? props.onChangeRelation
+        : (newRelation: WorkspaceRelation) => {
+            setError(undefined);
+            setLocalRelation(newRelation);
+            updateMutation.send(
+              {
+                workspaceId: props.workspaceId,
+                memberUserId: props.userId,
+                relation: newRelation,
+              },
+              (result) => {
+                if (result && "error" in result) {
+                  setError(result.error);
+                  setLocalRelation(props.relation);
+                  return;
+                }
+                props.onRefresh();
+                revalidator.revalidate();
+              }
+            );
+          };
+
+    return (
+      <Select
+        color="ghost"
+        options={[...workspaceRelations]}
+        value={value}
+        getLabel={(option: WorkspaceRelation) =>
+          workspaceRelationLabels[option]
+        }
+        onChange={handleChange}
+        disabled={!props.canRemove}
+      />
+    );
+  })();
+
+  const deleteElement = (() => {
+    if (role === "owner") {
+      return (
+        <IconButton aria-label="Remove member" tabIndex={-1} disabled>
+          <TrashIcon />
+        </IconButton>
+      );
+    }
+
+    if (props.canRemove) {
+      return (
+        <Tooltip
+          content={error ?? "Remove member"}
+          variant={error ? "wrapped" : undefined}
+          open={error ? true : undefined}
+        >
+          <IconButton
+            data-action
+            tabIndex={-1}
+            aria-label="Remove member"
+            onClick={() => {
+              if (role === "pending") {
+                props.onRemove();
+                return;
+              }
+              setError(undefined);
+              removeMutation.send(
+                {
+                  workspaceId: props.workspaceId,
+                  memberUserId: props.userId,
+                },
+                (result) => {
+                  if (result && "error" in result) {
+                    setError(result.error);
+                    return;
+                  }
+                  props.onRefresh();
+                  revalidator.revalidate();
+                }
+              );
+            }}
+            disabled={
+              role === "member" ? removeMutation.state !== "idle" : false
+            }
+          >
+            <TrashIcon />
+          </IconButton>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <IconButton
+        aria-label="Remove member"
+        tabIndex={-1}
+        disabled
+        css={{ visibility: "hidden" }}
+      >
+        <TrashIcon />
+      </IconButton>
+    );
+  })();
 
   return (
     <ListItem index={index} asChild>
@@ -177,68 +296,8 @@ const MemberRow = ({
           <Text truncate>{email}</Text>
         </Flex>
         <Flex align="center" gap="1" css={{ flexShrink: 0 }}>
-          {canRemove ? (
-            <Select
-              color="ghost"
-              options={[...workspaceRelations]}
-              value={localRelation}
-              getLabel={(option: WorkspaceRelation) =>
-                workspaceRelationLabels[option]
-              }
-              onChange={(newRelation: WorkspaceRelation) => {
-                setError(undefined);
-                setLocalRelation(newRelation);
-                updateMutation.send(
-                  {
-                    workspaceId,
-                    memberUserId: userId,
-                    relation: newRelation,
-                  },
-                  (result) => {
-                    if (result && "error" in result) {
-                      setError(result.error);
-                      setLocalRelation(relation);
-                      return;
-                    }
-                    onRefresh();
-                    revalidator.revalidate();
-                  }
-                );
-              }}
-            />
-          ) : (
-            <Text color="subtle">{workspaceRelationLabels[relation]}</Text>
-          )}
-          {canRemove && (
-            <Tooltip
-              content={error ?? "Remove member"}
-              variant={error ? "wrapped" : undefined}
-              open={error ? true : undefined}
-            >
-              <IconButton
-                data-action
-                tabIndex={-1}
-                aria-label="Remove member"
-                onClick={() => {
-                  setError(undefined);
-                  removeMutation.send(
-                    { workspaceId, memberUserId: userId },
-                    (result) => {
-                      if (result && "error" in result) {
-                        setError(result.error);
-                        return;
-                      }
-                      onRefresh();
-                      revalidator.revalidate();
-                    }
-                  );
-                }}
-                disabled={removeMutation.state !== "idle"}
-              >
-                <TrashIcon />
-              </IconButton>
-            </Tooltip>
-          )}
+          {selectElement}
+          {deleteElement}
         </Flex>
       </Flex>
     </ListItem>
@@ -292,25 +351,12 @@ const MemberList = ({
 
   return (
     <List style={{ padding: 0, margin: 0 }}>
-      <ListItem index={index++} asChild>
-        <Flex
-          align="center"
-          gap="2"
-          justify="between"
-          className={memberItemStyle()}
-        >
-          <Flex direction="column" css={{ minWidth: 0, flexGrow: 1 }}>
-            <Text truncate>{owner.email}</Text>
-          </Flex>
-          <Flex align="center" gap="1" css={{ flexShrink: 0 }}>
-            <Text color="subtle">Owner</Text>
-          </Flex>
-        </Flex>
-      </ListItem>
+      <MemberRow email={owner.email} role="owner" index={index++} />
       {members.map((member) => (
         <MemberRow
           key={member.userId}
           email={member.email ?? ""}
+          role="member"
           userId={member.userId}
           workspaceId={workspaceId}
           relation={member.relation as WorkspaceRelation}
@@ -320,47 +366,18 @@ const MemberList = ({
         />
       ))}
       {pendingEntries.map(([email, relation]) => (
-        <ListItem key={email} index={index++} asChild>
-          <Flex
-            align="center"
-            gap="2"
-            justify="between"
-            className={memberItemStyle()}
-          >
-            <Flex direction="column" css={{ minWidth: 0, flexGrow: 1 }}>
-              <Text truncate>{email}</Text>
-            </Flex>
-            <Flex align="center" gap="1" css={{ flexShrink: 0 }}>
-              {canRemove ? (
-                <Select
-                  color="ghost"
-                  options={[...workspaceRelations]}
-                  value={relation}
-                  getLabel={(option: WorkspaceRelation) =>
-                    workspaceRelationLabels[option]
-                  }
-                  onChange={(newRelation: WorkspaceRelation) => {
-                    onChangeInvitedRelation(email, newRelation);
-                  }}
-                />
-              ) : (
-                <Text color="subtle">{workspaceRelationLabels[relation]}</Text>
-              )}
-              {canRemove && (
-                <Tooltip content="Remove member">
-                  <IconButton
-                    data-action
-                    tabIndex={-1}
-                    aria-label="Remove member"
-                    onClick={() => onRemoveInvited(email)}
-                  >
-                    <TrashIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Flex>
-          </Flex>
-        </ListItem>
+        <MemberRow
+          key={email}
+          email={email}
+          role="pending"
+          relation={relation}
+          canRemove={canRemove}
+          index={index++}
+          onRemove={() => onRemoveInvited(email)}
+          onChangeRelation={(newRelation) =>
+            onChangeInvitedRelation(email, newRelation)
+          }
+        />
       ))}
     </List>
   );
