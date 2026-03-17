@@ -16,6 +16,11 @@ import {
   type UserPlanFeatures,
 } from "@webstudio-is/trpc-interface/user-plan-features";
 import type { DashboardProject } from "@webstudio-is/dashboard";
+import { updateCsrfToken } from "~/shared/csrf.client";
+
+// Set a dummy CSRF token so the custom fetch wrapper does not show
+// "CSRF token is not set" toasts in Storybook.
+updateCsrfToken("__storybook__");
 
 export default {
   title: "Dashboard",
