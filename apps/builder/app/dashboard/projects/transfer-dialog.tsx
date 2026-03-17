@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useRevalidator } from "@remix-run/react";
+import { useRevalidator, useSearchParams } from "@remix-run/react";
 import {
   Button,
   Flex,
@@ -14,6 +14,7 @@ import {
   DialogDescription,
   MenuCheckedIcon,
   ScrollAreaNative,
+  Separator,
   theme,
   toast,
   css,
@@ -49,6 +50,9 @@ const workspaceItemStyle = css({
   },
 });
 
+const sortWorkspaces = <T extends { name: string }>(workspaces: Array<T>) =>
+  [...workspaces].sort((a, b) => a.name.localeCompare(b.name));
+
 const SEARCH_DEBOUNCE_MS = 300;
 
 export const TransferProjectDialog = ({
@@ -64,6 +68,7 @@ export const TransferProjectDialog = ({
 }) => {
   const workspaces = useStore($workspaces);
   const revalidator = useRevalidator();
+  const [searchParams] = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>();
@@ -76,12 +81,12 @@ export const TransferProjectDialog = ({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const requestCounterRef = useRef(0);
 
-  // Group workspaces by ownership
-  const ownedWorkspaces = workspaces.filter(
-    (w) => w.workspaceRelation === "own"
+  // Group and sort workspaces by ownership
+  const ownedWorkspaces = sortWorkspaces(
+    workspaces.filter((w) => w.workspaceRelation === "own")
   );
-  const sharedWorkspaces = workspaces.filter(
-    (w) => w.workspaceRelation !== "own"
+  const sharedWorkspaces = sortWorkspaces(
+    workspaces.filter((w) => w.workspaceRelation !== "own")
   );
 
   const canTransferToWorkspace = (workspaceRelation: string) =>
@@ -91,17 +96,31 @@ export const TransferProjectDialog = ({
     ? filteredWorkspaces.length > 0
     : workspaces.length > 0;
 
-  // Reset state when dialog opens/closes
-  useEffect(() => {
-    if (isOpen === false) {
-      setEmail("");
-      setSelectedWorkspaceId(undefined);
-      setFilteredWorkspaces([]);
-      setIsFiltered(false);
-      setError(undefined);
-      clearTimeout(debounceTimerRef.current);
+  // Determine the current workspace from URL or fall back to default
+  const getCurrentWorkspaceId = () => {
+    const urlWorkspaceId = searchParams.get("workspaceId");
+    if (urlWorkspaceId !== null) {
+      return urlWorkspaceId;
     }
+    // When no workspaceId in URL, the user is on the default workspace
+    return ownedWorkspaces[0]?.id;
+  };
+
+  // Reset state when dialog opens — pre-select the current workspace
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedWorkspaceId(getCurrentWorkspaceId());
+      return;
+    }
+    setEmail("");
+    setSelectedWorkspaceId(undefined);
+    setFilteredWorkspaces([]);
+    setIsFiltered(false);
+    setError(undefined);
+    clearTimeout(debounceTimerRef.current);
+
     return () => clearTimeout(debounceTimerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleEmailChange = (searchEmail: string) => {
@@ -110,7 +129,7 @@ export const TransferProjectDialog = ({
 
     if (searchEmail.trim() === "") {
       setIsFiltered(false);
-      setSelectedWorkspaceId(undefined);
+      setSelectedWorkspaceId(getCurrentWorkspaceId());
       clearTimeout(debounceTimerRef.current);
       return;
     }
@@ -147,7 +166,7 @@ export const TransferProjectDialog = ({
   const handleClearEmail = () => {
     setEmail("");
     setIsFiltered(false);
-    setSelectedWorkspaceId(undefined);
+    setSelectedWorkspaceId(getCurrentWorkspaceId());
     setError(undefined);
     clearTimeout(debounceTimerRef.current);
   };
@@ -263,11 +282,13 @@ export const TransferProjectDialog = ({
                 }}
               >
                 {isFiltered ? (
-                  filteredWorkspaces.map((w) => renderWorkspaceItem(w, false))
+                  sortWorkspaces(filteredWorkspaces).map((w) =>
+                    renderWorkspaceItem(w, false)
+                  )
                 ) : (
                   <>
                     {ownedWorkspaces.length > 0 && (
-                      <Flex direction="column">
+                      <>
                         <Text
                           variant="tiny"
                           color="subtle"
@@ -281,10 +302,10 @@ export const TransferProjectDialog = ({
                         {ownedWorkspaces.map((w) =>
                           renderWorkspaceItem(w, false)
                         )}
-                      </Flex>
+                      </>
                     )}
                     {sharedWorkspaces.length > 0 && (
-                      <Flex direction="column">
+                      <>
                         <Text
                           variant="tiny"
                           color="subtle"
@@ -302,7 +323,7 @@ export const TransferProjectDialog = ({
                               false
                           )
                         )}
-                      </Flex>
+                      </>
                     )}
                   </>
                 )}
@@ -317,6 +338,8 @@ export const TransferProjectDialog = ({
               place it.
             </Text>
           )}
+
+          <Separator />
 
           <Flex direction="column" gap="1">
             <Label htmlFor="transfer-email">Recipient email (optional)</Label>
