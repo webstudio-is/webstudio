@@ -1,23 +1,13 @@
 import { useState } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuGroup,
   Flex,
-  MenuCheckedIcon,
-  Avatar,
   theme,
-  Button,
   Text,
   ProBadge,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon, UpgradeIcon } from "@webstudio-is/icons";
+import { UpgradeIcon } from "@webstudio-is/icons";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 import { useNavigate, useLocation } from "@remix-run/react";
 import { useStore } from "@nanostores/react";
@@ -29,6 +19,10 @@ import {
   DeleteWorkspaceDialog,
   LeaveWorkspaceDialog,
 } from "./workspace-dialogs";
+import {
+  WorkspaceDropdown,
+  type WorkspaceDropdownGroup,
+} from "./workspace-dropdown";
 
 const sortWorkspaces = (workspaces: Array<WorkspaceWithRelation>) =>
   [...workspaces].sort((a, b) => {
@@ -81,6 +75,36 @@ export const WorkspaceSelector = ({
 
   const isOwner = currentWorkspace?.userId === userId;
 
+  const toDropdownItem = (workspace: WorkspaceWithRelation) => ({
+    id: workspace.id,
+    name: workspace.name,
+    disabled: workspace.isDowngraded,
+    suffix: workspace.isDowngraded ? (
+      <>
+        {" "}
+        <ProBadge>Suspended</ProBadge>
+      </>
+    ) : undefined,
+  });
+
+  const groups: Array<WorkspaceDropdownGroup> = [
+    { label: "My workspaces", items: owned.map(toDropdownItem) },
+    ...(shared.length > 0
+      ? [{ label: "Shared with me", items: shared.map(toDropdownItem) }]
+      : []),
+  ];
+
+  const handleWorkspaceChange = (workspaceId: string) => {
+    const defaultWorkspace = workspaces.find((w) => w.isDefault);
+
+    if (workspaceId === defaultWorkspace?.id) {
+      navigate(location.pathname);
+      return;
+    }
+
+    navigate(`${location.pathname}?workspaceId=${workspaceId}`);
+  };
+
   return (
     <Flex
       grow
@@ -89,133 +113,61 @@ export const WorkspaceSelector = ({
         minWidth: 0,
       }}
     >
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            color="ghost"
-            prefix={
-              <Avatar
-                size="small"
-                fallback={(currentWorkspace?.name ?? "W")
-                  .charAt(0)
-                  .toLocaleUpperCase()}
-                alt={currentWorkspace?.name ?? "Workspace"}
-                css={{ borderRadius: theme.borderRadius[4] }}
-              />
-            }
-            suffix={<ChevronDownIcon />}
-          >
-            {currentWorkspace?.name ?? "Workspace"}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuRadioGroup
-            value={currentWorkspaceId}
-            onValueChange={(workspaceId) => {
-              const defaultWorkspace = workspaces.find((w) => w.isDefault);
-
-              if (workspaceId === defaultWorkspace?.id) {
-                navigate(location.pathname);
-                return;
-              }
-
-              navigate(`${location.pathname}?workspaceId=${workspaceId}`);
-            }}
-          >
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>My workspaces</DropdownMenuLabel>
-              {owned.map((workspace) => (
-                <DropdownMenuRadioItem
-                  key={workspace.id}
-                  value={workspace.id}
-                  icon={<MenuCheckedIcon />}
-                  disabled={workspace.isDowngraded}
-                >
-                  {workspace.name}
-                  {workspace.isDowngraded && (
-                    <>
-                      {" "}
-                      <ProBadge>Suspended</ProBadge>
-                    </>
-                  )}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuGroup>
-            {shared.length > 0 && (
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Shared with me</DropdownMenuLabel>
-                {shared.map((workspace) => (
-                  <DropdownMenuRadioItem
-                    key={workspace.id}
-                    value={workspace.id}
-                    icon={<MenuCheckedIcon />}
-                    disabled={workspace.isDowngraded}
-                  >
-                    {workspace.name}
-                    {workspace.isDowngraded && (
-                      <>
-                        {" "}
-                        <ProBadge>Suspended</ProBadge>
-                      </>
-                    )}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuGroup>
-            )}
-          </DropdownMenuRadioGroup>
-          <DropdownMenuSeparator />
-          {permissions.canCreateWorkspace && (
-            <DropdownMenuItem
-              withIndicator
-              onSelect={() => setCreateOpen(true)}
-            >
-              Create new
-            </DropdownMenuItem>
-          )}
+      <WorkspaceDropdown
+        groups={groups}
+        selectedId={currentWorkspaceId}
+        onSelectedChange={handleWorkspaceChange}
+        color="ghost"
+      >
+        <DropdownMenuSeparator />
+        {permissions.canCreateWorkspace && (
+          <DropdownMenuItem withIndicator onSelect={() => setCreateOpen(true)}>
+            Create new
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          withIndicator
+          disabled={currentWorkspace?.userId !== userId}
+          onSelect={() => setRenameOpen(true)}
+        >
+          Rename
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          withIndicator
+          disabled={permissions.canInviteMembers === false}
+          onSelect={() => setInviteOpen(true)}
+        >
+          Members
+        </DropdownMenuItem>
+        {isOwner ? (
           <DropdownMenuItem
             withIndicator
-            disabled={currentWorkspace?.userId !== userId}
-            onSelect={() => setRenameOpen(true)}
+            disabled={currentWorkspace?.isDefault === true}
+            onSelect={() => setDeleteOpen(true)}
           >
-            Rename
+            Delete
           </DropdownMenuItem>
-          <DropdownMenuItem
-            withIndicator
-            disabled={permissions.canInviteMembers === false}
-            onSelect={() => setInviteOpen(true)}
-          >
-            Members
+        ) : (
+          <DropdownMenuItem withIndicator onSelect={() => setLeaveOpen(true)}>
+            Leave
           </DropdownMenuItem>
-          {isOwner ? (
+        )}
+        {permissions.canCreateWorkspace === false && (
+          <>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
-              withIndicator
-              disabled={currentWorkspace?.isDefault === true}
-              onSelect={() => setDeleteOpen(true)}
+              onSelect={() => {
+                window.open("https://webstudio.is/pricing");
+              }}
             >
-              Delete
+              <Flex align="center" gap="1">
+                <UpgradeIcon />
+                <Text truncate>Upgrade</Text>
+              </Flex>
             </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem withIndicator onSelect={() => setLeaveOpen(true)}>
-              Leave
-            </DropdownMenuItem>
-          )}
-          {permissions.canCreateWorkspace === false && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => {
-                  window.open("https://webstudio.is/pricing");
-                }}
-              >
-                <Flex align="center" gap="1">
-                  <UpgradeIcon />
-                  <Text truncate>Upgrade</Text>
-                </Flex>
-              </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </>
+        )}
+      </WorkspaceDropdown>
       <CreateWorkspaceDialog
         isOpen={createOpen}
         onOpenChange={setCreateOpen}

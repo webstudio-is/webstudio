@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRevalidator, useSearchParams } from "@remix-run/react";
 import {
-  Avatar,
   Button,
   Flex,
   Label,
@@ -13,30 +12,32 @@ import {
   DialogTitle,
   DialogClose,
   DialogDescription,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuLabel,
-  DropdownMenuGroup,
-  MenuCheckedIcon,
-  Separator,
+  css,
   theme,
   toast,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import { $workspaces } from "~/shared/nano-states";
 import { nativeClient } from "~/shared/trpc/trpc-client";
-
-type TargetWorkspace = {
-  id: string;
-  name: string;
-};
+import {
+  WorkspaceDropdown,
+  type WorkspaceDropdownGroup,
+} from "~/dashboard/workspace-dropdown";
 
 const sortWorkspaces = <T extends { name: string }>(workspaces: Array<T>) =>
   [...workspaces].sort((a, b) => a.name.localeCompare(b.name));
+
+const orSeparatorStyle = css({
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing[5],
+  "&::before, &::after": {
+    content: "''",
+    flexGrow: 1,
+    height: theme.spacing[1],
+    backgroundColor: theme.colors.borderMain,
+  },
+});
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -58,7 +59,7 @@ export const TransferProjectDialog = ({
   const [email, setEmail] = useState("");
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>();
   const [filteredWorkspaces, setFilteredWorkspaces] = useState<
-    TargetWorkspace[]
+    Array<{ id: string; name: string }>
   >([]);
   const [isFiltered, setIsFiltered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,15 +87,6 @@ export const TransferProjectDialog = ({
     // When no workspaceId in URL, the user is on the default workspace
     return ownedWorkspaces[0]?.id;
   };
-
-  // The workspace to show in dropdown and filtered list items
-  const allTargetWorkspaces = isFiltered
-    ? sortWorkspaces(filteredWorkspaces)
-    : [];
-
-  const selectedWorkspace =
-    workspaces.find((w) => w.id === selectedWorkspaceId) ??
-    filteredWorkspaces.find((w) => w.id === selectedWorkspaceId);
 
   // Reset state when dialog opens — pre-select the current workspace
   useEffect(() => {
@@ -213,129 +205,42 @@ export const TransferProjectDialog = ({
   const hasWorkspace = selectedWorkspaceId !== undefined;
   const canSubmit = hasEmail || hasWorkspace;
 
-  const workspaceDropdown = isFiltered ? (
-    // When filtering by email, show flat list of shared workspaces
-    allTargetWorkspaces.length > 0 ? (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            color="ghost"
-            prefix={
-              <Avatar
-                size="small"
-                fallback={(selectedWorkspace?.name ?? "W")
-                  .charAt(0)
-                  .toLocaleUpperCase()}
-                alt={selectedWorkspace?.name ?? "Select workspace"}
-                css={{ borderRadius: theme.borderRadius[4] }}
-              />
-            }
-            suffix={<ChevronDownIcon />}
-          >
-            {selectedWorkspace?.name ?? "Select workspace"}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuRadioGroup
-            value={selectedWorkspaceId ?? ""}
-            onValueChange={setSelectedWorkspaceId}
-          >
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>
-                Their workspaces you have access to
-              </DropdownMenuLabel>
-              {allTargetWorkspaces.map((workspace) => (
-                <DropdownMenuRadioItem
-                  key={workspace.id}
-                  value={workspace.id}
-                  icon={<MenuCheckedIcon />}
-                >
-                  {workspace.name}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuGroup>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ) : (
-      <Text color="subtle" variant="labels">
-        No shared workspaces found. The project will be transferred without a
-        target workspace — the recipient will choose where to place it.
-      </Text>
-    )
-  ) : (
-    // Default view: grouped owned + shared workspaces
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          color="ghost"
-          prefix={
-            <Avatar
-              size="small"
-              fallback={(selectedWorkspace?.name ?? "W")
-                .charAt(0)
-                .toLocaleUpperCase()}
-              alt={selectedWorkspace?.name ?? "Select workspace"}
-              css={{ borderRadius: theme.borderRadius[4] }}
-            />
-          }
-          suffix={<ChevronDownIcon />}
-        >
-          {selectedWorkspace?.name ?? "Select workspace"}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuRadioGroup
-          value={selectedWorkspaceId ?? ""}
-          onValueChange={setSelectedWorkspaceId}
-        >
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>My workspaces</DropdownMenuLabel>
-            {ownedWorkspaces.map((workspace) => (
-              <DropdownMenuRadioItem
-                key={workspace.id}
-                value={workspace.id}
-                icon={<MenuCheckedIcon />}
-              >
-                {workspace.name}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuGroup>
-          {sharedWorkspaces.length > 0 && (
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Shared with me</DropdownMenuLabel>
-              {sharedWorkspaces.map((workspace) => (
-                <DropdownMenuRadioItem
-                  key={workspace.id}
-                  value={workspace.id}
-                  icon={<MenuCheckedIcon />}
-                  disabled={
-                    canTransferToWorkspace(workspace.workspaceRelation) ===
-                    false
-                  }
-                >
-                  {workspace.name}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuGroup>
-          )}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  // Build groups for the dropdown — either filtered or owned+shared
+  const dropdownGroups: Array<WorkspaceDropdownGroup> = isFiltered
+    ? filteredWorkspaces.length > 0
+      ? [
+          {
+            label: "Their workspaces you have access to",
+            items: sortWorkspaces(filteredWorkspaces),
+          },
+        ]
+      : []
+    : [
+        ...(ownedWorkspaces.length > 0
+          ? [{ label: "My workspaces", items: ownedWorkspaces }]
+          : []),
+        ...(sharedWorkspaces.length > 0
+          ? [
+              {
+                label: "Shared with me",
+                items: sharedWorkspaces.map((w) => ({
+                  ...w,
+                  disabled:
+                    canTransferToWorkspace(w.workspaceRelation) === false,
+                })),
+              },
+            ]
+          : []),
+      ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
-        <Flex
-          direction="column"
-          gap="3"
-          css={{ paddingBlock: theme.panel.padding, width: theme.spacing[32] }}
-        >
+        <Flex direction="column" css={{ width: theme.spacing[32] }}>
           <Flex
             direction="column"
             gap="3"
-            css={{ paddingInline: theme.panel.padding }}
+            css={{ padding: theme.panel.padding }}
           >
             <DialogDescription asChild>
               <Text as="p">
@@ -344,25 +249,42 @@ export const TransferProjectDialog = ({
               </Text>
             </DialogDescription>
 
-            <Flex direction="column" gap="1">
+            <Flex direction="column" gap="1" align="start">
               <Label>
                 {isFiltered
                   ? "Their workspaces you have access to"
                   : "Workspace"}
               </Label>
-              {workspaceDropdown}
+              {dropdownGroups.length > 0 ? (
+                <WorkspaceDropdown
+                  groups={dropdownGroups}
+                  selectedId={selectedWorkspaceId}
+                  onSelectedChange={setSelectedWorkspaceId}
+                  color="ghost"
+                />
+              ) : isFiltered && hasEmail ? (
+                <Text color="subtle" variant="labels">
+                  No shared workspaces found. The project will be transferred
+                  without a target workspace — the recipient will choose where
+                  to place it.
+                </Text>
+              ) : undefined}
             </Flex>
           </Flex>
 
-          <Separator />
+          <div className={orSeparatorStyle()}>
+            <Text color="subtle" variant="tiny">
+              OR
+            </Text>
+          </div>
 
           <Flex
             direction="column"
             gap="3"
-            css={{ paddingInline: theme.panel.padding }}
+            css={{ padding: theme.panel.padding }}
           >
             <Flex direction="column" gap="1">
-              <Label htmlFor="transfer-email">Recipient email (optional)</Label>
+              <Label htmlFor="transfer-email">Recipient</Label>
               <SearchField
                 id="transfer-email"
                 placeholder="user@example.com"
