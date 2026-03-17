@@ -33,7 +33,7 @@ export const create = async (
     payload: Record<string, unknown>;
   },
   context: AppContext
-): Promise<void> => {
+): Promise<string> => {
   const senderId = assertUser(context);
 
   // Idempotency: skip if a pending, non-expired notification already exists
@@ -72,18 +72,17 @@ export const create = async (
     }
 
     if (duplicate.data !== null) {
-      return;
+      return duplicate.data.id;
     }
   }
 
-  // For project transfers, match on projectId in the payload
-  if (type === "projectTransfer" && (existing.count ?? 0) > 0) {
+  // For project transfers, only one pending transfer per project is allowed
+  // (across all senders and recipients).
+  if (type === "projectTransfer") {
     const duplicate = await context.postgrest.client
       .from("Notification")
       .select("id")
       .eq("type", type)
-      .eq("recipientId", recipientId)
-      .eq("senderId", senderId)
       .eq("status", "pending")
       .gte("createdAt", expirationCutoff())
       .contains("payload", {
@@ -96,7 +95,9 @@ export const create = async (
     }
 
     if (duplicate.data !== null) {
-      return;
+      throw new Error(
+        "A transfer is already pending for this project. Cancel it first."
+      );
     }
   }
 
@@ -116,6 +117,8 @@ export const create = async (
   if (result.error) {
     throw result.error;
   }
+
+  return result.data.id;
 };
 
 export const list = async (context: AppContext) => {
@@ -385,6 +388,26 @@ export const accept = async (
       throw new Error("The sender no longer owns this project");
     }
 
+    // Check receiver's plan limit before accepting the transfer
+    if (context.getOwnerPlanFeatures !== undefined) {
+      const receiverPlan = await context.getOwnerPlanFeatures(userId);
+      const projectCount = await context.postgrest.client
+        .from("Project")
+        .select("id", { count: "exact", head: true })
+        .eq("userId", userId)
+        .eq("isDeleted", false);
+
+      if (projectCount.error) {
+        throw projectCount.error;
+      }
+
+      if ((projectCount.count ?? 0) >= receiverPlan.maxProjectsAllowedPerUser) {
+        throw new Error(
+          "You've reached the project limit for your plan. Upgrade or delete projects to accept this transfer."
+        );
+      }
+    }
+
     // Determine the target workspace: use the one from the notification payload,
     // or fall back to the one provided by the receiver at accept time.
     const resolvedWorkspaceId = parsed.targetWorkspaceId ?? targetWorkspaceId;
@@ -521,5 +544,41 @@ export const decline = async (
 
   if (result.error) {
     throw result.error;
+  }
+};
+
+export const cancel = async (
+  { notificationId }: { notificationId: string },
+  context: AppContext
+) => {
+  const userId = assertUser(context);
+
+  const notification = await context.postgrest.client
+    .from("Notification")
+    .select("id, senderId, status")
+    .eq("id", notificationId)
+    .eq("senderId", userId)
+    .single();
+
+  if (notification.error) {
+    throw new Error("Notification not found");
+  }
+
+  if (notification.data.status !== "pending") {
+    throw new Error("This notification has already been acted on");
+  }
+
+  const cancelResult = await context.postgrest.client
+    .from("Notification")
+    .update({
+      status: "declined" satisfies NotificationStatus,
+      respondedAt: new Date().toISOString(),
+    })
+    .eq("id", notificationId)
+    .select("id")
+    .single();
+
+  if (cancelResult.error) {
+    throw cancelResult.error;
   }
 };

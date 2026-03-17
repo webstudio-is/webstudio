@@ -51,6 +51,17 @@ export const notificationRouter = router({
         return createErrorResponse(error);
       }
     }),
+
+  cancel: procedure
+    .input(z.object({ notificationId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await notificationApi.cancel(input, ctx);
+        return { success: true as const };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
 });
 
 export type NotificationRouter = typeof notificationRouter;

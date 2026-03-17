@@ -9,6 +9,7 @@ export type UserPlanFeatures = {
   maxDomainsAllowedPerUser: number;
   maxPublishesAllowedPerUser: number;
   maxWorkspaces: number;
+  maxProjectsAllowedPerUser: number;
 };
 
 /** Most-restrictive (free) plan defaults — used when no user plan is available */
@@ -23,6 +24,7 @@ export const defaultUserPlanFeatures: UserPlanFeatures = {
   maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 10,
   maxWorkspaces: 1,
+  maxProjectsAllowedPerUser: 2,
 };
 
 /** All user purchases (subscriptions and LTDs). subscriptionId present only for recurring subscriptions */

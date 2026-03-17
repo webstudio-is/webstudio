@@ -26,7 +26,7 @@ import {
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
-import { setSharedStores, $workspaces } from "~/shared/nano-states";
+import { setSharedStores, $workspaces, $user } from "~/shared/nano-states";
 import { dashboardPath } from "~/shared/router-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ProfileMenu } from "./profile-menu";
@@ -155,6 +155,7 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
     $data.set(data);
     setSharedStores(data);
     $workspaces.set(data.workspaces);
+    $user.set(data.user);
   }, [data]);
   globalStyles();
   return null;

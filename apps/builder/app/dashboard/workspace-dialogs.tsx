@@ -316,7 +316,10 @@ const MemberList = ({
   workspaceId: string;
   canRemove: boolean;
   refreshKey: number;
-  invitedEmails: Map<string, WorkspaceRelation>;
+  invitedEmails: Map<
+    string,
+    { relation: WorkspaceRelation; notificationId: string }
+  >;
   onRefresh: () => void;
   onRemoveInvited: (email: string) => void;
   onChangeInvitedRelation: (email: string, relation: WorkspaceRelation) => void;
@@ -366,7 +369,7 @@ const MemberList = ({
             onRefresh={onRefresh}
           />
         ))}
-        {pendingEntries.map(([email, relation]) => (
+        {pendingEntries.map(([email, { relation }]) => (
           <MemberRow
             key={email}
             email={email}
@@ -486,7 +489,7 @@ export const ManageMembersDialog = ({
   const [inviteRelation, setInviteRelation] =
     useState<WorkspaceRelation>("viewers");
   const [invitedEmails, setInvitedEmails] = useState<
-    Map<string, WorkspaceRelation>
+    Map<string, { relation: WorkspaceRelation; notificationId: string }>
   >(new Map());
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -507,15 +510,19 @@ export const ManageMembersDialog = ({
     setInviting(true);
 
     const failed: string[] = [];
-    const succeeded: string[] = [];
+    const succeeded: { email: string; notificationId: string }[] = [];
     for (const email of emails) {
       try {
-        await nativeClient.workspace.addMember.mutate({
+        const result = await nativeClient.workspace.addMember.mutate({
           workspaceId: workspace.id,
           email,
           relation: inviteRelation,
         });
-        succeeded.push(email);
+        if (result.success) {
+          succeeded.push({ email, notificationId: result.notificationId });
+        } else {
+          failed.push(`${email}: ${result.error}`);
+        }
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown error";
@@ -528,8 +535,8 @@ export const ManageMembersDialog = ({
     if (succeeded.length > 0) {
       setInvitedEmails((prev) => {
         const next = new Map(prev);
-        for (const email of succeeded) {
-          next.set(email, inviteRelation);
+        for (const { email, notificationId } of succeeded) {
+          next.set(email, { relation: inviteRelation, notificationId });
         }
         return next;
       });
@@ -606,6 +613,15 @@ export const ManageMembersDialog = ({
                 invitedEmails={invitedEmails}
                 onRefresh={() => setMembersKey((key) => key + 1)}
                 onRemoveInvited={(email) => {
+                  const entry = invitedEmails.get(email);
+                  if (entry) {
+                    // Fire-and-forget: cancel the server-side notification.
+                    // For fake IDs (non-existent users) this fails silently,
+                    // preserving anti-enumeration.
+                    nativeClient.notification.cancel
+                      .mutate({ notificationId: entry.notificationId })
+                      .catch(() => {});
+                  }
                   setInvitedEmails((prev) => {
                     const next = new Map(prev);
                     next.delete(email);
@@ -614,8 +630,12 @@ export const ManageMembersDialog = ({
                 }}
                 onChangeInvitedRelation={(email, relation) => {
                   setInvitedEmails((prev) => {
+                    const existing = prev.get(email);
+                    if (existing === undefined) {
+                      return prev;
+                    }
                     const next = new Map(prev);
-                    next.set(email, relation);
+                    next.set(email, { ...existing, relation });
                     return next;
                   });
                 }}
