@@ -289,7 +289,7 @@ export const addMember = async (
     relation,
   }: { workspaceId: string; email: string; relation: WorkspaceRelation },
   context: AppContext
-) => {
+): Promise<{ notificationId: string }> => {
   const userId = assertUser(context);
   await assertOwner(workspaceId, userId, context);
 
@@ -307,7 +307,7 @@ export const addMember = async (
   // User not found — silently succeed without creating a placeholder.
   // Returns the same shape to prevent email enumeration.
   if (user.data === null) {
-    return;
+    return { notificationId: crypto.randomUUID() };
   }
 
   if (user.data.id === userId) {
@@ -331,15 +331,17 @@ export const addMember = async (
 
   if (existing.data !== null) {
     // Already a member — silently succeed
-    return;
+    return { notificationId: crypto.randomUUID() };
   }
 
   // Create a pending notification instead of inserting directly
   const payload: WorkspaceInvitePayload = { workspaceId, relation };
-  await createNotification(
+  const notificationId = await createNotification(
     { type: "workspaceInvite", recipientId: memberId, payload },
     context
   );
+
+  return { notificationId };
 };
 
 export const updateWorkspaceRelation = async (
@@ -568,7 +570,10 @@ export const moveProject = async (
 ) => {
   const userId = assertUser(context);
 
-  await assertProjectPermission({ projectId, userId, action: "move" }, context);
+  const projectData = await assertProjectPermission(
+    { projectId, userId, action: "move" },
+    context
+  );
 
   // Verify the target workspace exists
   const targetWorkspace = await context.postgrest.client
@@ -600,6 +605,17 @@ export const moveProject = async (
         "You need admin or owner permissions on the target workspace"
       );
     }
+  }
+
+  // Only the project owner can move a project to a different owner's workspace.
+  // Admins can move within the same owner's workspaces, but not cross-owner.
+  if (
+    targetWorkspace.data.userId !== projectData.userId &&
+    projectData.userId !== userId
+  ) {
+    throw new AuthorizationError(
+      "Only the project owner can move a project to another user's workspace"
+    );
   }
 
   // If the target workspace belongs to a different user, the project ownership

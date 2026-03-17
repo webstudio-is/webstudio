@@ -8,6 +8,7 @@ import {
   type UserPurchase,
 } from "@webstudio-is/trpc-interface/user-plan-features";
 import type { WorkspaceRelation } from "@webstudio-is/project";
+import type { User } from "~/shared/db/user.server";
 import { toast, type Placement } from "@webstudio-is/design-system";
 import type {
   Instance,
@@ -316,6 +317,8 @@ export const $workspaces = atom<
 >([]);
 
 export const $purchases = atom<Array<UserPurchase>>([]);
+
+export const $user = atom<User | undefined>();
 
 /**
  * Set stores shared between builder and dashboard.

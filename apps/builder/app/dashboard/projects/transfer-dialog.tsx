@@ -17,7 +17,7 @@ import {
   toast,
 } from "@webstudio-is/design-system";
 import { useStore } from "@nanostores/react";
-import { $workspaces } from "~/shared/nano-states";
+import { $workspaces, $user } from "~/shared/nano-states";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import {
   WorkspaceDropdown,
@@ -53,6 +53,8 @@ export const TransferProjectDialog = ({
   title: string;
 }) => {
   const workspaces = useStore($workspaces);
+  const user = useStore($user);
+  const userEmail = user?.email ?? "";
   const revalidator = useRevalidator();
   const [searchParams] = useSearchParams();
 
@@ -203,7 +205,11 @@ export const TransferProjectDialog = ({
 
   const hasEmail = email.trim() !== "";
   const hasWorkspace = selectedWorkspaceId !== undefined;
-  const canSubmit = hasEmail || hasWorkspace;
+  const isSelfTransfer =
+    hasEmail &&
+    userEmail !== "" &&
+    email.trim().toLowerCase() === userEmail.toLowerCase();
+  const canSubmit = (hasEmail || hasWorkspace) && isSelfTransfer === false;
 
   // Build groups for the dropdown — either filtered or owned+shared
   const dropdownGroups: Array<WorkspaceDropdownGroup> = isFiltered
@@ -303,6 +309,13 @@ export const TransferProjectDialog = ({
             </Flex>
 
             {error !== undefined && <Text color="destructive">{error}</Text>}
+
+            {isSelfTransfer && (
+              <Text color="destructive">
+                You can&apos;t transfer a project to yourself. Use the workspace
+                selector above to move it.
+              </Text>
+            )}
           </Flex>
         </Flex>
 
