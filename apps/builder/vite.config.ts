@@ -41,7 +41,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       remix({
-        presets: [vercelPreset()],
+        // vercelPreset() changes the build output to Vercel's serverless format.
+        // Skip it when building for Docker (standard build/server/index.js output).
+        presets: process.env.VERCEL ? [vercelPreset()] : [],
         future: {
           v3_lazyRouteDiscovery: false,
           v3_relativeSplatPath: false,
@@ -122,18 +124,23 @@ export default defineConfig(({ mode }) => {
       "process.env.NODE_ENV": JSON.stringify(mode),
     },
     server: {
-      // Service-to-service OAuth token call requires a specified host for the wstd.dev domain
-      host: "wstd.dev",
-      proxy: {
-        "/collab-relay": {
-          target: multiplayerRelayProxyTarget,
-          ws: true,
-        },
-      },
-      https: {
-        key: readFileSync("../../https/privkey.pem"),
-        cert: readFileSync("../../https/fullchain.pem"),
-      },
+      // Service-to-service OAuth token call requires a specified host for the wstd.dev domain.
+      // In Docker dev (DOCKER_DEV=true) bind on all interfaces instead.
+      host: process.env.DOCKER_DEV ? "0.0.0.0" : "wstd.dev",
+      // Needed for SSL
+      proxy: {},
+
+      https: (() => {
+        try {
+          return {
+            key: readFileSync("../../https/privkey.pem"),
+            cert: readFileSync("../../https/fullchain.pem"),
+          };
+        } catch {
+          // SSL certs unavailable (Docker build, CI, etc.)
+          return undefined;
+        }
+      })(),
       cors: ((
         req: IncomingMessage,
         callback: (error: Error | null, options: CorsOptions | null) => void

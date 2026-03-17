@@ -100,7 +100,7 @@ if (env.DEV_LOGIN === "true") {
       const email =
         emailValue != null && emailValue.toString().trim() !== ""
           ? emailValue.toString().trim()
-          : "hello@webstudio.is";
+          : (env.DEV_LOGIN_EMAIL ?? "hello@webstudio.is");
 
       if (secret === env.AUTH_SECRET) {
         try {
