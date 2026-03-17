@@ -7,7 +7,9 @@ import { softDeleteProject } from "./project";
 import {
   defaultWorkspaceRelation,
   type WorkspaceRelation,
+  type WorkspaceInvitePayload,
 } from "../shared/schema";
+import { create as createNotification } from "./notification";
 
 export type Workspace = Database["public"]["Tables"]["Workspace"]["Row"];
 
@@ -189,7 +191,8 @@ export const findMany = async (userId: string, context: AppContext) => {
   const memberships = await context.postgrest.client
     .from("WorkspaceMember")
     .select("workspaceId, relation")
-    .eq("userId", userId);
+    .eq("userId", userId)
+    .is("removedAt", null);
 
   if (memberships.error) {
     throw memberships.error;
@@ -312,23 +315,30 @@ export const addMember = async (
 
   const memberId = user.data.id;
 
-  const result = await context.postgrest.client
+  // Check if already a member — no need for a notification
+  const existing = await context.postgrest.client
     .from("WorkspaceMember")
-    .insert({
-      workspaceId,
-      userId: memberId,
-      relation,
-    })
-    .select()
-    .single();
+    .select("userId")
+    .eq("workspaceId", workspaceId)
+    .eq("userId", memberId)
+    .is("removedAt", null)
+    .maybeSingle();
 
-  if (result.error) {
-    // Silently succeed if already a member
-    if (result.error.code === "23505") {
-      return;
-    }
-    throw result.error;
+  if (existing.error) {
+    throw existing.error;
   }
+
+  if (existing.data !== null) {
+    // Already a member — silently succeed
+    return;
+  }
+
+  // Create a pending notification instead of inserting directly
+  const payload: WorkspaceInvitePayload = { workspaceId, relation };
+  await createNotification(
+    { type: "workspace_invite", recipientId: memberId, payload },
+    context
+  );
 };
 
 export const updateWorkspaceRelation = async (
@@ -355,6 +365,7 @@ export const updateWorkspaceRelation = async (
     .update({ relation })
     .eq("workspaceId", workspaceId)
     .eq("userId", memberUserId)
+    .is("removedAt", null)
     .select()
     .maybeSingle();
 
@@ -398,9 +409,10 @@ export const removeMember = async (
 
   const result = await context.postgrest.client
     .from("WorkspaceMember")
-    .delete()
+    .update({ removedAt: new Date().toISOString() })
     .eq("workspaceId", workspaceId)
-    .eq("userId", memberUserId);
+    .eq("userId", memberUserId)
+    .is("removedAt", null);
 
   if (result.error) {
     throw result.error;
@@ -431,6 +443,7 @@ export const listMembers = async (
       .select("userId")
       .eq("workspaceId", workspaceId)
       .eq("userId", userId)
+      .is("removedAt", null)
       .maybeSingle();
 
     if (membership.error) {
@@ -446,6 +459,7 @@ export const listMembers = async (
     .from("WorkspaceMember")
     .select("userId, relation, createdAt")
     .eq("workspaceId", workspaceId)
+    .is("removedAt", null)
     .order("createdAt", { ascending: false });
 
   if (members.error) {

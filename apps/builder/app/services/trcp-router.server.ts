@@ -3,6 +3,7 @@ import { domainRouter } from "@webstudio-is/domain/index.server";
 import {
   projectRouter,
   workspaceRouter,
+  notificationRouter,
 } from "@webstudio-is/project/index.server";
 import { authorizationTokenRouter } from "@webstudio-is/authorization-token/index.server";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
@@ -16,6 +17,7 @@ export const appRouter = router({
   domain: domainRouter,
   project: projectRouter,
   workspace: workspaceRouter,
+  notification: notificationRouter,
   authorizationToken: authorizationTokenRouter,
   dashboardProject: dashboardProjectRouter,
   logout: logoutRouter,

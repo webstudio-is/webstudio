@@ -481,6 +481,39 @@ export type Database = {
           },
         ];
       };
+      Notification: {
+        Row: {
+          createdAt: string;
+          id: string;
+          payload: Json;
+          recipientId: string;
+          respondedAt: string | null;
+          senderId: string;
+          status: string;
+          type: string;
+        };
+        Insert: {
+          createdAt?: string;
+          id?: string;
+          payload?: Json;
+          recipientId: string;
+          respondedAt?: string | null;
+          senderId: string;
+          status?: string;
+          type: string;
+        };
+        Update: {
+          createdAt?: string;
+          id?: string;
+          payload?: Json;
+          recipientId?: string;
+          respondedAt?: string | null;
+          senderId?: string;
+          status?: string;
+          type?: string;
+        };
+        Relationships: [];
+      };
       Product: {
         Row: {
           createdAt: string;
@@ -744,18 +777,21 @@ export type Database = {
         Row: {
           createdAt: string;
           relation: Database["public"]["Enums"]["AuthorizationRelation"];
+          removedAt: string | null;
           userId: string;
           workspaceId: string;
         };
         Insert: {
           createdAt?: string;
           relation?: Database["public"]["Enums"]["AuthorizationRelation"];
+          removedAt?: string | null;
           userId: string;
           workspaceId: string;
         };
         Update: {
           createdAt?: string;
           relation?: Database["public"]["Enums"]["AuthorizationRelation"];
+          removedAt?: string | null;
           userId?: string;
           workspaceId?: string;
         };

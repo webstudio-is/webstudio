@@ -305,8 +305,22 @@ model WorkspaceMember {
   userId      String
   relation    AuthorizationRelation  @default(administrators)
   createdAt   DateTime              @default(now()) @db.Timestamptz(3)
+  removedAt   DateTime?             @db.Timestamptz(3)
 
   @@id([workspaceId, userId])
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  type        String
+  recipientId String
+  senderId    String
+  status      String    @default("pending")
+  payload     Json      @default("{}")
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  respondedAt DateTime? @db.Timestamptz(3)
+
+  @@index([recipientId, status])
 }
 
 view WorkspaceProjectAuthorization {

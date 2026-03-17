@@ -76,11 +76,17 @@ const fetchAndMapDomains = async <
 
 export type DashboardProject = Awaited<ReturnType<typeof findMany>>[number];
 
-export const findMany = async (
-  userId: string,
-  context: AppContext,
-  workspaceId?: string
-) => {
+export const findMany = async ({
+  userId,
+  context,
+  workspaceId,
+  includeUnassigned,
+}: {
+  userId: string;
+  context: AppContext;
+  workspaceId?: string;
+  includeUnassigned?: boolean;
+}) => {
   if (context.authorization.type !== "user") {
     throw new AuthorizationError(
       "Only logged in users can view the project list"
@@ -100,7 +106,16 @@ export const findMany = async (
   // When filtering by workspace, show all workspace projects
   // (members can see all projects in the workspace)
   if (workspaceId !== undefined) {
-    query = query.eq("workspaceId", workspaceId);
+    if (includeUnassigned) {
+      // For the default workspace, also include pre-workspace projects that
+      // have NULL workspaceId — these belong to the user but haven't been
+      // assigned to a workspace yet.
+      query = query.or(
+        `workspaceId.eq.${workspaceId},and(workspaceId.is.null,userId.eq.${userId})`
+      );
+    } else {
+      query = query.eq("workspaceId", workspaceId);
+    }
   } else {
     query = query.eq("userId", userId);
   }
@@ -110,6 +125,7 @@ export const findMany = async (
   const data = await query
     .order("createdAt", { ascending: false })
     .order("id", { ascending: false });
+
   if (data.error) {
     throw data.error;
   }

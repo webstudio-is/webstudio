@@ -38,3 +38,37 @@ export const workspaceRelationLabels: Record<WorkspaceRelation, string> = {
   builders: "Builder",
   administrators: "Admin",
 };
+
+// ── Notifications ──
+
+export const notificationTypes = [
+  "workspace_invite",
+  "project_transfer",
+] as const;
+
+export type NotificationType = (typeof notificationTypes)[number];
+
+export const notificationStatuses = [
+  "pending",
+  "accepted",
+  "declined",
+] as const;
+
+export type NotificationStatus = (typeof notificationStatuses)[number];
+
+/** Notifications expire after this many milliseconds (7 days). */
+export const NOTIFICATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+export const WorkspaceInvitePayload = z.object({
+  workspaceId: z.string(),
+  relation: z.enum(workspaceRelations),
+});
+
+export type WorkspaceInvitePayload = z.infer<typeof WorkspaceInvitePayload>;
+
+export const ProjectTransferPayload = z.object({
+  projectId: z.string(),
+  targetWorkspaceId: z.string().optional(),
+});
+
+export type ProjectTransferPayload = z.infer<typeof ProjectTransferPayload>;

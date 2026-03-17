@@ -10,9 +10,20 @@ import { db } from "../db";
 
 const projectRouter = router({
   findMany: procedure
-    .input(z.object({ userId: z.string(), workspaceId: z.string().optional() }))
+    .input(
+      z.object({
+        userId: z.string(),
+        workspaceId: z.string().uuid().optional(),
+        includeUnassigned: z.boolean().optional(),
+      })
+    )
     .query(async ({ input, ctx }) => {
-      return await db.findMany(input.userId, ctx, input.workspaceId);
+      return await db.findMany({
+        userId: input.userId,
+        context: ctx,
+        workspaceId: input.workspaceId,
+        includeUnassigned: input.includeUnassigned,
+      });
     }),
 
   findManyByIds: procedure

@@ -175,6 +175,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         .select("userId, members:WorkspaceMember(relation)")
         .eq("id", project.workspaceId)
         .eq("members.userId", currentUserId ?? "")
+        .is("members.removedAt", null)
         .single();
 
       if (workspace.error) {
