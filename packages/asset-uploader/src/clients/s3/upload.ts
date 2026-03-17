@@ -1,9 +1,53 @@
 import { arrayBuffer } from "node:stream/consumers";
+import { request as httpRequest, Agent as HttpAgent } from "node:http";
+import { request as httpsRequest, Agent as HttpsAgent } from "node:https";
 import type { SignatureV4 } from "@smithy/signature-v4";
 import { type AssetData, getAssetData } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
 import { extendedEncodeURIComponent } from "../../utils/sanitize-s3-key";
 import { getMimeTypeByFilename } from "@webstudio-is/sdk";
+
+// Use node:http/https directly instead of fetch to avoid auto-added unsigned headers
+// (fetch adds `accept: */*` and others that MinIO rejects as unsigned).
+const putToS3 = (
+  url: URL,
+  headers: Record<string, string>,
+  body: ArrayBuffer
+): Promise<{ status: number; text: () => Promise<string> }> =>
+  new Promise((resolve, reject) => {
+    const requestFn = url.protocol === "https:" ? httpsRequest : httpRequest;
+    // keepAlive: false prevents node:http from adding "Connection: keep-alive"
+    // which would be an unsigned header rejected by MinIO's strict validation.
+    const agent =
+      url.protocol === "https:"
+        ? new HttpsAgent({ keepAlive: false })
+        : new HttpAgent({ keepAlive: false });
+    let responseBody = "";
+    const req = requestFn(
+      {
+        hostname: url.hostname,
+        port: url.port || (url.protocol === "https:" ? 443 : 80),
+        path: url.pathname,
+        method: "PUT",
+        headers,
+        agent,
+      },
+      (res) => {
+        res.on("data", (chunk: Buffer) => {
+          responseBody += chunk.toString();
+        });
+        res.on("end", () => {
+          resolve({
+            status: res.statusCode ?? 0,
+            text: () => Promise.resolve(responseBody),
+          });
+        });
+      }
+    );
+    req.on("error", reject);
+    req.write(Buffer.from(body));
+    req.end();
+  });
 
 export const uploadToS3 = async ({
   signer,
@@ -44,39 +88,19 @@ export const uploadToS3 = async ({
   // Use proper MIME type based on file extension instead of generic type category
   const contentType = getMimeTypeByFilename(name);
 
+  // Include host explicitly so it appears in SignedHeaders.
+  // node:http always sends Host: hostname:port — if it's not signed, MinIO rejects it.
+  const hostHeader = url.port ? `${url.hostname}:${url.port}` : url.hostname;
+
   const s3Request = await signer.sign({
     method: "PUT",
     protocol: url.protocol,
     hostname: url.hostname,
-    // Pass port separately so the signer constructs `host: hostname:port` for
-    // non-standard ports, matching what fetch automatically sends from the URL.
-    // Without this, the signed host is `hostname` but fetch sends `hostname:port`,
-    // causing MinIO's strict SigV4 validation to reject the request.
-    port: url.port ? parseInt(url.port) : undefined,
     path: url.pathname,
     headers: {
-      // MinIO strictly rejects requests where any header is not listed in
-      // SignedHeaders. fetch (undici in Node.js) auto-adds several headers that
-      // would otherwise be unsigned. Pre-signing them here prevents rejection.
-      // Values are set explicitly so undici uses ours instead of its defaults:
-      //   accept          — added if absent (Fetch spec step 12)
-      //   accept-language — added if absent (Fetch spec step 13)
-      //   accept-encoding — added if absent; "identity" disables compression
-      //   user-agent      — added if absent; we override the default "undici"/"node"
-      //   sec-fetch-mode  — always overwritten by undici to the fetch mode ("cors")
-      // In CF Workers, fetch does not add these headers the same way, so this
-      // list is sufficient for both environments.
-      accept: "*/*",
-      "accept-language": "*",
-      "accept-encoding": "identity",
-      "user-agent": "webstudio",
-      "sec-fetch-mode": "cors",
-      // undici appends origin for non-GET/HEAD requests in cors mode (Fetch spec step 12.3)
-      // In Node.js the client origin is opaque ("null")
-      origin: "null",
+      host: hostHeader,
       "Content-Type": contentType,
       "Content-Length": `${data.byteLength}`,
-      "Cache-Control": "public, max-age=31536004,immutable",
       "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
       // encodeURIComponent is needed to support special characters like Cyrillic
       "x-amz-meta-filename": encodeURIComponent(name),
@@ -86,16 +110,11 @@ export const uploadToS3 = async ({
     body: data,
   });
 
-  // Temporary debug: log signed headers to identify any remaining unsigned ones
-  console.info(
-    `S3 upload headers: ${JSON.stringify(Object.keys(s3Request.headers).sort())}`
+  const response = await putToS3(
+    url,
+    s3Request.headers as Record<string, string>,
+    data
   );
-
-  const response = await fetch(url, {
-    method: s3Request.method,
-    headers: s3Request.headers,
-    body: data,
-  });
 
   if (response.status !== 200) {
     const responseText = await response.text().catch(() => "(unreadable)");
