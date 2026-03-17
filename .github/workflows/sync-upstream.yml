@@ -1,0 +1,68 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: '0 8 * * 1' # every Monday at 8am UTC
+  workflow_dispatch:
+
+jobs:
+  sync-main:
+    name: Sync main with upstream
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      has_new_commits: ${{ steps.sync.outputs.has_new_commits }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.WORKFLOW_PAT }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync with upstream
+        id: sync
+        run: |
+          git remote add upstream https://github.com/webstudio-is/webstudio.git
+          git fetch upstream main
+          BEFORE=$(git rev-parse HEAD)
+          git reset --hard upstream/main
+          AFTER=$(git rev-parse HEAD)
+          if [ "$BEFORE" != "$AFTER" ]; then
+            echo "has_new_commits=true" >> "$GITHUB_OUTPUT"
+            git push --force-with-lease origin main
+            echo "main synced with upstream"
+          else
+            echo "has_new_commits=false" >> "$GITHUB_OUTPUT"
+            echo "main already up to date"
+          fi
+
+  rebase-develop:
+    name: Rebase develop onto main
+    needs: sync-main
+    if: needs.sync-main.outputs.has_new_commits == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Rebase develop onto main
+        run: |
+          git fetch origin main
+          git rebase origin/main
+          git push origin develop --force-with-lease

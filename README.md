@@ -1,3 +1,11 @@
+
+> **⚠️ This is an unofficial community fork of [Webstudio](https://github.com/webstudio-is/webstudio).**
+>
+> - If you want to fork this repo, use the `develop` branch. it contains our additions on top of upstream.
+> - The `main` branch mirrors upstream and is updated every week
+> - For **self-hosting documentation**, see **[webstudio-community/webstudio-self-host](https://github.com/webstudio-community/webstudio-self-host)**.
+> - For issues related to self-hosting, please open them on the [webstudio-self-host repo](https://github.com/webstudio-community/webstudio-self-host/issues) rather than here, as this repo stays linked to upstream.
+
 <img width="1512" alt="builder-screenshot" src="https://github.com/webstudio-is/.github/blob/main/assets/builder-screenshot.png?raw=true">
 <br /><br />
 
