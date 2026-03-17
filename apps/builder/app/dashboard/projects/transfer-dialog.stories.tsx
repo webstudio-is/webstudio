@@ -75,21 +75,3 @@ export const OwnedAndSharedWorkspaces: StoryFn = () => {
   );
   return <RouterProvider router={router} />;
 };
-
-// ---------------------------------------------------------------------------
-// No workspaces — only email input visible
-// ---------------------------------------------------------------------------
-
-export const NoWorkspaces: StoryFn = () => {
-  $workspaces.set([]);
-
-  const router = createRouter(
-    <TransferProjectDialog
-      isOpen={true}
-      onOpenChange={() => {}}
-      projectId="project-1"
-      title="Portfolio"
-    />
-  );
-  return <RouterProvider router={router} />;
-};
