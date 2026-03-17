@@ -103,6 +103,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (URL.canParse(name)) {
     return fetch(name);
   }
+
+  // If S3 is configured, fetch from S3/MinIO (bucket has anonymous download enabled)
+  if (env.S3_ENDPOINT !== undefined && env.S3_BUCKET !== undefined) {
+    const s3Url = new URL(
+      `/${env.S3_BUCKET}/${encodeURIComponent(name)}`,
+      env.S3_ENDPOINT
+    );
+    return fetch(s3Url.href);
+  }
+
   const filePath = join(process.cwd(), fileUploadPath, name);
 
   if (existsSync(filePath) === false) {
