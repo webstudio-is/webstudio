@@ -12,7 +12,7 @@ const EntryResponse = z.object({
 const getEntriToken = async () => {
   const { ENTRI_APPLICATION_ID, ENTRI_SECRET } = env;
 
-  if (ENTRI_SECRET === undefined) {
+  if (!ENTRI_SECRET) {
     throw new Error(`ENTRI_SECRET is not defined`);
   }
 
