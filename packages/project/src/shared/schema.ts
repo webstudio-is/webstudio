@@ -42,8 +42,8 @@ export const workspaceRelationLabels: Record<WorkspaceRelation, string> = {
 // ── Notifications ──
 
 export const notificationTypes = [
-  "workspace_invite",
-  "project_transfer",
+  "workspaceInvite",
+  "projectTransfer",
 ] as const;
 
 export type NotificationType = (typeof notificationTypes)[number];

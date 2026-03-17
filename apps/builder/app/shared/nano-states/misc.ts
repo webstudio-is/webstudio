@@ -308,7 +308,11 @@ export const $userPlanFeatures = atom<UserPlanFeatures>(
 export const $workspaceRelation = atom<WorkspaceRelation | "own">("own");
 
 export const $workspaces = atom<
-  Array<{ workspaceRelation: WorkspaceRelation | "own" }>
+  Array<{
+    id: string;
+    name: string;
+    workspaceRelation: WorkspaceRelation | "own";
+  }>
 >([]);
 
 export const $purchases = atom<Array<UserPurchase>>([]);

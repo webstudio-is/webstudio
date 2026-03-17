@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRevalidator } from "@remix-run/react";
 import {
+  Box,
   Flex,
   IconButton,
   List,
@@ -25,20 +26,30 @@ import {
 import {
   type WorkspaceInvitePayload,
   WorkspaceInvitePayload as WorkspaceInvitePayloadSchema,
+  notificationTypes,
   workspaceRelationLabels,
 } from "@webstudio-is/project";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 
 type WorkspaceInviteNotification = {
-  type: "workspace_invite";
+  type: "workspaceInvite";
   payload: WorkspaceInvitePayload;
   workspaceName?: string;
+  projectTitle?: string;
+};
+
+type ProjectTransferNotification = {
+  type: "projectTransfer";
+  payload: { projectId: string; targetWorkspaceId?: string };
+  workspaceName?: string;
+  projectTitle?: string;
 };
 
 type GenericNotification = {
-  type: string;
+  type: Exclude<string, "workspaceInvite" | "projectTransfer">;
   payload: Record<string, unknown>;
   workspaceName?: string;
+  projectTitle?: string;
 };
 
 export type NotificationItem = {
@@ -47,7 +58,13 @@ export type NotificationItem = {
   createdAt: string;
   senderEmail: string;
   senderName: string;
-} & (WorkspaceInviteNotification | GenericNotification);
+} & (
+  | WorkspaceInviteNotification
+  | ProjectTransferNotification
+  | GenericNotification
+);
+
+const knownNotificationTypes = new Set<string>(notificationTypes);
 
 const notificationRowStyle = css({
   paddingBlock: theme.spacing[5],
@@ -61,7 +78,7 @@ const getDescription = (notification: NotificationItem) => {
   const senderLabel =
     notification.senderName || notification.senderEmail || "Someone";
 
-  if (notification.type === "workspace_invite") {
+  if (notification.type === "workspaceInvite") {
     const parsed = WorkspaceInvitePayloadSchema.safeParse(notification.payload);
     const workspaceLabel = notification.workspaceName ?? "a workspace";
     const roleLabel = parsed.success
@@ -70,6 +87,11 @@ const getDescription = (notification: NotificationItem) => {
       : "member";
 
     return `${senderLabel} invited you to "${workspaceLabel}" as ${roleLabel}`;
+  }
+
+  if (notification.type === "projectTransfer") {
+    const projectLabel = notification.projectTitle ?? "a project";
+    return `${senderLabel} wants to transfer "${projectLabel}" to you`;
   }
 
   return "You have a new notification";
@@ -144,8 +166,11 @@ const loadNotifications = async (
   try {
     const result = await nativeClient.notification.list.query();
     if (result.success) {
-      setNotifications(result.data);
-      setPendingCount(result.data.length);
+      const known = result.data.filter((n) =>
+        knownNotificationTypes.has(n.type)
+      );
+      setNotifications(known as NotificationItem[]);
+      setPendingCount(known.length);
     }
   } catch {
     // Silently fail
@@ -156,7 +181,7 @@ export const NotificationPopover = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
-  const [loadingId, setLoadingId] = useState<string>();
+  const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   const revalidator = useRevalidator();
 
   useEffect(() => {
@@ -170,7 +195,7 @@ export const NotificationPopover = () => {
   }, [isOpen]);
 
   const handleAccept = async (notificationId: string) => {
-    setLoadingId(notificationId);
+    setLoadingIds((prev) => new Set(prev).add(notificationId));
     try {
       const result = await nativeClient.notification.accept.mutate({
         notificationId,
@@ -187,12 +212,16 @@ export const NotificationPopover = () => {
     } catch {
       toast.error("Failed to accept notification");
     } finally {
-      setLoadingId(undefined);
+      setLoadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(notificationId);
+        return next;
+      });
     }
   };
 
   const handleDecline = async (notificationId: string) => {
-    setLoadingId(notificationId);
+    setLoadingIds((prev) => new Set(prev).add(notificationId));
     try {
       const result = await nativeClient.notification.decline.mutate({
         notificationId,
@@ -208,7 +237,11 @@ export const NotificationPopover = () => {
     } catch {
       toast.error("Failed to decline notification");
     } finally {
-      setLoadingId(undefined);
+      setLoadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(notificationId);
+        return next;
+      });
     }
   };
 
@@ -223,27 +256,32 @@ export const NotificationPopover = () => {
         <PopoverTitle>All notifications</PopoverTitle>
         <ScrollAreaNative
           css={{
-            maxHeight: 320,
-            width: theme.spacing[32],
-            padding: theme.panel.padding,
+            maxHeight: theme.spacing[33],
+            width: theme.spacing[34],
           }}
         >
           {notifications.length === 0 ? (
-            <Flex align="center" justify="center" css={{ height: 100 }}>
+            <Flex
+              align="center"
+              justify="center"
+              css={{ height: theme.spacing[21] }}
+            >
               <Text color="subtle">No notifications</Text>
             </Flex>
           ) : (
-            <List>
-              {notifications.map((notification, index) => (
-                <NotificationRow
-                  key={notification.id}
-                  notification={notification}
-                  index={index}
-                  onAccept={() => handleAccept(notification.id)}
-                  onDecline={() => handleDecline(notification.id)}
-                  isLoading={loadingId === notification.id}
-                />
-              ))}
+            <List asChild>
+              <Box>
+                {notifications.map((notification, index) => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    index={index}
+                    onAccept={() => handleAccept(notification.id)}
+                    onDecline={() => handleDecline(notification.id)}
+                    isLoading={loadingIds.has(notification.id)}
+                  />
+                ))}
+              </Box>
             </List>
           )}
         </ScrollAreaNative>

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
+  Box,
   Flex,
   List,
   ListItem,
@@ -118,29 +119,31 @@ const NavigationItems = ({
   const workspaceId = searchParams.get("workspaceId");
 
   return (
-    <List style={{ padding: 0, margin: 0 }}>
-      {items.map((item, index) => {
-        const to =
-          workspaceId && item.target === undefined
-            ? `${item.to}?workspaceId=${workspaceId}`
-            : item.to;
+    <List asChild>
+      <Box>
+        {items.map((item, index) => {
+          const to =
+            workspaceId && item.target === undefined
+              ? `${item.to}?workspaceId=${workspaceId}`
+              : item.to;
 
-        return (
-          <ListItem asChild index={index} key={index}>
-            <NavLink
-              to={to}
-              end
-              target={item.target}
-              className={sidebarLinkStyle()}
-            >
-              {item.prefix}
-              <Text variant="labels" color="main">
-                {item.children}
-              </Text>
-            </NavLink>
-          </ListItem>
-        );
-      })}
+          return (
+            <ListItem asChild index={index} key={index}>
+              <NavLink
+                to={to}
+                end
+                target={item.target}
+                className={sidebarLinkStyle()}
+              >
+                {item.prefix}
+                <Text variant="labels" color="main">
+                  {item.children}
+                </Text>
+              </NavLink>
+            </ListItem>
+          );
+        })}
+      </Box>
     </List>
   );
 };

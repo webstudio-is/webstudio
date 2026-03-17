@@ -8,6 +8,7 @@ import {
   defaultWorkspaceRelation,
   type WorkspaceRelation,
   type WorkspaceInvitePayload,
+  type ProjectTransferPayload,
 } from "../shared/schema";
 import { create as createNotification } from "./notification";
 
@@ -336,7 +337,7 @@ export const addMember = async (
   // Create a pending notification instead of inserting directly
   const payload: WorkspaceInvitePayload = { workspaceId, relation };
   await createNotification(
-    { type: "workspace_invite", recipientId: memberId, payload },
+    { type: "workspaceInvite", recipientId: memberId, payload },
     context
   );
 };
@@ -500,4 +501,258 @@ export const listMembers = async (
       username: usersById.get(m.userId)?.username ?? "",
     })),
   };
+};
+
+/**
+ * Verify the caller is the project owner or an admin of the project's source workspace.
+ * Returns the loaded project data.
+ */
+const assertProjectPermission = async (
+  {
+    projectId,
+    userId,
+    action,
+  }: { projectId: string; userId: string; action: string },
+  context: AppContext
+) => {
+  const project = await context.postgrest.client
+    .from("Project")
+    .select("id, userId, workspaceId")
+    .eq("id", projectId)
+    .eq("isDeleted", false)
+    .single();
+
+  if (project.error) {
+    throw new Error("Project not found");
+  }
+
+  const isProjectOwner = project.data.userId === userId;
+  const sourceWorkspaceId = project.data.workspaceId;
+
+  if (isProjectOwner === false && sourceWorkspaceId !== null) {
+    const membership = await context.postgrest.client
+      .from("WorkspaceMember")
+      .select("relation")
+      .eq("workspaceId", sourceWorkspaceId)
+      .eq("userId", userId)
+      .is("removedAt", null)
+      .maybeSingle();
+
+    if (
+      membership.data === null ||
+      membership.data.relation !== "administrators"
+    ) {
+      throw new AuthorizationError(
+        `Only the project owner or a workspace admin can ${action} projects`
+      );
+    }
+  } else if (isProjectOwner === false) {
+    throw new AuthorizationError(
+      `Only the project owner can ${action} this project`
+    );
+  }
+
+  return project.data;
+};
+
+/**
+ * Move a project to a different workspace owned by or shared with the current user.
+ * No notification is needed — the move is instant.
+ */
+export const moveProject = async (
+  {
+    projectId,
+    targetWorkspaceId,
+  }: { projectId: string; targetWorkspaceId: string },
+  context: AppContext
+) => {
+  const userId = assertUser(context);
+
+  await assertProjectPermission({ projectId, userId, action: "move" }, context);
+
+  // Verify the target workspace exists
+  const targetWorkspace = await context.postgrest.client
+    .from("Workspace")
+    .select("id, userId")
+    .eq("id", targetWorkspaceId)
+    .single();
+
+  if (targetWorkspace.error) {
+    throw new Error("Target workspace not found");
+  }
+
+  // Verify the caller is owner or admin of the target workspace
+  const isTargetOwner = targetWorkspace.data.userId === userId;
+  if (isTargetOwner === false) {
+    const targetMembership = await context.postgrest.client
+      .from("WorkspaceMember")
+      .select("relation")
+      .eq("workspaceId", targetWorkspaceId)
+      .eq("userId", userId)
+      .is("removedAt", null)
+      .maybeSingle();
+
+    if (
+      targetMembership.data === null ||
+      targetMembership.data.relation !== "administrators"
+    ) {
+      throw new AuthorizationError(
+        "You need admin or owner permissions on the target workspace"
+      );
+    }
+  }
+
+  // If the target workspace belongs to a different user, the project ownership
+  // must be reassigned to the target workspace owner.
+  const newOwnerId = targetWorkspace.data.userId;
+
+  if (newOwnerId !== userId) {
+    console.info(
+      `Project ownership change: project=${projectId} from=${userId} to=${newOwnerId} workspace=${targetWorkspaceId}`
+    );
+  }
+
+  const result = await context.postgrest.client
+    .from("Project")
+    .update({ workspaceId: targetWorkspaceId, userId: newOwnerId })
+    .eq("id", projectId)
+    .select("id")
+    .single();
+
+  if (result.error) {
+    throw result.error;
+  }
+};
+
+/**
+ * Initiate a project transfer to another user. Creates a notification
+ * the recipient must accept before the project is reassigned.
+ */
+export const transferProject = async (
+  {
+    projectId,
+    recipientEmail,
+    targetWorkspaceId,
+  }: {
+    projectId: string;
+    recipientEmail: string;
+    targetWorkspaceId?: string;
+  },
+  context: AppContext
+) => {
+  const userId = assertUser(context);
+
+  await assertProjectPermission(
+    { projectId, userId, action: "transfer" },
+    context
+  );
+
+  // Look up the recipient by email
+  const recipient = await context.postgrest.client
+    .from("User")
+    .select("id")
+    .eq("email", recipientEmail)
+    .maybeSingle();
+
+  if (recipient.error) {
+    throw recipient.error;
+  }
+
+  // Silently succeed for non-existent emails (anti-enumeration)
+  if (recipient.data === null) {
+    return;
+  }
+
+  if (recipient.data.id === userId) {
+    throw new Error("You cannot transfer a project to yourself");
+  }
+
+  // If a target workspace is specified, verify it exists and belongs to the recipient
+  if (targetWorkspaceId !== undefined) {
+    const targetWorkspace = await context.postgrest.client
+      .from("Workspace")
+      .select("id, userId")
+      .eq("id", targetWorkspaceId)
+      .single();
+
+    if (targetWorkspace.error) {
+      throw new Error("Target workspace not found");
+    }
+
+    if (targetWorkspace.data.userId !== recipient.data.id) {
+      throw new Error("Target workspace does not belong to the recipient");
+    }
+  }
+
+  const payload: ProjectTransferPayload = {
+    projectId,
+    targetWorkspaceId,
+  };
+
+  await createNotification(
+    { type: "projectTransfer", recipientId: recipient.data.id, payload },
+    context
+  );
+};
+
+/**
+ * List workspaces owned by a specific user that the current user is a member of.
+ * Used in the transfer dialog to show available target workspaces.
+ */
+export const findSharedWorkspacesByOwnerEmail = async (
+  { email }: { email: string },
+  context: AppContext
+) => {
+  const userId = assertUser(context);
+
+  // Look up the target user by email
+  const targetUser = await context.postgrest.client
+    .from("User")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (targetUser.error) {
+    throw targetUser.error;
+  }
+
+  // Return empty for non-existent emails (anti-enumeration)
+  if (targetUser.data === null) {
+    return [];
+  }
+
+  // Find workspaces owned by the target user
+  const workspaces = await context.postgrest.client
+    .from("Workspace")
+    .select("id, name")
+    .eq("userId", targetUser.data.id);
+
+  if (workspaces.error) {
+    throw workspaces.error;
+  }
+
+  if (workspaces.data.length === 0) {
+    return [];
+  }
+
+  // Filter to only those where the current user is a member
+  const memberships = await context.postgrest.client
+    .from("WorkspaceMember")
+    .select("workspaceId")
+    .eq("userId", userId)
+    .is("removedAt", null)
+    .in(
+      "workspaceId",
+      workspaces.data.map((w) => w.id)
+    );
+
+  if (memberships.error) {
+    throw memberships.error;
+  }
+
+  const memberWorkspaceIds = new Set(
+    memberships.data.map((m) => m.workspaceId)
+  );
+
+  return workspaces.data.filter((w) => memberWorkspaceIds.has(w.id));
 };

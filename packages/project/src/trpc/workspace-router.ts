@@ -132,6 +132,54 @@ export const workspaceRouter = router({
         return createErrorResponse(error);
       }
     }),
+
+  moveProject: procedure
+    .input(
+      z.object({
+        projectId: z.string(),
+        targetWorkspaceId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await workspaceApi.moveProject(input, ctx);
+        return { success: true as const };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
+
+  transferProject: procedure
+    .input(
+      z.object({
+        projectId: z.string(),
+        recipientEmail: z.string().email(),
+        targetWorkspaceId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await workspaceApi.transferProject(input, ctx);
+        // Same response shape for existing and non-existing emails (anti-enumeration)
+        return { success: true as const };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
+
+  findSharedWorkspacesByOwnerEmail: procedure
+    .input(z.object({ email: z.string().email() }))
+    .query(async ({ input, ctx }) => {
+      try {
+        const workspaces = await workspaceApi.findSharedWorkspacesByOwnerEmail(
+          input,
+          ctx
+        );
+        return { success: true as const, data: workspaces };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
 });
 
 export type WorkspaceRouter = typeof workspaceRouter;

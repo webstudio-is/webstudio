@@ -350,35 +350,37 @@ const MemberList = ({
   let index = 0;
 
   return (
-    <List style={{ padding: 0, margin: 0 }}>
-      <MemberRow email={owner.email} role="owner" index={index++} />
-      {members.map((member) => (
-        <MemberRow
-          key={member.userId}
-          email={member.email ?? ""}
-          role="member"
-          userId={member.userId}
-          workspaceId={workspaceId}
-          relation={member.relation as WorkspaceRelation}
-          canRemove={canRemove}
-          index={index++}
-          onRefresh={onRefresh}
-        />
-      ))}
-      {pendingEntries.map(([email, relation]) => (
-        <MemberRow
-          key={email}
-          email={email}
-          role="pending"
-          relation={relation}
-          canRemove={canRemove}
-          index={index++}
-          onRemove={() => onRemoveInvited(email)}
-          onChangeRelation={(newRelation) =>
-            onChangeInvitedRelation(email, newRelation)
-          }
-        />
-      ))}
+    <List asChild>
+      <Box>
+        <MemberRow email={owner.email} role="owner" index={index++} />
+        {members.map((member) => (
+          <MemberRow
+            key={member.userId}
+            email={member.email ?? ""}
+            role="member"
+            userId={member.userId}
+            workspaceId={workspaceId}
+            relation={member.relation as WorkspaceRelation}
+            canRemove={canRemove}
+            index={index++}
+            onRefresh={onRefresh}
+          />
+        ))}
+        {pendingEntries.map(([email, relation]) => (
+          <MemberRow
+            key={email}
+            email={email}
+            role="pending"
+            relation={relation}
+            canRemove={canRemove}
+            index={index++}
+            onRemove={() => onRemoveInvited(email)}
+            onChangeRelation={(newRelation) =>
+              onChangeInvitedRelation(email, newRelation)
+            }
+          />
+        ))}
+      </Box>
     </List>
   );
 };

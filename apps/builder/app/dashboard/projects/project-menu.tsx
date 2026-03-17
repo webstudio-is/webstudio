@@ -64,6 +64,11 @@ export const ProjectMenu = ({ projectId, onOpenChange }: ProjectMenuProps) => {
             Delete
           </DropdownMenuItem>
         )}
+        {permissions.canTransfer && (
+          <DropdownMenuItem onSelect={() => onOpenChange("transfer")}>
+            Transfer
+          </DropdownMenuItem>
+        )}
         {permissions.canEditTags && (
           <DropdownMenuItem onSelect={() => onOpenChange("tags")}>
             Tags

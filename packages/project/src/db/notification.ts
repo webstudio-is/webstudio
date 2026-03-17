@@ -7,6 +7,7 @@ import {
   type NotificationStatus,
   NOTIFICATION_TTL_MS,
   WorkspaceInvitePayload,
+  ProjectTransferPayload,
 } from "../shared/schema";
 
 const assertUser = (context: AppContext) => {
@@ -51,7 +52,7 @@ export const create = async (
   }
 
   // For workspace invites, also match on workspaceId in the payload
-  if (type === "workspace_invite" && (existing.count ?? 0) > 0) {
+  if (type === "workspaceInvite" && (existing.count ?? 0) > 0) {
     // Check if any of the existing ones match this specific workspace
     const duplicate = await context.postgrest.client
       .from("Notification")
@@ -63,6 +64,30 @@ export const create = async (
       .gte("createdAt", expirationCutoff())
       .contains("payload", {
         workspaceId: (payload as { workspaceId: string }).workspaceId,
+      })
+      .maybeSingle();
+
+    if (duplicate.error) {
+      throw duplicate.error;
+    }
+
+    if (duplicate.data !== null) {
+      return;
+    }
+  }
+
+  // For project transfers, match on projectId in the payload
+  if (type === "projectTransfer" && (existing.count ?? 0) > 0) {
+    const duplicate = await context.postgrest.client
+      .from("Notification")
+      .select("id")
+      .eq("type", type)
+      .eq("recipientId", recipientId)
+      .eq("senderId", senderId)
+      .eq("status", "pending")
+      .gte("createdAt", expirationCutoff())
+      .contains("payload", {
+        projectId: (payload as { projectId: string }).projectId,
       })
       .maybeSingle();
 
@@ -125,16 +150,28 @@ export const list = async (context: AppContext) => {
 
   const usersById = new Map(users.data.map((u) => [u.id, u]));
 
-  // Resolve workspace names for workspace_invite notifications
-  const workspaceIds = result.data
-    .filter((n) => n.type === "workspace_invite")
-    .map((n) => {
-      const parsed = WorkspaceInvitePayload.safeParse(n.payload);
-      return parsed.success ? parsed.data.workspaceId : undefined;
-    })
-    .filter((id): id is string => id !== undefined);
+  // Parse payloads once and cache results
+  const parsedInvites = new Map<string, WorkspaceInvitePayload>();
+  const parsedTransfers = new Map<string, ProjectTransferPayload>();
 
-  const uniqueWorkspaceIds = [...new Set(workspaceIds)];
+  for (const n of result.data) {
+    if (n.type === "workspaceInvite") {
+      const parsed = WorkspaceInvitePayload.safeParse(n.payload);
+      if (parsed.success) {
+        parsedInvites.set(n.id, parsed.data);
+      }
+    } else if (n.type === "projectTransfer") {
+      const parsed = ProjectTransferPayload.safeParse(n.payload);
+      if (parsed.success) {
+        parsedTransfers.set(n.id, parsed.data);
+      }
+    }
+  }
+
+  // Resolve workspace names for workspaceInvite notifications
+  const uniqueWorkspaceIds = [
+    ...new Set([...parsedInvites.values()].map((p) => p.workspaceId)),
+  ];
 
   const workspacesById = new Map<
     string,
@@ -156,16 +193,32 @@ export const list = async (context: AppContext) => {
     }
   }
 
+  // Resolve project titles for projectTransfer notifications
+  const uniqueProjectIds = [
+    ...new Set([...parsedTransfers.values()].map((p) => p.projectId)),
+  ];
+
+  const projectsById = new Map<string, { id: string; title: string }>();
+
+  if (uniqueProjectIds.length > 0) {
+    const projects = await context.postgrest.client
+      .from("Project")
+      .select("id, title")
+      .in("id", uniqueProjectIds);
+
+    if (projects.error) {
+      throw projects.error;
+    }
+
+    for (const p of projects.data) {
+      projectsById.set(p.id, p);
+    }
+  }
+
   return result.data.map((n) => {
     const sender = usersById.get(n.senderId);
-    let workspaceName: string | undefined;
-
-    if (n.type === "workspace_invite") {
-      const parsed = WorkspaceInvitePayload.safeParse(n.payload);
-      if (parsed.success) {
-        workspaceName = workspacesById.get(parsed.data.workspaceId)?.name;
-      }
-    }
+    const invite = parsedInvites.get(n.id);
+    const transfer = parsedTransfers.get(n.id);
 
     return {
       id: n.id,
@@ -175,7 +228,12 @@ export const list = async (context: AppContext) => {
       createdAt: n.createdAt,
       senderEmail: sender?.email ?? "",
       senderName: sender?.username ?? "",
-      workspaceName,
+      workspaceName: invite
+        ? workspacesById.get(invite.workspaceId)?.name
+        : undefined,
+      projectTitle: transfer
+        ? projectsById.get(transfer.projectId)?.title
+        : undefined,
     };
   });
 };
@@ -198,7 +256,10 @@ export const count = async (context: AppContext) => {
 };
 
 export const accept = async (
-  { notificationId }: { notificationId: string },
+  {
+    notificationId,
+    targetWorkspaceId,
+  }: { notificationId: string; targetWorkspaceId?: string },
   context: AppContext
 ) => {
   const userId = assertUser(context);
@@ -226,7 +287,7 @@ export const accept = async (
   }
 
   // Perform type-specific side effect
-  if (notification.data.type === "workspace_invite") {
+  if (notification.data.type === "workspaceInvite") {
     const parsed = WorkspaceInvitePayload.parse(notification.data.payload);
 
     // Verify the workspace still exists
@@ -248,7 +309,9 @@ export const accept = async (
           status: "declined" satisfies NotificationStatus,
           respondedAt: new Date().toISOString(),
         })
-        .eq("id", notificationId);
+        .eq("id", notificationId)
+        .select("id")
+        .single();
 
       throw new Error("This workspace no longer exists");
     }
@@ -274,6 +337,141 @@ export const accept = async (
     }
   }
 
+  if (notification.data.type === "projectTransfer") {
+    if (userId === notification.data.senderId) {
+      throw new Error("You cannot accept your own transfer request");
+    }
+
+    const parsed = ProjectTransferPayload.parse(notification.data.payload);
+
+    // Verify the project still exists
+    const project = await context.postgrest.client
+      .from("Project")
+      .select("id, userId")
+      .eq("id", parsed.projectId)
+      .eq("isDeleted", false)
+      .maybeSingle();
+
+    if (project.error) {
+      throw project.error;
+    }
+
+    if (project.data === null) {
+      await context.postgrest.client
+        .from("Notification")
+        .update({
+          status: "declined" satisfies NotificationStatus,
+          respondedAt: new Date().toISOString(),
+        })
+        .eq("id", notificationId)
+        .select("id")
+        .single();
+
+      throw new Error("This project no longer exists");
+    }
+
+    // Verify the sender still owns the project
+    if (project.data.userId !== notification.data.senderId) {
+      await context.postgrest.client
+        .from("Notification")
+        .update({
+          status: "declined" satisfies NotificationStatus,
+          respondedAt: new Date().toISOString(),
+        })
+        .eq("id", notificationId)
+        .select("id")
+        .single();
+
+      throw new Error("The sender no longer owns this project");
+    }
+
+    // Determine the target workspace: use the one from the notification payload,
+    // or fall back to the one provided by the receiver at accept time.
+    const resolvedWorkspaceId = parsed.targetWorkspaceId ?? targetWorkspaceId;
+
+    if (resolvedWorkspaceId !== undefined) {
+      // Verify the workspace exists and belongs to the receiver
+      const workspace = await context.postgrest.client
+        .from("Workspace")
+        .select("id, userId")
+        .eq("id", resolvedWorkspaceId)
+        .maybeSingle();
+
+      if (workspace.error) {
+        throw workspace.error;
+      }
+
+      if (workspace.data === null) {
+        await context.postgrest.client
+          .from("Notification")
+          .update({
+            status: "declined" satisfies NotificationStatus,
+            respondedAt: new Date().toISOString(),
+          })
+          .eq("id", notificationId)
+          .select("id")
+          .single();
+
+        throw new Error("This workspace no longer exists");
+      }
+
+      if (workspace.data.userId !== userId) {
+        throw new AuthorizationError(
+          "You can only transfer projects into your own workspaces"
+        );
+      }
+
+      // Reassign the project to the target workspace and its owner
+      console.info(
+        `Project ownership change (transfer accepted): project=${parsed.projectId} from=${notification.data.senderId} to=${userId} workspace=${resolvedWorkspaceId}`
+      );
+
+      const updateResult = await context.postgrest.client
+        .from("Project")
+        .update({
+          userId,
+          workspaceId: resolvedWorkspaceId,
+        })
+        .eq("id", parsed.projectId)
+        .select("id")
+        .single();
+
+      if (updateResult.error) {
+        throw new Error("Failed to reassign the project");
+      }
+    } else {
+      // No workspace specified — assign to receiver's default workspace
+      const defaultWorkspace = await context.postgrest.client
+        .from("Workspace")
+        .select("id")
+        .eq("userId", userId)
+        .eq("isDefault", true)
+        .maybeSingle();
+
+      if (defaultWorkspace.error) {
+        throw defaultWorkspace.error;
+      }
+
+      console.info(
+        `Project ownership change (transfer accepted): project=${parsed.projectId} from=${notification.data.senderId} to=${userId} workspace=${defaultWorkspace.data?.id ?? "default"}`
+      );
+
+      const updateResult = await context.postgrest.client
+        .from("Project")
+        .update({
+          userId,
+          workspaceId: defaultWorkspace.data?.id ?? null,
+        })
+        .eq("id", parsed.projectId)
+        .select("id")
+        .single();
+
+      if (updateResult.error) {
+        throw new Error("Failed to reassign the project");
+      }
+    }
+  }
+
   // Mark as accepted
   const update = await context.postgrest.client
     .from("Notification")
@@ -281,7 +479,9 @@ export const accept = async (
       status: "accepted" satisfies NotificationStatus,
       respondedAt: new Date().toISOString(),
     })
-    .eq("id", notificationId);
+    .eq("id", notificationId)
+    .select("id")
+    .single();
 
   if (update.error) {
     throw update.error;
@@ -315,7 +515,9 @@ export const decline = async (
       status: "declined" satisfies NotificationStatus,
       respondedAt: new Date().toISOString(),
     })
-    .eq("id", notificationId);
+    .eq("id", notificationId)
+    .select("id")
+    .single();
 
   if (result.error) {
     throw result.error;
