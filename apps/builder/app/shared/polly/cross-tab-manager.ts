@@ -344,10 +344,3 @@ export const createCrossTabPollingManager = (
 
   return { subscribe, refresh, destroy };
 };
-
-// Allow tests to reach internals that are otherwise private.
-export const __testing__ = {
-  DEFAULT_CHANNEL_NAME,
-  HEARTBEAT_INTERVAL,
-  HEARTBEAT_TIMEOUT,
-};

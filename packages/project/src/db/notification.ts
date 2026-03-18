@@ -8,6 +8,7 @@ import {
   NOTIFICATION_TTL_MS,
   WorkspaceInvitePayload,
   ProjectTransferPayload,
+  workspaceRelationLabels,
 } from "../shared/schema";
 
 const assertUser = (context: AppContext) => {
@@ -223,6 +224,14 @@ export const list = async (context: AppContext) => {
     const invite = parsedInvites.get(n.id);
     const transfer = parsedTransfers.get(n.id);
 
+    const senderLabel = sender?.username || sender?.email || "Someone";
+    const workspaceName = invite
+      ? workspacesById.get(invite.workspaceId)?.name
+      : undefined;
+    const projectTitle = transfer
+      ? projectsById.get(transfer.projectId)?.title
+      : undefined;
+
     return {
       id: n.id,
       type: n.type,
@@ -231,14 +240,51 @@ export const list = async (context: AppContext) => {
       createdAt: n.createdAt,
       senderEmail: sender?.email ?? "",
       senderName: sender?.username ?? "",
-      workspaceName: invite
-        ? workspacesById.get(invite.workspaceId)?.name
-        : undefined,
-      projectTitle: transfer
-        ? projectsById.get(transfer.projectId)?.title
-        : undefined,
+      workspaceName,
+      projectTitle,
+      description: describeNotification({
+        type: n.type,
+        senderLabel,
+        workspaceName,
+        projectTitle,
+        invite,
+      }),
     };
   });
+};
+
+/**
+ * Build a human-readable one-liner for a notification.
+ *
+ * Extracted as a pure function so the popover never needs to know
+ * about individual notification types — adding a new type only
+ * requires updating this switch.
+ */
+const describeNotification = ({
+  type,
+  senderLabel,
+  workspaceName,
+  projectTitle,
+  invite,
+}: {
+  type: string;
+  senderLabel: string;
+  workspaceName?: string;
+  projectTitle?: string;
+  invite?: WorkspaceInvitePayload;
+}): string => {
+  if (type === "workspaceInvite" && invite) {
+    const roleLabel =
+      workspaceRelationLabels[invite.relation]?.toLowerCase() ??
+      invite.relation;
+    return `${senderLabel} invited you to "${workspaceName ?? "a workspace"}" as ${roleLabel}`;
+  }
+
+  if (type === "projectTransfer") {
+    return `${senderLabel} wants to transfer "${projectTitle ?? "a project"}" to you`;
+  }
+
+  return "You have a new notification";
 };
 
 export const count = async (context: AppContext) => {
@@ -582,3 +628,5 @@ export const cancel = async (
     throw cancelResult.error;
   }
 };
+
+export const __testing__ = { describeNotification };

@@ -1,97 +1,83 @@
 import { describe, test, expect } from "vitest";
-import { __testing__, type NotificationItem } from "./notification-popover";
+import { notification } from "@webstudio-is/project/index.server";
+import type { WorkspaceInvitePayload } from "@webstudio-is/project";
 
-const { getDescription } = __testing__;
+const { describeNotification } = notification.__testing__;
 
-const createNotification = (
-  overrides: Partial<NotificationItem> = {}
-): NotificationItem =>
-  ({
-    id: "notif-1",
-    type: "workspaceInvite",
-    status: "pending",
-    payload: { workspaceId: "ws-1", relation: "viewers" },
-    createdAt: "2026-03-16T00:00:00.000Z",
-    senderEmail: "alice@example.com",
-    senderName: "Alice",
-    workspaceName: "Design team",
-    ...overrides,
-  }) as NotificationItem;
-
-describe("getDescription", () => {
+describe("describeNotification", () => {
   test("workspace invite with all info", () => {
-    const result = getDescription(createNotification());
+    const result = describeNotification({
+      type: "workspaceInvite",
+      senderLabel: "Alice",
+      workspaceName: "Design team",
+      invite: { workspaceId: "ws-1", relation: "viewers" },
+    });
     expect(result).toBe('Alice invited you to "Design team" as viewer');
   });
 
-  test("workspace invite falls back to email when name is empty", () => {
-    const result = getDescription(createNotification({ senderName: "" }));
-    expect(result).toBe(
-      'alice@example.com invited you to "Design team" as viewer'
-    );
-  });
-
-  test("workspace invite falls back to 'Someone' when both are empty", () => {
-    const result = getDescription(
-      createNotification({ senderName: "", senderEmail: "" })
-    );
-    expect(result).toBe('Someone invited you to "Design team" as viewer');
-  });
-
   test("workspace invite with admin relation", () => {
-    const result = getDescription(
-      createNotification({
-        payload: { workspaceId: "ws-1", relation: "administrators" },
-      })
-    );
+    const result = describeNotification({
+      type: "workspaceInvite",
+      senderLabel: "Alice",
+      workspaceName: "Design team",
+      invite: {
+        workspaceId: "ws-1",
+        relation: "administrators",
+      } satisfies WorkspaceInvitePayload,
+    });
     expect(result).toBe('Alice invited you to "Design team" as admin');
   });
 
   test("workspace invite without workspace name", () => {
-    const result = getDescription(
-      createNotification({ workspaceName: undefined })
-    );
+    const result = describeNotification({
+      type: "workspaceInvite",
+      senderLabel: "Alice",
+      invite: { workspaceId: "ws-1", relation: "viewers" },
+    });
     expect(result).toBe('Alice invited you to "a workspace" as viewer');
   });
 
-  test("unknown notification type", () => {
-    const result = getDescription(createNotification({ type: "unknown_type" }));
+  test("workspace invite without parsed invite falls back to generic", () => {
+    const result = describeNotification({
+      type: "workspaceInvite",
+      senderLabel: "Alice",
+    });
     expect(result).toBe("You have a new notification");
   });
 
   test("project transfer with project title", () => {
-    const result = getDescription(
-      createNotification({
-        type: "projectTransfer",
-        payload: { projectId: "proj-1" },
-        projectTitle: "My Website",
-      })
-    );
+    const result = describeNotification({
+      type: "projectTransfer",
+      senderLabel: "Alice",
+      projectTitle: "My Website",
+    });
     expect(result).toBe('Alice wants to transfer "My Website" to you');
   });
 
   test("project transfer without project title", () => {
-    const result = getDescription(
-      createNotification({
-        type: "projectTransfer",
-        payload: { projectId: "proj-1" },
-        projectTitle: undefined,
-      })
-    );
+    const result = describeNotification({
+      type: "projectTransfer",
+      senderLabel: "Alice",
+    });
     expect(result).toBe('Alice wants to transfer "a project" to you');
   });
 
-  test("project transfer with sender email fallback", () => {
-    const result = getDescription(
-      createNotification({
-        type: "projectTransfer",
-        payload: { projectId: "proj-1" },
-        projectTitle: "My Website",
-        senderName: "",
-      })
-    );
+  test("sender label from email fallback", () => {
+    const result = describeNotification({
+      type: "projectTransfer",
+      senderLabel: "alice@example.com",
+      projectTitle: "My Website",
+    });
     expect(result).toBe(
       'alice@example.com wants to transfer "My Website" to you'
     );
+  });
+
+  test("unknown type returns generic message", () => {
+    const result = describeNotification({
+      type: "someFutureType",
+      senderLabel: "Alice",
+    });
+    expect(result).toBe("You have a new notification");
   });
 });
