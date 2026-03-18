@@ -24,46 +24,11 @@ import {
   CheckMarkIcon,
   XIcon,
 } from "@webstudio-is/icons";
-import {
-  type WorkspaceInvitePayload,
-  WorkspaceInvitePayload as WorkspaceInvitePayloadSchema,
-  workspaceRelationLabels,
-} from "@webstudio-is/project";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import { $notifications, refreshNotifications } from "./shared/subscription";
+import type { Notifications } from "~/shared/polly/types";
 
-type WorkspaceInviteNotification = {
-  type: "workspaceInvite";
-  payload: WorkspaceInvitePayload;
-  workspaceName?: string;
-  projectTitle?: string;
-};
-
-type ProjectTransferNotification = {
-  type: "projectTransfer";
-  payload: { projectId: string; targetWorkspaceId?: string };
-  workspaceName?: string;
-  projectTitle?: string;
-};
-
-type GenericNotification = {
-  type: Exclude<string, "workspaceInvite" | "projectTransfer">;
-  payload: Record<string, unknown>;
-  workspaceName?: string;
-  projectTitle?: string;
-};
-
-export type NotificationItem = {
-  id: string;
-  status: string;
-  createdAt: string;
-  senderEmail: string;
-  senderName: string;
-} & (
-  | WorkspaceInviteNotification
-  | ProjectTransferNotification
-  | GenericNotification
-);
+export type NotificationItem = Notifications[number];
 
 const notificationRowStyle = css({
   paddingBlock: theme.spacing[5],
@@ -72,31 +37,6 @@ const notificationRowStyle = css({
     borderBottom: `1px solid ${theme.colors.borderMain}`,
   },
 });
-
-const getDescription = (notification: NotificationItem) => {
-  const senderLabel =
-    notification.senderName || notification.senderEmail || "Someone";
-
-  if (notification.type === "workspaceInvite") {
-    const parsed = WorkspaceInvitePayloadSchema.safeParse(notification.payload);
-    const workspaceLabel = notification.workspaceName ?? "a workspace";
-    const roleLabel = parsed.success
-      ? (workspaceRelationLabels[parsed.data.relation]?.toLowerCase() ??
-        parsed.data.relation)
-      : "member";
-
-    return `${senderLabel} invited you to "${workspaceLabel}" as ${roleLabel}`;
-  }
-
-  if (notification.type === "projectTransfer") {
-    const projectLabel = notification.projectTitle ?? "a project";
-    return `${senderLabel} wants to transfer "${projectLabel}" to you`;
-  }
-
-  return "You have a new notification";
-};
-
-export const __testing__ = { getDescription };
 
 const NotificationRow = ({
   notification,
@@ -120,7 +60,7 @@ const NotificationRow = ({
         gap="2"
       >
         <Text variant="labels" truncate css={{ flexGrow: 1 }}>
-          {getDescription(notification)}
+          {notification.description}
         </Text>
         <Flex gap="1" shrink={false}>
           <Tooltip content="Accept">

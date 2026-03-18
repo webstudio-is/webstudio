@@ -31,6 +31,7 @@ const sampleNotifications: NotificationItem[] = [
     senderEmail: "alice@example.com",
     senderName: "Alice",
     workspaceName: "Design team",
+    description: 'Alice invited you to "Design team" as viewer',
   },
   {
     id: "notif-2",
@@ -41,6 +42,7 @@ const sampleNotifications: NotificationItem[] = [
     senderEmail: "bob@example.com",
     senderName: "Bob",
     projectTitle: "Landing Page",
+    description: 'Bob wants to transfer "Landing Page" to you',
   },
 ];
 
