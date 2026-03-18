@@ -19,28 +19,6 @@ const createRouter = (element: React.ReactElement) =>
   });
 
 // ---------------------------------------------------------------------------
-// Default — owned workspaces only
-// ---------------------------------------------------------------------------
-
-export const OwnedWorkspaces: StoryFn = () => {
-  $workspaces.set([
-    { id: "ws-1", name: "My workspace", workspaceRelation: "own" },
-    { id: "ws-2", name: "Client projects", workspaceRelation: "own" },
-    { id: "ws-3", name: "Side projects", workspaceRelation: "own" },
-  ]);
-
-  const router = createRouter(
-    <TransferProjectDialog
-      isOpen={true}
-      onOpenChange={() => {}}
-      projectId="project-1"
-      title="Landing Page"
-    />
-  );
-  return <RouterProvider router={router} />;
-};
-
-// ---------------------------------------------------------------------------
 // Owned + shared workspaces (shared ones are disabled unless admin)
 // ---------------------------------------------------------------------------
 
