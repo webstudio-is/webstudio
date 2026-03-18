@@ -30,6 +30,7 @@ export { ErrorBoundary } from "~/shared/error/error-boundary";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
 import { resolveCurrentWorkspace } from "~/dashboard/dashboard-utils";
+import type { DashboardData } from "~/dashboard/shared/types";
 
 export const meta = () => {
   const metas: ReturnType<MetaFunction> = [];
@@ -246,7 +247,13 @@ const DashboardSetup = lazy(async () => {
 });
 
 const DashboardRoute = () => {
-  const data = useLoaderData<typeof loader>();
+  // `useLoaderData` wraps the return in `JsonifyObject` which turns
+  // `string | undefined` properties into optional keys.  At runtime the
+  // shapes are identical, so the cast to `DashboardData` is safe.
+  const data = useLoaderData<typeof loader>() as ReturnType<
+    typeof useLoaderData<typeof loader>
+  > &
+    DashboardData;
 
   data.projects.slice(0, 5).forEach((project) => {
     prefetchDNS(builderUrl({ projectId: project.id, origin: data.origin }));
