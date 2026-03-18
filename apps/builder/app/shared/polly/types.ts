@@ -12,6 +12,14 @@
  * TypeScript will error if any step is skipped:
  * - Missing from `topicNames` → `EnsureAllTopicsCovered` fires.
  * - Missing resolver → `TopicResolvers` mapped type fires.
+ *
+ * ── Future topic ideas (implement when needed) ──────────────────
+ *
+ * - publish status    — replace the manual while-loop in publish.tsx
+ * - build status      — same pattern as publish for static builds
+ * - dashboard refresh — periodic revalidation of the project list
+ * - session keepalive — detect expired sessions before a save fails
+ * - presence          — collaborative multi-user cursors (needs arch)
  */
 
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";

@@ -156,8 +156,7 @@ export const NotificationPopover = ({
 } = {}) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const polledNotifications = useStore($notifications);
-  const notifications = (initialNotifications ??
-    polledNotifications) as NotificationItem[];
+  const notifications = initialNotifications ?? polledNotifications;
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   const revalidator = useRevalidator();
 
