@@ -14,7 +14,10 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
-import { workspace as workspaceApi } from "@webstudio-is/project/index.server";
+import {
+  workspace as workspaceApi,
+  notification as notificationApi,
+} from "@webstudio-is/project/index.server";
 import type { WorkspaceRelation } from "@webstudio-is/project";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
@@ -126,6 +129,8 @@ const loadDashboardData = async (request: Request) => {
     skipApprovalCheck: true,
   });
 
+  const notifications = await notificationApi.list(context);
+
   return {
     context,
     user,
@@ -137,6 +142,7 @@ const loadDashboardData = async (request: Request) => {
     workspaces,
     currentWorkspaceId,
     workspaceRelation,
+    notifications,
   };
 };
 
@@ -190,6 +196,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     workspaces,
     currentWorkspaceId,
     workspaceRelation,
+    notifications,
   } = await loadDashboardData(request);
 
   const projectToClone = await getProjectToClone(request, context);
@@ -206,6 +213,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     workspaces,
     currentWorkspaceId,
     workspaceRelation,
+    notifications,
   };
 };
 

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRevalidator } from "@remix-run/react";
+import { useStore } from "@nanostores/react";
 import {
   Box,
   Flex,
@@ -26,10 +27,10 @@ import {
 import {
   type WorkspaceInvitePayload,
   WorkspaceInvitePayload as WorkspaceInvitePayloadSchema,
-  notificationTypes,
   workspaceRelationLabels,
 } from "@webstudio-is/project";
 import { nativeClient } from "~/shared/trpc/trpc-client";
+import { $notifications, refreshNotifications } from "./shared/subscription";
 
 type WorkspaceInviteNotification = {
   type: "workspaceInvite";
@@ -63,8 +64,6 @@ export type NotificationItem = {
   | ProjectTransferNotification
   | GenericNotification
 );
-
-const knownNotificationTypes = new Set<string>(notificationTypes);
 
 const notificationRowStyle = css({
   paddingBlock: theme.spacing[5],
@@ -148,35 +147,6 @@ const NotificationRow = ({
   );
 };
 
-const loadCount = async (setPendingCount: (count: number) => void) => {
-  try {
-    const result = await nativeClient.notification.count.query();
-    if (result.success) {
-      setPendingCount(result.data);
-    }
-  } catch {
-    // Silently fail — badge just won't show
-  }
-};
-
-const loadNotifications = async (
-  setNotifications: (items: NotificationItem[]) => void,
-  setPendingCount: (count: number) => void
-) => {
-  try {
-    const result = await nativeClient.notification.list.query();
-    if (result.success) {
-      const known = result.data.filter((n) =>
-        knownNotificationTypes.has(n.type)
-      );
-      setNotifications(known as NotificationItem[]);
-      setPendingCount(known.length);
-    }
-  } catch {
-    // Silently fail
-  }
-};
-
 export const NotificationPopover = ({
   defaultOpen = false,
   initialNotifications,
@@ -185,26 +155,11 @@ export const NotificationPopover = ({
   initialNotifications?: NotificationItem[];
 } = {}) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(
-    initialNotifications ?? []
-  );
-  const [pendingCount, setPendingCount] = useState(
-    initialNotifications?.length ?? 0
-  );
+  const polledNotifications = useStore($notifications);
+  const notifications = (initialNotifications ??
+    polledNotifications) as NotificationItem[];
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   const revalidator = useRevalidator();
-
-  useEffect(() => {
-    if (initialNotifications === undefined) {
-      loadCount(setPendingCount);
-    }
-  }, [initialNotifications]);
-
-  useEffect(() => {
-    if (isOpen && initialNotifications === undefined) {
-      loadNotifications(setNotifications, setPendingCount);
-    }
-  }, [isOpen, initialNotifications]);
 
   const handleAccept = async (notificationId: string) => {
     setLoadingIds((prev) => new Set(prev).add(notificationId));
@@ -213,8 +168,7 @@ export const NotificationPopover = ({
         notificationId,
       });
       if (result.success) {
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-        setPendingCount((prev) => Math.max(0, prev - 1));
+        refreshNotifications();
         revalidator.revalidate();
         return;
       }
@@ -239,8 +193,7 @@ export const NotificationPopover = ({
         notificationId,
       });
       if (result.success) {
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-        setPendingCount((prev) => Math.max(0, prev - 1));
+        refreshNotifications();
         return;
       }
       if ("error" in result) {
@@ -261,7 +214,7 @@ export const NotificationPopover = ({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <IconButton color="ghost" aria-label="Notifications">
-          {pendingCount > 0 ? <BellDotIcon /> : <BellIcon />}
+          {notifications.length > 0 ? <BellDotIcon /> : <BellIcon />}
         </IconButton>
       </PopoverTrigger>
       <PopoverContent align="start" sideOffset={4}>

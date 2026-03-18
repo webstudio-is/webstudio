@@ -40,6 +40,12 @@ import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
 import { WorkspaceSelector } from "./workspace-selector";
 import { NotificationPopover } from "./notification-popover";
+import {
+  seedNotifications,
+  startDashboardSubscription,
+  stopDashboardSubscription,
+} from "./shared/subscription";
+import { requestNotificationPermission } from "./shared/browser-notification";
 
 const globalStyles = globalCss({
   body: {
@@ -157,6 +163,17 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
     $workspaces.set(data.workspaces);
     $user.set(data.user);
   }, [data]);
+  // Seed notifications from loader data so the indicator renders instantly.
+  // Runs on every revalidation to keep loader → store in sync.
+  useEffect(() => {
+    seedNotifications(data.notifications);
+  }, [data.notifications]);
+  // Start polling + permission once on mount; stop on unmount.
+  useEffect(() => {
+    requestNotificationPermission();
+    startDashboardSubscription();
+    return stopDashboardSubscription;
+  }, []);
   globalStyles();
   return null;
 };
