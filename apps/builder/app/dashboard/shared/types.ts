@@ -8,6 +8,7 @@ import type {
   UserPlanFeatures,
   UserPurchase,
 } from "@webstudio-is/trpc-interface/user-plan-features";
+import type { Notifications } from "~/shared/polly/types";
 
 export type DashboardData = {
   user: User;
@@ -24,4 +25,5 @@ export type DashboardData = {
   };
   workspaces: Array<WorkspaceWithRelation>;
   currentWorkspaceId?: string;
+  notifications: Notifications;
 };

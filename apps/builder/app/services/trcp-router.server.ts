@@ -8,6 +8,7 @@ import {
 import { authorizationTokenRouter } from "@webstudio-is/authorization-token/index.server";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { marketplaceRouter } from "~/shared/marketplace/router.server";
+import { subscriptionRouter } from "~/shared/polly/subscription-router.server";
 import { userRouter } from "./user-router.server";
 import { logoutRouter } from "./logout-router.server";
 
@@ -21,6 +22,7 @@ export const appRouter = router({
   authorizationToken: authorizationTokenRouter,
   dashboardProject: dashboardProjectRouter,
   logout: logoutRouter,
+  polly: subscriptionRouter,
 });
 
 export type AppRouter = typeof appRouter;
