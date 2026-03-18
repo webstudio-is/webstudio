@@ -9,25 +9,28 @@
  * which should be called from the dashboard root component's useEffect.
  */
 import { atom } from "nanostores";
-import { createPollingManager } from "~/shared/polly/polling-manager";
+import { createCrossTabPollingManager } from "~/shared/polly/cross-tab-manager";
 import type { Notifications, SubscriptionResponse } from "~/shared/polly/types";
+import type {
+  PollingManager,
+  Subscription,
+} from "~/shared/polly/polling-manager";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import { notificationTypes } from "@webstudio-is/project";
 import { toast } from "@webstudio-is/design-system";
 import { showBrowserNotification } from "./browser-notification";
-import type { Subscription } from "~/shared/polly/polling-manager";
 
 const knownNotificationTypes = new Set<string>(notificationTypes);
 
 export const $notifications = atom<Notifications>([]);
 
 let subscription: Subscription | undefined;
-let manager: ReturnType<typeof createPollingManager> | undefined;
+let manager: PollingManager | undefined;
 let isFirstLoad = true;
 
 const getManager = () => {
   if (manager === undefined) {
-    manager = createPollingManager({
+    manager = createCrossTabPollingManager({
       fetcher: (topics) =>
         nativeClient.polly.poll.query({
           topics,
