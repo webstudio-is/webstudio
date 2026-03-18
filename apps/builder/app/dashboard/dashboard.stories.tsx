@@ -73,6 +73,7 @@ const data = {
   projects,
   workspaceRelation: "own" as const,
   workspaces: [],
+  notifications: [],
 };
 
 export const Welcome: StoryFn<typeof Dashboard> = () => {
