@@ -51,8 +51,13 @@ const env = {
       projectId.trim()
     ) ?? [],
 
+  // N8N webhooks (old payment path — used when PLAN_WORKER_URL is not set)
   N8N_WEBHOOK_URL: process.env.N8N_WEBHOOK_URL,
   N8N_WEBHOOK_TOKEN: process.env.N8N_WEBHOOK_TOKEN,
+
+  // Plan worker (new payment path — when set, replaces N8N for plan features)
+  PLAN_WORKER_URL: process.env.PLAN_WORKER_URL,
+  PLAN_WORKER_TOKEN: process.env.PLAN_WORKER_TOKEN,
 
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || "wstd.work",
 
