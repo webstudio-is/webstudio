@@ -99,6 +99,45 @@ export const findMany = async ({
     );
   }
 
+  // When filtering by workspace, verify the caller is a member or owner
+  // to prevent unauthorized access via direct tRPC calls.
+  if (workspaceId !== undefined) {
+    const workspace = await context.postgrest.client
+      .from("Workspace")
+      .select("userId")
+      .eq("id", workspaceId)
+      .eq("isDeleted", false)
+      .maybeSingle();
+
+    if (workspace.error) {
+      throw workspace.error;
+    }
+
+    if (workspace.data === null) {
+      throw new AuthorizationError("Workspace not found");
+    }
+
+    const isOwner = workspace.data.userId === userId;
+
+    if (isOwner === false) {
+      const membership = await context.postgrest.client
+        .from("WorkspaceMember")
+        .select("userId")
+        .eq("workspaceId", workspaceId)
+        .eq("userId", userId)
+        .is("removedAt", null)
+        .maybeSingle();
+
+      if (membership.error) {
+        throw membership.error;
+      }
+
+      if (membership.data === null) {
+        throw new AuthorizationError("You don't have access to this workspace");
+      }
+    }
+  }
+
   let query = context.postgrest.client
     .from("DashboardProject")
     .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)");
@@ -166,10 +205,14 @@ export const findManyByIds = async (
 
   // PROJECT_TEMPLATES IDs are admin-curated via env var and skip approval.
   // Other callers require ownership or marketplace approval.
-  if (skipApprovalCheck === false && userId !== undefined) {
-    query = query.or(
-      `userId.eq.${userId},marketplaceApprovalStatus.eq.APPROVED`
-    );
+  if (skipApprovalCheck === false) {
+    if (userId !== undefined) {
+      query = query.or(
+        `userId.eq.${userId},marketplaceApprovalStatus.eq.APPROVED`
+      );
+    } else {
+      query = query.eq("marketplaceApprovalStatus", "APPROVED");
+    }
   }
 
   const data = await query

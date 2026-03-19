@@ -21,6 +21,7 @@ import {
 import type { WorkspaceRelation } from "@webstudio-is/project";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
+import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
 import env from "~/env/env.server";
 import { ClientOnly } from "~/shared/client-only";
@@ -29,7 +30,10 @@ import { allowedDestinations } from "~/services/destinations.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
-import { resolveCurrentWorkspace } from "~/dashboard/dashboard-utils";
+import {
+  resolveCurrentWorkspace,
+  isDowngradedForMember,
+} from "~/dashboard/dashboard-utils";
 import type { DashboardData } from "~/dashboard/shared/types";
 
 export const meta = () => {
@@ -122,13 +126,18 @@ const loadDashboardData = async (request: Request) => {
     }
   }
 
-  const projects =
-    await dashboardProjectCaller(context).findMany(findManyInput);
+  // When the workspace owner's plan has been downgraded, non-owner members
+  // must not see shared projects on reload. The owner keeps seeing their
+  // own projects because they own them regardless of plan status.
+  const projects = isDowngradedForMember(currentWorkspace)
+    ? []
+    : await dashboardProjectCaller(context).findMany(findManyInput);
 
-  const templates = await dashboardProjectCaller(context).findManyByIds({
-    projectIds: env.PROJECT_TEMPLATES,
-    skipApprovalCheck: true,
-  });
+  const templates = await dashboardDb.db.findManyByIds(
+    env.PROJECT_TEMPLATES,
+    context,
+    { skipApprovalCheck: true }
+  );
 
   const notifications = await notificationApi.list(context);
 

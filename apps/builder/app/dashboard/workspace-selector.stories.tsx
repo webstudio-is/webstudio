@@ -16,6 +16,7 @@ const createWorkspace = (
   id: "ws-1",
   name: "My workspace",
   isDefault: false,
+  isDeleted: false,
   createdAt: new Date().toISOString(),
   userId: "user-1",
   workspaceRelation: "own",

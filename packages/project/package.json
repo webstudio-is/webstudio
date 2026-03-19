@@ -6,7 +6,8 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsgo --noEmit"
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@trpc/server": "^10.45.2",
@@ -22,7 +23,8 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:*"
+    "@webstudio-is/tsconfig": "workspace:*",
+    "vitest": "^3.1.2"
   },
   "exports": {
     ".": {

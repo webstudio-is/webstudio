@@ -24,21 +24,34 @@ const createRouter = (element: React.ReactElement) =>
 
 export const OwnedAndSharedWorkspaces: StoryFn = () => {
   $workspaces.set([
-    { id: "ws-1", name: "My workspace", workspaceRelation: "own" },
-    { id: "ws-2", name: "Client projects", workspaceRelation: "own" },
+    {
+      id: "ws-1",
+      name: "My workspace",
+      isDefault: true,
+      workspaceRelation: "own",
+    },
+    {
+      id: "ws-2",
+      name: "Client projects",
+      isDefault: false,
+      workspaceRelation: "own",
+    },
     {
       id: "ws-3",
       name: "Team workspace (admin)",
+      isDefault: false,
       workspaceRelation: "administrators",
     },
     {
       id: "ws-4",
       name: "Agency workspace (editor)",
+      isDefault: false,
       workspaceRelation: "editors",
     },
     {
       id: "ws-5",
       name: "Partner workspace (builder)",
+      isDefault: false,
       workspaceRelation: "builders",
     },
   ]);

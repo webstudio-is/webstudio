@@ -52,6 +52,31 @@ const genericCreateAccount = async (
     .single();
 
   if (dbUser.error == null) {
+    // Ensure the user has a default workspace — it may be missing if
+    // the original workspace insert failed after user creation.
+    const existingWorkspace = await context.postgrest.client
+      .from("Workspace")
+      .select("id")
+      .eq("userId", dbUser.data.id)
+      .eq("isDefault", true)
+      .maybeSingle();
+
+    if (existingWorkspace.data === null) {
+      const ws = await context.postgrest.client
+        .from("Workspace")
+        .insert({
+          name: "My workspace",
+          isDefault: true,
+          userId: dbUser.data.id,
+        })
+        .select("id")
+        .single();
+
+      if (ws.error) {
+        console.error("Failed to lazily create default workspace", ws.error);
+      }
+    }
+
     return formatUser(dbUser.data);
   }
 

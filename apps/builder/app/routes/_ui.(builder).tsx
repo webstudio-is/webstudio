@@ -169,12 +169,16 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
           ? context.authorization.userId
           : undefined;
 
-      // Fetch workspace owner and current user's membership in a single query
+      // Fetch workspace owner and current user's membership in a single query.
+      // When currentUserId is undefined (token auth), filter with a UUID that
+      // can never match so the members array comes back empty.
+      const noMatchId = "00000000-0000-0000-0000-000000000000";
       const workspace = await context.postgrest.client
         .from("Workspace")
         .select("userId, members:WorkspaceMember(relation)")
         .eq("id", project.workspaceId)
-        .eq("members.userId", currentUserId ?? "")
+        .eq("isDeleted", false)
+        .eq("members.userId", currentUserId ?? noMatchId)
         .is("members.removedAt", null)
         .single();
 

@@ -64,17 +64,30 @@ const env = {
   // Default maxWorkspaces for plans that don't specify it.
   // Every user gets at least 1 workspace (the default). Plans with product.meta can grant more.
   // Set to 20 in local/staging to test multi-workspace features during development.
-  MAX_WORKSPACES: Math.max(1, Number(process.env.MAX_WORKSPACES ?? "1")),
+  MAX_WORKSPACES: Number.isFinite(Number(process.env.MAX_WORKSPACES))
+    ? Math.max(1, Number(process.env.MAX_WORKSPACES))
+    : 1,
 
   POSTGREST_URL: process.env.POSTGREST_URL ?? "http://localhost:3000",
   POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
 
   SECURE_COOKIE: true,
 
-  // Used for project oauth login flow @todo remove ??
+  // Used for project oauth login flow
   AUTH_WS_CLIENT_ID: process.env.AUTH_WS_CLIENT_ID ?? "12345",
   AUTH_WS_CLIENT_SECRET: process.env.AUTH_WS_CLIENT_SECRET ?? "12345678",
 };
+
+// Reject default OAuth secrets in production.
+if (
+  env.DEPLOYMENT_ENVIRONMENT === "production" &&
+  (env.AUTH_WS_CLIENT_ID === "12345" ||
+    env.AUTH_WS_CLIENT_SECRET === "12345678")
+) {
+  throw new Error(
+    "AUTH_WS_CLIENT_ID and AUTH_WS_CLIENT_SECRET must be set in production"
+  );
+}
 
 export type ServerEnv = typeof env;
 

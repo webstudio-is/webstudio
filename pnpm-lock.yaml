@@ -1740,6 +1740,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.7.3(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)
 
   packages/project-build:
     dependencies:

@@ -96,7 +96,6 @@ export type AppContext = {
    * Resolves plan features for a given user ID.
    * Used by workspace authorization to check whether the workspace owner's plan
    * still supports workspace features (maxWorkspaces > 1) after a potential downgrade.
-   * Optional for backward compatibility — when absent, the downgrade check is skipped.
    */
-  getOwnerPlanFeatures?: (userId: string) => Promise<UserPlanFeatures>;
+  getOwnerPlanFeatures: (userId: string) => Promise<UserPlanFeatures>;
 };
