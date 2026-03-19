@@ -2,6 +2,11 @@ name: Migrate
 
 on:
   push:
+    branches:
+      - "migrate"
+      - "main"
+      - "*.staging"
+      - "*.migrate"
 
 # Pending if other migration from the same branch is running
 concurrency: migrate-${{ github.ref_name }}
@@ -12,14 +17,16 @@ permissions:
 
 jobs:
   migrate:
-    # This workflow is triggered on pushes to any branch when the
-    # head commit message contains `::migrate::` anywhere.
+    # This workflow is triggered only on pushes to the `main`, `*.staging` or 'migrate' branches.
+    # For `*.staging` and `migrate` it specifically checks if the commit message starts with `::migrate::`,
+    # indicating a migration-related change.
     #
     # Example usage:
-    #   git commit --allow-empty -m "fix: add column ::migrate::"
+    #   Execute a commit with a migration flag using:
+    #   git commit --allow-empty -m "::migrate::test description"
     # Note:
     #   This setup is a temporary measure. The intention is to transition to a fully automated publish and release process via GitHub Actions in the future.
-    if: contains(github.event.head_commit.message, '::migrate::')
+    if: (github.ref_name == 'main') || ((github.ref_name == 'migrate' || endsWith(github.ref_name, '.migrate') || endsWith(github.ref_name, '.staging')) && startsWith(github.event.head_commit.message, '::migrate::'))
 
     runs-on: ubuntu-latest
 
@@ -52,9 +59,8 @@ jobs:
 
   # Execute db tests (runs after migrations, even if they fail)
   db-tests:
-    # Run only for migration-triggering commits, but still execute after the
-    # migrate job completes even if that job fails.
-    if: contains(github.event.head_commit.message, '::migrate::') && always()
+    # Always run tests to see failures on CI, but only after migrate job completes
+    if: always()
 
     needs: [migrate]
 
@@ -77,7 +83,7 @@ jobs:
 
   # Prints pending migrations
   pending:
-    if: contains(github.event.head_commit.message, '::migrate::') && always()
+    if: always()
 
     needs: [migrate]
 
