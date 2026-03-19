@@ -52,8 +52,9 @@ jobs:
 
   # Execute db tests (runs after migrations, even if they fail)
   db-tests:
-    # Always run tests to see failures on CI, but only after migrate job completes
-    if: always()
+    # Run only for migration-triggering commits, but still execute after the
+    # migrate job completes even if that job fails.
+    if: contains(github.event.head_commit.message, '::migrate::') && always()
 
     needs: [migrate]
 
@@ -76,7 +77,7 @@ jobs:
 
   # Prints pending migrations
   pending:
-    if: always()
+    if: contains(github.event.head_commit.message, '::migrate::') && always()
 
     needs: [migrate]
 
