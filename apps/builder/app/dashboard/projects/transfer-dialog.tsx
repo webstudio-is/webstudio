@@ -73,13 +73,6 @@ export const TransferProjectDialog = ({
   const ownedWorkspaces = sortWorkspaces(
     workspaces.filter((w) => w.workspaceRelation === "own")
   );
-  const sharedWorkspaces = sortWorkspaces(
-    workspaces.filter((w) => w.workspaceRelation !== "own")
-  );
-
-  const canTransferToWorkspace = (workspaceRelation: string) =>
-    workspaceRelation === "own" || workspaceRelation === "administrators";
-
   // Determine the current workspace from URL or fall back to default
   const getCurrentWorkspaceId = () => {
     const urlWorkspaceId = searchParams.get("workspaceId");
@@ -213,7 +206,10 @@ export const TransferProjectDialog = ({
     email.trim().toLowerCase() === userEmail.toLowerCase();
   const canSubmit = (hasEmail || hasWorkspace) && isSelfTransfer === false;
 
-  // Build groups for the dropdown — either filtered or owned+shared
+  // Build groups for the dropdown.
+  // In filtered mode (email entered): show the recipient's workspaces.
+  // In unfiltered mode (no email): only show own workspaces — moving to
+  // another user's workspace requires the transfer flow with a notification.
   const dropdownGroups: Array<WorkspaceDropdownGroup> = isFiltered
     ? filteredWorkspaces.length > 0
       ? [
@@ -226,18 +222,6 @@ export const TransferProjectDialog = ({
     : [
         ...(ownedWorkspaces.length > 0
           ? [{ label: "My workspaces", items: ownedWorkspaces }]
-          : []),
-        ...(sharedWorkspaces.length > 0
-          ? [
-              {
-                label: "Shared with me",
-                items: sharedWorkspaces.map((w) => ({
-                  ...w,
-                  disabled:
-                    canTransferToWorkspace(w.workspaceRelation) === false,
-                })),
-              },
-            ]
           : []),
       ];
 

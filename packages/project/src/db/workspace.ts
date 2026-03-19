@@ -625,30 +625,17 @@ export const moveProject = async (
     }
   }
 
-  // Only the project owner can move a project to a different owner's workspace.
-  // Admins can move within the same owner's workspaces, but not cross-owner.
-  if (
-    targetWorkspace.data.userId !== projectData.userId &&
-    projectData.userId !== userId
-  ) {
+  // Cross-owner moves are not allowed — use the transfer flow instead
+  // so the target workspace owner gets a notification and must accept.
+  if (targetWorkspace.data.userId !== projectData.userId) {
     throw new AuthorizationError(
-      "Only the project owner can move a project to another user's workspace"
-    );
-  }
-
-  // If the target workspace belongs to a different user, the project ownership
-  // must be reassigned to the target workspace owner.
-  const newOwnerId = targetWorkspace.data.userId;
-
-  if (newOwnerId !== userId) {
-    console.info(
-      `Project ownership change: project=${projectId} from=${userId} to=${newOwnerId} workspace=${targetWorkspaceId}`
+      "Use the transfer flow to move a project to another user's workspace"
     );
   }
 
   const result = await context.postgrest.client
     .from("Project")
-    .update({ workspaceId: targetWorkspaceId, userId: newOwnerId })
+    .update({ workspaceId: targetWorkspaceId })
     .eq("id", projectId)
     .select("id")
     .single();
