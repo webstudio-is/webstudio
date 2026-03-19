@@ -2,12 +2,6 @@ name: Migrate
 
 on:
   push:
-    branches:
-      - "migrate"
-      - "main"
-      - "*.staging"
-      - "*.migrate"
-      - "feat/**"
 
 # Pending if other migration from the same branch is running
 concurrency: migrate-${{ github.ref_name }}
@@ -18,15 +12,14 @@ permissions:
 
 jobs:
   migrate:
-    # This workflow is triggered on pushes to `main` (always), or to
-    # `*.staging`, `*.migrate`, `migrate`, and `feat/**` branches when the
-    # commit message contains `::migrate::` anywhere.
+    # This workflow is triggered on pushes to any branch when the
+    # head commit message contains `::migrate::` anywhere.
     #
     # Example usage:
     #   git commit --allow-empty -m "fix: add column ::migrate::"
     # Note:
     #   This setup is a temporary measure. The intention is to transition to a fully automated publish and release process via GitHub Actions in the future.
-    if: (github.ref_name == 'main') || ((github.ref_name == 'migrate' || endsWith(github.ref_name, '.migrate') || endsWith(github.ref_name, '.staging') || startsWith(github.ref_name, 'feat/')) && contains(github.event.head_commit.message, '::migrate::'))
+    if: contains(github.event.head_commit.message, '::migrate::')
 
     runs-on: ubuntu-latest
 

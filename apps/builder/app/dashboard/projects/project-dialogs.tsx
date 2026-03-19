@@ -224,11 +224,7 @@ const useRenameProject = ({
         : undefined;
     setErrors(errors);
     if (parsed.success) {
-      send({ projectId, title }, (result) => {
-        if (result && "error" in result) {
-          setErrors(result.error);
-          return;
-        }
+      send({ projectId, title }, () => {
         onOpenChange(false);
         revalidator.revalidate();
       });
