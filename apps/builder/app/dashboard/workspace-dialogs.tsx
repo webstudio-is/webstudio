@@ -216,7 +216,7 @@ const MemberRow = (props: MemberRowProps) => {
           workspaceRelationLabels[option]
         }
         onChange={handleChange}
-        disabled={!props.canRemove}
+        disabled={!props.canRemove || role === "pending"}
       />
     );
   })();

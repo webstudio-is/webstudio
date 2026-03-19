@@ -312,6 +312,7 @@ export const $workspaces = atom<
   Array<{
     id: string;
     name: string;
+    isDefault: boolean;
     workspaceRelation: WorkspaceRelation | "own";
   }>
 >([]);

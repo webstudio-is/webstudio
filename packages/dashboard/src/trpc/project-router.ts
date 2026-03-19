@@ -30,13 +30,10 @@ const projectRouter = router({
     .input(
       z.object({
         projectIds: z.array(z.string()),
-        skipApprovalCheck: z.boolean().optional(),
       })
     )
     .query(async ({ input, ctx }) => {
-      return await db.findManyByIds(input.projectIds, ctx, {
-        skipApprovalCheck: input.skipApprovalCheck,
-      });
+      return await db.findManyByIds(input.projectIds, ctx);
     }),
 });
 

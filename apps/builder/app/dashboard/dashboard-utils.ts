@@ -21,3 +21,13 @@ export const resolveCurrentWorkspace = (
   }
   return { type: "resolved", workspace: workspaces.find((w) => w.isDefault) };
 };
+
+/**
+ * Pure function: returns true when the workspace owner's plan has been
+ * downgraded and the current user is a non-owner member.
+ * In that case the dashboard should hide shared projects on reload.
+ */
+export const isDowngradedForMember = (
+  workspace: WorkspaceWithRelation | undefined
+): boolean =>
+  workspace?.isDowngraded === true && workspace.workspaceRelation !== "own";

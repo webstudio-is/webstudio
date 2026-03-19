@@ -746,6 +746,7 @@ export type Database = {
           createdAt: string;
           id: string;
           isDefault: boolean;
+          isDeleted: boolean;
           name: string;
           userId: string;
         };
@@ -753,6 +754,7 @@ export type Database = {
           createdAt?: string;
           id?: string;
           isDefault?: boolean;
+          isDeleted?: boolean;
           name: string;
           userId: string;
         };
@@ -760,6 +762,7 @@ export type Database = {
           createdAt?: string;
           id?: string;
           isDefault?: boolean;
+          isDeleted?: boolean;
           name?: string;
           userId?: string;
         };

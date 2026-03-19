@@ -46,7 +46,8 @@ export const create = async (
   const countResult = await context.postgrest.client
     .from("Workspace")
     .select("id", { count: "exact", head: true })
-    .eq("userId", userId);
+    .eq("userId", userId)
+    .eq("isDeleted", false);
 
   if (countResult.error) {
     throw countResult.error;
@@ -92,6 +93,7 @@ export const rename = async (
     .update({ name: trimmed })
     .eq("id", workspaceId)
     .eq("userId", userId)
+    .eq("isDeleted", false)
     .select()
     .single();
 
@@ -116,6 +118,7 @@ export const remove = async (
     .from("Workspace")
     .select("id, isDefault, userId")
     .eq("id", workspaceId)
+    .eq("isDeleted", false)
     .single();
 
   if (workspace.error) {
@@ -132,7 +135,8 @@ export const remove = async (
     throw new Error("The default workspace cannot be deleted");
   }
 
-  // Check for active projects
+  // Check for active projects BEFORE soft-deleting to avoid
+  // leaving the workspace in a deleted state on error.
   const projects = await context.postgrest.client
     .from("Project")
     .select("id")
@@ -146,25 +150,26 @@ export const remove = async (
   // Collect project IDs upfront so concurrent changes can't alter the set.
   const projectIds = projects.data.map((p) => p.id);
 
-  if (projectIds.length > 0) {
-    if (deleteProjects !== true) {
-      throw new Error(
-        "Cannot delete a workspace that still contains projects. Move or delete all projects first."
-      );
-    }
+  if (projectIds.length > 0 && deleteProjects !== true) {
+    throw new Error(
+      "Cannot delete a workspace that still contains projects. Move or delete all projects first."
+    );
+  }
 
-    // Soft-delete each project individually (each needs a unique domain).
-    // PostgREST doesn't support multi-request transactions, but this is
-    // safe to retry: the project query above filters by isDeleted=false,
-    // so already-deleted projects are skipped on the next attempt.
+  // Soft-delete projects first so the operation is retryable:
+  // if a project deletion fails mid-loop the workspace is still visible
+  // (isDeleted=false) and the caller can retry the whole operation.
+  if (projectIds.length > 0) {
     for (const id of projectIds) {
       await softDeleteProject(id, context);
     }
   }
 
+  // Soft-delete the workspace last — single atomic update makes it
+  // immediately invisible everywhere.
   const result = await context.postgrest.client
     .from("Workspace")
-    .delete()
+    .update({ isDeleted: true })
     .eq("id", workspaceId)
     .eq("userId", userId);
 
@@ -181,6 +186,7 @@ export const findMany = async (userId: string, context: AppContext) => {
     .from("Workspace")
     .select()
     .eq("userId", userId)
+    .eq("isDeleted", false)
     .order("isDefault", { ascending: false })
     .order("createdAt");
 
@@ -221,6 +227,7 @@ export const findMany = async (userId: string, context: AppContext) => {
     .from("Workspace")
     .select()
     .in("id", memberWorkspaceIds)
+    .eq("isDeleted", false)
     .order("createdAt");
 
   if (memberOf.error) {
@@ -232,17 +239,18 @@ export const findMany = async (userId: string, context: AppContext) => {
   const ownerIds = [...new Set(memberOf.data.map((w) => w.userId))];
   const downgradedOwners = new Set<string>();
 
-  if (context.getOwnerPlanFeatures !== undefined) {
-    const plans = await Promise.all(
+  if (ownerIds.length > 0) {
+    // Use allSettled so a single owner's plan-check failure doesn't
+    // break the entire workspace list. Failed checks default to not-downgraded.
+    const plans = await Promise.allSettled(
       ownerIds.map(async (ownerId) => {
-        // getOwnerPlanFeatures is guaranteed to be defined here
-        const plan = await context.getOwnerPlanFeatures!(ownerId);
+        const plan = await context.getOwnerPlanFeatures(ownerId);
         return { ownerId, maxWorkspaces: plan.maxWorkspaces };
       })
     );
-    for (const { ownerId, maxWorkspaces } of plans) {
-      if (maxWorkspaces <= 1) {
-        downgradedOwners.add(ownerId);
+    for (const result of plans) {
+      if (result.status === "fulfilled" && result.value.maxWorkspaces <= 1) {
+        downgradedOwners.add(result.value.ownerId);
       }
     }
   }
@@ -269,6 +277,7 @@ const assertOwner = async (
     .from("Workspace")
     .select("id, userId")
     .eq("id", workspaceId)
+    .eq("isDeleted", false)
     .single();
 
   if (workspace.error) {
@@ -396,6 +405,7 @@ export const removeMember = async (
       .from("Workspace")
       .select("id, userId")
       .eq("id", workspaceId)
+      .eq("isDeleted", false)
       .single();
 
     if (workspace.error) {
@@ -415,10 +425,16 @@ export const removeMember = async (
     .update({ removedAt: new Date().toISOString() })
     .eq("workspaceId", workspaceId)
     .eq("userId", memberUserId)
-    .is("removedAt", null);
+    .is("removedAt", null)
+    .select("userId")
+    .maybeSingle();
 
   if (result.error) {
     throw result.error;
+  }
+
+  if (result.data === null) {
+    throw new Error("Member not found");
   }
 };
 
@@ -433,6 +449,7 @@ export const listMembers = async (
     .from("Workspace")
     .select("id, userId")
     .eq("id", workspaceId)
+    .eq("isDeleted", false)
     .single();
 
   if (workspace.error) {
@@ -580,6 +597,7 @@ export const moveProject = async (
     .from("Workspace")
     .select("id, userId")
     .eq("id", targetWorkspaceId)
+    .eq("isDeleted", false)
     .single();
 
   if (targetWorkspace.error) {
@@ -689,6 +707,7 @@ export const transferProject = async (
       .from("Workspace")
       .select("id, userId")
       .eq("id", targetWorkspaceId)
+      .eq("isDeleted", false)
       .single();
 
     if (targetWorkspace.error) {
@@ -741,7 +760,8 @@ export const findSharedWorkspacesByOwnerEmail = async (
   const workspaces = await context.postgrest.client
     .from("Workspace")
     .select("id, name")
-    .eq("userId", targetUser.data.id);
+    .eq("userId", targetUser.data.id)
+    .eq("isDeleted", false);
 
   if (workspaces.error) {
     throw workspaces.error;

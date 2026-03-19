@@ -1,5 +1,8 @@
 import { describe, test, expect } from "vitest";
-import { resolveCurrentWorkspace } from "./dashboard-utils";
+import {
+  resolveCurrentWorkspace,
+  isDowngradedForMember,
+} from "./dashboard-utils";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 
 const createWorkspace = (
@@ -8,6 +11,7 @@ const createWorkspace = (
   id: "ws-1",
   name: "Workspace",
   isDefault: false,
+  isDeleted: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   userId: "user-1",
   workspaceRelation: "own",
@@ -96,5 +100,54 @@ describe("resolveCurrentWorkspace", () => {
     if (result.type === "resolved") {
       expect(result.workspace?.workspaceRelation).toBe("editors");
     }
+  });
+});
+
+describe("isDowngradedForMember", () => {
+  test("returns false for undefined workspace", () => {
+    expect(isDowngradedForMember(undefined)).toBe(false);
+  });
+
+  test("returns false for non-downgraded workspace", () => {
+    expect(
+      isDowngradedForMember(
+        createWorkspace({ isDowngraded: false, workspaceRelation: "editors" })
+      )
+    ).toBe(false);
+  });
+
+  test("returns false for downgraded workspace owned by current user", () => {
+    expect(
+      isDowngradedForMember(
+        createWorkspace({ isDowngraded: true, workspaceRelation: "own" })
+      )
+    ).toBe(false);
+  });
+
+  test("returns true for downgraded workspace where user is a member", () => {
+    expect(
+      isDowngradedForMember(
+        createWorkspace({ isDowngraded: true, workspaceRelation: "editors" })
+      )
+    ).toBe(true);
+  });
+
+  test("returns true for downgraded workspace with viewer relation", () => {
+    expect(
+      isDowngradedForMember(
+        createWorkspace({ isDowngraded: true, workspaceRelation: "viewers" })
+      )
+    ).toBe(true);
+  });
+
+  test("returns true for downgraded workspace with admin relation", () => {
+    expect(
+      isDowngradedForMember(
+        createWorkspace({
+          isDowngraded: true,
+          workspaceRelation: "administrators",
+        })
+      )
+    ).toBe(true);
   });
 });

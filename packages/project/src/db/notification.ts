@@ -37,24 +37,8 @@ export const create = async (
 ): Promise<string> => {
   const senderId = assertUser(context);
 
-  // Idempotency: skip if a pending, non-expired notification already exists
-  // for the same type + recipient + distinguishing payload key.
-  const existing = await context.postgrest.client
-    .from("Notification")
-    .select("id", { count: "exact", head: true })
-    .eq("type", type)
-    .eq("recipientId", recipientId)
-    .eq("senderId", senderId)
-    .eq("status", "pending")
-    .gte("createdAt", expirationCutoff());
-
-  if (existing.error) {
-    throw existing.error;
-  }
-
-  // For workspace invites, also match on workspaceId in the payload
-  if (type === "workspaceInvite" && (existing.count ?? 0) > 0) {
-    // Check if any of the existing ones match this specific workspace
+  // For workspace invites, check if a pending invite for the same workspace exists.
+  if (type === "workspaceInvite") {
     const duplicate = await context.postgrest.client
       .from("Notification")
       .select("id")
@@ -102,10 +86,12 @@ export const create = async (
     }
   }
 
+  const newId = crypto.randomUUID();
+
   const result = await context.postgrest.client
     .from("Notification")
     .insert({
-      id: crypto.randomUUID(),
+      id: newId,
       type,
       recipientId,
       senderId,
@@ -119,7 +105,106 @@ export const create = async (
     throw result.error;
   }
 
-  return result.data.id;
+  // Post-insert dedup: if a concurrent request inserted an identical
+  // notification between our check and our insert, keep the one with the
+  // earliest createdAt and silently discard ours.
+  const dedup = await postInsertDedup({
+    newId,
+    type,
+    recipientId,
+    senderId,
+    payload,
+    client: context.postgrest.client,
+  });
+
+  return dedup ?? newId;
+};
+
+/**
+ * After inserting a notification, check whether a concurrent request created a
+ * duplicate. If one exists, delete the row we just inserted and return the
+ * existing id. Returns undefined when no duplicate was found.
+ */
+const postInsertDedup = async ({
+  newId,
+  type,
+  recipientId,
+  senderId,
+  payload,
+  client,
+}: {
+  newId: string;
+  type: NotificationType;
+  recipientId: string;
+  senderId: string;
+  payload: Record<string, unknown>;
+  client: AppContext["postgrest"]["client"];
+}): Promise<string | undefined> => {
+  let query = client
+    .from("Notification")
+    .select("id, createdAt")
+    .eq("type", type)
+    .eq("status", "pending")
+    .gte("createdAt", expirationCutoff())
+    .order("createdAt", { ascending: true });
+
+  if (type === "workspaceInvite") {
+    query = query
+      .eq("recipientId", recipientId)
+      .eq("senderId", senderId)
+      .contains("payload", {
+        workspaceId: (payload as { workspaceId: string }).workspaceId,
+      });
+  } else if (type === "projectTransfer") {
+    query = query.contains("payload", {
+      projectId: (payload as { projectId: string }).projectId,
+    });
+  } else {
+    return;
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("postInsertDedup: failed to query duplicates:", error);
+    return;
+  }
+
+  if (data === null || data.length <= 1) {
+    return;
+  }
+
+  // Keep the earliest; if ours isn't earliest, delete ours.
+  const earliest = data[0];
+  if (earliest.id !== newId) {
+    // For projectTransfer, verify the winning notification was sent by the
+    // same sender. Otherwise the caller would receive an ID they didn't
+    // create and can't cancel.
+    if (type === "projectTransfer") {
+      const winner = await client
+        .from("Notification")
+        .select("senderId")
+        .eq("id", earliest.id)
+        .single();
+
+      if (winner.data?.senderId !== senderId) {
+        // Different sender won the race — delete ours and surface error.
+        await client.from("Notification").delete().eq("id", newId);
+        throw new Error(
+          "A transfer is already pending for this project. Cancel it first."
+        );
+      }
+    }
+
+    const del = await client.from("Notification").delete().eq("id", newId);
+    if (del.error) {
+      console.error(
+        `postInsertDedup: failed to remove duplicate notification ${newId}:`,
+        del.error
+      );
+    }
+    return earliest.id;
+  }
 };
 
 export const list = async (context: AppContext) => {
@@ -186,7 +271,8 @@ export const list = async (context: AppContext) => {
     const workspaces = await context.postgrest.client
       .from("Workspace")
       .select("id, name, userId")
-      .in("id", uniqueWorkspaceIds);
+      .in("id", uniqueWorkspaceIds)
+      .eq("isDeleted", false);
 
     if (workspaces.error) {
       throw workspaces.error;
@@ -335,15 +421,108 @@ export const accept = async (
     throw new Error("This invitation has expired");
   }
 
-  // Perform type-specific side effect
-  if (notification.data.type === "workspaceInvite") {
-    const parsed = WorkspaceInvitePayload.parse(notification.data.payload);
+  // Atomically claim the notification by setting status='accepted'.
+  // Only one concurrent accept() call will match the pending row.
+  const claim = await context.postgrest.client
+    .from("Notification")
+    .update({
+      status: "accepted" satisfies NotificationStatus,
+      respondedAt: new Date().toISOString(),
+    })
+    .eq("id", notificationId)
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
+
+  if (claim.error) {
+    throw claim.error;
+  }
+
+  if (claim.data === null) {
+    throw new Error("This notification has already been acted on");
+  }
+
+  // Revert the status if the side effect below fails, so the user may retry.
+  const revertStatus = async () => {
+    const revert = await context.postgrest.client
+      .from("Notification")
+      .update({
+        status: "pending" satisfies NotificationStatus,
+        respondedAt: null,
+      })
+      .eq("id", notificationId);
+
+    if (revert.error) {
+      console.error(
+        `Failed to revert notification ${notificationId} to pending:`,
+        revert.error
+      );
+    }
+  };
+
+  // Auto-decline helper — used when the referenced entity no longer exists.
+  // The notification was already claimed (accepted), so we overwrite to declined.
+  const autoDecline = async () => {
+    await context.postgrest.client
+      .from("Notification")
+      .update({
+        status: "declined" satisfies NotificationStatus,
+        respondedAt: new Date().toISOString(),
+      })
+      .eq("id", notificationId);
+  };
+
+  // Wrap side effects so every failure path reverts the atomic claim.
+  try {
+    await performAcceptSideEffect({
+      notification: notification.data,
+      userId,
+      targetWorkspaceId,
+      autoDecline,
+      context,
+    });
+  } catch (error) {
+    // Auto-decline errors already set their own status — only revert others.
+    if (error instanceof AutoDeclinedError) {
+      throw error;
+    }
+    await revertStatus();
+    throw error;
+  }
+};
+
+/**
+ * Sentinel thrown when the notification was auto-declined because the
+ * referenced entity (workspace / project) no longer exists.
+ */
+class AutoDeclinedError extends Error {}
+
+const performAcceptSideEffect = async ({
+  notification,
+  userId,
+  targetWorkspaceId,
+  autoDecline,
+  context,
+}: {
+  notification: { type: string; senderId: string; payload: unknown };
+  userId: string;
+  targetWorkspaceId: string | undefined;
+  autoDecline: () => Promise<void>;
+  context: AppContext;
+}) => {
+  if (notification.type === "workspaceInvite") {
+    const parseResult = WorkspaceInvitePayload.safeParse(notification.payload);
+    if (parseResult.success === false) {
+      throw new Error("Invalid workspace invite payload");
+    }
+    const parsed = parseResult.data;
 
     // Verify the workspace still exists
     const workspace = await context.postgrest.client
       .from("Workspace")
       .select("id")
       .eq("id", parsed.workspaceId)
+      .eq("isDeleted", false)
       .maybeSingle();
 
     if (workspace.error) {
@@ -351,18 +530,8 @@ export const accept = async (
     }
 
     if (workspace.data === null) {
-      // Auto-decline — workspace no longer exists
-      await context.postgrest.client
-        .from("Notification")
-        .update({
-          status: "declined" satisfies NotificationStatus,
-          respondedAt: new Date().toISOString(),
-        })
-        .eq("id", notificationId)
-        .select("id")
-        .single();
-
-      throw new Error("This workspace no longer exists");
+      await autoDecline();
+      throw new AutoDeclinedError("This workspace no longer exists");
     }
 
     // Upsert the member — handles re-inviting previously removed members
@@ -384,14 +553,19 @@ export const accept = async (
     if (member.error) {
       throw member.error;
     }
+    return;
   }
 
-  if (notification.data.type === "projectTransfer") {
-    if (userId === notification.data.senderId) {
+  if (notification.type === "projectTransfer") {
+    if (userId === notification.senderId) {
       throw new Error("You cannot accept your own transfer request");
     }
 
-    const parsed = ProjectTransferPayload.parse(notification.data.payload);
+    const parseResult = ProjectTransferPayload.safeParse(notification.payload);
+    if (parseResult.success === false) {
+      throw new Error("Invalid project transfer payload");
+    }
+    const parsed = parseResult.data;
 
     // Verify the project still exists
     const project = await context.postgrest.client
@@ -406,52 +580,32 @@ export const accept = async (
     }
 
     if (project.data === null) {
-      await context.postgrest.client
-        .from("Notification")
-        .update({
-          status: "declined" satisfies NotificationStatus,
-          respondedAt: new Date().toISOString(),
-        })
-        .eq("id", notificationId)
-        .select("id")
-        .single();
-
-      throw new Error("This project no longer exists");
+      await autoDecline();
+      throw new AutoDeclinedError("This project no longer exists");
     }
 
     // Verify the sender still owns the project
-    if (project.data.userId !== notification.data.senderId) {
-      await context.postgrest.client
-        .from("Notification")
-        .update({
-          status: "declined" satisfies NotificationStatus,
-          respondedAt: new Date().toISOString(),
-        })
-        .eq("id", notificationId)
-        .select("id")
-        .single();
-
-      throw new Error("The sender no longer owns this project");
+    if (project.data.userId !== notification.senderId) {
+      await autoDecline();
+      throw new AutoDeclinedError("The sender no longer owns this project");
     }
 
     // Check receiver's plan limit before accepting the transfer
-    if (context.getOwnerPlanFeatures !== undefined) {
-      const receiverPlan = await context.getOwnerPlanFeatures(userId);
-      const projectCount = await context.postgrest.client
-        .from("Project")
-        .select("id", { count: "exact", head: true })
-        .eq("userId", userId)
-        .eq("isDeleted", false);
+    const receiverPlan = await context.getOwnerPlanFeatures(userId);
+    const projectCount = await context.postgrest.client
+      .from("Project")
+      .select("id", { count: "exact", head: true })
+      .eq("userId", userId)
+      .eq("isDeleted", false);
 
-      if (projectCount.error) {
-        throw projectCount.error;
-      }
+    if (projectCount.error) {
+      throw projectCount.error;
+    }
 
-      if ((projectCount.count ?? 0) >= receiverPlan.maxProjectsAllowedPerUser) {
-        throw new Error(
-          "You've reached the project limit for your plan. Upgrade or delete projects to accept this transfer."
-        );
-      }
+    if ((projectCount.count ?? 0) >= receiverPlan.maxProjectsAllowedPerUser) {
+      throw new Error(
+        "You've reached the project limit for your plan. Upgrade or delete projects to accept this transfer."
+      );
     }
 
     // Determine the target workspace: use the one from the notification payload,
@@ -464,6 +618,7 @@ export const accept = async (
         .from("Workspace")
         .select("id, userId")
         .eq("id", resolvedWorkspaceId)
+        .eq("isDeleted", false)
         .maybeSingle();
 
       if (workspace.error) {
@@ -471,17 +626,8 @@ export const accept = async (
       }
 
       if (workspace.data === null) {
-        await context.postgrest.client
-          .from("Notification")
-          .update({
-            status: "declined" satisfies NotificationStatus,
-            respondedAt: new Date().toISOString(),
-          })
-          .eq("id", notificationId)
-          .select("id")
-          .single();
-
-        throw new Error("This workspace no longer exists");
+        await autoDecline();
+        throw new AutoDeclinedError("This workspace no longer exists");
       }
 
       if (workspace.data.userId !== userId) {
@@ -490,17 +636,13 @@ export const accept = async (
         );
       }
 
-      // Reassign the project to the target workspace and its owner
       console.info(
-        `Project ownership change (transfer accepted): project=${parsed.projectId} from=${notification.data.senderId} to=${userId} workspace=${resolvedWorkspaceId}`
+        `Project ownership change (transfer accepted): project=${parsed.projectId} from=${notification.senderId} to=${userId} workspace=${resolvedWorkspaceId}`
       );
 
       const updateResult = await context.postgrest.client
         .from("Project")
-        .update({
-          userId,
-          workspaceId: resolvedWorkspaceId,
-        })
+        .update({ userId, workspaceId: resolvedWorkspaceId })
         .eq("id", parsed.projectId)
         .select("id")
         .single();
@@ -508,52 +650,39 @@ export const accept = async (
       if (updateResult.error) {
         throw new Error("Failed to reassign the project");
       }
-    } else {
-      // No workspace specified — assign to receiver's default workspace
-      const defaultWorkspace = await context.postgrest.client
-        .from("Workspace")
-        .select("id")
-        .eq("userId", userId)
-        .eq("isDefault", true)
-        .maybeSingle();
-
-      if (defaultWorkspace.error) {
-        throw defaultWorkspace.error;
-      }
-
-      console.info(
-        `Project ownership change (transfer accepted): project=${parsed.projectId} from=${notification.data.senderId} to=${userId} workspace=${defaultWorkspace.data?.id ?? "default"}`
-      );
-
-      const updateResult = await context.postgrest.client
-        .from("Project")
-        .update({
-          userId,
-          workspaceId: defaultWorkspace.data?.id ?? null,
-        })
-        .eq("id", parsed.projectId)
-        .select("id")
-        .single();
-
-      if (updateResult.error) {
-        throw new Error("Failed to reassign the project");
-      }
+      return;
     }
-  }
 
-  // Mark as accepted
-  const update = await context.postgrest.client
-    .from("Notification")
-    .update({
-      status: "accepted" satisfies NotificationStatus,
-      respondedAt: new Date().toISOString(),
-    })
-    .eq("id", notificationId)
-    .select("id")
-    .single();
+    // No workspace specified — assign to receiver's default workspace
+    const defaultWorkspace = await context.postgrest.client
+      .from("Workspace")
+      .select("id")
+      .eq("userId", userId)
+      .eq("isDefault", true)
+      .eq("isDeleted", false)
+      .maybeSingle();
 
-  if (update.error) {
-    throw update.error;
+    if (defaultWorkspace.error) {
+      throw defaultWorkspace.error;
+    }
+
+    console.info(
+      `Project ownership change (transfer accepted): project=${parsed.projectId} from=${notification.senderId} to=${userId} workspace=${defaultWorkspace.data?.id ?? "default"}`
+    );
+
+    const updateResult = await context.postgrest.client
+      .from("Project")
+      .update({
+        userId,
+        workspaceId: defaultWorkspace.data?.id ?? null,
+      })
+      .eq("id", parsed.projectId)
+      .select("id")
+      .single();
+
+    if (updateResult.error) {
+      throw new Error("Failed to reassign the project");
+    }
   }
 };
 
@@ -563,21 +692,8 @@ export const decline = async (
 ) => {
   const userId = assertUser(context);
 
-  const notification = await context.postgrest.client
-    .from("Notification")
-    .select("id, recipientId, status")
-    .eq("id", notificationId)
-    .eq("recipientId", userId)
-    .single();
-
-  if (notification.error) {
-    throw new Error("Notification not found");
-  }
-
-  if (notification.data.status !== "pending") {
-    throw new Error("This notification has already been acted on");
-  }
-
+  // Atomic update — only succeeds if still pending, preventing
+  // a race where a concurrent accept() already claimed the row.
   const result = await context.postgrest.client
     .from("Notification")
     .update({
@@ -585,11 +701,17 @@ export const decline = async (
       respondedAt: new Date().toISOString(),
     })
     .eq("id", notificationId)
+    .eq("recipientId", userId)
+    .eq("status", "pending")
     .select("id")
-    .single();
+    .maybeSingle();
 
   if (result.error) {
     throw result.error;
+  }
+
+  if (result.data === null) {
+    throw new Error("Notification not found or already acted on");
   }
 };
 
@@ -599,21 +721,8 @@ export const cancel = async (
 ) => {
   const userId = assertUser(context);
 
-  const notification = await context.postgrest.client
-    .from("Notification")
-    .select("id, senderId, status")
-    .eq("id", notificationId)
-    .eq("senderId", userId)
-    .single();
-
-  if (notification.error) {
-    throw new Error("Notification not found");
-  }
-
-  if (notification.data.status !== "pending") {
-    throw new Error("This notification has already been acted on");
-  }
-
+  // Atomic update — only succeeds if still pending, preventing
+  // a race where a concurrent accept() already claimed the row.
   const cancelResult = await context.postgrest.client
     .from("Notification")
     .update({
@@ -621,11 +730,17 @@ export const cancel = async (
       respondedAt: new Date().toISOString(),
     })
     .eq("id", notificationId)
+    .eq("senderId", userId)
+    .eq("status", "pending")
     .select("id")
-    .single();
+    .maybeSingle();
 
   if (cancelResult.error) {
     throw cancelResult.error;
+  }
+
+  if (cancelResult.data === null) {
+    throw new Error("Notification not found or already acted on");
   }
 };
 

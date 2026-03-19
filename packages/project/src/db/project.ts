@@ -109,6 +109,7 @@ export const create = async (
       .from("Workspace")
       .select("userId")
       .eq("id", workspaceId)
+      .eq("isDeleted", false)
       .single();
 
     if (workspace.error) {
@@ -307,7 +308,12 @@ export const clone = async (
       .from("Workspace")
       .select("userId")
       .eq("id", project.workspaceId)
+      .eq("isDeleted", false)
       .maybeSingle();
+
+    if (workspace.error) {
+      throw workspace.error;
+    }
 
     if (workspace.data !== null) {
       const isOwner = workspace.data.userId === userId;
@@ -325,6 +331,10 @@ export const clone = async (
           .eq("userId", userId)
           .is("removedAt", null)
           .maybeSingle();
+
+        if (membership.error) {
+          throw membership.error;
+        }
 
         if (membership.data !== null) {
           const canClone =
@@ -364,13 +374,17 @@ export const clone = async (
   }
 
   if (workspaceCloneTarget !== undefined) {
-    await destinationContext.postgrest.client
+    const assignResult = await destinationContext.postgrest.client
       .from("Project")
       .update({
         workspaceId: workspaceCloneTarget.workspaceId,
         userId: workspaceCloneTarget.projectOwnerUserId,
       })
       .eq("id", clonedProject.data.id);
+
+    if (assignResult.error) {
+      throw assignResult.error;
+    }
   }
 
   return { id: clonedProject.data.id };

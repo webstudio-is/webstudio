@@ -289,6 +289,7 @@ model Workspace {
   id        String    @id @default(uuid())
   name      String
   isDefault Boolean   @default(false)
+  isDeleted Boolean   @default(false)
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
   user      User      @relation(fields: [userId], references: [id])
   userId    String

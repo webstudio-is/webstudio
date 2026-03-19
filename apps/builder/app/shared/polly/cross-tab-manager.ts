@@ -97,8 +97,11 @@ export const createCrossTabPollingManager = (
 
   type Listener = (data: never) => void;
   const localListeners = new Map<TopicName, Set<Listener>>();
+  const innerSubs = new Map<TopicName, Subscription>();
   const channel = createChannel(channelName);
-
+  // Per-topic JSON snapshots for equality checking — suppresses
+  // duplicate dispatches when polling returns unchanged data.
+  const snapshots = new Map<TopicName, string>();
   // ── Helpers ──────────────────────────────────────────────────
 
   const getLocalTopics = (): TopicName[] => {
@@ -127,6 +130,11 @@ export const createCrossTabPollingManager = (
         continue;
       }
       const data = response[topic];
+      const serialized = JSON.stringify(data);
+      if (snapshots.get(topic) === serialized) {
+        continue;
+      }
+      snapshots.set(topic, serialized);
       for (const fn of set) {
         fn(data as never);
       }
@@ -141,6 +149,10 @@ export const createCrossTabPollingManager = (
     }
     isLeader = true;
     stopWatchdog();
+    // Clear snapshots so the first poll after promotion always dispatches
+    // — the follower's cached snapshots came from BroadcastChannel data
+    // messages which may be stale or incomplete after a leadership change.
+    snapshots.clear();
 
     // Wrap the original fetcher so we can broadcast responses to
     // follower tabs and dispatch to our own local listeners.
@@ -161,11 +173,14 @@ export const createCrossTabPollingManager = (
     // Subscribe the inner manager to every topic that local
     // listeners care about. Keep handles so we can unsub later.
     for (const topic of getLocalTopics()) {
-      inner.subscribe(topic, () => {
-        // Data dispatch is handled by the wrapped fetcher callback
-        // inside the inner manager already. We subscribe here only
-        // so the inner manager knows which topics to request.
-      });
+      if (innerSubs.has(topic) === false) {
+        const sub = inner.subscribe(topic, () => {
+          // Data dispatch is handled by the wrapped fetcher callback
+          // inside the inner manager already. We subscribe here only
+          // so the inner manager knows which topics to request.
+        });
+        innerSubs.set(topic, sub);
+      }
     }
 
     // Start heartbeat.
@@ -182,6 +197,10 @@ export const createCrossTabPollingManager = (
       clearInterval(heartbeatTimerId);
       heartbeatTimerId = undefined;
     }
+    for (const sub of innerSubs.values()) {
+      sub.unsubscribe();
+    }
+    innerSubs.clear();
     inner?.destroy();
     inner = undefined;
     isLeader = false;
@@ -257,9 +276,13 @@ export const createCrossTabPollingManager = (
           // A follower subscribed to topics we aren't tracking yet.
           const currentTopics = getLocalTopics();
           for (const topic of msg.topics) {
-            if (currentTopics.includes(topic) === false) {
+            if (
+              currentTopics.includes(topic) === false &&
+              innerSubs.has(topic) === false
+            ) {
               // Subscribe inner manager so it includes this topic.
-              inner.subscribe(topic, () => {});
+              const sub = inner.subscribe(topic, () => {});
+              innerSubs.set(topic, sub);
             }
           }
           inner.refresh();
@@ -295,7 +318,10 @@ export const createCrossTabPollingManager = (
 
     if (isLeader && inner) {
       // Leader — make sure inner manager is subscribed.
-      inner.subscribe(topic, () => {});
+      if (innerSubs.has(topic) === false) {
+        const sub = inner.subscribe(topic, () => {});
+        innerSubs.set(topic, sub);
+      }
       inner.refresh();
     } else {
       // Follower — ask leader to add the topic.
@@ -311,6 +337,10 @@ export const createCrossTabPollingManager = (
         current.delete(listener as Listener);
         if (current.size === 0) {
           localListeners.delete(topic);
+          // No local listeners left for this topic — unsubscribe
+          // the inner manager to prevent orphaned subscriptions.
+          innerSubs.get(topic)?.unsubscribe();
+          innerSubs.delete(topic);
         }
       },
     };
@@ -340,6 +370,8 @@ export const createCrossTabPollingManager = (
     channel.removeEventListener("message", onMessage);
     channel.close();
     localListeners.clear();
+    innerSubs.clear();
+    snapshots.clear();
   };
 
   return { subscribe, refresh, destroy };

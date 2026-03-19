@@ -371,6 +371,107 @@ describe("createCrossTabPollingManager", () => {
     });
   });
 
+  // ── Dispatch dedup ─────────────────────────────────────────────
+
+  describe("dispatch dedup", () => {
+    test("leader suppresses duplicate dispatches when data has not changed", async () => {
+      // Return the same data every time.
+      const fetcher = vi.fn(
+        async () =>
+          ({ notifications: mockNotifications }) as SubscriptionResponse
+      );
+
+      const manager = createCrossTabPollingManager({
+        fetcher,
+        tabId: "tab-1",
+        interval: 1_000,
+        createChannel: hub.createMockChannel,
+      });
+
+      const listener = vi.fn();
+      manager.subscribe("notifications", listener);
+      await flush();
+
+      // First poll dispatches.
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      // Advance past the interval to trigger a second poll.
+      await vi.advanceTimersByTimeAsync(1_000);
+      await flush();
+
+      // Fetcher was called again but listener was NOT called
+      // because the data didn't change.
+      expect(fetcher.mock.calls.length).toBeGreaterThanOrEqual(2);
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      manager.destroy();
+    });
+
+    test("leader dispatches when data changes between polls", async () => {
+      let callCount = 0;
+      const fetcher = vi.fn(async () => {
+        callCount += 1;
+        return {
+          notifications: [{ ...mockNotifications![0], id: String(callCount) }],
+        } as unknown as SubscriptionResponse;
+      });
+
+      const manager = createCrossTabPollingManager({
+        fetcher,
+        tabId: "tab-1",
+        interval: 1_000,
+        createChannel: hub.createMockChannel,
+      });
+
+      const listener = vi.fn();
+      manager.subscribe("notifications", listener);
+      await flush();
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+      await flush();
+
+      // Data changed (different id) — listener fires again.
+      expect(listener).toHaveBeenCalledTimes(2);
+
+      manager.destroy();
+    });
+
+    test("follower suppresses duplicate dispatches from broadcast", async () => {
+      const fetcher = createMockFetcher();
+      const leader = createCrossTabPollingManager({
+        fetcher,
+        tabId: "aaa",
+        interval: 1_000,
+        createChannel: hub.createMockChannel,
+      });
+      const follower = createCrossTabPollingManager({
+        fetcher: createMockFetcher(),
+        tabId: "zzz",
+        interval: 1_000,
+        createChannel: hub.createMockChannel,
+      });
+
+      const followerListener = vi.fn();
+      leader.subscribe("notifications", vi.fn());
+      follower.subscribe("notifications", followerListener);
+      await flush();
+
+      // First broadcast — dispatched.
+      expect(followerListener).toHaveBeenCalledTimes(1);
+
+      // Trigger another poll with the same data.
+      await vi.advanceTimersByTimeAsync(1_000);
+      await flush();
+
+      // Follower should NOT re-dispatch identical data.
+      expect(followerListener).toHaveBeenCalledTimes(1);
+
+      leader.destroy();
+      follower.destroy();
+    });
+  });
+
   // ── Destroy ────────────────────────────────────────────────────
 
   describe("destroy", () => {

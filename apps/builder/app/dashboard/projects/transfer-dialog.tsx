@@ -87,21 +87,23 @@ export const TransferProjectDialog = ({
       return urlWorkspaceId;
     }
     // When no workspaceId in URL, the user is on the default workspace
-    return ownedWorkspaces[0]?.id;
+    return (
+      ownedWorkspaces.find((w) => w.isDefault)?.id ?? ownedWorkspaces[0]?.id
+    );
   };
 
   // Reset state when dialog opens — pre-select the current workspace
   useEffect(() => {
     if (isOpen) {
       setSelectedWorkspaceId(getCurrentWorkspaceId());
-      return;
+    } else {
+      setEmail("");
+      setSelectedWorkspaceId(undefined);
+      setFilteredWorkspaces([]);
+      setIsFiltered(false);
+      setError(undefined);
+      clearTimeout(debounceTimerRef.current);
     }
-    setEmail("");
-    setSelectedWorkspaceId(undefined);
-    setFilteredWorkspaces([]);
-    setIsFiltered(false);
-    setError(undefined);
-    clearTimeout(debounceTimerRef.current);
 
     return () => clearTimeout(debounceTimerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps

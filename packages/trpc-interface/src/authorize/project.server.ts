@@ -115,8 +115,9 @@ const check = async (
 
 // doesn't work in cloudflare workers
 const memoizedCheck = memoize(check, {
-  // 1 minute
-  maxAge: 60 * 1000,
+  // Short TTL so plan downgrades propagate quickly. No cache invalidation
+  // hook exists yet — keep this low until one is added.
+  maxAge: 10 * 1000,
   cacheKey: ([_context, input]) => JSON.stringify(input),
 });
 
@@ -133,12 +134,17 @@ type AuthInfo =
       type: "service";
     };
 
-export const checkProjectPermit = async (
-  projectId: string,
-  permit: AuthPermit,
-  authInfo: AuthInfo,
-  postgrestClient: AppContext["postgrest"]["client"]
-) => {
+export const checkProjectPermit = async ({
+  projectId,
+  permit,
+  authInfo,
+  postgrestClient,
+}: {
+  projectId: string;
+  permit: AuthPermit;
+  authInfo: AuthInfo;
+  postgrestClient: AppContext["postgrest"]["client"];
+}) => {
   const checks = [];
   const namespace = "Project";
 
@@ -248,6 +254,7 @@ const getWorkspaceOwnerIdForProject = async (
     .from("Workspace")
     .select("userId")
     .eq("id", project.data.workspaceId)
+    .eq("isDeleted", false)
     .maybeSingle();
 
   return workspace.data?.userId ?? undefined;
@@ -272,12 +279,12 @@ export const hasProjectPermit = async (
     return false;
   }
 
-  const allowed = await checkProjectPermit(
-    props.projectId,
-    props.permit,
+  const allowed = await checkProjectPermit({
+    projectId: props.projectId,
+    permit: props.permit,
     authInfo,
-    context.postgrest.client
-  );
+    postgrestClient: context.postgrest.client,
+  });
 
   if (allowed === false) {
     return false;
@@ -286,18 +293,15 @@ export const hasProjectPermit = async (
   // Workspace downgrade check: when a workspace member accesses a project,
   // verify the workspace owner's plan still supports workspace features.
   // Direct project owners and workspace owners are not affected.
-  if (
-    authorization.type === "user" &&
-    context.getOwnerPlanFeatures !== undefined
-  ) {
+  if (authorization.type === "user") {
     // "own" permit is only granted to direct owners and workspace owners —
     // both are unaffected by downgrade. This call is memoized.
-    const isOwner = await checkProjectPermit(
-      props.projectId,
-      "own",
+    const isOwner = await checkProjectPermit({
+      projectId: props.projectId,
+      permit: "own",
       authInfo,
-      context.postgrest.client
-    );
+      postgrestClient: context.postgrest.client,
+    });
 
     if (isOwner === false) {
       // User is a workspace member — verify the owner's plan

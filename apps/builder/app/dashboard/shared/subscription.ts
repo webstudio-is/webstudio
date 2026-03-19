@@ -88,6 +88,8 @@ export const startDashboardSubscription = () => {
 export const stopDashboardSubscription = () => {
   subscription?.unsubscribe();
   subscription = undefined;
+  manager?.destroy();
+  manager = undefined;
   isFirstLoad = true;
 };
 
@@ -95,4 +97,4 @@ export const stopDashboardSubscription = () => {
  * Force an immediate refresh — useful after accept/decline mutations
  * so the popover updates without waiting for the next poll cycle.
  */
-export const refreshNotifications = () => getManager().refresh();
+export const refreshNotifications = () => manager?.refresh();

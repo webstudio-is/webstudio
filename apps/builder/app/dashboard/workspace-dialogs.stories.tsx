@@ -17,6 +17,7 @@ const createWorkspace = (overrides: Partial<Workspace> = {}): Workspace => ({
   id: "ws-1",
   name: "Client projects",
   isDefault: false,
+  isDeleted: false,
   createdAt: new Date().toISOString(),
   userId: "user-1",
   ...overrides,
