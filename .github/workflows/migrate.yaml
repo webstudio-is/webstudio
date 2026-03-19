@@ -7,6 +7,7 @@ on:
       - "main"
       - "*.staging"
       - "*.migrate"
+      - "feat/**"
 
 # Pending if other migration from the same branch is running
 concurrency: migrate-${{ github.ref_name }}
@@ -17,16 +18,15 @@ permissions:
 
 jobs:
   migrate:
-    # This workflow is triggered only on pushes to the `main`, `*.staging` or 'migrate' branches.
-    # For `*.staging` and `migrate` it specifically checks if the commit message starts with `::migrate::`,
-    # indicating a migration-related change.
+    # This workflow is triggered on pushes to `main` (always), or to
+    # `*.staging`, `*.migrate`, `migrate`, and `feat/**` branches when the
+    # commit message contains `::migrate::` anywhere.
     #
     # Example usage:
-    #   Execute a commit with a migration flag using:
-    #   git commit --allow-empty -m "::migrate::test description"
+    #   git commit --allow-empty -m "fix: add column ::migrate::"
     # Note:
     #   This setup is a temporary measure. The intention is to transition to a fully automated publish and release process via GitHub Actions in the future.
-    if: (github.ref_name == 'main') || ((github.ref_name == 'migrate' || endsWith(github.ref_name, '.migrate') || endsWith(github.ref_name, '.staging')) && startsWith(github.event.head_commit.message, '::migrate::'))
+    if: (github.ref_name == 'main') || ((github.ref_name == 'migrate' || endsWith(github.ref_name, '.migrate') || endsWith(github.ref_name, '.staging') || startsWith(github.ref_name, 'feat/')) && contains(github.event.head_commit.message, '::migrate::'))
 
     runs-on: ubuntu-latest
 
