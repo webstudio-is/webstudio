@@ -2549,8 +2549,10 @@ describe("style tag to tokens", () => {
       );
       expect(codeProp).toBeDefined();
       // The leftover should only contain the div selector, not .card
-      expect((codeProp as any).value).toContain("div");
-      expect((codeProp as any).value).not.toMatch(/\.card/);
+      expect(codeProp!.type === "string" && codeProp!.value).toContain("div");
+      expect(codeProp!.type === "string" && codeProp!.value).not.toMatch(
+        /\.card/
+      );
     });
 
     test(".a, .b, #id {} extracts .a and .b, keeps #id in leftover", () => {
