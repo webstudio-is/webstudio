@@ -22,14 +22,12 @@ export const Breakpoint = z
     if (condition !== undefined) {
       return minWidth === undefined && maxWidth === undefined;
     }
-    return (
-      // Either min or max width have to be defined
-      (minWidth !== undefined && maxWidth === undefined) ||
-      (minWidth === undefined && maxWidth !== undefined) ||
-      // This is a base breakpoint
-      (minWidth === undefined && maxWidth === undefined)
-    );
-  }, "Either minWidth, maxWidth, or condition should be defined, but not both");
+    // When both min and max width are defined, min must be less than max
+    if (minWidth !== undefined && maxWidth !== undefined) {
+      return minWidth < maxWidth;
+    }
+    return true;
+  }, "Width-based (minWidth/maxWidth) and condition are mutually exclusive, and minWidth must be less than maxWidth");
 
 export type Breakpoint = z.infer<typeof Breakpoint>;
 

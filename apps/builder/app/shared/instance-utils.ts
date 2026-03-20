@@ -336,9 +336,27 @@ export const insertWebstudioFragmentAt = (
   insertable?: Insertable,
   conflictResolution?: ConflictResolution
 ): boolean => {
-  // cannot insert empty fragment
-  if (fragment.children.length === 0) {
+  const hasChildren = fragment.children.length > 0;
+  const hasTokens = fragment.styleSources.length > 0;
+  if (!hasChildren && !hasTokens) {
     return false;
+  }
+  // Tokens-only fragment: insert tokens/breakpoints/styles without instances
+  if (!hasChildren && hasTokens) {
+    const project = $project.get();
+    if (project === undefined) {
+      return false;
+    }
+    updateWebstudioData((data) => {
+      insertWebstudioFragmentCopy({
+        data,
+        fragment,
+        availableVariables: [],
+        projectId: project.id,
+        conflictResolution,
+      });
+    });
+    return true;
   }
   const project = $project.get();
   insertable = findClosestInsertable(fragment, insertable) ?? insertable;

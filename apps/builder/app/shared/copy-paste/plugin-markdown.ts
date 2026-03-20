@@ -10,7 +10,8 @@ const parse = (clipboardData: string) => {
     extensions: [gfm()],
     htmlExtensions: [gfmHtml()],
   });
-  const fragment = generateFragmentFromHtml(html);
+  const { skippedSelectors: _skipped, ...fragment } =
+    generateFragmentFromHtml(html);
   const instances = new Map(fragment.instances.map((item) => [item.id, item]));
   for (const instance of fragment.instances) {
     if (instance.tag === "img") {
