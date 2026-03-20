@@ -66,7 +66,6 @@ jobs:
         with:
           path: |
             ./node_modules/.cache/prettier/.prettier-cache
-            ./node_modules/.cache/eslint/.eslint-cache
           key: checks-${{ github.sha }}
           restore-keys: checks-
 
@@ -77,7 +76,7 @@ jobs:
 
       - name: Lint
         run: |
-          pnpm lint --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
+          pnpm lint
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
