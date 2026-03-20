@@ -192,7 +192,7 @@ export const createPubsub = <PublishMap>() => {
 
       useEffect(() => {
         return emitter.on(type, handleOnAction);
-      }, [type, handleOnAction]);
+      }, [type]);
     },
 
     subscribe<Type extends keyof PublishMap>(

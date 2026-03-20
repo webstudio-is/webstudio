@@ -264,8 +264,6 @@ const useScrub = ({
   }, [
     shouldHandleEvent,
     property,
-    updateIntermediateValue,
-    onAbortStable,
     defaultUnit,
     value.type,
     // eslint-disable-next-line react-hooks/exhaustive-deps

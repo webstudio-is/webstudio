@@ -45,7 +45,7 @@ const InertController = ({
     return () => {
       clearTimeout(timeout);
     };
-  }, [handleChange]);
+  }, []);
 
   return null;
 };

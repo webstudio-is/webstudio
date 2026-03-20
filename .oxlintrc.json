@@ -1,0 +1,34 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "plugins": ["react", "unicorn", "typescript"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "no-console": [
+      "error",
+      { "allow": ["info", "warn", "error", "time", "timeEnd"] }
+    ],
+    "func-style": ["error", "expression", { "allowArrowFunctions": true }],
+    "curly": "error",
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "radix": "error",
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "typescript/no-explicit-any": "error",
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }],
+    "unicorn/prefer-node-protocol": "error"
+  },
+  "ignorePatterns": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/__generated__/**",
+    "codemod/**",
+    "packages/*/lib/**",
+    "packages/prisma-client/prisma/migrations/**",
+    "packages/cli/templates/**",
+    "fixtures/**",
+    "packages/sdk-components-animation/private-src/polyfill/**",
+    "packages/sdk-components-animation/private-src/perf/**"
+  ]
+}

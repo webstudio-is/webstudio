@@ -298,7 +298,7 @@ const DomainItem = ({
     startTransition(async () => {
       await handleUpdateStatus();
     });
-  }, [status, handleVerify, handleUpdateStatus, isStatusLoading]);
+  }, [status, isStatusLoading]);
 
   const domainStatus = getStatus(projectDomain);
 
