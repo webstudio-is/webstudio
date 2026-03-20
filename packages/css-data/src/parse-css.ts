@@ -105,32 +105,21 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
     return [];
   }
 
-  // Track context as we traverse
-  let currentAtrule: csstree.Atrule | undefined;
+  // Track context as we traverse — use a stack to support nested @media
+  const atruleStack: csstree.Atrule[] = [];
   let currentRule: csstree.Rule | undefined;
-  let nestedAtruleDepth = 0;
-
-  const supportedMediaFeatures = ["min-width", "max-width"];
-  const supportedUnits = ["px"];
 
   csstree.walk(ast, {
     enter(node) {
       if (node.type === "Atrule") {
-        if (currentAtrule) {
-          nestedAtruleDepth++;
-        }
-        currentAtrule = node;
+        atruleStack.push(node);
       } else if (node.type === "Rule") {
         currentRule = node;
       }
     },
     leave(node) {
       if (node.type === "Atrule") {
-        if (nestedAtruleDepth > 0) {
-          nestedAtruleDepth--;
-        } else {
-          currentAtrule = undefined;
-        }
+        atruleStack.pop();
       } else if (node.type === "Rule") {
         currentRule = undefined;
       }
@@ -144,58 +133,67 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
         return;
       }
 
-      // forbid nested at rules
-      if (nestedAtruleDepth > 0) {
-        return;
-      }
-
-      if (currentAtrule && currentAtrule.name !== "media") {
+      // All enclosing at-rules must be @media — reject @supports, @keyframes, etc.
+      if (atruleStack.some((atrule) => atrule.name !== "media")) {
         return;
       }
 
       let breakpoint: undefined | string;
       let invalidBreakpoint = false;
 
-      if (currentAtrule?.prelude?.type === "AtrulePrelude") {
-        csstree.walk(currentAtrule.prelude, {
-          enter: (node) => {
-            if (node.type === "MediaQuery") {
-              if (node.mediaType === "screen" || node.mediaType === "all") {
-                node.mediaType = null;
+      // Collect and flatten all enclosing @media preludes
+      const flattenedParts: string[] = [];
+      for (const atrule of atruleStack) {
+        if (atrule.prelude?.type === "AtrulePrelude") {
+          let hasNonPxWidthUnit = false;
+          let hasPrintMedia = false;
+          let currentFeatureName: string | undefined;
+          csstree.walk(atrule.prelude, {
+            enter: (node) => {
+              if (node.type === "MediaQuery") {
+                // Mutates AST in-place to normalize media type for breakpoint string generation;
+                // the AST is discarded after parseCss returns so this is safe.
+                if (node.mediaType === "screen" || node.mediaType === "all") {
+                  node.mediaType = null;
+                }
+                if (node.mediaType === "print") {
+                  hasPrintMedia = true;
+                }
               }
-              // prevent saving print styles
-              if (node.mediaType === "print") {
-                invalidBreakpoint = true;
+              if (node.type === "Feature") {
+                currentFeatureName = node.name;
               }
-            }
-            if (
-              node.type === "Feature" &&
-              supportedMediaFeatures.includes(node.name) === false
-            ) {
-              invalidBreakpoint = true;
-            }
-            if (
-              node.type === "Dimension" &&
-              supportedUnits.includes(node.unit) === false
-            ) {
-              invalidBreakpoint = true;
-            }
-          },
-          leave: (node) => {
-            // complex media queries are not supported yet
-            if (node.type === "MediaQuery") {
-              const children = node.condition?.children;
-              if (children && children.size > 1) {
-                invalidBreakpoint = true;
+              // Only reject non-px units on width features (min-width, max-width)
+              if (
+                node.type === "Dimension" &&
+                node.unit !== "px" &&
+                (currentFeatureName === "min-width" ||
+                  currentFeatureName === "max-width")
+              ) {
+                hasNonPxWidthUnit = true;
               }
-            }
-          },
-        });
-        const generated = csstree.generate(currentAtrule.prelude);
-        if (generated) {
-          breakpoint = generated;
+            },
+            leave: (node) => {
+              if (node.type === "Feature") {
+                currentFeatureName = undefined;
+              }
+            },
+          });
+          if (hasPrintMedia || hasNonPxWidthUnit) {
+            invalidBreakpoint = true;
+            break;
+          }
+          const generated = csstree.generate(atrule.prelude);
+          if (generated) {
+            flattenedParts.push(generated);
+          }
         }
       }
+
+      if (!invalidBreakpoint && flattenedParts.length > 0) {
+        breakpoint = flattenedParts.join(" and ");
+      }
+
       if (invalidBreakpoint || currentRule.prelude.type !== "SelectorList") {
         return;
       }
@@ -219,6 +217,9 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
               break;
             case "ClassSelector":
               name = `.${childNode.name}`;
+              break;
+            case "IdSelector":
+              name = `#${childNode.name}`;
               break;
             case "AttributeSelector":
               // for example &[data-state=active]
@@ -297,6 +298,169 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
   return Array.from(styles.values());
 };
 
+export type ParsedClassSelector = {
+  /** Token name: "card" for .card, "card__title" for .card .title */
+  tokenName: string;
+  /** Target class names (the last segment): ["card"] or ["title"] */
+  classNames: string[];
+  /**
+   * Non-class selector suffixes on the target: attribute selectors, pseudo-classes, pseudo-elements.
+   * e.g. ["[disabled]"] for .btn[disabled], [":hover"] for .card:hover
+   */
+  states?: string[];
+  /**
+   * Ancestor constraints for nested selectors (e.g., .card .title).
+   * Ordered from outermost to innermost ancestor.
+   * Each entry's combinator describes the relationship to the next segment.
+   */
+  ancestors?: Array<{
+    classNames: string[];
+    combinator: "descendant" | "child";
+  }>;
+};
+
+/**
+ * Parse a selector string and determine if it's a class-based selector
+ * suitable for token extraction. Uses css-tree to handle the full CSS
+ * selector spec.
+ *
+ * Supports simple selectors, compound selectors, and nested selectors
+ * using descendant (" ") and child (">") combinators where ALL segments
+ * are class-based.
+ *
+ * Supported patterns:
+ *   .card                      → { tokenName: "card", classNames: ["card"] }
+ *   .card.active               → { tokenName: "card.active", classNames: ["card", "active"] }
+ *   .btn[disabled]             → { tokenName: "btn", ..., states: ["[disabled]"] }
+ *   .card:hover                → { tokenName: "card", ..., states: [":hover"] }
+ *   .card .title               → { tokenName: "card__title", ..., ancestors: [{classNames:["card"], combinator:"descendant"}] }
+ *   .card > .title             → { tokenName: "card__title", ..., ancestors: [{classNames:["card"], combinator:"child"}] }
+ *   .a .b .c                   → { tokenName: "a__b__c", ..., ancestors: [{..,"descendant"},{..,"descendant"}] }
+ *   .card > .title:hover       → { tokenName: "card__title", ..., states: [":hover"], ancestors: [...] }
+ *
+ * Returns undefined for:
+ * - Selectors with sibling combinators (+, ~)
+ * - Selectors with non-class nodes in ancestor segments (e.g., .card h1, h1 .card)
+ * - Pure element/id selectors
+ */
+export const parseClassBasedSelector = (
+  selector: string
+): ParsedClassSelector | undefined => {
+  let ast: csstree.CssNode;
+  try {
+    ast = csstree.parse(selector, { context: "selector" });
+  } catch {
+    return undefined;
+  }
+
+  if (ast.type !== "Selector") {
+    return undefined;
+  }
+
+  const children = ast.children.toArray();
+  if (children.length === 0) {
+    return undefined;
+  }
+
+  // First node must be a ClassSelector
+  if (children[0].type !== "ClassSelector") {
+    return undefined;
+  }
+
+  // Split children into segments at Combinator nodes
+  type Segment = {
+    nodes: csstree.CssNode[];
+    combinator?: "descendant" | "child";
+  };
+  const segments: Segment[] = [];
+  let currentNodes: csstree.CssNode[] = [];
+
+  for (const child of children) {
+    if (child.type === "Combinator") {
+      if (child.name === " ") {
+        segments.push({ nodes: currentNodes, combinator: "descendant" });
+      } else if (child.name === ">") {
+        segments.push({ nodes: currentNodes, combinator: "child" });
+      } else {
+        // Sibling combinators (+, ~) — reject
+        return undefined;
+      }
+      currentNodes = [];
+    } else {
+      currentNodes.push(child);
+    }
+  }
+  // Push the last (target) segment
+  segments.push({ nodes: currentNodes });
+
+  // Validate all segments and extract class names
+  const ancestors: Array<{
+    classNames: string[];
+    combinator: "descendant" | "child";
+  }> = [];
+
+  // Process ancestor segments (all except the last)
+  for (let i = 0; i < segments.length - 1; i++) {
+    const segment = segments[i];
+    const segClassNames: string[] = [];
+    for (const node of segment.nodes) {
+      if (node.type === "ClassSelector") {
+        segClassNames.push(node.name);
+      } else {
+        // Non-class node in an ancestor segment — reject
+        return undefined;
+      }
+    }
+    if (segClassNames.length === 0) {
+      return undefined;
+    }
+    ancestors.push({
+      classNames: segClassNames,
+      combinator: segment.combinator!,
+    });
+  }
+
+  // Process the last (target) segment
+  const lastSegment = segments[segments.length - 1];
+  const classNames: string[] = [];
+  const states: string[] = [];
+
+  for (const node of lastSegment.nodes) {
+    switch (node.type) {
+      case "ClassSelector":
+        classNames.push(node.name);
+        break;
+      case "AttributeSelector":
+      case "PseudoClassSelector":
+      case "PseudoElementSelector":
+        states.push(csstree.generate(node));
+        break;
+      default:
+        return undefined;
+    }
+  }
+
+  if (classNames.length === 0) {
+    return undefined;
+  }
+
+  // Build token name: join segment class names with "__"
+  const segmentNames = [
+    ...ancestors.map((a) =>
+      a.classNames.length === 1 ? a.classNames[0] : a.classNames.join(".")
+    ),
+    classNames.length === 1 ? classNames[0] : classNames.join("."),
+  ];
+  const tokenName = segmentNames.join("__");
+
+  return {
+    tokenName,
+    classNames,
+    ...(states.length > 0 ? { states } : {}),
+    ...(ancestors.length > 0 ? { ancestors } : {}),
+  };
+};
+
 type ParsedBreakpoint = {
   minWidth?: number;
   maxWidth?: number;
@@ -307,17 +471,19 @@ export const parseMediaQuery = (
   mediaQuery: string
 ): undefined | ParsedBreakpoint => {
   const ast = csstree.parse(mediaQuery, { context: "mediaQuery" });
-  let property: undefined | "minWidth" | "maxWidth";
-  let value: undefined | number;
+  let minWidth: undefined | number;
+  let maxWidth: undefined | number;
+  let currentWidthProperty: undefined | "minWidth" | "maxWidth";
   const otherFeatures: string[] = [];
 
   csstree.walk(ast, (node) => {
     if (node.type === "Feature") {
       if (node.name === "min-width") {
-        property = "minWidth";
+        currentWidthProperty = "minWidth";
       } else if (node.name === "max-width") {
-        property = "maxWidth";
+        currentWidthProperty = "maxWidth";
       } else {
+        currentWidthProperty = undefined;
         // Capture any other media feature as custom condition
         const generated = csstree.generate(node);
         // Remove outer parentheses if present
@@ -331,23 +497,33 @@ export const parseMediaQuery = (
       }
     }
     if (node.type === "Dimension" && node.unit === "px") {
-      value = Number(node.value);
+      const value = Number(node.value);
+      if (currentWidthProperty === "minWidth") {
+        minWidth = value;
+      } else if (currentWidthProperty === "maxWidth") {
+        maxWidth = value;
+      }
+      currentWidthProperty = undefined;
     }
   });
 
   const condition =
     otherFeatures.length > 0 ? otherFeatures.join(" and ") : undefined;
 
+  const hasWidth = minWidth !== undefined || maxWidth !== undefined;
+
   // If there's a custom condition and no width, return only condition
-  if (condition !== undefined && property === undefined) {
+  if (condition !== undefined && !hasWidth) {
     return { condition };
   }
 
-  if (property === undefined || value === undefined) {
+  if (!hasWidth && condition === undefined) {
     return;
   }
+
   return {
-    [property]: value,
+    ...(minWidth !== undefined ? { minWidth } : {}),
+    ...(maxWidth !== undefined ? { maxWidth } : {}),
     ...(condition !== undefined ? { condition } : {}),
   };
 };
