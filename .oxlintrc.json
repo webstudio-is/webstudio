@@ -14,7 +14,7 @@
     "eqeqeq": ["error", "always", { "null": "ignore" }],
     "radix": "error",
     "react/rules-of-hooks": "error",
-    "react/exhaustive-deps": "off",
+    "react/exhaustive-deps": "warn",
     "typescript/no-explicit-any": "error",
     "unicorn/filename-case": ["error", { "case": "kebabCase" }],
     "unicorn/prefer-node-protocol": "error"

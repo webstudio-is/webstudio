@@ -130,7 +130,7 @@ export const useExternalDragStateEffect = (
 
   useEffect(() => {
     return $externalDragState.subscribe(handleCallback);
-  }, [handleCallback]);
+  }, []);
 };
 
 const dropCount = atom(0);
@@ -144,7 +144,7 @@ export const useOnDropEffect = (callback: () => void) => {
 
   useEffect(() => {
     return dropCount.listen(handleCallback);
-  }, [handleCallback]);
+  }, []);
 };
 
 export const isBlockedByBackdrop = (element: Element) => {
