@@ -32,6 +32,7 @@ export type Notifications = Awaited<ReturnType<typeof notification.list>>;
 
 export type TopicRegistry = {
   notifications: Notifications;
+  projectCount: number;
 };
 
 // ── 2. Derived helpers ───────────────────────────────────────────
@@ -46,6 +47,7 @@ export type TopicData<K extends TopicName> = TopicRegistry[K];
  */
 export const topicNames = [
   "notifications",
+  "projectCount",
 ] as const satisfies readonly TopicName[];
 
 // Compile-time check: every `TopicRegistry` key must appear in `topicNames`.

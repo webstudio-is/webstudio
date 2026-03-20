@@ -1,4 +1,5 @@
 import { notification } from "@webstudio-is/project/index.server";
+import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
 import type { TopicResolvers, TopicName, SubscriptionResponse } from "./types";
 
 /**
@@ -10,6 +11,15 @@ import type { TopicResolvers, TopicName, SubscriptionResponse } from "./types";
  */
 const resolvers: TopicResolvers = {
   notifications: (ctx) => notification.list(ctx),
+  projectCount: (ctx) => {
+    if (ctx.authorization.type !== "user") {
+      return Promise.resolve(0);
+    }
+    return dashboardDb.db.countByUserId({
+      userId: ctx.authorization.userId,
+      context: ctx,
+    });
+  },
 };
 
 /**

@@ -44,6 +44,7 @@ import {
   seedNotifications,
   startDashboardSubscription,
   stopDashboardSubscription,
+  $shouldRevalidateProjects,
 } from "./shared/subscription";
 import { requestNotificationPermission } from "./shared/browser-notification";
 
@@ -157,6 +158,8 @@ const NavigationItems = ({
 const $data = atom<DashboardData | undefined>();
 
 export const DashboardSetup = ({ data }: { data: DashboardData }) => {
+  const revalidator = useRevalidator();
+  const revalidateVersion = useStore($shouldRevalidateProjects);
   useEffect(() => {
     $data.set(data);
     setSharedStores(data);
@@ -168,6 +171,13 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   useEffect(() => {
     seedNotifications(data.notifications);
   }, [data.notifications]);
+  // Revalidate when the polled project count changes (e.g. a transfer was accepted).
+  useEffect(() => {
+    if (revalidateVersion > 0) {
+      revalidator.revalidate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revalidateVersion]);
   // Start polling + permission once on mount; stop on unmount.
   useEffect(() => {
     requestNotificationPermission();
