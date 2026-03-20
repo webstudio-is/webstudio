@@ -338,10 +338,10 @@ const buildLeftoverCss = (cssText: string): string => {
   return parts.join("");
 };
 
-function collectNonClassFromAtrule(
+const collectNonClassFromAtrule = (
   node: csstree.Atrule,
   getLeftoverRule: (rule: csstree.Rule) => string | undefined
-): string | undefined {
+): string | undefined => {
   if (node.name === "media" && node.block) {
     // Check if this nested @media is unsupported (e.g. print)
     let isUnsupportedMedia = false;
@@ -377,7 +377,7 @@ function collectNonClassFromAtrule(
   }
   // Non-media at-rules (like @supports nested in @media) — always keep
   return csstree.generate(node);
-}
+};
 
 /**
  * Resolve overlapping range breakpoints by adjusting maxWidth values.
