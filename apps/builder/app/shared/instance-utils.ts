@@ -331,64 +331,32 @@ export const insertWebstudioElementAt = (insertable?: Insertable) => {
   return true;
 };
 
-export const insertWebstudioFragmentTokensOnly = (
-  fragment: WebstudioFragment
-): boolean => {
-  if (fragment.styleSources.length === 0) {
-    return false;
-  }
-  updateWebstudioData((data) => {
-    const { breakpoints, styleSources, styles } = data;
-
-    const mergedBreakpointIds = buildMergedBreakpointIds(
-      fragment.breakpoints,
-      breakpoints
-    );
-    for (const newBreakpoint of fragment.breakpoints) {
-      if (mergedBreakpointIds.has(newBreakpoint.id) === false) {
-        breakpoints.set(newBreakpoint.id, newBreakpoint);
-      }
-    }
-
-    const { styleSourceIds, styleSourceIdMap, updatedStyleSources } =
-      insertStyleSources({
-        fragmentStyleSources: fragment.styleSources,
-        fragmentStyles: fragment.styles,
-        existingStyleSources: styleSources,
-        existingStyles: styles,
-        breakpoints,
-        mergedBreakpointIds,
-      });
-
-    for (const [id, styleSource] of updatedStyleSources) {
-      styleSources.set(id, styleSource);
-    }
-
-    for (const styleDecl of fragment.styles) {
-      if (styleSourceIds.has(styleDecl.styleSourceId)) {
-        const { breakpointId } = styleDecl;
-        const newStyleDecl: StyleDecl = {
-          ...styleDecl,
-          breakpointId: mergedBreakpointIds.get(breakpointId) ?? breakpointId,
-          styleSourceId:
-            styleSourceIdMap.get(styleDecl.styleSourceId) ??
-            styleDecl.styleSourceId,
-        };
-        styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
-      }
-    }
-  });
-  return true;
-};
-
 export const insertWebstudioFragmentAt = (
   fragment: WebstudioFragment,
   insertable?: Insertable,
   conflictResolution?: ConflictResolution
 ): boolean => {
-  // cannot insert empty fragment
-  if (fragment.children.length === 0) {
+  const hasChildren = fragment.children.length > 0;
+  const hasTokens = fragment.styleSources.length > 0;
+  if (!hasChildren && !hasTokens) {
     return false;
+  }
+  // Tokens-only fragment: insert tokens/breakpoints/styles without instances
+  if (!hasChildren && hasTokens) {
+    const project = $project.get();
+    if (project === undefined) {
+      return false;
+    }
+    updateWebstudioData((data) => {
+      insertWebstudioFragmentCopy({
+        data,
+        fragment,
+        availableVariables: [],
+        projectId: project.id,
+        conflictResolution,
+      });
+    });
+    return true;
   }
   const project = $project.get();
   insertable = findClosestInsertable(fragment, insertable) ?? insertable;
