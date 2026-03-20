@@ -1,4 +1,5 @@
 import { toast } from "@webstudio-is/design-system";
+import type { WebstudioFragment } from "@webstudio-is/sdk";
 import {
   isAutoGridPlacement,
   resetGridChildPlacement,
@@ -456,10 +457,18 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       description: "Convert Tailwind to CSS",
       handler: async () => {
         const html = await navigator.clipboard.readText();
-        let fragment = generateFragmentFromHtml(html);
+        const parseResult = generateFragmentFromHtml(html);
+        const { skippedSelectors } = parseResult;
+        let fragment: WebstudioFragment = parseResult;
         fragment = await denormalizeSrcProps(fragment);
         fragment = await generateFragmentFromTailwind(fragment);
-        return insertWebstudioFragmentAt(fragment);
+        const result = insertWebstudioFragmentAt(fragment);
+        if (skippedSelectors.length > 0) {
+          builderApi.toast.info(
+            `Skipped nested selectors (no matching elements): ${skippedSelectors.join(", ")}`
+          );
+        }
+        return result;
       },
     },
 
