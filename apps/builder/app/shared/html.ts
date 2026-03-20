@@ -857,7 +857,8 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
             if (parsed.maxWidth !== undefined) {
               conditionParts.push(`max-width:${parsed.maxWidth}px`);
             }
-            conditionParts.push(parsed.condition);
+            // hasCondition guarantees parsed.condition is defined
+            conditionParts.push(parsed.condition as string);
             breakpointId = getOrCreateBreakpoint({
               condition: conditionParts.join(" and "),
             });
