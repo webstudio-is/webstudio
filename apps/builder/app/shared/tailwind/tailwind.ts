@@ -152,6 +152,17 @@ const adaptBreakpoints = (
     const mediaQuery = styleDecl.breakpoint
       ? parseMediaQuery(styleDecl.breakpoint)
       : undefined;
+    // Skip condition-only breakpoints (e.g. dark mode prefers-color-scheme)
+    // and combined min+max width breakpoints (e.g. md:max-xl:)
+    if (mediaQuery?.condition !== undefined) {
+      continue;
+    }
+    if (
+      mediaQuery?.minWidth !== undefined &&
+      mediaQuery?.maxWidth !== undefined
+    ) {
+      continue;
+    }
     if (mediaQuery?.minWidth) {
       mediaQuery.minWidth =
         tailwindToWebstudioMappings[mediaQuery.minWidth] ?? mediaQuery.minWidth;

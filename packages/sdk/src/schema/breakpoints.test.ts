@@ -77,9 +77,7 @@ describe("Breakpoint schema", () => {
         condition: "orientation:portrait",
         minWidth: 1024,
       })
-    ).toThrow(
-      "Either minWidth, maxWidth, or condition should be defined, but not both"
-    );
+    ).toThrow();
 
     expect(() =>
       Breakpoint.parse({
@@ -88,9 +86,7 @@ describe("Breakpoint schema", () => {
         condition: "hover:hover",
         maxWidth: 767,
       })
-    ).toThrow(
-      "Either minWidth, maxWidth, or condition should be defined, but not both"
-    );
+    ).toThrow();
 
     expect(() =>
       Breakpoint.parse({
@@ -100,18 +96,37 @@ describe("Breakpoint schema", () => {
         minWidth: 1024,
         maxWidth: 767,
       })
-    ).toThrow(
-      "Either minWidth, maxWidth, or condition should be defined, but not both"
-    );
+    ).toThrow();
   });
 
-  test("rejects breakpoint with both minWidth and maxWidth", () => {
+  test("allows breakpoint with both minWidth and maxWidth when min < max", () => {
+    const result = Breakpoint.parse({
+      id: "1",
+      label: "Tablet range",
+      minWidth: 768,
+      maxWidth: 1024,
+    });
+    expect(result.minWidth).toBe(768);
+    expect(result.maxWidth).toBe(1024);
+    expect(result.condition).toBeUndefined();
+  });
+
+  test("rejects breakpoint with minWidth >= maxWidth", () => {
     expect(() =>
       Breakpoint.parse({
         id: "1",
         label: "Invalid",
         minWidth: 1024,
         maxWidth: 767,
+      })
+    ).toThrow();
+
+    expect(() =>
+      Breakpoint.parse({
+        id: "2",
+        label: "Invalid",
+        minWidth: 768,
+        maxWidth: 768,
       })
     ).toThrow();
   });

@@ -105,32 +105,23 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
     return [];
   }
 
-  // Track context as we traverse
-  let currentAtrule: csstree.Atrule | undefined;
+  // Track context as we traverse — use a stack to support nested @media
+  const atruleStack: csstree.Atrule[] = [];
   let currentRule: csstree.Rule | undefined;
-  let nestedAtruleDepth = 0;
 
-  const supportedMediaFeatures = ["min-width", "max-width"];
   const supportedUnits = ["px"];
 
   csstree.walk(ast, {
     enter(node) {
       if (node.type === "Atrule") {
-        if (currentAtrule) {
-          nestedAtruleDepth++;
-        }
-        currentAtrule = node;
+        atruleStack.push(node);
       } else if (node.type === "Rule") {
         currentRule = node;
       }
     },
     leave(node) {
       if (node.type === "Atrule") {
-        if (nestedAtruleDepth > 0) {
-          nestedAtruleDepth--;
-        } else {
-          currentAtrule = undefined;
-        }
+        atruleStack.pop();
       } else if (node.type === "Rule") {
         currentRule = undefined;
       }
@@ -144,58 +135,65 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
         return;
       }
 
-      // forbid nested at rules
-      if (nestedAtruleDepth > 0) {
-        return;
-      }
-
-      if (currentAtrule && currentAtrule.name !== "media") {
+      // All enclosing at-rules must be @media — reject @supports, @keyframes, etc.
+      if (atruleStack.some((atrule) => atrule.name !== "media")) {
         return;
       }
 
       let breakpoint: undefined | string;
       let invalidBreakpoint = false;
 
-      if (currentAtrule?.prelude?.type === "AtrulePrelude") {
-        csstree.walk(currentAtrule.prelude, {
-          enter: (node) => {
-            if (node.type === "MediaQuery") {
-              if (node.mediaType === "screen" || node.mediaType === "all") {
-                node.mediaType = null;
+      // Collect and flatten all enclosing @media preludes
+      const flattenedParts: string[] = [];
+      for (const atrule of atruleStack) {
+        if (atrule.prelude?.type === "AtrulePrelude") {
+          let hasNonPxWidthUnit = false;
+          let hasPrintMedia = false;
+          let currentFeatureName: string | undefined;
+          csstree.walk(atrule.prelude, {
+            enter: (node) => {
+              if (node.type === "MediaQuery") {
+                if (node.mediaType === "screen" || node.mediaType === "all") {
+                  node.mediaType = null;
+                }
+                if (node.mediaType === "print") {
+                  hasPrintMedia = true;
+                }
               }
-              // prevent saving print styles
-              if (node.mediaType === "print") {
-                invalidBreakpoint = true;
+              if (node.type === "Feature") {
+                currentFeatureName = node.name;
               }
-            }
-            if (
-              node.type === "Feature" &&
-              supportedMediaFeatures.includes(node.name) === false
-            ) {
-              invalidBreakpoint = true;
-            }
-            if (
-              node.type === "Dimension" &&
-              supportedUnits.includes(node.unit) === false
-            ) {
-              invalidBreakpoint = true;
-            }
-          },
-          leave: (node) => {
-            // complex media queries are not supported yet
-            if (node.type === "MediaQuery") {
-              const children = node.condition?.children;
-              if (children && children.size > 1) {
-                invalidBreakpoint = true;
+              // Only reject non-px units on width features (min-width, max-width)
+              if (
+                node.type === "Dimension" &&
+                node.unit !== "px" &&
+                (currentFeatureName === "min-width" ||
+                  currentFeatureName === "max-width")
+              ) {
+                hasNonPxWidthUnit = true;
               }
-            }
-          },
-        });
-        const generated = csstree.generate(currentAtrule.prelude);
-        if (generated) {
-          breakpoint = generated;
+            },
+            leave: (node) => {
+              if (node.type === "Feature") {
+                currentFeatureName = undefined;
+              }
+            },
+          });
+          if (hasPrintMedia || hasNonPxWidthUnit) {
+            invalidBreakpoint = true;
+            break;
+          }
+          const generated = csstree.generate(atrule.prelude);
+          if (generated) {
+            flattenedParts.push(generated);
+          }
         }
       }
+
+      if (!invalidBreakpoint && flattenedParts.length > 0) {
+        breakpoint = flattenedParts.join(" and ");
+      }
+
       if (invalidBreakpoint || currentRule.prelude.type !== "SelectorList") {
         return;
       }
@@ -307,17 +305,19 @@ export const parseMediaQuery = (
   mediaQuery: string
 ): undefined | ParsedBreakpoint => {
   const ast = csstree.parse(mediaQuery, { context: "mediaQuery" });
-  let property: undefined | "minWidth" | "maxWidth";
-  let value: undefined | number;
+  let minWidth: undefined | number;
+  let maxWidth: undefined | number;
+  let currentWidthProperty: undefined | "minWidth" | "maxWidth";
   const otherFeatures: string[] = [];
 
   csstree.walk(ast, (node) => {
     if (node.type === "Feature") {
       if (node.name === "min-width") {
-        property = "minWidth";
+        currentWidthProperty = "minWidth";
       } else if (node.name === "max-width") {
-        property = "maxWidth";
+        currentWidthProperty = "maxWidth";
       } else {
+        currentWidthProperty = undefined;
         // Capture any other media feature as custom condition
         const generated = csstree.generate(node);
         // Remove outer parentheses if present
@@ -331,23 +331,33 @@ export const parseMediaQuery = (
       }
     }
     if (node.type === "Dimension" && node.unit === "px") {
-      value = Number(node.value);
+      const value = Number(node.value);
+      if (currentWidthProperty === "minWidth") {
+        minWidth = value;
+      } else if (currentWidthProperty === "maxWidth") {
+        maxWidth = value;
+      }
+      currentWidthProperty = undefined;
     }
   });
 
   const condition =
     otherFeatures.length > 0 ? otherFeatures.join(" and ") : undefined;
 
+  const hasWidth = minWidth !== undefined || maxWidth !== undefined;
+
   // If there's a custom condition and no width, return only condition
-  if (condition !== undefined && property === undefined) {
+  if (condition !== undefined && !hasWidth) {
     return { condition };
   }
 
-  if (property === undefined || value === undefined) {
+  if (!hasWidth && condition === undefined) {
     return;
   }
+
   return {
-    [property]: value,
+    ...(minWidth !== undefined ? { minWidth } : {}),
+    ...(maxWidth !== undefined ? { maxWidth } : {}),
     ...(condition !== undefined ? { condition } : {}),
   };
 };

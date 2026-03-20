@@ -15,11 +15,17 @@ import {
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
-import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  parseCss,
+  parseMediaQuery,
+  type ParsedStyleDecl,
+} from "@webstudio-is/css-data";
 import { richTextContentTags } from "./content-model";
 import { setIsSubsetOf } from "./shim";
 import { isAttributeNameSafe } from "@webstudio-is/react-sdk";
 import { capitalCase } from "change-case";
+import * as csstree from "css-tree";
 
 type ElementNode = DefaultTreeAdapterMap["element"];
 
@@ -73,6 +79,279 @@ const findContentTags = (element: ElementNode, tags = new Set<string>()) => {
   return tags;
 };
 
+/**
+ * Check if a parsed selector is a simple class selector like `.card`
+ * (not compound like `.card.active`, not descendant like `.card .inner`)
+ */
+const isSimpleClassSelector = (selector: string): string | undefined => {
+  // Must start with . and contain only one class
+  if (!selector.startsWith(".")) {
+    return undefined;
+  }
+  const className = selector.slice(1);
+  // No spaces (descendant), no dots (compound), no combinators, no brackets
+  if (/[\s.>+~[\]#:]/.test(className)) {
+    return undefined;
+  }
+  if (className.length === 0) {
+    return undefined;
+  }
+  return className;
+};
+
+/**
+ * Collect all text content from <style> elements in the parsed HTML tree
+ */
+const collectStyleTexts = (
+  documentFragment: DefaultTreeAdapterMap["documentFragment"]
+): string[] => {
+  const texts: string[] = [];
+  const walk = (node: DefaultTreeAdapterMap["parentNode"]) => {
+    for (const child of node.childNodes) {
+      if (
+        defaultTreeAdapter.isElementNode(child) &&
+        child.tagName === "style"
+      ) {
+        const textContent = child.childNodes
+          .filter((c) => defaultTreeAdapter.isTextNode(c))
+          .map((c) => (c as DefaultTreeAdapterMap["textNode"]).value)
+          .join("");
+        texts.push(textContent);
+      }
+      if (defaultTreeAdapter.isElementNode(child)) {
+        walk(child);
+      }
+    }
+  };
+  walk(documentFragment);
+  return texts;
+};
+
+/**
+ * From a list of parsed style declarations, determine which selectors are
+ * simple class selectors (extractable as tokens) and which are not.
+ */
+const classifyRules = (
+  decls: ParsedStyleDecl[]
+): {
+  classRules: Map<string, ParsedStyleDecl[]>;
+  hasNonClassRules: boolean;
+} => {
+  const classRules = new Map<string, ParsedStyleDecl[]>();
+  let hasNonClassRules = false;
+
+  for (const decl of decls) {
+    const className = isSimpleClassSelector(decl.selector);
+    if (className !== undefined) {
+      let rules = classRules.get(className);
+      if (!rules) {
+        rules = [];
+        classRules.set(className, rules);
+      }
+      rules.push(decl);
+    } else {
+      hasNonClassRules = true;
+    }
+  }
+  return { classRules, hasNonClassRules };
+};
+
+/**
+ * Build the leftover CSS (non-class rules) from the original style text.
+ * We re-parse and filter rather than reconstructing, to preserve original formatting
+ * for non-class at-rules like @keyframes, @font-face.
+ *
+ * For simplicity, we re-generate from parseCss output and the original CSS text.
+ * We use a heuristic: parse with css-tree and walk top-level rules to classify them.
+ */
+const buildLeftoverCss = (cssText: string): string => {
+  const ast = csstree.parse(cssText);
+  const parts: string[] = [];
+
+  const isSimpleClassRule = (
+    selectorList: csstree.SelectorList | csstree.Raw
+  ): boolean => {
+    // Check if ALL selectors in this rule are simple class selectors
+    if (selectorList?.type !== "SelectorList") {
+      return false;
+    }
+    for (const selector of selectorList.children) {
+      if (selector.type !== "Selector") {
+        return false;
+      }
+      const children = selector.children.toArray();
+      // Check: exactly one ClassSelector, possibly followed by pseudo
+      if (children.length === 0) {
+        return false;
+      }
+      const first = children[0];
+      if (first.type !== "ClassSelector") {
+        return false;
+      }
+      // If there are more nodes, they must all be pseudo-class or pseudo-element
+      for (let i = 1; i < children.length; i++) {
+        const child = children[i];
+        if (
+          child.type !== "PseudoClassSelector" &&
+          child.type !== "PseudoElementSelector"
+        ) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  // Walk only top-level children of the stylesheet
+  if (ast.type === "StyleSheet") {
+    for (const node of ast.children) {
+      if (node.type === "Rule") {
+        if (!isSimpleClassRule(node.prelude)) {
+          parts.push(csstree.generate(node));
+        }
+      } else if (node.type === "Atrule") {
+        if (node.name === "media") {
+          // Check if this media query is unsupported by parseCss (print, non-px units)
+          // If so, keep the entire block as leftover
+          let isUnsupportedMedia = false;
+          if (node.prelude) {
+            csstree.walk(node.prelude, (walkNode) => {
+              if (
+                walkNode.type === "MediaQuery" &&
+                walkNode.mediaType === "print"
+              ) {
+                isUnsupportedMedia = true;
+              }
+            });
+          }
+          if (isUnsupportedMedia) {
+            parts.push(csstree.generate(node));
+          } else {
+            // For @media, check children — keep non-class rules
+            const leftoverRules: string[] = [];
+            if (node.block) {
+              for (const child of node.block.children) {
+                if (child.type === "Rule") {
+                  if (!isSimpleClassRule(child.prelude)) {
+                    leftoverRules.push(csstree.generate(child));
+                  }
+                } else if (child.type === "Atrule") {
+                  // Nested at-rule within @media — keep if it contains non-class rules
+                  const nestedLeftover = collectNonClassFromAtrule(
+                    child,
+                    isSimpleClassRule
+                  );
+                  if (nestedLeftover) {
+                    leftoverRules.push(nestedLeftover);
+                  }
+                }
+              }
+            }
+            if (leftoverRules.length > 0) {
+              const prelude = node.prelude
+                ? csstree.generate(node.prelude)
+                : "";
+              parts.push(`@media ${prelude}{${leftoverRules.join("")}}`);
+            }
+          }
+        } else {
+          // @keyframes, @font-face, @supports, etc. — always keep
+          parts.push(csstree.generate(node));
+        }
+      }
+    }
+  }
+  return parts.join("");
+};
+
+function collectNonClassFromAtrule(
+  node: csstree.Atrule,
+  isSimpleClassRule: (sel: csstree.SelectorList | csstree.Raw) => boolean
+): string | undefined {
+  if (node.name === "media" && node.block) {
+    const leftoverRules: string[] = [];
+    for (const child of node.block.children) {
+      if (child.type === "Rule") {
+        if (!isSimpleClassRule(child.prelude)) {
+          leftoverRules.push(csstree.generate(child));
+        }
+      } else if (child.type === "Atrule") {
+        const nested = collectNonClassFromAtrule(child, isSimpleClassRule);
+        if (nested) {
+          leftoverRules.push(nested);
+        }
+      }
+    }
+    if (leftoverRules.length > 0) {
+      const prelude = node.prelude ? csstree.generate(node.prelude) : "";
+      return `@media ${prelude}{${leftoverRules.join("")}}`;
+    }
+    return undefined;
+  }
+  // Non-media at-rules (like @supports nested in @media) — always keep
+  return csstree.generate(node);
+}
+
+/**
+ * Resolve overlapping range breakpoints by adjusting maxWidth values.
+ * Range breakpoints are those that have both minWidth and maxWidth.
+ * When ranges overlap, the earlier range's maxWidth is adjusted to
+ * be less than the next range's minWidth.
+ */
+const resolveOverlappingBreakpoints = (breakpoints: Breakpoint[]) => {
+  // Collect all breakpoints that have both minWidth and maxWidth (range breakpoints)
+  // plus simple minWidth-only and maxWidth-only breakpoints
+  const widthBreakpoints = breakpoints.filter(
+    (b) =>
+      b.condition === undefined &&
+      (b.minWidth !== undefined || b.maxWidth !== undefined)
+  );
+
+  if (widthBreakpoints.length < 2) {
+    return;
+  }
+
+  // Sort range breakpoints by minWidth
+  const rangeBreakpoints = widthBreakpoints
+    .filter((b) => b.minWidth !== undefined && b.maxWidth !== undefined)
+    .sort((a, b) => a.minWidth! - b.minWidth!);
+
+  // Also consider simple min-width breakpoints as potential overlap targets
+  const minOnlyBreakpoints = widthBreakpoints.filter(
+    (b) => b.minWidth !== undefined && b.maxWidth === undefined
+  );
+  const maxOnlyBreakpoints = widthBreakpoints.filter(
+    (b) => b.maxWidth !== undefined && b.minWidth === undefined
+  );
+
+  // Adjust range vs range overlaps
+  for (let i = 0; i < rangeBreakpoints.length - 1; i++) {
+    const current = rangeBreakpoints[i];
+    const next = rangeBreakpoints[i + 1];
+    if (current.maxWidth! >= next.minWidth!) {
+      current.maxWidth = next.minWidth! - 1;
+    }
+  }
+
+  // Adjust range vs min-width-only overlaps
+  for (const range of rangeBreakpoints) {
+    for (const minBp of minOnlyBreakpoints) {
+      if (range.maxWidth! >= minBp.minWidth!) {
+        range.maxWidth = minBp.minWidth! - 1;
+      }
+    }
+  }
+
+  // Adjust range vs max-width-only overlaps
+  for (const range of rangeBreakpoints) {
+    for (const maxBp of maxOnlyBreakpoints) {
+      if (range.minWidth! <= maxBp.maxWidth!) {
+        range.minWidth = maxBp.maxWidth! + 1;
+      }
+    }
+  }
+};
+
 export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
   const attributeTypes = getAttributeTypes();
   const instances = new Map<Instance["id"], Instance>();
@@ -97,6 +376,31 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
     return baseBreakpoint.id;
   };
 
+  // Breakpoint deduplication by key — breakpoints use their own ID counter
+  let lastBreakpointId = -1;
+  const getNewBreakpointId = () => {
+    lastBreakpointId += 1;
+    return lastBreakpointId.toString();
+  };
+  const breakpointByKey = new Map<string, Breakpoint>();
+  const getOrCreateBreakpoint = (parsed: {
+    minWidth?: number;
+    maxWidth?: number;
+    condition?: string;
+  }): string => {
+    const key = JSON.stringify(parsed);
+    let bp = breakpointByKey.get(key);
+    if (!bp) {
+      const id = getNewBreakpointId();
+      const label =
+        parsed.condition ?? `${parsed.minWidth ?? parsed.maxWidth ?? ""}`;
+      bp = { id, label, ...parsed };
+      breakpointByKey.set(key, bp);
+      breakpoints.push(bp);
+    }
+    return bp.id;
+  };
+
   const createLocalStyles = (instanceId: string, css: string) => {
     const localStyleSource: StyleSource = {
       type: "local",
@@ -114,16 +418,76 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
     }
   };
 
+  // ---- Pre-parse all <style> tags to extract class-based tokens ----
+  const documentFragment = parseFragment(html, {
+    scriptingEnabled: false,
+    sourceCodeLocationInfo: true,
+  });
+
+  // Collect style tag texts and their nodes
+  const styleTexts = collectStyleTexts(documentFragment);
+  const allCssText = styleTexts.join("\n");
+
+  // Parse all CSS and classify rules
+  const allDecls = parseCss(allCssText);
+  const { classRules } = classifyRules(allDecls);
+
+  // Track which class names are used by elements — IDs will be assigned later
+  const usedClassNames = new Set<string>();
+
+  // Classify each style tag: "all-class" (skip embed), "no-class" (keep original),
+  // "mixed" (regenerate leftover), or "empty" (skip)
+  type StyleTagAction =
+    | { type: "skip" }
+    | { type: "keep-original" }
+    | { type: "leftover"; css: string };
+
+  const styleTagActions: StyleTagAction[] = [];
+  for (const text of styleTexts) {
+    if (spaceRegex.test(text) || text.length === 0) {
+      styleTagActions.push({ type: "skip" });
+      continue;
+    }
+    const parsedDecls = parseCss(text);
+    const { classRules: tagClassRules, hasNonClassRules: tagHasNonClass } =
+      classifyRules(parsedDecls);
+
+    if (parsedDecls.length === 0 && tagClassRules.size === 0) {
+      // Unparseable CSS — keep original
+      styleTagActions.push({ type: "keep-original" });
+    } else if (tagClassRules.size === 0) {
+      // Only non-class rules — keep original
+      styleTagActions.push({ type: "keep-original" });
+    } else if (!tagHasNonClass) {
+      // Only class rules — also check for unsupported media like @media print
+      const leftover = buildLeftoverCss(text);
+      if (leftover.length > 0) {
+        styleTagActions.push({ type: "leftover", css: leftover });
+      } else {
+        styleTagActions.push({ type: "skip" });
+      }
+    } else {
+      // Mixed — regenerate leftover
+      const leftover = buildLeftoverCss(text);
+      if (leftover.length > 0) {
+        styleTagActions.push({ type: "leftover", css: leftover });
+      } else {
+        styleTagActions.push({ type: "skip" });
+      }
+    }
+  }
+
+  let styleTagIndex = 0;
+
+  // Map of instanceId → resolved class names (for post-processing token assignments)
+  const instanceTokenClasses = new Map<string, string[]>();
+
   const convertElementToInstance = (node: ElementNode) => {
-    if (
-      (node.tagName === "script" || node.tagName === "style") &&
-      node.sourceCodeLocation
-    ) {
+    if (node.tagName === "script" && node.sourceCodeLocation) {
       const { startCol, startOffset, endOffset } = node.sourceCodeLocation;
       const indent = startCol - 1;
       const htmlFragment = html
         .slice(startOffset, endOffset)
-        // try to preserve indentation
         .split("\n")
         .map((line, index) => {
           if (index > 0 && /^\s+$/.test(line.slice(0, indent))) {
@@ -136,19 +500,17 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
         type: "instance",
         id: getNewId(),
         component: "HtmlEmbed",
-        label: capitalCase(node.tagName),
+        label: "Script",
         children: [],
       };
       instances.set(instance.id, instance);
-      if (node.tagName === "script") {
-        props.push({
-          id: `${instance.id}:clientOnly`,
-          instanceId: instance.id,
-          name: "clientOnly",
-          type: "boolean",
-          value: true,
-        });
-      }
+      props.push({
+        id: `${instance.id}:clientOnly`,
+        instanceId: instance.id,
+        name: "clientOnly",
+        type: "boolean",
+        value: true,
+      });
       props.push({
         id: `${instance.id}:code`,
         instanceId: instance.id,
@@ -157,6 +519,64 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
         value: htmlFragment,
       });
       return { type: "id" as const, value: instance.id };
+    }
+    if (node.tagName === "style" && node.sourceCodeLocation) {
+      const tagIdx = styleTagIndex++;
+      const action = styleTagActions[tagIdx] ?? { type: "skip" };
+
+      if (action.type === "keep-original") {
+        // Preserve original formatting — use original HTML fragment
+        const { startCol, startOffset, endOffset } = node.sourceCodeLocation;
+        const indent = startCol - 1;
+        const htmlFragment = html
+          .slice(startOffset, endOffset)
+          .split("\n")
+          .map((line, index) => {
+            if (index > 0 && /^\s+$/.test(line.slice(0, indent))) {
+              return line.slice(indent);
+            }
+            return line;
+          })
+          .join("\n");
+        const instance: Instance = {
+          type: "instance",
+          id: getNewId(),
+          component: "HtmlEmbed",
+          label: "Style",
+          children: [],
+        };
+        instances.set(instance.id, instance);
+        props.push({
+          id: `${instance.id}:code`,
+          instanceId: instance.id,
+          name: "code",
+          type: "string",
+          value: htmlFragment,
+        });
+        return { type: "id" as const, value: instance.id };
+      }
+
+      if (action.type === "leftover") {
+        const instance: Instance = {
+          type: "instance",
+          id: getNewId(),
+          component: "HtmlEmbed",
+          label: "Style",
+          children: [],
+        };
+        instances.set(instance.id, instance);
+        props.push({
+          id: `${instance.id}:code`,
+          instanceId: instance.id,
+          name: "code",
+          type: "string",
+          value: `<style>${action.css}</style>`,
+        });
+        return { type: "id" as const, value: instance.id };
+      }
+
+      // action.type === "skip" — all rules were class rules (or empty)
+      return undefined;
     }
     if (!tags.includes(node.tagName)) {
       return;
@@ -191,6 +611,36 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
       // ignore style attribute to not conflict with react
       if (attr.name === "style") {
         createLocalStyles(instanceId, attr.value);
+        continue;
+      }
+      // resolve class attribute against class rules from style tags
+      if (attr.name === "class" && classRules.size > 0) {
+        const classNames = attr.value.split(/\s+/).filter(Boolean);
+        const resolvedClasses: string[] = [];
+        const unresolvedClasses: string[] = [];
+        for (const className of classNames) {
+          if (classRules.has(className)) {
+            resolvedClasses.push(className);
+            usedClassNames.add(className);
+          } else {
+            unresolvedClasses.push(className);
+          }
+        }
+        // Token style source selections will be created after all instances
+        if (resolvedClasses.length > 0) {
+          // Store the resolved class names for post-processing
+          instanceTokenClasses.set(instanceId, resolvedClasses);
+        }
+        // Keep unresolved class names as class prop
+        if (unresolvedClasses.length > 0) {
+          props.push({
+            id,
+            instanceId,
+            name: "class",
+            type: "string",
+            value: unresolvedClasses.join(" "),
+          });
+        }
         continue;
       }
       // selected option is represented as fake value attribute on select element
@@ -317,10 +767,6 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
     return { type: "id" as const, value: instance.id };
   };
 
-  const documentFragment = parseFragment(html, {
-    scriptingEnabled: false,
-    sourceCodeLocationInfo: true,
-  });
   const children: Instance["children"] = [];
   for (const childNode of documentFragment.childNodes) {
     if (defaultTreeAdapter.isElementNode(childNode)) {
@@ -330,6 +776,96 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
       }
     }
   }
+
+  // ---- Post-processing: create token style sources and styles ----
+  // Now that all instances have been created and IDs assigned,
+  // create token style sources (using the shared getNewId counter)
+  // in the order that matches template rendering (instances first, then tokens)
+
+  const tokenIdMap = new Map<string, string>(); // className → styleSourceId
+
+  for (const className of usedClassNames) {
+    const styleSourceId = getNewId();
+    tokenIdMap.set(className, styleSourceId);
+    styleSources.push({
+      type: "token",
+      id: styleSourceId,
+      name: className,
+    });
+
+    const decls = classRules.get(className);
+    if (decls) {
+      for (const decl of decls) {
+        let breakpointId: string;
+        if (decl.breakpoint) {
+          const parsed = parseMediaQuery(decl.breakpoint);
+          if (parsed === undefined) {
+            continue;
+          }
+          const hasWidth =
+            parsed.minWidth !== undefined || parsed.maxWidth !== undefined;
+          const hasCondition = parsed.condition !== undefined;
+          if (hasCondition) {
+            const conditionParts: string[] = [];
+            if (parsed.minWidth !== undefined) {
+              conditionParts.push(`min-width:${parsed.minWidth}px`);
+            }
+            if (parsed.maxWidth !== undefined) {
+              conditionParts.push(`max-width:${parsed.maxWidth}px`);
+            }
+            conditionParts.push(parsed.condition);
+            breakpointId = getOrCreateBreakpoint({
+              condition: conditionParts.join(" and "),
+            });
+          } else if (hasWidth) {
+            breakpointId = getOrCreateBreakpoint({
+              ...(parsed.minWidth !== undefined
+                ? { minWidth: parsed.minWidth }
+                : {}),
+              ...(parsed.maxWidth !== undefined
+                ? { maxWidth: parsed.maxWidth }
+                : {}),
+            });
+          } else {
+            continue;
+          }
+        } else {
+          breakpointId = getBaseBreakpointId();
+        }
+        styles.push({
+          styleSourceId,
+          breakpointId,
+          property: camelCaseProperty(decl.property),
+          value: decl.value,
+          ...(decl.state ? { state: decl.state } : {}),
+        });
+      }
+    }
+  }
+
+  // Create style source selections for instances that use tokens
+  for (const [instanceId, classNames] of instanceTokenClasses) {
+    const tokenIds = classNames
+      .map((name) => tokenIdMap.get(name))
+      .filter((id): id is string => id !== undefined);
+    if (tokenIds.length > 0) {
+      const existingSelection = styleSourceSelections.find(
+        (sel) => sel.instanceId === instanceId
+      );
+      if (existingSelection) {
+        existingSelection.values.push(...tokenIds);
+      } else {
+        styleSourceSelections.push({
+          instanceId,
+          values: [...tokenIds],
+        });
+      }
+    }
+  }
+
+  // Resolve overlapping breakpoints
+  resolveOverlappingBreakpoints(breakpoints);
+
   return {
     children,
     instances: Array.from(instances.values()),
