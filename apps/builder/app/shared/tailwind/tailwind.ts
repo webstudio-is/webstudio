@@ -154,6 +154,7 @@ const adaptBreakpoints = (
       : undefined;
     // Skip condition-only breakpoints (e.g. dark mode prefers-color-scheme)
     // and combined min+max width breakpoints (e.g. md:max-xl:)
+    // @todo support composite breakpoints by splitting into range-based breakpoints
     if (mediaQuery?.condition !== undefined) {
       continue;
     }

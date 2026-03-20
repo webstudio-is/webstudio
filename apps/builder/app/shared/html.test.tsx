@@ -2133,34 +2133,44 @@ describe("style tag to tokens", () => {
   });
 
   describe("selector edge cases", () => {
-    test("class with compound selector .card.active is not extracted", () => {
+    test("class with compound selector .card.active is extracted as combo token", () => {
       const fragment = generateFragmentFromHtml(`
         <style>
           .card.active { opacity: 1; }
         </style>
         <div class="card active">Hello</div>
       `);
-      // compound selectors should not become tokens
-      expect(
-        fragment.styleSources.filter((s) => s.type === "token")
-      ).toHaveLength(0);
+      // compound selectors become combo tokens (Webflow-style naming)
+      const tokenSource = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "card.active"
+      );
+      expect(tokenSource).toBeDefined();
+      // no leftover for pure class rule
       expect(fragment.instances.some((i) => i.component === "HtmlEmbed")).toBe(
-        true
+        false
       );
     });
 
-    test("class with attribute selector .btn[disabled] is not extracted", () => {
+    test("class with attribute selector .btn[disabled] is extracted with state", () => {
       const fragment = generateFragmentFromHtml(`
         <style>
           .btn[disabled] { opacity: 0.5; }
         </style>
         <button class="btn" disabled>Click</button>
       `);
-      expect(
-        fragment.styleSources.filter((s) => s.type === "token")
-      ).toHaveLength(0);
+      const tokenSource = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "btn"
+      );
+      expect(tokenSource).toBeDefined();
+      // the style should have [disabled] state
+      const style = fragment.styles.find(
+        (s) => s.styleSourceId === tokenSource!.id
+      );
+      expect(style).toBeDefined();
+      expect(style!.state).toBe("[disabled]");
+      // no leftover
       expect(fragment.instances.some((i) => i.component === "HtmlEmbed")).toBe(
-        true
+        false
       );
     });
 
@@ -2223,6 +2233,285 @@ describe("style tag to tokens", () => {
       expect(fragment.instances.some((i) => i.component === "HtmlEmbed")).toBe(
         true
       );
+    });
+  });
+
+  describe("compound class selectors", () => {
+    test("compound .card.active extracts as combo token when element has both classes", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .card { display: flex; }
+          .card.active { opacity: 1; }
+        </style>
+        <div class="card active">Hello</div>
+      `);
+      const cardToken = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "card"
+      );
+      const comboToken = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "card.active"
+      );
+      expect(cardToken).toBeDefined();
+      expect(comboToken).toBeDefined();
+      // instance should reference both tokens
+      const sel = fragment.styleSourceSelections.find(
+        (s) =>
+          s.values.includes(cardToken!.id) && s.values.includes(comboToken!.id)
+      );
+      expect(sel).toBeDefined();
+    });
+
+    test("compound .a.b.c extracts as triple combo token", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .a.b.c { color: red; }
+        </style>
+        <div class="a b c">Hello</div>
+      `);
+      const comboToken = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "a.b.c"
+      );
+      expect(comboToken).toBeDefined();
+      const style = fragment.styles.find(
+        (s) => s.styleSourceId === comboToken!.id && s.property === "color"
+      );
+      expect(style).toBeDefined();
+    });
+
+    test("compound class not matched when element is missing a class", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .card.active { opacity: 1; }
+        </style>
+        <div class="card">Hello</div>
+      `);
+      // token is created (class rule exists) but not assigned to instance
+      const comboToken = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "card.active"
+      );
+      // Token should NOT be created because the class is never used
+      expect(comboToken).toBeUndefined();
+    });
+
+    test("compound class with :hover pseudo extracts correctly", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .btn.primary:hover { background: blue; }
+        </style>
+        <button class="btn primary">Click</button>
+      `);
+      const comboToken = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "btn.primary"
+      );
+      expect(comboToken).toBeDefined();
+      const style = fragment.styles.find(
+        (s) => s.styleSourceId === comboToken!.id
+      );
+      expect(style).toBeDefined();
+      expect(style!.state).toBe(":hover");
+    });
+
+    test("compound class inside @media query creates breakpoint style", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .card.featured { display: block; }
+          @media (min-width: 768px) {
+            .card.featured { display: flex; }
+          }
+        </style>
+        <div class="card featured">Hello</div>
+      `);
+      const comboToken = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "card.featured"
+      );
+      expect(comboToken).toBeDefined();
+      // Should have both base and breakpoint styles
+      const comboStyles = fragment.styles.filter(
+        (s) => s.styleSourceId === comboToken!.id
+      );
+      expect(comboStyles.length).toBe(2);
+      const bpIds = new Set(comboStyles.map((s) => s.breakpointId));
+      expect(bpIds.size).toBe(2);
+    });
+  });
+
+  describe("attribute selectors as state", () => {
+    test(".btn[disabled] extracts with [disabled] state", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .btn { padding: 8px; }
+          .btn[disabled] { opacity: 0.5; }
+        </style>
+        <button class="btn" disabled>Click</button>
+      `);
+      const btnToken = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "btn"
+      );
+      expect(btnToken).toBeDefined();
+      const baseStyle = fragment.styles.find(
+        (s) => s.styleSourceId === btnToken!.id && s.state === undefined
+      );
+      expect(baseStyle).toBeDefined();
+      expect(baseStyle!.property).toBe("paddingTop");
+      const stateStyle = fragment.styles.find(
+        (s) => s.styleSourceId === btnToken!.id && s.state === "[disabled]"
+      );
+      expect(stateStyle).toBeDefined();
+      expect(stateStyle!.property).toBe("opacity");
+    });
+
+    test(".input[readonly] extracts with [readonly] state", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .input[readonly] { background: #eee; }
+        </style>
+        <input class="input" readonly>
+      `);
+      const inputToken = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "input"
+      );
+      expect(inputToken).toBeDefined();
+      const stateStyle = fragment.styles.find(
+        (s) => s.styleSourceId === inputToken!.id && s.state === "[readonly]"
+      );
+      expect(stateStyle).toBeDefined();
+    });
+
+    test("attribute selector combined with pseudo keeps pseudo state", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .btn:hover { color: blue; }
+          .btn[disabled] { opacity: 0.5; }
+        </style>
+        <button class="btn" disabled>Click</button>
+      `);
+      const btnToken = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "btn"
+      );
+      expect(btnToken).toBeDefined();
+      const hoverStyle = fragment.styles.find(
+        (s) => s.styleSourceId === btnToken!.id && s.state === ":hover"
+      );
+      expect(hoverStyle).toBeDefined();
+      const disabledStyle = fragment.styles.find(
+        (s) => s.styleSourceId === btnToken!.id && s.state === "[disabled]"
+      );
+      expect(disabledStyle).toBeDefined();
+    });
+  });
+
+  describe("mixed comma selectors (partial extraction)", () => {
+    test(".card, div {} extracts .card token, keeps div in leftover", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .card, div { display: flex; }
+        </style>
+        <div class="card">Hello</div>
+      `);
+      const cardToken = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "card"
+      );
+      expect(cardToken).toBeDefined();
+      // div part should stay as html embed
+      const htmlEmbed = fragment.instances.find(
+        (i) => i.component === "HtmlEmbed"
+      );
+      expect(htmlEmbed).toBeDefined();
+      const codeProp = fragment.props.find(
+        (p) => p.instanceId === htmlEmbed!.id && p.name === "code"
+      );
+      expect(codeProp).toBeDefined();
+      // The leftover should only contain the div selector, not .card
+      expect((codeProp as any).value).toContain("div");
+      expect((codeProp as any).value).not.toMatch(/\.card/);
+    });
+
+    test(".a, .b, #id {} extracts .a and .b, keeps #id in leftover", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .a, .b, #id { color: red; }
+        </style>
+        <div class="a">A</div>
+        <div class="b">B</div>
+      `);
+      const tokenA = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "a"
+      );
+      const tokenB = fragment.styleSources.find(
+        (s) => s.type === "token" && s.name === "b"
+      );
+      expect(tokenA).toBeDefined();
+      expect(tokenB).toBeDefined();
+      // #id should stay in embed
+      const htmlEmbed = fragment.instances.find(
+        (i) => i.component === "HtmlEmbed"
+      );
+      expect(htmlEmbed).toBeDefined();
+    });
+
+    test(".a, .b {} with all class selectors produces no leftover", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          .a, .b { padding: 4px; }
+        </style>
+        <div class="a">A</div>
+        <div class="b">B</div>
+      `);
+      // Both should become tokens
+      expect(
+        fragment.styleSources.filter((s) => s.type === "token")
+      ).toHaveLength(2);
+      // No leftover embed
+      expect(fragment.instances.some((i) => i.component === "HtmlEmbed")).toBe(
+        false
+      );
+    });
+  });
+
+  describe("breakpoint labels", () => {
+    test("condition breakpoint gets human-readable label", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          @media (prefers-color-scheme: dark) {
+            .card { background: black; }
+          }
+        </style>
+        <div class="card">Hello</div>
+      `);
+      const condBp = fragment.breakpoints.find((b) => b.condition);
+      expect(condBp).toBeDefined();
+      // capitalCase transforms "prefers-color-scheme:dark" → "Prefers Color Scheme Dark"
+      expect(condBp!.label).toBe("Prefers Color Scheme Dark");
+    });
+
+    test("width breakpoint gets readable label", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          @media (min-width: 768px) {
+            .card { display: flex; }
+          }
+        </style>
+        <div class="card">Hello</div>
+      `);
+      const bp = fragment.breakpoints.find((b) => b.minWidth === 768);
+      expect(bp).toBeDefined();
+      expect(bp!.label).toBe("≥ 768px");
+    });
+
+    test("range breakpoint gets combined label", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          @media (min-width: 768px) and (max-width: 1024px) {
+            .card { display: flex; }
+          }
+        </style>
+        <div class="card">Hello</div>
+      `);
+      const bp = fragment.breakpoints.find(
+        (b) => b.minWidth === 768 && b.maxWidth === 1024
+      );
+      expect(bp).toBeDefined();
+      expect(bp!.label).toBe("≥ 768px and ≤ 1024px");
     });
   });
 

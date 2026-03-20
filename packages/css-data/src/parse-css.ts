@@ -109,8 +109,6 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
   const atruleStack: csstree.Atrule[] = [];
   let currentRule: csstree.Rule | undefined;
 
-  const supportedUnits = ["px"];
-
   csstree.walk(ast, {
     enter(node) {
       if (node.type === "Atrule") {
@@ -153,6 +151,8 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
           csstree.walk(atrule.prelude, {
             enter: (node) => {
               if (node.type === "MediaQuery") {
+                // Mutates AST in-place to normalize media type for breakpoint string generation;
+                // the AST is discarded after parseCss returns so this is safe.
                 if (node.mediaType === "screen" || node.mediaType === "all") {
                   node.mediaType = null;
                 }
@@ -217,6 +217,9 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
               break;
             case "ClassSelector":
               name = `.${childNode.name}`;
+              break;
+            case "IdSelector":
+              name = `#${childNode.name}`;
               break;
             case "AttributeSelector":
               // for example &[data-state=active]
@@ -293,6 +296,97 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
   });
 
   return Array.from(styles.values());
+};
+
+export type ParsedClassSelector = {
+  /** Token name: "card" for .card, "card.active" for .card.active */
+  tokenName: string;
+  /** Individual class names: ["card"] or ["card", "active"] */
+  classNames: string[];
+  /**
+   * Non-class selector suffixes: attribute selectors, pseudo-classes, pseudo-elements.
+   * e.g. ["[disabled]"] for .btn[disabled], [":hover"] for .card:hover,
+   * ["[disabled]", ":hover"] for .btn[disabled]:hover
+   */
+  states?: string[];
+};
+
+/**
+ * Parse a selector string and determine if it's a class-based selector
+ * suitable for token extraction. Uses css-tree to handle the full CSS
+ * selector spec.
+ *
+ * A class-based selector starts with one or more ClassSelectors and may
+ * be followed by any combination of AttributeSelectors, PseudoClassSelectors,
+ * and PseudoElementSelectors. Any selector containing combinators, type
+ * selectors, ID selectors, or nesting selectors is rejected.
+ *
+ * Supported patterns:
+ *   .card                      → { tokenName: "card", classNames: ["card"] }
+ *   .card.active               → { tokenName: "card.active", classNames: ["card", "active"] }
+ *   .btn[disabled]             → { tokenName: "btn", ..., states: ["[disabled]"] }
+ *   .card:hover                → { tokenName: "card", ..., states: [":hover"] }
+ *   .card::before              → { tokenName: "card", ..., states: ["::before"] }
+ *   .card:nth-child(2n+1)      → { tokenName: "card", ..., states: [":nth-child(2n+1)"] }
+ *   .btn[disabled]:hover       → { tokenName: "btn", ..., states: ["[disabled]", ":hover"] }
+ *   .card.active[open]:hover   → { tokenName: "card.active", ..., states: ["[open]", ":hover"] }
+ *
+ * Returns undefined for non-class selectors (element, id, descendant, combinators, etc.)
+ */
+export const parseClassBasedSelector = (
+  selector: string
+): ParsedClassSelector | undefined => {
+  let ast: csstree.CssNode;
+  try {
+    ast = csstree.parse(selector, { context: "selector" });
+  } catch {
+    return undefined;
+  }
+
+  if (ast.type !== "Selector") {
+    return undefined;
+  }
+
+  const children = ast.children.toArray();
+  if (children.length === 0) {
+    return undefined;
+  }
+
+  // First node must be a ClassSelector
+  if (children[0].type !== "ClassSelector") {
+    return undefined;
+  }
+
+  const classNames: string[] = [];
+  const states: string[] = [];
+
+  for (const child of children) {
+    switch (child.type) {
+      case "ClassSelector":
+        classNames.push(child.name);
+        break;
+      case "AttributeSelector":
+      case "PseudoClassSelector":
+      case "PseudoElementSelector":
+        states.push(csstree.generate(child));
+        break;
+      // Reject combinators, type selectors, id selectors, nesting, etc.
+      default:
+        return undefined;
+    }
+  }
+
+  if (classNames.length === 0) {
+    return undefined;
+  }
+
+  const tokenName =
+    classNames.length === 1 ? classNames[0] : classNames.join(".");
+  return {
+    tokenName,
+    classNames,
+    ...(states.length > 0 ? { states } : {}),
+  };
 };
 
 type ParsedBreakpoint = {

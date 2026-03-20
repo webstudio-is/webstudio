@@ -18,6 +18,7 @@ import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
 import {
   camelCaseProperty,
   parseCss,
+  parseClassBasedSelector,
   parseMediaQuery,
   type ParsedStyleDecl,
 } from "@webstudio-is/css-data";
@@ -80,26 +81,6 @@ const findContentTags = (element: ElementNode, tags = new Set<string>()) => {
 };
 
 /**
- * Check if a parsed selector is a simple class selector like `.card`
- * (not compound like `.card.active`, not descendant like `.card .inner`)
- */
-const isSimpleClassSelector = (selector: string): string | undefined => {
-  // Must start with . and contain only one class
-  if (!selector.startsWith(".")) {
-    return undefined;
-  }
-  const className = selector.slice(1);
-  // No spaces (descendant), no dots (compound), no combinators, no brackets
-  if (/[\s.>+~[\]#:]/.test(className)) {
-    return undefined;
-  }
-  if (className.length === 0) {
-    return undefined;
-  }
-  return className;
-};
-
-/**
  * Collect all text content from <style> elements in the parsed HTML tree
  */
 const collectStyleTexts = (
@@ -129,7 +110,11 @@ const collectStyleTexts = (
 
 /**
  * From a list of parsed style declarations, determine which selectors are
- * simple class selectors (extractable as tokens) and which are not.
+ * class-based selectors (extractable as tokens) and which are not.
+ *
+ * When the selector contains non-class suffixes (attribute selectors like
+ * [disabled], pseudo-classes, etc.) that parseCss didn't separate into the
+ * state field, they are merged into the decl's state.
  */
 const classifyRules = (
   decls: ParsedStyleDecl[]
@@ -141,14 +126,22 @@ const classifyRules = (
   let hasNonClassRules = false;
 
   for (const decl of decls) {
-    const className = isSimpleClassSelector(decl.selector);
-    if (className !== undefined) {
-      let rules = classRules.get(className);
+    const parsed = parseClassBasedSelector(decl.selector);
+    if (parsed !== undefined) {
+      // If the selector had embedded states (e.g. [disabled]) that parseCss
+      // didn't separate, merge the first one into the state field.
+      // parseCss already extracts pseudo-classes/elements into decl.state,
+      // so parsed.states typically contains only attribute selectors.
+      const selectorState = parsed.states?.[0];
+      const effectiveDecl = selectorState
+        ? { ...decl, state: decl.state ?? selectorState }
+        : decl;
+      let rules = classRules.get(parsed.tokenName);
       if (!rules) {
         rules = [];
-        classRules.set(className, rules);
+        classRules.set(parsed.tokenName, rules);
       }
-      rules.push(decl);
+      rules.push(effectiveDecl);
     } else {
       hasNonClassRules = true;
     }
@@ -158,56 +151,54 @@ const classifyRules = (
 
 /**
  * Build the leftover CSS (non-class rules) from the original style text.
- * We re-parse and filter rather than reconstructing, to preserve original formatting
- * for non-class at-rules like @keyframes, @font-face.
- *
- * For simplicity, we re-generate from parseCss output and the original CSS text.
- * We use a heuristic: parse with css-tree and walk top-level rules to classify them.
+ * We re-parse with css-tree and walk rules to classify them:
+ * - Class-based selectors (simple and compound) are removed (extracted as tokens)
+ * - Non-class selectors are kept as leftover
+ * - For mixed comma-separated selectors (.card, div {}), only the non-class
+ *   portions are kept
  */
 const buildLeftoverCss = (cssText: string): string => {
   const ast = csstree.parse(cssText);
   const parts: string[] = [];
 
-  const isSimpleClassRule = (
-    selectorList: csstree.SelectorList | csstree.Raw
-  ): boolean => {
-    // Check if ALL selectors in this rule are simple class selectors
-    if (selectorList?.type !== "SelectorList") {
-      return false;
+  /** Re-use parseClassBasedSelector as single source of truth */
+  const isClassBasedSelector = (selector: csstree.CssNode): boolean =>
+    selector.type === "Selector" &&
+    parseClassBasedSelector(csstree.generate(selector)) !== undefined;
+
+  /**
+   * Process a Rule: if all selectors are class-based, skip entirely.
+   * If none are, keep entirely. If mixed, keep only non-class selectors.
+   */
+  const getLeftoverRule = (node: csstree.Rule): string | undefined => {
+    if (node.prelude?.type !== "SelectorList") {
+      return csstree.generate(node);
     }
-    for (const selector of selectorList.children) {
-      if (selector.type !== "Selector") {
-        return false;
-      }
-      const children = selector.children.toArray();
-      // Check: exactly one ClassSelector, possibly followed by pseudo
-      if (children.length === 0) {
-        return false;
-      }
-      const first = children[0];
-      if (first.type !== "ClassSelector") {
-        return false;
-      }
-      // If there are more nodes, they must all be pseudo-class or pseudo-element
-      for (let i = 1; i < children.length; i++) {
-        const child = children[i];
-        if (
-          child.type !== "PseudoClassSelector" &&
-          child.type !== "PseudoElementSelector"
-        ) {
-          return false;
-        }
-      }
+    const selectors = node.prelude.children.toArray();
+    const nonClassSelectors = selectors.filter(
+      (sel) => !isClassBasedSelector(sel)
+    );
+    if (nonClassSelectors.length === selectors.length) {
+      // No class selectors found — keep entire rule
+      return csstree.generate(node);
     }
-    return true;
+    if (nonClassSelectors.length === 0) {
+      // All selectors are class-based — skip entirely
+      return undefined;
+    }
+    // Mixed: rebuild rule with only non-class selectors
+    const selectorStrs = nonClassSelectors.map((sel) => csstree.generate(sel));
+    const body = node.block ? csstree.generate(node.block) : "{}";
+    return `${selectorStrs.join(",")}${body}`;
   };
 
   // Walk only top-level children of the stylesheet
   if (ast.type === "StyleSheet") {
     for (const node of ast.children) {
       if (node.type === "Rule") {
-        if (!isSimpleClassRule(node.prelude)) {
-          parts.push(csstree.generate(node));
+        const leftover = getLeftoverRule(node);
+        if (leftover) {
+          parts.push(leftover);
         }
       } else if (node.type === "Atrule") {
         if (node.name === "media") {
@@ -232,14 +223,15 @@ const buildLeftoverCss = (cssText: string): string => {
             if (node.block) {
               for (const child of node.block.children) {
                 if (child.type === "Rule") {
-                  if (!isSimpleClassRule(child.prelude)) {
-                    leftoverRules.push(csstree.generate(child));
+                  const leftover = getLeftoverRule(child);
+                  if (leftover) {
+                    leftoverRules.push(leftover);
                   }
                 } else if (child.type === "Atrule") {
                   // Nested at-rule within @media — keep if it contains non-class rules
                   const nestedLeftover = collectNonClassFromAtrule(
                     child,
-                    isSimpleClassRule
+                    getLeftoverRule
                   );
                   if (nestedLeftover) {
                     leftoverRules.push(nestedLeftover);
@@ -266,17 +258,30 @@ const buildLeftoverCss = (cssText: string): string => {
 
 function collectNonClassFromAtrule(
   node: csstree.Atrule,
-  isSimpleClassRule: (sel: csstree.SelectorList | csstree.Raw) => boolean
+  getLeftoverRule: (rule: csstree.Rule) => string | undefined
 ): string | undefined {
   if (node.name === "media" && node.block) {
+    // Check if this nested @media is unsupported (e.g. print)
+    let isUnsupportedMedia = false;
+    if (node.prelude) {
+      csstree.walk(node.prelude, (walkNode) => {
+        if (walkNode.type === "MediaQuery" && walkNode.mediaType === "print") {
+          isUnsupportedMedia = true;
+        }
+      });
+    }
+    if (isUnsupportedMedia) {
+      return csstree.generate(node);
+    }
     const leftoverRules: string[] = [];
     for (const child of node.block.children) {
       if (child.type === "Rule") {
-        if (!isSimpleClassRule(child.prelude)) {
-          leftoverRules.push(csstree.generate(child));
+        const leftover = getLeftoverRule(child);
+        if (leftover) {
+          leftoverRules.push(leftover);
         }
       } else if (child.type === "Atrule") {
-        const nested = collectNonClassFromAtrule(child, isSimpleClassRule);
+        const nested = collectNonClassFromAtrule(child, getLeftoverRule);
         if (nested) {
           leftoverRules.push(nested);
         }
@@ -392,8 +397,20 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
     let bp = breakpointByKey.get(key);
     if (!bp) {
       const id = getNewBreakpointId();
-      const label =
-        parsed.condition ?? `${parsed.minWidth ?? parsed.maxWidth ?? ""}`;
+      let label: string;
+      if (parsed.condition) {
+        // e.g. "prefers-color-scheme:dark" → "Prefers Color Scheme Dark"
+        label = capitalCase(parsed.condition);
+      } else {
+        const parts: string[] = [];
+        if (parsed.minWidth !== undefined) {
+          parts.push(`≥ ${parsed.minWidth}px`);
+        }
+        if (parsed.maxWidth !== undefined) {
+          parts.push(`≤ ${parsed.maxWidth}px`);
+        }
+        label = parts.join(" and ");
+      }
       bp = { id, label, ...parsed };
       breakpointByKey.set(key, bp);
       breakpoints.push(bp);
@@ -616,20 +633,41 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
       // resolve class attribute against class rules from style tags
       if (attr.name === "class" && classRules.size > 0) {
         const classNames = attr.value.split(/\s+/).filter(Boolean);
-        const resolvedClasses: string[] = [];
+        const resolvedTokenNames: string[] = [];
         const unresolvedClasses: string[] = [];
+
+        // First: match individual class names as simple tokens
         for (const className of classNames) {
           if (classRules.has(className)) {
-            resolvedClasses.push(className);
+            resolvedTokenNames.push(className);
             usedClassNames.add(className);
           } else {
             unresolvedClasses.push(className);
           }
         }
+
+        // Second: match compound class combinations (e.g., class="card active"
+        // matches token "card.active" from .card.active {} selector)
+        if (classNames.length >= 2) {
+          const classSet = new Set(classNames);
+          for (const tokenName of classRules.keys()) {
+            if (!tokenName.includes(".")) {
+              continue;
+            }
+            const parts = tokenName.split(".");
+            if (parts.every((part) => classSet.has(part))) {
+              resolvedTokenNames.push(tokenName);
+              usedClassNames.add(tokenName);
+              // Remove individual classes from unresolved that are part of this combo
+              // (they're covered by the combo token)
+            }
+          }
+        }
+
         // Token style source selections will be created after all instances
-        if (resolvedClasses.length > 0) {
-          // Store the resolved class names for post-processing
-          instanceTokenClasses.set(instanceId, resolvedClasses);
+        if (resolvedTokenNames.length > 0) {
+          // Store the resolved token names for post-processing
+          instanceTokenClasses.set(instanceId, resolvedTokenNames);
         }
         // Keep unresolved class names as class prop
         if (unresolvedClasses.length > 0) {
@@ -844,21 +882,24 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
   }
 
   // Create style source selections for instances that use tokens
+  const selectionsByInstance = new Map(
+    styleSourceSelections.map((sel) => [sel.instanceId, sel])
+  );
   for (const [instanceId, classNames] of instanceTokenClasses) {
     const tokenIds = classNames
       .map((name) => tokenIdMap.get(name))
       .filter((id): id is string => id !== undefined);
     if (tokenIds.length > 0) {
-      const existingSelection = styleSourceSelections.find(
-        (sel) => sel.instanceId === instanceId
-      );
+      const existingSelection = selectionsByInstance.get(instanceId);
       if (existingSelection) {
         existingSelection.values.push(...tokenIds);
       } else {
-        styleSourceSelections.push({
+        const newSelection: StyleSourceSelection = {
           instanceId,
           values: [...tokenIds],
-        });
+        };
+        styleSourceSelections.push(newSelection);
+        selectionsByInstance.set(instanceId, newSelection);
       }
     }
   }
