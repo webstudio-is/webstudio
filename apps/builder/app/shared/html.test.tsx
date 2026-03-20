@@ -838,13 +838,26 @@ describe("style tag to tokens", () => {
       </style>
       <div class="used">Hello</div>
     `);
-    // only the used class should become a token
+    // all class rules become tokens, even if not referenced by elements
     const tokenNames = fragment.styleSources
       .filter((s) => s.type === "token")
       .map((s) => (s as { name: string }).name);
     expect(tokenNames).toContain("used");
-    expect(tokenNames).not.toContain("unused");
-    // no HtmlEmbed since all rules are class rules (even if unused)
+    expect(tokenNames).toContain("unused");
+    // only "used" is assigned to the instance
+    const divInstance = fragment.instances.find((i) => i.tag === "div");
+    const sel = fragment.styleSourceSelections.find(
+      (s) => s.instanceId === divInstance?.id
+    );
+    const usedToken = fragment.styleSources.find(
+      (s) => s.type === "token" && s.name === "used"
+    );
+    const unusedToken = fragment.styleSources.find(
+      (s) => s.type === "token" && s.name === "unused"
+    );
+    expect(sel?.values).toContain(usedToken?.id);
+    expect(sel?.values).not.toContain(unusedToken?.id);
+    // no HtmlEmbed since all rules are class rules
     expect(fragment.instances.some((i) => i.component === "HtmlEmbed")).toBe(
       false
     );
@@ -1011,6 +1024,99 @@ describe("style tag to tokens", () => {
         </ws.element>
       )
     );
+  });
+
+  test("create tokens from style-only paste without HTML elements", () => {
+    const result = generateFragmentFromHtml(`
+      <style>.card { display: flex; padding: 16px; }</style>
+    `);
+    expect(result.children).toEqual([]);
+    expect(result.instances).toEqual([]);
+    expect(result.styleSources).toEqual([
+      { type: "token", id: expect.any(String), name: "card" },
+    ]);
+    expect(result.styles).toEqual([
+      {
+        styleSourceId: result.styleSources[0].id,
+        breakpointId: expect.any(String),
+        property: "display",
+        value: { type: "keyword", value: "flex" },
+      },
+      {
+        styleSourceId: result.styleSources[0].id,
+        breakpointId: expect.any(String),
+        property: "paddingTop",
+        value: { type: "unit", unit: "px", value: 16 },
+      },
+      {
+        styleSourceId: result.styleSources[0].id,
+        breakpointId: expect.any(String),
+        property: "paddingRight",
+        value: { type: "unit", unit: "px", value: 16 },
+      },
+      {
+        styleSourceId: result.styleSources[0].id,
+        breakpointId: expect.any(String),
+        property: "paddingBottom",
+        value: { type: "unit", unit: "px", value: 16 },
+      },
+      {
+        styleSourceId: result.styleSources[0].id,
+        breakpointId: expect.any(String),
+        property: "paddingLeft",
+        value: { type: "unit", unit: "px", value: 16 },
+      },
+    ]);
+    expect(result.styleSourceSelections).toEqual([]);
+  });
+
+  test("create multiple tokens from style-only paste", () => {
+    const result = generateFragmentFromHtml(`
+      <style>
+        .card { display: flex; }
+        .title { font-weight: bold; }
+      </style>
+    `);
+    expect(result.children).toEqual([]);
+    expect(result.styleSources).toEqual([
+      { type: "token", id: expect.any(String), name: "card" },
+      { type: "token", id: expect.any(String), name: "title" },
+    ]);
+    expect(result.styles).toHaveLength(2);
+  });
+
+  test("create tokens with media queries from style-only paste", () => {
+    const result = generateFragmentFromHtml(`
+      <style>
+        .card { display: flex; }
+        @media (min-width: 768px) {
+          .card { flex-direction: row; }
+        }
+      </style>
+    `);
+    expect(result.children).toEqual([]);
+    expect(result.styleSources).toEqual([
+      { type: "token", id: expect.any(String), name: "card" },
+    ]);
+    // base style + breakpoint style
+    expect(result.styles).toHaveLength(2);
+    expect(result.breakpoints).toHaveLength(2); // base + 768px
+  });
+
+  test("style-only paste with non-class rules creates leftover embed", () => {
+    const result = generateFragmentFromHtml(`
+      <style>
+        .card { display: flex; }
+        div { color: red; }
+      </style>
+    `);
+    // card token created
+    expect(result.styleSources).toEqual([
+      { type: "token", id: expect.any(String), name: "card" },
+    ]);
+    // leftover non-class rule kept as HtmlEmbed
+    expect(result.instances).toHaveLength(1);
+    expect(result.instances[0].component).toBe("HtmlEmbed");
   });
 
   describe("media queries", () => {
@@ -2285,12 +2391,18 @@ describe("style tag to tokens", () => {
         </style>
         <div class="card">Hello</div>
       `);
-      // token is created (class rule exists) but not assigned to instance
+      // token is created for all class rules, even if not applied to elements
       const comboToken = fragment.styleSources.find(
         (s) => s.type === "token" && s.name === "card.active"
       );
-      // Token should NOT be created because the class is never used
-      expect(comboToken).toBeUndefined();
+      expect(comboToken).toBeDefined();
+      // but NOT assigned to the div (missing "active" class)
+      const divInstance = fragment.instances.find((i) => i.tag === "div");
+      const sel = fragment.styleSourceSelections.find(
+        (s) => s.instanceId === divInstance?.id
+      );
+      // No selection for this instance, or if one exists, it shouldn't contain the combo token
+      expect(sel?.values ?? []).not.toContain(comboToken?.id);
     });
 
     test("compound class with :hover pseudo extracts correctly", () => {

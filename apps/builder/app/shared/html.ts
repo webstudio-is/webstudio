@@ -820,6 +820,12 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
   // create token style sources (using the shared getNewId counter)
   // in the order that matches template rendering (instances first, then tokens)
 
+  // Ensure all class rules become tokens, even when no elements reference them
+  // (e.g. pasting just a <style> tag without HTML elements)
+  for (const className of classRules.keys()) {
+    usedClassNames.add(className);
+  }
+
   const tokenIdMap = new Map<string, string>(); // className → styleSourceId
 
   for (const className of usedClassNames) {
