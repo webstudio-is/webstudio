@@ -21,6 +21,7 @@ import {
   parseClassBasedSelector,
   parseMediaQuery,
   type ParsedStyleDecl,
+  type ParsedClassSelector,
 } from "@webstudio-is/css-data";
 import { richTextContentTags } from "./content-model";
 import { setIsSubsetOf } from "./shim";
@@ -109,44 +110,125 @@ const collectStyleTexts = (
 };
 
 /**
+ * Get class names from a parse5 element's class attribute.
+ */
+const getElementClasses = (element: ElementNode): Set<string> => {
+  const classAttr = element.attrs?.find((a) => a.name === "class");
+  if (!classAttr) {
+    return new Set();
+  }
+  return new Set(classAttr.value.split(/\s+/).filter(Boolean));
+};
+
+/**
+ * Get the parent element node, or undefined if the parent is a document/fragment.
+ */
+const getParentElementNode = (node: ElementNode): ElementNode | undefined => {
+  const parent = node.parentNode;
+  return parent && defaultTreeAdapter.isElementNode(parent)
+    ? parent
+    : undefined;
+};
+
+/**
+ * Check whether an element satisfies the ancestor constraints of a nested
+ * selector. Walks up the parse5 tree from the element checking each ancestor
+ * constraint from innermost to outermost.
+ */
+const elementMatchesAncestors = (
+  element: ElementNode,
+  ancestors: NonNullable<ParsedClassSelector["ancestors"]>
+): boolean => {
+  let current: ElementNode | undefined = getParentElementNode(element);
+
+  // Check ancestors from innermost (last in array) to outermost (first)
+  for (let i = ancestors.length - 1; i >= 0; i--) {
+    const { classNames: requiredClasses, combinator } = ancestors[i];
+    const requiredSet = new Set(requiredClasses);
+
+    if (combinator === "child") {
+      // Direct parent must match
+      if (!current) {
+        return false;
+      }
+      if (!setIsSubsetOf(requiredSet, getElementClasses(current))) {
+        return false;
+      }
+      current = getParentElementNode(current);
+    } else {
+      // "descendant" — search up the tree for any matching ancestor
+      let found = false;
+      while (current) {
+        if (setIsSubsetOf(requiredSet, getElementClasses(current))) {
+          current = getParentElementNode(current);
+          found = true;
+          break;
+        }
+        current = getParentElementNode(current);
+      }
+      if (!found) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
+
+type NestedClassRule = {
+  parsed: ParsedClassSelector;
+  decls: ParsedStyleDecl[];
+  selector: string;
+};
+
+/**
  * From a list of parsed style declarations, determine which selectors are
  * class-based selectors (extractable as tokens) and which are not.
  *
- * When the selector contains non-class suffixes (attribute selectors like
- * [disabled], pseudo-classes, etc.) that parseCss didn't separate into the
- * state field, they are merged into the decl's state.
+ * Simple class selectors go into classRules. Nested selectors (with
+ * descendant/child combinators) go into nestedClassRules for tree matching.
  */
 const classifyRules = (
   decls: ParsedStyleDecl[]
 ): {
   classRules: Map<string, ParsedStyleDecl[]>;
+  nestedClassRules: Map<string, NestedClassRule>;
   hasNonClassRules: boolean;
 } => {
   const classRules = new Map<string, ParsedStyleDecl[]>();
+  const nestedClassRules = new Map<string, NestedClassRule>();
   let hasNonClassRules = false;
 
   for (const decl of decls) {
     const parsed = parseClassBasedSelector(decl.selector);
     if (parsed !== undefined) {
-      // If the selector had embedded states (e.g. [disabled]) that parseCss
-      // didn't separate, merge the first one into the state field.
-      // parseCss already extracts pseudo-classes/elements into decl.state,
-      // so parsed.states typically contains only attribute selectors.
       const selectorState = parsed.states?.[0];
       const effectiveDecl = selectorState
         ? { ...decl, state: decl.state ?? selectorState }
         : decl;
-      let rules = classRules.get(parsed.tokenName);
-      if (!rules) {
-        rules = [];
-        classRules.set(parsed.tokenName, rules);
+
+      if (parsed.ancestors && parsed.ancestors.length > 0) {
+        // Nested selector — needs tree matching
+        let entry = nestedClassRules.get(parsed.tokenName);
+        if (!entry) {
+          entry = { parsed, decls: [], selector: decl.selector };
+          nestedClassRules.set(parsed.tokenName, entry);
+        }
+        entry.decls.push(effectiveDecl);
+      } else {
+        // Simple class selector
+        let rules = classRules.get(parsed.tokenName);
+        if (!rules) {
+          rules = [];
+          classRules.set(parsed.tokenName, rules);
+        }
+        rules.push(effectiveDecl);
       }
-      rules.push(effectiveDecl);
     } else {
       hasNonClassRules = true;
     }
   }
-  return { classRules, hasNonClassRules };
+  return { classRules, nestedClassRules, hasNonClassRules };
 };
 
 /**
@@ -357,7 +439,9 @@ const resolveOverlappingBreakpoints = (breakpoints: Breakpoint[]) => {
   }
 };
 
-export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
+export const generateFragmentFromHtml = (
+  html: string
+): WebstudioFragment & { skippedSelectors: string[] } => {
   const attributeTypes = getAttributeTypes();
   const instances = new Map<Instance["id"], Instance>();
   const styleSourceSelections: StyleSourceSelection[] = [];
@@ -447,10 +531,12 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
 
   // Parse all CSS and classify rules
   const allDecls = parseCss(allCssText);
-  const { classRules } = classifyRules(allDecls);
+  const { classRules, nestedClassRules } = classifyRules(allDecls);
 
   // Track which class names are used by elements — IDs will be assigned later
   const usedClassNames = new Set<string>();
+  // Track which nested token names were resolved against the tree
+  const usedNestedTokenNames = new Set<string>();
 
   // Classify each style tag: "all-class" (skip embed), "no-class" (keep original),
   // "mixed" (regenerate leftover), or "empty" (skip)
@@ -466,13 +552,20 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
       continue;
     }
     const parsedDecls = parseCss(text);
-    const { classRules: tagClassRules, hasNonClassRules: tagHasNonClass } =
-      classifyRules(parsedDecls);
+    const {
+      classRules: tagClassRules,
+      nestedClassRules: tagNestedRules,
+      hasNonClassRules: tagHasNonClass,
+    } = classifyRules(parsedDecls);
 
-    if (parsedDecls.length === 0 && tagClassRules.size === 0) {
+    if (
+      parsedDecls.length === 0 &&
+      tagClassRules.size === 0 &&
+      tagNestedRules.size === 0
+    ) {
       // Unparseable CSS — keep original
       styleTagActions.push({ type: "keep-original" });
-    } else if (tagClassRules.size === 0) {
+    } else if (tagClassRules.size === 0 && tagNestedRules.size === 0) {
       // Only non-class rules — keep original
       styleTagActions.push({ type: "keep-original" });
     } else if (!tagHasNonClass) {
@@ -631,7 +724,10 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
         continue;
       }
       // resolve class attribute against class rules from style tags
-      if (attr.name === "class" && classRules.size > 0) {
+      if (
+        attr.name === "class" &&
+        (classRules.size > 0 || nestedClassRules.size > 0)
+      ) {
         const classNames = attr.value.split(/\s+/).filter(Boolean);
         const resolvedTokenNames: string[] = [];
         const unresolvedClasses: string[] = [];
@@ -658,8 +754,32 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
             if (parts.every((part) => classSet.has(part))) {
               resolvedTokenNames.push(tokenName);
               usedClassNames.add(tokenName);
-              // Remove individual classes from unresolved that are part of this combo
-              // (they're covered by the combo token)
+            }
+          }
+        }
+
+        // Third: match nested class rules (e.g., .card .title)
+        if (nestedClassRules.size > 0) {
+          const classSet = new Set(classNames);
+          for (const [tokenName, { parsed }] of nestedClassRules) {
+            const targetRequired = new Set(parsed.classNames);
+            if (!setIsSubsetOf(targetRequired, classSet)) {
+              continue;
+            }
+            if (
+              parsed.ancestors &&
+              !elementMatchesAncestors(node, parsed.ancestors)
+            ) {
+              continue;
+            }
+            resolvedTokenNames.push(tokenName);
+            usedNestedTokenNames.add(tokenName);
+            // Remove matched target class names from unresolved
+            for (const cn of parsed.classNames) {
+              const idx = unresolvedClasses.indexOf(cn);
+              if (idx >= 0) {
+                unresolvedClasses.splice(idx, 1);
+              }
             }
           }
         }
@@ -820,10 +940,14 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
   // create token style sources (using the shared getNewId counter)
   // in the order that matches template rendering (instances first, then tokens)
 
-  // Ensure all class rules become tokens, even when no elements reference them
+  // Ensure all simple class rules become tokens, even when no elements reference them
   // (e.g. pasting just a <style> tag without HTML elements)
   for (const className of classRules.keys()) {
     usedClassNames.add(className);
+  }
+  // Add resolved nested tokens
+  for (const tokenName of usedNestedTokenNames) {
+    usedClassNames.add(tokenName);
   }
 
   const tokenIdMap = new Map<string, string>(); // className → styleSourceId
@@ -837,7 +961,8 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
       name: className,
     });
 
-    const decls = classRules.get(className);
+    const decls =
+      classRules.get(className) ?? nestedClassRules.get(className)?.decls;
     if (decls) {
       for (const decl of decls) {
         let breakpointId: string;
@@ -914,6 +1039,14 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
   // Resolve overlapping breakpoints
   resolveOverlappingBreakpoints(breakpoints);
 
+  // Collect skipped nested selectors (no matching elements in the pasted HTML)
+  const skippedSelectors: string[] = [];
+  for (const [tokenName, { selector }] of nestedClassRules) {
+    if (!usedNestedTokenNames.has(tokenName)) {
+      skippedSelectors.push(selector);
+    }
+  }
+
   return {
     children,
     instances: Array.from(instances.values()),
@@ -925,5 +1058,6 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
     styles,
     breakpoints,
     assets: [],
+    skippedSelectors,
   };
 };

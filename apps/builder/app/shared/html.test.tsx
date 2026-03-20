@@ -1,6 +1,13 @@
 import { expect, test, describe } from "vitest";
 import { $, css, renderTemplate, token, ws } from "@webstudio-is/template";
-import { generateFragmentFromHtml } from "./html";
+import { generateFragmentFromHtml as _generateFragmentFromHtml } from "./html";
+
+// Wrapper that strips skippedSelectors for tests that only compare fragment shape
+const generateFragmentFromHtml = (html: string) => {
+  const { skippedSelectors: _skipped, ...fragment } =
+    _generateFragmentFromHtml(html);
+  return fragment;
+};
 
 test("generate instances from html", () => {
   expect(
@@ -573,7 +580,13 @@ describe("style tag to tokens", () => {
     );
   });
 
-  test("ignore complex selectors - descendant", () => {
+  test("resolve nested selectors - descendant", () => {
+    const cardInnerToken = token(
+      "card__inner",
+      css`
+        color: red;
+      `
+    );
     expect(
       generateFragmentFromHtml(`
         <style>.card .inner { color: red; }</style>
@@ -583,33 +596,35 @@ describe("style tag to tokens", () => {
       `)
     ).toEqual(
       renderTemplate(
-        <>
-          <$.HtmlEmbed
-            ws:label="Style"
-            code={`<style>.card .inner { color: red; }</style>`}
-          />
-          <ws.element ws:tag="div" class="card">
-            <ws.element ws:tag="span" class="inner">
-              Hello
-            </ws.element>
+        <ws.element ws:tag="div" class="card">
+          <ws.element ws:tag="span" ws:tokens={[cardInnerToken]}>
+            Hello
           </ws.element>
-        </>
+        </ws.element>
       )
     );
   });
 
-  test("ignore complex selectors - child combinator", () => {
-    const fragment = generateFragmentFromHtml(`
-      <style>.parent > .child { margin: 0; }</style>
-      <div class="parent"><span class="child">Hello</span></div>
-    `);
-    // no tokens created for complex selectors
+  test("resolve nested selectors - child combinator", () => {
+    const parentChildToken = token(
+      "parent__child",
+      css`
+        margin: 0;
+      `
+    );
     expect(
-      fragment.styleSources.filter((s) => s.type === "token")
-    ).toHaveLength(0);
-    // stays as HtmlEmbed
-    expect(fragment.instances.some((i) => i.component === "HtmlEmbed")).toBe(
-      true
+      generateFragmentFromHtml(`
+        <style>.parent > .child { margin: 0; }</style>
+        <div class="parent"><span class="child">Hello</span></div>
+      `)
+    ).toEqual(
+      renderTemplate(
+        <ws.element ws:tag="div" class="parent">
+          <ws.element ws:tag="span" ws:tokens={[parentChildToken]}>
+            Hello
+          </ws.element>
+        </ws.element>
+      )
     );
   });
 
@@ -2786,6 +2801,149 @@ describe("style tag to tokens", () => {
         sel.values.includes(linkToken!.id)
       );
       expect(linkSelections).toHaveLength(2);
+    });
+  });
+
+  describe("nested selectors", () => {
+    test("resolve descendant selector to matching element", () => {
+      const cardInnerToken = token(
+        "card__inner",
+        css`
+          color: red;
+        `
+      );
+      expect(
+        generateFragmentFromHtml(`
+          <style>.card .inner { color: red; }</style>
+          <div class="card"><span class="inner">Hello</span></div>
+        `)
+      ).toEqual(
+        renderTemplate(
+          <ws.element ws:tag="div" class="card">
+            <ws.element ws:tag="span" ws:tokens={[cardInnerToken]}>
+              Hello
+            </ws.element>
+          </ws.element>
+        )
+      );
+    });
+
+    test("resolve child combinator to direct child", () => {
+      const parentChildToken = token(
+        "parent__child",
+        css`
+          margin: 0;
+        `
+      );
+      expect(
+        generateFragmentFromHtml(`
+          <style>.parent > .child { margin: 0; }</style>
+          <div class="parent"><span class="child">Hello</span></div>
+        `)
+      ).toEqual(
+        renderTemplate(
+          <ws.element ws:tag="div" class="parent">
+            <ws.element ws:tag="span" ws:tokens={[parentChildToken]}>
+              Hello
+            </ws.element>
+          </ws.element>
+        )
+      );
+    });
+
+    test("child combinator does not match non-direct child", () => {
+      const result = _generateFragmentFromHtml(`
+        <style>.parent > .child { color: red; }</style>
+        <div class="parent"><div><span class="child">Hello</span></div></div>
+      `);
+      // .child is nested inside an intermediate div, not a direct child of .parent
+      expect(result.skippedSelectors).toEqual([".parent > .child"]);
+      // no token created for the nested rule
+      expect(
+        result.styleSources.filter((s) => s.type === "token")
+      ).toHaveLength(0);
+    });
+
+    test("skip unresolved nested selector and report it", () => {
+      const result = _generateFragmentFromHtml(`
+        <style>.card .title { color: red; }</style>
+        <div class="card"><span>No title class here</span></div>
+      `);
+      expect(result.skippedSelectors).toEqual([".card .title"]);
+      expect(
+        result.styleSources.filter((s) => s.type === "token")
+      ).toHaveLength(0);
+    });
+
+    test("style-only paste with nested selector — all skipped", () => {
+      const result = _generateFragmentFromHtml(`
+        <style>.card .title { color: red; }</style>
+      `);
+      expect(result.skippedSelectors).toEqual([".card .title"]);
+      expect(result.styleSources).toHaveLength(0);
+    });
+
+    test("mixed simple and nested selectors", () => {
+      const result = _generateFragmentFromHtml(`
+        <style>
+          .card { display: flex; }
+          .card .title { font-weight: bold; }
+        </style>
+        <div class="card"><h1 class="title">Hello</h1></div>
+      `);
+      expect(result.skippedSelectors).toEqual([]);
+      // .card token + .card__title nested token
+      const tokenNames = result.styleSources
+        .filter((s) => s.type === "token")
+        .map((s) => s.name);
+      expect(tokenNames).toContain("card");
+      expect(tokenNames).toContain("card__title");
+    });
+
+    test("multiple ancestors: .a .b .c", () => {
+      const result = _generateFragmentFromHtml(`
+        <style>.a .b .c { color: red; }</style>
+        <div class="a"><div class="b"><span class="c">Hi</span></div></div>
+      `);
+      expect(result.skippedSelectors).toEqual([]);
+      const tokenNames = result.styleSources
+        .filter((s) => s.type === "token")
+        .map((s) => s.name);
+      expect(tokenNames).toContain("a__b__c");
+    });
+
+    test("nested selector with media query", () => {
+      const result = _generateFragmentFromHtml(`
+        <style>
+          .card .title { color: red; }
+          @media (min-width: 768px) {
+            .card .title { color: blue; }
+          }
+        </style>
+        <div class="card"><h1 class="title">Hello</h1></div>
+      `);
+      expect(result.skippedSelectors).toEqual([]);
+      const nestedToken = result.styleSources.find(
+        (s) => s.type === "token" && s.name === "card__title"
+      );
+      expect(nestedToken).toBeDefined();
+      // should have styles at base breakpoint and 768px breakpoint
+      const nestedStyles = result.styles.filter(
+        (s) => s.styleSourceId === nestedToken!.id
+      );
+      const breakpointIds = new Set(nestedStyles.map((s) => s.breakpointId));
+      expect(breakpointIds.size).toBe(2);
+    });
+
+    test("sibling combinators stay as leftover", () => {
+      const result = _generateFragmentFromHtml(`
+        <style>.a + .b { color: red; }</style>
+        <div class="a">A</div><div class="b">B</div>
+      `);
+      // sibling selector is not class-based → stays as HtmlEmbed
+      expect(result.instances.some((i) => i.component === "HtmlEmbed")).toBe(
+        true
+      );
     });
   });
 });

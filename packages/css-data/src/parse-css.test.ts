@@ -1839,12 +1839,20 @@ describe("parseClassBasedSelector", () => {
     expect(parseClassBasedSelector(":root")).toBeUndefined();
   });
 
-  test("rejects descendant combinator", () => {
-    expect(parseClassBasedSelector(".card .inner")).toBeUndefined();
+  test("descendant combinator: .card .inner", () => {
+    expect(parseClassBasedSelector(".card .inner")).toEqual({
+      tokenName: "card__inner",
+      classNames: ["inner"],
+      ancestors: [{ classNames: ["card"], combinator: "descendant" }],
+    });
   });
 
-  test("rejects child combinator", () => {
-    expect(parseClassBasedSelector(".card>.inner")).toBeUndefined();
+  test("child combinator: .card>.inner", () => {
+    expect(parseClassBasedSelector(".card>.inner")).toEqual({
+      tokenName: "card__inner",
+      classNames: ["inner"],
+      ancestors: [{ classNames: ["card"], combinator: "child" }],
+    });
   });
 
   test("rejects sibling combinator", () => {
@@ -1933,5 +1941,70 @@ describe("parseClassBasedSelector", () => {
 
   test("rejects nesting selector &.class", () => {
     expect(parseClassBasedSelector("&.card")).toBeUndefined();
+  });
+
+  // Nested selector tests
+  test("multiple ancestors: .a .b .c", () => {
+    expect(parseClassBasedSelector(".a .b .c")).toEqual({
+      tokenName: "a__b__c",
+      classNames: ["c"],
+      ancestors: [
+        { classNames: ["a"], combinator: "descendant" },
+        { classNames: ["b"], combinator: "descendant" },
+      ],
+    });
+  });
+
+  test("compound segments in nested: .card.active .title.bold", () => {
+    expect(parseClassBasedSelector(".card.active .title.bold")).toEqual({
+      tokenName: "card.active__title.bold",
+      classNames: ["title", "bold"],
+      ancestors: [{ classNames: ["card", "active"], combinator: "descendant" }],
+    });
+  });
+
+  test("mixed combinators: .a .b > .c", () => {
+    expect(parseClassBasedSelector(".a .b > .c")).toEqual({
+      tokenName: "a__b__c",
+      classNames: ["c"],
+      ancestors: [
+        { classNames: ["a"], combinator: "descendant" },
+        { classNames: ["b"], combinator: "child" },
+      ],
+    });
+  });
+
+  test("nested with state on target: .card > .title:hover", () => {
+    expect(parseClassBasedSelector(".card > .title:hover")).toEqual({
+      tokenName: "card__title",
+      classNames: ["title"],
+      states: [":hover"],
+      ancestors: [{ classNames: ["card"], combinator: "child" }],
+    });
+  });
+
+  test("nested with pseudo-element: .card .title::before", () => {
+    expect(parseClassBasedSelector(".card .title::before")).toEqual({
+      tokenName: "card__title",
+      classNames: ["title"],
+      states: ["::before"],
+      ancestors: [{ classNames: ["card"], combinator: "descendant" }],
+    });
+  });
+
+  test("rejects type selector in ancestor: h1 .card", () => {
+    expect(parseClassBasedSelector("h1 .card")).toBeUndefined();
+  });
+
+  test("rejects type selector in target: .card h1", () => {
+    expect(parseClassBasedSelector(".card h1")).toBeUndefined();
+  });
+
+  test("rejects id selector in target: .card #hero", () => {
+    expect(parseClassBasedSelector(".card #hero")).toBeUndefined();
+  });
+
+  test("rejects attribute selector in ancestor: .card[disabled] .title", () => {
+    expect(parseClassBasedSelector(".card[disabled] .title")).toBeUndefined();
   });
 });

@@ -299,16 +299,24 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
 };
 
 export type ParsedClassSelector = {
-  /** Token name: "card" for .card, "card.active" for .card.active */
+  /** Token name: "card" for .card, "card__title" for .card .title */
   tokenName: string;
-  /** Individual class names: ["card"] or ["card", "active"] */
+  /** Target class names (the last segment): ["card"] or ["title"] */
   classNames: string[];
   /**
-   * Non-class selector suffixes: attribute selectors, pseudo-classes, pseudo-elements.
-   * e.g. ["[disabled]"] for .btn[disabled], [":hover"] for .card:hover,
-   * ["[disabled]", ":hover"] for .btn[disabled]:hover
+   * Non-class selector suffixes on the target: attribute selectors, pseudo-classes, pseudo-elements.
+   * e.g. ["[disabled]"] for .btn[disabled], [":hover"] for .card:hover
    */
   states?: string[];
+  /**
+   * Ancestor constraints for nested selectors (e.g., .card .title).
+   * Ordered from outermost to innermost ancestor.
+   * Each entry's combinator describes the relationship to the next segment.
+   */
+  ancestors?: Array<{
+    classNames: string[];
+    combinator: "descendant" | "child";
+  }>;
 };
 
 /**
@@ -316,22 +324,24 @@ export type ParsedClassSelector = {
  * suitable for token extraction. Uses css-tree to handle the full CSS
  * selector spec.
  *
- * A class-based selector starts with one or more ClassSelectors and may
- * be followed by any combination of AttributeSelectors, PseudoClassSelectors,
- * and PseudoElementSelectors. Any selector containing combinators, type
- * selectors, ID selectors, or nesting selectors is rejected.
+ * Supports simple selectors, compound selectors, and nested selectors
+ * using descendant (" ") and child (">") combinators where ALL segments
+ * are class-based.
  *
  * Supported patterns:
  *   .card                      → { tokenName: "card", classNames: ["card"] }
  *   .card.active               → { tokenName: "card.active", classNames: ["card", "active"] }
  *   .btn[disabled]             → { tokenName: "btn", ..., states: ["[disabled]"] }
  *   .card:hover                → { tokenName: "card", ..., states: [":hover"] }
- *   .card::before              → { tokenName: "card", ..., states: ["::before"] }
- *   .card:nth-child(2n+1)      → { tokenName: "card", ..., states: [":nth-child(2n+1)"] }
- *   .btn[disabled]:hover       → { tokenName: "btn", ..., states: ["[disabled]", ":hover"] }
- *   .card.active[open]:hover   → { tokenName: "card.active", ..., states: ["[open]", ":hover"] }
+ *   .card .title               → { tokenName: "card__title", ..., ancestors: [{classNames:["card"], combinator:"descendant"}] }
+ *   .card > .title             → { tokenName: "card__title", ..., ancestors: [{classNames:["card"], combinator:"child"}] }
+ *   .a .b .c                   → { tokenName: "a__b__c", ..., ancestors: [{..,"descendant"},{..,"descendant"}] }
+ *   .card > .title:hover       → { tokenName: "card__title", ..., states: [":hover"], ancestors: [...] }
  *
- * Returns undefined for non-class selectors (element, id, descendant, combinators, etc.)
+ * Returns undefined for:
+ * - Selectors with sibling combinators (+, ~)
+ * - Selectors with non-class nodes in ancestor segments (e.g., .card h1, h1 .card)
+ * - Pure element/id selectors
  */
 export const parseClassBasedSelector = (
   selector: string
@@ -357,20 +367,74 @@ export const parseClassBasedSelector = (
     return undefined;
   }
 
+  // Split children into segments at Combinator nodes
+  type Segment = {
+    nodes: csstree.CssNode[];
+    combinator?: "descendant" | "child";
+  };
+  const segments: Segment[] = [];
+  let currentNodes: csstree.CssNode[] = [];
+
+  for (const child of children) {
+    if (child.type === "Combinator") {
+      if (child.name === " ") {
+        segments.push({ nodes: currentNodes, combinator: "descendant" });
+      } else if (child.name === ">") {
+        segments.push({ nodes: currentNodes, combinator: "child" });
+      } else {
+        // Sibling combinators (+, ~) — reject
+        return undefined;
+      }
+      currentNodes = [];
+    } else {
+      currentNodes.push(child);
+    }
+  }
+  // Push the last (target) segment
+  segments.push({ nodes: currentNodes });
+
+  // Validate all segments and extract class names
+  const ancestors: Array<{
+    classNames: string[];
+    combinator: "descendant" | "child";
+  }> = [];
+
+  // Process ancestor segments (all except the last)
+  for (let i = 0; i < segments.length - 1; i++) {
+    const segment = segments[i];
+    const segClassNames: string[] = [];
+    for (const node of segment.nodes) {
+      if (node.type === "ClassSelector") {
+        segClassNames.push(node.name);
+      } else {
+        // Non-class node in an ancestor segment — reject
+        return undefined;
+      }
+    }
+    if (segClassNames.length === 0) {
+      return undefined;
+    }
+    ancestors.push({
+      classNames: segClassNames,
+      combinator: segment.combinator!,
+    });
+  }
+
+  // Process the last (target) segment
+  const lastSegment = segments[segments.length - 1];
   const classNames: string[] = [];
   const states: string[] = [];
 
-  for (const child of children) {
-    switch (child.type) {
+  for (const node of lastSegment.nodes) {
+    switch (node.type) {
       case "ClassSelector":
-        classNames.push(child.name);
+        classNames.push(node.name);
         break;
       case "AttributeSelector":
       case "PseudoClassSelector":
       case "PseudoElementSelector":
-        states.push(csstree.generate(child));
+        states.push(csstree.generate(node));
         break;
-      // Reject combinators, type selectors, id selectors, nesting, etc.
       default:
         return undefined;
     }
@@ -380,12 +444,20 @@ export const parseClassBasedSelector = (
     return undefined;
   }
 
-  const tokenName =
-    classNames.length === 1 ? classNames[0] : classNames.join(".");
+  // Build token name: join segment class names with "__"
+  const segmentNames = [
+    ...ancestors.map((a) =>
+      a.classNames.length === 1 ? a.classNames[0] : a.classNames.join(".")
+    ),
+    classNames.length === 1 ? classNames[0] : classNames.join("."),
+  ];
+  const tokenName = segmentNames.join("__");
+
   return {
     tokenName,
     classNames,
     ...(states.length > 0 ? { states } : {}),
+    ...(ancestors.length > 0 ? { ancestors } : {}),
   };
 };
 
