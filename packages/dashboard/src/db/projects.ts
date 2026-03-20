@@ -183,6 +183,34 @@ export const findMany = async ({
   );
 };
 
+export const countByUserId = async ({
+  userId,
+  context,
+}: {
+  userId: string;
+  context: AppContext;
+}) => {
+  if (context.authorization.type !== "user") {
+    throw new AuthorizationError(
+      "Only logged in users can view the project count"
+    );
+  }
+  if (userId !== context.authorization.userId) {
+    throw new AuthorizationError(
+      "Only the project owner can view the project count"
+    );
+  }
+  const result = await context.postgrest.client
+    .from("Project")
+    .select("id", { count: "exact", head: true })
+    .eq("userId", userId)
+    .eq("isDeleted", false);
+  if (result.error) {
+    throw result.error;
+  }
+  return result.count ?? 0;
+};
+
 export const findManyByIds = async (
   projectIds: string[],
   context: AppContext,

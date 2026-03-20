@@ -23,8 +23,10 @@ import { showBrowserNotification } from "./browser-notification";
 const knownNotificationTypes = new Set<string>(notificationTypes);
 
 export const $notifications = atom<Notifications>([]);
+export const $shouldRevalidateProjects = atom(0);
 
 let subscription: Subscription | undefined;
+let projectCountSub: Subscription | undefined;
 let manager: PollingManager | undefined;
 let isFirstLoad = true;
 
@@ -83,11 +85,17 @@ export const startDashboardSubscription = () => {
   }
   isFirstLoad = true;
   subscription = getManager().subscribe("notifications", handleNotifications);
+  projectCountSub = getManager().subscribe("projectCount", () => {
+    // Bump the counter so React listeners know to revalidate.
+    $shouldRevalidateProjects.set($shouldRevalidateProjects.get() + 1);
+  });
 };
 
 export const stopDashboardSubscription = () => {
   subscription?.unsubscribe();
   subscription = undefined;
+  projectCountSub?.unsubscribe();
+  projectCountSub = undefined;
   manager?.destroy();
   manager = undefined;
   isFirstLoad = true;
