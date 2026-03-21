@@ -2,6 +2,7 @@ import type { AUTH_PROVIDERS } from "~/shared/session";
 import { publicStaticEnv } from "~/env/env.static";
 import { getAuthorizationServerOrigin } from "./origins";
 import type { BuilderMode } from "../nano-states/misc";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
   const searchParams = new URLSearchParams();
@@ -113,6 +114,10 @@ export const userPlanSubscriptionPath = (subscriptionId?: string) => {
   urlSearchParams.set("return_url", window.location.href);
   if (subscriptionId) {
     urlSearchParams.set("subscription", subscriptionId);
+  }
+
+  if (isFeatureEnabled("paymentWorker")) {
+    return `/payments/billing-portal/sessions?${urlSearchParams.toString()}`;
   }
 
   return `/n8n/billing_portal/sessions?${urlSearchParams.toString()}`;
