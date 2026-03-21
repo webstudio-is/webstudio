@@ -111,6 +111,15 @@ export const NotificationPopover = ({
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   const revalidator = useRevalidator();
 
+  const [hasSeen, setHasSeen] = useState(defaultOpen);
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open) {
+      setHasSeen(true);
+    }
+  };
+
   const handleAccept = async (notificationId: string) => {
     setLoadingIds((prev) => new Set(prev).add(notificationId));
     try {
@@ -161,13 +170,13 @@ export const NotificationPopover = ({
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <IconButton
           color="ghost"
           aria-label="Notifications"
           css={
-            notifications.length > 0
+            notifications.length > 0 && !hasSeen
               ? {
                   transformOrigin: "top center",
                   animation: `${bounceBell} 1s ease-in-out infinite`,
