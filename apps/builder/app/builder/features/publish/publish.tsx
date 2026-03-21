@@ -57,6 +57,7 @@ import {
   $project,
   $publishedOrigin,
   $userPlanFeatures,
+  $purchases,
   $stagingUsername,
   $stagingPassword,
   $publisherHost,
@@ -415,7 +416,7 @@ const Publish = ({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
   const userPlanFeatures = useStore($userPlanFeatures);
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
+  const hasPaidPlan = useStore($purchases).length > 0;
   const { allowStagingPublish } = userPlanFeatures;
   const countdown = usePublishCountdown(isPublishing);
 

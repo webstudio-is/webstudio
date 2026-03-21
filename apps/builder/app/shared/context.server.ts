@@ -153,7 +153,10 @@ const createEntriContext = () => {
 const createUserPlanContext = async (
   authorization: AppContext["authorization"],
   postgrest: AppContext["postgrest"]
-) => {
+): Promise<{
+  userPlanFeatures: AppContext["userPlanFeatures"];
+  purchases: AppContext["purchases"];
+}> => {
   const ownerId =
     authorization.type === "token"
       ? authorization.ownerId
@@ -161,10 +164,15 @@ const createUserPlanContext = async (
         ? authorization.userId
         : undefined;
 
-  const planFeatures = ownerId
-    ? await getUserPlanFeatures(ownerId, postgrest)
-    : undefined;
-  return planFeatures;
+  if (ownerId === undefined) {
+    return { userPlanFeatures: undefined, purchases: [] };
+  }
+
+  const result = await getUserPlanFeatures(ownerId, postgrest);
+  return {
+    userPlanFeatures: result,
+    purchases: result.purchases,
+  };
 };
 
 const createTrpcCache = () => {
@@ -198,7 +206,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const domain = createDomainContext();
   const deployment = createDeploymentContext(getRequestOrigin(request.url));
   const entri = createEntriContext();
-  const userPlanFeatures = await createUserPlanContext(
+  const { userPlanFeatures, purchases } = await createUserPlanContext(
     authorization,
     postgrest
   );
@@ -209,7 +217,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
       authToken,
       postgrest
     );
-    const userPlanFeatures = await createUserPlanContext(
+    const { userPlanFeatures, purchases } = await createUserPlanContext(
       authorization,
       postgrest
     );
@@ -220,6 +228,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
       deployment,
       entri,
       userPlanFeatures,
+      purchases,
       trpcCache,
       postgrest,
       createTokenContext,
@@ -232,6 +241,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
     deployment,
     entri,
     userPlanFeatures,
+    purchases,
     trpcCache,
     postgrest,
     createTokenContext,

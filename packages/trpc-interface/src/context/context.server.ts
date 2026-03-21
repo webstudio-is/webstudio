@@ -1,5 +1,6 @@
 import type { TrpcInterfaceClient } from "../shared/shared-router";
 import type { Client } from "@webstudio-is/postgrest/index.server";
+import type { UserPurchase } from "../shared/user-plan-features";
 
 /**
  * All necessary parameters for Authorization
@@ -65,6 +66,8 @@ type DeploymentContext = {
 };
 
 type UserPlanFeatures = {
+  canDownloadAssets: boolean;
+  canRestoreBackups: boolean;
   allowAdditionalPermissions: boolean;
   allowDynamicData: boolean;
   allowContentMode: boolean;
@@ -72,7 +75,9 @@ type UserPlanFeatures = {
   maxContactEmails: number;
   maxDomainsAllowedPerUser: number;
   maxPublishesAllowedPerUser: number;
-  /** All user purchases (subscriptions and LTDs). subscriptionId present only for recurring subscriptions */
+  maxWorkspaces: number;
+  maxProjectsAllowedPerUser: number;
+  /** @deprecated Keep for backward compat — prefer top-level `purchases` */
   purchases: Array<{
     planName: string;
     subscriptionId?: string;
@@ -99,6 +104,7 @@ export type AppContext = {
   deployment: DeploymentContext;
   entri: EntriContext;
   userPlanFeatures: UserPlanFeatures | undefined;
+  purchases: UserPurchase[];
   trpcCache: TrpcCache;
   postgrest: PostgrestContext;
   createTokenContext: (token: string) => Promise<AppContext>;

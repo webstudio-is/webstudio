@@ -26,7 +26,7 @@ import {
   $authToken,
   $authTokenPermissions,
   $isDesignMode,
-  $userPlanFeatures,
+  $purchases,
 } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
@@ -58,8 +58,7 @@ const ViewMenuItem = () => {
 };
 
 export const Menu = ({ defaultOpen }: { defaultOpen?: boolean } = {}) => {
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
+  const hasPaidPlan = useStore($purchases).length > 0;
   const authPermit = useStore($authPermit);
   const authTokenPermission = useStore($authTokenPermissions);
   const authToken = useStore($authToken);

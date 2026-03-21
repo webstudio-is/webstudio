@@ -69,6 +69,9 @@ const env = {
   // current user plan features (default)
   USER_PLAN: process.env.USER_PLAN ?? "",
 
+  // Maximum number of workspaces per user (default: 1)
+  MAX_WORKSPACES: Number(process.env.MAX_WORKSPACES || "1"),
+
   POSTGREST_URL: process.env.POSTGREST_URL ?? "http://localhost:3000",
   POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
 

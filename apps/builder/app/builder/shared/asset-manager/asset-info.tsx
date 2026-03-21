@@ -58,7 +58,7 @@ import {
   $props,
   $styles,
   $styleSourceSelections,
-  $userPlanFeatures,
+  $purchases,
 } from "~/shared/nano-states";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import {
@@ -389,8 +389,7 @@ const AssetInfoContent = ({
   asset: Asset;
   usages: AssetUsage[];
 }) => {
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
+  const hasPaidPlan = useStore($purchases).length > 0;
   const { size, meta, id, name } = asset;
   const { basename, ext } = parseAssetName(name);
   const [filenameError, setFilenameError] = useState<string>();

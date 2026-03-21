@@ -20,7 +20,7 @@ import {
 import { UpgradeIcon } from "@webstudio-is/icons";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
 import { $project } from "~/shared/sync/data-stores";
-import { $userPlanFeatures } from "~/shared/nano-states";
+import { $purchases } from "~/shared/nano-states";
 import { sectionSpacing } from "./utils";
 import cmsUpgradeBanner from "../cms-upgrade-banner.svg?url";
 
@@ -41,8 +41,7 @@ export const SectionBackups = ({
 }: {
   projectId?: string;
 }) => {
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
+  const hasPaidPlan = useStore($purchases).length > 0;
   const { data, load } = trpcClient.project.publishedBuilds.useQuery();
   const project = useStore($project);
   const projectId = projectIdProp ?? project?.id ?? "";

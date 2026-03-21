@@ -18,6 +18,7 @@ import { type InstanceSelector } from "../tree-utils";
 import type { ChildrenOrientation } from "@webstudio-is/design-system";
 import { $awareness, $selectedInstance } from "../awareness";
 import type { UserPlanFeatures } from "../db/user-plan-features.server";
+import type { UserPurchase } from "@webstudio-is/trpc-interface/user-plan-features";
 import {
   $project,
   $publisherHost,
@@ -297,6 +298,8 @@ export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
 
 // keep in sync with user-plan-features.server
 export const $userPlanFeatures = atom<UserPlanFeatures>({
+  canDownloadAssets: false,
+  canRestoreBackups: false,
   allowAdditionalPermissions: false,
   allowDynamicData: false,
   allowContentMode: false,
@@ -304,8 +307,11 @@ export const $userPlanFeatures = atom<UserPlanFeatures>({
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 1,
-  purchases: [],
+  maxWorkspaces: 1,
+  maxProjectsAllowedPerUser: 2,
 });
+
+export const $purchases = atom<UserPurchase[]>([]);
 
 const builderModes = ["design", "preview", "content"] as const;
 export type BuilderMode = (typeof builderModes)[number];

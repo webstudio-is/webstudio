@@ -10,7 +10,7 @@ import {
   Link,
 } from "@webstudio-is/design-system";
 import { trpcClient } from "~/shared/trpc/trpc-client";
-import { $userPlanFeatures } from "~/shared/nano-states";
+import { $purchases } from "~/shared/nano-states";
 import { extractCname } from "./cname";
 import { UploadIcon } from "@webstudio-is/icons";
 
@@ -98,8 +98,7 @@ const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
 
 export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
   entriGlobalStyles();
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
+  const hasPaidPlan = useStore($purchases).length > 0;
   const { error, isOpen, showDialog } = useEntri({
     domain,
     dnsRecords,

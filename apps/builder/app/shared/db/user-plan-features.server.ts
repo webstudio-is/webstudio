@@ -1,15 +1,18 @@
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   type UserPlanFeatures,
+  type UserPurchase,
   UserPlanFeaturesSchema,
   defaultUserPlanFeatures,
 } from "@webstudio-is/trpc-interface/user-plan-features";
 import env from "~/env/env.server";
 import { z } from "zod";
 
+export type { UserPlanFeatures };
+
 type UserPlanInfo = {
   userPlanFeatures: UserPlanFeatures;
-  purchases: AppContext["purchases"];
+  purchases: UserPurchase[];
 };
 
 // ---------------------------------------------------------------------------
@@ -246,6 +249,28 @@ export const getUserPlanInfo = async (
   }
 
   return fetchUserPlanFromDb(userId, postgrest);
+};
+
+/**
+ * Backward-compatible wrapper used by context.server.ts.
+ * Returns the old-style UserPlanFeatures (with purchases embedded)
+ * so existing AppContext.userPlanFeatures consumers keep working.
+ */
+export const getUserPlanFeatures = async (
+  userId: string,
+  postgrest: AppContext["postgrest"]
+): Promise<NonNullable<AppContext["userPlanFeatures"]>> => {
+  const { userPlanFeatures, purchases } = await getUserPlanInfo(
+    userId,
+    postgrest
+  );
+  return {
+    ...userPlanFeatures,
+    purchases: purchases.map((p) => ({
+      planName: p.planName,
+      subscriptionId: p.subscriptionId,
+    })),
+  };
 };
 
 export const __testing__ = {

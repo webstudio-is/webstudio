@@ -43,7 +43,10 @@ const userPlanFeatures: UserPlanFeatures = {
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 1,
-  purchases: [],
+  canDownloadAssets: false,
+  canRestoreBackups: false,
+  maxWorkspaces: 1,
+  maxProjectsAllowedPerUser: 2,
 };
 
 const projects = [

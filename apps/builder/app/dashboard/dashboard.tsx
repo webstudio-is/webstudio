@@ -183,7 +183,7 @@ export const Dashboard = () => {
           }}
         >
           <Header variant="aside">
-            <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
+            <ProfileMenu user={user} />
           </Header>
           <Flex
             direction="column"
