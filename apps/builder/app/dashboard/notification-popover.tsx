@@ -15,6 +15,7 @@ import {
   Text,
   Tooltip,
   css,
+  keyframes,
   theme,
   toast,
 } from "@webstudio-is/design-system";
@@ -29,6 +30,16 @@ import { $notifications, refreshNotifications } from "./shared/subscription";
 import type { Notifications } from "~/shared/polly/types";
 
 export type NotificationItem = Notifications[number];
+
+// "swing" animation from Animate.css (https://animate.style)
+// Rotates around the top anchor to simulate a ringing bell.
+const bounceBell = keyframes({
+  "20%": { transform: "rotate3d(0, 0, 1, 15deg)" },
+  "40%": { transform: "rotate3d(0, 0, 1, -10deg)" },
+  "60%": { transform: "rotate3d(0, 0, 1, 5deg)" },
+  "80%": { transform: "rotate3d(0, 0, 1, -5deg)" },
+  "100%": { transform: "rotate3d(0, 0, 1, 0deg)" },
+});
 
 const notificationRowStyle = css({
   paddingBlock: theme.spacing[5],
@@ -152,7 +163,18 @@ export const NotificationPopover = ({
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <IconButton color="ghost" aria-label="Notifications">
+        <IconButton
+          color="ghost"
+          aria-label="Notifications"
+          css={
+            notifications.length > 0
+              ? {
+                  transformOrigin: "top center",
+                  animation: `${bounceBell} 1s ease-in-out infinite`,
+                }
+              : undefined
+          }
+        >
           {notifications.length > 0 ? <BellDotIcon /> : <BellIcon />}
         </IconButton>
       </PopoverTrigger>
