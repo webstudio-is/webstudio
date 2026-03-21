@@ -52,6 +52,31 @@ const genericCreateAccount = async (
     .single();
 
   if (dbUser.error == null) {
+    // Ensure the user has a default workspace — it may be missing if
+    // the original workspace insert failed after user creation.
+    const existingWorkspace = await context.postgrest.client
+      .from("Workspace")
+      .select("id")
+      .eq("userId", dbUser.data.id)
+      .eq("isDefault", true)
+      .maybeSingle();
+
+    if (existingWorkspace.data === null) {
+      const ws = await context.postgrest.client
+        .from("Workspace")
+        .insert({
+          name: "My workspace",
+          isDefault: true,
+          userId: dbUser.data.id,
+        })
+        .select("id")
+        .single();
+
+      if (ws.error) {
+        console.error("Failed to lazily create default workspace", ws.error);
+      }
+    }
+
     return formatUser(dbUser.data);
   }
 
@@ -61,10 +86,12 @@ const genericCreateAccount = async (
     throw new Error("User not found");
   }
 
+  const userId = crypto.randomUUID();
+
   const newUser = await context.postgrest.client
     .from("User")
     .insert({
-      id: crypto.randomUUID(),
+      id: userId,
       ...userData,
     })
     .select()
@@ -73,6 +100,22 @@ const genericCreateAccount = async (
   if (newUser.error) {
     console.error(newUser.error);
     throw new Error("Failed to create user");
+  }
+
+  // Every user gets a default workspace that cannot be deleted.
+  const workspace = await context.postgrest.client
+    .from("Workspace")
+    .insert({
+      name: "My workspace",
+      isDefault: true,
+      userId,
+    })
+    .select("id")
+    .single();
+
+  if (workspace.error) {
+    console.error(workspace.error);
+    throw new Error("Failed to create default workspace");
   }
 
   return formatUser(newUser.data);

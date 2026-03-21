@@ -1,18 +1,8 @@
 import * as entri from "entrijs";
 import { useEffect, useState } from "react";
-import { useStore } from "@nanostores/react";
-import {
-  globalCss,
-  Button,
-  Text,
-  PanelBanner,
-  Flex,
-  Link,
-} from "@webstudio-is/design-system";
+import { globalCss, Button, Text } from "@webstudio-is/design-system";
 import { trpcClient } from "~/shared/trpc/trpc-client";
-import { $userPlanFeatures } from "~/shared/nano-states";
 import { extractCname } from "./cname";
-import { UploadIcon } from "@webstudio-is/icons";
 
 // https://developers.entri.com/docs/install
 type DnsRecord = {
@@ -98,14 +88,11 @@ const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
 
 export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
   entriGlobalStyles();
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
   const { error, isOpen, showDialog } = useEntri({
     domain,
     dnsRecords,
     onClose,
   });
-  const [requestUpgrade, setRequestUpgrade] = useState(false);
   return (
     <>
       {error !== undefined && <Text color="destructive">{error}</Text>}
@@ -114,33 +101,11 @@ export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
         color="primary"
         type="button"
         onClick={() => {
-          if (hasPaidPlan) {
-            showDialog();
-          } else {
-            setRequestUpgrade(true);
-          }
+          showDialog();
         }}
       >
         Setup automatically with Entri
       </Button>
-      {requestUpgrade && (
-        <PanelBanner>
-          <Text>
-            Please upgrade to the Pro plan or higher to use automatic domain
-            configuration.
-          </Text>
-          <Flex align="center" gap={1}>
-            <UploadIcon />
-            <Link
-              color="inherit"
-              target="_blank"
-              href="https://webstudio.is/pricing"
-            >
-              Upgrade to Pro
-            </Link>
-          </Flex>
-        </PanelBanner>
-      )}
     </>
   );
 };

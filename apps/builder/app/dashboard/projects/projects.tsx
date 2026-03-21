@@ -16,8 +16,9 @@ import { CreateProject } from "./project-dialogs";
 import { Header, Main } from "../shared/layout";
 import { useSearchParams } from "react-router-dom";
 import { setIsSubsetOf } from "~/shared/shim";
+import { useStore } from "@nanostores/react";
 import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { $permissions } from "~/shared/nano-states";
 import { Tag } from "./tags";
 import {
   SortSelect,
@@ -29,7 +30,6 @@ import { ProjectsList } from "./projects-list";
 
 export const ProjectsGrid = ({
   projects,
-  userPlanFeatures,
   publisherHost,
   projectsTags,
 }: ProjectsProps) => {
@@ -48,7 +48,6 @@ export const ProjectsGrid = ({
             <ListItem index={0} key={project.id} asChild>
               <ProjectCard
                 project={project}
-                userPlanFeatures={userPlanFeatures}
                 publisherHost={publisherHost}
                 projectsTags={projectsTags}
               />
@@ -62,12 +61,13 @@ export const ProjectsGrid = ({
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;
-  userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectsTags: User["projectsTags"];
+  currentWorkspaceId?: string;
 };
 
 export const Projects = (props: ProjectsProps) => {
+  const permissions = useStore($permissions);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTags = searchParams.getAll("tag");
   const viewMode = (searchParams.get("view") as "grid" | "list") ?? "grid";
@@ -138,7 +138,9 @@ export const Projects = (props: ProjectsProps) => {
             </ToggleGroupButton>
           </ToggleGroup>
           <SortSelect value={sortState} onValueChange={handleSortChange} />
-          <CreateProject />
+          {permissions.canCreateProject && (
+            <CreateProject workspaceId={props.currentWorkspaceId} />
+          )}
         </Flex>
       </Header>
       <Flex

@@ -10,13 +10,15 @@ export const isUserAuthorizedForProject = async (
 ) => {
   const postgrestContext = createPostgrestContext();
 
-  // Only the project owner can access the Builder URL with authentication credentials (session).
-  const isProjectOwner = await authorizeProject.checkProjectPermit(
+  // Any user with at least view access (viewers, editors, builders,
+  // administrators, or owner) can open the builder. The UI and server
+  // enforce per-action permissions once inside.
+  const isAuthorized = await authorizeProject.checkProjectPermit({
     projectId,
-    "own",
-    { type: "user", userId },
-    postgrestContext.client
-  );
+    permit: "view",
+    authInfo: { type: "user", userId },
+    postgrestClient: postgrestContext.client,
+  });
 
-  return isProjectOwner;
+  return isAuthorized;
 };

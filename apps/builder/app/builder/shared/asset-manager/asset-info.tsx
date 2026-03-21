@@ -55,10 +55,10 @@ import {
   $editingPageId,
   $instances,
   $pages,
+  $permissions,
   $props,
   $styles,
   $styleSourceSelections,
-  $userPlanFeatures,
 } from "~/shared/nano-states";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import {
@@ -389,8 +389,7 @@ const AssetInfoContent = ({
   asset: Asset;
   usages: AssetUsage[];
 }) => {
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
+  const { canDownloadAssets } = useStore($permissions);
   const { size, meta, id, name } = asset;
   const { basename, ext } = parseAssetName(name);
   const [filenameError, setFilenameError] = useState<string>();
@@ -441,7 +440,7 @@ const AssetInfoContent = ({
   if (authPermit === "view") {
     downloadError =
       "Unavailable in View mode. Switch to Edit to download assets.";
-  } else if (!hasPaidPlan) {
+  } else if (canDownloadAssets === false) {
     downloadError = "Upgrade to Pro to download assets.";
   }
 

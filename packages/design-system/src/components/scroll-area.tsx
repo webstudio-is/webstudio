@@ -106,3 +106,9 @@ export const ScrollArea = forwardRef(
   }
 );
 ScrollArea.displayName = "ScrollArea";
+
+export const ScrollAreaNative = styled("div", {
+  overflow: "auto",
+  scrollbarWidth: "thin",
+  scrollbarColor: `${theme.colors.foregroundScrollBar} transparent`,
+});
