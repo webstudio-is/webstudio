@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "vite build && vike prerender",
+    "build": "vite build",
     "postbuild": "prettier --write \"dist/**/*.html\" || true",
     "dev": "vite dev",
     "typecheck": "tsgo --noEmit",

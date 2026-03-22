@@ -3,7 +3,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build": "vite build && vike prerender",
+    "build": "vite build",
     "dev": "vite dev",
     "typecheck": "tsgo --noEmit"
   },
