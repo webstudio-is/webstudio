@@ -65,7 +65,7 @@ runs:
             "outputDirectory": null,
             "rootDirectory": "apps/builder",
             "directoryListing": false,
-            "nodeVersion": "20.x"
+            "nodeVersion": "22.x"
           }
         }
         EOF
