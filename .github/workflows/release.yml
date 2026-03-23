@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
+      - "[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   release:
@@ -11,53 +11,53 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/github-script@v7
-      with:
-        script: |
-          const latestRelease = await github.rest.repos.getLatestRelease({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-          })
-          const commits = await github.rest.repos.compareCommitsWithBasehead({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            basehead: `refs/tags/${latestRelease.data.tag_name}...${context.ref}`,
-          })
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const latestRelease = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            })
+            const commits = await github.rest.repos.compareCommitsWithBasehead({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              basehead: `refs/tags/${latestRelease.data.tag_name}...${context.ref}`,
+            })
 
-          const groups = {
-            feat: [`## Features\n`],
-            fix: [`## Fixes\n`],
-            docs: [`## Documentation\n`],
-            experimental: [`## Experimental\n`],
-            other: [`## Other changes\n`],
-          }
-          for (const commit of commits.data.commits) {
-            const match = commit.commit.message.match(/^(?<type>\w+)\s*:\s*(?<message>.+)\n*/)
-            const type = match?.groups?.type
-            const message = match?.groups?.message
-            if (type && message) {
-              const availableType = type in groups ? type : 'other'
-              const capitalized = message[0].toLocaleUpperCase() + message.slice(1)
-              groups[availableType].push(`- ${capitalized} by @${commit.author.login}`)
+            const groups = {
+              feat: [`## Features\n`],
+              fix: [`## Fixes\n`],
+              docs: [`## Documentation\n`],
+              experimental: [`## Experimental\n`],
+              other: [`## Other changes\n`],
             }
-          }
+            for (const commit of commits.data.commits) {
+              const match = commit.commit.message.match(/^(?<type>\w+)\s*:\s*(?<message>.+)\n*/)
+              const type = match?.groups?.type
+              const message = match?.groups?.message
+              if (type && message) {
+                const availableType = type in groups ? type : 'other'
+                const capitalized = message[0].toLocaleUpperCase() + message.slice(1)
+                groups[availableType].push(`- ${capitalized}`)
+              }
+            }
 
-          const tag_name = context.ref.slice('refs/tags/'.length)
-          const fullChangelog = `**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${latestRelease.data.tag_name}...${tag_name}`
-          const changelog = Object.values(groups)
-            .filter(lines => lines.length > 1)
-            .map(lines => lines.join('\n'))
-            .concat(fullChangelog)
-            .join('\n\n')
-          console.info(changelog)
+            const tag_name = context.ref.slice('refs/tags/'.length)
+            const fullChangelog = `**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${latestRelease.data.tag_name}...${tag_name}`
+            const changelog = Object.values(groups)
+              .filter(lines => lines.length > 1)
+              .map(lines => lines.join('\n'))
+              .concat(fullChangelog)
+              .join('\n\n')
+            console.info(changelog)
 
-          await github.rest.repos.createRelease({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            tag_name,
-            name: tag_name,
-            body: changelog,
-          })
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name,
+              name: tag_name,
+              body: changelog,
+            })
 
   publish:
     runs-on: ubuntu-latest
