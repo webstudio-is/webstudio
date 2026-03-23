@@ -26,8 +26,8 @@ import {
 import { richTextContentTags } from "./content-model";
 import { setIsSubsetOf } from "./shim";
 import { isAttributeNameSafe } from "@webstudio-is/react-sdk";
-import { capitalCase } from "change-case";
 import * as csstree from "css-tree";
+import { titleCase } from "title-case";
 
 type ElementNode = DefaultTreeAdapterMap["element"];
 
@@ -484,7 +484,7 @@ export const generateFragmentFromHtml = (
       let label: string;
       if (parsed.condition) {
         // e.g. "prefers-color-scheme:dark" → "Prefers Color Scheme Dark"
-        label = capitalCase(parsed.condition);
+        label = titleCase(parsed.condition.replace(/[-:]/g, " "));
       } else {
         const parts: string[] = [];
         if (parsed.minWidth !== undefined) {
