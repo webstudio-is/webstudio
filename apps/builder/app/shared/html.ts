@@ -484,7 +484,7 @@ export const generateFragmentFromHtml = (
       let label: string;
       if (parsed.condition) {
         // e.g. "prefers-color-scheme:dark" → "Prefers Color Scheme Dark"
-        label = titleCase(parsed.condition);
+        label = titleCase(parsed.condition.replace(/[-:]/g, " "));
       } else {
         const parts: string[] = [];
         if (parsed.minWidth !== undefined) {
