@@ -56,7 +56,7 @@ import {
 import {
   $dataSources,
   $resources,
-  $userPlanFeatures,
+  $permissions,
   $instances,
   $props,
   $variableValuesByInstanceSelector,
@@ -192,7 +192,7 @@ const TypeField = ({
   value: VariableType;
   onChange: (value: VariableType) => void;
 }) => {
-  const { allowDynamicData } = useStore($userPlanFeatures);
+  const { allowDynamicData } = useStore($permissions);
   const optionsList: Array<{
     value: VariableType;
     disabled?: boolean;
@@ -559,7 +559,7 @@ const VariablePanelForm = forwardRef<
     { variable, variableType, onVariableTypeChange, value, onValueChange },
     ref
   ) => {
-    const { allowDynamicData } = useStore($userPlanFeatures);
+    const { allowDynamicData } = useStore($permissions);
 
     const isResource =
       variableType === "resource" ||

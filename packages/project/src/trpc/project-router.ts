@@ -45,7 +45,7 @@ export const projectRouter = router({
     }),
 
   create: procedure
-    .input(z.object({ title: Title }))
+    .input(z.object({ title: Title, workspaceId: z.string().optional() }))
     .mutation(async ({ input, ctx }) => {
       return await projectApi.create(input, ctx);
     }),

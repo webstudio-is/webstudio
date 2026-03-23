@@ -76,7 +76,17 @@ const fetchAndMapDomains = async <
 
 export type DashboardProject = Awaited<ReturnType<typeof findMany>>[number];
 
-export const findMany = async (userId: string, context: AppContext) => {
+export const findMany = async ({
+  userId,
+  context,
+  workspaceId,
+  includeUnassigned,
+}: {
+  userId: string;
+  context: AppContext;
+  workspaceId?: string;
+  includeUnassigned?: boolean;
+}) => {
   if (context.authorization.type !== "user") {
     throw new AuthorizationError(
       "Only logged in users can view the project list"
@@ -89,13 +99,72 @@ export const findMany = async (userId: string, context: AppContext) => {
     );
   }
 
-  const data = await context.postgrest.client
+  // When filtering by workspace, verify the caller is a member or owner
+  // to prevent unauthorized access via direct tRPC calls.
+  if (workspaceId !== undefined) {
+    const workspace = await context.postgrest.client
+      .from("Workspace")
+      .select("userId")
+      .eq("id", workspaceId)
+      .eq("isDeleted", false)
+      .maybeSingle();
+
+    if (workspace.error) {
+      throw workspace.error;
+    }
+
+    if (workspace.data === null) {
+      throw new AuthorizationError("Workspace not found");
+    }
+
+    const isOwner = workspace.data.userId === userId;
+
+    if (isOwner === false) {
+      const membership = await context.postgrest.client
+        .from("WorkspaceMember")
+        .select("userId")
+        .eq("workspaceId", workspaceId)
+        .eq("userId", userId)
+        .is("removedAt", null)
+        .maybeSingle();
+
+      if (membership.error) {
+        throw membership.error;
+      }
+
+      if (membership.data === null) {
+        throw new AuthorizationError("You don't have access to this workspace");
+      }
+    }
+  }
+
+  let query = context.postgrest.client
     .from("DashboardProject")
-    .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)")
-    .eq("userId", userId)
-    .eq("isDeleted", false)
+    .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)");
+
+  // When filtering by workspace, show all workspace projects
+  // (members can see all projects in the workspace)
+  if (workspaceId !== undefined) {
+    if (includeUnassigned) {
+      // For the default workspace, also include pre-workspace projects that
+      // have NULL workspaceId — these belong to the user but haven't been
+      // assigned to a workspace yet.
+      query = query.or(
+        `workspaceId.eq.${workspaceId},and(workspaceId.is.null,userId.eq.${userId})`
+      );
+    } else {
+      query = query.eq("workspaceId", workspaceId);
+    }
+  } else {
+    query = query.eq("userId", userId);
+  }
+
+  query = query.eq("isDeleted", false);
+
+  const data = await query
     .order("createdAt", { ascending: false })
     .order("id", { ascending: false });
+
   if (data.error) {
     throw data.error;
   }
@@ -114,16 +183,43 @@ export const findMany = async (userId: string, context: AppContext) => {
   );
 };
 
+export const countByUserId = async ({
+  userId,
+  context,
+}: {
+  userId: string;
+  context: AppContext;
+}) => {
+  if (context.authorization.type !== "user") {
+    throw new AuthorizationError(
+      "Only logged in users can view the project count"
+    );
+  }
+  if (userId !== context.authorization.userId) {
+    throw new AuthorizationError(
+      "Only the project owner can view the project count"
+    );
+  }
+  const result = await context.postgrest.client
+    .from("Project")
+    .select("id", { count: "exact", head: true })
+    .eq("userId", userId)
+    .eq("isDeleted", false);
+  if (result.error) {
+    throw result.error;
+  }
+  return result.count ?? 0;
+};
+
 export const findManyByIds = async (
   projectIds: string[],
-  context: AppContext
+  context: AppContext,
+  { skipApprovalCheck = false }: { skipApprovalCheck?: boolean } = {}
 ) => {
   if (projectIds.length === 0) {
     return [];
   }
 
-  // Get the user ID for ownership filtering
-  // Allow service context (no authorization) to access any projects (for templates)
   const userId =
     context.authorization.type === "user"
       ? context.authorization.userId
@@ -135,11 +231,16 @@ export const findManyByIds = async (
     .in("id", projectIds)
     .eq("isDeleted", false);
 
-  // If user context, also filter by userId OR isMarketplaceApproved (public templates)
-  if (userId !== undefined) {
-    query = query.or(
-      `userId.eq.${userId},marketplaceApprovalStatus.eq.APPROVED`
-    );
+  // PROJECT_TEMPLATES IDs are admin-curated via env var and skip approval.
+  // Other callers require ownership or marketplace approval.
+  if (skipApprovalCheck === false) {
+    if (userId !== undefined) {
+      query = query.or(
+        `userId.eq.${userId},marketplaceApprovalStatus.eq.APPROVED`
+      );
+    } else {
+      query = query.eq("marketplaceApprovalStatus", "APPROVED");
+    }
   }
 
   const data = await query

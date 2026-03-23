@@ -14,8 +14,14 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
+import {
+  workspace as workspaceApi,
+  notification as notificationApi,
+} from "@webstudio-is/project/index.server";
+import type { WorkspaceRelation } from "@webstudio-is/project";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
+import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
 import env from "~/env/env.server";
 import { ClientOnly } from "~/shared/client-only";
@@ -24,6 +30,11 @@ import { allowedDestinations } from "~/services/destinations.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
+import {
+  resolveCurrentWorkspace,
+  isDowngradedForMember,
+} from "~/dashboard/dashboard-utils";
+import type { DashboardData } from "~/dashboard/shared/types";
 
 export const meta = () => {
   const metas: ReturnType<MetaFunction> = [];
@@ -73,31 +84,75 @@ const loadDashboardData = async (request: Request) => {
     throw new AuthorizationError("You must be logged in to access this page");
   }
 
-  const { userPlanFeatures } = context;
-
-  if (userPlanFeatures === undefined) {
-    throw new Response("User plan features are not defined", {
-      status: 404,
-    });
-  }
+  const { userPlanFeatures, purchases } = context;
 
   const { sourceOrigin } = parseBuilderUrl(request.url);
 
-  const projects = await dashboardProjectCaller(context).findMany({
+  const findManyInput: {
+    userId: string;
+    workspaceId?: string;
+    includeUnassigned?: boolean;
+  } = {
     userId: user.id,
-  });
+  };
 
-  const templates = await dashboardProjectCaller(context).findManyByIds({
-    projectIds: env.PROJECT_TEMPLATES,
-  });
+  let workspaceRelation: WorkspaceRelation | "own" = "own";
+
+  const workspaces = await workspaceApi.findMany(user.id, context);
+
+  const selectedId = url.searchParams.get("workspaceId") ?? undefined;
+  const result = resolveCurrentWorkspace(workspaces, selectedId);
+
+  if (result.type === "stale") {
+    url.searchParams.delete("workspaceId");
+    const search = url.searchParams.toString();
+    throw redirect(search ? `${url.pathname}?${search}` : url.pathname);
+  }
+
+  const currentWorkspace = result.workspace;
+  const currentWorkspaceId = currentWorkspace?.id;
+
+  if (currentWorkspace !== undefined) {
+    workspaceRelation = currentWorkspace.workspaceRelation;
+  }
+
+  if (currentWorkspaceId !== undefined) {
+    findManyInput.workspaceId = currentWorkspaceId;
+    // Include projects with NULL workspaceId when viewing the default workspace.
+    // These are pre-workspace projects that belong to the user but haven't been
+    // assigned to a workspace yet.
+    if (currentWorkspace?.isDefault) {
+      findManyInput.includeUnassigned = true;
+    }
+  }
+
+  // When the workspace owner's plan has been downgraded, non-owner members
+  // must not see shared projects on reload. The owner keeps seeing their
+  // own projects because they own them regardless of plan status.
+  const projects = isDowngradedForMember(currentWorkspace)
+    ? []
+    : await dashboardProjectCaller(context).findMany(findManyInput);
+
+  const templates = await dashboardDb.db.findManyByIds(
+    env.PROJECT_TEMPLATES,
+    context,
+    { skipApprovalCheck: true }
+  );
+
+  const notifications = await notificationApi.list(context);
 
   return {
     context,
     user,
     origin: sourceOrigin,
     userPlanFeatures,
+    purchases,
     projects,
     templates,
+    workspaces,
+    currentWorkspaceId,
+    workspaceRelation,
+    notifications,
   };
 };
 
@@ -140,8 +195,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
   allowedDestinations(request, ["document", "empty"]);
 
-  const { context, user, userPlanFeatures, origin, projects, templates } =
-    await loadDashboardData(request);
+  const {
+    context,
+    user,
+    userPlanFeatures,
+    purchases,
+    origin,
+    projects,
+    templates,
+    workspaces,
+    currentWorkspaceId,
+    workspaceRelation,
+    notifications,
+  } = await loadDashboardData(request);
 
   const projectToClone = await getProjectToClone(request, context);
 
@@ -150,9 +216,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     projects,
     templates,
     userPlanFeatures,
+    purchases,
     publisherHost: env.PUBLISHER_HOST,
     origin,
     projectToClone,
+    workspaces,
+    currentWorkspaceId,
+    workspaceRelation,
+    notifications,
   };
 };
 
@@ -161,6 +232,14 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   currentUrl,
   nextUrl,
 }) => {
+  // Revalidate when workspace changes (need to re-fetch project list)
+  if (
+    currentUrl.searchParams.get("workspaceId") !==
+    nextUrl.searchParams.get("workspaceId")
+  ) {
+    return true;
+  }
+
   // We have the entire data on the client, so we don't need to revalidate when
   // URL is changing.
   if (currentUrl.href !== nextUrl.href) {
@@ -177,7 +256,13 @@ const DashboardSetup = lazy(async () => {
 });
 
 const DashboardRoute = () => {
-  const data = useLoaderData<typeof loader>();
+  // `useLoaderData` wraps the return in `JsonifyObject` which turns
+  // `string | undefined` properties into optional keys.  At runtime the
+  // shapes are identical, so the cast to `DashboardData` is safe.
+  const data = useLoaderData<typeof loader>() as ReturnType<
+    typeof useLoaderData<typeof loader>
+  > &
+    DashboardData;
 
   data.projects.slice(0, 5).forEach((project) => {
     prefetchDNS(builderUrl({ projectId: project.id, origin: data.origin }));
