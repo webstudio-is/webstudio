@@ -285,7 +285,7 @@ export const PropsSection = (props: PropsSectionProps) => {
       <Separator />
       {showPropertiesSection && (
         <CollapsibleSectionWithAddButton
-          label="Properties & Attributes"
+          label="Properties & attributes"
           onAdd={isDesignMode ? () => setAddingProp(true) : undefined}
           hasItems={hasItems}
         >

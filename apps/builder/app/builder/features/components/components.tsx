@@ -42,6 +42,7 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
+import { titleCase } from "title-case";
 
 type Meta = {
   name: string;
@@ -264,7 +265,7 @@ export const ComponentsPanel = ({
       <ScrollArea ref={draggableContainerRef}>
         {groups.map((group) => (
           <CollapsibleSection
-            label={group.category}
+            label={titleCase(group.category)}
             key={group.category}
             fullWidth
           >
