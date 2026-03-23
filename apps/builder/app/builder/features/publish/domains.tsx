@@ -336,6 +336,7 @@ const DomainItem = ({
           }
           domain={projectDomain.domain}
           disabled={domainStatus !== "VERIFIED_ACTIVE"}
+          isCustomDomain
         />
       }
       initiallyOpen={initiallyOpen}

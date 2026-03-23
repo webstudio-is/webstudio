@@ -416,14 +416,9 @@ const Publish = ({
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
   const userPlanFeatures = useStore($userPlanFeatures);
   const hasPaidPlan = userPlanFeatures.purchases.length > 0;
-  const { allowStagingPublish } = userPlanFeatures;
   const countdown = usePublishCountdown(isPublishing);
 
   useEffect(() => {
-    if (allowStagingPublish === false) {
-      setHasSelectedDomains(true);
-      return;
-    }
     const form = buttonRef.current?.closest("form");
 
     if (form == null) {
@@ -452,22 +447,17 @@ const Publish = ({
     return () => {
       observer.disconnect();
     };
-  }, [allowStagingPublish]);
+  }, []);
 
   const handlePublish = async (formData: FormData) => {
     setPublishError(undefined);
     setIsPublishing(true);
 
-    const domains = allowStagingPublish
-      ? formData
-          .getAll(domainToPublishName)
-          .map((domainEntry) => domainEntry.toString())
-      : [
-          project.domain,
-          ...project.domainsVirtual
-            .filter((domain) => domain.verified && domain.status === "ACTIVE")
-            .map((domain) => domain.domain),
-        ];
+    // Custom domain checkboxes are disabled on free plan so they are never
+    // submitted — only the staging (wstd.io) domain can appear in formData.
+    const domains = formData
+      .getAll(domainToPublishName)
+      .map((domainEntry) => domainEntry.toString());
 
     if (domains.length === 0) {
       toast.error("Please select at least one domain to publish");
@@ -807,7 +797,6 @@ const UpgradeBanner = () => {
   const { canAddDomain } = useCanAddDomain();
   const { userPublishCount, maxPublishesAllowedPerUser } =
     useUserPublishCount();
-
   if (userPublishCount >= maxPublishesAllowedPerUser) {
     return (
       <PanelBanner>
