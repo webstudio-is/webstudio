@@ -471,7 +471,7 @@ const Story = {
   .w-menu-content-1 {
     left: 0;
     top: 0;
-    positon: absolute;
+    position: absolute;
     width: max-content;
     padding: 1rem
   }
@@ -671,7 +671,7 @@ const Story = {
   .w-menu-content-2 {
     left: 0;
     top: 0;
-    positon: absolute;
+    position: absolute;
     width: max-content;
     padding: 1rem
   }
