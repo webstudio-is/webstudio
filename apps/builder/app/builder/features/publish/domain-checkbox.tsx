@@ -19,6 +19,7 @@ interface DomainCheckboxProps {
   domain: string;
   buildId: string | undefined;
   disabled?: boolean;
+  isCustomDomain?: boolean;
 }
 
 export const DomainCheckbox = (props: DomainCheckboxProps) => {
@@ -56,8 +57,12 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
     </Flex>
   );
 
-  const defaultChecked = allowStagingPublish ? props.defaultChecked : true;
-  const disabled = allowStagingPublish ? props.disabled : true;
+  // On free plan: custom domains are disabled+unchecked (can't publish to them).
+  // Staging domain behaves normally — user can still check/uncheck it.
+  const defaultChecked =
+    !allowStagingPublish && props.isCustomDomain ? false : props.defaultChecked;
+  const disabled =
+    !allowStagingPublish && props.isCustomDomain ? true : props.disabled;
 
   const hideDomainCheckbox =
     project.domainsVirtual.filter(
