@@ -203,6 +203,75 @@ export const parseColor = (colorString: string): undefined | ColorValue => {
   }
 };
 
+// Parse a color function node that uses a CSS var() as its alpha channel.
+// e.g. rgb(28 25 23 / var(--tw-text-opacity)) or color(display-p3 0.4 0.6 0.3 / var(--tw-bg-opacity))
+//
+// Neither colorjs nor css-tree's lexer support var() in the alpha slot, so we use
+// css-tree's AST to locate the var(), extract the color components by substituting
+// "1" for the var node (AST-level, no string replacement), then store the var as alpha.
+const parseColorWithVarAlpha = (node: FunctionNode): undefined | ColorValue => {
+  // Find the "/" operator followed by a var() function in the css-tree AST
+  let foundSlash = false;
+  let varNode: FunctionNode | undefined;
+  for (const child of node.children) {
+    if (child.type === "Operator" && child.value === "/") {
+      foundSlash = true;
+    } else if (
+      foundSlash &&
+      child.type === "Function" &&
+      child.name === "var"
+    ) {
+      varNode = child;
+      break;
+    }
+  }
+
+  if (!foundSlash || varNode === undefined) {
+    return;
+  }
+
+  const alphaVar = parseCssVar(varNode);
+  if (alphaVar === undefined) {
+    return;
+  }
+
+  // Use css-tree to rebuild the function node with "1" substituted for the var()
+  // so colorjs can parse the color components. This is AST-based — no fragile
+  // string replacement that could match the wrong occurrence.
+  const substituteChildren = new List<CssNode>();
+  for (const child of node.children) {
+    if (child === varNode) {
+      substituteChildren.appendData({
+        type: "Number",
+        loc: null,
+        value: "1",
+      });
+    } else {
+      substituteChildren.appendData(child);
+    }
+  }
+  const substituteStr = generate({
+    type: "Function",
+    loc: null,
+    name: node.name,
+    children: substituteChildren,
+  });
+
+  const color = parseColor(substituteStr);
+  if (color === undefined) {
+    return;
+  }
+
+  // If the var has no CSS-level fallback, use "1" (fully opaque) as the fallback
+  // so renderers have a safe value when the variable is unset.
+  const alpha: VarValue =
+    alphaVar.fallback !== undefined
+      ? alphaVar
+      : { ...alphaVar, fallback: { type: "unit", unit: "number", value: 1 } };
+
+  return { ...color, alpha };
+};
+
 const parseShadow = (
   nodes: CssNode[],
   input: string
@@ -344,6 +413,12 @@ const parseLiteral = (
       const color = parseColor(generate(node));
       if (color) {
         return color;
+      }
+      // Try to parse with CSS variable as alpha channel (CSS Color Level 4)
+      // e.g. rgb(28 25 23 / var(--tw-text-opacity))
+      const colorWithVarAlpha = parseColorWithVarAlpha(node);
+      if (colorWithVarAlpha) {
+        return colorWithVarAlpha;
       }
     }
     if (node.name === "var") {

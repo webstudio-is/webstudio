@@ -162,12 +162,69 @@ describe("Parse CSS value", () => {
     });
   });
 
-  test("fallback to unparsed type when color has variable inside", () => {
+  test("parse rgb color with CSS variable as alpha channel", () => {
     expect(
       parseCssValue("color", "rgb(24 24 27 / var(--tw-bg-opacity))")
     ).toEqual({
-      type: "unparsed",
-      value: "rgb(24 24 27 / var(--tw-bg-opacity))",
+      type: "color",
+      colorSpace: "srgb",
+      components: [0.0941, 0.0941, 0.1059],
+      alpha: {
+        type: "var",
+        value: "tw-bg-opacity",
+        fallback: { type: "unit", unit: "number", value: 1 },
+      },
+    });
+  });
+
+  test("parse color() function with CSS variable as alpha channel", () => {
+    expect(
+      parseCssValue(
+        "background-color",
+        "color(display-p3 0.4 0.6 0.3 / var(--tw-bg-opacity))"
+      )
+    ).toEqual({
+      type: "color",
+      colorSpace: "p3",
+      components: [0.4, 0.6, 0.3],
+      alpha: {
+        type: "var",
+        value: "tw-bg-opacity",
+        fallback: { type: "unit", unit: "number", value: 1 },
+      },
+    });
+  });
+
+  test("parse oklch color with CSS variable as alpha channel", () => {
+    expect(
+      parseCssValue(
+        "color",
+        "oklch(59.686% 0.1009 29.234 / var(--tw-text-opacity))"
+      )
+    ).toEqual({
+      type: "color",
+      colorSpace: "oklch",
+      components: [0.5969, 0.1009, 29.234],
+      alpha: {
+        type: "var",
+        value: "tw-text-opacity",
+        fallback: { type: "unit", unit: "number", value: 1 },
+      },
+    });
+  });
+
+  test("preserve explicit CSS fallback in var alpha channel", () => {
+    expect(
+      parseCssValue("color", "rgb(24 24 27 / var(--tw-bg-opacity, 0.5))")
+    ).toEqual({
+      type: "color",
+      colorSpace: "srgb",
+      components: [0.0941, 0.0941, 0.1059],
+      alpha: {
+        type: "var",
+        value: "tw-bg-opacity",
+        fallback: { type: "unparsed", value: "0.5" },
+      },
     });
   });
 });

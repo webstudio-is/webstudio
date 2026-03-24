@@ -328,6 +328,16 @@ const substituteVars = (
     }
     return styleValue;
   }
+  if (
+    styleValue.type === "color" &&
+    typeof styleValue.alpha === "object" &&
+    styleValue.alpha.type === "var"
+  ) {
+    const resolved = mapper(styleValue.alpha);
+    // Keep as a number when the variable resolves to a numeric unit value
+    const alpha = resolved.type === "unit" ? resolved.value : styleValue.alpha;
+    return { ...styleValue, alpha };
+  }
   if (styleValue.type === "layers" || styleValue.type === "tuple") {
     const newItems = styleValue.value.map((item) => {
       return substituteVars(item, mapper) as UnparsedValue;
