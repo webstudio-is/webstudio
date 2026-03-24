@@ -331,7 +331,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       components: [0.8, 0.4, 0.6],
       alpha: 0.8,
     });
-    expect(value).toBe("color(p3 0.8 0.4 0.6 / 0.8)");
+    expect(value).toBe("color(display-p3 0.8 0.4 0.6 / 0.8)");
   });
 
   test("color with xyz-d65 uses color() function", () => {
@@ -361,7 +361,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       components: [0.4, 0.6, 0.3],
       alpha: { type: "var", value: "tw-bg-opacity" },
     });
-    expect(value).toBe("color(p3 0.4 0.6 0.3 / var(--tw-bg-opacity))");
+    expect(value).toBe("color(display-p3 0.4 0.6 0.3 / var(--tw-bg-opacity))");
   });
 
   test("color in tuple", () => {
