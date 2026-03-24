@@ -122,7 +122,7 @@ export const toValue = (
       case "oklch":
         return `oklch(${c1} ${c2} ${c3} / ${alpha})`;
       // Fall back to color() function for less common color spaces.
-      // colorjs uses internal short names that differ from CSS predefined color space identifiers.
+      // Webstudio uses colorjs internal names; map to CSS predefined color space names.
       case "p3":
         return `color(display-p3 ${c1} ${c2} ${c3} / ${alpha})`;
       case "a98rgb":
