@@ -331,7 +331,27 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       components: [0.8, 0.4, 0.6],
       alpha: 0.8,
     });
-    expect(value).toBe("color(p3 0.8 0.4 0.6 / 0.8)");
+    expect(value).toBe("color(display-p3 0.8 0.4 0.6 / 0.8)");
+  });
+
+  test("color with a98rgb color space uses a98-rgb CSS name", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "a98rgb",
+      components: [0.5, 0.3, 0.7],
+      alpha: 1,
+    });
+    expect(value).toBe("color(a98-rgb 0.5 0.3 0.7 / 1)");
+  });
+
+  test("color with prophoto color space uses prophoto-rgb CSS name", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "prophoto",
+      components: [0.6, 0.4, 0.2],
+      alpha: 1,
+    });
+    expect(value).toBe("color(prophoto-rgb 0.6 0.4 0.2 / 1)");
   });
 
   test("color with xyz-d65 uses color() function", () => {
@@ -361,7 +381,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       components: [0.4, 0.6, 0.3],
       alpha: { type: "var", value: "tw-bg-opacity" },
     });
-    expect(value).toBe("color(p3 0.4 0.6 0.3 / var(--tw-bg-opacity))");
+    expect(value).toBe("color(display-p3 0.4 0.6 0.3 / var(--tw-bg-opacity))");
   });
 
   test("color in tuple", () => {
