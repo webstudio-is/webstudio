@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { parseCssValue } from "./parse-css-value";
+import { parseCssValue, isValidDeclaration } from "./parse-css-value";
 import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 
 describe("Parse CSS value", () => {
@@ -1348,5 +1348,213 @@ test("parse perspective-origin", () => {
       { type: "unit", value: 50, unit: "%" },
       { type: "unit", value: 50, unit: "%" },
     ],
+  });
+});
+
+describe("isValidDeclaration", () => {
+  test("custom properties always accept any value", () => {
+    expect(isValidDeclaration("--my-color", "anything")).toBe(true);
+    expect(isValidDeclaration("--x", "rgb(0 0 0)")).toBe(true);
+    expect(isValidDeclaration("--x", "not-valid-garbage")).toBe(true);
+  });
+
+  test("var() is valid on any property, detected via AST", () => {
+    expect(isValidDeclaration("color", "var(--primary)")).toBe(true);
+    expect(isValidDeclaration("color", "var(--primary, red)")).toBe(true);
+    expect(isValidDeclaration("width", "var(--size)")).toBe(true);
+  });
+
+  // Critical: var() must be detected by the AST walk before reaching the
+  // keyword-only check, otherwise var() on these properties would be rejected.
+  test("var() on keyword-only properties is valid", () => {
+    expect(isValidDeclaration("white-space-collapse", "var(--ws)")).toBe(true);
+    expect(isValidDeclaration("text-wrap-mode", "var(--tw)")).toBe(true);
+    expect(isValidDeclaration("text-wrap-style", "var(--ts)")).toBe(true);
+  });
+
+  test("white-space-collapse: valid keywords accepted", () => {
+    expect(isValidDeclaration("white-space-collapse", "collapse")).toBe(true);
+    expect(isValidDeclaration("white-space-collapse", "preserve")).toBe(true);
+  });
+
+  test("white-space-collapse: unknown keywords rejected", () => {
+    expect(isValidDeclaration("white-space-collapse", "not-valid")).toBe(false);
+    expect(isValidDeclaration("white-space-collapse", "wrap")).toBe(false);
+  });
+
+  test("text-wrap-mode: valid keywords accepted", () => {
+    expect(isValidDeclaration("text-wrap-mode", "wrap")).toBe(true);
+    expect(isValidDeclaration("text-wrap-mode", "nowrap")).toBe(true);
+  });
+
+  test("text-wrap-mode: unknown keywords rejected", () => {
+    expect(isValidDeclaration("text-wrap-mode", "not-valid")).toBe(false);
+  });
+
+  test("text-wrap-style: valid keywords accepted", () => {
+    expect(isValidDeclaration("text-wrap-style", "balance")).toBe(true);
+    expect(isValidDeclaration("text-wrap-style", "auto")).toBe(true);
+  });
+
+  test("text-wrap-style: unknown keywords rejected", () => {
+    expect(isValidDeclaration("text-wrap-style", "not-valid")).toBe(false);
+  });
+
+  // Relative color syntax: csstree returns identical "Mismatch" errors for both
+  // relative colors and genuinely invalid values, so we detect structurally via
+  // the `from` identifier being the first child of the color function node.
+  test("static relative color syntax is valid", () => {
+    expect(isValidDeclaration("color", "rgb(from blue r g b / 50%)")).toBe(
+      true
+    );
+    expect(isValidDeclaration("color", "oklch(from red l c h)")).toBe(true);
+    expect(
+      isValidDeclaration("background-color", "hsl(from green h s 75%)")
+    ).toBe(true);
+  });
+
+  test("relative color with var() origin is valid", () => {
+    expect(isValidDeclaration("color", "rgb(from var(--brand) r g b)")).toBe(
+      true
+    );
+    expect(
+      isValidDeclaration(
+        "color",
+        "oklch(from var(--brand) l c h / var(--alpha))"
+      )
+    ).toBe(true);
+  });
+
+  test("standard color values are valid via csstree lexer", () => {
+    expect(isValidDeclaration("color", "oklch(0.7 0.15 200)")).toBe(true);
+    expect(isValidDeclaration("color", "color-mix(in oklch, red, blue)")).toBe(
+      true
+    );
+    expect(isValidDeclaration("color", "rgb(255 0 0)")).toBe(true);
+    expect(isValidDeclaration("color", "#ff0000")).toBe(true);
+  });
+
+  test("genuinely invalid CSS values are rejected", () => {
+    expect(isValidDeclaration("color", "not-valid-garbage")).toBe(false);
+    // blur() is not a valid <color> value
+    expect(isValidDeclaration("color", "blur(4)")).toBe(false);
+    // red is not a valid <length>
+    expect(isValidDeclaration("width", "red")).toBe(false);
+  });
+
+  // The AST walk is deep, not shallow. var() nested inside calc() or color-mix()
+  // must be detected even though it isn't the top-level node.
+  test("var() nested deep inside another function is valid", () => {
+    expect(isValidDeclaration("width", "calc(var(--size) + 10px)")).toBe(true);
+    expect(
+      isValidDeclaration("color", "color-mix(in oklch, var(--primary), blue)")
+    ).toBe(true);
+  });
+
+  // When csstree's tokenizer itself fails (malformed syntax like unmatched braces)
+  // cssTryParseValue returns undefined. In the non-browser path this must return false.
+  test("syntactically broken value that csstree cannot parse at all is rejected", () => {
+    expect(isValidDeclaration("color", "}")).toBe(false);
+  });
+
+  // The newer CSS linear() easing function isn't in csstree's grammar for
+  // transition/animation-timing-function, so there's a special lexer.match() call
+  // before the normal lexer.matchProperty() call.
+  test("transition-timing-function: CSS linear() easing syntax is valid", () => {
+    expect(
+      isValidDeclaration("transition-timing-function", "linear(0 0%, 1 100%)")
+    ).toBe(true);
+    expect(
+      isValidDeclaration("transition-timing-function", "linear(0, 0.5 25%, 1)")
+    ).toBe(true);
+  });
+
+  test("animation-timing-function: CSS linear() easing syntax is valid", () => {
+    expect(
+      isValidDeclaration("animation-timing-function", "linear(0 0%, 1 100%)")
+    ).toBe(true);
+  });
+
+  // Unknown CSS properties (future or vendor-prefixed) are allowed through so they
+  // can be stored as UnparsedValue rather than silently dropped.
+  test("unknown CSS properties are accepted via the 'Unknown property' error path", () => {
+    expect(
+      isValidDeclaration("animation-timeline" as CssProperty, "auto")
+    ).toBe(true);
+    expect(
+      isValidDeclaration("animation-range-start" as CssProperty, "normal")
+    ).toBe(true);
+  });
+});
+
+describe("keyword-only properties via parseCssValue", () => {
+  test("white-space-collapse: valid keyword", () => {
+    expect(parseCssValue("white-space-collapse", "collapse")).toEqual({
+      type: "keyword",
+      value: "collapse",
+    });
+    expect(parseCssValue("white-space-collapse", "preserve")).toEqual({
+      type: "keyword",
+      value: "preserve",
+    });
+  });
+
+  test("white-space-collapse: invalid keyword returns invalid", () => {
+    expect(parseCssValue("white-space-collapse", "not-valid")).toEqual({
+      type: "invalid",
+      value: "not-valid",
+    });
+  });
+
+  test("white-space-collapse: var() is accepted and returned as VarValue", () => {
+    expect(parseCssValue("white-space-collapse", "var(--ws-collapse)")).toEqual(
+      {
+        type: "var",
+        value: "ws-collapse",
+      }
+    );
+  });
+
+  test("text-wrap-mode: valid keyword", () => {
+    expect(parseCssValue("text-wrap-mode", "wrap")).toEqual({
+      type: "keyword",
+      value: "wrap",
+    });
+    expect(parseCssValue("text-wrap-mode", "nowrap")).toEqual({
+      type: "keyword",
+      value: "nowrap",
+    });
+  });
+
+  test("text-wrap-mode: invalid value", () => {
+    expect(parseCssValue("text-wrap-mode", "not-valid")).toEqual({
+      type: "invalid",
+      value: "not-valid",
+    });
+  });
+
+  test("text-wrap-mode: var() is accepted", () => {
+    expect(parseCssValue("text-wrap-mode", "var(--tw-mode)")).toEqual({
+      type: "var",
+      value: "tw-mode",
+    });
+  });
+
+  test("text-wrap-style: valid keyword", () => {
+    expect(parseCssValue("text-wrap-style", "balance")).toEqual({
+      type: "keyword",
+      value: "balance",
+    });
+    expect(parseCssValue("text-wrap-style", "auto")).toEqual({
+      type: "keyword",
+      value: "auto",
+    });
+  });
+
+  test("text-wrap-style: var() is accepted", () => {
+    expect(parseCssValue("text-wrap-style", "var(--style)")).toEqual({
+      type: "var",
+      value: "style",
+    });
   });
 });

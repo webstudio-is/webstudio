@@ -6,6 +6,7 @@ import {
   lexer,
   List,
   parse,
+  walk,
 } from "css-tree";
 import warnOnce from "warn-once";
 import {
@@ -72,17 +73,39 @@ export const isValidDeclaration = (
   property: CssProperty,
   value: string
 ): boolean => {
-  if (
-    property.startsWith("--") ||
-    value.includes("var(") ||
-    // color-mix() is a CSS Color 5 function; older csstree grammars may not
-    // recognise it, so bypass lexer validation and let parseCssValue handle it.
-    value.includes("color-mix(") ||
-    // Relative color syntax: rgb(from <color> ...), oklch(from ...), etc.
-    // The 'from' keyword inside color functions is not in older csstree grammars.
-    /\(\s*from\s/.test(value)
-  ) {
+  // Custom properties accept any value.
+  if (property.startsWith("--")) {
     return true;
+  }
+
+  // Parse once upfront for structural inspection. cssTryParseValue may return
+  // null for values that the browser can still handle (csstree has known gaps),
+  // so null here does NOT mean the value is invalid — we fall through to other paths.
+  const ast = cssTryParseValue(value);
+
+  // Two CSS constructs cannot be validated by any lexer path and must be accepted
+  // unconditionally regardless of property:
+  //   var()         — the variable's value is unknown at validation time
+  //   relative color (rgb(from ...), oklch(from ...), etc.) — csstree lexer
+  //                   returns the same "Mismatch" error as genuinely invalid values
+  // Detecting these here also ensures var() stays valid for the keyword-only
+  // properties below, which don't go through CSSStyleValue.parse.
+  if (ast != null) {
+    let hasUncheckedSyntax = false;
+    walk(ast, (node) => {
+      if (node.type === "Function") {
+        if (
+          node.name === "var" ||
+          (node.children.first?.type === "Identifier" &&
+            node.children.first.name === "from")
+        ) {
+          hasUncheckedSyntax = true;
+        }
+      }
+    });
+    if (hasUncheckedSyntax) {
+      return true;
+    }
   }
 
   // these properties have poor support in browser
@@ -108,8 +131,8 @@ export const isValidDeclaration = (
     }
   }
 
-  const ast = cssTryParseValue(value);
-
+  // Non-browser (test) path — use csstree lexer.
+  // Bail out if the AST parse above failed; the lexer can't work without it.
   if (ast == null) {
     return false;
   }
@@ -125,6 +148,7 @@ export const isValidDeclaration = (
     }
   }
 
+  // Reuse the AST parsed above — no second cssTryParseValue call needed.
   const matchResult = lexer.matchProperty(property, ast);
 
   // allow to parse unknown properties as unparsed
