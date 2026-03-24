@@ -446,7 +446,6 @@ describe("Convert WS CSS Values to native CSS strings", () => {
         expect(value).toBe(expected);
       });
     }
-  });
 
   test("color in tuple", () => {
     const value = toValue({
