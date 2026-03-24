@@ -80,6 +80,7 @@ export const ColorPickerControl = ({
           styleValue.type === "color" ||
           styleValue.type === "keyword" ||
           styleValue.type === "var" ||
+          styleValue.type === "unparsed" ||
           styleValue.type === "invalid"
         ) {
           setIntermediateValue(styleValue);
@@ -104,7 +105,8 @@ export const ColorPickerControl = ({
           value.type === "rgb" ||
           value.type === "color" ||
           value.type === "keyword" ||
-          value.type === "var"
+          value.type === "var" ||
+          value.type === "unparsed"
         ) {
           setIntermediateValue(undefined);
           onChangeComplete(value);

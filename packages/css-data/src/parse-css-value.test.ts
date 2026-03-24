@@ -229,6 +229,52 @@ describe("Parse CSS value", () => {
   });
 });
 
+test("parse color-mix() as unparsed value", () => {
+  expect(parseCssValue("color", "color-mix(in oklch, red 50%, blue)")).toEqual({
+    type: "unparsed",
+    value: "color-mix(in oklch, red 50%, blue)",
+  });
+});
+
+test("parse color-mix() on background-color as unparsed value", () => {
+  expect(
+    parseCssValue(
+      "background-color",
+      "color-mix(in srgb, #ff0000 30%, transparent)"
+    )
+  ).toEqual({
+    type: "unparsed",
+    value: "color-mix(in srgb, #ff0000 30%, transparent)",
+  });
+});
+
+test("parse color-mix() with var() as first color argument", () => {
+  expect(
+    parseCssValue("color", "color-mix(in oklch, var(--primary), blue)")
+  ).toEqual({
+    type: "unparsed",
+    value: "color-mix(in oklch, var(--primary), blue)",
+  });
+});
+
+test("parse color-mix() with var() as second color argument", () => {
+  expect(
+    parseCssValue("color", "color-mix(in oklch, red, var(--secondary))")
+  ).toEqual({
+    type: "unparsed",
+    value: "color-mix(in oklch, red, var(--secondary))",
+  });
+});
+
+test("parse color-mix() with var() as percentage", () => {
+  expect(
+    parseCssValue("color", "color-mix(in srgb, red var(--pct), blue)")
+  ).toEqual({
+    type: "unparsed",
+    value: "color-mix(in srgb, red var(--pct), blue)",
+  });
+});
+
 test("parse background-image property as layers", () => {
   expect(
     parseCssValue(

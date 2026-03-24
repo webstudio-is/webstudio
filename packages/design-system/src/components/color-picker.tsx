@@ -58,12 +58,32 @@ const colorToRgba = (color: colorjs.PlainColorObject): RgbaColor => {
 
 const transparentColor: RgbaColor = { r: 0, g: 0, b: 0, a: 0 };
 
+// Resolve a color string the browser understands but colorjs doesn't
+// (e.g. color-mix(), relative color syntax). Returns undefined in non-browser
+// environments (SSR, tests) or when the browser can't resolve the color.
+const resolveColorViaCanvas = (colorString: string): RgbaColor | undefined => {
+  if (typeof document === "undefined") {
+    return;
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return;
+  }
+  ctx.fillStyle = colorString;
+  ctx.fillRect(0, 0, 1, 1);
+  const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+  return { r: r ?? 0, g: g ?? 0, b: b ?? 0, a: (a ?? 255) / 255 };
+};
+
 // Helper to parse color string to RgbaColor
 export const parseColorString = (colorString: string): RgbaColor => {
   try {
     return colorToRgba(colorjs.to(colorString, "srgb"));
   } catch {
-    return transparentColor;
+    return resolveColorViaCanvas(colorString) ?? transparentColor;
   }
 };
 

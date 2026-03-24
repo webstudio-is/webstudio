@@ -72,7 +72,13 @@ export const isValidDeclaration = (
   property: CssProperty,
   value: string
 ): boolean => {
-  if (property.startsWith("--") || value.includes("var(")) {
+  if (
+    property.startsWith("--") ||
+    value.includes("var(") ||
+    // color-mix() is a CSS Color 5 function; older csstree grammars may not
+    // recognise it, so bypass lexer validation and let parseCssValue handle it.
+    value.includes("color-mix(")
+  ) {
     return true;
   }
 
