@@ -330,7 +330,6 @@ const substituteVars = (
   }
   if (
     styleValue.type === "color" &&
-    styleValue.alpha !== null &&
     typeof styleValue.alpha === "object" &&
     styleValue.alpha.type === "var"
   ) {

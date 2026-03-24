@@ -12,6 +12,7 @@ import {
 import { $, renderData } from "@webstudio-is/template";
 import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import type {
+  ColorValue,
   CssProperty,
   LayersValue,
   ShadowValue,
@@ -446,6 +447,39 @@ test("compute custom properties in shadows", () => {
         },
       },
     ],
+  });
+});
+
+test("resolve custom property in color alpha channel", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --tw-opacity: 0.5;
+        color: #ff0000;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
+  // Mutate the color value to have a VarValue alpha, simulating parsed
+  // Tailwind output like `rgb(28 25 23 / var(--tw-opacity))`
+  const colorDecl = model.styles.get("bodyLocal:base:color:")!;
+  const colorValue = colorDecl.value as ColorValue;
+  colorValue.alpha = {
+    type: "var",
+    value: "tw-opacity",
+    fallback: { type: "unit", unit: "number", value: 1 },
+  };
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "color",
+    }).computedValue
+  ).toEqual({
+    type: "color",
+    colorSpace: "srgb",
+    components: [1, 0, 0],
+    alpha: 0.5,
   });
 });
 

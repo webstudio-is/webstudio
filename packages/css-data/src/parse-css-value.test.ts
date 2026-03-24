@@ -212,6 +212,21 @@ describe("Parse CSS value", () => {
       },
     });
   });
+
+  test("preserve explicit CSS fallback in var alpha channel", () => {
+    expect(
+      parseCssValue("color", "rgb(24 24 27 / var(--tw-bg-opacity, 0.5))")
+    ).toEqual({
+      type: "color",
+      colorSpace: "srgb",
+      components: [0.0941, 0.0941, 0.1059],
+      alpha: {
+        type: "var",
+        value: "tw-bg-opacity",
+        fallback: { type: "unparsed", value: "0.5" },
+      },
+    });
+  });
 });
 
 test("parse background-image property as layers", () => {
