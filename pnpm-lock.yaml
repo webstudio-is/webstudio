@@ -1441,6 +1441,9 @@ importers:
       downshift:
         specifier: ^6.1.7
         version: 6.1.7(react@18.3.0-canary-14898b6a9-20240318)
+      hdr-color-input:
+        specifier: ^0.4.0
+        version: 0.4.0
       match-sorter:
         specifier: ^8.0.0
         version: 8.0.0
@@ -4147,6 +4150,9 @@ packages:
   '@polka/url@1.0.0-next.28':
     resolution: {integrity: sha512-8LduaNlMZGwdZ6qWrKlfa+2M4gahzFkprZiAt2TF8uS0qQgBizKXpXURqvTJ4WtmupWxaLqjRb2UCTe72mu+Aw==}
 
+  '@preact/signals-core@1.14.0':
+    resolution: {integrity: sha512-AowtCcCU/33lFlh1zRFf/u+12rfrhtNakj7UpaGEsmMwUKpKWMVvcktOGcwBBNiB4lWrZWc01LhiyyzVklJyaQ==}
+
   '@prisma/client@5.12.1':
     resolution: {integrity: sha512-6/JnizEdlSBxDIdiLbrBdMW5NqDxOmhXAJaNXiPpgzAPr/nLZResT6MMpbOHLo5yAbQ1Vv5UU8PTPRzb0WIxdA==}
     engines: {node: '>=16.13'}
@@ -6806,6 +6812,9 @@ packages:
 
   hast-util-whitespace@2.0.1:
     resolution: {integrity: sha512-nAxA0v8+vXSBDt3AnRUNjyRIQ0rD+ntpbAp4LnPkumc5M9yUbSMa4XDU9Q6etY4f1Wp4bNgvc1yjiZtsTTrSng==}
+
+  hdr-color-input@0.4.0:
+    resolution: {integrity: sha512-Wv7UgbOswBXYMWQCrzuf5j6Yxs3Dz4Gm3hdrrMV88mD1bbL4khX5aojJvMRLOe30bj6eRo5TYRdcDwTEWl4Wbg==}
 
   headers-polyfill@4.0.3:
     resolution: {integrity: sha512-IScLbePpkvO846sIwOtOTDjutRMWdXdJmXdMvk6gCBHxFO8d+QKOQedyZSxFTTFYRSmlgSTDtXqqq4pcenBXLQ==}
@@ -11098,6 +11107,8 @@ snapshots:
 
   '@polka/url@1.0.0-next.28': {}
 
+  '@preact/signals-core@1.14.0': {}
+
   '@prisma/client@5.12.1(prisma@5.12.1)':
     optionalDependencies:
       prisma: 5.12.1
@@ -14208,6 +14219,11 @@ snapshots:
       - supports-color
 
   hast-util-whitespace@2.0.1: {}
+
+  hdr-color-input@0.4.0:
+    dependencies:
+      '@preact/signals-core': 1.14.0
+      colorjs.io: 0.6.1
 
   headers-polyfill@4.0.3:
     optional: true

@@ -1,27 +1,26 @@
 import * as colorjs from "colorjs.io/fn";
-import {
+import "hdr-color-input";
+import type { ChangeDetail, ColorInput } from "hdr-color-input";
+import React, {
   forwardRef,
   type ComponentProps,
   type ElementRef,
   useEffect,
-  useState,
+  useRef,
 } from "react";
 import { clamp } from "@react-aria/utils";
 import { useDebouncedCallback } from "use-debounce";
-import { RgbaColorPicker } from "react-colorful";
-import { EyedropperIcon } from "@webstudio-is/icons";
 import {
   toValue,
   type StyleValue,
   type Unit,
-  type RgbValue,
+  type ColorValue,
+  type UnparsedValue,
 } from "@webstudio-is/css-engine";
 import { css, rawTheme, theme, type CSS } from "../stitches.config";
 import { useDisableCanvasPointerEvents } from "../utilities";
-import { Grid } from "./grid";
-import { IconButton } from "./icon-button";
-import { InputField } from "./input-field";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+
+// ─── colorjs color space registrations ──────────────────────────────────────
 
 colorjs.ColorSpace.register(colorjs.sRGB);
 colorjs.ColorSpace.register(colorjs.sRGB_Linear);
@@ -37,6 +36,25 @@ colorjs.ColorSpace.register(colorjs.ProPhoto);
 colorjs.ColorSpace.register(colorjs.REC_2020);
 colorjs.ColorSpace.register(colorjs.XYZ_D65);
 colorjs.ColorSpace.register(colorjs.XYZ_D50);
+
+// ─── JSX type for <color-input> custom element ──────────────────────────────
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace React.JSX {
+    interface IntrinsicElements {
+      "color-input": React.HTMLAttributes<HTMLElement> & {
+        ref?: React.Ref<HTMLElement>;
+        value?: string;
+        colorspace?: string;
+        theme?: "auto" | "light" | "dark";
+        "no-alpha"?: boolean | string;
+      };
+    }
+  }
+}
+
+// ─── Color utilities ─────────────────────────────────────────────────────────
 
 type RgbaColor = {
   r: number;
@@ -87,7 +105,7 @@ export const parseColorString = (colorString: string): RgbaColor => {
   }
 };
 
-// Helper to convert RgbaColor to RGB string
+// Helper to convert RgbaColor to RGB string (used for border color)
 const rgbaToRgbString = (color: RgbaColor): string => {
   const { r, g, b, a } = color;
   if (a < 1) {
@@ -96,22 +114,51 @@ const rgbaToRgbString = (color: RgbaColor): string => {
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 };
 
-// Helper to convert RgbaColor to hex
-const rgbaToHex = (color: RgbaColor): string => {
-  const { r, g, b, a } = color;
-  const toHex = (n: number) => {
-    const hex = Math.round(n).toString(16);
-    return hex.length === 1 ? "0" + hex : hex;
-  };
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}${toHex(a * 255)}`.toUpperCase();
+// colorjs spaceId → ColorValue["colorSpace"] (same as parse-css-value.ts)
+const colorSpaceMap: Record<string, ColorValue["colorSpace"]> = {
+  srgb: "srgb",
+  "srgb-linear": "srgb-linear",
+  hsl: "hsl",
+  hwb: "hwb",
+  lab: "lab",
+  lch: "lch",
+  oklab: "oklab",
+  oklch: "oklch",
+  p3: "p3",
+  a98rgb: "a98rgb",
+  prophoto: "prophoto",
+  rec2020: "rec2020",
+  "xyz-d65": "xyz-d65",
+  "xyz-d50": "xyz-d50",
+  xyz: "xyz-d65",
 };
 
-const colorfulStyles = css({
-  ".react-colorful__pointer": {
-    width: theme.spacing[10],
-    height: theme.spacing[10],
-  },
-});
+const toColorComponent = (value: undefined | null | number) =>
+  Math.round((value ?? 0) * 10000) / 10000;
+
+// Convert a CSS color string emitted by <color-input> into a StyleValue.
+// colorjs can parse all concrete color values the picker produces.
+// Falls back to UnparsedValue for anything it can't parse (e.g. relative colors
+// typed directly into the text field).
+const cssStringToStyleValue = (
+  cssString: string
+): ColorValue | UnparsedValue => {
+  try {
+    const color = colorjs.parse(cssString);
+    return {
+      type: "color",
+      colorSpace: colorSpaceMap[color.spaceId] ?? "srgb",
+      components: color.coords.map(
+        toColorComponent
+      ) as ColorValue["components"],
+      alpha: toColorComponent(color.alpha),
+    };
+  } catch {
+    return { type: "unparsed", value: cssString };
+  }
+};
+
+// ─── ColorThumb ──────────────────────────────────────────────────────────────
 
 const whiteColor: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
 const borderColorSwatch = colorToRgba(
@@ -174,7 +221,8 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
     const rgba = parseColorString(color);
     const background =
       rgba.a < 1
-        ? `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${color}`
+        ? `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%)
+ 0% 33.33% / 40% 40%, ${color}`
         : color;
     const borderColor = calcBorderColor(rgba);
 
@@ -198,33 +246,7 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
 
 ColorThumb.displayName = "ColorThumb";
 
-const colorResultToRgbValue = (rgb: RgbaColor): RgbValue => ({
-  type: "rgb",
-  r: rgb.r,
-  g: rgb.g,
-  b: rgb.b,
-  alpha: rgb.a ?? 1,
-});
-
-const normalizeHex = (value: string) => {
-  const trimmed = value.trim();
-  const hex = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
-  return hex;
-};
-
-const getEyeDropper = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Constructor = (window as any).EyeDropper;
-  if (Constructor === undefined) {
-    return;
-  }
-  const eyeDropper = new Constructor();
-  return (callback: (rgb: string) => void) => {
-    eyeDropper.open().then((result: { sRGBHex: string }) => {
-      callback(result.sRGBHex);
-    });
-  };
-};
+// ─── ColorPicker / ColorPickerPopover ────────────────────────────────────────
 
 type IntermediateColorValue = {
   type: "intermediate";
@@ -249,90 +271,60 @@ type ColorPickerPopoverProps = {
   thumb?: React.ReactElement;
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
+  // Kept for API compatibility; positioning is managed by the web component.
   sideOffset?: number;
 };
 
-const fixColor = (value: ColorPickerValue, color: RgbaColor) => {
-  if (value.type === "keyword" && value.value === "transparent") {
-    return { ...color, a: 1 };
-  }
-  return color;
-};
-
-const EyeDropper = ({ onChange }: { onChange: (rgb: string) => void }) => {
-  const open = getEyeDropper();
-  return (
-    <IconButton
-      disabled={open === undefined}
-      onClick={() => {
-        open?.(onChange);
-      }}
-    >
-      <EyedropperIcon />
-    </IconButton>
-  );
-};
-
+// Standalone color picker — renders <color-input> with its panel immediately
+// open so it can be embedded inside a custom container without triggering
+// the web component's own popover mechanism.
 export const ColorPicker = ({
   value,
   onChange,
   onChangeComplete,
 }: ColorPickerProps) => {
-  const [hex, setHex] = useState(() => {
-    const colorString =
-      value.type === "intermediate" ? value.value : toValue(value);
-    return rgbaToHex(parseColorString(colorString));
-  });
-  const normalizedHex = normalizeHex(hex);
+  const pickerRef = useRef<HTMLElement>(null);
+  const colorString =
+    value.type === "intermediate" ? value.value : toValue(value);
+
   const handleCompleteDebounced = useDebouncedCallback(
-    (newValue: RgbValue) => onChangeComplete(newValue),
+    (v: StyleValue) => onChangeComplete(v),
     500
   );
 
-  return (
-    <>
-      <RgbaColorPicker
-        className={colorfulStyles.toString()}
-        color={parseColorString(normalizedHex)}
-        onChange={(newRgb) => {
-          const fixedRgb = fixColor(value, newRgb);
-          setHex(rgbaToHex(fixedRgb));
-          const newValue = colorResultToRgbValue(fixedRgb);
-          onChange(newValue);
-          handleCompleteDebounced(newValue);
-        }}
-      />
-      <Grid css={{ gridTemplateColumns: "auto 1fr" }} gap="1">
-        <EyeDropper
-          onChange={(newHex) => {
-            setHex(newHex);
-            const newValue = colorResultToRgbValue(parseColorString(newHex));
-            onChangeComplete(newValue);
-          }}
-        />
-        <InputField
-          value={hex}
-          onChange={(event) => {
-            setHex(event.target.value);
-            try {
-              const color = colorjs.to(
-                normalizeHex(event.target.value),
-                "srgb"
-              );
-              const rgba = colorToRgba(color);
-              const newValue = colorResultToRgbValue(rgba);
-              onChange(newValue);
-              handleCompleteDebounced(newValue);
-            } catch {
-              // Invalid color, don't update
-            }
-          }}
-        />
-      </Grid>
-    </>
-  );
+  // Sync external value changes into the web component.
+  useEffect(() => {
+    const el = pickerRef.current as ColorInput | null;
+    if (el && el.value !== colorString) {
+      el.value = colorString;
+    }
+  }, [colorString]);
+
+  // Wire up the change event.
+  useEffect(() => {
+    const el = pickerRef.current;
+    if (!el) return;
+    const handler = (e: Event) => {
+      const { value: css } = (e as CustomEvent<ChangeDetail>).detail;
+      const styleValue = cssStringToStyleValue(css);
+      onChange(styleValue);
+      handleCompleteDebounced(styleValue);
+    };
+    el.addEventListener("change", handler);
+    return () => el.removeEventListener("change", handler);
+  }, [onChange, handleCompleteDebounced]);
+
+  // Open the picker panel immediately (we're being rendered inline, not via
+  // the web component's own trigger button).
+  useEffect(() => {
+    (pickerRef.current as ColorInput | null)?.showPicker();
+  }, []);
+
+  return <color-input ref={pickerRef} value={colorString} theme="dark" />;
 };
 
+// Popover wrapper — uses <color-input>'s native Popover API panel.
+// The component element stays hidden; clicking the thumb calls show(anchor).
 export const ColorPickerPopover = ({
   value,
   onChange,
@@ -340,64 +332,109 @@ export const ColorPickerPopover = ({
   open,
   onOpenChange,
   thumb,
-  side = "bottom",
-  align = "center",
-  sideOffset,
 }: ColorPickerPopoverProps) => {
-  const [displayColorPicker, setDisplayColorPicker] = useState(false);
+  const pickerRef = useRef<HTMLElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
-  const isControlled = open !== undefined;
-  const isOpen = isControlled ? open : displayColorPicker;
+  const colorString = toValue(value);
 
+  const handleCompleteDebounced = useDebouncedCallback(
+    (v: StyleValue) => onChangeComplete(v),
+    500
+  );
+
+  // Sync externally-controlled open state into the web component.
   useEffect(() => {
-    if (isOpen) {
+    const el = pickerRef.current as ColorInput | null;
+    if (open === true) el?.show(anchorRef.current);
+    if (open === false) el?.close();
+  }, [open]);
+
+  // Sync external value changes into the web component.
+  useEffect(() => {
+    const el = pickerRef.current as ColorInput | null;
+    if (el && el.value !== colorString) {
+      el.value = colorString;
+    }
+  }, [colorString]);
+
+  // Wire up change / open / close events.
+  useEffect(() => {
+    const el = pickerRef.current;
+    if (!el) return;
+
+    const handleChange = (e: Event) => {
+      const { value: css } = (e as CustomEvent<ChangeDetail>).detail;
+      const styleValue = cssStringToStyleValue(css);
+      onChange(styleValue);
+      handleCompleteDebounced(styleValue);
+    };
+
+    const handleOpen = () => {
       disableCanvasPointerEvents();
       document.body.style.userSelect = "none";
-    } else {
-      document.body.style.removeProperty("user-select");
+      onOpenChange?.(true);
+    };
+
+    const handleClose = () => {
       enableCanvasPointerEvents();
-    }
+      document.body.style.removeProperty("user-select");
+      onOpenChange?.(false);
+    };
+
+    el.addEventListener("change", handleChange);
+    el.addEventListener("open", handleOpen);
+    el.addEventListener("close", handleClose);
 
     return () => {
-      document.body.style.removeProperty("user-select");
+      el.removeEventListener("change", handleChange);
+      el.removeEventListener("open", handleOpen);
+      el.removeEventListener("close", handleClose);
       enableCanvasPointerEvents();
+      document.body.style.removeProperty("user-select");
     };
-  }, [isOpen, disableCanvasPointerEvents, enableCanvasPointerEvents]);
+  }, [
+    onChange,
+    handleCompleteDebounced,
+    onOpenChange,
+    disableCanvasPointerEvents,
+    enableCanvasPointerEvents,
+  ]);
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!isControlled) {
-      setDisplayColorPicker(nextOpen);
-    }
-    onOpenChange?.(nextOpen);
+  const handleTriggerClick = () => {
+    (pickerRef.current as ColorInput | null)?.show(anchorRef.current);
   };
 
+  // Inject the click handler into whatever trigger element is provided,
+  // or use a default ColorThumb.
+  const trigger = thumb
+    ? React.cloneElement(thumb, {
+        onClick: (e: React.MouseEvent) => {
+          thumb.props.onClick?.(e);
+          handleTriggerClick();
+        },
+      })
+    : React.createElement(ColorThumb, {
+        color: colorString,
+        interactive: true,
+        onClick: handleTriggerClick,
+      });
+
   return (
-    <Popover modal open={isOpen} onOpenChange={handleOpenChange}>
-      <PopoverTrigger
-        asChild
-        aria-label="Open color picker"
-        onClick={() => handleOpenChange(!isOpen)}
-      >
-        {thumb ?? <ColorThumb color={toValue(value)} interactive={true} />}
-      </PopoverTrigger>
-      <PopoverContent
-        side={side}
-        align={align}
-        sideOffset={sideOffset}
-        css={{
-          display: "grid",
-          padding: theme.spacing[5],
-          gap: theme.spacing[5],
-        }}
-      >
-        <ColorPicker
-          value={value}
-          onChange={onChange}
-          onChangeComplete={onChangeComplete}
-        />
-      </PopoverContent>
-    </Popover>
+    <>
+      {/* Wrap trigger in a display:contents div we can use as the popover anchor */}
+      <div ref={anchorRef} style={{ display: "contents" }}>
+        {trigger}
+      </div>
+      {/* The <color-input> element lives hidden; only its popover panel is shown */}
+      <color-input
+        ref={pickerRef}
+        value={colorString}
+        theme="dark"
+        style={{ display: "none" }}
+      />
+    </>
   );
 };
