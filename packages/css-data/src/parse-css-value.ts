@@ -77,7 +77,10 @@ export const isValidDeclaration = (
     value.includes("var(") ||
     // color-mix() is a CSS Color 5 function; older csstree grammars may not
     // recognise it, so bypass lexer validation and let parseCssValue handle it.
-    value.includes("color-mix(")
+    value.includes("color-mix(") ||
+    // Relative color syntax: rgb(from <color> ...), oklch(from ...), etc.
+    // The 'from' keyword inside color functions is not in older csstree grammars.
+    /\(\s*from\s/.test(value)
   ) {
     return true;
   }

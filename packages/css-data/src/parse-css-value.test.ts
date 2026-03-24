@@ -275,6 +275,67 @@ test("parse color-mix() with var() as percentage", () => {
   });
 });
 
+describe("relative color syntax", () => {
+  test("static relative color (no var)", () => {
+    expect(parseCssValue("color", "rgb(from blue r g b / 50%)")).toEqual({
+      type: "unparsed",
+      value: "rgb(from blue r g b / 50%)",
+    });
+  });
+
+  test("var() as origin color", () => {
+    expect(
+      parseCssValue("color", "rgb(from var(--brand-primary) r g b / 25%)")
+    ).toEqual({
+      type: "unparsed",
+      value: "rgb(from var(--brand-primary) r g b / 25%)",
+    });
+  });
+
+  test("var() as channel value", () => {
+    expect(parseCssValue("color", "oklch(from red l var(--chroma) h)")).toEqual(
+      {
+        type: "unparsed",
+        value: "oklch(from red l var(--chroma) h)",
+      }
+    );
+  });
+
+  test("var() as alpha", () => {
+    expect(
+      parseCssValue("color", "rgb(from red r g b / var(--alpha))")
+    ).toEqual({
+      type: "unparsed",
+      value: "rgb(from red r g b / var(--alpha))",
+    });
+  });
+
+  test("hsl relative with var() as origin", () => {
+    expect(parseCssValue("color", "hsl(from var(--brand) h s 75%)")).toEqual({
+      type: "unparsed",
+      value: "hsl(from var(--brand) h s 75%)",
+    });
+  });
+
+  test("oklch relative on background-color", () => {
+    expect(
+      parseCssValue("background-color", "oklch(from var(--brand) l c h / 0.5)")
+    ).toEqual({
+      type: "unparsed",
+      value: "oklch(from var(--brand) l c h / 0.5)",
+    });
+  });
+
+  test("var() in both origin and alpha", () => {
+    expect(
+      parseCssValue("color", "rgb(from var(--brand) r g b / var(--alpha))")
+    ).toEqual({
+      type: "unparsed",
+      value: "rgb(from var(--brand) r g b / var(--alpha))",
+    });
+  });
+});
+
 test("parse background-image property as layers", () => {
   expect(
     parseCssValue(
