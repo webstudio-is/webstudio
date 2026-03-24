@@ -344,6 +344,26 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("color(xyz-d65 0.5 0.3 0.2 / 1)");
   });
 
+  test("color with CSS variable as alpha channel (srgb)", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "srgb",
+      components: [0.1098, 0.098, 0.0902],
+      alpha: { type: "var", value: "tw-text-opacity" },
+    });
+    expect(value).toBe("rgb(28 25 23 / var(--tw-text-opacity))");
+  });
+
+  test("color with CSS variable as alpha channel (p3)", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "p3",
+      components: [0.4, 0.6, 0.3],
+      alpha: { type: "var", value: "tw-bg-opacity" },
+    });
+    expect(value).toBe("color(p3 0.4 0.6 0.3 / var(--tw-bg-opacity))");
+  });
+
   test("color in tuple", () => {
     const value = toValue({
       type: "tuple",

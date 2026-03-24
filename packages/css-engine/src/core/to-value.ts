@@ -89,7 +89,8 @@ export const toValue = (
 
   if (value.type === "color") {
     let [c1, c2, c3] = value.components;
-    const alpha = value.alpha;
+    const alpha =
+      typeof value.alpha === "number" ? value.alpha : toValue(value.alpha);
 
     // Use specific CSS functions when available
     switch (value.colorSpace) {

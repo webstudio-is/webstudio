@@ -64,7 +64,31 @@ const RgbValue = z.object({
 });
 export type RgbValue = z.infer<typeof RgbValue>;
 
-export const ColorValue = z.object({
+// Explicit type declaration needed to break the ColorValue ↔ VarValue ↔ VarFallback cycle.
+// VarValue (defined later) may appear as the alpha channel value.
+export type ColorValue = {
+  type: "color";
+  colorSpace:
+    | "srgb"
+    | "p3"
+    | "srgb-linear"
+    | "hsl"
+    | "hwb"
+    | "lab"
+    | "lch"
+    | "oklab"
+    | "oklch"
+    | "a98rgb"
+    | "prophoto"
+    | "rec2020"
+    | "xyz-d65"
+    | "xyz-d50";
+  components: [number, number, number];
+  alpha: number | VarValue;
+  hidden?: boolean;
+};
+
+export const ColorValue: z.ZodType<ColorValue> = z.object({
   type: z.literal("color"),
   // all these color spaces are defined by design tokens specification
   colorSpace: z.union([
@@ -84,10 +108,9 @@ export const ColorValue = z.object({
     z.literal("xyz-d50"),
   ]),
   components: z.tuple([z.number(), z.number(), z.number()]),
-  alpha: z.number(),
+  alpha: z.union([z.number(), z.lazy(() => VarValue) as z.ZodType<VarValue>]),
   hidden: z.boolean().optional(),
 });
-export type ColorValue = z.infer<typeof ColorValue>;
 
 export type FunctionValue = z.infer<typeof FunctionValue>;
 
