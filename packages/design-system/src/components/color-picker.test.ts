@@ -1,6 +1,4 @@
-import { describe, test, expect, vi } from "vitest";
-
-vi.mock("hdr-color-input", () => ({}));
+import { describe, test, expect } from "vitest";
 
 import { cssStringToStyleValue } from "./color-picker";
 
