@@ -22,6 +22,7 @@ const initialColor: RgbValue = {
 
 export const ColorPicker = () => {
   const [value, setValue] = useState<StyleValue>(initialColor);
+  const [open, setOpen] = useState(true);
 
   return (
     <>
@@ -29,6 +30,8 @@ export const ColorPicker = () => {
         <Flex direction="column" gap="2">
           <ColorPickerComponent
             value={value}
+            open={open}
+            onOpenChange={setOpen}
             onChange={(val) => {
               if (val !== undefined) {
                 setValue(val);

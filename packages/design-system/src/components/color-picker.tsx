@@ -22,10 +22,6 @@ import { css, rawTheme, theme, type CSS } from "../stitches.config";
 import { useDisableCanvasPointerEvents } from "../utilities";
 import { textStyle } from "./text";
 
-// Attribute that signals to inert-handlers in the builder that pointer events
-// originating from this element should not be suppressed.
-const skipInertHandlersAttribute = "data-ws-skip-inert-handlers";
-
 // ─── colorjs color space registrations ──────────────────────────────────────
 
 colorjs.ColorSpace.register(colorjs.sRGB);
@@ -383,19 +379,12 @@ export const ColorPicker = ({
         }
       `}</style>
 
-      <ColorThumb
-        color={colorString}
-        css={css}
-        onPointerDown={(event) => {
-          event.preventDefault();
-        }}
-      >
+      <ColorThumb color={colorString} css={css}>
         <color-input
           ref={pickerRef}
           value={colorString}
           theme="light"
           class={`${textClass} ${scopeClass}`}
-          {...{ [skipInertHandlersAttribute]: true }}
         />
       </ColorThumb>
     </>
