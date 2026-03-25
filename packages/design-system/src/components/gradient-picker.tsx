@@ -74,7 +74,6 @@ export type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
 const THUMB_INTERACTION_DISTANCE = 12;
 const DRAG_THRESHOLD = 3;
 const SLIDER_HEIGHT = 16;
-const THUMB_HEIGHT = 14;
 
 const defaultStopColor: RgbValue = {
   type: "rgb",
@@ -936,6 +935,11 @@ export const GradientPicker = <T extends ParsedGradient>({
                 onOpenChange={(open) =>
                   handleColorPickerOpenChange(index, open)
                 }
+                css={{
+                  width: theme.spacing[8],
+                  height: theme.spacing[8],
+                  margin: 1,
+                }}
               />
               <SliderThumbPointer aria-hidden />
             </SliderThumb>

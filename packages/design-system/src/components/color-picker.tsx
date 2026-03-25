@@ -22,7 +22,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { css, rawTheme, theme, type CSS } from "../stitches.config";
 import { useDisableCanvasPointerEvents } from "../utilities";
-import { Box } from "./box";
+import { textStyle } from "./text";
 
 // ─── colorjs color space registrations ──────────────────────────────────────
 
@@ -61,24 +61,24 @@ declare global {
 // ─── Color utilities ─────────────────────────────────────────────────────────
 
 type RgbaColor = {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
+  red: number;
+  green: number;
+  blue: number;
+  alpha: number;
 };
 
 // Helper to create RgbaColor from colorjs.io Color
 const colorToRgba = (color: colorjs.PlainColorObject): RgbaColor => {
-  const [r, g, b] = color.coords;
+  const [red, green, blue] = color.coords;
   return {
-    r: (r ?? 0) * 255,
-    g: (g ?? 0) * 255,
-    b: (b ?? 0) * 255,
-    a: color.alpha ?? 1,
+    red: (red ?? 0) * 255,
+    green: (green ?? 0) * 255,
+    blue: (blue ?? 0) * 255,
+    alpha: color.alpha ?? 1,
   };
 };
 
-const transparentColor: RgbaColor = { r: 0, g: 0, b: 0, a: 0 };
+const transparentColor: RgbaColor = { red: 0, green: 0, blue: 0, alpha: 0 };
 
 // Resolve a color string the browser understands but colorjs doesn't
 // (e.g. color-mix(), relative color syntax). Returns undefined in non-browser
@@ -96,8 +96,13 @@ const resolveColorViaCanvas = (colorString: string): RgbaColor | undefined => {
   }
   ctx.fillStyle = colorString;
   ctx.fillRect(0, 0, 1, 1);
-  const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
-  return { r: r ?? 0, g: g ?? 0, b: b ?? 0, a: (a ?? 255) / 255 };
+  const [red, green, blue, alpha] = ctx.getImageData(0, 0, 1, 1).data;
+  return {
+    red: red ?? 0,
+    green: green ?? 0,
+    blue: blue ?? 0,
+    alpha: (alpha ?? 255) / 255,
+  };
 };
 
 // Helper to parse color string to RgbaColor
@@ -111,11 +116,11 @@ export const parseColorString = (colorString: string): RgbaColor => {
 
 // Helper to convert RgbaColor to RGB string (used for border color)
 const rgbaToRgbString = (color: RgbaColor): string => {
-  const { r, g, b, a } = color;
-  if (a < 1) {
-    return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${a})`;
+  const { red, green, blue, alpha } = color;
+  if (alpha < 1) {
+    return `rgba(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)}, ${alpha})`;
   }
-  return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+  return `rgb(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)})`;
 };
 
 const toColorComponent = (value: undefined | null | number) =>
@@ -148,17 +153,17 @@ const cssStringToStyleValue = (
 
 // ─── ColorThumb ──────────────────────────────────────────────────────────────
 
-const whiteColor: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
+const whiteColor: RgbaColor = { red: 255, green: 255, blue: 255, alpha: 1 };
 const borderColorSwatch = colorToRgba(
   colorjs.to(rawTheme.colors.borderColorSwatch, "srgb")
 );
 
-const distance = (a: RgbaColor, b: RgbaColor) =>
+const distance = (colorA: RgbaColor, colorB: RgbaColor) =>
   Math.sqrt(
-    Math.pow(a.r / 255 - b.r / 255, 2) +
-      Math.pow(a.g / 255 - b.g / 255, 2) +
-      Math.pow(a.b / 255 - b.b / 255, 2) +
-      Math.pow(a.a - b.a, 2)
+    Math.pow(colorA.red / 255 - colorB.red / 255, 2) +
+      Math.pow(colorA.green / 255 - colorB.green / 255, 2) +
+      Math.pow(colorA.blue / 255 - colorB.blue / 255, 2) +
+      Math.pow(colorA.alpha - colorB.alpha, 2)
   );
 
 const calcBorderColor = (color: RgbaColor) => {
@@ -172,18 +177,19 @@ const calcBorderColor = (color: RgbaColor) => {
   return lerpColor(transparentColor, borderColorSwatch, alpha);
 };
 
-const lerp = (a: number, b: number, t: number) => a * (1 - t) + b * t;
+const lerp = (start: number, end: number, ratio: number) =>
+  start * (1 - ratio) + end * ratio;
 
-const lerpColor = (a: RgbaColor, b: RgbaColor, t: number) => ({
-  r: lerp(a.r, b.r, t),
-  g: lerp(a.g, b.g, t),
-  b: lerp(a.b, b.b, t),
-  a: lerp(a.a, b.a, t),
+const lerpColor = (colorA: RgbaColor, colorB: RgbaColor, ratio: number) => ({
+  red: lerp(colorA.red, colorB.red, ratio),
+  green: lerp(colorA.green, colorB.green, ratio),
+  blue: lerp(colorA.blue, colorB.blue, ratio),
+  alpha: lerp(colorA.alpha, colorB.alpha, ratio),
 });
 
 const thumbStyle = css({
   display: "block",
-  position: "realtive",
+  position: "relative",
   width: theme.spacing[9],
   height: theme.spacing[9],
   backgroundBlendMode: "difference",
@@ -209,7 +215,7 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
   ({ interactive, color = "transparent", css, ...rest }, ref) => {
     const rgba = parseColorString(color);
     const background =
-      rgba.a < 1
+      rgba.alpha < 1
         ? `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%)
  0% 33.33% / 40% 40%, ${color}`
         : color;
@@ -222,7 +228,7 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
         style={{
           background,
           borderColor: rgbaToRgbString(borderColor),
-          borderWidth: borderColor.a === 0 ? 0 : 1,
+          borderWidth: borderColor.alpha === 0 ? 0 : 1,
         }}
         className={thumbStyle({ css })}
         tabIndex={-1}
@@ -235,14 +241,13 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
 
 ColorThumb.displayName = "ColorThumb";
 
-// ─── ColorPicker ─────────────────────────────────────────────────────────────
-
 type ColorPickerProps = {
   value: StyleValue;
   onChange: (value: StyleValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  css?: CSS;
 };
 
 // Renders <color-input> with its built-in trigger chip, hiding the text input.
@@ -255,8 +260,9 @@ export const ColorPicker = ({
   onChangeComplete,
   open,
   onOpenChange,
+  css,
 }: ColorPickerProps) => {
-  const pickerRef = useRef<HTMLElement>(null);
+  const pickerRef = useRef<ColorInput>(null);
   const scopeClass = useId().replace(/:/g, "");
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
@@ -264,13 +270,13 @@ export const ColorPicker = ({
   const colorString = toValue(value);
 
   const handleCompleteDebounced = useDebouncedCallback(
-    (v: StyleValue) => onChangeComplete(v),
+    (styleValue: StyleValue) => onChangeComplete(styleValue),
     500
   );
 
   // Sync externally-controlled open state into the web component.
   useEffect(() => {
-    const el = pickerRef.current as ColorInput | null;
+    const el = pickerRef.current;
     try {
       if (open === true) el?.show();
     } catch {}
@@ -281,7 +287,7 @@ export const ColorPicker = ({
 
   // Sync external value changes into the web component.
   useEffect(() => {
-    const el = pickerRef.current as ColorInput | null;
+    const el = pickerRef.current;
     if (el && el.value !== colorString) {
       el.value = colorString;
     }
@@ -292,8 +298,8 @@ export const ColorPicker = ({
     const el = pickerRef.current;
     if (!el) return;
 
-    const handleChange = (e: Event) => {
-      const { value: css } = (e as CustomEvent<ChangeDetail>).detail;
+    const handleChange = (event: Event) => {
+      const { value: css } = (event as CustomEvent<ChangeDetail>).detail;
       const styleValue = cssStringToStyleValue(css);
       onChange(styleValue);
       handleCompleteDebounced(styleValue);
@@ -330,31 +336,43 @@ export const ColorPicker = ({
     enableCanvasPointerEvents,
   ]);
 
+  const { className: textClass } = textStyle();
+
   return (
     <>
       <style>{`
-        .${scopeClass}::part(input) {
-          display: none;
-        }
-        .${scopeClass}::part(trigger) {
+        /* Stitches can't handle ::part, need to migrate a new styling approach */
+        .${scopeClass}, 
+        .${scopeClass}::part(trigger), 
+        .${scopeClass}::part(chip) {
           position: absolute;
           inset: 0;
           opacity: 0;
+          width: auto;
+          height: auto;
+        }
+        .${scopeClass}::part(input) {
+          display: none;
+        }
+        .${scopeClass}::part(controls) {
+          /* Hack to fix as we can't reach into .control and change grid-template-columns */
+          font-size: 16px;
+        }
+        .${scopeClass}::part(panel) svg {
+          width: 16px;
+          height: 16px;
         }
       `}</style>
 
-      <ColorThumb color={colorString}>
+      <ColorThumb color={colorString} css={css}>
         <color-input
           ref={pickerRef}
           value={colorString}
           theme="light"
           // @ts-expect-error needed, keep it here, for some reason we get classname on DOM element otherwise.
-          class={scopeClass}
+          class={`${textClass} ${scopeClass}`}
         />
       </ColorThumb>
     </>
   );
 };
-
-/** @deprecated Use ColorPicker instead */
-export const ColorPickerPopover = ColorPicker;
