@@ -24,7 +24,7 @@ import { ChevronFilledUpIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Flex } from "./flex";
 import { Box } from "./box";
-import { ColorPickerPopover, ColorThumb } from "./color-picker";
+import { ColorPicker } from "./color-picker";
 
 // Helper to mix two RGB colors
 const mixColors = (
@@ -924,7 +924,7 @@ export const GradientPicker = <T extends ParsedGradient>({
                 handleStopSelected(index, stop);
               }}
             >
-              <ColorPickerPopover
+              <ColorPicker
                 value={stopColor}
                 onChange={(value) =>
                   handleStopColorChange(index, value, "change")
@@ -935,19 +935,6 @@ export const GradientPicker = <T extends ParsedGradient>({
                 open={colorPickerOpenStop === index}
                 onOpenChange={(open) =>
                   handleColorPickerOpenChange(index, open)
-                }
-                sideOffset={SLIDER_HEIGHT + THUMB_HEIGHT}
-                thumb={
-                  <ColorThumb
-                    color={stop.color ? toValue(stop.color) : "transparent"}
-                    interactive={true}
-                    css={{
-                      margin: 1,
-                      width: THUMB_HEIGHT,
-                      height: THUMB_HEIGHT,
-                    }}
-                    data-gradient-thumb="true"
-                  />
                 }
               />
               <SliderThumbPointer aria-hidden />

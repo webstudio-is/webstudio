@@ -1,11 +1,15 @@
 import * as colorjs from "colorjs.io/fn";
 import "hdr-color-input";
 import type { ChangeDetail, ColorInput } from "hdr-color-input";
-import React, {
+// @ts-ignore React is used in the global JSX type declaration below
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import React from "react";
+import {
   forwardRef,
   type ComponentProps,
   type ElementRef,
   useEffect,
+  useId,
   useRef,
 } from "react";
 import { clamp } from "@react-aria/utils";
@@ -13,12 +17,12 @@ import { useDebouncedCallback } from "use-debounce";
 import {
   toValue,
   type StyleValue,
-  type Unit,
   type ColorValue,
   type UnparsedValue,
 } from "@webstudio-is/css-engine";
 import { css, rawTheme, theme, type CSS } from "../stitches.config";
 import { useDisableCanvasPointerEvents } from "../utilities";
+import { Box } from "./box";
 
 // ─── colorjs color space registrations ──────────────────────────────────────
 
@@ -114,25 +118,6 @@ const rgbaToRgbString = (color: RgbaColor): string => {
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 };
 
-// colorjs spaceId → ColorValue["colorSpace"] (same as parse-css-value.ts)
-const colorSpaceMap: Record<string, ColorValue["colorSpace"]> = {
-  srgb: "srgb",
-  "srgb-linear": "srgb-linear",
-  hsl: "hsl",
-  hwb: "hwb",
-  lab: "lab",
-  lch: "lch",
-  oklab: "oklab",
-  oklch: "oklch",
-  p3: "p3",
-  a98rgb: "a98rgb",
-  prophoto: "prophoto",
-  rec2020: "rec2020",
-  "xyz-d65": "xyz-d65",
-  "xyz-d50": "xyz-d50",
-  xyz: "xyz-d65",
-};
-
 const toColorComponent = (value: undefined | null | number) =>
   Math.round((value ?? 0) * 10000) / 10000;
 
@@ -145,9 +130,12 @@ const cssStringToStyleValue = (
 ): ColorValue | UnparsedValue => {
   try {
     const color = colorjs.parse(cssString);
+    const colorSpace = (
+      color.spaceId === "xyz" ? "xyz-d65" : color.spaceId
+    ) as ColorValue["colorSpace"];
     return {
       type: "color",
-      colorSpace: colorSpaceMap[color.spaceId] ?? "srgb",
+      colorSpace,
       components: color.coords.map(
         toColorComponent
       ) as ColorValue["components"],
@@ -195,6 +183,7 @@ const lerpColor = (a: RgbaColor, b: RgbaColor, t: number) => ({
 
 const thumbStyle = css({
   display: "block",
+  position: "realtive",
   width: theme.spacing[9],
   height: theme.spacing[9],
   backgroundBlendMode: "difference",
@@ -246,94 +235,29 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
 
 ColorThumb.displayName = "ColorThumb";
 
-// ─── ColorPicker / ColorPickerPopover ────────────────────────────────────────
-
-type IntermediateColorValue = {
-  type: "intermediate";
-  value: string;
-  unit?: Unit;
-};
-
-type ColorPickerValue = StyleValue | IntermediateColorValue;
+// ─── ColorPicker ─────────────────────────────────────────────────────────────
 
 type ColorPickerProps = {
-  value: ColorPickerValue;
-  onChange: (value: StyleValue | undefined) => void;
-  onChangeComplete: (value: StyleValue) => void;
-};
-
-type ColorPickerPopoverProps = {
   value: StyleValue;
   onChange: (value: StyleValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  thumb?: React.ReactElement;
-  side?: "top" | "right" | "bottom" | "left";
-  align?: "start" | "center" | "end";
-  // Kept for API compatibility; positioning is managed by the web component.
-  sideOffset?: number;
 };
 
-// Standalone color picker — renders <color-input> with its panel immediately
-// open so it can be embedded inside a custom container without triggering
-// the web component's own popover mechanism.
+// Renders <color-input> with its built-in trigger chip, hiding the text input.
+// The chip opens the panel natively via the Popover API.
+// Our own ColorThumb is rendered on top (pointer-events: none) so that clicks
+// pass through to the real chip underneath.
 export const ColorPicker = ({
-  value,
-  onChange,
-  onChangeComplete,
-}: ColorPickerProps) => {
-  const pickerRef = useRef<HTMLElement>(null);
-  const colorString =
-    value.type === "intermediate" ? value.value : toValue(value);
-
-  const handleCompleteDebounced = useDebouncedCallback(
-    (v: StyleValue) => onChangeComplete(v),
-    500
-  );
-
-  // Sync external value changes into the web component.
-  useEffect(() => {
-    const el = pickerRef.current as ColorInput | null;
-    if (el && el.value !== colorString) {
-      el.value = colorString;
-    }
-  }, [colorString]);
-
-  // Wire up the change event.
-  useEffect(() => {
-    const el = pickerRef.current;
-    if (!el) return;
-    const handler = (e: Event) => {
-      const { value: css } = (e as CustomEvent<ChangeDetail>).detail;
-      const styleValue = cssStringToStyleValue(css);
-      onChange(styleValue);
-      handleCompleteDebounced(styleValue);
-    };
-    el.addEventListener("change", handler);
-    return () => el.removeEventListener("change", handler);
-  }, [onChange, handleCompleteDebounced]);
-
-  // Open the picker panel immediately (we're being rendered inline, not via
-  // the web component's own trigger button).
-  useEffect(() => {
-    (pickerRef.current as ColorInput | null)?.showPicker();
-  }, []);
-
-  return <color-input ref={pickerRef} value={colorString} theme="dark" />;
-};
-
-// Popover wrapper — renders <color-input> with its built-in trigger chip,
-// hiding only the text input. The chip opens the panel natively via the
-// Popover API. Value sync and open/close events are wired up in effects.
-export const ColorPickerPopover = ({
   value,
   onChange,
   onChangeComplete,
   open,
   onOpenChange,
-}: ColorPickerPopoverProps) => {
+}: ColorPickerProps) => {
   const pickerRef = useRef<HTMLElement>(null);
+  const scopeClass = useId().replace(/:/g, "");
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
@@ -347,8 +271,12 @@ export const ColorPickerPopover = ({
   // Sync externally-controlled open state into the web component.
   useEffect(() => {
     const el = pickerRef.current as ColorInput | null;
-    if (open === true) el?.show();
-    if (open === false) el?.close();
+    try {
+      if (open === true) el?.show();
+    } catch {}
+    try {
+      if (open === false) el?.close();
+    } catch {}
   }, [open]);
 
   // Sync external value changes into the web component.
@@ -405,17 +333,28 @@ export const ColorPickerPopover = ({
   return (
     <>
       <style>{`
-        color-input::part(input) {
+        .${scopeClass}::part(input) {
           display: none;
         }
-        color-input::part(chip) {
-          width: ${rawTheme.spacing[9]};
-          height: ${rawTheme.spacing[9]};
-          border-radius: ${rawTheme.borderRadius[2]};
-          background-blend-mode: difference;
+        .${scopeClass}::part(trigger) {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
         }
       `}</style>
-      <color-input ref={pickerRef} value={colorString} theme="light" />
+
+      <ColorThumb color={colorString}>
+        <color-input
+          ref={pickerRef}
+          value={colorString}
+          theme="light"
+          // @ts-expect-error needed, keep it here, for some reason we get classname on DOM element otherwise.
+          class={scopeClass}
+        />
+      </ColorThumb>
     </>
   );
 };
+
+/** @deprecated Use ColorPicker instead */
+export const ColorPickerPopover = ColorPicker;
