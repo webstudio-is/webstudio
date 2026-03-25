@@ -275,6 +275,7 @@ export const ColorPicker = ({
     onOpenChange,
     disableCanvasPointerEvents,
     enableCanvasPointerEvents,
+    value,
   });
   callbacksRef.current = {
     onChange,
@@ -282,6 +283,7 @@ export const ColorPicker = ({
     onOpenChange,
     disableCanvasPointerEvents,
     enableCanvasPointerEvents,
+    value,
   };
 
   const colorString = toValue(value);
@@ -314,11 +316,13 @@ export const ColorPicker = ({
   // Wire up change / open / close events.
   useEffect(() => {
     const el = pickerRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
 
     const controller = new AbortController();
     const { signal } = controller;
-    let lastStyleValue: StyleValue = value;
+    let lastStyleValue: StyleValue = callbacksRef.current.value;
 
     el.addEventListener(
       "change",
