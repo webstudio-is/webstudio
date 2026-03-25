@@ -8,6 +8,10 @@ export default defineConfig({
         find: "~",
         replacement: resolve("app"),
       },
+      {
+        find: "hdr-color-input",
+        replacement: resolve("__mocks__/hdr-color-input.ts"),
+      },
     ],
     conditions: ["webstudio", "browser", "development|production"],
     // conditions: ["webstudio", ...defaultClientConditions],

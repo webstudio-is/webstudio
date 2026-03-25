@@ -441,7 +441,7 @@ test("compute custom properties in shadows", () => {
         blur: { type: "unit", value: 30, unit: "px" },
         color: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           components: [1, 0, 0],
           alpha: 1,
         },
@@ -477,7 +477,7 @@ test("resolve custom property in color alpha channel", () => {
     }).computedValue
   ).toEqual({
     type: "color",
-    colorSpace: "srgb",
+    colorSpace: "hex",
     components: [1, 0, 0],
     alpha: 0.5,
   });

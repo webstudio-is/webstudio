@@ -30,10 +30,7 @@ test("fallback further to valid values", () => {
     ["background-attachment", parseCssValue("background-attachment", "scroll")],
     ["background-origin", parseCssValue("background-origin", "padding-box")],
     ["background-clip", parseCssValue("background-clip", "border-box")],
-    [
-      "background-color",
-      parseCssValue("background-color", "rgba(255, 255, 255, 1)"),
-    ],
+    ["background-color", parseCssValue("background-color", "#fff")],
   ]);
   expect(parseCssFragment("#fff", ["background-image", "background"])).toEqual(
     result
