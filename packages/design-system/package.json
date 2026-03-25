@@ -75,7 +75,10 @@
     "warn-once": "^0.1.1"
   },
   "exports": {
-    "webstudio": "./src/index.ts"
+    ".": {
+      "webstudio": "./src/index.ts"
+    },
+    "./test-setup": "./src/test-setup.ts"
   },
   "license": "AGPL-3.0-or-later",
   "private": true,

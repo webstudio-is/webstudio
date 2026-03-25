@@ -20,6 +20,6 @@ export default defineConfig({
     },
   },
   test: {
-    setupFiles: ["./vitest-setup.ts"],
+    setupFiles: ["@webstudio-is/design-system/test-setup"],
   },
 });
