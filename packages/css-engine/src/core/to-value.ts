@@ -94,6 +94,15 @@ export const toValue = (
 
     // Use specific CSS functions when available
     switch (value.colorSpace) {
+      case "hex": {
+        const toHex = (v: number) =>
+          Math.round(Math.min(Math.max(v, 0), 1) * 255)
+            .toString(16)
+            .padStart(2, "0");
+        const hex = `#${toHex(c1)}${toHex(c2)}${toHex(c3)}`;
+        const alphaNum = typeof alpha === "number" ? alpha : 1;
+        return alphaNum < 1 ? hex + toHex(alphaNum) : hex;
+      }
       case "srgb": {
         c1 = Math.round(c1 * 255);
         c2 = Math.round(c2 * 255);

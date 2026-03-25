@@ -222,7 +222,10 @@ export const parseColor = (colorString: string): undefined | ColorValue => {
     return;
   }
   try {
-    const color = colorjs.parse(colorString);
+    // css-tree's generator strips the space before negative values (e.g. "0.1-0.2").
+    // Restore it so colorjs can tokenize color function arguments correctly.
+    const normalized = colorString.replace(/([\d.])-(\d)/g, "$1 -$2");
+    const color = colorjs.parse(normalized);
     return {
       type: "color",
       colorSpace: colorSpace[color.spaceId],
@@ -424,9 +427,10 @@ const parseLiteral = (
     };
   }
   if (node?.type === "Hash") {
-    const color = parseColor(`#${node.value}`);
+    const hexString = `#${node.value}`;
+    const color = parseColor(hexString);
     if (color) {
-      return color;
+      return { ...color, colorSpace: "hex" };
     }
   }
   if (node?.type === "Function") {

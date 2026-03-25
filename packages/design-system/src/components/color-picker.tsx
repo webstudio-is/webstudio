@@ -1,6 +1,6 @@
 import * as colorjs from "colorjs.io/fn";
 import "hdr-color-input";
-import type { ChangeDetail, ColorInput } from "hdr-color-input";
+import type { ChangeDetail, ColorInput, ColorSpace } from "hdr-color-input";
 // @ts-ignore React is used in the global JSX type declaration below
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from "react";
@@ -18,7 +18,6 @@ import {
   toValue,
   type StyleValue,
   type ColorValue,
-  type UnparsedValue,
 } from "@webstudio-is/css-engine";
 import { css, rawTheme, theme, type CSS } from "../stitches.config";
 import { useDisableCanvasPointerEvents } from "../utilities";
@@ -127,28 +126,30 @@ const toColorComponent = (value: undefined | null | number) =>
   Math.round((value ?? 0) * 10000) / 10000;
 
 // Convert a CSS color string emitted by <color-input> into a StyleValue.
-// colorjs can parse all concrete color values the picker produces.
-// Falls back to UnparsedValue for anything it can't parse (e.g. relative colors
-// typed directly into the text field).
-const cssStringToStyleValue = (
-  cssString: string
-): ColorValue | UnparsedValue => {
-  try {
-    const color = colorjs.parse(cssString);
-    const colorSpace = (
-      color.spaceId === "xyz" ? "xyz-d65" : color.spaceId
-    ) as ColorValue["colorSpace"];
-    return {
-      type: "color",
-      colorSpace,
-      components: color.coords.map(
-        toColorComponent
-      ) as ColorValue["components"],
-      alpha: toColorComponent(color.alpha),
-    };
-  } catch {
-    return { type: "unparsed", value: cssString };
-  }
+export const cssStringToStyleValue = (
+  cssString: string,
+  colorspace: ColorSpace
+): ColorValue => {
+  // Most ColorSpace values match ColorValue["colorSpace"] directly;
+  // only a handful of wide-gamut names differ.
+  const colorSpaceMap: Partial<Record<ColorSpace, ColorValue["colorSpace"]>> = {
+    "display-p3": "p3",
+    "a98-rgb": "a98rgb",
+    xyz: "xyz-d65",
+  };
+  const colorSpace = (colorSpaceMap[colorspace] ??
+    colorspace) as ColorValue["colorSpace"];
+  // For hex, colorjs parses to sRGB coords under the "srgb" spaceId — we keep
+  // those coords but override the colorSpace to "hex" so toValue() serializes
+  // back to hex format. For other spaces, use coords as-is.
+  const parsed = colorjs.parse(cssString);
+  const color = colorSpace === "hex" ? colorjs.to(parsed, "srgb") : parsed;
+  return {
+    type: "color",
+    colorSpace,
+    components: color.coords.map(toColorComponent) as ColorValue["components"],
+    alpha: toColorComponent(color.alpha),
+  };
 };
 
 // ─── ColorThumb ──────────────────────────────────────────────────────────────
@@ -276,12 +277,13 @@ export const ColorPicker = ({
 
   // Sync externally-controlled open state into the web component.
   useEffect(() => {
-    const el = pickerRef.current;
     try {
-      if (open === true) el?.show();
-    } catch {}
-    try {
-      if (open === false) el?.close();
+      if (open === true) {
+        pickerRef.current?.show();
+      }
+      if (open === false) {
+        pickerRef.current?.close();
+      }
     } catch {}
   }, [open]);
 
@@ -298,33 +300,43 @@ export const ColorPicker = ({
     const el = pickerRef.current;
     if (!el) return;
 
-    const handleChange = (event: Event) => {
-      const { value: css } = (event as CustomEvent<ChangeDetail>).detail;
-      const styleValue = cssStringToStyleValue(css);
-      onChange(styleValue);
-      handleCompleteDebounced(styleValue);
-    };
+    const controller = new AbortController();
+    const { signal } = controller;
 
-    const handleOpen = () => {
-      disableCanvasPointerEvents();
-      document.body.style.userSelect = "none";
-      onOpenChange?.(true);
-    };
+    el.addEventListener(
+      "change",
+      (event: Event) => {
+        const { value: css, colorspace } = (event as CustomEvent<ChangeDetail>)
+          .detail;
+        const styleValue = cssStringToStyleValue(css, colorspace);
+        onChange(styleValue);
+        handleCompleteDebounced(styleValue);
+      },
+      { signal }
+    );
 
-    const handleClose = () => {
-      enableCanvasPointerEvents();
-      document.body.style.removeProperty("user-select");
-      onOpenChange?.(false);
-    };
+    el.addEventListener(
+      "open",
+      () => {
+        disableCanvasPointerEvents();
+        document.body.style.userSelect = "none";
+        onOpenChange?.(true);
+      },
+      { signal }
+    );
 
-    el.addEventListener("change", handleChange);
-    el.addEventListener("open", handleOpen);
-    el.addEventListener("close", handleClose);
+    el.addEventListener(
+      "close",
+      () => {
+        enableCanvasPointerEvents();
+        document.body.style.removeProperty("user-select");
+        onOpenChange?.(false);
+      },
+      { signal }
+    );
 
     return () => {
-      el.removeEventListener("change", handleChange);
-      el.removeEventListener("open", handleOpen);
-      el.removeEventListener("close", handleClose);
+      controller.abort();
       enableCanvasPointerEvents();
       document.body.style.removeProperty("user-select");
     };
@@ -357,10 +369,6 @@ export const ColorPicker = ({
         .${scopeClass}::part(controls) {
           /* Hack to fix as we can't reach into .control and change grid-template-columns */
           font-size: 16px;
-        }
-        .${scopeClass}::part(panel) svg {
-          width: 16px;
-          height: 16px;
         }
       `}</style>
 

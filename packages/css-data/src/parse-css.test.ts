@@ -24,7 +24,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -159,7 +159,7 @@ describe("Parse CSS", () => {
         property: "background-color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [0.9216, 1, 0.9882],
         },
@@ -217,7 +217,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -232,7 +232,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -249,7 +249,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -265,7 +265,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -280,7 +280,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -291,7 +291,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -307,7 +307,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -318,7 +318,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -342,7 +342,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -568,7 +568,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -583,7 +583,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },
@@ -598,7 +598,7 @@ describe("Parse CSS", () => {
         property: "color",
         value: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           alpha: 1,
           components: [1, 0, 0],
         },

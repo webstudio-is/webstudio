@@ -117,7 +117,7 @@ describe("Parse CSS value", () => {
     test("Color rgba values", () => {
       expect(parseCssValue("background-color", "#00220011")).toEqual({
         type: "color",
-        colorSpace: "srgb",
+        colorSpace: "hex",
         alpha: 0.0667,
         components: [0, 0.1333, 0],
       });
@@ -158,6 +158,116 @@ describe("Parse CSS value", () => {
         colorSpace: "oklch",
         alpha: 1,
         components: [0.8, 0.15, 240],
+      });
+    });
+
+    test("hsl color", () => {
+      expect(parseCssValue("color", "hsl(120 100% 50%)")).toEqual({
+        type: "color",
+        colorSpace: "hsl",
+        alpha: 1,
+        components: [120, 100, 50],
+      });
+    });
+
+    test("hwb color", () => {
+      expect(parseCssValue("color", "hwb(120 0% 0%)")).toEqual({
+        type: "color",
+        colorSpace: "hwb",
+        alpha: 1,
+        components: [120, 0, 0],
+      });
+    });
+
+    test("lab color", () => {
+      expect(parseCssValue("color", "lab(50 20 30)")).toEqual({
+        type: "color",
+        colorSpace: "lab",
+        alpha: 1,
+        components: [50, 20, 30],
+      });
+    });
+
+    test("lch color", () => {
+      expect(parseCssValue("color", "lch(50 40 120)")).toEqual({
+        type: "color",
+        colorSpace: "lch",
+        alpha: 1,
+        components: [50, 40, 120],
+      });
+    });
+
+    test("oklab color", () => {
+      expect(parseCssValue("color", "oklab(0.7 0.1 -0.1)")).toEqual({
+        type: "color",
+        colorSpace: "oklab",
+        alpha: 1,
+        components: [0.7, 0.1, -0.1],
+      });
+    });
+
+    test("srgb-linear color", () => {
+      expect(parseCssValue("color", "color(srgb-linear 1 0 0)")).toEqual({
+        type: "color",
+        colorSpace: "srgb-linear",
+        alpha: 1,
+        components: [1, 0, 0],
+      });
+    });
+
+    test("display-p3 color", () => {
+      expect(parseCssValue("color", "color(display-p3 0.4 0.6 0.3)")).toEqual({
+        type: "color",
+        colorSpace: "p3",
+        alpha: 1,
+        components: [0.4, 0.6, 0.3],
+      });
+    });
+
+    test("a98-rgb color", () => {
+      expect(parseCssValue("color", "color(a98-rgb 0.4 0.6 0.3)")).toEqual({
+        type: "color",
+        colorSpace: "a98rgb",
+        alpha: 1,
+        components: [0.4, 0.6, 0.3],
+      });
+    });
+
+    test("prophoto-rgb color", () => {
+      expect(parseCssValue("color", "color(prophoto-rgb 0.4 0.6 0.3)")).toEqual(
+        {
+          type: "color",
+          colorSpace: "prophoto",
+          alpha: 1,
+          components: [0.4, 0.6, 0.3],
+        }
+      );
+    });
+
+    test("rec2020 color", () => {
+      expect(parseCssValue("color", "color(rec2020 0.4 0.6 0.3)")).toEqual({
+        type: "color",
+        colorSpace: "rec2020",
+        alpha: 1,
+        components: [0.4, 0.6, 0.3],
+      });
+    });
+
+    test("xyz-d65 color", () => {
+      expect(parseCssValue("color", "color(xyz-d65 0.4 0.6 0.3)")).toEqual({
+        type: "color",
+        colorSpace: "xyz-d65",
+        alpha: 1,
+        components: [0.4, 0.6, 0.3],
+      });
+    });
+
+    test("xyz-d50 color", () => {
+      expect(parseCssValue("color", "color(xyz-d50 0.4 0.6 0.3)")).toEqual({
+        type: "color",
+        colorSpace: "xyz-d50",
+        alpha: 1,
+        components: [0.4, 0.6, 0.3],
       });
     });
   });
@@ -804,7 +914,7 @@ test("support color in custom property", () => {
   });
   expect(parseCssValue("--color", "#3d4d04")).toEqual({
     type: "color",
-    colorSpace: "srgb",
+    colorSpace: "hex",
     alpha: 1,
     components: [0.2392, 0.302, 0.0157],
   });
@@ -1115,7 +1225,7 @@ describe("parse filters", () => {
             blur: { type: "unit", unit: "px", value: 25 },
             color: {
               type: "color",
-              colorSpace: "srgb",
+              colorSpace: "hex",
               alpha: 1,
               components: [0, 0, 1],
             },

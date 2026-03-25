@@ -400,6 +400,56 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("oklch(0.5 0.1 180 / 1) 10px");
   });
 
+  test("color with hex color space (opaque)", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "hex",
+      components: [1, 0, 0],
+      alpha: 1,
+    });
+    expect(value).toBe("#ff0000");
+  });
+
+  test("color with hex color space (with alpha)", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "hex",
+      components: [1, 0, 0],
+      alpha: 0.5,
+    });
+    expect(value).toBe("#ff000080");
+  });
+
+  test("color with srgb-linear color space", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "srgb-linear",
+      components: [1, 0, 0],
+      alpha: 1,
+    });
+    expect(value).toBe("color(srgb-linear 1 0 0 / 1)");
+  });
+
+  test("color with rec2020 color space", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "rec2020",
+      components: [0.4, 0.6, 0.3],
+      alpha: 1,
+    });
+    expect(value).toBe("color(rec2020 0.4 0.6 0.3 / 1)");
+  });
+
+  test("color with xyz-d50 color space", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "xyz-d50",
+      components: [0.4, 0.6, 0.3],
+      alpha: 1,
+    });
+    expect(value).toBe("color(xyz-d50 0.4 0.6 0.3 / 1)");
+  });
+
   test("color in shadow", () => {
     const value = toValue({
       type: "shadow",
