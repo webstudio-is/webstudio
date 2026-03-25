@@ -290,14 +290,20 @@ export const ColorPicker = ({
 
   // Sync externally-controlled open state into the web component.
   useEffect(() => {
-    try {
-      if (open === true) {
-        pickerRef.current?.show();
-      }
-      if (open === false) {
-        pickerRef.current?.close();
-      }
-    } catch {}
+    if (open === undefined) {
+      return;
+    }
+    // hdr-color-input is loaded lazily; wait for the element to be defined
+    // before calling .show()/.close() so the methods are available.
+    customElements.whenDefined("color-input").then(() => {
+      try {
+        if (open === true) {
+          pickerRef.current?.show();
+        } else {
+          pickerRef.current?.close();
+        }
+      } catch {}
+    });
   }, [open]);
 
   // Sync external value changes into the web component.
