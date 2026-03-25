@@ -1,4 +1,5 @@
 import * as colorjs from "colorjs.io/fn";
+import "hdr-color-input";
 import type { ChangeDetail, ColorInput, ColorSpace } from "hdr-color-input";
 // @ts-ignore React is used in the global JSX type declaration below
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -313,11 +314,6 @@ export const ColorPicker = ({
       el.value = colorString;
     }
   }, [colorString]);
-
-  // Register the custom element on first mount (browser-only).
-  useEffect(() => {
-    import("hdr-color-input");
-  }, []);
 
   // Wire up change / open / close events.
   useEffect(() => {

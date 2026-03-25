@@ -19,4 +19,7 @@ export default defineConfig({
       // conditions: ["webstudio", ...defaultServerConditions],
     },
   },
+  test: {
+    setupFiles: ["./vitest-setup.ts"],
+  },
 });
