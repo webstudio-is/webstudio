@@ -1,43 +1,40 @@
 // Polyfill browser globals needed by hdr-color-input at module load time.
 // These are stubs — just enough for the module to be imported without throwing.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-if (typeof globalThis.CSS === "undefined") {
-  (globalThis as typeof globalThis & { CSS: unknown }).CSS = {
-    supports: () => false,
+const g = globalThis as any;
+
+if (typeof g.CSS === "undefined") {
+  g.CSS = { supports: () => false };
+}
+
+if (typeof g.CSSStyleSheet === "undefined") {
+  g.CSSStyleSheet = class {
+    replaceSync() {}
   };
 }
 
-if (typeof globalThis.CSSStyleSheet === "undefined") {
-  (globalThis as typeof globalThis & { CSSStyleSheet: unknown }).CSSStyleSheet =
-    class {
-      replaceSync() {}
-    };
+if (typeof g.HTMLElement === "undefined") {
+  g.HTMLElement = class HTMLElement {
+    addEventListener() {}
+    removeEventListener() {}
+    dispatchEvent() {
+      return true;
+    }
+    setAttribute() {}
+    getAttribute() {
+      return null;
+    }
+    hasAttribute() {
+      return false;
+    }
+  };
 }
 
-if (typeof globalThis.HTMLElement === "undefined") {
-  (globalThis as typeof globalThis & { HTMLElement: unknown }).HTMLElement =
-    class HTMLElement {
-      addEventListener() {}
-      removeEventListener() {}
-      dispatchEvent() {
-        return true;
-      }
-      setAttribute() {}
-      getAttribute() {
-        return null;
-      }
-      hasAttribute() {
-        return false;
-      }
-    };
-}
-
-if (typeof globalThis.customElements === "undefined") {
-  (
-    globalThis as typeof globalThis & { customElements: unknown }
-  ).customElements = {
+if (typeof g.customElements === "undefined") {
+  g.customElements = {
     define: () => {},
     get: () => undefined,
-    whenDefined: () => Promise.resolve(undefined),
+    whenDefined: () => Promise.resolve(g.HTMLElement),
   };
 }
