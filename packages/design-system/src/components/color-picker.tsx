@@ -323,18 +323,17 @@ export const ColorPicker = ({
   return <color-input ref={pickerRef} value={colorString} theme="dark" />;
 };
 
-// Popover wrapper — uses <color-input>'s native Popover API panel.
-// The component element stays hidden; clicking the thumb calls show(anchor).
+// Popover wrapper — renders <color-input> with its built-in trigger chip,
+// hiding only the text input. The chip opens the panel natively via the
+// Popover API. Value sync and open/close events are wired up in effects.
 export const ColorPickerPopover = ({
   value,
   onChange,
   onChangeComplete,
   open,
   onOpenChange,
-  thumb,
 }: ColorPickerPopoverProps) => {
   const pickerRef = useRef<HTMLElement>(null);
-  const anchorRef = useRef<HTMLDivElement>(null);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
@@ -348,7 +347,7 @@ export const ColorPickerPopover = ({
   // Sync externally-controlled open state into the web component.
   useEffect(() => {
     const el = pickerRef.current as ColorInput | null;
-    if (open === true) el?.show(anchorRef.current);
+    if (open === true) el?.show();
     if (open === false) el?.close();
   }, [open]);
 
@@ -403,38 +402,20 @@ export const ColorPickerPopover = ({
     enableCanvasPointerEvents,
   ]);
 
-  const handleTriggerClick = () => {
-    (pickerRef.current as ColorInput | null)?.show(anchorRef.current);
-  };
-
-  // Inject the click handler into whatever trigger element is provided,
-  // or use a default ColorThumb.
-  const trigger = thumb
-    ? React.cloneElement(thumb, {
-        onClick: (e: React.MouseEvent) => {
-          thumb.props.onClick?.(e);
-          handleTriggerClick();
-        },
-      })
-    : React.createElement(ColorThumb, {
-        color: colorString,
-        interactive: true,
-        onClick: handleTriggerClick,
-      });
-
   return (
     <>
-      {/* Wrap trigger in a display:contents div we can use as the popover anchor */}
-      <div ref={anchorRef} style={{ display: "contents" }}>
-        {trigger}
-      </div>
-      {/* The <color-input> element lives hidden; only its popover panel is shown */}
-      <color-input
-        ref={pickerRef}
-        value={colorString}
-        theme="dark"
-        style={{ display: "none" }}
-      />
+      <style>{`
+        color-input::part(input) {
+          display: none;
+        }
+        color-input::part(chip) {
+          width: ${rawTheme.spacing[9]};
+          height: ${rawTheme.spacing[9]};
+          border-radius: ${rawTheme.borderRadius[2]};
+          background-blend-mode: difference;
+        }
+      `}</style>
+      <color-input ref={pickerRef} value={colorString} theme="light" />
     </>
   );
 };
