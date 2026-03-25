@@ -13,7 +13,6 @@ import {
   useRef,
 } from "react";
 import { clamp } from "@react-aria/utils";
-import { useDebouncedCallback } from "use-debounce";
 import {
   toValue,
   type StyleValue,
@@ -22,6 +21,10 @@ import {
 import { css, rawTheme, theme, type CSS } from "../stitches.config";
 import { useDisableCanvasPointerEvents } from "../utilities";
 import { textStyle } from "./text";
+
+// Attribute that signals to inert-handlers in the builder that pointer events
+// originating from this element should not be suppressed.
+const skipInertHandlersAttribute = "data-ws-skip-inert-handlers";
 
 // ─── colorjs color space registrations ──────────────────────────────────────
 
@@ -52,6 +55,7 @@ declare global {
         colorspace?: string;
         theme?: "auto" | "light" | "dark";
         "no-alpha"?: boolean | string;
+        class?: string;
       };
     }
   }
@@ -268,12 +272,24 @@ export const ColorPicker = ({
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
-  const colorString = toValue(value);
+  // Keep stable refs to callbacks so the event-wiring effect never needs to
+  // re-run (and tear down / re-attach listeners) just because a prop changed.
+  const callbacksRef = useRef({
+    onChange,
+    onChangeComplete,
+    onOpenChange,
+    disableCanvasPointerEvents,
+    enableCanvasPointerEvents,
+  });
+  callbacksRef.current = {
+    onChange,
+    onChangeComplete,
+    onOpenChange,
+    disableCanvasPointerEvents,
+    enableCanvasPointerEvents,
+  };
 
-  const handleCompleteDebounced = useDebouncedCallback(
-    (styleValue: StyleValue) => onChangeComplete(styleValue),
-    500
-  );
+  const colorString = toValue(value);
 
   // Sync externally-controlled open state into the web component.
   useEffect(() => {
@@ -302,15 +318,15 @@ export const ColorPicker = ({
 
     const controller = new AbortController();
     const { signal } = controller;
+    let lastStyleValue: StyleValue = value;
 
     el.addEventListener(
       "change",
       (event: Event) => {
         const { value: css, colorspace } = (event as CustomEvent<ChangeDetail>)
           .detail;
-        const styleValue = cssStringToStyleValue(css, colorspace);
-        onChange(styleValue);
-        handleCompleteDebounced(styleValue);
+        lastStyleValue = cssStringToStyleValue(css, colorspace);
+        callbacksRef.current.onChange(lastStyleValue);
       },
       { signal }
     );
@@ -318,9 +334,9 @@ export const ColorPicker = ({
     el.addEventListener(
       "open",
       () => {
-        disableCanvasPointerEvents();
+        callbacksRef.current.disableCanvasPointerEvents();
         document.body.style.userSelect = "none";
-        onOpenChange?.(true);
+        callbacksRef.current.onOpenChange?.(true);
       },
       { signal }
     );
@@ -328,25 +344,20 @@ export const ColorPicker = ({
     el.addEventListener(
       "close",
       () => {
-        enableCanvasPointerEvents();
+        callbacksRef.current.enableCanvasPointerEvents();
         document.body.style.removeProperty("user-select");
-        onOpenChange?.(false);
+        callbacksRef.current.onOpenChange?.(false);
+        callbacksRef.current.onChangeComplete(lastStyleValue);
       },
       { signal }
     );
 
     return () => {
       controller.abort();
-      enableCanvasPointerEvents();
+      callbacksRef.current.enableCanvasPointerEvents();
       document.body.style.removeProperty("user-select");
     };
-  }, [
-    onChange,
-    handleCompleteDebounced,
-    onOpenChange,
-    disableCanvasPointerEvents,
-    enableCanvasPointerEvents,
-  ]);
+  }, []);
 
   const { className: textClass } = textStyle();
 
@@ -372,13 +383,19 @@ export const ColorPicker = ({
         }
       `}</style>
 
-      <ColorThumb color={colorString} css={css}>
+      <ColorThumb
+        color={colorString}
+        css={css}
+        onPointerDown={(event) => {
+          event.preventDefault();
+        }}
+      >
         <color-input
           ref={pickerRef}
           value={colorString}
           theme="light"
-          // @ts-expect-error needed, keep it here, for some reason we get classname on DOM element otherwise.
           class={`${textClass} ${scopeClass}`}
+          {...{ [skipInertHandlersAttribute]: true }}
         />
       </ColorThumb>
     </>
