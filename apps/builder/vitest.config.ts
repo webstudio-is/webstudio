@@ -21,6 +21,7 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    environmentMatchGlobs: [["**/*.server.test.*", "node"]],
     setupFiles: ["@webstudio-is/design-system/test-setup"],
   },
 });
