@@ -397,7 +397,7 @@ export const ColorPicker = ({
         <color-input
           ref={pickerRef}
           value={colorString}
-          theme="dark"
+          theme="light"
           class={`${textClass} ${scopeClass}`}
         />
       </ColorThumb>
