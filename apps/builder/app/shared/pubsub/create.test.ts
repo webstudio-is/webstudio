@@ -21,6 +21,7 @@ describe("createPubsub", () => {
   let addEventListenerSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.spyOn(window, "postMessage").mockImplementation(() => {});
     vi.spyOn(window.parent, "postMessage").mockImplementation(() => {});
     vi.spyOn(window, "addEventListener");
@@ -31,19 +32,15 @@ describe("createPubsub", () => {
     >;
     addEventListenerSpy = window.addEventListener as ReturnType<typeof vi.fn>;
 
-    // Mock requestAnimationFrame - execute callbacks immediately
-    vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation(
-      (callback: FrameRequestCallback) => {
-        setTimeout(() => callback(0), 0);
-        return 0;
-      }
-    );
-
     // Set NODE_ENV for consistent testing
     process.env.NODE_ENV = "test";
   });
 
   afterEach(() => {
+    // Flush any pending fake rAF callbacks so raf-queue module state is
+    // clean (handle reset to undefined) before the next test.
+    vi.runAllTimers();
+    vi.useRealTimers();
     vi.restoreAllMocks();
     delete (window as Window & { __webstudio__$__api_token?: string })
       .__webstudio__$__api_token;
@@ -220,8 +217,7 @@ describe("createPubsub", () => {
 
       messageHandler(mockEvent);
 
-      // Wait for requestAnimationFrame callback to execute
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.runAllTimers();
 
       expect(handler).toHaveBeenCalledWith({ value: "test" });
     });
@@ -287,8 +283,7 @@ describe("createPubsub", () => {
       // Call messageHandler and let it emit
       messageHandler(mockEvent);
 
-      // Wait for requestAnimationFrame callback to execute
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.runAllTimers();
 
       expect(handler1).toHaveBeenCalledTimes(1);
       expect(handler1).toHaveBeenCalledWith({ value: "test" });
@@ -437,8 +432,7 @@ describe("createPubsub", () => {
 
       messageHandler({ data: "storybook-data" });
 
-      // Wait for requestAnimationFrame callback to execute
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.runAllTimers();
 
       expect(handler).toHaveBeenCalledWith("storybook-data");
 
@@ -530,8 +524,7 @@ describe("createPubsub", () => {
 
       messageHandler(mockEvent);
 
-      // Wait for requestAnimationFrame callback
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.runAllTimers();
 
       expect(handler).toHaveBeenCalledWith({
         source: "builder",
@@ -569,7 +562,7 @@ describe("createPubsub", () => {
 
       messageHandler(mockEvent);
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.runAllTimers();
 
       expect(handler1).toHaveBeenCalledTimes(1);
       expect(handler2).not.toHaveBeenCalled();
@@ -604,7 +597,7 @@ describe("createPubsub", () => {
 
       messageHandler(mockEvent);
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.runAllTimers();
 
       expect(generalHandler).toHaveBeenCalledWith({
         source: "builder",
@@ -644,7 +637,7 @@ describe("createPubsub", () => {
 
       messageHandler(mockEvent);
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.runAllTimers();
 
       expect(handler).not.toHaveBeenCalled();
     });
@@ -678,7 +671,7 @@ describe("createPubsub", () => {
 
       messageHandler(mockEvent);
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.runAllTimers();
 
       expect(handler1).toHaveBeenCalledWith({
         source: "builder",
@@ -721,7 +714,7 @@ describe("createPubsub", () => {
 
       messageHandler(mockEvent);
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.runAllTimers();
 
       expect(handler).toHaveBeenCalledWith({
         source: "builder",
