@@ -386,12 +386,12 @@ export const ColorPicker = ({
         .${scopeClass}::part(controls) {
           /* Hack to fix as we can't reach into .control and change grid-template-columns */
           font-size: 16px;
-          /* Isolate compositing context to prevent GPU rendering glitches on Windows */
-          contain: layout style;
         }
         .${scopeClass} {
-          /* Force GPU compositing layer to fix native <select> rendering on Windows */
-          transform: translateZ(0);
+          /* color-scheme cascades into shadow DOM and forces native selects (appearance:
+             base-select) to render with light-mode colors so text is visible in the
+             ::picker(select) top-layer popup */
+          color-scheme: light;
         }
       `}</style>
 
