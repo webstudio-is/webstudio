@@ -1,8 +1,6 @@
 import * as colorjs from "colorjs.io/fn";
 import "hdr-color-input";
 import type { ChangeDetail, ColorInput, ColorSpace } from "hdr-color-input";
-// @ts-ignore React is used in the global JSX type declaration below
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from "react";
 import {
   forwardRef,
@@ -326,18 +324,10 @@ export const ColorPicker = ({
     const { signal } = controller;
     let lastStyleValue: StyleValue = callbacksRef.current.value;
 
-    const updateContrast = (styleValue: StyleValue) => {
-      const { red, green, blue, alpha } = parseColorString(toValue(styleValue));
-      // Composite over white before computing luminance so that transparent
-      // colors (which show a light background) correctly get black text.
-      const r = alpha * red + (1 - alpha) * 255;
-      const g = alpha * green + (1 - alpha) * 255;
-      const b = alpha * blue + (1 - alpha) * 255;
-      // WCAG relative luminance uses gamma-linearized values, but parseColorString
-      // returns non-linearized 0–255 components. For non-linearized values the
-      // equal-contrast midpoint is ~0.5.
-      const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-      el.style.setProperty("--contrast", luminance > 0.5 ? "black" : "white");
+    const updateContrast = () => {
+      el.style.setProperty("--contrast", "black");
+      const preview = el.shadowRoot?.querySelector<HTMLElement>(".preview");
+      preview?.style.setProperty("--value", "#fff");
     };
 
     el.addEventListener(
@@ -347,7 +337,7 @@ export const ColorPicker = ({
           .detail;
         lastStyleValue = cssStringToStyleValue(value, colorspace);
         callbacksRef.current.onChange(lastStyleValue);
-        updateContrast(lastStyleValue);
+        updateContrast();
       },
       { signal }
     );
@@ -358,7 +348,7 @@ export const ColorPicker = ({
         // Set contrast immediately on open so the initial color is correct
         // before any change event fires (the component's own JS sets --contrast
         // based on raw color only, ignoring alpha).
-        updateContrast(lastStyleValue);
+        updateContrast();
         callbacksRef.current.disableCanvasPointerEvents();
         document.body.style.userSelect = "none";
         callbacksRef.current.onOpenChange?.(true);
@@ -380,13 +370,7 @@ export const ColorPicker = ({
     // The component's JS re-sets --contrast on each color change, ignoring alpha.
     // Re-apply our override whenever the window regains focus (e.g. after the
     // user switches away and back while the picker is open).
-    window.addEventListener(
-      "focus",
-      () => {
-        updateContrast(lastStyleValue);
-      },
-      { signal }
-    );
+    window.addEventListener("focus", updateContrast, { signal });
 
     return () => {
       controller.abort();
