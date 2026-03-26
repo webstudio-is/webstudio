@@ -1,6 +1,3 @@
-/**
- * @vitest-environment node
- */
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
 import { createPubsub } from "./create";
 
@@ -24,53 +21,37 @@ describe("createPubsub", () => {
   let addEventListenerSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    // Setup window and crypto
-    if (!global.window) {
-      (global as typeof globalThis).window = {} as Window & typeof globalThis;
-    }
+    vi.spyOn(window, "postMessage").mockImplementation(() => {});
+    vi.spyOn(window.parent, "postMessage").mockImplementation(() => {});
+    vi.spyOn(window, "addEventListener");
 
-    // Mock crypto.getRandomValues
-    global.window.crypto = {
-      getRandomValues: vi.fn((arr: Uint8Array) => {
-        for (let i = 0; i < arr.length; i++) {
-          arr[i] = i;
-        }
-        return arr;
-      }),
-    } as unknown as Crypto;
+    postMessageSpy = window.postMessage as ReturnType<typeof vi.fn>;
+    parentPostMessageSpy = window.parent.postMessage as ReturnType<
+      typeof vi.fn
+    >;
+    addEventListenerSpy = window.addEventListener as ReturnType<typeof vi.fn>;
 
     // Mock requestAnimationFrame - execute callbacks immediately
-    global.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {
-      // Execute the callback immediately for testing
-      setTimeout(() => callback(0), 0);
-      return 0;
-    }) as typeof requestAnimationFrame;
-
-    postMessageSpy = vi.fn();
-    parentPostMessageSpy = vi.fn();
-    addEventListenerSpy = vi.fn();
-
-    global.window.postMessage = postMessageSpy;
-    global.window.addEventListener = addEventListenerSpy;
-    global.window.parent = {
-      postMessage: parentPostMessageSpy,
-    } as unknown as Window;
+    vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation(
+      (callback: FrameRequestCallback) => {
+        setTimeout(() => callback(0), 0);
+        return 0;
+      }
+    );
 
     // Set NODE_ENV for consistent testing
     process.env.NODE_ENV = "test";
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
-    delete (global.window as Window & { __webstudio__$__api_token?: string })
+    vi.restoreAllMocks();
+    delete (window as Window & { __webstudio__$__api_token?: string })
       .__webstudio__$__api_token;
   });
 
   describe("SSR environment", () => {
     test("should throw errors when used in SSR", () => {
-      const originalWindow = global.window;
-      (global as typeof globalThis).window = undefined as unknown as Window &
-        typeof globalThis;
+      vi.stubGlobal("window", undefined);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -87,26 +68,26 @@ describe("createPubsub", () => {
         "subscribe is not available in this environment"
       );
 
-      global.window = originalWindow;
+      vi.unstubAllGlobals();
     });
   });
 
   describe("token generation and validation", () => {
     test("should generate random token when window.self === window.top", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       createPubsub<TestPublishMap>();
 
-      expect(global.window.__webstudio__$__api_token).toBeDefined();
+      expect(window.__webstudio__$__api_token).toBeDefined();
     });
 
     test("should use development token in non-production", () => {
       const originalNodeEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = "development";
 
-      global.window.self = asWindow({});
-      global.window.top = asWindow(global.window);
+      window.self = asWindow({});
+      window.top = asWindow(window);
 
       createPubsub<TestPublishMap>();
 
@@ -122,29 +103,29 @@ describe("createPubsub", () => {
 
     test("should read token from top window when not top", () => {
       const mockToken = "test-token";
-      global.window.top = {
+      window.top = {
         __webstudio__$__api_token: mockToken,
       } as unknown as Window & typeof globalThis;
-      global.window.self = asWindow({});
+      window.self = asWindow({});
 
       createPubsub<TestPublishMap>();
 
       // Token should be reset to undefined on canvas
-      expect(global.window.top.__webstudio__$__api_token).toBeUndefined();
+      expect(window.top.__webstudio__$__api_token).toBeUndefined();
     });
   });
 
   describe("publish (Canvas -> Builder)", () => {
     test("should publish action to parent and self", () => {
-      global.window.self = asWindow({});
-      global.window.top = asWindow(global.window);
-      global.window.top.__webstudio__$__api_token = "test-token";
+      window.self = asWindow({});
+      window.top = asWindow(window);
+      window.top.__webstudio__$__api_token = "test-token";
 
       const pubsub = createPubsub<TestPublishMap>();
 
       // Clear the token since it gets reset in createPubsub for Canvas context
       // Set it again after initialization
-      global.window.top.__webstudio__$__api_token = "test-token";
+      window.top.__webstudio__$__api_token = "test-token";
 
       pubsub.publish({ type: "testAction", payload: { value: "hello" } });
 
@@ -163,8 +144,8 @@ describe("createPubsub", () => {
     });
 
     test("should throw error when publish is called from Builder (self === top)", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -174,14 +155,14 @@ describe("createPubsub", () => {
     });
 
     test("should handle action with no payload", () => {
-      global.window.self = asWindow({});
-      global.window.top = asWindow(global.window);
-      global.window.top.__webstudio__$__api_token = "test-token";
+      window.self = asWindow({});
+      window.top = asWindow(window);
+      window.top.__webstudio__$__api_token = "test-token";
 
       const pubsub = createPubsub<TestPublishMap>();
 
       // Set token again after initialization
-      global.window.top.__webstudio__$__api_token = "test-token";
+      window.top.__webstudio__$__api_token = "test-token";
 
       pubsub.publish({ type: "noPayloadAction" });
 
@@ -196,8 +177,8 @@ describe("createPubsub", () => {
 
   describe("usePublish (Builder -> Canvas)", () => {
     test("should be available when self === top", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -206,8 +187,8 @@ describe("createPubsub", () => {
     });
 
     test("should be available for iframe context", () => {
-      global.window.self = asWindow({});
-      global.window.top = asWindow(global.window);
+      window.self = asWindow({});
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -218,8 +199,8 @@ describe("createPubsub", () => {
 
   describe("subscribe", () => {
     test("should subscribe to messages and call handler", async () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -246,8 +227,8 @@ describe("createPubsub", () => {
     });
 
     test("should return unsubscribe function", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -275,12 +256,12 @@ describe("createPubsub", () => {
     });
 
     test("should handle multiple subscribers", async () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       // Create a fresh addEventListener spy for this test
       const localAddEventListenerSpy = vi.fn();
-      global.window.addEventListener = localAddEventListenerSpy;
+      window.addEventListener = localAddEventListenerSpy;
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -318,8 +299,8 @@ describe("createPubsub", () => {
 
   describe("useSubscribe", () => {
     test("should be available as a hook function", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -330,8 +311,8 @@ describe("createPubsub", () => {
 
   describe("message unwrapping and validation", () => {
     test("should reject invalid payload (not an object)", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -357,8 +338,8 @@ describe("createPubsub", () => {
     });
 
     test("should reject payload without token", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -373,8 +354,8 @@ describe("createPubsub", () => {
     });
 
     test("should reject payload with invalid token", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -394,8 +375,8 @@ describe("createPubsub", () => {
     });
 
     test("should reject payload without action", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -414,8 +395,8 @@ describe("createPubsub", () => {
     });
 
     test("should hide token from subsequent subscribers", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -439,12 +420,12 @@ describe("createPubsub", () => {
       const originalIsStorybook = process.env.IS_STROYBOOK;
       process.env.IS_STROYBOOK = "true";
 
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       // Create a fresh addEventListener spy for this test
       const localAddEventListenerSpy = vi.fn();
-      global.window.addEventListener = localAddEventListenerSpy;
+      window.addEventListener = localAddEventListenerSpy;
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -467,14 +448,14 @@ describe("createPubsub", () => {
 
   describe("action types", () => {
     test("should handle action with undefined payload", () => {
-      global.window.self = asWindow({});
-      global.window.top = asWindow(global.window);
-      global.window.top.__webstudio__$__api_token = "test-token";
+      window.self = asWindow({});
+      window.top = asWindow(window);
+      window.top.__webstudio__$__api_token = "test-token";
 
       const pubsub = createPubsub<TestPublishMap>();
 
       // Set token again after initialization
-      global.window.top.__webstudio__$__api_token = "test-token";
+      window.top.__webstudio__$__api_token = "test-token";
 
       pubsub.publish({ type: "noPayloadAction", payload: undefined });
 
@@ -487,14 +468,14 @@ describe("createPubsub", () => {
     });
 
     test("should handle action with number payload", () => {
-      global.window.self = asWindow({});
-      global.window.top = asWindow(global.window);
-      global.window.top.__webstudio__$__api_token = "test-token";
+      window.self = asWindow({});
+      window.top = asWindow(window);
+      window.top.__webstudio__$__api_token = "test-token";
 
       const pubsub = createPubsub<TestPublishMap>();
 
       // Set token again after initialization
-      global.window.top.__webstudio__$__api_token = "test-token";
+      window.top.__webstudio__$__api_token = "test-token";
 
       pubsub.publish({ type: "numberAction", payload: 42 });
 
@@ -509,8 +490,8 @@ describe("createPubsub", () => {
 
   describe("event listener registration", () => {
     test("should register message event listener on initialization", () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       createPubsub<TestPublishMap>();
 
@@ -524,11 +505,11 @@ describe("createPubsub", () => {
 
   describe("command-specific subscriptions", () => {
     test("should subscribe to specific command and call handler", async () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const localAddEventListenerSpy = vi.fn();
-      global.window.addEventListener = localAddEventListenerSpy;
+      window.addEventListener = localAddEventListenerSpy;
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -559,11 +540,11 @@ describe("createPubsub", () => {
     });
 
     test("should only call handler for matching command", async () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const localAddEventListenerSpy = vi.fn();
-      global.window.addEventListener = localAddEventListenerSpy;
+      window.addEventListener = localAddEventListenerSpy;
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -595,11 +576,11 @@ describe("createPubsub", () => {
     });
 
     test("should call both general command handler and specific command handler", async () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const localAddEventListenerSpy = vi.fn();
-      global.window.addEventListener = localAddEventListenerSpy;
+      window.addEventListener = localAddEventListenerSpy;
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -636,11 +617,11 @@ describe("createPubsub", () => {
     });
 
     test("should unsubscribe from specific command", async () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const localAddEventListenerSpy = vi.fn();
-      global.window.addEventListener = localAddEventListenerSpy;
+      window.addEventListener = localAddEventListenerSpy;
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -669,11 +650,11 @@ describe("createPubsub", () => {
     });
 
     test("should handle multiple subscribers to the same specific command", async () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const localAddEventListenerSpy = vi.fn();
-      global.window.addEventListener = localAddEventListenerSpy;
+      window.addEventListener = localAddEventListenerSpy;
 
       const pubsub = createPubsub<TestPublishMap>();
 
@@ -710,11 +691,11 @@ describe("createPubsub", () => {
     });
 
     test("should pass payload to command-specific subscribers", async () => {
-      global.window.self = asWindow(global.window);
-      global.window.top = asWindow(global.window);
+      window.self = asWindow(window);
+      window.top = asWindow(window);
 
       const localAddEventListenerSpy = vi.fn();
-      global.window.addEventListener = localAddEventListenerSpy;
+      window.addEventListener = localAddEventListenerSpy;
 
       const pubsub = createPubsub<TestPublishMap>();
 
