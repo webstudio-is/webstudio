@@ -299,6 +299,16 @@ export const Tree = () => {
               </TreeNodeLabel>
             </TreeNode>
             <TreeNode
+              level={2}
+              isSelected={false}
+              isSelectedDescendant
+              isExpanded={undefined}
+              buttonProps={{}}
+              action={<SmallIconButton tabIndex={-1} icon={<EllipsesIcon />} />}
+            >
+              <TreeNodeLabel>Selected descendant node</TreeNodeLabel>
+            </TreeNode>
+            <TreeNode
               level={1}
               tabbable
               isSelected={false}

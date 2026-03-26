@@ -34,6 +34,26 @@ const treeActionOpacity = "--tree-action-opacity";
 const treeDepthBarsVisibility = "--tree-depth-bars-visibility";
 const treeDepthBarsColor = "--tree-depth-bars-color";
 
+type TreeSelectionState = "none" | "selected" | "selected-descendant";
+
+const getTreeSelectionState = ({
+  isSelected,
+  isSelectedDescendant,
+}: {
+  isSelected: boolean;
+  isSelectedDescendant: boolean;
+}): TreeSelectionState => {
+  if (isSelected) {
+    return "selected";
+  }
+
+  if (isSelectedDescendant) {
+    return "selected-descendant";
+  }
+
+  return "none";
+};
+
 const ITEM_PADDING_LEFT = 8;
 // extra padding on the right to make sure scrollbar doesn't obscure anything
 const ITEM_PADDING_RIGHT = 10;
@@ -100,10 +120,13 @@ const NodeContainer = styled("div", {
     backgroundColor: `var(${treeNodeBackgroundColor})`,
     [treeActionOpacity]: 1,
   },
-  "&:has([aria-selected=true])": {
+  '&[data-selection-state="selected-descendant"]': {
+    [treeNodeBackgroundColor]: theme.colors.backgroundItemCurrentChild,
+    backgroundColor: `var(${treeNodeBackgroundColor})`,
+  },
+  '&[data-selection-state="selected"]': {
     [treeNodeBackgroundColor]: theme.colors.backgroundItemCurrent,
     backgroundColor: `var(${treeNodeBackgroundColor})`,
-    [treeDepthBarsColor]: theme.colors.borderItemChildLineCurrent,
   },
 });
 
@@ -404,6 +427,7 @@ export const TreeNode = ({
   level,
   tabbable,
   isSelected,
+  isSelectedDescendant = false,
   isHighlighted,
   isExpanded,
   isActionVisible,
@@ -416,6 +440,7 @@ export const TreeNode = ({
   level: number;
   tabbable?: boolean;
   isSelected: boolean;
+  isSelectedDescendant?: boolean;
   isHighlighted?: boolean;
   isExpanded?: undefined | boolean;
   isActionVisible?: boolean;
@@ -426,6 +451,10 @@ export const TreeNode = ({
   children: ReactNode;
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const selectionState = getTreeSelectionState({
+    isSelected,
+    isSelectedDescendant,
+  });
   // scroll the selected button into view when selected from canvas.
   useEffect(() => {
     if (isSelected) {
@@ -463,6 +492,7 @@ export const TreeNode = ({
   return (
     <NodeContainer
       {...nodeProps}
+      data-selection-state={selectionState}
       css={{
         [treeNodeLevel]: level,
         ...(isActionVisible && { [treeActionOpacity]: 1 }),
