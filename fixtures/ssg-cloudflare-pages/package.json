@@ -1,9 +1,9 @@
 {
-  "name": "ssg",
+  "name": "ssg-cloudflare-pages",
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && vike prerender",
     "postbuild": "prettier --write \"dist/**/*.html\" || true",
     "dev": "vite dev",
     "typecheck": "tsgo --noEmit",
