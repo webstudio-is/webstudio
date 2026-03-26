@@ -386,6 +386,12 @@ export const ColorPicker = ({
         .${scopeClass}::part(controls) {
           /* Hack to fix as we can't reach into .control and change grid-template-columns */
           font-size: 16px;
+          /* Isolate compositing context to prevent GPU rendering glitches on Windows */
+          contain: layout style;
+        }
+        .${scopeClass} {
+          /* Force GPU compositing layer to fix native <select> rendering on Windows */
+          transform: translateZ(0);
         }
       `}</style>
 
