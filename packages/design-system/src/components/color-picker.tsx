@@ -1,7 +1,6 @@
 import * as colorjs from "colorjs.io/fn";
 import "hdr-color-input";
 import type { ChangeDetail, ColorInput, ColorSpace } from "hdr-color-input";
-import React from "react";
 import {
   forwardRef,
   type ComponentProps,
@@ -325,9 +324,9 @@ export const ColorPicker = ({
     let lastStyleValue: StyleValue = callbacksRef.current.value;
 
     const updateContrast = () => {
-      el.style.setProperty("--contrast", "black");
+      el.style.setProperty("--contrast", "inherit");
       const preview = el.shadowRoot?.querySelector<HTMLElement>(".preview");
-      preview?.style.setProperty("--value", "#fff");
+      preview?.style.setProperty("--value", rawTheme.colors.backgroundPanel);
     };
 
     el.addEventListener(
