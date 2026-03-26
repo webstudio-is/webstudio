@@ -1,6 +1,10 @@
 import { describe, test, expect } from "vitest";
 import { parseCssValue, isValidDeclaration } from "./parse-css-value";
-import { toValue, type CssProperty } from "@webstudio-is/css-engine";
+import {
+  toValue,
+  type CssProperty,
+  type ColorValue,
+} from "@webstudio-is/css-engine";
 
 describe("Parse CSS value", () => {
   describe("number value", () => {
@@ -272,55 +276,83 @@ describe("Parse CSS value", () => {
     });
   });
 
-  test("parse rgb color with CSS variable as alpha channel", () => {
-    expect(
-      parseCssValue("color", "rgb(24 24 27 / var(--tw-bg-opacity))")
-    ).toEqual({
-      type: "color",
-      colorSpace: "srgb",
-      components: [0.0941, 0.0941, 0.1059],
-      alpha: {
-        type: "var",
-        value: "tw-bg-opacity",
-        fallback: { type: "unit", unit: "number", value: 1 },
+  describe("CSS variable in alpha channel", () => {
+    // hex is excluded: #RRGGBB syntax has no / alpha slot in CSS.
+    // Using satisfies Record<Exclude<...>, unknown> ensures TypeScript errors
+    // when a new color space is added to ColorValue without a test entry here.
+    const cases = {
+      srgb: {
+        css: "rgb(255 0 0 / var(--opacity))",
+        components: [1, 0, 0],
       },
-    });
-  });
+      hsl: {
+        css: "hsl(120 100% 50% / var(--opacity))",
+        components: [120, 100, 50],
+      },
+      hwb: {
+        css: "hwb(120 0% 0% / var(--opacity))",
+        components: [120, 0, 0],
+      },
+      lab: {
+        css: "lab(50 20 30 / var(--opacity))",
+        components: [50, 20, 30],
+      },
+      lch: {
+        css: "lch(50 40 120 / var(--opacity))",
+        components: [50, 40, 120],
+      },
+      oklab: {
+        css: "oklab(0.7 0.1 -0.1 / var(--opacity))",
+        components: [0.7, 0.1, -0.1],
+      },
+      oklch: {
+        css: "oklch(0.5 0.1 180 / var(--opacity))",
+        components: [0.5, 0.1, 180],
+      },
+      p3: {
+        css: "color(display-p3 0.4 0.6 0.3 / var(--opacity))",
+        components: [0.4, 0.6, 0.3],
+      },
+      "srgb-linear": {
+        css: "color(srgb-linear 1 0 0 / var(--opacity))",
+        components: [1, 0, 0],
+      },
+      a98rgb: {
+        css: "color(a98-rgb 0.5 0.3 0.7 / var(--opacity))",
+        components: [0.5, 0.3, 0.7],
+      },
+      prophoto: {
+        css: "color(prophoto-rgb 0.6 0.4 0.2 / var(--opacity))",
+        components: [0.6, 0.4, 0.2],
+      },
+      rec2020: {
+        css: "color(rec2020 0.4 0.6 0.3 / var(--opacity))",
+        components: [0.4, 0.6, 0.3],
+      },
+      "xyz-d65": {
+        css: "color(xyz-d65 0.5 0.3 0.2 / var(--opacity))",
+        components: [0.5, 0.3, 0.2],
+      },
+      "xyz-d50": {
+        css: "color(xyz-d50 0.4 0.6 0.3 / var(--opacity))",
+        components: [0.4, 0.6, 0.3],
+      },
+    } satisfies Record<Exclude<ColorValue["colorSpace"], "hex">, unknown>;
 
-  test("parse color() function with CSS variable as alpha channel", () => {
-    expect(
-      parseCssValue(
-        "background-color",
-        "color(display-p3 0.4 0.6 0.3 / var(--tw-bg-opacity))"
-      )
-    ).toEqual({
-      type: "color",
-      colorSpace: "p3",
-      components: [0.4, 0.6, 0.3],
-      alpha: {
-        type: "var",
-        value: "tw-bg-opacity",
-        fallback: { type: "unit", unit: "number", value: 1 },
-      },
-    });
-  });
-
-  test("parse oklch color with CSS variable as alpha channel", () => {
-    expect(
-      parseCssValue(
-        "color",
-        "oklch(59.686% 0.1009 29.234 / var(--tw-text-opacity))"
-      )
-    ).toEqual({
-      type: "color",
-      colorSpace: "oklch",
-      components: [0.5969, 0.1009, 29.234],
-      alpha: {
-        type: "var",
-        value: "tw-text-opacity",
-        fallback: { type: "unit", unit: "number", value: 1 },
-      },
-    });
+    for (const [colorSpace, { css, components }] of Object.entries(cases)) {
+      test(colorSpace, () => {
+        expect(parseCssValue("color", css)).toEqual({
+          type: "color",
+          colorSpace,
+          components,
+          alpha: {
+            type: "var",
+            value: "opacity",
+            fallback: { type: "unit", unit: "number", value: 1 },
+          },
+        });
+      });
+    }
   });
 
   test("preserve explicit CSS fallback in var alpha channel", () => {

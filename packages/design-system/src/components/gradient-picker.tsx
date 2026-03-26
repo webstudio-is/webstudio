@@ -433,7 +433,10 @@ export const GradientPicker = <T extends ParsedGradient>({
   const isGradientColorValue = (
     value: StyleValue
   ): value is GradientColorValue =>
-    value.type === "rgb" || value.type === "keyword" || value.type === "var";
+    value.type === "rgb" ||
+    value.type === "color" ||
+    value.type === "keyword" ||
+    value.type === "var";
 
   const handleStopColorChange = useCallback(
     (
