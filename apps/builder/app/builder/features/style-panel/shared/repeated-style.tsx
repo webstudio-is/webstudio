@@ -49,6 +49,8 @@ export const getComputedRepeatedItem = (
     const cascadedItems = styleDecl.cascadedValue.value;
     if (cascadedItems.length !== items.length) {
       const item = cascadedItems[index];
+      // Hidden repeated items are omitted from serialized computed CSS,
+      // so remap the requested cascaded index onto the remaining visible items.
       const visibleItems = cascadedItems.filter((item) => item.hidden !== true);
       if (visibleItems.length !== items.length) {
         return;
