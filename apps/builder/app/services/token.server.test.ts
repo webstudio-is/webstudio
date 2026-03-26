@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment node
+ */
 import {
   encrypt,
   decrypt,

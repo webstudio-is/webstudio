@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment node
+ */
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
 import { createPubsub } from "./create";
 

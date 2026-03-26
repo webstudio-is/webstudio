@@ -20,6 +20,7 @@ export default defineConfig({
     },
   },
   test: {
+    environment: "jsdom",
     setupFiles: ["@webstudio-is/design-system/test-setup"],
   },
 });
