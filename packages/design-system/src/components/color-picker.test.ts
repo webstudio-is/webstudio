@@ -1,7 +1,8 @@
 import { describe, test, expect } from "vitest";
 import type { ColorSpace } from "hdr-color-input";
 import type { ColorValue } from "@webstudio-is/css-engine";
-import { cssStringToStyleValue } from "./color-picker";
+import { __testing__ } from "./color-picker";
+const { cssStringToStyleValue } = __testing__;
 
 // All ColorSpace values from hdr-color-input and their expected CSS input strings
 // (as <color-input> would emit in its change event).

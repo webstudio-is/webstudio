@@ -1,4 +1,3 @@
-import * as colorjs from "colorjs.io/fn";
 import {
   type CssNode,
   type FunctionNode,
@@ -10,6 +9,9 @@ import {
 } from "css-tree";
 import warnOnce from "warn-once";
 import {
+  color,
+  toColorSpace,
+  toColorComponent,
   cssWideKeywords,
   type ImageValue,
   type KeywordValue,
@@ -30,21 +32,6 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-
-colorjs.ColorSpace.register(colorjs.sRGB);
-colorjs.ColorSpace.register(colorjs.sRGB_Linear);
-colorjs.ColorSpace.register(colorjs.HSL);
-colorjs.ColorSpace.register(colorjs.HWB);
-colorjs.ColorSpace.register(colorjs.Lab);
-colorjs.ColorSpace.register(colorjs.LCH);
-colorjs.ColorSpace.register(colorjs.OKLab);
-colorjs.ColorSpace.register(colorjs.OKLCH);
-colorjs.ColorSpace.register(colorjs.P3);
-colorjs.ColorSpace.register(colorjs.A98RGB);
-colorjs.ColorSpace.register(colorjs.ProPhoto);
-colorjs.ColorSpace.register(colorjs.REC_2020);
-colorjs.ColorSpace.register(colorjs.XYZ_D65);
-colorjs.ColorSpace.register(colorjs.XYZ_D50);
 
 export const cssTryParseValue = (input: string): undefined | CssNode => {
   try {
@@ -191,31 +178,6 @@ const tupleProps = new Set<CssProperty>([
 
 const availableUnits = new Set<string>(Object.values(units).flat());
 
-// Map color space names to supported ColorValue color spaces
-const colorSpace: Record<string, ColorValue["colorSpace"]> = {
-  srgb: "srgb",
-  "srgb-linear": "srgb-linear",
-  "display-p3": "p3",
-  p3: "p3",
-  hsl: "hsl",
-  hwb: "hwb",
-  lab: "lab",
-  lch: "lch",
-  oklab: "oklab",
-  oklch: "oklch",
-  "a98-rgb": "a98rgb",
-  a98rgb: "a98rgb",
-  "prophoto-rgb": "prophoto",
-  prophoto: "prophoto",
-  rec2020: "rec2020",
-  "xyz-d65": "xyz-d65",
-  "xyz-d50": "xyz-d50",
-  xyz: "xyz-d65", // default to d65
-};
-
-const toColorComponent = (value: undefined | null | number) =>
-  Math.round((value ?? 0) * 10000) / 10000;
-
 export const parseColor = (colorString: string): undefined | ColorValue => {
   // does not match css variables which are incorrectly treated by colorjs.io
   if (!lexer.match("<color>", colorString).matched) {
@@ -225,14 +187,14 @@ export const parseColor = (colorString: string): undefined | ColorValue => {
     // css-tree's generator strips the space before negative values (e.g. "0.1-0.2").
     // Restore it so colorjs can tokenize color function arguments correctly.
     const normalized = colorString.replace(/([\d.])-(\d)/g, "$1 -$2");
-    const color = colorjs.parse(normalized);
+    const colorResult = color.parse(normalized);
     return {
       type: "color",
-      colorSpace: colorSpace[color.spaceId],
-      components: color.coords.map(
+      colorSpace: toColorSpace(color.ColorSpace.get(colorResult.spaceId)),
+      components: colorResult.coords.map(
         toColorComponent
       ) as ColorValue["components"],
-      alpha: toColorComponent(color.alpha),
+      alpha: toColorComponent(colorResult.alpha),
     };
   } catch {
     // Invalid colors or relative color syntax are treated as unparsed

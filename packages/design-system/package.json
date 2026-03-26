@@ -63,7 +63,6 @@
     "@webstudio-is/icons": "workspace:*",
     "change-case": "^5.4.4",
     "cmdk": "^1.1.1",
-    "colorjs.io": "^0.6.1",
     "downshift": "^6.1.7",
     "hdr-color-input": "^0.4.0",
     "match-sorter": "^8.0.0",

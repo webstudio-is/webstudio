@@ -19,7 +19,7 @@ import type {
   GradientStop,
   ParsedGradient,
 } from "@webstudio-is/css-data";
-import * as colorjs from "colorjs.io/fn";
+import { color, type ColorConstructor } from "@webstudio-is/css-engine";
 import { ChevronFilledUpIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Flex } from "./flex";
@@ -32,7 +32,7 @@ const mixColors = (
   color2: RgbValue,
   ratio: number
 ): RgbValue => {
-  const c1: colorjs.ColorConstructor = {
+  const c1: ColorConstructor = {
     spaceId: "srgb",
     coords: [
       (color1.r ?? 0) / 255,
@@ -41,7 +41,7 @@ const mixColors = (
     ],
     alpha: undefined,
   };
-  const c2: colorjs.ColorConstructor = {
+  const c2: ColorConstructor = {
     spaceId: "srgb",
     coords: [
       (color2.r ?? 0) / 255,
@@ -50,7 +50,7 @@ const mixColors = (
     ],
     alpha: undefined,
   };
-  const mixed = colorjs.mix(c1, c2, ratio);
+  const mixed = color.mix(c1, c2, ratio);
   const [r, g, b] = mixed.coords;
   return {
     type: "rgb",
@@ -84,18 +84,18 @@ const defaultStopColor: RgbValue = {
 };
 
 const toRgbColor = (
-  color: GradientStop["color"] | undefined
+  stopColor: GradientStop["color"] | undefined
 ): RgbValue | undefined => {
-  if (color === undefined) {
+  if (stopColor === undefined) {
     return;
   }
 
-  if (color.type === "rgb") {
-    return color;
+  if (stopColor.type === "rgb") {
+    return stopColor;
   }
 
   try {
-    const parsed = colorjs.parse(toValue(color));
+    const parsed = color.parse(toValue(stopColor));
     const [r, g, b] = parsed.coords;
     const alpha = parsed.alpha;
     return {

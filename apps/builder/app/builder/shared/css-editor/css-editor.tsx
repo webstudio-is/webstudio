@@ -1,5 +1,5 @@
 import { mergeRefs } from "@react-aria/utils";
-import * as colorjs from "colorjs.io/fn";
+import { color } from "@webstudio-is/css-engine";
 import {
   memo,
   useEffect,
@@ -134,7 +134,7 @@ const AdvancedPropertyValue = ({
   const inputRef = useRef<HTMLInputElement>(null);
   let isColor = false;
   try {
-    colorjs.parse(toValue(styleDecl.usedValue));
+    color.parse(toValue(styleDecl.usedValue));
     isColor = true;
   } catch {
     isColor = false;
