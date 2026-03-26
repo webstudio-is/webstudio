@@ -387,19 +387,17 @@ export const ColorPicker = ({
           /* Hack to fix as we can't reach into .control and change grid-template-columns */
           font-size: 16px;
         }
-        .${scopeClass} {
-          /* color-scheme cascades into shadow DOM and forces native selects (appearance:
-             base-select) to render with light-mode colors so text is visible in the
-             ::picker(select) top-layer popup */
-          color-scheme: light;
-        }
+        .${scopeClass}::part(output) {
+          font-size: inherit;
+          height: 2em;
+        }       
       `}</style>
 
       <ColorThumb color={colorString} css={css}>
         <color-input
           ref={pickerRef}
           value={colorString}
-          theme="light"
+          theme="dark"
           class={`${textClass} ${scopeClass}`}
         />
       </ColorThumb>
