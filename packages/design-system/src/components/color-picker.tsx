@@ -326,13 +326,28 @@ export const ColorPicker = ({
     const { signal } = controller;
     let lastStyleValue: StyleValue = callbacksRef.current.value;
 
+    const updateContrast = (styleValue: StyleValue) => {
+      const { red, green, blue, alpha } = parseColorString(toValue(styleValue));
+      // Composite over white before computing luminance so that transparent
+      // colors (which show a light background) correctly get black text.
+      const r = alpha * red + (1 - alpha) * 255;
+      const g = alpha * green + (1 - alpha) * 255;
+      const b = alpha * blue + (1 - alpha) * 255;
+      // WCAG relative luminance uses gamma-linearized values, but parseColorString
+      // returns non-linearized 0–255 components. For non-linearized values the
+      // equal-contrast midpoint is ~0.5.
+      const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      el.style.setProperty("--contrast", luminance > 0.5 ? "black" : "white");
+    };
+
     el.addEventListener(
       "change",
       (event: Event) => {
-        const { value: css, colorspace } = (event as CustomEvent<ChangeDetail>)
+        const { value, colorspace } = (event as CustomEvent<ChangeDetail>)
           .detail;
-        lastStyleValue = cssStringToStyleValue(css, colorspace);
+        lastStyleValue = cssStringToStyleValue(value, colorspace);
         callbacksRef.current.onChange(lastStyleValue);
+        updateContrast(lastStyleValue);
       },
       { signal }
     );
@@ -340,6 +355,10 @@ export const ColorPicker = ({
     el.addEventListener(
       "open",
       () => {
+        // Set contrast immediately on open so the initial color is correct
+        // before any change event fires (the component's own JS sets --contrast
+        // based on raw color only, ignoring alpha).
+        updateContrast(lastStyleValue);
         callbacksRef.current.disableCanvasPointerEvents();
         document.body.style.userSelect = "none";
         callbacksRef.current.onOpenChange?.(true);
@@ -354,6 +373,17 @@ export const ColorPicker = ({
         document.body.style.removeProperty("user-select");
         callbacksRef.current.onOpenChange?.(false);
         callbacksRef.current.onChangeComplete(lastStyleValue);
+      },
+      { signal }
+    );
+
+    // The component's JS re-sets --contrast on each color change, ignoring alpha.
+    // Re-apply our override whenever the window regains focus (e.g. after the
+    // user switches away and back while the picker is open).
+    window.addEventListener(
+      "focus",
+      () => {
+        updateContrast(lastStyleValue);
       },
       { signal }
     );
