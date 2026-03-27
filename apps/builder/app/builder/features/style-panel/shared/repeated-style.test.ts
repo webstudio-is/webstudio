@@ -10,6 +10,7 @@ import {
   addRepeatedStyleItem,
   deleteRepeatedStyleItem,
   editRepeatedStyleItem,
+  getComputedRepeatedItem,
   getRepeatedStyleItem,
   setRepeatedStyleItem,
   swapRepeatedStyleItems,
@@ -476,6 +477,53 @@ describe("toggle repeated item", () => {
     );
     // color should not switch to 1s when hide first layer
     expect(toValue($transitionDuration.get().cascadedValue)).toEqual("2s, 1s");
+  });
+
+  test("preserves computed layer mapping for hidden box shadows", () => {
+    const $boxShadow = createComputedStyleDeclStore("box-shadow");
+    setRawProperty(
+      "box-shadow",
+      "1px 2px 3px red, inset 4px 5px 6px blue, 7px 8px 9px green"
+    );
+
+    toggleRepeatedStyleItem([$boxShadow.get()], 0);
+
+    expect(getComputedRepeatedItem($boxShadow.get(), 0)).toMatchObject({
+      type: "shadow",
+      hidden: true,
+      position: "outset",
+    });
+    expect(getComputedRepeatedItem($boxShadow.get(), 1)).toMatchObject({
+      type: "shadow",
+      position: "inset",
+    });
+    expect(getComputedRepeatedItem($boxShadow.get(), 2)).toMatchObject({
+      type: "shadow",
+      position: "outset",
+      offsetX: { type: "unit", unit: "px", value: 7 },
+      offsetY: { type: "unit", unit: "px", value: 8 },
+      blur: { type: "unit", unit: "px", value: 9 },
+    });
+  });
+
+  test("preserves computed layer mapping for hidden text shadows", () => {
+    const $textShadow = createComputedStyleDeclStore("text-shadow");
+    setRawProperty("text-shadow", "1px 2px 3px red, 4px 5px 6px blue");
+
+    toggleRepeatedStyleItem([$textShadow.get()], 0);
+
+    expect(getComputedRepeatedItem($textShadow.get(), 0)).toMatchObject({
+      type: "shadow",
+      hidden: true,
+      position: "outset",
+    });
+    expect(getComputedRepeatedItem($textShadow.get(), 1)).toMatchObject({
+      type: "shadow",
+      position: "outset",
+      offsetX: { type: "unit", unit: "px", value: 4 },
+      offsetY: { type: "unit", unit: "px", value: 5 },
+      blur: { type: "unit", unit: "px", value: 6 },
+    });
   });
 });
 
