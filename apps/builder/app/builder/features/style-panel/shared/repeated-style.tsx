@@ -42,11 +42,31 @@ export const getComputedRepeatedItem = (
 ) => {
   const value = reparseComputedValue(styleDecl);
   const items = isRepeatedValue(value) ? value.value : [];
-  if (
-    isRepeatedValue(styleDecl.cascadedValue) &&
-    styleDecl.cascadedValue.value.length !== items.length
-  ) {
+  if (items.length === 0) {
     return;
+  }
+  if (isRepeatedValue(styleDecl.cascadedValue)) {
+    const cascadedItems = styleDecl.cascadedValue.value;
+    if (cascadedItems.length !== items.length) {
+      const item = cascadedItems[index];
+      // Hidden repeated items are omitted from serialized computed CSS,
+      // so remap the requested cascaded index onto the remaining visible items.
+      const visibleItems = cascadedItems.filter((item) => item.hidden !== true);
+      if (visibleItems.length !== items.length) {
+        return;
+      }
+      if (
+        item?.hidden === true &&
+        item.type !== "var" &&
+        item.type !== "unparsed"
+      ) {
+        return item;
+      }
+      const hiddenItems = cascadedItems
+        .slice(0, index)
+        .filter((item) => item.hidden === true).length;
+      return items[index - hiddenItems];
+    }
   }
   return items[index % items.length];
 };

@@ -99,6 +99,14 @@ export const createPubsub = <PublishMap>() => {
   };
 
   const handleMessage = (event: MessageEvent) => {
+    // Ignore messages from unknown sources (e.g. browser extensions, third-party scripts)
+    if (
+      typeof event.data !== "object" ||
+      event.data === null ||
+      !("token" in event.data)
+    ) {
+      return;
+    }
     const action = unwrapAction(event.data);
     const type = action.type;
     // Execute all updates within a single batch to improve performance

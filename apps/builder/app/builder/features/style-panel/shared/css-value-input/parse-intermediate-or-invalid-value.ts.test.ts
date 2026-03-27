@@ -470,7 +470,7 @@ describe("Colors", () => {
     expect(result).toEqual({
       type: "color",
       alpha: 1,
-      colorSpace: "srgb",
+      colorSpace: "hex",
       components: [1, 0, 0],
     });
   });
@@ -484,7 +484,7 @@ describe("Colors", () => {
     expect(result).toEqual({
       type: "color",
       alpha: 1,
-      colorSpace: "srgb",
+      colorSpace: "hex",
       components: [0.9412, 0.9333, 0.0588],
     });
   });
@@ -498,7 +498,7 @@ describe("Colors", () => {
     expect(result).toEqual({
       type: "color",
       alpha: 1,
-      colorSpace: "srgb",
+      colorSpace: "hex",
       components: [1, 0, 0],
     });
   });
@@ -512,7 +512,7 @@ describe("Colors", () => {
     expect(result).toEqual({
       type: "color",
       alpha: 1,
-      colorSpace: "srgb",
+      colorSpace: "hex",
       components: [0.9412, 0.9333, 0.0588],
     });
   });
@@ -529,6 +529,188 @@ describe("Colors", () => {
       alpha: 0.5,
       colorSpace: "srgb",
       components: [0.0392, 0.0784, 0.1176],
+    });
+  });
+
+  test("hsl color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "hsl(120 100% 50%)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "hsl",
+      alpha: 1,
+      components: [120, 100, 50],
+    });
+  });
+
+  test("hwb color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "hwb(120 0% 0%)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "hwb",
+      alpha: 1,
+      components: [120, 0, 0],
+    });
+  });
+
+  test("lab color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "lab(50 20 30)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "lab",
+      alpha: 1,
+      components: [50, 20, 30],
+    });
+  });
+
+  test("lch color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "lch(50 40 120)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "lch",
+      alpha: 1,
+      components: [50, 40, 120],
+    });
+  });
+
+  test("oklab color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "oklab(0.7 0.1 -0.1)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "oklab",
+      alpha: 1,
+      components: [0.7, 0.1, -0.1],
+    });
+  });
+
+  test("oklch color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "oklch(0.7 0.1 180)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "oklch",
+      alpha: 1,
+      components: [0.7, 0.1, 180],
+    });
+  });
+
+  test("srgb-linear color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(srgb-linear 1 0 0)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "srgb-linear",
+      alpha: 1,
+      components: [1, 0, 0],
+    });
+  });
+
+  test("display-p3 color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(display-p3 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "p3",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+
+  test("a98-rgb color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(a98-rgb 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "a98rgb",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+
+  test("prophoto-rgb color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(prophoto-rgb 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "prophoto",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+
+  test("rec2020 color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(rec2020 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "rec2020",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+
+  test("xyz-d65 color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(xyz-d65 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "xyz-d65",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+
+  test("xyz-d50 color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(xyz-d50 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "xyz-d50",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
     });
   });
 });
@@ -595,7 +777,7 @@ test("parse color in css variable", () => {
     })
   ).toEqual({
     type: "color",
-    colorSpace: "srgb",
+    colorSpace: "hex",
     components: [0.0588, 0.0588, 0.0588],
     alpha: 1,
   });

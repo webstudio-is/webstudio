@@ -2,11 +2,9 @@ import { useState } from "react";
 import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
 import {
   ColorPicker as ColorPickerComponent,
-  ColorPickerPopover,
   ColorThumb,
 } from "./color-picker";
 import { Flex } from "./flex";
-import { Grid } from "./grid";
 import { Text } from "./text";
 import { StorySection } from "./storybook";
 
@@ -23,38 +21,25 @@ const initialColor: RgbValue = {
 };
 
 export const ColorPicker = () => {
-  const [inlineValue, setInlineValue] = useState<StyleValue>(initialColor);
-  const [popoverValue, setPopoverValue] = useState<StyleValue>(initialColor);
+  const [value, setValue] = useState<StyleValue>(initialColor);
+  const [open, setOpen] = useState(true);
 
   return (
     <>
-      <StorySection title="Inline">
+      <StorySection title="Color Picker">
         <Flex direction="column" gap="2">
           <ColorPickerComponent
-            value={inlineValue}
-            onChange={(value) => {
-              if (value !== undefined) {
-                setInlineValue(value);
+            value={value}
+            open={open}
+            onOpenChange={setOpen}
+            onChange={(val) => {
+              if (val !== undefined) {
+                setValue(val);
               }
             }}
-            onChangeComplete={setInlineValue}
+            onChangeComplete={setValue}
           />
-          <Text>{JSON.stringify(inlineValue)}</Text>
-        </Flex>
-      </StorySection>
-
-      <StorySection title="Popover">
-        <Flex direction="column" gap="2">
-          <ColorPickerPopover
-            value={popoverValue}
-            onChange={(value) => {
-              if (value !== undefined) {
-                setPopoverValue(value);
-              }
-            }}
-            onChangeComplete={setPopoverValue}
-          />
-          <Text>{JSON.stringify(popoverValue)}</Text>
+          <Text>{JSON.stringify(value)}</Text>
         </Flex>
       </StorySection>
 
@@ -67,65 +52,5 @@ export const ColorPicker = () => {
         </Flex>
       </StorySection>
     </>
-  );
-};
-
-export const PopoverPositioning = () => {
-  const [value, setValue] = useState<StyleValue>(initialColor);
-  const handleChange = (val: StyleValue | undefined) => {
-    if (val !== undefined) {
-      setValue(val);
-    }
-  };
-  return (
-    <Grid
-      columns={2}
-      gap="9"
-      align="center"
-      justify="center"
-      style={{ padding: 100, minHeight: "100vh" }}
-    >
-      <Flex direction="column" gap="2" align="center">
-        <Text variant="labels">Side top</Text>
-        <ColorPickerPopover
-          value={value}
-          onChange={handleChange}
-          onChangeComplete={setValue}
-          side="top"
-          open={true}
-        />
-      </Flex>
-      <Flex direction="column" gap="2" align="center">
-        <Text variant="labels">Side right</Text>
-        <ColorPickerPopover
-          value={value}
-          onChange={handleChange}
-          onChangeComplete={setValue}
-          side="right"
-          open={true}
-        />
-      </Flex>
-      <Flex direction="column" gap="2" align="center">
-        <Text variant="labels">Align start</Text>
-        <ColorPickerPopover
-          value={value}
-          onChange={handleChange}
-          onChangeComplete={setValue}
-          side="bottom"
-          align="start"
-          open={true}
-        />
-      </Flex>
-      <Flex direction="column" gap="2" align="center">
-        <Text variant="labels">Side offset 16</Text>
-        <ColorPickerPopover
-          value={value}
-          onChange={handleChange}
-          onChangeComplete={setValue}
-          sideOffset={16}
-          open={true}
-        />
-      </Flex>
-    </Grid>
   );
 };

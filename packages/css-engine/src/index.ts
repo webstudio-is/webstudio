@@ -1,6 +1,7 @@
 export * from "./core/index";
 export * from "./schema";
 export * from "./css";
+export * from "./color";
 
 // necessary for sdk dts generation
 export type { Unit as __Unit } from "./__generated__/types";

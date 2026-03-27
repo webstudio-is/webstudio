@@ -94,6 +94,15 @@ export const toValue = (
 
     // Use specific CSS functions when available
     switch (value.colorSpace) {
+      case "hex": {
+        const toHex = (v: number) =>
+          Math.round(Math.min(Math.max(v, 0), 1) * 255)
+            .toString(16)
+            .padStart(2, "0");
+        const hex = `#${toHex(c1)}${toHex(c2)}${toHex(c3)}`;
+        const alphaNum = typeof alpha === "number" ? alpha : 1;
+        return alphaNum < 1 ? hex + toHex(alphaNum) : hex;
+      }
       case "srgb": {
         c1 = Math.round(c1 * 255);
         c2 = Math.round(c2 * 255);
@@ -112,11 +121,15 @@ export const toValue = (
         return `oklab(${c1} ${c2} ${c3} / ${alpha})`;
       case "oklch":
         return `oklch(${c1} ${c2} ${c3} / ${alpha})`;
-      // Fall back to color() function for less common color spaces
+      // Fall back to color() function for less common color spaces.
+      // colorjs uses internal short names that differ from CSS predefined color space identifiers.
       case "p3":
-      case "srgb-linear":
+        return `color(display-p3 ${c1} ${c2} ${c3} / ${alpha})`;
       case "a98rgb":
+        return `color(a98-rgb ${c1} ${c2} ${c3} / ${alpha})`;
       case "prophoto":
+        return `color(prophoto-rgb ${c1} ${c2} ${c3} / ${alpha})`;
+      case "srgb-linear":
       case "rec2020":
       case "xyz-d65":
       case "xyz-d50":

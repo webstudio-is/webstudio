@@ -41,6 +41,15 @@
    - Change any style
    - See if it is applied
 
+1. Repeated shadow labels
+
+   - Select an instance
+   - Add at least 3 `box-shadow` layers in the style panel
+   - Hide the first layer
+   - Check that all `box-shadow` rows keep their full labels and only the hidden row is visually muted
+   - Repeat the same flow with at least 3 `text-shadow` layers
+   - Check that all `text-shadow` rows keep their full labels after hiding one layer
+
 1. Content editable components
 
    - Add any contenteditable component (heading, paragraph, text ...)
