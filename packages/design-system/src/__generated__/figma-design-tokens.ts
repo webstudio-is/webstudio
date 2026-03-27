@@ -404,7 +404,7 @@ export const color = {
   backgroundButtonDisabled: "#e9ebed",
   backgroundButtonDisabledDark: "#646464",
   backgroundItemCurrent: "#e1f0ff",
-  backgroundItemCurrentChild: "#fff",
+  backgroundItemCurrentChild: "#eef6ff",
   backgroundItemCurrentHidden: "#7e868c",
   backgroundItemMenuItemHover: "#efefef",
   backgroundTooltipMain: "#11181c",
