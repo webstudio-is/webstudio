@@ -24,7 +24,11 @@ const initialBoxShadow = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
 const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {
   const shadowValue =
-    computedLayer?.type === "shadow" ? computedLayer : undefined;
+    layer.type === "shadow"
+      ? layer
+      : computedLayer?.type === "shadow"
+        ? computedLayer
+        : undefined;
   const labels = [];
   if (shadowValue?.position === "inset") {
     labels.push("Inner:");
@@ -39,7 +43,7 @@ const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {
     labels.push(toValue(shadowValue.blur));
     labels.push(toValue(shadowValue.spread));
   } else {
-    labels.push(toValue(shadowValue));
+    labels.push(toValue(layer));
   }
   const color = shadowValue?.color ? toValue(shadowValue.color) : undefined;
   return { label: labels.join(" "), color };

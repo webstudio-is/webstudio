@@ -24,7 +24,11 @@ const initialTextShadow = "0px 2px 5px rgba(0, 0, 0, 0.2)";
 
 const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {
   const shadowValue =
-    computedLayer?.type === "shadow" ? computedLayer : undefined;
+    layer.type === "shadow"
+      ? layer
+      : computedLayer?.type === "shadow"
+        ? computedLayer
+        : undefined;
   const labels = [];
   if (layer.type === "var") {
     labels.push(`--${layer.value}`);
@@ -33,7 +37,7 @@ const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {
     labels.push(toValue(shadowValue.offsetY));
     labels.push(toValue(shadowValue.blur));
   } else {
-    labels.push(toValue(shadowValue));
+    labels.push(toValue(layer));
   }
   const color = shadowValue?.color ? toValue(shadowValue.color) : undefined;
   return { label: labels.join(" "), color };
