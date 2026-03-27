@@ -177,3 +177,13 @@
    - The name should change in the pages list as well (with a small delay)
    - Change the page path
    - Reload browser tab and open the page settings again and make sure your changes are persisted
+
+1. Data variables
+
+   - Select an element in the project
+   - Open Settings and create a new data variable
+   - Set the name and choose the `resource` type
+   - Enter a valid resource URL
+   - Add a header and verify the modal stays open and a new header row appears
+   - Add a search param and verify the modal stays open and a new search param row appears
+   - Save the variable, reopen it, and verify the header and search param persist

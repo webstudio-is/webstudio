@@ -298,6 +298,7 @@ const SearchParamPair = ({
         />
       </BindingControl>
       <SmallIconButton
+        type="button"
         aria-label="Delete search param"
         variant="destructive"
         icon={<TrashIcon />}
@@ -323,6 +324,7 @@ export const SearchParams = ({
       <Flex justify="between" align="center">
         <Label>Search params</Label>
         <SmallIconButton
+          type="button"
           aria-label="Add another search param"
           icon={<PlusIcon />}
           onClick={() => {
@@ -422,6 +424,7 @@ const HeaderPair = ({
         />
       </BindingControl>
       <SmallIconButton
+        type="button"
         aria-label="Delete header"
         variant="destructive"
         icon={<TrashIcon />}
@@ -447,6 +450,7 @@ export const Headers = ({
       <Flex justify="between" align="center">
         <Label>Headers</Label>
         <SmallIconButton
+          type="button"
           aria-label="Add another search param"
           icon={<PlusIcon />}
           onClick={() => {
