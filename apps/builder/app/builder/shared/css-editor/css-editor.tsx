@@ -1,5 +1,5 @@
 import { mergeRefs } from "@react-aria/utils";
-import * as colorjs from "colorjs.io/fn";
+import { color } from "@webstudio-is/css-engine";
 import {
   memo,
   useEffect,
@@ -35,7 +35,7 @@ import {
 import { CssValueInputContainer } from "../../features/style-panel/shared/css-value-input";
 import { $availableVariables } from "../../features/style-panel/shared/model";
 import { PropertyInfo } from "../../features/style-panel/property-label";
-import { ColorPickerPopover } from "@webstudio-is/design-system";
+import { ColorPicker } from "@webstudio-is/design-system";
 import { useClientSupports } from "~/shared/client-supports";
 import { CssEditorContextMenu, copyAttribute } from "./css-editor-context-menu";
 import { AddStyleInput } from "./add-style-input";
@@ -134,7 +134,7 @@ const AdvancedPropertyValue = ({
   const inputRef = useRef<HTMLInputElement>(null);
   let isColor = false;
   try {
-    colorjs.parse(toValue(styleDecl.usedValue));
+    color.parse(toValue(styleDecl.usedValue));
     isColor = true;
   } catch {
     isColor = false;
@@ -148,7 +148,7 @@ const AdvancedPropertyValue = ({
       fieldSizing="content"
       prefix={
         isColor && (
-          <ColorPickerPopover
+          <ColorPicker
             value={styleDecl.usedValue}
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };

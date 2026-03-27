@@ -19,4 +19,9 @@ export default defineConfig({
       // conditions: ["webstudio", ...defaultServerConditions],
     },
   },
+  test: {
+    environment: "jsdom",
+    environmentMatchGlobs: [["**/*.server.test.*", "node"]],
+    setupFiles: ["@webstudio-is/design-system/test-setup"],
+  },
 });

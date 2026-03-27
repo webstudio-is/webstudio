@@ -1,6 +1,10 @@
 import { describe, test, expect } from "vitest";
-import { parseCssValue } from "./parse-css-value";
-import { toValue, type CssProperty } from "@webstudio-is/css-engine";
+import { parseCssValue, isValidDeclaration } from "./parse-css-value";
+import {
+  toValue,
+  type CssProperty,
+  type ColorValue,
+} from "@webstudio-is/css-engine";
 
 describe("Parse CSS value", () => {
   describe("number value", () => {
@@ -117,7 +121,7 @@ describe("Parse CSS value", () => {
     test("Color rgba values", () => {
       expect(parseCssValue("background-color", "#00220011")).toEqual({
         type: "color",
-        colorSpace: "srgb",
+        colorSpace: "hex",
         alpha: 0.0667,
         components: [0, 0.1333, 0],
       });
@@ -160,57 +164,195 @@ describe("Parse CSS value", () => {
         components: [0.8, 0.15, 240],
       });
     });
-  });
 
-  test("parse rgb color with CSS variable as alpha channel", () => {
-    expect(
-      parseCssValue("color", "rgb(24 24 27 / var(--tw-bg-opacity))")
-    ).toEqual({
-      type: "color",
-      colorSpace: "srgb",
-      components: [0.0941, 0.0941, 0.1059],
-      alpha: {
-        type: "var",
-        value: "tw-bg-opacity",
-        fallback: { type: "unit", unit: "number", value: 1 },
-      },
+    test("hsl color", () => {
+      expect(parseCssValue("color", "hsl(120 100% 50%)")).toEqual({
+        type: "color",
+        colorSpace: "hsl",
+        alpha: 1,
+        components: [120, 100, 50],
+      });
+    });
+
+    test("hwb color", () => {
+      expect(parseCssValue("color", "hwb(120 0% 0%)")).toEqual({
+        type: "color",
+        colorSpace: "hwb",
+        alpha: 1,
+        components: [120, 0, 0],
+      });
+    });
+
+    test("lab color", () => {
+      expect(parseCssValue("color", "lab(50 20 30)")).toEqual({
+        type: "color",
+        colorSpace: "lab",
+        alpha: 1,
+        components: [50, 20, 30],
+      });
+    });
+
+    test("lch color", () => {
+      expect(parseCssValue("color", "lch(50 40 120)")).toEqual({
+        type: "color",
+        colorSpace: "lch",
+        alpha: 1,
+        components: [50, 40, 120],
+      });
+    });
+
+    test("oklab color", () => {
+      expect(parseCssValue("color", "oklab(0.7 0.1 -0.1)")).toEqual({
+        type: "color",
+        colorSpace: "oklab",
+        alpha: 1,
+        components: [0.7, 0.1, -0.1],
+      });
+    });
+
+    test("srgb-linear color", () => {
+      expect(parseCssValue("color", "color(srgb-linear 1 0 0)")).toEqual({
+        type: "color",
+        colorSpace: "srgb-linear",
+        alpha: 1,
+        components: [1, 0, 0],
+      });
+    });
+
+    test("display-p3 color", () => {
+      expect(parseCssValue("color", "color(display-p3 0.4 0.6 0.3)")).toEqual({
+        type: "color",
+        colorSpace: "p3",
+        alpha: 1,
+        components: [0.4, 0.6, 0.3],
+      });
+    });
+
+    test("a98-rgb color", () => {
+      expect(parseCssValue("color", "color(a98-rgb 0.4 0.6 0.3)")).toEqual({
+        type: "color",
+        colorSpace: "a98rgb",
+        alpha: 1,
+        components: [0.4, 0.6, 0.3],
+      });
+    });
+
+    test("prophoto-rgb color", () => {
+      expect(parseCssValue("color", "color(prophoto-rgb 0.4 0.6 0.3)")).toEqual(
+        {
+          type: "color",
+          colorSpace: "prophoto",
+          alpha: 1,
+          components: [0.4, 0.6, 0.3],
+        }
+      );
+    });
+
+    test("rec2020 color", () => {
+      expect(parseCssValue("color", "color(rec2020 0.4 0.6 0.3)")).toEqual({
+        type: "color",
+        colorSpace: "rec2020",
+        alpha: 1,
+        components: [0.4, 0.6, 0.3],
+      });
+    });
+
+    test("xyz-d65 color", () => {
+      expect(parseCssValue("color", "color(xyz-d65 0.4 0.6 0.3)")).toEqual({
+        type: "color",
+        colorSpace: "xyz-d65",
+        alpha: 1,
+        components: [0.4, 0.6, 0.3],
+      });
+    });
+
+    test("xyz-d50 color", () => {
+      expect(parseCssValue("color", "color(xyz-d50 0.4 0.6 0.3)")).toEqual({
+        type: "color",
+        colorSpace: "xyz-d50",
+        alpha: 1,
+        components: [0.4, 0.6, 0.3],
+      });
     });
   });
 
-  test("parse color() function with CSS variable as alpha channel", () => {
-    expect(
-      parseCssValue(
-        "background-color",
-        "color(display-p3 0.4 0.6 0.3 / var(--tw-bg-opacity))"
-      )
-    ).toEqual({
-      type: "color",
-      colorSpace: "p3",
-      components: [0.4, 0.6, 0.3],
-      alpha: {
-        type: "var",
-        value: "tw-bg-opacity",
-        fallback: { type: "unit", unit: "number", value: 1 },
+  describe("CSS variable in alpha channel", () => {
+    // hex is excluded: #RRGGBB syntax has no / alpha slot in CSS.
+    // Using satisfies Record<Exclude<...>, unknown> ensures TypeScript errors
+    // when a new color space is added to ColorValue without a test entry here.
+    const cases = {
+      srgb: {
+        css: "rgb(255 0 0 / var(--opacity))",
+        components: [1, 0, 0],
       },
-    });
-  });
+      hsl: {
+        css: "hsl(120 100% 50% / var(--opacity))",
+        components: [120, 100, 50],
+      },
+      hwb: {
+        css: "hwb(120 0% 0% / var(--opacity))",
+        components: [120, 0, 0],
+      },
+      lab: {
+        css: "lab(50 20 30 / var(--opacity))",
+        components: [50, 20, 30],
+      },
+      lch: {
+        css: "lch(50 40 120 / var(--opacity))",
+        components: [50, 40, 120],
+      },
+      oklab: {
+        css: "oklab(0.7 0.1 -0.1 / var(--opacity))",
+        components: [0.7, 0.1, -0.1],
+      },
+      oklch: {
+        css: "oklch(0.5 0.1 180 / var(--opacity))",
+        components: [0.5, 0.1, 180],
+      },
+      p3: {
+        css: "color(display-p3 0.4 0.6 0.3 / var(--opacity))",
+        components: [0.4, 0.6, 0.3],
+      },
+      "srgb-linear": {
+        css: "color(srgb-linear 1 0 0 / var(--opacity))",
+        components: [1, 0, 0],
+      },
+      a98rgb: {
+        css: "color(a98-rgb 0.5 0.3 0.7 / var(--opacity))",
+        components: [0.5, 0.3, 0.7],
+      },
+      prophoto: {
+        css: "color(prophoto-rgb 0.6 0.4 0.2 / var(--opacity))",
+        components: [0.6, 0.4, 0.2],
+      },
+      rec2020: {
+        css: "color(rec2020 0.4 0.6 0.3 / var(--opacity))",
+        components: [0.4, 0.6, 0.3],
+      },
+      "xyz-d65": {
+        css: "color(xyz-d65 0.5 0.3 0.2 / var(--opacity))",
+        components: [0.5, 0.3, 0.2],
+      },
+      "xyz-d50": {
+        css: "color(xyz-d50 0.4 0.6 0.3 / var(--opacity))",
+        components: [0.4, 0.6, 0.3],
+      },
+    } satisfies Record<Exclude<ColorValue["colorSpace"], "hex">, unknown>;
 
-  test("parse oklch color with CSS variable as alpha channel", () => {
-    expect(
-      parseCssValue(
-        "color",
-        "oklch(59.686% 0.1009 29.234 / var(--tw-text-opacity))"
-      )
-    ).toEqual({
-      type: "color",
-      colorSpace: "oklch",
-      components: [0.5969, 0.1009, 29.234],
-      alpha: {
-        type: "var",
-        value: "tw-text-opacity",
-        fallback: { type: "unit", unit: "number", value: 1 },
-      },
-    });
+    for (const [colorSpace, { css, components }] of Object.entries(cases)) {
+      test(colorSpace, () => {
+        expect(parseCssValue("color", css)).toEqual({
+          type: "color",
+          colorSpace,
+          components,
+          alpha: {
+            type: "var",
+            value: "opacity",
+            fallback: { type: "unit", unit: "number", value: 1 },
+          },
+        });
+      });
+    }
   });
 
   test("preserve explicit CSS fallback in var alpha channel", () => {
@@ -225,6 +367,113 @@ describe("Parse CSS value", () => {
         value: "tw-bg-opacity",
         fallback: { type: "unparsed", value: "0.5" },
       },
+    });
+  });
+});
+
+test("parse color-mix() as unparsed value", () => {
+  expect(parseCssValue("color", "color-mix(in oklch, red 50%, blue)")).toEqual({
+    type: "unparsed",
+    value: "color-mix(in oklch, red 50%, blue)",
+  });
+});
+
+test("parse color-mix() on background-color as unparsed value", () => {
+  expect(
+    parseCssValue(
+      "background-color",
+      "color-mix(in srgb, #ff0000 30%, transparent)"
+    )
+  ).toEqual({
+    type: "unparsed",
+    value: "color-mix(in srgb, #ff0000 30%, transparent)",
+  });
+});
+
+test("parse color-mix() with var() as first color argument", () => {
+  expect(
+    parseCssValue("color", "color-mix(in oklch, var(--primary), blue)")
+  ).toEqual({
+    type: "unparsed",
+    value: "color-mix(in oklch, var(--primary), blue)",
+  });
+});
+
+test("parse color-mix() with var() as second color argument", () => {
+  expect(
+    parseCssValue("color", "color-mix(in oklch, red, var(--secondary))")
+  ).toEqual({
+    type: "unparsed",
+    value: "color-mix(in oklch, red, var(--secondary))",
+  });
+});
+
+test("parse color-mix() with var() as percentage", () => {
+  expect(
+    parseCssValue("color", "color-mix(in srgb, red var(--pct), blue)")
+  ).toEqual({
+    type: "unparsed",
+    value: "color-mix(in srgb, red var(--pct), blue)",
+  });
+});
+
+describe("relative color syntax", () => {
+  test("static relative color (no var)", () => {
+    expect(parseCssValue("color", "rgb(from blue r g b / 50%)")).toEqual({
+      type: "unparsed",
+      value: "rgb(from blue r g b / 50%)",
+    });
+  });
+
+  test("var() as origin color", () => {
+    expect(
+      parseCssValue("color", "rgb(from var(--brand-primary) r g b / 25%)")
+    ).toEqual({
+      type: "unparsed",
+      value: "rgb(from var(--brand-primary) r g b / 25%)",
+    });
+  });
+
+  test("var() as channel value", () => {
+    expect(parseCssValue("color", "oklch(from red l var(--chroma) h)")).toEqual(
+      {
+        type: "unparsed",
+        value: "oklch(from red l var(--chroma) h)",
+      }
+    );
+  });
+
+  test("var() as alpha", () => {
+    expect(
+      parseCssValue("color", "rgb(from red r g b / var(--alpha))")
+    ).toEqual({
+      type: "unparsed",
+      value: "rgb(from red r g b / var(--alpha))",
+    });
+  });
+
+  test("hsl relative with var() as origin", () => {
+    expect(parseCssValue("color", "hsl(from var(--brand) h s 75%)")).toEqual({
+      type: "unparsed",
+      value: "hsl(from var(--brand) h s 75%)",
+    });
+  });
+
+  test("oklch relative on background-color", () => {
+    expect(
+      parseCssValue("background-color", "oklch(from var(--brand) l c h / 0.5)")
+    ).toEqual({
+      type: "unparsed",
+      value: "oklch(from var(--brand) l c h / 0.5)",
+    });
+  });
+
+  test("var() in both origin and alpha", () => {
+    expect(
+      parseCssValue("color", "rgb(from var(--brand) r g b / var(--alpha))")
+    ).toEqual({
+      type: "unparsed",
+      value: "rgb(from var(--brand) r g b / var(--alpha))",
     });
   });
 });
@@ -697,7 +946,7 @@ test("support color in custom property", () => {
   });
   expect(parseCssValue("--color", "#3d4d04")).toEqual({
     type: "color",
-    colorSpace: "srgb",
+    colorSpace: "hex",
     alpha: 1,
     components: [0.2392, 0.302, 0.0157],
   });
@@ -1008,7 +1257,7 @@ describe("parse filters", () => {
             blur: { type: "unit", unit: "px", value: 25 },
             color: {
               type: "color",
-              colorSpace: "srgb",
+              colorSpace: "hex",
               alpha: 1,
               components: [0, 0, 1],
             },
@@ -1241,5 +1490,213 @@ test("parse perspective-origin", () => {
       { type: "unit", value: 50, unit: "%" },
       { type: "unit", value: 50, unit: "%" },
     ],
+  });
+});
+
+describe("isValidDeclaration", () => {
+  test("custom properties always accept any value", () => {
+    expect(isValidDeclaration("--my-color", "anything")).toBe(true);
+    expect(isValidDeclaration("--x", "rgb(0 0 0)")).toBe(true);
+    expect(isValidDeclaration("--x", "not-valid-garbage")).toBe(true);
+  });
+
+  test("var() is valid on any property, detected via AST", () => {
+    expect(isValidDeclaration("color", "var(--primary)")).toBe(true);
+    expect(isValidDeclaration("color", "var(--primary, red)")).toBe(true);
+    expect(isValidDeclaration("width", "var(--size)")).toBe(true);
+  });
+
+  // Critical: var() must be detected by the AST walk before reaching the
+  // keyword-only check, otherwise var() on these properties would be rejected.
+  test("var() on keyword-only properties is valid", () => {
+    expect(isValidDeclaration("white-space-collapse", "var(--ws)")).toBe(true);
+    expect(isValidDeclaration("text-wrap-mode", "var(--tw)")).toBe(true);
+    expect(isValidDeclaration("text-wrap-style", "var(--ts)")).toBe(true);
+  });
+
+  test("white-space-collapse: valid keywords accepted", () => {
+    expect(isValidDeclaration("white-space-collapse", "collapse")).toBe(true);
+    expect(isValidDeclaration("white-space-collapse", "preserve")).toBe(true);
+  });
+
+  test("white-space-collapse: unknown keywords rejected", () => {
+    expect(isValidDeclaration("white-space-collapse", "not-valid")).toBe(false);
+    expect(isValidDeclaration("white-space-collapse", "wrap")).toBe(false);
+  });
+
+  test("text-wrap-mode: valid keywords accepted", () => {
+    expect(isValidDeclaration("text-wrap-mode", "wrap")).toBe(true);
+    expect(isValidDeclaration("text-wrap-mode", "nowrap")).toBe(true);
+  });
+
+  test("text-wrap-mode: unknown keywords rejected", () => {
+    expect(isValidDeclaration("text-wrap-mode", "not-valid")).toBe(false);
+  });
+
+  test("text-wrap-style: valid keywords accepted", () => {
+    expect(isValidDeclaration("text-wrap-style", "balance")).toBe(true);
+    expect(isValidDeclaration("text-wrap-style", "auto")).toBe(true);
+  });
+
+  test("text-wrap-style: unknown keywords rejected", () => {
+    expect(isValidDeclaration("text-wrap-style", "not-valid")).toBe(false);
+  });
+
+  // Relative color syntax: csstree returns identical "Mismatch" errors for both
+  // relative colors and genuinely invalid values, so we detect structurally via
+  // the `from` identifier being the first child of the color function node.
+  test("static relative color syntax is valid", () => {
+    expect(isValidDeclaration("color", "rgb(from blue r g b / 50%)")).toBe(
+      true
+    );
+    expect(isValidDeclaration("color", "oklch(from red l c h)")).toBe(true);
+    expect(
+      isValidDeclaration("background-color", "hsl(from green h s 75%)")
+    ).toBe(true);
+  });
+
+  test("relative color with var() origin is valid", () => {
+    expect(isValidDeclaration("color", "rgb(from var(--brand) r g b)")).toBe(
+      true
+    );
+    expect(
+      isValidDeclaration(
+        "color",
+        "oklch(from var(--brand) l c h / var(--alpha))"
+      )
+    ).toBe(true);
+  });
+
+  test("standard color values are valid via csstree lexer", () => {
+    expect(isValidDeclaration("color", "oklch(0.7 0.15 200)")).toBe(true);
+    expect(isValidDeclaration("color", "color-mix(in oklch, red, blue)")).toBe(
+      true
+    );
+    expect(isValidDeclaration("color", "rgb(255 0 0)")).toBe(true);
+    expect(isValidDeclaration("color", "#ff0000")).toBe(true);
+  });
+
+  test("genuinely invalid CSS values are rejected", () => {
+    expect(isValidDeclaration("color", "not-valid-garbage")).toBe(false);
+    // blur() is not a valid <color> value
+    expect(isValidDeclaration("color", "blur(4)")).toBe(false);
+    // red is not a valid <length>
+    expect(isValidDeclaration("width", "red")).toBe(false);
+  });
+
+  // The AST walk is deep, not shallow. var() nested inside calc() or color-mix()
+  // must be detected even though it isn't the top-level node.
+  test("var() nested deep inside another function is valid", () => {
+    expect(isValidDeclaration("width", "calc(var(--size) + 10px)")).toBe(true);
+    expect(
+      isValidDeclaration("color", "color-mix(in oklch, var(--primary), blue)")
+    ).toBe(true);
+  });
+
+  // When csstree's tokenizer itself fails (malformed syntax like unmatched braces)
+  // cssTryParseValue returns undefined. In the non-browser path this must return false.
+  test("syntactically broken value that csstree cannot parse at all is rejected", () => {
+    expect(isValidDeclaration("color", "}")).toBe(false);
+  });
+
+  // The newer CSS linear() easing function isn't in csstree's grammar for
+  // transition/animation-timing-function, so there's a special lexer.match() call
+  // before the normal lexer.matchProperty() call.
+  test("transition-timing-function: CSS linear() easing syntax is valid", () => {
+    expect(
+      isValidDeclaration("transition-timing-function", "linear(0 0%, 1 100%)")
+    ).toBe(true);
+    expect(
+      isValidDeclaration("transition-timing-function", "linear(0, 0.5 25%, 1)")
+    ).toBe(true);
+  });
+
+  test("animation-timing-function: CSS linear() easing syntax is valid", () => {
+    expect(
+      isValidDeclaration("animation-timing-function", "linear(0 0%, 1 100%)")
+    ).toBe(true);
+  });
+
+  // Unknown CSS properties (future or vendor-prefixed) are allowed through so they
+  // can be stored as UnparsedValue rather than silently dropped.
+  test("unknown CSS properties are accepted via the 'Unknown property' error path", () => {
+    expect(
+      isValidDeclaration("animation-timeline" as CssProperty, "auto")
+    ).toBe(true);
+    expect(
+      isValidDeclaration("animation-range-start" as CssProperty, "normal")
+    ).toBe(true);
+  });
+});
+
+describe("keyword-only properties via parseCssValue", () => {
+  test("white-space-collapse: valid keyword", () => {
+    expect(parseCssValue("white-space-collapse", "collapse")).toEqual({
+      type: "keyword",
+      value: "collapse",
+    });
+    expect(parseCssValue("white-space-collapse", "preserve")).toEqual({
+      type: "keyword",
+      value: "preserve",
+    });
+  });
+
+  test("white-space-collapse: invalid keyword returns invalid", () => {
+    expect(parseCssValue("white-space-collapse", "not-valid")).toEqual({
+      type: "invalid",
+      value: "not-valid",
+    });
+  });
+
+  test("white-space-collapse: var() is accepted and returned as VarValue", () => {
+    expect(parseCssValue("white-space-collapse", "var(--ws-collapse)")).toEqual(
+      {
+        type: "var",
+        value: "ws-collapse",
+      }
+    );
+  });
+
+  test("text-wrap-mode: valid keyword", () => {
+    expect(parseCssValue("text-wrap-mode", "wrap")).toEqual({
+      type: "keyword",
+      value: "wrap",
+    });
+    expect(parseCssValue("text-wrap-mode", "nowrap")).toEqual({
+      type: "keyword",
+      value: "nowrap",
+    });
+  });
+
+  test("text-wrap-mode: invalid value", () => {
+    expect(parseCssValue("text-wrap-mode", "not-valid")).toEqual({
+      type: "invalid",
+      value: "not-valid",
+    });
+  });
+
+  test("text-wrap-mode: var() is accepted", () => {
+    expect(parseCssValue("text-wrap-mode", "var(--tw-mode)")).toEqual({
+      type: "var",
+      value: "tw-mode",
+    });
+  });
+
+  test("text-wrap-style: valid keyword", () => {
+    expect(parseCssValue("text-wrap-style", "balance")).toEqual({
+      type: "keyword",
+      value: "balance",
+    });
+    expect(parseCssValue("text-wrap-style", "auto")).toEqual({
+      type: "keyword",
+      value: "auto",
+    });
+  });
+
+  test("text-wrap-style: var() is accepted", () => {
+    expect(parseCssValue("text-wrap-style", "var(--style)")).toEqual({
+      type: "var",
+      value: "style",
+    });
   });
 });

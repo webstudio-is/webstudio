@@ -1,115 +1,86 @@
-import * as colorjs from "colorjs.io/fn";
+import "hdr-color-input";
+import type { ChangeDetail, ColorInput, ColorSpace } from "hdr-color-input";
+import {
+  color,
+  toColorSpace,
+  toColorComponent,
+  parseColor,
+  colorDistance,
+  lerpColor,
+  serializeColor,
+  transparentColor,
+  whiteColor,
+  toValue,
+  type PlainColorObject,
+  type StyleValue,
+  type ColorValue,
+} from "@webstudio-is/css-engine";
 import {
   forwardRef,
+  useCallback,
   type ComponentProps,
   type ElementRef,
   useEffect,
-  useState,
+  useId,
+  useRef,
 } from "react";
 import { clamp } from "@react-aria/utils";
-import { useDebouncedCallback } from "use-debounce";
-import { RgbaColorPicker } from "react-colorful";
-import { EyedropperIcon } from "@webstudio-is/icons";
-import {
-  toValue,
-  type StyleValue,
-  type Unit,
-  type RgbValue,
-} from "@webstudio-is/css-engine";
 import { css, rawTheme, theme, type CSS } from "../stitches.config";
 import { useDisableCanvasPointerEvents } from "../utilities";
-import { Grid } from "./grid";
-import { IconButton } from "./icon-button";
-import { InputField } from "./input-field";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { textStyle } from "./text";
 
-colorjs.ColorSpace.register(colorjs.sRGB);
-colorjs.ColorSpace.register(colorjs.sRGB_Linear);
-colorjs.ColorSpace.register(colorjs.HSL);
-colorjs.ColorSpace.register(colorjs.HWB);
-colorjs.ColorSpace.register(colorjs.Lab);
-colorjs.ColorSpace.register(colorjs.LCH);
-colorjs.ColorSpace.register(colorjs.OKLab);
-colorjs.ColorSpace.register(colorjs.OKLCH);
-colorjs.ColorSpace.register(colorjs.P3);
-colorjs.ColorSpace.register(colorjs.A98RGB);
-colorjs.ColorSpace.register(colorjs.ProPhoto);
-colorjs.ColorSpace.register(colorjs.REC_2020);
-colorjs.ColorSpace.register(colorjs.XYZ_D65);
-colorjs.ColorSpace.register(colorjs.XYZ_D50);
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace React.JSX {
+    interface IntrinsicElements {
+      "color-input": React.HTMLAttributes<HTMLElement> & {
+        ref?: React.Ref<HTMLElement>;
+        value?: string;
+        colorspace?: string;
+        theme?: "auto" | "light" | "dark";
+        "no-alpha"?: boolean | string;
+        class?: string;
+      };
+    }
+  }
+}
 
-type RgbaColor = {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-};
+// ─── Color utilities ─────────────────────────────────────────────────────────
 
-// Helper to create RgbaColor from colorjs.io Color
-const colorToRgba = (color: colorjs.PlainColorObject): RgbaColor => {
-  const [r, g, b] = color.coords;
+// Convert a CSS color string emitted by <color-input> into a StyleValue.
+const cssStringToStyleValue = (
+  cssString: string,
+  colorspace: ColorSpace
+): ColorValue => {
+  // hdr-color-input uses a few CSS aliases that differ from our canonical ids.
+  // "hex" is a UI-only format (not a real color space) that serializes as hex.
+  const colorSpace: ColorValue["colorSpace"] =
+    colorspace === "hex"
+      ? "hex"
+      : toColorSpace(color.ColorSpace.get(colorspace));
+  // For hex, colorjs parses to sRGB coords under the "srgb" spaceId — we keep
+  // those coords but override the colorSpace to "hex" so toValue() serializes
+  // back to hex format. For other spaces, use coords as-is.
+  const parsed = color.parse(cssString);
+  const colorValue = colorSpace === "hex" ? color.to(parsed, "srgb") : parsed;
   return {
-    r: (r ?? 0) * 255,
-    g: (g ?? 0) * 255,
-    b: (b ?? 0) * 255,
-    a: color.alpha ?? 1,
+    type: "color",
+    colorSpace,
+    components: colorValue.coords.map(
+      toColorComponent
+    ) as ColorValue["components"],
+    alpha: toColorComponent(colorValue.alpha),
   };
 };
 
-const transparentColor: RgbaColor = { r: 0, g: 0, b: 0, a: 0 };
+// ─── ColorThumb ──────────────────────────────────────────────────────────────
 
-// Helper to parse color string to RgbaColor
-export const parseColorString = (colorString: string): RgbaColor => {
-  try {
-    return colorToRgba(colorjs.to(colorString, "srgb"));
-  } catch {
-    return transparentColor;
-  }
-};
+const borderColorSwatch = parseColor(rawTheme.colors.borderColorSwatch);
 
-// Helper to convert RgbaColor to RGB string
-const rgbaToRgbString = (color: RgbaColor): string => {
-  const { r, g, b, a } = color;
-  if (a < 1) {
-    return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${a})`;
-  }
-  return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
-};
-
-// Helper to convert RgbaColor to hex
-const rgbaToHex = (color: RgbaColor): string => {
-  const { r, g, b, a } = color;
-  const toHex = (n: number) => {
-    const hex = Math.round(n).toString(16);
-    return hex.length === 1 ? "0" + hex : hex;
-  };
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}${toHex(a * 255)}`.toUpperCase();
-};
-
-const colorfulStyles = css({
-  ".react-colorful__pointer": {
-    width: theme.spacing[10],
-    height: theme.spacing[10],
-  },
-});
-
-const whiteColor: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
-const borderColorSwatch = colorToRgba(
-  colorjs.to(rawTheme.colors.borderColorSwatch, "srgb")
-);
-
-const distance = (a: RgbaColor, b: RgbaColor) =>
-  Math.sqrt(
-    Math.pow(a.r / 255 - b.r / 255, 2) +
-      Math.pow(a.g / 255 - b.g / 255, 2) +
-      Math.pow(a.b / 255 - b.b / 255, 2) +
-      Math.pow(a.a - b.a, 2)
-  );
-
-const calcBorderColor = (color: RgbaColor) => {
+const calcBorderColor = (color: PlainColorObject) => {
   const distanceToStartDrawBorder = 0.15;
   const alpha = clamp(
-    (distanceToStartDrawBorder - distance(whiteColor, color)) /
+    (distanceToStartDrawBorder - colorDistance(whiteColor, color)) /
       distanceToStartDrawBorder,
     0,
     1
@@ -117,17 +88,9 @@ const calcBorderColor = (color: RgbaColor) => {
   return lerpColor(transparentColor, borderColorSwatch, alpha);
 };
 
-const lerp = (a: number, b: number, t: number) => a * (1 - t) + b * t;
-
-const lerpColor = (a: RgbaColor, b: RgbaColor, t: number) => ({
-  r: lerp(a.r, b.r, t),
-  g: lerp(a.g, b.g, t),
-  b: lerp(a.b, b.b, t),
-  a: lerp(a.a, b.a, t),
-});
-
 const thumbStyle = css({
   display: "block",
+  position: "relative",
   width: theme.spacing[9],
   height: theme.spacing[9],
   backgroundBlendMode: "difference",
@@ -140,10 +103,7 @@ const thumbStyle = css({
   },
 });
 
-export type ColorThumbProps = Omit<
-  ComponentProps<"button" | "span">,
-  "color"
-> & {
+type ColorThumbProps = Omit<ComponentProps<"button" | "span">, "color"> & {
   interactive?: boolean;
   color?: string;
   css?: CSS;
@@ -151,12 +111,14 @@ export type ColorThumbProps = Omit<
 
 export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
   ({ interactive, color = "transparent", css, ...rest }, ref) => {
-    const rgba = parseColorString(color);
+    const parsed = parseColor(color);
+    const alpha = parsed.alpha ?? 1;
     const background =
-      rgba.a < 1
-        ? `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${color}`
+      alpha < 1
+        ? `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%)
+ 0% 33.33% / 40% 40%, ${color}`
         : color;
-    const borderColor = calcBorderColor(rgba);
+    const borderColor = calcBorderColor(parsed);
 
     const Component = interactive ? "button" : "span";
 
@@ -164,8 +126,8 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
       <Component
         style={{
           background,
-          borderColor: rgbaToRgbString(borderColor),
-          borderWidth: borderColor.a === 0 ? 0 : 1,
+          borderColor: serializeColor(borderColor),
+          borderWidth: (borderColor.alpha ?? 1) === 0 ? 0 : 1,
         }}
         className={thumbStyle({ css })}
         tabIndex={-1}
@@ -178,206 +140,189 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
 
 ColorThumb.displayName = "ColorThumb";
 
-const colorResultToRgbValue = (rgb: RgbaColor): RgbValue => ({
-  type: "rgb",
-  r: rgb.r,
-  g: rgb.g,
-  b: rgb.b,
-  alpha: rgb.a ?? 1,
-});
-
-const normalizeHex = (value: string) => {
-  const trimmed = value.trim();
-  const hex = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
-  return hex;
-};
-
-const getEyeDropper = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Constructor = (window as any).EyeDropper;
-  if (Constructor === undefined) {
-    return;
-  }
-  const eyeDropper = new Constructor();
-  return (callback: (rgb: string) => void) => {
-    eyeDropper.open().then((result: { sRGBHex: string }) => {
-      callback(result.sRGBHex);
-    });
-  };
-};
-
-type IntermediateColorValue = {
-  type: "intermediate";
-  value: string;
-  unit?: Unit;
-};
-
-type ColorPickerValue = StyleValue | IntermediateColorValue;
-
 type ColorPickerProps = {
-  value: ColorPickerValue;
-  onChange: (value: StyleValue | undefined) => void;
-  onChangeComplete: (value: StyleValue) => void;
-};
-
-type ColorPickerPopoverProps = {
   value: StyleValue;
   onChange: (value: StyleValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  thumb?: React.ReactElement;
-  side?: "top" | "right" | "bottom" | "left";
-  align?: "start" | "center" | "end";
-  sideOffset?: number;
+  css?: CSS;
 };
 
-const fixColor = (value: ColorPickerValue, color: RgbaColor) => {
-  if (value.type === "keyword" && value.value === "transparent") {
-    return { ...color, a: 1 };
-  }
-  return color;
-};
-
-const EyeDropper = ({ onChange }: { onChange: (rgb: string) => void }) => {
-  const open = getEyeDropper();
-  return (
-    <IconButton
-      disabled={open === undefined}
-      onClick={() => {
-        open?.(onChange);
-      }}
-    >
-      <EyedropperIcon />
-    </IconButton>
-  );
-};
+// Renders <color-input> with its built-in trigger chip, hiding the text input.
+// The chip opens the panel natively via the Popover API.
+// Our own ColorThumb is rendered on top (pointer-events: none) so that clicks
+// pass through to the real chip underneath.
+export const __testing__ = { cssStringToStyleValue };
 
 export const ColorPicker = ({
   value,
   onChange,
   onChangeComplete,
-}: ColorPickerProps) => {
-  const [hex, setHex] = useState(() => {
-    const colorString =
-      value.type === "intermediate" ? value.value : toValue(value);
-    return rgbaToHex(parseColorString(colorString));
-  });
-  const normalizedHex = normalizeHex(hex);
-  const handleCompleteDebounced = useDebouncedCallback(
-    (newValue: RgbValue) => onChangeComplete(newValue),
-    500
-  );
-
-  return (
-    <>
-      <RgbaColorPicker
-        className={colorfulStyles.toString()}
-        color={parseColorString(normalizedHex)}
-        onChange={(newRgb) => {
-          const fixedRgb = fixColor(value, newRgb);
-          setHex(rgbaToHex(fixedRgb));
-          const newValue = colorResultToRgbValue(fixedRgb);
-          onChange(newValue);
-          handleCompleteDebounced(newValue);
-        }}
-      />
-      <Grid css={{ gridTemplateColumns: "auto 1fr" }} gap="1">
-        <EyeDropper
-          onChange={(newHex) => {
-            setHex(newHex);
-            const newValue = colorResultToRgbValue(parseColorString(newHex));
-            onChangeComplete(newValue);
-          }}
-        />
-        <InputField
-          value={hex}
-          onChange={(event) => {
-            setHex(event.target.value);
-            try {
-              const color = colorjs.to(
-                normalizeHex(event.target.value),
-                "srgb"
-              );
-              const rgba = colorToRgba(color);
-              const newValue = colorResultToRgbValue(rgba);
-              onChange(newValue);
-              handleCompleteDebounced(newValue);
-            } catch {
-              // Invalid color, don't update
-            }
-          }}
-        />
-      </Grid>
-    </>
-  );
-};
-
-export const ColorPickerPopover = ({
-  value,
-  onChange,
-  onChangeComplete,
   open,
   onOpenChange,
-  thumb,
-  side = "bottom",
-  align = "center",
-  sideOffset,
-}: ColorPickerPopoverProps) => {
-  const [displayColorPicker, setDisplayColorPicker] = useState(false);
+  css,
+}: ColorPickerProps) => {
+  const colorInputRef = useRef<ColorInput>(null);
+  const scopeClass = useId().replace(/:/g, "");
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
-  const isControlled = open !== undefined;
-  const isOpen = isControlled ? open : displayColorPicker;
-
-  useEffect(() => {
-    if (isOpen) {
-      disableCanvasPointerEvents();
-      document.body.style.userSelect = "none";
-    } else {
-      document.body.style.removeProperty("user-select");
-      enableCanvasPointerEvents();
-    }
-
-    return () => {
-      document.body.style.removeProperty("user-select");
-      enableCanvasPointerEvents();
-    };
-  }, [isOpen, disableCanvasPointerEvents, enableCanvasPointerEvents]);
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!isControlled) {
-      setDisplayColorPicker(nextOpen);
-    }
-    onOpenChange?.(nextOpen);
+  // Keep stable refs to callbacks so the event-wiring effect never needs to
+  // re-run (and tear down / re-attach listeners) just because a prop changed.
+  const callbacksRef = useRef({
+    onChange,
+    onChangeComplete,
+    onOpenChange,
+    disableCanvasPointerEvents,
+    enableCanvasPointerEvents,
+    value,
+  });
+  callbacksRef.current = {
+    onChange,
+    onChangeComplete,
+    onOpenChange,
+    disableCanvasPointerEvents,
+    enableCanvasPointerEvents,
+    value,
   };
 
+  const colorString = toValue(value);
+
+  const overrideContrast = useCallback(() => {
+    const colorInputElement = colorInputRef.current;
+    if (!colorInputElement) {
+      return;
+    }
+    colorInputElement.style.setProperty("--contrast", "inherit");
+    colorInputElement.shadowRoot
+      ?.querySelector<HTMLElement>(".preview")
+      ?.style.setProperty("--value", rawTheme.colors.backgroundPanel);
+  }, []);
+
+  // Sync externally-controlled open state into the web component.
+  useEffect(() => {
+    if (open === undefined) {
+      return;
+    }
+    // hdr-color-input is loaded lazily; wait for the element to be defined
+    // before calling .show()/.close() so the methods are available.
+    customElements.whenDefined("color-input").then(() => {
+      try {
+        if (open === true) {
+          colorInputRef.current?.show();
+        } else {
+          colorInputRef.current?.close();
+        }
+      } catch {}
+    });
+  }, [open]);
+
+  // Sync external value changes into the web component.
+  useEffect(() => {
+    const colorInputElement = colorInputRef.current;
+    if (colorInputElement && colorInputElement.value !== colorString) {
+      colorInputElement.value = colorString;
+    }
+    overrideContrast();
+  }, [colorString, overrideContrast]);
+
+  // Wire up change / open / close events.
+  useEffect(() => {
+    const colorInputElement = colorInputRef.current;
+    if (!colorInputElement) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const { signal } = controller;
+    let lastStyleValue: StyleValue = callbacksRef.current.value;
+
+    colorInputElement.addEventListener(
+      "change",
+      (event: Event) => {
+        const { value, colorspace } = (event as CustomEvent<ChangeDetail>)
+          .detail;
+        lastStyleValue = cssStringToStyleValue(value, colorspace);
+        callbacksRef.current.onChange(lastStyleValue);
+        overrideContrast();
+      },
+      { signal }
+    );
+
+    colorInputElement.addEventListener(
+      "open",
+      () => {
+        // Set contrast immediately on open so the initial color is correct
+        // before any change event fires (the component's own JS sets --contrast
+        // based on raw color only, ignoring alpha).
+        callbacksRef.current.disableCanvasPointerEvents();
+        document.body.style.userSelect = "none";
+        callbacksRef.current.onOpenChange?.(true);
+        overrideContrast();
+      },
+      { signal }
+    );
+
+    colorInputElement.addEventListener(
+      "close",
+      () => {
+        callbacksRef.current.enableCanvasPointerEvents();
+        document.body.style.removeProperty("user-select");
+        callbacksRef.current.onOpenChange?.(false);
+        callbacksRef.current.onChangeComplete(lastStyleValue);
+      },
+      { signal }
+    );
+
+    // The component's JS re-sets --contrast on each color change, ignoring alpha.
+    // Re-apply our override whenever the window regains focus (e.g. after the
+    // user switches away and back while the picker is open).
+    window.addEventListener("focus", overrideContrast, { signal });
+
+    return () => {
+      controller.abort();
+      callbacksRef.current.enableCanvasPointerEvents();
+      document.body.style.removeProperty("user-select");
+    };
+  }, [overrideContrast]);
+
+  const { className: textClass } = textStyle();
+
   return (
-    <Popover modal open={isOpen} onOpenChange={handleOpenChange}>
-      <PopoverTrigger
-        asChild
-        aria-label="Open color picker"
-        onClick={() => handleOpenChange(!isOpen)}
-      >
-        {thumb ?? <ColorThumb color={toValue(value)} interactive={true} />}
-      </PopoverTrigger>
-      <PopoverContent
-        side={side}
-        align={align}
-        sideOffset={sideOffset}
-        css={{
-          display: "grid",
-          padding: theme.spacing[5],
-          gap: theme.spacing[5],
-        }}
-      >
-        <ColorPicker
-          value={value}
-          onChange={onChange}
-          onChangeComplete={onChangeComplete}
+    <>
+      <style>{`
+        /* Stitches can't handle ::part, need to migrate a new styling approach */
+        .${scopeClass}, 
+        .${scopeClass}::part(trigger), 
+        .${scopeClass}::part(chip) {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          width: auto;
+          height: auto;
+        }
+        .${scopeClass}::part(input) {
+          display: none;
+        }
+        .${scopeClass}::part(controls) {
+          /* Hack to fix as we can't reach into .control and change grid-template-columns */
+          font-size: 16px;
+        }
+        .${scopeClass}::part(output) {
+          font-size: inherit;
+          height: 2em;
+        }       
+      `}</style>
+
+      <ColorThumb color={colorString} css={css}>
+        <color-input
+          ref={colorInputRef}
+          value={colorString}
+          theme="light"
+          class={`${textClass} ${scopeClass}`}
         />
-      </PopoverContent>
-    </Popover>
+      </ColorThumb>
+    </>
   );
 };

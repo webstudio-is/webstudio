@@ -162,7 +162,7 @@ export const createCommandsEmitter = <CommandName extends string>({
         if (disableOnInputLikeControls) {
           const element = event.target as HTMLElement;
           const isOnInputLikeControl =
-            ["input", "select", "textarea"].includes(
+            ["input", "select", "textarea", "color-input"].includes(
               element.tagName.toLowerCase()
             ) ||
             element.isContentEditable ||

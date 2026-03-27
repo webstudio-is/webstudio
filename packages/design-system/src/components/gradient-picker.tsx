@@ -19,12 +19,12 @@ import type {
   GradientStop,
   ParsedGradient,
 } from "@webstudio-is/css-data";
-import * as colorjs from "colorjs.io/fn";
+import { color, type ColorConstructor } from "@webstudio-is/css-engine";
 import { ChevronFilledUpIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Flex } from "./flex";
 import { Box } from "./box";
-import { ColorPickerPopover, ColorThumb } from "./color-picker";
+import { ColorPicker } from "./color-picker";
 
 // Helper to mix two RGB colors
 const mixColors = (
@@ -32,7 +32,7 @@ const mixColors = (
   color2: RgbValue,
   ratio: number
 ): RgbValue => {
-  const c1: colorjs.ColorConstructor = {
+  const c1: ColorConstructor = {
     spaceId: "srgb",
     coords: [
       (color1.r ?? 0) / 255,
@@ -41,7 +41,7 @@ const mixColors = (
     ],
     alpha: undefined,
   };
-  const c2: colorjs.ColorConstructor = {
+  const c2: ColorConstructor = {
     spaceId: "srgb",
     coords: [
       (color2.r ?? 0) / 255,
@@ -50,7 +50,7 @@ const mixColors = (
     ],
     alpha: undefined,
   };
-  const mixed = colorjs.mix(c1, c2, ratio);
+  const mixed = color.mix(c1, c2, ratio);
   const [r, g, b] = mixed.coords;
   return {
     type: "rgb",
@@ -74,7 +74,6 @@ export type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
 const THUMB_INTERACTION_DISTANCE = 12;
 const DRAG_THRESHOLD = 3;
 const SLIDER_HEIGHT = 16;
-const THUMB_HEIGHT = 14;
 
 const defaultStopColor: RgbValue = {
   type: "rgb",
@@ -85,18 +84,18 @@ const defaultStopColor: RgbValue = {
 };
 
 const toRgbColor = (
-  color: GradientStop["color"] | undefined
+  stopColor: GradientStop["color"] | undefined
 ): RgbValue | undefined => {
-  if (color === undefined) {
+  if (stopColor === undefined) {
     return;
   }
 
-  if (color.type === "rgb") {
-    return color;
+  if (stopColor.type === "rgb") {
+    return stopColor;
   }
 
   try {
-    const parsed = colorjs.parse(toValue(color));
+    const parsed = color.parse(toValue(stopColor));
     const [r, g, b] = parsed.coords;
     const alpha = parsed.alpha;
     return {
@@ -434,7 +433,10 @@ export const GradientPicker = <T extends ParsedGradient>({
   const isGradientColorValue = (
     value: StyleValue
   ): value is GradientColorValue =>
-    value.type === "rgb" || value.type === "keyword" || value.type === "var";
+    value.type === "rgb" ||
+    value.type === "color" ||
+    value.type === "keyword" ||
+    value.type === "var";
 
   const handleStopColorChange = useCallback(
     (
@@ -924,7 +926,7 @@ export const GradientPicker = <T extends ParsedGradient>({
                 handleStopSelected(index, stop);
               }}
             >
-              <ColorPickerPopover
+              <ColorPicker
                 value={stopColor}
                 onChange={(value) =>
                   handleStopColorChange(index, value, "change")
@@ -936,19 +938,11 @@ export const GradientPicker = <T extends ParsedGradient>({
                 onOpenChange={(open) =>
                   handleColorPickerOpenChange(index, open)
                 }
-                sideOffset={SLIDER_HEIGHT + THUMB_HEIGHT}
-                thumb={
-                  <ColorThumb
-                    color={stop.color ? toValue(stop.color) : "transparent"}
-                    interactive={true}
-                    css={{
-                      margin: 1,
-                      width: THUMB_HEIGHT,
-                      height: THUMB_HEIGHT,
-                    }}
-                    data-gradient-thumb="true"
-                  />
-                }
+                css={{
+                  width: theme.spacing[8],
+                  height: theme.spacing[8],
+                  margin: 1,
+                }}
               />
               <SliderThumbPointer aria-hidden />
             </SliderThumb>
