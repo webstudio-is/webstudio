@@ -305,7 +305,7 @@ describe("createPubsub", () => {
   });
 
   describe("message unwrapping and validation", () => {
-    test("should reject invalid payload (not an object)", () => {
+    test("should silently ignore invalid payload (not an object)", () => {
       window.self = asWindow(window);
       window.top = asWindow(window);
 
@@ -316,23 +316,13 @@ describe("createPubsub", () => {
 
       const messageHandler = addEventListenerSpy.mock.calls[0][1];
 
-      // Mock console.error to avoid test output noise
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      // Non-object data is silently ignored by handleMessage guard
+      messageHandler({ data: "invalid" });
 
-      expect(() => {
-        messageHandler({ data: "invalid" });
-      }).toThrow("Invalid payload");
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Invalid payload",
-        "invalid"
-      );
-      consoleErrorSpy.mockRestore();
+      expect(handler).not.toHaveBeenCalled();
     });
 
-    test("should reject payload without token", () => {
+    test("should silently ignore payload without token", () => {
       window.self = asWindow(window);
       window.top = asWindow(window);
 
@@ -343,9 +333,10 @@ describe("createPubsub", () => {
 
       const messageHandler = addEventListenerSpy.mock.calls[0][1];
 
-      expect(() => {
-        messageHandler({ data: { action: { type: "testAction" } } });
-      }).toThrow("Invalid payload, not wrapped");
+      // Payload without token is silently ignored by handleMessage guard
+      messageHandler({ data: { action: { type: "testAction" } } });
+
+      expect(handler).not.toHaveBeenCalled();
     });
 
     test("should reject payload with invalid token", () => {
@@ -430,7 +421,13 @@ describe("createPubsub", () => {
       // Get the message handler from this pubsub instance
       const messageHandler = localAddEventListenerSpy.mock.calls[0][1];
 
-      messageHandler({ data: "storybook-data" });
+      // In storybook, messages still need to be properly wrapped to pass handleMessage guard
+      messageHandler({
+        data: {
+          token: "development-token",
+          action: { type: "storybook", payload: "storybook-data" },
+        },
+      });
 
       vi.runAllTimers();
 
