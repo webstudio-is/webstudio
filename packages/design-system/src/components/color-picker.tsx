@@ -17,6 +17,7 @@ import {
 } from "@webstudio-is/css-engine";
 import {
   forwardRef,
+  useCallback,
   type ComponentProps,
   type ElementRef,
   useEffect,
@@ -162,7 +163,7 @@ export const ColorPicker = ({
   onOpenChange,
   css,
 }: ColorPickerProps) => {
-  const pickerRef = useRef<ColorInput>(null);
+  const colorInputRef = useRef<ColorInput>(null);
   const scopeClass = useId().replace(/:/g, "");
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
@@ -188,6 +189,17 @@ export const ColorPicker = ({
 
   const colorString = toValue(value);
 
+  const overrideContrast = useCallback(() => {
+    const colorInputElement = colorInputRef.current;
+    if (!colorInputElement) {
+      return;
+    }
+    colorInputElement.style.setProperty("--contrast", "inherit");
+    colorInputElement.shadowRoot
+      ?.querySelector<HTMLElement>(".preview")
+      ?.style.setProperty("--value", rawTheme.colors.backgroundPanel);
+  }, []);
+
   // Sync externally-controlled open state into the web component.
   useEffect(() => {
     if (open === undefined) {
@@ -198,9 +210,9 @@ export const ColorPicker = ({
     customElements.whenDefined("color-input").then(() => {
       try {
         if (open === true) {
-          pickerRef.current?.show();
+          colorInputRef.current?.show();
         } else {
-          pickerRef.current?.close();
+          colorInputRef.current?.close();
         }
       } catch {}
     });
@@ -208,16 +220,17 @@ export const ColorPicker = ({
 
   // Sync external value changes into the web component.
   useEffect(() => {
-    const el = pickerRef.current;
-    if (el && el.value !== colorString) {
-      el.value = colorString;
+    const colorInputElement = colorInputRef.current;
+    if (colorInputElement && colorInputElement.value !== colorString) {
+      colorInputElement.value = colorString;
     }
-  }, [colorString]);
+    overrideContrast();
+  }, [colorString, overrideContrast]);
 
   // Wire up change / open / close events.
   useEffect(() => {
-    const el = pickerRef.current;
-    if (!el) {
+    const colorInputElement = colorInputRef.current;
+    if (!colorInputElement) {
       return;
     }
 
@@ -225,39 +238,33 @@ export const ColorPicker = ({
     const { signal } = controller;
     let lastStyleValue: StyleValue = callbacksRef.current.value;
 
-    const updateContrast = () => {
-      el.style.setProperty("--contrast", "inherit");
-      const preview = el.shadowRoot?.querySelector<HTMLElement>(".preview");
-      preview?.style.setProperty("--value", rawTheme.colors.backgroundPanel);
-    };
-
-    el.addEventListener(
+    colorInputElement.addEventListener(
       "change",
       (event: Event) => {
         const { value, colorspace } = (event as CustomEvent<ChangeDetail>)
           .detail;
         lastStyleValue = cssStringToStyleValue(value, colorspace);
         callbacksRef.current.onChange(lastStyleValue);
-        updateContrast();
+        overrideContrast();
       },
       { signal }
     );
 
-    el.addEventListener(
+    colorInputElement.addEventListener(
       "open",
       () => {
         // Set contrast immediately on open so the initial color is correct
         // before any change event fires (the component's own JS sets --contrast
         // based on raw color only, ignoring alpha).
-        updateContrast();
         callbacksRef.current.disableCanvasPointerEvents();
         document.body.style.userSelect = "none";
         callbacksRef.current.onOpenChange?.(true);
+        overrideContrast();
       },
       { signal }
     );
 
-    el.addEventListener(
+    colorInputElement.addEventListener(
       "close",
       () => {
         callbacksRef.current.enableCanvasPointerEvents();
@@ -271,14 +278,14 @@ export const ColorPicker = ({
     // The component's JS re-sets --contrast on each color change, ignoring alpha.
     // Re-apply our override whenever the window regains focus (e.g. after the
     // user switches away and back while the picker is open).
-    window.addEventListener("focus", updateContrast, { signal });
+    window.addEventListener("focus", overrideContrast, { signal });
 
     return () => {
       controller.abort();
       callbacksRef.current.enableCanvasPointerEvents();
       document.body.style.removeProperty("user-select");
     };
-  }, []);
+  }, [overrideContrast]);
 
   const { className: textClass } = textStyle();
 
@@ -310,7 +317,7 @@ export const ColorPicker = ({
 
       <ColorThumb color={colorString} css={css}>
         <color-input
-          ref={pickerRef}
+          ref={colorInputRef}
           value={colorString}
           theme="light"
           class={`${textClass} ${scopeClass}`}
