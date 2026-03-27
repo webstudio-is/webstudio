@@ -102,6 +102,7 @@ export const SmallButton = forwardRef(
   ) => {
     return (
       <button
+        type="button"
         {...restProps}
         className={style({ css, className, variant, bleed })}
         ref={ref}
