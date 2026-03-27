@@ -60,15 +60,25 @@ const ITEM_PADDING_RIGHT = 10;
 const BARS_GAP = 16;
 const EXPAND_WIDTH = 24;
 
-const TreeContainer = ({ children }: { children: ReactNode }) => {
+const TreeContainer = ({
+  children,
+  showDepthBarsOnHover,
+}: {
+  children: ReactNode;
+  showDepthBarsOnHover: boolean;
+}) => {
   const focusManager = useFocusManager();
   return (
     <Box
-      css={{
-        "&:hover": {
-          [treeDepthBarsVisibility]: "visible",
-        },
-      }}
+      css={
+        showDepthBarsOnHover
+          ? {
+              "&:hover": {
+                [treeDepthBarsVisibility]: "visible",
+              },
+            }
+          : undefined
+      }
       onKeyDown={(event) => {
         if (event.defaultPrevented) {
           return;
@@ -104,10 +114,18 @@ const TreeContainer = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const TreeRoot = ({ children }: { children: ReactNode }) => {
+export const TreeRoot = ({
+  children,
+  showDepthBarsOnHover = true,
+}: {
+  children: ReactNode;
+  showDepthBarsOnHover?: boolean;
+}) => {
   return (
     <FocusScope>
-      <TreeContainer>{children}</TreeContainer>
+      <TreeContainer showDepthBarsOnHover={showDepthBarsOnHover}>
+        {children}
+      </TreeContainer>
     </FocusScope>
   );
 };
