@@ -73,6 +73,8 @@ const TreeContainer = ({
       css={
         showDepthBarsOnHover
           ? {
+              // Display vertical depth bars on hover
+              // can be disabled to reduce visual clutter
               "&:hover": {
                 [treeDepthBarsVisibility]: "visible",
               },
