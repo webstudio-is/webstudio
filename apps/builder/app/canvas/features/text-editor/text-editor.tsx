@@ -1,4 +1,4 @@
-import * as colorjs from "colorjs.io/fn";
+import { color } from "@webstudio-is/css-engine";
 import {
   useState,
   useEffect,
@@ -146,8 +146,8 @@ const CaretColorPlugin = () => {
 
     let isLightBackground = false;
     try {
-      const color = colorjs.parse(elementColor);
-      const alpha = color.alpha ?? 1;
+      const parsed = color.parse(elementColor);
+      const alpha = parsed.alpha ?? 1;
       isLightBackground = alpha < 0.1;
     } catch {
       // If we can't parse the color, assume it's not light

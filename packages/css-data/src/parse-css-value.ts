@@ -1,4 +1,3 @@
-import * as colorjs from "colorjs.io/fn";
 import {
   type CssNode,
   type FunctionNode,
@@ -6,9 +5,13 @@ import {
   lexer,
   List,
   parse,
+  walk,
 } from "css-tree";
 import warnOnce from "warn-once";
 import {
+  color,
+  toColorSpace,
+  toColorComponent,
   cssWideKeywords,
   type ImageValue,
   type KeywordValue,
@@ -29,21 +32,6 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-
-colorjs.ColorSpace.register(colorjs.sRGB);
-colorjs.ColorSpace.register(colorjs.sRGB_Linear);
-colorjs.ColorSpace.register(colorjs.HSL);
-colorjs.ColorSpace.register(colorjs.HWB);
-colorjs.ColorSpace.register(colorjs.Lab);
-colorjs.ColorSpace.register(colorjs.LCH);
-colorjs.ColorSpace.register(colorjs.OKLab);
-colorjs.ColorSpace.register(colorjs.OKLCH);
-colorjs.ColorSpace.register(colorjs.P3);
-colorjs.ColorSpace.register(colorjs.A98RGB);
-colorjs.ColorSpace.register(colorjs.ProPhoto);
-colorjs.ColorSpace.register(colorjs.REC_2020);
-colorjs.ColorSpace.register(colorjs.XYZ_D65);
-colorjs.ColorSpace.register(colorjs.XYZ_D50);
 
 export const cssTryParseValue = (input: string): undefined | CssNode => {
   try {
@@ -72,8 +60,39 @@ export const isValidDeclaration = (
   property: CssProperty,
   value: string
 ): boolean => {
-  if (property.startsWith("--") || value.includes("var(")) {
+  // Custom properties accept any value.
+  if (property.startsWith("--")) {
     return true;
+  }
+
+  // Parse once upfront for structural inspection. cssTryParseValue may return
+  // null for values that the browser can still handle (csstree has known gaps),
+  // so null here does NOT mean the value is invalid — we fall through to other paths.
+  const ast = cssTryParseValue(value);
+
+  // Two CSS constructs cannot be validated by any lexer path and must be accepted
+  // unconditionally regardless of property:
+  //   var()         — the variable's value is unknown at validation time
+  //   relative color (rgb(from ...), oklch(from ...), etc.) — csstree lexer
+  //                   returns the same "Mismatch" error as genuinely invalid values
+  // Detecting these here also ensures var() stays valid for the keyword-only
+  // properties below, which don't go through CSSStyleValue.parse.
+  if (ast != null) {
+    let hasUncheckedSyntax = false;
+    walk(ast, (node) => {
+      if (node.type === "Function") {
+        if (
+          node.name === "var" ||
+          (node.children.first?.type === "Identifier" &&
+            node.children.first.name === "from")
+        ) {
+          hasUncheckedSyntax = true;
+        }
+      }
+    });
+    if (hasUncheckedSyntax) {
+      return true;
+    }
   }
 
   // these properties have poor support in browser
@@ -99,8 +118,8 @@ export const isValidDeclaration = (
     }
   }
 
-  const ast = cssTryParseValue(value);
-
+  // Non-browser (test) path — use csstree lexer.
+  // Bail out if the AST parse above failed; the lexer can't work without it.
   if (ast == null) {
     return false;
   }
@@ -116,6 +135,7 @@ export const isValidDeclaration = (
     }
   }
 
+  // Reuse the AST parsed above — no second cssTryParseValue call needed.
   const matchResult = lexer.matchProperty(property, ast);
 
   // allow to parse unknown properties as unparsed
@@ -158,45 +178,23 @@ const tupleProps = new Set<CssProperty>([
 
 const availableUnits = new Set<string>(Object.values(units).flat());
 
-// Map color space names to supported ColorValue color spaces
-const colorSpace: Record<string, ColorValue["colorSpace"]> = {
-  srgb: "srgb",
-  "srgb-linear": "srgb-linear",
-  "display-p3": "p3",
-  p3: "p3",
-  hsl: "hsl",
-  hwb: "hwb",
-  lab: "lab",
-  lch: "lch",
-  oklab: "oklab",
-  oklch: "oklch",
-  "a98-rgb": "a98rgb",
-  a98rgb: "a98rgb",
-  "prophoto-rgb": "prophoto",
-  prophoto: "prophoto",
-  rec2020: "rec2020",
-  "xyz-d65": "xyz-d65",
-  "xyz-d50": "xyz-d50",
-  xyz: "xyz-d65", // default to d65
-};
-
-const toColorComponent = (value: undefined | null | number) =>
-  Math.round((value ?? 0) * 10000) / 10000;
-
 export const parseColor = (colorString: string): undefined | ColorValue => {
   // does not match css variables which are incorrectly treated by colorjs.io
   if (!lexer.match("<color>", colorString).matched) {
     return;
   }
   try {
-    const color = colorjs.parse(colorString);
+    // css-tree's generator strips the space before negative values (e.g. "0.1-0.2").
+    // Restore it so colorjs can tokenize color function arguments correctly.
+    const normalized = colorString.replace(/([\d.])-(\d)/g, "$1 -$2");
+    const colorResult = color.parse(normalized);
     return {
       type: "color",
-      colorSpace: colorSpace[color.spaceId],
-      components: color.coords.map(
+      colorSpace: toColorSpace(color.ColorSpace.get(colorResult.spaceId)),
+      components: colorResult.coords.map(
         toColorComponent
       ) as ColorValue["components"],
-      alpha: toColorComponent(color.alpha),
+      alpha: toColorComponent(colorResult.alpha),
     };
   } catch {
     // Invalid colors or relative color syntax are treated as unparsed
@@ -391,9 +389,10 @@ const parseLiteral = (
     };
   }
   if (node?.type === "Hash") {
-    const color = parseColor(`#${node.value}`);
+    const hexString = `#${node.value}`;
+    const color = parseColor(hexString);
     if (color) {
-      return color;
+      return { ...color, colorSpace: "hex" };
     }
   }
   if (node?.type === "Function") {

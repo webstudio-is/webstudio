@@ -189,9 +189,11 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       // Disallowing iframes from loading any content except the canvas
       // Still possible create iframes on canvas itself (but we use credentialless attribute)
       // Still possible create iframe without src attribute
-      // Disable workers on builder
+      // Allow blob: workers so hdr-color-input can spawn its inline canvas-rendering worker.
+      // blob: workers can only be created from JS already running in this page, so the
+      // attack surface is no wider than allowing eval.
       "Content-Security-Policy",
-      `frame-src ${url.origin}/canvas https://app.goentri.com/ https://help.webstudio.is/; worker-src 'none'`
+      `frame-src ${url.origin}/canvas https://app.goentri.com/ https://help.webstudio.is/; worker-src blob:`
     );
 
     return json(

@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { toValue } from "./to-value";
+import type { ColorValue } from "../schema";
 
 describe("Convert WS CSS Values to native CSS strings", () => {
   test("keyword", () => {
@@ -331,7 +332,27 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       components: [0.8, 0.4, 0.6],
       alpha: 0.8,
     });
-    expect(value).toBe("color(p3 0.8 0.4 0.6 / 0.8)");
+    expect(value).toBe("color(display-p3 0.8 0.4 0.6 / 0.8)");
+  });
+
+  test("color with a98rgb color space uses a98-rgb CSS name", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "a98rgb",
+      components: [0.5, 0.3, 0.7],
+      alpha: 1,
+    });
+    expect(value).toBe("color(a98-rgb 0.5 0.3 0.7 / 1)");
+  });
+
+  test("color with prophoto color space uses prophoto-rgb CSS name", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "prophoto",
+      components: [0.6, 0.4, 0.2],
+      alpha: 1,
+    });
+    expect(value).toBe("color(prophoto-rgb 0.6 0.4 0.2 / 1)");
   });
 
   test("color with xyz-d65 uses color() function", () => {
@@ -344,24 +365,87 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("color(xyz-d65 0.5 0.3 0.2 / 1)");
   });
 
-  test("color with CSS variable as alpha channel (srgb)", () => {
-    const value = toValue({
-      type: "color",
-      colorSpace: "srgb",
-      components: [0.1098, 0.098, 0.0902],
-      alpha: { type: "var", value: "tw-text-opacity" },
-    });
-    expect(value).toBe("rgb(28 25 23 / var(--tw-text-opacity))");
-  });
+  describe("CSS variable as alpha channel", () => {
+    // hex is excluded: the hex serializer ignores non-numeric alpha (no / slot).
+    // Using satisfies Record<Exclude<...>, unknown> ensures TypeScript errors
+    // when a new color space is added to ColorValue without a test entry here.
+    const cases = {
+      srgb: {
+        components: [1, 0, 0] as ColorValue["components"],
+        expected: "rgb(255 0 0 / var(--opacity))",
+      },
+      hsl: {
+        components: [120, 100, 50] as ColorValue["components"],
+        expected: "hsl(120 100% 50% / var(--opacity))",
+      },
+      hwb: {
+        components: [45, 10, 20] as ColorValue["components"],
+        expected: "hwb(45 10% 20% / var(--opacity))",
+      },
+      lab: {
+        components: [50, 20, 30] as ColorValue["components"],
+        expected: "lab(50% 20 30 / var(--opacity))",
+      },
+      lch: {
+        components: [50, 20, 120] as ColorValue["components"],
+        expected: "lch(50% 20 120 / var(--opacity))",
+      },
+      oklab: {
+        components: [0.6, 0.1, -0.1] as ColorValue["components"],
+        expected: "oklab(0.6 0.1 -0.1 / var(--opacity))",
+      },
+      oklch: {
+        components: [0.5, 0.1, 180] as ColorValue["components"],
+        expected: "oklch(0.5 0.1 180 / var(--opacity))",
+      },
+      p3: {
+        components: [0.4, 0.6, 0.3] as ColorValue["components"],
+        expected: "color(display-p3 0.4 0.6 0.3 / var(--opacity))",
+      },
+      "srgb-linear": {
+        components: [1, 0, 0] as ColorValue["components"],
+        expected: "color(srgb-linear 1 0 0 / var(--opacity))",
+      },
+      a98rgb: {
+        components: [0.5, 0.3, 0.7] as ColorValue["components"],
+        expected: "color(a98-rgb 0.5 0.3 0.7 / var(--opacity))",
+      },
+      prophoto: {
+        components: [0.6, 0.4, 0.2] as ColorValue["components"],
+        expected: "color(prophoto-rgb 0.6 0.4 0.2 / var(--opacity))",
+      },
+      rec2020: {
+        components: [0.4, 0.6, 0.3] as ColorValue["components"],
+        expected: "color(rec2020 0.4 0.6 0.3 / var(--opacity))",
+      },
+      "xyz-d65": {
+        components: [0.5, 0.3, 0.2] as ColorValue["components"],
+        expected: "color(xyz-d65 0.5 0.3 0.2 / var(--opacity))",
+      },
+      "xyz-d50": {
+        components: [0.4, 0.6, 0.3] as ColorValue["components"],
+        expected: "color(xyz-d50 0.4 0.6 0.3 / var(--opacity))",
+      },
+    } satisfies Record<Exclude<ColorValue["colorSpace"], "hex">, unknown>;
 
-  test("color with CSS variable as alpha channel (p3)", () => {
-    const value = toValue({
-      type: "color",
-      colorSpace: "p3",
-      components: [0.4, 0.6, 0.3],
-      alpha: { type: "var", value: "tw-bg-opacity" },
-    });
-    expect(value).toBe("color(p3 0.4 0.6 0.3 / var(--tw-bg-opacity))");
+    for (const [colorSpace, { components, expected }] of Object.entries(
+      cases
+    ) as Array<
+      [
+        Exclude<ColorValue["colorSpace"], "hex">,
+        { components: ColorValue["components"]; expected: string },
+      ]
+    >) {
+      test(colorSpace, () => {
+        const value = toValue({
+          type: "color",
+          colorSpace,
+          components,
+          alpha: { type: "var", value: "opacity" },
+        });
+        expect(value).toBe(expected);
+      });
+    }
   });
 
   test("color in tuple", () => {
@@ -378,6 +462,56 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       ],
     });
     expect(value).toBe("oklch(0.5 0.1 180 / 1) 10px");
+  });
+
+  test("color with hex color space (opaque)", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "hex",
+      components: [1, 0, 0],
+      alpha: 1,
+    });
+    expect(value).toBe("#ff0000");
+  });
+
+  test("color with hex color space (with alpha)", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "hex",
+      components: [1, 0, 0],
+      alpha: 0.5,
+    });
+    expect(value).toBe("#ff000080");
+  });
+
+  test("color with srgb-linear color space", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "srgb-linear",
+      components: [1, 0, 0],
+      alpha: 1,
+    });
+    expect(value).toBe("color(srgb-linear 1 0 0 / 1)");
+  });
+
+  test("color with rec2020 color space", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "rec2020",
+      components: [0.4, 0.6, 0.3],
+      alpha: 1,
+    });
+    expect(value).toBe("color(rec2020 0.4 0.6 0.3 / 1)");
+  });
+
+  test("color with xyz-d50 color space", () => {
+    const value = toValue({
+      type: "color",
+      colorSpace: "xyz-d50",
+      components: [0.4, 0.6, 0.3],
+      alpha: 1,
+    });
+    expect(value).toBe("color(xyz-d50 0.4 0.6 0.3 / 1)");
   });
 
   test("color in shadow", () => {
