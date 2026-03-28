@@ -76,7 +76,11 @@ runs:
         export GITHUB_SHA=${{ inputs.sha }}
         export GITHUB_REF_NAME=${{ inputs.ref-name }}
 
-        pnpx vercel build
+        if [ "${{ inputs.environment }}" = "production" ]; then
+          pnpx vercel build --prod
+        else
+          pnpx vercel build
+        fi
       shell: bash
 
     - name: Patch
@@ -103,10 +107,19 @@ runs:
     - name: Deploy
       id: deploy
       run: |
-        pnpx vercel deploy \
-        --prebuilt \
-        --token ${{ inputs.vercel-token }} \
-        2> >(tee info.txt >&2) | tee domain.txt
+        if [ "${{ inputs.environment }}" = "production" ]; then
+          pnpx vercel deploy \
+          --prebuilt \
+          --prod \
+          --skip-domain \
+          --token ${{ inputs.vercel-token }} \
+          2> >(tee info.txt >&2) | tee domain.txt
+        else
+          pnpx vercel deploy \
+          --prebuilt \
+          --token ${{ inputs.vercel-token }} \
+          2> >(tee info.txt >&2) | tee domain.txt
+        fi
 
         echo "domain=$(cat ./domain.txt)" >> $GITHUB_OUTPUT
         echo "inspect-url=$(cat info.txt | grep 'Inspect:' | awk '{print $2}')" >> $GITHUB_OUTPUT
@@ -114,6 +127,7 @@ runs:
       shell: bash
 
     - name: Set Alias
+      if: ${{ inputs.environment != 'production' }}
       id: alias
       run: |
         ALIAS="${{ steps.branch.outputs.value }}"
