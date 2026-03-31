@@ -565,7 +565,7 @@
           "description": "color for current item in the navigator item, menu item, pages panel item components"
         },
         "current-child": {
-          "value": "{background.panel}",
+          "value": "#eef6ff",
           "type": "color",
           "description": "color for child of current item in the navigator item, pages panel item components"
         },

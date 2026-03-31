@@ -122,4 +122,10 @@ test("is descendant or self", () => {
   expect(isDescendantOrSelf(["1", "2", "3"], ["1", "2", "3"])).toBe(true);
   expect(isDescendantOrSelf(["0", "1", "2", "3"], ["1", "2", "3"])).toBe(true);
   expect(isDescendantOrSelf(["1", "2", "3"], ["0", "1", "2", "3"])).toBe(false);
+  expect(
+    isDescendantOrSelf(
+      ["item-child", "collection:entry-1", "collection", "body", "page-root"],
+      ["collection", "body", "page-root"]
+    )
+  ).toBe(true);
 });
