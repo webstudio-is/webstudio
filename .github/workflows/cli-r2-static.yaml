@@ -53,13 +53,13 @@ jobs:
         run: pnpm install --ignore-scripts
 
       - name: pnpm build
-        run: pnpm --filter 'ssg^...' run build
+        run: pnpm --filter 'ssg-cloudflare-pages^...' run build
 
       # Ideally, execute 'pnpm deploy --prod', but @remix-run/dev doesn't support this flag.
       # Despite being listed as a dependency, @remix-run/dev does not install the remix cli.
       # TODO: Minimize artefact size due to frequent downloads on each publish.
       - name: pnpm deploy
-        run: pnpm --filter 'ssg' deploy "${{ github.workspace }}/../ssg-template"
+        run: pnpm --filter 'ssg-cloudflare-pages' deploy "${{ github.workspace }}/../ssg-template"
 
       - name: Make archive
         run: |
