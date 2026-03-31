@@ -51,7 +51,7 @@ import {
   type ItemDropTarget,
   $propValuesByInstanceSelectorWithMemoryProps,
 } from "~/shared/nano-states";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { reparentInstance, toggleInstanceShow } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
@@ -661,6 +661,10 @@ export const NavigatorTree = () => {
             getInstanceKey(item.selector)
           );
           const show = Boolean(propValues?.get(showAttribute) ?? true);
+          const isSelectedDescendantItem =
+            selectedInstanceSelector !== undefined &&
+            item.selector.join() !== selectedInstanceSelector.join() &&
+            isDescendantOrSelf(item.selector, selectedInstanceSelector);
 
           // Hook memory prop
           const isAnimationSelected =
@@ -733,6 +737,7 @@ export const NavigatorTree = () => {
                 <TreeNode
                   level={level}
                   isSelected={selectedKey === key}
+                  isSelectedDescendant={isSelectedDescendantItem}
                   isHighlighted={hoveredKey === key || dropTargetKey === key}
                   isExpanded={item.isExpanded}
                   isActionVisible={isAnimating}
