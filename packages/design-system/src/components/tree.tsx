@@ -31,8 +31,6 @@ const treeNodeLevel = "--tree-node-level";
 const treeNodeOutline = "--tree-node-outline";
 const treeNodeBackgroundColor = "--tree-node-background-color";
 const treeActionOpacity = "--tree-action-opacity";
-const treeDepthBarsVisibility = "--tree-depth-bars-visibility";
-const treeDepthBarsColor = "--tree-depth-bars-color";
 
 type TreeSelectionState = "none" | "selected" | "selected-descendant";
 
@@ -60,27 +58,10 @@ const ITEM_PADDING_RIGHT = 10;
 const BARS_GAP = 16;
 const EXPAND_WIDTH = 24;
 
-const TreeContainer = ({
-  children,
-  showDepthBarsOnHover,
-}: {
-  children: ReactNode;
-  showDepthBarsOnHover: boolean;
-}) => {
+const TreeContainer = ({ children }: { children: ReactNode }) => {
   const focusManager = useFocusManager();
   return (
     <Box
-      css={
-        showDepthBarsOnHover
-          ? {
-              // Display vertical depth bars on hover
-              // can be disabled to reduce visual clutter
-              "&:hover": {
-                [treeDepthBarsVisibility]: "visible",
-              },
-            }
-          : undefined
-      }
       onKeyDown={(event) => {
         if (event.defaultPrevented) {
           return;
@@ -116,18 +97,10 @@ const TreeContainer = ({
   );
 };
 
-export const TreeRoot = ({
-  children,
-  showDepthBarsOnHover = true,
-}: {
-  children: ReactNode;
-  showDepthBarsOnHover?: boolean;
-}) => {
+export const TreeRoot = ({ children }: { children: ReactNode }) => {
   return (
     <FocusScope>
-      <TreeContainer showDepthBarsOnHover={showDepthBarsOnHover}>
-        {children}
-      </TreeContainer>
+      <TreeContainer>{children}</TreeContainer>
     </FocusScope>
   );
 };
@@ -148,22 +121,6 @@ const NodeContainer = styled("div", {
     [treeNodeBackgroundColor]: theme.colors.backgroundItemCurrent,
     backgroundColor: `var(${treeNodeBackgroundColor})`,
   },
-});
-
-const DepthBars = styled("div", {
-  visibility: `var(${treeDepthBarsVisibility}, hidden)`,
-  position: "absolute",
-  top: 0,
-  left: 0,
-  width: `calc((var(${treeNodeLevel}) - 1) * ${BARS_GAP}px)`,
-  height: "100%",
-  backgroundImage: `repeating-linear-gradient(
-    to right,
-    transparent,
-    transparent ${BARS_GAP - 1}px,
-    var(${treeDepthBarsColor}, ${theme.colors.borderItemChildLine}) ${BARS_GAP - 1}px,
-    var(${treeDepthBarsColor}, ${theme.colors.borderItemChildLine}) ${BARS_GAP}px
-  )`,
 });
 
 const NodeButton = styled("button", {
@@ -519,7 +476,6 @@ export const TreeNode = ({
       }}
       onKeyDown={handleKeydown}
     >
-      <DepthBars />
       <NodeButton
         {...buttonProps}
         ref={buttonRef}

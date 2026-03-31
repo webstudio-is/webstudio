@@ -619,7 +619,7 @@ export const NavigatorTree = () => {
         flexGrow: 1,
       }}
     >
-      <TreeRoot showDepthBarsOnHover={false}>
+      <TreeRoot>
         {rootMeta && isContentMode === false && (
           <TreeNode
             level={0}
