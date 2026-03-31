@@ -120,9 +120,17 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 export const ErrorBoundary = () => {
   const error = useRouteError();
 
-  if (isRouteErrorResponse(error)) {
-    return <div style={{ whiteSpace: "pre-wrap" }}>{error.data}</div>;
-  }
+  const message = isRouteErrorResponse(error) ? error.data : "Unexpected error";
 
-  return <div>Unexpected error</div>;
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <title>Error</title>
+      </head>
+      <body>
+        <div style={{ whiteSpace: "pre-wrap" }}>{message}</div>
+      </body>
+    </html>
+  );
 };
