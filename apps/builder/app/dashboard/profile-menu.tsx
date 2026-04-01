@@ -87,11 +87,9 @@ export const ProfileMenu = ({
           purchase.subscriptionId ? (
             <DropdownMenuItem
               key={purchase.subscriptionId}
-              onSelect={() => {
-                window.location.href = userPlanSubscriptionPath(
-                  purchase.subscriptionId
-                );
-              }}
+              onSelect={() =>
+                navigate(userPlanSubscriptionPath(purchase.subscriptionId))
+              }
             >
               {purchase.planName}
             </DropdownMenuItem>
