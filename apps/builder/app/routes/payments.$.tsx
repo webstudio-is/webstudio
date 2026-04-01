@@ -25,7 +25,7 @@ const zWorkerEnv = z.object({
   PAYMENT_WORKER_TOKEN: z.string(),
 });
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (isDashboard(request) === false) {
     throw new Response("Not Found", {
       status: 404,
@@ -56,7 +56,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const workerEnv = workerEnvParsed.data;
 
   const workerUrl = new URL(workerEnv.PAYMENT_WORKER_URL);
-  workerUrl.pathname = `${workerUrl.pathname}/${params["*"]}`
+  workerUrl.pathname = `${workerUrl.pathname}/checkout/sessions`
     .split("/")
     .filter(Boolean)
     .join("/");
