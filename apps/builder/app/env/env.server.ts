@@ -51,12 +51,6 @@ const env = {
       projectId.trim()
     ) ?? [],
 
-  N8N_WEBHOOK_URL: process.env.N8N_WEBHOOK_URL,
-  N8N_WEBHOOK_TOKEN: process.env.N8N_WEBHOOK_TOKEN,
-
-  PAYMENT_WORKER_URL: process.env.PAYMENT_WORKER_URL,
-  PAYMENT_WORKER_TOKEN: process.env.PAYMENT_WORKER_TOKEN,
-
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || "wstd.work",
 
   STAGING_USERNAME: process.env.STAGING_USERNAME ?? "admin",
