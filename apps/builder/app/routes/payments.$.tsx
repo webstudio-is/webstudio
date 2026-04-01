@@ -25,7 +25,7 @@ const zWorkerEnv = z.object({
   PAYMENT_WORKER_TOKEN: z.string(),
 });
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (isDashboard(request) === false) {
     throw new Response("Not Found", {
       status: 404,
@@ -56,7 +56,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const workerEnv = workerEnvParsed.data;
 
   const workerUrl = new URL(workerEnv.PAYMENT_WORKER_URL);
-  workerUrl.pathname = `${workerUrl.pathname}/checkout/sessions`
+  workerUrl.pathname = `${workerUrl.pathname}/${params["*"]}`
     .split("/")
     .filter(Boolean)
     .join("/");
@@ -120,17 +120,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const ErrorBoundary = () => {
   const error = useRouteError();
 
-  const message = isRouteErrorResponse(error) ? error.data : "Unexpected error";
+  if (isRouteErrorResponse(error)) {
+    return <div style={{ whiteSpace: "pre-wrap" }}>{error.data}</div>;
+  }
 
-  return (
-    <html lang="en">
-      <head>
-        <meta charSet="utf-8" />
-        <title>Error</title>
-      </head>
-      <body>
-        <div style={{ whiteSpace: "pre-wrap" }}>{message}</div>
-      </body>
-    </html>
-  );
+  return <div>Unexpected error</div>;
 };
