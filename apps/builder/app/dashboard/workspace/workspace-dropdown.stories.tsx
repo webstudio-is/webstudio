@@ -3,8 +3,8 @@ import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 import { defaultUserPlanFeatures } from "@webstudio-is/trpc-interface/user-plan-features";
 import { $userPlanFeatures } from "~/shared/nano-states";
-import { $workspaces } from "./atoms";
-import { WorkspaceSelector } from "./selector";
+import { $workspaces } from "./workspace-stores";
+import { WorkspaceSelector } from "./workspace-dropdown";
 
 export default {
   title: "Dashboard / Workspace Selector",

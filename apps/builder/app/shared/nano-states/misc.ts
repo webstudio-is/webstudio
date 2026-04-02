@@ -1,5 +1,9 @@
 import type { Simplify } from "type-fest";
 import { atom, computed, onSet } from "nanostores";
+import {
+  $workspaceRelation,
+  $workspaces,
+} from "~/dashboard/workspace/workspace-stores";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import {
@@ -306,17 +310,7 @@ export const $userPlanFeatures = atom<UserPlanFeatures>(
   defaultUserPlanFeatures
 );
 
-export const $workspaceRelation = atom<WorkspaceRelation | "own">("own");
-
-export const $workspaces = atom<
-  Array<{
-    id: string;
-    name: string;
-    isDefault: boolean;
-    workspaceRelation: WorkspaceRelation | "own";
-  }>
->([]);
-
+export { $workspaceRelation, $workspaces };
 export const $purchases = atom<Array<UserPurchase>>([]);
 
 export const $user = atom<User | undefined>();

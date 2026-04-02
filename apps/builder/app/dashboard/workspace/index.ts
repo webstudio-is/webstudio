@@ -1,6 +1,9 @@
 // UI components
-export { WorkspaceSelector, WorkspaceDropdown } from "./selector";
-export type { WorkspaceDropdownGroup, WorkspaceDropdownItem } from "./selector";
+export { WorkspaceSelector, WorkspaceDropdown } from "./workspace-dropdown";
+export type {
+  WorkspaceDropdownGroup,
+  WorkspaceDropdownItem,
+} from "./workspace-dropdown";
 
 // Dialogs
 export { CreateWorkspaceDialog } from "./create-workspace-dialog";
@@ -13,4 +16,4 @@ export { LeaveWorkspaceDialog } from "./leave-workspace-dialog";
 export { resolveCurrentWorkspace, isDowngradedForMember } from "./utils";
 
 // Atoms
-export { $workspaces, $workspaceRelation } from "./atoms";
+export { $workspaces, $workspaceRelation } from "./workspace-stores";

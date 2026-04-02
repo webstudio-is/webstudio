@@ -2,7 +2,7 @@ import type { StoryFn } from "@storybook/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { $workspaces } from "~/shared/nano-states";
 import { updateCsrfToken } from "~/shared/csrf.client";
-import { TransferProjectDialog } from "./transfer-dialog";
+import { TransferProjectDialog } from "./transfer-project-dialog";
 
 // Set a dummy CSRF token so the custom fetch wrapper does not show
 // "CSRF token is not set" toasts in Storybook.

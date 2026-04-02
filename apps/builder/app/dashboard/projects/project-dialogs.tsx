@@ -28,7 +28,7 @@ import {
 } from "~/shared/project-settings";
 import type { User } from "~/shared/db/user.server";
 import { TagsDialog } from "./tags";
-import { TransferProjectDialog } from "./transfer-dialog";
+import { TransferProjectDialog } from "~/dashboard/workspace/transfer-project-dialog";
 import {
   destroyClientSync,
   initializeClientSync,

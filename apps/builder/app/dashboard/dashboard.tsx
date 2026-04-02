@@ -26,7 +26,8 @@ import {
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
-import { setSharedStores, $workspaces, $user } from "~/shared/nano-states";
+import { setSharedStores, $user } from "~/shared/nano-states";
+import { $workspaces } from "~/dashboard/workspace";
 import { dashboardPath } from "~/shared/router-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ProfileMenu } from "./profile-menu";
@@ -38,7 +39,7 @@ import { help } from "~/shared/help";
 import { SearchResults } from "./search/search-results";
 import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
-import { WorkspaceSelector } from "./workspace/selector";
+import { WorkspaceSelector } from "./workspace/workspace-dropdown";
 import { NotificationPopover } from "./notification-popover";
 import {
   seedNotifications,
