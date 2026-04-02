@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { __testing__ } from "./workspace-selector";
+import { __testing__ } from "./selector";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 
 const { sortWorkspaces, groupWorkspaces } = __testing__;

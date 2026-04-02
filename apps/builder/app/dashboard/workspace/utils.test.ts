@@ -1,8 +1,5 @@
 import { describe, test, expect } from "vitest";
-import {
-  resolveCurrentWorkspace,
-  isDowngradedForMember,
-} from "./dashboard-utils";
+import { resolveCurrentWorkspace, isDowngradedForMember } from "./utils";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 
 const createWorkspace = (

@@ -7,7 +7,7 @@ import {
   ManageMembersDialog,
   DeleteWorkspaceDialog,
   LeaveWorkspaceDialog,
-} from "./workspace-dialogs";
+} from "./dialogs";
 
 export default {
   title: "Dashboard / Workspace Dialogs",

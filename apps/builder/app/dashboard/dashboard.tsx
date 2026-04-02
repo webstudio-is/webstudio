@@ -38,7 +38,7 @@ import { help } from "~/shared/help";
 import { SearchResults } from "./search/search-results";
 import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
-import { WorkspaceSelector } from "./workspace-selector";
+import { WorkspaceSelector } from "./workspace/selector";
 import { NotificationPopover } from "./notification-popover";
 import {
   seedNotifications,

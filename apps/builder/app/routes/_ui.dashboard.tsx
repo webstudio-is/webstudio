@@ -14,10 +14,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
-import {
-  workspace as workspaceApi,
-  notification as notificationApi,
-} from "@webstudio-is/project/index.server";
+import { notification as notificationApi } from "@webstudio-is/project/index.server";
 import type { WorkspaceRelation } from "@webstudio-is/project";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
@@ -30,10 +27,8 @@ import { allowedDestinations } from "~/services/destinations.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
-import {
-  resolveCurrentWorkspace,
-  isDowngradedForMember,
-} from "~/dashboard/dashboard-utils";
+import { isDowngradedForMember } from "~/dashboard/workspace/utils";
+import { loadWorkspacesForDashboard } from "~/dashboard/workspace/loader.server";
 import type { DashboardData } from "~/dashboard/shared/types";
 
 export const meta = () => {
@@ -98,23 +93,18 @@ const loadDashboardData = async (request: Request) => {
 
   let workspaceRelation: WorkspaceRelation | "own" = "own";
 
-  const workspaces = await workspaceApi.findMany(user.id, context);
-
-  const selectedId = url.searchParams.get("workspaceId") ?? undefined;
-  const result = resolveCurrentWorkspace(workspaces, selectedId);
-
-  if (result.type === "stale") {
-    url.searchParams.delete("workspaceId");
-    const search = url.searchParams.toString();
-    throw redirect(search ? `${url.pathname}?${search}` : url.pathname);
+  const wsResult = await loadWorkspacesForDashboard(user.id, url, context);
+  if (wsResult.type === "redirect") {
+    throw redirect(wsResult.to);
   }
 
-  const currentWorkspace = result.workspace;
-  const currentWorkspaceId = currentWorkspace?.id;
-
-  if (currentWorkspace !== undefined) {
-    workspaceRelation = currentWorkspace.workspaceRelation;
-  }
+  const {
+    workspaces,
+    currentWorkspace,
+    currentWorkspaceId,
+    workspaceRelation: resolvedRelation,
+  } = wsResult;
+  workspaceRelation = resolvedRelation;
 
   if (currentWorkspaceId !== undefined) {
     findManyInput.workspaceId = currentWorkspaceId;

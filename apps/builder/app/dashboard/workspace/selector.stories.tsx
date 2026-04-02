@@ -2,8 +2,9 @@ import type { StoryFn } from "@storybook/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 import { defaultUserPlanFeatures } from "@webstudio-is/trpc-interface/user-plan-features";
-import { $userPlanFeatures, $workspaces } from "~/shared/nano-states";
-import { WorkspaceSelector } from "./workspace-selector";
+import { $userPlanFeatures } from "~/shared/nano-states";
+import { $workspaces } from "./atoms";
+import { WorkspaceSelector } from "./selector";
 
 export default {
   title: "Dashboard / Workspace Selector",

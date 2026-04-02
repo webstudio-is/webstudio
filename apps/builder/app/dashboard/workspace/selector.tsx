@@ -18,11 +18,8 @@ import {
   ManageMembersDialog,
   DeleteWorkspaceDialog,
   LeaveWorkspaceDialog,
-} from "./workspace-dialogs";
-import {
-  WorkspaceDropdown,
-  type WorkspaceDropdownGroup,
-} from "./workspace-dropdown";
+} from "./dialogs";
+import { WorkspaceDropdown, type WorkspaceDropdownGroup } from "./dropdown";
 
 const sortWorkspaces = (workspaces: Array<WorkspaceWithRelation>) =>
   [...workspaces].sort((a, b) => {
