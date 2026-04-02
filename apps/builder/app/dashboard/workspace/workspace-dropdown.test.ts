@@ -13,7 +13,7 @@ const createWorkspace = (
   isDeleted: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   userId: "user-1",
-  workspaceRelation: "own",
+  role: "own",
   isDowngraded: false,
   ...overrides,
 });
@@ -101,18 +101,18 @@ describe("groupWorkspaces", () => {
         id: "ws-1",
         name: "My workspace",
         isDefault: true,
-        workspaceRelation: "own",
+        role: "own",
       }),
       createWorkspace({
         id: "ws-2",
         name: "Team workspace",
         userId: "other-user",
-        workspaceRelation: "editors",
+        role: "editors",
       }),
       createWorkspace({
         id: "ws-3",
         name: "Client workspace",
-        workspaceRelation: "own",
+        role: "own",
       }),
     ];
 
@@ -126,8 +126,8 @@ describe("groupWorkspaces", () => {
 
   test("returns empty shared when all workspaces are owned", () => {
     const workspaces = [
-      createWorkspace({ id: "ws-1", name: "Alpha", workspaceRelation: "own" }),
-      createWorkspace({ id: "ws-2", name: "Beta", workspaceRelation: "own" }),
+      createWorkspace({ id: "ws-1", name: "Alpha", role: "own" }),
+      createWorkspace({ id: "ws-2", name: "Beta", role: "own" }),
     ];
 
     const { owned, shared } = groupWorkspaces(workspaces);
@@ -141,7 +141,7 @@ describe("groupWorkspaces", () => {
         id: "ws-1",
         name: "Shared A",
         userId: "other",
-        workspaceRelation: "viewers",
+        role: "viewers",
       }),
     ];
 
@@ -155,24 +155,24 @@ describe("groupWorkspaces", () => {
       createWorkspace({
         id: "ws-3",
         name: "Zebra",
-        workspaceRelation: "own",
+        role: "own",
       }),
       createWorkspace({
         id: "ws-2",
         name: "Apple",
-        workspaceRelation: "own",
+        role: "own",
       }),
       createWorkspace({
         id: "ws-4",
         name: "Mango shared",
         userId: "other",
-        workspaceRelation: "editors",
+        role: "editors",
       }),
       createWorkspace({
         id: "ws-5",
         name: "Alpha shared",
         userId: "other",
-        workspaceRelation: "viewers",
+        role: "viewers",
       }),
     ];
 

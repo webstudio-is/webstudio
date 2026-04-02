@@ -5,7 +5,8 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createBuild } from "@webstudio-is/project-build/index.server";
-import { MarketplaceApprovalStatus, Title } from "../shared/schema";
+import { Title } from "../shared/project-schema";
+import { MarketplaceApprovalStatus } from "../shared/marketplace-schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 import type { SetNonNullable } from "type-fest";
 

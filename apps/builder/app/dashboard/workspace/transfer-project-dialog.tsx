@@ -71,7 +71,7 @@ export const TransferProjectDialog = ({
 
   // Group and sort workspaces by ownership
   const ownedWorkspaces = sortWorkspaces(
-    workspaces.filter((w) => w.workspaceRelation === "own")
+    workspaces.filter((w) => w.role === "own")
   );
   // Determine the current workspace from URL or fall back to default
   const getCurrentWorkspaceId = () => {

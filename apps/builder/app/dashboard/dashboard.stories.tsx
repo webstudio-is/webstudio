@@ -71,7 +71,7 @@ const data = {
   purchases: [],
   publisherHost: "https://wstd.work",
   projects,
-  workspaceRelation: "own" as const,
+  role: "own" as const,
   workspaces: [],
   notifications: [],
 };

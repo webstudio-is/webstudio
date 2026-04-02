@@ -1,7 +1,7 @@
 import type { Simplify } from "type-fest";
 import { atom, computed, onSet } from "nanostores";
 import {
-  $workspaceRelation,
+  $workspaceRole,
   $workspaces,
 } from "~/dashboard/workspace/workspace-stores";
 import { nanoid } from "nanoid";
@@ -11,7 +11,7 @@ import {
   type UserPlanFeatures,
   type UserPurchase,
 } from "@webstudio-is/trpc-interface/user-plan-features";
-import type { WorkspaceRelation } from "@webstudio-is/project";
+import type { Role } from "@webstudio-is/project";
 import type { User } from "~/shared/db/user.server";
 import { toast, type Placement } from "@webstudio-is/design-system";
 import type {
@@ -310,7 +310,7 @@ export const $userPlanFeatures = atom<UserPlanFeatures>(
   defaultUserPlanFeatures
 );
 
-export { $workspaceRelation, $workspaces };
+export { $workspaceRole, $workspaces };
 export const $purchases = atom<Array<UserPurchase>>([]);
 
 export const $user = atom<User | undefined>();
@@ -322,11 +322,11 @@ export const $user = atom<User | undefined>();
 export const setSharedStores = (data: {
   userPlanFeatures: UserPlanFeatures;
   purchases: Array<UserPurchase>;
-  workspaceRelation: WorkspaceRelation | "own";
+  role: Role | "own";
 }) => {
   $userPlanFeatures.set(data.userPlanFeatures);
   $purchases.set(data.purchases);
-  $workspaceRelation.set(data.workspaceRelation);
+  $workspaceRole.set(data.role);
 };
 
 const builderModes = ["design", "preview", "content"] as const;
@@ -361,10 +361,10 @@ export const $stagingUsername = atom<string | undefined>();
 export const $stagingPassword = atom<string | undefined>();
 
 export const $permissions = computed(
-  [$userPlanFeatures, $authPermit, $workspaceRelation, $workspaces],
-  (userPlanFeatures, authPermit, workspaceRelation, workspaces) =>
+  [$userPlanFeatures, $authPermit, $workspaceRole, $workspaces],
+  (userPlanFeatures, authPermit, role, workspaces) =>
     getPermissions({
-      workspaceRelation,
+      role,
       userPlanFeatures,
       authPermit,
       workspaces,

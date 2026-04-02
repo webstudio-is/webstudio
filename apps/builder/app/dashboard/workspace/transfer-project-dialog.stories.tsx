@@ -28,31 +28,31 @@ export const OwnedAndSharedWorkspaces: StoryFn = () => {
       id: "ws-1",
       name: "My workspace",
       isDefault: true,
-      workspaceRelation: "own",
+      role: "own",
     },
     {
       id: "ws-2",
       name: "Client projects",
       isDefault: false,
-      workspaceRelation: "own",
+      role: "own",
     },
     {
       id: "ws-3",
       name: "Team workspace (admin)",
       isDefault: false,
-      workspaceRelation: "administrators",
+      role: "administrators",
     },
     {
       id: "ws-4",
       name: "Agency workspace (editor)",
       isDefault: false,
-      workspaceRelation: "editors",
+      role: "editors",
     },
     {
       id: "ws-5",
       name: "Partner workspace (builder)",
       isDefault: false,
-      workspaceRelation: "builders",
+      role: "builders",
     },
   ]);
 

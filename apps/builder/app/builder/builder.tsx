@@ -11,7 +11,7 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import type { WorkspaceRelation } from "@webstudio-is/project";
+import type { Role } from "@webstudio-is/project";
 import { initializeClientSync, getSyncClient } from "~/shared/sync/sync-client";
 import { usePreventUnload } from "~/shared/sync/project-queue";
 import { usePublish, $publisher } from "~/shared/pubsub";
@@ -234,7 +234,7 @@ export type BuilderProps = {
   projectId: string;
   authToken?: string;
   authPermit: AuthPermit;
-  workspaceRelation: WorkspaceRelation | "own";
+  role: Role | "own";
   authTokenPermissions: TokenPermissions;
   userPlanFeatures: UserPlanFeatures;
   purchases: Array<UserPurchase>;

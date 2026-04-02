@@ -1,8 +1,5 @@
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import type {
-  WorkspaceWithRelation,
-  WorkspaceRelation,
-} from "@webstudio-is/project";
+import type { WorkspaceWithRelation, Role } from "@webstudio-is/project";
 import type { User } from "~/shared/db/user.server";
 import type {
   UserPlanFeatures,
@@ -17,7 +14,7 @@ export type DashboardData = {
   userPlanFeatures: UserPlanFeatures;
   purchases: Array<UserPurchase>;
   publisherHost: string;
-  workspaceRelation: WorkspaceRelation | "own";
+  role: Role | "own";
   projectToClone?: {
     authToken: string;
     id: string;

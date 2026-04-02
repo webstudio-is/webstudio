@@ -20,7 +20,7 @@ const createWorkspace = (
   isDeleted: false,
   createdAt: new Date().toISOString(),
   userId: "user-1",
-  workspaceRelation: "own",
+  role: "own",
   isDowngraded: false,
   ...overrides,
 });
@@ -39,7 +39,7 @@ const workspaces: Array<WorkspaceWithRelation> = [
     id: "ws-4",
     name: "Team workspace",
     userId: "other-user",
-    workspaceRelation: "editors",
+    role: "editors",
   }),
 ];
 
@@ -69,13 +69,13 @@ export const MemberView: StoryFn = () => {
       name: "My workspace",
       isDefault: true,
       userId: "member-1",
-      workspaceRelation: "own",
+      role: "own",
     }),
     createWorkspace({
       id: "ws-shared",
       name: "Team workspace",
       userId: "owner-1",
-      workspaceRelation: "editors",
+      role: "editors",
     }),
   ];
 

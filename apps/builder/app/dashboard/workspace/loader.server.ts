@@ -1,9 +1,6 @@
 import { workspace as workspaceApi } from "@webstudio-is/project/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import type {
-  WorkspaceRelation,
-  WorkspaceWithRelation,
-} from "@webstudio-is/project";
+import type { Role, WorkspaceWithRelation } from "@webstudio-is/project";
 import { resolveCurrentWorkspace } from "./utils";
 
 type WorkspaceLoadResult =
@@ -13,7 +10,7 @@ type WorkspaceLoadResult =
       workspaces: Array<WorkspaceWithRelation>;
       currentWorkspace: WorkspaceWithRelation | undefined;
       currentWorkspaceId: string | undefined;
-      workspaceRelation: WorkspaceRelation | "own";
+      role: Role | "own";
     };
 
 /**
@@ -45,8 +42,6 @@ export const loadWorkspacesForDashboard = async (
     workspaces,
     currentWorkspace,
     currentWorkspaceId: currentWorkspace?.id,
-    workspaceRelation: (currentWorkspace?.workspaceRelation ?? "own") as
-      | WorkspaceRelation
-      | "own",
+    role: (currentWorkspace?.role ?? "own") as Role | "own",
   };
 };

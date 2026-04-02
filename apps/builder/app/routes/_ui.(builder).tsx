@@ -12,10 +12,7 @@ import {
   type LoaderFunctionArgs,
 } from "@remix-run/server-runtime";
 import * as projectApi from "@webstudio-is/project/index.server";
-import {
-  defaultWorkspaceRelation,
-  type WorkspaceRelation,
-} from "@webstudio-is/project";
+import { defaultRole, type Role } from "@webstudio-is/project";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 
 import {
@@ -161,7 +158,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
 
     // When the project belongs to a workspace, resolve plan from the workspace owner
     // so the owner's subscription governs all projects in the workspace
-    let workspaceRelation: WorkspaceRelation | "own" = "own";
+    let role: Role | "own" = "own";
 
     if (project.workspaceId !== null) {
       const currentUserId =
@@ -199,9 +196,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         workspace.data.userId !== currentUserId
       ) {
         const membership = workspace.data.members[0];
-        workspaceRelation =
-          (membership?.relation as WorkspaceRelation) ??
-          defaultWorkspaceRelation;
+        role = (membership?.relation as Role) ?? defaultRole;
 
         // When the workspace owner has downgraded, members lose access.
         // Data stays intact but permissions are suspended.
@@ -271,7 +266,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         authToken,
         authTokenPermissions,
         authPermit,
-        workspaceRelation,
+        role,
         userPlanFeatures,
         purchases,
         stagingUsername: env.STAGING_USERNAME,

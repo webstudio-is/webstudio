@@ -26,9 +26,9 @@ import {
 import { TrashIcon } from "@webstudio-is/icons";
 import {
   type Workspace,
-  type WorkspaceRelation,
-  workspaceRelations,
-  workspaceRelationLabels,
+  type Role,
+  roles,
+  roleLabels,
 } from "@webstudio-is/project";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
 
@@ -150,27 +150,26 @@ type MemberRowProps = {
       role: "member";
       userId: string;
       workspaceId: string;
-      relation: WorkspaceRelation;
+      relation: Role;
       canRemove: boolean;
       onRefresh: () => void;
     }
   | {
       role: "pending";
-      relation: WorkspaceRelation;
+      relation: Role;
       canRemove: boolean;
       onRemove: () => void;
-      onChangeRelation: (relation: WorkspaceRelation) => void;
+      onChangeRole: (role: Role) => void;
     }
 );
 
 const MemberRow = (props: MemberRowProps) => {
   const { email, index, role } = props;
   const removeMutation = trpcClient.workspace.removeMember.useMutation();
-  const updateMutation =
-    trpcClient.workspace.updateWorkspaceRelation.useMutation();
+  const updateMutation = trpcClient.workspace.updateRole.useMutation();
   const revalidator = useRevalidator();
   const [error, setError] = useState<string>();
-  const [localRelation, setLocalRelation] = useState<WorkspaceRelation>(
+  const [localRole, setLocalRole] = useState<Role>(
     role !== "owner" ? props.relation : "administrators"
   );
 
@@ -181,24 +180,24 @@ const MemberRow = (props: MemberRowProps) => {
       );
     }
 
-    const value = role === "pending" ? props.relation : localRelation;
+    const value = role === "pending" ? props.relation : localRole;
 
     const handleChange =
       role === "pending"
-        ? props.onChangeRelation
-        : (newRelation: WorkspaceRelation) => {
+        ? props.onChangeRole
+        : (newRole: Role) => {
             setError(undefined);
-            setLocalRelation(newRelation);
+            setLocalRole(newRole);
             updateMutation.send(
               {
                 workspaceId: props.workspaceId,
                 memberUserId: props.userId,
-                relation: newRelation,
+                relation: newRole,
               },
               (result) => {
                 if (result && "error" in result) {
                   setError(result.error);
-                  setLocalRelation(props.relation);
+                  setLocalRole(props.relation);
                   return;
                 }
                 props.onRefresh();
@@ -210,11 +209,9 @@ const MemberRow = (props: MemberRowProps) => {
     return (
       <Select
         color="ghost"
-        options={[...workspaceRelations]}
+        options={[...roles]}
         value={value}
-        getLabel={(option: WorkspaceRelation) =>
-          workspaceRelationLabels[option]
-        }
+        getLabel={(option: Role) => roleLabels[option]}
         onChange={handleChange}
         disabled={!props.canRemove || role === "pending"}
       />
@@ -311,18 +308,15 @@ const MemberList = ({
   invitedEmails,
   onRefresh,
   onRemoveInvited,
-  onChangeInvitedRelation,
+  onChangeInvitedRole,
 }: {
   workspaceId: string;
   canRemove: boolean;
   refreshKey: number;
-  invitedEmails: Map<
-    string,
-    { relation: WorkspaceRelation; notificationId: string }
-  >;
+  invitedEmails: Map<string, { relation: Role; notificationId: string }>;
   onRefresh: () => void;
   onRemoveInvited: (email: string) => void;
-  onChangeInvitedRelation: (email: string, relation: WorkspaceRelation) => void;
+  onChangeInvitedRole: (email: string, relation: Role) => void;
 }) => {
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
 
@@ -363,7 +357,7 @@ const MemberList = ({
             role="member"
             userId={member.userId}
             workspaceId={workspaceId}
-            relation={member.relation as WorkspaceRelation}
+            relation={member.relation as Role}
             canRemove={canRemove}
             index={index++}
             onRefresh={onRefresh}
@@ -378,9 +372,7 @@ const MemberList = ({
             canRemove={canRemove}
             index={index++}
             onRemove={() => onRemoveInvited(email)}
-            onChangeRelation={(newRelation) =>
-              onChangeInvitedRelation(email, newRelation)
-            }
+            onChangeRole={(newRole) => onChangeInvitedRole(email, newRole)}
           />
         ))}
       </Box>
@@ -486,10 +478,9 @@ export const ManageMembersDialog = ({
   const [errors, setErrors] = useState<string[]>();
   const [membersKey, setMembersKey] = useState(0);
   const [inviting, setInviting] = useState(false);
-  const [inviteRelation, setInviteRelation] =
-    useState<WorkspaceRelation>("viewers");
+  const [inviteRelation, setInviteRelation] = useState<Role>("viewers");
   const [invitedEmails, setInvitedEmails] = useState<
-    Map<string, { relation: WorkspaceRelation; notificationId: string }>
+    Map<string, { relation: Role; notificationId: string }>
   >(new Map());
   const { load: loadSeatUsage, data: seatData } =
     trpcClient.workspace.seatUsage.useQuery();
@@ -620,11 +611,9 @@ export const ManageMembersDialog = ({
                     </InputErrorsTooltip>
                   </Box>
                   <Select
-                    options={[...workspaceRelations]}
+                    options={[...roles]}
                     value={inviteRelation}
-                    getLabel={(option: WorkspaceRelation) =>
-                      workspaceRelationLabels[option]
-                    }
+                    getLabel={(option: Role) => roleLabels[option]}
                     onChange={setInviteRelation}
                   />
                   <Button
@@ -667,7 +656,7 @@ export const ManageMembersDialog = ({
                     return next;
                   });
                 }}
-                onChangeInvitedRelation={(email, relation) => {
+                onChangeInvitedRole={(email, relation) => {
                   setInvitedEmails((prev) => {
                     const existing = prev.get(email);
                     if (existing === undefined) {

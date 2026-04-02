@@ -11,7 +11,7 @@ const createWorkspace = (
   isDeleted: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   userId: "user-1",
-  workspaceRelation: "own",
+  role: "own",
   isDowngraded: false,
   ...overrides,
 });
@@ -88,14 +88,14 @@ describe("resolveCurrentWorkspace", () => {
       createWorkspace({
         id: "ws-1",
         isDefault: true,
-        workspaceRelation: "editors",
+        role: "editors",
       }),
     ];
 
     const result = resolveCurrentWorkspace(workspaces, undefined);
     expect(result.type).toBe("resolved");
     if (result.type === "resolved") {
-      expect(result.workspace?.workspaceRelation).toBe("editors");
+      expect(result.workspace?.role).toBe("editors");
     }
   });
 });
@@ -108,7 +108,7 @@ describe("isDowngradedForMember", () => {
   test("returns false for non-downgraded workspace", () => {
     expect(
       isDowngradedForMember(
-        createWorkspace({ isDowngraded: false, workspaceRelation: "editors" })
+        createWorkspace({ isDowngraded: false, role: "editors" })
       )
     ).toBe(false);
   });
@@ -116,7 +116,7 @@ describe("isDowngradedForMember", () => {
   test("returns false for downgraded workspace owned by current user", () => {
     expect(
       isDowngradedForMember(
-        createWorkspace({ isDowngraded: true, workspaceRelation: "own" })
+        createWorkspace({ isDowngraded: true, role: "own" })
       )
     ).toBe(false);
   });
@@ -124,7 +124,7 @@ describe("isDowngradedForMember", () => {
   test("returns true for downgraded workspace where user is a member", () => {
     expect(
       isDowngradedForMember(
-        createWorkspace({ isDowngraded: true, workspaceRelation: "editors" })
+        createWorkspace({ isDowngraded: true, role: "editors" })
       )
     ).toBe(true);
   });
@@ -132,7 +132,7 @@ describe("isDowngradedForMember", () => {
   test("returns true for downgraded workspace with viewer relation", () => {
     expect(
       isDowngradedForMember(
-        createWorkspace({ isDowngraded: true, workspaceRelation: "viewers" })
+        createWorkspace({ isDowngraded: true, role: "viewers" })
       )
     ).toBe(true);
   });
@@ -142,7 +142,7 @@ describe("isDowngradedForMember", () => {
       isDowngradedForMember(
         createWorkspace({
           isDowngraded: true,
-          workspaceRelation: "administrators",
+          role: "administrators",
         })
       )
     ).toBe(true);

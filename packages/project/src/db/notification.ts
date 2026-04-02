@@ -8,8 +8,8 @@ import {
   NOTIFICATION_TTL_MS,
   WorkspaceInvitePayload,
   ProjectTransferPayload,
-  workspaceRelationLabels,
-} from "../shared/schema";
+} from "../shared/notification-schema";
+import { roleLabels } from "../shared/role-schema";
 
 const assertUser = (context: AppContext) => {
   if (context.authorization.type !== "user") {
@@ -361,8 +361,7 @@ const describeNotification = ({
 }): string => {
   if (type === "workspaceInvite" && invite) {
     const roleLabel =
-      workspaceRelationLabels[invite.relation]?.toLowerCase() ??
-      invite.relation;
+      roleLabels[invite.relation]?.toLowerCase() ?? invite.relation;
     return `${senderLabel} invited you to "${workspaceName ?? "a workspace"}" as ${roleLabel}`;
   }
 

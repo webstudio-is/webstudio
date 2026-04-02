@@ -1,4 +1,7 @@
-export * from "./shared/schema";
+export * from "./shared/role-schema";
+export * from "./shared/project-schema";
+export * from "./shared/notification-schema";
+export * from "./shared/marketplace-schema";
 export type { Project } from "./db/project";
 export type { Workspace, WorkspaceWithRelation } from "./db/workspace";
 export type { ProjectRouter } from "./trpc/project-router";

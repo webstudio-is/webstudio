@@ -16,4 +16,4 @@ export { LeaveWorkspaceDialog } from "./leave-workspace-dialog";
 export { resolveCurrentWorkspace, isDowngradedForMember } from "./utils";
 
 // Atoms
-export { $workspaces, $workspaceRelation } from "./workspace-stores";
+export { $workspaces, $workspaceRole } from "./workspace-stores";

@@ -5,10 +5,10 @@ import {
   procedure,
   createErrorResponse,
 } from "@webstudio-is/trpc-interface/index.server";
-import { workspaceRelations } from "../shared/schema";
+import { roles } from "../shared/role-schema";
 
 const Name = z.string().min(2).max(100);
-const Relation = z.enum(workspaceRelations);
+const Relation = z.enum(roles);
 
 export const workspaceRouter = router({
   create: procedure
@@ -115,7 +115,7 @@ export const workspaceRouter = router({
       }
     }),
 
-  updateWorkspaceRelation: procedure
+  updateRole: procedure
     .input(
       z.object({
         workspaceId: z.string(),
@@ -130,7 +130,7 @@ export const workspaceRouter = router({
             "Upgrade your plan to manage workspace member roles."
           );
         }
-        await workspaceApi.updateWorkspaceRelation(input, ctx);
+        await workspaceApi.updateRole(input, ctx);
         return { success: true as const };
       } catch (error) {
         return createErrorResponse(error);

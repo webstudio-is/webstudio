@@ -4,19 +4,18 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { softDeleteProject } from "./project";
+import { defaultRole, type Role } from "../shared/role-schema";
 import {
-  defaultWorkspaceRelation,
-  type WorkspaceRelation,
   type WorkspaceInvitePayload,
   type ProjectTransferPayload,
-} from "../shared/schema";
+} from "../shared/notification-schema";
 import { create as createNotification } from "./notification";
 
 export type Workspace = Database["public"]["Tables"]["Workspace"]["Row"];
 
 export type WorkspaceWithRelation = Workspace & {
   /** The current user's relation to the workspace: "own" for owners */
-  workspaceRelation: WorkspaceRelation | "own";
+  role: Role | "own";
   /**
    * True when the workspace owner's plan no longer supports workspace features
    * (maxWorkspaces <= 1). Members lose project access but workspace data stays intact.
@@ -207,15 +206,12 @@ export const findMany = async (userId: string, context: AppContext) => {
 
   const memberWorkspaceIds = memberships.data.map((m) => m.workspaceId);
   const relationByWorkspaceId = new Map(
-    memberships.data.map((m) => [
-      m.workspaceId,
-      m.relation as WorkspaceRelation,
-    ])
+    memberships.data.map((m) => [m.workspaceId, m.relation as Role])
   );
 
   const ownedWithRelation: WorkspaceWithRelation[] = owned.data.map((w) => ({
     ...w,
-    workspaceRelation: "own" as const,
+    role: "own" as const,
     isDowngraded: false,
   }));
 
@@ -258,8 +254,7 @@ export const findMany = async (userId: string, context: AppContext) => {
   const memberWithRelation: WorkspaceWithRelation[] = memberOf.data.map(
     (w) => ({
       ...w,
-      workspaceRelation:
-        relationByWorkspaceId.get(w.id) ?? defaultWorkspaceRelation,
+      role: relationByWorkspaceId.get(w.id) ?? defaultRole,
       isDowngraded: downgradedOwners.has(w.userId),
     })
   );
@@ -333,7 +328,7 @@ export const addMember = async (
     workspaceId,
     email,
     relation,
-  }: { workspaceId: string; email: string; relation: WorkspaceRelation },
+  }: { workspaceId: string; email: string; relation: Role },
   context: AppContext
 ): Promise<{ notificationId: string }> => {
   const userId = assertUser(context);
@@ -390,7 +385,7 @@ export const addMember = async (
   return { notificationId };
 };
 
-export const updateWorkspaceRelation = async (
+export const updateRole = async (
   {
     workspaceId,
     memberUserId,
@@ -398,7 +393,7 @@ export const updateWorkspaceRelation = async (
   }: {
     workspaceId: string;
     memberUserId: string;
-    relation: WorkspaceRelation;
+    relation: Role;
   },
   context: AppContext
 ) => {

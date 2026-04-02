@@ -1,13 +1,13 @@
 import { atom } from "nanostores";
-import type { WorkspaceRelation } from "@webstudio-is/project";
+import type { Role } from "@webstudio-is/project";
 
-export const $workspaceRelation = atom<WorkspaceRelation | "own">("own");
+export const $workspaceRole = atom<Role | "own">("own");
 
 export const $workspaces = atom<
   Array<{
     id: string;
     name: string;
     isDefault: boolean;
-    workspaceRelation: WorkspaceRelation | "own";
+    role: Role | "own";
   }>
 >([]);

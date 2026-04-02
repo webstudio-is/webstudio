@@ -7,7 +7,8 @@ import {
   authorizeProject,
   createErrorResponse,
 } from "@webstudio-is/trpc-interface/index.server";
-import { MarketplaceApprovalStatus, Title } from "../shared/schema";
+import { Title } from "../shared/project-schema";
+import { MarketplaceApprovalStatus } from "../shared/marketplace-schema";
 
 export const projectRouter = router({
   rename: procedure

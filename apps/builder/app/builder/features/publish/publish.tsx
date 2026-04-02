@@ -407,8 +407,7 @@ const Publish = ({
   disabled: boolean;
   refresh: () => Promise<void>;
 }) => {
-  const { maxPublishesAllowedPerUser, allowStagingPublish } =
-    useStore($permissions);
+  const { maxPublishesAllowedPerUser } = useStore($permissions);
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
@@ -1200,7 +1199,9 @@ type PublishProps = {
 export const PublishButton = ({ projectId }: PublishProps) => {
   const publishDialog = useStore($publishDialog);
   const authTokenPermissions = useStore($authTokenPermissions);
-  const isPublishEnabled = authTokenPermissions.canPublish;
+  const { canPublishToStagingOnly } = useStore($permissions);
+  const isPublishEnabled =
+    authTokenPermissions.canPublish || canPublishToStagingOnly;
 
   const tooltipContent = isPublishEnabled
     ? undefined

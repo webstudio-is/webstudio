@@ -15,7 +15,7 @@ import {
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { notification as notificationApi } from "@webstudio-is/project/index.server";
-import type { WorkspaceRelation } from "@webstudio-is/project";
+import type { Role } from "@webstudio-is/project";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
@@ -91,7 +91,7 @@ const loadDashboardData = async (request: Request) => {
     userId: user.id,
   };
 
-  let workspaceRelation: WorkspaceRelation | "own" = "own";
+  let role: Role | "own" = "own";
 
   const wsResult = await loadWorkspacesForDashboard(user.id, url, context);
   if (wsResult.type === "redirect") {
@@ -102,9 +102,9 @@ const loadDashboardData = async (request: Request) => {
     workspaces,
     currentWorkspace,
     currentWorkspaceId,
-    workspaceRelation: resolvedRelation,
+    role: resolvedRelation,
   } = wsResult;
-  workspaceRelation = resolvedRelation;
+  role = resolvedRelation;
 
   if (currentWorkspaceId !== undefined) {
     findManyInput.workspaceId = currentWorkspaceId;
@@ -141,7 +141,7 @@ const loadDashboardData = async (request: Request) => {
     templates,
     workspaces,
     currentWorkspaceId,
-    workspaceRelation,
+    role,
     notifications,
   };
 };
@@ -195,7 +195,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     templates,
     workspaces,
     currentWorkspaceId,
-    workspaceRelation,
+    role,
     notifications,
   } = await loadDashboardData(request);
 
@@ -212,7 +212,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     projectToClone,
     workspaces,
     currentWorkspaceId,
-    workspaceRelation,
+    role,
     notifications,
   };
 };

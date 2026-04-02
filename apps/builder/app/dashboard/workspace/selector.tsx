@@ -122,7 +122,7 @@ const groupWorkspaces = (workspaces: Array<WorkspaceWithRelation>) => {
   const owned: Array<WorkspaceWithRelation> = [];
   const shared: Array<WorkspaceWithRelation> = [];
   for (const workspace of sorted) {
-    if (workspace.workspaceRelation === "own") {
+    if (workspace.role === "own") {
       owned.push(workspace);
     } else {
       shared.push(workspace);

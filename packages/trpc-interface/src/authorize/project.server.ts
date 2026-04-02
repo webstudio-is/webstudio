@@ -1,9 +1,8 @@
 import type { AppContext } from "../context/context.server";
-import type { Database } from "@webstudio-is/postgrest/index.server";
+import type { Role } from "@webstudio-is/project";
 import memoize from "memoize";
 
-type Relation =
-  Database["public"]["Tables"]["AuthorizationToken"]["Row"]["relation"];
+type Relation = Role;
 
 export type AuthPermit = "view" | "edit" | "build" | "admin" | "own";
 
@@ -32,10 +31,7 @@ const permitToRelationRewrite: Record<TokenAuthPermit, Relation[]> = {
  * Pure function: checks whether a set of workspace relations grants a given
  * permit. Used by the auth layer to evaluate workspace-based access.
  */
-const isWorkspaceRelationPermitted = (
-  relations: string[],
-  permit: AuthPermit
-): boolean => {
+const isRolePermitted = (relations: string[], permit: AuthPermit): boolean => {
   // Workspace owner gets all permits
   if (relations.includes("own")) {
     return true;
@@ -85,7 +81,7 @@ const check = async (
       const relations = wpaRows.data.flatMap((r) =>
         r.relation !== null ? [r.relation] : []
       );
-      return { allowed: isWorkspaceRelationPermitted(relations, input.permit) };
+      return { allowed: isRolePermitted(relations, input.permit) };
     }
 
     return { allowed: false };
@@ -354,6 +350,6 @@ export const getProjectPermit = async (
 };
 
 export const __testing__ = {
-  isWorkspaceRelationPermitted,
+  isRolePermitted,
   getWorkspaceOwnerIdForProject,
 };

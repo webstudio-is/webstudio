@@ -29,5 +29,4 @@ export const resolveCurrentWorkspace = (
  */
 export const isDowngradedForMember = (
   workspace: WorkspaceWithRelation | undefined
-): boolean =>
-  workspace?.isDowngraded === true && workspace.workspaceRelation !== "own";
+): boolean => workspace?.isDowngraded === true && workspace.role !== "own";
