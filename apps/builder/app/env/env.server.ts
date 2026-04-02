@@ -71,6 +71,11 @@ const env = {
   POSTGREST_URL: process.env.POSTGREST_URL ?? "http://localhost:3000",
   POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
 
+  /** Payment worker base URL (e.g. https://apps.webstudio.is/builder-payments) */
+  PAYMENT_WORKER_URL: process.env.PAYMENT_WORKER_URL ?? "",
+  /** Shared secret token for authenticating requests to the payment worker */
+  PAYMENT_WORKER_TOKEN: process.env.PAYMENT_WORKER_TOKEN ?? "",
+
   SECURE_COOKIE: true,
 
   // Used for project oauth login flow

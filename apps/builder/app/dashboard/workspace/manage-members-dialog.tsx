@@ -300,6 +300,8 @@ export const ManageMembersDialog = ({
   const [invitedEmails, setInvitedEmails] = useState<
     Map<string, { relation: Role; notificationId: string }>
   >(new Map());
+  const [seatError, setSeatError] = useState<string>();
+  const [seatUpdating, setSeatUpdating] = useState(false);
   const { load: loadSeatUsage, data: seatData } =
     trpcClient.workspace.seatUsage.useQuery();
 
@@ -318,6 +320,29 @@ export const ManageMembersDialog = ({
   // At absolute hard cap of 20 (only applies to seat-capped plans; max=0 means uncapped)
   const isAtHardCap =
     seatUsage !== undefined && seatUsage.max > 0 && seatUsage.used >= 20;
+
+  const handleUpdateSeats = async (newQuantity: number) => {
+    setSeatError(undefined);
+    setSeatUpdating(true);
+    try {
+      const response = await fetch("/api/seats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newQuantity }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        setSeatError(data.error ?? "Failed to update seats");
+      } else {
+        setMembersKey((key) => key + 1);
+        revalidator.revalidate();
+      }
+    } catch {
+      setSeatError("Network error. Please try again.");
+    } finally {
+      setSeatUpdating(false);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -401,9 +426,47 @@ export const ManageMembersDialog = ({
               }}
             >
               {seatUsage !== undefined && seatUsage.max > 0 && (
-                <Text color="subtle" variant="small">
-                  {seatUsage.used} of {seatUsage.max} seats used
-                </Text>
+                <Flex align="center" justify="between" gap="2">
+                  <Text color="subtle" variant="small">
+                    {seatUsage.used} of {seatUsage.max} seats used
+                  </Text>
+                  {isAtHardCap === false && (
+                    <Flex align="center" gap="1">
+                      {seatError && (
+                        <Text color="destructive" variant="small">
+                          {seatError}
+                        </Text>
+                      )}
+                      <Button
+                        color="ghost"
+                        type="button"
+                        disabled={
+                          seatUpdating || seatUsage.max <= seatUsage.used
+                        }
+                        onClick={() => handleUpdateSeats(seatUsage.max - 1)}
+                      >
+                        −
+                      </Button>
+                      <Text
+                        variant="small"
+                        css={{
+                          minWidth: theme.spacing[7],
+                          textAlign: "center",
+                        }}
+                      >
+                        {seatUsage.max}
+                      </Text>
+                      <Button
+                        color="ghost"
+                        type="button"
+                        disabled={seatUpdating}
+                        onClick={() => handleUpdateSeats(seatUsage.max + 1)}
+                      >
+                        +
+                      </Button>
+                    </Flex>
+                  )}
+                </Flex>
               )}
               <Label>Invite members</Label>
               {isAtHardCap ? (
