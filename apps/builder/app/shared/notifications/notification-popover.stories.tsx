@@ -1,6 +1,6 @@
 import type { StoryFn } from "@storybook/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
-import { Flex, theme } from "@webstudio-is/design-system";
+import { Flex, theme, IconButton } from "@webstudio-is/design-system";
 import { updateCsrfToken } from "~/shared/csrf.client";
 import {
   NotificationPopover,
@@ -58,6 +58,7 @@ export const Default: StoryFn = () => {
       <NotificationPopover
         defaultOpen
         initialNotifications={sampleNotifications}
+        renderTrigger={(props) => <IconButton color="ghost" {...props} />}
       />
     </Flex>
   );
@@ -71,7 +72,11 @@ export const Default: StoryFn = () => {
 export const Empty: StoryFn = () => {
   const router = createRouter(
     <Flex css={{ padding: theme.spacing[9] }}>
-      <NotificationPopover defaultOpen initialNotifications={[]} />
+      <NotificationPopover
+        defaultOpen
+        initialNotifications={[]}
+        renderTrigger={(props) => <IconButton color="ghost" {...props} />}
+      />
     </Flex>
   );
   return <RouterProvider router={router} />;

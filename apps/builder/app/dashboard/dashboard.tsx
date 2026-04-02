@@ -15,6 +15,7 @@ import {
   buttonStyle,
   Separator,
   Grid,
+  IconButton,
 } from "@webstudio-is/design-system";
 import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
 import {
@@ -40,14 +41,14 @@ import { SearchResults } from "./search/search-results";
 import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
 import { WorkspaceSelector } from "./workspace/workspace-dropdown";
-import { NotificationPopover } from "./notification-popover";
+import { NotificationPopover } from "~/shared/notifications/notification-popover";
 import {
   seedNotifications,
-  startDashboardSubscription,
-  stopDashboardSubscription,
+  startSubscription,
+  stopSubscription,
   $shouldRevalidateProjects,
-} from "./shared/subscription";
-import { requestNotificationPermission } from "./shared/browser-notification";
+} from "~/shared/notifications/subscription";
+import { requestNotificationPermission } from "~/shared/notifications/browser-notification";
 
 const globalStyles = globalCss({
   body: {
@@ -182,8 +183,8 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   // Start polling + permission once on mount; stop on unmount.
   useEffect(() => {
     requestNotificationPermission();
-    startDashboardSubscription();
-    return stopDashboardSubscription;
+    startSubscription();
+    return stopSubscription;
   }, []);
   globalStyles();
   return null;
@@ -279,7 +280,9 @@ export const Dashboard = () => {
         >
           <Header variant="aside">
             <ProfileMenu user={user} />
-            <NotificationPopover />
+            <NotificationPopover
+              renderTrigger={(props) => <IconButton color="ghost" {...props} />}
+            />
           </Header>
           <Flex
             direction="column"

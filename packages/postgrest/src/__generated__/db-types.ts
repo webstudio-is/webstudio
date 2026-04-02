@@ -800,6 +800,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "WorkspaceMember_userId_fkey";
+            columns: ["userId"];
+            isOneToOne: false;
+            referencedRelation: "User";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "WorkspaceMember_workspaceId_fkey";
             columns: ["workspaceId"];
             isOneToOne: false;
@@ -983,6 +990,7 @@ export type Database = {
           customerEmail: string | null;
           customerId: string | null;
           productId: string | null;
+          seatQuantity: number | null;
           subscriptionId: string | null;
           userId: string | null;
         };

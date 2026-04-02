@@ -33,6 +33,8 @@ export type Notifications = Awaited<ReturnType<typeof notification.list>>;
 export type TopicRegistry = {
   notifications: Notifications;
   projectCount: number;
+  /** True when the current user's seat in a shared workspace is suspended. */
+  seatSuspended: boolean;
 };
 
 // ── 2. Derived helpers ───────────────────────────────────────────
@@ -48,6 +50,7 @@ export type TopicData<K extends TopicName> = TopicRegistry[K];
 export const topicNames = [
   "notifications",
   "projectCount",
+  "seatSuspended",
 ] as const satisfies readonly TopicName[];
 
 // Compile-time check: every `TopicRegistry` key must appear in `topicNames`.

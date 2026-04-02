@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import { useRevalidator } from "@remix-run/react";
 import { useStore } from "@nanostores/react";
 import {
@@ -26,10 +26,15 @@ import {
   XIcon,
 } from "@webstudio-is/icons";
 import { nativeClient } from "~/shared/trpc/trpc-client";
-import { $notifications, refreshNotifications } from "./shared/subscription";
+import { $notifications, refreshNotifications } from "./subscription";
 import type { Notifications } from "~/shared/polly/types";
 
 export type NotificationItem = Notifications[number];
+
+export type TriggerButtonProps = {
+  "aria-label": string;
+  children: ReactElement;
+};
 
 // "swing" animation from Animate.css (https://animate.style)
 // Rotates around the top anchor to simulate a ringing bell.
@@ -98,13 +103,19 @@ const NotificationRow = ({
   );
 };
 
-export const NotificationPopover = ({
-  defaultOpen = false,
-  initialNotifications,
-}: {
-  defaultOpen?: boolean;
-  initialNotifications?: NotificationItem[];
-} = {}) => {
+export const NotificationPopover = (
+  {
+    defaultOpen = false,
+    initialNotifications,
+    renderTrigger,
+  }: {
+    defaultOpen?: boolean;
+    initialNotifications?: NotificationItem[];
+    renderTrigger: (props: TriggerButtonProps) => ReactElement;
+  } = {
+    renderTrigger: (props) => <IconButton color="ghost" {...props} />,
+  }
+) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const polledNotifications = useStore($notifications);
   const notifications = initialNotifications ?? polledNotifications;
@@ -172,20 +183,22 @@ export const NotificationPopover = ({
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <IconButton
-          color="ghost"
-          aria-label="Notifications"
-          css={
-            notifications.length > 0 && !hasSeen
-              ? {
+        {renderTrigger({
+          "aria-label": "Notifications",
+          children:
+            notifications.length > 0 && !hasSeen ? (
+              <BellDotIcon
+                style={{
                   transformOrigin: "top center",
                   animation: `${bounceBell} 1s ease-in-out infinite`,
-                }
-              : undefined
-          }
-        >
-          {notifications.length > 0 ? <BellDotIcon /> : <BellIcon />}
-        </IconButton>
+                }}
+              />
+            ) : notifications.length > 0 ? (
+              <BellDotIcon />
+            ) : (
+              <BellIcon />
+            ),
+        })}
       </PopoverTrigger>
       <PopoverContent align="start" sideOffset={4}>
         <PopoverTitle>All notifications</PopoverTitle>

@@ -78,6 +78,10 @@ import {
 import { useInertHandlers } from "./shared/inert-handlers";
 import { TextToolbar } from "./features/workspace/canvas-tools/text-toolbar";
 import { RemoteDialog } from "./features/help/remote-dialog";
+import {
+  startSubscription,
+  stopSubscription,
+} from "~/shared/notifications/subscription";
 import type { SidebarPanelName } from "./sidebar-left/types";
 import { SidebarLeft } from "./sidebar-left/sidebar-left";
 import { useDisableContextMenu } from "./shared/use-disable-context-menu";
@@ -290,6 +294,10 @@ export const Builder = (props: BuilderProps) => {
   useToastErrors();
   useEffect(subscribeCommands, []);
   useEffect(subscribeResources, []);
+  useEffect(() => {
+    startSubscription();
+    return stopSubscription;
+  }, []);
   useDisableContextMenu();
 
   useUnmount(() => {
