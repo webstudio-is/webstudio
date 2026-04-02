@@ -3,14 +3,12 @@ export { WorkspaceSelector } from "./selector";
 export { WorkspaceDropdown } from "./dropdown";
 export type { WorkspaceDropdownGroup, WorkspaceDropdownItem } from "./dropdown";
 
-// Dialogs (CreateWorkspaceDialog, RenameWorkspaceDialog, ManageMembersDialog, etc.)
-export {
-  CreateWorkspaceDialog,
-  RenameWorkspaceDialog,
-  ManageMembersDialog,
-  DeleteWorkspaceDialog,
-  LeaveWorkspaceDialog,
-} from "./dialogs";
+// Dialogs
+export { CreateWorkspaceDialog } from "./create-workspace-dialog";
+export { RenameWorkspaceDialog } from "./rename-workspace-dialog";
+export { ManageMembersDialog } from "./manage-members-dialog";
+export { DeleteWorkspaceDialog } from "./delete-workspace-dialog";
+export { LeaveWorkspaceDialog } from "./leave-workspace-dialog";
 
 // Pure utilities
 export { resolveCurrentWorkspace, isDowngradedForMember } from "./utils";
