@@ -5,9 +5,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm -r --filter='!./fixtures/*' build",
+    "build": "pnpm -r --filter=\"!./fixtures/*\" build",
     "dts": "pnpm -r dts",
-    "dev": "pnpm --filter='@webstudio-is/builder' dev",
+    "dev": "pnpm --filter=@webstudio-is/builder dev",
     "lint": "oxlint --deny-warnings",
     "fixtures": "pnpm -r fixtures:link && pnpm -r fixtures:sync && pnpm -r fixtures:build",
     "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint && pnpm fixtures",
@@ -15,13 +15,13 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "storybook:dev": "storybook dev -p 6006",
     "storybook:build": "storybook build",
-    "migrations": "pnpm --filter=@webstudio-is/prisma-client generate && pnpm --filter=./packages/prisma-client migrations --dev --cwd ../../apps/builder",
+    "migrations": "pnpm --filter=@webstudio-is/prisma-client generate && pnpm --filter=./packages/prisma-client migrations migrate --dev --cwd ../../apps/builder",
     "build-figma-tokens": "cd packages/design-system && pnpm build-figma-tokens",
-    "prepare": "which git && git config core.hooksPath .git/hooks/ && simple-git-hooks || echo git not installed",
+    "prepare": "git --version && git config core.hooksPath .git/hooks/ && simple-git-hooks || echo git not installed",
     "local:version-snapshot": "pnpm -r exec pnpm version prepatch --preid $(cat /dev/urandom | LC_ALL=C tr -dc 'a-z' | fold -w 8 | head -n 1)",
     "local:publish-snapshot": "pnpm -r publish --access public --no-git-checks --registry http://localhost:4873",
     "local:dangerously-undo-version-snapshot": "git restore --source=$(git branch --show-current) '**/*/package.json'",
-    "local:release": "pnpm build && pnpm dts && pnpm local:version-snapshot && pnpm local:publish-snapshot && pnpm local:dangerously-undo-version-snapshot && echo \"now execute\npnpm up -r -L '@webstudio-is/*' --registry http://localhost:4873\""
+    "local:release": "pnpm build && pnpm dts && pnpm local:version-snapshot && pnpm local:publish-snapshot && pnpm local:dangerously-undo-version-snapshot && echo \"now execute\npnpm up -r -L \\\"@webstudio-is/*\\\" --registry http://localhost:4873\""
   },
   "simple-git-hooks": {
     "pre-commit": "./node_modules/.bin/nano-staged"

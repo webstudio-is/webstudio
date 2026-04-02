@@ -1,5 +1,6 @@
 import { Umzug } from "umzug";
 import fs from "node:fs";
+import { pathToFileURL } from "node:url";
 import * as prismaMigrations from "./prisma-migrations";
 import * as logger from "./logger";
 import { UserError } from "./errors";
@@ -36,7 +37,7 @@ export const umzug = new Umzug({
           up: async () => {
             await prismaMigrations.generateMigrationClient(params.name);
 
-            const migration = await import(tsFilePath);
+            const migration = await import(pathToFileURL(tsFilePath).href);
 
             if (typeof migration.default !== "function") {
               throw new UserError(

@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "build": "rm -rf lib && vite build",
+    "build": "node -e \"require('fs').rmSync('lib', {recursive: true, force: true})\" && vite build",
     "test": "vitest run"
   },
   "license": "AGPL-3.0-or-later",

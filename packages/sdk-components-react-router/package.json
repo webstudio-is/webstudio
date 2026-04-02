@@ -20,7 +20,7 @@
     }
   },
   "scripts": {
-    "build": "rm -rf lib && esbuild src/components.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "node -e \"require('fs').rmSync('lib', {recursive: true, force: true})\" && esbuild src/components.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsgo --noEmit"
   },

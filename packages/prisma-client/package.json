@@ -6,8 +6,8 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "generate": "PRISMA_BINARY_TARGET=${PRISMA_BINARY_TARGET:-'[\"native\"]'} prisma generate",
-    "migrations": "./migrations-cli/cli.ts"
+    "generate": "prisma generate",
+    "migrations": "tsx ./migrations-cli/cli.ts"
   },
   "devDependencies": {
     "@prisma/client": "^5.12.1",
