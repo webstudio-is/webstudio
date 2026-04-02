@@ -53,7 +53,12 @@ export const parseIntermediateOrInvalidValue = (
   if ("unit" in styleValue && styleValue.unit === "number") {
     const numericValue = Number(value);
     if (!Number.isNaN(numericValue) && !Number.isInteger(numericValue)) {
-      value = String(Math.round(numericValue));
+      // Only round if the decimal value is not valid for this property
+      // (e.g. z-index requires integers, but line-height accepts decimals)
+      const decimalTest = parseCssValue(property, value);
+      if (decimalTest.type === "invalid") {
+        value = String(Math.round(numericValue));
+      }
     }
   }
 
