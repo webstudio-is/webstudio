@@ -1,7 +1,6 @@
 // UI components
-export { WorkspaceSelector } from "./selector";
-export { WorkspaceDropdown } from "./dropdown";
-export type { WorkspaceDropdownGroup, WorkspaceDropdownItem } from "./dropdown";
+export { WorkspaceSelector, WorkspaceDropdown } from "./selector";
+export type { WorkspaceDropdownGroup, WorkspaceDropdownItem } from "./selector";
 
 // Dialogs
 export { CreateWorkspaceDialog } from "./create-workspace-dialog";

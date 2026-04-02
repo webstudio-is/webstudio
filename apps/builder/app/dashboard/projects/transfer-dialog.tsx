@@ -22,7 +22,7 @@ import { nativeClient } from "~/shared/trpc/trpc-client";
 import {
   WorkspaceDropdown,
   type WorkspaceDropdownGroup,
-} from "~/dashboard/workspace/dropdown";
+} from "~/dashboard/workspace/selector";
 
 const sortWorkspaces = <T extends { name: string }>(workspaces: Array<T>) =>
   [...workspaces].sort((a, b) => a.name.localeCompare(b.name));
