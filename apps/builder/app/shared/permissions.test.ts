@@ -29,6 +29,7 @@ const proPlan = {
   maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
   maxWorkspaces: 0,
   maxProjectsAllowedPerUser: Number.MAX_SAFE_INTEGER,
+  maxSeats: Number.MAX_SAFE_INTEGER,
 };
 
 const freePlan = {
@@ -43,6 +44,7 @@ const freePlan = {
   maxPublishesAllowedPerUser: 10,
   maxWorkspaces: 0,
   maxProjectsAllowedPerUser: 2,
+  maxSeats: 0,
 };
 
 describe("getPermissions", () => {

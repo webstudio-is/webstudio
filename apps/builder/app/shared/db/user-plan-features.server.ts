@@ -32,6 +32,7 @@ const proPlanDefaults = (maxWorkspaces: number): UserPlanFeatures => ({
   maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
   maxWorkspaces,
   maxProjectsAllowedPerUser: Number.MAX_SAFE_INTEGER,
+  maxSeats: Number.MAX_SAFE_INTEGER,
 });
 
 /**
@@ -68,6 +69,7 @@ const mergeProductMetas = (
     maxProjectsAllowedPerUser: Math.max(
       ...productMetas.map((item) => item.maxProjectsAllowedPerUser)
     ),
+    maxSeats: Math.max(...productMetas.map((item) => item.maxSeats)),
   };
 };
 
@@ -156,6 +158,7 @@ export const getUserPlanInfo = async (
       maxPublishesAllowedPerUser: 10,
       maxWorkspaces: env.MAX_WORKSPACES,
       maxProjectsAllowedPerUser: 2,
+      maxSeats: 0,
     },
     purchases: [],
   };

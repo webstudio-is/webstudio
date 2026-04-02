@@ -80,6 +80,32 @@ export const workspaceRouter = router({
         if (ctx.userPlanFeatures.maxWorkspaces <= 1) {
           throw new Error("Upgrade your plan to invite members to workspaces.");
         }
+
+        // Only enforce seat limits for plans with a finite seat cap.
+        // Pro plan uses Number.MAX_SAFE_INTEGER (unlimited) — skip check.
+        // Free plan uses 0 — already blocked above by maxWorkspaces check.
+        const maxSeats = ctx.userPlanFeatures.maxSeats;
+        if (maxSeats > 0 && maxSeats < Number.MAX_SAFE_INTEGER) {
+          const userId =
+            ctx.authorization.type === "user"
+              ? ctx.authorization.userId
+              : undefined;
+
+          if (userId === undefined) {
+            throw new Error("Only logged in users can invite members.");
+          }
+
+          const memberCount = await workspaceApi.countAllMembers(userId, ctx);
+          // Owner counts as 1 seat, so total = 1 + memberCount
+          const totalSeats = 1 + memberCount;
+
+          if (totalSeats >= maxSeats) {
+            throw new Error(
+              "You have reached the maximum number of seats. Add more seats to invite more members."
+            );
+          }
+        }
+
         const { notificationId } = await workspaceApi.addMember(input, ctx);
         // notificationId is always returned — it's a real ID for existing users
         // and a fake UUID for non-existing users to prevent email enumeration.
@@ -206,6 +232,29 @@ export const workspaceRouter = router({
         return createErrorResponse(error);
       }
     }),
+
+  seatUsage: procedure.query(async ({ ctx }) => {
+    try {
+      if (ctx.authorization.type !== "user") {
+        return { success: true as const, data: { used: 0, max: 0 } };
+      }
+
+      const memberCount = await workspaceApi.countAllMembers(
+        ctx.authorization.userId,
+        ctx
+      );
+      // Owner counts as 1 seat
+      const used = 1 + memberCount;
+      // Normalize: 0 = free (no seat concept), MAX_SAFE_INTEGER = Pro (unlimited).
+      // Both are treated as "no cap" → return max=0 so the UI skips seat UI entirely.
+      const rawMax = ctx.userPlanFeatures.maxSeats;
+      const max =
+        rawMax === 0 || rawMax >= Number.MAX_SAFE_INTEGER ? 0 : rawMax;
+      return { success: true as const, data: { used, max } };
+    } catch (error) {
+      return createErrorResponse(error);
+    }
+  }),
 });
 
 export type WorkspaceRouter = typeof workspaceRouter;

@@ -491,6 +491,24 @@ export const ManageMembersDialog = ({
   const [invitedEmails, setInvitedEmails] = useState<
     Map<string, { relation: WorkspaceRelation; notificationId: string }>
   >(new Map());
+  const { load: loadSeatUsage, data: seatData } =
+    trpcClient.workspace.seatUsage.useQuery();
+
+  useEffect(() => {
+    if (isOpen && isOwner) {
+      loadSeatUsage();
+    }
+  }, [isOpen, isOwner, loadSeatUsage, membersKey]);
+
+  const seatUsage = seatData && "data" in seatData ? seatData.data : undefined;
+  // At limit when plan has a seat cap and all seats are taken
+  const isAtSeatLimit =
+    seatUsage !== undefined &&
+    seatUsage.max > 0 &&
+    seatUsage.used >= seatUsage.max;
+  // At absolute hard cap of 20 (only applies to seat-capped plans; max=0 means uncapped)
+  const isAtHardCap =
+    seatUsage !== undefined && seatUsage.max > 0 && seatUsage.used >= 20;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -573,29 +591,50 @@ export const ManageMembersDialog = ({
                 paddingTop: theme.spacing[5],
               }}
             >
+              {seatUsage !== undefined && seatUsage.max > 0 && (
+                <Text color="subtle" variant="small">
+                  {seatUsage.used} of {seatUsage.max} seats used
+                </Text>
+              )}
               <Label>Invite members</Label>
-              <Flex gap="2">
-                <Box css={{ flexGrow: 1 }}>
-                  <InputErrorsTooltip errors={errors}>
-                    <InputField
-                      name="emails"
-                      placeholder="alice@example.com, bob@example.com"
-                      color={errors ? "error" : undefined}
-                    />
-                  </InputErrorsTooltip>
-                </Box>
-                <Select
-                  options={[...workspaceRelations]}
-                  value={inviteRelation}
-                  getLabel={(option: WorkspaceRelation) =>
-                    workspaceRelationLabels[option]
-                  }
-                  onChange={setInviteRelation}
-                />
-                <Button type="submit" state={inviting ? "pending" : undefined}>
-                  Invite
-                </Button>
-              </Flex>
+              {isAtHardCap ? (
+                <Text color="destructive">
+                  Maximum 20 seats reached. Contact{" "}
+                  <a href="mailto:support@webstudio.is">support@webstudio.is</a>{" "}
+                  for larger teams.
+                </Text>
+              ) : isAtSeatLimit ? (
+                <Text color="destructive">
+                  You have reached the maximum number of seats. Add more seats
+                  to invite more members.
+                </Text>
+              ) : (
+                <Flex gap="2">
+                  <Box css={{ flexGrow: 1 }}>
+                    <InputErrorsTooltip errors={errors}>
+                      <InputField
+                        name="emails"
+                        placeholder="alice@example.com, bob@example.com"
+                        color={errors ? "error" : undefined}
+                      />
+                    </InputErrorsTooltip>
+                  </Box>
+                  <Select
+                    options={[...workspaceRelations]}
+                    value={inviteRelation}
+                    getLabel={(option: WorkspaceRelation) =>
+                      workspaceRelationLabels[option]
+                    }
+                    onChange={setInviteRelation}
+                  />
+                  <Button
+                    type="submit"
+                    state={inviting ? "pending" : undefined}
+                  >
+                    Invite
+                  </Button>
+                </Flex>
+              )}
             </Flex>
           )}
           <ScrollAreaNative

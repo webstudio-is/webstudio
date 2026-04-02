@@ -291,6 +291,43 @@ const assertOwner = async (
   return workspace.data;
 };
 
+/**
+ * Count all current members (non-removed) across all non-deleted workspaces owned by userId.
+ * The owner is NOT counted — this returns only invited member records.
+ */
+export const countAllMembers = async (
+  userId: string,
+  context: AppContext
+): Promise<number> => {
+  const workspaces = await context.postgrest.client
+    .from("Workspace")
+    .select("id")
+    .eq("userId", userId)
+    .eq("isDeleted", false);
+
+  if (workspaces.error) {
+    throw workspaces.error;
+  }
+
+  if (workspaces.data.length === 0) {
+    return 0;
+  }
+
+  const workspaceIds = workspaces.data.map((w) => w.id);
+
+  const result = await context.postgrest.client
+    .from("WorkspaceMember")
+    .select("userId", { count: "exact", head: true })
+    .in("workspaceId", workspaceIds)
+    .is("removedAt", null);
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return result.count ?? 0;
+};
+
 export const addMember = async (
   {
     workspaceId,

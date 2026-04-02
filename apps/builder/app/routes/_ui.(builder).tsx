@@ -210,6 +210,21 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
             "The workspace owner's plan no longer supports workspace access"
           );
         }
+
+        // Enforce seat limits: block all members when the owner is over their seat cap.
+        const maxSeats = planResult.userPlanFeatures.maxSeats;
+        if (maxSeats > 0) {
+          const memberCount = await projectApi.workspace.countAllMembers(
+            workspace.data.userId,
+            context
+          );
+          // Owner occupies 1 seat; total = owner + all invited members
+          if (1 + memberCount > maxSeats) {
+            throw new AuthorizationError(
+              "The workspace owner needs to add more seats or remove members to restore access."
+            );
+          }
+        }
       }
     }
 
