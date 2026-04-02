@@ -1,11 +1,16 @@
-import { lazy } from "react";
+import { lazy, useEffect } from "react";
 import { preconnect, prefetchDNS } from "react-dom";
 import {
   Outlet,
   redirect,
   type ShouldRevalidateFunction,
 } from "react-router-dom";
-import { useLoaderData, type MetaFunction } from "@remix-run/react";
+import {
+  useLoaderData,
+  useLocation,
+  useNavigate,
+  type MetaFunction,
+} from "@remix-run/react";
 import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import {
   createCallerFactory,
@@ -20,6 +25,7 @@ import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
+import { getSetting, setSetting } from "~/builder/shared/client-settings";
 import env from "~/env/env.server";
 import { ClientOnly } from "~/shared/client-only";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -246,6 +252,27 @@ const DashboardSetup = lazy(async () => {
 });
 
 const DashboardRoute = () => {
+  const { search } = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (search !== "") {
+      setSetting("lastDashboardSearch", search);
+    } else {
+      const lastSearch = getSetting("lastDashboardSearch");
+      if (lastSearch !== "") {
+        navigate({ search: lastSearch }, { replace: true });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (search !== "") {
+      setSetting("lastDashboardSearch", search);
+    }
+  }, [search]);
+
   // `useLoaderData` wraps the return in `JsonifyObject` which turns
   // `string | undefined` properties into optional keys.  At runtime the
   // shapes are identical, so the cast to `DashboardData` is safe.
