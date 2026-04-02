@@ -1,13 +1,11 @@
 import type { StoryFn } from "@storybook/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import type { Workspace } from "@webstudio-is/project";
-import {
-  CreateWorkspaceDialog,
-  RenameWorkspaceDialog,
-  ManageMembersDialog,
-  DeleteWorkspaceDialog,
-  LeaveWorkspaceDialog,
-} from "./dialogs";
+import { CreateWorkspaceDialog } from "./create-workspace-dialog";
+import { RenameWorkspaceDialog } from "./rename-workspace-dialog";
+import { ManageMembersDialog } from "./manage-members-dialog";
+import { DeleteWorkspaceDialog } from "./delete-workspace-dialog";
+import { LeaveWorkspaceDialog } from "./leave-workspace-dialog";
 
 export default {
   title: "Dashboard / Workspace Dialogs",

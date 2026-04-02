@@ -23,13 +23,11 @@ import type { WorkspaceWithRelation } from "@webstudio-is/project";
 import { useNavigate, useLocation } from "@remix-run/react";
 import { useStore } from "@nanostores/react";
 import { $permissions } from "~/shared/nano-states";
-import {
-  CreateWorkspaceDialog,
-  RenameWorkspaceDialog,
-  ManageMembersDialog,
-  DeleteWorkspaceDialog,
-  LeaveWorkspaceDialog,
-} from "./dialogs";
+import { CreateWorkspaceDialog } from "./create-workspace-dialog";
+import { RenameWorkspaceDialog } from "./rename-workspace-dialog";
+import { ManageMembersDialog } from "./manage-members-dialog";
+import { DeleteWorkspaceDialog } from "./delete-workspace-dialog";
+import { LeaveWorkspaceDialog } from "./leave-workspace-dialog";
 
 export type WorkspaceDropdownItem = {
   id: string;
