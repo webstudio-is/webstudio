@@ -5,7 +5,7 @@ import {
   procedure,
   createErrorResponse,
 } from "@webstudio-is/trpc-interface/index.server";
-import { roles } from "../shared/role-schema";
+import { roles } from "@webstudio-is/trpc-interface/authorize";
 
 const Name = z.string().min(2).max(100);
 const Relation = z.enum(roles);

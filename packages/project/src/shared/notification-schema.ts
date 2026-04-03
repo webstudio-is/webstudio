@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { roles } from "./role-schema";
+import { roles } from "@webstudio-is/trpc-interface/authorize";
 
 export const notificationTypes = [
   "workspaceInvite",

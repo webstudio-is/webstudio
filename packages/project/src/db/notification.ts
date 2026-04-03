@@ -9,7 +9,7 @@ import {
   WorkspaceInvitePayload,
   ProjectTransferPayload,
 } from "../shared/notification-schema";
-import { roleLabels } from "../shared/role-schema";
+import { roleLabels } from "@webstudio-is/trpc-interface/authorize";
 
 const assertUser = (context: AppContext) => {
   if (context.authorization.type !== "user") {

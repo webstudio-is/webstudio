@@ -1,4 +1,9 @@
-export * from "./shared/role-schema";
+export {
+  roles,
+  type Role,
+  defaultRole,
+  roleLabels,
+} from "@webstudio-is/trpc-interface/authorize";
 export * from "./shared/project-schema";
 export * from "./shared/notification-schema";
 export * from "./shared/marketplace-schema";

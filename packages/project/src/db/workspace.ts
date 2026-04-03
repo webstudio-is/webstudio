@@ -4,7 +4,7 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { softDeleteProject } from "./project";
-import { defaultRole, type Role } from "../shared/role-schema";
+import { defaultRole, type Role } from "@webstudio-is/trpc-interface/authorize";
 import {
   type WorkspaceInvitePayload,
   type ProjectTransferPayload,
