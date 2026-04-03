@@ -46,7 +46,7 @@ import {
   GearIcon,
   InfoCircleIcon,
   PageIcon,
-  RefreshIcon,
+  ReverseIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
 import { hyphenateProperty } from "@webstudio-is/css-engine";
@@ -628,13 +628,13 @@ const AssetInfoContent = ({
               {replaceError ? (
                 <Tooltip side="bottom" content={replaceError}>
                   <IconButton disabled>
-                    <RefreshIcon />
+                    <ReverseIcon />
                   </IconButton>
                 </Tooltip>
               ) : (
                 <Tooltip side="bottom" content="Replace asset">
                   <IconButton onClick={() => replaceInputRef.current?.click()}>
-                    <RefreshIcon />
+                    <ReverseIcon />
                   </IconButton>
                 </Tooltip>
               )}

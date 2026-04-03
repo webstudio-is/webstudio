@@ -4471,6 +4471,31 @@ export const ResourceIcon: IconComponent = forwardRef(
 );
 ResourceIcon.displayName = "ResourceIcon";
 
+export const ReverseIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.3"
+          d="M2.667 11.333h10.666m0 0-2.666-2.666m2.666 2.666L10.667 14m2.666-9.333H2.667m0 0L5.333 2M2.667 4.667l2.666 2.666"
+        />
+      </svg>
+    );
+  }
+);
+ReverseIcon.displayName = "ReverseIcon";
+
 export const SearchIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
