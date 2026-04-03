@@ -45,6 +45,7 @@ import {
   camelCaseProperty,
   declarationDescriptions,
   isValidDeclaration,
+  parseColor,
 } from "@webstudio-is/css-data";
 import { $selectedInstanceSizes } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
@@ -362,6 +363,37 @@ const itemToString = (item: CssValueInputValue | null) => {
 };
 
 const Description = styled(Box, { width: theme.spacing[27] });
+
+// Returns the CSS color string to show as a color swatch for a dropdown item,
+// or undefined if the item has no meaningful color preview.
+const getItemColor = (item: CssValueInputValue): string | undefined => {
+  if (item.type === "var") {
+    const { fallback } = item;
+    if (fallback?.type === "rgb" || fallback?.type === "color") {
+      return toValue(fallback);
+    }
+    if (
+      (fallback?.type === "unparsed" || fallback?.type === "keyword") &&
+      parseColor(fallback.value) !== undefined
+    ) {
+      return fallback.value;
+    }
+    return undefined;
+  }
+  if (item.type === "keyword" && parseColor(item.value) !== undefined) {
+    return item.value;
+  }
+  return undefined;
+};
+
+// Returns the unit string to show as a text preview for a var dropdown item,
+// or undefined if the fallback is not a unit.
+const getItemUnit = (item: CssValueInputValue): string | undefined => {
+  if (item.type === "var" && item.fallback?.type === "unit") {
+    return toValue(item.fallback);
+  }
+  return undefined;
+};
 
 /**
  * Common:
@@ -943,22 +975,27 @@ export const CssValueInput = ({
                     {...getItemProps({ item, index })}
                     key={index}
                   >
-                    {item.type === "var" ? (
-                      <Flex justify="between" align="center" grow gap={2}>
-                        <Box>--{item.value}</Box>
-                        {item.fallback?.type === "unit" && (
-                          <Text variant="small" color="subtle">
-                            {toValue(item.fallback)}
-                          </Text>
-                        )}
-                        {(item.fallback?.type === "rgb" ||
-                          item.fallback?.type === "color") && (
-                          <ColorThumb color={toValue(item.fallback)} />
-                        )}
-                      </Flex>
-                    ) : (
-                      itemToString(item)
-                    )}
+                    {(() => {
+                      const label = itemToString(item);
+                      const colorValue = getItemColor(item);
+                      const unitValue = getItemUnit(item);
+                      if (colorValue === undefined && unitValue === undefined) {
+                        return label;
+                      }
+                      return (
+                        <Flex justify="between" align="center" grow gap={2}>
+                          <Box>{label}</Box>
+                          {unitValue !== undefined && (
+                            <Text variant="small" color="subtle">
+                              {unitValue}
+                            </Text>
+                          )}
+                          {colorValue !== undefined && (
+                            <ColorThumb color={colorValue} />
+                          )}
+                        </Flex>
+                      );
+                    })()}
                   </ComboboxListboxItem>
                 ))}
               </ComboboxScrollArea>
@@ -974,3 +1011,5 @@ export const CssValueInput = ({
     </ComboboxRoot>
   );
 };
+
+export const __testing__ = { getItemColor, getItemUnit };
