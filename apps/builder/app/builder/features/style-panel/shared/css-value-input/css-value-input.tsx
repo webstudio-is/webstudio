@@ -367,23 +367,15 @@ const Description = styled(Box, { width: theme.spacing[27] });
 // Returns the CSS color string to show as a color swatch for a dropdown item,
 // or undefined if the item has no meaningful color preview.
 const getItemColor = (item: CssValueInputValue): string | undefined => {
-  if (item.type === "var") {
-    const { fallback } = item;
-    if (fallback?.type === "rgb" || fallback?.type === "color") {
-      return toValue(fallback);
-    }
-    if (
-      (fallback?.type === "unparsed" || fallback?.type === "keyword") &&
-      parseColor(fallback.value) !== undefined
-    ) {
-      return fallback.value;
-    }
-    return undefined;
+  let colorString: string | undefined;
+  if (item.type === "var" && item.fallback !== undefined) {
+    colorString = toValue(item.fallback);
+  } else if (item.type === "keyword") {
+    colorString = item.value;
   }
-  if (item.type === "keyword" && parseColor(item.value) !== undefined) {
-    return item.value;
+  if (colorString !== undefined && parseColor(colorString) !== undefined) {
+    return colorString;
   }
-  return undefined;
 };
 
 // Returns the unit string to show as a text preview for a var dropdown item,
@@ -392,7 +384,6 @@ const getItemUnit = (item: CssValueInputValue): string | undefined => {
   if (item.type === "var" && item.fallback?.type === "unit") {
     return toValue(item.fallback);
   }
-  return undefined;
 };
 
 /**
