@@ -153,3 +153,5 @@ const waitForAsset = (
     check();
   });
 };
+
+export const __testing__ = { replaceAssetInStyleValue };
