@@ -380,7 +380,7 @@ export const color = {
   backgroundAssetcardHover: "#e6e8eb",
   backgroundNeutralMain: "#d7dbdf",
   backgroundNeutralAccent: "#11181c",
-  backgroundNeutralNotification: "#ffffff",
+  backgroundNeutralNotification: "#f5f5f5",
   backgroundNeutralDark: "#b2b2b2",
   backgroundDestructiveMain: "#dc2929",
   backgroundDestructiveNotification: "#ffe9e9",

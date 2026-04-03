@@ -4,7 +4,7 @@ import {
   type ReactNode,
   forwardRef,
 } from "react";
-import { theme, styled, type VariantProps, type CSS } from "../stitches.config";
+import { theme, styled, type CSS } from "../stitches.config";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import { Box } from "./box";
 
@@ -20,6 +20,7 @@ const StyledAvatar = styled(AvatarPrimitive.Root, {
   position: "relative",
   border: "none",
   fontFamily: "inherit",
+  fontSize: 14,
   lineHeight: "1",
   margin: "0",
   outline: "none",
@@ -29,6 +30,11 @@ const StyledAvatar = styled(AvatarPrimitive.Root, {
   height: 24,
   backgroundColor: theme.colors.foregroundSubtle,
   borderRadius: "50%",
+  '&[data-size="small"]': {
+    width: 16,
+    height: 16,
+    fontSize: 9,
+  },
 });
 
 const StyledAvatarImage = styled(AvatarPrimitive.Image, {
@@ -43,24 +49,22 @@ const StyledAvatarImage = styled(AvatarPrimitive.Image, {
 const StyledAvatarFallback = styled(AvatarPrimitive.Fallback, {
   textTransform: "uppercase",
   borderRadius: "50%",
-  fontSize: theme.deprecatedFontSize[4],
   color: theme.colors.white,
 });
 
-type AvatarVariants = VariantProps<typeof StyledAvatar>;
 type AvatarPrimitiveProps = ComponentProps<typeof AvatarPrimitive.Root>;
-type AvatarOwnProps = AvatarPrimitiveProps &
-  AvatarVariants & {
-    css?: CSS;
-    alt?: string;
-    src?: string;
-    fallback?: ReactNode;
-  };
+type AvatarOwnProps = AvatarPrimitiveProps & {
+  css?: CSS;
+  alt?: string;
+  src?: string;
+  fallback?: ReactNode;
+  size?: "small";
+};
 
 export const Avatar = forwardRef<
   ElementRef<typeof StyledAvatar>,
   AvatarOwnProps
->(({ alt, src, fallback, css, ...props }, forwardedRef) => {
+>(({ alt, src, fallback, css, size, ...props }, forwardedRef) => {
   return (
     <Box
       css={{
@@ -70,7 +74,7 @@ export const Avatar = forwardRef<
         width: "fit-content",
       }}
     >
-      <StyledAvatar {...props} ref={forwardedRef}>
+      <StyledAvatar {...props} data-size={size} ref={forwardedRef}>
         <StyledAvatarImage alt={alt} src={src} />
         <StyledAvatarFallback>{fallback}</StyledAvatarFallback>
       </StyledAvatar>

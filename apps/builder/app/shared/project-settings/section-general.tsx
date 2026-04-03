@@ -21,12 +21,7 @@ import { CopyIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { Image, wsImageLoader } from "@webstudio-is/image";
 import type { ProjectMeta } from "@webstudio-is/sdk";
 import { ImageControl } from "./image-control";
-import {
-  $assets,
-  $pages,
-  $project,
-  $userPlanFeatures,
-} from "~/shared/nano-states";
+import { $assets, $pages, $project, $permissions } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { sectionSpacing } from "./utils";
 import { CodeEditor } from "~/shared/code-editor";
@@ -87,7 +82,7 @@ const saveSetting = <Name extends keyof ProjectMeta>(
 };
 
 export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
-  const { maxContactEmails } = useStore($userPlanFeatures);
+  const { maxContactEmails } = useStore($permissions);
   const allowContactEmail = maxContactEmails > 0;
   const pages = useStore($pages);
   const project = useStore($project);

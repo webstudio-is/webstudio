@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@webstudio-is/feature-flags": "workspace:*",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "memoize": "^10.0.0",
@@ -24,6 +25,12 @@
   "exports": {
     "./index.server": {
       "webstudio": "./src/index.server.ts"
+    },
+    "./user-plan-features": {
+      "webstudio": "./src/shared/user-plan-features.ts"
+    },
+    "./authorize": {
+      "webstudio": "./src/authorize/role.ts"
     }
   },
   "license": "AGPL-3.0-or-later",
