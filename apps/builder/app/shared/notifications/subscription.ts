@@ -17,6 +17,7 @@ import {
   SEAT_SUSPENDED_TOAST_ID,
   SEAT_SUSPENDED_MESSAGE,
 } from "./seat-suspended";
+import { publicStaticEnv } from "~/env/env.static";
 
 const knownNotificationTypes = new Set<string>(notificationTypes);
 
@@ -89,6 +90,16 @@ export const startSubscription = () => {
         id: SEAT_SUSPENDED_TOAST_ID,
         duration: Number.POSITIVE_INFINITY,
       });
+    }
+  });
+
+  const NEW_VERSION_TOAST_ID = "new-builder-version";
+  manager.subscribe("builderVersion", (serverVersion) => {
+    if (serverVersion !== publicStaticEnv.VERSION) {
+      toast.info(
+        "A new version of Webstudio is available. Reload to get the latest — see what's new at wstd.us/changelog",
+        { id: NEW_VERSION_TOAST_ID, duration: Number.POSITIVE_INFINITY }
+      );
     }
   });
 };

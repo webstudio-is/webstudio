@@ -35,6 +35,8 @@ export type TopicRegistry = {
   projectCount: number;
   /** True when the current user's seat in a shared workspace is suspended. */
   seatSuspended: boolean;
+  /** The builder's deployed version string (GITHUB_SHA or "local"). */
+  builderVersion: string;
 };
 
 // ── 2. Derived helpers ───────────────────────────────────────────
@@ -51,6 +53,7 @@ export const topicNames = [
   "notifications",
   "projectCount",
   "seatSuspended",
+  "builderVersion",
 ] as const satisfies readonly TopicName[];
 
 // Compile-time check: every `TopicRegistry` key must appear in `topicNames`.

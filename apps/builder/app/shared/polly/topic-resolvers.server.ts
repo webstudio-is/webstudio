@@ -2,6 +2,7 @@ import { notification } from "@webstudio-is/project/index.server";
 import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
 import { workspace as workspaceDb } from "@webstudio-is/project/index.server";
 import { getUserPlanInfo } from "~/shared/db/user-plan-features.server";
+import { publicStaticEnv } from "~/env/env.static";
 import type { TopicResolvers, TopicName, SubscriptionResponse } from "./types";
 
 /**
@@ -69,6 +70,7 @@ const resolvers: TopicResolvers = {
 
     return false;
   },
+  builderVersion: () => Promise.resolve(publicStaticEnv.VERSION),
 };
 
 /**
