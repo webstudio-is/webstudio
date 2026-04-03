@@ -107,6 +107,13 @@
    - Upload an image
    - Check it loads and shows a progress bar
    - Delete an asset by clicking on the `x` icon and then the delete button in the tooltip
+   - Click on an image asset to open asset details
+   - Click the replace (reverse) icon button next to the download button
+   - Select a new image file from the file picker
+   - Check that the asset is replaced and the new image is shown
+   - Check that all usages of the old asset (image `src` props, background image styles, favicon, social image) now reference the new file
+   - Check that the original asset's filename is preserved on the new asset
+   - Verify the replace button is absent for non-image assets (e.g. fonts)
 
 1. Navigator view settings
 
