@@ -1,11 +1,5 @@
-export const roles = [
-  "viewers",
-  "editors",
-  "builders",
-  "administrators",
-] as const;
-
-export type Role = (typeof roles)[number];
+export { roles, type Role } from "@webstudio-is/trpc-interface/authorize";
+import type { Role } from "@webstudio-is/trpc-interface/authorize";
 
 /** Safest default when role is unknown — principle of least privilege */
 export const defaultRole: Role = "viewers";

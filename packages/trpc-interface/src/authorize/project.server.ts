@@ -1,5 +1,5 @@
 import type { AppContext } from "../context/context.server";
-import type { Role } from "@webstudio-is/project";
+import type { Role } from "./role";
 import memoize from "memoize";
 
 type Relation = Role;

@@ -28,6 +28,9 @@
     },
     "./user-plan-features": {
       "webstudio": "./src/shared/user-plan-features.ts"
+    },
+    "./authorize": {
+      "webstudio": "./src/authorize/role.ts"
     }
   },
   "license": "AGPL-3.0-or-later",
