@@ -389,6 +389,48 @@ describe("Value ending with `-` should be considered unitless", () => {
     });
   });
 
+  test("Decimal number intermediate for line-height is not rounded", () => {
+    const result = parseIntermediateOrInvalidValue("line-height", {
+      type: "intermediate",
+      value: "1.5",
+      unit: "number",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 1.5,
+      unit: "number",
+    });
+  });
+
+  test("Decimal number intermediate for z-index is rounded to integer", () => {
+    const result = parseIntermediateOrInvalidValue("z-index", {
+      type: "intermediate",
+      value: "1.5",
+      unit: "number",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 2,
+      unit: "number",
+    });
+  });
+
+  test("Decimal number intermediate for column-count is rounded to integer", () => {
+    const result = parseIntermediateOrInvalidValue("column-count", {
+      type: "intermediate",
+      value: "2.7",
+      unit: "number",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 3,
+      unit: "number",
+    });
+  });
+
   test("Unitless expression transformed to unitless", () => {
     const result = parseIntermediateOrInvalidValue("line-height", {
       type: "intermediate",
