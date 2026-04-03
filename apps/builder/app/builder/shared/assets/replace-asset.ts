@@ -43,14 +43,12 @@ export const replaceAsset = async (
   serverSyncStore.createTransaction(
     [$pages, $props, $styles, $assets],
     (pages, props, styles, assets) => {
-      // Copy metadata from old asset to new asset
       const updatedNewAsset = assets.get(newAssetId);
       if (updatedNewAsset) {
         updatedNewAsset.filename = oldAsset.filename;
         updatedNewAsset.description = oldAsset.description;
       }
 
-      // Update props referencing the old asset
       for (const prop of props.values()) {
         if (
           prop.type === "asset" &&
@@ -62,12 +60,10 @@ export const replaceAsset = async (
         }
       }
 
-      // Update styles referencing the old asset
       for (const [, styleDecl] of styles) {
         replaceAssetInStyleValue(styleDecl.value, oldAssetId, newAssetId);
       }
 
-      // Update page meta references
       if (pages) {
         if (pages.meta?.faviconAssetId === oldAssetId) {
           pages.meta.faviconAssetId = newAssetId;
@@ -82,12 +78,10 @@ export const replaceAsset = async (
         }
       }
 
-      // Delete the old asset
       assets.delete(oldAssetId);
     }
   );
 
-  // Wait for server to confirm, then invalidate cache
   onNextTransactionComplete(() => {
     invalidateAssets();
   });
@@ -95,9 +89,6 @@ export const replaceAsset = async (
   toast.success("Asset replaced successfully");
 };
 
-/**
- * Recursively traverse a style value and replace asset references.
- */
 import type { StyleValue } from "@webstudio-is/css-engine";
 
 const replaceAssetInStyleValue = (
@@ -124,10 +115,6 @@ const replaceAssetInStyleValue = (
   }
 };
 
-/**
- * Wait for an asset to appear in the $assets store.
- * Uses polling with a timeout to avoid infinite waits.
- */
 const waitForAsset = (
   assetId: string,
   timeoutMs = 60_000,
@@ -138,7 +125,6 @@ const waitForAsset = (
 
     const check = () => {
       const asset = $assets.get().get(assetId);
-      // Asset exists and has been fully uploaded (has a non-empty createdAt)
       if (asset && asset.createdAt !== "") {
         resolve(asset);
         return;
