@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { __testing__ } from "./css-value-input";
-const { getItemColor, getItemUnit } = __testing__;
+const { getItemColor } = __testing__;
 
 describe("getItemColor", () => {
   test("returns undefined for non-color keyword", () => {
@@ -94,35 +94,5 @@ describe("getItemColor", () => {
     expect(
       getItemColor({ type: "unit", value: 16, unit: "px" })
     ).toBeUndefined();
-  });
-});
-
-describe("getItemUnit", () => {
-  test("returns unit string for var with unit fallback", () => {
-    expect(
-      getItemUnit({
-        type: "var",
-        value: "spacing",
-        fallback: { type: "unit", value: 8, unit: "px" },
-      })
-    ).toBe("8px");
-  });
-
-  test("returns undefined for var with non-unit fallback", () => {
-    expect(
-      getItemUnit({
-        type: "var",
-        value: "brand",
-        fallback: { type: "keyword", value: "red" },
-      })
-    ).toBeUndefined();
-  });
-
-  test("returns undefined for var without fallback", () => {
-    expect(getItemUnit({ type: "var", value: "spacing" })).toBeUndefined();
-  });
-
-  test("returns undefined for keyword item", () => {
-    expect(getItemUnit({ type: "keyword", value: "auto" })).toBeUndefined();
   });
 });

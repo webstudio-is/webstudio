@@ -16,7 +16,6 @@ import {
   theme,
   Flex,
   styled,
-  Text,
   ColorThumb,
 } from "@webstudio-is/design-system";
 import type {
@@ -375,14 +374,6 @@ const getItemColor = (item: CssValueInputValue): string | undefined => {
   }
   if (colorString !== undefined && parseColor(colorString) !== undefined) {
     return colorString;
-  }
-};
-
-// Returns the unit string to show as a text preview for a var dropdown item,
-// or undefined if the fallback is not a unit.
-const getItemUnit = (item: CssValueInputValue): string | undefined => {
-  if (item.type === "var" && item.fallback?.type === "unit") {
-    return toValue(item.fallback);
   }
 };
 
@@ -969,21 +960,13 @@ export const CssValueInput = ({
                     {(() => {
                       const label = itemToString(item);
                       const colorValue = getItemColor(item);
-                      const unitValue = getItemUnit(item);
-                      if (colorValue === undefined && unitValue === undefined) {
+                      if (colorValue === undefined) {
                         return label;
                       }
                       return (
                         <Flex justify="between" align="center" grow gap={2}>
                           <Box>{label}</Box>
-                          {unitValue !== undefined && (
-                            <Text variant="small" color="subtle">
-                              {unitValue}
-                            </Text>
-                          )}
-                          {colorValue !== undefined && (
-                            <ColorThumb color={colorValue} />
-                          )}
+                          <ColorThumb color={colorValue} />
                         </Flex>
                       );
                     })()}
@@ -1003,4 +986,4 @@ export const CssValueInput = ({
   );
 };
 
-export const __testing__ = { getItemColor, getItemUnit };
+export const __testing__ = { getItemColor };
