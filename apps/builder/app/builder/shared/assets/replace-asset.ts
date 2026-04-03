@@ -25,7 +25,6 @@ export const replaceAsset = async (
     return;
   }
 
-  // Step 1: Upload the new file
   const fileToAssetId = await uploadAssets("image", [file]);
   const newAssetId = fileToAssetId.get(file);
 
@@ -34,7 +33,6 @@ export const replaceAsset = async (
     return;
   }
 
-  // Step 2: Wait for the upload to complete by watching $assets
   const newAsset = await waitForAsset(newAssetId);
 
   if (!newAsset) {
@@ -42,7 +40,6 @@ export const replaceAsset = async (
     return;
   }
 
-  // Step 3 & 4: Re-point all references and copy metadata, then delete old asset
   serverSyncStore.createTransaction(
     [$pages, $props, $styles, $assets],
     (pages, props, styles, assets) => {
@@ -95,7 +92,7 @@ export const replaceAsset = async (
     invalidateAssets();
   });
 
-  toast.info("Asset replaced successfully");
+  toast.success("Asset replaced successfully");
 };
 
 /**
