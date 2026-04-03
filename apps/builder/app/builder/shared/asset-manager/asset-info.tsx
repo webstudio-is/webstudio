@@ -1,10 +1,10 @@
 import isValidFilename from "valid-filename";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { getMimeTypeByExtension } from "@webstudio-is/sdk";
+import { getMimeTypeByExtension, IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
 import type { Asset, Pages, Props, Styles, Instance } from "@webstudio-is/sdk";
 import type {
   ImageValue,
@@ -46,6 +46,7 @@ import {
   GearIcon,
   InfoCircleIcon,
   PageIcon,
+  ReverseIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
 import { hyphenateProperty } from "@webstudio-is/css-engine";
@@ -67,7 +68,8 @@ import {
   selectPage,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { deleteAssets } from "~/builder/shared/assets";
+import { deleteAssets, replaceAsset } from "~/builder/shared/assets";
+import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import {
   $activeInspectorPanel,
   setActiveSidebarPanel,
@@ -436,6 +438,20 @@ const AssetInfoContent = ({
   );
 
   const authPermit = useStore($authPermit);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+
+  const handleReplaceFile = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = validateFiles(Array.from(event.target.files ?? []));
+      const file = files[0];
+      if (file) {
+        replaceAsset(id, file);
+      }
+      // Reset input so the same file can be selected again
+      event.target.value = "";
+    },
+    [id]
+  );
 
   let downloadError: undefined | string;
   if (authPermit === "view") {
@@ -443,6 +459,12 @@ const AssetInfoContent = ({
       "Unavailable in View mode. Switch to Edit to download assets.";
   } else if (!hasPaidPlan) {
     downloadError = "Upgrade to Pro to download assets.";
+  }
+
+  const isImage = asset.type === "image";
+  let replaceError: undefined | string;
+  if (authPermit === "view") {
+    replaceError = "View mode. You can't replace assets.";
   }
 
   return (
@@ -593,23 +615,49 @@ const AssetInfoContent = ({
           </Dialog>
         )}
 
-        {downloadError ? (
-          <Tooltip side="bottom" content={downloadError}>
-            <IconButton disabled>
-              <DownloadIcon />
-            </IconButton>
-          </Tooltip>
-        ) : (
-          <Tooltip side="bottom" content="Download asset">
-            <IconButton
-              as="a"
-              download={formatAssetName(asset)}
-              href={getAssetUrl(asset, window.location.origin).href}
-            >
-              <DownloadIcon />
-            </IconButton>
-          </Tooltip>
-        )}
+        <Flex gap="1">
+          {isImage && (
+            <>
+              <input
+                ref={replaceInputRef}
+                type="file"
+                accept={IMAGE_MIME_TYPES.join(", ")}
+                style={{ display: "none" }}
+                onChange={handleReplaceFile}
+              />
+              {replaceError ? (
+                <Tooltip side="bottom" content={replaceError}>
+                  <IconButton disabled>
+                    <ReverseIcon />
+                  </IconButton>
+                </Tooltip>
+              ) : (
+                <Tooltip side="bottom" content="Replace asset">
+                  <IconButton onClick={() => replaceInputRef.current?.click()}>
+                    <ReverseIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </>
+          )}
+          {downloadError ? (
+            <Tooltip side="bottom" content={downloadError}>
+              <IconButton disabled>
+                <DownloadIcon />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <Tooltip side="bottom" content="Download asset">
+              <IconButton
+                as="a"
+                download={formatAssetName(asset)}
+                href={getAssetUrl(asset, window.location.origin).href}
+              >
+                <DownloadIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Flex>
       </Flex>
     </>
   );
