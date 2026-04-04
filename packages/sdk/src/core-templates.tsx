@@ -17,6 +17,7 @@ import {
   collectionComponent,
   descendantComponent,
   elementComponent,
+  customSlotComponent,
 } from "./core-metas";
 
 const elementMeta: TemplateMeta = {
@@ -64,6 +65,16 @@ const collectionMeta: TemplateMeta = {
 const descendantMeta: TemplateMeta = {
   category: "internal",
   template: <ws.descendant selector=" p" />,
+};
+
+const CustomSlot = ws["customSlot"];
+
+const customSlotMeta: TemplateMeta = {
+  category: "general",
+  order: 5,
+  description:
+    "A reusable container that stays synced across the project and supports fields for flexible content customization.",
+  template: <CustomSlot></CustomSlot>,
 };
 
 const BlockTemplate = ws["block-template"];
@@ -427,6 +438,7 @@ export const coreTemplates = {
   [collectionComponent]: collectionMeta,
   [descendantComponent]: descendantMeta,
   [blockComponent]: blockMeta,
+  [customSlotComponent]: customSlotMeta,
   ...typography,
   ...forms,
   builtWithWebstudio: builtWithWebstudioMeta,

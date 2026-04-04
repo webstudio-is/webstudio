@@ -27,6 +27,8 @@ import {
   rootComponent,
   blockTemplateComponent,
   descendantComponent,
+  getSlotContentRoot,
+  customSlotComponent,
   type Instance,
 } from "@webstudio-is/sdk";
 import { animationCanPlayOnCanvasProperty } from "@webstudio-is/sdk/runtime";
@@ -91,6 +93,34 @@ type TreeItem = {
   dropTarget?: TreeDropTarget;
 };
 
+const hasVisibleNavigatorChildren = (
+  instances: Map<string, Instance>,
+  instance: Instance
+): boolean => {
+  const children =
+    instance.component === customSlotComponent
+      ? (getSlotContentRoot(instances, instance.id)?.children ?? [])
+      : instance.children;
+
+  for (const child of children) {
+    if (child.type !== "id") {
+      continue;
+    }
+    const childInstance = instances.get(child.value);
+    if (childInstance === undefined) {
+      continue;
+    }
+    if (childInstance.component !== "Fragment") {
+      return true;
+    }
+    if (hasVisibleNavigatorChildren(instances, childInstance)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 const $expandedItems = atom(new Set<string>());
 
 const $dropTarget = computed(
@@ -140,7 +170,10 @@ export const $flatTree = computed(
       const isHidden =
         isParentHidden ||
         false === Boolean(propValues?.get(showAttribute) ?? true);
-      const isReusable = isParentReusable || instance.component === "Slot";
+      const isReusable =
+        isParentReusable ||
+        instance.component === "Slot" ||
+        instance.component === customSlotComponent;
       const treeItem: TreeItem = {
         selector,
         visibleAncestors,
@@ -151,7 +184,7 @@ export const $flatTree = computed(
         isReusable,
       };
       let isVisible = true;
-      // slot fragment component is not rendered in navigator tree
+      // internal structure nodes are not rendered in navigator tree
       // so should be always expanded
       if (instance.component === "Fragment") {
         isVisible = false;
@@ -184,7 +217,7 @@ export const $flatTree = computed(
         flatTree.push(treeItem);
       }
       const level = treeItem.visibleAncestors.length - 1;
-      if (level > 0 && instance.children.some((child) => child.type === "id")) {
+      if (level > 0 && hasVisibleNavigatorChildren(instances, instance)) {
         treeItem.isExpanded = expandedItems.has(selector.join());
       }
       // always expand invisible items

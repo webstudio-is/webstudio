@@ -24,6 +24,7 @@ import {
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
+  isCustomSlotInternalVariableName,
   SYSTEM_VARIABLE_ID,
   systemParameter,
 } from "@webstudio-is/sdk";
@@ -348,6 +349,9 @@ export const $selectedInstanceScope = computed(
           dataSource = systemParameter;
         }
         if (dataSource === undefined) {
+          continue;
+        }
+        if (isCustomSlotInternalVariableName(dataSource.name)) {
           continue;
         }
         const name = encodeDataSourceVariable(dataSourceId);

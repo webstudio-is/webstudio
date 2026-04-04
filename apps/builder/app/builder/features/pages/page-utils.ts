@@ -13,6 +13,7 @@ import {
   ROOT_FOLDER_ID,
   isRootFolder,
   ROOT_INSTANCE_ID,
+  isCustomSlotInternalVariableName,
   systemParameter,
   SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
@@ -276,6 +277,9 @@ export const $pageRootScope = computed(
         dataSource = systemParameter;
       }
       if (dataSource === undefined) {
+        continue;
+      }
+      if (isCustomSlotInternalVariableName(dataSource.name)) {
         continue;
       }
       const name = encodeDataSourceVariable(dataSourceId);

@@ -7,7 +7,7 @@ import {
   WebstudioFragment,
   findTreeInstanceIdsExcludingSlotDescendants,
   isComponentDetachable,
-  portalComponent,
+  isPortalLikeComponent,
 } from "@webstudio-is/sdk";
 import {
   $selectedInstanceSelector,
@@ -82,7 +82,8 @@ const getPortalFragmentSelector = (
 ) => {
   const instance = instances.get(instanceSelector[0]);
   if (
-    instance?.component !== portalComponent ||
+    instance === undefined ||
+    isPortalLikeComponent(instance.component) === false ||
     instance.children.length === 0 ||
     instance.children[0].type !== "id"
   ) {

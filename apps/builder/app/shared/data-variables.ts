@@ -11,6 +11,12 @@ import {
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
   collectionComponent,
+  customSlotComponent,
+  customSlotComponentVariable,
+  customSlotValuesVariable,
+  findCustomSlotComponentDataSource,
+  getSlotContentRootId,
+  isCustomSlotInternalVariableName,
   decodeDataVariableId,
   encodeDataVariableId,
   findTreeInstanceIds,
@@ -18,14 +24,22 @@ import {
   getExpressionIdentifiers,
   systemParameter,
   transpileExpression,
+  portalComponent,
 } from "@webstudio-is/sdk";
 import {
   createJsonStringifyProxy,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
+import { parseCustomSlotFieldValues } from "./custom-slot-field-values";
 import { setUnion } from "./shim";
 
 const allowedJsChars = /[A-Za-z_]/;
+
+const isUserFacingDataSource = (
+  dataSource: undefined | DataSource
+): dataSource is DataSource =>
+  dataSource !== undefined &&
+  isCustomSlotInternalVariableName(dataSource.name) === false;
 
 /**
  * variable names can contain any characters and
@@ -194,7 +208,7 @@ const getParentInstanceById = (instances: Instances) => {
   const parentInstanceById = new Map<Instance["id"], Instance["id"]>();
   for (const instance of instances.values()) {
     // interrupt lookup because slot variables cannot be passed to slot content
-    if (instance.component === "Slot") {
+    if (instance.component === portalComponent) {
       continue;
     }
     for (const child of instance.children) {
@@ -220,7 +234,18 @@ const findMaskedVariablesByInstanceId = ({
   let currentId: undefined | string = startingInstanceId;
   const instanceIdsPath: Instance["id"][] = [];
   while (currentId) {
+    const instance = instances.get(currentId);
     instanceIdsPath.push(currentId);
+
+    // children inside customSlot may see customSlot-local variables,
+    // but should not see variables above customSlot
+    if (
+      currentId !== startingInstanceId &&
+      instance?.component === customSlotComponent
+    ) {
+      break;
+    }
+
     currentId = parentInstanceById.get(currentId);
   }
   // allow accessing global variables everywhere
@@ -234,9 +259,10 @@ const findMaskedVariablesByInstanceId = ({
     const instance = instances.get(instanceId);
     for (const dataSource of dataSources.values()) {
       if (dataSource.scopeInstanceId === instanceId) {
-        // when current instance is collection
-        // ignore its collection item parameter
-        // when rebind variables
+        if (isCustomSlotInternalVariableName(dataSource.name)) {
+          continue;
+        }
+
         if (
           instanceId === startingInstanceId &&
           instance?.component === collectionComponent &&
@@ -244,7 +270,25 @@ const findMaskedVariablesByInstanceId = ({
         ) {
           continue;
         }
+
         maskedVariables.set(dataSource.name, dataSource.id);
+      }
+    }
+  }
+  const startingInstance = instances.get(startingInstanceId);
+
+  if (startingInstance?.component === customSlotComponent) {
+    const fragmentRootId = getSlotContentRootId(instances, startingInstance.id);
+    if (fragmentRootId !== undefined) {
+      const componentDataSource = findCustomSlotComponentDataSource(
+        dataSources,
+        fragmentRootId
+      );
+      if (componentDataSource) {
+        maskedVariables.set(
+          customSlotComponentVariable,
+          componentDataSource.id
+        );
       }
     }
   }
@@ -392,6 +436,37 @@ const traverseExpressions = ({
 
   for (const dataSource of dataSources.values()) {
     const instanceId = dataSource.scopeInstanceId ?? "";
+    if (
+      instanceIds.has(instanceId) &&
+      dataSource.type === "variable" &&
+      dataSource.name === customSlotValuesVariable &&
+      dataSource.value.type === "json"
+    ) {
+      const nextFieldValues = parseCustomSlotFieldValues(
+        dataSource.value.value
+      );
+      let hasChanged = false;
+
+      for (const fieldValue of Object.values(nextFieldValues)) {
+        if (fieldValue.type !== "expression") {
+          continue;
+        }
+
+        const nextExpression = update(fieldValue.value, instanceId);
+        if (
+          nextExpression !== undefined &&
+          nextExpression !== fieldValue.value
+        ) {
+          fieldValue.value = nextExpression;
+          hasChanged = true;
+        }
+      }
+
+      if (hasChanged) {
+        dataSource.value.value = nextFieldValues;
+      }
+    }
+
     if (instanceIds.has(instanceId) && dataSource.type === "resource") {
       instanceIdByResourceId.set(dataSource.resourceId, instanceId);
     }
@@ -445,7 +520,10 @@ export const findUnsetVariableNames = ({
         replaceVariable: (identifier) => {
           const id = decodeDataVariableId(identifier);
           if (id === undefined && args.includes(identifier) === false) {
-            unsetVariables.add(decodeDataVariableName(identifier));
+            const name = decodeDataVariableName(identifier);
+            if (isCustomSlotInternalVariableName(name) === false) {
+              unsetVariables.add(name);
+            }
           }
         },
       });
@@ -548,7 +626,9 @@ export const rebindTreeVariablesMutable = ({
   // unset all variables
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
   for (const dataSource of dataSources.values()) {
-    unsetNameById.set(dataSource.id, dataSource.name);
+    if (isUserFacingDataSource(dataSource)) {
+      unsetNameById.set(dataSource.id, dataSource.name);
+    }
   }
   // precompute parent instances outside of traverse
   const parentInstanceById = getParentInstanceById(instances);
@@ -600,7 +680,9 @@ export const deleteVariableMutable = (
     data.resources.delete(dataSource.resourceId);
   }
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
-  unsetNameById.set(dataSource.id, dataSource.name);
+  if (isUserFacingDataSource(dataSource)) {
+    unsetNameById.set(dataSource.id, dataSource.name);
+  }
   const startingInstanceId = dataSource.scopeInstanceId ?? "";
   const maskedIdByName = findMaskedVariablesByInstanceId({
     startingInstanceId,

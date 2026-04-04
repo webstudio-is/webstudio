@@ -24,7 +24,6 @@ import {
   encodeDataSourceVariable,
   transpileExpression,
   ROOT_INSTANCE_ID,
-  portalComponent,
   collectionComponent,
   Prop,
   Props,
@@ -32,6 +31,12 @@ import {
   tags,
   blockTemplateComponent,
   isComponentDetachable,
+  customSlotComponent,
+  customSlotSchemaVariable,
+  customSlotValuesVariable,
+  customSlotComponentVariable,
+  isPortalLikeComponent,
+  getSlotContentRootId,
 } from "@webstudio-is/sdk";
 import { detectTokenConflicts } from "./style-source-utils";
 import { type ConflictResolution } from "./token-conflict-dialog";
@@ -156,9 +161,8 @@ export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
       if (cycles.length > 0) {
         toast.info("Detected and fixed cycles in the instance tree.");
 
-        breakCyclesMutable(
-          instances.values(),
-          (node) => node.component === "Slot"
+        breakCyclesMutable(instances.values(), (node) =>
+          isPortalLikeComponent(node.component)
         );
       }
     }
@@ -225,11 +229,34 @@ export const findAllEditableInstanceSelector = ({
   }
 };
 
+const resolvePortalLikeContentParentSelector = (
+  instances: Instances,
+  parentSelector: InstanceSelector
+): InstanceSelector => {
+  const parentInstance = instances.get(parentSelector[0]);
+  const fragmentId =
+    parentInstance?.component === customSlotComponent
+      ? getSlotContentRootId(instances, parentInstance.id)
+      : parentInstance?.children[0]?.type === "id"
+        ? parentInstance.children[0].value
+        : undefined;
+
+  if (
+    parentInstance &&
+    isPortalLikeComponent(parentInstance.component) &&
+    fragmentId !== undefined
+  ) {
+    return [fragmentId, ...parentSelector];
+  }
+
+  return parentSelector;
+};
+
 export const insertInstanceChildrenMutable = (
   data: Omit<WebstudioData, "pages">,
   children: Instance["children"],
   insertTarget: Insertable
-) => {
+): undefined | InstanceSelector => {
   const dropTarget: DroppableTarget = {
     parentSelector: insertTarget.parentSelector,
     position: insertTarget.position === "after" ? "end" : insertTarget.position,
@@ -245,7 +272,12 @@ export const insertInstanceChildrenMutable = (
       metas,
       dropTarget
     ) ?? insertTarget;
-  const [parentInstanceId] = insertTarget.parentSelector;
+  const resolvedParentSelector = resolvePortalLikeContentParentSelector(
+    data.instances,
+    insertTarget.parentSelector
+  );
+
+  const [parentInstanceId] = resolvedParentSelector;
   const parentInstance = data.instances.get(parentInstanceId);
   if (parentInstance === undefined) {
     return;
@@ -255,6 +287,7 @@ export const insertInstanceChildrenMutable = (
   } else {
     parentInstance.children.splice(dropTarget.position, 0, ...children);
   }
+  return resolvedParentSelector;
 };
 
 export const insertWebstudioElementAt = (insertable?: Insertable) => {
@@ -322,12 +355,27 @@ export const insertWebstudioElementAt = (insertable?: Insertable) => {
     return false;
   }
   // insert element
+  let newInstanceSelector: undefined | InstanceSelector;
+
   updateWebstudioData((data) => {
     data.instances.set(element.id, element);
     const children: Instance["children"] = [{ type: "id", value: element.id }];
-    insertInstanceChildrenMutable(data, children, insertable);
+
+    const insertedParentSelector = insertInstanceChildrenMutable(
+      data,
+      children,
+      insertable
+    );
+
+    if (insertedParentSelector) {
+      newInstanceSelector = [element.id, ...insertedParentSelector];
+    }
   });
-  selectInstance([element.id, ...insertable.parentSelector]);
+
+  if (newInstanceSelector) {
+    selectInstance(newInstanceSelector);
+  }
+
   return true;
 };
 
@@ -409,11 +457,19 @@ export const insertWebstudioFragmentAt = (
       parentSelector = insertable.parentSelector;
       position = insertable.position;
     }
-    insertInstanceChildrenMutable(data, children, {
-      parentSelector,
-      position,
-    });
-    newInstanceSelector = [children[0].value, ...parentSelector];
+    const insertedParentSelector = insertInstanceChildrenMutable(
+      data,
+      children,
+      {
+        parentSelector,
+        position,
+      }
+    );
+
+    const firstChild = children[0];
+    if (insertedParentSelector && firstChild?.type === "id") {
+      newInstanceSelector = [firstChild.value, ...insertedParentSelector];
+    }
   });
   if (newInstanceSelector) {
     selectInstance(newInstanceSelector);
@@ -421,9 +477,73 @@ export const insertWebstudioFragmentAt = (
   return true;
 };
 
+const createCustomSlotFragment = (): WebstudioFragment => {
+  const customSlotId = nanoid();
+  const fragmentId = nanoid();
+  const schemaId = nanoid();
+  const valuesId = nanoid();
+  const componentId = nanoid();
+
+  return {
+    children: [{ type: "id", value: customSlotId }],
+    instances: [
+      {
+        id: customSlotId,
+        type: "instance",
+        component: customSlotComponent,
+        children: [{ type: "id", value: fragmentId }],
+      },
+      {
+        id: fragmentId,
+        type: "instance",
+        component: "Fragment",
+        children: [],
+      },
+    ],
+    props: [],
+    dataSources: [
+      {
+        id: schemaId,
+        scopeInstanceId: fragmentId,
+        name: customSlotSchemaVariable,
+        type: "variable",
+        value: {
+          type: "json",
+          value: [],
+        },
+      },
+      {
+        id: valuesId,
+        scopeInstanceId: customSlotId,
+        name: customSlotValuesVariable,
+        type: "variable",
+        value: {
+          type: "json",
+          value: {},
+        },
+      },
+      {
+        id: componentId,
+        scopeInstanceId: fragmentId,
+        name: customSlotComponentVariable,
+        type: "parameter",
+      },
+    ],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+    breakpoints: [],
+    assets: [],
+    resources: [],
+  };
+};
+
 export const getComponentTemplateData = (
   componentOrTemplate: string
 ): WebstudioFragment => {
+  if (componentOrTemplate === customSlotComponent) {
+    return createCustomSlotFragment();
+  }
   const templates = $registeredTemplates.get();
   const templateMeta = templates.get(componentOrTemplate);
   if (templateMeta) {
@@ -472,12 +592,17 @@ export const reparentInstanceMutable = (
   }
   // try to use slot fragment as target instead of slot itself
   const parentInstance = data.instances.get(dropTarget.parentSelector[0]);
+  const fragmentId =
+    parentInstance?.component === customSlotComponent
+      ? getSlotContentRootId(data.instances, parentInstance.id)
+      : parentInstance?.children[0]?.type === "id"
+        ? parentInstance.children[0].value
+        : undefined;
   if (
-    parentInstance?.component === portalComponent &&
-    parentInstance.children.length > 0 &&
-    parentInstance.children[0].type === "id"
+    parentInstance &&
+    isPortalLikeComponent(parentInstance.component) &&
+    fragmentId !== undefined
   ) {
-    const fragmentId = parentInstance.children[0].value;
     dropTarget = {
       parentSelector: [fragmentId, ...dropTarget.parentSelector],
       position: dropTarget.position,
@@ -1362,7 +1487,7 @@ export const insertWebstudioFragmentCopy = ({
   const portalContentRootIds = new Set<Instance["id"]>();
   for (const instance of fragment.instances) {
     fragmentInstances.set(instance.id, instance);
-    if (instance.component === portalComponent) {
+    if (isPortalLikeComponent(instance.component)) {
       for (const child of instance.children) {
         if (child.type === "id") {
           portalContentRootIds.add(child.value);
@@ -1687,7 +1812,7 @@ export const findClosestSlot = (
 ) => {
   for (const instanceId of instanceSelector) {
     const instance = instances.get(instanceId);
-    if (instance?.component === "Slot") {
+    if (isPortalLikeComponent(instance?.component ?? "")) {
       return instance;
     }
   }

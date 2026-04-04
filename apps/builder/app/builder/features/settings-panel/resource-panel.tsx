@@ -20,6 +20,7 @@ import {
 import {
   encodeDataVariableId,
   generateObjectExpression,
+  isCustomSlotInternalVariableName,
   isLiteralExpression,
   parseObjectExpression,
   SYSTEM_VARIABLE_ID,
@@ -543,6 +544,9 @@ export const getResourceScopeForInstance = ({
     }
     // prevent resources using data of other resources
     if (dataSource.type === "resource") {
+      hiddenDataSourceIds.add(dataSource.id);
+    }
+    if (isCustomSlotInternalVariableName(dataSource.name)) {
       hiddenDataSourceIds.add(dataSource.id);
     }
   }

@@ -1,6 +1,6 @@
 import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance, Instances } from "./schema/instances";
-import { blockTemplateComponent } from "./core-metas";
+import { blockTemplateComponent, isPortalLikeComponent } from "./core-metas";
 
 export const ROOT_INSTANCE_ID = ":root";
 
@@ -42,7 +42,7 @@ export const findTreeInstanceIdsExcludingSlotDescendants = (
   const ids = new Set<Instance["id"]>([rootInstanceId]);
   traverseInstances(instances, rootInstanceId, (instance) => {
     ids.add(instance.id);
-    if (instance.component === "Slot") {
+    if (isPortalLikeComponent(instance.component)) {
       return false;
     }
   });

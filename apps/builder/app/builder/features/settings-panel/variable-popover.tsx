@@ -44,6 +44,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   type DataSource,
+  isCustomSlotComponentDataSource,
   transpileExpression,
   lintExpression,
   SYSTEM_VARIABLE_ID,
@@ -752,8 +753,13 @@ const VariablePopoverContent = ({
   onClose: () => void;
 }) => {
   const hasPendingResources = useStore($hasPendingResources);
+  const instances = useStore($instances);
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
+  const isCustomSlotVariable = isCustomSlotComponentDataSource(
+    instances,
+    variable
+  );
   const [value, setValue] = useState<unknown>(() => {
     if (variable?.type === "variable") {
       if (variable.value.type === "json") {
@@ -856,7 +862,7 @@ const VariablePopoverContent = ({
             style={{ display: "contents" }}
             onSubmit={(event) => {
               event.preventDefault();
-              if (isSystemVariable) {
+              if (isSystemVariable || isCustomSlotVariable) {
                 return;
               }
               const nameElement =
@@ -882,7 +888,7 @@ const VariablePopoverContent = ({
             <fieldset
               style={{ display: "contents" }}
               // forbid editing system variable
-              disabled={isSystemVariable}
+              disabled={isSystemVariable || isCustomSlotVariable}
             >
               <VariablePanelForm
                 ref={panelRef}

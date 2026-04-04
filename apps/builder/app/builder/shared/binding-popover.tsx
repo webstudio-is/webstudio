@@ -89,6 +89,30 @@ export const evaluateExpressionWithinScope = (
   return computeExpression(expression, variables);
 };
 
+const getBindableScopeEntries = ({
+  scope,
+  aliases,
+}: {
+  scope: Record<string, unknown>;
+  aliases: Map<string, string>;
+}) => {
+  const entries: Array<{
+    identifier: string;
+    name: string;
+    value: unknown;
+  }> = [];
+
+  for (const [identifier, name] of aliases) {
+    entries.push({
+      identifier,
+      name,
+      value: scope[identifier],
+    });
+  }
+
+  return entries;
+};
+
 const BindingPanel = ({
   scope,
   aliases,
@@ -112,7 +136,10 @@ const BindingPanel = ({
   );
   const [errorsCount, setErrorsCount] = useState<number>(0);
   const [touched, setTouched] = useState(false);
-  const scopeEntries = Object.entries(scope);
+  const scopeEntries = useMemo(
+    () => getBindableScopeEntries({ scope, aliases }),
+    [scope, aliases]
+  );
 
   const validate = (expression: string) => {
     const diagnostics = lintExpression({
@@ -158,8 +185,7 @@ const BindingPanel = ({
           </Flex>
         )}
         <CssValueListArrowFocus>
-          {scopeEntries.map(([identifier, value], index) => {
-            const name = aliases.get(identifier);
+          {scopeEntries.map(({ identifier, name, value }, index) => {
             const label =
               value === undefined
                 ? name
@@ -174,10 +200,8 @@ const BindingPanel = ({
                 active={usedIdentifiers.has(identifier)}
                 // convert variable to expression
                 onClick={() => {
-                  if (name) {
-                    const nameIdentifier = encodeDataVariableName(name);
-                    editorApiRef.current?.replaceSelection(nameIdentifier);
-                  }
+                  const nameIdentifier = encodeDataVariableName(name);
+                  editorApiRef.current?.replaceSelection(nameIdentifier);
                 }}
                 // expression editor blur is fired after pointer down even
                 // preventing it allows to not trigger validation
