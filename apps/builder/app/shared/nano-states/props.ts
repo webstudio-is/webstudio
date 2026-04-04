@@ -15,6 +15,12 @@ import {
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
   findTreeInstanceIds,
+  customSlotComponent,
+  customSlotComponentVariable,
+  findCustomSlotComponentDataSource,
+  findCustomSlotSchemaDataSource,
+  findCustomSlotValuesDataSource,
+  getSlotContentRootId,
 } from "@webstudio-is/sdk";
 import {
   normalizeProps,
@@ -22,6 +28,11 @@ import {
   getCollectionEntries,
 } from "@webstudio-is/react-sdk";
 import { mapGroupBy } from "~/shared/shim";
+import {
+  buildCustomSlotComponentValue,
+  parseCustomSlotFieldValues,
+  parseCustomSlotSchema,
+} from "~/shared/custom-slot-field-values";
 import { $instances } from "./instances";
 import {
   $dataSources,
@@ -230,6 +241,7 @@ export const $propValuesByInstanceSelector = computed(
     $pages,
     $assets,
     $uploadingFilesDataStore,
+    $dataSources,
   ],
   (
     instances,
@@ -238,11 +250,9 @@ export const $propValuesByInstanceSelector = computed(
     unscopedVariableValues,
     pages,
     assets,
-    uploadingFilesDataStore
+    uploadingFilesDataStore,
+    dataSources
   ) => {
-    // already includes global variables
-    const variableValues = new Map<string, unknown>(unscopedVariableValues);
-
     let propsList = Array.from(props.values());
 
     // ignore asset and page props when params is not provided
@@ -273,7 +283,25 @@ export const $propValuesByInstanceSelector = computed(
     if (page === undefined) {
       return propValuesByInstanceSelector;
     }
-    const traverseInstances = (instanceSelector: InstanceSelector) => {
+
+    const globalVariableValues = new Map<string, unknown>();
+    globalVariableValues.set(
+      SYSTEM_VARIABLE_ID,
+      unscopedVariableValues.get(SYSTEM_VARIABLE_ID)
+    );
+    for (const [dataSourceId, dataSource] of dataSources) {
+      if (dataSource.scopeInstanceId === ROOT_INSTANCE_ID) {
+        globalVariableValues.set(
+          dataSourceId,
+          unscopedVariableValues.get(dataSourceId)
+        );
+      }
+    }
+
+    const traverseInstances = (
+      instanceSelector: InstanceSelector,
+      currentVariableValues = unscopedVariableValues
+    ) => {
       const [instanceId] = instanceSelector;
       const instance = instances.get(instanceId);
       if (instance === undefined) {
@@ -292,14 +320,14 @@ export const $propValuesByInstanceSelector = computed(
             continue;
           }
           if (prop.type === "expression") {
-            const value = computeExpression(prop.value, variableValues);
+            const value = computeExpression(prop.value, currentVariableValues);
             if (value !== undefined) {
               propValues.set(prop.name, value);
             }
             continue;
           }
           if (prop.type === "action") {
-            const action = getAction(prop, variableValues);
+            const action = getAction(prop, currentVariableValues);
             if (typeof action === "function") {
               propValues.set(prop.name, action);
             }
@@ -324,33 +352,116 @@ export const $propValuesByInstanceSelector = computed(
         const itemKeyVariableId = parameters.get("itemKey");
         if (itemVariableId !== undefined && originalData) {
           for (const [key, value] of getCollectionEntries(originalData)) {
-            variableValues.set(itemVariableId, value);
+            const itemVariableValues = new Map(currentVariableValues);
+            itemVariableValues.set(itemVariableId, value);
             if (itemKeyVariableId !== undefined) {
-              variableValues.set(itemKeyVariableId, key);
+              itemVariableValues.set(itemKeyVariableId, key);
             }
             for (const child of instance.children) {
               if (child.type === "id") {
                 const indexId = getIndexedInstanceId(instanceId, key);
-                traverseInstances([child.value, indexId, ...instanceSelector]);
+                traverseInstances(
+                  [child.value, indexId, ...instanceSelector],
+                  itemVariableValues
+                );
               }
             }
           }
         }
         return;
       }
+
+      if (instance.component === customSlotComponent) {
+        const fragmentRootId = getSlotContentRootId(instances, instanceId);
+        if (fragmentRootId === undefined) {
+          return;
+        }
+
+        const componentDataSource = findCustomSlotComponentDataSource(
+          dataSources,
+          fragmentRootId
+        );
+
+        const schemaDataSource = findCustomSlotSchemaDataSource(
+          dataSources,
+          fragmentRootId
+        );
+
+        const valuesDataSource = findCustomSlotValuesDataSource(
+          dataSources,
+          instanceId
+        );
+
+        const customSlotVariableValues = new Map(globalVariableValues);
+
+        if (componentDataSource?.type === "parameter") {
+          const schema =
+            schemaDataSource?.type === "variable" &&
+            schemaDataSource.value.type === "json"
+              ? parseCustomSlotSchema(schemaDataSource.value.value)
+              : [];
+
+          const values =
+            valuesDataSource?.type === "variable" &&
+            valuesDataSource.value.type === "json"
+              ? parseCustomSlotFieldValues(valuesDataSource.value.value)
+              : {};
+
+          customSlotVariableValues.set(
+            componentDataSource.id,
+            buildCustomSlotComponentValue({
+              schema,
+              values,
+              evaluateExpression: (expression) =>
+                computeExpression(expression, currentVariableValues),
+            })
+          );
+        }
+
+        traverseInstances(
+          [fragmentRootId, ...instanceSelector],
+          customSlotVariableValues
+        );
+        return;
+      }
+
+      if (instance.component === portalComponent) {
+        for (const child of instance.children) {
+          if (child.type === "text" && instance.children.length === 1) {
+            propValues.set(textContentAttribute, child.value);
+          }
+          if (child.type === "expression") {
+            const value = computeExpression(child.value, globalVariableValues);
+            if (value !== undefined) {
+              propValues.set(textContentAttribute, value);
+            }
+          }
+          if (child.type === "id") {
+            traverseInstances(
+              [child.value, ...instanceSelector],
+              globalVariableValues
+            );
+          }
+        }
+        return;
+      }
+
       for (const child of instance.children) {
         // plain text can be edited from props panel
         if (child.type === "text" && instance.children.length === 1) {
           propValues.set(textContentAttribute, child.value);
         }
         if (child.type === "expression") {
-          const value = computeExpression(child.value, variableValues);
+          const value = computeExpression(child.value, currentVariableValues);
           if (value !== undefined) {
             propValues.set(textContentAttribute, value);
           }
         }
         if (child.type === "id") {
-          traverseInstances([child.value, ...instanceSelector]);
+          traverseInstances(
+            [child.value, ...instanceSelector],
+            currentVariableValues
+          );
         }
       }
     };
@@ -444,22 +555,46 @@ export const $variableValuesByInstanceSelector = computed(
       }
       if (variables) {
         for (const variable of variables) {
+          const previousVariableId = variableNames.get(variable.name);
+          const inheritedValue =
+            previousVariableId !== undefined
+              ? variableValues.get(previousVariableId)
+              : undefined;
+
           // delete previous variable with the same name
           // because it is masked and no longer available
-          variableValues.delete(variableNames.get(variable.name) ?? "");
+          if (
+            previousVariableId !== undefined &&
+            previousVariableId !== variable.id
+          ) {
+            variableValues.delete(previousVariableId);
+          }
+
           variableNames.set(variable.name, variable.id);
+
           if (variable.type === "variable") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value ?? variable.value.value);
+            continue;
           }
+
           if (variable.type === "parameter") {
-            const value = dataSourceVariables.get(variable.id);
+            let value = dataSourceVariables.get(variable.id);
+
+            // keep inherited runtime value for scope-carried parameters like customSlot component
+            if (value === undefined && inheritedValue !== undefined) {
+              value = inheritedValue;
+            }
+
             variableValues.set(variable.id, value);
+
             // set page system value
             if (variable.id === page.systemDataSourceId) {
               variableValues.set(variable.id, system);
             }
+            continue;
           }
+
           if (variable.type === "resource") {
             const resource = resources.get(variable.resourceId);
             if (resource) {
@@ -554,6 +689,73 @@ export const $variableValuesByInstanceSelector = computed(
         }
         return;
       }
+
+      if (instance.component === customSlotComponent) {
+        const fragmentRootId = getSlotContentRootId(instances, instanceId);
+        if (fragmentRootId === undefined) {
+          return;
+        }
+
+        const componentDataSource = findCustomSlotComponentDataSource(
+          dataSources,
+          fragmentRootId
+        );
+
+        const schemaDataSource = findCustomSlotSchemaDataSource(
+          dataSources,
+          fragmentRootId
+        );
+
+        const valuesDataSource = findCustomSlotValuesDataSource(
+          dataSources,
+          instanceId
+        );
+
+        const ownerVariableValues = new Map(variableValues);
+        const customSlotVariableValues = new Map(globalVariableValues);
+        const customSlotVariableNames = new Map(globalVariableNames);
+
+        if (componentDataSource?.type === "parameter") {
+          const schema =
+            schemaDataSource?.type === "variable" &&
+            schemaDataSource.value.type === "json"
+              ? parseCustomSlotSchema(schemaDataSource.value.value)
+              : [];
+
+          const values =
+            valuesDataSource?.type === "variable" &&
+            valuesDataSource.value.type === "json"
+              ? parseCustomSlotFieldValues(valuesDataSource.value.value)
+              : {};
+
+          customSlotVariableNames.set(
+            customSlotComponentVariable,
+            componentDataSource.id
+          );
+          const componentValue = buildCustomSlotComponentValue({
+            schema,
+            values,
+            evaluateExpression: (expression) =>
+              computeExpression(expression, variableValues),
+          });
+          ownerVariableValues.set(componentDataSource.id, componentValue);
+          customSlotVariableValues.set(componentDataSource.id, componentValue);
+        }
+
+        // component auch auf dem customSlot-owner sichtbar machen
+        variableValuesByInstanceSelector.set(
+          getInstanceKey(instanceSelector),
+          ownerVariableValues
+        );
+
+        traverseInstances(
+          [fragmentRootId, ...instanceSelector],
+          customSlotVariableValues,
+          customSlotVariableNames
+        );
+        return;
+      }
+
       // reset values for slot children to let slots behave as isolated components
       if (instance.component === portalComponent) {
         // allow accessing global variables in slots

@@ -15,6 +15,8 @@ import { UpgradeIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $isDesignMode, $userPlanFeatures } from "~/shared/nano-states";
+import { customSlotComponent } from "@webstudio-is/sdk";
+import { CustomSlotFieldsSection } from "./custom-slot-fields-section";
 
 export const SettingsPanel = ({
   selectedInstance,
@@ -61,6 +63,10 @@ export const SettingsPanel = ({
             </Link>
           </Flex>
         </PanelBanner>
+      )}
+
+      {selectedInstance.component === customSlotComponent && (
+        <CustomSlotFieldsSection selectedInstance={selectedInstance} />
       )}
     </Box>
   );

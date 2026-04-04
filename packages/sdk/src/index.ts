@@ -15,6 +15,7 @@ export * from "./schema/component-meta";
 
 export * from "./assets";
 export * from "./core-metas";
+export * from "./custom-slot-utils";
 export * from "./instances-utils";
 export * from "./page-utils";
 export * from "./scope";
