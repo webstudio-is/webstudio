@@ -62,6 +62,7 @@ type IntermediateItem = {
   label: string;
   disabled: boolean;
   source: ItemSource;
+  locked: boolean;
   isAdded?: boolean;
   states: string[];
 };
@@ -278,6 +279,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           isEditing={item.id === editingItemId}
           hasStyles={hasStyles(item.id)}
           source={item.source}
+          locked={item.locked}
           onChangeEditing={(isEditing) => {
             onEditItem?.(isEditing ? item.id : undefined);
           }}
@@ -309,6 +311,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onDeleteItem?: (id: Item["id"]) => void;
   onClearStyles?: (id: Item["id"]) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
+  onToggleLockItem?: (id: Item["id"], locked: boolean) => void;
   onConvertToToken?: (id: Item["id"]) => void;
   onCreateItem?: (id: Item["id"], label: string) => void;
   onChangeItem?: (item: Item) => void;
@@ -347,6 +350,7 @@ const matchOrSuggestToCreate = (
       label: search.trim(),
       disabled: false,
       source: "token",
+      locked: false,
       isAdded: false,
       states: [],
     });
@@ -388,6 +392,7 @@ export const StyleSourceInput = (
       disabled: false,
       id: "",
       source: "local",
+      locked: false,
       states: [],
     },
     selectedItem: undefined,
@@ -451,6 +456,7 @@ export const StyleSourceInput = (
                 }}
                 onSelect={props.onSelectItem}
                 onDuplicate={props.onDuplicateItem}
+                onToggleLock={props.onToggleLockItem}
                 onConvertToToken={props.onConvertToToken}
                 onEnable={props.onEnableItem}
                 onDisable={props.onDisableItem}

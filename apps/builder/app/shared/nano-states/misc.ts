@@ -18,6 +18,7 @@ import { type InstanceSelector } from "../tree-utils";
 import type { ChildrenOrientation } from "@webstudio-is/design-system";
 import { $awareness, $selectedInstance } from "../awareness";
 import type { UserPlanFeatures } from "../db/user-plan-features.server";
+import { isStyleSourceLocked } from "../style-source-utils";
 import {
   $project,
   $publisherHost,
@@ -283,6 +284,11 @@ export const $selectedStyleSource = computed(
       styleSources.at(-1)
     );
   }
+);
+
+export const $isSelectedStyleSourceLocked = computed(
+  $selectedStyleSource,
+  (styleSource) => isStyleSourceLocked(styleSource)
 );
 
 /**

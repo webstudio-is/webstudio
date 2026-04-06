@@ -12,6 +12,7 @@ import {
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $selectedInstance } from "~/shared/awareness";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 
 type StyleUpdate =
   | {
@@ -64,6 +65,13 @@ const publishUpdates = (
     selectedStyleSource === undefined ||
     styleSourceSelector === undefined
   ) {
+    return;
+  }
+
+  if (isStyleSourceLocked(selectedStyleSource)) {
+    if (type === "preview") {
+      $ephemeralStyles.set([]);
+    }
     return;
   }
 

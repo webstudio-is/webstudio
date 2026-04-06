@@ -27,6 +27,7 @@ import {
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import { $selectedInstance } from "~/shared/awareness";
+import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { CssValueInputContainer } from "../../../shared/css-value-input";
 import { createBatchUpdate } from "../../../shared/use-style-data";
@@ -274,6 +275,7 @@ const TrackEditor = ({
   autoTrackCount,
   disabled = false,
 }: TrackEditorProps) => {
+  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
   const { plural } = trackTypeLabels[trackType];
   const isAuto =
     property === "grid-auto-columns" || property === "grid-auto-rows";
@@ -375,6 +377,7 @@ const TrackEditor = ({
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       fullWidth
+      contentDisabled={isSelectedStyleSourceLocked}
       trigger={
         <Flex
           align="center"
@@ -386,9 +389,12 @@ const TrackEditor = ({
           </Text>
           {!isAuto && (
             <IconButton
-              disabled={disabled}
+              disabled={disabled || isSelectedStyleSourceLocked}
               onClick={(e) => {
                 e.stopPropagation();
+                if (isSelectedStyleSourceLocked) {
+                  return;
+                }
                 addTrack();
               }}
             >

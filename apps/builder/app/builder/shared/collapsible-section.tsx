@@ -118,6 +118,7 @@ type CollapsibleSectionBaseProps = {
   children: ReactNode;
   fullWidth?: boolean;
   label?: string;
+  contentDisabled?: boolean;
   isOpen?: boolean;
   onOpenChange?: (value: boolean) => void;
 };
@@ -127,6 +128,7 @@ export const CollapsibleSectionRoot = ({
   trigger,
   children,
   fullWidth = false,
+  contentDisabled = false,
   isOpen,
   onOpenChange,
 }: CollapsibleSectionBaseProps) => {
@@ -144,10 +146,12 @@ export const CollapsibleSectionRoot = ({
         <Flex
           gap="2"
           direction="column"
+          aria-disabled={contentDisabled}
           css={{
             pb: theme.panel.paddingBlock,
             px: fullWidth ? 0 : theme.panel.paddingInline,
             paddingTop: 0,
+            pointerEvents: contentDisabled ? "none" : undefined,
             "&:empty": { display: "none" },
           }}
         >

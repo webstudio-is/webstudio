@@ -19,6 +19,7 @@ import {
   type RenameStyleSourceError,
   deleteStyleSource,
   DeleteStyleSourceDialog,
+  setStyleSourceLocked,
 } from "~/builder/shared/style-source-actions";
 import {
   $registeredComponentMetas,
@@ -382,6 +383,7 @@ type StyleSourceInputItem = {
   label: string;
   disabled: boolean;
   source: ItemSource;
+  locked: boolean;
   states: string[];
 };
 
@@ -394,6 +396,7 @@ const convertToInputItem = (
     label: styleSource.type === "local" ? "Local" : styleSource.name,
     disabled: false,
     source: styleSource.type,
+    locked: styleSource.type === "token" && styleSource.locked === true,
     states,
   };
 };
@@ -485,6 +488,9 @@ export const StyleSourcesSection = () => {
             setTokenToDelete(token);
           }
         }}
+        onToggleLockItem={(id, locked) => {
+          setStyleSourceLocked(id, locked);
+        }}
         onSort={(items) => {
           reorderStyleSources(items.map((item) => item.id));
         }}
@@ -527,4 +533,4 @@ export const StyleSourcesSection = () => {
   );
 };
 
-export const __testing__ = { getComponentStates };
+export const __testing__ = { duplicateStyleSource, getComponentStates };

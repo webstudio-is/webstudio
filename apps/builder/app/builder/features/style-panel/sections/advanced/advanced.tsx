@@ -22,6 +22,7 @@ import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
 import { $advancedStyleDeclarations } from "./stores";
 import { $selectedInstanceKey } from "~/shared/awareness";
+import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -34,19 +35,25 @@ const AdvancedStyleSection = (props: {
 }) => {
   const { label, children, properties, onAdd } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
+  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
   const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       fullWidth
+      contentDisabled={isSelectedStyleSourceLocked}
       trigger={
         <SectionTitle
           dots={getDots(styles)}
           suffix={
             <SectionTitleButton
+              disabled={isSelectedStyleSourceLocked}
               prefix={<PlusIcon />}
               onClick={() => {
+                if (isSelectedStyleSourceLocked) {
+                  return;
+                }
                 setIsOpen(true);
                 onAdd();
               }}
@@ -64,6 +71,7 @@ const AdvancedStyleSection = (props: {
 
 export const Section = () => {
   const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
+  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
   const properties = advancedStyleDeclarations.map(
     (styleDecl) => styleDecl.property
   );
@@ -131,18 +139,35 @@ export const Section = () => {
       label="Advanced"
       properties={properties}
       onAdd={() => {
+        if (isSelectedStyleSourceLocked) {
+          return;
+        }
         setShowAddStyleInput(true);
       }}
     >
       <CssEditor
         declarations={advancedStyleDeclarations}
-        onDeleteProperty={handleDeleteProperty}
-        onSetProperty={setProperty}
-        onAddDeclarations={handleAddDeclarations}
-        onDeleteAllDeclarations={handleDeleteAllDeclarations}
+        onDeleteProperty={
+          isSelectedStyleSourceLocked ? () => undefined : handleDeleteProperty
+        }
+        onSetProperty={
+          isSelectedStyleSourceLocked ? () => () => undefined : setProperty
+        }
+        onAddDeclarations={
+          isSelectedStyleSourceLocked ? () => undefined : handleAddDeclarations
+        }
+        onDeleteAllDeclarations={
+          isSelectedStyleSourceLocked
+            ? () => undefined
+            : handleDeleteAllDeclarations
+        }
         recentProperties={recentProperties}
-        showAddStyleInput={showAddStyleInput}
-        onToggleAddStyleInput={setShowAddStyleInput}
+        showAddStyleInput={
+          isSelectedStyleSourceLocked ? false : showAddStyleInput
+        }
+        onToggleAddStyleInput={
+          isSelectedStyleSourceLocked ? () => undefined : setShowAddStyleInput
+        }
       />
     </AdvancedStyleSection>
   );

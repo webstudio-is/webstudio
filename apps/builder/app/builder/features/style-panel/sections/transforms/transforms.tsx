@@ -1,4 +1,5 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import { useStore } from "@nanostores/react";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
@@ -31,6 +32,7 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
+import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
 import { humanizeString } from "~/shared/string-utils";
 import { getDots } from "../../shared/style-section";
 import {
@@ -76,6 +78,7 @@ const TransformAdvancedButton = forwardRef<
   ElementRef<"button">,
   ComponentProps<"button">
 >((props, ref) => {
+  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
   const styles = useComputedStyles(advancedProperties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   return (
@@ -84,7 +87,11 @@ const TransformAdvancedButton = forwardRef<
         {...props}
         ref={ref}
         variant={styleValueSourceColor}
+        disabled={isSelectedStyleSourceLocked}
         onClick={(event) => {
+          if (isSelectedStyleSourceLocked) {
+            return;
+          }
           if (event.altKey) {
             const batch = createBatchUpdate();
             for (const property of advancedProperties) {
@@ -103,12 +110,20 @@ const TransformAdvancedButton = forwardRef<
 });
 
 const TransformAdvancedPopover = () => {
+  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
   return (
     <FloatingPanel
       title="Advanced Transform"
       placement="bottom-within"
       content={
-        <Grid gap="2" css={{ padding: theme.panel.padding }}>
+        <Grid
+          gap="2"
+          aria-disabled={isSelectedStyleSourceLocked}
+          css={{
+            padding: theme.panel.padding,
+            pointerEvents: isSelectedStyleSourceLocked ? "none" : undefined,
+          }}
+        >
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
               label="Backface Visibility"
@@ -137,6 +152,7 @@ const TransformAdvancedPopover = () => {
 
 export const Section = () => {
   const [isOpen, setIsOpen] = useOpenState(label);
+  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
 
   const styles = useComputedStyles(properties);
   const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
@@ -153,6 +169,7 @@ export const Section = () => {
       label={label}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
+      contentDisabled={isSelectedStyleSourceLocked}
       trigger={
         <SectionTitle
           inactive={dots.length === 0}
@@ -164,6 +181,7 @@ export const Section = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SectionTitleButton
+                    disabled={isSelectedStyleSourceLocked}
                     prefix={<PlusIcon />}
                   ></SectionTitleButton>
                 </DropdownMenuTrigger>
@@ -179,6 +197,9 @@ export const Section = () => {
                       })}
                       key={panel}
                       onSelect={() => {
+                        if (isSelectedStyleSourceLocked) {
+                          return;
+                        }
                         addDefaultsForTransormSection({
                           panel,
                           styles,
@@ -228,6 +249,7 @@ const TransformSection = ({
   index: number;
   panel: TransformPanel;
 }) => {
+  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
   const property = panel === "rotate" || panel === "skew" ? "transform" : panel;
   const styleDecl = useComputedStyleDecl(property);
   const values = getHumanizedTextFromTransformLayer(
@@ -243,7 +265,14 @@ const TransformSection = ({
     <FloatingPanel
       title={humanizeString(panel)}
       content={
-        <Flex direction="column" css={{ padding: theme.panel.padding }}>
+        <Flex
+          direction="column"
+          aria-disabled={isSelectedStyleSourceLocked}
+          css={{
+            padding: theme.panel.padding,
+            pointerEvents: isSelectedStyleSourceLocked ? "none" : undefined,
+          }}
+        >
           {panel === "translate" && <TranslatePanelContent />}
           {panel === "scale" && <ScalePanelContent />}
           {panel === "rotate" && <RotatePanelContent />}
@@ -261,6 +290,7 @@ const TransformSection = ({
             <SmallToggleButton
               variant="normal"
               pressed={value.hidden}
+              disabled={isSelectedStyleSourceLocked}
               tabIndex={-1}
               onPressedChange={() =>
                 handleHideTransformProperty({
@@ -272,6 +302,7 @@ const TransformSection = ({
             />
             <SmallIconButton
               variant="destructive"
+              disabled={isSelectedStyleSourceLocked}
               tabIndex={-1}
               icon={<MinusIcon />}
               onClick={() =>

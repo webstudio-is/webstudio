@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useStore } from "@nanostores/react";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import {
@@ -10,6 +11,7 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
+import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
 import { useComputedStyles } from "./model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { PropertySectionLabel } from "../property-label";
@@ -42,12 +44,14 @@ export const StyleSection = (props: {
 }) => {
   const { label, children, properties, fullWidth, suffix } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
+  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
   const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot
       label={label}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
+      contentDisabled={isSelectedStyleSourceLocked}
       trigger={
         <SectionTitle dots={getDots(styles)} suffix={suffix}>
           <SectionTitleLabel>{label}</SectionTitleLabel>
@@ -71,6 +75,7 @@ export const RepeatedStyleSection = (props: {
   const { label, description, children, properties, onAdd, collapsible } =
     props;
   const [isOpen, setIsOpen] = useOpenState(label);
+  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
   const styles = useComputedStyles(properties);
   const dots = getDots(styles);
 
@@ -80,6 +85,7 @@ export const RepeatedStyleSection = (props: {
       label={label}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
+      contentDisabled={isSelectedStyleSourceLocked}
       trigger={
         <SectionTitle
           inactive={dots.length === 0}
@@ -87,8 +93,12 @@ export const RepeatedStyleSection = (props: {
           dots={getDots(styles)}
           suffix={
             <SectionTitleButton
+              disabled={isSelectedStyleSourceLocked}
               prefix={<PlusIcon />}
               onClick={() => {
+                if (isSelectedStyleSourceLocked) {
+                  return;
+                }
                 setIsOpen(true);
                 onAdd();
               }}
