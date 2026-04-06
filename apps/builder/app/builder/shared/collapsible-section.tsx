@@ -8,6 +8,8 @@ import {
   SectionTitleButton,
   Separator,
   theme,
+  getDisabledFocusRegionProps,
+  useDisabledFocusRegion,
 } from "@webstudio-is/design-system";
 import {
   createContext,
@@ -132,6 +134,8 @@ export const CollapsibleSectionRoot = ({
   isOpen,
   onOpenChange,
 }: CollapsibleSectionBaseProps) => {
+  const contentRef = useDisabledFocusRegion<HTMLDivElement>(contentDisabled);
+
   return (
     <Collapsible.Root defaultOpen open={isOpen} onOpenChange={onOpenChange}>
       <Collapsible.Trigger asChild>
@@ -144,9 +148,10 @@ export const CollapsibleSectionRoot = ({
 
       <Collapsible.Content asChild>
         <Flex
+          ref={contentRef}
           gap="2"
           direction="column"
-          aria-disabled={contentDisabled}
+          {...getDisabledFocusRegionProps(contentDisabled)}
           css={{
             pb: theme.panel.paddingBlock,
             px: fullWidth ? 0 : theme.panel.paddingInline,
