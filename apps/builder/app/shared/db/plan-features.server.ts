@@ -54,7 +54,9 @@ const mergeProductMetas = (productMetas: PlanFeatures[]): PlanFeatures => {
 export const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return new Map();
+    if (!Array.isArray(parsed)) {
+      return new Map();
+    }
 
     type PlanEntry = {
       name: string;
