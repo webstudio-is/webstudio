@@ -8,6 +8,8 @@ import {
   theme,
   ToggleGroup,
   ToggleGroupButton,
+  PanelBanner,
+  panelBannerIconColor,
 } from "@webstudio-is/design-system";
 import { RepeatGridIcon, ListViewIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -16,8 +18,9 @@ import { CreateProject } from "./project-dialogs";
 import { Header, Main } from "../shared/layout";
 import { useSearchParams } from "react-router-dom";
 import { setIsSubsetOf } from "~/shared/shim";
+import { useStore } from "@nanostores/react";
 import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { $permissions } from "~/shared/nano-states";
 import { Tag } from "./tags";
 import {
   SortSelect,
@@ -25,11 +28,12 @@ import {
   type SortState,
   type SortField,
 } from "./sort";
+import { AlertIcon } from "@webstudio-is/icons";
+import { SEAT_SUSPENDED_MESSAGE } from "~/shared/notifications/seat-suspended";
 import { ProjectsList } from "./projects-list";
 
 export const ProjectsGrid = ({
   projects,
-  userPlanFeatures,
   publisherHost,
   projectsTags,
 }: ProjectsProps) => {
@@ -48,7 +52,6 @@ export const ProjectsGrid = ({
             <ListItem index={0} key={project.id} asChild>
               <ProjectCard
                 project={project}
-                userPlanFeatures={userPlanFeatures}
                 publisherHost={publisherHost}
                 projectsTags={projectsTags}
               />
@@ -62,12 +65,14 @@ export const ProjectsGrid = ({
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;
-  userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectsTags: User["projectsTags"];
+  currentWorkspaceId?: string;
+  isWorkspaceSuspended?: boolean;
 };
 
 export const Projects = (props: ProjectsProps) => {
+  const permissions = useStore($permissions);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTags = searchParams.getAll("tag");
   const viewMode = (searchParams.get("view") as "grid" | "list") ?? "grid";
@@ -138,7 +143,9 @@ export const Projects = (props: ProjectsProps) => {
             </ToggleGroupButton>
           </ToggleGroup>
           <SortSelect value={sortState} onValueChange={handleSortChange} />
-          <CreateProject />
+          {permissions.canCreateProject && (
+            <CreateProject workspaceId={props.currentWorkspaceId} />
+          )}
         </Flex>
       </Header>
       <Flex
@@ -168,16 +175,34 @@ export const Projects = (props: ProjectsProps) => {
       </Flex>
       <Flex css={{ paddingInline: theme.spacing[13] }}>
         {projects.length === 0 ? (
-          <Text
-            variant="brandRegular"
-            css={{
-              paddingBlock: theme.spacing[20],
-              textAlign: "center",
-              flexGrow: 1,
-            }}
-          >
-            No projects found
-          </Text>
+          props.isWorkspaceSuspended ? (
+            <Flex
+              css={{
+                paddingBlock: theme.spacing[20],
+                flexGrow: 1,
+                justifyContent: "center",
+              }}
+            >
+              <PanelBanner variant="warning" css={{ maxWidth: 400 }}>
+                <Flex align="center" gap="1">
+                  <AlertIcon color={panelBannerIconColor} />
+                  <Text variant="regularBold">Workspace suspended</Text>
+                </Flex>
+                <Text variant="regular">{SEAT_SUSPENDED_MESSAGE}</Text>
+              </PanelBanner>
+            </Flex>
+          ) : (
+            <Text
+              variant="brandRegular"
+              css={{
+                paddingBlock: theme.spacing[20],
+                textAlign: "center",
+                flexGrow: 1,
+              }}
+            >
+              No projects found
+            </Text>
+          )
         ) : viewMode === "grid" ? (
           <ProjectsGrid {...props} projects={projects} />
         ) : (

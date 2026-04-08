@@ -2,13 +2,13 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Box, StorySection, theme } from "@webstudio-is/design-system";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $pages, $instances } from "~/shared/sync/data-stores";
-import { $userPlanFeatures } from "~/shared/nano-states";
+import { $planFeatures } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { $awareness } from "~/shared/awareness";
 import { VariablesSection as VariablesSectionComponent } from "./variables-section";
 
-$userPlanFeatures.set({
-  ...$userPlanFeatures.get(),
+$planFeatures.set({
+  ...$planFeatures.get(),
   allowDynamicData: true,
 });
 

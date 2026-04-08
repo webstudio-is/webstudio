@@ -5,6 +5,8 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
+import { type Role, roleLabels } from "@webstudio-is/project";
+import { roleDescriptions } from "~/shared/permissions";
 import {
   Box,
   Button,
@@ -108,9 +110,9 @@ const Menu = ({
   const [isOpen, setIsOpen] = useState(false);
   const [customLinkName, setCustomLinkName] = useState<string>(name);
 
-  const handleCheckedChange = (relation: Relation) => (checked: boolean) => {
+  const handleCheckedChange = (role: Role) => (checked: boolean) => {
     if (checked) {
-      onChange({ ...value, relation });
+      onChange({ ...value, relation: role });
     }
   };
 
@@ -164,11 +166,10 @@ const Menu = ({
           <Permission
             checked={value.relation === "viewers"}
             onCheckedChange={handleCheckedChange("viewers")}
-            title="View"
-            //info="Recipients can view, copy instances and clone the project"
+            title={roleLabels.viewers}
             info={
               <Flex direction="column">
-                Recipients can view, copy instances and clone the project.
+                {roleDescriptions.viewers}
                 {!allowAdditionalPermissions && (
                   <>
                     <br />
@@ -255,11 +256,10 @@ const Menu = ({
             disabled={!allowAdditionalPermissions}
             onCheckedChange={handleCheckedChange("editors")}
             checked={value.relation === "editors"}
-            title="Content"
+            title={roleLabels.editors}
             info={
               <Flex direction="column">
-                Recipients can edit content only, such as text, images, and
-                predefined components.
+                {roleDescriptions.editors}
                 {!allowAdditionalPermissions && (
                   <>
                     <br />
@@ -318,19 +318,18 @@ const Menu = ({
           <Permission
             onCheckedChange={handleCheckedChange("builders")}
             checked={value.relation === "builders"}
-            title="Build"
-            info="Recipients can make any changes but can not publish the project."
+            title={roleLabels.builders}
+            info={roleDescriptions.builders}
           />
 
           <Permission
             disabled={!allowAdditionalPermissions}
             onCheckedChange={handleCheckedChange("administrators")}
             checked={value.relation === "administrators"}
-            title="Admin"
+            title={roleLabels.administrators}
             info={
               <Flex direction="column">
-                Recipients can make any changes and can also publish the
-                project.
+                {roleDescriptions.administrators}
                 {!allowAdditionalPermissions && (
                   <>
                     <br />
@@ -377,12 +376,10 @@ const itemStyle = css({
   backgroundColor: theme.colors.backgroundPanel,
 });
 
-type Relation = "viewers" | "editors" | "builders" | "administrators";
-
 export type LinkOptions = {
   token: string;
   name: string;
-  relation: Relation;
+  relation: Role;
   canCopy: boolean;
   canClone: boolean;
   canPublish: boolean;
@@ -396,7 +393,7 @@ type SharedLinkItemType = {
   allowAdditionalPermissions: boolean;
 };
 
-const relationToMode: Record<Relation, BuilderMode> = {
+const relationToMode: Record<Role, BuilderMode> = {
   viewers: "preview",
   editors: "content",
   builders: "design",

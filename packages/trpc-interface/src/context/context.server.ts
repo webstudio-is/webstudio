@@ -1,5 +1,6 @@
 import type { TrpcInterfaceClient } from "../shared/shared-router";
 import type { Client } from "@webstudio-is/postgrest/index.server";
+import type { PlanFeatures, Purchase } from "../shared/plan-features";
 
 /**
  * All necessary parameters for Authorization
@@ -64,21 +65,6 @@ type DeploymentContext = {
   };
 };
 
-type UserPlanFeatures = {
-  allowAdditionalPermissions: boolean;
-  allowDynamicData: boolean;
-  allowContentMode: boolean;
-  allowStagingPublish: boolean;
-  maxContactEmails: number;
-  maxDomainsAllowedPerUser: number;
-  maxPublishesAllowedPerUser: number;
-  /** All user purchases (subscriptions and LTDs). subscriptionId present only for recurring subscriptions */
-  purchases: Array<{
-    planName: string;
-    subscriptionId?: string;
-  }>;
-};
-
 type TrpcCache = {
   setMaxAge: (path: string, value: number) => void;
   getMaxAge: (path: string) => number | undefined;
@@ -98,8 +84,15 @@ export type AppContext = {
   domain: DomainContext;
   deployment: DeploymentContext;
   entri: EntriContext;
-  userPlanFeatures: UserPlanFeatures | undefined;
+  planFeatures: PlanFeatures;
+  purchases: Array<Purchase>;
   trpcCache: TrpcCache;
   postgrest: PostgrestContext;
   createTokenContext: (token: string) => Promise<AppContext>;
+  /**
+   * Resolves plan features for a given user ID.
+   * Used by workspace authorization to check whether the workspace owner's plan
+   * still supports workspace features (maxWorkspaces > 1) after a potential downgrade.
+   */
+  getOwnerPlanFeatures: (userId: string) => Promise<PlanFeatures>;
 };

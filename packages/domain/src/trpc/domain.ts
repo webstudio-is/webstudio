@@ -240,16 +240,13 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const { userPlanFeatures } = ctx;
-        if (userPlanFeatures === undefined) {
-          throw new Error("Missing userPlanFeatures");
-        }
+        const { planFeatures } = ctx;
 
         return await db.create(
           {
             projectId: input.projectId,
             domain: input.domain,
-            maxDomainsAllowedPerUser: userPlanFeatures.maxDomainsAllowedPerUser,
+            maxDomainsAllowedPerUser: planFeatures.maxDomainsAllowedPerUser,
           },
           ctx
         );

@@ -22,7 +22,6 @@ const env = {
 
   // Assets
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
-  MAX_ASSETS_PER_PROJECT: process.env.MAX_ASSETS_PER_PROJECT,
 
   // Remote assets
   S3_ENDPOINT: process.env.S3_ENDPOINT,
@@ -56,20 +55,39 @@ const env = {
   STAGING_USERNAME: process.env.STAGING_USERNAME ?? "admin",
   STAGING_PASSWORD: process.env.STAGING_PASSWORD ?? "webstudio",
 
-  FEATURES: process.env.FEATURES ?? "",
+  FEATURE_FLAGS: process.env.FEATURE_FLAGS ?? "",
 
-  // current user plan features (default)
-  USER_PLAN: process.env.USER_PLAN ?? "",
+  // Plan definitions for local dev / staging.
+  // JSON array of {name, features} objects; features are validated against PlanFeaturesSchema,
+  // then all entries are merged together (booleans: any, numbers: max).
+  // Example: PLANS='[{"name":"Pro","features":{"canDownloadAssets":true,"maxWorkspaces":5}}]'
+  PLANS: process.env.PLANS ?? "[]",
 
   POSTGREST_URL: process.env.POSTGREST_URL ?? "http://localhost:3000",
   POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
 
+  /** Payment worker base URL (e.g. https://apps.webstudio.is/builder-payments) */
+  PAYMENT_WORKER_URL: process.env.PAYMENT_WORKER_URL ?? "",
+  /** Shared secret token for authenticating requests to the payment worker */
+  PAYMENT_WORKER_TOKEN: process.env.PAYMENT_WORKER_TOKEN ?? "",
+
   SECURE_COOKIE: true,
 
-  // Used for project oauth login flow @todo remove ??
+  // Used for project oauth login flow
   AUTH_WS_CLIENT_ID: process.env.AUTH_WS_CLIENT_ID ?? "12345",
   AUTH_WS_CLIENT_SECRET: process.env.AUTH_WS_CLIENT_SECRET ?? "12345678",
 };
+
+// Reject default OAuth secrets in production.
+if (
+  env.DEPLOYMENT_ENVIRONMENT === "production" &&
+  (env.AUTH_WS_CLIENT_ID === "12345" ||
+    env.AUTH_WS_CLIENT_SECRET === "12345678")
+) {
+  throw new Error(
+    "AUTH_WS_CLIENT_ID and AUTH_WS_CLIENT_SECRET must be set in production"
+  );
+}
 
 export type ServerEnv = typeof env;
 
