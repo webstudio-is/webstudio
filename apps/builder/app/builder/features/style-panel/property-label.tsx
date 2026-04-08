@@ -19,11 +19,12 @@ import {
 import { humanizeString } from "~/shared/string-utils";
 import {
   $breakpoints,
-  $isSelectedStyleSourceLocked,
+  $selectedStyleSource,
   $instances,
   $registeredComponentMetas,
   $styleSources,
 } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import type {
   ComputedStyleDecl,
   StyleValueSourceColor,
@@ -241,7 +242,9 @@ export const PropertyLabel = ({
   disabled?: boolean;
 }) => {
   const styles = useComputedStyles(properties);
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
@@ -311,7 +314,9 @@ export const PropertySectionLabel = ({
   properties: [CssProperty, ...CssProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
@@ -446,7 +451,9 @@ export const PropertyValueTooltip = ({
   children: ReactNode;
 }) => {
   const styles = useComputedStyles(properties);
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
     if (isSelectedStyleSourceLocked) {

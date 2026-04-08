@@ -32,7 +32,8 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
+import { $selectedStyleSource } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import { humanizeString } from "~/shared/string-utils";
 import { getDots } from "../../shared/style-section";
 import {
@@ -78,7 +79,9 @@ const TransformAdvancedButton = forwardRef<
   ElementRef<"button">,
   ComponentProps<"button">
 >((props, ref) => {
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const styles = useComputedStyles(advancedProperties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   return (
@@ -110,7 +113,9 @@ const TransformAdvancedButton = forwardRef<
 });
 
 const TransformAdvancedPopover = () => {
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   return (
     <FloatingPanel
       title="Advanced Transform"
@@ -152,7 +157,9 @@ const TransformAdvancedPopover = () => {
 
 export const Section = () => {
   const [isOpen, setIsOpen] = useOpenState(label);
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
 
   const styles = useComputedStyles(properties);
   const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
@@ -249,7 +256,9 @@ const TransformSection = ({
   index: number;
   panel: TransformPanel;
 }) => {
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const property = panel === "rotate" || panel === "skew" ? "transform" : panel;
   const styleDecl = useComputedStyleDecl(property);
   const values = getHumanizedTextFromTransformLayer(

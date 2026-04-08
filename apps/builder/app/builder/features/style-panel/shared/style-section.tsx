@@ -11,7 +11,8 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
+import { $selectedStyleSource } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import { useComputedStyles } from "./model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { PropertySectionLabel } from "../property-label";
@@ -44,7 +45,9 @@ export const StyleSection = (props: {
 }) => {
   const { label, children, properties, fullWidth, suffix } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot
@@ -75,7 +78,9 @@ export const RepeatedStyleSection = (props: {
   const { label, description, children, properties, onAdd, collapsible } =
     props;
   const [isOpen, setIsOpen] = useOpenState(label);
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const styles = useComputedStyles(properties);
   const dots = getDots(styles);
 

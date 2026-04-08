@@ -31,7 +31,8 @@ import {
 } from "@webstudio-is/design-system";
 import { SelectControl } from "../../controls";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
-import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
+import { $selectedStyleSource } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import { BackgroundSize } from "./background-size";
 import { BackgroundGradient } from "./background-gradient";
 import { BackgroundImage } from "./background-image";
@@ -324,7 +325,9 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
 };
 
 const OtherLayerProperties = ({ index }: { index: number }) => {
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   return (
     <CollapsibleSectionRoot
       label={"More properties"}

@@ -23,7 +23,8 @@ import {
   ColorThumb,
 } from "@webstudio-is/design-system";
 import { repeatUntil } from "~/shared/array-utils";
-import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
+import { $selectedStyleSource } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
 
@@ -386,7 +387,9 @@ export const RepeatedStyle = (props: {
     renderItemButtons,
     renderPanelTitleSuffix,
   } = props;
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   // first property should describe the amount of layers or tuple items
   const primaryValue = styles[0].cascadedValue;
   let primaryItems: StyleValue[] = [];

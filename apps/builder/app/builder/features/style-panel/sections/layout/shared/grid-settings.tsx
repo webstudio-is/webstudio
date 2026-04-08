@@ -27,7 +27,8 @@ import {
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import { $selectedInstance } from "~/shared/awareness";
-import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
+import { $selectedStyleSource } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { CssValueInputContainer } from "../../../shared/css-value-input";
 import { createBatchUpdate } from "../../../shared/use-style-data";
@@ -275,7 +276,9 @@ const TrackEditor = ({
   autoTrackCount,
   disabled = false,
 }: TrackEditorProps) => {
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const { plural } = trackTypeLabels[trackType];
   const isAuto =
     property === "grid-auto-columns" || property === "grid-auto-rows";

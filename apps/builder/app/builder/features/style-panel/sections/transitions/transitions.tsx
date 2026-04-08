@@ -16,9 +16,10 @@ import {
   useOpenState,
 } from "~/builder/shared/collapsible-section";
 import {
-  $isSelectedStyleSourceLocked,
+  $selectedStyleSource,
   $selectedOrLastStyleSourceSelector,
 } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import { humanizeString } from "~/shared/string-utils";
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -89,7 +90,9 @@ const getLayerLabel = ({
 
 export const Section = () => {
   const [isOpen, setIsOpen] = useOpenState(label);
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
 
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector

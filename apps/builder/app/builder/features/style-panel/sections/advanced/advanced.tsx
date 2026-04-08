@@ -22,7 +22,8 @@ import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
 import { $advancedStyleDeclarations } from "./stores";
 import { $selectedInstanceKey } from "~/shared/awareness";
-import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
+import { $selectedStyleSource } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -35,7 +36,9 @@ const AdvancedStyleSection = (props: {
 }) => {
   const { label, children, properties, onAdd } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot
@@ -71,7 +74,9 @@ const AdvancedStyleSection = (props: {
 
 export const Section = () => {
   const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const properties = advancedStyleDeclarations.map(
     (styleDecl) => styleDecl.property
   );

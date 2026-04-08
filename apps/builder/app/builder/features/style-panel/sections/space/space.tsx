@@ -15,7 +15,8 @@ import { useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
-import { $isSelectedStyleSourceLocked } from "~/shared/nano-states";
+import { $selectedStyleSource } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 
 const movementMapSpace = {
   "margin-top": ["margin-bottom", "margin-right", "padding-top", "margin-left"],
@@ -143,7 +144,9 @@ const Cell = ({
 export { spaceProperties as properties };
 
 export const Section = () => {
-  const isSelectedStyleSourceLocked = useStore($isSelectedStyleSourceLocked);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const styles = useComputedStyles(spaceProperties);
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
   const styleValue = styles.find(
