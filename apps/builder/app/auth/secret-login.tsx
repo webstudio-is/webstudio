@@ -31,7 +31,7 @@ export const SecretLogin = ({ devPlanNames }: SecretLoginProps) => {
           />
           <select name="devPlan">
             <option value="">Default plan</option>
-            {devPlanNames.map((name) => (
+            {devPlanNames?.map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>
