@@ -151,8 +151,21 @@ describe("parsePlansEnv", () => {
     expect(parsePlansEnv(validEntry).size).toBe(0);
   });
 
-  test("skips entries missing features key", () => {
-    expect(parsePlansEnv(JSON.stringify([{ name: "Pro" }])).size).toBe(0);
+  test("extends-only entry (no features key) inherits parent features", () => {
+    const result = parsePlansEnv(
+      JSON.stringify([
+        { name: "Pro", features: fullFeatures },
+        { name: "LTD T2", extends: "Pro" },
+      ])
+    );
+    expect(result.size).toBe(2);
+    expect(result.get("LTD T2")).toEqual(result.get("Pro"));
+  });
+
+  test("entry with no features key and no extends resolves to defaultPlanFeatures", () => {
+    const result = parsePlansEnv(JSON.stringify([{ name: "Free" }]));
+    expect(result.size).toBe(1);
+    expect(result.get("Free")).toEqual(defaultPlanFeatures);
   });
 
   test("extends: child inherits parent features and overrides specific fields", () => {

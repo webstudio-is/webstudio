@@ -69,17 +69,18 @@ export const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
       if (
         typeof item !== "object" ||
         item === null ||
-        typeof item.name !== "string" ||
-        !("features" in item)
+        typeof item.name !== "string"
       ) {
-        console.error("Invalid PLANS entry (missing name or features):", item);
+        console.error("Invalid PLANS entry (missing name):", item);
         return [];
       }
       if ("extends" in item && typeof item.extends !== "string") {
         console.error("Invalid PLANS entry (extends must be a string):", item);
         return [];
       }
-      const result = PlanFeaturesSchema.partial().safeParse(item.features);
+      const result = PlanFeaturesSchema.partial().safeParse(
+        "features" in item ? item.features : {}
+      );
       if (!result.success) {
         console.error(
           `Invalid PLANS entry "${item.name}" features:`,
