@@ -473,7 +473,7 @@ export const accept = async (
 
   // Wrap side effects so every failure path reverts the atomic claim.
   try {
-    return await performAcceptSideEffect({
+    await performAcceptSideEffect({
       notification: notification.data,
       userId,
       targetWorkspaceId,
@@ -488,7 +488,6 @@ export const accept = async (
     await revertStatus();
     throw error;
   }
-  return {};
 };
 
 /**
@@ -509,7 +508,7 @@ const performAcceptSideEffect = async ({
   targetWorkspaceId: string | undefined;
   autoDecline: () => Promise<void>;
   context: AppContext;
-}): Promise<{ workspaceId?: string }> => {
+}) => {
   if (notification.type === "workspaceInvite") {
     const parseResult = WorkspaceInvitePayload.safeParse(notification.payload);
     if (parseResult.success === false) {
@@ -553,7 +552,7 @@ const performAcceptSideEffect = async ({
     if (member.error) {
       throw member.error;
     }
-    return { workspaceId: parsed.workspaceId };
+    return;
   }
 
   if (notification.type === "projectTransfer") {
@@ -650,7 +649,7 @@ const performAcceptSideEffect = async ({
       if (updateResult.error) {
         throw new Error("Failed to reassign the project");
       }
-      return {};
+      return;
     }
 
     // No workspace specified — assign to receiver's default workspace
@@ -683,10 +682,7 @@ const performAcceptSideEffect = async ({
     if (updateResult.error) {
       throw new Error("Failed to reassign the project");
     }
-    return {};
   }
-
-  return {};
 };
 
 export const decline = async (

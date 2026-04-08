@@ -31,7 +31,7 @@ const proPlan = {
   maxProjectsAllowedPerUser: 100,
   maxAssetsPerProject: 500,
   minSeats: 0,
-  maxSeats: 0,
+  maxSeatsPerWorkspace: 0,
 };
 
 const freePlan = {
@@ -48,7 +48,7 @@ const freePlan = {
   maxProjectsAllowedPerUser: 2,
   maxAssetsPerProject: 50,
   minSeats: 0,
-  maxSeats: 0,
+  maxSeatsPerWorkspace: 0,
 };
 
 describe("getPermissions", () => {

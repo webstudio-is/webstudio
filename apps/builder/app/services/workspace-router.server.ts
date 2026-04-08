@@ -48,7 +48,7 @@ const syncOwnerSeats = async (
     subscriptionId: subscription.subscriptionId,
     newQuantity: memberCount,
     minSeats: planFeatures.minSeats,
-    maxSeats: planFeatures.maxSeats,
+    maxSeats: planFeatures.maxSeatsPerWorkspace,
   });
 
   if (result === null) {
