@@ -5,6 +5,7 @@ import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
 import { uploadAssets } from "./upload-assets";
+import type { StyleValue } from "@webstudio-is/css-engine";
 
 /**
  * Replace an image asset with a new file.
@@ -88,8 +89,6 @@ export const replaceAsset = async (
 
   toast.success("Asset replaced successfully");
 };
-
-import type { StyleValue } from "@webstudio-is/css-engine";
 
 const replaceAssetInStyleValue = (
   styleValue: StyleValue,
