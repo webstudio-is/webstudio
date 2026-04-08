@@ -29,7 +29,7 @@ import {
   type SortField,
 } from "./sort";
 import { AlertIcon } from "@webstudio-is/icons";
-import { SEAT_SUSPENDED_MESSAGE } from "~/shared/notifications/seat-suspended";
+import { getSeatSuspendedMessage } from "~/shared/notifications/seat-suspended";
 import { ProjectsList } from "./projects-list";
 
 export const ProjectsGrid = ({
@@ -68,6 +68,7 @@ type ProjectsProps = {
   publisherHost: string;
   projectsTags: User["projectsTags"];
   currentWorkspaceId?: string;
+  workspaceName?: string;
   isWorkspaceSuspended?: boolean;
 };
 
@@ -188,7 +189,9 @@ export const Projects = (props: ProjectsProps) => {
                   <AlertIcon color={panelBannerIconColor} />
                   <Text variant="regularBold">Workspace suspended</Text>
                 </Flex>
-                <Text variant="regular">{SEAT_SUSPENDED_MESSAGE}</Text>
+                <Text variant="regular">
+                  {getSeatSuspendedMessage(props.workspaceName)}
+                </Text>
               </PanelBanner>
             </Flex>
           ) : (

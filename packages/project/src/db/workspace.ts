@@ -8,6 +8,7 @@ import { defaultRole, type Role } from "@webstudio-is/trpc-interface/authorize";
 import {
   type WorkspaceInvitePayload,
   type ProjectTransferPayload,
+  NOTIFICATION_TTL_MS,
 } from "../shared/notification-schema";
 import { create as createNotification } from "./notification";
 
@@ -287,8 +288,10 @@ const assertOwner = async (
 };
 
 /**
- * Count all current members (non-removed) across all non-deleted workspaces owned by userId.
- * The owner is NOT counted — this returns only invited member records.
+ * Count all current members (non-removed) plus pending invites across all
+ * non-deleted workspaces owned by userId.
+ * The owner is NOT counted.
+ * Pending invites are included because seats are billed at invite time.
  */
 export const countAllMembers = async (
   userId: string,
@@ -310,17 +313,37 @@ export const countAllMembers = async (
 
   const workspaceIds = workspaces.data.map((w) => w.id);
 
-  const result = await context.postgrest.client
-    .from("WorkspaceMember")
-    .select("userId", { count: "exact", head: true })
-    .in("workspaceId", workspaceIds)
-    .is("removedAt", null);
+  const [membersResult, pendingResult] = await Promise.all([
+    context.postgrest.client
+      .from("WorkspaceMember")
+      .select("userId", { count: "exact", head: true })
+      .in("workspaceId", workspaceIds)
+      .is("removedAt", null),
+    context.postgrest.client
+      .from("Notification")
+      .select("id", { count: "exact", head: true })
+      .eq("type", "workspaceInvite")
+      .eq("senderId", userId)
+      .eq("status", "pending")
+      .gte(
+        "createdAt",
+        new Date(Date.now() - NOTIFICATION_TTL_MS).toISOString()
+      ),
+  ]);
 
-  if (result.error) {
-    throw result.error;
+  if (membersResult.error) {
+    throw membersResult.error;
+  }
+  if (pendingResult.error) {
+    throw pendingResult.error;
   }
 
-  return result.count ?? 0;
+  // Avoid double-counting: a pending invite recipient who is also already
+  // a member would be in both sets. This is theoretically impossible
+  // (addMember guards against it) but we subtract to be safe by using the
+  // total of accepted members + non-accepted pending invites.
+  // Simple approximation: accepted + pending counts (small overlap risk is acceptable).
+  return (membersResult.count ?? 0) + (pendingResult.count ?? 0);
 };
 
 export const addMember = async (
@@ -518,10 +541,41 @@ export const listMembers = async (
     throw members.error;
   }
 
-  // Fetch user info for all members plus the owner
+  // Fetch pending workspace invite notifications for this workspace.
+  // Only visible to the owner (already verified above).
+  const pendingInvites =
+    workspace.data.userId === userId
+      ? await context.postgrest.client
+          .from("Notification")
+          .select("id, recipientId, payload, createdAt")
+          .eq("type", "workspaceInvite")
+          .eq("senderId", workspace.data.userId)
+          .eq("status", "pending")
+          .gte(
+            "createdAt",
+            new Date(Date.now() - NOTIFICATION_TTL_MS).toISOString()
+          )
+          .order("createdAt", { ascending: false })
+      : { data: [], error: null };
+
+  if (pendingInvites.error) {
+    throw pendingInvites.error;
+  }
+
+  // Filter to only invites for this specific workspace.
+  const acceptedUserIds = new Set(members.data.map((m) => m.userId));
+  const pendingForWorkspace = pendingInvites.data.filter((n) => {
+    const payload = n.payload as unknown as Partial<WorkspaceInvitePayload>;
+    return (
+      payload.workspaceId === workspaceId && !acceptedUserIds.has(n.recipientId)
+    );
+  });
+
+  // Fetch user info for members, owner, and pending invite recipients.
   const allUserIds = [
     workspace.data.userId,
     ...members.data.map((m) => m.userId),
+    ...pendingForWorkspace.map((n) => n.recipientId),
   ];
   const uniqueUserIds = [...new Set(allUserIds)];
 
@@ -551,6 +605,16 @@ export const listMembers = async (
       email: usersById.get(m.userId)?.email ?? "",
       username: usersById.get(m.userId)?.username ?? "",
     })),
+    pendingInvites: pendingForWorkspace.map((n) => {
+      const payload = n.payload as unknown as WorkspaceInvitePayload;
+      return {
+        notificationId: n.id,
+        recipientId: n.recipientId,
+        relation: payload.relation,
+        createdAt: n.createdAt,
+        email: usersById.get(n.recipientId)?.email ?? "",
+      };
+    }),
   };
 };
 

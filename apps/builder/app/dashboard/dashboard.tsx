@@ -360,6 +360,7 @@ export const Dashboard = () => {
             publisherHost={publisherHost}
             projectsTags={user.projectsTags}
             currentWorkspaceId={currentWorkspaceId}
+            workspaceName={currentWorkspace?.name}
             isWorkspaceSuspended={isWorkspaceSuspended}
           />
         )}

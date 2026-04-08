@@ -205,18 +205,12 @@ const MemberList = ({
   workspaceId,
   canRemove,
   refreshKey,
-  invitedEmails,
   onRefresh,
-  onRemoveInvited,
-  onChangeInvitedRole,
 }: {
   workspaceId: string;
   canRemove: boolean;
   refreshKey: number;
-  invitedEmails: Map<string, { relation: Role; notificationId: string }>;
   onRefresh: () => void;
-  onRemoveInvited: (email: string) => void;
-  onChangeInvitedRole: (email: string, relation: Role) => void;
 }) => {
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
 
@@ -234,15 +228,7 @@ const MemberList = ({
     );
   }
 
-  const { owner, members } = result;
-
-  // Show invited emails that aren't already in the real member list.
-  // This makes behavior identical for existing vs non-existing emails,
-  // preventing email enumeration.
-  const knownEmails = new Set(members.map((m) => m.email));
-  const pendingEntries = [...invitedEmails].filter(
-    ([email]) => knownEmails.has(email) === false
-  );
+  const { owner, members, pendingInvites } = result;
 
   let index = 0;
 
@@ -263,16 +249,24 @@ const MemberList = ({
             onRefresh={onRefresh}
           />
         ))}
-        {pendingEntries.map(([email, { relation }]) => (
+        {pendingInvites.map((invite) => (
           <MemberRow
-            key={email}
-            email={email}
+            key={invite.notificationId}
+            email={invite.email}
             role="pending"
-            relation={relation}
+            relation={invite.relation as Role}
             canRemove={canRemove}
             index={index++}
-            onRemove={() => onRemoveInvited(email)}
-            onChangeRole={(newRole) => onChangeInvitedRole(email, newRole)}
+            onRemove={() => {
+              nativeClient.notification.cancel
+                .mutate({ notificationId: invite.notificationId })
+                .then(() => onRefresh())
+                .catch(() => {});
+            }}
+            onChangeRole={() => {
+              // Role change on pending invites is not supported.
+              // Cancel the invite and re-invite with the new role.
+            }}
           />
         ))}
       </Box>
@@ -297,9 +291,6 @@ export const ManageMembersDialog = ({
   const [membersKey, setMembersKey] = useState(0);
   const [inviting, setInviting] = useState(false);
   const [inviteRelation, setInviteRelation] = useState<Role>("viewers");
-  const [invitedEmails, setInvitedEmails] = useState<
-    Map<string, { relation: Role; notificationId: string }>
-  >(new Map());
 
   useEffect(() => {
     if (isOpen && isOwner) {
@@ -325,7 +316,6 @@ export const ManageMembersDialog = ({
     setInviting(true);
 
     const failed: string[] = [];
-    const succeeded: { email: string; notificationId: string }[] = [];
     for (const email of emails) {
       try {
         const result = await nativeClient.workspace.addMember.mutate({
@@ -333,9 +323,7 @@ export const ManageMembersDialog = ({
           email,
           relation: inviteRelation,
         });
-        if (result.success) {
-          succeeded.push({ email, notificationId: result.notificationId });
-        } else {
+        if (!result.success) {
           failed.push(`${email}: ${result.error}`);
         }
       } catch (error) {
@@ -346,16 +334,6 @@ export const ManageMembersDialog = ({
     }
 
     setInviting(false);
-
-    if (succeeded.length > 0) {
-      setInvitedEmails((prev) => {
-        const next = new Map(prev);
-        for (const { email, notificationId } of succeeded) {
-          next.set(email, { relation: inviteRelation, notificationId });
-        }
-        return next;
-      });
-    }
 
     if (failed.length > 0) {
       setErrors(failed);
@@ -421,35 +399,7 @@ export const ManageMembersDialog = ({
                 workspaceId={workspace.id}
                 canRemove={isOwner}
                 refreshKey={membersKey}
-                invitedEmails={invitedEmails}
                 onRefresh={() => setMembersKey((key) => key + 1)}
-                onRemoveInvited={(email) => {
-                  const entry = invitedEmails.get(email);
-                  if (entry) {
-                    // Fire-and-forget: cancel the server-side notification.
-                    // For fake IDs (non-existent users) this fails silently,
-                    // preserving anti-enumeration.
-                    nativeClient.notification.cancel
-                      .mutate({ notificationId: entry.notificationId })
-                      .catch(() => {});
-                  }
-                  setInvitedEmails((prev) => {
-                    const next = new Map(prev);
-                    next.delete(email);
-                    return next;
-                  });
-                }}
-                onChangeInvitedRole={(email, relation) => {
-                  setInvitedEmails((prev) => {
-                    const existing = prev.get(email);
-                    if (existing === undefined) {
-                      return prev;
-                    }
-                    const next = new Map(prev);
-                    next.set(email, { ...existing, relation });
-                    return next;
-                  });
-                }}
               />
             </Flex>
           </ScrollAreaNative>

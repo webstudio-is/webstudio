@@ -15,7 +15,7 @@ import { toast, Link } from "@webstudio-is/design-system";
 import { showBrowserNotification } from "./browser-notification";
 import {
   SEAT_SUSPENDED_TOAST_ID,
-  SEAT_SUSPENDED_MESSAGE,
+  getSeatSuspendedMessage,
 } from "./seat-suspended";
 import { publicStaticEnv } from "~/env/env.static";
 
@@ -86,7 +86,7 @@ export const startSubscription = () => {
   });
   manager.subscribe("seatSuspended", (suspended) => {
     if (suspended) {
-      toast.error(SEAT_SUSPENDED_MESSAGE, {
+      toast.error(getSeatSuspendedMessage(), {
         id: SEAT_SUSPENDED_TOAST_ID,
         duration: Number.POSITIVE_INFINITY,
       });
