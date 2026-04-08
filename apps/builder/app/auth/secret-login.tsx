@@ -29,16 +29,14 @@ export const SecretLogin = ({ devPlanNames }: SecretLoginProps) => {
             type="email"
             placeholder="Email (optional)"
           />
-          {devPlanNames && devPlanNames.length > 0 && (
-            <select name="devPlan">
-              <option value="">Default plan</option>
-              {devPlanNames.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          )}
+          <select name="devPlan">
+            <option value="">Default plan</option>
+            {devPlanNames.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
           <Button type="submit">Login</Button>
         </Flex>
       </form>
