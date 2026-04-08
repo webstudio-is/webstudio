@@ -5,41 +5,48 @@ import { z } from "zod";
  * (e.g. product.meta JSON blobs). Only known keys of the correct type
  * are kept — anything else is silently stripped.
  */
-export const UserPlanFeaturesSchema = z.object({
+export const PlanFeaturesSchema = z.object({
   canDownloadAssets: z.boolean(),
   canRestoreBackups: z.boolean(),
   allowAdditionalPermissions: z.boolean(),
   allowDynamicData: z.boolean(),
   allowContentMode: z.boolean(),
   allowStagingPublish: z.boolean(),
-  maxContactEmails: z.number().nonnegative(),
+  maxContactEmailsPerProject: z.number().nonnegative(),
   maxDomainsAllowedPerUser: z.number().nonnegative(),
-  maxPublishesAllowedPerUser: z.number().nonnegative(),
+  maxDailyPublishesPerUser: z.number().nonnegative(),
   maxWorkspaces: z.number().nonnegative(),
   maxProjectsAllowedPerUser: z.number().nonnegative(),
-  maxSeats: z.number().nonnegative(),
+  maxSeatsPerWorkspace: z.number().nonnegative(),
 });
 
-export type UserPlanFeatures = z.infer<typeof UserPlanFeaturesSchema>;
+export type PlanFeatures = z.infer<typeof PlanFeaturesSchema>;
 
-/** Most-restrictive (free) plan defaults — used when no user plan is available */
-export const defaultUserPlanFeatures: UserPlanFeatures = {
+// Compile-time guard: all PlanFeatures values must be boolean or number.
+// If a new field with a different type is added to PlanFeaturesSchema, this line will error.
+type _AssertBooleanOrNumber =
+  PlanFeatures extends Record<string, boolean | number> ? true : never;
+const _checkPlanFeaturesValueTypes: _AssertBooleanOrNumber = true;
+void _checkPlanFeaturesValueTypes;
+
+/** Default (free) plan — the baseline, all features disabled / at minimum limits */
+export const defaultPlanFeatures: PlanFeatures = {
   canDownloadAssets: false,
   canRestoreBackups: false,
   allowAdditionalPermissions: false,
   allowDynamicData: false,
   allowContentMode: false,
   allowStagingPublish: false,
-  maxContactEmails: 0,
+  maxContactEmailsPerProject: 0,
   maxDomainsAllowedPerUser: 0,
-  maxPublishesAllowedPerUser: 10,
+  maxDailyPublishesPerUser: 10,
   maxWorkspaces: 1,
   maxProjectsAllowedPerUser: 2,
-  maxSeats: 0,
+  maxSeatsPerWorkspace: 0,
 };
 
 /** All user purchases (subscriptions and LTDs). subscriptionId present only for recurring subscriptions */
-export type UserPurchase = {
+export type Purchase = {
   planName: string;
   subscriptionId?: string;
 };

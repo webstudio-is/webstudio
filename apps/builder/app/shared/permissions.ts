@@ -1,6 +1,6 @@
 import type { Role } from "@webstudio-is/project";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import type { UserPlanFeatures } from "@webstudio-is/trpc-interface/user-plan-features";
+import type { PlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
 
 /**
  * Human-readable descriptions of what each workspace role can do.
@@ -26,12 +26,12 @@ export const roleDescriptions: Record<Role, string> = {
  */
 export const getPermissions = ({
   role,
-  userPlanFeatures,
+  planFeatures,
   authPermit,
   workspaces,
 }: {
   role: Role | "own";
-  userPlanFeatures: UserPlanFeatures;
+  planFeatures: PlanFeatures;
   authPermit?: AuthPermit;
   workspaces: Array<{ role: Role | "own" }>;
 }) => {
@@ -59,19 +59,19 @@ export const getPermissions = ({
     canPublishToStagingOnly:
       (isBuilder && !isAdmin && !isOwn) || authPermit === "build",
     // Plan feature permissions
-    canDownloadAssets: userPlanFeatures.canDownloadAssets,
-    canRestoreBackups: userPlanFeatures.canRestoreBackups,
-    allowDynamicData: userPlanFeatures.allowDynamicData,
-    allowContentMode: isSharedProject || userPlanFeatures.allowContentMode,
-    allowStagingPublish: userPlanFeatures.allowStagingPublish,
-    allowAdditionalPermissions: userPlanFeatures.allowAdditionalPermissions,
-    maxContactEmails: userPlanFeatures.maxContactEmails,
-    maxDomainsAllowedPerUser: userPlanFeatures.maxDomainsAllowedPerUser,
-    maxPublishesAllowedPerUser: userPlanFeatures.maxPublishesAllowedPerUser,
-    maxWorkspaces: userPlanFeatures.maxWorkspaces,
-    canInviteMembers: userPlanFeatures.maxWorkspaces > 1,
+    canDownloadAssets: planFeatures.canDownloadAssets,
+    canRestoreBackups: planFeatures.canRestoreBackups,
+    allowDynamicData: planFeatures.allowDynamicData,
+    allowContentMode: isSharedProject || planFeatures.allowContentMode,
+    allowStagingPublish: planFeatures.allowStagingPublish,
+    allowAdditionalPermissions: planFeatures.allowAdditionalPermissions,
+    maxContactEmailsPerProject: planFeatures.maxContactEmailsPerProject,
+    maxDomainsAllowedPerUser: planFeatures.maxDomainsAllowedPerUser,
+    maxDailyPublishesPerUser: planFeatures.maxDailyPublishesPerUser,
+    maxWorkspaces: planFeatures.maxWorkspaces,
+    canInviteMembers: planFeatures.maxWorkspaces > 1,
     canCreateWorkspace:
       workspaces.filter((w) => w.role === "own").length <
-      userPlanFeatures.maxWorkspaces,
+      planFeatures.maxWorkspaces,
   };
 };

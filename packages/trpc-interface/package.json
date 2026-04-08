@@ -26,8 +26,8 @@
     "./index.server": {
       "webstudio": "./src/index.server.ts"
     },
-    "./user-plan-features": {
-      "webstudio": "./src/shared/user-plan-features.ts"
+    "./plan-features": {
+      "webstudio": "./src/shared/plan-features.ts"
     },
     "./authorize": {
       "webstudio": "./src/authorize/role.ts"

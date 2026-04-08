@@ -1,7 +1,7 @@
 import { notification } from "@webstudio-is/project/index.server";
 import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
 import { workspace as workspaceDb } from "@webstudio-is/project/index.server";
-import { getUserPlanInfo } from "~/shared/db/user-plan-features.server";
+import { getPlanInfo } from "~/shared/db/plan-features.server";
 import { publicStaticEnv } from "~/env/env.static";
 import type { TopicResolvers, TopicName, SubscriptionResponse } from "./types";
 
@@ -52,17 +52,17 @@ const resolvers: TopicResolvers = {
     // Check each workspace owner's plan — suspended if any owner can't cover seats.
     for (const m of sharedWorkspaces) {
       const ownerId = (m.workspace as unknown as { userId: string }).userId;
-      const planResult = await getUserPlanInfo(ownerId, ctx.postgrest);
-      const features = planResult.userPlanFeatures;
+      const planResult = await getPlanInfo(ownerId, ctx.postgrest);
+      const features = planResult.planFeatures;
 
       if (features.maxWorkspaces <= 1) {
         return true;
       }
 
-      const maxSeats = features.maxSeats;
-      if (maxSeats > 0 && maxSeats < Number.MAX_SAFE_INTEGER) {
+      const maxSeatsPerWorkspace = features.maxSeatsPerWorkspace;
+      if (maxSeatsPerWorkspace > 0) {
         const memberCount = await workspaceDb.countAllMembers(ownerId, ctx);
-        if (1 + memberCount > maxSeats) {
+        if (1 + memberCount > maxSeatsPerWorkspace) {
           return true;
         }
       }

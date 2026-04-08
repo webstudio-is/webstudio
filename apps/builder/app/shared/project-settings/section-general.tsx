@@ -48,18 +48,18 @@ const Email = z.string().email();
 
 const validateContactEmail = (
   contactEmail: string,
-  maxContactEmails: number
+  maxContactEmailsPerProject: number
 ) => {
   contactEmail = contactEmail.trim();
   if (contactEmail.length === 0) {
     return;
   }
   const emails = contactEmail.split(/\s*,\s*/);
-  if (emails.length > maxContactEmails) {
-    if (maxContactEmails === 0) {
+  if (emails.length > maxContactEmailsPerProject) {
+    if (maxContactEmailsPerProject === 0) {
       return `Upgrade to PRO to customize the contact email.`;
     }
-    return `Only ${maxContactEmails} emails are allowed.`;
+    return `Only ${maxContactEmailsPerProject} emails are allowed.`;
   }
   if (emails.every((email) => Email.safeParse(email).success) === false) {
     return "Contact email is invalid.";
@@ -82,8 +82,8 @@ const saveSetting = <Name extends keyof ProjectMeta>(
 };
 
 export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
-  const { maxContactEmails } = useStore($permissions);
-  const allowContactEmail = maxContactEmails > 0;
+  const { maxContactEmailsPerProject } = useStore($permissions);
+  const allowContactEmail = maxContactEmailsPerProject > 0;
   const pages = useStore($pages);
   const project = useStore($project);
   const assets = useStore($assets);
@@ -100,7 +100,7 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
 
   const contactEmailError = validateContactEmail(
     meta.contactEmail ?? "",
-    maxContactEmails
+    maxContactEmailsPerProject
   );
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
@@ -179,7 +179,10 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
             value={meta.contactEmail ?? ""}
             onChange={(value) => {
               setMeta({ ...meta, contactEmail: value });
-              if (validateContactEmail(value, maxContactEmails) === undefined) {
+              if (
+                validateContactEmail(value, maxContactEmailsPerProject) ===
+                undefined
+              ) {
                 saveSetting("contactEmail", value);
               }
             }}

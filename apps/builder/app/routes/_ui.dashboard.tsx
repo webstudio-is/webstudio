@@ -85,7 +85,7 @@ const loadDashboardData = async (request: Request) => {
     throw new AuthorizationError("You must be logged in to access this page");
   }
 
-  const { userPlanFeatures, purchases } = context;
+  const { planFeatures, purchases } = context;
 
   const { sourceOrigin } = parseBuilderUrl(request.url);
 
@@ -141,7 +141,7 @@ const loadDashboardData = async (request: Request) => {
     context,
     user,
     origin: sourceOrigin,
-    userPlanFeatures,
+    planFeatures,
     purchases,
     projects,
     templates,
@@ -194,7 +194,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const {
     context,
     user,
-    userPlanFeatures,
+    planFeatures,
     purchases,
     origin,
     projects,
@@ -211,7 +211,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     user,
     projects,
     templates,
-    userPlanFeatures,
+    planFeatures,
     purchases,
     publisherHost: env.PUBLISHER_HOST,
     origin,

@@ -16,7 +16,7 @@ import {
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { useStore } from "@nanostores/react";
-import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
+import { logoutPath, planSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
 import { $purchases } from "~/shared/nano-states";
 
@@ -92,7 +92,7 @@ export const ProfileMenu = ({ user }: { user: User }) => {
             <DropdownMenuItem
               key={purchase.subscriptionId}
               onSelect={() => {
-                window.location.href = userPlanSubscriptionPath(
+                window.location.href = planSubscriptionPath(
                   purchase.subscriptionId
                 );
               }}

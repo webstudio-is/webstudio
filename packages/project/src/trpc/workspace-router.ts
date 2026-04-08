@@ -16,7 +16,7 @@ export const workspaceRouter = router({
     .mutation(async ({ input, ctx }) => {
       try {
         const workspace = await workspaceApi.create(
-          { ...input, maxWorkspaces: ctx.userPlanFeatures.maxWorkspaces },
+          { ...input, maxWorkspaces: ctx.planFeatures.maxWorkspaces },
           ctx
         );
         return { success: true as const, data: workspace };
@@ -77,15 +77,13 @@ export const workspaceRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        if (ctx.userPlanFeatures.maxWorkspaces <= 1) {
+        if (ctx.planFeatures.maxWorkspaces <= 1) {
           throw new Error("Upgrade your plan to invite members to workspaces.");
         }
 
-        // Only enforce seat limits for plans with a finite seat cap.
-        // Pro plan uses Number.MAX_SAFE_INTEGER (unlimited) — skip check.
-        // Free plan uses 0 — already blocked above by maxWorkspaces check.
-        const maxSeats = ctx.userPlanFeatures.maxSeats;
-        if (maxSeats > 0 && maxSeats < Number.MAX_SAFE_INTEGER) {
+        // Enforce seat limits when a cap is set. 0 = no cap (free plan blocked above by maxWorkspaces).
+        const maxSeatsPerWorkspace = ctx.planFeatures.maxSeatsPerWorkspace;
+        if (maxSeatsPerWorkspace > 0) {
           const userId =
             ctx.authorization.type === "user"
               ? ctx.authorization.userId
@@ -99,7 +97,7 @@ export const workspaceRouter = router({
           // Owner counts as 1 seat, so total = 1 + memberCount
           const totalSeats = 1 + memberCount;
 
-          if (totalSeats >= maxSeats) {
+          if (totalSeats >= maxSeatsPerWorkspace) {
             throw new Error(
               "You have reached the maximum number of seats. Add more seats to invite more members."
             );
@@ -125,7 +123,7 @@ export const workspaceRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        if (ctx.userPlanFeatures.maxWorkspaces <= 1) {
+        if (ctx.planFeatures.maxWorkspaces <= 1) {
           throw new Error(
             "Upgrade your plan to manage workspace member roles."
           );
@@ -245,11 +243,9 @@ export const workspaceRouter = router({
       );
       // Owner counts as 1 seat
       const used = 1 + memberCount;
-      // Normalize: 0 = free (no seat concept), MAX_SAFE_INTEGER = Pro (unlimited).
-      // Both are treated as "no cap" → return max=0 so the UI skips seat UI entirely.
-      const rawMax = ctx.userPlanFeatures.maxSeats;
-      const max =
-        rawMax === 0 || rawMax >= Number.MAX_SAFE_INTEGER ? 0 : rawMax;
+      // 0 = no seat cap → return max=0 so the UI skips seat UI entirely.
+      const rawMax = ctx.planFeatures.maxSeatsPerWorkspace;
+      const max = rawMax === 0 ? 0 : rawMax;
       return { success: true as const, data: { used, max } };
     } catch (error) {
       return createErrorResponse(error);

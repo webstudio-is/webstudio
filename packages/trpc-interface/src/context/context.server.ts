@@ -1,9 +1,6 @@
 import type { TrpcInterfaceClient } from "../shared/shared-router";
 import type { Client } from "@webstudio-is/postgrest/index.server";
-import type {
-  UserPlanFeatures,
-  UserPurchase,
-} from "../shared/user-plan-features";
+import type { PlanFeatures, Purchase } from "../shared/plan-features";
 
 /**
  * All necessary parameters for Authorization
@@ -87,8 +84,8 @@ export type AppContext = {
   domain: DomainContext;
   deployment: DeploymentContext;
   entri: EntriContext;
-  userPlanFeatures: UserPlanFeatures;
-  purchases: Array<UserPurchase>;
+  planFeatures: PlanFeatures;
+  purchases: Array<Purchase>;
   trpcCache: TrpcCache;
   postgrest: PostgrestContext;
   createTokenContext: (token: string) => Promise<AppContext>;
@@ -97,5 +94,5 @@ export type AppContext = {
    * Used by workspace authorization to check whether the workspace owner's plan
    * still supports workspace features (maxWorkspaces > 1) after a potential downgrade.
    */
-  getOwnerPlanFeatures: (userId: string) => Promise<UserPlanFeatures>;
+  getOwnerPlanFeatures: (userId: string) => Promise<PlanFeatures>;
 };

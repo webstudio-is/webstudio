@@ -7,10 +7,10 @@ import {
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import {
-  defaultUserPlanFeatures,
-  type UserPlanFeatures,
-  type UserPurchase,
-} from "@webstudio-is/trpc-interface/user-plan-features";
+  defaultPlanFeatures,
+  type PlanFeatures,
+  type Purchase,
+} from "@webstudio-is/trpc-interface/plan-features";
 import type { Role } from "@webstudio-is/project";
 import type { User } from "~/shared/db/user.server";
 import { toast, type Placement } from "@webstudio-is/design-system";
@@ -306,12 +306,10 @@ export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
 );
 
-export const $userPlanFeatures = atom<UserPlanFeatures>(
-  defaultUserPlanFeatures
-);
+export const $planFeatures = atom<PlanFeatures>(defaultPlanFeatures);
 
 export { $workspaceRole, $workspaces };
-export const $purchases = atom<Array<UserPurchase>>([]);
+export const $purchases = atom<Array<Purchase>>([]);
 
 export const $user = atom<User | undefined>();
 
@@ -320,11 +318,11 @@ export const $user = atom<User | undefined>();
  * Keep in sync with the atoms above.
  */
 export const setSharedStores = (data: {
-  userPlanFeatures: UserPlanFeatures;
-  purchases: Array<UserPurchase>;
+  planFeatures: PlanFeatures;
+  purchases: Array<Purchase>;
   role: Role | "own";
 }) => {
-  $userPlanFeatures.set(data.userPlanFeatures);
+  $planFeatures.set(data.planFeatures);
   $purchases.set(data.purchases);
   $workspaceRole.set(data.role);
 };
@@ -361,11 +359,11 @@ export const $stagingUsername = atom<string | undefined>();
 export const $stagingPassword = atom<string | undefined>();
 
 export const $permissions = computed(
-  [$userPlanFeatures, $authPermit, $workspaceRole, $workspaces],
-  (userPlanFeatures, authPermit, role, workspaces) =>
+  [$planFeatures, $authPermit, $workspaceRole, $workspaces],
+  (planFeatures, authPermit, role, workspaces) =>
     getPermissions({
       role,
-      userPlanFeatures,
+      planFeatures,
       authPermit,
       workspaces,
     })

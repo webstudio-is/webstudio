@@ -46,9 +46,9 @@ import { useMount, useUnmount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { ProjectSettings } from "~/shared/project-settings";
 import type {
-  UserPlanFeatures,
-  UserPurchase,
-} from "@webstudio-is/trpc-interface/user-plan-features";
+  PlanFeatures,
+  Purchase,
+} from "@webstudio-is/trpc-interface/plan-features";
 import {
   $activeSidebarPanel,
   $dataLoadingState,
@@ -236,8 +236,8 @@ export type BuilderProps = {
   authPermit: AuthPermit;
   role: Role | "own";
   authTokenPermissions: TokenPermissions;
-  userPlanFeatures: UserPlanFeatures;
-  purchases: Array<UserPurchase>;
+  planFeatures: PlanFeatures;
+  purchases: Array<Purchase>;
   stagingUsername: string;
   stagingPassword: string;
 };

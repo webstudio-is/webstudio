@@ -12,9 +12,9 @@ import { Dashboard, DashboardSetup } from "./dashboard";
 import { Card as CardComponent, CardContent, CardFooter } from "./shared/card";
 import { ThumbnailWithAbbr, ThumbnailLinkWithAbbr } from "./shared/thumbnail";
 import {
-  defaultUserPlanFeatures,
-  type UserPlanFeatures,
-} from "@webstudio-is/trpc-interface/user-plan-features";
+  defaultPlanFeatures,
+  type PlanFeatures,
+} from "@webstudio-is/trpc-interface/plan-features";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { updateCsrfToken } from "~/shared/csrf.client";
 
@@ -42,7 +42,7 @@ const createRouter = (element: JSX.Element, path: string, current?: string) =>
     initialEntries: [current ?? path],
   });
 
-const userPlanFeatures: UserPlanFeatures = defaultUserPlanFeatures;
+const planFeatures: PlanFeatures = defaultPlanFeatures;
 
 const projects = [
   {
@@ -67,7 +67,7 @@ const projects = [
 const data = {
   user,
   templates: projects,
-  userPlanFeatures,
+  planFeatures,
   purchases: [],
   publisherHost: "https://wstd.work",
   projects,

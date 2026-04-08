@@ -56,17 +56,13 @@ const env = {
   STAGING_USERNAME: process.env.STAGING_USERNAME ?? "admin",
   STAGING_PASSWORD: process.env.STAGING_PASSWORD ?? "webstudio",
 
-  FEATURES: process.env.FEATURES ?? "",
+  FEATURE_FLAGS: process.env.FEATURE_FLAGS ?? "",
 
-  // current user plan features (default)
-  USER_PLAN: process.env.USER_PLAN ?? "",
-
-  // Default maxWorkspaces for plans that don't specify it.
-  // Every user gets at least 1 workspace (the default). Plans with product.meta can grant more.
-  // Set to 20 in local/staging to test multi-workspace features during development.
-  MAX_WORKSPACES: Number.isFinite(Number(process.env.MAX_WORKSPACES))
-    ? Math.max(1, Number(process.env.MAX_WORKSPACES))
-    : 1,
+  // Plan definitions for local dev / staging.
+  // JSON array of {name, features} objects; features are validated against PlanFeaturesSchema,
+  // then all entries are merged together (booleans: any, numbers: max).
+  // Example: PLANS='[{"name":"Pro","features":{"canDownloadAssets":true,"maxWorkspaces":5}}]'
+  PLANS: process.env.PLANS ?? "[]",
 
   POSTGREST_URL: process.env.POSTGREST_URL ?? "http://localhost:3000",
   POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",

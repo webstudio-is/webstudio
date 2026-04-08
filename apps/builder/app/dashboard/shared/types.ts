@@ -2,17 +2,17 @@ import type { DashboardProject } from "@webstudio-is/dashboard";
 import type { WorkspaceWithRelation, Role } from "@webstudio-is/project";
 import type { User } from "~/shared/db/user.server";
 import type {
-  UserPlanFeatures,
-  UserPurchase,
-} from "@webstudio-is/trpc-interface/user-plan-features";
+  PlanFeatures,
+  Purchase,
+} from "@webstudio-is/trpc-interface/plan-features";
 import type { Notifications } from "~/shared/polly/types";
 
 export type DashboardData = {
   user: User;
   projects: Array<DashboardProject>;
   templates: Array<DashboardProject>;
-  userPlanFeatures: UserPlanFeatures;
-  purchases: Array<UserPurchase>;
+  planFeatures: PlanFeatures;
+  purchases: Array<Purchase>;
   publisherHost: string;
   role: Role | "own";
   projectToClone?: {

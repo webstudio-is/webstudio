@@ -1,8 +1,8 @@
 import type { StoryFn } from "@storybook/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
-import { defaultUserPlanFeatures } from "@webstudio-is/trpc-interface/user-plan-features";
-import { $userPlanFeatures } from "~/shared/nano-states";
+import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
+import { $planFeatures } from "~/shared/nano-states";
 import { $workspaces } from "./workspace-stores";
 import { WorkspaceSelector } from "./workspace-dropdown";
 
@@ -49,7 +49,7 @@ const createRouter = (element: React.ReactElement) =>
   });
 
 export const Default: StoryFn = () => {
-  $userPlanFeatures.set({ ...defaultUserPlanFeatures, maxWorkspaces: 20 });
+  $planFeatures.set({ ...defaultPlanFeatures, maxWorkspaces: 20 });
   $workspaces.set(workspaces);
   const router = createRouter(
     <WorkspaceSelector
@@ -79,7 +79,7 @@ export const MemberView: StoryFn = () => {
     }),
   ];
 
-  $userPlanFeatures.set({ ...defaultUserPlanFeatures, maxWorkspaces: 20 });
+  $planFeatures.set({ ...defaultPlanFeatures, maxWorkspaces: 20 });
   $workspaces.set(memberWorkspaces);
   const router = createRouter(
     <WorkspaceSelector
@@ -93,7 +93,7 @@ export const MemberView: StoryFn = () => {
 };
 
 export const FreePlan: StoryFn = () => {
-  $userPlanFeatures.set({ ...defaultUserPlanFeatures, maxWorkspaces: 1 });
+  $planFeatures.set({ ...defaultPlanFeatures, maxWorkspaces: 1 });
   $workspaces.set([defaultWorkspace]);
   const router = createRouter(
     <WorkspaceSelector
