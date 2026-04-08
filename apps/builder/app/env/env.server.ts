@@ -22,7 +22,6 @@ const env = {
 
   // Assets
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
-  MAX_ASSETS_PER_PROJECT: process.env.MAX_ASSETS_PER_PROJECT,
 
   // Remote assets
   S3_ENDPOINT: process.env.S3_ENDPOINT,

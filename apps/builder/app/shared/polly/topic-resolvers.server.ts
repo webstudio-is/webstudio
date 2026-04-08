@@ -1,6 +1,5 @@
 import { notification } from "@webstudio-is/project/index.server";
 import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
-import { workspace as workspaceDb } from "@webstudio-is/project/index.server";
 import { getPlanInfo } from "~/shared/db/plan-features.server";
 import { publicStaticEnv } from "~/env/env.static";
 import type { TopicResolvers, TopicName, SubscriptionResponse } from "./types";
@@ -57,14 +56,6 @@ const resolvers: TopicResolvers = {
 
       if (features.maxWorkspaces <= 1) {
         return true;
-      }
-
-      const maxSeatsPerWorkspace = features.maxSeatsPerWorkspace;
-      if (maxSeatsPerWorkspace > 0) {
-        const memberCount = await workspaceDb.countAllMembers(ownerId, ctx);
-        if (1 + memberCount > maxSeatsPerWorkspace) {
-          return true;
-        }
       }
     }
 

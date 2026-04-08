@@ -29,7 +29,7 @@ const proPlan = {
   maxDailyPublishesPerUser: 100,
   maxWorkspaces: 0,
   maxProjectsAllowedPerUser: 100,
-  maxSeatsPerWorkspace: 20,
+  maxAssetsPerProject: 500,
 };
 
 const freePlan = {
@@ -44,7 +44,7 @@ const freePlan = {
   maxDailyPublishesPerUser: 10,
   maxWorkspaces: 0,
   maxProjectsAllowedPerUser: 2,
-  maxSeatsPerWorkspace: 0,
+  maxAssetsPerProject: 50,
 };
 
 describe("getPermissions", () => {

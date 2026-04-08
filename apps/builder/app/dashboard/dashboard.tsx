@@ -41,6 +41,7 @@ import { SearchResults } from "./search/search-results";
 import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
 import { WorkspaceSelector } from "./workspace/workspace-dropdown";
+import { isDowngradedForMember } from "./workspace/utils";
 import { NotificationPopover } from "~/shared/notifications/notification-popover";
 import {
   seedNotifications,
@@ -232,7 +233,9 @@ export const Dashboard = () => {
     workspaces,
     currentWorkspaceId,
   } = data;
-  const hasProjects = projects.length > 0;
+  const currentWorkspace = workspaces?.find((w) => w.id === currentWorkspaceId);
+  const isWorkspaceSuspended = isDowngradedForMember(currentWorkspace);
+  const hasProjects = projects.length > 0 || isWorkspaceSuspended;
   const isDefaultWorkspace =
     currentWorkspaceId === undefined ||
     workspaces?.find((w) => w.id === currentWorkspaceId)?.isDefault === true;
@@ -357,6 +360,7 @@ export const Dashboard = () => {
             publisherHost={publisherHost}
             projectsTags={user.projectsTags}
             currentWorkspaceId={currentWorkspaceId}
+            isWorkspaceSuspended={isWorkspaceSuspended}
           />
         )}
         {view === "templates" && (

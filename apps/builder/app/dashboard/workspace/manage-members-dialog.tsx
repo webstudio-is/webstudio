@@ -300,49 +300,12 @@ export const ManageMembersDialog = ({
   const [invitedEmails, setInvitedEmails] = useState<
     Map<string, { relation: Role; notificationId: string }>
   >(new Map());
-  const [seatError, setSeatError] = useState<string>();
-  const [seatUpdating, setSeatUpdating] = useState(false);
-  const { load: loadSeatUsage, data: seatData } =
-    trpcClient.workspace.seatUsage.useQuery();
 
   useEffect(() => {
     if (isOpen && isOwner) {
-      loadSeatUsage();
+      setMembersKey((key) => key + 1);
     }
-  }, [isOpen, isOwner, loadSeatUsage, membersKey]);
-
-  const seatUsage = seatData && "data" in seatData ? seatData.data : undefined;
-  // At limit when plan has a seat cap and all seats are taken
-  const isAtSeatLimit =
-    seatUsage !== undefined &&
-    seatUsage.max > 0 &&
-    seatUsage.used >= seatUsage.max;
-  // At absolute hard cap of 20 (only applies to seat-capped plans; max=0 means uncapped)
-  const isAtHardCap =
-    seatUsage !== undefined && seatUsage.max > 0 && seatUsage.used >= 20;
-
-  const handleUpdateSeats = async (newQuantity: number) => {
-    setSeatError(undefined);
-    setSeatUpdating(true);
-    try {
-      const response = await fetch("/api/seats", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newQuantity }),
-      });
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        setSeatError(data.error ?? "Failed to update seats");
-      } else {
-        setMembersKey((key) => key + 1);
-        revalidator.revalidate();
-      }
-    } catch {
-      setSeatError("Network error. Please try again.");
-    } finally {
-      setSeatUpdating(false);
-    }
-  };
+  }, [isOpen, isOwner]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -425,84 +388,25 @@ export const ManageMembersDialog = ({
                 paddingTop: theme.spacing[5],
               }}
             >
-              {seatUsage !== undefined && seatUsage.max > 0 && (
-                <Flex align="center" justify="between" gap="2">
-                  <Text color="subtle" variant="small">
-                    {seatUsage.used} of {seatUsage.max} seats used
-                  </Text>
-                  {isAtHardCap === false && (
-                    <Flex align="center" gap="1">
-                      {seatError && (
-                        <Text color="destructive" variant="small">
-                          {seatError}
-                        </Text>
-                      )}
-                      <Button
-                        color="ghost"
-                        type="button"
-                        disabled={
-                          seatUpdating || seatUsage.max <= seatUsage.used
-                        }
-                        onClick={() => handleUpdateSeats(seatUsage.max - 1)}
-                      >
-                        −
-                      </Button>
-                      <Text
-                        variant="small"
-                        css={{
-                          minWidth: theme.spacing[7],
-                          textAlign: "center",
-                        }}
-                      >
-                        {seatUsage.max}
-                      </Text>
-                      <Button
-                        color="ghost"
-                        type="button"
-                        disabled={seatUpdating}
-                        onClick={() => handleUpdateSeats(seatUsage.max + 1)}
-                      >
-                        +
-                      </Button>
-                    </Flex>
-                  )}
-                </Flex>
-              )}
               <Label>Invite members</Label>
-              {isAtHardCap ? (
-                <Text color="destructive">
-                  Maximum 20 seats reached. Contact{" "}
-                  <a href="mailto:support@webstudio.is">support@webstudio.is</a>{" "}
-                  for larger teams.
-                </Text>
-              ) : isAtSeatLimit ? (
-                <Text color="destructive">
-                  You have reached the maximum number of seats. Add more seats
-                  to invite more members.
-                </Text>
-              ) : (
-                <Flex gap="2">
-                  <Box css={{ flexGrow: 1 }}>
-                    <InputErrorsTooltip errors={errors}>
-                      <InputField
-                        name="emails"
-                        placeholder="alice@example.com, bob@example.com"
-                        color={errors ? "error" : undefined}
-                      />
-                    </InputErrorsTooltip>
-                  </Box>
-                  <RoleSelect
-                    value={inviteRelation}
-                    onChange={setInviteRelation}
-                  />
-                  <Button
-                    type="submit"
-                    state={inviting ? "pending" : undefined}
-                  >
-                    Invite
-                  </Button>
-                </Flex>
-              )}
+              <Flex gap="2">
+                <Box css={{ flexGrow: 1 }}>
+                  <InputErrorsTooltip errors={errors}>
+                    <InputField
+                      name="emails"
+                      placeholder="alice@example.com, bob@example.com"
+                      color={errors ? "error" : undefined}
+                    />
+                  </InputErrorsTooltip>
+                </Box>
+                <RoleSelect
+                  value={inviteRelation}
+                  onChange={setInviteRelation}
+                />
+                <Button type="submit" state={inviting ? "pending" : undefined}>
+                  Invite
+                </Button>
+              </Flex>
             </Flex>
           )}
           <ScrollAreaNative

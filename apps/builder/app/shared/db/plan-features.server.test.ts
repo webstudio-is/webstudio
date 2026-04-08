@@ -21,7 +21,6 @@ const fullFeatures: PlanFeatures = {
   maxDailyPublishesPerUser: 100,
   maxWorkspaces: 1,
   maxProjectsAllowedPerUser: 100,
-  maxSeatsPerWorkspace: 20,
 };
 
 describe("parseProductMeta", () => {

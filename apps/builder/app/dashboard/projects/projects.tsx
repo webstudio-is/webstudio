@@ -8,6 +8,8 @@ import {
   theme,
   ToggleGroup,
   ToggleGroupButton,
+  PanelBanner,
+  panelBannerIconColor,
 } from "@webstudio-is/design-system";
 import { RepeatGridIcon, ListViewIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -26,6 +28,8 @@ import {
   type SortState,
   type SortField,
 } from "./sort";
+import { AlertIcon } from "@webstudio-is/icons";
+import { SEAT_SUSPENDED_MESSAGE } from "~/shared/notifications/seat-suspended";
 import { ProjectsList } from "./projects-list";
 
 export const ProjectsGrid = ({
@@ -64,6 +68,7 @@ type ProjectsProps = {
   publisherHost: string;
   projectsTags: User["projectsTags"];
   currentWorkspaceId?: string;
+  isWorkspaceSuspended?: boolean;
 };
 
 export const Projects = (props: ProjectsProps) => {
@@ -170,16 +175,34 @@ export const Projects = (props: ProjectsProps) => {
       </Flex>
       <Flex css={{ paddingInline: theme.spacing[13] }}>
         {projects.length === 0 ? (
-          <Text
-            variant="brandRegular"
-            css={{
-              paddingBlock: theme.spacing[20],
-              textAlign: "center",
-              flexGrow: 1,
-            }}
-          >
-            No projects found
-          </Text>
+          props.isWorkspaceSuspended ? (
+            <Flex
+              css={{
+                paddingBlock: theme.spacing[20],
+                flexGrow: 1,
+                justifyContent: "center",
+              }}
+            >
+              <PanelBanner variant="warning" css={{ maxWidth: 400 }}>
+                <Flex align="center" gap="1">
+                  <AlertIcon color={panelBannerIconColor} />
+                  <Text variant="regularBold">Workspace suspended</Text>
+                </Flex>
+                <Text variant="regular">{SEAT_SUSPENDED_MESSAGE}</Text>
+              </PanelBanner>
+            </Flex>
+          ) : (
+            <Text
+              variant="brandRegular"
+              css={{
+                paddingBlock: theme.spacing[20],
+                textAlign: "center",
+                flexGrow: 1,
+              }}
+            >
+              No projects found
+            </Text>
+          )
         ) : viewMode === "grid" ? (
           <ProjectsGrid {...props} projects={projects} />
         ) : (

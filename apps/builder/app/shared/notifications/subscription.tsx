@@ -11,7 +11,7 @@ import { createCrossTabPollingManager } from "~/shared/polly/cross-tab-manager";
 import type { Notifications, SubscriptionResponse } from "~/shared/polly/types";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import { notificationTypes } from "@webstudio-is/project";
-import { toast } from "@webstudio-is/design-system";
+import { toast, Link } from "@webstudio-is/design-system";
 import { showBrowserNotification } from "./browser-notification";
 import {
   SEAT_SUSPENDED_TOAST_ID,
@@ -97,7 +97,17 @@ export const startSubscription = () => {
   manager.subscribe("builderVersion", (serverVersion) => {
     if (serverVersion !== publicStaticEnv.VERSION) {
       toast.info(
-        "A new version of Webstudio is available. Reload to get the latest — see what's new at wstd.us/changelog",
+        <>
+          A new version of Webstudio is available. Reload to get the latest —
+          see what&apos;s new at{" "}
+          <Link
+            href="https://wstd.us/changelog"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            wstd.us/changelog
+          </Link>
+        </>,
         { id: NEW_VERSION_TOAST_ID, duration: Number.POSITIVE_INFINITY }
       );
     }

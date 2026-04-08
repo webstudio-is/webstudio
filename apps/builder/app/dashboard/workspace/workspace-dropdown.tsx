@@ -75,10 +75,10 @@ export const WorkspaceDropdown = ({
           }
           suffix={<ChevronDownIcon />}
         >
-          {triggerLabel}
+          <Text truncate>{triggerLabel}</Text>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent align="start" css={{ maxWidth: theme.spacing[30] }}>
         <DropdownMenuRadioGroup
           value={selectedId ?? ""}
           onValueChange={onSelectedChange}
@@ -93,7 +93,7 @@ export const WorkspaceDropdown = ({
                   icon={<MenuCheckedIcon />}
                   disabled={item.disabled}
                 >
-                  {item.name}
+                  <Text truncate>{item.name}</Text>
                   {item.suffix}
                 </DropdownMenuRadioItem>
               ))}
@@ -156,16 +156,15 @@ export const WorkspaceSelector = ({
   const [leaveOpen, setLeaveOpen] = useState(false);
 
   const isOwner = currentWorkspace?.userId === userId;
+  const isSuspended = currentWorkspace?.isDowngraded === true;
 
   const toDropdownItem = (workspace: WorkspaceWithRelation) => ({
     id: workspace.id,
     name: workspace.name,
-    disabled: workspace.isDowngraded,
     suffix: workspace.isDowngraded ? (
-      <>
-        {" "}
+      <Flex css={{ marginInlineStart: theme.spacing[4], flexShrink: 0 }}>
         <ProBadge>Suspended</ProBadge>
-      </>
+      </Flex>
     ) : undefined,
   });
 
@@ -203,20 +202,24 @@ export const WorkspaceSelector = ({
       >
         <DropdownMenuSeparator />
         {permissions.canCreateWorkspace && (
-          <DropdownMenuItem withIndicator onSelect={() => setCreateOpen(true)}>
+          <DropdownMenuItem
+            withIndicator
+            disabled={isSuspended}
+            onSelect={() => setCreateOpen(true)}
+          >
             Create new
           </DropdownMenuItem>
         )}
         <DropdownMenuItem
           withIndicator
-          disabled={currentWorkspace?.userId !== userId}
+          disabled={isSuspended || currentWorkspace?.userId !== userId}
           onSelect={() => setRenameOpen(true)}
         >
           Rename
         </DropdownMenuItem>
         <DropdownMenuItem
           withIndicator
-          disabled={permissions.canInviteMembers === false}
+          disabled={isSuspended || permissions.canInviteMembers === false}
           onSelect={() => setInviteOpen(true)}
         >
           Members
@@ -224,7 +227,7 @@ export const WorkspaceSelector = ({
         {isOwner ? (
           <DropdownMenuItem
             withIndicator
-            disabled={currentWorkspace?.isDefault === true}
+            disabled={isSuspended || currentWorkspace?.isDefault === true}
             onSelect={() => setDeleteOpen(true)}
           >
             Delete

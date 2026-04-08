@@ -51,7 +51,7 @@ const mergeProductMetas = (productMetas: PlanFeatures[]): PlanFeatures => {
  * - An extends reference to an unknown plan name throws an error.
  * Returns a Map of plan name → resolved PlanFeatures.
  */
-const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
+export const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return new Map();
@@ -200,14 +200,6 @@ export const getPlanInfo = async (
     return {
       planFeatures: mergeProductMetas(productMetas),
       purchases: buildPurchases(userProducts, productIdToName),
-    };
-  }
-
-  const plansByName = parsePlansEnv(env.PLANS);
-  if (plansByName.size > 0) {
-    return {
-      planFeatures: mergeProductMetas([...plansByName.values()]),
-      purchases: [],
     };
   }
 

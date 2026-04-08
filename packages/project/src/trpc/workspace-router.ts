@@ -81,29 +81,6 @@ export const workspaceRouter = router({
           throw new Error("Upgrade your plan to invite members to workspaces.");
         }
 
-        // Enforce seat limits when a cap is set. 0 = no cap (free plan blocked above by maxWorkspaces).
-        const maxSeatsPerWorkspace = ctx.planFeatures.maxSeatsPerWorkspace;
-        if (maxSeatsPerWorkspace > 0) {
-          const userId =
-            ctx.authorization.type === "user"
-              ? ctx.authorization.userId
-              : undefined;
-
-          if (userId === undefined) {
-            throw new Error("Only logged in users can invite members.");
-          }
-
-          const memberCount = await workspaceApi.countAllMembers(userId, ctx);
-          // Owner counts as 1 seat, so total = 1 + memberCount
-          const totalSeats = 1 + memberCount;
-
-          if (totalSeats >= maxSeatsPerWorkspace) {
-            throw new Error(
-              "You have reached the maximum number of seats. Add more seats to invite more members."
-            );
-          }
-        }
-
         const { notificationId } = await workspaceApi.addMember(input, ctx);
         // notificationId is always returned — it's a real ID for existing users
         // and a fake UUID for non-existing users to prevent email enumeration.
@@ -230,27 +207,6 @@ export const workspaceRouter = router({
         return createErrorResponse(error);
       }
     }),
-
-  seatUsage: procedure.query(async ({ ctx }) => {
-    try {
-      if (ctx.authorization.type !== "user") {
-        return { success: true as const, data: { used: 0, max: 0 } };
-      }
-
-      const memberCount = await workspaceApi.countAllMembers(
-        ctx.authorization.userId,
-        ctx
-      );
-      // Owner counts as 1 seat
-      const used = 1 + memberCount;
-      // 0 = no seat cap → return max=0 so the UI skips seat UI entirely.
-      const rawMax = ctx.planFeatures.maxSeatsPerWorkspace;
-      const max = rawMax === 0 ? 0 : rawMax;
-      return { success: true as const, data: { used, max } };
-    } catch (error) {
-      return createErrorResponse(error);
-    }
-  }),
 });
 
 export type WorkspaceRouter = typeof workspaceRouter;
