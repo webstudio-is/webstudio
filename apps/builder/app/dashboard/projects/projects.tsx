@@ -13,6 +13,7 @@ import {
 } from "@webstudio-is/design-system";
 import { RepeatGridIcon, ListViewIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
+import type { WorkspaceWithRelation } from "@webstudio-is/project";
 import { ProjectCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
 import { Header, Main } from "../shared/layout";
@@ -68,7 +69,7 @@ type ProjectsProps = {
   publisherHost: string;
   projectsTags: User["projectsTags"];
   currentWorkspaceId?: string;
-  workspaceName?: string;
+  workspace?: WorkspaceWithRelation;
   isWorkspaceSuspended?: boolean;
 };
 
@@ -176,7 +177,7 @@ export const Projects = (props: ProjectsProps) => {
       </Flex>
       <Flex css={{ paddingInline: theme.spacing[13] }}>
         {projects.length === 0 ? (
-          props.isWorkspaceSuspended ? (
+          props.isWorkspaceSuspended && props.workspace !== undefined ? (
             <Flex
               css={{
                 paddingBlock: theme.spacing[20],
@@ -190,7 +191,7 @@ export const Projects = (props: ProjectsProps) => {
                   <Text variant="regularBold">Workspace suspended</Text>
                 </Flex>
                 <Text variant="regular">
-                  {getSeatSuspendedMessage(props.workspaceName)}
+                  {getSeatSuspendedMessage(props.workspace.name)}
                 </Text>
               </PanelBanner>
             </Flex>

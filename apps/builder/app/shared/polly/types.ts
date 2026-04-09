@@ -33,8 +33,8 @@ export type Notifications = Awaited<ReturnType<typeof notification.list>>;
 export type TopicRegistry = {
   notifications: Notifications;
   projectCount: number;
-  /** True when the current user's seat in a shared workspace is suspended. */
-  seatSuspended: boolean;
+  /** Workspace name when the current user's seat in a shared workspace is suspended, false otherwise. */
+  seatSuspended: string | false;
   /** The builder's deployed version string (GITHUB_SHA or "local"). */
   builderVersion: string;
 };

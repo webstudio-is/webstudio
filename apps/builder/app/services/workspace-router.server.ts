@@ -6,11 +6,58 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { workspace as workspaceApi } from "@webstudio-is/project/index.server";
 import { getPlanInfo } from "~/shared/db/plan-features.server";
-import { updateSeats } from "~/shared/payment-worker.server";
 import { roles } from "@webstudio-is/trpc-interface/authorize";
+import env from "~/env/env.server";
 
 const Name = z.string().min(2).max(100);
 const Relation = z.enum(roles);
+
+type UpdateSeatsResult =
+  | { type: "success"; seats: number }
+  | { type: "error"; error: string };
+
+const updateSeats = async ({
+  userId,
+  subscriptionId,
+  newQuantity,
+  minSeats,
+  maxSeats,
+}: {
+  userId: string;
+  subscriptionId: string;
+  newQuantity: number;
+  minSeats: number;
+  maxSeats: number;
+}): Promise<UpdateSeatsResult | null> => {
+  if (!env.PAYMENT_WORKER_URL || !env.PAYMENT_WORKER_TOKEN) {
+    return null;
+  }
+
+  const url = `${env.PAYMENT_WORKER_URL}/seats/update`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${env.PAYMENT_WORKER_TOKEN}`,
+    },
+    body: JSON.stringify({
+      userId,
+      subscriptionId,
+      newQuantity,
+      minSeats,
+      maxSeats,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Payment worker /seats/update responded with ${response.status}`
+    );
+  }
+
+  return (await response.json()) as UpdateSeatsResult;
+};
 
 /**
  * Syncs the Stripe seat quantity for the owner of a given workspace.
@@ -129,6 +176,38 @@ export const workspaceRouter = router({
       try {
         if (ctx.planFeatures.maxWorkspaces <= 1) {
           throw new Error("Upgrade your plan to invite members to workspaces.");
+        }
+
+        const { maxSeatsPerWorkspace } = ctx.planFeatures;
+        if (maxSeatsPerWorkspace > 0) {
+          const [membersResult, pendingResult] = await Promise.all([
+            ctx.postgrest.client
+              .from("WorkspaceMember")
+              .select("userId", { count: "exact", head: true })
+              .eq("workspaceId", input.workspaceId)
+              .is("removedAt", null),
+            ctx.postgrest.client
+              .from("Notification")
+              .select("id", { count: "exact", head: true })
+              .eq("type", "workspaceInvite")
+              .eq("status", "pending")
+              .filter("payload->>workspaceId", "eq", input.workspaceId),
+          ]);
+
+          if (membersResult.error) {
+            throw membersResult.error;
+          }
+          if (pendingResult.error) {
+            throw pendingResult.error;
+          }
+
+          const currentCount =
+            (membersResult.count ?? 0) + (pendingResult.count ?? 0);
+          if (currentCount >= maxSeatsPerWorkspace) {
+            throw new Error(
+              `This workspace has reached its seat limit of ${maxSeatsPerWorkspace}. Remove a member or upgrade your plan to invite more.`
+            );
+          }
         }
 
         const { notificationId } = await workspaceApi.addMember(input, ctx);

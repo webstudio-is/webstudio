@@ -31,7 +31,7 @@ const resolvers: TopicResolvers = {
     // Find all workspaces where the user is a non-owner active member.
     const memberships = await ctx.postgrest.client
       .from("WorkspaceMember")
-      .select("workspaceId, workspace:Workspace!inner(userId)")
+      .select("workspaceId, workspace:Workspace!inner(userId, name)")
       .eq("userId", userId)
       .is("removedAt", null);
 
@@ -41,7 +41,9 @@ const resolvers: TopicResolvers = {
 
     // Filter out workspaces owned by the user (shouldn't be any, but be safe).
     const sharedWorkspaces = memberships.data.filter(
-      (m) => (m.workspace as unknown as { userId: string }).userId !== userId
+      (m) =>
+        (m.workspace as unknown as { userId: string; name: string }).userId !==
+        userId
     );
 
     if (sharedWorkspaces.length === 0) {
@@ -55,7 +57,8 @@ const resolvers: TopicResolvers = {
       const features = planResult.planFeatures;
 
       if (features.maxWorkspaces <= 1) {
-        return true;
+        return (m.workspace as unknown as { userId: string; name: string })
+          .name;
       }
     }
 

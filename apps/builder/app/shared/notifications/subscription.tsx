@@ -84,9 +84,9 @@ export const startSubscription = () => {
     // Bump the counter so React listeners know to revalidate.
     $shouldRevalidateProjects.set($shouldRevalidateProjects.get() + 1);
   });
-  manager.subscribe("seatSuspended", (suspended) => {
-    if (suspended) {
-      toast.error(getSeatSuspendedMessage(), {
+  manager.subscribe("seatSuspended", (seatSuspended) => {
+    if (seatSuspended !== false) {
+      toast.error(getSeatSuspendedMessage(seatSuspended), {
         id: SEAT_SUSPENDED_TOAST_ID,
         duration: Number.POSITIVE_INFINITY,
       });

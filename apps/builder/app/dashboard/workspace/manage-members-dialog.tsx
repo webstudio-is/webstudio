@@ -61,7 +61,6 @@ type MemberRowProps = {
       relation: Role;
       canRemove: boolean;
       onRemove: () => void;
-      onChangeRole: (role: Role) => void;
     }
 );
 
@@ -82,38 +81,39 @@ const MemberRow = (props: MemberRowProps) => {
       );
     }
 
-    const value = role === "pending" ? props.relation : localRole;
-
-    const handleChange =
-      role === "pending"
-        ? props.onChangeRole
-        : (newRole: Role) => {
-            setError(undefined);
-            setLocalRole(newRole);
-            updateMutation.send(
-              {
-                workspaceId: props.workspaceId,
-                memberUserId: props.userId,
-                relation: newRole,
-              },
-              (result) => {
-                if (result && "error" in result) {
-                  setError(result.error);
-                  setLocalRole(props.relation);
-                  return;
-                }
-                props.onRefresh();
-                revalidator.revalidate();
-              }
-            );
-          };
+    if (role === "pending") {
+      return (
+        <Text color="subtle" variant="regular">
+          Pending
+        </Text>
+      );
+    }
 
     return (
       <RoleSelect
         color="ghost"
-        value={value}
-        onChange={handleChange}
-        disabled={!props.canRemove || role === "pending"}
+        value={localRole}
+        onChange={(newRole: Role) => {
+          setError(undefined);
+          setLocalRole(newRole);
+          updateMutation.send(
+            {
+              workspaceId: props.workspaceId,
+              memberUserId: props.userId,
+              relation: newRole,
+            },
+            (result) => {
+              if (result && "error" in result) {
+                setError(result.error);
+                setLocalRole(props.relation);
+                return;
+              }
+              props.onRefresh();
+              revalidator.revalidate();
+            }
+          );
+        }}
+        disabled={!props.canRemove}
       />
     );
   })();
@@ -262,10 +262,6 @@ const MemberList = ({
                 .mutate({ notificationId: invite.notificationId })
                 .then(() => onRefresh())
                 .catch(() => {});
-            }}
-            onChangeRole={() => {
-              // Role change on pending invites is not supported.
-              // Cancel the invite and re-invite with the new role.
             }}
           />
         ))}
