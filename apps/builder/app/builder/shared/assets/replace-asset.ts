@@ -34,12 +34,7 @@ export const replaceAsset = async (
     return;
   }
 
-  const newAsset = await waitForAsset(newAssetId);
-
-  if (!newAsset) {
-    toast.error("Replacement asset upload timed out");
-    return;
-  }
+  await waitForAsset(newAssetId);
 
   serverSyncStore.createTransaction(
     [$pages, $props, $styles, $assets],
@@ -114,28 +109,15 @@ const replaceAssetInStyleValue = (
   }
 };
 
-const waitForAsset = (
-  assetId: string,
-  timeoutMs = 60_000,
-  intervalMs = 500
-): Promise<Asset | undefined> => {
+const waitForAsset = (assetId: string): Promise<Asset> => {
   return new Promise((resolve) => {
-    const startTime = Date.now();
-
-    const check = () => {
-      const asset = $assets.get().get(assetId);
-      if (asset && asset.createdAt !== "") {
+    const unsubscribe = $assets.subscribe((assets) => {
+      const asset = assets.get(assetId);
+      if (asset !== undefined) {
+        unsubscribe();
         resolve(asset);
-        return;
       }
-      if (Date.now() - startTime > timeoutMs) {
-        resolve(undefined);
-        return;
-      }
-      setTimeout(check, intervalMs);
-    };
-
-    check();
+    });
   });
 };
 
