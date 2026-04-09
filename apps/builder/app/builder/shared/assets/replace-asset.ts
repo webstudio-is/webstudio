@@ -51,7 +51,7 @@ export const replaceAsset = async (
         }
       }
 
-      for (const [, styleDecl] of styles) {
+      for (const styleDecl of styles.values()) {
         replaceAssetInStyleValue(styleDecl.value, oldAssetId, newAssetId);
       }
 
