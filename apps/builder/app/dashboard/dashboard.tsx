@@ -234,6 +234,14 @@ export const Dashboard = () => {
     currentWorkspaceId,
   } = data;
   const currentWorkspace = workspaces?.find((w) => w.id === currentWorkspaceId);
+
+  // Workspace ID in the URL but not found — it was deleted or the user was removed.
+  // Redirect to the default dashboard to avoid a broken state.
+  if (currentWorkspaceId !== undefined && currentWorkspace === undefined) {
+    navigate(dashboardPath("projects"), { replace: true });
+    return null;
+  }
+
   const isWorkspaceSuspended = isDowngradedForMember(currentWorkspace);
   const hasProjects = projects.length > 0 || isWorkspaceSuspended;
   const isDefaultWorkspace =
@@ -360,6 +368,7 @@ export const Dashboard = () => {
             publisherHost={publisherHost}
             projectsTags={user.projectsTags}
             currentWorkspaceId={currentWorkspaceId}
+            workspace={currentWorkspace}
             isWorkspaceSuspended={isWorkspaceSuspended}
           />
         )}

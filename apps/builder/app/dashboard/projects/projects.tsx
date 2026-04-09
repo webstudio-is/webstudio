@@ -13,6 +13,7 @@ import {
 } from "@webstudio-is/design-system";
 import { RepeatGridIcon, ListViewIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
+import type { WorkspaceWithRelation } from "@webstudio-is/project";
 import { ProjectCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
 import { Header, Main } from "../shared/layout";
@@ -29,7 +30,7 @@ import {
   type SortField,
 } from "./sort";
 import { AlertIcon } from "@webstudio-is/icons";
-import { SEAT_SUSPENDED_MESSAGE } from "~/shared/notifications/seat-suspended";
+import { getSeatSuspendedMessage } from "~/shared/notifications/seat-suspended";
 import { ProjectsList } from "./projects-list";
 
 export const ProjectsGrid = ({
@@ -68,6 +69,7 @@ type ProjectsProps = {
   publisherHost: string;
   projectsTags: User["projectsTags"];
   currentWorkspaceId?: string;
+  workspace?: WorkspaceWithRelation;
   isWorkspaceSuspended?: boolean;
 };
 
@@ -175,7 +177,7 @@ export const Projects = (props: ProjectsProps) => {
       </Flex>
       <Flex css={{ paddingInline: theme.spacing[13] }}>
         {projects.length === 0 ? (
-          props.isWorkspaceSuspended ? (
+          props.isWorkspaceSuspended && props.workspace !== undefined ? (
             <Flex
               css={{
                 paddingBlock: theme.spacing[20],
@@ -188,7 +190,9 @@ export const Projects = (props: ProjectsProps) => {
                   <AlertIcon color={panelBannerIconColor} />
                   <Text variant="regularBold">Workspace suspended</Text>
                 </Flex>
-                <Text variant="regular">{SEAT_SUSPENDED_MESSAGE}</Text>
+                <Text variant="regular">
+                  {getSeatSuspendedMessage(props.workspace.name)}
+                </Text>
               </PanelBanner>
             </Flex>
           ) : (

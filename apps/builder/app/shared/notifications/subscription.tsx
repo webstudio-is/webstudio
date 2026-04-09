@@ -15,7 +15,7 @@ import { toast, Link } from "@webstudio-is/design-system";
 import { showBrowserNotification } from "./browser-notification";
 import {
   SEAT_SUSPENDED_TOAST_ID,
-  SEAT_SUSPENDED_MESSAGE,
+  getSeatSuspendedMessage,
 } from "./seat-suspended";
 import { publicStaticEnv } from "~/env/env.static";
 
@@ -84,9 +84,9 @@ export const startSubscription = () => {
     // Bump the counter so React listeners know to revalidate.
     $shouldRevalidateProjects.set($shouldRevalidateProjects.get() + 1);
   });
-  manager.subscribe("seatSuspended", (suspended) => {
-    if (suspended) {
-      toast.error(SEAT_SUSPENDED_MESSAGE, {
+  manager.subscribe("seatSuspended", (seatSuspended) => {
+    if (seatSuspended !== false) {
+      toast.error(getSeatSuspendedMessage(seatSuspended), {
         id: SEAT_SUSPENDED_TOAST_ID,
         duration: Number.POSITIVE_INFINITY,
       });

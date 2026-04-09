@@ -18,6 +18,8 @@ export const PlanFeaturesSchema = z.object({
   maxWorkspaces: z.number().nonnegative(),
   maxProjectsAllowedPerUser: z.number().nonnegative(),
   maxAssetsPerProject: z.number().nonnegative(),
+  minSeats: z.number().nonnegative(),
+  maxSeatsPerWorkspace: z.number().nonnegative(),
 });
 
 export type PlanFeatures = z.infer<typeof PlanFeaturesSchema>;
@@ -43,6 +45,8 @@ export const defaultPlanFeatures: PlanFeatures = {
   maxWorkspaces: 1,
   maxProjectsAllowedPerUser: 2,
   maxAssetsPerProject: 50,
+  minSeats: 0,
+  maxSeatsPerWorkspace: 0,
 };
 
 /** All user purchases (subscriptions and LTDs). subscriptionId present only for recurring subscriptions */
