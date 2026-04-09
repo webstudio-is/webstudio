@@ -46,12 +46,7 @@ export const replaceAsset = async (
       }
 
       for (const prop of props.values()) {
-        if (
-          prop.type === "asset" &&
-          prop.value === oldAssetId &&
-          prop.name !== "width" &&
-          prop.name !== "height"
-        ) {
+        if (prop.type === "asset" && prop.value === oldAssetId) {
           prop.value = newAssetId;
         }
       }
