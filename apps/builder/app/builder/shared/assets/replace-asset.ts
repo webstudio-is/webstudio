@@ -104,8 +104,15 @@ const replaceAssetInStyleValue = (
 };
 
 const waitForAsset = (assetId: string): Promise<Asset> => {
+  // Check if asset already exists (avoids TDZ with synchronous subscribe callback)
+  const existingAsset = $assets.get().get(assetId);
+  if (existingAsset !== undefined) {
+    return Promise.resolve(existingAsset);
+  }
+
+  // Use .listen() instead of .subscribe(), so the `unsubscribe` variable is always assigned before the callback runs.
   return new Promise((resolve) => {
-    const unsubscribe = $assets.subscribe((assets) => {
+    const unsubscribe = $assets.listen((assets) => {
       const asset = assets.get(assetId);
       if (asset !== undefined) {
         unsubscribe();
