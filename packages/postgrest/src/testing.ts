@@ -19,18 +19,15 @@ export const empty = (init?: ConstructorParameters<typeof HttpResponse>[1]) =>
 
 const POSTGREST_URL = "http://test-postgrest";
 
-/** Ready-made `postgrest` context object — use as `postgrest: testPostgrest` in test contexts. */
-export const testPostgrest = {
-  client: createClient(POSTGREST_URL, "test-key"),
-};
-
 /**
  * Spreadable partial context with `postgrest` pre-filled.
  * @example
  * const createContext = (): AppContext =>
  *   ({ ...testContext, authorization: { type: "user", userId: "user-1" } }) as unknown as AppContext;
  */
-export const testContext = { postgrest: testPostgrest };
+export const testContext = {
+  postgrest: { client: createClient(POSTGREST_URL, "test-key") },
+};
 
 type Resolver = HttpResponseResolver<PathParams, DefaultBodyType, undefined>;
 
