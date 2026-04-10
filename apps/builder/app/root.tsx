@@ -11,13 +11,13 @@ import { useSetFeatures } from "./shared/use-set-features";
 
 export const loader = () => {
   return json({
-    features: env.FEATURES,
+    featureFlags: env.FEATURE_FLAGS,
   });
 };
 
 export default function App() {
-  const { features } = useLoaderData<typeof loader>();
-  setEnv(features);
+  const { featureFlags } = useLoaderData<typeof loader>();
+  setEnv(featureFlags);
   useSetFeatures();
 
   return <Outlet />;

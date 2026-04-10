@@ -8,6 +8,7 @@ import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env/env.server";
 import type { LoginProps } from "~/auth/index.client";
+import { parsePlansEnv } from "~/shared/db/plan-features.server";
 import { useLoginErrorMessage } from "~/shared/session";
 import {
   comparePathnames,
@@ -86,6 +87,8 @@ export const loader = async ({
   return json(
     {
       isSecretLoginEnabled: env.DEV_LOGIN === "true",
+      devPlanNames:
+        env.DEV_LOGIN === "true" ? [...parsePlansEnv(env.PLANS).keys()] : [],
       isGithubEnabled: Boolean(env.GH_CLIENT_ID && env.GH_CLIENT_SECRET),
       isGoogleEnabled: Boolean(
         env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET

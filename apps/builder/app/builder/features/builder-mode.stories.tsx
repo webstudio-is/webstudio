@@ -4,7 +4,7 @@ import {
   $builderMode,
   $authPermit,
   $authToken,
-  $userPlanFeatures,
+  $planFeatures,
 } from "~/shared/nano-states";
 
 export default {
@@ -15,8 +15,8 @@ export const BuilderMode = () => {
   $builderMode.set("design");
   $authPermit.set("own");
   $authToken.set(undefined);
-  $userPlanFeatures.set({
-    ...$userPlanFeatures.get(),
+  $planFeatures.set({
+    ...$planFeatures.get(),
     allowContentMode: true,
   });
 

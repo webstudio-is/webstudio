@@ -4,12 +4,13 @@ import type { Change } from "immerhin";
 import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import * as commandQueue from "./command-queue";
-import { restPatchPath } from "~/shared/router-utils";
-import { toast } from "@webstudio-is/design-system";
+import { createBackoff } from "~/shared/polly/backoff";
 import { fetch } from "~/shared/fetch.client";
-import type { SyncStorage, Transaction } from "~/shared/sync-client";
+import { toast } from "@webstudio-is/design-system";
+import { restPatchPath } from "~/shared/router-utils";
 import { loadBuilderData } from "~/shared/builder-data";
+import * as commandQueue from "./command-queue";
+import type { SyncStorage, Transaction } from "~/shared/sync-client";
 
 export { commandQueue };
 
@@ -24,10 +25,6 @@ const MAX_RETRY_RECOVERY = 5;
 
 // We are assuming that error is fatal (unrecoverable) after this amount of attempts with API error.
 const MAX_ALLOWED_API_ERRORS = 5;
-
-// When we reached max failed attempts we will slow down the attempts interval.
-const INTERVAL_ERROR = 5000;
-const MAX_INTERVAL_ERROR = 2 * 60000;
 
 const pause = (timeout: number) => {
   return new Promise((resolve) => setTimeout(resolve, timeout));
@@ -91,9 +88,6 @@ export const onNextTransactionComplete = (callback: () => void) => {
   }, 60000);
 };
 
-const getRandomBetween = (a: number, b: number) => {
-  return Math.random() * (b - a) + a;
-};
 // polling is important to queue new transactions independently
 // from async iterator and batch them into single job
 const pollCommands = async function* () {
@@ -112,22 +106,18 @@ const pollCommands = async function* () {
 };
 
 const retry = async function* () {
-  let failedAttempts = 0;
-  let delay = INTERVAL_ERROR;
+  const backoff = createBackoff();
 
   while (true) {
     yield;
-    failedAttempts += 1;
-    if (failedAttempts < MAX_RETRY_RECOVERY) {
+    if (backoff.attempts() < MAX_RETRY_RECOVERY) {
+      backoff.next();
       $queueStatus.set({ status: "recovering" });
       await pause(INTERVAL_RECOVERY);
     } else {
       $queueStatus.set({ status: "failed" });
 
-      // Clamped exponential backoff with decorrelated jitter
-      // to prevent clients from sending simultaneous requests after server issues
-      delay = getRandomBetween(INTERVAL_ERROR, delay * 3);
-      delay = Math.min(delay, MAX_INTERVAL_ERROR);
+      const delay = backoff.next();
 
       toast.error(
         `Builder is offline. Retry in ${Math.round(delay / 1000)} seconds.`
@@ -407,11 +397,11 @@ export class ServerSyncStorage implements SyncStorage {
   subscribe(setState: (state: unknown) => void, signal: AbortSignal) {
     const projectId = this.projectId;
     loadBuilderData({ projectId, signal })
-      .then((data) => {
+      .then((data: Record<string, unknown>) => {
         const serverData = new Map(Object.entries(data));
         setState(new Map([["server", serverData]]));
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (err instanceof Error) {
           console.error(err);
           return;
@@ -466,4 +456,10 @@ export const usePreventUnload = () => {
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, []);
+};
+
+export const __testing__ = {
+  pollCommands,
+  retry,
+  transactionCallbacks,
 };

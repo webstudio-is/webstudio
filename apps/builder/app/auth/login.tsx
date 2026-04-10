@@ -24,6 +24,7 @@ export type LoginProps = {
   isGithubEnabled?: boolean;
   isGoogleEnabled?: boolean;
   isSecretLoginEnabled?: boolean;
+  devPlanNames?: string[];
 };
 
 export const Login = ({
@@ -31,6 +32,7 @@ export const Login = ({
   isGithubEnabled,
   isGoogleEnabled,
   isSecretLoginEnabled,
+  devPlanNames,
 }: LoginProps) => {
   globalStyles();
   return (
@@ -86,7 +88,9 @@ export const Login = ({
                 Sign in with GitHub
               </Button>
             </Form>
-            {isSecretLoginEnabled && <SecretLogin />}
+            {isSecretLoginEnabled && (
+              <SecretLogin devPlanNames={devPlanNames} />
+            )}
           </Flex>
         </TooltipProvider>
         {errorMessage ? (

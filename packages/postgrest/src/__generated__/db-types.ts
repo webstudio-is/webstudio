@@ -425,7 +425,7 @@ export type Database = {
           domainsVirtualId: string;
           projectId: string;
           publishStatus: Database["public"]["Enums"]["PublishStatus"];
-          updatedAt: string;
+          updatedAt?: string;
         };
         Update: {
           buildId?: string;
@@ -481,6 +481,39 @@ export type Database = {
           },
         ];
       };
+      Notification: {
+        Row: {
+          createdAt: string;
+          id: string;
+          payload: Json;
+          recipientId: string;
+          respondedAt: string | null;
+          senderId: string;
+          status: string;
+          type: string;
+        };
+        Insert: {
+          createdAt?: string;
+          id?: string;
+          payload?: Json;
+          recipientId: string;
+          respondedAt?: string | null;
+          senderId: string;
+          status?: string;
+          type: string;
+        };
+        Update: {
+          createdAt?: string;
+          id?: string;
+          payload?: Json;
+          recipientId?: string;
+          respondedAt?: string | null;
+          senderId?: string;
+          status?: string;
+          type?: string;
+        };
+        Relationships: [];
+      };
       Product: {
         Row: {
           createdAt: string;
@@ -522,6 +555,7 @@ export type Database = {
           tags: string[] | null;
           title: string;
           userId: string | null;
+          workspaceId: string | null;
         };
         Insert: {
           createdAt?: string;
@@ -533,6 +567,7 @@ export type Database = {
           tags?: string[] | null;
           title: string;
           userId?: string | null;
+          workspaceId?: string | null;
         };
         Update: {
           createdAt?: string;
@@ -544,6 +579,7 @@ export type Database = {
           tags?: string[] | null;
           title?: string;
           userId?: string | null;
+          workspaceId?: string | null;
         };
         Relationships: [
           {
@@ -558,6 +594,13 @@ export type Database = {
             columns: ["userId"];
             isOneToOne: false;
             referencedRelation: "User";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "Project_workspaceId_fkey";
+            columns: ["workspaceId"];
+            isOneToOne: false;
+            referencedRelation: "Workspace";
             referencedColumns: ["id"];
           },
         ];
@@ -607,18 +650,6 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
-      };
-      Team: {
-        Row: {
-          id: string;
-        };
-        Insert: {
-          id: string;
-        };
-        Update: {
-          id?: string;
-        };
-        Relationships: [];
       };
       TransactionLog: {
         Row: {
@@ -688,7 +719,6 @@ export type Database = {
           image: string | null;
           projectsTags: Json;
           provider: string | null;
-          teamId: string | null;
           username: string | null;
         };
         Insert: {
@@ -698,7 +728,6 @@ export type Database = {
           image?: string | null;
           projectsTags?: Json;
           provider?: string | null;
-          teamId?: string | null;
           username?: string | null;
         };
         Update: {
@@ -708,15 +737,80 @@ export type Database = {
           image?: string | null;
           projectsTags?: Json;
           provider?: string | null;
-          teamId?: string | null;
           username?: string | null;
+        };
+        Relationships: [];
+      };
+      Workspace: {
+        Row: {
+          createdAt: string;
+          id: string;
+          isDefault: boolean;
+          isDeleted: boolean;
+          name: string;
+          userId: string;
+        };
+        Insert: {
+          createdAt?: string;
+          id?: string;
+          isDefault?: boolean;
+          isDeleted?: boolean;
+          name: string;
+          userId: string;
+        };
+        Update: {
+          createdAt?: string;
+          id?: string;
+          isDefault?: boolean;
+          isDeleted?: boolean;
+          name?: string;
+          userId?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "User_teamId_fkey";
-            columns: ["teamId"];
+            foreignKeyName: "Workspace_userId_fkey";
+            columns: ["userId"];
             isOneToOne: false;
-            referencedRelation: "Team";
+            referencedRelation: "User";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      WorkspaceMember: {
+        Row: {
+          createdAt: string;
+          relation: Database["public"]["Enums"]["AuthorizationRelation"];
+          removedAt: string | null;
+          userId: string;
+          workspaceId: string;
+        };
+        Insert: {
+          createdAt?: string;
+          relation?: Database["public"]["Enums"]["AuthorizationRelation"];
+          removedAt?: string | null;
+          userId: string;
+          workspaceId: string;
+        };
+        Update: {
+          createdAt?: string;
+          relation?: Database["public"]["Enums"]["AuthorizationRelation"];
+          removedAt?: string | null;
+          userId?: string;
+          workspaceId?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "WorkspaceMember_userId_fkey";
+            columns: ["userId"];
+            isOneToOne: false;
+            referencedRelation: "User";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "WorkspaceMember_workspaceId_fkey";
+            columns: ["workspaceId"];
+            isOneToOne: false;
+            referencedRelation: "Workspace";
             referencedColumns: ["id"];
           },
         ];
@@ -760,6 +854,7 @@ export type Database = {
           tags: string[] | null;
           title: string | null;
           userId: string | null;
+          workspaceId: string | null;
         };
         Insert: {
           createdAt?: string | null;
@@ -774,6 +869,7 @@ export type Database = {
           tags?: string[] | null;
           title?: string | null;
           userId?: string | null;
+          workspaceId?: string | null;
         };
         Update: {
           createdAt?: string | null;
@@ -788,6 +884,7 @@ export type Database = {
           tags?: string[] | null;
           title?: string | null;
           userId?: string | null;
+          workspaceId?: string | null;
         };
         Relationships: [
           {
@@ -802,6 +899,13 @@ export type Database = {
             columns: ["userId"];
             isOneToOne: false;
             referencedRelation: "User";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "Project_workspaceId_fkey";
+            columns: ["workspaceId"];
+            isOneToOne: false;
+            referencedRelation: "Workspace";
             referencedColumns: ["id"];
           },
         ];
@@ -886,7 +990,16 @@ export type Database = {
           customerEmail: string | null;
           customerId: string | null;
           productId: string | null;
+          seatQuantity: number | null;
           subscriptionId: string | null;
+          userId: string | null;
+        };
+        Relationships: [];
+      };
+      WorkspaceProjectAuthorization: {
+        Row: {
+          projectId: string | null;
+          relation: string | null;
           userId: string | null;
         };
         Relationships: [];
@@ -910,6 +1023,7 @@ export type Database = {
           tags: string[] | null;
           title: string;
           userId: string | null;
+          workspaceId: string | null;
         };
         SetofOptions: {
           from: "*";
@@ -950,6 +1064,26 @@ export type Database = {
         };
       };
       latestBuildVirtual:
+        | {
+            Args: {
+              "": Database["public"]["Views"]["DashboardProject"]["Row"];
+            };
+            Returns: {
+              buildId: string;
+              createdAt: string;
+              domain: string;
+              domainsVirtualId: string;
+              projectId: string;
+              publishStatus: Database["public"]["Enums"]["PublishStatus"];
+              updatedAt: string;
+            };
+            SetofOptions: {
+              from: '"DashboardProject"';
+              to: "latestBuildVirtual";
+              isOneToOne: true;
+              isSetofReturn: true;
+            };
+          }
         | {
             Args: { "": Database["public"]["Tables"]["domainsVirtual"]["Row"] };
             Returns: {
