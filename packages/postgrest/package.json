@@ -11,6 +11,10 @@
     "./index.server": {
       "webstudio": "./src/index.server.ts",
       "import": "./src/index.server.ts"
+    },
+    "./testing": {
+      "webstudio": "./src/testing.ts",
+      "import": "./src/testing.ts"
     }
   },
   "sideEffects": false,
@@ -24,6 +28,8 @@
     "@supabase/postgrest-js": "^1.19.3"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:*"
+    "@webstudio-is/tsconfig": "workspace:*",
+    "msw": "^2.13.2",
+    "vitest": "^3.1.2"
   }
 }

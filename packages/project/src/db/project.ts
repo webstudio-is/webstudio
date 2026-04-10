@@ -149,6 +149,24 @@ export const create = async (
     projectOwnerUserId = workspace.data.userId;
   }
 
+  // Enforce the per-user project limit before creating anything
+  const ownerPlan = await context.getOwnerPlanFeatures(projectOwnerUserId);
+  const projectCountResult = await context.postgrest.client
+    .from("Project")
+    .select("id", { count: "exact", head: true })
+    .eq("userId", projectOwnerUserId)
+    .eq("isDeleted", false);
+
+  if (projectCountResult.error) {
+    throw projectCountResult.error;
+  }
+
+  if ((projectCountResult.count ?? 0) >= ownerPlan.maxProjectsAllowedPerUser) {
+    throw new Error(
+      "You've reached the project limit for your plan. Upgrade or delete a project to create a new one."
+    );
+  }
+
   // create project without user first
   // and set user only after build is successfully created
   // this way to make project creation transactional

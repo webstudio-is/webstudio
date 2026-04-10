@@ -242,3 +242,5 @@ export const remove = async (
 
   return dbToken.data;
 };
+
+export const __testing__ = { applyTokenPermissions };
