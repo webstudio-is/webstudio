@@ -4322,6 +4322,31 @@ export const RangeCoverIcon: IconComponent = forwardRef(
 );
 RangeCoverIcon.displayName = "RangeCoverIcon";
 
+export const RefreshCcwIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8m0 0V3m0 5h5m-5 4a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16m0 0h-5m5 0v5"
+        />
+      </svg>
+    );
+  }
+);
+RefreshCcwIcon.displayName = "RefreshCcwIcon";
+
 export const RefreshIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -4470,31 +4495,6 @@ export const ResourceIcon: IconComponent = forwardRef(
   }
 );
 ResourceIcon.displayName = "ResourceIcon";
-
-export const ReverseIcon: IconComponent = forwardRef(
-  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.3"
-          d="M2.667 11.333h10.666m0 0-2.666-2.666m2.666 2.666L10.667 14m2.666-9.333H2.667m0 0L5.333 2M2.667 4.667l2.666 2.666"
-        />
-      </svg>
-    );
-  }
-);
-ReverseIcon.displayName = "ReverseIcon";
 
 export const SearchIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
