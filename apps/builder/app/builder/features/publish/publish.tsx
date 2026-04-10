@@ -532,7 +532,7 @@ const Publish = ({
         toast.success(
           <>
             The project has been successfully published.{" "}
-            {timesLeft > 0 && (
+            {timesLeft > 0 && timesLeft <= 10 && (
               <div>
                 You have {timesLeft} out of {maxDailyPublishesPerUser} daily
                 publications remaining. The counter resets tomorrow.
