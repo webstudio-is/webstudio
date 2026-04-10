@@ -607,6 +607,28 @@ const performAcceptSideEffect = async ({
       );
     }
 
+    // Block transfer if the project has custom domains and the receiver's plan
+    // does not include domain support.
+    if (receiverPlan.maxDomainsAllowedPerUser === 0) {
+      const domainCount = await context.postgrest.client
+        .from("ProjectDomain")
+        .select("domainId", { count: "exact", head: true })
+        .eq("projectId", parsed.projectId);
+
+      if (domainCount.error) {
+        throw domainCount.error;
+      }
+
+      if (
+        receiverPlan.maxDomainsAllowedPerUser === 0 &&
+        (domainCount.count ?? 0) > 0
+      ) {
+        throw new Error(
+          "This project has custom domains attached. Upgrade your plan to accept projects with custom domains."
+        );
+      }
+    }
+
     // Determine the target workspace: use the one from the notification payload,
     // or fall back to the one provided by the receiver at accept time.
     const resolvedWorkspaceId = parsed.targetWorkspaceId ?? targetWorkspaceId;
