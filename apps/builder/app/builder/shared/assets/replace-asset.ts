@@ -41,7 +41,6 @@ export const replaceAsset = async (
     (pages, props, styles, assets) => {
       const updatedNewAsset = assets.get(newAssetId);
       if (updatedNewAsset) {
-        updatedNewAsset.filename = oldAsset.filename;
         updatedNewAsset.description = oldAsset.description;
       }
 
