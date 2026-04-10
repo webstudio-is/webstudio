@@ -24,6 +24,8 @@ import { CloneButton } from "~/builder/features/clone";
 import { $selectedPage } from "~/shared/awareness";
 import { BuilderModeDropDown } from "~/builder/features/builder-mode";
 import { SafeModeButton } from "~/builder/features/safe-mode";
+import { NotificationPopover } from "~/shared/notifications/notification-popover";
+import { $notifications } from "~/shared/notifications/subscription";
 import { TopbarLayout } from "./topbar-layout";
 
 const PagesButton = () => {
@@ -66,6 +68,7 @@ type TopbarProps = {
 
 export const Topbar = ({ project, css, loading }: TopbarProps) => {
   const pages = useStore($pages);
+  const notifications = useStore($notifications);
   return (
     <TopbarLayout
       css={css}
@@ -81,6 +84,11 @@ export const Topbar = ({ project, css, loading }: TopbarProps) => {
       center={<BreakpointsContainer />}
       right={
         <>
+          {notifications.length > 0 && (
+            <NotificationPopover
+              renderTrigger={(props) => <ToolbarButton {...props} />}
+            />
+          )}
           <SafeModeButton />
           <ViewMode />
           <SyncStatus />

@@ -108,7 +108,7 @@ export const loginPath = (params: {
 export const logoutPath = () => "/logout";
 export const restLogoutPath = () => "/dashboard-logout";
 
-export const userPlanSubscriptionPath = (subscriptionId?: string) => {
+export const planSubscriptionPath = (subscriptionId?: string) => {
   const urlSearchParams = new URLSearchParams();
   urlSearchParams.set("return_url", window.location.href);
   if (subscriptionId) {

@@ -11,8 +11,16 @@ import {
 import { Dashboard, DashboardSetup } from "./dashboard";
 import { Card as CardComponent, CardContent, CardFooter } from "./shared/card";
 import { ThumbnailWithAbbr, ThumbnailLinkWithAbbr } from "./shared/thumbnail";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import {
+  defaultPlanFeatures,
+  type PlanFeatures,
+} from "@webstudio-is/trpc-interface/plan-features";
 import type { DashboardProject } from "@webstudio-is/dashboard";
+import { updateCsrfToken } from "~/shared/csrf.client";
+
+// Set a dummy CSRF token so the custom fetch wrapper does not show
+// "CSRF token is not set" toasts in Storybook.
+updateCsrfToken("__storybook__");
 
 export default {
   title: "Dashboard",
@@ -25,7 +33,6 @@ const user = {
   email: null,
   image: null,
   username: "Taylor",
-  teamId: null,
   provider: "github",
   projectsTags: [],
 };
@@ -35,16 +42,7 @@ const createRouter = (element: JSX.Element, path: string, current?: string) =>
     initialEntries: [current ?? path],
   });
 
-const userPlanFeatures: UserPlanFeatures = {
-  allowAdditionalPermissions: false,
-  allowDynamicData: false,
-  allowContentMode: false,
-  allowStagingPublish: false,
-  maxContactEmails: 0,
-  maxDomainsAllowedPerUser: 0,
-  maxPublishesAllowedPerUser: 1,
-  purchases: [],
-};
+const planFeatures: PlanFeatures = defaultPlanFeatures;
 
 const projects = [
   {
@@ -62,15 +60,20 @@ const projects = [
     marketplaceApprovalStatus: "UNLISTED" as const,
     tags: [],
     domainsVirtual: [],
+    workspaceId: null,
   } as DashboardProject,
 ];
 
 const data = {
   user,
   templates: projects,
-  userPlanFeatures,
+  planFeatures,
+  purchases: [],
   publisherHost: "https://wstd.work",
   projects,
+  role: "own" as const,
+  workspaces: [],
+  notifications: [],
 };
 
 export const Welcome: StoryFn<typeof Dashboard> = () => {

@@ -52,6 +52,15 @@ const style = css({
   },
   variants: {
     fullWidth: { true: { width: "100%" } },
+    color: {
+      ghost: {
+        background: "transparent",
+        "&:hover": {
+          borderColor: "transparent",
+          background: theme.colors.backgroundHover,
+        },
+      },
+    },
   },
 });
 
@@ -64,20 +73,21 @@ const textStyle = css(textVariants.regular, {
   paddingLeft: theme.spacing[3],
 });
 
-type Props = Omit<ComponentProps<"button">, "prefix"> & {
+type Props = Omit<ComponentProps<"button">, "prefix" | "color"> & {
   fullWidth?: boolean;
+  color?: "ghost";
   css?: CSS;
   prefix?: ReactNode; // primarily for <NestedIconLabel>
 };
 
 export const SelectButton = forwardRef(
   (
-    { prefix, children, css, className, fullWidth, ...rest }: Props,
+    { prefix, children, css, className, fullWidth, color, ...rest }: Props,
     ref: Ref<HTMLButtonElement>
   ) => (
     <button
       {...rest}
-      className={style({ css, className, fullWidth })}
+      className={style({ css, className, fullWidth, color })}
       ref={ref}
     >
       {prefix}

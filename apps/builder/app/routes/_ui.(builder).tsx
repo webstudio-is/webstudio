@@ -12,6 +12,7 @@ import {
   type LoaderFunctionArgs,
 } from "@remix-run/server-runtime";
 import * as projectApi from "@webstudio-is/project/index.server";
+import { defaultRole, type Role } from "@webstudio-is/project";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 
 import {
@@ -19,6 +20,7 @@ import {
   authorizeProject,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
+import { getPlanInfo } from "~/shared/db/plan-features.server";
 import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
 
 import env from "~/env/env.server";
@@ -154,12 +156,59 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
           )
         : authDb.tokenDefaultPermissions;
 
-    const { userPlanFeatures } = context;
-    if (userPlanFeatures === undefined) {
-      throw new Response("User plan features are not defined", {
-        status: 404,
-      });
+    // When the project belongs to a workspace, resolve plan from the workspace owner
+    // so the owner's subscription governs all projects in the workspace
+    let role: Role | "own" = "own";
+
+    if (project.workspaceId !== null) {
+      const currentUserId =
+        context.authorization.type === "user"
+          ? context.authorization.userId
+          : undefined;
+
+      // Fetch workspace owner and current user's membership in a single query.
+      // When currentUserId is undefined (token auth), filter with a UUID that
+      // can never match so the members array comes back empty.
+      const noMatchId = "00000000-0000-0000-0000-000000000000";
+      const workspace = await context.postgrest.client
+        .from("Workspace")
+        .select("userId, members:WorkspaceMember(relation)")
+        .eq("id", project.workspaceId)
+        .eq("isDeleted", false)
+        .eq("members.userId", currentUserId ?? noMatchId)
+        .is("members.removedAt", null)
+        .single();
+
+      if (workspace.error) {
+        throw workspace.error;
+      }
+
+      const planResult = await getPlanInfo(
+        workspace.data.userId,
+        context.postgrest
+      );
+      context.planFeatures = planResult.planFeatures;
+      context.purchases = planResult.purchases;
+
+      // Determine the current user's relation to the workspace
+      if (
+        currentUserId !== undefined &&
+        workspace.data.userId !== currentUserId
+      ) {
+        const membership = workspace.data.members[0];
+        role = (membership?.relation as Role) ?? defaultRole;
+
+        // When the workspace owner has downgraded, members lose access.
+        // Data stays intact but permissions are suspended.
+        if (planResult.planFeatures.maxWorkspaces <= 1) {
+          throw new AuthorizationError(
+            "The workspace owner's plan no longer supports workspace access"
+          );
+        }
+      }
     }
+
+    const { planFeatures, purchases } = context;
 
     if (project.userId === null) {
       throw new AuthorizationError("Project must have project userId defined");
@@ -202,7 +251,9 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         authToken,
         authTokenPermissions,
         authPermit,
-        userPlanFeatures,
+        role,
+        planFeatures,
+        purchases,
         stagingUsername: env.STAGING_USERNAME,
         stagingPassword: env.STAGING_PASSWORD,
       } as const,

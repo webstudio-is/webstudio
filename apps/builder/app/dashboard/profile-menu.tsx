@@ -12,11 +12,13 @@ import {
   ProBadge,
   DropdownMenuSeparator,
   Text,
+  Flex,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
-import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
+import { useStore } from "@nanostores/react";
+import { logoutPath, planSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { $purchases } from "~/shared/nano-states";
 
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
@@ -33,43 +35,45 @@ const ProfileButton = forwardRef<
   }
 >(({ image, name, hasPurchases, ...rest }, forwardedRef) => {
   return (
-    <Button
-      color="ghost"
-      aria-label="Profile Menu"
-      {...rest}
-      ref={forwardedRef}
-      prefix={
-        <Avatar src={image} fallback={getAvatarLetter(name)} alt={name} />
-      }
-      suffix={<ChevronDownIcon size={12} />}
-      css={{
-        // Exception for avatar. May need to introduce a 32px controls size later.
-        height: theme.spacing[13],
-      }}
-    >
-      {hasPurchases === false && <ProBadge>Free</ProBadge>}
-    </Button>
+    <Flex gap="2" align="center">
+      <Button
+        color="ghost"
+        aria-label="Profile Menu"
+        {...rest}
+        ref={forwardedRef}
+        prefix={
+          <Avatar src={image} fallback={getAvatarLetter(name)} alt={name} />
+        }
+        suffix={<ChevronDownIcon size={12} />}
+        css={{
+          // Exception for avatar. May need to introduce a 32px controls size later.
+          height: theme.spacing[13],
+        }}
+      >
+        {name && (
+          <Text variant="labels" truncate>
+            {name}
+          </Text>
+        )}
+      </Button>
+      {hasPurchases === false && (
+        <ProBadge css={{ flexShrink: 0 }}>Free</ProBadge>
+      )}
+    </Flex>
   );
 });
 
-export const ProfileMenu = ({
-  user,
-  userPlanFeatures,
-}: {
-  user: User;
-  userPlanFeatures: UserPlanFeatures;
-}) => {
+export const ProfileMenu = ({ user }: { user: User }) => {
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
-  const purchases = userPlanFeatures.purchases;
-  const hasPaidPlan = purchases.length > 0;
+  const purchases = useStore($purchases);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <ProfileButton
           image={user.image || undefined}
           name={nameOrEmail}
-          hasPurchases={hasPaidPlan}
+          hasPurchases={purchases.length > 0}
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" width="regular">
@@ -80,7 +84,7 @@ export const ProfileMenu = ({
         {purchases.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Purchases</DropdownMenuLabel>
+            <DropdownMenuLabel>Plans</DropdownMenuLabel>
           </>
         )}
         {purchases.map((purchase, index) =>
@@ -88,7 +92,7 @@ export const ProfileMenu = ({
             <DropdownMenuItem
               key={purchase.subscriptionId}
               onSelect={() => {
-                window.location.href = userPlanSubscriptionPath(
+                window.location.href = planSubscriptionPath(
                   purchase.subscriptionId
                 );
               }}
@@ -101,7 +105,7 @@ export const ProfileMenu = ({
             </DropdownMenuLabel>
           )
         )}
-        {hasPaidPlan === false && (
+        {purchases.length === 0 && (
           <DropdownMenuItem
             onSelect={() => {
               window.open("https://webstudio.is/pricing");
