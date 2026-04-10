@@ -4377,6 +4377,31 @@ export const RangeCoverIcon: IconComponent = forwardRef(
 );
 RangeCoverIcon.displayName = "RangeCoverIcon";
 
+export const RefreshCcwIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8m0 0V3m0 5h5m-5 4a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16m0 0h-5m5 0v5"
+        />
+      </svg>
+    );
+  }
+);
+RefreshCcwIcon.displayName = "RefreshCcwIcon";
+
 export const RefreshIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
