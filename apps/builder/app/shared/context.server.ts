@@ -4,8 +4,10 @@ import { authenticator } from "~/services/auth.server";
 import { trpcSharedClient } from "~/services/trpc.server";
 import { entryApi } from "./entri/entri-api.server";
 
-import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
-import { createPlanInfoLoader } from "./db/plan-client.server";
+import {
+  defaultPlanFeatures,
+  createPlanInfoLoader,
+} from "@webstudio-is/trpc-interface/plan-features";
 import { staticEnv } from "~/env/env.static.server";
 import { createClient } from "@webstudio-is/postgrest/index.server";
 import { builderAuthenticator } from "~/services/builder-auth.server";
@@ -153,9 +155,7 @@ const createEntriContext = () => {
 
 const createPlanContext = async (
   authorization: AppContext["authorization"],
-  getPlanInfo: (
-    userIds: string[]
-  ) => Promise<
+  getPlanInfo: (userIds: string[]) => Promise<
     Map<
       string,
       {
@@ -213,7 +213,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const postgrest = createPostgrestContext();
   const authorization = await createAuthorizationContext(request, postgrest);
 
-  const planInfoLoader = createPlanInfoLoader();
+  const planInfoLoader = createPlanInfoLoader(env.PLANS || undefined);
   const { getPlanInfo } = planInfoLoader;
 
   const domain = createDomainContext();
