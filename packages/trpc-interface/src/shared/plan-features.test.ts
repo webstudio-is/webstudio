@@ -2,8 +2,9 @@ import { describe, test, expect } from "vitest";
 import {
   type PlanFeatures,
   defaultPlanFeatures,
-} from "@webstudio-is/trpc-interface/plan-features";
-import { parsePlansEnv } from "@webstudio-is/trpc-interface/plan-features";
+  parsePlansEnv,
+} from "./plan-features";
+
 /** Full-featured plan for use in tests — all booleans true, numeric limits at max */
 const fullFeatures: PlanFeatures = {
   ...defaultPlanFeatures,

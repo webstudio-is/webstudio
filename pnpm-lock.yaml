@@ -322,6 +322,9 @@ importers:
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
+      fetch-extras:
+        specifier: ^2.1.1
+        version: 2.1.1
       immer:
         specifier: ^10.1.1
         version: 10.1.1
@@ -6627,6 +6630,10 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fetch-extras@2.1.1:
+    resolution: {integrity: sha512-nJSIrM7waFMb6j0hF/uNT5kzQf157Q6w4cxz7EsVc7AUUchXq9LOO53zt6UNSfV0+DwFrczQd+yllUGuSuPkdA==}
+    engines: {node: '>=22'}
 
   filename-reserved-regex@3.0.0:
     resolution: {integrity: sha512-hn4cQfU6GOT/7cFHXBqeBg2TbrMBgdD0kcjLhvSQYYwm3s4B6cjvBfb7nBALJLAXqmU5xajSa7X2NnUud/VCdw==}
@@ -14001,6 +14008,8 @@ snapshots:
   fdir@6.4.4(picomatch@4.0.2):
     optionalDependencies:
       picomatch: 4.0.2
+
+  fetch-extras@2.1.1: {}
 
   filename-reserved-regex@3.0.0: {}
 

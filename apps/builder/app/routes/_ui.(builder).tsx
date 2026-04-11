@@ -20,6 +20,8 @@ import {
   authorizeProject,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
+import { getPlanInfo } from "@webstudio-is/trpc-interface/plan-client";
+import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
 import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
 
 import env from "~/env/env.server";
@@ -182,13 +184,11 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         throw workspace.error;
       }
 
-      const planResult = await context.getPlanInfo([workspace.data.userId]);
-      const ownerPlan = planResult.get(workspace.data.userId);
-      if (ownerPlan === undefined) {
-        throw new Error(
-          `Plan info not found for user ${workspace.data.userId}`
-        );
-      }
+      const planResult = await getPlanInfo([workspace.data.userId], context);
+      const ownerPlan = planResult.get(workspace.data.userId) ?? {
+        planFeatures: defaultPlanFeatures,
+        purchases: [],
+      };
       context.planFeatures = ownerPlan.planFeatures;
       context.purchases = ownerPlan.purchases;
 

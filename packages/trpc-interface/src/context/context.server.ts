@@ -95,13 +95,4 @@ export type AppContext = {
    * still supports workspace features (maxWorkspaces > 1) after a potential downgrade.
    */
   getOwnerPlanFeatures: (userId: string) => Promise<PlanFeatures>;
-  /**
-   * Resolves plan features and purchases for one or more user IDs.
-   * Per-request cached — each userId is resolved at most once.
-   */
-  getPlanInfo: (
-    userIds: string[]
-  ) => Promise<
-    Map<string, { planFeatures: PlanFeatures; purchases: Array<Purchase> }>
-  >;
 };

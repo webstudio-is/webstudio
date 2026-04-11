@@ -148,32 +148,3 @@ export const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
     return new Map();
   }
 };
-
-type PlanInfo = {
-  planFeatures: PlanFeatures;
-  purchases: Array<Purchase>;
-};
-
-/**
- * Create a per-request plan info loader.
- * Resolves plan features from the `plans` string (PLANS env format) for every userId.
- * All users share the same plan (first plan in the list, or defaultPlanFeatures if unset).
- *
- * TODO: Replace with a `POST /plans` call to the payment worker (task W2).
- * Once the worker endpoint is live, pass the worker response here instead.
- */
-export const createPlanInfoLoader = (plans?: string) => {
-  const planFeatures: PlanFeatures = plans
-    ? (parsePlansEnv(plans).values().next().value ?? defaultPlanFeatures)
-    : defaultPlanFeatures;
-
-  const selfHostedPlanInfo: PlanInfo = { planFeatures, purchases: [] };
-
-  const getPlanInfo = async (
-    userIds: string[]
-  ): Promise<Map<string, PlanInfo>> => {
-    return new Map(userIds.map((id) => [id, selfHostedPlanInfo]));
-  };
-
-  return { getPlanInfo };
-};
