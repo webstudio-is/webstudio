@@ -5,7 +5,6 @@ import {
   createErrorResponse,
 } from "@webstudio-is/trpc-interface/index.server";
 import { workspace as workspaceApi } from "@webstudio-is/project/index.server";
-import { getPlanInfo } from "~/shared/db/plan-features.server";
 import { roles } from "@webstudio-is/trpc-interface/authorize";
 import env from "~/env/env.server";
 
@@ -80,7 +79,11 @@ const syncOwnerSeats = async (
   }
 
   const ownerId = workspaceResult.data.userId;
-  const planInfo = await getPlanInfo(ownerId, ctx.postgrest);
+  const planResults = await ctx.getPlanInfo([ownerId]);
+  const planInfo = planResults.get(ownerId);
+  if (planInfo === undefined) {
+    return;
+  }
   const { planFeatures, purchases } = planInfo;
 
   const subscription = purchases.find((p) => p.subscriptionId !== undefined);

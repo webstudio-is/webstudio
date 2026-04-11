@@ -5,7 +5,7 @@ import { trpcSharedClient } from "~/services/trpc.server";
 import { entryApi } from "./entri/entri-api.server";
 
 import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
-import { getPlanInfo } from "./db/plan-features.server";
+import { createPlanInfoLoader } from "./db/plan-client.server";
 import { staticEnv } from "~/env/env.static.server";
 import { createClient } from "@webstudio-is/postgrest/index.server";
 import { builderAuthenticator } from "~/services/builder-auth.server";
@@ -153,7 +153,17 @@ const createEntriContext = () => {
 
 const createPlanContext = async (
   authorization: AppContext["authorization"],
-  postgrest: AppContext["postgrest"]
+  getPlanInfo: (
+    userIds: string[]
+  ) => Promise<
+    Map<
+      string,
+      {
+        planFeatures: AppContext["planFeatures"];
+        purchases: AppContext["purchases"];
+      }
+    >
+  >
 ): Promise<{
   planFeatures: AppContext["planFeatures"];
   purchases: AppContext["purchases"];
@@ -169,7 +179,10 @@ const createPlanContext = async (
     return { planFeatures: defaultPlanFeatures, purchases: [] };
   }
 
-  return getPlanInfo(ownerId, postgrest);
+  const results = await getPlanInfo([ownerId]);
+  return (
+    results.get(ownerId) ?? { planFeatures: defaultPlanFeatures, purchases: [] }
+  );
 };
 
 const createTrpcCache = () => {
@@ -200,18 +213,21 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const postgrest = createPostgrestContext();
   const authorization = await createAuthorizationContext(request, postgrest);
 
+  const planInfoLoader = createPlanInfoLoader();
+  const { getPlanInfo } = planInfoLoader;
+
   const domain = createDomainContext();
   const deployment = createDeploymentContext(getRequestOrigin(request.url));
   const entri = createEntriContext();
   const { planFeatures, purchases } = await createPlanContext(
     authorization,
-    postgrest
+    getPlanInfo
   );
   const trpcCache = createTrpcCache();
 
   const getOwnerPlanFeatures = async (userId: string) => {
-    const { planFeatures } = await getPlanInfo(userId, postgrest);
-    return planFeatures;
+    const results = await getPlanInfo([userId]);
+    return results.get(userId)?.planFeatures ?? defaultPlanFeatures;
   };
 
   const createTokenContext = async (authToken: string) => {
@@ -221,7 +237,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
     );
     const { planFeatures, purchases } = await createPlanContext(
       authorization,
-      postgrest
+      getPlanInfo
     );
 
     return {
@@ -235,6 +251,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
       postgrest,
       createTokenContext,
       getOwnerPlanFeatures,
+      getPlanInfo,
     };
   };
 
@@ -249,5 +266,6 @@ export const createContext = async (request: Request): Promise<AppContext> => {
     postgrest,
     createTokenContext,
     getOwnerPlanFeatures,
+    getPlanInfo,
   };
 };
