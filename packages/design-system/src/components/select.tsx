@@ -148,7 +148,7 @@ export const SelectItemDescription = ({
 
 type TriggerPassThroughProps = Omit<
   ComponentProps<typeof Primitive.Trigger>,
-  "onChange" | "value" | "defaultValue" | "asChild" | "prefix"
+  "onChange" | "value" | "defaultValue" | "asChild" | "prefix" | "color"
 > &
   Omit<ComponentProps<typeof SelectButton>, "onChange" | "value">;
 
@@ -203,6 +203,7 @@ const SelectBase = <Option,>(
     name,
     children,
     prefix,
+    color,
     ...props
   }: SelectProps<Option>,
   forwardedRef: Ref<HTMLButtonElement>
@@ -255,7 +256,7 @@ const SelectBase = <Option,>(
       onOpenChange={onOpenChange}
     >
       <Primitive.Trigger ref={forwardedRef} {...props} asChild>
-        <SelectButton prefix={prefix}>
+        <SelectButton prefix={prefix} color={color}>
           <Primitive.Value placeholder={placeholder} />
         </SelectButton>
       </Primitive.Trigger>

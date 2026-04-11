@@ -2,7 +2,11 @@ import { Button, Flex, InputField, theme } from "@webstudio-is/design-system";
 import { useState } from "react";
 import { authPath } from "~/shared/router-utils";
 
-export const SecretLogin = () => {
+type SecretLoginProps = {
+  devPlanNames?: string[];
+};
+
+export const SecretLogin = ({ devPlanNames }: SecretLoginProps) => {
   const [show, setShow] = useState(false);
   if (show) {
     return (
@@ -11,7 +15,7 @@ export const SecretLogin = () => {
         action={authPath({ provider: "dev" })}
         style={{ display: "contents" }}
       >
-        <Flex gap="2">
+        <Flex gap="2" direction="column">
           <InputField
             name="secret"
             type="text"
@@ -19,8 +23,20 @@ export const SecretLogin = () => {
             required
             autoFocus
             placeholder="Auth secret"
-            css={{ flexGrow: 1 }}
           />
+          <InputField
+            name="email"
+            type="email"
+            placeholder="Email (optional)"
+          />
+          <select name="devPlan">
+            <option value="">Default plan</option>
+            {devPlanNames?.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
           <Button type="submit">Login</Button>
         </Flex>
       </form>

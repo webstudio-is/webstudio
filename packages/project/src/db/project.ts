@@ -5,7 +5,8 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createBuild } from "@webstudio-is/project-build/index.server";
-import { MarketplaceApprovalStatus, Title } from "../shared/schema";
+import { Title } from "../shared/project-schema";
+import { MarketplaceApprovalStatus } from "../shared/marketplace-schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 import type { SetNonNullable } from "type-fest";
 
@@ -82,7 +83,7 @@ export const loadById = async (projectId: string, context: AppContext) => {
 };
 
 export const create = async (
-  { title }: { title: string },
+  { title, workspaceId }: { title: string; workspaceId?: string },
   context: AppContext
 ) => {
   Title.parse(title);
@@ -98,6 +99,73 @@ export const create = async (
   }
 
   const projectId = crypto.randomUUID();
+
+  // When creating inside a workspace, the project is owned by the workspace
+  // owner — not the creating user. This ensures the workspace owner retains
+  // full control and removing a member revokes all their access.
+  let projectOwnerUserId = userId;
+
+  if (workspaceId !== undefined) {
+    const workspace = await context.postgrest.client
+      .from("Workspace")
+      .select("userId")
+      .eq("id", workspaceId)
+      .eq("isDeleted", false)
+      .single();
+
+    if (workspace.error) {
+      throw workspace.error;
+    }
+
+    // Verify the caller is the workspace owner or a member
+    if (workspace.data.userId !== userId) {
+      const membership = await context.postgrest.client
+        .from("WorkspaceMember")
+        .select("userId, relation")
+        .eq("workspaceId", workspaceId)
+        .eq("userId", userId)
+        .is("removedAt", null)
+        .maybeSingle();
+
+      if (membership.error) {
+        throw membership.error;
+      }
+
+      if (membership.data === null) {
+        throw new AuthorizationError("You don't have access to this workspace");
+      }
+
+      // Only builders and administrators can create projects
+      const canCreate =
+        membership.data.relation === "builders" ||
+        membership.data.relation === "administrators";
+      if (canCreate === false) {
+        throw new AuthorizationError(
+          "You don't have permission to create projects in this workspace"
+        );
+      }
+    }
+
+    projectOwnerUserId = workspace.data.userId;
+  }
+
+  // Enforce the per-user project limit before creating anything
+  const ownerPlan = await context.getOwnerPlanFeatures(projectOwnerUserId);
+  const projectCountResult = await context.postgrest.client
+    .from("Project")
+    .select("id", { count: "exact", head: true })
+    .eq("userId", projectOwnerUserId)
+    .eq("isDeleted", false);
+
+  if (projectCountResult.error) {
+    throw projectCountResult.error;
+  }
+
+  if ((projectCountResult.count ?? 0) >= ownerPlan.maxProjectsAllowedPerUser) {
+    throw new Error(
+      "You've reached the project limit for your plan. Upgrade or delete a project to create a new one."
+    );
+  }
 
   // create project without user first
   // and set user only after build is successfully created
@@ -116,7 +184,7 @@ export const create = async (
 
   const updatedProject = await context.postgrest.client
     .from("Project")
-    .update({ userId })
+    .update({ userId: projectOwnerUserId, workspaceId: workspaceId ?? null })
     .eq("id", projectId)
     .select("*")
     .single();
@@ -139,16 +207,29 @@ export const markAsDeleted = async (
     return { errors: "Only the owner can delete the project" };
   }
 
-  const deletedProject = await context.postgrest.client
+  await softDeleteProject(projectId, context);
+};
+
+/**
+ * Soft-delete a single project: marks it as deleted and frees the subdomain
+ * by assigning a unique random domain. Must be called once per project —
+ * never in a bulk update — so every row gets its own unique domain.
+ */
+export const softDeleteProject = async (
+  projectId: string,
+  context: AppContext
+) => {
+  const result = await context.postgrest.client
     .from("Project")
     .update({
       isDeleted: true,
-      // Free up the subdomain
+      // Free the subdomain — each project needs a unique value
       domain: nanoid(),
     })
     .eq("id", projectId);
-  if (deletedProject.error) {
-    throw deletedProject.error;
+
+  if (result.error) {
+    throw result.error;
   }
 };
 
@@ -235,6 +316,68 @@ export const clone = async (
   }
 
   // Should be some mixed context in case of RLS
+  // If the source project belongs to a workspace, check clone permissions
+  // BEFORE creating the clone to avoid unnecessary rollbacks.
+  let workspaceCloneTarget:
+    | undefined
+    | { workspaceId: string; projectOwnerUserId: string };
+
+  if (project.workspaceId !== null) {
+    const workspace = await destinationContext.postgrest.client
+      .from("Workspace")
+      .select("userId")
+      .eq("id", project.workspaceId)
+      .eq("isDeleted", false)
+      .maybeSingle();
+
+    if (workspace.error) {
+      throw workspace.error;
+    }
+
+    if (workspace.data !== null) {
+      const isOwner = workspace.data.userId === userId;
+
+      if (isOwner) {
+        workspaceCloneTarget = {
+          workspaceId: project.workspaceId,
+          projectOwnerUserId: workspace.data.userId,
+        };
+      } else {
+        const membership = await destinationContext.postgrest.client
+          .from("WorkspaceMember")
+          .select("userId, relation")
+          .eq("workspaceId", project.workspaceId)
+          .eq("userId", userId)
+          .is("removedAt", null)
+          .maybeSingle();
+
+        if (membership.error) {
+          throw membership.error;
+        }
+
+        if (membership.data !== null) {
+          const canClone =
+            membership.data.relation === "builders" ||
+            membership.data.relation === "administrators";
+
+          if (canClone === false) {
+            throw new AuthorizationError(
+              "You don't have permission to clone projects in this workspace"
+            );
+          }
+
+          // Place clone in workspace, owned by the workspace owner
+          // (consistent with project creation)
+          workspaceCloneTarget = {
+            workspaceId: project.workspaceId,
+            projectOwnerUserId: workspace.data.userId,
+          };
+        }
+        // Non-members (e.g. token-based clone): clone stays in personal space
+      }
+    }
+  }
+
   const clonedProject = await destinationContext.postgrest.client.rpc(
     "clone_project",
     {
@@ -247,6 +390,20 @@ export const clone = async (
 
   if (clonedProject.error) {
     throw clonedProject.error;
+  }
+
+  if (workspaceCloneTarget !== undefined) {
+    const assignResult = await destinationContext.postgrest.client
+      .from("Project")
+      .update({
+        workspaceId: workspaceCloneTarget.workspaceId,
+        userId: workspaceCloneTarget.projectOwnerUserId,
+      })
+      .eq("id", clonedProject.data.id);
+
+    if (assignResult.error) {
+      throw assignResult.error;
+    }
   }
 
   return { id: clonedProject.data.id };

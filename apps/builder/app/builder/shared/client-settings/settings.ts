@@ -8,6 +8,7 @@ const Settings = z.object({
   sidebarPanelWidths: z
     .record(z.enum(sidebarPanelNames), z.number())
     .default({}),
+  lastDashboardSearch: z.string().default(""),
 });
 
 export type Settings = z.infer<typeof Settings>;

@@ -6,16 +6,21 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsgo --noEmit"
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@webstudio-is/feature-flags": "workspace:*",
     "@webstudio-is/project": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "type-fest": "^4.37.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:*"
+    "@webstudio-is/postgrest": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "msw": "^2.13.2",
+    "vitest": "^3.1.2"
   },
   "exports": {
     ".": {

@@ -56,7 +56,7 @@ import {
   $pages,
   $project,
   $publishedOrigin,
-  $userPlanFeatures,
+  $permissions,
   $stagingUsername,
   $stagingPassword,
   $publisherHost,
@@ -322,8 +322,8 @@ const ChangeProjectDomain = ({
 };
 
 const $restrictedFeatures = computed(
-  [$pages, $dataSources, $instances, $userPlanFeatures],
-  (pages, dataSources, instances, userPlanFeatures) => {
+  [$pages, $dataSources, $instances, $permissions],
+  (pages, dataSources, instances, permissions) => {
     const features = new Map<
       string,
       | undefined
@@ -334,12 +334,12 @@ const $restrictedFeatures = computed(
     }
     // specified emails for default webhook form
     if (
-      userPlanFeatures.maxContactEmails === 0 &&
+      permissions.maxContactEmailsPerProject === 0 &&
       (pages?.meta?.contactEmail ?? "").trim()
     ) {
       features.set("Custom contact email", undefined);
     }
-    if (!userPlanFeatures.allowDynamicData) {
+    if (!permissions.allowDynamicData) {
       // pages with dynamic paths
       for (const page of [pages.homePage, ...pages.pages]) {
         const awareness = {
@@ -407,15 +407,13 @@ const Publish = ({
   disabled: boolean;
   refresh: () => Promise<void>;
 }) => {
-  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
+  const { maxDailyPublishesPerUser } = useStore($permissions);
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
   const countdown = usePublishCountdown(isPublishing);
 
   useEffect(() => {
@@ -534,11 +532,10 @@ const Publish = ({
         toast.success(
           <>
             The project has been successfully published.{" "}
-            {hasPaidPlan === false && (
+            {timesLeft > 0 && timesLeft <= 10 && (
               <div>
-                On the free plan, you have {timesLeft} out of{" "}
-                {maxPublishesAllowedPerUser} daily publications remaining. The
-                counter resets tomorrow.
+                You have {timesLeft} out of {maxDailyPublishesPerUser} daily
+                publications remaining. The counter resets tomorrow.
               </div>
             )}
           </>,
@@ -743,7 +740,7 @@ const PublishStatic = ({
 
 const useCanAddDomain = () => {
   const { load, data } = trpcClient.domain.countTotalDomains.useQuery();
-  const { maxDomainsAllowedPerUser } = useStore($userPlanFeatures);
+  const { maxDomainsAllowedPerUser } = useStore($permissions);
   const project = useStore($project);
   const activeDomainsCount = project?.domainsVirtual.filter(
     (domain) => domain.status === "ACTIVE" && domain.verified
@@ -759,13 +756,13 @@ const useCanAddDomain = () => {
 
 const useUserPublishCount = () => {
   const { load, data } = trpcClient.project.userPublishCount.useQuery();
-  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
+  const { maxDailyPublishesPerUser } = useStore($permissions);
   useEffect(() => {
     load();
   }, [load]);
   return {
     userPublishCount: data?.success ? data.data : 0,
-    maxPublishesAllowedPerUser,
+    maxDailyPublishesPerUser,
   };
 };
 
@@ -795,14 +792,12 @@ const buttonLinkClass = css({
 const UpgradeBanner = () => {
   const restrictedFeatures = useStore($restrictedFeatures);
   const { canAddDomain } = useCanAddDomain();
-  const { userPublishCount, maxPublishesAllowedPerUser } =
-    useUserPublishCount();
-  if (userPublishCount >= maxPublishesAllowedPerUser) {
+  const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
+  if (userPublishCount >= maxDailyPublishesPerUser) {
     return (
       <PanelBanner>
         <Text variant="regularBold">
-          Upgrade to publish more than {maxPublishesAllowedPerUser} times per
-          day:
+          Upgrade to publish more than {maxDailyPublishesPerUser} times per day:
         </Text>
         <Link
           className={buttonStyle({ color: "gradient" })}
@@ -911,8 +906,7 @@ const Content = (props: {
   }
   const projectState = "idle";
 
-  const { userPublishCount, maxPublishesAllowedPerUser } =
-    useUserPublishCount();
+  const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
 
   const hasUnpublishedDomains = project.domainsVirtual.some(
     (domain) =>
@@ -969,10 +963,10 @@ const Content = (props: {
         <Publish
           project={project}
           refresh={refreshProject}
-          timesLeft={maxPublishesAllowedPerUser - userPublishCount}
+          timesLeft={maxDailyPublishesPerUser - userPublishCount}
           disabled={
             restrictedFeatures.size > 0 ||
-            userPublishCount >= maxPublishesAllowedPerUser
+            userPublishCount >= maxDailyPublishesPerUser
           }
         />
       </Flex>
@@ -1201,7 +1195,9 @@ type PublishProps = {
 export const PublishButton = ({ projectId }: PublishProps) => {
   const publishDialog = useStore($publishDialog);
   const authTokenPermissions = useStore($authTokenPermissions);
-  const isPublishEnabled = authTokenPermissions.canPublish;
+  const { canPublishToStagingOnly } = useStore($permissions);
+  const isPublishEnabled =
+    authTokenPermissions.canPublish || canPublishToStagingOnly;
 
   const tooltipContent = isPublishEnabled
     ? undefined

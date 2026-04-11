@@ -6,12 +6,15 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsgo --noEmit"
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@trpc/server": "^10.45.2",
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
+    "@webstudio-is/feature-flags": "workspace:*",
+    "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "nanoid": "^5.1.5",
@@ -20,7 +23,9 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:*"
+    "@webstudio-is/tsconfig": "workspace:*",
+    "msw": "^2.13.2",
+    "vitest": "^3.1.2"
   },
   "exports": {
     ".": {

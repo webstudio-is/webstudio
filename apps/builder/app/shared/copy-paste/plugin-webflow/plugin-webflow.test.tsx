@@ -106,6 +106,7 @@ beforeEach(() => {
     latestBuildVirtual: null,
     previewImageAssetId: null,
     tags: [],
+    workspaceId: null,
   });
 
   $breakpoints.set(

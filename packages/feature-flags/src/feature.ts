@@ -35,7 +35,7 @@ export const setEnv = (features: string) => {
  * Returns true/false if the feature is turned on.
  * A feature can be turned on:
  * - by default directly in ./flags
- * - by providing an environment variable server-side (locally or on the server): FEATURES="something1, something2" pnpm dev
+ * - by providing an environment variable server-side (locally or on the server): FEATURE_FLAGS="something1, something2" pnpm dev
  * - by setting it in the browser console: localStorage.features = 'something1, something2', browser defined flag will override server-side flag
  */
 export const isFeatureEnabled = (name: Name): boolean => {

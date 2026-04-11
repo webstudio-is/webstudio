@@ -1093,6 +1093,61 @@ export const AutoScrollIcon: IconComponent = forwardRef(
 );
 AutoScrollIcon.displayName = "AutoScrollIcon";
 
+export const BellDotIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6.845 14a1.333 1.333 0 0 0 2.31 0M7.787 1.34A4 4 0 0 0 4 5.332c0 3-.94 3.971-1.825 4.884a.667.667 0 0 0 .492 1.116h10.666a.666.666 0 0 0 .494-1.115c-.55-.567-1.119-1.154-1.474-2.232"
+        />
+        <path
+          fill="red"
+          stroke="red"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12 5.333a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
+        />
+      </svg>
+    );
+  }
+);
+BellDotIcon.displayName = "BellDotIcon";
+
+export const BellIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6.845 14a1.333 1.333 0 0 0 2.31 0m-6.98-3.783a.667.667 0 0 0 .492 1.116h10.666a.666.666 0 0 0 .494-1.115C12.94 9.304 12 8.333 12 5.333a4 4 0 1 0-8 0c0 3-.94 3.971-1.825 4.884Z"
+        />
+      </svg>
+    );
+  }
+);
+BellIcon.displayName = "BellIcon";
+
 export const BlockquoteIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -4321,6 +4376,31 @@ export const RangeCoverIcon: IconComponent = forwardRef(
   }
 );
 RangeCoverIcon.displayName = "RangeCoverIcon";
+
+export const RefreshCcwIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8m0 0V3m0 5h5m-5 4a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16m0 0h-5m5 0v5"
+        />
+      </svg>
+    );
+  }
+);
+RefreshCcwIcon.displayName = "RefreshCcwIcon";
 
 export const RefreshIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
