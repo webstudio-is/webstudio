@@ -20,9 +20,11 @@ export default function Dev() {
  *   TransactionLog row (eventId = "dev-{userId}") that satisfies the UserProduct view.
  * - No plan selected: delete the TransactionLog row so the user has no active purchase.
  */
-const applyDevPlan = async (email: string, planName: string | null) => {
-  const postgrest = createPostgrestContext();
-
+export const applyDevPlan = async (
+  email: string,
+  planName: string | null,
+  postgrest = createPostgrestContext()
+) => {
   // Resolve userId from email (user was already created by the authenticator).
   const userResult = await postgrest.client
     .from("User")
