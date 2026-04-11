@@ -58,6 +58,29 @@ const buildPurchases = (
   return purchases;
 };
 
+type Product = { id: string; name: string; meta: unknown };
+
+// Products are admin-created and rarely change. Cache them for the lifetime of the
+// server instance to avoid a repeated DB round-trip on every request.
+let productCache: Map<string, Product> | undefined;
+
+const getProductCache = async (
+  postgrest: AppContext["postgrest"]
+): Promise<Map<string, Product>> => {
+  if (productCache !== undefined) {
+    return productCache;
+  }
+  const result = await postgrest.client
+    .from("Product")
+    .select("id, name, meta");
+  if (result.error) {
+    console.error(result.error);
+    throw new Error("Failed to fetch products");
+  }
+  productCache = new Map(result.data.map((p) => [p.id, p]));
+  return productCache;
+};
+
 export const getPlanInfo = async (
   userIds: string[],
   context: Pick<AppContext, "postgrest">
@@ -115,21 +138,15 @@ export const getPlanInfo = async (
     );
   }
 
-  const productsResult = await postgrest.client
-    .from("Product")
-    .select("id, name, meta")
-    .in("id", productIds);
-
-  if (productsResult.error) {
-    console.error(productsResult.error);
-    throw new Error("Failed to fetch products");
-  }
-
+  const allProducts = await getProductCache(postgrest);
   const productById = new Map(
-    productsResult.data.map((product) => [product.id, product])
+    productIds.flatMap((id) => {
+      const product = allProducts.get(id);
+      return product !== undefined ? [[id, product] as const] : [];
+    })
   );
   const productIdToName = new Map(
-    productsResult.data.map((product) => [product.id, product.name])
+    [...productById.values()].map((product) => [product.id, product.name])
   );
   const plansByName = parsePlansEnv(process.env.PLANS ?? "[]");
 
