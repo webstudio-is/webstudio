@@ -5,7 +5,7 @@ import { AUTH_PROVIDERS } from "~/shared/session";
 import { clearReturnToCookie, returnToPath } from "~/services/cookie.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect, setNoStoreToRedirect } from "~/services/no-store-redirect";
-import { applyDevPlan } from "./auth.dev.server";
+import { applyDevPlan } from "~/services/dev-plan.server";
 
 export default function Dev() {
   return null;
