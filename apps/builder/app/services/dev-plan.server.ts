@@ -1,4 +1,4 @@
-import { createPostgrestContext } from "~/shared/context.server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 
 /**
  * Upsert or delete dev plan rows in the DB for the given user email.
@@ -12,8 +12,9 @@ import { createPostgrestContext } from "~/shared/context.server";
 export const applyDevPlan = async (
   email: string,
   planName: string | null,
-  postgrest = createPostgrestContext()
+  context: Pick<AppContext, "postgrest">
 ) => {
+  const { postgrest } = context;
   // Resolve userId from email (user was already created by the authenticator).
   const userResult = await postgrest.client
     .from("User")

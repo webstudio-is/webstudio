@@ -10,8 +10,6 @@ import { applyDevPlan } from "~/services/dev-plan.server";
 
 const server = createTestServer();
 
-const postgrest = testContext.postgrest;
-
 // ─── applyDevPlan ─────────────────────────────────────────────
 
 describe("applyDevPlan (msw)", () => {
@@ -27,7 +25,7 @@ describe("applyDevPlan (msw)", () => {
 
     // Should resolve without throwing even when user is missing
     await expect(
-      applyDevPlan("ghost@example.com", "Pro", postgrest)
+      applyDevPlan("ghost@example.com", "Pro", testContext)
     ).resolves.toBeUndefined();
   });
 
@@ -47,7 +45,7 @@ describe("applyDevPlan (msw)", () => {
       })
     );
 
-    await applyDevPlan("dev@example.com", "Pro", postgrest);
+    await applyDevPlan("dev@example.com", "Pro", testContext);
     expect(productUpserted).toBe(true);
     expect(txUpserted).toBe(true);
   });
@@ -63,7 +61,7 @@ describe("applyDevPlan (msw)", () => {
       })
     );
 
-    await applyDevPlan("dev@example.com", null, postgrest);
+    await applyDevPlan("dev@example.com", null, testContext);
     expect(txDeleted).toBe(true);
   });
 
@@ -80,7 +78,7 @@ describe("applyDevPlan (msw)", () => {
 
     // Should resolve (logs error but doesn't throw)
     await expect(
-      applyDevPlan("dev@example.com", "Pro", postgrest)
+      applyDevPlan("dev@example.com", "Pro", testContext)
     ).resolves.toBeUndefined();
   });
 });
