@@ -41,9 +41,14 @@ const ensureValue = (css: string) => {
  * - Property and value: color: red
  * - Multiple properties: color: red; background: blue
  */
-export const parseStyleInput = (css: string): CssStyleMap => {
+export type ParseStyleInputResult = {
+  styleMap: CssStyleMap;
+  errors: string[];
+};
+
+export const parseStyleInput = (css: string): ParseStyleInputResult => {
   css = ensureValue(css);
-  const styles = parseCss(`selector{${css}}`);
+  const { styles, errors } = parseCss(`selector{${css}}`, new Map());
   const styleMap: CssStyleMap = new Map();
   for (const { property, value } of styles) {
     if (property.startsWith("--")) {
@@ -64,5 +69,5 @@ export const parseStyleInput = (css: string): CssStyleMap => {
     // @todo This should be returning { type: "guaranteedInvalid" }
     styleMap.set(property, value);
   }
-  return styleMap;
+  return { styleMap, errors };
 };

@@ -20,7 +20,7 @@ const mapGroupBy = <Item, Key>(
 };
 
 const css = await readFile("./src/normalize.css", "utf8");
-const parsed = parseCss(css);
+const { styles: parsed } = parseCss(css, new Map());
 const groups = mapGroupBy(parsed, (styleDecl) => styleDecl.selector);
 
 const validTags = [

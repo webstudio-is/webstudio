@@ -27,10 +27,10 @@ export const parseCssFragment = (
   css: string,
   fallbacks: (CssProperty | ShorthandProperty)[]
 ): Map<CssProperty, StyleValue> => {
-  let parsed = parseCss(`.styles{${css}}`);
+  let parsed = parseCss(`.styles{${css}}`, new Map()).styles;
   if (parsed.length === 0) {
     for (const fallbackProperty of fallbacks) {
-      parsed = parseCss(`.styles{${fallbackProperty}: ${css}}`);
+      parsed = parseCss(`.styles{${fallbackProperty}: ${css}}`, new Map()).styles;
       parsed = parsed.filter((styleDecl) => styleDecl.value.type !== "invalid");
       if (parsed.length > 0) {
         break;

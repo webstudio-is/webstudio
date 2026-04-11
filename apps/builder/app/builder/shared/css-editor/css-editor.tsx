@@ -18,6 +18,7 @@ import {
   Separator,
   Text,
   theme,
+  toast,
   Tooltip,
 } from "@webstudio-is/design-system";
 import {
@@ -366,7 +367,10 @@ export const CssEditor = ({
     recentProperties.length > 0 && searchProperties === undefined;
 
   const handleInsertStyles = (cssText: string) => {
-    const styleMap = parseStyleInput(cssText);
+    const { styleMap, errors } = parseStyleInput(cssText);
+    for (const error of errors) {
+      toast.error(error);
+    }
     if (styleMap.size === 0) {
       return new Map();
     }

@@ -249,9 +249,9 @@ const parseTailwindClasses = async (
       border-color: var(--tw-default-border-color, #e5e7eb);
       border-width: 0;
     }`;
-    parsedStyles.push(...parseCss(reset));
+    parsedStyles.push(...parseCss(reset, new Map()).styles);
   }
-  parsedStyles.push(...parseCss(css));
+  parsedStyles.push(...parseCss(css, new Map()).styles);
   // skip preflights with ::before, ::after and ::backdrop
   parsedStyles = parsedStyles.filter(
     (styleDecl) => !styleDecl.state?.startsWith("::")

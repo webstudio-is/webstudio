@@ -122,7 +122,7 @@ const matchOrSuggestToCreate = (search: string, items: Array<SearchItem>) => {
   matched.length = Math.min(matched.length, 100);
 
   if (matched.length === 0) {
-    const parsedStyleMap = parseStyleInput(search);
+    const { styleMap: parsedStyleMap } = parseStyleInput(search);
     const styleMap = mergeStyles(parsedStyleMap);
 
     // When parsedStyles is more than one, user entered a shorthand.

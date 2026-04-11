@@ -5,8 +5,15 @@ import type {
   CssProperty,
   StyleProperty,
 } from "@webstudio-is/css-engine";
-import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
+import type { FunctionNode } from "css-tree";
+import {
+  parseCssValue as parseCssValueLonghand,
+  parseCssVar,
+} from "./parse-css-value";
 import { expandShorthands } from "./shorthands";
+import { shorthandProperties } from "./__generated__/shorthand-properties";
+
+const shorthandSet = new Set<string>(shorthandProperties);
 
 export type ParsedStyleDecl = {
   breakpoint?: string;
@@ -83,6 +90,95 @@ const parseCssValue = (property: CssProperty, value: string) => {
   return final;
 };
 
+/**
+ * Substitute var() references in a shorthand value using custom properties
+ * from the same rule and the external cssVars map, then expand the result.
+ *
+ * Works for any shorthand (background, border, transition, font…):
+ *   background: var(--clr)                  → substitute → expand
+ *   border: var(--w) solid var(--clr)       → substitute → expand
+ *   transition: var(--dur) ease             → substitute → expand
+ *
+ * Resolution order: same-rule custom properties take precedence over cssVars.
+ *
+ * Returns undefined when the value contains no var() (fast path).
+ * Returns { result: empty Map, droppedVars } when all vars are unresolvable
+ * so the caller can emit errors and skip the property.
+ */
+const substituteVarsInShorthand = (
+  property: string,
+  value: string,
+  customProperties: Map<string, string>,
+  cssVars?: Map<string, string>
+): { result: Map<CssProperty, StyleValue>; droppedVars: string[] } | undefined => {
+  if (!value.includes("var(")) {
+    return;
+  }
+
+  let ast: csstree.CssNode;
+  try {
+    ast = csstree.parse(value, { context: "value", positions: true });
+  } catch {
+    return;
+  }
+
+  const replacements: Array<{ start: number; end: number; resolved: string }> =
+    [];
+  const unresolvableVarNames: string[] = [];
+  let totalVars = 0;
+  let unresolvedVars = 0;
+
+  csstree.walk(ast, {
+    visit: "Function",
+    enter(node) {
+      if (node.name !== "var" || !node.loc) {
+        return;
+      }
+      totalVars++;
+      const varRef = parseCssVar(node as FunctionNode);
+      if (!varRef) {
+        return;
+      }
+      const resolved =
+        customProperties.get(`--${varRef.value}`) ??
+        cssVars?.get(`--${varRef.value}`);
+      if (resolved === undefined) {
+        unresolvedVars++;
+        unresolvableVarNames.push(`--${varRef.value}`);
+        return;
+      }
+      replacements.push({
+        start: node.loc.start.offset,
+        end: node.loc.end.offset,
+        resolved,
+      });
+    },
+  });
+
+  if (totalVars === 0) {
+    return;
+  }
+
+  // At least one var was substituted — apply replacements in reverse order to
+  // preserve earlier offsets, then expand the shorthand with the concrete value.
+  if (replacements.length > 0) {
+    let substituted = value;
+    for (const r of [...replacements].reverse()) {
+      substituted =
+        substituted.slice(0, r.start) + r.resolved + substituted.slice(r.end);
+    }
+    return {
+      result: parseCssValue(property as CssProperty, substituted),
+      droppedVars: unresolvableVarNames,
+    };
+  }
+
+  // All vars were unresolvable — signal that the property will be dropped.
+  if (unresolvedVars === totalVars) {
+    return { result: new Map(), droppedVars: unresolvableVarNames };
+  }
+};
+
 const cssTreeTryParse = (input: string) => {
   try {
     const ast = csstree.parse(input);
@@ -97,17 +193,28 @@ type Selector = {
   state?: string;
 };
 
-export const parseCss = (css: string): ParsedStyleDecl[] => {
+export type ParseCssResult = {
+  styles: ParsedStyleDecl[];
+  errors: string[];
+};
+
+export const parseCss = (
+  css: string,
+  cssVars: Map<string, string>
+): ParseCssResult => {
   const ast = cssTreeTryParse(css);
-  const styles = new Map<string, ParsedStyleDecl>();
+  const stylesMap = new Map<string, ParsedStyleDecl>();
+  const errors: string[] = [];
 
   if (ast === undefined) {
-    return [];
+    return { styles: [], errors };
   }
 
   // Track context as we traverse — use a stack to support nested @media
   const atruleStack: csstree.Atrule[] = [];
   let currentRule: csstree.Rule | undefined;
+  // Custom properties declared in the current rule, used to resolve var() in shorthand expansion.
+  const customProperties = new Map<string, string>();
 
   csstree.walk(ast, {
     enter(node) {
@@ -115,6 +222,7 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
         atruleStack.push(node);
       } else if (node.type === "Rule") {
         currentRule = node;
+        customProperties.clear();
       }
     },
     leave(node) {
@@ -264,15 +372,39 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
       }
 
       const stringValue = csstree.generate(node.value);
+      const property = normalizeProperty(node.property);
 
-      const parsedCss = parseCssValue(
-        normalizeProperty(node.property),
-        stringValue
-      );
+      // Collect custom property values so var() in subsequent declarations
+      // within the same rule can be resolved.
+      if (property.startsWith("--")) {
+        customProperties.set(property, stringValue);
+      }
+
+      let parsedCss: Map<CssProperty, StyleValue>;
+      if (shorthandSet.has(property)) {
+        const substituted = substituteVarsInShorthand(
+          property,
+          stringValue,
+          customProperties,
+          cssVars
+        );
+        if (substituted !== undefined) {
+          parsedCss = substituted.result;
+          for (const varName of substituted.droppedVars) {
+            errors.push(
+              `"${property}" was not applied because ${varName} could not be resolved`
+            );
+          }
+        } else {
+          parsedCss = parseCssValue(property, stringValue);
+        }
+      } else {
+        parsedCss = parseCssValue(property, stringValue);
+      }
 
       for (const { name: selector, state } of selectors) {
-        for (const [property, value] of parsedCss) {
-          const normalizedProperty = normalizeProperty(property);
+        for (const [prop, value] of parsedCss) {
+          const normalizedProperty = normalizeProperty(prop);
           const styleDecl: ParsedStyleDecl = {
             selector,
             property: normalizedProperty,
@@ -286,7 +418,7 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
           }
 
           // deduplicate styles within selector and state by using map
-          styles.set(
+          stylesMap.set(
             `${breakpoint}:${selector}:${state}:${normalizedProperty}`,
             styleDecl
           );
@@ -295,7 +427,7 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
     },
   });
 
-  return Array.from(styles.values());
+  return { styles: Array.from(stylesMap.values()), errors };
 };
 
 export type ParsedClassSelector = {
