@@ -234,9 +234,9 @@ export const checkProjectPermit = async ({
  */
 const getWorkspaceOwnerIdForProject = async (
   projectId: string,
-  postgrestClient: AppContext["postgrest"]["client"]
+  context: Pick<AppContext, "postgrest">
 ): Promise<string | undefined> => {
-  const project = await postgrestClient
+  const project = await context.postgrest.client
     .from("Project")
     .select("workspaceId")
     .eq("id", projectId)
@@ -246,7 +246,7 @@ const getWorkspaceOwnerIdForProject = async (
     return;
   }
 
-  const workspace = await postgrestClient
+  const workspace = await context.postgrest.client
     .from("Workspace")
     .select("userId")
     .eq("id", project.data.workspaceId)
@@ -303,7 +303,7 @@ export const hasProjectPermit = async (
       // User is a workspace member — verify the owner's plan
       const workspaceOwnerId = await getWorkspaceOwnerIdForProject(
         props.projectId,
-        context.postgrest.client
+        context
       );
 
       if (workspaceOwnerId !== undefined) {

@@ -185,10 +185,7 @@ describe("getWorkspaceOwnerIdForProject (msw)", () => {
     server.use(
       db.get("Project", () => json({ id: projectId, workspaceId: null }))
     );
-    const result = await getWorkspaceOwnerIdForProject(
-      projectId,
-      testContext.postgrest.client
-    );
+    const result = await getWorkspaceOwnerIdForProject(projectId, testContext);
     expect(result).toBeUndefined();
   });
 
@@ -198,10 +195,7 @@ describe("getWorkspaceOwnerIdForProject (msw)", () => {
       db.get("Project", () => json({ id: projectId, workspaceId: "ws-1" })),
       db.get("Workspace", () => json({ id: "ws-1", userId: "owner-99" }))
     );
-    const result = await getWorkspaceOwnerIdForProject(
-      projectId,
-      testContext.postgrest.client
-    );
+    const result = await getWorkspaceOwnerIdForProject(projectId, testContext);
     expect(result).toBe("owner-99");
   });
 
@@ -211,10 +205,7 @@ describe("getWorkspaceOwnerIdForProject (msw)", () => {
       db.get("Project", () => json({ id: projectId, workspaceId: "ws-gone" })),
       db.get("Workspace", () => json(null))
     );
-    const result = await getWorkspaceOwnerIdForProject(
-      projectId,
-      testContext.postgrest.client
-    );
+    const result = await getWorkspaceOwnerIdForProject(projectId, testContext);
     expect(result).toBeUndefined();
   });
 });
