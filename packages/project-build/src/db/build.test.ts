@@ -30,8 +30,9 @@ const createContext = (userId = "user-1"): AppContext =>
 /** hasProjectPermit: return the row when userId param is in the query */
 const ownershipHandler = db.get("Project", ({ request }) => {
   const url = new URL(request.url);
-  if (url.searchParams.has("userId"))
+  if (url.searchParams.has("userId")) {
     return json({ id: url.searchParams.get("id")?.replace("eq.", "") });
+  }
   return json(null);
 });
 

@@ -173,7 +173,9 @@ describe("findMany (msw)", () => {
     server.use(
       db.get("Workspace", ({ request }) => {
         const url = new URL(request.url);
-        if (url.searchParams.get("userId")) return json([workspaceRow]);
+        if (url.searchParams.get("userId")) {
+          return json([workspaceRow]);
+        }
         return json([]);
       }),
       db.get("WorkspaceMember", () => json([]))
@@ -192,7 +194,9 @@ describe("findMany (msw)", () => {
         const url = new URL(request.url);
         if (url.searchParams.has("userId")) {
           // first call: owned workspaces (eq userId)
-          if (url.searchParams.get("userId") === "eq.user-1") return json([]);
+          if (url.searchParams.get("userId") === "eq.user-1") {
+            return json([]);
+          }
           // third call: member workspace details
           return json([{ ...workspaceRow, id: "ws-2", userId: "owner-2" }]);
         }

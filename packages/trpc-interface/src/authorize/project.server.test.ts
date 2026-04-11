@@ -366,7 +366,9 @@ describe("hasProjectPermit — workspace downgrade guard (msw)", () => {
       // Per-call routing: ownership check uses userId param; workspaceId lookup does not
       db.get("Project", ({ request }) => {
         const url = new URL(request.url);
-        if (url.searchParams.has("userId")) return json(null);
+        if (url.searchParams.has("userId")) {
+          return json(null);
+        }
         return json({ id: projectId, workspaceId: "ws-1" });
       }),
       db.get("WorkspaceProjectAuthorization", () =>
@@ -385,7 +387,9 @@ describe("hasProjectPermit — workspace downgrade guard (msw)", () => {
     server.use(
       db.get("Project", ({ request }) => {
         const url = new URL(request.url);
-        if (url.searchParams.has("userId")) return json(null);
+        if (url.searchParams.has("userId")) {
+          return json(null);
+        }
         return json({ id: projectId, workspaceId: "ws-1" });
       }),
       db.get("WorkspaceProjectAuthorization", () =>

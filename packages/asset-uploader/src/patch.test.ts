@@ -28,8 +28,9 @@ const createContext = (): AppContext =>
 /** hasProjectPermit: direct ownership check — returns a row for any project */
 const ownershipHandler = db.get("Project", ({ request }) => {
   const url = new URL(request.url);
-  if (url.searchParams.has("userId"))
+  if (url.searchParams.has("userId")) {
     return json({ id: url.searchParams.get("id")?.replace("eq.", "") });
+  }
   return json(null);
 });
 
@@ -109,7 +110,9 @@ describe("patchAssets (msw)", () => {
       // loadAssetsByProject returns empty list — no existing assets
       db.get("Asset", ({ request }) => {
         const url = new URL(request.url);
-        if (url.searchParams.get("projectId")) return json([]);
+        if (url.searchParams.get("projectId")) {
+          return json([]);
+        }
         return json([]);
       }),
       // File lookup for undo restore

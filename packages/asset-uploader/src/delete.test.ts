@@ -24,8 +24,9 @@ const createContext = (): AppContext =>
 /** hasProjectPermit: direct ownership check returns a row for a given projectId */
 const ownershipHandler = db.get("Project", ({ request }) => {
   const url = new URL(request.url);
-  if (url.searchParams.has("userId"))
+  if (url.searchParams.has("userId")) {
     return json({ id: url.searchParams.get("id")?.replace("eq.", "") });
+  }
   return json(null);
 });
 
@@ -70,7 +71,9 @@ describe("deleteAssets (msw)", () => {
       db.get("Asset", ({ request }) => {
         const url = new URL(request.url);
         // usage check (in name filter) — no other assets use this file
-        if (url.searchParams.get("name")) return json([]);
+        if (url.searchParams.get("name")) {
+          return json([]);
+        }
         return json([assetRow]);
       }),
       db.patch("Project", () => {
@@ -106,7 +109,9 @@ describe("deleteAssets (msw)", () => {
       db.get("Asset", () => {
         assetGetCount += 1;
         // First call: load the assets to delete. Second call: usage check.
-        if (assetGetCount === 1) return json([assetRow]);
+        if (assetGetCount === 1) {
+          return json([assetRow]);
+        }
         // usage check — another asset still references the file
         return json([{ name: "photo.jpg" }]);
       }),
