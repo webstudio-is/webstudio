@@ -62,23 +62,27 @@ type Product = { id: string; name: string; meta: unknown };
 
 // Products are admin-created and rarely change. Cache them for the lifetime of the
 // server instance to avoid a repeated DB round-trip on every request.
-let productCache: Map<string, Product> | undefined;
+// The promise itself is cached to deduplicate concurrent cold-start requests.
+let productCachePromise: Promise<Map<string, Product>> | undefined;
 
-const getProductCache = async (
+const getProductCache = (
   postgrest: AppContext["postgrest"]
 ): Promise<Map<string, Product>> => {
-  if (productCache !== undefined) {
-    return productCache;
+  if (productCachePromise !== undefined) {
+    return productCachePromise;
   }
-  const result = await postgrest.client
-    .from("Product")
-    .select("id, name, meta");
-  if (result.error) {
-    console.error(result.error);
-    throw new Error("Failed to fetch products");
-  }
-  productCache = new Map(result.data.map((p) => [p.id, p]));
-  return productCache;
+  const promise: Promise<Map<string, Product>> = Promise.resolve(
+    postgrest.client.from("Product").select("id, name, meta")
+  ).then((result) => {
+    if (result.error) {
+      productCachePromise = undefined;
+      console.error(result.error);
+      throw new Error("Failed to fetch products");
+    }
+    return new Map(result.data.map((p) => [p.id, p as Product]));
+  });
+  productCachePromise = promise;
+  return promise;
 };
 
 export const getPlanInfo = async (
@@ -180,7 +184,16 @@ export const getPlanInfo = async (
   );
 };
 
-export const __testing__ = { parseProductMeta, mergeProductMetas };
+/** Resets the module-level product cache. Only for use in tests. */
+const resetProductCache = () => {
+  productCachePromise = undefined;
+};
+
+export const __testing__ = {
+  parseProductMeta,
+  mergeProductMetas,
+  resetProductCache,
+};
 
 export const getAuthorizationOwnerId = (
   authorization: AppContext["authorization"]
