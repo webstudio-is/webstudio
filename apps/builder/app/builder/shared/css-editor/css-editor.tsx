@@ -34,7 +34,10 @@ import {
 } from "@webstudio-is/css-engine";
 // @todo all style panel stuff needs to be moved to shared and/or decoupled from style panel
 import { CssValueInputContainer } from "../../features/style-panel/shared/css-value-input";
-import { $availableVariables } from "../../features/style-panel/shared/model";
+import {
+  $availableVariables,
+  $cssVarsMap,
+} from "../../features/style-panel/shared/model";
 import { PropertyInfo } from "../../features/style-panel/property-label";
 import { ColorPicker } from "@webstudio-is/design-system";
 import { useClientSupports } from "~/shared/client-supports";
@@ -367,7 +370,7 @@ export const CssEditor = ({
     recentProperties.length > 0 && searchProperties === undefined;
 
   const handleInsertStyles = (cssText: string) => {
-    const { styleMap, errors } = parseStyleInput(cssText);
+    const { styleMap, errors } = parseStyleInput(cssText, $cssVarsMap.get());
     for (const error of errors) {
       toast.error(error);
     }

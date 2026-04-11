@@ -6,6 +6,7 @@ import { propertiesData } from "@webstudio-is/css-data";
 import {
   compareMedia,
   hyphenateProperty,
+  toValue,
   toVarFallback,
   type CssProperty,
   type StyleValue,
@@ -314,6 +315,24 @@ export const $availableVariables = computed(
       }
     }
     return availableVariables;
+  }
+);
+
+/**
+ * Resolved CSS custom properties for the currently selected element,
+ * keyed by full property name (e.g. "--clr-red" → "#f00").
+ * Used to substitute var() references when parsing shorthand CSS input.
+ */
+export const $cssVarsMap = computed(
+  $computedStyleDeclarations,
+  (computedStyles): Map<string, string> => {
+    const map = new Map<string, string>();
+    for (const styleDecl of computedStyles) {
+      if (styleDecl.property.startsWith("--")) {
+        map.set(styleDecl.property, toValue(styleDecl.computedValue));
+      }
+    }
+    return map;
   }
 );
 

@@ -46,9 +46,12 @@ export type ParseStyleInputResult = {
   errors: string[];
 };
 
-export const parseStyleInput = (css: string): ParseStyleInputResult => {
+export const parseStyleInput = (
+  css: string,
+  cssVars: Map<string, string>
+): ParseStyleInputResult => {
   css = ensureValue(css);
-  const { styles, errors } = parseCss(`selector{${css}}`, new Map());
+  const { styles, errors } = parseCss(`selector{${css}}`, cssVars);
   const styleMap: CssStyleMap = new Map();
   for (const { property, value } of styles) {
     if (property.startsWith("--")) {

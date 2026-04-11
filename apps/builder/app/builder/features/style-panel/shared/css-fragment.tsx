@@ -17,7 +17,7 @@ import {
   EditorDialogControl,
   getCodeEditorCssVars,
 } from "~/shared/code-editor-base";
-import { $availableVariables } from "./model";
+import { $availableVariables, $cssVarsMap } from "./model";
 
 type ShorthandProperty = (typeof shorthandProperties)[number];
 
@@ -27,10 +27,11 @@ export const parseCssFragment = (
   css: string,
   fallbacks: (CssProperty | ShorthandProperty)[]
 ): Map<CssProperty, StyleValue> => {
-  let parsed = parseCss(`.styles{${css}}`, new Map()).styles;
+  const cssVars = $cssVarsMap.get();
+  let parsed = parseCss(`.styles{${css}}`, cssVars).styles;
   if (parsed.length === 0) {
     for (const fallbackProperty of fallbacks) {
-      parsed = parseCss(`.styles{${fallbackProperty}: ${css}}`, new Map()).styles;
+      parsed = parseCss(`.styles{${fallbackProperty}: ${css}}`, cssVars).styles;
       parsed = parsed.filter((styleDecl) => styleDecl.value.type !== "invalid");
       if (parsed.length > 0) {
         break;
