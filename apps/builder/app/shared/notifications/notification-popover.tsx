@@ -3,6 +3,7 @@ import { useRevalidator } from "@remix-run/react";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  Button,
   Flex,
   IconButton,
   List,
@@ -19,12 +20,7 @@ import {
   theme,
   toast,
 } from "@webstudio-is/design-system";
-import {
-  BellIcon,
-  BellDotIcon,
-  CheckMarkIcon,
-  XIcon,
-} from "@webstudio-is/icons";
+import { BellIcon, BellDotIcon, XIcon } from "@webstudio-is/icons";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import { $notifications, refreshNotifications } from "./subscription";
 import type { Notifications } from "~/shared/polly/types";
@@ -79,15 +75,9 @@ const NotificationRow = ({
           {notification.description}
         </Text>
         <Flex gap="1" shrink={false}>
-          <Tooltip content="Accept">
-            <IconButton
-              aria-label="Accept"
-              onClick={onAccept}
-              disabled={isLoading}
-            >
-              <CheckMarkIcon />
-            </IconButton>
-          </Tooltip>
+          <Button color="neutral" onClick={onAccept} disabled={isLoading}>
+            Accept
+          </Button>
           <Tooltip content="Decline">
             <IconButton
               aria-label="Decline"

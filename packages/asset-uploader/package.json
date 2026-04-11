@@ -23,7 +23,9 @@
   },
   "devDependencies": {
     "@types/fontkit": "^2.0.8",
+    "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "msw": "^2.13.2",
     "vitest": "^3.1.2",
     "zod": "^3.24.2"
   },

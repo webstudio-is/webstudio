@@ -1,5 +1,14 @@
 import { describe, test, expect } from "vitest";
-import { __testing__ } from "./notification";
+import {
+  createTestServer,
+  db,
+  json,
+  empty,
+  testContext,
+} from "@webstudio-is/postgrest/testing";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
+import { accept, __testing__ } from "./notification";
 
 const { describeNotification } = __testing__;
 
@@ -84,5 +93,98 @@ describe("describeNotification", () => {
         senderLabel: "Someone",
       })
     ).toBe("You have a new notification");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// accept() — domain guard (MSW integration)
+// Verifies the correct table and filter are used in the ProjectDomain query.
+// ---------------------------------------------------------------------------
+
+const server = createTestServer();
+
+const makeAcceptCtx = (
+  planOverrides: Partial<typeof defaultPlanFeatures> = {}
+): AppContext =>
+  ({
+    authorization: { type: "user", userId: "recipient-1" },
+    planFeatures: defaultPlanFeatures,
+    purchases: [],
+    trpcCache: new Map(),
+    domain: {},
+    deployment: {},
+    entri: {},
+    ...testContext,
+    createTokenContext: () => {},
+    getOwnerPlanFeatures: async () => ({
+      ...defaultPlanFeatures,
+      ...planOverrides,
+    }),
+  }) as unknown as AppContext;
+
+const notificationRow = {
+  id: "notif-1",
+  type: "projectTransfer",
+  status: "pending",
+  senderId: "sender-1",
+  recipientId: "recipient-1",
+  createdAt: new Date(Date.now() - 1000).toISOString(),
+  respondedAt: null,
+  payload: { projectId: "proj-1" },
+};
+
+/** Handlers shared by all accept() tests: notification load + claim */
+const baseHandlers = [
+  db.get("Notification", () => json(notificationRow)),
+  db.patch("Notification", () => json({ id: "notif-1" })),
+  // existence check — project exists, sender owns it
+  db.get("Project", () => json({ id: "proj-1", userId: "sender-1" })),
+  // receiver's project count — 0 projects owned
+  db.head("Project", () => empty({ headers: { "Content-Range": "*/0" } })),
+];
+
+describe("accept — domain guard (msw)", () => {
+  test("throws when free receiver tries to accept a project with a custom domain", async () => {
+    server.use(
+      ...baseHandlers,
+      // ProjectDomain count — 1 domain attached
+      db.head("ProjectDomain", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("projectId")).toBe("eq.proj-1");
+        return empty({ headers: { "Content-Range": "*/1" } });
+      })
+    );
+
+    const ctx = makeAcceptCtx({
+      maxDomainsAllowedPerUser: 0,
+      maxProjectsAllowedPerUser: 100,
+    });
+
+    await expect(accept({ notificationId: "notif-1" }, ctx)).rejects.toThrow(
+      "custom domains attached"
+    );
+  });
+
+  test("succeeds when free receiver accepts a project with no custom domains", async () => {
+    server.use(
+      ...baseHandlers,
+      // ProjectDomain count — 0 domains
+      db.head("ProjectDomain", () =>
+        empty({ headers: { "Content-Range": "*/0" } })
+      ),
+      // default workspace lookup
+      db.get("Workspace", () => json({ id: "ws-1" })),
+      // project reassign
+      db.patch("Project", () => json({ id: "proj-1" }))
+    );
+
+    const ctx = makeAcceptCtx({
+      maxDomainsAllowedPerUser: 0,
+      maxProjectsAllowedPerUser: 100,
+    });
+
+    await expect(
+      accept({ notificationId: "notif-1" }, ctx)
+    ).resolves.toBeUndefined();
   });
 });

@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
+    "msw": "^2.13.2",
     "vitest": "^3.1.2"
   },
   "exports": {

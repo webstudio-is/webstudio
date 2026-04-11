@@ -6,7 +6,8 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsgo --noEmit"
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@webstudio-is/postgrest": "workspace:*",
@@ -15,7 +16,9 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
-    "type-fest": "^4.37.0"
+    "msw": "^2.13.2",
+    "type-fest": "^4.37.0",
+    "vitest": "^3.1.2"
   },
   "exports": {
     ".": {

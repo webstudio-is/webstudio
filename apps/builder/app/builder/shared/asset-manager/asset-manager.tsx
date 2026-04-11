@@ -7,6 +7,10 @@ import {
   useSearchFieldKeys,
 } from "@webstudio-is/design-system";
 import type { Asset, AllowedFileExtension } from "@webstudio-is/sdk";
+import {
+  acceptToMimePatterns,
+  doesAssetMatchMimePatterns,
+} from "@webstudio-is/sdk";
 import { AssetsShell, type AssetContainer, useAssets } from "../assets";
 import { AssetThumbnail } from "./asset-thumbnail";
 import { AssetFilters } from "./asset-filters";
@@ -28,11 +32,23 @@ type AssetManagerProps = {
 export const AssetManager = ({ accept = "*", onChange }: AssetManagerProps) => {
   const { assetContainers } = useAssets();
 
+  // Only show assets that match the accept constraint so incompatible types
+  // (e.g. video files) can never be selected from an image picker.
+  const compatibleContainers = useMemo(() => {
+    const patterns = acceptToMimePatterns(accept);
+    if (patterns === "*") {
+      return assetContainers;
+    }
+    return assetContainers.filter((container) =>
+      doesAssetMatchMimePatterns(container.asset, patterns)
+    );
+  }, [accept, assetContainers]);
+
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const [selectedExtensions, setSelectedExtensions] = useState<
     AllowedFileExtension[] | "*"
-  >(() => getInitialExtensions(accept, assetContainers));
+  >(() => getInitialExtensions(accept, compatibleContainers));
 
   const [sortState, setSortState] = useState<SortState>({
     sortBy: "createdAt",
@@ -40,8 +56,8 @@ export const AssetManager = ({ accept = "*", onChange }: AssetManagerProps) => {
   });
 
   const formatCounts = useMemo(
-    () => calculateFormatCounts(assetContainers),
-    [assetContainers]
+    () => calculateFormatCounts(compatibleContainers),
+    [compatibleContainers]
   );
 
   const searchProps = useSearchFieldKeys({
@@ -65,12 +81,12 @@ export const AssetManager = ({ accept = "*", onChange }: AssetManagerProps) => {
   const filteredItems = useMemo(
     () =>
       filterAndSortAssets({
-        assetContainers,
+        assetContainers: compatibleContainers,
         selectedExtensions,
         searchQuery: searchProps.value,
         sortState,
       }),
-    [assetContainers, selectedExtensions, searchProps.value, sortState]
+    [compatibleContainers, selectedExtensions, searchProps.value, sortState]
   );
 
   const handleSelect = (assetContainer?: AssetContainer) => {
