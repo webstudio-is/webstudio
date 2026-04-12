@@ -143,7 +143,10 @@ const substituteVarsInShorthand = (
       }
       const resolved =
         customProperties.get(`--${varRef.value}`) ??
-        cssVars?.get(`--${varRef.value}`);
+        cssVars?.get(`--${varRef.value}`) ??
+        (varRef.fallback?.type === "unparsed"
+          ? varRef.fallback.value
+          : undefined);
       if (resolved === undefined) {
         unresolvedVars++;
         unresolvableVarNames.push(`--${varRef.value}`);

@@ -1923,6 +1923,36 @@ describe("var() substitution — background", () => {
   });
 });
 
+describe("var() substitution — CSS var() inline fallback", () => {
+  test("uses inline fallback when var is unresolvable", () => {
+    // --w is not defined anywhere; inline fallback 2px should be used
+    const result = decls(`border: var(--w, 2px) solid red;`);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop("border-top-width", u(2, "px")),
+        prop("border-top-style", kw("solid")),
+        prop("border-top-color", kw("red")),
+      ])
+    );
+  });
+
+  test("var value takes precedence over inline fallback", () => {
+    // --w is defined as 4px; inline fallback 2px should be ignored
+    const result = decls(`--w: 4px; border: var(--w, 2px) solid red;`);
+    expect(result).toEqual(
+      expect.arrayContaining([prop("border-top-width", u(4, "px"))])
+    );
+  });
+
+  test("no error emitted when resolved via inline fallback", () => {
+    const { errors } = parseCss(
+      `.x { border: var(--w, 1px) solid black; }`,
+      new Map()
+    );
+    expect(errors).toEqual([]);
+  });
+});
+
 describe("var() substitution — border", () => {
   test("var() for border width", () => {
     const result = decls(`--w: 3px; border: var(--w) solid red;`);
