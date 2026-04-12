@@ -55,7 +55,10 @@ describe("parseStyleInput", () => {
   });
 
   test("parses multiple property-value pairs", () => {
-    const { styleMap: result } = parseStyleInput("color: red; display: block", new Map());
+    const { styleMap: result } = parseStyleInput(
+      "color: red; display: block",
+      new Map()
+    );
     expect(result).toEqual(
       new Map([
         ["color", { type: "keyword", value: "red" }],
@@ -65,7 +68,10 @@ describe("parseStyleInput", () => {
   });
 
   test("parses multiple property-value pairs, one is invalid", () => {
-    const { styleMap: result } = parseStyleInput("color: red; somethinginvalid: block", new Map());
+    const { styleMap: result } = parseStyleInput(
+      "color: red; somethinginvalid: block",
+      new Map()
+    );
     expect(result).toEqual(
       new Map([
         ["color", { type: "keyword", value: "red" }],
@@ -75,14 +81,20 @@ describe("parseStyleInput", () => {
   });
 
   test("parses custom property with value", () => {
-    const { styleMap: result } = parseStyleInput("--custom-color: red", new Map());
+    const { styleMap: result } = parseStyleInput(
+      "--custom-color: red",
+      new Map()
+    );
     expect(result).toEqual(
       new Map([["--custom-color", { type: "unparsed", value: "red" }]])
     );
   });
 
   test("handles malformed style block", () => {
-    const { styleMap: result } = parseStyleInput("color: red; invalid;", new Map());
+    const { styleMap: result } = parseStyleInput(
+      "color: red; invalid;",
+      new Map()
+    );
     expect(result).toEqual(
       new Map([["color", { type: "keyword", value: "red" }]])
     );
@@ -96,7 +108,10 @@ describe("parseStyleInput", () => {
   });
 
   test("preserves -webkit-text-stroke as shorthand property, not as CSS variable", () => {
-    const { styleMap: result } = parseStyleInput("-webkit-text-stroke: 1px red", new Map());
+    const { styleMap: result } = parseStyleInput(
+      "-webkit-text-stroke: 1px red",
+      new Map()
+    );
     expect(result).toEqual(
       new Map([
         [

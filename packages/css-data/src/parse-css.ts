@@ -110,7 +110,9 @@ const substituteVarsInShorthand = (
   value: string,
   customProperties: Map<string, string>,
   cssVars?: Map<string, string>
-): { result: Map<CssProperty, StyleValue>; droppedVars: string[] } | undefined => {
+):
+  | { result: Map<CssProperty, StyleValue>; droppedVars: string[] }
+  | undefined => {
   if (!value.includes("var(")) {
     return;
   }

@@ -8,7 +8,9 @@ import {
 
 describe("Parse CSS", () => {
   test("longhand property name with keyword value", () => {
-    expect(parseCss(`.test { background-color: red }`, new Map()).styles).toEqual([
+    expect(
+      parseCss(`.test { background-color: red }`, new Map()).styles
+    ).toEqual([
       {
         selector: ".test",
         property: "background-color",
@@ -226,7 +228,9 @@ describe("Parse CSS", () => {
   });
 
   test("attribute selector", () => {
-    expect(parseCss(`[class^="a"] { color: #ff0000 }`, new Map()).styles).toEqual([
+    expect(
+      parseCss(`[class^="a"] { color: #ff0000 }`, new Map()).styles
+    ).toEqual([
       {
         selector: '[class^="a"]',
         property: "color",
@@ -242,7 +246,9 @@ describe("Parse CSS", () => {
 
   test("parse first pseudo class as selector", () => {
     // E.g. :root
-    expect(parseCss(`:first-pseudo:my-state { color: #ff0000 }`, new Map()).styles).toEqual([
+    expect(
+      parseCss(`:first-pseudo:my-state { color: #ff0000 }`, new Map()).styles
+    ).toEqual([
       {
         selector: ":first-pseudo",
         state: ":my-state",
@@ -258,7 +264,9 @@ describe("Parse CSS", () => {
   });
 
   test("parse pseudo element", () => {
-    expect(parseCss(`input::placeholder { color: #ff0000 }`, new Map()).styles).toEqual([
+    expect(
+      parseCss(`input::placeholder { color: #ff0000 }`, new Map()).styles
+    ).toEqual([
       {
         selector: "input",
         state: "::placeholder",
@@ -274,33 +282,37 @@ describe("Parse CSS", () => {
   });
 
   test("parse multiple selectors, one with state", () => {
-    expect(parseCss(`a, a:hover { color: #ff0000 }`, new Map()).styles).toEqual([
-      {
-        selector: "a",
-        property: "color",
-        value: {
-          type: "color",
-          colorSpace: "hex",
-          alpha: 1,
-          components: [1, 0, 0],
+    expect(parseCss(`a, a:hover { color: #ff0000 }`, new Map()).styles).toEqual(
+      [
+        {
+          selector: "a",
+          property: "color",
+          value: {
+            type: "color",
+            colorSpace: "hex",
+            alpha: 1,
+            components: [1, 0, 0],
+          },
         },
-      },
-      {
-        selector: "a",
-        state: ":hover",
-        property: "color",
-        value: {
-          type: "color",
-          colorSpace: "hex",
-          alpha: 1,
-          components: [1, 0, 0],
+        {
+          selector: "a",
+          state: ":hover",
+          property: "color",
+          value: {
+            type: "color",
+            colorSpace: "hex",
+            alpha: 1,
+            components: [1, 0, 0],
+          },
         },
-      },
-    ]);
+      ]
+    );
   });
 
   test("parse multiple selectors, both with state", () => {
-    expect(parseCss(`a:active, a:hover { color: #ff0000 }`, new Map()).styles).toEqual([
+    expect(
+      parseCss(`a:active, a:hover { color: #ff0000 }`, new Map()).styles
+    ).toEqual([
       {
         selector: "a",
         state: ":active",
@@ -327,7 +339,9 @@ describe("Parse CSS", () => {
   });
 
   test("parse multiple rules", () => {
-    expect(parseCss(`a { color: red} a:hover { color: #ff0000 }`, new Map()).styles).toEqual([
+    expect(
+      parseCss(`a { color: red} a:hover { color: #ff0000 }`, new Map()).styles
+    ).toEqual([
       {
         selector: "a",
         property: "color",
@@ -489,8 +503,9 @@ describe("Parse CSS", () => {
           color: var(--color);
           background-color: var(--color, red);
         }
-        `
-      , new Map()).styles
+        `,
+        new Map()
+      ).styles
     ).toEqual([
       {
         selector: "a",
@@ -510,7 +525,9 @@ describe("Parse CSS", () => {
   });
 
   test("parse empty value as unset", () => {
-    expect(parseCss(`a { color: ; background-color: red }`, new Map()).styles).toEqual([
+    expect(
+      parseCss(`a { color: ; background-color: red }`, new Map()).styles
+    ).toEqual([
       {
         selector: "a",
         property: "color",
@@ -535,7 +552,9 @@ describe("Parse CSS", () => {
   });
 
   test("keep prefix for property that needs one", () => {
-    expect(parseCss(`a { -webkit-box-orient: horizontal; }`, new Map()).styles).toEqual([
+    expect(
+      parseCss(`a { -webkit-box-orient: horizontal; }`, new Map()).styles
+    ).toEqual([
       {
         selector: "a",
         property: "-webkit-box-orient",
@@ -546,7 +565,9 @@ describe("Parse CSS", () => {
 
   test("keep prefix for -webkit-text-stroke", () => {
     // shorthand is kept as-is (not expanded) but prefix is preserved
-    expect(parseCss(`a { -webkit-text-stroke: 1px black; }`, new Map()).styles).toEqual([
+    expect(
+      parseCss(`a { -webkit-text-stroke: 1px black; }`, new Map()).styles
+    ).toEqual([
       {
         selector: "a",
         property: "-webkit-text-stroke",
@@ -609,7 +630,8 @@ describe("Parse CSS", () => {
 
 test("parse font-smooth properties", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       a {
         font-smoothing: auto;
       }
@@ -619,7 +641,9 @@ test("parse font-smooth properties", () => {
       c {
         -moz-osx-font-smoothing: auto;
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -641,14 +665,17 @@ test("parse font-smooth properties", () => {
 
 test("parse incorrectly unprefixed tap-highlight-color", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       a {
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
       }
       b {
         tap-highlight-color: transparent;
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -670,7 +697,8 @@ test("parse incorrectly unprefixed tap-highlight-color", () => {
 
 test("parse top level rules and media all as base query", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       a {
         color: red;
       }
@@ -679,7 +707,9 @@ test("parse top level rules and media all as base query", () => {
           width: auto;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -696,7 +726,8 @@ test("parse top level rules and media all as base query", () => {
 
 test("parse media queries", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media  ( max-width:  768px )  {
         a {
           color: red;
@@ -707,7 +738,9 @@ test("parse media queries", () => {
           color: green;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: `(max-width:768px)`,
@@ -726,7 +759,8 @@ test("parse media queries", () => {
 
 test("support only screen media type", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media all {
         a {
           color: yellow;
@@ -747,7 +781,9 @@ test("support only screen media type", () => {
           color: blue;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -771,7 +807,8 @@ test("support only screen media type", () => {
 
 test("parse previously unsupported media queries", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       a {
         color: red;
       }
@@ -795,7 +832,9 @@ test("parse previously unsupported media queries", () => {
           color: orange;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -826,7 +865,8 @@ test("parse previously unsupported media queries", () => {
 
 test("parse nested media queries by flattening", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-width: 768px)  {
         a {
           color: green;
@@ -837,7 +877,9 @@ test("parse nested media queries by flattening", () => {
           }
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: "(min-width:768px)",
@@ -856,7 +898,8 @@ test("parse nested media queries by flattening", () => {
 
 test("ignore unsupported at rules", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       a {
         color: red;
       }
@@ -865,7 +908,9 @@ test("ignore unsupported at rules", () => {
           color: green;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -877,13 +922,16 @@ test("ignore unsupported at rules", () => {
 
 test("parse condition-based media queries", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (prefers-color-scheme: dark) {
         a {
           color: white;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: `(prefers-color-scheme:dark)`,
@@ -896,13 +944,16 @@ test("parse condition-based media queries", () => {
 
 test("parse hover media feature", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (hover: hover) {
         a {
           color: blue;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: `(hover:hover)`,
@@ -915,13 +966,16 @@ test("parse hover media feature", () => {
 
 test("parse orientation media feature", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (orientation: portrait) {
         a {
           color: green;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: `(orientation:portrait)`,
@@ -934,13 +988,16 @@ test("parse orientation media feature", () => {
 
 test("parse prefers-reduced-motion media feature", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (prefers-reduced-motion: reduce) {
         a {
           color: red;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: `(prefers-reduced-motion:reduce)`,
@@ -953,13 +1010,16 @@ test("parse prefers-reduced-motion media feature", () => {
 
 test("parse combined min-width and max-width media query", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-width: 768px) and (max-width: 1024px) {
         a {
           color: green;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: `(min-width:768px) and (max-width:1024px)`,
@@ -972,13 +1032,16 @@ test("parse combined min-width and max-width media query", () => {
 
 test("parse min-width combined with condition feature", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-width: 768px) and (orientation: landscape) {
         a {
           color: green;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: `(min-width:768px) and (orientation:landscape)`,
@@ -991,13 +1054,16 @@ test("parse min-width combined with condition feature", () => {
 
 test("parse multiple condition features in media query", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (prefers-color-scheme: dark) and (prefers-contrast: more) {
         a {
           color: white;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: `(prefers-color-scheme:dark) and (prefers-contrast:more)`,
@@ -1010,7 +1076,8 @@ test("parse multiple condition features in media query", () => {
 
 test("parse nested media queries", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-width: 768px) {
         a {
           color: green;
@@ -1021,7 +1088,9 @@ test("parse nested media queries", () => {
           }
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: "(min-width:768px)",
@@ -1040,7 +1109,8 @@ test("parse nested media queries", () => {
 
 test("parse nested media with condition inside width", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-width: 768px) {
         a {
           color: green;
@@ -1051,7 +1121,9 @@ test("parse nested media with condition inside width", () => {
           }
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: "(min-width:768px)",
@@ -1070,7 +1142,8 @@ test("parse nested media with condition inside width", () => {
 
 test("parse deeply nested media queries", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-width: 768px) {
         @media (orientation: landscape) {
           @media (hover: hover) {
@@ -1080,7 +1153,9 @@ test("parse deeply nested media queries", () => {
           }
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint:
@@ -1094,7 +1169,8 @@ test("parse deeply nested media queries", () => {
 
 test("parse condition and base styles together", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       a {
         color: black;
       }
@@ -1103,7 +1179,9 @@ test("parse condition and base styles together", () => {
           color: white;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -1121,7 +1199,8 @@ test("parse condition and base styles together", () => {
 
 test("still ignore non-px units in media queries", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       a {
         color: red;
       }
@@ -1130,7 +1209,9 @@ test("still ignore non-px units in media queries", () => {
           color: green;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -1142,7 +1223,8 @@ test("still ignore non-px units in media queries", () => {
 
 test("still ignore @media print", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       a {
         color: red;
       }
@@ -1151,7 +1233,9 @@ test("still ignore @media print", () => {
           color: black;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -1163,7 +1247,8 @@ test("still ignore @media print", () => {
 
 test("still ignore @supports", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       a {
         color: red;
       }
@@ -1172,7 +1257,9 @@ test("still ignore @supports", () => {
           color: green;
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -1184,11 +1271,14 @@ test("still ignore @supports", () => {
 
 test("parse &:pseudo-classes as state", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       &:hover {
         color: red;
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "",
@@ -1201,11 +1291,14 @@ test("parse &:pseudo-classes as state", () => {
 
 test("parse &[attribute=selector] as state", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       &[data-state=active] {
         color: red;
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "",
@@ -1230,14 +1323,16 @@ test("parse class selector with pseudo-class", () => {
 });
 
 test("parse class selector with pseudo-element", () => {
-  expect(parseCss(`.card::before { content: none }`, new Map()).styles).toEqual([
-    {
-      selector: ".card",
-      state: "::before",
-      property: "content",
-      value: { type: "keyword", value: "none" },
-    },
-  ]);
+  expect(parseCss(`.card::before { content: none }`, new Map()).styles).toEqual(
+    [
+      {
+        selector: ".card",
+        state: "::before",
+        property: "content",
+        value: { type: "keyword", value: "none" },
+      },
+    ]
+  );
 });
 
 test("parse compound class selector", () => {
@@ -1251,7 +1346,9 @@ test("parse compound class selector", () => {
 });
 
 test("parse compound class selector with pseudo-class", () => {
-  expect(parseCss(`.card.active:hover { opacity: 0.5 }`, new Map()).styles).toEqual([
+  expect(
+    parseCss(`.card.active:hover { opacity: 0.5 }`, new Map()).styles
+  ).toEqual([
     {
       selector: ".card.active",
       state: ":hover",
@@ -1262,17 +1359,21 @@ test("parse compound class selector with pseudo-class", () => {
 });
 
 test("parse class with attribute selector", () => {
-  expect(parseCss(`.btn[disabled] { opacity: 0.5 }`, new Map()).styles).toEqual([
-    {
-      selector: ".btn[disabled]",
-      property: "opacity",
-      value: { type: "unit", unit: "number", value: 0.5 },
-    },
-  ]);
+  expect(parseCss(`.btn[disabled] { opacity: 0.5 }`, new Map()).styles).toEqual(
+    [
+      {
+        selector: ".btn[disabled]",
+        property: "opacity",
+        value: { type: "unit", unit: "number", value: 0.5 },
+      },
+    ]
+  );
 });
 
 test("parse class + attribute + pseudo-class", () => {
-  expect(parseCss(`.btn[disabled]:focus { outline: none }`, new Map()).styles).toEqual([
+  expect(
+    parseCss(`.btn[disabled]:focus { outline: none }`, new Map()).styles
+  ).toEqual([
     {
       selector: ".btn[disabled]",
       state: ":focus",
@@ -1391,7 +1492,10 @@ test("parse CSS with no declarations returns empty array", () => {
 });
 
 test("parse multiple properties from one rule", () => {
-  const result = parseCss(`.card { display: flex; color: red; opacity: 1 }`, new Map()).styles;
+  const result = parseCss(
+    `.card { display: flex; color: red; opacity: 1 }`,
+    new Map()
+  ).styles;
   expect(result).toEqual([
     {
       selector: ".card",
@@ -1442,7 +1546,9 @@ test("parse comma-separated mixed selectors (class + element)", () => {
 });
 
 test("parse comma-separated selectors with different states", () => {
-  expect(parseCss(`.a:hover, .b:focus { color: blue }`, new Map()).styles).toEqual([
+  expect(
+    parseCss(`.a:hover, .b:focus { color: blue }`, new Map()).styles
+  ).toEqual([
     {
       selector: ".a",
       state: ":hover",
@@ -1462,10 +1568,13 @@ test("parse comma-separated selectors with different states", () => {
 
 test("ignore @keyframes", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       .card { color: red }
       @keyframes fade { from { opacity: 1 } to { opacity: 0 } }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: ".card",
@@ -1477,10 +1586,13 @@ test("ignore @keyframes", () => {
 
 test("ignore @font-face", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       .card { color: red }
       @font-face { font-family: "Custom"; src: url(font.woff2); }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: ".card",
@@ -1492,14 +1604,17 @@ test("ignore @font-face", () => {
 
 test("ignore @supports nested inside @media", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-width: 768px) {
         .card { color: green }
         @supports (display: grid) {
           .card { display: grid }
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: "(min-width:768px)",
@@ -1514,11 +1629,14 @@ test("ignore @supports nested inside @media", () => {
 
 test("parse bare screen media type as base query", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media screen {
         a { color: red }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       selector: "a",
@@ -1530,21 +1648,27 @@ test("parse bare screen media type as base query", () => {
 
 test("ignore @media print with min-width", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media print and (min-width: 768px) {
         a { color: black }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([]);
 });
 
 test("parse non-px units in non-width features are allowed", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-resolution: 2dppx) {
         a { color: red }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: "(min-resolution:2dppx)",
@@ -1557,11 +1681,14 @@ test("parse non-px units in non-width features are allowed", () => {
 
 test("class selector inside media query preserves both breakpoint and selector", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-width: 640px) {
         .card:hover { color: blue }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: "(min-width:640px)",
@@ -1575,11 +1702,14 @@ test("class selector inside media query preserves both breakpoint and selector",
 
 test("compound class inside media query", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (max-width: 768px) {
         .card.featured { display: block }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([
     {
       breakpoint: "(max-width:768px)",
@@ -1592,25 +1722,31 @@ test("compound class inside media query", () => {
 
 test("nested media with non-px inner is rejected", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-width: 768px) {
         @media (min-width: 40em) {
           a { color: red }
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([]);
 });
 
 test("nested media with print inner is rejected", () => {
   expect(
-    parseCss(`
+    parseCss(
+      `
       @media (min-width: 768px) {
         @media print {
           a { color: red }
         }
       }
-   `, new Map()).styles
+   `,
+      new Map()
+    ).styles
   ).toEqual([]);
 });
 
@@ -1618,12 +1754,15 @@ test("background: single var() resolving to a color in the same rule expands to 
   // --clr-red is in the same rule, so it's substituted before expansion.
   // background-color gets the concrete hex color (not a var ref).
   // The var declaration itself is also stored separately.
-  const result = parseCss(`
+  const result = parseCss(
+    `
     .my-parent {
       --clr-red: #f00;
       background: var(--clr-red);
     }
-  `, new Map()).styles;
+  `,
+    new Map()
+  ).styles;
   const bgColor = result.find(
     (d) => d.selector === ".my-parent" && d.property === "background-color"
   );
@@ -1633,12 +1772,15 @@ test("background: single var() resolving to a color in the same rule expands to 
 });
 
 test("background: single var() resolving to a non-color expands using resolved value", () => {
-  const result = parseCss(`
+  const result = parseCss(
+    `
     .my-parent {
       --bg: url("img.png") no-repeat center;
       background: var(--bg);
     }
-  `, new Map()).styles;
+  `,
+    new Map()
+  ).styles;
   // Expanded from the resolved value: background-image should be the url
   expect(result).toEqual(
     expect.arrayContaining([
@@ -1650,35 +1792,49 @@ test("background: single var() resolving to a non-color expands using resolved v
   expect(image?.value).toEqual(
     expect.objectContaining({
       type: "layers",
-      value: expect.arrayContaining([expect.objectContaining({ type: "image" })]),
+      value: expect.arrayContaining([
+        expect.objectContaining({ type: "image" }),
+      ]),
     })
   );
 });
 
 test("shorthand: var() in border is substituted and expanded", () => {
   // border expands: border → border-color/width/style → border-{side}-color/width/style
-  const result = parseCss(`
+  const result = parseCss(
+    `
     .box {
       --clr: blue;
       --w: 2px;
       border: var(--w) solid var(--clr);
     }
-  `, new Map()).styles;
+  `,
+    new Map()
+  ).styles;
   expect(result).toEqual(
     expect.arrayContaining([
-      expect.objectContaining({ property: "border-top-color", value: expect.objectContaining({ type: "keyword", value: "blue" }) }),
-      expect.objectContaining({ property: "border-top-width", value: expect.objectContaining({ type: "unit", value: 2, unit: "px" }) }),
+      expect.objectContaining({
+        property: "border-top-color",
+        value: expect.objectContaining({ type: "keyword", value: "blue" }),
+      }),
+      expect.objectContaining({
+        property: "border-top-width",
+        value: expect.objectContaining({ type: "unit", value: 2, unit: "px" }),
+      }),
     ])
   );
 });
 
 test("shorthand: var() in transition is substituted and expanded", () => {
-  const result = parseCss(`
+  const result = parseCss(
+    `
     .box {
       --dur: 300ms;
       transition: opacity var(--dur) ease;
     }
-  `, new Map()).styles;
+  `,
+    new Map()
+  ).styles;
   expect(result).toEqual(
     expect.arrayContaining([
       expect.objectContaining({ property: "transition-duration" }),
@@ -1706,12 +1862,17 @@ const kw = (value: string) =>
   expect.objectContaining({ type: "keyword", value });
 const varRef = (value: string) => ({ type: "var", value });
 const layers = (...items: unknown[]) =>
-  expect.objectContaining({ type: "layers", value: expect.arrayContaining(items) });
+  expect.objectContaining({
+    type: "layers",
+    value: expect.arrayContaining(items),
+  });
 const prop = (property: string, value: unknown) =>
   expect.objectContaining({ property, value });
 
 const decls = (css: string) =>
-  parseCss(`.x { ${css} }`, new Map()).styles.filter((d) => d.selector === ".x");
+  parseCss(`.x { ${css} }`, new Map()).styles.filter(
+    (d) => d.selector === ".x"
+  );
 
 describe("var() substitution — background", () => {
   test("var() for color part alongside other background parts", () => {
@@ -1735,7 +1896,10 @@ describe("var() substitution — background", () => {
     `);
     expect(result).toEqual(
       expect.arrayContaining([
-        prop("background-image", layers(expect.objectContaining({ type: "image" }))),
+        prop(
+          "background-image",
+          layers(expect.objectContaining({ type: "image" }))
+        ),
         prop("background-repeat", layers(kw("no-repeat"))),
       ])
     );
@@ -1748,13 +1912,15 @@ describe("var() substitution — background", () => {
     `);
     expect(result).toEqual(
       expect.arrayContaining([
-        prop("background-color", expect.objectContaining({ type: "keyword", value: "red" })),
+        prop(
+          "background-color",
+          expect.objectContaining({ type: "keyword", value: "red" })
+        ),
         prop("background-position-x", layers(kw("center"))),
         prop("background-position-y", layers(kw("bottom"))),
       ])
     );
   });
-
 });
 
 describe("var() substitution — border", () => {
@@ -1781,7 +1947,9 @@ describe("var() substitution — border", () => {
   });
 
   test("var() for both border width and color", () => {
-    const result = decls(`--w: 2px; --clr: blue; border: var(--w) dashed var(--clr);`);
+    const result = decls(
+      `--w: 2px; --clr: blue; border: var(--w) dashed var(--clr);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("border-top-width", u(2, "px")),
@@ -1805,7 +1973,9 @@ describe("var() substitution — border", () => {
   });
 
   test("var() for border-left width and color", () => {
-    const result = decls(`--w: 1px; --clr: purple; border-left: var(--w) solid var(--clr);`);
+    const result = decls(
+      `--w: 1px; --clr: purple; border-left: var(--w) solid var(--clr);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("border-left-width", u(1, "px")),
@@ -1851,7 +2021,9 @@ describe("var() substitution — outline", () => {
   });
 
   test("var() for both outline width and color", () => {
-    const result = decls(`--w: 1px; --clr: navy; outline: var(--w) solid var(--clr);`);
+    const result = decls(
+      `--w: 1px; --clr: navy; outline: var(--w) solid var(--clr);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("outline-width", u(1, "px")),
@@ -1873,7 +2045,9 @@ describe("var() substitution — text-decoration", () => {
   });
 
   test("var() for text-decoration style", () => {
-    const result = decls(`--sty: dashed; text-decoration: underline var(--sty) red;`);
+    const result = decls(
+      `--sty: dashed; text-decoration: underline var(--sty) red;`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("text-decoration-style", kw("dashed")),
@@ -1930,7 +2104,9 @@ describe("var() substitution — margin / padding", () => {
   });
 
   test("var() for padding four-side notation", () => {
-    const result = decls(`--a: 4px; --b: 8px; --c: 12px; --d: 16px; padding: var(--a) var(--b) var(--c) var(--d);`);
+    const result = decls(
+      `--a: 4px; --b: 8px; --c: 12px; --d: 16px; padding: var(--a) var(--b) var(--c) var(--d);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("padding-top", u(4, "px")),
@@ -1952,7 +2128,9 @@ describe("var() substitution — margin / padding", () => {
   });
 
   test("var() for margin-block start and end", () => {
-    const result = decls(`--s: 8px; --e: 16px; margin-block: var(--s) var(--e);`);
+    const result = decls(
+      `--s: 8px; --e: 16px; margin-block: var(--s) var(--e);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("margin-block-start", u(8, "px")),
@@ -1972,7 +2150,9 @@ describe("var() substitution — margin / padding", () => {
   });
 
   test("var() for padding-block start and end", () => {
-    const result = decls(`--s: 5px; --e: 10px; padding-block: var(--s) var(--e);`);
+    const result = decls(
+      `--s: 5px; --e: 10px; padding-block: var(--s) var(--e);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("padding-block-start", u(5, "px")),
@@ -2008,7 +2188,9 @@ describe("var() substitution — inset", () => {
   });
 
   test("var() for inset-inline", () => {
-    const result = decls(`--s: 5px; --e: 15px; inset-inline: var(--s) var(--e);`);
+    const result = decls(
+      `--s: 5px; --e: 15px; inset-inline: var(--s) var(--e);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("inset-inline-start", u(5, "px")),
@@ -2092,13 +2274,17 @@ describe("var() substitution — column-rule", () => {
 
 describe("var() substitution — animation", () => {
   test("var() for animation duration", () => {
-    const result = decls(`--dur: 0.5s; animation: slide var(--dur) ease infinite;`);
+    const result = decls(
+      `--dur: 0.5s; animation: slide var(--dur) ease infinite;`
+    );
     const duration = result.find((d) => d.property === "animation-duration");
     expect(duration?.value).toEqual(u(0.5, "s"));
   });
 
   test("var() for animation duration and delay", () => {
-    const result = decls(`--dur: 1s; --del: 200ms; animation: bounce var(--dur) ease var(--del);`);
+    const result = decls(
+      `--dur: 1s; --del: 200ms; animation: bounce var(--dur) ease var(--del);`
+    );
     const duration = result.find((d) => d.property === "animation-duration");
     const delay = result.find((d) => d.property === "animation-delay");
     expect(duration?.value).toEqual(u(1, "s"));
@@ -2116,7 +2302,9 @@ describe("var() substitution — transition", () => {
   });
 
   test("var() for transition duration and delay", () => {
-    const result = decls(`--dur: 200ms; --del: 50ms; transition: color var(--dur) linear var(--del);`);
+    const result = decls(
+      `--dur: 200ms; --del: 50ms; transition: color var(--dur) linear var(--del);`
+    );
     const duration = result.find((d) => d.property === "transition-duration");
     const delay = result.find((d) => d.property === "transition-delay");
     expect(duration?.value).toEqual(
@@ -2186,7 +2374,9 @@ describe("var() substitution — list-style", () => {
 
 describe("var() substitution — place-content / place-items / place-self", () => {
   test("var() for place-content align and justify", () => {
-    const result = decls(`--a: center; --j: start; place-content: var(--a) var(--j);`);
+    const result = decls(
+      `--a: center; --j: start; place-content: var(--a) var(--j);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("align-content", kw("center")),
@@ -2212,7 +2402,9 @@ describe("var() substitution — place-content / place-items / place-self", () =
 
 describe("var() substitution — contain-intrinsic-size", () => {
   test("var() for both intrinsic dimensions", () => {
-    const result = decls(`--w: 300px; --h: 200px; contain-intrinsic-size: var(--w) var(--h);`);
+    const result = decls(
+      `--w: 300px; --h: 200px; contain-intrinsic-size: var(--w) var(--h);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("contain-intrinsic-width", u(300, "px")),
@@ -2236,7 +2428,9 @@ describe("var() substitution — scroll-margin / scroll-padding", () => {
   });
 
   test("var() for scroll-padding vertical/horizontal", () => {
-    const result = decls(`--v: 4px; --h: 8px; scroll-padding: var(--v) var(--h);`);
+    const result = decls(
+      `--v: 4px; --h: 8px; scroll-padding: var(--v) var(--h);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("scroll-padding-top", u(4, "px")),
@@ -2258,7 +2452,9 @@ describe("var() substitution — scroll-margin / scroll-padding", () => {
   });
 
   test("var() for scroll-margin-block", () => {
-    const result = decls(`--s: 6px; --e: 10px; scroll-margin-block: var(--s) var(--e);`);
+    const result = decls(
+      `--s: 6px; --e: 10px; scroll-margin-block: var(--s) var(--e);`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("scroll-margin-block-start", u(6, "px")),
@@ -2277,7 +2473,9 @@ describe("var() substitution — font", () => {
   });
 
   test("var() for font-weight and font-size", () => {
-    const result = decls(`--w: 700; --sz: 16px; font: var(--w) var(--sz) sans-serif;`);
+    const result = decls(
+      `--w: 700; --sz: 16px; font: var(--w) var(--sz) sans-serif;`
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("font-weight", num(700)),
@@ -2292,7 +2490,9 @@ describe("var() substitution — -webkit-text-stroke", () => {
     // -webkit-text-stroke is in shorthand-properties so it gets var substitution,
     // but shorthands.ts has no expand case for it — it passes through as a tuple
     // value containing the resolved width and color tokens.
-    const result = decls(`--w: 1px; --clr: black; -webkit-text-stroke: var(--w) var(--clr);`);
+    const result = decls(
+      `--w: 1px; --clr: black; -webkit-text-stroke: var(--w) var(--clr);`
+    );
     const stroke = result.find((d) => d.property === "-webkit-text-stroke");
     expect(stroke?.value).toEqual(
       expect.objectContaining({
@@ -2343,7 +2543,10 @@ describe("parseCss — external cssVars parameter", () => {
     );
     expect(result).toEqual(
       expect.arrayContaining([
-        prop("background-image", layers(expect.objectContaining({ type: "image" }))),
+        prop(
+          "background-image",
+          layers(expect.objectContaining({ type: "image" }))
+        ),
         prop("background-position-x", layers(kw("center"))),
       ])
     );
@@ -2463,9 +2666,12 @@ describe("parseCss — external cssVars parameter", () => {
   });
 
   test("font: weight from cssVars, size from same rule", () => {
-    const result = declsWithVars(`--sz: 14px; font: var(--fw) var(--sz) Arial;`, {
-      "--fw": "600",
-    });
+    const result = declsWithVars(
+      `--sz: 14px; font: var(--fw) var(--sz) Arial;`,
+      {
+        "--fw": "600",
+      }
+    );
     expect(result).toEqual(
       expect.arrayContaining([
         prop("font-weight", num(600)),
@@ -2505,8 +2711,9 @@ describe("parseCss — external cssVars parameter", () => {
   test("cssVars are available in both rules when passed", () => {
     const styles = parseCss(
       `.a { border: var(--w) solid red; } .b { margin: var(--w); }`,
-      new Map([["--w", "4px"]])
-    , new Map()).styles;
+      new Map([["--w", "4px"]]),
+      new Map()
+    ).styles;
     const aBorderTop = styles.find(
       (d) => d.selector === ".a" && d.property === "border-top-width"
     );
@@ -2521,8 +2728,9 @@ describe("parseCss — external cssVars parameter", () => {
     // .a has --w: 10px in same rule, .b does not
     const styles = parseCss(
       `.a { --w: 10px; margin: var(--w); } .b { margin: var(--w); }`,
-      new Map([["--w", "4px"]])
-    , new Map()).styles;
+      new Map([["--w", "4px"]]),
+      new Map()
+    ).styles;
     const aMarginTop = styles.find(
       (d) => d.selector === ".a" && d.property === "margin-top"
     );

@@ -509,7 +509,8 @@ export const generateFragmentFromHtml = (
     };
     styleSources.push(localStyleSource);
     styleSourceSelections.push({ instanceId, values: [localStyleSource.id] });
-    for (const { property, value } of parseCss(`.styles{${css}}`, new Map()).styles) {
+    for (const { property, value } of parseCss(`.styles{${css}}`, new Map())
+      .styles) {
       styles.push({
         styleSourceId: localStyleSource.id,
         breakpointId: getBaseBreakpointId(),
