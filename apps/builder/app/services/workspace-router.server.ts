@@ -229,7 +229,15 @@ export const workspaceRouter = router({
         // When the payment worker is configured, a billing failure aborts the
         // invite so the member is never added. When the worker URL is not set
         // (self-hosted / dev), syncOwnerSeats returns early and this is a no-op.
-        await syncOwnerSeats(input.workspaceId, ctx, +1);
+        try {
+          await syncOwnerSeats(input.workspaceId, ctx, +1);
+        } catch (error) {
+          const technical =
+            error instanceof Error ? error.message : String(error);
+          throw new Error(
+            `Unable to update billing. Please try again or contact support. (${technical})`
+          );
+        }
 
         const { notificationId } = await workspaceApi.addMember(input, ctx);
 
