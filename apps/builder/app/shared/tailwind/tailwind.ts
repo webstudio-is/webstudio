@@ -248,7 +248,7 @@ const parseTailwindClasses = async (
   const finalVars = extractCssCustomProperties(css);
   let normalizedCss = css;
   if (finalVars.size > 0) {
-    normalizedCss = css.replace(/--[\w-]+\s*:[^;{}]*/g, (match) => {
+    normalizedCss = css.replace(/--[\w-]+\s*:[^;{}\n]*/g, (match) => {
       const colonIdx = match.indexOf(":");
       const propName = match.slice(0, colonIdx).trim();
       const finalValue = finalVars.get(propName);
