@@ -5,7 +5,10 @@ import { trpcSharedClient } from "~/services/trpc.server";
 import { entryApi } from "./entri/entri-api.server";
 
 import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
-import { getPlanInfo } from "./db/plan-features.server";
+import {
+  getPlanInfo,
+  getAuthorizationOwnerId,
+} from "@webstudio-is/trpc-interface/plan-client";
 import { staticEnv } from "~/env/env.static.server";
 import { createClient } from "@webstudio-is/postgrest/index.server";
 import { builderAuthenticator } from "~/services/builder-auth.server";
@@ -151,27 +154,6 @@ const createEntriContext = () => {
   };
 };
 
-const createPlanContext = async (
-  authorization: AppContext["authorization"],
-  postgrest: AppContext["postgrest"]
-): Promise<{
-  planFeatures: AppContext["planFeatures"];
-  purchases: AppContext["purchases"];
-}> => {
-  const ownerId =
-    authorization.type === "token"
-      ? authorization.ownerId
-      : authorization.type === "user"
-        ? authorization.userId
-        : undefined;
-
-  if (ownerId === undefined) {
-    return { planFeatures: defaultPlanFeatures, purchases: [] };
-  }
-
-  return getPlanInfo(ownerId, postgrest);
-};
-
 const createTrpcCache = () => {
   const proceduresMaxAge = new Map<string, number>();
   const setMaxAge = (path: string, value: number) => {
@@ -200,18 +182,31 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const postgrest = createPostgrestContext();
   const authorization = await createAuthorizationContext(request, postgrest);
 
+  const resolvePlanInfo = async (auth: AppContext["authorization"]) => {
+    const ownerId = getAuthorizationOwnerId(auth);
+    if (ownerId === undefined) {
+      return {
+        planFeatures: defaultPlanFeatures,
+        purchases: [] as AppContext["purchases"],
+      };
+    }
+    return (
+      (await getPlanInfo([ownerId], { postgrest })).get(ownerId) ?? {
+        planFeatures: defaultPlanFeatures,
+        purchases: [] as AppContext["purchases"],
+      }
+    );
+  };
+
   const domain = createDomainContext();
   const deployment = createDeploymentContext(getRequestOrigin(request.url));
   const entri = createEntriContext();
-  const { planFeatures, purchases } = await createPlanContext(
-    authorization,
-    postgrest
-  );
+  const { planFeatures, purchases } = await resolvePlanInfo(authorization);
   const trpcCache = createTrpcCache();
 
   const getOwnerPlanFeatures = async (userId: string) => {
-    const { planFeatures } = await getPlanInfo(userId, postgrest);
-    return planFeatures;
+    const results = await getPlanInfo([userId], { postgrest });
+    return results.get(userId)?.planFeatures ?? defaultPlanFeatures;
   };
 
   const createTokenContext = async (authToken: string) => {
@@ -219,10 +214,8 @@ export const createContext = async (request: Request): Promise<AppContext> => {
       authToken,
       postgrest
     );
-    const { planFeatures, purchases } = await createPlanContext(
-      authorization,
-      postgrest
-    );
+
+    const { planFeatures, purchases } = await resolvePlanInfo(authorization);
 
     return {
       authorization,

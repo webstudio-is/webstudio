@@ -63,8 +63,10 @@ export const deleteAssets = async (
   }
 
   // delete unused files
-  await context.postgrest.client
-    .from("File")
-    .update({ isDeleted: true })
-    .in("name", Array.from(unusedFileNames));
+  if (unusedFileNames.size > 0) {
+    await context.postgrest.client
+      .from("File")
+      .update({ isDeleted: true })
+      .in("name", Array.from(unusedFileNames));
+  }
 };

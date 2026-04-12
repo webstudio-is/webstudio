@@ -29,6 +29,9 @@
     "./plan-features": {
       "webstudio": "./src/shared/plan-features.ts"
     },
+    "./plan-client": {
+      "webstudio": "./src/shared/plan-client.server.ts"
+    },
     "./authorize": {
       "webstudio": "./src/authorize/role.ts"
     }

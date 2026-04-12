@@ -1,6 +1,7 @@
 import { notification } from "@webstudio-is/project/index.server";
 import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
-import { getPlanInfo } from "~/shared/db/plan-features.server";
+import { getPlanInfo } from "@webstudio-is/trpc-interface/plan-client";
+import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
 import { publicStaticEnv } from "~/env/env.static";
 import type { TopicResolvers, TopicName, SubscriptionResponse } from "./types";
 
@@ -50,11 +51,16 @@ const resolvers: TopicResolvers = {
       return false;
     }
 
-    // Check each workspace owner's plan — suspended if any owner can't cover seats.
+    // Check each workspace owner's plan — suspended if owner of any workspace can't cover seats.
+    const ownerIds = sharedWorkspaces.map(
+      (m) => (m.workspace as unknown as { userId: string }).userId
+    );
+    const planResults = await getPlanInfo(ownerIds, ctx);
+
     for (const m of sharedWorkspaces) {
       const ownerId = (m.workspace as unknown as { userId: string }).userId;
-      const planResult = await getPlanInfo(ownerId, ctx.postgrest);
-      const features = planResult.planFeatures;
+      const features =
+        planResults.get(ownerId)?.planFeatures ?? defaultPlanFeatures;
 
       if (features.maxWorkspaces <= 1) {
         return (m.workspace as unknown as { userId: string; name: string })

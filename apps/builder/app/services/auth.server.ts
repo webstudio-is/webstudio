@@ -26,7 +26,7 @@ const transformRefToAlias = (input: string) => {
 export const callbackOrigin =
   env.DEPLOYMENT_ENVIRONMENT === "production"
     ? env.DEPLOYMENT_URL
-    : env.DEPLOYMENT_ENVIRONMENT === "staging" ||
+    : env.DEPLOYMENT_ENVIRONMENT === "preview" ||
         env.DEPLOYMENT_ENVIRONMENT === "development"
       ? `https://${transformRefToAlias(staticEnv.GITHUB_REF_NAME ?? "main")}.${env.DEPLOYMENT_ENVIRONMENT}.webstudio.is`
       : `https://wstd.dev:${env.PORT || 5173}`;
