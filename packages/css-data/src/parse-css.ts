@@ -235,6 +235,32 @@ export type ParseCssResult = {
   errors: string[];
 };
 
+/**
+ * Extract all CSS custom property (--*) declarations from a CSS string,
+ * regardless of which selector rule they appear in.
+ * Useful when CSS from multiple rules (e.g. Tailwind utility classes) needs
+ * to be resolved together as if they apply to the same element.
+ */
+export const extractCssCustomProperties = (
+  css: string
+): Map<string, string> => {
+  const map = new Map<string, string>();
+  const ast = cssTreeTryParse(css);
+  if (ast === undefined) {
+    return map;
+  }
+  csstree.walk(ast, {
+    visit: "Declaration",
+    enter(decl) {
+      const prop = normalizeProperty(decl.property);
+      if (prop.startsWith("--")) {
+        map.set(prop, csstree.generate(decl.value));
+      }
+    },
+  });
+  return map;
+};
+
 export const parseCss = (
   css: string,
   cssVars: Map<string, string>
@@ -251,7 +277,23 @@ export const parseCss = (
   const atruleStack: csstree.Atrule[] = [];
   let currentRule: csstree.Rule | undefined;
   // Custom properties declared in the current rule, used to resolve var() in shorthand expansion.
+  // Pre-populated for each rule (two-pass) so that forward references like
+  //   border-color: rgb(x y z / var(--op));  --op: 0.6;
+  // resolve correctly regardless of declaration order.
   const customProperties = new Map<string, string>();
+
+  const collectRuleCustomProperties = (rule: csstree.Rule) => {
+    customProperties.clear();
+    csstree.walk(rule, {
+      visit: "Declaration",
+      enter(decl) {
+        const prop = normalizeProperty(decl.property);
+        if (prop.startsWith("--")) {
+          customProperties.set(prop, csstree.generate(decl.value));
+        }
+      },
+    });
+  };
 
   csstree.walk(ast, {
     enter(node) {
@@ -259,7 +301,7 @@ export const parseCss = (
         atruleStack.push(node);
       } else if (node.type === "Rule") {
         currentRule = node;
-        customProperties.clear();
+        collectRuleCustomProperties(node);
       }
     },
     leave(node) {
@@ -410,12 +452,6 @@ export const parseCss = (
 
       const stringValue = csstree.generate(node.value);
       const property = normalizeProperty(node.property);
-
-      // Collect custom property values so var() in subsequent declarations
-      // within the same rule can be resolved.
-      if (property.startsWith("--")) {
-        customProperties.set(property, stringValue);
-      }
 
       let parsedCss: Map<CssProperty, StyleValue>;
       if (shorthandSet.has(property)) {
