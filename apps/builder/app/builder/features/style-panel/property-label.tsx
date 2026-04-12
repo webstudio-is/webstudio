@@ -19,10 +19,12 @@ import {
 import { humanizeString } from "~/shared/string-utils";
 import {
   $breakpoints,
+  $selectedStyleSource,
   $instances,
   $registeredComponentMetas,
   $styleSources,
 } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import type {
   ComputedStyleDecl,
   StyleValueSourceColor,
@@ -69,6 +71,7 @@ export const PropertyInfo = ({
   styles,
   onReset,
   resetType = "reset",
+  disabledReset = false,
 }: {
   title: string;
   code?: string;
@@ -77,6 +80,7 @@ export const PropertyInfo = ({
   styles: ComputedStyleDecl[];
   onReset: () => void;
   resetType?: "reset" | "delete";
+  disabledReset?: boolean;
 }) => {
   const breakpoints = useStore($breakpoints);
   const instances = useStore($instances);
@@ -188,7 +192,7 @@ export const PropertyInfo = ({
           </Flex>
         </Flex>
       )}
-      {resettable && (
+      {resettable && disabledReset === false && (
         <Button
           color="dark"
           prefix={
@@ -238,9 +242,15 @@ export const PropertyLabel = ({
   disabled?: boolean;
 }) => {
   const styles = useComputedStyles(properties);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
+    if (isSelectedStyleSourceLocked) {
+      return;
+    }
     const batch = createBatchUpdate();
     for (const property of properties) {
       batch.deleteProperty(property);
@@ -255,6 +265,9 @@ export const PropertyLabel = ({
         onOpenChange={setIsOpen}
         triggerProps={{
           onClick: (event) => {
+            if (isSelectedStyleSourceLocked) {
+              return;
+            }
             if (event.altKey) {
               event.preventDefault();
               // If not, when mixed with ToogleGroupControl.
@@ -276,6 +289,7 @@ export const PropertyLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
+            disabledReset={isSelectedStyleSourceLocked}
             link={propertiesData[properties[0]]?.mdnUrl}
           />
         }
@@ -300,9 +314,15 @@ export const PropertySectionLabel = ({
   properties: [CssProperty, ...CssProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
+    if (isSelectedStyleSourceLocked) {
+      return;
+    }
     const batch = createBatchUpdate();
     for (const property of properties) {
       batch.deleteProperty(property);
@@ -319,6 +339,9 @@ export const PropertySectionLabel = ({
         onPointerDown={(event) => event.preventDefault()}
         triggerProps={{
           onClick: (event) => {
+            if (isSelectedStyleSourceLocked) {
+              return;
+            }
             if (event.altKey) {
               event.preventDefault();
               resetProperty();
@@ -336,6 +359,7 @@ export const PropertySectionLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
+            disabledReset={isSelectedStyleSourceLocked}
             link={propertiesData[properties[0]]?.mdnUrl}
           />
         }
@@ -427,8 +451,14 @@ export const PropertyValueTooltip = ({
   children: ReactNode;
 }) => {
   const styles = useComputedStyles(properties);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
+    if (isSelectedStyleSourceLocked) {
+      return;
+    }
     const batch = createBatchUpdate();
     for (const property of properties) {
       batch.deleteProperty(property);
@@ -444,6 +474,9 @@ export const PropertyValueTooltip = ({
       onPointerDown={(event) => event.preventDefault()}
       triggerProps={{
         onClick: (event) => {
+          if (isSelectedStyleSourceLocked) {
+            return;
+          }
           if (event.altKey) {
             event.preventDefault();
             resetProperty();
@@ -470,6 +503,7 @@ export const PropertyValueTooltip = ({
             resetProperty();
             setIsOpen(false);
           }}
+          disabledReset={isSelectedStyleSourceLocked}
           link={propertiesData[properties[0]]?.mdnUrl}
         />
       }

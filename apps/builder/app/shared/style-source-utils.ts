@@ -14,6 +14,9 @@ import { toValue } from "@webstudio-is/css-engine";
 import type { ConflictResolution } from "./token-conflict-dialog";
 import { removeByMutable } from "./array-utils";
 
+export const isStyleSourceLocked = (styleSource: StyleSource | undefined) =>
+  styleSource?.type === "token" && styleSource.locked === true;
+
 /**
  * Generates a normalized CSS string for comparing style source styles.
  * This creates a deterministic signature based on breakpoint, state, property, and value.
@@ -617,6 +620,26 @@ export const renameStyleSourceMutable = ({
   if (styleSource?.type === "token") {
     styleSource.name = name;
   }
+};
+
+export const toggleStyleSourceLockMutable = ({
+  id,
+  locked,
+  styleSources,
+}: {
+  id: StyleSource["id"];
+  locked: boolean;
+  styleSources: StyleSources;
+}): void => {
+  const styleSource = styleSources.get(id);
+  if (styleSource?.type !== "token") {
+    return;
+  }
+  if (locked) {
+    styleSource.locked = true;
+    return;
+  }
+  delete styleSource.locked;
 };
 
 /**

@@ -6,11 +6,12 @@ import {
   $selectedStyleSources,
   $styleSourceSelections,
   $styleSources,
+  $styles,
 } from "~/shared/nano-states";
 import { addStyleSourceToInstance, __testing__ } from "./style-source-section";
 import { $awareness } from "~/shared/awareness";
 
-const { getComponentStates } = __testing__;
+const { duplicateStyleSource, getComponentStates } = __testing__;
 
 enableMapSet();
 registerContainers();
@@ -152,5 +153,43 @@ test("add style source to instance", () => {
   expect($styleSourceSelections.get().get("body")).toEqual({
     instanceId: "body",
     values: ["token1", "token2", "local1"],
+  });
+});
+
+test("duplicate locked style source creates an unlocked copy", () => {
+  $instances.set(
+    new Map([
+      [
+        "body",
+        { type: "instance", id: "body", component: "Body", children: [] },
+      ],
+    ])
+  );
+  $awareness.set({
+    pageId: "",
+    instanceSelector: ["body"],
+  });
+  $styleSources.set(
+    new Map([
+      [
+        "token1",
+        { id: "token1", type: "token", name: "Primary", locked: true },
+      ],
+    ])
+  );
+  $styleSourceSelections.set(
+    new Map([["body", { instanceId: "body", values: ["token1"] }]])
+  );
+  $selectedStyleSources.set(new Map([["body", "token1"]]));
+  $styles.set(new Map());
+
+  const duplicatedId = duplicateStyleSource("token1");
+
+  expect(duplicatedId).toBeDefined();
+  const duplicatedStyleSource = $styleSources.get().get(duplicatedId!);
+  expect(duplicatedStyleSource).toEqual({
+    id: duplicatedId,
+    type: "token",
+    name: "Primary (copy)",
   });
 });

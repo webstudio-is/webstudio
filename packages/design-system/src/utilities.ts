@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import warnOnce from "warn-once";
 import type { CSS } from "./stitches.config";
 
@@ -175,4 +182,102 @@ export const focusFirstCollectionItem = (container: HTMLElement) => {
       firstItem.focus();
     }
   });
+};
+
+const focusableSelector = [
+  "button:not([disabled])",
+  "[href]",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(", ");
+
+const isFocusableElement = (element: Element): element is HTMLElement => {
+  return element instanceof HTMLElement && element.matches(focusableSelector);
+};
+
+const findFocusableElement = (element: Element | null) => {
+  if (element === null) {
+    return;
+  }
+  if (isFocusableElement(element)) {
+    return element;
+  }
+  return element.querySelector<HTMLElement>(focusableSelector) ?? undefined;
+};
+
+export const moveFocusOutsideRegion = (region: HTMLElement) => {
+  const dialog = region.closest<HTMLElement>("[role='dialog']");
+  if (dialog && region.contains(dialog) === false) {
+    dialog.focus();
+    return;
+  }
+
+  let currentElement: Element | null = region;
+
+  while (currentElement) {
+    let sibling = currentElement.previousElementSibling;
+    while (sibling) {
+      const focusableElement = findFocusableElement(sibling);
+      if (focusableElement) {
+        focusableElement.focus();
+        return;
+      }
+      sibling = sibling.previousElementSibling;
+    }
+    currentElement = currentElement.parentElement;
+  }
+
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+};
+
+export const useDisabledFocusRegion = <T extends HTMLElement>(
+  disabled: boolean
+) => {
+  const ref = useRef<T>(null);
+
+  useLayoutEffect(() => {
+    if (disabled === false) {
+      return;
+    }
+
+    const region = ref.current;
+    if (region === null) {
+      return;
+    }
+
+    const redirectFocus = (target: EventTarget | null) => {
+      if (target instanceof Node && region.contains(target)) {
+        moveFocusOutsideRegion(region);
+      }
+    };
+
+    redirectFocus(document.activeElement);
+
+    const handleFocusIn = (event: FocusEvent) => {
+      redirectFocus(event.target);
+    };
+
+    document.addEventListener("focusin", handleFocusIn, true);
+
+    return () => {
+      document.removeEventListener("focusin", handleFocusIn, true);
+    };
+  }, [disabled]);
+
+  return ref;
+};
+
+export const getDisabledFocusRegionProps = (disabled: boolean) => {
+  if (disabled) {
+    return {
+      "aria-disabled": true,
+      inert: "",
+    } as const;
+  }
+
+  return {} as const;
 };

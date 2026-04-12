@@ -1,4 +1,5 @@
 import { useMemo, type ComponentProps, type JSX, type ReactNode } from "react";
+import { useStore } from "@nanostores/react";
 import {
   toValue,
   type CssProperty,
@@ -22,6 +23,8 @@ import {
   ColorThumb,
 } from "@webstudio-is/design-system";
 import { repeatUntil } from "~/shared/array-utils";
+import { $selectedStyleSource } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
 
@@ -384,6 +387,9 @@ export const RepeatedStyle = (props: {
     renderItemButtons,
     renderPanelTitleSuffix,
   } = props;
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   // first property should describe the amount of layers or tuple items
   const primaryValue = styles[0].cascadedValue;
   let primaryItems: StyleValue[] = [];
@@ -408,8 +414,12 @@ export const RepeatedStyle = (props: {
 
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
     items: sortableItems,
-    onSort: (newIndex, oldIndex) =>
-      swapRepeatedStyleItems(styles, oldIndex, newIndex),
+    onSort: (newIndex, oldIndex) => {
+      if (isSelectedStyleSourceLocked) {
+        return;
+      }
+      swapRepeatedStyleItems(styles, oldIndex, newIndex);
+    },
   });
 
   if (primaryItems.length === 0) {
@@ -430,27 +440,40 @@ export const RepeatedStyle = (props: {
             styles[0].cascadedValue.type === "var" ? index === 0 : true;
           const customButtons = renderItemButtons?.(index, primaryItem, {
             isHidden,
-            canBeChanged,
+            canBeChanged: canBeChanged && isSelectedStyleSourceLocked === false,
           });
           const panelTitleSuffix = renderPanelTitleSuffix?.(
             index,
             primaryItem,
             {
               isHidden,
-              canBeChanged,
+              canBeChanged:
+                canBeChanged && isSelectedStyleSourceLocked === false,
             }
           );
           return (
             <FloatingPanel
               key={index}
               title={label}
-              content={renderItemContent(index, primaryItem)}
+              content={
+                <Flex
+                  direction="column"
+                  aria-disabled={isSelectedStyleSourceLocked}
+                  css={{
+                    pointerEvents: isSelectedStyleSourceLocked
+                      ? "none"
+                      : undefined,
+                  }}
+                >
+                  {renderItemContent(index, primaryItem)}
+                </Flex>
+              }
               titleSuffix={panelTitleSuffix}
               offset={floatingPanelOffset}
             >
               <CssValueListItem
                 id={id}
-                draggable
+                draggable={isSelectedStyleSourceLocked === false}
                 active={dragItemId === id}
                 index={index}
                 label={<Label truncate>{itemLabel}</Label>}
@@ -465,7 +488,9 @@ export const RepeatedStyle = (props: {
                     <SmallToggleButton
                       variant="normal"
                       pressed={isHidden}
-                      disabled={false === canBeChanged}
+                      disabled={
+                        false === canBeChanged || isSelectedStyleSourceLocked
+                      }
                       tabIndex={-1}
                       icon={isHidden ? <EyeClosedIcon /> : <EyeOpenIcon />}
                       onPressedChange={() =>
@@ -474,7 +499,9 @@ export const RepeatedStyle = (props: {
                     />
                     <SmallIconButton
                       variant="destructive"
-                      disabled={false === canBeChanged}
+                      disabled={
+                        false === canBeChanged || isSelectedStyleSourceLocked
+                      }
                       tabIndex={-1}
                       icon={<MinusIcon />}
                       onClick={() => deleteRepeatedStyleItem(styles, index)}

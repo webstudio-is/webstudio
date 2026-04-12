@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import {
   theme,
   Flex,
@@ -29,6 +30,8 @@ import { createBatchUpdate } from "../../../shared/use-style-data";
 import { GridPositionInputs } from "./grid-position-inputs";
 import { GridAreaPicker } from "./grid-area-picker";
 import { $gridEditingArea } from "~/builder/shared/nano-states";
+import { $selectedStyleSource } from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 
 export { parseGridAreas, type AreaInfo } from "@webstudio-is/css-data";
 
@@ -427,6 +430,9 @@ const AreaEditor = ({
 };
 
 export const GridAreas = () => {
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
   const [isOpen, setIsOpen] = useOpenState("Areas");
   const [editingAreaIndex, setEditingAreaIndex] = useState<number | undefined>(
     undefined
@@ -598,6 +604,7 @@ export const GridAreas = () => {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       fullWidth
+      contentDisabled={isSelectedStyleSourceLocked}
       trigger={
         <Flex
           align="center"
@@ -608,8 +615,12 @@ export const GridAreas = () => {
             Areas ({areas.length})
           </Text>
           <IconButton
+            disabled={isSelectedStyleSourceLocked}
             onClick={(e) => {
               e.stopPropagation();
+              if (isSelectedStyleSourceLocked) {
+                return;
+              }
               addArea();
             }}
           >

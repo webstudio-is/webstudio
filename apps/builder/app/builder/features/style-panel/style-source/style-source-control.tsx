@@ -6,6 +6,7 @@ import {
   Flex,
   Tooltip,
 } from "@webstudio-is/design-system";
+import { LockIcon } from "@webstudio-is/icons";
 import type { StyleSource } from "@webstudio-is/sdk";
 import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
@@ -217,6 +218,7 @@ type StyleSourceControlProps = {
   isDragging: boolean;
   hasStyles: boolean;
   source: ItemSource;
+  locked: boolean;
   onSelect: () => void;
   onChangeValue: (value: string) => void;
   onChangeEditing: (isEditing: boolean) => void;
@@ -235,6 +237,7 @@ export const StyleSourceControl = ({
   isDragging,
   hasStyles,
   source,
+  locked,
   label,
   onChangeValue,
   onChangeEditing,
@@ -288,6 +291,7 @@ export const StyleSourceControl = ({
                   onChangeValue={onChangeValue}
                   value={label}
                 />
+                {locked && isEditing === false && <LockIcon size={12} />}
                 {hasStyles === false && isEditing === false && (
                   <LocalStyleIcon showDot={hasStyles} />
                 )}

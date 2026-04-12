@@ -15,7 +15,11 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
+import {
+  $selectedStyleSource,
+  $selectedOrLastStyleSourceSelector,
+} from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import { humanizeString } from "~/shared/string-utils";
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -86,6 +90,9 @@ const getLayerLabel = ({
 
 export const Section = () => {
   const [isOpen, setIsOpen] = useOpenState(label);
+  const isSelectedStyleSourceLocked = isStyleSourceLocked(
+    useStore($selectedStyleSource)
+  );
 
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector
@@ -103,6 +110,7 @@ export const Section = () => {
       label={label}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
+      contentDisabled={isSelectedStyleSourceLocked}
       trigger={
         <SectionTitle
           inactive={dots.length === 0}
@@ -117,9 +125,14 @@ export const Section = () => {
               }
             >
               <SectionTitleButton
-                disabled={isStyleInLocalState === false}
+                disabled={
+                  isSelectedStyleSourceLocked || isStyleInLocalState === false
+                }
                 prefix={<PlusIcon />}
                 onClick={() => {
+                  if (isSelectedStyleSourceLocked) {
+                    return;
+                  }
                   setIsOpen(true);
                   addRepeatedStyleItem(
                     styles,
