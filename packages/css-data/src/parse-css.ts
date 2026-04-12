@@ -91,29 +91,23 @@ const parseCssValue = (property: CssProperty, value: string) => {
 };
 
 /**
- * Substitute var() references in a shorthand value using custom properties
- * from the same rule and the external cssVars map, then expand the result.
+ * Recursively resolve all var() references in a CSS value string.
+ * Handles nested var() in fallbacks (e.g. var(--a, var(--b))).
+ * Uses this.skip() to prevent double-processing nested nodes.
  *
- * Works for any shorthand (background, border, transition, font…):
- *   background: var(--clr)                  → substitute → expand
- *   border: var(--w) solid var(--clr)       → substitute → expand
- *   transition: var(--dur) ease             → substitute → expand
+ * Resolution order per var(): direct custom property → cssVars → inline fallback
+ * (fallback is itself recursively resolved if it contains var()).
  *
- * Resolution order: same-rule custom properties take precedence over cssVars.
- *
- * Returns undefined when the value contains no var() (fast path).
- * Returns { result: empty Map, droppedVars } when all vars are unresolvable
- * so the caller can emit errors and skip the property.
+ * Returns undefined when the value contains no var() (fast path) or when the
+ * recursion depth limit is exceeded.
  */
-const substituteVarsInShorthand = (
-  property: string,
+const resolveVars = (
   value: string,
   customProperties: Map<string, string>,
-  cssVars?: Map<string, string>
-):
-  | { result: Map<CssProperty, StyleValue>; droppedVars: string[] }
-  | undefined => {
-  if (!value.includes("var(")) {
+  cssVars: Map<string, string> | undefined,
+  depth = 0
+): { resolved: string; dropped: string[] } | undefined => {
+  if (!value.includes("var(") || depth > 8) {
     return;
   }
 
@@ -124,11 +118,8 @@ const substituteVarsInShorthand = (
     return;
   }
 
-  const replacements: Array<{ start: number; end: number; resolved: string }> =
-    [];
-  const unresolvableVarNames: string[] = [];
-  let totalVars = 0;
-  let unresolvedVars = 0;
+  const subs: Array<{ start: number; end: number; text: string }> = [];
+  const dropped: string[] = [];
 
   csstree.walk(ast, {
     visit: "Function",
@@ -136,52 +127,90 @@ const substituteVarsInShorthand = (
       if (node.name !== "var" || !node.loc) {
         return;
       }
-      totalVars++;
       const varRef = parseCssVar(node as FunctionNode);
       if (!varRef) {
-        return;
+        return this.skip;
       }
-      const resolved =
+
+      const direct =
         customProperties.get(`--${varRef.value}`) ??
-        cssVars?.get(`--${varRef.value}`) ??
-        (varRef.fallback?.type === "unparsed"
-          ? varRef.fallback.value
-          : undefined);
-      if (resolved === undefined) {
-        unresolvedVars++;
-        unresolvableVarNames.push(`--${varRef.value}`);
-        return;
+        cssVars?.get(`--${varRef.value}`);
+
+      if (direct !== undefined) {
+        subs.push({
+          start: node.loc.start.offset,
+          end: node.loc.end.offset,
+          text: direct,
+        });
+        return this.skip;
       }
-      replacements.push({
-        start: node.loc.start.offset,
-        end: node.loc.end.offset,
-        resolved,
-      });
+
+      // Try inline fallback — may itself contain var() references.
+      if (varRef.fallback?.type === "unparsed") {
+        const fbValue = varRef.fallback.value;
+        // If the fallback itself has no var(), use it directly.
+        // Otherwise recursively resolve any nested vars inside it.
+        const fallbackResult = fbValue.includes("var(")
+          ? resolveVars(fbValue, customProperties, cssVars, depth + 1)
+          : { resolved: fbValue, dropped: [] };
+        if (fallbackResult !== undefined && fallbackResult.dropped.length === 0) {
+          subs.push({
+            start: node.loc.start.offset,
+            end: node.loc.end.offset,
+            text: fallbackResult.resolved,
+          });
+          return this.skip;
+        }
+      }
+
+      dropped.push(`--${varRef.value}`);
+      return this.skip;
     },
   });
 
-  if (totalVars === 0) {
+  let resolved = value;
+  for (const s of [...subs].reverse()) {
+    resolved = resolved.slice(0, s.start) + s.text + resolved.slice(s.end);
+  }
+  return { resolved, dropped };
+};
+
+/**
+ * Substitute var() references in a shorthand value then expand the result.
+ * Works for any shorthand (background, border, transition, font…).
+ *
+ * Returns undefined when the value contains no var() (fast path).
+ * Returns { result: empty Map, droppedVars } when all vars are unresolvable.
+ */
+const substituteVarsInShorthand = (
+  property: string,
+  value: string,
+  customProperties: Map<string, string>,
+  cssVars?: Map<string, string>
+):
+  | { result: Map<CssProperty, StyleValue>; droppedVars: string[] }
+  | undefined => {
+  const resolution = resolveVars(value, customProperties, cssVars);
+  if (resolution === undefined) {
     return;
   }
 
-  // At least one var was substituted — apply replacements in reverse order to
-  // preserve earlier offsets, then expand the shorthand with the concrete value.
-  if (replacements.length > 0) {
-    let substituted = value;
-    for (const r of [...replacements].reverse()) {
-      substituted =
-        substituted.slice(0, r.start) + r.resolved + substituted.slice(r.end);
+  const { resolved, dropped } = resolution;
+
+  if (resolved === value) {
+    // No substitution happened.
+    if (dropped.length === 0) {
+      // No recognizable var() nodes — let caller fall through to default.
+      return;
     }
-    return {
-      result: parseCssValue(property as CssProperty, substituted),
-      droppedVars: unresolvableVarNames,
-    };
+    // All vars were unresolvable — signal that the property will be dropped.
+    return { result: new Map(), droppedVars: dropped };
   }
 
-  // All vars were unresolvable — signal that the property will be dropped.
-  if (unresolvedVars === totalVars) {
-    return { result: new Map(), droppedVars: unresolvableVarNames };
-  }
+  return {
+    result: parseCssValue(property as CssProperty, resolved),
+    droppedVars: dropped,
+  };
 };
 
 const cssTreeTryParse = (input: string) => {

@@ -1924,7 +1924,7 @@ describe("var() substitution — background", () => {
 });
 
 describe("var() substitution — CSS var() inline fallback", () => {
-  test("uses inline fallback when var is unresolvable", () => {
+  test("uses plain inline fallback when var is unresolvable", () => {
     // --w is not defined anywhere; inline fallback 2px should be used
     const result = decls(`border: var(--w, 2px) solid red;`);
     expect(result).toEqual(
@@ -1950,6 +1950,50 @@ describe("var() substitution — CSS var() inline fallback", () => {
       new Map()
     );
     expect(errors).toEqual([]);
+  });
+
+  test("nested var() in fallback is resolved — var(--a, var(--b))", () => {
+    // --a unresolvable, fallback is var(--b) which resolves to 3px
+    const result = decls(`--b: 3px; border: var(--a, var(--b)) solid red;`);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop("border-top-width", u(3, "px")),
+        prop("border-top-style", kw("solid")),
+        prop("border-top-color", kw("red")),
+      ])
+    );
+  });
+
+  test("nested var() in fallback from cssVars — var(--a, var(--b))", () => {
+    // --a unresolvable in same-rule and cssVars, fallback var(--b) in cssVars
+    const result = parseCss(
+      `.x { border: var(--a, var(--b)) solid black; }`,
+      new Map([["--b", "4px"]])
+    ).styles.filter((d) => d.selector === ".x");
+    expect(result).toEqual(
+      expect.arrayContaining([prop("border-top-width", u(4, "px"))])
+    );
+  });
+
+  test("deeply nested fallback var(--a, var(--b, var(--c)))", () => {
+    // --a and --b unresolvable, --c resolves
+    const result = decls(
+      `--c: 5px; border: var(--a, var(--b, var(--c))) solid red;`
+    );
+    expect(result).toEqual(
+      expect.arrayContaining([prop("border-top-width", u(5, "px"))])
+    );
+  });
+
+  test("all nested fallback vars unresolvable — property dropped with error", () => {
+    const { errors } = parseCss(
+      `.x { border: var(--a, var(--b)) solid red; }`,
+      new Map()
+    );
+    // --a is the top-level var reported in the error
+    expect(errors).toEqual([
+      `"border" was not applied because --a could not be resolved`,
+    ]);
   });
 });
 
