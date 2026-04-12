@@ -5,7 +5,6 @@ import type {
   CssProperty,
   StyleProperty,
 } from "@webstudio-is/css-engine";
-import type { FunctionNode } from "css-tree";
 import {
   parseCssValue as parseCssValueLonghand,
   parseCssVar,
@@ -121,15 +120,18 @@ const resolveVars = (
   const subs: Array<{ start: number; end: number; text: string }> = [];
   const dropped: string[] = [];
 
+  const walkSkip = (csstree.walk as unknown as { skip: symbol }).skip;
+
   csstree.walk(ast, {
     visit: "Function",
     enter(node) {
-      if (node.name !== "var" || !node.loc) {
+      const fnNode = node as csstree.FunctionNode;
+      if (fnNode.name !== "var" || !fnNode.loc) {
         return;
       }
-      const varRef = parseCssVar(node as FunctionNode);
+      const varRef = parseCssVar(fnNode);
       if (!varRef) {
-        return this.skip;
+        return walkSkip;
       }
 
       const direct =
@@ -138,11 +140,11 @@ const resolveVars = (
 
       if (direct !== undefined) {
         subs.push({
-          start: node.loc.start.offset,
-          end: node.loc.end.offset,
+          start: fnNode.loc.start.offset,
+          end: fnNode.loc.end.offset,
           text: direct,
         });
-        return this.skip;
+        return walkSkip;
       }
 
       // Try inline fallback — may itself contain var() references.
@@ -158,16 +160,16 @@ const resolveVars = (
           fallbackResult.dropped.length === 0
         ) {
           subs.push({
-            start: node.loc.start.offset,
-            end: node.loc.end.offset,
+            start: fnNode.loc.start.offset,
+            end: fnNode.loc.end.offset,
             text: fallbackResult.resolved,
           });
-          return this.skip;
+          return walkSkip;
         }
       }
 
       dropped.push(`--${varRef.value}`);
-      return this.skip;
+      return walkSkip;
     },
   });
 
@@ -251,7 +253,8 @@ export const extractCssCustomProperties = (
   }
   csstree.walk(ast, {
     visit: "Declaration",
-    enter(decl) {
+    enter(node) {
+      const decl = node as csstree.Declaration;
       const prop = normalizeProperty(decl.property);
       if (prop.startsWith("--")) {
         map.set(prop, csstree.generate(decl.value));
@@ -286,7 +289,8 @@ export const parseCss = (
     customProperties.clear();
     csstree.walk(rule, {
       visit: "Declaration",
-      enter(decl) {
+      enter(node) {
+        const decl = node as csstree.Declaration;
         const prop = normalizeProperty(decl.property);
         if (prop.startsWith("--")) {
           customProperties.set(prop, csstree.generate(decl.value));

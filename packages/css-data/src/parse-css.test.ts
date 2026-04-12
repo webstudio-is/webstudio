@@ -1860,7 +1860,6 @@ const u = (value: number, unit: string) =>
 const num = (value: number) => u(value, "number");
 const kw = (value: string) =>
   expect.objectContaining({ type: "keyword", value });
-const varRef = (value: string) => ({ type: "var", value });
 const layers = (...items: unknown[]) =>
   expect.objectContaining({
     type: "layers",
@@ -2595,7 +2594,9 @@ describe("var() substitution — -webkit-text-stroke", () => {
     const result = decls(
       `--w: 1px; --clr: black; -webkit-text-stroke: var(--w) var(--clr);`
     );
-    const stroke = result.find((d) => d.property === "-webkit-text-stroke");
+    const stroke = result.find(
+      (d) => (d.property as string) === "-webkit-text-stroke"
+    );
     expect(stroke?.value).toEqual(
       expect.objectContaining({
         type: "tuple",
@@ -2813,8 +2814,7 @@ describe("parseCss — external cssVars parameter", () => {
   test("cssVars are available in both rules when passed", () => {
     const styles = parseCss(
       `.a { border: var(--w) solid red; } .b { margin: var(--w); }`,
-      new Map([["--w", "4px"]]),
-      new Map()
+      new Map([["--w", "4px"]])
     ).styles;
     const aBorderTop = styles.find(
       (d) => d.selector === ".a" && d.property === "border-top-width"
@@ -2830,8 +2830,7 @@ describe("parseCss — external cssVars parameter", () => {
     // .a has --w: 10px in same rule, .b does not
     const styles = parseCss(
       `.a { --w: 10px; margin: var(--w); } .b { margin: var(--w); }`,
-      new Map([["--w", "4px"]]),
-      new Map()
+      new Map([["--w", "4px"]])
     ).styles;
     const aMarginTop = styles.find(
       (d) => d.selector === ".a" && d.property === "margin-top"
