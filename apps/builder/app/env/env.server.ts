@@ -66,13 +66,14 @@ const envSchema = z.object({
   PLANS: z
     .string()
     .default("[]")
-    .transform((val) => {
+    .refine((val) => {
       try {
-        return JSON.parse(val);
+        JSON.parse(val);
+        return true;
       } catch {
-        throw new Error(`Invalid PLANS JSON: ${val}`);
+        return false;
       }
-    }),
+    }, "PLANS must be valid JSON"),
 
   POSTGREST_URL: z.string().url().default("http://localhost:3000"),
   POSTGREST_API_KEY: z.string().default(""),
