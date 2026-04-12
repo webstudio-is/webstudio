@@ -1995,6 +1995,34 @@ describe("var() substitution — CSS var() inline fallback", () => {
       `"border" was not applied because --a could not be resolved`,
     ]);
   });
+
+  test("primary unresolvable, fallback resolves — background shorthand", () => {
+    // --primary is not defined, fallback blue should be used for background-color
+    const result = decls(`background: var(--primary, blue);`);
+    expect(result).toEqual(
+      expect.arrayContaining([prop("background-color", kw("blue"))])
+    );
+  });
+
+  test("primary unresolvable, fallback resolves — no error emitted", () => {
+    const { errors } = parseCss(
+      `.x { background: var(--primary, blue); }`,
+      new Map()
+    );
+    expect(errors).toEqual([]);
+  });
+
+  test("primary unresolvable, fallback resolves — mixed shorthand", () => {
+    // --w is not defined, fallback 1px is used; other parts are literal
+    const result = decls(`border: var(--w, 1px) solid var(--clr, navy);`);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop("border-top-width", u(1, "px")),
+        prop("border-top-style", kw("solid")),
+        prop("border-top-color", kw("navy")),
+      ])
+    );
+  });
 });
 
 describe("var() substitution — border", () => {

@@ -153,7 +153,10 @@ const resolveVars = (
         const fallbackResult = fbValue.includes("var(")
           ? resolveVars(fbValue, customProperties, cssVars, depth + 1)
           : { resolved: fbValue, dropped: [] };
-        if (fallbackResult !== undefined && fallbackResult.dropped.length === 0) {
+        if (
+          fallbackResult !== undefined &&
+          fallbackResult.dropped.length === 0
+        ) {
           subs.push({
             start: node.loc.start.offset,
             end: node.loc.end.offset,
