@@ -53,7 +53,7 @@ const createModel = ({
   matchingStates?: Set<string>;
 }): StyleObjectModel => {
   const instanceTags = new Map<Instance["id"], HtmlTags>();
-  const parsedStyles = parseCss(css);
+  const { styles: parsedStyles } = parseCss(css, new Map());
   const styles: Styles = new Map();
   for (const { breakpoint, selector, state, property, value } of parsedStyles) {
     const styleDecl: StyleDecl = {
@@ -82,7 +82,7 @@ const createModel = ({
   }
   const presetStyles = new Map<string, StyleValue>();
   for (const [componentName, css] of Object.entries(presets ?? {})) {
-    const parsedStyles = parseCss(css);
+    const { styles: parsedStyles } = parseCss(css, new Map());
     for (const styleDecl of parsedStyles) {
       const key = getPresetStyleDeclKey({
         component: componentName,

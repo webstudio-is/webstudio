@@ -139,7 +139,8 @@ const toParsedVariants = (variants: UnparsedVariants) => {
       try {
         const sanitizedStyles = styles.replaceAll(/@raw<\|([^@]+)\|>/g, "$1");
         const parsed = processStyles(
-          parseCss(`.styles${state} {${sanitizedStyles}}`) ?? []
+          parseCss(`.styles${state} {${sanitizedStyles}}`, new Map()).styles ??
+            []
         );
         const allBreakpointStyles = parsedVariants.get(breakpointName) ?? [];
         allBreakpointStyles.push(...parsed);

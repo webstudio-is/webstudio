@@ -36,7 +36,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           styles,
-          parseCssFragment("none", ["background-image"])
+          parseCssFragment("none", ["background-image"]).styles
         );
       }}
       collapsible

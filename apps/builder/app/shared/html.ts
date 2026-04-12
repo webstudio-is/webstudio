@@ -509,7 +509,8 @@ export const generateFragmentFromHtml = (
     };
     styleSources.push(localStyleSource);
     styleSourceSelections.push({ instanceId, values: [localStyleSource.id] });
-    for (const { property, value } of parseCss(`.styles{${css}}`)) {
+    for (const { property, value } of parseCss(`.styles{${css}}`, new Map())
+      .styles) {
       styles.push({
         styleSourceId: localStyleSource.id,
         breakpointId: getBaseBreakpointId(),
@@ -530,7 +531,7 @@ export const generateFragmentFromHtml = (
   const allCssText = styleTexts.join("\n");
 
   // Parse all CSS and classify rules
-  const allDecls = parseCss(allCssText);
+  const { styles: allDecls } = parseCss(allCssText, new Map());
   const { classRules, nestedClassRules } = classifyRules(allDecls);
 
   // Track which class names are used by elements — IDs will be assigned later
@@ -551,7 +552,7 @@ export const generateFragmentFromHtml = (
       styleTagActions.push({ type: "skip" });
       continue;
     }
-    const parsedDecls = parseCss(text);
+    const { styles: parsedDecls } = parseCss(text, new Map());
     const {
       classRules: tagClassRules,
       nestedClassRules: tagNestedRules,

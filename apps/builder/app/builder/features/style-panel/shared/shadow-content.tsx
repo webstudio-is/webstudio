@@ -24,6 +24,7 @@ import {
   ToggleGroup,
   ToggleGroupButton,
   Tooltip,
+  toast,
 } from "@webstudio-is/design-system";
 import {
   InfoCircleIcon,
@@ -179,9 +180,13 @@ export const ShadowContent = ({
     // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/drop-shadow#formal_syntax
     // https://developer.mozilla.org/en-US/docs/Web/CSS/text-shadow#formal_syntax
     // Both share a similar syntax but the property name is different.
-    const parsed = parseCssFragment(intermediateValue.value, [
-      parsedShadowProperty,
-    ]);
+    const { styles: parsed, errors } = parseCssFragment(
+      intermediateValue.value,
+      [parsedShadowProperty]
+    );
+    for (const error of errors) {
+      toast.error(error);
+    }
     const parsedValue = parsed.get(parsedShadowProperty);
     if (parsedValue?.type === "layers" || parsedValue?.type === "var") {
       onEditLayer(index, parsedValue, { isEphemeral: false });

@@ -3,6 +3,7 @@ import { presetLegacyCompat } from "@unocss/preset-legacy-compat";
 import { presetWind3 } from "@unocss/preset-wind3";
 import {
   camelCaseProperty,
+  extractCssCustomProperties,
   parseCss,
   parseMediaQuery,
   type ParsedStyleDecl,
@@ -239,9 +240,24 @@ const parseTailwindClasses = async (
   const generated = await generator.generate(classes);
   // use tailwind prefix instead of unocss one
   const css = generated.css.replaceAll("--un-", "--tw-");
+  // Normalize CSS custom property values: when the same var is declared in
+  // multiple utility-class rules, replace every occurrence with the value from
+  // the LAST declaration (the final cascaded value). This allows per-rule
+  // two-pass pre-collection to see the correct final value regardless of which
+  // rule a shorthand (e.g. border-color) lives in.
+  const finalVars = extractCssCustomProperties(css);
+  let normalizedCss = css;
+  if (finalVars.size > 0) {
+    normalizedCss = css.replace(/--[\w-]+\s*:[^;{}\n]*/g, (match) => {
+      const colonIdx = match.indexOf(":");
+      const propName = match.slice(0, colonIdx).trim();
+      const finalValue = finalVars.get(propName);
+      return finalValue !== undefined ? `${propName}: ${finalValue}` : match;
+    });
+  }
   let parsedStyles: StyleDecl[] = [];
   // @todo probably builtin in v4
-  if (css.includes("border")) {
+  if (normalizedCss.includes("border")) {
     // Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
     // [UnoCSS]: allow to override the default border color with css var `--un-default-border-color`
     const reset = `.styles {
@@ -249,9 +265,9 @@ const parseTailwindClasses = async (
       border-color: var(--tw-default-border-color, #e5e7eb);
       border-width: 0;
     }`;
-    parsedStyles.push(...parseCss(reset));
+    parsedStyles.push(...parseCss(reset, new Map()).styles);
   }
-  parsedStyles.push(...parseCss(css));
+  parsedStyles.push(...parseCss(normalizedCss, new Map()).styles);
   // skip preflights with ::before, ::after and ::backdrop
   parsedStyles = parsedStyles.filter(
     (styleDecl) => !styleDecl.state?.startsWith("::")

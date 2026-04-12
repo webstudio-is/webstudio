@@ -40,7 +40,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialFilter, ["filter"])
+          parseCssFragment(initialFilter, ["filter"]).styles
         );
       }}
     >

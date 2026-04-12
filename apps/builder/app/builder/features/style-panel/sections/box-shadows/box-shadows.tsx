@@ -60,7 +60,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialBoxShadow, ["box-shadow"])
+          parseCssFragment(initialBoxShadow, ["box-shadow"]).styles
         );
       }}
     >

@@ -10,13 +10,13 @@ test("parse var()", () => {
     ["background-image", parseCssValue("background-image", "var(--bg)")],
   ]);
   expect(
-    parseCssFragment("var(--bg)", ["background-image", "background"])
+    parseCssFragment("var(--bg)", ["background-image", "background"]).styles
   ).toEqual(result);
   expect(
     parseCssFragment("background-image: var(--bg)", [
       "background-image",
       "background",
-    ])
+    ]).styles
   ).toEqual(result);
 });
 
@@ -32,9 +32,9 @@ test("fallback further to valid values", () => {
     ["background-clip", parseCssValue("background-clip", "border-box")],
     ["background-color", parseCssValue("background-color", "#fff")],
   ]);
-  expect(parseCssFragment("#fff", ["background-image", "background"])).toEqual(
-    result
-  );
+  expect(
+    parseCssFragment("#fff", ["background-image", "background"]).styles
+  ).toEqual(result);
 });
 
 test("parse shorthand property", () => {
@@ -48,10 +48,10 @@ test("parse shorthand property", () => {
     ["transition-delay", parseCssValue("transition-delay", "0s")],
     ["transition-behavior", parseCssValue("transition-behavior", "normal")],
   ]);
-  expect(parseCssFragment("opacity 1s", ["transition"])).toEqual(result);
-  expect(parseCssFragment("transition: opacity 1s", ["transition"])).toEqual(
-    result
-  );
+  expect(parseCssFragment("opacity 1s", ["transition"]).styles).toEqual(result);
+  expect(
+    parseCssFragment("transition: opacity 1s", ["transition"]).styles
+  ).toEqual(result);
 });
 
 test("parse longhand properties", () => {
@@ -62,11 +62,25 @@ test("parse longhand properties", () => {
        transition-duration: 1s;
      `,
       ["transition"]
-    )
+    ).styles
   ).toEqual(
     new Map([
       ["transition-property", parseCssValue("transition-property", "opacity")],
       ["transition-duration", parseCssValue("transition-duration", "1s")],
     ])
   );
+});
+
+test("error from first parse is preserved when fallback path produces no styles", () => {
+  // background shorthand with an unresolvable var: the initial parse emits an
+  // error and returns no styles. Fallback attempts (background-image: ...) also
+  // produce no styles but emit no error of their own. Without the fix the error
+  // would be silently discarded.
+  const { errors } = parseCssFragment("background: var(--missing)", [
+    "background-image",
+    "background",
+  ]);
+  expect(errors).toEqual([
+    '"background" was not applied because --missing could not be resolved',
+  ]);
 });

@@ -34,13 +34,15 @@ const objectGroupBy = <Item>(list: Item[], by: (item: Item) => string) => {
 };
 
 const css = readFileSync(sourcePath, "utf8");
-const parsed = parseCss(css).map(({ property, ...styleDecl }) => ({
-  selector: styleDecl.selector,
-  breakpoint: styleDecl.breakpoint,
-  state: styleDecl.state,
-  property: camelCaseProperty(property),
-  value: styleDecl.value,
-}));
+const parsed = parseCss(css, new Map()).styles.map(
+  ({ property, ...styleDecl }) => ({
+    selector: styleDecl.selector,
+    breakpoint: styleDecl.breakpoint,
+    state: styleDecl.state,
+    property: camelCaseProperty(property),
+    value: styleDecl.value,
+  })
+);
 const records = objectGroupBy(parsed, (item) => item.selector);
 mkdirSync(path.dirname(destinationPath), { recursive: true });
 const code = `/* eslint-disable */

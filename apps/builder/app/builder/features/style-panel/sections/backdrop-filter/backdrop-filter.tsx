@@ -43,7 +43,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialBackdropFilter, ["backdrop-filter"])
+          parseCssFragment(initialBackdropFilter, ["backdrop-filter"]).styles
         );
       }}
     >

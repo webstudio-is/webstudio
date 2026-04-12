@@ -34,7 +34,10 @@ import {
   deleteProperty,
   setProperty,
 } from "~/builder/features/style-panel/shared/use-style-data";
-import { $availableVariables } from "~/builder/features/style-panel/shared/model";
+import {
+  $availableVariables,
+  $cssVarsMap,
+} from "~/builder/features/style-panel/shared/model";
 import { parseStyleInput } from "./parse-style-input";
 import { validateCssVariableName } from "~/builder/shared/css-variable-utils";
 import { toast } from "@webstudio-is/design-system";
@@ -122,7 +125,10 @@ const matchOrSuggestToCreate = (search: string, items: Array<SearchItem>) => {
   matched.length = Math.min(matched.length, 100);
 
   if (matched.length === 0) {
-    const parsedStyleMap = parseStyleInput(search);
+    const { styleMap: parsedStyleMap } = parseStyleInput(
+      search,
+      $cssVarsMap.get()
+    );
     const styleMap = mergeStyles(parsedStyleMap);
 
     // When parsedStyles is more than one, user entered a shorthand.

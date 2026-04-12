@@ -17,7 +17,7 @@ import {
   EditorDialogControl,
   getCodeEditorCssVars,
 } from "~/shared/code-editor-base";
-import { $availableVariables } from "./model";
+import { $availableVariables, $cssVarsMap } from "./model";
 
 type ShorthandProperty = (typeof shorthandProperties)[number];
 
@@ -26,20 +26,40 @@ export { getCodeEditorCssVars };
 export const parseCssFragment = (
   css: string,
   fallbacks: (CssProperty | ShorthandProperty)[]
-): Map<CssProperty, StyleValue> => {
-  let parsed = parseCss(`.styles{${css}}`);
+): { styles: Map<CssProperty, StyleValue>; errors: string[] } => {
+  const cssVars = $cssVarsMap.get();
+  const { styles: firstStyles, errors: firstErrors } = parseCss(
+    `.styles{${css}}`,
+    cssVars
+  );
+  let parsed = firstStyles;
+  let errors = firstErrors;
   if (parsed.length === 0) {
     for (const fallbackProperty of fallbacks) {
-      parsed = parseCss(`.styles{${fallbackProperty}: ${css}}`);
-      parsed = parsed.filter((styleDecl) => styleDecl.value.type !== "invalid");
+      const result = parseCss(`.styles{${fallbackProperty}: ${css}}`, cssVars);
+      parsed = result.styles.filter(
+        (styleDecl) => styleDecl.value.type !== "invalid"
+      );
+      // Only use fallback errors when firstErrors is empty: the initial
+      // full-declaration parse produces the most relevant diagnostic (e.g.
+      // "background was not applied because --x could not be resolved").
+      // Fallback attempts with a forced property prefix often produce silent
+      // failures with no errors at all, which would otherwise discard the
+      // original diagnostic.
+      if (errors.length === 0 && result.errors.length > 0) {
+        errors = result.errors;
+      }
       if (parsed.length > 0) {
         break;
       }
     }
   }
-  return new Map(
-    parsed.map((styleDecl) => [styleDecl.property, styleDecl.value])
-  );
+  return {
+    styles: new Map(
+      parsed.map((styleDecl) => [styleDecl.property, styleDecl.value])
+    ),
+    errors,
+  };
 };
 
 const compareVariables = (left: RankingInfo, right: RankingInfo) => {

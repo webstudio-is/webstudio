@@ -3,7 +3,7 @@ import type { StyleValue } from "@webstudio-is/css-engine";
 import { parseCss } from "../src/parse-css";
 
 const css = readFileSync("./src/html.css", "utf8");
-const parsed = parseCss(css);
+const { styles: parsed } = parseCss(css, new Map());
 const result: [string, StyleValue][] = [];
 for (const styleDecl of parsed) {
   result.push([`${styleDecl.selector}:${styleDecl.property}`, styleDecl.value]);
