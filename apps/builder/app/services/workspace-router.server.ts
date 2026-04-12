@@ -187,7 +187,11 @@ export const workspaceRouter = router({
           throw new Error("Upgrade your plan to invite members to workspaces.");
         }
 
-        if (!env.PAYMENT_WORKER_URL || !env.PAYMENT_WORKER_TOKEN) {
+        const isDevEnvironment = env.DEPLOYMENT_ENVIRONMENT === "development";
+        const hasPaymentWorker =
+          env.PAYMENT_WORKER_URL && env.PAYMENT_WORKER_TOKEN;
+
+        if (!hasPaymentWorker && !isDevEnvironment) {
           throw new Error(
             "Adding workspace members requires a configured payment provider."
           );
