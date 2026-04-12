@@ -64,10 +64,15 @@ const updateSeats = async ({
  * Syncs the Stripe seat quantity for the owner of a given workspace.
  * Called after adding or removing members.
  * Throws on payment worker errors so the caller can decide whether to soft-fail.
+ *
+ * @param countDelta - adjustment to the current member count before syncing.
+ *   Pass +1 when a member is about to be added (pre-charge) so that billing
+ *   is checked before the DB change is committed.
  */
 const syncOwnerSeats = async (
   workspaceId: string,
-  ctx: Parameters<typeof workspaceApi.countAllMembers>[1]
+  ctx: Parameters<typeof workspaceApi.countAllMembers>[1],
+  countDelta = 0
 ) => {
   const workspaceResult = await ctx.postgrest.client
     .from("Workspace")
@@ -97,7 +102,7 @@ const syncOwnerSeats = async (
   const result = await updateSeats({
     userId: ownerId,
     subscriptionId: subscription.subscriptionId,
-    newQuantity: memberCount,
+    newQuantity: memberCount + countDelta,
     minSeats: planFeatures.minSeats,
     maxSeats: planFeatures.maxSeatsPerWorkspace,
   });
@@ -214,16 +219,13 @@ export const workspaceRouter = router({
           }
         }
 
-        const { notificationId } = await workspaceApi.addMember(input, ctx);
+        // Pre-charge the seat before adding the member (Figma model).
+        // When the payment worker is configured, a billing failure aborts the
+        // invite so the member is never added. When the worker URL is not set
+        // (self-hosted / dev), syncOwnerSeats returns early and this is a no-op.
+        await syncOwnerSeats(input.workspaceId, ctx, +1);
 
-        // Charge the seat at invite time (Figma model).
-        // Soft-fail: the invite is already created, billing is best-effort.
-        await syncOwnerSeats(input.workspaceId, ctx).catch((error) => {
-          console.error(
-            "[payment-worker] Failed to bill seat on invite:",
-            error
-          );
-        });
+        const { notificationId } = await workspaceApi.addMember(input, ctx);
 
         return { success: true as const, notificationId };
       } catch (error) {
