@@ -5,7 +5,7 @@ import { AUTH_PROVIDERS } from "~/shared/session";
 import { clearReturnToCookie, returnToPath } from "~/services/cookie.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect, setNoStoreToRedirect } from "~/services/no-store-redirect";
-import { applyDevPlan } from "~/services/dev-plan.server";
+import { applyDevPlan } from "@webstudio-is/plans/index.server";
 import { createPostgrestContext } from "~/shared/context.server";
 
 export default function Dev() {

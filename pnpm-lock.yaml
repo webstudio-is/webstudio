@@ -262,6 +262,9 @@ importers:
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
+      '@webstudio-is/plans':
+        specifier: workspace:*
+        version: link:../../packages/plans
       '@webstudio-is/postgrest':
         specifier: workspace:*
         version: link:../../packages/postgrest
@@ -1693,6 +1696,22 @@ importers:
         specifier: ^3.1.2
         version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)
 
+  packages/plans:
+    dependencies:
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+    devDependencies:
+      '@webstudio-is/postgrest':
+        specifier: workspace:*
+        version: link:../postgrest
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)
+
   packages/postgrest:
     dependencies:
       '@supabase/postgrest-js':
@@ -2272,6 +2291,9 @@ importers:
       '@webstudio-is/feature-flags':
         specifier: workspace:*
         version: link:../feature-flags
+      '@webstudio-is/plans':
+        specifier: workspace:*
+        version: link:../plans
       memoize:
         specifier: ^10.0.0
         version: 10.0.0
