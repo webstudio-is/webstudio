@@ -1,6 +1,6 @@
 import type { TrpcInterfaceClient } from "../shared/shared-router";
 import type { Client } from "@webstudio-is/postgrest/index.server";
-import type { PlanFeatures, Purchase } from "../shared/plan-features";
+import type { PlanFeatures, Purchase } from "@webstudio-is/plans";
 
 /**
  * All necessary parameters for Authorization

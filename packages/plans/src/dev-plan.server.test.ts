@@ -6,7 +6,7 @@ import {
   json,
   empty,
 } from "@webstudio-is/postgrest/testing";
-import { applyDevPlan } from "~/services/dev-plan.server";
+import { applyDevPlan } from "./dev-plan.server";
 
 const server = createTestServer();
 
