@@ -2022,6 +2022,17 @@ describe("var() substitution — CSS var() inline fallback", () => {
       ])
     );
   });
+
+  test("partial resolution — some vars resolve, some do not — error emitted", () => {
+    // --w resolves, --clr does not; an error is emitted for --clr
+    const { errors } = parseCss(
+      `.x { --w: 1px; border: var(--w) solid var(--clr); }`,
+      new Map()
+    );
+    expect(errors).toEqual([
+      `"border" was not applied because --clr could not be resolved`,
+    ]);
+  });
 });
 
 describe("var() substitution — border", () => {

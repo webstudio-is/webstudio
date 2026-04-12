@@ -14,6 +14,10 @@ import { shorthandProperties } from "./__generated__/shorthand-properties";
 
 const shorthandSet = new Set<string>(shorthandProperties);
 
+// css-tree exposes `skip` as a Symbol on the walk function itself.
+// Returning it from an enter() callback prevents descent into child nodes.
+const walkSkip = (csstree.walk as unknown as { skip: symbol }).skip;
+
 export type ParsedStyleDecl = {
   breakpoint?: string;
   selector: string;
@@ -92,7 +96,7 @@ const parseCssValue = (property: CssProperty, value: string) => {
 /**
  * Recursively resolve all var() references in a CSS value string.
  * Handles nested var() in fallbacks (e.g. var(--a, var(--b))).
- * Uses this.skip() to prevent double-processing nested nodes.
+ * Returns `walkSkip` from enter() to prevent double-processing nested nodes.
  *
  * Resolution order per var(): direct custom property → cssVars → inline fallback
  * (fallback is itself recursively resolved if it contains var()).
@@ -119,8 +123,6 @@ const resolveVars = (
 
   const subs: Array<{ start: number; end: number; text: string }> = [];
   const dropped: string[] = [];
-
-  const walkSkip = (csstree.walk as unknown as { skip: symbol }).skip;
 
   csstree.walk(ast, {
     visit: "Function",
@@ -186,6 +188,9 @@ const resolveVars = (
  *
  * Returns undefined when the value contains no var() (fast path).
  * Returns { result: empty Map, droppedVars } when all vars are unresolvable.
+ * Returns { result: parsed Map, droppedVars } when some vars resolved and
+ * some did not — droppedVars is non-empty and an error should be reported,
+ * but the partially-resolved value is still attempted (may produce invalid).
  */
 const substituteVarsInShorthand = (
   property: string,

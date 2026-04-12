@@ -8,7 +8,7 @@ import {
   type CompletionSource,
 } from "@codemirror/autocomplete";
 import { parseCss, shorthandProperties } from "@webstudio-is/css-data";
-import { css as style, type CSS } from "@webstudio-is/design-system";
+import { css as style, toast, type CSS } from "@webstudio-is/design-system";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   EditorContent,
@@ -28,15 +28,26 @@ export const parseCssFragment = (
   fallbacks: (CssProperty | ShorthandProperty)[]
 ): Map<CssProperty, StyleValue> => {
   const cssVars = $cssVarsMap.get();
-  let parsed = parseCss(`.styles{${css}}`, cssVars).styles;
+  const { styles: firstStyles, errors: firstErrors } = parseCss(
+    `.styles{${css}}`,
+    cssVars
+  );
+  let parsed = firstStyles;
+  let errors = firstErrors;
   if (parsed.length === 0) {
     for (const fallbackProperty of fallbacks) {
-      parsed = parseCss(`.styles{${fallbackProperty}: ${css}}`, cssVars).styles;
-      parsed = parsed.filter((styleDecl) => styleDecl.value.type !== "invalid");
+      const result = parseCss(`.styles{${fallbackProperty}: ${css}}`, cssVars);
+      parsed = result.styles.filter(
+        (styleDecl) => styleDecl.value.type !== "invalid"
+      );
+      errors = result.errors;
       if (parsed.length > 0) {
         break;
       }
     }
+  }
+  for (const error of errors) {
+    toast.error(error);
   }
   return new Map(
     parsed.map((styleDecl) => [styleDecl.property, styleDecl.value])
