@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/trpc-interface",
-  "version": "0.0.0",
+  "version": "0.0.0-webstudio-version",
   "description": "Webstudio TRPC Interface",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -24,19 +24,22 @@
   },
   "exports": {
     "./index.server": {
-      "webstudio": "./src/index.server.ts"
+      "webstudio": "./src/index.server.ts",
+      "import": "./src/index.server.ts"
     },
     "./plan-features": {
-      "webstudio": "./src/shared/plan-features.ts"
+      "webstudio": "./src/shared/plan-features.ts",
+      "import": "./src/shared/plan-features.ts"
     },
     "./plan-client": {
-      "webstudio": "./src/shared/plan-client.server.ts"
+      "webstudio": "./src/shared/plan-client.server.ts",
+      "import": "./src/shared/plan-client.server.ts"
     },
     "./authorize": {
-      "webstudio": "./src/authorize/role.ts"
+      "webstudio": "./src/authorize/role.ts",
+      "import": "./src/authorize/role.ts"
     }
   },
   "license": "AGPL-3.0-or-later",
-  "private": true,
   "sideEffects": false
 }
