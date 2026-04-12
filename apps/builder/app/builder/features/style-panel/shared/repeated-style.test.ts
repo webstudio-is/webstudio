@@ -109,7 +109,7 @@ describe("add repeated item", () => {
     expect($transitionProperty.get().cascadedValue.type).toEqual("var");
     addRepeatedStyleItem(
       [$transitionProperty.get()],
-      parseCssFragment("opacity", ["transition-property"])
+      parseCssFragment("opacity", ["transition-property"]).styles
     );
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "var(--my-property), opacity"
@@ -122,11 +122,11 @@ describe("add repeated item", () => {
     );
     addRepeatedStyleItem(
       [$transitionProperty.get()],
-      parseCssFragment("opacity", ["transition-property"])
+      parseCssFragment("opacity", ["transition-property"]).styles
     );
     addRepeatedStyleItem(
       [$transitionProperty.get()],
-      parseCssFragment("transform", ["transition-property"])
+      parseCssFragment("transform", ["transition-property"]).styles
     );
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "opacity, transform"
@@ -137,11 +137,11 @@ describe("add repeated item", () => {
     const $filter = createComputedStyleDeclStore("filter");
     addRepeatedStyleItem(
       [$filter.get()],
-      parseCssFragment("blur(5px)", ["filter"])
+      parseCssFragment("blur(5px)", ["filter"]).styles
     );
     addRepeatedStyleItem(
       [$filter.get()],
-      parseCssFragment("brightness(0.5)", ["filter"])
+      parseCssFragment("brightness(0.5)", ["filter"]).styles
     );
     expect(toValue($filter.get().cascadedValue)).toEqual(
       "blur(5px) brightness(0.5)"
@@ -152,7 +152,7 @@ describe("add repeated item", () => {
     const $backgroundColor = createComputedStyleDeclStore("background-color");
     addRepeatedStyleItem(
       [$backgroundColor.get()],
-      parseCssFragment("none", ["background"])
+      parseCssFragment("none", ["background"]).styles
     );
     expect($backgroundColor.get().source.name).toEqual("default");
     expect(toValue($backgroundColor.get().cascadedValue)).toEqual(
@@ -176,7 +176,7 @@ describe("add repeated item", () => {
         $transitionDuration.get(),
         $transitionDelay.get(),
       ],
-      parseCssFragment("width 2s", ["transition"])
+      parseCssFragment("width 2s", ["transition"]).styles
     );
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "opacity, transform, width"
@@ -195,7 +195,7 @@ describe("edit item in repeated style", () => {
     editRepeatedStyleItem(
       [$backgroundImage.get()],
       0,
-      parseCssFragment("var(--gradient1)", ["background-image"])
+      parseCssFragment("var(--gradient1)", ["background-image"]).styles
     );
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
       "var(--gradient1)"
@@ -205,7 +205,7 @@ describe("edit item in repeated style", () => {
       [$backgroundImage.get()],
       // use greater index when access computed items
       2,
-      parseCssFragment("var(--gradient2)", ["background-image"])
+      parseCssFragment("var(--gradient2)", ["background-image"]).styles
     );
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
       "var(--gradient2)"
@@ -219,7 +219,7 @@ describe("edit item in repeated style", () => {
     editRepeatedStyleItem(
       [$backgroundImage.get()],
       1,
-      parseCssFragment("var(--gradient1)", ["background-image"])
+      parseCssFragment("var(--gradient1)", ["background-image"]).styles
     );
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
       "none, var(--gradient1)"
@@ -228,7 +228,7 @@ describe("edit item in repeated style", () => {
     editRepeatedStyleItem(
       [$backgroundImage.get()],
       1,
-      parseCssFragment("var(--gradient2)", ["background-image"])
+      parseCssFragment("var(--gradient2)", ["background-image"]).styles
     );
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
       "none, var(--gradient2)"
@@ -244,7 +244,7 @@ describe("edit item in repeated style", () => {
     editRepeatedStyleItem(
       [$transitionProperty.get()],
       1,
-      parseCssFragment("width", ["transition-property"])
+      parseCssFragment("width", ["transition-property"]).styles
     );
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "opacity, width"
@@ -257,7 +257,7 @@ describe("edit item in repeated style", () => {
     editRepeatedStyleItem(
       [$filter.get()],
       1,
-      parseCssFragment("contrast(200%)", ["filter"])
+      parseCssFragment("contrast(200%)", ["filter"]).styles
     );
     expect(toValue($filter.get().cascadedValue)).toEqual(
       "blur(5px) contrast(200%)"

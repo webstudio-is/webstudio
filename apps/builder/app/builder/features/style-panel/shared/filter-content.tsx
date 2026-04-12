@@ -13,6 +13,7 @@ import {
   Separator,
   Select,
   Grid,
+  toast,
 } from "@webstudio-is/design-system";
 import { useEffect, useState, type JSX } from "react";
 import {
@@ -152,7 +153,10 @@ export const FilterSectionContent = ({
     value: string,
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
-    const parsed = parseCssFragment(value, [property]);
+    const { styles: parsed, errors } = parseCssFragment(value, [property]);
+    for (const error of errors) {
+      toast.error(error);
+    }
     const parsedValue = parsed.get(property);
     const invalid = parsedValue === undefined || parsedValue.type === "invalid";
     setIntermediateValue({

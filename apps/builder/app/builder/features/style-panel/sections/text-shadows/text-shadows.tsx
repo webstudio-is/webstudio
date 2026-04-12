@@ -54,7 +54,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialTextShadow, ["text-shadow"])
+          parseCssFragment(initialTextShadow, ["text-shadow"]).styles
         );
       }}
     >

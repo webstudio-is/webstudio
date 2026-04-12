@@ -15,6 +15,7 @@ import {
   Tooltip,
   Text,
   Grid,
+  toast,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { propertiesData, propertyDescriptions } from "@webstudio-is/css-data";
@@ -84,11 +85,14 @@ export const TransitionContent = ({ index }: { index: number }) => {
     if (intermediateValue === undefined) {
       return;
     }
-    editRepeatedStyleItem(
-      styles,
-      index,
-      parseCssFragment(intermediateValue.value, ["transition"])
+    const { styles: parsed, errors } = parseCssFragment(
+      intermediateValue.value,
+      ["transition"]
     );
+    for (const error of errors) {
+      toast.error(error);
+    }
+    editRepeatedStyleItem(styles, index, parsed);
   };
 
   const updateIntermediateValue = (params: {
