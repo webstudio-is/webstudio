@@ -187,6 +187,12 @@ export const workspaceRouter = router({
           throw new Error("Upgrade your plan to invite members to workspaces.");
         }
 
+        if (!env.PAYMENT_WORKER_URL || !env.PAYMENT_WORKER_TOKEN) {
+          throw new Error(
+            "Adding workspace members requires a configured payment provider."
+          );
+        }
+
         const { maxSeatsPerWorkspace } = ctx.planFeatures;
         if (maxSeatsPerWorkspace > 0) {
           const [membersResult, pendingResult] = await Promise.all([
