@@ -1,6 +1,8 @@
 -- Remove seatQuantity from UserProduct view.
 -- Seat quantity is now derived directly from TransactionLog in the application layer.
-CREATE OR REPLACE VIEW "UserProduct" AS (
+-- NOTE: PostgreSQL's CREATE OR REPLACE VIEW cannot remove columns; DROP + CREATE is required.
+DROP VIEW IF EXISTS "UserProduct";
+CREATE VIEW "UserProduct" AS (
   SELECT
     "userId",
     "subscriptionId",
