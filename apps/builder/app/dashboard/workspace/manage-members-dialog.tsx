@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRevalidator } from "@remix-run/react";
 import {
   Button,
@@ -44,7 +44,20 @@ const inviteMembers = async (
         failed.push(`${email}: ${result.error}`);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
+      const raw = error instanceof Error ? error.message : "Unknown error";
+      // tRPC surfaces Zod input validation failures as a JSON array of issues.
+      // Extract the human-readable message(s) instead of dumping raw JSON.
+      let message = raw;
+      try {
+        const issues = JSON.parse(raw);
+        if (Array.isArray(issues) && issues.length > 0) {
+          message = issues
+            .map((i: { message?: string }) => i.message ?? "Invalid value")
+            .join(", ");
+        }
+      } catch {
+        // not JSON — use raw message as-is
+      }
       failed.push(`${email}: ${message}`);
     }
   }
@@ -356,6 +369,41 @@ const MemberList = ({
   );
 };
 
+const ExtraSeatsConfirmDialog = ({
+  memberCount,
+  extraSeats,
+  onConfirm,
+  onCancel,
+}: {
+  memberCount: number;
+  extraSeats: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) => (
+  <Dialog open onOpenChange={(open) => !open && onCancel()}>
+    <DialogContent>
+      <DialogTitle>Extra seats will be charged</DialogTitle>
+      <Flex direction="column" gap="2" css={{ padding: theme.spacing[5] }}>
+        <Text>
+          {`Inviting ${memberCount} member${
+            memberCount === 1 ? "" : "s"
+          } will add ${extraSeats} extra seat${
+            extraSeats === 1 ? "" : "s"
+          } to your billing.`}
+        </Text>
+      </Flex>
+      <DialogActions>
+        <Button color="neutral" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button autoFocus onClick={onConfirm}>
+          Confirm
+        </Button>
+      </DialogActions>
+    </DialogContent>
+  </Dialog>
+);
+
 export const ManageMembersDialog = ({
   workspace,
   userId,
@@ -375,6 +423,12 @@ export const ManageMembersDialog = ({
   const [optimisticPending, setOptimisticPending] = useState<
     OptimisticPendingInvite[]
   >([]);
+  const [pendingConfirm, setPendingConfirm] = useState<{
+    emails: string[];
+    relation: Role;
+    extraSeats: number;
+  }>();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
   const membersData = data?.success ? data.data : undefined;
@@ -390,6 +444,33 @@ export const ManageMembersDialog = ({
 
   const availableSeats = computeAvailableSeats(membersData, optimisticPending);
 
+  const performInvite = async (emails: string[], relation: Role) => {
+    setErrors(undefined);
+    setInviting(true);
+    const optimistic: OptimisticPendingInvite[] = emails.map((email) => ({
+      notificationId: crypto.randomUUID(),
+      email,
+      relation,
+    }));
+    setOptimisticPending((prev) => [...prev, ...optimistic]);
+
+    const failed = await inviteMembers(emails, workspace.id, relation);
+    setInviting(false);
+
+    if (failed.length > 0) {
+      setErrors(failed);
+      const failedEmails = new Set(failed.map((f) => f.split(":")[0].trim()));
+      setOptimisticPending((prev) =>
+        prev.filter((o) => !failedEmails.has(o.email))
+      );
+    } else {
+      formRef.current?.reset();
+    }
+
+    handleRefresh();
+    revalidator.revalidate();
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -404,116 +485,125 @@ export const ManageMembersDialog = ({
       return;
     }
 
-    setErrors(undefined);
-    setInviting(true);
-    // Add optimistic entries immediately so the UI shows them while the list refreshes
-    const optimistic: OptimisticPendingInvite[] = emails.map((email) => ({
-      notificationId: crypto.randomUUID(),
-      email,
-      relation: inviteRelation,
-    }));
-    setOptimisticPending((prev) => [...prev, ...optimistic]);
-
-    const failed = await inviteMembers(emails, workspace.id, inviteRelation);
-    setInviting(false);
-
-    if (failed.length > 0) {
-      setErrors(failed);
-      // Remove optimistic entries for emails that failed
-      const failedEmails = new Set(failed.map((f) => f.split(":")[0].trim()));
-      setOptimisticPending((prev) =>
-        prev.filter((o) => !failedEmails.has(o.email))
-      );
-    } else {
-      (event.target as HTMLFormElement).reset();
+    if (availableSeats !== undefined && emails.length > availableSeats) {
+      setPendingConfirm({
+        emails,
+        relation: inviteRelation,
+        extraSeats: emails.length - Math.max(0, availableSeats),
+      });
+      return;
     }
 
-    handleRefresh();
-    revalidator.revalidate();
+    await performInvite(emails, inviteRelation);
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        onOpenChange(open);
-        if (open === false) {
-          setErrors(undefined);
-        }
-      }}
-    >
-      <DialogContent css={{ width: theme.spacing[34] }}>
-        <Flex as="form" direction="column" gap="3" onSubmit={handleSubmit}>
-          {isOwner && (
-            <Flex
-              gap="1"
-              direction="column"
+    <>
+      {pendingConfirm !== undefined && (
+        <ExtraSeatsConfirmDialog
+          memberCount={pendingConfirm.emails.length}
+          extraSeats={pendingConfirm.extraSeats}
+          onCancel={() => setPendingConfirm(undefined)}
+          onConfirm={async () => {
+            const confirm = pendingConfirm;
+            setPendingConfirm(undefined);
+            await performInvite(confirm.emails, confirm.relation);
+          }}
+        />
+      )}
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          onOpenChange(open);
+          if (open === false) {
+            setErrors(undefined);
+          }
+        }}
+      >
+        <DialogContent css={{ width: theme.spacing[34] }}>
+          <Flex
+            as="form"
+            ref={formRef}
+            direction="column"
+            gap="3"
+            onSubmit={handleSubmit}
+          >
+            {isOwner && (
+              <Flex
+                gap="1"
+                direction="column"
+                css={{
+                  px: theme.spacing[7],
+                  paddingTop: theme.spacing[5],
+                }}
+              >
+                <Label>Invite members</Label>
+                <Flex gap="2">
+                  <Box css={{ flexGrow: 1 }}>
+                    <InputErrorsTooltip errors={errors}>
+                      <InputField
+                        name="emails"
+                        placeholder="alice@example.com, bob@example.com"
+                        color={errors ? "error" : undefined}
+                      />
+                    </InputErrorsTooltip>
+                  </Box>
+                  <RoleSelect
+                    value={inviteRelation}
+                    onChange={setInviteRelation}
+                  />
+                  <Button
+                    type="submit"
+                    state={inviting ? "pending" : undefined}
+                  >
+                    Invite
+                  </Button>
+                </Flex>
+              </Flex>
+            )}
+            <ScrollAreaNative
               css={{
-                px: theme.spacing[7],
-                paddingTop: theme.spacing[5],
+                maxHeight: 300,
+                paddingTop: isOwner ? undefined : theme.spacing[5],
               }}
             >
-              <Label>Invite members</Label>
-              <Flex gap="2">
-                <Box css={{ flexGrow: 1 }}>
-                  <InputErrorsTooltip errors={errors}>
-                    <InputField
-                      name="emails"
-                      placeholder="alice@example.com, bob@example.com"
-                      color={errors ? "error" : undefined}
-                    />
-                  </InputErrorsTooltip>
-                </Box>
-                <RoleSelect
-                  value={inviteRelation}
-                  onChange={setInviteRelation}
+              <Flex direction="column" gap="2" css={{ px: theme.spacing[7] }}>
+                <Text variant="labels">Members</Text>
+                <MemberList
+                  workspaceId={workspace.id}
+                  canRemove={isOwner}
+                  membersData={membersData}
+                  onRefresh={handleRefresh}
+                  optimisticPending={optimisticPending}
+                  onRemoveOptimistic={(id) =>
+                    setOptimisticPending((prev) =>
+                      prev.filter((o) => o.notificationId !== id)
+                    )
+                  }
                 />
-                <Button type="submit" state={inviting ? "pending" : undefined}>
-                  Invite
-                </Button>
               </Flex>
-            </Flex>
-          )}
-          <ScrollAreaNative
-            css={{
-              maxHeight: 300,
-              paddingTop: isOwner ? undefined : theme.spacing[5],
-            }}
-          >
-            <Flex direction="column" gap="2" css={{ px: theme.spacing[7] }}>
-              <Text variant="labels">Members</Text>
-              <MemberList
-                workspaceId={workspace.id}
-                canRemove={isOwner}
-                membersData={membersData}
-                onRefresh={handleRefresh}
-                optimisticPending={optimisticPending}
-                onRemoveOptimistic={(id) =>
-                  setOptimisticPending((prev) =>
-                    prev.filter((o) => o.notificationId !== id)
-                  )
-                }
-              />
-            </Flex>
-          </ScrollAreaNative>
-        </Flex>
-        <DialogActions>
-          <Flex justify="between" align="center" grow>
-            {availableSeats !== undefined && (
-              <Text color={availableSeats <= 0 ? "destructive" : "subtle"}>
-                {availableSeats >= 0
-                  ? `${availableSeats} more seats included`
-                  : `${-availableSeats} extra seat${-availableSeats === 1 ? "" : "s"} will be charged`}
-              </Text>
-            )}
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
+            </ScrollAreaNative>
           </Flex>
-        </DialogActions>
-        <DialogTitle>Members</DialogTitle>
-      </DialogContent>
-    </Dialog>
+          <DialogActions>
+            <Flex justify="between" align="center" grow>
+              {availableSeats !== undefined ? (
+                <Text color={availableSeats <= 0 ? "destructive" : "subtle"}>
+                  {availableSeats >= 0
+                    ? `${availableSeats} more seats included`
+                    : `${-availableSeats} extra seat${-availableSeats === 1 ? "" : "s"} will be charged`}
+                </Text>
+              ) : (
+                <div />
+              )}
+              <DialogClose>
+                <Button color="ghost">Cancel</Button>
+              </DialogClose>
+            </Flex>
+          </DialogActions>
+          <DialogTitle>Members</DialogTitle>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
