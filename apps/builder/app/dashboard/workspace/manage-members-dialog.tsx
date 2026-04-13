@@ -234,37 +234,26 @@ type OptimisticPendingInvite = {
 const MemberList = ({
   workspaceId,
   canRemove,
-  refreshKey,
+  result,
   onRefresh,
-  onSeatsLoaded,
   optimisticPending,
   onRemoveOptimistic,
 }: {
   workspaceId: string;
   canRemove: boolean;
-  refreshKey: number;
+  result:
+    | Extract<
+        Exclude<
+          ReturnType<typeof trpcClient.workspace.listMembers.useQuery>["data"],
+          undefined
+        >,
+        { success: true }
+      >["data"]
+    | undefined;
   onRefresh: () => void;
-  onSeatsLoaded?: (seatsUsed: number, maxSeats: number) => void;
   optimisticPending: OptimisticPendingInvite[];
   onRemoveOptimistic: (notificationId: string) => void;
 }) => {
-  const { load, data } = trpcClient.workspace.listMembers.useQuery();
-
-  useEffect(() => {
-    load({ workspaceId });
-  }, [load, workspaceId, refreshKey]);
-
-  const result = data && "data" in data ? data.data : undefined;
-
-  useEffect(() => {
-    if (result !== undefined && onSeatsLoaded !== undefined) {
-      onSeatsLoaded(
-        result.members.length + result.pendingInvites.length,
-        result.maxSeats
-      );
-    }
-  }, [result, onSeatsLoaded]);
-
   if (result === undefined) {
     return (
       <Text color="subtle" align="center">
@@ -350,23 +339,44 @@ export const ManageMembersDialog = ({
   const isOwner = workspace.userId === userId;
   const revalidator = useRevalidator();
   const [errors, setErrors] = useState<string[]>();
-  const [membersKey, setMembersKey] = useState(0);
   const [inviting, setInviting] = useState(false);
   const [inviteRelation, setInviteRelation] = useState<Role>("viewers");
-  const [availableSeats, setAvailableSeats] = useState<number>();
   const [optimisticPending, setOptimisticPending] = useState<
     OptimisticPendingInvite[]
   >([]);
-  const handleSeatsLoaded = useCallback(
-    (used: number, max: number) => setAvailableSeats(Math.max(0, max - used)),
-    []
-  );
+
+  const { load, data } = trpcClient.workspace.listMembers.useQuery();
+  const result = data && "data" in data ? data.data : undefined;
+  const handleRefresh = useCallback(() => {
+    load({ workspaceId: workspace.id });
+  }, [load, workspace.id]);
 
   useEffect(() => {
     if (isOpen && isOwner) {
-      setMembersKey((key) => key + 1);
+      load({ workspaceId: workspace.id });
     }
-  }, [isOpen, isOwner]);
+  }, [isOpen, isOwner, load, workspace.id]);
+
+  const availableSeats = (() => {
+    if (result === undefined) {
+      return;
+    }
+    const knownEmails = new Set([
+      result.owner.email,
+      ...result.members.map((m) => m.email ?? ""),
+      ...result.pendingInvites.map((i) => i.email),
+    ]);
+    const extraCount = optimisticPending.filter(
+      (o) => !knownEmails.has(o.email)
+    ).length;
+    return Math.max(
+      0,
+      result.maxSeats -
+        result.members.length -
+        result.pendingInvites.length -
+        extraCount
+    );
+  })();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -406,7 +416,7 @@ export const ManageMembersDialog = ({
       (event.target as HTMLFormElement).reset();
     }
 
-    setMembersKey((key) => key + 1);
+    handleRefresh();
     revalidator.revalidate();
   };
 
@@ -463,15 +473,14 @@ export const ManageMembersDialog = ({
               <MemberList
                 workspaceId={workspace.id}
                 canRemove={isOwner}
-                refreshKey={membersKey}
-                onRefresh={() => setMembersKey((key) => key + 1)}
+                result={result}
+                onRefresh={handleRefresh}
                 optimisticPending={optimisticPending}
                 onRemoveOptimistic={(id) =>
                   setOptimisticPending((prev) =>
                     prev.filter((o) => o.notificationId !== id)
                   )
                 }
-                onSeatsLoaded={handleSeatsLoaded}
               />
             </Flex>
           </ScrollAreaNative>
