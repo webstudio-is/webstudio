@@ -238,12 +238,6 @@ const MemberRow = (props: MemberRowProps) => {
   );
 };
 
-type OptimisticPendingInvite = {
-  notificationId: string;
-  email: string;
-  relation: Role;
-};
-
 const computeAvailableSeats = (
   membersData:
     | Extract<
@@ -254,7 +248,6 @@ const computeAvailableSeats = (
         { success: true }
       >["data"]
     | undefined,
-  optimisticPending: OptimisticPendingInvite[],
   // Optimistic upper bound for maxSeats set when extra seats are confirmed,
   // to avoid flickering while the Stripe webhook has not yet updated TransactionLog.
   confirmedMaxSeats?: number
@@ -266,19 +259,10 @@ const computeAvailableSeats = (
     confirmedMaxSeats !== undefined
       ? Math.max(membersData.maxSeats, confirmedMaxSeats)
       : membersData.maxSeats;
-  const knownEmails = new Set([
-    membersData.owner.email,
-    ...membersData.members.map((m) => m.email ?? ""),
-    ...membersData.pendingInvites.map((i) => i.email),
-  ]);
-  const extraCount = optimisticPending.filter(
-    (o) => !knownEmails.has(o.email)
-  ).length;
   return (
     effectiveMaxSeats -
     membersData.members.length -
-    membersData.pendingInvites.length -
-    extraCount
+    membersData.pendingInvites.length
   );
 };
 
@@ -287,8 +271,6 @@ const MemberList = ({
   canRemove,
   membersData,
   onRefresh,
-  optimisticPending,
-  onRemoveOptimistic,
 }: {
   workspaceId: string;
   canRemove: boolean;
@@ -302,8 +284,6 @@ const MemberList = ({
       >["data"]
     | undefined;
   onRefresh: () => void;
-  optimisticPending: OptimisticPendingInvite[];
-  onRemoveOptimistic: (notificationId: string) => void;
 }) => {
   if (membersData === undefined) {
     return (
@@ -314,16 +294,6 @@ const MemberList = ({
   }
 
   const { owner, members, pendingInvites } = membersData;
-
-  // Emails already covered by confirmed pending invites or accepted members
-  const knownEmails = new Set([
-    owner.email,
-    ...members.map((m) => m.email ?? ""),
-    ...pendingInvites.map((i) => i.email),
-  ]);
-  const extraOptimistic = optimisticPending.filter(
-    (o) => !knownEmails.has(o.email)
-  );
 
   let index = 0;
 
@@ -358,17 +328,6 @@ const MemberList = ({
                 .then(() => onRefresh())
                 .catch(() => {});
             }}
-          />
-        ))}
-        {extraOptimistic.map((invite) => (
-          <MemberRow
-            key={invite.notificationId}
-            email={invite.email}
-            role="pending"
-            relation={invite.relation}
-            canRemove={canRemove}
-            index={index++}
-            onRemove={() => onRemoveOptimistic(invite.notificationId)}
           />
         ))}
       </Box>
@@ -427,9 +386,6 @@ export const ManageMembersDialog = ({
   const [errors, setErrors] = useState<string[]>();
   const [inviting, setInviting] = useState(false);
   const [inviteRelation, setInviteRelation] = useState<Role>("viewers");
-  const [optimisticPending, setOptimisticPending] = useState<
-    OptimisticPendingInvite[]
-  >([]);
   const [pendingConfirm, setPendingConfirm] = useState<{
     emails: string[];
     relation: Role;
@@ -477,21 +433,6 @@ export const ManageMembersDialog = ({
     }
   }, [isOpen, isOwner, load, workspace.id]);
 
-  // Clean up optimistic entries once the server confirms them (email appears in
-  // pendingInvites or members). This prevents stale entries from inflating the
-  // "used seats" count after a pending invite is subsequently cancelled.
-  useEffect(() => {
-    if (membersData === undefined) return;
-    const serverEmails = new Set([
-      membersData.owner.email,
-      ...membersData.members.map((m) => m.email ?? ""),
-      ...membersData.pendingInvites.map((i) => i.email),
-    ]);
-    setOptimisticPending((prev) =>
-      prev.filter((o) => !serverEmails.has(o.email))
-    );
-  }, [membersData]);
-
   // Clear the optimistic override once the server reflects the paid seats.
   useEffect(() => {
     if (
@@ -503,11 +444,7 @@ export const ManageMembersDialog = ({
     }
   }, [membersData, confirmedMaxSeats, setConfirmedMaxSeats]);
 
-  const availableSeats = computeAvailableSeats(
-    membersData,
-    optimisticPending,
-    confirmedMaxSeats
-  );
+  const availableSeats = computeAvailableSeats(membersData, confirmedMaxSeats);
 
   const performInvite = async (emails: string[], relation: Role) => {
     setErrors(undefined);
@@ -515,19 +452,6 @@ export const ManageMembersDialog = ({
 
     const failed = await inviteMembers(emails, workspace.id, relation);
     setInviting(false);
-
-    // Add optimistic entries only for emails that actually succeeded so that
-    // non-existent or already-member emails never flicker into the list.
-    const failedEmails = new Set(failed.map((f) => f.split(":")[0].trim()));
-    const succeeded = emails.filter((e) => !failedEmails.has(e));
-    if (succeeded.length > 0) {
-      const optimistic: OptimisticPendingInvite[] = succeeded.map((email) => ({
-        notificationId: crypto.randomUUID(),
-        email,
-        relation,
-      }));
-      setOptimisticPending((prev) => [...prev, ...optimistic]);
-    }
 
     if (failed.length > 0) {
       setErrors(failed);
@@ -651,12 +575,6 @@ export const ManageMembersDialog = ({
                   canRemove={isOwner}
                   membersData={membersData}
                   onRefresh={handleRefresh}
-                  optimisticPending={optimisticPending}
-                  onRemoveOptimistic={(id) =>
-                    setOptimisticPending((prev) =>
-                      prev.filter((o) => o.notificationId !== id)
-                    )
-                  }
                 />
               </Flex>
             </ScrollAreaNative>

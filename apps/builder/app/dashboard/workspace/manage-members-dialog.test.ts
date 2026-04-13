@@ -29,11 +29,11 @@ const makeData = ({
 
 describe("computeAvailableSeats", () => {
   test("returns undefined when membersData is undefined", () => {
-    expect(computeAvailableSeats(undefined, [])).toBeUndefined();
+    expect(computeAvailableSeats(undefined)).toBeUndefined();
   });
 
   test("returns maxSeats when workspace is empty", () => {
-    expect(computeAvailableSeats(makeData({ maxSeats: 5 }), [])).toBe(5);
+    expect(computeAvailableSeats(makeData({ maxSeats: 5 }))).toBe(5);
   });
 
   test("subtracts accepted members", () => {
@@ -53,9 +53,7 @@ describe("computeAvailableSeats", () => {
         username: "",
       },
     ];
-    expect(computeAvailableSeats(makeData({ maxSeats: 5, members }), [])).toBe(
-      3
-    );
+    expect(computeAvailableSeats(makeData({ maxSeats: 5, members }))).toBe(3);
   });
 
   test("subtracts confirmed pending invites", () => {
@@ -69,68 +67,7 @@ describe("computeAvailableSeats", () => {
       },
     ];
     expect(
-      computeAvailableSeats(makeData({ maxSeats: 5, pendingInvites }), [])
-    ).toBe(4);
-  });
-
-  test("subtracts optimistic pending entries not yet confirmed", () => {
-    const optimistic = [
-      {
-        notificationId: "opt-1",
-        email: "new@example.com",
-        relation: "viewers" as const,
-      },
-    ];
-    expect(computeAvailableSeats(makeData({ maxSeats: 5 }), optimistic)).toBe(
-      4
-    );
-  });
-
-  test("does not double-count optimistic entry already confirmed as pending invite", () => {
-    const pendingInvites = [
-      {
-        notificationId: "n1",
-        recipientId: "r1",
-        email: "dup@example.com",
-        relation: "editors" as const,
-        createdAt: "",
-      },
-    ];
-    const optimistic = [
-      {
-        notificationId: "opt-1",
-        email: "dup@example.com",
-        relation: "editors" as const,
-      },
-    ];
-    // confirmed invite already counts; optimistic for same email is ignored
-    expect(
-      computeAvailableSeats(
-        makeData({ maxSeats: 5, pendingInvites }),
-        optimistic
-      )
-    ).toBe(4);
-  });
-
-  test("does not double-count optimistic entry already in accepted members", () => {
-    const members = [
-      {
-        userId: "u1",
-        email: "member@example.com",
-        relation: "editors" as const,
-        createdAt: "",
-        username: "",
-      },
-    ];
-    const optimistic = [
-      {
-        notificationId: "opt-1",
-        email: "member@example.com",
-        relation: "editors" as const,
-      },
-    ];
-    expect(
-      computeAvailableSeats(makeData({ maxSeats: 5, members }), optimistic)
+      computeAvailableSeats(makeData({ maxSeats: 5, pendingInvites }))
     ).toBe(4);
   });
 
@@ -144,9 +81,7 @@ describe("computeAvailableSeats", () => {
         username: "",
       },
     ];
-    expect(computeAvailableSeats(makeData({ maxSeats: 1, members }), [])).toBe(
-      0
-    );
+    expect(computeAvailableSeats(makeData({ maxSeats: 1, members }))).toBe(0);
   });
 
   test("returns negative when seats are exceeded", () => {
@@ -166,17 +101,8 @@ describe("computeAvailableSeats", () => {
         username: "",
       },
     ];
-    const optimistic = [
-      {
-        notificationId: "opt-1",
-        email: "new@example.com",
-        relation: "viewers" as const,
-      },
-    ];
-    // 1 maxSeat − 2 members − 1 optimistic = -2
-    expect(
-      computeAvailableSeats(makeData({ maxSeats: 1, members }), optimistic)
-    ).toBe(-2);
+    // 1 maxSeat − 2 members = -1
+    expect(computeAvailableSeats(makeData({ maxSeats: 1, members }))).toBe(-1);
   });
 
   test("confirmedMaxSeats overrides stale server maxSeats when higher", () => {
@@ -212,7 +138,6 @@ describe("computeAvailableSeats", () => {
     expect(
       computeAvailableSeats(
         makeData({ maxSeats: 3, members, pendingInvites }),
-        [],
         5
       )
     ).toBe(2);
@@ -220,6 +145,6 @@ describe("computeAvailableSeats", () => {
 
   test("confirmedMaxSeats is ignored when server maxSeats is already higher", () => {
     // Webhook fired: server returns maxSeats=5, confirmedMaxSeats=4 (stale override).
-    expect(computeAvailableSeats(makeData({ maxSeats: 5 }), [], 4)).toBe(5);
+    expect(computeAvailableSeats(makeData({ maxSeats: 5 }), 4)).toBe(5);
   });
 });
