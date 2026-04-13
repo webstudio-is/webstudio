@@ -349,8 +349,7 @@ const itemToString = (item: CssValueInputValue | null) => {
     return "";
   }
   if (item.type === "var") {
-    // Use toValue to include fallback when present
-    return toValue(item as StyleValue);
+    return `--${item.value}`;
   }
   if (item.type === "keyword") {
     // E.g. we want currentcolor to be lower case
@@ -920,7 +919,10 @@ export const CssValueInput = ({
               if (event.target instanceof HTMLInputElement) {
                 // We are setting the value on focus because we might have removed the var() from the value,
                 // but once focused, we need to show the full value
-                event.target.value = itemToString(value);
+                event.target.value =
+                  value.type === "var"
+                    ? toValue(value as StyleValue)
+                    : itemToString(value);
               }
             }}
             autoFocus={autoFocus}
