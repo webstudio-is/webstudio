@@ -1767,6 +1767,9 @@ importers:
       '@webstudio-is/feature-flags':
         specifier: workspace:*
         version: link:../feature-flags
+      '@webstudio-is/plans':
+        specifier: workspace:*
+        version: link:../plans
       '@webstudio-is/postgrest':
         specifier: workspace:*
         version: link:../postgrest
