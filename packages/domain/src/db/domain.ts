@@ -367,11 +367,11 @@ export const updateStatus = async (
 
   const data =
     domainStatus === "error"
-      ? ({
+      ? {
           status: "error" as const,
           error: domainError ?? originalError ?? "Unknown error",
-        })
-      : ({ status: domainStatus });
+        }
+      : { status: domainStatus };
 
   // update domain status
   const updatedDomainResult = await context.postgrest.client

@@ -1,4 +1,3 @@
-
 > **⚠️ This is an unofficial community fork of [Webstudio](https://github.com/webstudio-is/webstudio).**
 >
 > - If you want to fork this repo, use the `develop` branch. it contains our additions on top of upstream.
