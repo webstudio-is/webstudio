@@ -274,6 +274,7 @@ export const InputErrorsTooltip = ({
           collisionBoundary={collisionBoundary as never}
           collisionPadding={-8}
           hideWhenDetached={true}
+          variant="wrapped"
           content={
             errors !== undefined && errors.length !== 0
               ? (content ?? " ")

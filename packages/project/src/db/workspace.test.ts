@@ -266,7 +266,7 @@ describe("addMember (msw)", () => {
         { workspaceId: "ws-1", email: "unknown@test.com", relation: "editors" },
         createContext()
       )
-    ).rejects.toThrow('No Webstudio account found for "unknown@test.com"');
+    ).rejects.toThrow("No Webstudio account found");
   });
 
   test("throws when inviting yourself", async () => {
@@ -299,7 +299,7 @@ describe("addMember (msw)", () => {
         { workspaceId: "ws-1", email: "other@test.com", relation: "editors" },
         createContext()
       )
-    ).rejects.toThrow("other@test.com is already a member");
+    ).rejects.toThrow("Already a member");
   });
 });
 

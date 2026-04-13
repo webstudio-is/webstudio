@@ -249,7 +249,7 @@ export const workspaceRouter = router({
         }
         if (inviteeResult.data === null) {
           throw new Error(
-            `No Webstudio account found for "${input.email}". The user needs to sign up first.`
+            "No Webstudio account found. The user needs to sign up first."
           );
         }
         const existingMemberResult = await ctx.postgrest.client
@@ -263,9 +263,7 @@ export const workspaceRouter = router({
           throw existingMemberResult.error;
         }
         if (existingMemberResult.data !== null) {
-          throw new Error(
-            `${input.email} is already a member of this workspace.`
-          );
+          throw new Error("Already a member of this workspace.");
         }
 
         try {

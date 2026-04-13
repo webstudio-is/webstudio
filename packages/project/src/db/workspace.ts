@@ -370,7 +370,7 @@ export const addMember = async (
 
   if (user.data === null) {
     throw new Error(
-      `No Webstudio account found for "${email}". The user needs to sign up first.`
+      "No Webstudio account found. The user needs to sign up first."
     );
   }
 
@@ -394,7 +394,7 @@ export const addMember = async (
   }
 
   if (existing.data !== null) {
-    throw new Error(`${email} is already a member of this workspace.`);
+    throw new Error("Already a member of this workspace.");
   }
 
   // Create a pending notification instead of inserting directly

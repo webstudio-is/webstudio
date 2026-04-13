@@ -473,22 +473,25 @@ export const ManageMembersDialog = ({
   const performInvite = async (emails: string[], relation: Role) => {
     setErrors(undefined);
     setInviting(true);
-    const optimistic: OptimisticPendingInvite[] = emails.map((email) => ({
-      notificationId: crypto.randomUUID(),
-      email,
-      relation,
-    }));
-    setOptimisticPending((prev) => [...prev, ...optimistic]);
 
     const failed = await inviteMembers(emails, workspace.id, relation);
     setInviting(false);
 
+    // Add optimistic entries only for emails that actually succeeded so that
+    // non-existent or already-member emails never flicker into the list.
+    const failedEmails = new Set(failed.map((f) => f.split(":")[0].trim()));
+    const succeeded = emails.filter((e) => !failedEmails.has(e));
+    if (succeeded.length > 0) {
+      const optimistic: OptimisticPendingInvite[] = succeeded.map((email) => ({
+        notificationId: crypto.randomUUID(),
+        email,
+        relation,
+      }));
+      setOptimisticPending((prev) => [...prev, ...optimistic]);
+    }
+
     if (failed.length > 0) {
       setErrors(failed);
-      const failedEmails = new Set(failed.map((f) => f.split(":")[0].trim()));
-      setOptimisticPending((prev) =>
-        prev.filter((o) => !failedEmails.has(o.email))
-      );
     } else {
       formRef.current?.reset();
     }
