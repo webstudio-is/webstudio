@@ -1,0 +1,48 @@
+name: Docker — Cleanup PR images
+
+on:
+  pull_request:
+    types: [closed]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  cleanup:
+    name: Delete branch image tag
+    runs-on: ubuntu-24.04
+
+    permissions:
+      packages: write
+
+    steps:
+      - name: Compute branch tag
+        id: branch
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          SAFE=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//;s/-$//')
+          echo "tag=$SAFE" >> "$GITHUB_OUTPUT"
+
+      - name: Delete GHCR image version for branch tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          TAG: ${{ steps.branch.outputs.tag }}
+        run: |
+          VERSIONS=$(curl -fsSL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/orgs/${OWNER}/packages/container/builder/versions?per_page=100")
+
+          VERSION_ID=$(echo "$VERSIONS" | jq -r --arg TAG "$TAG" \
+            '.[] | select(.metadata.container.tags != null and (.metadata.container.tags[] == $TAG)) | .id')
+
+          if [ -n "$VERSION_ID" ]; then
+            curl -fsSL -X DELETE \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/orgs/${OWNER}/packages/container/builder/versions/${VERSION_ID}"
+            echo "Deleted version ${VERSION_ID} (tag: ${TAG})"
+          else
+            echo "No image found with tag '${TAG}', nothing to delete"
+          fi

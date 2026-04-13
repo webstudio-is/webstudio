@@ -36,9 +36,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Sanitize branch name for use as image tag (workflow_dispatch only)
+      - name: Compute branch tag
+        id: branch
+        run: |
+          BRANCH="${GITHUB_REF_NAME}"
+          SAFE=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//;s/-$//')
+          if [[ "$BRANCH" == "develop" ]]; then
+            echo "is_main=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_main=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "tag=$SAFE" >> "$GITHUB_OUTPUT"
+
       # Derive image tags:
-      #   push to develop  → :latest
-      #   published release → :<tag> + :latest
+      #   push to develop               → :latest
+      #   workflow_dispatch on develop  → :latest
+      #   workflow_dispatch on other    → :<sanitized-branch>
+      #   published release             → :<version> + :latest
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -46,7 +61,8 @@ jobs:
           images: |
             ghcr.io/${{ github.repository_owner }}/builder
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/develop' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/develop' || github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && steps.branch.outputs.is_main == 'true') }}
+            type=raw,value=${{ steps.branch.outputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' && steps.branch.outputs.is_main == 'false' }}
             type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
             type=semver,pattern={{major}}.{{minor}},enable=${{ github.event_name == 'release' }}
 
