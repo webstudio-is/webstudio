@@ -254,11 +254,18 @@ const computeAvailableSeats = (
         { success: true }
       >["data"]
     | undefined,
-  optimisticPending: OptimisticPendingInvite[]
+  optimisticPending: OptimisticPendingInvite[],
+  // Optimistic upper bound for maxSeats set when extra seats are confirmed,
+  // to avoid flickering while the Stripe webhook has not yet updated TransactionLog.
+  confirmedMaxSeats?: number
 ): number | undefined => {
   if (membersData === undefined) {
     return;
   }
+  const effectiveMaxSeats =
+    confirmedMaxSeats !== undefined
+      ? Math.max(membersData.maxSeats, confirmedMaxSeats)
+      : membersData.maxSeats;
   const knownEmails = new Set([
     membersData.owner.email,
     ...membersData.members.map((m) => m.email ?? ""),
@@ -268,7 +275,7 @@ const computeAvailableSeats = (
     (o) => !knownEmails.has(o.email)
   ).length;
   return (
-    membersData.maxSeats -
+    effectiveMaxSeats -
     membersData.members.length -
     membersData.pendingInvites.length -
     extraCount
@@ -428,6 +435,10 @@ export const ManageMembersDialog = ({
     relation: Role;
     extraSeats: number;
   }>();
+  // Optimistic maxSeats ceiling: set when the user confirms extra-seat charges so
+  // the footer and confirmation gate stay correct while the Stripe webhook is in
+  // flight (TransactionLog not yet updated).
+  const [confirmedMaxSeats, setConfirmedMaxSeats] = useState<number>();
   const formRef = useRef<HTMLFormElement>(null);
 
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
@@ -442,7 +453,22 @@ export const ManageMembersDialog = ({
     }
   }, [isOpen, isOwner, load, workspace.id]);
 
-  const availableSeats = computeAvailableSeats(membersData, optimisticPending);
+  // Clear the optimistic override once the server reflects the paid seats.
+  useEffect(() => {
+    if (
+      membersData !== undefined &&
+      confirmedMaxSeats !== undefined &&
+      membersData.maxSeats >= confirmedMaxSeats
+    ) {
+      setConfirmedMaxSeats(undefined);
+    }
+  }, [membersData, confirmedMaxSeats]);
+
+  const availableSeats = computeAvailableSeats(
+    membersData,
+    optimisticPending,
+    confirmedMaxSeats
+  );
 
   const performInvite = async (emails: string[], relation: Role) => {
     setErrors(undefined);
@@ -507,6 +533,14 @@ export const ManageMembersDialog = ({
           onConfirm={async () => {
             const confirm = pendingConfirm;
             setPendingConfirm(undefined);
+            // Optimistically raise confirmedMaxSeats so the footer and the
+            // confirmation gate reflect the payment before the webhook fires.
+            setConfirmedMaxSeats((prev) =>
+              Math.max(
+                prev ?? 0,
+                (membersData?.maxSeats ?? 0) + confirm.extraSeats
+              )
+            );
             await performInvite(confirm.emails, confirm.relation);
           }}
         />
@@ -517,6 +551,7 @@ export const ManageMembersDialog = ({
           onOpenChange(open);
           if (open === false) {
             setErrors(undefined);
+            setConfirmedMaxSeats(undefined);
           }
         }}
       >
