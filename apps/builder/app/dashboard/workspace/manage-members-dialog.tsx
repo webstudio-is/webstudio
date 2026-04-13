@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRevalidator } from "@remix-run/react";
 import {
   Button,
@@ -26,6 +26,30 @@ import { TrashIcon } from "@webstudio-is/icons";
 import { type Workspace, type Role } from "@webstudio-is/project";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
 import { RoleSelect } from "./role-select";
+
+const inviteMembers = async (
+  emails: string[],
+  workspaceId: string,
+  relation: Role
+): Promise<string[]> => {
+  const failed: string[] = [];
+  for (const email of emails) {
+    try {
+      const result = await nativeClient.workspace.addMember.mutate({
+        workspaceId,
+        email,
+        relation,
+      });
+      if (!result.success) {
+        failed.push(`${email}: ${result.error}`);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      failed.push(`${email}: ${message}`);
+    }
+  }
+  return failed;
+};
 
 const memberItemStyle = css({
   paddingInline: theme.spacing[5],
@@ -206,11 +230,13 @@ const MemberList = ({
   canRemove,
   refreshKey,
   onRefresh,
+  onSeatsLoaded,
 }: {
   workspaceId: string;
   canRemove: boolean;
   refreshKey: number;
   onRefresh: () => void;
+  onSeatsLoaded?: (seatsUsed: number, maxSeats: number) => void;
 }) => {
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
 
@@ -219,6 +245,15 @@ const MemberList = ({
   }, [load, workspaceId, refreshKey]);
 
   const result = data && "data" in data ? data.data : undefined;
+
+  useEffect(() => {
+    if (result !== undefined && onSeatsLoaded !== undefined) {
+      onSeatsLoaded(
+        result.members.length + result.pendingInvites.length,
+        result.maxSeats
+      );
+    }
+  }, [result, onSeatsLoaded]);
 
   if (result === undefined) {
     return (
@@ -287,6 +322,11 @@ export const ManageMembersDialog = ({
   const [membersKey, setMembersKey] = useState(0);
   const [inviting, setInviting] = useState(false);
   const [inviteRelation, setInviteRelation] = useState<Role>("viewers");
+  const [availableSeats, setAvailableSeats] = useState<number>();
+  const handleSeatsLoaded = useCallback(
+    (used: number, max: number) => setAvailableSeats(Math.max(0, max - used)),
+    []
+  );
 
   useEffect(() => {
     if (isOpen && isOwner) {
@@ -310,25 +350,7 @@ export const ManageMembersDialog = ({
 
     setErrors(undefined);
     setInviting(true);
-
-    const failed: string[] = [];
-    for (const email of emails) {
-      try {
-        const result = await nativeClient.workspace.addMember.mutate({
-          workspaceId: workspace.id,
-          email,
-          relation: inviteRelation,
-        });
-        if (!result.success) {
-          failed.push(`${email}: ${result.error}`);
-        }
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unknown error";
-        failed.push(`${email}: ${message}`);
-      }
-    }
-
+    const failed = await inviteMembers(emails, workspace.id, inviteRelation);
     setInviting(false);
 
     if (failed.length > 0) {
@@ -396,14 +418,22 @@ export const ManageMembersDialog = ({
                 canRemove={isOwner}
                 refreshKey={membersKey}
                 onRefresh={() => setMembersKey((key) => key + 1)}
+                onSeatsLoaded={handleSeatsLoaded}
               />
             </Flex>
           </ScrollAreaNative>
         </Flex>
         <DialogActions>
-          <DialogClose>
-            <Button color="ghost">Cancel</Button>
-          </DialogClose>
+          <Flex justify="between" align="center" grow>
+            {availableSeats !== undefined && (
+              <Text color={availableSeats === 0 ? "destructive" : "subtle"}>
+                {availableSeats} more seats included
+              </Text>
+            )}
+            <DialogClose>
+              <Button color="ghost">Cancel</Button>
+            </DialogClose>
+          </Flex>
         </DialogActions>
         <DialogTitle>Members</DialogTitle>
       </DialogContent>

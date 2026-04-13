@@ -298,7 +298,18 @@ export const workspaceRouter = router({
     .query(async ({ input, ctx }) => {
       try {
         const members = await workspaceApi.listMembers(input, ctx);
-        return { success: true as const, data: members };
+        return {
+          success: true as const,
+          data: {
+            ...members,
+            // paidSeats = actual Stripe subscription quantity for the current
+            // billing period (may stay > used count if a member was removed
+            // mid-period and the payment worker defers the reduction).
+            // Falls back to minSeats (seats included in the plan) when the
+            // subscription event hasn't arrived yet.
+            maxSeats: members.paidSeats ?? ctx.planFeatures.minSeats,
+          },
+        };
       } catch (error) {
         return createErrorResponse(error);
       }
