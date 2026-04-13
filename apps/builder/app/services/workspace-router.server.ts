@@ -6,8 +6,8 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { workspace as workspaceApi } from "@webstudio-is/project/index.server";
 import { roles } from "@webstudio-is/trpc-interface/authorize";
-import { getPlanInfo } from "@webstudio-is/trpc-interface/plan-client";
-import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
+import { getPlanInfo, getPaidSeats } from "@webstudio-is/plans/index.server";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import env from "~/env/env.server";
 
 const Name = z.string().min(2).max(100);
@@ -298,16 +298,14 @@ export const workspaceRouter = router({
     .query(async ({ input, ctx }) => {
       try {
         const members = await workspaceApi.listMembers(input, ctx);
+        const paidSeats = await getPaidSeats(members.owner.userId, ctx);
         return {
           success: true as const,
           data: {
             ...members,
-            // paidSeats = actual Stripe subscription quantity for the current
-            // billing period (may stay > used count if a member was removed
-            // mid-period and the payment worker defers the reduction).
-            // Falls back to minSeats (seats included in the plan) when the
-            // subscription event hasn't arrived yet.
-            maxSeats: members.paidSeats ?? ctx.planFeatures.minSeats,
+            // Falls back to minSeats (seats included in the plan) when no
+            // subscription event exists yet (free plan, AppSumo, etc.).
+            maxSeats: paidSeats ?? ctx.planFeatures.minSeats,
           },
         };
       } catch (error) {

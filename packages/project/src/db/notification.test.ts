@@ -7,7 +7,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { accept, __testing__ } from "./notification";
 
 const { describeNotification } = __testing__;

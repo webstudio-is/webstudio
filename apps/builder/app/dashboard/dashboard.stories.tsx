@@ -11,10 +11,7 @@ import {
 import { Dashboard, DashboardSetup } from "./dashboard";
 import { Card as CardComponent, CardContent, CardFooter } from "./shared/card";
 import { ThumbnailWithAbbr, ThumbnailLinkWithAbbr } from "./shared/thumbnail";
-import {
-  defaultPlanFeatures,
-  type PlanFeatures,
-} from "@webstudio-is/trpc-interface/plan-features";
+import { defaultPlanFeatures, type PlanFeatures } from "@webstudio-is/plans";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { updateCsrfToken } from "~/shared/csrf.client";
 

@@ -45,10 +45,7 @@ import { useSyncPageUrl } from "~/shared/pages";
 import { useMount, useUnmount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { ProjectSettings } from "~/shared/project-settings";
-import type {
-  PlanFeatures,
-  Purchase,
-} from "@webstudio-is/trpc-interface/plan-features";
+import type { PlanFeatures, Purchase } from "@webstudio-is/plans";
 import {
   $activeSidebarPanel,
   $dataLoadingState,

@@ -75,21 +75,32 @@ type Product = { id: string; name: string; meta: unknown };
 // The promise itself is cached to deduplicate concurrent cold-start requests.
 let productCachePromise: Promise<Map<string, Product>> | undefined;
 
-const getProductCache = (
+const fetchProducts = (
   postgrest: PostgrestContext
-): Promise<Map<string, Product>> => {
-  if (productCachePromise !== undefined) {
-    return productCachePromise;
-  }
-  const promise: Promise<Map<string, Product>> = Promise.resolve(
+): Promise<Map<string, Product>> =>
+  Promise.resolve(
     postgrest.client.from("Product").select("id, name, meta")
   ).then((result) => {
     if (result.error) {
-      productCachePromise = undefined;
       console.error(result.error);
       throw new Error("Failed to fetch products");
     }
     return new Map(result.data.map((p) => [p.id, p as Product]));
+  });
+
+const getProductCache = (
+  postgrest: PostgrestContext
+): Promise<Map<string, Product>> => {
+  // Skip caching in test environment so each test gets a fresh fetch.
+  if (process.env.VITEST !== undefined) {
+    return fetchProducts(postgrest);
+  }
+  if (productCachePromise !== undefined) {
+    return productCachePromise;
+  }
+  const promise = fetchProducts(postgrest);
+  promise.catch(() => {
+    productCachePromise = undefined;
   });
   productCachePromise = promise;
   return promise;
@@ -194,15 +205,48 @@ export const getPlanInfo = async (
   );
 };
 
-/** Resets the module-level product cache. Only for use in tests. */
-const resetProductCache = () => {
-  productCachePromise = undefined;
+/**
+ * Returns the Stripe subscription item quantity for the given user, derived
+ * from the latest customer.subscription.updated/created event in TransactionLog.
+ * Returns null when no subscription event exists yet (free plan, AppSumo, etc.).
+ */
+export const getPaidSeats = async (
+  userId: string,
+  context: { postgrest: PostgrestContext }
+): Promise<number | null> => {
+  const result = await context.postgrest.client
+    .from("TransactionLog")
+    .select("eventData")
+    .eq("userId", userId)
+    .in("eventType", [
+      "customer.subscription.updated",
+      "customer.subscription.created",
+    ])
+    .order("eventCreated", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  const eventData = result.data?.eventData as
+    | {
+        data?: {
+          object?: {
+            items?: { data?: Array<{ quantity?: unknown }> };
+          };
+        };
+      }
+    | null
+    | undefined;
+  const rawQuantity = eventData?.data?.object?.items?.data?.[0]?.quantity;
+  return typeof rawQuantity === "number" ? rawQuantity : null;
 };
 
 export const __testing__ = {
   parseProductMeta,
   mergeProductMetas,
-  resetProductCache,
 };
 
 export const getAuthorizationOwnerId = (

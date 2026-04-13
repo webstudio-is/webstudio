@@ -1,7 +1,7 @@
 import { notification } from "@webstudio-is/project/index.server";
 import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
-import { getPlanInfo } from "@webstudio-is/trpc-interface/plan-client";
-import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
+import { getPlanInfo } from "@webstudio-is/plans/index.server";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { publicStaticEnv } from "~/env/env.static";
 import type { TopicResolvers, TopicName, SubscriptionResponse } from "./types";
 

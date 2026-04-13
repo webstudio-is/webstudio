@@ -20,8 +20,8 @@ import {
   authorizeProject,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
-import { getPlanInfo } from "@webstudio-is/trpc-interface/plan-client";
-import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
+import { getPlanInfo } from "@webstudio-is/plans/index.server";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
 
 import env from "~/env/env.server";

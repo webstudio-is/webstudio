@@ -1,6 +1,7 @@
 export * from "./index";
 export {
   getPlanInfo,
+  getPaidSeats,
   getAuthorizationOwnerId,
   parsePlansEnv,
   parseProductMeta,

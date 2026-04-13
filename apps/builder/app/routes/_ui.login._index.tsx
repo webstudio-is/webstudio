@@ -8,7 +8,7 @@ import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env/env.server";
 import type { LoginProps } from "~/auth/index.client";
-import { parsePlansEnv } from "@webstudio-is/trpc-interface/plan-features";
+import { parsePlansEnv } from "@webstudio-is/plans";
 import { useLoginErrorMessage } from "~/shared/session";
 import {
   comparePathnames,

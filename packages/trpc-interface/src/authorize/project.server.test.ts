@@ -6,7 +6,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "../context/context.server";
-import { defaultPlanFeatures } from "../shared/plan-features";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import {
   checkProjectPermit,
   hasProjectPermit,

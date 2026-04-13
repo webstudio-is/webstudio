@@ -1,7 +1,7 @@
 import type { StoryFn } from "@storybook/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
-import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { $planFeatures } from "~/shared/nano-states";
 import { $workspaces } from "./workspace-stores";
 import { WorkspaceSelector } from "./workspace-dropdown";

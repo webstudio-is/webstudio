@@ -990,7 +990,6 @@ export type Database = {
           customerEmail: string | null;
           customerId: string | null;
           productId: string | null;
-          seatQuantity: number | null;
           subscriptionId: string | null;
           userId: string | null;
         };

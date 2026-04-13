@@ -1,6 +1,6 @@
 import type { Role } from "@webstudio-is/project";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import type { PlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
+import type { PlanFeatures } from "@webstudio-is/plans";
 
 /**
  * Human-readable descriptions of what each workspace role can do.

@@ -28,14 +28,6 @@
       "webstudio": "./src/index.server.ts",
       "import": "./src/index.server.ts"
     },
-    "./plan-features": {
-      "webstudio": "./src/shared/plan-features.ts",
-      "import": "./src/shared/plan-features.ts"
-    },
-    "./plan-client": {
-      "webstudio": "./src/shared/plan-client.server.ts",
-      "import": "./src/shared/plan-client.server.ts"
-    },
     "./authorize": {
       "webstudio": "./src/authorize/role.ts",
       "import": "./src/authorize/role.ts"

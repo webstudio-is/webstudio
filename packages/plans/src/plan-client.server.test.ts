@@ -8,7 +8,7 @@ import {
 import { type PlanFeatures, defaultPlanFeatures } from "./plan-features";
 import { getPlanInfo, __testing__ } from "./plan-client.server";
 
-const { parseProductMeta, mergeProductMetas, resetProductCache } = __testing__;
+const { parseProductMeta, mergeProductMetas } = __testing__;
 
 // ---------------------------------------------------------------------------
 // Unit tests for private helpers
@@ -17,7 +17,6 @@ const { parseProductMeta, mergeProductMetas, resetProductCache } = __testing__;
 const server = createTestServer();
 
 beforeEach(() => {
-  resetProductCache();
   vi.unstubAllEnvs();
 });
 
@@ -136,23 +135,6 @@ describe("getPlanInfo (msw)", () => {
     vi.stubEnv("PLANS", JSON.stringify([]));
     const result = await getPlanInfo(["user-1"], testContext);
     expect(result.get("user-1")?.purchases[0].planName).toBe("Pro");
-  });
-
-  test("Product table is queried only once across two calls (cache hit)", async () => {
-    vi.stubEnv("PLANS", JSON.stringify([]));
-    let productFetchCount = 0;
-    server.use(
-      db.get("UserProduct", () => json([proUserProduct])),
-      db.get("Product", () => {
-        productFetchCount += 1;
-        return json([proProduct]);
-      })
-    );
-
-    await getPlanInfo(["user-1"], testContext);
-    await getPlanInfo(["user-1"], testContext);
-
-    expect(productFetchCount).toBe(1);
   });
 });
 

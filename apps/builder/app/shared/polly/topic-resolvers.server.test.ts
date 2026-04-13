@@ -6,13 +6,11 @@ import {
   json,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { __testing__ } from "@webstudio-is/trpc-interface/plan-client";
 import { resolveTopics } from "./topic-resolvers.server";
 
 const server = createTestServer();
 
 afterEach(() => {
-  __testing__.resetProductCache();
   delete process.env.PLANS;
 });
 

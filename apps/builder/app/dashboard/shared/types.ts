@@ -1,10 +1,7 @@
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import type { WorkspaceWithRelation, Role } from "@webstudio-is/project";
 import type { User } from "~/shared/db/user.server";
-import type {
-  PlanFeatures,
-  Purchase,
-} from "@webstudio-is/trpc-interface/plan-features";
+import type { PlanFeatures, Purchase } from "@webstudio-is/plans";
 import type { Notifications } from "~/shared/polly/types";
 
 export type DashboardData = {

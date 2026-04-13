@@ -10,7 +10,7 @@ import {
   defaultPlanFeatures,
   type PlanFeatures,
   type Purchase,
-} from "@webstudio-is/trpc-interface/plan-features";
+} from "@webstudio-is/plans";
 import type { Role } from "@webstudio-is/project";
 import type { User } from "~/shared/db/user.server";
 import { toast, type Placement } from "@webstudio-is/design-system";

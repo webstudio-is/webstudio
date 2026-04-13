@@ -4,11 +4,11 @@ import { authenticator } from "~/services/auth.server";
 import { trpcSharedClient } from "~/services/trpc.server";
 import { entryApi } from "./entri/entri-api.server";
 
-import { defaultPlanFeatures } from "@webstudio-is/trpc-interface/plan-features";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import {
   getPlanInfo,
   getAuthorizationOwnerId,
-} from "@webstudio-is/trpc-interface/plan-client";
+} from "@webstudio-is/plans/index.server";
 import { staticEnv } from "~/env/env.static.server";
 import { createClient } from "@webstudio-is/postgrest/index.server";
 import { builderAuthenticator } from "~/services/builder-auth.server";

@@ -590,25 +590,9 @@ export const listMembers = async (
 
   const usersById = new Map(users.data.map((u) => [u.id, u]));
 
-  // Fetch the Stripe seat quantity actually paid for this billing period.
-  // Only present when the owner has an active subscription.
-  const userProduct = await context.postgrest.client
-    .from("UserProduct")
-    .select("seatQuantity")
-    .eq("userId", workspace.data.userId)
-    .not("subscriptionId", "is", null)
-    .maybeSingle();
-
-  if (userProduct.error) {
-    throw userProduct.error;
-  }
-
-  const paidSeats: number | null = userProduct.data?.seatQuantity ?? null;
-
   const ownerUser = usersById.get(workspace.data.userId);
 
   return {
-    paidSeats,
     owner: {
       userId: workspace.data.userId,
       email: ownerUser?.email ?? "",
