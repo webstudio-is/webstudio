@@ -14,7 +14,7 @@ const makeData = ({
   members = [] as {
     userId: string;
     email: string;
-    relation: string;
+    relation: "administrators" | "builders" | "editors" | "viewers";
     createdAt: string;
     username: string;
   }[],
@@ -22,7 +22,7 @@ const makeData = ({
     notificationId: string;
     recipientId: string;
     email: string;
-    relation: string;
+    relation: "administrators" | "builders" | "editors" | "viewers";
     createdAt: string;
   }[],
 } = {}) => ({ owner, members, pendingInvites, maxSeats });
@@ -41,14 +41,14 @@ describe("computeAvailableSeats", () => {
       {
         userId: "u1",
         email: "a@example.com",
-        relation: "editors",
+        relation: "editors" as const,
         createdAt: "",
         username: "",
       },
       {
         userId: "u2",
         email: "b@example.com",
-        relation: "viewers",
+        relation: "viewers" as const,
         createdAt: "",
         username: "",
       },
@@ -64,7 +64,7 @@ describe("computeAvailableSeats", () => {
         notificationId: "n1",
         recipientId: "r1",
         email: "c@example.com",
-        relation: "editors",
+        relation: "editors" as const,
         createdAt: "",
       },
     ];
@@ -92,7 +92,7 @@ describe("computeAvailableSeats", () => {
         notificationId: "n1",
         recipientId: "r1",
         email: "dup@example.com",
-        relation: "editors",
+        relation: "editors" as const,
         createdAt: "",
       },
     ];
@@ -117,7 +117,7 @@ describe("computeAvailableSeats", () => {
       {
         userId: "u1",
         email: "member@example.com",
-        relation: "editors",
+        relation: "editors" as const,
         createdAt: "",
         username: "",
       },
@@ -139,7 +139,7 @@ describe("computeAvailableSeats", () => {
       {
         userId: "u1",
         email: "a@example.com",
-        relation: "editors",
+        relation: "editors" as const,
         createdAt: "",
         username: "",
       },
@@ -154,14 +154,14 @@ describe("computeAvailableSeats", () => {
       {
         userId: "u1",
         email: "a@example.com",
-        relation: "editors",
+        relation: "editors" as const,
         createdAt: "",
         username: "",
       },
       {
         userId: "u2",
         email: "b@example.com",
-        relation: "viewers",
+        relation: "viewers" as const,
         createdAt: "",
         username: "",
       },
