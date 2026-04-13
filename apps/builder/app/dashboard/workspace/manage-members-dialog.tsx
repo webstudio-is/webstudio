@@ -231,17 +231,48 @@ type OptimisticPendingInvite = {
   relation: Role;
 };
 
+const computeAvailableSeats = (
+  membersData:
+    | Extract<
+        Exclude<
+          ReturnType<typeof trpcClient.workspace.listMembers.useQuery>["data"],
+          undefined
+        >,
+        { success: true }
+      >["data"]
+    | undefined,
+  optimisticPending: OptimisticPendingInvite[]
+): number | undefined => {
+  if (membersData === undefined) {
+    return;
+  }
+  const knownEmails = new Set([
+    membersData.owner.email,
+    ...membersData.members.map((m) => m.email ?? ""),
+    ...membersData.pendingInvites.map((i) => i.email),
+  ]);
+  const extraCount = optimisticPending.filter(
+    (o) => !knownEmails.has(o.email)
+  ).length;
+  return (
+    membersData.maxSeats -
+    membersData.members.length -
+    membersData.pendingInvites.length -
+    extraCount
+  );
+};
+
 const MemberList = ({
   workspaceId,
   canRemove,
-  result,
+  membersData,
   onRefresh,
   optimisticPending,
   onRemoveOptimistic,
 }: {
   workspaceId: string;
   canRemove: boolean;
-  result:
+  membersData:
     | Extract<
         Exclude<
           ReturnType<typeof trpcClient.workspace.listMembers.useQuery>["data"],
@@ -254,7 +285,7 @@ const MemberList = ({
   optimisticPending: OptimisticPendingInvite[];
   onRemoveOptimistic: (notificationId: string) => void;
 }) => {
-  if (result === undefined) {
+  if (membersData === undefined) {
     return (
       <Text color="subtle" align="center">
         Loading members…
@@ -262,7 +293,7 @@ const MemberList = ({
     );
   }
 
-  const { owner, members, pendingInvites } = result;
+  const { owner, members, pendingInvites } = membersData;
 
   // Emails already covered by confirmed pending invites or accepted members
   const knownEmails = new Set([
@@ -346,7 +377,7 @@ export const ManageMembersDialog = ({
   >([]);
 
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
-  const result = data && "data" in data ? data.data : undefined;
+  const membersData = data?.success ? data.data : undefined;
   const handleRefresh = useCallback(() => {
     load({ workspaceId: workspace.id });
   }, [load, workspace.id]);
@@ -357,26 +388,7 @@ export const ManageMembersDialog = ({
     }
   }, [isOpen, isOwner, load, workspace.id]);
 
-  const availableSeats = (() => {
-    if (result === undefined) {
-      return;
-    }
-    const knownEmails = new Set([
-      result.owner.email,
-      ...result.members.map((m) => m.email ?? ""),
-      ...result.pendingInvites.map((i) => i.email),
-    ]);
-    const extraCount = optimisticPending.filter(
-      (o) => !knownEmails.has(o.email)
-    ).length;
-    return Math.max(
-      0,
-      result.maxSeats -
-        result.members.length -
-        result.pendingInvites.length -
-        extraCount
-    );
-  })();
+  const availableSeats = computeAvailableSeats(membersData, optimisticPending);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -473,7 +485,7 @@ export const ManageMembersDialog = ({
               <MemberList
                 workspaceId={workspace.id}
                 canRemove={isOwner}
-                result={result}
+                membersData={membersData}
                 onRefresh={handleRefresh}
                 optimisticPending={optimisticPending}
                 onRemoveOptimistic={(id) =>
@@ -488,8 +500,10 @@ export const ManageMembersDialog = ({
         <DialogActions>
           <Flex justify="between" align="center" grow>
             {availableSeats !== undefined && (
-              <Text color={availableSeats === 0 ? "destructive" : "subtle"}>
-                {availableSeats} more seats included
+              <Text color={availableSeats <= 0 ? "destructive" : "subtle"}>
+                {availableSeats >= 0
+                  ? `${availableSeats} more seats included`
+                  : `${-availableSeats} extra seat${-availableSeats === 1 ? "" : "s"} will be charged`}
               </Text>
             )}
             <DialogClose>
@@ -502,3 +516,5 @@ export const ManageMembersDialog = ({
     </Dialog>
   );
 };
+
+export const __testing__ = { computeAvailableSeats };
