@@ -1,5 +1,6 @@
 import {
   Box,
+  Text,
   useCombobox,
   ComboboxRoot,
   ComboboxContent,
@@ -960,12 +961,17 @@ export const CssValueInput = ({
                     {(() => {
                       const label = itemToString(item);
                       const colorValue = getItemColor(item);
+                      const labelElement = (
+                        <Text truncate css={{ maxWidth: theme.spacing[30] }}>
+                          {label}
+                        </Text>
+                      );
                       if (colorValue === undefined) {
-                        return label;
+                        return labelElement;
                       }
                       return (
                         <Flex justify="between" align="center" grow gap={2}>
-                          <Box>{label}</Box>
+                          {labelElement}
                           <ColorThumb color={colorValue} />
                         </Flex>
                       );
