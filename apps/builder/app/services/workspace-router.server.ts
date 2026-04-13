@@ -230,9 +230,44 @@ export const workspaceRouter = router({
         }
 
         // Pre-charge the seat before adding the member (Figma model).
+        // We validate user existence first so that a missing account never
+        // triggers a billing change.
         // When the payment worker is configured, a billing failure aborts the
         // invite so the member is never added. When the worker URL is not set
         // (self-hosted / dev), syncOwnerSeats returns early and this is a no-op.
+
+        // Validate the invitee exists and is not already a member before
+        // touching billing. This mirrors the checks in workspaceApi.addMember
+        // so that we never charge for a doomed invite.
+        const inviteeResult = await ctx.postgrest.client
+          .from("User")
+          .select("id")
+          .eq("email", input.email)
+          .maybeSingle();
+        if (inviteeResult.error) {
+          throw inviteeResult.error;
+        }
+        if (inviteeResult.data === null) {
+          throw new Error(
+            `No Webstudio account found for "${input.email}". The user needs to sign up first.`
+          );
+        }
+        const existingMemberResult = await ctx.postgrest.client
+          .from("WorkspaceMember")
+          .select("userId")
+          .eq("workspaceId", input.workspaceId)
+          .eq("userId", inviteeResult.data.id)
+          .is("removedAt", null)
+          .maybeSingle();
+        if (existingMemberResult.error) {
+          throw existingMemberResult.error;
+        }
+        if (existingMemberResult.data !== null) {
+          throw new Error(
+            `${input.email} is already a member of this workspace.`
+          );
+        }
+
         try {
           await syncOwnerSeats(input.workspaceId, ctx, +1);
         } catch (error) {

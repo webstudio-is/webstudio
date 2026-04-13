@@ -255,17 +255,18 @@ describe("countAllMembers (msw)", () => {
 describe("addMember (msw)", () => {
   const ownerWorkspace = { id: "ws-1", userId: "user-1" };
 
-  test("silently succeeds when invited email does not exist", async () => {
+  test("throws when invited email does not exist", async () => {
     server.use(
       db.get("Workspace", () => json(ownerWorkspace)),
       db.get("User", () => json(null))
     );
 
-    const result = await addMember(
-      { workspaceId: "ws-1", email: "unknown@test.com", relation: "editors" },
-      createContext()
-    );
-    expect(typeof result.notificationId).toBe("string");
+    await expect(
+      addMember(
+        { workspaceId: "ws-1", email: "unknown@test.com", relation: "editors" },
+        createContext()
+      )
+    ).rejects.toThrow('No Webstudio account found for "unknown@test.com"');
   });
 
   test("throws when inviting yourself", async () => {
@@ -284,7 +285,7 @@ describe("addMember (msw)", () => {
     ).rejects.toThrow("already the owner");
   });
 
-  test("silently succeeds when invitee is already a member", async () => {
+  test("throws when invitee is already a member", async () => {
     server.use(
       db.get("Workspace", () => json(ownerWorkspace)),
       db.get("User", () =>
@@ -293,11 +294,12 @@ describe("addMember (msw)", () => {
       db.get("WorkspaceMember", () => json({ userId: "user-2" }))
     );
 
-    const result = await addMember(
-      { workspaceId: "ws-1", email: "other@test.com", relation: "editors" },
-      createContext()
-    );
-    expect(typeof result.notificationId).toBe("string");
+    await expect(
+      addMember(
+        { workspaceId: "ws-1", email: "other@test.com", relation: "editors" },
+        createContext()
+      )
+    ).rejects.toThrow("other@test.com is already a member");
   });
 });
 

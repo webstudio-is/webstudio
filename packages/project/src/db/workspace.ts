@@ -368,10 +368,10 @@ export const addMember = async (
     throw user.error;
   }
 
-  // User not found — silently succeed without creating a placeholder.
-  // Returns the same shape to prevent email enumeration.
   if (user.data === null) {
-    return { notificationId: crypto.randomUUID() };
+    throw new Error(
+      `No Webstudio account found for "${email}". The user needs to sign up first.`
+    );
   }
 
   if (user.data.id === userId) {
@@ -394,8 +394,7 @@ export const addMember = async (
   }
 
   if (existing.data !== null) {
-    // Already a member — silently succeed
-    return { notificationId: crypto.randomUUID() };
+    throw new Error(`${email} is already a member of this workspace.`);
   }
 
   // Create a pending notification instead of inserting directly

@@ -82,8 +82,6 @@ export const workspaceRouter = router({
         }
 
         const { notificationId } = await workspaceApi.addMember(input, ctx);
-        // notificationId is always returned — it's a real ID for existing users
-        // and a fake UUID for non-existing users to prevent email enumeration.
         return { success: true as const, notificationId };
       } catch (error) {
         return createErrorResponse(error);
