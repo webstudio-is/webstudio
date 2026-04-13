@@ -108,7 +108,7 @@ const MemberRow = (props: MemberRowProps) => {
     if (role === "pending") {
       return (
         <Text color="subtle" variant="regular">
-          Pending
+          Pending…
         </Text>
       );
     }
@@ -225,18 +225,28 @@ const MemberRow = (props: MemberRowProps) => {
   );
 };
 
+type OptimisticPendingInvite = {
+  notificationId: string;
+  email: string;
+  relation: Role;
+};
+
 const MemberList = ({
   workspaceId,
   canRemove,
   refreshKey,
   onRefresh,
   onSeatsLoaded,
+  optimisticPending,
+  onRemoveOptimistic,
 }: {
   workspaceId: string;
   canRemove: boolean;
   refreshKey: number;
   onRefresh: () => void;
   onSeatsLoaded?: (seatsUsed: number, maxSeats: number) => void;
+  optimisticPending: OptimisticPendingInvite[];
+  onRemoveOptimistic: (notificationId: string) => void;
 }) => {
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
 
@@ -264,6 +274,16 @@ const MemberList = ({
   }
 
   const { owner, members, pendingInvites } = result;
+
+  // Emails already covered by confirmed pending invites or accepted members
+  const knownEmails = new Set([
+    owner.email,
+    ...members.map((m) => m.email ?? ""),
+    ...pendingInvites.map((i) => i.email),
+  ]);
+  const extraOptimistic = optimisticPending.filter(
+    (o) => !knownEmails.has(o.email)
+  );
 
   let index = 0;
 
@@ -300,6 +320,17 @@ const MemberList = ({
             }}
           />
         ))}
+        {extraOptimistic.map((invite) => (
+          <MemberRow
+            key={invite.notificationId}
+            email={invite.email}
+            role="pending"
+            relation={invite.relation}
+            canRemove={canRemove}
+            index={index++}
+            onRemove={() => onRemoveOptimistic(invite.notificationId)}
+          />
+        ))}
       </Box>
     </List>
   );
@@ -323,6 +354,9 @@ export const ManageMembersDialog = ({
   const [inviting, setInviting] = useState(false);
   const [inviteRelation, setInviteRelation] = useState<Role>("viewers");
   const [availableSeats, setAvailableSeats] = useState<number>();
+  const [optimisticPending, setOptimisticPending] = useState<
+    OptimisticPendingInvite[]
+  >([]);
   const handleSeatsLoaded = useCallback(
     (used: number, max: number) => setAvailableSeats(Math.max(0, max - used)),
     []
@@ -350,11 +384,24 @@ export const ManageMembersDialog = ({
 
     setErrors(undefined);
     setInviting(true);
+    // Add optimistic entries immediately so the UI shows them while the list refreshes
+    const optimistic: OptimisticPendingInvite[] = emails.map((email) => ({
+      notificationId: crypto.randomUUID(),
+      email,
+      relation: inviteRelation,
+    }));
+    setOptimisticPending((prev) => [...prev, ...optimistic]);
+
     const failed = await inviteMembers(emails, workspace.id, inviteRelation);
     setInviting(false);
 
     if (failed.length > 0) {
       setErrors(failed);
+      // Remove optimistic entries for emails that failed
+      const failedEmails = new Set(failed.map((f) => f.split(":")[0].trim()));
+      setOptimisticPending((prev) =>
+        prev.filter((o) => !failedEmails.has(o.email))
+      );
     } else {
       (event.target as HTMLFormElement).reset();
     }
@@ -418,6 +465,12 @@ export const ManageMembersDialog = ({
                 canRemove={isOwner}
                 refreshKey={membersKey}
                 onRefresh={() => setMembersKey((key) => key + 1)}
+                optimisticPending={optimisticPending}
+                onRemoveOptimistic={(id) =>
+                  setOptimisticPending((prev) =>
+                    prev.filter((o) => o.notificationId !== id)
+                  )
+                }
                 onSeatsLoaded={handleSeatsLoaded}
               />
             </Flex>
