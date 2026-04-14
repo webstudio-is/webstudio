@@ -267,7 +267,7 @@ const parseTailwindClasses = async (
     }`;
     parsedStyles.push(...parseCss(reset, new Map()).styles);
   }
-  parsedStyles.push(...parseCss(normalizedCss, new Map()).styles);
+  parsedStyles.push(...parseCss(normalizedCss, finalVars).styles);
   // skip preflights with ::before, ::after and ::backdrop
   parsedStyles = parsedStyles.filter(
     (styleDecl) => !styleDecl.state?.startsWith("::")

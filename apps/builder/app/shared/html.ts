@@ -18,6 +18,7 @@ import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
 import {
   camelCaseProperty,
   parseCss,
+  extractCssCustomProperties,
   parseClassBasedSelector,
   parseMediaQuery,
   type ParsedStyleDecl,
@@ -530,8 +531,12 @@ export const generateFragmentFromHtml = (
   const styleTexts = collectStyleTexts(documentFragment);
   const allCssText = styleTexts.join("\n");
 
+  // Extract all CSS custom properties across all rules so cross-rule var()
+  // references (e.g. --clr defined in .parent, used in .child) can be resolved.
+  const allCssVars = extractCssCustomProperties(allCssText);
+
   // Parse all CSS and classify rules
-  const { styles: allDecls } = parseCss(allCssText, new Map());
+  const { styles: allDecls } = parseCss(allCssText, allCssVars);
   const { classRules, nestedClassRules } = classifyRules(allDecls);
 
   // Track which class names are used by elements — IDs will be assigned later
@@ -552,7 +557,7 @@ export const generateFragmentFromHtml = (
       styleTagActions.push({ type: "skip" });
       continue;
     }
-    const { styles: parsedDecls } = parseCss(text, new Map());
+    const { styles: parsedDecls } = parseCss(text, allCssVars);
     const {
       classRules: tagClassRules,
       nestedClassRules: tagNestedRules,
