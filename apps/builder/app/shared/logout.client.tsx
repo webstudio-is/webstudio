@@ -120,16 +120,11 @@ export const LogoutPage = (props: LogoutPageProps) => {
     }
 
     if (formData.get("error") !== null) {
-      const value = formData.get("error")!.toString();
-
-      const failedProjects = (JSON.parse(value) as string[])
-        .map((project) => `- ${new URL(project).origin}`)
-        .join("\n");
-
-      throw {
-        message: "Logout failed. Please try again later",
-        description: `Something went wrong during the projects logout. Please try again later.\nProjects failed to logout:\n${failedProjects}`,
-      };
+      // Canvas iframes failed to log out, but the main session was already
+      // cleared by the server. Redirect anyway — canvas sessions will expire
+      // naturally. A full page navigation also clears in-memory state.
+      window.location.href = parsedData.data.redirectTo;
+      return;
     }
 
     window.location.href = parsedData.data.redirectTo;

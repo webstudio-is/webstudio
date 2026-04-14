@@ -15,6 +15,15 @@ import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
 
 export const domainRouter = router({
+  publisherCapabilities: procedure.query(async ({ ctx }) => {
+    const { deploymentTrpc } = ctx.deployment;
+    try {
+      return await deploymentTrpc.capabilities.query();
+    } catch {
+      return { cloudflare: false };
+    }
+  }),
+
   getEntriToken: procedure.query(async ({ ctx }) => {
     try {
       const result = await ctx.entri.entryApi.getEntriToken();
@@ -62,6 +71,8 @@ export const domainRouter = router({
           projectId: z.string(),
           domains: z.array(z.string()),
           destination: z.literal("saas"),
+          // Self-hosting only: "ssg" (static, default) or "ssr" (Node subprocess)
+          buildMode: z.enum(["ssg", "ssr", "cloudflare"]).default("ssr"),
         }),
         z.object({
           projectId: z.string(),
@@ -139,6 +150,7 @@ export const domainRouter = router({
           // preview support
           branchName: env.GITHUB_REF_NAME,
           destination: input.destination,
+          buildMode: input.destination === "saas" ? input.buildMode : "ssg",
           // action log helper (not used for deployment, but for action logs readablity)
           logProjectName: `${project.title} - ${project.id}`,
         });

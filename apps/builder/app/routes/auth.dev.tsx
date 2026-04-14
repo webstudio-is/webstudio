@@ -7,6 +7,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect, setNoStoreToRedirect } from "~/services/no-store-redirect";
 import { applyDevPlan } from "@webstudio-is/plans/index.server";
 import { createPostgrestContext } from "~/shared/context.server";
+import env from "~/env/env.server";
 
 export default function Dev() {
   return null;
@@ -27,7 +28,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.clone().formData();
   const devPlanRaw = formData.get("devPlan");
   const planName =
-    typeof devPlanRaw === "string" && devPlanRaw !== "" ? devPlanRaw : null;
+    typeof devPlanRaw === "string" && devPlanRaw !== ""
+      ? devPlanRaw
+      : (env.USER_PLAN ?? null);
   const emailRaw = formData.get("email");
   const email =
     typeof emailRaw === "string" && emailRaw.trim() !== ""

@@ -9,6 +9,8 @@ export const PublishInput = z.object({
   githubSha: z.string().optional(),
 
   destination: z.enum(["saas", "static"]),
+  // Self-hosting build mode: "ssg" (static, default), "ssr" (Node subprocess), "cloudflare"
+  buildMode: z.enum(["ssg", "ssr", "cloudflare"]).default("ssg"),
   // preview support
   branchName: z.string(),
   // action log helper (not used for deployment, but for action logs readablity)
@@ -39,6 +41,22 @@ export const Output = z.discriminatedUnion("success", [
  * When not set, publish returns NOT_IMPLEMENTED and the user is shown the CLI instructions.
  **/
 export const deploymentRouter = router({
+  capabilities: procedure.query(async () => {
+    const publisherUrl = process.env.SELF_HOSTED_PUBLISHER_URL;
+    if (publisherUrl === undefined) {
+      return { cloudflare: false };
+    }
+    try {
+      const response = await fetch(`${publisherUrl}/capabilities`);
+      if (response.ok) {
+        return (await response.json()) as { cloudflare: boolean };
+      }
+    } catch {
+      // publisher unreachable
+    }
+    return { cloudflare: false };
+  }),
+
   publish: procedure
     .input(PublishInput)
     .output(Output)
@@ -59,6 +77,7 @@ export const deploymentRouter = router({
           body: JSON.stringify({
             buildId: input.buildId,
             builderOrigin: input.builderOrigin,
+            buildMode: input.buildMode,
             destination: input.destination,
           }),
         });

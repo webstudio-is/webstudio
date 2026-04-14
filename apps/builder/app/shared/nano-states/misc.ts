@@ -340,6 +340,9 @@ export const $authToken = atom<string | undefined>(undefined);
 export const $stagingUsername = atom<string | undefined>();
 export const $stagingPassword = atom<string | undefined>();
 
+// true when ENTRI_SECRET is set server-side (self-hosting with Entri configured)
+export const $entriEnabled = atom<boolean>(false);
+
 export const $permissions = computed(
   [$planFeatures, $authPermit, $workspaceRole, $workspaces],
   (planFeatures, authPermit, role, workspaces) =>

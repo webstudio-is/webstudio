@@ -3,6 +3,7 @@ import { z } from "zod";
 const envSchema = z.object({
   // Authentication
   DEV_LOGIN: z.string().optional(),
+  USER_PLAN: z.string().optional(),
   GH_CLIENT_ID: z.string().optional(),
   GH_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
@@ -84,6 +85,7 @@ const envSchema = z.object({
 const rawEnv = {
   DEV_LOGIN: process.env.DEV_LOGIN,
   DEV_LOGIN_EMAIL: process.env.DEV_LOGIN_EMAIL,
+  USER_PLAN: process.env.USER_PLAN,
   GH_CLIENT_ID: process.env.GH_CLIENT_ID,
   GH_CLIENT_SECRET: process.env.GH_CLIENT_SECRET,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
