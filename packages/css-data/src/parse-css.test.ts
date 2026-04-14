@@ -2830,6 +2830,72 @@ describe("parseCss — external cssVars parameter", () => {
     );
   });
 
+  // ── multi-token cross-rule var ────────────────────────────────────────────
+
+  test("border: cross-rule multi-token var preserves var() on all longhands", () => {
+    // --b resolves to a full shorthand value; no single longhand string equals
+    // "2px solid red", so var() must be assigned to every longhand.
+    const result = declsWithVars(`border: var(--b);`, {
+      "--b": "2px solid red",
+    });
+    const varB = expect.objectContaining({ type: "var", value: "b" });
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop("border-top-width", varB),
+        prop("border-top-style", varB),
+        prop("border-top-color", varB),
+        prop("border-right-width", varB),
+      ])
+    );
+  });
+
+  test("background: cross-rule multi-token var preserves var() on all longhands", () => {
+    const result = declsWithVars(`background: var(--bg);`, {
+      "--bg": "url(hero.png) no-repeat center",
+    });
+    const varBg = expect.objectContaining({ type: "var", value: "bg" });
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop("background-image", varBg),
+        prop("background-repeat", varBg),
+        prop("background-position-x", varBg),
+      ])
+    );
+  });
+
+  test("padding: cross-rule two-value var preserves var() on all sides", () => {
+    // --p: 8px 16px resolves to different values per side; none equals the
+    // full "8px 16px" text → all four padding longhands get var(--p).
+    const result = declsWithVars(`padding: var(--p);`, {
+      "--p": "8px 16px",
+    });
+    const varP = expect.objectContaining({ type: "var", value: "p" });
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop("padding-top", varP),
+        prop("padding-right", varP),
+        prop("padding-bottom", varP),
+        prop("padding-left", varP),
+      ])
+    );
+  });
+
+  test("background: cross-rule rgb-with-spaces var preserves var() on background-color", () => {
+    // csstree normalises rgb(255, 0, 0) to rgb(255,0,0) in expandShorthands;
+    // the comparison must account for this whitespace difference.
+    const result = declsWithVars(`background: var(--clr);`, {
+      "--clr": "rgb(255, 0, 0)",
+    });
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop(
+          "background-color",
+          expect.objectContaining({ type: "var", value: "clr" })
+        ),
+      ])
+    );
+  });
+
   // ── multiple rules: cssVars doesn't bleed between rules ───────────────────
 
   test("cssVars are available in both rules when passed", () => {

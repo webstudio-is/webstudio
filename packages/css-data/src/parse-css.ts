@@ -214,27 +214,53 @@ const substituteVarsInShorthand = (
   // single var(--x) whose definition lives in another rule (cssVars only),
   // expand with the resolved concrete value to find the right sub-property,
   // but store the original var() text instead of the concrete value.
+  //
+  // Two sub-cases:
+  //   Single-token var  (--clr: #f00 → background: var(--clr))
+  //     expandShorthands maps one longhand to the resolved token; that
+  //     longhand gets var(), reset longhands get their concrete defaults.
+  //
+  //   Multi-token var  (--b: 2px solid red → border: var(--b))
+  //     No individual longhand string equals the full resolved text, so
+  //     var() is assigned to ALL longhands (the var controls all of them).
+  //
+  // resolvedText is normalised through csstree so that values like
+  // `rgb(255, 0, 0)` (with spaces) compare equal to the `rgb(255,0,0)`
+  // that expandShorthands produces.
   const crossRuleVarMatch = value.trim().match(/^var\(\s*(--[\w-]+)[^)]*\)$/);
   if (crossRuleVarMatch !== null && cssVars !== undefined) {
     const varName = crossRuleVarMatch[1];
     if (!customProperties.has(varName) && cssVars.has(varName)) {
-      // Trim the resolved value: csstree.generate may preserve the whitespace
-      // that follows the colon in `--x: value`, giving " value" not "value".
-      const resolvedText = cssVars.get(varName)!.trim();
+      const rawResolved = cssVars.get(varName)!.trim();
+      let normalizedResolved = rawResolved;
+      try {
+        normalizedResolved = csstree.generate(
+          csstree.parse(rawResolved, { context: "value" })
+        );
+      } catch {
+        // keep rawResolved if parsing fails
+      }
+
       const expandedStrings = new Map(
-        expandShorthands([[property, resolvedText]])
+        expandShorthands([[property, normalizedResolved]])
       );
-      const result = new Map<CssProperty, StyleValue>();
+      const anyMatch = [...expandedStrings.values()].some(
+        (s) => s === normalizedResolved
+      );
+
       const originalVarText = value.trim();
+      const result = new Map<CssProperty, StyleValue>();
       for (const [prop, expandedStr] of expandedStrings) {
-        if (expandedStr === resolvedText) {
-          // This longhand received the var's value — preserve the var() reference.
+        if (!anyMatch || expandedStr === normalizedResolved) {
+          // Multi-token var (no match anywhere) → preserve var() on every
+          // longhand. Single-token var → preserve var() only on the longhand(s)
+          // that actually received the var's value.
           result.set(
             prop as CssProperty,
             parseCssValueLonghand(prop as CssProperty, originalVarText)
           );
         } else {
-          // This longhand got a reset/default value — store it as concrete.
+          // Longhand received a reset/default value — store it as concrete.
           result.set(
             prop as CssProperty,
             parseCssValueLonghand(prop as CssProperty, expandedStr)
