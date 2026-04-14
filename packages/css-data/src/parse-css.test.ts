@@ -2630,12 +2630,19 @@ describe("parseCss — external cssVars parameter", () => {
   // ── background ────────────────────────────────────────────────────────────
 
   test("background: cross-rule var resolves via cssVars", () => {
-    // --clr defined only in cssVars (parent rule), not in same rule
+    // --clr defined only in cssVars (parent rule), not in same rule.
+    // The var() reference must be preserved — it must NOT be inlined to the
+    // concrete color, because the variable lives on an ancestor element.
     const result = declsWithVars(`background: var(--clr);`, {
       "--clr": "tomato",
     });
     expect(result).toEqual(
-      expect.arrayContaining([prop("background-color", kw("tomato"))])
+      expect.arrayContaining([
+        prop(
+          "background-color",
+          expect.objectContaining({ type: "var", value: "clr" })
+        ),
+      ])
     );
   });
 
@@ -2713,15 +2720,18 @@ describe("parseCss — external cssVars parameter", () => {
   // ── margin / padding ──────────────────────────────────────────────────────
 
   test("margin: cross-rule var for all sides via cssVars", () => {
+    // Single cross-rule var: var() reference must be preserved on every
+    // expanded longhand (all four sides receive the var's value).
     const result = declsWithVars(`margin: var(--space);`, {
       "--space": "16px",
     });
+    const varSpace = expect.objectContaining({ type: "var", value: "space" });
     expect(result).toEqual(
       expect.arrayContaining([
-        prop("margin-top", u(16, "px")),
-        prop("margin-right", u(16, "px")),
-        prop("margin-bottom", u(16, "px")),
-        prop("margin-left", u(16, "px")),
+        prop("margin-top", varSpace),
+        prop("margin-right", varSpace),
+        prop("margin-bottom", varSpace),
+        prop("margin-left", varSpace),
       ])
     );
   });
@@ -2833,8 +2843,12 @@ describe("parseCss — external cssVars parameter", () => {
     const bMarginTop = styles.find(
       (d) => d.selector === ".b" && d.property === "margin-top"
     );
+    // .a: border has extra tokens ("solid red") — not a single var, so resolved
     expect(aBorderTop?.value).toEqual(u(4, "px"));
-    expect(bMarginTop?.value).toEqual(u(4, "px"));
+    // .b: margin is a single cross-rule var — var() reference is preserved
+    expect(bMarginTop?.value).toEqual(
+      expect.objectContaining({ type: "var", value: "w" })
+    );
   });
 
   test("same-rule var overrides cssVars in first rule, not second", () => {
@@ -2849,8 +2863,12 @@ describe("parseCss — external cssVars parameter", () => {
     const bMarginTop = styles.find(
       (d) => d.selector === ".b" && d.property === "margin-top"
     );
+    // .a: same-rule var → inlined to concrete value
     expect(aMarginTop?.value).toEqual(u(10, "px"));
-    expect(bMarginTop?.value).toEqual(u(4, "px"));
+    // .b: cross-rule var → var() reference preserved
+    expect(bMarginTop?.value).toEqual(
+      expect.objectContaining({ type: "var", value: "w" })
+    );
   });
 });
 

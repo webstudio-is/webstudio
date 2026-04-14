@@ -191,6 +191,16 @@ const resolveVars = (
  * Returns { result: parsed Map, droppedVars } when some vars resolved and
  * some did not — droppedVars is non-empty and an error should be reported,
  * but the partially-resolved value is still attempted (may produce invalid).
+ *
+ * Special case — cross-rule single var():
+ * When the entire shorthand value is exactly one var(--x) and --x is defined
+ * only in cssVars (not in the same-rule customProperties), the var() reference
+ * is preserved in the expanded longhands instead of being inlined.  The
+ * resolved value is used solely to guide shorthand expansion (i.e. to decide
+ * which longhand sub-property the value belongs to).  Longhands whose
+ * expanded string differs from the resolved var value are stored as concrete
+ * (reset/initial) values, while the one longhand that received the var's
+ * value is stored as var(--x).
  */
 const substituteVarsInShorthand = (
   property: string,
@@ -200,6 +210,41 @@ const substituteVarsInShorthand = (
 ):
   | { result: Map<CssProperty, StyleValue>; droppedVars: string[] }
   | undefined => {
+  // Cross-rule single-var preservation: when the whole shorthand value is a
+  // single var(--x) whose definition lives in another rule (cssVars only),
+  // expand with the resolved concrete value to find the right sub-property,
+  // but store the original var() text instead of the concrete value.
+  const crossRuleVarMatch = value.trim().match(/^var\(\s*(--[\w-]+)[^)]*\)$/);
+  if (crossRuleVarMatch !== null && cssVars !== undefined) {
+    const varName = crossRuleVarMatch[1];
+    if (!customProperties.has(varName) && cssVars.has(varName)) {
+      // Trim the resolved value: csstree.generate may preserve the whitespace
+      // that follows the colon in `--x: value`, giving " value" not "value".
+      const resolvedText = cssVars.get(varName)!.trim();
+      const expandedStrings = new Map(
+        expandShorthands([[property, resolvedText]])
+      );
+      const result = new Map<CssProperty, StyleValue>();
+      const originalVarText = value.trim();
+      for (const [prop, expandedStr] of expandedStrings) {
+        if (expandedStr === resolvedText) {
+          // This longhand received the var's value — preserve the var() reference.
+          result.set(
+            prop as CssProperty,
+            parseCssValueLonghand(prop as CssProperty, originalVarText)
+          );
+        } else {
+          // This longhand got a reset/default value — store it as concrete.
+          result.set(
+            prop as CssProperty,
+            parseCssValueLonghand(prop as CssProperty, expandedStr)
+          );
+        }
+      }
+      return { result, droppedVars: [] };
+    }
+  }
+
   const resolution = resolveVars(value, customProperties, cssVars);
   if (resolution === undefined) {
     return;
