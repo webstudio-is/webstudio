@@ -54,6 +54,7 @@ export const parseStyleInput = (
   const { styles, errors } = parseCss(`selector{${css}}`, cssVars);
   const styleMap: CssStyleMap = new Map();
   for (const { property, value } of styles) {
+    const keepVendorLonghand = property.startsWith("-webkit-text-stroke-");
     if (property.startsWith("--")) {
       styleMap.set(property, value);
       continue;
@@ -62,6 +63,7 @@ export const parseStyleInput = (
     // but keep known shorthands like -webkit-text-stroke as-is
     if (
       propertiesData[property] === undefined &&
+      keepVendorLonghand === false &&
       shorthandProperties.includes(
         property as (typeof shorthandProperties)[number]
       ) === false

@@ -107,7 +107,7 @@ describe("parseStyleInput", () => {
     );
   });
 
-  test("preserves -webkit-text-stroke as shorthand property, not as CSS variable", () => {
+  test("keeps expanded -webkit-text-stroke longhands as regular properties", () => {
     const { styleMap: result } = parseStyleInput(
       "-webkit-text-stroke: 1px red",
       new Map()
@@ -115,13 +115,18 @@ describe("parseStyleInput", () => {
     expect(result).toEqual(
       new Map([
         [
-          "-webkit-text-stroke",
+          "-webkit-text-stroke-width",
           {
-            type: "tuple",
-            value: [
-              { type: "unit", unit: "px", value: 1 },
-              { type: "keyword", value: "red" },
-            ],
+            type: "unit",
+            unit: "px",
+            value: 1,
+          },
+        ],
+        [
+          "-webkit-text-stroke-color",
+          {
+            type: "keyword",
+            value: "red",
           },
         ],
       ])

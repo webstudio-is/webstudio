@@ -5,6 +5,7 @@ import {
   parseCss,
   parseMediaQuery,
 } from "./parse-css";
+import { shorthandTestFixtures } from "./__generated__/shorthand-test-fixtures";
 
 describe("Parse CSS", () => {
   test("longhand property name with keyword value", () => {
@@ -564,19 +565,21 @@ describe("Parse CSS", () => {
   });
 
   test("keep prefix for -webkit-text-stroke", () => {
-    // shorthand is kept as-is (not expanded) but prefix is preserved
+    // shorthand expands to prefixed longhands while preserving the prefix
     expect(
       parseCss(`a { -webkit-text-stroke: 1px black; }`, new Map()).styles
     ).toEqual([
       {
         selector: "a",
-        property: "-webkit-text-stroke",
+        property: "-webkit-text-stroke-width",
+        value: { type: "unit", unit: "px", value: 1 },
+      },
+      {
+        selector: "a",
+        property: "-webkit-text-stroke-color",
         value: {
-          type: "tuple",
-          value: [
-            { type: "unit", unit: "px", value: 1 },
-            { type: "keyword", value: "black" },
-          ],
+          type: "keyword",
+          value: "black",
         },
       },
     ]);
@@ -2598,24 +2601,15 @@ describe("var() substitution — font", () => {
 });
 
 describe("var() substitution — -webkit-text-stroke", () => {
-  test("var() for stroke width and color — passes through as tuple (not expanded)", () => {
-    // -webkit-text-stroke is in shorthand-properties so it gets var substitution,
-    // but shorthands.ts has no expand case for it — it passes through as a tuple
-    // value containing the resolved width and color tokens.
+  test("var() for stroke width and color", () => {
     const result = decls(
       `--w: 1px; --clr: black; -webkit-text-stroke: var(--w) var(--clr);`
     );
-    const stroke = result.find(
-      (d) => (d.property as string) === "-webkit-text-stroke"
-    );
-    expect(stroke?.value).toEqual(
-      expect.objectContaining({
-        type: "tuple",
-        value: expect.arrayContaining([
-          expect.objectContaining({ type: "unit", value: 1, unit: "px" }),
-          expect.objectContaining({ type: "keyword", value: "black" }),
-        ]),
-      })
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop("-webkit-text-stroke-width", u(1, "px")),
+        prop("-webkit-text-stroke-color", kw("black")),
+      ])
     );
   });
 });
@@ -2936,6 +2930,72 @@ describe("parseCss — external cssVars parameter", () => {
       expect.objectContaining({ type: "var", value: "w" })
     );
   });
+
+  // ── comprehensive shorthand coverage ─────────────────────────────────────
+  //
+  // Test cases are driven entirely by the generated fixture:
+  //   src/__generated__/shorthand-test-fixtures.ts
+  //
+  // Regenerate with: pnpm build:shorthand-fixtures
+  //
+  // For every shorthand that expandShorthands() handles we run two cases:
+  //   • singleToken – a value matching exactly a single longhand: at least
+  //     one longhand must have type:"var", none may be type:"invalid".
+  //   • multiToken  – a value spanning *all* longhands differently: every
+  //     longhand must have type:"var".
+  //
+  // Shorthands whose longhands[] is empty are not handled by expandShorthands
+  // (they pass through), so no cross-rule substitution is expected from them.
+
+  const expandableFixtures = shorthandTestFixtures.filter(
+    (f) => f.longhands.length > 0
+  );
+
+  test.each(expandableFixtures)(
+    "cross-rule single-token var: $property — at least one var longhand, no invalids",
+    ({ property, singleToken }) => {
+      const result = declsWithVars(`${property}: var(--v);`, {
+        "--v": singleToken,
+      });
+      expect(result.length).toBeGreaterThan(0);
+      const invalids = result.filter((d) => d.value.type === "invalid");
+      const vars = result.filter((d) => d.value.type === "var");
+      expect(invalids).toHaveLength(0);
+      expect(vars.length).toBeGreaterThan(0);
+    }
+  );
+
+  test.each(expandableFixtures)(
+    "cross-rule multi-token var: $property — all longhands are var(), no invalids",
+    ({ property, multiToken }) => {
+      const result = declsWithVars(`${property}: var(--v);`, {
+        "--v": multiToken,
+      });
+      expect(result.length).toBeGreaterThan(0);
+      const invalids = result.filter((d) => d.value.type === "invalid");
+      const vars = result.filter((d) => d.value.type === "var");
+      expect(invalids).toHaveLength(0);
+      expect(vars).toHaveLength(result.length);
+    }
+  );
+
+  // Shorthands not handled by expandShorthands (passthrough): verify they
+  // produce no invalid values when a cross-rule var is used as the value.
+  const passthroughFixtures = shorthandTestFixtures.filter(
+    (f) => f.longhands.length === 0
+  );
+
+  test.each(passthroughFixtures)(
+    "cross-rule passthrough shorthand: $property — no invalid values",
+    ({ property }) => {
+      const result = declsWithVars(`${property}: var(--v);`, {
+        "--v": "none",
+      });
+      expect(result.length).toBeGreaterThan(0);
+      const invalids = result.filter((d) => d.value.type === "invalid");
+      expect(invalids).toHaveLength(0);
+    }
+  );
 });
 
 describe("parseMediaQuery", () => {

@@ -1413,6 +1413,31 @@ const expandShorthand = function* (property: string, value: CssNode) {
       break;
     }
 
+    // -webkit-text-stroke = <line-width> || <color>
+    // Sets width/color together with standard shorthand reset semantics.
+    case "-webkit-text-stroke": {
+      const [width, color] = parseUnordered(
+        [`<'-webkit-text-stroke-width'>`, `<'-webkit-text-stroke-color'>`],
+        value
+      );
+      yield ["-webkit-text-stroke-width", width ?? createNumber("0")] as const;
+      yield [
+        "-webkit-text-stroke-color",
+        color ?? createIdentifier("currentcolor"),
+      ] as const;
+      break;
+    }
+
+    // marker = none | <url>
+    // Shorthand for marker-start, marker-mid, and marker-end.
+    // All three longhands receive the same value.
+    case "marker": {
+      yield ["marker-start", value] as const;
+      yield ["marker-mid", value] as const;
+      yield ["marker-end", value] as const;
+      break;
+    }
+
     default:
       yield [property, value] as const;
   }

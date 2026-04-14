@@ -127,7 +127,10 @@ export const html: Map<string, StyleValue> = new Map([
   ["sup:font-size", { type: "keyword", value: "smaller" }],
   ["a:text-decoration-line", { type: "keyword", value: "underline" }],
   ["a:cursor", { type: "keyword", value: "pointer" }],
-  ["a:color", { type: "rgb", alpha: 1, r: 0, g: 0, b: 238 }],
+  [
+    "a:color",
+    { type: "color", colorSpace: "srgb", components: [0, 0, 0.9333], alpha: 1 },
+  ],
   ["ul:display", { type: "keyword", value: "block" }],
   ["ul:list-style-type", { type: "keyword", value: "disc" }],
   ["ul:margin-top", { type: "unit", unit: "em", value: 1 }],
@@ -215,24 +218,15 @@ export const html: Map<string, StyleValue> = new Map([
   ["button:text-indent", { type: "unit", unit: "number", value: 0 }],
   [
     "textarea:text-shadow",
-    {
-      type: "layers",
-      value: [{ type: "tuple", value: [{ type: "keyword", value: "none" }] }],
-    },
+    { type: "layers", value: [{ type: "unparsed", value: "none" }] },
   ],
   [
     "select:text-shadow",
-    {
-      type: "layers",
-      value: [{ type: "tuple", value: [{ type: "keyword", value: "none" }] }],
-    },
+    { type: "layers", value: [{ type: "unparsed", value: "none" }] },
   ],
   [
     "button:text-shadow",
-    {
-      type: "layers",
-      value: [{ type: "tuple", value: [{ type: "keyword", value: "none" }] }],
-    },
+    { type: "layers", value: [{ type: "unparsed", value: "none" }] },
   ],
   ["textarea:display", { type: "keyword", value: "inline-block" }],
   ["select:display", { type: "keyword", value: "inline-block" }],
