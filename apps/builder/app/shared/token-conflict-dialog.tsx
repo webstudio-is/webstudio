@@ -210,7 +210,7 @@ export const TokenConflictDialog = () => {
           </Flex>
         </Flex>
         <DialogActions>
-          <Button color="positive" onClick={handleResolve}>
+          <Button autoFocus color="positive" onClick={handleResolve}>
             Continue
           </Button>
           <Button color="ghost" onClick={handleCancel}>

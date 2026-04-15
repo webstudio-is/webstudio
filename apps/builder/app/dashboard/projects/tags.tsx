@@ -53,22 +53,23 @@ const DeleteConfirmationDialog = ({
       <DialogContent>
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Text>{question}</Text>
-          <Flex direction="rowReverse" gap="2">
-            <DialogClose>
-              <Button
-                color="destructive"
-                onClick={() => {
-                  onConfirm();
-                }}
-              >
-                Delete
-              </Button>
-            </DialogClose>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          <DialogClose>
+            <Button
+              autoFocus
+              color="destructive"
+              onClick={() => {
+                onConfirm();
+              }}
+            >
+              Delete
+            </Button>
+          </DialogClose>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
         <DialogTitle>Delete confirmation</DialogTitle>
       </DialogContent>
     </Dialog>

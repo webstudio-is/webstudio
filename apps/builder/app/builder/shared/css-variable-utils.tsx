@@ -3,6 +3,7 @@ import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   DialogClose,
@@ -501,21 +502,21 @@ export const DeleteCssVariableDialog = ({
         <DialogTitle>Delete confirmation</DialogTitle>
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Text>{`Delete CSS variable "${cssVariable?.property}" from the project?`}</Text>
-          <Flex direction="rowReverse" gap="2">
-            <Button
-              color="destructive"
-              onClick={() => {
-                onConfirm(cssVariable!.property);
-                onClose();
-              }}
-            >
-              Delete
-            </Button>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          <Button
+            color="destructive"
+            onClick={() => {
+              onConfirm(cssVariable!.property);
+              onClose();
+            }}
+          >
+            Delete
+          </Button>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );
@@ -588,15 +589,15 @@ export const RenameCssVariableDialog = ({
               </Text>
             )}
           </Flex>
-          <Flex direction="rowReverse" gap="2">
-            <Button color="primary" onClick={handleConfirm}>
-              Rename
-            </Button>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          <Button color="primary" onClick={handleConfirm}>
+            Rename
+          </Button>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );
@@ -612,31 +613,33 @@ const DeleteUnusedCssVariablesDialogContent = ({
   const unusedVariablesArray = Array.from(unusedVariables);
 
   return (
-    <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
-      {unusedVariablesArray.length === 0 ? (
-        <Text>There are no unused CSS variables to delete.</Text>
-      ) : (
-        <>
-          <Text>
-            Delete {unusedVariablesArray.length} unused CSS{" "}
-            {unusedVariablesArray.length === 1 ? "variable" : "variables"} from
-            the project?
-          </Text>
-          <Text
-            variant="mono"
-            css={{
-              maxHeight: 200,
-              overflowY: "auto",
-              backgroundColor: theme.colors.backgroundPanel,
-              borderRadius: theme.borderRadius[4],
-              wordBreak: "break-word",
-            }}
-          >
-            {unusedVariablesArray.join(", ")}
-          </Text>
-        </>
-      )}
-      <Flex direction="rowReverse" gap="2">
+    <>
+      <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        {unusedVariablesArray.length === 0 ? (
+          <Text>There are no unused CSS variables to delete.</Text>
+        ) : (
+          <>
+            <Text>
+              Delete {unusedVariablesArray.length} unused CSS{" "}
+              {unusedVariablesArray.length === 1 ? "variable" : "variables"}{" "}
+              from the project?
+            </Text>
+            <Text
+              variant="mono"
+              css={{
+                maxHeight: 200,
+                overflowY: "auto",
+                backgroundColor: theme.colors.backgroundPanel,
+                borderRadius: theme.borderRadius[4],
+                wordBreak: "break-word",
+              }}
+            >
+              {unusedVariablesArray.join(", ")}
+            </Text>
+          </>
+        )}
+      </Flex>
+      <DialogActions>
         {unusedVariablesArray.length > 0 && (
           <Button
             color="destructive"
@@ -661,8 +664,8 @@ const DeleteUnusedCssVariablesDialogContent = ({
             {unusedVariablesArray.length > 0 ? "Cancel" : "Close"}
           </Button>
         </DialogClose>
-      </Flex>
-    </Flex>
+      </DialogActions>
+    </>
   );
 };
 

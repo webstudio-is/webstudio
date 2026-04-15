@@ -4,6 +4,7 @@ import { useStore } from "@nanostores/react";
 import { toast } from "@webstudio-is/design-system";
 import {
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   DialogClose,
@@ -88,21 +89,22 @@ export const DeleteDataVariableDialog = ({
                 ? `Delete "${variable.name}" variable from the project? It is used in ${variable.usages} ${variable.usages === 1 ? "expression" : "expressions"}.`
                 : `Delete "${variable.name}" variable from the project?`)}
           </Text>
-          <Flex direction="rowReverse" gap="2">
-            <Button
-              color="destructive"
-              onClick={() => {
-                onConfirm(variable!.id);
-                onClose();
-              }}
-            >
-              Delete
-            </Button>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          <Button
+            autoFocus
+            color="destructive"
+            onClick={() => {
+              onConfirm(variable!.id);
+              onClose();
+            }}
+          >
+            Delete
+          </Button>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );
@@ -262,15 +264,15 @@ export const RenameDataVariableDialog = ({
               </Text>
             )}
           </Flex>
-          <Flex direction="rowReverse" gap="2">
-            <Button color="primary" onClick={handleConfirm}>
-              Rename
-            </Button>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          <Button color="primary" onClick={handleConfirm}>
+            Rename
+          </Button>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );
@@ -334,33 +336,33 @@ export const DeleteUnusedDataVariablesDialog = () => {
               </Text>
             </>
           )}
-          <Flex direction="rowReverse" gap="2">
-            {unusedVariables.length > 0 && (
-              <Button
-                color="destructive"
-                autoFocus
-                onClick={() => {
-                  const deletedCount = deleteUnusedDataVariables();
-                  handleClose();
-                  if (deletedCount === 0) {
-                    toast.info("No unused data variables to delete");
-                  } else {
-                    toast.success(
-                      `Deleted ${deletedCount} unused data ${deletedCount === 1 ? "variable" : "variables"}`
-                    );
-                  }
-                }}
-              >
-                Delete
-              </Button>
-            )}
-            <DialogClose>
-              <Button color="ghost">
-                {unusedVariables.length > 0 ? "Cancel" : "Close"}
-              </Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          {unusedVariables.length > 0 && (
+            <Button
+              color="destructive"
+              autoFocus
+              onClick={() => {
+                const deletedCount = deleteUnusedDataVariables();
+                handleClose();
+                if (deletedCount === 0) {
+                  toast.info("No unused data variables to delete");
+                } else {
+                  toast.success(
+                    `Deleted ${deletedCount} unused data ${deletedCount === 1 ? "variable" : "variables"}`
+                  );
+                }
+              }}
+            >
+              Delete
+            </Button>
+          )}
+          <DialogClose>
+            <Button color="ghost">
+              {unusedVariables.length > 0 ? "Cancel" : "Close"}
+            </Button>
+          </DialogClose>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );

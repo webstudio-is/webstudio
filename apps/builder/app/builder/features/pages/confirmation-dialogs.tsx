@@ -1,5 +1,6 @@
 import {
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   DialogClose,
@@ -38,22 +39,23 @@ export const DeletePageConfirmationDialog = ({
             You can undo it even if you delete the page as long as you don't
             reload.
           </Text>
-          <Flex direction="rowReverse" gap="2">
-            <DialogClose>
-              <Button
-                color="destructive"
-                onClick={() => {
-                  onConfirm();
-                }}
-              >
-                Delete Page
-              </Button>
-            </DialogClose>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          <DialogClose>
+            <Button
+              autoFocus
+              color="destructive"
+              onClick={() => {
+                onConfirm();
+              }}
+            >
+              Delete Page
+            </Button>
+          </DialogClose>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );
@@ -83,22 +85,23 @@ export const DeleteFolderConfirmationDialog = ({
         <DialogTitle>Delete confirmation</DialogTitle>
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Text>{`Delete folder "${folder.name}" including all of its pages?`}</Text>
-          <Flex direction="rowReverse" gap="2">
-            <DialogClose>
-              <Button
-                color="destructive"
-                onClick={() => {
-                  onConfirm();
-                }}
-              >
-                Delete
-              </Button>
-            </DialogClose>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          <DialogClose>
+            <Button
+              autoFocus
+              color="destructive"
+              onClick={() => {
+                onConfirm();
+              }}
+            >
+              Delete
+            </Button>
+          </DialogClose>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );

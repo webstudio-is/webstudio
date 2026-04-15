@@ -35,11 +35,11 @@ export const ConfirmationDialog = ({
           </Text>
         </Flex>
         <DialogActions>
+          <Button autoFocus onClick={onConfirm} color="destructive">
+            Delete
+          </Button>
           <Button color="neutral" onClick={onAbort}>
             Cancel
-          </Button>
-          <Button onClick={onConfirm} color="destructive">
-            Delete
           </Button>
         </DialogActions>
       </DialogContent>

@@ -400,11 +400,11 @@ const ExtraSeatsConfirmDialog = ({
         </Text>
       </Flex>
       <DialogActions>
-        <Button color="neutral" onClick={onCancel}>
-          Cancel
-        </Button>
         <Button autoFocus onClick={onConfirm}>
           Confirm
+        </Button>
+        <Button color="neutral" onClick={onCancel}>
+          Cancel
         </Button>
       </DialogActions>
     </DialogContent>

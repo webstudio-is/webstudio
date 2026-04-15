@@ -2,6 +2,7 @@ import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   DialogClose,
@@ -51,30 +52,32 @@ const DeleteUnusedAssetsDialogContent = ({
   const unusedAssets = getUnusedAssets();
 
   return (
-    <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
-      {unusedAssets.length === 0 ? (
-        <Text>There are no unused assets to delete.</Text>
-      ) : (
-        <>
-          <Text>
-            Delete {unusedAssets.length} unused{" "}
-            {unusedAssets.length === 1 ? "asset" : "assets"} from the project?
-          </Text>
+    <>
+      <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        {unusedAssets.length === 0 ? (
+          <Text>There are no unused assets to delete.</Text>
+        ) : (
+          <>
+            <Text>
+              Delete {unusedAssets.length} unused{" "}
+              {unusedAssets.length === 1 ? "asset" : "assets"} from the project?
+            </Text>
 
-          <ScrollArea>
-            <Box css={{ maxHeight: 200 }}>
-              <Flex direction="column" gap="1">
-                {unusedAssets.map((asset) => (
-                  <Text key={asset.id} variant="mono" truncate>
-                    {formatAssetName(asset)}
-                  </Text>
-                ))}
-              </Flex>
-            </Box>
-          </ScrollArea>
-        </>
-      )}
-      <Flex direction="rowReverse" gap="2">
+            <ScrollArea>
+              <Box css={{ maxHeight: 200 }}>
+                <Flex direction="column" gap="1">
+                  {unusedAssets.map((asset) => (
+                    <Text key={asset.id} variant="mono" truncate>
+                      {formatAssetName(asset)}
+                    </Text>
+                  ))}
+                </Flex>
+              </Box>
+            </ScrollArea>
+          </>
+        )}
+      </Flex>
+      <DialogActions>
         {unusedAssets.length > 0 && (
           <Button
             color="destructive"
@@ -96,8 +99,8 @@ const DeleteUnusedAssetsDialogContent = ({
             {unusedAssets.length > 0 ? "Cancel" : "Close"}
           </Button>
         </DialogClose>
-      </Flex>
-    </Flex>
+      </DialogActions>
+    </>
   );
 };
 
