@@ -80,17 +80,45 @@ describe("getComponentStates", () => {
     const result = getComponentStates({
       predefinedStates: [],
       componentStates: [
-        { label: "Open", selector: "[data-state=open]" },
-        { label: "Closed", selector: "[data-state=closed]" },
+        { label: "Open", selector: '[data-state="open"]' },
+        { label: "Closed", selector: '[data-state="closed"]' },
       ],
       instanceStyleSourceIds: new Set(),
       styles: [],
       selectedStyleState: undefined,
     });
 
-    const openState = result.find((s) => s.selector === "[data-state=open]");
+    const openState = result.find((s) => s.selector === '[data-state="open"]');
     expect(openState?.source).toBe("component");
     expect(openState?.label).toBe("Open");
+  });
+
+  test("does not duplicate component states when styles exist for the same selector", () => {
+    const result = getComponentStates({
+      predefinedStates: [],
+      componentStates: [
+        { label: "Open", selector: '[data-state="open"]' },
+        { label: "Closed", selector: '[data-state="closed"]' },
+      ],
+      instanceStyleSourceIds: new Set(["style1"]),
+      styles: [
+        { styleSourceId: "style1", state: '[data-state="open"]' },
+        { styleSourceId: "style1", state: '[data-state="closed"]' },
+      ],
+      selectedStyleState: undefined,
+    });
+
+    const openStates = result.filter(
+      (s) => s.selector === '[data-state="open"]'
+    );
+    expect(openStates).toHaveLength(1);
+    expect(openStates[0].source).toBe("component");
+
+    const closedStates = result.filter(
+      (s) => s.selector === '[data-state="closed"]'
+    );
+    expect(closedStates).toHaveLength(1);
+    expect(closedStates[0].source).toBe("component");
   });
 
   test("removes selector when styles are cleared", () => {

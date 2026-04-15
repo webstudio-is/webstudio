@@ -16,8 +16,9 @@ export const metaCheckbox: WsComponentMeta = {
     descendants: [radix.CheckboxIndicator],
   },
   states: [
-    { label: "Checked", selector: "[data-state=checked]" },
-    { label: "Unchecked", selector: "[data-state=unchecked]" },
+    { label: "Checked", selector: '[data-state="checked"]' },
+    { label: "Unchecked", selector: '[data-state="unchecked"]' },
+    { label: "Indeterminate", selector: '[data-state="indeterminate"]' },
   ],
   presetStyle: {
     button: [button, buttonReset].flat(),
@@ -32,6 +33,11 @@ export const metaCheckboxIndicator: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
+  states: [
+    { label: "Checked", selector: '[data-state="checked"]' },
+    { label: "Unchecked", selector: '[data-state="unchecked"]' },
+    { label: "Indeterminate", selector: '[data-state="indeterminate"]' },
+  ],
   presetStyle: {
     span,
   },

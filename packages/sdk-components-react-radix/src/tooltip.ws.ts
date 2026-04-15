@@ -8,13 +8,17 @@ import {
   propsTooltipTrigger,
 } from "./__generated__/tooltip.props";
 
-// @todo add [data-state] to button and link
 export const metaTooltipTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   contentModel: {
     category: "none",
     children: ["instance"],
   },
+  states: [
+    { label: "Closed", selector: '[data-state="closed"]' },
+    { label: "Delayed open", selector: '[data-state="delayed-open"]' },
+    { label: "Instant open", selector: '[data-state="instant-open"]' },
+  ],
   props: propsTooltipTrigger,
 };
 
@@ -24,6 +28,11 @@ export const metaTooltipContent: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
+  states: [
+    { label: "Closed", selector: '[data-state="closed"]' },
+    { label: "Delayed open", selector: '[data-state="delayed-open"]' },
+    { label: "Instant open", selector: '[data-state="instant-open"]' },
+  ],
   presetStyle: { div },
   initialProps: ["side", "sideOffset", "align", "alignOffset"],
   props: propsTooltipContent,

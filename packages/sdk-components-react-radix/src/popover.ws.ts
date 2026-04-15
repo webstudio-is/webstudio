@@ -15,13 +15,16 @@ import {
 } from "./__generated__/popover.props";
 import { buttonReset } from "./shared/preset-styles";
 
-// @todo add [data-state] to button and link
 export const metaPopoverTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   contentModel: {
     category: "none",
     children: ["instance"],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   props: propsPopoverTrigger,
 };
 
@@ -32,6 +35,10 @@ export const metaPopoverContent: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.PopoverClose],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: {
     div,
   },

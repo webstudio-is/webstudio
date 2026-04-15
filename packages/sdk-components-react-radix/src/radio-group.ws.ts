@@ -31,8 +31,8 @@ export const metaRadioGroupItem: WsComponentMeta = {
     descendants: [radix.RadioGroupIndicator],
   },
   states: [
-    { label: "Checked", selector: "[data-state=checked]" },
-    { label: "Unchecked", selector: "[data-state=unchecked]" },
+    { label: "Checked", selector: '[data-state="checked"]' },
+    { label: "Unchecked", selector: '[data-state="unchecked"]' },
   ],
   presetStyle: {
     button: [button, buttonReset].flat(),
@@ -48,8 +48,8 @@ export const metaRadioGroupIndicator: WsComponentMeta = {
     children: ["instance"],
   },
   states: [
-    { label: "Checked", selector: "[data-state=checked]" },
-    { label: "Unchecked", selector: "[data-state=unchecked]" },
+    { label: "Checked", selector: '[data-state="checked"]' },
+    { label: "Unchecked", selector: '[data-state="unchecked"]' },
   ],
   presetStyle: {
     span,

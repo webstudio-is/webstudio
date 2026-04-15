@@ -73,6 +73,10 @@ export const metaNavigationMenuTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   props: propsNavigationMenuTrigger,
 };
 
@@ -84,6 +88,10 @@ export const metaNavigationMenuContent: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.NavigationMenuLink],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: {
     div,
   },
@@ -107,6 +115,10 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: {
     div,
   },

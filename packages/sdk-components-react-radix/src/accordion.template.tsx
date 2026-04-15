@@ -76,6 +76,12 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
           line-height: ${fontSizeLineHeight.sm};
           transition: ${transition.all};
           padding-bottom: ${spacing[4]};
+          &[data-state="closed"] {
+            height: 0;
+          }
+          &[data-state="open"] {
+            height: var(--radix-accordion-content-height);
+          }
         `}
       >
         {new PlaceholderValue(contentText)}

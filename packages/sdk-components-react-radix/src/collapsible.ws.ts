@@ -19,6 +19,10 @@ export const metaCollapsible: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.CollapsibleTrigger, radix.CollapsibleContent],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: {
     div,
   },
@@ -32,6 +36,10 @@ export const metaCollapsibleTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   props: propsCollapsibleTrigger,
 };
 
@@ -41,6 +49,10 @@ export const metaCollapsibleContent: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: {
     div,
   },
