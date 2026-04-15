@@ -55,15 +55,24 @@ export type Purchase = {
   subscriptionId?: string;
 };
 
+const PricesSchema = z.record(z.string(), z.string());
+
+/** A parsed plan entry with resolved features and price IDs keyed by billing cycle */
+export type PlanConfig = {
+  name: string;
+  features: PlanFeatures;
+  prices: Record<string, string>;
+};
+
 /**
- * Parse the PLANS env variable (JSON array of {name, extends?, features}).
+ * Parse the PLANS env variable (JSON array of {name, extends?, features, prices?}).
  * - features is partial when extends is used; the parent plan fills in the rest.
  * - The final merged features are validated against the full PlanFeaturesSchema.
  * - Invalid entries are skipped with a console.error.
  * - An extends reference to an unknown plan name throws an error.
- * Returns a Map of plan name → resolved PlanFeatures.
+ * Returns a Map of plan name → { name, features, prices }.
  */
-export const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
+export const parsePlansEnv = (raw: string): Map<string, PlanConfig> => {
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) {
@@ -74,6 +83,7 @@ export const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
       name: string;
       extends?: string;
       features: Partial<PlanFeatures>;
+      prices: Record<string, string>;
     };
 
     // First pass: validate entry structure and collect partial features.
@@ -90,13 +100,23 @@ export const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
         console.error("Invalid PLANS entry (extends must be a string):", item);
         return [];
       }
-      const result = PlanFeaturesSchema.partial().safeParse(
+      const featuresResult = PlanFeaturesSchema.partial().safeParse(
         "features" in item ? item.features : {}
       );
-      if (!result.success) {
+      if (!featuresResult.success) {
         console.error(
           `Invalid PLANS entry "${item.name}" features:`,
-          result.error.flatten()
+          featuresResult.error.flatten()
+        );
+        return [];
+      }
+      const pricesResult = PricesSchema.safeParse(
+        "prices" in item ? item.prices : {}
+      );
+      if (!pricesResult.success) {
+        console.error(
+          `Invalid PLANS entry "${item.name}" prices:`,
+          pricesResult.error.flatten()
         );
         return [];
       }
@@ -104,7 +124,8 @@ export const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
         {
           name: item.name,
           extends: "extends" in item ? (item.extends as string) : undefined,
-          features: result.data,
+          features: featuresResult.data,
+          prices: pricesResult.data,
         } satisfies PlanEntry,
       ];
     });
@@ -116,7 +137,7 @@ export const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
 
     // Second pass: resolve extends and validate the full feature set.
     // Every entry implicitly extends defaultPlanFeatures; "extends" picks a named plan on top of that.
-    const resolved = new Map<string, PlanFeatures>();
+    const resolved = new Map<string, PlanConfig>();
     for (const entry of entries) {
       if (entry.extends !== undefined && !byName.has(entry.extends)) {
         throw new Error(
@@ -138,7 +159,11 @@ export const parsePlansEnv = (raw: string): Map<string, PlanFeatures> => {
         );
         continue;
       }
-      resolved.set(entry.name, result.data);
+      resolved.set(entry.name, {
+        name: entry.name,
+        features: result.data,
+        prices: entry.prices,
+      });
     }
     return resolved;
   } catch (error) {

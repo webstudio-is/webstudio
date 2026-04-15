@@ -188,7 +188,7 @@ export const getPlanInfo = async (
         }
         return [
           {
-            ...(plansByName.get(product.name) ?? defaultPlanFeatures),
+            ...(plansByName.get(product.name)?.features ?? defaultPlanFeatures),
             ...parseProductMeta(product.meta),
           },
         ];

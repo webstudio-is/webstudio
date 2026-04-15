@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 import {
   type PlanFeatures,
+  type PlanConfig,
   defaultPlanFeatures,
   parsePlansEnv,
 } from "./plan-features";
@@ -20,6 +21,13 @@ const fullFeatures: PlanFeatures = {
   maxWorkspaces: 1,
   maxProjectsAllowedPerUser: 100,
 };
+
+/** Helper to build expected PlanConfig objects in tests */
+const planConfig = (
+  name: string,
+  features: PlanFeatures,
+  prices: Record<string, string> = {}
+): PlanConfig => ({ name, features, prices });
 
 describe("parsePlansEnv", () => {
   const validEntry = JSON.stringify({ name: "Pro", features: fullFeatures });
@@ -48,13 +56,14 @@ describe("parsePlansEnv", () => {
       ])
     );
     expect(result.size).toBe(2);
-    expect(result.get("LTD T2")).toEqual(result.get("Pro"));
+    expect(result.get("LTD T2")).toEqual(planConfig("LTD T2", fullFeatures));
+    expect(result.get("Pro")).toEqual(planConfig("Pro", fullFeatures));
   });
 
   test("entry with no features key and no extends resolves to defaultPlanFeatures", () => {
     const result = parsePlansEnv(JSON.stringify([{ name: "Free" }]));
     expect(result.size).toBe(1);
-    expect(result.get("Free")).toEqual(defaultPlanFeatures);
+    expect(result.get("Free")).toEqual(planConfig("Free", defaultPlanFeatures));
   });
 
   test("extends: child inherits parent features and overrides specific fields", () => {
@@ -65,9 +74,11 @@ describe("parsePlansEnv", () => {
       ])
     );
     expect(result.size).toBe(2);
-    expect(result.get("Team")!.canDownloadAssets).toBe(true);
-    expect(result.get("Team")!.maxWorkspaces).toBe(50);
-    expect(result.get("Pro")!.maxWorkspaces).toBe(fullFeatures.maxWorkspaces);
+    expect(result.get("Team")!.features.canDownloadAssets).toBe(true);
+    expect(result.get("Team")!.features.maxWorkspaces).toBe(50);
+    expect(result.get("Pro")!.features.maxWorkspaces).toBe(
+      fullFeatures.maxWorkspaces
+    );
   });
 
   test("extends: throws when extending an unknown plan", () => {
@@ -87,13 +98,46 @@ describe("parsePlansEnv", () => {
   test("parses a single valid entry", () => {
     const result = parsePlansEnv(`[${validEntry}]`);
     expect(result.size).toBe(1);
-    expect(result.get("Pro")).toEqual(fullFeatures);
+    expect(result.get("Pro")).toEqual(planConfig("Pro", fullFeatures));
+  });
+
+  test("parses prices from entry", () => {
+    const result = parsePlansEnv(
+      JSON.stringify([
+        {
+          name: "Pro",
+          features: fullFeatures,
+          prices: { monthly: "price_abc", yearly: "price_def" },
+        },
+      ])
+    );
+    expect(result.size).toBe(1);
+    expect(result.get("Pro")!.prices).toEqual({
+      monthly: "price_abc",
+      yearly: "price_def",
+    });
+  });
+
+  test("prices default to empty object when not provided", () => {
+    const result = parsePlansEnv(`[${validEntry}]`);
+    expect(result.get("Pro")!.prices).toEqual({});
+  });
+
+  test("skips entry with invalid prices (non-string value)", () => {
+    const result = parsePlansEnv(
+      JSON.stringify([
+        { name: "Bad", features: fullFeatures, prices: { monthly: 123 } },
+        { name: "Pro", features: fullFeatures },
+      ])
+    );
+    expect(result.size).toBe(1);
+    expect(result.get("Pro")).toBeDefined();
   });
 
   test("parses multiple valid entries", () => {
     const result = parsePlansEnv(twoEntries);
     expect(result.size).toBe(2);
-    expect(result.get("Workspaces")!.maxWorkspaces).toBe(10);
+    expect(result.get("Workspaces")!.features.maxWorkspaces).toBe(10);
   });
 
   test("skips entries with invalid features (wrong type), keeps valid ones", () => {
@@ -104,7 +148,7 @@ describe("parsePlansEnv", () => {
       ])
     );
     expect(result.size).toBe(1);
-    expect(result.get("Pro")).toEqual(fullFeatures);
+    expect(result.get("Pro")).toEqual(planConfig("Pro", fullFeatures));
   });
 
   test("partial features without extends fills in from defaultPlanFeatures", () => {
@@ -112,10 +156,9 @@ describe("parsePlansEnv", () => {
       JSON.stringify([{ name: "Pro", features: { canDownloadAssets: true } }])
     );
     expect(result.size).toBe(1);
-    expect(result.get("Pro")).toEqual({
-      ...defaultPlanFeatures,
-      canDownloadAssets: true,
-    });
+    expect(result.get("Pro")).toEqual(
+      planConfig("Pro", { ...defaultPlanFeatures, canDownloadAssets: true })
+    );
   });
 
   test("strips unknown keys from features", () => {
@@ -126,7 +169,7 @@ describe("parsePlansEnv", () => {
     );
     expect(result.size).toBe(1);
     expect(
-      (result.get("Pro") as Record<string, unknown>)["admin"]
+      (result.get("Pro")!.features as Record<string, unknown>)["admin"]
     ).toBeUndefined();
   });
 });
