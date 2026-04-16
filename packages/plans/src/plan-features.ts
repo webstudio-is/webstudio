@@ -18,7 +18,7 @@ export const PlanFeaturesSchema = z.object({
   maxWorkspaces: z.number().nonnegative(),
   maxProjectsAllowedPerUser: z.number().nonnegative(),
   maxAssetsPerProject: z.number().nonnegative(),
-  minSeats: z.number().nonnegative(),
+  seatsIncluded: z.number().nonnegative(),
   maxSeatsPerWorkspace: z.number().nonnegative(),
 });
 
@@ -45,7 +45,7 @@ export const defaultPlanFeatures: PlanFeatures = {
   maxWorkspaces: 1,
   maxProjectsAllowedPerUser: 100,
   maxAssetsPerProject: 50,
-  minSeats: 0,
+  seatsIncluded: 0,
   maxSeatsPerWorkspace: 0,
 };
 

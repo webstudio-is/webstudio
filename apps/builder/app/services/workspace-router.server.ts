@@ -312,9 +312,9 @@ export const workspaceRouter = router({
           success: true as const,
           data: {
             ...members,
-            // Falls back to minSeats (seats included in the plan) when no
+            // Falls back to seatsIncluded (seats included in the plan) when no
             // subscription event exists yet (free plan, AppSumo, etc.).
-            maxSeats: paidSeats ?? ctx.planFeatures.minSeats,
+            maxSeats: paidSeats ?? ctx.planFeatures.seatsIncluded,
           },
         };
       } catch (error) {

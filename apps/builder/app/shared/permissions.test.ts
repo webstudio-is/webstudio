@@ -30,7 +30,7 @@ const proPlan = {
   maxWorkspaces: 0,
   maxProjectsAllowedPerUser: 100,
   maxAssetsPerProject: 500,
-  minSeats: 0,
+  seatsIncluded: 0,
   maxSeatsPerWorkspace: 0,
 };
 
@@ -47,7 +47,7 @@ const freePlan = {
   maxWorkspaces: 0,
   maxProjectsAllowedPerUser: 2,
   maxAssetsPerProject: 50,
-  minSeats: 0,
+  seatsIncluded: 0,
   maxSeatsPerWorkspace: 0,
 };
 
