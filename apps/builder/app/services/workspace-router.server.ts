@@ -6,8 +6,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { workspace as workspaceApi } from "@webstudio-is/project/index.server";
 import { roles } from "@webstudio-is/trpc-interface/authorize";
-import { getPlanInfo, getPaidSeats } from "@webstudio-is/plans/index.server";
-import { defaultPlanFeatures } from "@webstudio-is/plans";
+import { getPaidSeats } from "@webstudio-is/plans/index.server";
 import env from "~/env/env.server";
 
 const Name = z.string().min(2).max(100);
@@ -19,16 +18,10 @@ type UpdateSeatsResult =
 
 const updateSeats = async ({
   userId,
-  subscriptionId,
   newQuantity,
-  minSeats,
-  maxSeats,
 }: {
   userId: string;
-  subscriptionId: string;
   newQuantity: number;
-  minSeats: number;
-  maxSeats: number;
 }): Promise<UpdateSeatsResult | null> => {
   if (!env.PAYMENT_WORKER_URL || !env.PAYMENT_WORKER_TOKEN) {
     return null;
@@ -44,10 +37,7 @@ const updateSeats = async ({
     },
     body: JSON.stringify({
       userId,
-      subscriptionId,
       newQuantity,
-      minSeats,
-      maxSeats,
     }),
   });
 
@@ -86,25 +76,11 @@ const syncOwnerSeats = async (
   }
 
   const ownerId = workspaceResult.data.userId;
-  const planResults = await getPlanInfo([ownerId], ctx);
-  const { planFeatures, purchases } = planResults.get(ownerId) ?? {
-    planFeatures: defaultPlanFeatures,
-    purchases: [],
-  };
-
-  const subscription = purchases.find((p) => p.subscriptionId !== undefined);
-  if (subscription?.subscriptionId === undefined) {
-    return;
-  }
-
   const memberCount = await workspaceApi.countAllMembers(ownerId, ctx);
 
   const result = await updateSeats({
     userId: ownerId,
-    subscriptionId: subscription.subscriptionId,
     newQuantity: memberCount + countDelta,
-    minSeats: planFeatures.minSeats,
-    maxSeats: planFeatures.maxSeatsPerWorkspace,
   });
 
   if (result === null) {
