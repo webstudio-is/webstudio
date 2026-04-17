@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { OldPagePath, ProjectNewRedirectPath } from "./pages";
+import { OldPagePath, PagePath, ProjectNewRedirectPath } from "./pages";
 
 describe("OldPagePath", () => {
   describe("basic validation", () => {
@@ -188,6 +188,26 @@ describe("OldPagePath", () => {
     test("accepts emoji characters", () => {
       expect(OldPagePath.safeParse("/🎉").success).toBe(true);
       expect(OldPagePath.safeParse("/hello-🌍").success).toBe(true);
+    });
+  });
+});
+
+describe("PagePath", () => {
+  describe("path length validation", () => {
+    test("accepts a path of exactly 255 characters", () => {
+      const path = "/" + "a".repeat(254);
+      expect(PagePath.safeParse(path).success).toBe(true);
+    });
+
+    test("rejects a path exceeding 255 characters", () => {
+      const path = "/" + "a".repeat(255);
+      const result = PagePath.safeParse(path);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          "Path can't exceed 255 characters"
+        );
+      }
     });
   });
 });
