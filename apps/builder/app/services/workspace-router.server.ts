@@ -312,9 +312,10 @@ export const workspaceRouter = router({
           success: true as const,
           data: {
             ...members,
-            // Falls back to seatsIncluded (seats included in the plan) when no
-            // subscription event exists yet (free plan, AppSumo, etc.).
-            maxSeats: paidSeats ?? ctx.planFeatures.seatsIncluded,
+            // seatsIncluded = seats covered by the Team plan.
+            // paidSeats = extra seats from the Seats subscription.
+            // Total capacity = included + extras.
+            maxSeats: ctx.planFeatures.seatsIncluded + (paidSeats ?? 0),
           },
         };
       } catch (error) {
