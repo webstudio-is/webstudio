@@ -131,8 +131,6 @@ view UserProduct {
   customerId     String?
   // Easier to debug
   customerEmail  String?
-  // Seat quantity from Stripe subscription (Team plan)
-  seatQuantity   Int?
 
   @@unique([userId, productId])
 }
