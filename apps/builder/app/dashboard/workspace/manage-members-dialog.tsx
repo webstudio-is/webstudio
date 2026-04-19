@@ -255,7 +255,8 @@ const computeAvailableSeats = (
         { success: true }
       >["data"]
     | undefined,
-  optimisticPending: OptimisticPendingInvite[]
+  optimisticPending: OptimisticPendingInvite[],
+  maxSeatsBoost = 0
 ): number | undefined => {
   if (membersData === undefined) {
     return;
@@ -269,7 +270,8 @@ const computeAvailableSeats = (
     (o) => !knownEmails.has(o.email)
   ).length;
   return (
-    membersData.maxSeats -
+    membersData.maxSeats +
+    maxSeatsBoost -
     membersData.members.length -
     membersData.pendingInvites.length -
     extraCount
@@ -429,7 +431,7 @@ export const ManageMembersDialog = ({
     relation: Role;
     extraSeats: number;
   }>();
-  const [suppressBanner, setSuppressBanner] = useState(false);
+  const [maxSeatsBoost, setMaxSeatsBoost] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
 
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
@@ -444,7 +446,11 @@ export const ManageMembersDialog = ({
     }
   }, [isOpen, isOwner, load, workspace.id]);
 
-  const availableSeats = computeAvailableSeats(membersData, optimisticPending);
+  const availableSeats = computeAvailableSeats(
+    membersData,
+    optimisticPending,
+    maxSeatsBoost
+  );
 
   const syncSeatsMutation = trpcClient.workspace.syncSeats.useMutation();
 
@@ -473,10 +479,11 @@ export const ManageMembersDialog = ({
     const failed = await inviteMembers(emails, workspace.id, relation);
     setInviting(false);
 
-    // Suppress the banner before optimistic entries trigger a re-render,
-    // otherwise React renders the new member count with the old maxSeats.
-    if (boughtExtraSeats) {
-      setSuppressBanner(true);
+    // Optimistically bump maxSeats so the banner never flashes.
+    // The server's maxSeats will catch up once the Stripe webhook lands,
+    // but we cannot predict when that will happen.
+    if (boughtExtraSeats && succeeded.length > 0) {
+      setMaxSeatsBoost((prev) => prev + succeeded.length);
     }
 
     // Add optimistic entries only for emails that actually succeeded so that
@@ -496,17 +503,6 @@ export const ManageMembersDialog = ({
       setErrors(failed);
     } else {
       formRef.current?.reset();
-    }
-
-    // When the invite triggered a Stripe Seats subscription, the webhook
-    // needs time to update the DB. Delay refetch; banner already suppressed.
-    if (boughtExtraSeats && succeeded.length > 0) {
-      setTimeout(() => {
-        handleRefresh();
-        revalidator.revalidate();
-        setSuppressBanner(false);
-      }, 4000);
-      return;
     }
 
     handleRefresh();
@@ -561,6 +557,7 @@ export const ManageMembersDialog = ({
           onOpenChange(open);
           if (open === false) {
             setErrors(undefined);
+            setMaxSeatsBoost(0);
           }
         }}
       >
@@ -605,7 +602,7 @@ export const ManageMembersDialog = ({
                 </Flex>
               </Flex>
             )}
-            {isOwner && overCapacity > 0 && suppressBanner === false && (
+            {isOwner && overCapacity > 0 && (
               <PanelBanner variant="warning">
                 <Flex direction="column" gap="2">
                   <Text>
