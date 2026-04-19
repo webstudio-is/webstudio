@@ -479,17 +479,17 @@ export const ManageMembersDialog = ({
     const failed = await inviteMembers(emails, workspace.id, relation);
     setInviting(false);
 
+    // Add optimistic entries only for emails that actually succeeded so that
+    // non-existent or already-member emails never flicker into the list.
+    const failedEmails = new Set(failed.map((f) => f.split(":")[0].trim()));
+    const succeeded = emails.filter((e) => !failedEmails.has(e));
+
     // Optimistically bump maxSeats so the banner never flashes.
     // The server's maxSeats will catch up once the Stripe webhook lands,
     // but we cannot predict when that will happen.
     if (boughtExtraSeats && succeeded.length > 0) {
       setMaxSeatsBoost((prev) => prev + succeeded.length);
     }
-
-    // Add optimistic entries only for emails that actually succeeded so that
-    // non-existent or already-member emails never flicker into the list.
-    const failedEmails = new Set(failed.map((f) => f.split(":")[0].trim()));
-    const succeeded = emails.filter((e) => !failedEmails.has(e));
     if (succeeded.length > 0) {
       const optimistic: OptimisticPendingInvite[] = succeeded.map((email) => ({
         notificationId: crypto.randomUUID(),
