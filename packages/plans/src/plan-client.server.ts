@@ -232,7 +232,7 @@ export const getExtraPaidSeats = async (
 
   const result = await context.postgrest.client
     .from("TransactionLog")
-    .select("eventData")
+    .select("eventData,subscriptionId,eventCreated")
     .eq("userId", userId)
     .in("eventType", [
       "customer.subscription.updated",
@@ -247,7 +247,31 @@ export const getExtraPaidSeats = async (
     throw result.error;
   }
 
-  const eventData = result.data?.eventData as
+  if (!result.data) {
+    return null;
+  }
+
+  // Check if the subscription was cancelled after this event.
+  if (result.data.subscriptionId) {
+    const deleted = await context.postgrest.client
+      .from("TransactionLog")
+      .select("eventId")
+      .eq("subscriptionId", result.data.subscriptionId)
+      .eq("eventType", "customer.subscription.deleted")
+      .eq("status", "canceled")
+      .gt("eventCreated", result.data.eventCreated)
+      .limit(1)
+      .maybeSingle();
+
+    if (deleted.error) {
+      throw deleted.error;
+    }
+    if (deleted.data) {
+      return null;
+    }
+  }
+
+  const eventData = result.data.eventData as
     | {
         data?: {
           object?: {
