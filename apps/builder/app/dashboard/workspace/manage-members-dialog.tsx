@@ -461,7 +461,11 @@ export const ManageMembersDialog = ({
     });
   };
 
-  const performInvite = async (emails: string[], relation: Role) => {
+  const performInvite = async (
+    emails: string[],
+    relation: Role,
+    { boughtExtraSeats = false } = {}
+  ) => {
     setErrors(undefined);
     setInviting(true);
 
@@ -485,6 +489,16 @@ export const ManageMembersDialog = ({
       setErrors(failed);
     } else {
       formRef.current?.reset();
+    }
+
+    // When the invite triggered a Stripe Seats subscription, the webhook
+    // needs time to update the DB. Delay refetch so the banner doesn't flash.
+    if (boughtExtraSeats && succeeded.length > 0) {
+      setTimeout(() => {
+        handleRefresh();
+        revalidator.revalidate();
+      }, 4000);
+      return;
     }
 
     handleRefresh();
@@ -527,7 +541,9 @@ export const ManageMembersDialog = ({
           onConfirm={async () => {
             const confirm = pendingConfirm;
             setPendingConfirm(undefined);
-            await performInvite(confirm.emails, confirm.relation);
+            await performInvite(confirm.emails, confirm.relation, {
+              boughtExtraSeats: true,
+            });
           }}
         />
       )}
