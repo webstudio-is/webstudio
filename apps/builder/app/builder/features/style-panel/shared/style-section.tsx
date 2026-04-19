@@ -10,6 +10,7 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
+import { useReadonly } from "./readonly";
 import { useComputedStyles } from "./model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { PropertySectionLabel } from "../property-label";
@@ -71,6 +72,7 @@ export const RepeatedStyleSection = (props: {
   const { label, description, children, properties, onAdd, collapsible } =
     props;
   const [isOpen, setIsOpen] = useOpenState(label);
+  const readonly = useReadonly();
   const styles = useComputedStyles(properties);
   const dots = getDots(styles);
 
@@ -87,6 +89,7 @@ export const RepeatedStyleSection = (props: {
           dots={getDots(styles)}
           suffix={
             <SectionTitleButton
+              disabled={readonly}
               prefix={<PlusIcon />}
               onClick={() => {
                 setIsOpen(true);

@@ -18,6 +18,7 @@ import {
   type SetValue,
 } from "../../shared/use-style-data";
 import { PropertyInlineLabel } from "../../property-label";
+import { useReadonly } from "../../shared/readonly";
 
 const toPosition = (value: TupleValue) => {
   // Should never actually happen, just for TS
@@ -59,6 +60,7 @@ export const PositionControl = ({
   property: CssProperty;
   styleDecl: ComputedStyleDecl;
 }) => {
+  const readonly = useReadonly();
   const value = toTuple(styleDecl.cascadedValue);
   const keywords = (keywordValues[property] ?? []).map((value) => ({
     type: "keyword" as const,
@@ -86,6 +88,7 @@ export const PositionControl = ({
       />
       <Flex gap="6">
         <PositionGrid
+          disabled={readonly}
           selectedPosition={toPosition(value)}
           onSelect={({ x, y }) => {
             setValue({
@@ -108,6 +111,7 @@ export const PositionControl = ({
             properties={[property]}
           />
           <CssValueInputContainer
+            disabled={readonly}
             property={property}
             styleSource={styleDecl.source.name}
             getOptions={() => keywords}
@@ -121,6 +125,7 @@ export const PositionControl = ({
             properties={[property]}
           />
           <CssValueInputContainer
+            disabled={readonly}
             property={property}
             styleSource={styleDecl.source.name}
             getOptions={() => keywords}

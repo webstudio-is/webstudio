@@ -2120,6 +2120,95 @@ describe("var() substitution — border", () => {
   });
 });
 
+describe("var() substitution — transitive (nested) var() resolution", () => {
+  test("var() whose value contains var() — calc(var(--base) * N)", () => {
+    const result = decls(`
+      --base-size: 1rem;
+      --border-width: calc(var(--base-size) * 0.0625);
+      border: var(--border-width) solid red;
+    `);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop(
+          "border-top-width",
+          expect.objectContaining({
+            type: "unparsed",
+            value: "calc(1rem*0.0625)",
+          })
+        ),
+        prop("border-top-style", kw("solid")),
+        prop("border-top-color", kw("red")),
+      ])
+    );
+  });
+
+  test("var() whose value contains var() — color-mix(var(--clr))", () => {
+    const result = decls(`
+      --base-clr: green;
+      --border-color: color-mix(in srgb, var(--base-clr) 65%, black);
+      border: 2px solid var(--border-color);
+    `);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop("border-top-width", u(2, "px")),
+        prop("border-top-style", kw("solid")),
+        prop(
+          "border-top-color",
+          expect.objectContaining({
+            type: "unparsed",
+            value: "color-mix(in srgb,green 65%,black)",
+          })
+        ),
+      ])
+    );
+  });
+
+  test("full .use_calc scenario — calc and color-mix with transitive vars", () => {
+    const result = decls(`
+      --base-size: 1rem;
+      --base-clr: green;
+      --border-width: calc(var(--base-size) * 0.0625);
+      --border-color: color-mix(in srgb, var(--base-clr) 65%, black);
+      border: var(--border-width) solid var(--border-color);
+    `);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop(
+          "border-top-width",
+          expect.objectContaining({
+            type: "unparsed",
+            value: "calc(1rem*0.0625)",
+          })
+        ),
+        prop("border-top-style", kw("solid")),
+        prop(
+          "border-top-color",
+          expect.objectContaining({
+            type: "unparsed",
+            value: "color-mix(in srgb,green 65%,black)",
+          })
+        ),
+      ])
+    );
+  });
+
+  test("three levels of transitive vars", () => {
+    const result = decls(`
+      --a: 5px;
+      --b: var(--a);
+      --c: var(--b);
+      border: var(--c) solid red;
+    `);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop("border-top-width", u(5, "px")),
+        prop("border-top-style", kw("solid")),
+        prop("border-top-color", kw("red")),
+      ])
+    );
+  });
+});
+
 describe("var() substitution — outline", () => {
   test("var() for outline color", () => {
     const result = decls(`--clr: red; outline: 2px solid var(--clr);`);

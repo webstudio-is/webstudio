@@ -15,6 +15,7 @@ import { useAssets, AssetUpload } from "~/builder/shared/assets";
 import { toItems } from "~/builder/shared/fonts-manager";
 import { useComputedStyleDecl } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 
 type Item = { value: string; label?: string };
 
@@ -41,6 +42,7 @@ const matchOrSuggestToCreate = (
 };
 
 export const FontFamilyControl = () => {
+  const readonly = useReadonly();
   const fontFamily = useComputedStyleDecl("font-family");
   const value = fontFamily.cascadedValue;
   const setValue = setProperty("font-family");
@@ -65,11 +67,12 @@ export const FontFamilyControl = () => {
   return (
     <Flex>
       <Combobox<Item>
+        disabled={readonly}
         suffix={
           <FloatingPanel
             placement="left-start"
             title="Fonts"
-            titleSuffix={<AssetUpload type="font" />}
+            titleSuffix={readonly ? undefined : <AssetUpload type="font" />}
             onOpenChange={setIsFontMangerOpen}
             content={
               <FontsManager
@@ -80,7 +83,7 @@ export const FontFamilyControl = () => {
               />
             }
           >
-            <FontsManagerButton />
+            <FontsManagerButton disabled={readonly} />
           </FloatingPanel>
         }
         getItems={() => items}

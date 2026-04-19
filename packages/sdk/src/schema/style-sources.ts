@@ -6,6 +6,7 @@ const StyleSourceToken = z.object({
   type: z.literal("token"),
   id: StyleSourceId,
   name: z.string(),
+  locked: z.boolean().optional(),
 });
 
 export type StyleSourceToken = z.infer<typeof StyleSourceToken>;

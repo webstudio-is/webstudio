@@ -16,6 +16,7 @@ import {
   useOpenState,
 } from "~/builder/shared/collapsible-section";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
+import { useReadonly } from "../../shared/readonly";
 import { humanizeString } from "~/shared/string-utils";
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -86,6 +87,7 @@ const getLayerLabel = ({
 
 export const Section = () => {
   const [isOpen, setIsOpen] = useOpenState(label);
+  const readonly = useReadonly();
 
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector
@@ -117,7 +119,7 @@ export const Section = () => {
               }
             >
               <SectionTitleButton
-                disabled={isStyleInLocalState === false}
+                disabled={readonly || isStyleInLocalState === false}
                 prefix={<PlusIcon />}
                 onClick={() => {
                   setIsOpen(true);

@@ -43,6 +43,7 @@ import {
 } from "./css-fragment";
 import { ColorPickerControl } from "./color-picker";
 import { $availableColorVariables, $availableUnitVariables } from "./model";
+import { useReadonly } from "./readonly";
 
 /*
   When it comes to checking and validating individual CSS properties for the box-shadow,
@@ -156,7 +157,9 @@ export const ShadowContent = ({
   const computedShadow =
     computedLayer?.type === "shadow" ? computedLayer : shadowValue;
 
-  const disabledControls = layer.type === "var" || layer.type === "unparsed";
+  const readonly = useReadonly();
+  const disabledControls =
+    readonly || layer.type === "var" || layer.type === "unparsed";
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -230,7 +233,7 @@ export const ShadowContent = ({
             // outline-offset is a fake property for validating box-shadow's offsetX.
             property="outline-offset"
             styleSource="local"
-            aria-disabled={disabledControls}
+            disabled={disabledControls}
             getOptions={() => $availableUnitVariables.get()}
             value={shadowValue.offsetX}
             onUpdate={(value, options) => {
@@ -254,7 +257,7 @@ export const ShadowContent = ({
             // outline-offset is a fake property for validating box-shadow's offsetY.
             property="outline-offset"
             styleSource="local"
-            aria-disabled={disabledControls}
+            disabled={disabledControls}
             getOptions={() => $availableUnitVariables.get()}
             value={shadowValue.offsetY}
             onUpdate={(value, options) => {
@@ -278,7 +281,7 @@ export const ShadowContent = ({
             // border-top-width is a fake property for validating box-shadow's blur.
             property="border-top-width"
             styleSource="local"
-            aria-disabled={disabledControls}
+            disabled={disabledControls}
             getOptions={() => $availableUnitVariables.get()}
             value={shadowValue.blur ?? { type: "unit", value: 0, unit: "px" }}
             onUpdate={(value, options) => {
@@ -303,7 +306,7 @@ export const ShadowContent = ({
               // outline-offset is a fake property for validating box-shadow's spread.
               property="outline-offset"
               styleSource="local"
-              aria-disabled={disabledControls}
+              disabled={disabledControls}
               getOptions={() => $availableUnitVariables.get()}
               value={
                 shadowValue.spread ?? { type: "unit", value: 0, unit: "px" }
@@ -335,7 +338,7 @@ export const ShadowContent = ({
           />
           <ColorPickerControl
             property="color"
-            aria-disabled={disabledControls}
+            disabled={disabledControls}
             value={shadowValue.color ?? defaultColor}
             currentColor={computedShadow?.color ?? defaultColor}
             getOptions={() => [
@@ -376,7 +379,7 @@ export const ShadowContent = ({
             />
             <ToggleGroup
               type="single"
-              aria-disabled={disabledControls}
+              disabled={disabledControls}
               value={shadowValue.position}
               defaultValue="inset"
               onValueChange={(value) =>
@@ -432,6 +435,7 @@ export const ShadowContent = ({
             <CssFragmentEditor
               content={
                 <CssFragmentEditorContent
+                  readOnly={readonly}
                   invalid={intermediateValue?.type === "invalid"}
                   autoFocus={disabledControls}
                   value={intermediateValue?.value ?? propertyValue ?? ""}

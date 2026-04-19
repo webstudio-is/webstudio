@@ -23,6 +23,7 @@ import { humanizeString } from "~/shared/string-utils";
 import { setProperty } from "../../shared/use-style-data";
 import { useComputedStyleDecl } from "../../shared/model";
 import { PropertyValueTooltip } from "../../property-label";
+import { useReadonly } from "../../shared/readonly";
 
 export const MenuControl = ({
   property,
@@ -35,6 +36,7 @@ export const MenuControl = ({
     icon: IconComponent;
   }>;
 }) => {
+  const readonly = useReadonly();
   const computedStyleDecl = useComputedStyleDecl(property);
   const [descriptionValue, setDescriptionValue] = useState<string>();
 
@@ -63,6 +65,7 @@ export const MenuControl = ({
       >
         <DropdownMenuTrigger asChild>
           <IconButton
+            disabled={readonly}
             aria-disabled={isAdvanced}
             variant={computedStyleDecl.source.name}
             onPointerDown={(event) => {

@@ -29,6 +29,7 @@ import { createBatchUpdate } from "../../../shared/use-style-data";
 import { GridPositionInputs } from "./grid-position-inputs";
 import { GridAreaPicker } from "./grid-area-picker";
 import { $gridEditingArea } from "~/builder/shared/nano-states";
+import { useReadonly } from "../../../shared/readonly";
 
 export { parseGridAreas, type AreaInfo } from "@webstudio-is/css-data";
 
@@ -225,6 +226,7 @@ type AreaEditorProps = {
   gridColumns: number;
   gridRows: number;
   existingAreas: AreaInfo[];
+  disabled?: boolean;
   onSave: (area: AreaInfo, oldName?: string) => void;
   onClose: () => void;
 };
@@ -235,6 +237,7 @@ const AreaEditor = ({
   gridColumns,
   gridRows,
   existingAreas,
+  disabled,
   onSave,
   onClose,
 }: AreaEditorProps) => {
@@ -329,6 +332,7 @@ const AreaEditor = ({
       >
         <Label>Name</Label>
         <InputField
+          disabled={disabled}
           css={{ gridColumn: "span 2" }}
           value={value.name}
           onChange={(event) => setValue({ ...value, name: event.target.value })}
@@ -355,6 +359,7 @@ const AreaEditor = ({
       >
         <Label css={{ paddingTop: theme.spacing[3] }}>Position</Label>
         <GridPositionInputs
+          disabled={disabled}
           value={{
             ...value,
             columnEnd: value.columnEnd - 1,
@@ -384,6 +389,7 @@ const AreaEditor = ({
       </Grid>
 
       <GridAreaPicker
+        disabled={disabled}
         value={value}
         onChange={(picked) => {
           setValue(picked);
@@ -427,6 +433,7 @@ const AreaEditor = ({
 };
 
 export const GridAreas = () => {
+  const readonly = useReadonly();
   const [isOpen, setIsOpen] = useOpenState("Areas");
   const [editingAreaIndex, setEditingAreaIndex] = useState<number | undefined>(
     undefined
@@ -608,6 +615,7 @@ export const GridAreas = () => {
             Areas ({areas.length})
           </Text>
           <IconButton
+            disabled={readonly}
             onClick={(e) => {
               e.stopPropagation();
               addArea();
@@ -636,6 +644,7 @@ export const GridAreas = () => {
               title="Edit area"
               content={
                 <AreaEditor
+                  disabled={readonly}
                   area={area}
                   editingIndex={index}
                   gridColumns={columns}
@@ -668,6 +677,7 @@ export const GridAreas = () => {
                 buttons={
                   <SmallIconButton
                     variant="destructive"
+                    disabled={readonly}
                     tabIndex={-1}
                     icon={<MinusIcon />}
                     onClick={(e) => {

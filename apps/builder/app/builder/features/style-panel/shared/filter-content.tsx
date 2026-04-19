@@ -24,6 +24,7 @@ import { parseCssValue } from "@webstudio-is/css-data";
 import type { StyleUpdateOptions } from "../shared/use-style-data";
 import { ShadowContent } from "./shadow-content";
 import { parseCssFragment } from "./css-fragment";
+import { useReadonly } from "./readonly";
 
 // filters can't be validated directly in the css-engine. Because, these are not properties
 // but functions that proeprties accept. So, we need to validate them manually using fake proeprties
@@ -99,6 +100,7 @@ export const FilterSectionContent = ({
   tooltip,
   layer,
 }: FilterContentProps) => {
+  const readonly = useReadonly();
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >();
@@ -182,6 +184,7 @@ export const FilterSectionContent = ({
             <Label>Function</Label>
           </Flex>
           <Select
+            disabled={readonly}
             name="filterFunction"
             placeholder="Select Filter"
             options={Object.keys(filterFunctions) as FilterFunction[]}
@@ -201,6 +204,7 @@ export const FilterSectionContent = ({
               <Label>Value</Label>
             </Flex>
             <CssValueInputContainer
+              disabled={readonly}
               key="functionValue"
               property={
                 filterFunction
@@ -254,6 +258,7 @@ export const FilterSectionContent = ({
           </Flex>
         </Label>
         <TextArea
+          disabled={readonly}
           rows={3}
           name="description"
           value={intermediateValue?.value ?? ""}

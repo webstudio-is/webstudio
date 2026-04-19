@@ -33,9 +33,11 @@ type IntermediateValue = {
 export const ImageControl = ({
   property,
   index,
+  disabled = false,
 }: {
   property: CssProperty;
   index: number;
+  disabled?: boolean;
 }) => {
   const assets = useStore($assets);
   const styleDecl = useComputedStyleDecl(property);
@@ -64,6 +66,9 @@ export const ImageControl = ({
       : undefined;
 
   const handleImageURLInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) {
+      return;
+    }
     const value = event.target.value;
     if (isValidURL(value) === true) {
       setRemoteImageURL({ type: "intermediate", value });
@@ -73,6 +78,9 @@ export const ImageControl = ({
   };
 
   const handleImageURLComplete = () => {
+    if (disabled) {
+      return;
+    }
     if (
       remoteImageURL?.type === "intermediate" &&
       isValidURL(remoteImageURL.value) === true
@@ -89,6 +97,7 @@ export const ImageControl = ({
     <Flex direction="column" gap="2">
       <InputField
         type="text"
+        disabled={disabled}
         color={remoteImageURL?.type === "invalid" ? "error" : undefined}
         placeholder="Enter image URL..."
         value={remoteImageURL?.value ?? ""}
@@ -102,7 +111,7 @@ export const ImageControl = ({
       />
       <FloatingPanel
         title="Images"
-        titleSuffix={<AssetUpload type="image" />}
+        titleSuffix={disabled ? undefined : <AssetUpload type="image" />}
         content={
           <AssetManager
             accept="image/*"
@@ -117,6 +126,7 @@ export const ImageControl = ({
       >
         <Button
           color="neutral"
+          disabled={disabled}
           css={{ maxWidth: "100%", justifySelf: "right" }}
         >
           {asset ? formatAssetName(asset) : "Choose image..."}

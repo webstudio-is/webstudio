@@ -25,6 +25,7 @@ import {
 } from "@webstudio-is/css-data";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { createBatchUpdate } from "../../../shared/use-style-data";
+import { useReadonly } from "../../../shared/readonly";
 import {
   $breakpoints,
   $gridCellData,
@@ -377,6 +378,7 @@ type GridGeneratorProps = {
 };
 
 export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
+  const readonly = useReadonly();
   const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
   const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
   const gridTemplateAreas = useComputedStyleDecl("grid-template-areas");
@@ -578,6 +580,7 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
     >
       {/* Visual grid preview - similar to Figma's style */}
       <button
+        disabled={readonly}
         aria-label={`Grid layout: ${columnCount} columns by ${rowCount} rows`}
         className={gridGeneratorButtonStyle()}
         style={{

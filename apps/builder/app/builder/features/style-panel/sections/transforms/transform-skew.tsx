@@ -15,7 +15,7 @@ const fakeProperty = "rotate";
 
 const defaultAngle: StyleValue = { type: "unit", value: 0, unit: "deg" };
 
-export const SkewPanelContent = () => {
+export const SkewPanelContent = ({ disabled }: { disabled?: boolean }) => {
   const styleDecl = useComputedStyleDecl("transform");
   const { skewX: skewXFn, skewY: skewYFn } = extractSkewPropertiesFromTransform(
     styleDecl.cascadedValue
@@ -36,6 +36,7 @@ export const SkewPanelContent = () => {
           description={propertySyntaxes.skewX}
         />
         <CssValueInputContainer
+          disabled={disabled}
           styleSource="local"
           property={fakeProperty}
           value={skewX}
@@ -55,6 +56,7 @@ export const SkewPanelContent = () => {
           description={propertySyntaxes.skewY}
         />
         <CssValueInputContainer
+          disabled={disabled}
           styleSource="local"
           property={fakeProperty}
           value={skewY}

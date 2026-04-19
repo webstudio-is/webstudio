@@ -9,6 +9,7 @@ import { humanizeString } from "~/shared/string-utils";
 import { setProperty } from "../../shared/use-style-data";
 import { useComputedStyleDecl } from "../../shared/model";
 import { PropertyValueTooltip } from "../../property-label";
+import { useReadonly } from "../../shared/readonly";
 
 export const ToggleControl = ({
   property,
@@ -21,6 +22,7 @@ export const ToggleControl = ({
     icon: IconComponent;
   }>;
 }) => {
+  const readonly = useReadonly();
   const computedStyleDecl = useComputedStyleDecl(property);
   const currentValue = toValue(computedStyleDecl.cascadedValue);
   const currentItem = items.find((item) => item.name === currentValue);
@@ -44,6 +46,7 @@ export const ToggleControl = ({
       isAdvanced={isAdvanced}
     >
       <ToggleButton
+        disabled={readonly}
         aria-disabled={isAdvanced}
         variant={computedStyleDecl.source.name}
         pressed={isPressed}

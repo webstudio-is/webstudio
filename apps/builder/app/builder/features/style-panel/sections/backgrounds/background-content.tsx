@@ -30,6 +30,7 @@ import {
 } from "@webstudio-is/design-system";
 import { SelectControl } from "../../controls";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
+import { useReadonly } from "../../shared/readonly";
 import { BackgroundSize } from "./background-size";
 import { BackgroundGradient } from "./background-gradient";
 import { BackgroundImage } from "./background-image";
@@ -119,6 +120,7 @@ const backgroundTypeOptions: BackgroundTypeOption[] = [
 ];
 
 type BackgroundTypeToggleProps = {
+  disabled?: boolean;
   value: BackgroundType;
   onChange: (value: BackgroundType) => void;
   backgroundStyleItem: StyleValue | undefined;
@@ -130,6 +132,7 @@ type BackgroundTypeToggleProps = {
 };
 
 const BackgroundTypeToggle = ({
+  disabled,
   value,
   onChange,
   backgroundStyleItem,
@@ -183,6 +186,7 @@ const BackgroundTypeToggle = ({
   return (
     <ToggleGroup
       type="single"
+      disabled={disabled}
       value={value}
       aria-label="Background type"
       onValueChange={handleValueChange}
@@ -204,7 +208,13 @@ const BackgroundTypeToggle = ({
   );
 };
 
-const BackgroundRepeat = ({ index }: { index: number }) => {
+const BackgroundRepeat = ({
+  index,
+  disabled,
+}: {
+  index: number;
+  disabled?: boolean;
+}) => {
   const styleDecl = useComputedStyleDecl("background-repeat");
   const value = getRepeatedStyleItem(styleDecl, index);
   const items = [
@@ -247,6 +257,7 @@ const BackgroundRepeat = ({ index }: { index: number }) => {
     >
       <ToggleGroup
         type="single"
+        disabled={disabled}
         value={toValue(value)}
         aria-label="Background repeat"
         onValueChange={(value) => {
@@ -293,7 +304,13 @@ const BackgroundRepeat = ({ index }: { index: number }) => {
   );
 };
 
-const BackgroundAttachment = ({ index }: { index: number }) => {
+const BackgroundAttachment = ({
+  index,
+  disabled,
+}: {
+  index: number;
+  disabled?: boolean;
+}) => {
   const styleDecl = useComputedStyleDecl("background-attachment");
   const value = getRepeatedStyleItem(styleDecl, index);
   return (
@@ -304,6 +321,7 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
     >
       <ToggleGroup
         type="single"
+        disabled={disabled}
         value={toValue(value)}
         aria-label="Background attachment"
         onValueChange={(value) => {
@@ -322,6 +340,7 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
 };
 
 const OtherLayerProperties = ({ index }: { index: number }) => {
+  const readonly = useReadonly();
   return (
     <CollapsibleSectionRoot label={"More properties"} fullWidth={true}>
       <Flex
@@ -335,24 +354,28 @@ const OtherLayerProperties = ({ index }: { index: number }) => {
             description={propertyDescriptions.backgroundBlendMode}
             properties={["background-blend-mode"]}
           />
-          <SelectControl property="background-blend-mode" index={index} />
+          <SelectControl
+            disabled={readonly}
+            property="background-blend-mode"
+            index={index}
+          />
         </Grid>
-        <BackgroundSize index={index} />
-        <BackgroundPosition index={index} />
+        <BackgroundSize disabled={readonly} index={index} />
+        <BackgroundPosition disabled={readonly} index={index} />
         <Grid columns={2} align="center" gap={2}>
           <PropertyLabel
             label="Repeat"
             description={propertyDescriptions.backgroundRepeat}
             properties={["background-repeat"]}
           />
-          <BackgroundRepeat index={index} />
+          <BackgroundRepeat disabled={readonly} index={index} />
 
           <PropertyLabel
             label="Attachment"
             description={propertyDescriptions.backgroundAttachment}
             properties={["background-attachment"]}
           />
-          <BackgroundAttachment index={index} />
+          <BackgroundAttachment disabled={readonly} index={index} />
         </Grid>
         <Grid columns={2} align="center" gap={2}>
           <PropertyLabel
@@ -360,14 +383,22 @@ const OtherLayerProperties = ({ index }: { index: number }) => {
             description={propertyDescriptions.backgroundClip}
             properties={["background-clip"]}
           />
-          <SelectControl property="background-clip" index={index} />
+          <SelectControl
+            disabled={readonly}
+            property="background-clip"
+            index={index}
+          />
 
           <PropertyLabel
             label="Origin"
             description={propertyDescriptions.backgroundOrigin}
             properties={["background-origin"]}
           />
-          <SelectControl property="background-origin" index={index} />
+          <SelectControl
+            disabled={readonly}
+            property="background-origin"
+            index={index}
+          />
         </Grid>
       </Flex>
     </CollapsibleSectionRoot>
@@ -375,6 +406,7 @@ const OtherLayerProperties = ({ index }: { index: number }) => {
 };
 
 export const BackgroundContent = ({ index }: { index: number }) => {
+  const readonly = useReadonly();
   const backgroundImage = useComputedStyleDecl("background-image");
   const backgroundStyleItem = getBackgroundStyleItem(backgroundImage, index);
 
@@ -401,6 +433,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           description={propertyDescriptions.backgroundImage}
         />
         <BackgroundTypeToggle
+          disabled={readonly}
           value={backgroundType}
           onChange={setBackgroundType}
           backgroundStyleItem={backgroundStyleItem}
@@ -431,7 +464,9 @@ export const BackgroundContent = ({ index }: { index: number }) => {
             />
           )}
 
-          {backgroundType === "image" && <BackgroundImage index={index} />}
+          {backgroundType === "image" && (
+            <BackgroundImage index={index} disabled={readonly} />
+          )}
 
           <Separator />
 

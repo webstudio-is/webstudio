@@ -17,6 +17,7 @@ type Item = {
   label: string;
   source: ItemSource;
   disabled: boolean;
+  locked: boolean;
   states: string[];
 };
 
@@ -25,6 +26,7 @@ const localItem: Item = {
   label: "Local",
   source: "local",
   disabled: false,
+  locked: false,
   states: [],
 };
 
@@ -34,6 +36,7 @@ const getItems = (): Array<Item> => [
     label: "Token",
     source: "token",
     disabled: false,
+    locked: false,
     states: [],
   },
   {
@@ -41,6 +44,7 @@ const getItems = (): Array<Item> => [
     label: "Tag",
     source: "tag",
     disabled: false,
+    locked: false,
     states: [],
   },
 ];
@@ -55,6 +59,7 @@ const createItem = (
     label,
     source: "token",
     disabled: false,
+    locked: false,
     states: [],
   };
   setValue([...value, item]);
@@ -77,6 +82,7 @@ export const StyleSourceInput = () => {
       label: "Disabled",
       source: "token",
       disabled: true,
+      locked: false,
       states: [],
     },
   ]);
@@ -93,6 +99,7 @@ export const StyleSourceInput = () => {
         "Local Something Something Something Something Something Something Something",
       source: "token",
       disabled: false,
+      locked: false,
       states: [],
     },
   ]);

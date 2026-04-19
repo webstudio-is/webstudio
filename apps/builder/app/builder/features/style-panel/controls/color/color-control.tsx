@@ -6,8 +6,10 @@ import {
   useComputedStyleDecl,
 } from "../../shared/model";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 
 export const ColorControl = ({ property }: { property: CssProperty }) => {
+  const readonly = useReadonly();
   const computedStyleDecl = useComputedStyleDecl(property);
   const value = computedStyleDecl.cascadedValue;
   const usedColor = computedStyleDecl.usedValue;
@@ -27,6 +29,7 @@ export const ColorControl = ({ property }: { property: CssProperty }) => {
   const setValue = setProperty(property);
   return (
     <ColorPickerControl
+      disabled={readonly}
       property={property}
       value={value}
       currentColor={currentColor}

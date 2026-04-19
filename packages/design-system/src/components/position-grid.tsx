@@ -121,6 +121,7 @@ type PositionGridProps = {
   focusedPosition?: Position;
   selectedPosition?: MixedPosition;
   focused?: boolean;
+  disabled?: boolean;
   onSelect: (position: Position) => void;
 };
 
@@ -133,6 +134,7 @@ export const PositionGrid = ({
   selectedPosition,
   focusedPosition,
   focused = false,
+  disabled = false,
   onSelect,
 }: PositionGridProps) => {
   const { handleKeyDown, focusedKey } = useKeyboard({
@@ -143,10 +145,12 @@ export const PositionGrid = ({
 
   return (
     <Grid
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
+      tabIndex={disabled ? -1 : 0}
+      onKeyDown={disabled ? undefined : handleKeyDown}
       data-focused={focused}
+      aria-disabled={disabled}
       className={containerStyle()}
+      css={disabled ? { opacity: 0.5, pointerEvents: "none" } : undefined}
     >
       {positions.map(([x, y]) => {
         const selectedKey = `${numericSelectedPosition?.x}-${numericSelectedPosition?.y}`;

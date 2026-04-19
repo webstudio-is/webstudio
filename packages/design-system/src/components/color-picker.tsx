@@ -147,6 +147,7 @@ type ColorPickerProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   css?: CSS;
+  disabled?: boolean;
 };
 
 // Renders <color-input> with its built-in trigger chip, hiding the text input.
@@ -162,6 +163,7 @@ export const ColorPicker = ({
   open,
   onOpenChange,
   css,
+  disabled = false,
 }: ColorPickerProps) => {
   const colorInputRef = useRef<ColorInput>(null);
   const scopeClass = useId().replace(/:/g, "");
@@ -202,6 +204,12 @@ export const ColorPicker = ({
 
   // Sync externally-controlled open state into the web component.
   useEffect(() => {
+    if (disabled) {
+      try {
+        colorInputRef.current?.close();
+      } catch {}
+      return;
+    }
     if (open === undefined) {
       return;
     }
@@ -216,7 +224,7 @@ export const ColorPicker = ({
         }
       } catch {}
     });
-  }, [open]);
+  }, [disabled, open]);
 
   // Sync external value changes into the web component.
   useEffect(() => {
@@ -241,6 +249,9 @@ export const ColorPicker = ({
     colorInputElement.addEventListener(
       "change",
       (event: Event) => {
+        if (disabled) {
+          return;
+        }
         const { value, colorspace } = (event as CustomEvent<ChangeDetail>)
           .detail;
         lastStyleValue = cssStringToStyleValue(value, colorspace);
@@ -253,6 +264,12 @@ export const ColorPicker = ({
     colorInputElement.addEventListener(
       "open",
       () => {
+        if (disabled) {
+          try {
+            colorInputElement.close();
+          } catch {}
+          return;
+        }
         // Set contrast immediately on open so the initial color is correct
         // before any change event fires (the component's own JS sets --contrast
         // based on raw color only, ignoring alpha).
@@ -270,7 +287,9 @@ export const ColorPicker = ({
         callbacksRef.current.enableCanvasPointerEvents();
         document.body.style.removeProperty("user-select");
         callbacksRef.current.onOpenChange?.(false);
-        callbacksRef.current.onChangeComplete(lastStyleValue);
+        if (!disabled) {
+          callbacksRef.current.onChangeComplete(lastStyleValue);
+        }
       },
       { signal }
     );
@@ -285,7 +304,7 @@ export const ColorPicker = ({
       callbacksRef.current.enableCanvasPointerEvents();
       document.body.style.removeProperty("user-select");
     };
-  }, [overrideContrast]);
+  }, [disabled, overrideContrast]);
 
   const { className: textClass } = textStyle();
 
@@ -315,13 +334,15 @@ export const ColorPicker = ({
         }       
       `}</style>
 
-      <ColorThumb color={colorString} css={css}>
-        <color-input
-          ref={colorInputRef}
-          value={colorString}
-          theme="light"
-          class={`${textClass} ${scopeClass}`}
-        />
+      <ColorThumb color={colorString} css={css} aria-disabled={disabled}>
+        {disabled === false && (
+          <color-input
+            ref={colorInputRef}
+            value={colorString}
+            theme="light"
+            class={`${textClass} ${scopeClass}`}
+          />
+        )}
       </ColorThumb>
     </>
   );

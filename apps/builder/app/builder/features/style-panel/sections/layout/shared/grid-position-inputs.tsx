@@ -58,6 +58,7 @@ type GridPositionInputsProps = {
   gridColumns: number;
   gridRows: number;
   checkBounds?: boolean;
+  disabled?: boolean;
   /**
    * When true, "end" values are inclusive track indices (1-based)
    * instead of exclusive grid-line numbers.
@@ -80,6 +81,7 @@ const PositionInputGroup = ({
   minEnd,
   maxEnd,
   label,
+  disabled,
 }: {
   startValue: number;
   endValue: number;
@@ -93,11 +95,13 @@ const PositionInputGroup = ({
   minEnd: number;
   maxEnd: number;
   label: string;
+  disabled?: boolean;
   onKeyDown?: (event: React.KeyboardEvent) => void;
 }) => (
   <Flex direction="column" gap="1" css={{ flex: 1 }}>
     <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[3] }}>
       <InputField
+        disabled={disabled}
         type="number"
         value={String(startValue)}
         onChange={(event) => {
@@ -113,6 +117,7 @@ const PositionInputGroup = ({
         max={maxStart}
       />
       <InputField
+        disabled={disabled}
         type="number"
         value={String(endValue)}
         onChange={(event) => {
@@ -143,6 +148,7 @@ export const GridPositionInputs = ({
   gridRows,
   checkBounds = false,
   inclusiveEnd = false,
+  disabled,
 }: GridPositionInputsProps) => {
   const validation = validateGridPosition(value, gridColumns, gridRows, {
     checkBounds,
@@ -156,6 +162,7 @@ export const GridPositionInputs = ({
   return (
     <Flex gap="2">
       <PositionInputGroup
+        disabled={disabled}
         startValue={value.columnStart}
         endValue={value.columnEnd}
         onStartChange={(columnStart) => onChange({ ...value, columnStart })}
@@ -171,6 +178,7 @@ export const GridPositionInputs = ({
         label="Column: start/end"
       />
       <PositionInputGroup
+        disabled={disabled}
         startValue={value.rowStart}
         endValue={value.rowEnd}
         onStartChange={(rowStart) => onChange({ ...value, rowStart })}

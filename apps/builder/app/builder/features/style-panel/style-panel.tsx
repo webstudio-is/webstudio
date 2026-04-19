@@ -23,7 +23,12 @@ import {
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { EllipsesIcon } from "@webstudio-is/icons";
-import { $selectedInstanceRenderState } from "~/shared/nano-states";
+import {
+  $selectedInstanceRenderState,
+  $selectedStyleSource,
+} from "~/shared/nano-states";
+import { isStyleSourceLocked } from "~/shared/style-source-utils";
+import { ReadonlyProvider } from "./shared/readonly";
 import { $selectedInstance } from "~/shared/awareness";
 import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
 import {
@@ -122,6 +127,7 @@ export const ModeMenu = () => {
 export const StylePanel = () => {
   const { stylePanelMode } = useStore($settings);
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
+  const readonly = isStyleSourceLocked(useStore($selectedStyleSource));
   const tag = useStore($selectedInstanceTag);
   const display = toValue(useComputedStyleDecl("display").computedValue);
   const parentDisplay = toValue(
@@ -179,7 +185,7 @@ export const StylePanel = () => {
   }
 
   return (
-    <>
+    <ReadonlyProvider value={readonly}>
       <Box css={{ padding: theme.panel.padding }}>
         <Text variant="titles" css={{ paddingBlock: theme.panel.paddingBlock }}>
           Style sources
@@ -195,6 +201,6 @@ export const StylePanel = () => {
           {all}
         </CollapsibleProvider>
       </ScrollArea>
-    </>
+    </ReadonlyProvider>
   );
 };

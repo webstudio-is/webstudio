@@ -29,6 +29,7 @@ import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 import { AlignSelfControl } from "../shared/align-self";
 import { OrderControl } from "../shared/order";
 import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
@@ -88,6 +89,7 @@ const getSizingValue = (flexGrow: string, flexShrink: string) => {
 };
 
 const FlexChildSectionSizing = () => {
+  const readonly = useReadonly();
   const styles = useComputedStyles(["flex-grow", "flex-shrink", "flex-basis"]);
   const [flexGrow, flexShrink, flexBasis] = styles;
   const styleValueSource = getPriorityStyleValueSource(styles);
@@ -148,6 +150,7 @@ const FlexChildSectionSizing = () => {
       {/* We don't support "flex" shorthand and
         this control is manipulating 3 properties at once */}
       <ToggleGroup
+        disabled={readonly}
         color={styleValueSource}
         type="single"
         value={selectedValue}

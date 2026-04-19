@@ -44,6 +44,7 @@ import {
 } from "@webstudio-is/icons";
 import { MenuControl, SelectControl } from "../../controls";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 import { StyleSection } from "../../shared/style-section";
 import {
   type IntermediateStyleValue,
@@ -68,12 +69,15 @@ import { DEFAULT_GRID_TRACK_COUNT, DEFAULT_GRID_GAP } from "./shared/constants";
 const GapLinked = ({
   isLinked,
   onChange,
+  disabled,
 }: {
   isLinked: boolean;
   onChange: (isLinked: boolean) => void;
+  disabled?: boolean;
 }) => (
   <EnhancedTooltip content={isLinked ? "Unlink gap values" : "Link gap values"}>
     <SmallToggleButton
+      disabled={disabled}
       pressed={isLinked}
       onPressedChange={onChange}
       variant="normal"
@@ -137,6 +141,7 @@ const GapInput = ({
   onPreviewChange,
   onChange,
   onReset,
+  disabled,
 }: {
   icon: JSX.Element;
   property: CssProperty;
@@ -146,10 +151,12 @@ const GapInput = ({
   onPreviewChange: (value?: StyleValue) => void;
   onChange: (value: StyleValue) => void;
   onReset: () => void;
+  disabled?: boolean;
 }) => {
   return (
     <Box>
       <CssValueInput
+        disabled={disabled}
         styleSource={styleDecl.source.name}
         icon={
           <GapTooltip
@@ -204,6 +211,7 @@ const GapInput = ({
 };
 
 const Gap = () => {
+  const readonly = useReadonly();
   const [columnGap, rowGap] = useComputedStyles(["column-gap", "row-gap"]);
   const [isLinked, setIsLinked] = useState(
     () => toValue(columnGap.cascadedValue) === toValue(rowGap.cascadedValue)
@@ -229,6 +237,7 @@ const Gap = () => {
     >
       <Box css={{ gridArea: "column-gap" }}>
         <GapInput
+          disabled={readonly}
           icon={
             <GapHorizontalIcon
               onClick={(event) => {
@@ -287,6 +296,7 @@ const Gap = () => {
 
       <Flex css={{ gridArea: "linked", px: theme.spacing[3] }} justify="center">
         <GapLinked
+          disabled={readonly}
           isLinked={isLinked}
           onChange={(isLinked) => {
             setIsLinked(isLinked);
@@ -314,6 +324,7 @@ const Gap = () => {
 
       <Box css={{ gridArea: "row-gap" }}>
         <GapInput
+          disabled={readonly}
           icon={
             <GapVerticalIcon
               onClick={(event) => {

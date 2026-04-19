@@ -464,6 +464,7 @@ type ComboboxProps<Item> = UseComboboxProps<Item> &
     | "suffix"
     | "onBlur"
     | "onInvalid"
+    | "disabled"
   >;
 
 export const Combobox = <Item,>({
@@ -477,6 +478,7 @@ export const Combobox = <Item,>({
   suffix,
   onBlur,
   onInvalid,
+  disabled,
   ...props
 }: ComboboxProps<Item>) => {
   const combobox = useCombobox<Item>(props);
@@ -500,6 +502,7 @@ export const Combobox = <Item,>({
             placeholder={placeholder}
             name={name}
             color={color}
+            disabled={disabled}
             suffix={
               suffix ??
               (props.getItems().length > 0 && (

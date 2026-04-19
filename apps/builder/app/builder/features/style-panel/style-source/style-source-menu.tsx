@@ -40,6 +40,7 @@ type IntermediateItem = {
   label: string;
   disabled: boolean;
   source: ItemSource;
+  locked: boolean;
   isAdded?: boolean;
   states: string[];
 };
@@ -113,11 +114,16 @@ const menuActionDescriptions = {
   convertToToken:
     "Turn local styles into a reusable token you can apply to other elements.",
   clearStyles: "Remove all styles from this local style source.",
+  lock: "Protect this token from accidental style changes until you unlock it.",
+  unlock: "Allow style changes on this token again.",
   detach: "Remove this token from the element without deleting it.",
   delete: "Permanently delete this token and all its styles from the project.",
 } as const;
 
 type MenuAction = keyof typeof menuActionDescriptions;
+
+const canEditStyleSourceStyles = (item: IntermediateItem) =>
+  item.source === "local" || item.locked === false;
 
 // All available CSS selectors for autocomplete
 const allSelectors = [
@@ -233,6 +239,7 @@ type StyleSourceMenuProps = {
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
+  onToggleLock?: (itemId: IntermediateItem["id"], locked: boolean) => void;
   onConvertToToken?: (itemId: IntermediateItem["id"]) => void;
   onDisable?: (itemId: IntermediateItem["id"]) => void;
   onEnable?: (itemId: IntermediateItem["id"]) => void;
@@ -248,6 +255,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
     description?: string;
   }>();
   const [highlightedAction, setHighlightedAction] = useState<MenuAction>();
+  const canEditStyles = canEditStyleSourceStyles(props.item);
 
   // Get description for highlighted or selected item
   const selectedState = props.selectedItemSelector?.state;
@@ -330,6 +338,19 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Duplicate
           </DropdownMenuItem>
         )}
+        {props.item.source === "token" && (
+          <DropdownMenuItem
+            onFocus={() => {
+              setHighlightedSelector(undefined);
+              setHighlightedAction(props.item.locked ? "unlock" : "lock");
+            }}
+            onSelect={() =>
+              props.onToggleLock?.(props.item.id, props.item.locked === false)
+            }
+          >
+            {props.item.locked ? "Unlock" : "Lock"}
+          </DropdownMenuItem>
+        )}
         {props.item.source === "local" && (
           <DropdownMenuItem
             onFocus={() => {
@@ -376,98 +397,105 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Delete
           </DropdownMenuItem>
         )}
-        {selectorLabels.map((currentCategory) => {
-          const categoryStates = props.states.filter(
-            ({ type }) => type === currentCategory
-          );
-          if (categoryStates.length === 0) {
-            return;
-          }
-          return (
-            <Fragment key={currentCategory}>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>
-                {categoryLabels[currentCategory]}
-              </DropdownMenuLabel>
-              {categoryStates.map(
-                ({ label, selector, source, type, description }, index) => {
-                  const previousItem = categoryStates[index - 1];
-                  const showSeparator =
-                    index > 0 &&
-                    ((source === "component" &&
-                      previousItem?.source !== "component") ||
-                      (source === "custom" &&
-                        previousItem?.source !== "custom"));
-
-                  return (
-                    <Fragment key={selector}>
-                      {showSeparator && <DropdownMenuSeparator />}
-                      <DropdownMenuItem
-                        withIndicator={true}
-                        onFocus={() => {
-                          setHighlightedAction(undefined);
-                          setHighlightedSelector({
-                            selector,
-                            type,
-                            description,
-                          });
-                        }}
-                        icon={
-                          props.item.id ===
-                            props.selectedItemSelector?.styleSourceId &&
-                          selector === props.selectedItemSelector.state && (
-                            <CheckMarkIcon
-                              color={
-                                props.item.states.includes(selector)
-                                  ? rawTheme.colors.foregroundPrimary
-                                  : rawTheme.colors.foregroundIconMain
-                              }
-                              size={12}
-                            />
-                          )
-                        }
-                        onSelect={() =>
-                          props.onSelect?.({
-                            styleSourceId: props.item.id,
-                            state:
-                              props.selectedItemSelector?.state === selector
-                                ? undefined
-                                : selector,
-                          })
-                        }
-                      >
-                        <Flex justify="between" align="center" grow>
-                          <Text variant="labels" truncate>
-                            {label}
-                          </Text>
-                          {props.item.states.includes(selector) && (
-                            <DotIcon
-                              size="12"
-                              color={rawTheme.colors.foregroundPrimary}
-                            />
-                          )}
-                        </Flex>
-                      </DropdownMenuItem>
-                    </Fragment>
-                  );
-                }
-              )}
-            </Fragment>
-          );
-        })}
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>Add more</DropdownMenuLabel>
-        <Box css={{ padding: theme.spacing[4] }}>
-          <SelectorCombobox
-            existingSelectors={props.states.map((state) => state.selector)}
-            onSelect={(selector) =>
-              props.onAddSelector?.(props.item.id, selector)
+        {canEditStyles &&
+          selectorLabels.map((currentCategory) => {
+            const categoryStates = props.states.filter(
+              ({ type }) => type === currentCategory
+            );
+            if (categoryStates.length === 0) {
+              return;
             }
-          />
-        </Box>
+            return (
+              <Fragment key={currentCategory}>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>
+                  {categoryLabels[currentCategory]}
+                </DropdownMenuLabel>
+                {categoryStates.map(
+                  ({ label, selector, source, type, description }, index) => {
+                    const previousItem = categoryStates[index - 1];
+                    const showSeparator =
+                      index > 0 &&
+                      ((source === "component" &&
+                        previousItem?.source !== "component") ||
+                        (source === "custom" &&
+                          previousItem?.source !== "custom"));
+
+                    return (
+                      <Fragment key={selector}>
+                        {showSeparator && <DropdownMenuSeparator />}
+                        <DropdownMenuItem
+                          withIndicator={true}
+                          onFocus={() => {
+                            setHighlightedAction(undefined);
+                            setHighlightedSelector({
+                              selector,
+                              type,
+                              description,
+                            });
+                          }}
+                          icon={
+                            props.item.id ===
+                              props.selectedItemSelector?.styleSourceId &&
+                            selector === props.selectedItemSelector.state && (
+                              <CheckMarkIcon
+                                color={
+                                  props.item.states.includes(selector)
+                                    ? rawTheme.colors.foregroundPrimary
+                                    : rawTheme.colors.foregroundIconMain
+                                }
+                                size={12}
+                              />
+                            )
+                          }
+                          onSelect={() =>
+                            props.onSelect?.({
+                              styleSourceId: props.item.id,
+                              state:
+                                props.selectedItemSelector?.state === selector
+                                  ? undefined
+                                  : selector,
+                            })
+                          }
+                        >
+                          <Flex justify="between" align="center" grow>
+                            <Text variant="labels" truncate>
+                              {label}
+                            </Text>
+                            {props.item.states.includes(selector) && (
+                              <DotIcon
+                                size="12"
+                                color={rawTheme.colors.foregroundPrimary}
+                              />
+                            )}
+                          </Flex>
+                        </DropdownMenuItem>
+                      </Fragment>
+                    );
+                  }
+                )}
+              </Fragment>
+            );
+          })}
+        {canEditStyles && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Add more</DropdownMenuLabel>
+            <Box css={{ padding: theme.spacing[4] }}>
+              <SelectorCombobox
+                existingSelectors={props.states.map((state) => state.selector)}
+                onSelect={(selector) =>
+                  props.onAddSelector?.(props.item.id, selector)
+                }
+              />
+            </Box>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem hint>{description}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
+
+export const __testing__ = { canEditStyleSourceStyles };

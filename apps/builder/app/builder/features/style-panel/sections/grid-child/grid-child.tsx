@@ -31,6 +31,7 @@ import {
   deleteProperty,
   resetEphemeralStyles,
 } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 import { getGridDimensions } from "../layout/shared/grid-areas";
 import { GridAreaPicker } from "../layout/shared/grid-area-picker";
 import {
@@ -258,6 +259,7 @@ const GridChildPositionMode = ({
   value: PositionMode;
   onChange: (value: PositionMode) => void;
 }) => {
+  const readonly = useReadonly();
   const [activeTooltip, setActiveTooltip] = useState<string | undefined>();
 
   const items = [
@@ -294,6 +296,7 @@ const GridChildPositionMode = ({
         ]}
       />
       <ToggleGroup
+        disabled={readonly}
         type="single"
         value={value}
         onValueChange={(newValue) => {
@@ -369,6 +372,7 @@ const SpanInput = ({
   property: "grid-column-end" | "grid-row-end";
   startProperty: "grid-column-start" | "grid-row-start";
 }) => {
+  const readonly = useReadonly();
   const computedStyleDecl = useComputedStyleDecl(property);
   const value = computedStyleDecl.cascadedValue;
   const [intermediateValue, setIntermediateValue] = useState<
@@ -453,6 +457,7 @@ const SpanInput = ({
 
   return (
     <CssValueInput
+      disabled={readonly}
       styleSource={computedStyleDecl.source.name}
       property={property}
       value={displayValue}
@@ -494,6 +499,7 @@ const SpanInput = ({
 };
 
 const GridChildPositionArea = () => {
+  const readonly = useReadonly();
   const parentGridTemplateAreas = useParentComputedStyleDecl(
     "grid-template-areas"
   );
@@ -532,6 +538,7 @@ const GridChildPositionArea = () => {
     <Grid css={{ gridTemplateColumns: "3fr 8fr" }}>
       <div />
       <Select
+        disabled={readonly}
         options={areaNames}
         value={selectedArea}
         onChange={handleAreaChange}
@@ -542,6 +549,7 @@ const GridChildPositionArea = () => {
 };
 
 const GridChildPositionManual = () => {
+  const readonly = useReadonly();
   const parentGridTemplateColumns = useParentComputedStyleDecl(
     "grid-template-columns"
   );
@@ -684,6 +692,7 @@ const GridChildPositionManual = () => {
       >
         <div />
         <GridPositionInputs
+          disabled={readonly}
           value={localValue.value}
           onChange={handleChange}
           onBlur={() => {
@@ -695,6 +704,7 @@ const GridChildPositionManual = () => {
         />
       </Grid>
       <GridAreaPicker
+        disabled={readonly}
         value={{
           name: "",
           ...localValue.value,

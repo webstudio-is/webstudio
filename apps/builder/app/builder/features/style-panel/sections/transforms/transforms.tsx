@@ -31,6 +31,7 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
+import { useReadonly } from "../../shared/readonly";
 import { humanizeString } from "~/shared/string-utils";
 import { getDots } from "../../shared/style-section";
 import {
@@ -76,6 +77,7 @@ const TransformAdvancedButton = forwardRef<
   ElementRef<"button">,
   ComponentProps<"button">
 >((props, ref) => {
+  const readonly = useReadonly();
   const styles = useComputedStyles(advancedProperties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   return (
@@ -84,6 +86,7 @@ const TransformAdvancedButton = forwardRef<
         {...props}
         ref={ref}
         variant={styleValueSourceColor}
+        disabled={readonly}
         onClick={(event) => {
           if (event.altKey) {
             const batch = createBatchUpdate();
@@ -103,30 +106,42 @@ const TransformAdvancedButton = forwardRef<
 });
 
 const TransformAdvancedPopover = () => {
+  const readonly = useReadonly();
   return (
     <FloatingPanel
       title="Advanced Transform"
       placement="bottom-within"
       content={
-        <Grid gap="2" css={{ padding: theme.panel.padding }}>
+        <Grid
+          gap="2"
+          css={{
+            padding: theme.panel.padding,
+          }}
+        >
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
               label="Backface Visibility"
               description={propertyDescriptions.backfaceVisibility}
               properties={["backface-visibility"]}
             />
-            <TextControl property="backface-visibility" />
+            <TextControl property="backface-visibility" disabled={readonly} />
           </Grid>
-          <TransformAndPerspectiveOrigin property="transform-origin" />
+          <TransformAndPerspectiveOrigin
+            property="transform-origin"
+            disabled={readonly}
+          />
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
               label="Perspective"
               description={propertyDescriptions.perspective}
               properties={["perspective"]}
             />
-            <TextControl property="perspective" />
+            <TextControl property="perspective" disabled={readonly} />
           </Grid>
-          <TransformAndPerspectiveOrigin property="perspective-origin" />
+          <TransformAndPerspectiveOrigin
+            property="perspective-origin"
+            disabled={readonly}
+          />
         </Grid>
       }
     >
@@ -137,6 +152,7 @@ const TransformAdvancedPopover = () => {
 
 export const Section = () => {
   const [isOpen, setIsOpen] = useOpenState(label);
+  const readonly = useReadonly();
 
   const styles = useComputedStyles(properties);
   const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
@@ -164,6 +180,7 @@ export const Section = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SectionTitleButton
+                    disabled={readonly}
                     prefix={<PlusIcon />}
                   ></SectionTitleButton>
                 </DropdownMenuTrigger>
@@ -228,6 +245,7 @@ const TransformSection = ({
   index: number;
   panel: TransformPanel;
 }) => {
+  const readonly = useReadonly();
   const property = panel === "rotate" || panel === "skew" ? "transform" : panel;
   const styleDecl = useComputedStyleDecl(property);
   const values = getHumanizedTextFromTransformLayer(
@@ -243,11 +261,18 @@ const TransformSection = ({
     <FloatingPanel
       title={humanizeString(panel)}
       content={
-        <Flex direction="column" css={{ padding: theme.panel.padding }}>
-          {panel === "translate" && <TranslatePanelContent />}
-          {panel === "scale" && <ScalePanelContent />}
-          {panel === "rotate" && <RotatePanelContent />}
-          {panel === "skew" && <SkewPanelContent />}
+        <Flex
+          direction="column"
+          css={{
+            padding: theme.panel.padding,
+          }}
+        >
+          {panel === "translate" && (
+            <TranslatePanelContent disabled={readonly} />
+          )}
+          {panel === "scale" && <ScalePanelContent disabled={readonly} />}
+          {panel === "rotate" && <RotatePanelContent disabled={readonly} />}
+          {panel === "skew" && <SkewPanelContent disabled={readonly} />}
         </Flex>
       }
     >
@@ -261,6 +286,7 @@ const TransformSection = ({
             <SmallToggleButton
               variant="normal"
               pressed={value.hidden}
+              disabled={readonly}
               tabIndex={-1}
               onPressedChange={() =>
                 handleHideTransformProperty({
@@ -272,6 +298,7 @@ const TransformSection = ({
             />
             <SmallIconButton
               variant="destructive"
+              disabled={readonly}
               tabIndex={-1}
               icon={<MinusIcon />}
               onClick={() =>

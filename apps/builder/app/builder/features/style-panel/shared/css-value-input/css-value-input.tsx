@@ -86,6 +86,7 @@ const useScrub = ({
   intermediateValue,
   defaultUnit,
   property,
+  disabled,
   onChange,
   onChangeComplete,
   onAbort,
@@ -95,6 +96,7 @@ const useScrub = ({
   value: CssValueInputValue;
   intermediateValue: CssValueInputValue | undefined;
   property: CssProperty;
+  disabled: boolean | undefined;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
   onAbort: () => void;
@@ -133,6 +135,10 @@ const useScrub = ({
 
     // Support only auto keyword to be scrubbable
     if (inputRefCurrent === null || scrubRefCurrent === null) {
+      return;
+    }
+
+    if (disabled) {
       return;
     }
 
@@ -266,6 +272,7 @@ const useScrub = ({
     shouldHandleEvent,
     property,
     defaultUnit,
+    disabled,
     value.type,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     "unit" in value ? value.unit : undefined,
@@ -550,6 +557,7 @@ export const CssValueInput = ({
     options: unitOptions,
     property,
     value,
+    disabled,
     onChange: (unitOrKeyword) => {
       if (unitOrKeyword.type === "keyword") {
         onChangeComplete({ value: unitOrKeyword, type: "unit-select" });
@@ -642,6 +650,7 @@ export const CssValueInput = ({
     defaultUnit,
     value,
     property,
+    disabled,
     intermediateValue: props.intermediateValue,
     onChange: props.onChange,
     onChangeComplete: (value) => onChangeComplete({ value, type: "scrub-end" }),
@@ -695,7 +704,8 @@ export const CssValueInput = ({
   const keywordButtonElement =
     value.type === "keyword" && items.length !== 0 ? (
       <NestedInputButton
-        {...getToggleButtonProps()}
+        {...(disabled ? {} : getToggleButtonProps())}
+        disabled={disabled}
         data-state={isOpen ? "open" : "closed"}
         tabIndex={-1}
       />

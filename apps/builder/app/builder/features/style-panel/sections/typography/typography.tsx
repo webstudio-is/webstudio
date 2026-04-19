@@ -43,6 +43,7 @@ import {
 } from "../../property-label";
 import { useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 
 const advancedProperties: CssProperty[] = [
   "white-space-collapse",
@@ -245,6 +246,7 @@ const AdvancedOptionsButton = forwardRef<
     "data-state"?: "open" | "closed";
   }
 >(({ onClick, ...rest }, ref) => {
+  const readonly = useReadonly();
   const styles = useComputedStyles(advancedProperties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   return (
@@ -252,6 +254,7 @@ const AdvancedOptionsButton = forwardRef<
       <EnhancedTooltip content="More typography options">
         <IconButton
           {...rest}
+          disabled={readonly}
           onClick={(event) => {
             if (event.altKey) {
               const batch = createBatchUpdate();

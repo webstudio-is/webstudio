@@ -20,6 +20,7 @@ type ColorPickerProps = {
   getOptions?: () => Array<KeywordValue | VarValue>;
   property: CssProperty;
   disabled?: boolean;
+  "aria-disabled"?: boolean;
 };
 
 export const ColorPickerControl = ({
@@ -28,24 +29,32 @@ export const ColorPickerControl = ({
   getOptions,
   property,
   disabled,
+  ["aria-disabled"]: ariaDisabled,
   onChange,
   onChangeComplete,
   onAbort,
   onReset,
 }: ColorPickerProps) => {
+  const isDisabled = disabled || ariaDisabled;
+
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
 
   return (
     <CssValueInput
-      aria-disabled={disabled}
+      disabled={isDisabled}
+      aria-disabled={isDisabled}
       styleSource="default"
       prefix={
         <Box css={{ paddingLeft: 2 }}>
           <ColorPicker
+            disabled={isDisabled}
             value={currentColor}
             onChange={(styleValue) => {
+              if (isDisabled) {
+                return;
+              }
               setIntermediateValue(styleValue);
               if (styleValue) {
                 onChange(styleValue);
@@ -54,6 +63,9 @@ export const ColorPickerControl = ({
               }
             }}
             onChangeComplete={(value) => {
+              if (isDisabled) {
+                return;
+              }
               setIntermediateValue(undefined);
               onChangeComplete(value);
             }}

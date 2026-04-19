@@ -33,11 +33,13 @@ import {
   editRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
+import { useReadonly } from "../../shared/readonly";
 
 const getLayer = (value: undefined | StyleValue, index: number) =>
   value?.type === "layers" ? value.value[index] : undefined;
 
 export const TransitionContent = ({ index }: { index: number }) => {
+  const readonly = useReadonly();
   const styles = useComputedStyles([
     "transition-property",
     "transition-duration",
@@ -132,6 +134,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transition-property"]}
         />
         <TransitionProperty
+          disabled={readonly}
           value={property ?? propertiesData["transition-property"].initial}
           onChange={(value) => {
             updateIntermediateValue({ property: value });
@@ -145,6 +148,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transition-duration"]}
         />
         <CssValueInputContainer
+          disabled={readonly}
           property="transition-duration"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
@@ -170,6 +174,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transition-delay"]}
         />
         <CssValueInputContainer
+          disabled={readonly}
           property="transition-delay"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
@@ -195,6 +200,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transition-timing-function"]}
         />
         <CssValueInputContainer
+          disabled={readonly}
           property="transition-timing-function"
           styleSource="local"
           getOptions={() => [
@@ -261,6 +267,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           </Flex>
         </Label>
         <TextArea
+          disabled={readonly}
           rows={3}
           name="description"
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
