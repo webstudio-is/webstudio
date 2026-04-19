@@ -451,7 +451,8 @@ describe("listMembers", () => {
           })),
         ])
       ),
-      // getPaidSeats: TransactionLog query
+      // getExtraPaidSeats: Product lookup + TransactionLog query
+      db.get("Product", () => json([{ id: "prod-seats" }])),
       db.get("TransactionLog", () => json(transactionLog))
     );
   };

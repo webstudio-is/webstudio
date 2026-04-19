@@ -252,6 +252,7 @@ describe("findMany (msw)", () => {
           headers: { "Content-Range": `*/${opts.pendingInvites}` },
         })
       ),
+      db.get("Product", () => json([{ id: "prod-seats" }])),
       db.get("TransactionLog", () => json(opts.transactionLog))
     );
   };
