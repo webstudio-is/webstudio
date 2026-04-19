@@ -14,6 +14,7 @@ import { useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
+import { useReadonly } from "../../shared/readonly";
 
 const movementMapSpace = {
   "margin-top": ["margin-bottom", "margin-right", "padding-top", "margin-left"],
@@ -101,7 +102,7 @@ const Cell = ({
   onHover: (target: HoverTarget | undefined) => void;
   property: SpaceStyleProperty;
   getActiveProperties: (modifiers?: Modifiers) => CssProperty[];
-  scrubStatus: ReturnType<typeof useScrub>;
+  scrubStatus: ReturnType<typeof useScrub> & { readonly: boolean };
 }) => {
   const styleDecl = useComputedStyleDecl(property);
   const finalValue =
@@ -113,7 +114,7 @@ const Cell = ({
       <InputPopover
         styleSource={styleDecl.source.name}
         value={finalValue}
-        isOpen={isPopoverOpen}
+        isOpen={scrubStatus.readonly ? false : isPopoverOpen}
         property={property}
         getActiveProperties={getActiveProperties}
         onClose={onPopoverClose}
@@ -126,6 +127,9 @@ const Cell = ({
         }
         onMouseLeave={() => onHover(undefined)}
         onClick={(event) => {
+          if (scrubStatus.readonly) {
+            return;
+          }
           if (event.altKey) {
             deleteProperty(property);
           }
@@ -138,6 +142,7 @@ const Cell = ({
 export { spaceProperties as properties };
 
 export const Section = () => {
+  const readonly = useReadonly();
   const styles = useComputedStyles(spaceProperties);
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
   const styleValue = styles.find(
@@ -145,9 +150,15 @@ export const Section = () => {
   );
   const scrubStatus = useScrub({
     value: styleValue?.usedValue,
-    target: styleValue?.cascadedValue.type === "unit" ? hoverTarget : undefined,
+    target:
+      readonly || styleValue?.cascadedValue.type !== "unit"
+        ? undefined
+        : hoverTarget,
     getModifiersGroup: getSpaceModifiersGroup,
     onChange: (values, options) => {
+      if (readonly) {
+        return;
+      }
       const batch = createBatchUpdate();
       for (const property of spaceProperties) {
         const value = values[property];
@@ -202,6 +213,7 @@ export const Section = () => {
   return (
     <StyleSection label="Space" properties={spaceProperties}>
       <SpaceLayout
+        disabled={readonly}
         ref={layoutRef}
         onClick={(event) => {
           const property = hoverTarget?.property;
@@ -210,6 +222,7 @@ export const Section = () => {
           )?.source.name;
 
           if (
+            readonly === false &&
             property &&
             // reset when the value is set and after try to edit two sides
             (styleValueSource === "local" || styleValueSource === "overwritten")
@@ -230,15 +243,20 @@ export const Section = () => {
               return;
             }
           }
+          if (readonly) {
+            return;
+          }
           handleOpenProperty(property);
         }}
-        onHover={handleHover}
-        onFocus={keyboardNavigation.handleFocus}
-        onBlur={keyboardNavigation.handleBlur}
+        onHover={readonly ? () => undefined : handleHover}
+        onFocus={readonly ? undefined : keyboardNavigation.handleFocus}
+        onBlur={readonly ? undefined : keyboardNavigation.handleBlur}
         activeProperties={activeProperties}
-        onKeyDown={keyboardNavigation.handleKeyDown}
-        onMouseMove={keyboardNavigation.handleMouseMove}
-        onMouseLeave={keyboardNavigation.handleMouseLeave}
+        onKeyDown={readonly ? undefined : keyboardNavigation.handleKeyDown}
+        onMouseMove={readonly ? undefined : keyboardNavigation.handleMouseMove}
+        onMouseLeave={
+          readonly ? undefined : keyboardNavigation.handleMouseLeave
+        }
         renderCell={({ property }) => (
           <Cell
             isPopoverOpen={openProperty === property}
@@ -251,7 +269,10 @@ export const Section = () => {
             onHover={handleHover}
             property={property}
             getActiveProperties={getActiveProperties}
-            scrubStatus={scrubStatus}
+            scrubStatus={{
+              ...scrubStatus,
+              readonly,
+            }}
           />
         )}
       />

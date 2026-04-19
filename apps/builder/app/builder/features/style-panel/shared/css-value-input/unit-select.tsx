@@ -25,6 +25,7 @@ export type UnitOption =
 type UseUnitSelectType = {
   property: CssProperty;
   value: CssValueInputValue;
+  disabled?: boolean;
   onChange: (
     value: { type: "unit"; value: Unit } | { type: "keyword"; value: string }
   ) => void;
@@ -35,6 +36,7 @@ type UseUnitSelectType = {
 export const useUnitSelect = ({
   property,
   value,
+  disabled = false,
   onChange,
   onCloseAutoFocus,
   options: unitOptions,
@@ -69,6 +71,7 @@ export const useUnitSelect = ({
     <UnitSelect
       value={unitOrKeywordValue}
       label={unit ?? nestedSelectButtonUnitless}
+      disabled={disabled}
       options={options}
       open={isOpen}
       onCloseAutoFocus={onCloseAutoFocus}
@@ -91,6 +94,7 @@ type UnitSelectProps = {
   options: Array<UnitOption>;
   value?: string | undefined;
   label?: string | undefined;
+  disabled?: boolean;
   onChange: (value: UnitOption) => void;
   onOpenChange: (open: boolean) => void;
   onCloseAutoFocus: (event: Event) => void;
@@ -101,6 +105,7 @@ const UnitSelect = ({
   options,
   value,
   label,
+  disabled = false,
   onChange,
   onOpenChange,
   onCloseAutoFocus,
@@ -117,10 +122,10 @@ const UnitSelect = ({
         onChange(optionValue);
       }}
       onOpenChange={onOpenChange}
-      open={open}
+      open={disabled ? false : open}
     >
       <SelectPrimitive.SelectTrigger asChild>
-        <NestedInputButton tabIndex={-1}>
+        <NestedInputButton tabIndex={-1} disabled={disabled}>
           <SelectPrimitive.Value>
             {value === "number" ? nestedSelectButtonUnitless : label}
           </SelectPrimitive.Value>

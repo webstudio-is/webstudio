@@ -49,7 +49,13 @@ const toTuple = (
   };
 };
 
-export const BackgroundSize = ({ index }: { index: number }) => {
+export const BackgroundSize = ({
+  index,
+  disabled,
+}: {
+  index: number;
+  disabled?: boolean;
+}) => {
   const property = "background-size";
   const styleDecl = useComputedStyleDecl(property);
   const styleValue = getRepeatedStyleItem(styleDecl, index);
@@ -88,6 +94,7 @@ export const BackgroundSize = ({ index }: { index: number }) => {
         <Select
           // show empty field instead of radix placeholder
           // like css value input does
+          disabled={disabled}
           placeholder=""
           options={selectOptions}
           value={selectValue}
@@ -144,6 +151,7 @@ export const BackgroundSize = ({ index }: { index: number }) => {
           />
 
           <CssValueInputContainer
+            disabled={disabled}
             property={property}
             styleSource="default"
             getOptions={() => customSizeOptions}
@@ -153,6 +161,7 @@ export const BackgroundSize = ({ index }: { index: number }) => {
           />
 
           <CssValueInputContainer
+            disabled={disabled}
             property={property}
             styleSource="default"
             getOptions={() => customSizeOptions}

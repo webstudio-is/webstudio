@@ -54,12 +54,14 @@ type AxisControlProps = {
 export const BackgroundPositionControl = ({
   label = "Position",
   description = propertyDescriptions.backgroundPosition,
+  disabled,
   xAxis,
   yAxis,
   onSelect,
 }: {
   label?: string;
   description?: string;
+  disabled?: boolean;
   xAxis: AxisControlProps;
   yAxis: AxisControlProps;
   onSelect: (position: { x: number; y: number }) => void;
@@ -92,6 +94,7 @@ export const BackgroundPositionControl = ({
       )}
       <Grid gap="2" columns={2}>
         <PositionGrid
+          disabled={disabled}
           selectedPosition={{
             x: calculateBackgroundPosition(xAxis.value),
             y: calculateBackgroundPosition(yAxis.value),
@@ -116,6 +119,7 @@ export const BackgroundPositionControl = ({
             />
           )}
           <CssValueInputContainer
+            disabled={disabled}
             property={xAxis.property}
             styleSource="default"
             getOptions={xAxis.getOptions}
@@ -137,6 +141,7 @@ export const BackgroundPositionControl = ({
             />
           )}
           <CssValueInputContainer
+            disabled={disabled}
             property={yAxis.property}
             styleSource="default"
             getOptions={yAxis.getOptions}
@@ -151,7 +156,13 @@ export const BackgroundPositionControl = ({
   );
 };
 
-export const BackgroundPosition = ({ index }: { index: number }) => {
+export const BackgroundPosition = ({
+  index,
+  disabled,
+}: {
+  index: number;
+  disabled?: boolean;
+}) => {
   const [backgroundPositionX, backgroundPositionY] = useComputedStyles([
     "background-position-x",
     "background-position-y",
@@ -176,6 +187,7 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
 
   return (
     <BackgroundPositionControl
+      disabled={disabled}
       xAxis={{
         label: "Left",
         description: "Left position offset",

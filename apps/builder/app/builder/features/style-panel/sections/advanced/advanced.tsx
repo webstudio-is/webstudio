@@ -22,17 +22,19 @@ import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
 import { $advancedStyleDeclarations } from "./stores";
 import { $selectedInstanceKey } from "~/shared/awareness";
+import { useReadonly } from "../../shared/readonly";
 
 // Only here to keep the same section module interface
 export const properties = [];
 
 const AdvancedStyleSection = (props: {
   label: string;
+  readonly: boolean;
   properties: Array<CssProperty>;
   onAdd: () => void;
   children: ReactNode;
 }) => {
-  const { label, children, properties, onAdd } = props;
+  const { label, readonly, children, properties, onAdd } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
   const styles = useComputedStyles(properties);
   return (
@@ -45,6 +47,7 @@ const AdvancedStyleSection = (props: {
           dots={getDots(styles)}
           suffix={
             <SectionTitleButton
+              disabled={readonly}
               prefix={<PlusIcon />}
               onClick={() => {
                 setIsOpen(true);
@@ -64,6 +67,7 @@ const AdvancedStyleSection = (props: {
 
 export const Section = () => {
   const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
+  const readonly = useReadonly();
   const properties = advancedStyleDeclarations.map(
     (styleDecl) => styleDecl.property
   );
@@ -129,12 +133,14 @@ export const Section = () => {
   return (
     <AdvancedStyleSection
       label="Advanced"
+      readonly={readonly}
       properties={properties}
       onAdd={() => {
         setShowAddStyleInput(true);
       }}
     >
       <CssEditor
+        readonly={readonly}
         declarations={advancedStyleDeclarations}
         onDeleteProperty={handleDeleteProperty}
         onSetProperty={setProperty}

@@ -26,6 +26,7 @@ import { humanizeString } from "~/shared/string-utils";
 import { PropertyLabel } from "../../property-label";
 import { useComputedStyleDecl } from "../../shared/model";
 import { deleteProperty } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 
 const SizeProperty = ({ property }: { property: CssProperty }) => {
   return (
@@ -41,6 +42,7 @@ const SizeProperty = ({ property }: { property: CssProperty }) => {
 };
 
 const ObjectPosition = () => {
+  const readonly = useReadonly();
   const styleDecl = useComputedStyleDecl("object-position");
   return (
     <Flex justify="end">
@@ -54,6 +56,7 @@ const ObjectPosition = () => {
         }
       >
         <IconButton
+          disabled={readonly}
           variant={styleDecl.source.name}
           onClick={(event) => {
             if (event.altKey) {

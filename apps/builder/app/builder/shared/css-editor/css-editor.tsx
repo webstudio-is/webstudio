@@ -120,6 +120,7 @@ const AdvancedPropertyLabel = ({
 
 const AdvancedPropertyValue = ({
   styleDecl,
+  readonly = false,
   onDeleteProperty,
   onSetProperty,
   onChangeComplete,
@@ -127,6 +128,7 @@ const AdvancedPropertyValue = ({
   inputRef: inputRefProp,
 }: {
   styleDecl: ComputedStyleDecl;
+  readonly?: boolean;
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
   onChangeComplete: ComponentProps<
@@ -150,9 +152,11 @@ const AdvancedPropertyValue = ({
       variant="chromeless"
       text="mono"
       fieldSizing="content"
+      disabled={readonly}
       prefix={
         isColor && (
           <ColorPicker
+            disabled={readonly}
             value={styleDecl.usedValue}
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };
@@ -262,6 +266,7 @@ const LazyRender = ({ children }: ComponentProps<"div">) => {
 const AdvancedDeclarationLonghand = memo(
   ({
     styleDecl,
+    readonly = false,
     onChangeComplete,
     onDeleteProperty,
     onSetProperty,
@@ -270,6 +275,7 @@ const AdvancedDeclarationLonghand = memo(
     indentation = initialIndentation,
   }: {
     styleDecl: ComputedStyleDecl;
+    readonly?: boolean;
     indentation?: string;
     onReset?: () => void;
     onSetProperty: SetProperty;
@@ -304,6 +310,7 @@ const AdvancedDeclarationLonghand = memo(
         </Text>
         <AdvancedPropertyValue
           styleDecl={styleDecl}
+          readonly={readonly}
           onChangeComplete={onChangeComplete}
           onReset={onReset}
           onDeleteProperty={onDeleteProperty}
@@ -321,6 +328,7 @@ export const CssEditor = ({
   onAddDeclarations,
   onDeleteAllDeclarations,
   declarations,
+  readonly = false,
   showSearch = true,
   virtualize = true,
   propertiesPosition = "bottom",
@@ -333,6 +341,7 @@ export const CssEditor = ({
   onSetProperty: SetProperty;
   onAddDeclarations: (styleMap: CssStyleMap) => void;
   onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
+  readonly?: boolean;
   showSearch?: boolean;
   propertiesPosition?: "top" | "bottom";
   virtualize?: boolean;
@@ -348,11 +357,19 @@ export const CssEditor = ({
     useState<Array<CssProperty>>();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const effectiveShowAddStyleInput = readonly ? false : showAddStyleInput;
+  const guardedSetProperty: SetProperty = readonly
+    ? () => () => undefined
+    : onSetProperty;
+  const guardedToggleAddStyleInput = readonly
+    ? undefined
+    : onToggleAddStyleInput;
+
   useEffect(() => {
-    if (showAddStyleInput) {
+    if (effectiveShowAddStyleInput) {
       addPropertyInputRef.current?.focus();
     }
-  }, [showAddStyleInput]);
+  }, [effectiveShowAddStyleInput]);
 
   const declarationsMap = new Map(
     declarations.map((decl) => [decl.property, decl])
@@ -370,6 +387,9 @@ export const CssEditor = ({
     recentProperties.length > 0 && searchProperties === undefined;
 
   const handleInsertStyles = (cssText: string) => {
+    if (readonly) {
+      return new Map();
+    }
     const { styleMap, errors } = parseStyleInput(cssText, $cssVarsMap.get());
     for (const error of errors) {
       toast.error(error);
@@ -423,7 +443,7 @@ export const CssEditor = ({
   };
 
   const afterChangingStyles = () => {
-    onToggleAddStyleInput?.(false);
+    guardedToggleAddStyleInput?.(false);
     requestAnimationFrame(() => {
       // We are either focusing the last value input from the recent list if available or the search input.
       const element =
@@ -437,6 +457,9 @@ export const CssEditor = ({
   };
 
   const handleDeleteProperty: DeleteProperty = (property, options = {}) => {
+    if (readonly) {
+      return;
+    }
     onDeleteProperty(property, options);
     if (options.isEphemeral === true) {
       return;
@@ -447,6 +470,9 @@ export const CssEditor = ({
   };
 
   const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
+    if (readonly) {
+      return;
+    }
     setSearchProperties(
       searchProperties?.filter(
         (searchProperty) => styleMap.has(searchProperty) === false
@@ -469,22 +495,23 @@ export const CssEditor = ({
           return (
             <AdvancedDeclarationLonghand
               styleDecl={styleDecl}
+              readonly={readonly}
               key={property}
               valueInputRef={lastRecentValueInputRef}
               onChangeComplete={(event) => {
                 if (event.type === "enter") {
-                  onToggleAddStyleInput?.(true);
+                  guardedToggleAddStyleInput?.(true);
                 }
               }}
               onReset={afterChangingStyles}
               onDeleteProperty={handleDeleteProperty}
-              onSetProperty={onSetProperty}
+              onSetProperty={guardedSetProperty}
             />
           );
         })}
       <Box
         css={
-          showAddStyleInput
+          effectiveShowAddStyleInput
             ? { paddingTop: theme.spacing[3] }
             : // We hide it visually so you can tab into it to get shown.
               { overflow: "hidden", height: 0 }
@@ -499,10 +526,10 @@ export const CssEditor = ({
           }}
           onClose={afterChangingStyles}
           onFocus={() => {
-            onToggleAddStyleInput?.(true);
+            guardedToggleAddStyleInput?.(true);
           }}
           onBlur={() => {
-            onToggleAddStyleInput?.(false);
+            guardedToggleAddStyleInput?.(false);
           }}
           ref={addPropertyInputRef}
         />
@@ -562,8 +589,9 @@ export const CssEditor = ({
               const declarationElement = (
                 <AdvancedDeclarationLonghand
                   styleDecl={styleDecl}
+                  readonly={readonly}
                   onDeleteProperty={handleDeleteProperty}
-                  onSetProperty={onSetProperty}
+                  onSetProperty={guardedSetProperty}
                   valueInputRef={lastRegularValueInputRef}
                   key={property}
                 />

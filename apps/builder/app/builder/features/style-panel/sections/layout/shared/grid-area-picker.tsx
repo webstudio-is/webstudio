@@ -180,6 +180,7 @@ type GridAreaPickerProps = {
   gridColumns: number;
   gridRows: number;
   otherAreas: AreaInfo[];
+  disabled?: boolean;
 };
 
 export const GridAreaPicker = ({
@@ -189,6 +190,7 @@ export const GridAreaPicker = ({
   gridColumns,
   gridRows,
   otherAreas,
+  disabled,
 }: GridAreaPickerProps) => {
   const anchorRef = useRef<{ col: number; row: number }>({
     col: value.columnStart,
@@ -252,6 +254,7 @@ export const GridAreaPicker = ({
         result.push(
           <button
             key={`${col},${row}`}
+            disabled={disabled}
             className={isSelected ? selectedCellStyle() : freeCellStyle()}
             style={{
               gridColumn: `${col} / ${col + 1}`,

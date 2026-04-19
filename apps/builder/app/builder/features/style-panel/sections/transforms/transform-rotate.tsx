@@ -14,7 +14,7 @@ import {
 } from "../../shared/model";
 import { updateTransformFunction } from "./transform-utils";
 
-export const RotatePanelContent = () => {
+export const RotatePanelContent = ({ disabled }: { disabled?: boolean }) => {
   const styleDecl = useComputedStyleDecl("transform");
   const tuple =
     styleDecl.cascadedValue.type === "tuple"
@@ -49,6 +49,7 @@ export const RotatePanelContent = () => {
           description={propertySyntaxes.rotateX}
         />
         <CssValueInputContainer
+          disabled={disabled}
           styleSource="local"
           property="rotate"
           getOptions={() => $availableUnitVariables.get()}
@@ -69,6 +70,7 @@ export const RotatePanelContent = () => {
           description={propertySyntaxes.rotateY}
         />
         <CssValueInputContainer
+          disabled={disabled}
           styleSource="local"
           property="rotate"
           getOptions={() => $availableUnitVariables.get()}
@@ -89,6 +91,7 @@ export const RotatePanelContent = () => {
           description={propertySyntaxes.rotateZ}
         />
         <CssValueInputContainer
+          disabled={disabled}
           styleSource="local"
           property="rotate"
           getOptions={() => $availableUnitVariables.get()}

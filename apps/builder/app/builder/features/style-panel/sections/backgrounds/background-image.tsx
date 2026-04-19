@@ -8,7 +8,13 @@ import { BackgroundCodeEditor } from "./background-code-editor";
 import { $assets } from "~/shared/sync/data-stores";
 import { isAbsoluteUrl } from "@webstudio-is/sdk";
 
-export const BackgroundImage = ({ index }: { index: number }) => {
+export const BackgroundImage = ({
+  index,
+  disabled,
+}: {
+  index: number;
+  disabled?: boolean;
+}) => {
   const elementRef = useRef<HTMLDivElement>(null);
 
   const handleValidate = useCallback(
@@ -64,7 +70,11 @@ export const BackgroundImage = ({ index }: { index: number }) => {
           ref={elementRef}
           data-floating-panel-container
         >
-          <ImageControl property="background-image" index={index} />
+          <ImageControl
+            property="background-image"
+            index={index}
+            disabled={disabled}
+          />
         </Box>
       </Grid>
       <BackgroundCodeEditor index={index} onValidate={handleValidate} />

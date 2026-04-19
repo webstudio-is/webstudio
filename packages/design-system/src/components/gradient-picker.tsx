@@ -69,6 +69,7 @@ export type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
   onThumbSelect: (index: number, stop: GradientStop) => void;
   selectedStopIndex?: number;
   type?: T["type"];
+  disabled?: boolean;
 };
 
 const THUMB_INTERACTION_DISTANCE = 12;
@@ -253,6 +254,7 @@ export const GradientPicker = <T extends ParsedGradient>({
   onChangeComplete,
   onThumbSelect,
   selectedStopIndex,
+  disabled = false,
 }: GradientPickerProps<T>) => {
   const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
@@ -476,6 +478,14 @@ export const GradientPicker = <T extends ParsedGradient>({
     }
   }, [colorPickerOpenStop, stops.length]);
 
+  useEffect(() => {
+    if (disabled) {
+      setColorPickerOpenStop(undefined);
+      setDraggingStop(undefined);
+      setIsHoveredOnStop(false);
+    }
+  }, [disabled]);
+
   const checkIfStopExistsAtPosition = useCallback(
     (
       clientX: number
@@ -525,6 +535,10 @@ export const GradientPicker = <T extends ParsedGradient>({
   const handleThumbPointerDown = useCallback(
     (index: number, stop: GradientStop) =>
       (event: ReactPointerEvent<HTMLDivElement>) => {
+        if (disabled) {
+          event.preventDefault();
+          return;
+        }
         // Don't start drag if the color picker is open for this thumb
         if (colorPickerOpenStop === index) {
           event.stopPropagation();
@@ -611,6 +625,7 @@ export const GradientPicker = <T extends ParsedGradient>({
         });
       },
     [
+      disabled,
       colorPickerOpenStop,
       handleStopSelected,
       thumbDragHandler,
@@ -622,6 +637,10 @@ export const GradientPicker = <T extends ParsedGradient>({
 
   const handleHintPointerDown = useCallback(
     (index: number) => (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (disabled) {
+        event.preventDefault();
+        return;
+      }
       event.stopPropagation();
       hintDragHandler.handlePointerDown({
         event,
@@ -633,11 +652,14 @@ export const GradientPicker = <T extends ParsedGradient>({
         },
       });
     },
-    [hintDragHandler, updateStopHint, onChangeComplete, buildGradient]
+    [buildGradient, disabled, hintDragHandler, onChangeComplete, updateStopHint]
   );
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
+      if (disabled) {
+        return;
+      }
       if (selectedStop === undefined) {
         return;
       }
@@ -725,6 +747,7 @@ export const GradientPicker = <T extends ParsedGradient>({
     },
     [
       handleStopSelected,
+      disabled,
       onThumbSelect,
       selectedStop,
       stops,
@@ -736,6 +759,9 @@ export const GradientPicker = <T extends ParsedGradient>({
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (disabled) {
+        return;
+      }
       if (
         event.target instanceof HTMLElement &&
         event.target.closest("[data-gradient-thumb='true']")
@@ -830,20 +856,27 @@ export const GradientPicker = <T extends ParsedGradient>({
 
       setIsHoveredOnStop(true);
     },
-    [checkIfStopExistsAtPosition, onThumbSelect, updateStops]
+    [checkIfStopExistsAtPosition, disabled, onThumbSelect, updateStops]
   );
 
   const handleMouseIndicator = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
+      if (disabled) {
+        setIsHoveredOnStop(false);
+        return;
+      }
       const { isStopExistingAtPosition } = checkIfStopExistsAtPosition(
         event.clientX
       );
       setIsHoveredOnStop(isStopExistingAtPosition);
     },
-    [checkIfStopExistsAtPosition]
+    [checkIfStopExistsAtPosition, disabled]
   );
 
   const handleSliderFocus = useCallback(() => {
+    if (disabled) {
+      return;
+    }
     if (stops.length === 0) {
       return;
     }
@@ -855,7 +888,7 @@ export const GradientPicker = <T extends ParsedGradient>({
         handleStopSelected(0, firstStop);
       }
     }
-  }, [handleStopSelected, selectedStop, stops]);
+  }, [disabled, handleStopSelected, selectedStop, stops]);
 
   if (
     stops.some(
@@ -877,11 +910,16 @@ export const GradientPicker = <T extends ParsedGradient>({
       <SliderRoot
         ref={handleSliderRef}
         data-gradient-slider
-        css={{ backgroundImage }}
+        css={
+          disabled
+            ? { backgroundImage, opacity: 0.5, pointerEvents: "none" }
+            : { backgroundImage }
+        }
         isHoveredOnStop={isHoveredOnStop}
-        tabIndex={0}
+        tabIndex={disabled ? -1 : 0}
         role="group"
         aria-label="Gradient stops"
+        aria-disabled={disabled}
         onPointerDown={handlePointerDown}
         onFocus={handleSliderFocus}
         onMouseEnter={handleMouseIndicator}
@@ -923,10 +961,14 @@ export const GradientPicker = <T extends ParsedGradient>({
               }}
               onPointerDown={handleThumbPointerDown(index, stop)}
               onClick={() => {
+                if (disabled) {
+                  return;
+                }
                 handleStopSelected(index, stop);
               }}
             >
               <ColorPicker
+                disabled={disabled}
                 value={stopColor}
                 onChange={(value) =>
                   handleStopColorChange(index, value, "change")
@@ -935,9 +977,12 @@ export const GradientPicker = <T extends ParsedGradient>({
                   handleStopColorChange(index, value, "complete")
                 }
                 open={colorPickerOpenStop === index}
-                onOpenChange={(open) =>
-                  handleColorPickerOpenChange(index, open)
-                }
+                onOpenChange={(open) => {
+                  if (disabled) {
+                    return;
+                  }
+                  handleColorPickerOpenChange(index, open);
+                }}
                 css={{
                   width: theme.spacing[8],
                   height: theme.spacing[8],

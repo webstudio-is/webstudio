@@ -20,6 +20,7 @@ import { PropertyLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { useComputedStyleDecl } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 
 const OrderPopover = () => {
   return (
@@ -51,6 +52,7 @@ const OrderPopover = () => {
 };
 
 export const OrderControl = () => {
+  const readonly = useReadonly();
   const order = useComputedStyleDecl("order");
   const selectedValue = toValue(order.cascadedValue);
   const items = [
@@ -93,6 +95,7 @@ export const OrderControl = () => {
         properties={["order"]}
       />
       <ToggleGroup
+        disabled={readonly}
         color={order.source.name}
         type="single"
         value={selectedValue}

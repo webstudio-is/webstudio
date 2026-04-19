@@ -55,6 +55,7 @@ type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: string; label?: string };
 type TransitionPropertyProps = {
   value: StyleValue;
+  disabled?: boolean;
   onChange: (value: KeywordValue | UnparsedValue) => void;
 };
 
@@ -79,6 +80,7 @@ const $animatableDefinedProperties = computed(
 
 export const TransitionProperty = ({
   value,
+  disabled,
   onChange,
 }: TransitionPropertyProps) => {
   const animatableDefinedProperties = useStore($animatableDefinedProperties);
@@ -195,6 +197,7 @@ export const TransitionProperty = ({
       <div {...getComboboxProps()}>
         <ComboboxAnchor>
           <InputField
+            disabled={disabled}
             autoFocus
             {...getInputProps({
               onKeyDown: (event) => {

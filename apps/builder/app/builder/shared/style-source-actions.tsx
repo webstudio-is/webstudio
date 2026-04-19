@@ -28,6 +28,7 @@ import {
   deleteStyleSourcesMutable,
   validateAndRenameStyleSource,
   renameStyleSourceMutable,
+  toggleStyleSourceLockMutable,
   type RenameStyleSourceError,
 } from "~/shared/style-source-utils";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
@@ -128,6 +129,15 @@ export const renameStyleSource = (
   }
   serverSyncStore.createTransaction([$styleSources], (styleSources) => {
     renameStyleSourceMutable({ id, name, styleSources });
+  });
+};
+
+export const setStyleSourceLocked = (
+  id: StyleSource["id"],
+  locked: boolean
+) => {
+  serverSyncStore.createTransaction([$styleSources], (styleSources) => {
+    toggleStyleSourceLockMutable({ id, locked, styleSources });
   });
 };
 

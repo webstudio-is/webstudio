@@ -179,6 +179,17 @@ const resolveVars = (
   for (const s of [...subs].reverse()) {
     resolved = resolved.slice(0, s.start) + s.text + resolved.slice(s.end);
   }
+  // Substituted text may itself contain var() references (transitive vars).
+  // Re-resolve until no more substitutions are possible.
+  if (resolved !== value && resolved.includes("var(")) {
+    const deeper = resolveVars(resolved, customProperties, cssVars, depth + 1);
+    if (deeper) {
+      return {
+        resolved: deeper.resolved,
+        dropped: [...new Set([...dropped, ...deeper.dropped])],
+      };
+    }
+  }
   return { resolved, dropped };
 };
 

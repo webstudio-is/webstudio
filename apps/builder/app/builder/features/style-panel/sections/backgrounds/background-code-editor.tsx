@@ -15,6 +15,7 @@ import {
 } from "../../shared/repeated-style";
 import { useComputedStyleDecl } from "../../shared/model";
 import { InputErrorsTooltip, toast } from "@webstudio-is/design-system";
+import { useReadonly } from "../../shared/readonly";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -39,6 +40,7 @@ export const BackgroundCodeEditor = ({
   index,
   onValidate,
 }: BackgroundCodeEditorProps) => {
+  const readonly = useReadonly();
   const styleDecl = useComputedStyleDecl("background-image");
   let styleValue = styleDecl.cascadedValue;
   if (styleValue.type === "layers") {
@@ -158,6 +160,7 @@ export const BackgroundCodeEditor = ({
           css={getCodeEditorCssVars({ minHeight: "4lh", maxHeight: "4lh" })}
           content={
             <CssFragmentEditorContent
+              readOnly={readonly}
               invalid={intermediateValue?.type === "invalid"}
               autoFocus={styleValue.type === "var"}
               value={textAreaValue ?? ""}

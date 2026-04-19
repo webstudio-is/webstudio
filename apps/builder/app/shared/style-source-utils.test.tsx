@@ -20,6 +20,8 @@ import {
   deleteStyleSourcesMutable,
   validateAndRenameStyleSource,
   renameStyleSourceMutable,
+  toggleStyleSourceLockMutable,
+  isStyleSourceLocked,
   deleteLocalStyleSourcesMutable,
   collectStyleSourcesFromInstances,
   findDuplicateTokens,
@@ -1815,6 +1817,92 @@ describe("renameStyleSourceMutable", () => {
     const styleSource = styleSources.get("token1");
     expect(styleSource?.id).toBe("token1");
     expect(styleSource?.type).toBe("token");
+  });
+});
+
+describe("toggleStyleSourceLockMutable", () => {
+  test("locks a token style source", () => {
+    const styleSources: StyleSources = new Map([
+      ["token1", { type: "token", id: "token1", name: "Token" } as StyleSource],
+    ]);
+
+    toggleStyleSourceLockMutable({
+      id: "token1",
+      locked: true,
+      styleSources,
+    });
+
+    expect(styleSources.get("token1")).toEqual({
+      type: "token",
+      id: "token1",
+      name: "Token",
+      locked: true,
+    });
+  });
+
+  test("unlocks a token style source by removing the locked field", () => {
+    const styleSources: StyleSources = new Map([
+      [
+        "token1",
+        {
+          type: "token",
+          id: "token1",
+          name: "Token",
+          locked: true,
+        } as StyleSource,
+      ],
+    ]);
+
+    toggleStyleSourceLockMutable({
+      id: "token1",
+      locked: false,
+      styleSources,
+    });
+
+    expect(styleSources.get("token1")).toEqual({
+      type: "token",
+      id: "token1",
+      name: "Token",
+    });
+  });
+
+  test("does not lock local style sources", () => {
+    const styleSources: StyleSources = new Map([
+      ["local1", { type: "local", id: "local1" } as StyleSource],
+    ]);
+
+    toggleStyleSourceLockMutable({
+      id: "local1",
+      locked: true,
+      styleSources,
+    });
+
+    expect(styleSources.get("local1")).toEqual({
+      type: "local",
+      id: "local1",
+    });
+  });
+});
+
+describe("isStyleSourceLocked", () => {
+  test("returns true only for locked tokens", () => {
+    expect(
+      isStyleSourceLocked({
+        type: "token",
+        id: "token1",
+        name: "Token",
+        locked: true,
+      })
+    ).toBe(true);
+    expect(
+      isStyleSourceLocked({
+        type: "token",
+        id: "token1",
+        name: "Token",
+      })
+    ).toBe(false);
+    expect(isStyleSourceLocked({ type: "local", id: "local1" })).toBe(false);
+    expect(isStyleSourceLocked(undefined)).toBe(false);
   });
 });
 

@@ -15,7 +15,7 @@ import {
 
 const property: CssProperty = "translate";
 
-export const TranslatePanelContent = () => {
+export const TranslatePanelContent = ({ disabled }: { disabled?: boolean }) => {
   const styleDecl = useComputedStyleDecl(property);
   const tuple =
     styleDecl.cascadedValue.type === "tuple"
@@ -59,6 +59,7 @@ export const TranslatePanelContent = () => {
         />
 
         <CssValueInputContainer
+          disabled={disabled}
           styleSource="local"
           property={property}
           getOptions={() => $availableUnitVariables.get()}
@@ -79,6 +80,7 @@ export const TranslatePanelContent = () => {
           description={propertySyntaxes.translateY}
         />
         <CssValueInputContainer
+          disabled={disabled}
           styleSource="local"
           property={property}
           getOptions={() => $availableUnitVariables.get()}
@@ -99,6 +101,7 @@ export const TranslatePanelContent = () => {
           description={propertySyntaxes.translateZ}
         />
         <CssValueInputContainer
+          disabled={disabled}
           styleSource="local"
           property={property}
           getOptions={() => $availableUnitVariables.get()}
