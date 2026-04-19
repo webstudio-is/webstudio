@@ -12,83 +12,42 @@ import env from "~/env/env.server";
 const Name = z.string().min(2).max(100);
 const Relation = z.enum(roles);
 
-type UpdateSeatsResult =
-  | { type: "success"; seats: number }
-  | { type: "error"; error: string };
-
-const updateSeats = async ({
-  userId,
-  newQuantity,
-}: {
-  userId: string;
-  newQuantity: number;
-}): Promise<UpdateSeatsResult | null> => {
+/**
+ * Tells the payment worker to count members and adjust Stripe seats.
+ * All member-counting and Stripe logic lives in the worker — the builder
+ * only passes the workspaceId and an optional delta.
+ *
+ * @param delta - adjustment to the current member count.
+ *   Pass +1 when a member is about to be added (pre-charge before DB insert).
+ *   Defaults to 0 (post-removal or manual sync).
+ */
+const syncSeats = async (workspaceId: string, delta = 0): Promise<void> => {
   if (!env.PAYMENT_WORKER_URL || !env.PAYMENT_WORKER_TOKEN) {
-    return null;
+    return;
   }
 
-  const url = `${env.PAYMENT_WORKER_URL}/seats/update`;
-
-  const response = await fetch(url, {
+  const response = await fetch(`${env.PAYMENT_WORKER_URL}/seats/sync`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${env.PAYMENT_WORKER_TOKEN}`,
     },
-    body: JSON.stringify({
-      userId,
-      newQuantity,
-    }),
+    body: JSON.stringify({ workspaceId, delta }),
   });
 
   if (!response.ok) {
     throw new Error(
-      `Payment worker /seats/update responded with ${response.status}`
+      `Payment worker /seats/sync responded with ${response.status}`
     );
   }
 
-  return (await response.json()) as UpdateSeatsResult;
-};
-
-/**
- * Syncs the Stripe seat quantity for the owner of a given workspace.
- * Called after adding or removing members.
- * Throws on payment worker errors so the caller can decide whether to soft-fail.
- *
- * @param countDelta - adjustment to the current member count before syncing.
- *   Pass +1 when a member is about to be added (pre-charge) so that billing
- *   is checked before the DB change is committed.
- */
-const syncOwnerSeats = async (
-  workspaceId: string,
-  ctx: Parameters<typeof workspaceApi.countAllMembers>[1],
-  countDelta = 0
-) => {
-  const workspaceResult = await ctx.postgrest.client
-    .from("Workspace")
-    .select("userId")
-    .eq("id", workspaceId)
-    .eq("isDeleted", false)
-    .maybeSingle();
-
-  if (workspaceResult.error || workspaceResult.data === null) {
-    return;
-  }
-
-  const ownerId = workspaceResult.data.userId;
-  const memberCount = await workspaceApi.countAllMembers(ownerId, ctx);
-
-  const result = await updateSeats({
-    userId: ownerId,
-    newQuantity: memberCount + countDelta,
-  });
-
-  if (result === null) {
-    return;
-  }
+  const result = (await response.json()) as {
+    type: string;
+    error?: string;
+  };
 
   if (result.type === "error") {
-    throw new Error(`Payment worker rejected seat update: ${result.error}`);
+    throw new Error(`Payment worker rejected seat sync: ${result.error}`);
   }
 };
 
@@ -210,7 +169,7 @@ export const workspaceRouter = router({
         // triggers a billing change.
         // When the payment worker is configured, a billing failure aborts the
         // invite so the member is never added. When the worker URL is not set
-        // (self-hosted / dev), syncOwnerSeats returns early and this is a no-op.
+        // (self-hosted / dev), syncSeats returns early and this is a no-op.
 
         // Validate the invitee exists and is not already a member before
         // touching billing. This mirrors the checks in workspaceApi.addMember
@@ -243,7 +202,7 @@ export const workspaceRouter = router({
         }
 
         try {
-          await syncOwnerSeats(input.workspaceId, ctx, +1);
+          await syncSeats(input.workspaceId, +1);
         } catch (error) {
           const technical =
             error instanceof Error ? error.message : String(error);
@@ -287,11 +246,7 @@ export const workspaceRouter = router({
     .mutation(async ({ input, ctx }) => {
       try {
         await workspaceApi.removeMember(input, ctx);
-
-        // Do NOT call Stripe — the seat is already paid for this billing
-        // period (high water mark). The owner can reuse it for another member
-        // without extra charge. Extra-seat quantity is right-sized at renewal
-        // by the invoice.created webhook.
+        await syncSeats(input.workspaceId);
 
         return { success: true as const };
       } catch (error) {
@@ -306,7 +261,7 @@ export const workspaceRouter = router({
         if (ctx.planFeatures.maxWorkspaces <= 1) {
           throw new Error("Upgrade your plan to manage workspace seats.");
         }
-        await syncOwnerSeats(input.workspaceId, ctx);
+        await syncSeats(input.workspaceId);
         return { success: true as const };
       } catch (error) {
         return createErrorResponse(error);
