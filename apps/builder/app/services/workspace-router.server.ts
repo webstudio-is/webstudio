@@ -6,7 +6,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { workspace as workspaceApi } from "@webstudio-is/project/index.server";
 import { roles } from "@webstudio-is/trpc-interface/authorize";
-import { getPaidSeats } from "@webstudio-is/plans/index.server";
+import { getExtraPaidSeats } from "@webstudio-is/plans/index.server";
 import env from "~/env/env.server";
 
 const Name = z.string().min(2).max(100);
@@ -318,15 +318,18 @@ export const workspaceRouter = router({
     .query(async ({ input, ctx }) => {
       try {
         const members = await workspaceApi.listMembers(input, ctx);
-        const paidSeats = await getPaidSeats(members.owner.userId, ctx);
+        const extraPaidSeats = await getExtraPaidSeats(
+          members.owner.userId,
+          ctx
+        );
         return {
           success: true as const,
           data: {
             ...members,
             // seatsIncluded = seats covered by the Team plan.
-            // paidSeats = extra seats from the Seats subscription.
+            // extraPaidSeats = extra seats from the Seats subscription.
             // Total capacity = included + extras.
-            maxSeats: ctx.planFeatures.seatsIncluded + (paidSeats ?? 0),
+            maxSeats: ctx.planFeatures.seatsIncluded + (extraPaidSeats ?? 0),
           },
         };
       } catch (error) {

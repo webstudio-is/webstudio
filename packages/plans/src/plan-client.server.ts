@@ -206,14 +206,30 @@ export const getPlanInfo = async (
 };
 
 /**
- * Returns the Stripe subscription item quantity for the given user, derived
- * from the latest customer.subscription.updated/created event in TransactionLog.
- * Returns null when no subscription event exists yet (free plan, AppSumo, etc.).
+ * Returns the extra-seat subscription quantity for the given user, derived
+ * from the latest customer.subscription.updated/created event in TransactionLog
+ * whose product is an extra-seat plan (maxSeatsPerWorkspace > 0, maxWorkspaces <= 1).
+ *
+ * Returns null when no matching event exists (free plan, no extra seats, etc.).
  */
-export const getPaidSeats = async (
+export const getExtraPaidSeats = async (
   userId: string,
   context: { postgrest: PostgrestContext }
 ): Promise<number | null> => {
+  const productResult = await context.postgrest.client
+    .from("Product")
+    .select("id")
+    .eq("name", "Seats");
+
+  if (productResult.error) {
+    throw productResult.error;
+  }
+
+  const seatProductIds = (productResult.data ?? []).map((p) => p.id);
+  if (seatProductIds.length === 0) {
+    return null;
+  }
+
   const result = await context.postgrest.client
     .from("TransactionLog")
     .select("eventData")
@@ -222,6 +238,7 @@ export const getPaidSeats = async (
       "customer.subscription.updated",
       "customer.subscription.created",
     ])
+    .in("productId", seatProductIds)
     .order("eventCreated", { ascending: false })
     .limit(1)
     .maybeSingle();

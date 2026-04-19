@@ -11,7 +11,7 @@ import {
   NOTIFICATION_TTL_MS,
 } from "../shared/notification-schema";
 import { create as createNotification } from "./notification";
-import { getPaidSeats } from "@webstudio-is/plans/index.server";
+import { getExtraPaidSeats } from "@webstudio-is/plans/index.server";
 
 export type Workspace = Database["public"]["Tables"]["Workspace"]["Row"];
 
@@ -253,7 +253,7 @@ export const findMany = async (userId: string, context: AppContext) => {
         }
         const [memberCount, extraSeats] = await Promise.all([
           countAllMembers(ownerId, context),
-          getPaidSeats(ownerId, context),
+          getExtraPaidSeats(ownerId, context),
         ]);
         // seatsIncluded is the number of non-owner member slots included in
         // the plan. The owner is not counted — consistent with the billing
