@@ -58,40 +58,71 @@ const createContext = (
  * Set up all MSW handlers needed for a full addMember happy-path.
  * Individual tests override specific handlers via `server.use(…)` *after*
  * calling this function.
- *
- * The payment worker now owns member counting via /seats/sync, so no
- * countAllMembers DB mocks are needed here — only the per-workspace
- * seat-limit HEAD counts.
  */
 const setupAddMemberMocks = (opts?: {
   /** Active members in the target workspace (used for HEAD count) */
   workspaceMemberCount?: number;
   /** Pending invites for the target workspace (used for HEAD count) */
   pendingInviteCount?: number;
+  /**
+   * Unique members across ALL owner's workspaces (used by countAllMembers
+   * inside syncOwnerSeats).
+   */
+  totalUniqueMembers?: number;
+  /** Pending invites sent by the owner across all workspaces */
+  totalPendingInvites?: number;
   /** Payment worker JSON response, or `null` to return HTTP 500. */
   paymentWorkerResponse?: object | null;
 }) => {
   const {
     workspaceMemberCount = 1,
     pendingInviteCount = 0,
-    paymentWorkerResponse = { type: "success" as const, seats: 1 },
+    totalUniqueMembers = 1,
+    totalPendingInvites = 0,
+    paymentWorkerResponse = {
+      type: "success" as const,
+      seats: totalUniqueMembers + 1,
+    },
   } = opts ?? {};
 
   server.use(
-    // ---- Workspace (router seat-limit + assertOwner) ----
-    db.get("Workspace", () =>
-      json({ id: "ws-1", userId: "owner-1", isDeleted: false })
-    ),
+    // ---- Workspace (multiple calls: router seat-limit, syncOwnerSeats,
+    // assertOwner inside workspaceApi.addMember) ----
+    db.get("Workspace", ({ request }) => {
+      const url = new URL(request.url);
+      // countAllMembers asks for all workspaces owned by userId
+      if (url.searchParams.get("userId")) {
+        return json([{ id: "ws-1" }]);
+      }
+      // assertOwner / syncOwnerSeats asks for a single workspace by id
+      return json({ id: "ws-1", userId: "owner-1", isDeleted: false });
+    }),
 
-    // ---- User (router invitee-lookup + workspaceApi.addMember lookup) ----
+    // ---- User (router invitee-lookup + workspaceApi.addMember lookup +
+    // any other User fetches) ----
     db.get("User", () =>
       json({ id: "user-2", email: "invitee@test.com", username: "invitee" })
     ),
 
     // ---- WorkspaceMember ----
-    // GET: router existing-member check + workspaceApi.addMember check
-    db.get("WorkspaceMember", () => json(null)),
-    // HEAD: per-workspace seat-limit count
+    // GET is used for:
+    //  1. router existing-member check (eq userId=user-2 on a single ws)
+    //  2. workspaceApi.addMember existing-member check (same)
+    //  3. countAllMembers (select userId, in workspaceId)
+    db.get("WorkspaceMember", ({ request }) => {
+      const url = new URL(request.url);
+      // Existing-member check – return null (not a member yet)
+      if (url.searchParams.get("userId")?.includes("user-2")) {
+        return json(null);
+      }
+      // countAllMembers – return unique members
+      return json(
+        Array.from({ length: totalUniqueMembers }, (_, i) => ({
+          userId: `member-${i}`,
+        }))
+      );
+    }),
+    // HEAD is used for the per-workspace seat-limit count
     db.head("WorkspaceMember", () =>
       empty({ headers: { "Content-Range": `*/${workspaceMemberCount}` } })
     ),
@@ -101,8 +132,18 @@ const setupAddMemberMocks = (opts?: {
     db.head("Notification", () =>
       empty({ headers: { "Content-Range": `*/${pendingInviteCount}` } })
     ),
-    // GET: createNotification duplicate check
-    db.get("Notification", () => json(null)),
+    // GET: countAllMembers pending count + createNotification duplicate check
+    db.get("Notification", ({ request }) => {
+      const url = new URL(request.url);
+      // countAllMembers uses count: "exact" + head: true  but that's routed
+      // through HEAD above. The GET here is the duplicate-check in
+      // createNotification.
+      if (url.searchParams.get("select") === "id") {
+        // No duplicate
+        return json(null);
+      }
+      return json([]);
+    }),
     // POST: Notification insert (createNotification)
     db.post("Notification", () =>
       json(
@@ -118,8 +159,8 @@ const setupAddMemberMocks = (opts?: {
       )
     ),
 
-    // ---- Payment worker (/seats/sync) ----
-    http.post(`${env.PAYMENT_WORKER_URL}/seats/sync`, () => {
+    // ---- Payment worker ----
+    http.post(`${env.PAYMENT_WORKER_URL}/seats/update`, () => {
       if (paymentWorkerResponse === null) {
         return new HttpResponse(null, { status: 500 });
       }
@@ -231,20 +272,23 @@ describe("addMember", () => {
     }
   });
 
-  test("pre-charges payment worker with delta=+1", async () => {
+  test("pre-charges payment worker with countAllMembers + 1", async () => {
     const ctx = createContext();
     const caller = createCaller(ctx);
 
-    let capturedBody: { workspaceId: string; delta: number } | undefined;
+    let capturedBody: { userId: string; newQuantity: number } | undefined;
 
-    setupAddMemberMocks();
+    setupAddMemberMocks({ totalUniqueMembers: 3, totalPendingInvites: 0 });
 
     // Override the payment worker handler to capture the request body.
     server.use(
-      http.post(`${env.PAYMENT_WORKER_URL}/seats/sync`, async ({ request }) => {
-        capturedBody = (await request.json()) as typeof capturedBody;
-        return HttpResponse.json({ type: "success", seats: 1 });
-      })
+      http.post(
+        `${env.PAYMENT_WORKER_URL}/seats/update`,
+        async ({ request }) => {
+          capturedBody = (await request.json()) as typeof capturedBody;
+          return HttpResponse.json({ type: "success", seats: 4 });
+        }
+      )
     );
 
     const result = await caller.addMember({
@@ -255,15 +299,16 @@ describe("addMember", () => {
 
     expect(result.success).toBe(true);
     expect(capturedBody).toBeDefined();
-    expect(capturedBody!.workspaceId).toBe("ws-1");
-    expect(capturedBody!.delta).toBe(1);
+    // 3 unique members + 1 delta = 4
+    expect(capturedBody!.newQuantity).toBe(4);
+    expect(capturedBody!.userId).toBe("owner-1");
   });
 
   test("succeeds and creates invite notification when billing passes", async () => {
     const ctx = createContext();
     const caller = createCaller(ctx);
 
-    setupAddMemberMocks({ workspaceMemberCount: 2 });
+    setupAddMemberMocks({ workspaceMemberCount: 2, totalUniqueMembers: 2 });
 
     const result = await caller.addMember({
       workspaceId: "ws-1",
@@ -283,8 +328,8 @@ describe("addMember", () => {
 // ---------------------------------------------------------------------------
 
 describe("removeMember", () => {
-  test("calls payment worker to sync seats after removal", async () => {
-    let capturedBody: { workspaceId: string; delta?: number } | undefined;
+  test("does NOT call payment worker (high water mark billing)", async () => {
+    let paymentWorkerCalled = false;
 
     server.use(
       // assertOwner
@@ -293,9 +338,10 @@ describe("removeMember", () => {
       ),
       // soft-delete via PATCH
       db.patch("WorkspaceMember", () => json({ userId: "user-2" })),
-      http.post(`${env.PAYMENT_WORKER_URL}/seats/sync`, async ({ request }) => {
-        capturedBody = (await request.json()) as typeof capturedBody;
-        return HttpResponse.json({ type: "success", seats: 0 });
+      // Trap: if the payment worker is called, fail the test.
+      http.post(`${env.PAYMENT_WORKER_URL}/seats/update`, () => {
+        paymentWorkerCalled = true;
+        return HttpResponse.json({ type: "success", seats: 1 });
       })
     );
 
@@ -307,10 +353,7 @@ describe("removeMember", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(capturedBody).toBeDefined();
-    expect(capturedBody!.workspaceId).toBe("ws-1");
-    // No delta — member is already removed from DB
-    expect(capturedBody!.delta).toBe(0);
+    expect(paymentWorkerCalled).toBe(false);
   });
 });
 
@@ -331,14 +374,33 @@ describe("syncSeats", () => {
     }
   });
 
-  test("calls payment worker with workspaceId (no delta)", async () => {
-    let capturedBody: { workspaceId: string; delta?: number } | undefined;
+  test("calls payment worker with actual member count (no delta)", async () => {
+    let capturedBody: { userId: string; newQuantity: number } | undefined;
 
     server.use(
-      http.post(`${env.PAYMENT_WORKER_URL}/seats/sync`, async ({ request }) => {
-        capturedBody = (await request.json()) as typeof capturedBody;
-        return HttpResponse.json({ type: "success", seats: 3 });
-      })
+      // syncOwnerSeats fetches workspace to get ownerId
+      db.get("Workspace", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("userId")) {
+          return json([{ id: "ws-1" }]);
+        }
+        return json({ id: "ws-1", userId: "owner-1", isDeleted: false });
+      }),
+      // countAllMembers — 2 unique members
+      db.get("WorkspaceMember", () =>
+        json([{ userId: "m-1" }, { userId: "m-2" }])
+      ),
+      // countAllMembers — 1 pending invite
+      db.head("Notification", () =>
+        empty({ headers: { "Content-Range": "*/1" } })
+      ),
+      http.post(
+        `${env.PAYMENT_WORKER_URL}/seats/update`,
+        async ({ request }) => {
+          capturedBody = (await request.json()) as typeof capturedBody;
+          return HttpResponse.json({ type: "success", seats: 3 });
+        }
+      )
     );
 
     const ctx = createContext();
@@ -347,9 +409,8 @@ describe("syncSeats", () => {
 
     expect(result.success).toBe(true);
     expect(capturedBody).toBeDefined();
-    expect(capturedBody!.workspaceId).toBe("ws-1");
-    // No delta for manual sync
-    expect(capturedBody!.delta).toBe(0);
+    // 2 unique members + 1 pending invite = 3, no +1 delta
+    expect(capturedBody!.newQuantity).toBe(3);
   });
 });
 
@@ -390,8 +451,7 @@ describe("listMembers", () => {
           })),
         ])
       ),
-      // getExtraPaidSeats: Product lookup + TransactionLog query
-      db.get("Product", () => json([{ id: "prod-seats" }])),
+      // getPaidSeats: TransactionLog query
       db.get("TransactionLog", () => json(transactionLog))
     );
   };
