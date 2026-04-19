@@ -218,6 +218,141 @@ describe("findMany (msw)", () => {
     const member = result.find((w) => w.id === "ws-2");
     expect(member?.isDowngraded).toBe(true);
   });
+
+  test("returns member workspaces with isDowngraded=true when actualMembers > paidSeats", async () => {
+    // Owner has workspaces plan (maxWorkspaces > 1), 3 members + 1 pending = 4 non-owner total,
+    // seatsIncluded=2 and extra-seat sub quantity=1 → paidSeats=3 < memberCount=4.
+    server.use(
+      db.get("Workspace", ({ request }) => {
+        const url = new URL(request.url);
+        // owned workspaces lookup for the viewer (user-1)
+        if (url.searchParams.get("userId") === "eq.user-1") {
+          return json([]);
+        }
+        // owner's workspaces lookup used by countAllMembers
+        if (url.searchParams.get("userId") === "eq.owner-2") {
+          return json([{ id: "ws-2" }, { id: "ws-3" }]);
+        }
+        // member workspace details lookup (by id in list)
+        return json([{ ...workspaceRow, id: "ws-2", userId: "owner-2" }]);
+      }),
+      db.get("WorkspaceMember", ({ request }) => {
+        const url = new URL(request.url);
+        // memberships lookup: userId=eq.user-1
+        if (url.searchParams.get("userId") === "eq.user-1") {
+          return json([{ workspaceId: "ws-2", relation: "editors" }]);
+        }
+        // countAllMembers lookup: workspaceId=in.(...)
+        return json([
+          { userId: "member-1" },
+          { userId: "member-2" },
+          { userId: "member-3" },
+        ]);
+      }),
+      db.head("Notification", () =>
+        empty({ headers: { "Content-Range": "*/1" } })
+      ),
+      db.get("TransactionLog", () =>
+        json({
+          eventData: {
+            data: { object: { items: { data: [{ quantity: 1 }] } } },
+          },
+        })
+      )
+    );
+
+    const ctx = createContext();
+    ctx.getOwnerPlanFeatures = async () => ({
+      ...defaultPlanFeatures,
+      maxWorkspaces: 5,
+      seatsIncluded: 2,
+    });
+
+    const result = await findMany("user-1", ctx);
+    const member = result.find((w) => w.id === "ws-2");
+    expect(member?.isDowngraded).toBe(true);
+  });
+
+  test("returns member workspaces with isDowngraded=false when actualMembers <= paidSeats", async () => {
+    // owner has workspaces plan, 1 non-owner member, seatsIncluded=2 → memberCount(1) < paidSeats(2).
+    server.use(
+      db.get("Workspace", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("userId") === "eq.user-1") {
+          return json([]);
+        }
+        if (url.searchParams.get("userId") === "eq.owner-2") {
+          return json([{ id: "ws-2" }]);
+        }
+        return json([{ ...workspaceRow, id: "ws-2", userId: "owner-2" }]);
+      }),
+      db.get("WorkspaceMember", ({ request }) => {
+        const url = new URL(request.url);
+        // memberships lookup: userId=eq.user-1
+        if (url.searchParams.get("userId") === "eq.user-1") {
+          return json([{ workspaceId: "ws-2", relation: "editors" }]);
+        }
+        // countAllMembers lookup: workspaceId=in.(...)
+        return json([{ userId: "member-1" }]);
+      }),
+      db.head("Notification", () =>
+        empty({ headers: { "Content-Range": "*/0" } })
+      ),
+      db.get("TransactionLog", () => json(null))
+    );
+
+    const ctx = createContext();
+    ctx.getOwnerPlanFeatures = async () => ({
+      ...defaultPlanFeatures,
+      maxWorkspaces: 5,
+      seatsIncluded: 2,
+    });
+
+    const result = await findMany("user-1", ctx);
+    const member = result.find((w) => w.id === "ws-2");
+    expect(member?.isDowngraded).toBe(false);
+  });
+
+  test("returns isDowngraded=false when memberCount === seatsIncluded (boundary)", async () => {
+    // Exactly seatsIncluded non-owner members: slots are full but not exceeded.
+    // No extra-seat sub needed and no suspension should fire.
+    server.use(
+      db.get("Workspace", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("userId") === "eq.user-1") {
+          return json([]);
+        }
+        if (url.searchParams.get("userId") === "eq.owner-2") {
+          return json([{ id: "ws-2" }]);
+        }
+        return json([{ ...workspaceRow, id: "ws-2", userId: "owner-2" }]);
+      }),
+      db.get("WorkspaceMember", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("userId") === "eq.user-1") {
+          return json([{ workspaceId: "ws-2", relation: "editors" }]);
+        }
+        // 2 members exactly filling seatsIncluded=2 (no extra sub).
+        return json([{ userId: "member-1" }, { userId: "member-2" }]);
+      }),
+      db.head("Notification", () =>
+        empty({ headers: { "Content-Range": "*/0" } })
+      ),
+      db.get("TransactionLog", () => json(null))
+    );
+
+    const ctx = createContext();
+    ctx.getOwnerPlanFeatures = async () => ({
+      ...defaultPlanFeatures,
+      maxWorkspaces: 5,
+      seatsIncluded: 2,
+    });
+
+    const result = await findMany("user-1", ctx);
+    const member = result.find((w) => w.id === "ws-2");
+    // memberCount(2) === paidSeats(2) → not downgraded.
+    expect(member?.isDowngraded).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -235,8 +370,8 @@ describe("countAllMembers (msw)", () => {
   test("returns sum of active members + pending invites", async () => {
     server.use(
       db.get("Workspace", () => json([workspaceRow])),
-      db.head("WorkspaceMember", () =>
-        empty({ headers: { "Content-Range": "*/3" } })
+      db.get("WorkspaceMember", () =>
+        json([{ userId: "m1" }, { userId: "m2" }, { userId: "m3" }])
       ),
       db.head("Notification", () =>
         empty({ headers: { "Content-Range": "*/2" } })
@@ -245,6 +380,22 @@ describe("countAllMembers (msw)", () => {
 
     const count = await countAllMembers("user-1", createContext());
     expect(count).toBe(5);
+  });
+
+  test("deduplicates same member across multiple workspaces", async () => {
+    // "user-a" appears in two workspaces — should count as 1, not 2.
+    server.use(
+      db.get("Workspace", () => json([{ id: "ws-1" }, { id: "ws-2" }])),
+      db.get("WorkspaceMember", () =>
+        json([{ userId: "user-a" }, { userId: "user-a" }])
+      ),
+      db.head("Notification", () =>
+        empty({ headers: { "Content-Range": "*/0" } })
+      )
+    );
+
+    const count = await countAllMembers("user-1", createContext());
+    expect(count).toBe(1);
   });
 });
 

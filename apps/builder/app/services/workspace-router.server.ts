@@ -288,13 +288,10 @@ export const workspaceRouter = router({
       try {
         await workspaceApi.removeMember(input, ctx);
 
-        // Release the seat immediately on removal.
-        await syncOwnerSeats(input.workspaceId, ctx).catch((error) => {
-          console.error(
-            "[payment-worker] Failed to release seat on member removal:",
-            error
-          );
-        });
+        // Do NOT call Stripe — the seat is already paid for this billing
+        // period (high water mark). The owner can reuse it for another member
+        // without extra charge. Extra-seat quantity is right-sized at renewal
+        // by the invoice.created webhook.
 
         return { success: true as const };
       } catch (error) {

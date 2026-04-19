@@ -11,6 +11,7 @@ import {
   NOTIFICATION_TTL_MS,
 } from "../shared/notification-schema";
 import { create as createNotification } from "./notification";
+import { getPaidSeats } from "@webstudio-is/plans/index.server";
 
 export type Workspace = Database["public"]["Tables"]["Workspace"]["Row"];
 
@@ -18,8 +19,11 @@ export type WorkspaceWithRelation = Workspace & {
   /** The current user's relation to the workspace: "own" for owners */
   role: Role | "own";
   /**
-   * True when the workspace owner's plan no longer supports workspace features
-   * (maxWorkspaces <= 1). Members lose project access but workspace data stays intact.
+   * True when the workspace owner has lost workspace access for members.
+   * Fires when either:
+   *   - owner's plan no longer grants workspaces (`maxWorkspaces <= 1`), or
+   *   - `actualMembers > paidSeats` (owner has more members than paid seats).
+   * Members lose project access but workspace data stays intact.
    */
   isDowngraded: boolean;
 };
@@ -231,22 +235,35 @@ export const findMany = async (userId: string, context: AppContext) => {
     throw memberOf.error;
   }
 
-  // For member workspaces, check if the owner's plan still supports workspace features.
-  // Collect unique owner IDs and batch-check their plans.
+  // For member workspaces, check whether the owner still grants workspace access.
+  // Two conditions downgrade: plan no longer includes workspaces
+  // (`maxWorkspaces <= 1`), or owner has more members than paid seats
+  // (`actualMembers > paidSeats`). Collect unique owner IDs and batch-check.
   const ownerIds = [...new Set(memberOf.data.map((w) => w.userId))];
   const downgradedOwners = new Set<string>();
 
   if (ownerIds.length > 0) {
-    // Use allSettled so a single owner's plan-check failure doesn't
+    // Use allSettled so a single owner's check failure doesn't
     // break the entire workspace list. Failed checks default to not-downgraded.
-    const plans = await Promise.allSettled(
+    const checks = await Promise.allSettled(
       ownerIds.map(async (ownerId) => {
         const plan = await context.getOwnerPlanFeatures(ownerId);
-        return { ownerId, maxWorkspaces: plan.maxWorkspaces };
+        if (plan.maxWorkspaces <= 1) {
+          return { ownerId, isDowngraded: true };
+        }
+        const [memberCount, extraSeats] = await Promise.all([
+          countAllMembers(ownerId, context),
+          getPaidSeats(ownerId, context),
+        ]);
+        // seatsIncluded is the number of non-owner member slots included in
+        // the plan. The owner is not counted — consistent with the billing
+        // formula used at invite time and at invoice renewal.
+        const paidSeats = plan.seatsIncluded + (extraSeats ?? 0);
+        return { ownerId, isDowngraded: memberCount > paidSeats };
       })
     );
-    for (const result of plans) {
-      if (result.status === "fulfilled" && result.value.maxWorkspaces <= 1) {
+    for (const result of checks) {
+      if (result.status === "fulfilled" && result.value.isDowngraded) {
         downgradedOwners.add(result.value.ownerId);
       }
     }
@@ -314,9 +331,11 @@ export const countAllMembers = async (
   const workspaceIds = workspaces.data.map((w) => w.id);
 
   const [membersResult, pendingResult] = await Promise.all([
+    // Fetch all userIds so we can deduplicate — the same person may be a
+    // member of several of the owner's workspaces but counts as one seat.
     context.postgrest.client
       .from("WorkspaceMember")
-      .select("userId", { count: "exact", head: true })
+      .select("userId")
       .in("workspaceId", workspaceIds)
       .is("removedAt", null),
     context.postgrest.client
@@ -324,11 +343,7 @@ export const countAllMembers = async (
       .select("id", { count: "exact", head: true })
       .eq("type", "workspaceInvite")
       .eq("senderId", userId)
-      .eq("status", "pending")
-      .gte(
-        "createdAt",
-        new Date(Date.now() - NOTIFICATION_TTL_MS).toISOString()
-      ),
+      .eq("status", "pending"),
   ]);
 
   if (membersResult.error) {
@@ -338,12 +353,10 @@ export const countAllMembers = async (
     throw pendingResult.error;
   }
 
-  // Avoid double-counting: a pending invite recipient who is also already
-  // a member would be in both sets. This is theoretically impossible
-  // (addMember guards against it) but we subtract to be safe by using the
-  // total of accepted members + non-accepted pending invites.
-  // Simple approximation: accepted + pending counts (small overlap risk is acceptable).
-  return (membersResult.count ?? 0) + (pendingResult.count ?? 0);
+  const uniqueMembers = new Set(
+    (membersResult.data ?? []).map((row) => row.userId)
+  );
+  return uniqueMembers.size + (pendingResult.count ?? 0);
 };
 
 export const addMember = async (
