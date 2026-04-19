@@ -505,6 +505,16 @@ export const ManageMembersDialog = ({
       formRef.current?.reset();
     }
 
+    // When the invite triggered a Stripe Seats subscription, the webhook
+    // needs time to update the DB. Delay refetch so the banner doesn't flash.
+    if (boughtExtraSeats && succeeded.length > 0) {
+      setTimeout(() => {
+        handleRefresh();
+        revalidator.revalidate();
+      }, 4000);
+      return;
+    }
+
     handleRefresh();
     revalidator.revalidate();
   };
