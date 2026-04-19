@@ -178,4 +178,44 @@ describe("computeAvailableSeats", () => {
       computeAvailableSeats(makeData({ maxSeats: 1, members }), optimistic)
     ).toBe(-2);
   });
+
+  test("maxSeatsBoost increases available seats optimistically", () => {
+    const members = [
+      {
+        userId: "u1",
+        email: "a@example.com",
+        relation: "editors" as const,
+        createdAt: "",
+        username: "",
+      },
+    ];
+    // 2 maxSeats − 1 member = 1, + 3 boost = 4
+    expect(
+      computeAvailableSeats(makeData({ maxSeats: 2, members }), [], 3)
+    ).toBe(4);
+  });
+
+  test("maxSeatsBoost prevents over-capacity after invite", () => {
+    const members = [
+      {
+        userId: "u1",
+        email: "a@example.com",
+        relation: "editors" as const,
+        createdAt: "",
+        username: "",
+      },
+    ];
+    const optimistic = [
+      {
+        notificationId: "opt-1",
+        email: "new@example.com",
+        relation: "viewers" as const,
+      },
+    ];
+    // Without boost: 1 maxSeat − 1 member − 1 optimistic = -1
+    // With boost of 1: 1 + 1 − 1 − 1 = 0
+    expect(
+      computeAvailableSeats(makeData({ maxSeats: 1, members }), optimistic, 1)
+    ).toBe(0);
+  });
 });
