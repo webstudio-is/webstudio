@@ -6,7 +6,11 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import { type PlanFeatures, defaultPlanFeatures } from "./plan-features";
-import { getPlanInfo, __testing__ } from "./plan-client.server";
+import {
+  getPlanInfo,
+  getExtraPaidSeats,
+  __testing__,
+} from "./plan-client.server";
 
 const { parseProductMeta, mergeProductMetas } = __testing__;
 
@@ -250,5 +254,93 @@ describe("workspaces plan", () => {
     const result = mergeProductMetas([proProduct, workspacesProduct]);
     expect(result.maxWorkspaces).toBe(20);
     expect(result.canDownloadAssets).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getExtraPaidSeats
+// ---------------------------------------------------------------------------
+
+const seatProduct = { id: "prod-seats" };
+
+const subscriptionEvent = (quantity: number, subscriptionId = "sub-seats") => ({
+  subscriptionId,
+  eventCreated: 1000,
+  eventData: {
+    data: { object: { items: { data: [{ quantity }] } } },
+  },
+});
+
+const setupSeatMocks = ({
+  productRows = [seatProduct],
+  transactionRow = subscriptionEvent(2) as Record<string, unknown> | null,
+  deletedRow = null as Record<string, unknown> | null,
+}: {
+  productRows?: Array<{ id: string }>;
+  transactionRow?: Record<string, unknown> | null;
+  deletedRow?: Record<string, unknown> | null;
+} = {}) => {
+  server.use(
+    db.get("Product", () => json(productRows)),
+    db.get("TransactionLog", ({ request }) => {
+      const url = new URL(request.url);
+      const eventType = url.searchParams.get("eventType");
+      // Deletion check query uses eq filter
+      if (eventType === "eq.customer.subscription.deleted") {
+        return json(deletedRow ? [deletedRow] : []);
+      }
+      // Main query uses in filter
+      return json(transactionRow ? [transactionRow] : []);
+    })
+  );
+};
+
+describe("getExtraPaidSeats", () => {
+  test("returns quantity from latest subscription event", async () => {
+    setupSeatMocks({ transactionRow: subscriptionEvent(3) });
+    const result = await getExtraPaidSeats("user-1", testContext);
+    expect(result).toBe(3);
+  });
+
+  test("returns null when no Seats product exists", async () => {
+    setupSeatMocks({ productRows: [] });
+    const result = await getExtraPaidSeats("user-1", testContext);
+    expect(result).toBeNull();
+  });
+
+  test("returns null when no subscription event exists", async () => {
+    setupSeatMocks({ transactionRow: null });
+    const result = await getExtraPaidSeats("user-1", testContext);
+    expect(result).toBeNull();
+  });
+
+  test("returns null when subscription was deleted after the latest event", async () => {
+    setupSeatMocks({
+      transactionRow: subscriptionEvent(2),
+      deletedRow: { eventId: "evt-del" },
+    });
+    const result = await getExtraPaidSeats("user-1", testContext);
+    expect(result).toBeNull();
+  });
+
+  test("returns quantity when no deletion event exists", async () => {
+    setupSeatMocks({
+      transactionRow: subscriptionEvent(5),
+      deletedRow: null,
+    });
+    const result = await getExtraPaidSeats("user-1", testContext);
+    expect(result).toBe(5);
+  });
+
+  test("returns null when eventData has no quantity", async () => {
+    setupSeatMocks({
+      transactionRow: {
+        subscriptionId: "sub-seats",
+        eventCreated: 1000,
+        eventData: { data: { object: {} } },
+      },
+    });
+    const result = await getExtraPaidSeats("user-1", testContext);
+    expect(result).toBeNull();
   });
 });
