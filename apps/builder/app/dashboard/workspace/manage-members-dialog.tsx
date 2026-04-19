@@ -429,6 +429,7 @@ export const ManageMembersDialog = ({
     relation: Role;
     extraSeats: number;
   }>();
+  const [suppressBanner, setSuppressBanner] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
@@ -492,11 +493,13 @@ export const ManageMembersDialog = ({
     }
 
     // When the invite triggered a Stripe Seats subscription, the webhook
-    // needs time to update the DB. Delay refetch so the banner doesn't flash.
+    // needs time to update the DB. Suppress the banner and delay refetch.
     if (boughtExtraSeats && succeeded.length > 0) {
+      setSuppressBanner(true);
       setTimeout(() => {
         handleRefresh();
         revalidator.revalidate();
+        setSuppressBanner(false);
       }, 4000);
       return;
     }
@@ -597,7 +600,7 @@ export const ManageMembersDialog = ({
                 </Flex>
               </Flex>
             )}
-            {isOwner && overCapacity > 0 && (
+            {isOwner && overCapacity > 0 && suppressBanner === false && (
               <PanelBanner variant="warning">
                 <Flex direction="column" gap="2">
                   <Text>
