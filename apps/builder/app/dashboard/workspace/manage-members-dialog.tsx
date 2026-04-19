@@ -473,6 +473,12 @@ export const ManageMembersDialog = ({
     const failed = await inviteMembers(emails, workspace.id, relation);
     setInviting(false);
 
+    // Suppress the banner before optimistic entries trigger a re-render,
+    // otherwise React renders the new member count with the old maxSeats.
+    if (boughtExtraSeats) {
+      setSuppressBanner(true);
+    }
+
     // Add optimistic entries only for emails that actually succeeded so that
     // non-existent or already-member emails never flicker into the list.
     const failedEmails = new Set(failed.map((f) => f.split(":")[0].trim()));
@@ -493,9 +499,8 @@ export const ManageMembersDialog = ({
     }
 
     // When the invite triggered a Stripe Seats subscription, the webhook
-    // needs time to update the DB. Suppress the banner and delay refetch.
+    // needs time to update the DB. Delay refetch; banner already suppressed.
     if (boughtExtraSeats && succeeded.length > 0) {
-      setSuppressBanner(true);
       setTimeout(() => {
         handleRefresh();
         revalidator.revalidate();
