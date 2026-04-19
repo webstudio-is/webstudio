@@ -458,6 +458,9 @@ importers:
       html-tags:
         specifier: ^4.0.0
         version: 4.0.0
+      msw:
+        specifier: ^2.13.2
+        version: 2.13.2(@types/node@22.13.10)(typescript@5.8.2)
       react-router-dom:
         specifier: ^6.30.0
         version: 6.30.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
