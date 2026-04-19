@@ -255,8 +255,7 @@ const computeAvailableSeats = (
         { success: true }
       >["data"]
     | undefined,
-  optimisticPending: OptimisticPendingInvite[],
-  maxSeatsBoost = 0
+  optimisticPending: OptimisticPendingInvite[]
 ): number | undefined => {
   if (membersData === undefined) {
     return;
@@ -270,8 +269,7 @@ const computeAvailableSeats = (
     (o) => !knownEmails.has(o.email)
   ).length;
   return (
-    membersData.maxSeats +
-    maxSeatsBoost -
+    membersData.maxSeats -
     membersData.members.length -
     membersData.pendingInvites.length -
     extraCount
@@ -431,7 +429,7 @@ export const ManageMembersDialog = ({
     relation: Role;
     extraSeats: number;
   }>();
-  const [maxSeatsBoost, setMaxSeatsBoost] = useState(0);
+  const [suppressBanner, setSuppressBanner] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
@@ -446,11 +444,7 @@ export const ManageMembersDialog = ({
     }
   }, [isOpen, isOwner, load, workspace.id]);
 
-  const availableSeats = computeAvailableSeats(
-    membersData,
-    optimisticPending,
-    maxSeatsBoost
-  );
+  const availableSeats = computeAvailableSeats(membersData, optimisticPending);
 
   const syncSeatsMutation = trpcClient.workspace.syncSeats.useMutation();
 
@@ -483,13 +477,6 @@ export const ManageMembersDialog = ({
     // non-existent or already-member emails never flicker into the list.
     const failedEmails = new Set(failed.map((f) => f.split(":")[0].trim()));
     const succeeded = emails.filter((e) => !failedEmails.has(e));
-
-    // Optimistically bump maxSeats so the banner never flashes.
-    // The server's maxSeats will catch up once the Stripe webhook lands,
-    // but we cannot predict when that will happen.
-    if (boughtExtraSeats && succeeded.length > 0) {
-      setMaxSeatsBoost((prev) => prev + succeeded.length);
-    }
     if (succeeded.length > 0) {
       const optimistic: OptimisticPendingInvite[] = succeeded.map((email) => ({
         notificationId: crypto.randomUUID(),
@@ -506,11 +493,13 @@ export const ManageMembersDialog = ({
     }
 
     // When the invite triggered a Stripe Seats subscription, the webhook
-    // needs time to update the DB. Delay refetch so the banner doesn't flash.
+    // needs time to update the DB. Suppress the banner and delay refetch.
     if (boughtExtraSeats && succeeded.length > 0) {
+      setSuppressBanner(true);
       setTimeout(() => {
         handleRefresh();
         revalidator.revalidate();
+        setSuppressBanner(false);
       }, 4000);
       return;
     }
@@ -567,7 +556,6 @@ export const ManageMembersDialog = ({
           onOpenChange(open);
           if (open === false) {
             setErrors(undefined);
-            setMaxSeatsBoost(0);
           }
         }}
       >
@@ -612,7 +600,7 @@ export const ManageMembersDialog = ({
                 </Flex>
               </Flex>
             )}
-            {isOwner && overCapacity > 0 && (
+            {isOwner && overCapacity > 0 && suppressBanner === false && (
               <PanelBanner variant="warning">
                 <Flex direction="column" gap="2">
                   <Text>
