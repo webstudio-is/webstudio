@@ -268,20 +268,6 @@ export const workspaceRouter = router({
       }
     }),
 
-  syncSeats: procedure
-    .input(z.object({ workspaceId: z.string() }))
-    .mutation(async ({ input, ctx }) => {
-      try {
-        if (ctx.planFeatures.maxWorkspaces <= 1) {
-          throw new Error("Upgrade your plan to manage workspace seats.");
-        }
-        await syncOwnerSeats(input.workspaceId, ctx);
-        return { success: true as const };
-      } catch (error) {
-        return createErrorResponse(error);
-      }
-    }),
-
   listMembers: procedure
     .input(z.object({ workspaceId: z.string() }))
     .query(async ({ input, ctx }) => {
