@@ -19,6 +19,7 @@ import {
   ScrollAreaNative,
   Select,
   Tooltip,
+  PanelBanner,
   css,
   theme,
 } from "@webstudio-is/design-system";
@@ -254,18 +255,11 @@ const computeAvailableSeats = (
         { success: true }
       >["data"]
     | undefined,
-  optimisticPending: OptimisticPendingInvite[],
-  // Optimistic upper bound for maxSeats set when extra seats are confirmed,
-  // to avoid flickering while the Stripe webhook has not yet updated TransactionLog.
-  confirmedMaxSeats?: number
+  optimisticPending: OptimisticPendingInvite[]
 ): number | undefined => {
   if (membersData === undefined) {
     return;
   }
-  const effectiveMaxSeats =
-    confirmedMaxSeats !== undefined
-      ? Math.max(membersData.maxSeats, confirmedMaxSeats)
-      : membersData.maxSeats;
   const knownEmails = new Set([
     membersData.owner.email,
     ...membersData.members.map((m) => m.email ?? ""),
@@ -275,7 +269,7 @@ const computeAvailableSeats = (
     (o) => !knownEmails.has(o.email)
   ).length;
   return (
-    effectiveMaxSeats -
+    membersData.maxSeats -
     membersData.members.length -
     membersData.pendingInvites.length -
     extraCount
@@ -435,10 +429,6 @@ export const ManageMembersDialog = ({
     relation: Role;
     extraSeats: number;
   }>();
-  // Optimistic maxSeats ceiling: set when the user confirms extra-seat charges so
-  // the footer and confirmation gate stay correct while the Stripe webhook is in
-  // flight (TransactionLog not yet updated).
-  const [confirmedMaxSeats, setConfirmedMaxSeats] = useState<number>();
   const formRef = useRef<HTMLFormElement>(null);
 
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
@@ -453,22 +443,23 @@ export const ManageMembersDialog = ({
     }
   }, [isOpen, isOwner, load, workspace.id]);
 
-  // Clear the optimistic override once the server reflects the paid seats.
-  useEffect(() => {
-    if (
-      membersData !== undefined &&
-      confirmedMaxSeats !== undefined &&
-      membersData.maxSeats >= confirmedMaxSeats
-    ) {
-      setConfirmedMaxSeats(undefined);
-    }
-  }, [membersData, confirmedMaxSeats]);
+  const availableSeats = computeAvailableSeats(membersData, optimisticPending);
 
-  const availableSeats = computeAvailableSeats(
-    membersData,
-    optimisticPending,
-    confirmedMaxSeats
-  );
+  const syncSeatsMutation = trpcClient.workspace.syncSeats.useMutation();
+
+  const overCapacity =
+    availableSeats !== undefined && availableSeats < 0 ? -availableSeats : 0;
+
+  const handleSyncSeats = () => {
+    syncSeatsMutation.send({ workspaceId: workspace.id }, (result) => {
+      if (result && "error" in result) {
+        setErrors([result.error]);
+        return;
+      }
+      handleRefresh();
+      revalidator.revalidate();
+    });
+  };
 
   const performInvite = async (emails: string[], relation: Role) => {
     setErrors(undefined);
@@ -536,14 +527,6 @@ export const ManageMembersDialog = ({
           onConfirm={async () => {
             const confirm = pendingConfirm;
             setPendingConfirm(undefined);
-            // Optimistically raise confirmedMaxSeats so the footer and the
-            // confirmation gate reflect the payment before the webhook fires.
-            setConfirmedMaxSeats((prev) =>
-              Math.max(
-                prev ?? 0,
-                (membersData?.maxSeats ?? 0) + confirm.extraSeats
-              )
-            );
             await performInvite(confirm.emails, confirm.relation);
           }}
         />
@@ -554,7 +537,6 @@ export const ManageMembersDialog = ({
           onOpenChange(open);
           if (open === false) {
             setErrors(undefined);
-            setConfirmedMaxSeats(undefined);
           }
         }}
       >
@@ -598,6 +580,31 @@ export const ManageMembersDialog = ({
                   </Button>
                 </Flex>
               </Flex>
+            )}
+            {isOwner && overCapacity > 0 && (
+              <PanelBanner variant="warning">
+                <Flex direction="column" gap="2">
+                  <Text>
+                    {`Your workspace has ${overCapacity} more member${overCapacity === 1 ? "" : "s"} than your plan covers. Non-owner members won't be able to access the workspace until this is resolved.`}
+                  </Text>
+                  <Flex gap="2">
+                    <Button
+                      color="dark"
+                      onClick={handleSyncSeats}
+                      state={
+                        syncSeatsMutation.state !== "idle"
+                          ? "pending"
+                          : undefined
+                      }
+                    >
+                      {`Buy ${overCapacity} extra seat${overCapacity === 1 ? "" : "s"}`}
+                    </Button>
+                    <Text color="subtle" css={{ alignSelf: "center" }}>
+                      {`or remove ${overCapacity} member${overCapacity === 1 ? "" : "s"}`}
+                    </Text>
+                  </Flex>
+                </Flex>
+              </PanelBanner>
             )}
             <ScrollAreaNative
               css={{

@@ -268,9 +268,7 @@ const DashboardRoute = () => {
   }, []);
 
   useEffect(() => {
-    if (search !== "") {
-      setSetting("lastDashboardSearch", search);
-    }
+    setSetting("lastDashboardSearch", search);
   }, [search]);
 
   // `useLoaderData` wraps the return in `JsonifyObject` which turns
