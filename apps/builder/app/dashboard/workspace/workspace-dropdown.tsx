@@ -268,6 +268,7 @@ export const WorkspaceSelector = ({
             onOpenChange={setRenameOpen}
           />
           <ManageMembersDialog
+            key={currentWorkspace.id}
             workspace={currentWorkspace}
             userId={userId}
             isOpen={inviteOpen}

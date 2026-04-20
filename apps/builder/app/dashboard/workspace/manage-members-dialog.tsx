@@ -457,21 +457,14 @@ export const ManageMembersDialog = ({
   const formRef = useRef<HTMLFormElement>(null);
 
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
-  // Track which workspace the cached data was fetched for so stale data
-  // from a previously-viewed workspace is never shown for the current one.
-  const [dataWorkspaceId, setDataWorkspaceId] = useState<string | undefined>();
-  const membersData = selectMembersData(data, dataWorkspaceId, workspace.id);
+  const membersData = data?.success ? data.data : undefined;
   const handleRefresh = useCallback(() => {
-    load({ workspaceId: workspace.id }, () => {
-      setDataWorkspaceId(workspace.id);
-    });
+    load({ workspaceId: workspace.id });
   }, [load, workspace.id]);
 
   useEffect(() => {
     if (isOpen && isOwner) {
-      load({ workspaceId: workspace.id }, () => {
-        setDataWorkspaceId(workspace.id);
-      });
+      load({ workspaceId: workspace.id });
     }
   }, [isOpen, isOwner, load, workspace.id]);
 
@@ -702,4 +695,4 @@ export const ManageMembersDialog = ({
   );
 };
 
-export const __testing__ = { computeAvailableSeats, selectMembersData };
+export const __testing__ = { computeAvailableSeats };
