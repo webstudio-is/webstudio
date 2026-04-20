@@ -92,9 +92,7 @@ export const AnimationTransforms = ({
                   { type: "tuple", value: [value.value[0], translateY] },
                   options
                 );
-              }
-              // for scrabbing
-              if (value.type === "unit") {
+              } else if (isTupleItem(value)) {
                 onUpdate(
                   "translate",
                   { type: "tuple", value: [value, translateY] },
@@ -123,9 +121,7 @@ export const AnimationTransforms = ({
                   { type: "tuple", value: [translateX, value.value[0]] },
                   options
                 );
-              }
-              // for scrabbing
-              if (value.type === "unit") {
+              } else if (isTupleItem(value)) {
                 onUpdate(
                   "translate",
                   { type: "tuple", value: [translateX, value] },
@@ -171,9 +167,7 @@ export const AnimationTransforms = ({
                     : [value.value[0], scaleY],
                 };
                 onUpdate("scale", newValue, options);
-              }
-              // for scrabbing
-              if (value.type === "unit") {
+              } else if (isTupleItem(value)) {
                 const newValue: StyleValue = {
                   type: "tuple",
                   value: isScaleLinked ? [value, value] : [value, scaleY],
@@ -226,9 +220,7 @@ export const AnimationTransforms = ({
                     : [scaleX, value.value[0]],
                 };
                 onUpdate("scale", newValue, options);
-              }
-              // for scrabbing
-              if (value.type === "unit") {
+              } else if (isTupleItem(value)) {
                 const newValue: StyleValue = {
                   type: "tuple",
                   value: isScaleLinked ? [value, value] : [scaleX, value],
