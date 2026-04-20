@@ -439,9 +439,19 @@ const Publish = ({
     useState(false);
   const countdown = usePublishCountdown(isPublishing);
   const publisherHost = useStore($publisherHost);
+  const buildModeStorageKey = `buildMode:${project.id}`;
   const [buildMode, setBuildMode] = useState<"ssg" | "ssr" | "cloudflare">(
-    "ssr"
+    () =>
+      (localStorage.getItem(buildModeStorageKey) as
+        | "ssg"
+        | "ssr"
+        | "cloudflare"
+        | null) ?? "ssr"
   );
+  const handleBuildModeChange = (value: "ssg" | "ssr" | "cloudflare") => {
+    localStorage.setItem(buildModeStorageKey, value);
+    setBuildMode(value);
+  };
   const { load: loadCapabilities, data: capabilities } =
     trpcClient.domain.publisherCapabilities.useQuery();
 
@@ -638,7 +648,7 @@ const Publish = ({
                 }
               : {}
           }
-          onChange={(value) => setBuildMode(value)}
+          onChange={handleBuildModeChange}
         />
       )}
 
