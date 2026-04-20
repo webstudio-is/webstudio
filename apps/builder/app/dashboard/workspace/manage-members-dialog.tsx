@@ -245,6 +245,28 @@ type OptimisticPendingInvite = {
   relation: Role;
 };
 
+/**
+ * Returns the member list data only when it was fetched for the given workspace.
+ * Guards against showing stale data cached from a previously-viewed workspace.
+ */
+const selectMembersData = (
+  data:
+    | ReturnType<typeof trpcClient.workspace.listMembers.useQuery>["data"]
+    | undefined,
+  dataWorkspaceId: string | undefined,
+  workspaceId: string
+) => {
+  if (
+    data &&
+    "success" in data &&
+    data.success &&
+    dataWorkspaceId === workspaceId
+  ) {
+    return data.data;
+  }
+  return undefined;
+};
+
 const computeAvailableSeats = (
   membersData:
     | Extract<
@@ -435,14 +457,21 @@ export const ManageMembersDialog = ({
   const formRef = useRef<HTMLFormElement>(null);
 
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
-  const membersData = data?.success ? data.data : undefined;
+  // Track which workspace the cached data was fetched for so stale data
+  // from a previously-viewed workspace is never shown for the current one.
+  const [dataWorkspaceId, setDataWorkspaceId] = useState<string | undefined>();
+  const membersData = selectMembersData(data, dataWorkspaceId, workspace.id);
   const handleRefresh = useCallback(() => {
-    load({ workspaceId: workspace.id });
+    load({ workspaceId: workspace.id }, () => {
+      setDataWorkspaceId(workspace.id);
+    });
   }, [load, workspace.id]);
 
   useEffect(() => {
     if (isOpen && isOwner) {
-      load({ workspaceId: workspace.id });
+      load({ workspaceId: workspace.id }, () => {
+        setDataWorkspaceId(workspace.id);
+      });
     }
   }, [isOpen, isOwner, load, workspace.id]);
 
@@ -673,4 +702,4 @@ export const ManageMembersDialog = ({
   );
 };
 
-export const __testing__ = { computeAvailableSeats };
+export const __testing__ = { computeAvailableSeats, selectMembersData };

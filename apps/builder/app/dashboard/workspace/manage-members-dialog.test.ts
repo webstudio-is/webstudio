@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { __testing__ } from "./manage-members-dialog";
 
-const { computeAvailableSeats } = __testing__;
+const { computeAvailableSeats, selectMembersData } = __testing__;
 
 const owner = {
   userId: "owner-1",
@@ -217,5 +217,39 @@ describe("computeAvailableSeats", () => {
     expect(
       computeAvailableSeats(makeData({ maxSeats: 1, members }), optimistic, 1)
     ).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// selectMembersData — stale workspace data guard
+// ---------------------------------------------------------------------------
+
+const sampleData = {
+  success: true as const,
+  data: {
+    ...makeData({ maxSeats: 3 }),
+  },
+};
+
+describe("selectMembersData", () => {
+  test("returns undefined when data is undefined", () => {
+    expect(selectMembersData(undefined, undefined, "ws-1")).toBeUndefined();
+  });
+
+  test("returns undefined when data has success=false", () => {
+    const errorData = { success: false as const, error: "oops" };
+    expect(selectMembersData(errorData, "ws-1", "ws-1")).toBeUndefined();
+  });
+
+  test("returns undefined when dataWorkspaceId does not match workspaceId", () => {
+    expect(selectMembersData(sampleData, "ws-OLD", "ws-NEW")).toBeUndefined();
+  });
+
+  test("returns undefined when dataWorkspaceId is undefined (data not yet tagged)", () => {
+    expect(selectMembersData(sampleData, undefined, "ws-1")).toBeUndefined();
+  });
+
+  test("returns data when dataWorkspaceId matches workspaceId", () => {
+    expect(selectMembersData(sampleData, "ws-1", "ws-1")).toBe(sampleData.data);
   });
 });
