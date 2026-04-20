@@ -630,8 +630,8 @@ const Publish = ({
           value={buildMode}
           options={["ssr", "ssg", "cloudflare"] as const}
           getLabel={(value) => {
-            if (value === "ssr") return "SSR";
-            if (value === "ssg") return "SSG";
+            if (value === "ssr") return "SSR (dynamic data)";
+            if (value === "ssg") return "SSG (static site)";
             return "Cloudflare Pages";
           }}
           getDescription={(value) => {
