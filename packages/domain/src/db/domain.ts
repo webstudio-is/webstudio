@@ -319,57 +319,47 @@ export const updateStatus = async (
 
   const { domain } = validationResult;
 
-  // @todo: must be implemented as workflow/queue service part of 3rd party domain initialization process
-  const statusResult = await context.domain.domainTrpc.getStatus.query({
-    domain,
-  });
-
-  if (statusResult.success === false) {
-    return statusResult;
-  }
-
-  let domainStatus = statusResult.data.status;
+  // Always re-verify TXT via DNS — never trust the in-memory cache for a status check.
+  let domainStatus: Status = "error";
   let domainError: string | null = null;
 
-  // If not active, re-verify TXT via DNS in case in-memory state was lost (e.g. server restart in self-hosting).
-  if (domainStatus !== "active") {
-    const domainIdRow = await context.postgrest.client
-      .from("Domain")
-      .select("id")
-      .eq("domain", domain)
-      .single();
+  const domainIdRow = await context.postgrest.client
+    .from("Domain")
+    .select("id")
+    .eq("domain", domain)
+    .single();
 
-    if (!domainIdRow.error) {
-      const projectDomainRow = await context.postgrest.client
-        .from("ProjectDomain")
-        .select("txtRecord")
-        .eq("domainId", domainIdRow.data.id)
-        .eq("projectId", props.projectId)
-        .single();
-
-      if (!projectDomainRow.error && projectDomainRow.data.txtRecord) {
-        const reVerifyResult = await context.domain.domainTrpc.create.mutate({
-          domain,
-          txtRecord: projectDomainRow.data.txtRecord,
-        });
-
-        if (reVerifyResult.success) {
-          domainStatus = "active";
-        } else {
-          domainError = reVerifyResult.error;
-        }
-      }
-    }
+  if (domainIdRow.error) {
+    return createErrorResponse(domainIdRow.error);
   }
 
-  const originalError =
-    statusResult.data.status === "error" ? statusResult.data.error : null;
+  const projectDomainRow = await context.postgrest.client
+    .from("ProjectDomain")
+    .select("txtRecord")
+    .eq("domainId", domainIdRow.data.id)
+    .eq("projectId", props.projectId)
+    .single();
+
+  if (projectDomainRow.error) {
+    return createErrorResponse(projectDomainRow.error);
+  }
+
+  const reVerifyResult = await context.domain.domainTrpc.create.mutate({
+    domain,
+    txtRecord: projectDomainRow.data.txtRecord,
+  });
+
+  if (reVerifyResult.success) {
+    domainStatus = "active";
+  } else {
+    domainError = reVerifyResult.error;
+  }
 
   const data =
     domainStatus === "error"
       ? {
           status: "error" as const,
-          error: domainError ?? originalError ?? "Unknown error",
+          error: domainError ?? "Unknown error",
         }
       : { status: domainStatus };
 
