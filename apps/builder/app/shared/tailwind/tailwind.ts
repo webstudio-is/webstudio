@@ -404,7 +404,8 @@ export const generateFragmentFromTailwind = async (
   };
   const createOrMergeLocalStyles = (
     instanceId: Instance["id"],
-    newStyles: StyleDecl[]
+    newStyles: StyleDecl[],
+    { skipExisting = false }: { skipExisting?: boolean } = {}
   ) => {
     const localStyleSource =
       getLocalStyleSource(instanceId) ?? createLocalStyleSource(instanceId);
@@ -422,6 +423,11 @@ export const generateFragmentFromTailwind = async (
         value: parsedStyleDecl.value,
       };
       const styleDeclKey = getStyleDeclKey(styleDecl);
+      // preflight is a browser reset baseline and must not overwrite
+      // explicit styles already set from inline style attributes
+      if (skipExisting && styles.has(styleDeclKey)) {
+        continue;
+      }
       styles.delete(styleDeclKey);
       styles.set(styleDeclKey, styleDecl);
     }
@@ -430,7 +436,9 @@ export const generateFragmentFromTailwind = async (
   for (const instance of fragment.instances) {
     const tag = instance.tag;
     if (tag && preflight[tag]) {
-      createOrMergeLocalStyles(instance.id, preflight[tag]);
+      createOrMergeLocalStyles(instance.id, preflight[tag], {
+        skipExisting: true,
+      });
     }
   }
 

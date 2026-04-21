@@ -219,6 +219,65 @@ test("add preflight matching tags when no classes are used", async () => {
   );
 });
 
+test("preflight does not overwrite inline styles", async () => {
+  // <a style="color: white"> — preflight sets color: inherit, must not win
+  expect(
+    await generateFragmentFromTailwind(
+      renderTemplate(
+        <ws.element
+          ws:tag="a"
+          ws:style={css`
+            color: white;
+          `}
+        ></ws.element>
+      )
+    )
+  ).toEqual(
+    renderTemplate(
+      <ws.element
+        ws:tag="a"
+        ws:style={css`
+          color: white;
+          text-decoration: inherit;
+        `}
+      ></ws.element>
+    )
+  );
+});
+
+test("preflight does not overwrite h1 inline styles", async () => {
+  // <h1 style="font-size: clamp(...); font-weight: 700; margin-bottom: 1.5rem">
+  // preflight resets font-size, font-weight, margin to 0/inherit — must not win
+  expect(
+    await generateFragmentFromTailwind(
+      renderTemplate(
+        <ws.element
+          ws:tag="h1"
+          ws:style={css`
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+          `}
+        ></ws.element>
+      )
+    )
+  ).toEqual(
+    renderTemplate(
+      <ws.element
+        ws:tag="h1"
+        ws:style={css`
+          font-size: clamp(2.5rem, 5vw, 4rem);
+          font-weight: 700;
+          margin-bottom: 1.5rem;
+          margin-top: 0;
+          margin-right: 0;
+          margin-left: 0;
+        `}
+      ></ws.element>
+    )
+  );
+});
+
 test("extract states from tailwind classes", async () => {
   expect(
     await generateFragmentFromTailwind(
