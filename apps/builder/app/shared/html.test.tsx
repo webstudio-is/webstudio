@@ -225,6 +225,17 @@ test("collapse any spacing characters inside rich text", () => {
   );
 });
 
+test("preserve leading space in inline element following text without trailing space", () => {
+  expect(generateFragmentFromHtml(`<h2>About<span> Us</span></h2>`)).toEqual(
+    renderTemplate(
+      <ws.element ws:tag="h2">
+        {"About"}
+        <ws.element ws:tag="span">{" Us"}</ws.element>
+      </ws.element>
+    )
+  );
+});
+
 test("generate style attribute as local styles", () => {
   expect(
     generateFragmentFromHtml(`
