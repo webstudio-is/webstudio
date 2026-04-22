@@ -2332,7 +2332,7 @@ describe("style tag to tokens", () => {
       ).toHaveLength(0);
     });
 
-    test(":root selector stays as html embed", () => {
+    test(":root selector is extracted as local styles on the root instance, not as html embed", () => {
       const fragment = generateFragmentFromHtml(`
         <style>
           :root { --color: blue; }
@@ -2345,11 +2345,87 @@ describe("style tag to tokens", () => {
         (s) => s.type === "token" && s.name === "card"
       );
       expect(tokenSource).toBeDefined();
-      // :root should stay as html embed
-      const htmlEmbed = fragment.instances.find(
-        (i) => i.component === "HtmlEmbed"
+      // :root should NOT produce an html embed
+      expect(fragment.instances.some((i) => i.component === "HtmlEmbed")).toBe(
+        false
       );
-      expect(htmlEmbed).toBeDefined();
+      // :root styles should be on the root instance selection
+      const rootSelection = fragment.styleSourceSelections.find(
+        (sel) => sel.instanceId === ":root"
+      );
+      expect(rootSelection).toBeDefined();
+      const rootStyleSourceId = rootSelection!.values[0];
+      const rootStyle = fragment.styles.find(
+        (s) => s.styleSourceId === rootStyleSourceId && s.property === "--color"
+      );
+      expect(rootStyle).toBeDefined();
+    });
+
+    test(":root only styles are extracted as local styles on root instance", () => {
+      const fragment = generateFragmentFromHtml(`
+        <style>
+          :root {
+            color: red;
+          }
+        </style>
+      `);
+      // no html embed
+      expect(fragment.instances.some((i) => i.component === "HtmlEmbed")).toBe(
+        false
+      );
+      // style on :root instance
+      const rootSelection = fragment.styleSourceSelections.find(
+        (sel) => sel.instanceId === ":root"
+      );
+      expect(rootSelection).toBeDefined();
+      const rootStyleSourceId = rootSelection!.values[0];
+      const rootStyle = fragment.styles.find(
+        (s) => s.styleSourceId === rootStyleSourceId && s.property === "color"
+      );
+      expect(rootStyle).toBeDefined();
+      expect(rootStyle!.value).toMatchObject({ type: "keyword", value: "red" });
+    });
+
+    test("cross-selector gradient vars stay as var() references in pasted tokens", () => {
+      const fragment = generateFragmentFromHtml(`
+        <section class="scope">
+          <style>
+            .scope {
+              --tone-1: #ff0000;
+              --tone-2: #00ff00;
+              --tone-3: #0000ff;
+            }
+
+            .panel {
+              background: linear-gradient(38deg, var(--tone-1), var(--tone-2), var(--tone-3));
+            }
+          </style>
+
+          <div class="panel">test</div>
+        </section>
+      `);
+      const tokenSource = fragment.styleSources.find(
+        (source) => source.type === "token" && source.name === "panel"
+      );
+      expect(tokenSource).toBeDefined();
+      const backgroundImage = fragment.styles.find(
+        (style) =>
+          style.styleSourceId === tokenSource!.id &&
+          style.property === "backgroundImage"
+      );
+      expect(backgroundImage?.value).toMatchObject({
+        type: "layers",
+        value: [
+          {
+            type: "unparsed",
+            value:
+              "linear-gradient(38deg,var(--tone-1),var(--tone-2),var(--tone-3))",
+          },
+        ],
+      });
+      expect(fragment.instances.some((i) => i.component === "HtmlEmbed")).toBe(
+        false
+      );
     });
 
     test("universal selector * stays as html embed", () => {

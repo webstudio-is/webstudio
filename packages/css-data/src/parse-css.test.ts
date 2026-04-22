@@ -1890,6 +1890,63 @@ describe("var() substitution — background", () => {
     );
   });
 
+  test("gradient var() references are preserved in background-image", () => {
+    const result = decls(`
+      background: linear-gradient(38deg, var(--aurora-clr1), var(--aurora-clr2), var(--aurora-clr3));
+    `);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop(
+          "background-image",
+          layers(
+            expect.objectContaining({
+              type: "unparsed",
+              value:
+                "linear-gradient(38deg,var(--aurora-clr1),var(--aurora-clr2),var(--aurora-clr3))",
+            })
+          )
+        ),
+      ])
+    );
+  });
+
+  test("cross-selector background gradients keep authored var() references", () => {
+    const result = parseCss(
+      `
+      .scope {
+        --tone-1: #ff0000;
+        --tone-2: #00ff00;
+        --tone-3: #0000ff;
+      }
+
+      .panel {
+        background: linear-gradient(38deg, var(--tone-1), var(--tone-2), var(--tone-3));
+      }
+    `,
+      new Map([
+        ["--tone-1", "#ff0000"],
+        ["--tone-2", "#00ff00"],
+        ["--tone-3", "#0000ff"],
+      ])
+    ).styles;
+    const backgroundImage = result.find(
+      (decl) =>
+        decl.selector === ".panel" && decl.property === "background-image"
+    );
+    expect(backgroundImage?.value).toEqual(
+      expect.objectContaining({
+        type: "layers",
+        value: [
+          expect.objectContaining({
+            type: "unparsed",
+            value:
+              "linear-gradient(38deg,var(--tone-1),var(--tone-2),var(--tone-3))",
+          }),
+        ],
+      })
+    );
+  });
+
   test("multiple vars for image and repeat parts", () => {
     const result = decls(`
       --img: url("hero.png");

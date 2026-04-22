@@ -109,7 +109,9 @@ const resolveVars = (
   customProperties: Map<string, string>,
   cssVars: Map<string, string> | undefined,
   depth = 0
-): { resolved: string; dropped: string[] } | undefined => {
+):
+  | { resolved: string; dropped: string[]; usedCssVarsSubstitution: boolean }
+  | undefined => {
   if (!value.includes("var(") || depth > 8) {
     return;
   }
@@ -123,6 +125,7 @@ const resolveVars = (
 
   const subs: Array<{ start: number; end: number; text: string }> = [];
   const dropped: string[] = [];
+  let usedCssVarsSubstitution = false;
 
   csstree.walk(ast, {
     visit: "Function",
@@ -141,6 +144,9 @@ const resolveVars = (
         cssVars?.get(`--${varRef.value}`);
 
       if (direct !== undefined) {
+        if (!customProperties.has(`--${varRef.value}`)) {
+          usedCssVarsSubstitution = true;
+        }
         subs.push({
           start: fnNode.loc.start.offset,
           end: fnNode.loc.end.offset,
@@ -187,10 +193,36 @@ const resolveVars = (
       return {
         resolved: deeper.resolved,
         dropped: [...new Set([...dropped, ...deeper.dropped])],
+        usedCssVarsSubstitution:
+          usedCssVarsSubstitution || deeper.usedCssVarsSubstitution,
       };
     }
   }
-  return { resolved, dropped };
+  return { resolved, dropped, usedCssVarsSubstitution };
+};
+
+const preserveOriginalBackgroundImageVars = (
+  value: string,
+  parsedCss: Map<CssProperty, StyleValue>
+) => {
+  const originalExpanded = new Map(expandShorthands([["background", value]]));
+  const originalBackgroundImage = value.includes("gradient(")
+    ? value
+    : originalExpanded.get("background-image");
+
+  if (
+    originalBackgroundImage === undefined ||
+    !originalBackgroundImage.includes("var(")
+  ) {
+    return parsedCss;
+  }
+
+  parsedCss.set(
+    "background-image",
+    parseCssValueLonghand("background-image", originalBackgroundImage)
+  );
+
+  return parsedCss;
 };
 
 /**
@@ -288,6 +320,7 @@ const substituteVarsInShorthand = (
   }
 
   const { resolved, dropped } = resolution;
+  const { usedCssVarsSubstitution } = resolution;
 
   if (resolved === value) {
     // No substitution happened.
@@ -295,12 +328,27 @@ const substituteVarsInShorthand = (
       // No recognizable var() nodes — let caller fall through to default.
       return;
     }
+    if (property === "background" && value.includes("gradient(")) {
+      return {
+        result: preserveOriginalBackgroundImageVars(
+          value,
+          parseCssValue(property as CssProperty, value)
+        ),
+        droppedVars: [],
+      };
+    }
     // All vars were unresolvable — signal that the property will be dropped.
     return { result: new Map(), droppedVars: dropped };
   }
 
+  let parsed = parseCssValue(property as CssProperty, resolved);
+
+  if (property === "background" && usedCssVarsSubstitution) {
+    parsed = preserveOriginalBackgroundImageVars(value, parsed);
+  }
+
   return {
-    result: parseCssValue(property as CssProperty, resolved),
+    result: parsed,
     droppedVars: dropped,
   };
 };
