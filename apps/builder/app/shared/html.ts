@@ -598,7 +598,10 @@ export const generateFragmentFromHtml = (
   // Map of instanceId → resolved class names (for post-processing token assignments)
   const instanceTokenClasses = new Map<string, string[]>();
 
-  const convertElementToInstance = (node: ElementNode) => {
+  const convertElementToInstance = (
+    node: ElementNode,
+    { preserveLeadingSpace = false }: { preserveLeadingSpace?: boolean } = {}
+  ) => {
     if (node.tagName === "script" && node.sourceCodeLocation) {
       const { startCol, startOffset, endOffset } = node.sourceCodeLocation;
       const indent = startCol - 1;
@@ -859,7 +862,13 @@ export const generateFragmentFromHtml = (
     for (let index = 0; index < node.childNodes.length; index += 1) {
       const childNode = node.childNodes[index];
       if (defaultTreeAdapter.isElementNode(childNode)) {
-        const child = convertElementToInstance(childNode);
+        const lastChild = instance.children.at(-1);
+        const nextPreserveLeadingSpace =
+          instance.children.length > 0 &&
+          !(lastChild?.type === "text" && lastChild.value.endsWith(" "));
+        const child = convertElementToInstance(childNode, {
+          preserveLeadingSpace: nextPreserveLeadingSpace,
+        });
         if (child) {
           instance.children.push(child);
         }
@@ -880,7 +889,9 @@ export const generateFragmentFromHtml = (
           // collapse spacing characters inside of text to avoid preserved newlines
           child.value = child.value.replaceAll(/\s+/g, " ");
           // remove unnecessary spacing in nodes
-          if (index === 0) {
+          // skip trimStart if the parent signaled that leading space is semantic
+          // (e.g. `<span> Us</span>` following `About` with no intervening space)
+          if (index === 0 && !preserveLeadingSpace) {
             child.value = child.value.trimStart();
           }
           if (index === node.childNodes.length - 1) {
