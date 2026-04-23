@@ -902,10 +902,34 @@ export const generateFragmentFromHtml = (
         }
       }
       if (defaultTreeAdapter.isTextNode(childNode)) {
-        // trim spaces around rich text
-        // do not for code
+        // For whitespace-only text nodes between elements, attach to previous element
+        // instead of creating a separate text node (preserves space but avoids breaking rich-text detection)
         if (spaceRegex.test(childNode.value) && node.tagName !== "code") {
-          if (index === 0 || index === node.childNodes.length - 1) {
+          const prevChild = index > 0 ? node.childNodes[index - 1] : undefined;
+          const nextChild =
+            index < node.childNodes.length - 1
+              ? node.childNodes[index + 1]
+              : undefined;
+          const prevIsElement =
+            prevChild && defaultTreeAdapter.isElementNode(prevChild);
+          const nextIsElement =
+            nextChild && defaultTreeAdapter.isElementNode(nextChild);
+
+          // If whitespace is between two elements, attach it to the previous element
+          if (prevIsElement && nextIsElement && instance.children.length > 0) {
+            const lastChild = instance.children.at(-1);
+            if (lastChild?.type === "id") {
+              // Find the previous instance and append space to its last text child
+              const prevInstanceId = lastChild.value;
+              const prevInstance = instances.get(prevInstanceId);
+              if (prevInstance && prevInstance.children.length > 0) {
+                const prevLastChild = prevInstance.children.at(-1);
+                if (prevLastChild?.type === "text") {
+                  prevLastChild.value += " ";
+                  continue;
+                }
+              }
+            }
             continue;
           }
         }

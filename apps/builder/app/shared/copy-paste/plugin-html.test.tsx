@@ -63,3 +63,57 @@ test("ignore html without any tags", async () => {
   expect(await html.onPaste?.(`It works`)).toEqual(false);
   expect($instances.get()).toEqual(data.instances);
 });
+
+test("skip whitespace-only text nodes between element siblings", async () => {
+  const data = renderData(
+    <ws.element ws:tag="body" ws:id="bodyId">
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    </ws.element>
+  );
+  $project.set({ id: "" } as Project);
+  $instances.set(data.instances);
+  $pages.set(
+    createDefaultPages({ rootInstanceId: "bodyId", homePageId: "pageId" })
+  );
+  $awareness.set({ pageId: "pageId", instanceSelector: ["divId", "bodyId"] });
+
+  // Regression test: whitespace between elements should not create separate text nodes
+  // but the space should be preserved as part of one of the adjacent span instances
+  // This ensures the second span gets text-content control in settings panel
+  expect(
+    await html.onPaste?.(`<div><span>✓</span> <span>text</span></div>`)
+  ).toEqual(true);
+
+  const instances = Array.from($instances.get().values()).filter(
+    (i) => i.id !== "bodyId" && i.id !== "divId"
+  );
+
+  const divs = instances.filter((i) => i.tag === "div");
+  expect(divs.length).toBeGreaterThan(0);
+
+  const pastedDiv = divs[0];
+  expect(pastedDiv?.children).toHaveLength(2);
+
+  // Both children should be element ids (the two spans), not a text node for the space
+  expect(pastedDiv?.children[0].type).toBe("id");
+  expect(pastedDiv?.children[1].type).toBe("id");
+  expect(pastedDiv?.children.some((c) => c.type === "text")).toBe(false);
+
+  // Verify the space is preserved in one of the spans' text content
+  const span1Id = (pastedDiv?.children[0] as any)?.value;
+  const span2Id = (pastedDiv?.children[1] as any)?.value;
+
+  const span1 = $instances.get().get(span1Id);
+  const span2 = $instances.get().get(span2Id);
+
+  const span1Text =
+    span1?.children[0]?.type === "text" ? span1.children[0].value : "";
+  const span2Text =
+    span2?.children[0]?.type === "text" ? span2.children[0].value : "";
+
+  // Space should be preserved as part of one of the spans, not lost
+  const combinedText = span1Text + span2Text;
+  expect(combinedText).toContain("✓");
+  expect(combinedText).toContain("text");
+  expect(combinedText).toContain(" ");
+});
