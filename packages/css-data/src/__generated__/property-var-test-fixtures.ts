@@ -19,13 +19,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["-webkit-line-clamp:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "-webkit-line-clamp:branch:1:type:integer:term:0:type:number-token",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-integer)",
         variables: {
-          "--slot-1": "1",
+          "--slot-integer": "1",
         },
       },
     ],
@@ -55,9 +63,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "-webkit-tap-highlight-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -72,9 +80,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "-webkit-text-fill-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -90,18 +98,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "-webkit-text-stroke:term:0:type:length",
           "-webkit-text-stroke:term:1:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "red",
+          "--slot-length": "1px",
+          "--slot-color": "red",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["-webkit-text-stroke:term:0:type:length"],
-        value: "var(--slot-1) red",
+        value: "var(--slot-length) red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
       {
@@ -109,9 +117,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "-webkit-text-stroke:term:1:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-color)",
         variables: {
-          "--slot-2": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -126,9 +134,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "-webkit-text-stroke-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -141,9 +149,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["-webkit-text-stroke-width:term:0:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -154,13 +162,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["accent-color:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "accent-color:branch:1:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -171,13 +187,33 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["align-content:branch:0:keyword:normal"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "align-content:branch:2:type:content-distribution:branch:0:keyword:space-between",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-content-distribution)",
         variables: {
-          "--slot-1": "space-between",
+          "--slot-content-distribution": "space-between",
+        },
+      },
+      {
+        id: "pattern-3-all-slots",
+        positions: [
+          "align-content:branch:1:type:baseline-position:term:0:repeat:branch:0:keyword:first",
+          "align-content:branch:1:type:baseline-position:term:1:keyword:baseline",
+        ],
+        value: "var(--slot-baseline-position) var(--slot-baseline-position-2)",
+        variables: {
+          "--slot-baseline-position": "first",
+          "--slot-baseline-position-2": "baseline",
         },
       },
       {
@@ -185,9 +221,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "align-content:branch:1:type:baseline-position:term:0:repeat:branch:0:keyword:first",
         ],
-        value: "var(--slot-1) baseline",
+        value: "var(--slot-baseline-position) baseline",
         variables: {
-          "--slot-1": "first",
+          "--slot-baseline-position": "first",
         },
       },
       {
@@ -195,9 +231,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "align-content:branch:1:type:baseline-position:term:1:keyword:baseline",
         ],
-        value: "first var(--slot-2)",
+        value: "first var(--slot-baseline-position-2)",
         variables: {
-          "--slot-2": "baseline",
+          "--slot-baseline-position-2": "baseline",
         },
       },
       {
@@ -206,10 +242,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "align-content:branch:3:term:0:repeat:type:overflow-position:branch:0:keyword:unsafe",
           "align-content:branch:3:term:1:type:content-position:branch:0:keyword:center",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-overflow-position) var(--slot-content-position)",
         variables: {
-          "--slot-1": "unsafe",
-          "--slot-2": "center",
+          "--slot-overflow-position": "unsafe",
+          "--slot-content-position": "center",
         },
       },
       {
@@ -217,9 +253,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "align-content:branch:3:term:0:repeat:type:overflow-position:branch:0:keyword:unsafe",
         ],
-        value: "var(--slot-1) center",
+        value: "var(--slot-overflow-position) center",
         variables: {
-          "--slot-1": "unsafe",
+          "--slot-overflow-position": "unsafe",
         },
       },
       {
@@ -227,9 +263,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "align-content:branch:3:term:1:type:content-position:branch:0:keyword:center",
         ],
-        value: "unsafe var(--slot-2)",
+        value: "unsafe var(--slot-content-position)",
         variables: {
-          "--slot-2": "center",
+          "--slot-content-position": "center",
         },
       },
     ],
@@ -254,10 +290,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "align-items:branch:2:type:baseline-position:term:0:repeat:branch:0:keyword:first",
           "align-items:branch:2:type:baseline-position:term:1:keyword:baseline",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-baseline-position) var(--slot-baseline-position-2)",
         variables: {
-          "--slot-1": "first",
-          "--slot-2": "baseline",
+          "--slot-baseline-position": "first",
+          "--slot-baseline-position-2": "baseline",
         },
       },
       {
@@ -265,9 +301,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "align-items:branch:2:type:baseline-position:term:0:repeat:branch:0:keyword:first",
         ],
-        value: "var(--slot-1) baseline",
+        value: "var(--slot-baseline-position) baseline",
         variables: {
-          "--slot-1": "first",
+          "--slot-baseline-position": "first",
         },
       },
       {
@@ -275,9 +311,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "align-items:branch:2:type:baseline-position:term:1:keyword:baseline",
         ],
-        value: "first var(--slot-2)",
+        value: "first var(--slot-baseline-position-2)",
         variables: {
-          "--slot-2": "baseline",
+          "--slot-baseline-position-2": "baseline",
         },
       },
     ],
@@ -347,30 +383,30 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:8:type:single-animation-timeline:branch:0:keyword:auto",
         ],
         value:
-          "var(--slot-1),var(--slot-2) var(--slot-3) var(--slot-4),var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8) var(--slot-9) var(--slot-10) var(--slot-11),var(--slot-12),var(--slot-13) var(--slot-14) var(--slot-15),var(--slot-16) var(--slot-17) var(--slot-18) var(--slot-19) var(--slot-20) var(--slot-21) var(--slot-22)",
+          "var(--slot-single-animation),var(--slot-single-animation-2) var(--slot-single-animation-3) var(--slot-single-animation-4),var(--slot-single-animation-5) var(--slot-single-animation-6) var(--slot-single-animation-7) var(--slot-single-animation-8) var(--slot-single-animation-9) var(--slot-single-animation-10) var(--slot-single-animation-11),var(--slot-single-animation-12),var(--slot-single-animation-13) var(--slot-single-animation-14) var(--slot-single-animation-15),var(--slot-single-animation-16) var(--slot-single-animation-17) var(--slot-single-animation-18) var(--slot-single-animation-19) var(--slot-single-animation-20) var(--slot-single-animation-21) var(--slot-single-animation-22)",
         variables: {
-          "--slot-1": "auto",
-          "--slot-2": "auto",
-          "--slot-3": "linear",
-          "--slot-4": "1s",
-          "--slot-5": "1s",
-          "--slot-6": "infinite",
-          "--slot-7": "normal",
-          "--slot-8": "none",
-          "--slot-9": "running",
-          "--slot-10": "none",
-          "--slot-11": "auto",
-          "--slot-12": "auto",
-          "--slot-13": "auto",
-          "--slot-14": "linear",
-          "--slot-15": "1s",
-          "--slot-16": "1s",
-          "--slot-17": "infinite",
-          "--slot-18": "normal",
-          "--slot-19": "none",
-          "--slot-20": "running",
-          "--slot-21": "none",
-          "--slot-22": "auto",
+          "--slot-single-animation": "auto",
+          "--slot-single-animation-2": "auto",
+          "--slot-single-animation-3": "linear",
+          "--slot-single-animation-4": "1s",
+          "--slot-single-animation-5": "1s",
+          "--slot-single-animation-6": "infinite",
+          "--slot-single-animation-7": "normal",
+          "--slot-single-animation-8": "none",
+          "--slot-single-animation-9": "running",
+          "--slot-single-animation-10": "none",
+          "--slot-single-animation-11": "auto",
+          "--slot-single-animation-12": "auto",
+          "--slot-single-animation-13": "auto",
+          "--slot-single-animation-14": "linear",
+          "--slot-single-animation-15": "1s",
+          "--slot-single-animation-16": "1s",
+          "--slot-single-animation-17": "infinite",
+          "--slot-single-animation-18": "normal",
+          "--slot-single-animation-19": "none",
+          "--slot-single-animation-20": "running",
+          "--slot-single-animation-21": "none",
+          "--slot-single-animation-22": "auto",
         },
       },
       {
@@ -379,9 +415,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:0:property:animation-duration:term:0:repeat:branch:0:keyword:auto",
         ],
         value:
-          "var(--slot-1),auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
+          "var(--slot-single-animation),auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-1": "auto",
+          "--slot-single-animation": "auto",
         },
       },
       {
@@ -390,9 +426,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:7:branch:0:keyword:none",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running var(--slot-10) auto,auto,auto linear 1s,1s infinite normal none running none auto",
+          "auto,auto linear 1s,1s infinite normal none running var(--slot-single-animation-10) auto,auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-10": "none",
+          "--slot-single-animation-10": "none",
         },
       },
       {
@@ -401,9 +437,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:8:type:single-animation-timeline:branch:0:keyword:auto",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none var(--slot-11),auto,auto linear 1s,1s infinite normal none running none auto",
+          "auto,auto linear 1s,1s infinite normal none running none var(--slot-single-animation-11),auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-11": "auto",
+          "--slot-single-animation-11": "auto",
         },
       },
       {
@@ -412,9 +448,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:0:property:animation-duration:term:0:repeat:branch:0:keyword:auto",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,var(--slot-12),auto linear 1s,1s infinite normal none running none auto",
+          "auto,auto linear 1s,1s infinite normal none running none auto,var(--slot-single-animation-12),auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-12": "auto",
+          "--slot-single-animation-12": "auto",
         },
       },
       {
@@ -423,9 +459,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:0:property:animation-duration:term:0:repeat:branch:0:keyword:auto",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,auto,var(--slot-13) linear 1s,1s infinite normal none running none auto",
+          "auto,auto linear 1s,1s infinite normal none running none auto,auto,var(--slot-single-animation-13) linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-13": "auto",
+          "--slot-single-animation-13": "auto",
         },
       },
       {
@@ -434,9 +470,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:1:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto var(--slot-14) 1s,1s infinite normal none running none auto",
+          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto var(--slot-single-animation-14) 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-14": "linear",
+          "--slot-single-animation-14": "linear",
         },
       },
       {
@@ -445,9 +481,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:2:property:animation-delay:term:0:repeat:type:time",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear var(--slot-15),1s infinite normal none running none auto",
+          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear var(--slot-single-animation-15),1s infinite normal none running none auto",
         variables: {
-          "--slot-15": "1s",
+          "--slot-single-animation-15": "1s",
         },
       },
       {
@@ -456,9 +492,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:2:property:animation-delay:term:0:repeat:type:time",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,var(--slot-16) infinite normal none running none auto",
+          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,var(--slot-single-animation-16) infinite normal none running none auto",
         variables: {
-          "--slot-16": "1s",
+          "--slot-single-animation-16": "1s",
         },
       },
       {
@@ -467,9 +503,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:3:type:single-animation-iteration-count:branch:0:keyword:infinite",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s var(--slot-17) normal none running none auto",
+          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s var(--slot-single-animation-17) normal none running none auto",
         variables: {
-          "--slot-17": "infinite",
+          "--slot-single-animation-17": "infinite",
         },
       },
       {
@@ -478,9 +514,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:4:type:single-animation-direction:branch:0:keyword:normal",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite var(--slot-18) none running none auto",
+          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite var(--slot-single-animation-18) none running none auto",
         variables: {
-          "--slot-18": "normal",
+          "--slot-single-animation-18": "normal",
         },
       },
       {
@@ -489,9 +525,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:5:type:single-animation-fill-mode:branch:0:keyword:none",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal var(--slot-19) running none auto",
+          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal var(--slot-single-animation-19) running none auto",
         variables: {
-          "--slot-19": "none",
+          "--slot-single-animation-19": "none",
         },
       },
       {
@@ -500,9 +536,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:0:property:animation-duration:term:0:repeat:branch:0:keyword:auto",
         ],
         value:
-          "auto,var(--slot-2) linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
+          "auto,var(--slot-single-animation-2) linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-2": "auto",
+          "--slot-single-animation-2": "auto",
         },
       },
       {
@@ -511,9 +547,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:6:type:single-animation-play-state:branch:0:keyword:running",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none var(--slot-20) none auto",
+          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none var(--slot-single-animation-20) none auto",
         variables: {
-          "--slot-20": "running",
+          "--slot-single-animation-20": "running",
         },
       },
       {
@@ -522,9 +558,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:7:branch:0:keyword:none",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running var(--slot-21) auto",
+          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running var(--slot-single-animation-21) auto",
         variables: {
-          "--slot-21": "none",
+          "--slot-single-animation-21": "none",
         },
       },
       {
@@ -533,9 +569,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:8:type:single-animation-timeline:branch:0:keyword:auto",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none var(--slot-22)",
+          "auto,auto linear 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none var(--slot-single-animation-22)",
         variables: {
-          "--slot-22": "auto",
+          "--slot-single-animation-22": "auto",
         },
       },
       {
@@ -544,9 +580,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:1:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
         value:
-          "auto,auto var(--slot-3) 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
+          "auto,auto var(--slot-single-animation-3) 1s,1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-3": "linear",
+          "--slot-single-animation-3": "linear",
         },
       },
       {
@@ -555,9 +591,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:2:property:animation-delay:term:0:repeat:type:time",
         ],
         value:
-          "auto,auto linear var(--slot-4),1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
+          "auto,auto linear var(--slot-single-animation-4),1s infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-4": "1s",
+          "--slot-single-animation-4": "1s",
         },
       },
       {
@@ -566,9 +602,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:2:property:animation-delay:term:0:repeat:type:time",
         ],
         value:
-          "auto,auto linear 1s,var(--slot-5) infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
+          "auto,auto linear 1s,var(--slot-single-animation-5) infinite normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-5": "1s",
+          "--slot-single-animation-5": "1s",
         },
       },
       {
@@ -577,9 +613,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:3:type:single-animation-iteration-count:branch:0:keyword:infinite",
         ],
         value:
-          "auto,auto linear 1s,1s var(--slot-6) normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
+          "auto,auto linear 1s,1s var(--slot-single-animation-6) normal none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-6": "infinite",
+          "--slot-single-animation-6": "infinite",
         },
       },
       {
@@ -588,9 +624,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:4:type:single-animation-direction:branch:0:keyword:normal",
         ],
         value:
-          "auto,auto linear 1s,1s infinite var(--slot-7) none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
+          "auto,auto linear 1s,1s infinite var(--slot-single-animation-7) none running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-7": "normal",
+          "--slot-single-animation-7": "normal",
         },
       },
       {
@@ -599,9 +635,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:5:type:single-animation-fill-mode:branch:0:keyword:none",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal var(--slot-8) running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
+          "auto,auto linear 1s,1s infinite normal var(--slot-single-animation-8) running none auto,auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-8": "none",
+          "--slot-single-animation-8": "none",
         },
       },
       {
@@ -610,9 +646,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation:term:0:repeat:type:single-animation:term:6:type:single-animation-play-state:branch:0:keyword:running",
         ],
         value:
-          "auto,auto linear 1s,1s infinite normal none var(--slot-9) none auto,auto,auto linear 1s,1s infinite normal none running none auto",
+          "auto,auto linear 1s,1s infinite normal none var(--slot-single-animation-9) none auto,auto,auto linear 1s,1s infinite normal none running none auto",
         variables: {
-          "--slot-9": "running",
+          "--slot-single-animation-9": "running",
         },
       },
     ],
@@ -628,10 +664,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation-composition:term:0:repeat:type:single-animation-composition:branch:0:keyword:replace",
           "animation-composition:term:0:repeat:type:single-animation-composition:branch:0:keyword:replace",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value:
+          "var(--slot-single-animation-composition),var(--slot-single-animation-composition-2)",
         variables: {
-          "--slot-1": "replace",
-          "--slot-2": "replace",
+          "--slot-single-animation-composition": "replace",
+          "--slot-single-animation-composition-2": "replace",
         },
       },
       {
@@ -639,9 +676,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-composition:term:0:repeat:type:single-animation-composition:branch:0:keyword:replace",
         ],
-        value: "var(--slot-1),replace",
+        value: "var(--slot-single-animation-composition),replace",
         variables: {
-          "--slot-1": "replace",
+          "--slot-single-animation-composition": "replace",
         },
       },
       {
@@ -649,9 +686,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-composition:term:0:repeat:type:single-animation-composition:branch:0:keyword:replace",
         ],
-        value: "replace,var(--slot-2)",
+        value: "replace,var(--slot-single-animation-composition-2)",
         variables: {
-          "--slot-2": "replace",
+          "--slot-single-animation-composition-2": "replace",
         },
       },
     ],
@@ -667,26 +704,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation-delay:term:0:repeat:type:time",
           "animation-delay:term:0:repeat:type:time",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-time),var(--slot-time-2)",
         variables: {
-          "--slot-1": "1s",
-          "--slot-2": "1s",
+          "--slot-time": "1s",
+          "--slot-time-2": "1s",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["animation-delay:term:0:repeat:type:time"],
-        value: "var(--slot-1),1s",
+        value: "var(--slot-time),1s",
         variables: {
-          "--slot-1": "1s",
+          "--slot-time": "1s",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["animation-delay:term:0:repeat:type:time"],
-        value: "1s,var(--slot-2)",
+        value: "1s,var(--slot-time-2)",
         variables: {
-          "--slot-2": "1s",
+          "--slot-time-2": "1s",
         },
       },
     ],
@@ -702,10 +739,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation-direction:term:0:repeat:type:single-animation-direction:branch:0:keyword:normal",
           "animation-direction:term:0:repeat:type:single-animation-direction:branch:0:keyword:normal",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value:
+          "var(--slot-single-animation-direction),var(--slot-single-animation-direction-2)",
         variables: {
-          "--slot-1": "normal",
-          "--slot-2": "normal",
+          "--slot-single-animation-direction": "normal",
+          "--slot-single-animation-direction-2": "normal",
         },
       },
       {
@@ -713,9 +751,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-direction:term:0:repeat:type:single-animation-direction:branch:0:keyword:normal",
         ],
-        value: "var(--slot-1),normal",
+        value: "var(--slot-single-animation-direction),normal",
         variables: {
-          "--slot-1": "normal",
+          "--slot-single-animation-direction": "normal",
         },
       },
       {
@@ -723,9 +761,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-direction:term:0:repeat:type:single-animation-direction:branch:0:keyword:normal",
         ],
-        value: "normal,var(--slot-2)",
+        value: "normal,var(--slot-single-animation-direction-2)",
         variables: {
-          "--slot-2": "normal",
+          "--slot-single-animation-direction-2": "normal",
         },
       },
     ],
@@ -776,10 +814,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation-fill-mode:term:0:repeat:type:single-animation-fill-mode:branch:0:keyword:none",
           "animation-fill-mode:term:0:repeat:type:single-animation-fill-mode:branch:0:keyword:none",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value:
+          "var(--slot-single-animation-fill-mode),var(--slot-single-animation-fill-mode-2)",
         variables: {
-          "--slot-1": "none",
-          "--slot-2": "none",
+          "--slot-single-animation-fill-mode": "none",
+          "--slot-single-animation-fill-mode-2": "none",
         },
       },
       {
@@ -787,9 +826,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-fill-mode:term:0:repeat:type:single-animation-fill-mode:branch:0:keyword:none",
         ],
-        value: "var(--slot-1),none",
+        value: "var(--slot-single-animation-fill-mode),none",
         variables: {
-          "--slot-1": "none",
+          "--slot-single-animation-fill-mode": "none",
         },
       },
       {
@@ -797,9 +836,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-fill-mode:term:0:repeat:type:single-animation-fill-mode:branch:0:keyword:none",
         ],
-        value: "none,var(--slot-2)",
+        value: "none,var(--slot-single-animation-fill-mode-2)",
         variables: {
-          "--slot-2": "none",
+          "--slot-single-animation-fill-mode-2": "none",
         },
       },
     ],
@@ -815,10 +854,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation-iteration-count:term:0:repeat:type:single-animation-iteration-count:branch:0:keyword:infinite",
           "animation-iteration-count:term:0:repeat:type:single-animation-iteration-count:branch:0:keyword:infinite",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value:
+          "var(--slot-single-animation-iteration-count),var(--slot-single-animation-iteration-count-2)",
         variables: {
-          "--slot-1": "infinite",
-          "--slot-2": "infinite",
+          "--slot-single-animation-iteration-count": "infinite",
+          "--slot-single-animation-iteration-count-2": "infinite",
         },
       },
       {
@@ -826,9 +866,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-iteration-count:term:0:repeat:type:single-animation-iteration-count:branch:0:keyword:infinite",
         ],
-        value: "var(--slot-1),infinite",
+        value: "var(--slot-single-animation-iteration-count),infinite",
         variables: {
-          "--slot-1": "infinite",
+          "--slot-single-animation-iteration-count": "infinite",
         },
       },
       {
@@ -836,9 +876,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-iteration-count:term:0:repeat:type:single-animation-iteration-count:branch:0:keyword:infinite",
         ],
-        value: "infinite,var(--slot-2)",
+        value: "infinite,var(--slot-single-animation-iteration-count-2)",
         variables: {
-          "--slot-2": "infinite",
+          "--slot-single-animation-iteration-count-2": "infinite",
         },
       },
     ],
@@ -889,10 +929,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation-play-state:term:0:repeat:type:single-animation-play-state:branch:0:keyword:running",
           "animation-play-state:term:0:repeat:type:single-animation-play-state:branch:0:keyword:running",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value:
+          "var(--slot-single-animation-play-state),var(--slot-single-animation-play-state-2)",
         variables: {
-          "--slot-1": "running",
-          "--slot-2": "running",
+          "--slot-single-animation-play-state": "running",
+          "--slot-single-animation-play-state-2": "running",
         },
       },
       {
@@ -900,9 +941,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-play-state:term:0:repeat:type:single-animation-play-state:branch:0:keyword:running",
         ],
-        value: "var(--slot-1),running",
+        value: "var(--slot-single-animation-play-state),running",
         variables: {
-          "--slot-1": "running",
+          "--slot-single-animation-play-state": "running",
         },
       },
       {
@@ -910,9 +951,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-play-state:term:0:repeat:type:single-animation-play-state:branch:0:keyword:running",
         ],
-        value: "running,var(--slot-2)",
+        value: "running,var(--slot-single-animation-play-state-2)",
         variables: {
-          "--slot-2": "running",
+          "--slot-single-animation-play-state-2": "running",
         },
       },
     ],
@@ -928,10 +969,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "animation-timing-function:term:0:repeat:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
           "animation-timing-function:term:0:repeat:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-easing-function),var(--slot-easing-function-2)",
         variables: {
-          "--slot-1": "linear",
-          "--slot-2": "linear",
+          "--slot-easing-function": "linear",
+          "--slot-easing-function-2": "linear",
         },
       },
       {
@@ -939,9 +980,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-timing-function:term:0:repeat:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
-        value: "var(--slot-1),linear",
+        value: "var(--slot-easing-function),linear",
         variables: {
-          "--slot-1": "linear",
+          "--slot-easing-function": "linear",
         },
       },
       {
@@ -949,9 +990,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "animation-timing-function:term:0:repeat:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
-        value: "linear,var(--slot-2)",
+        value: "linear,var(--slot-easing-function-2)",
         variables: {
-          "--slot-2": "linear",
+          "--slot-easing-function-2": "linear",
         },
       },
     ],
@@ -997,13 +1038,31 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-2-slot-1",
+        positions: ["appearance:branch:1:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: [
+          "appearance:branch:2:type:compat-auto:branch:0:keyword:searchfield",
+        ],
+        value: "var(--slot-compat-auto)",
+        variables: {
+          "--slot-compat-auto": "searchfield",
+        },
+      },
+      {
         id: "pattern-4-slot-1",
         positions: [
           "appearance:branch:3:type:compat-special:branch:0:keyword:textfield",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-compat-special)",
         variables: {
-          "--slot-1": "textfield",
+          "--slot-compat-special": "textfield",
         },
       },
     ],
@@ -1020,11 +1079,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "aspect-ratio:term:1:type:ratio:term:0:type:number",
           "aspect-ratio:term:1:type:ratio:term:1:repeat:term:1:type:number",
         ],
-        value: "var(--slot-1) var(--slot-2)/var(--slot-3)",
+        value: "var(--slot-1) var(--slot-ratio)/var(--slot-ratio-2)",
         variables: {
           "--slot-1": "auto",
-          "--slot-2": "1",
-          "--slot-3": "1",
+          "--slot-ratio": "1",
+          "--slot-ratio-2": "1",
         },
       },
       {
@@ -1038,9 +1097,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-2",
         positions: ["aspect-ratio:term:1:type:ratio:term:0:type:number"],
-        value: "auto var(--slot-2)/1",
+        value: "auto var(--slot-ratio)/1",
         variables: {
-          "--slot-2": "1",
+          "--slot-ratio": "1",
         },
       },
       {
@@ -1048,9 +1107,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "aspect-ratio:term:1:type:ratio:term:1:repeat:term:1:type:number",
         ],
-        value: "auto 1/var(--slot-3)",
+        value: "auto 1/var(--slot-ratio-2)",
         variables: {
-          "--slot-3": "1",
+          "--slot-ratio-2": "1",
         },
       },
     ],
@@ -1074,10 +1133,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "backdrop-filter:branch:1:type:filter-value-list:term:0:repeat:branch:1:type:url",
           "backdrop-filter:branch:1:type:filter-value-list:term:0:repeat:branch:1:type:url",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-filter-value-list) var(--slot-filter-value-list-2)",
         variables: {
-          "--slot-1": "url(hero.png)",
-          "--slot-2": "url(hero.png)",
+          "--slot-filter-value-list": "url(hero.png)",
+          "--slot-filter-value-list-2": "url(hero.png)",
         },
       },
       {
@@ -1085,9 +1144,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "backdrop-filter:branch:1:type:filter-value-list:term:0:repeat:branch:1:type:url",
         ],
-        value: "var(--slot-1)url(hero.png)",
+        value: "var(--slot-filter-value-list)url(hero.png)",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-filter-value-list": "url(hero.png)",
         },
       },
       {
@@ -1095,9 +1154,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "backdrop-filter:branch:1:type:filter-value-list:term:0:repeat:branch:1:type:url",
         ],
-        value: "url(hero.png)var(--slot-2)",
+        value: "url(hero.png)var(--slot-filter-value-list-2)",
         variables: {
-          "--slot-2": "url(hero.png)",
+          "--slot-filter-value-list-2": "url(hero.png)",
         },
       },
     ],
@@ -1149,30 +1208,30 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:2:type:final-bg-layer:term:6:property:background-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
-          "var(--slot-1) var(--slot-2)/var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6) var(--slot-7),var(--slot-8) var(--slot-9)/var(--slot-10) var(--slot-11) var(--slot-12) var(--slot-13) var(--slot-14),var(--slot-15) var(--slot-16)/var(--slot-17) var(--slot-18) var(--slot-19) var(--slot-20) var(--slot-21) var(--slot-22)",
+          "var(--slot-bg-layer) var(--slot-bg-layer-2)/var(--slot-bg-layer-3) var(--slot-bg-layer-4) var(--slot-bg-layer-5) var(--slot-bg-layer-6) var(--slot-bg-layer-7),var(--slot-bg-layer-8) var(--slot-bg-layer-9)/var(--slot-bg-layer-10) var(--slot-bg-layer-11) var(--slot-bg-layer-12) var(--slot-bg-layer-13) var(--slot-bg-layer-14),var(--slot-final-bg-layer) var(--slot-final-bg-layer-2)/var(--slot-final-bg-layer-3) var(--slot-final-bg-layer-4) var(--slot-final-bg-layer-5) var(--slot-final-bg-layer-6) var(--slot-final-bg-layer-7) var(--slot-final-bg-layer-8)",
         variables: {
-          "--slot-1": "url(hero.png)",
-          "--slot-2": "left",
-          "--slot-3": "cover",
-          "--slot-4": "repeat-x",
-          "--slot-5": "scroll",
-          "--slot-6": "content-box",
-          "--slot-7": "content-box",
-          "--slot-8": "url(hero.png)",
-          "--slot-9": "left",
-          "--slot-10": "cover",
-          "--slot-11": "repeat-x",
-          "--slot-12": "scroll",
-          "--slot-13": "content-box",
-          "--slot-14": "content-box",
-          "--slot-15": "url(hero.png)",
-          "--slot-16": "left",
-          "--slot-17": "cover",
-          "--slot-18": "repeat-x",
-          "--slot-19": "scroll",
-          "--slot-20": "content-box",
-          "--slot-21": "content-box",
-          "--slot-22": "red",
+          "--slot-bg-layer": "url(hero.png)",
+          "--slot-bg-layer-2": "left",
+          "--slot-bg-layer-3": "cover",
+          "--slot-bg-layer-4": "repeat-x",
+          "--slot-bg-layer-5": "scroll",
+          "--slot-bg-layer-6": "content-box",
+          "--slot-bg-layer-7": "content-box",
+          "--slot-bg-layer-8": "url(hero.png)",
+          "--slot-bg-layer-9": "left",
+          "--slot-bg-layer-10": "cover",
+          "--slot-bg-layer-11": "repeat-x",
+          "--slot-bg-layer-12": "scroll",
+          "--slot-bg-layer-13": "content-box",
+          "--slot-bg-layer-14": "content-box",
+          "--slot-final-bg-layer": "url(hero.png)",
+          "--slot-final-bg-layer-2": "left",
+          "--slot-final-bg-layer-3": "cover",
+          "--slot-final-bg-layer-4": "repeat-x",
+          "--slot-final-bg-layer-5": "scroll",
+          "--slot-final-bg-layer-6": "content-box",
+          "--slot-final-bg-layer-7": "content-box",
+          "--slot-final-bg-layer-8": "red",
         },
       },
       {
@@ -1181,9 +1240,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:0:type:bg-image:branch:0:type:image:branch:0:type:url",
         ],
         value:
-          "var(--slot-1) left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "var(--slot-bg-layer) left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-bg-layer": "url(hero.png)",
         },
       },
       {
@@ -1192,9 +1251,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:1:term:1:repeat:term:1:type:bg-size:branch:1:keyword:cover",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/var(--slot-10) repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/var(--slot-bg-layer-10) repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-10": "cover",
+          "--slot-bg-layer-10": "cover",
         },
       },
       {
@@ -1203,9 +1262,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:2:type:repeat-style:branch:0:keyword:repeat-x",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover var(--slot-11) scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover var(--slot-bg-layer-11) scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-11": "repeat-x",
+          "--slot-bg-layer-11": "repeat-x",
         },
       },
       {
@@ -1214,9 +1273,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:3:type:attachment:branch:0:keyword:scroll",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x var(--slot-12) content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x var(--slot-bg-layer-12) content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-12": "scroll",
+          "--slot-bg-layer-12": "scroll",
         },
       },
       {
@@ -1225,9 +1284,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:4:type:visual-box:branch:0:keyword:content-box",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll var(--slot-13) content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll var(--slot-bg-layer-13) content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-13": "content-box",
+          "--slot-bg-layer-13": "content-box",
         },
       },
       {
@@ -1236,9 +1295,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:5:type:visual-box:branch:0:keyword:content-box",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box var(--slot-14),url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box var(--slot-bg-layer-14),url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-14": "content-box",
+          "--slot-bg-layer-14": "content-box",
         },
       },
       {
@@ -1247,9 +1306,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:2:type:final-bg-layer:term:0:type:bg-image:branch:0:type:image:branch:0:type:url",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,var(--slot-15) left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,var(--slot-final-bg-layer) left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-15": "url(hero.png)",
+          "--slot-final-bg-layer": "url(hero.png)",
         },
       },
       {
@@ -1258,9 +1317,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:2:type:final-bg-layer:term:1:term:0:type:bg-position:branch:0:branch:0:keyword:left",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)var(--slot-16)/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)var(--slot-final-bg-layer-2)/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-16": "left",
+          "--slot-final-bg-layer-2": "left",
         },
       },
       {
@@ -1269,9 +1328,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:2:type:final-bg-layer:term:1:term:1:repeat:term:1:type:bg-size:branch:1:keyword:cover",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/var(--slot-17) repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/var(--slot-final-bg-layer-3) repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-17": "cover",
+          "--slot-final-bg-layer-3": "cover",
         },
       },
       {
@@ -1280,9 +1339,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:2:type:final-bg-layer:term:2:type:repeat-style:branch:0:keyword:repeat-x",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover var(--slot-18) scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover var(--slot-final-bg-layer-4) scroll content-box content-box red",
         variables: {
-          "--slot-18": "repeat-x",
+          "--slot-final-bg-layer-4": "repeat-x",
         },
       },
       {
@@ -1291,9 +1350,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:2:type:final-bg-layer:term:3:type:attachment:branch:0:keyword:scroll",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x var(--slot-19) content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x var(--slot-final-bg-layer-5) content-box content-box red",
         variables: {
-          "--slot-19": "scroll",
+          "--slot-final-bg-layer-5": "scroll",
         },
       },
       {
@@ -1302,9 +1361,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:1:term:0:type:bg-position:branch:0:branch:0:keyword:left",
         ],
         value:
-          "url(hero.png)var(--slot-2)/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)var(--slot-bg-layer-2)/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-2": "left",
+          "--slot-bg-layer-2": "left",
         },
       },
       {
@@ -1313,9 +1372,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:2:type:final-bg-layer:term:4:type:visual-box:branch:0:keyword:content-box",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll var(--slot-20) content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll var(--slot-final-bg-layer-6) content-box red",
         variables: {
-          "--slot-20": "content-box",
+          "--slot-final-bg-layer-6": "content-box",
         },
       },
       {
@@ -1324,9 +1383,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:2:type:final-bg-layer:term:5:type:visual-box:branch:0:keyword:content-box",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box var(--slot-21) red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box var(--slot-final-bg-layer-7) red",
         variables: {
-          "--slot-21": "content-box",
+          "--slot-final-bg-layer-7": "content-box",
         },
       },
       {
@@ -1335,9 +1394,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:2:type:final-bg-layer:term:6:property:background-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box var(--slot-22)",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box var(--slot-final-bg-layer-8)",
         variables: {
-          "--slot-22": "red",
+          "--slot-final-bg-layer-8": "red",
         },
       },
       {
@@ -1346,9 +1405,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:1:term:1:repeat:term:1:type:bg-size:branch:1:keyword:cover",
         ],
         value:
-          "url(hero.png)left/var(--slot-3) repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/var(--slot-bg-layer-3) repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-3": "cover",
+          "--slot-bg-layer-3": "cover",
         },
       },
       {
@@ -1357,9 +1416,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:2:type:repeat-style:branch:0:keyword:repeat-x",
         ],
         value:
-          "url(hero.png)left/cover var(--slot-4) scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover var(--slot-bg-layer-4) scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-4": "repeat-x",
+          "--slot-bg-layer-4": "repeat-x",
         },
       },
       {
@@ -1368,9 +1427,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:3:type:attachment:branch:0:keyword:scroll",
         ],
         value:
-          "url(hero.png)left/cover repeat-x var(--slot-5) content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x var(--slot-bg-layer-5) content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-5": "scroll",
+          "--slot-bg-layer-5": "scroll",
         },
       },
       {
@@ -1379,9 +1438,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:4:type:visual-box:branch:0:keyword:content-box",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll var(--slot-6) content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll var(--slot-bg-layer-6) content-box,url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-6": "content-box",
+          "--slot-bg-layer-6": "content-box",
         },
       },
       {
@@ -1390,9 +1449,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:5:type:visual-box:branch:0:keyword:content-box",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box var(--slot-7),url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box var(--slot-bg-layer-7),url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-7": "content-box",
+          "--slot-bg-layer-7": "content-box",
         },
       },
       {
@@ -1401,9 +1460,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:0:type:bg-image:branch:0:type:image:branch:0:type:url",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,var(--slot-8) left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,var(--slot-bg-layer-8) left/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-8": "url(hero.png)",
+          "--slot-bg-layer-8": "url(hero.png)",
         },
       },
       {
@@ -1412,9 +1471,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background:term:0:repeat:type:bg-layer:term:1:term:0:type:bg-position:branch:0:branch:0:keyword:left",
         ],
         value:
-          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)var(--slot-9)/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
+          "url(hero.png)left/cover repeat-x scroll content-box content-box,url(hero.png)var(--slot-bg-layer-9)/cover repeat-x scroll content-box content-box,url(hero.png)left/cover repeat-x scroll content-box content-box red",
         variables: {
-          "--slot-9": "left",
+          "--slot-bg-layer-9": "left",
         },
       },
     ],
@@ -1430,10 +1489,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background-attachment:term:0:repeat:type:attachment:branch:0:keyword:scroll",
           "background-attachment:term:0:repeat:type:attachment:branch:0:keyword:scroll",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-attachment),var(--slot-attachment-2)",
         variables: {
-          "--slot-1": "scroll",
-          "--slot-2": "scroll",
+          "--slot-attachment": "scroll",
+          "--slot-attachment-2": "scroll",
         },
       },
       {
@@ -1441,9 +1500,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-attachment:term:0:repeat:type:attachment:branch:0:keyword:scroll",
         ],
-        value: "var(--slot-1),scroll",
+        value: "var(--slot-attachment),scroll",
         variables: {
-          "--slot-1": "scroll",
+          "--slot-attachment": "scroll",
         },
       },
       {
@@ -1451,9 +1510,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-attachment:term:0:repeat:type:attachment:branch:0:keyword:scroll",
         ],
-        value: "scroll,var(--slot-2)",
+        value: "scroll,var(--slot-attachment-2)",
         variables: {
-          "--slot-2": "scroll",
+          "--slot-attachment-2": "scroll",
         },
       },
     ],
@@ -1469,10 +1528,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background-blend-mode:term:0:repeat:type:blend-mode:branch:0:keyword:normal",
           "background-blend-mode:term:0:repeat:type:blend-mode:branch:0:keyword:normal",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-blend-mode),var(--slot-blend-mode-2)",
         variables: {
-          "--slot-1": "normal",
-          "--slot-2": "normal",
+          "--slot-blend-mode": "normal",
+          "--slot-blend-mode-2": "normal",
         },
       },
       {
@@ -1480,9 +1539,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-blend-mode:term:0:repeat:type:blend-mode:branch:0:keyword:normal",
         ],
-        value: "var(--slot-1),normal",
+        value: "var(--slot-blend-mode),normal",
         variables: {
-          "--slot-1": "normal",
+          "--slot-blend-mode": "normal",
         },
       },
       {
@@ -1490,9 +1549,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-blend-mode:term:0:repeat:type:blend-mode:branch:0:keyword:normal",
         ],
-        value: "normal,var(--slot-2)",
+        value: "normal,var(--slot-blend-mode-2)",
         variables: {
-          "--slot-2": "normal",
+          "--slot-blend-mode-2": "normal",
         },
       },
     ],
@@ -1508,10 +1567,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background-clip:term:0:repeat:type:bg-clip:branch:0:type:visual-box:branch:0:keyword:content-box",
           "background-clip:term:0:repeat:type:bg-clip:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-bg-clip),var(--slot-bg-clip-2)",
         variables: {
-          "--slot-1": "content-box",
-          "--slot-2": "content-box",
+          "--slot-bg-clip": "content-box",
+          "--slot-bg-clip-2": "content-box",
         },
       },
       {
@@ -1519,9 +1578,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-clip:term:0:repeat:type:bg-clip:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "var(--slot-1),content-box",
+        value: "var(--slot-bg-clip),content-box",
         variables: {
-          "--slot-1": "content-box",
+          "--slot-bg-clip": "content-box",
         },
       },
       {
@@ -1529,9 +1588,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-clip:term:0:repeat:type:bg-clip:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "content-box,var(--slot-2)",
+        value: "content-box,var(--slot-bg-clip-2)",
         variables: {
-          "--slot-2": "content-box",
+          "--slot-bg-clip-2": "content-box",
         },
       },
     ],
@@ -1546,9 +1605,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -1564,10 +1623,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background-image:term:0:repeat:type:bg-image:branch:0:type:image:branch:0:type:url",
           "background-image:term:0:repeat:type:bg-image:branch:0:type:image:branch:0:type:url",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-bg-image),var(--slot-bg-image-2)",
         variables: {
-          "--slot-1": "url(hero.png)",
-          "--slot-2": "url(hero.png)",
+          "--slot-bg-image": "url(hero.png)",
+          "--slot-bg-image-2": "url(hero.png)",
         },
       },
       {
@@ -1575,9 +1634,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-image:term:0:repeat:type:bg-image:branch:0:type:image:branch:0:type:url",
         ],
-        value: "var(--slot-1),url(hero.png)",
+        value: "var(--slot-bg-image),url(hero.png)",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-bg-image": "url(hero.png)",
         },
       },
       {
@@ -1585,9 +1644,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-image:term:0:repeat:type:bg-image:branch:0:type:image:branch:0:type:url",
         ],
-        value: "url(hero.png),var(--slot-2)",
+        value: "url(hero.png),var(--slot-bg-image-2)",
         variables: {
-          "--slot-2": "url(hero.png)",
+          "--slot-bg-image-2": "url(hero.png)",
         },
       },
     ],
@@ -1603,10 +1662,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background-origin:term:0:repeat:type:visual-box:branch:0:keyword:content-box",
           "background-origin:term:0:repeat:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-visual-box),var(--slot-visual-box-2)",
         variables: {
-          "--slot-1": "content-box",
-          "--slot-2": "content-box",
+          "--slot-visual-box": "content-box",
+          "--slot-visual-box-2": "content-box",
         },
       },
       {
@@ -1614,9 +1673,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-origin:term:0:repeat:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "var(--slot-1),content-box",
+        value: "var(--slot-visual-box),content-box",
         variables: {
-          "--slot-1": "content-box",
+          "--slot-visual-box": "content-box",
         },
       },
       {
@@ -1624,9 +1683,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-origin:term:0:repeat:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "content-box,var(--slot-2)",
+        value: "content-box,var(--slot-visual-box-2)",
         variables: {
-          "--slot-2": "content-box",
+          "--slot-visual-box-2": "content-box",
         },
       },
     ],
@@ -1642,10 +1701,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background-position:term:0:repeat:type:bg-position:branch:0:branch:0:keyword:left",
           "background-position:term:0:repeat:type:bg-position:branch:0:branch:0:keyword:left",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-bg-position),var(--slot-bg-position-2)",
         variables: {
-          "--slot-1": "left",
-          "--slot-2": "left",
+          "--slot-bg-position": "left",
+          "--slot-bg-position-2": "left",
         },
       },
       {
@@ -1653,9 +1712,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-position:term:0:repeat:type:bg-position:branch:0:branch:0:keyword:left",
         ],
-        value: "var(--slot-1),left",
+        value: "var(--slot-bg-position),left",
         variables: {
-          "--slot-1": "left",
+          "--slot-bg-position": "left",
         },
       },
       {
@@ -1663,9 +1722,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-position:term:0:repeat:type:bg-position:branch:0:branch:0:keyword:left",
         ],
-        value: "left,var(--slot-2)",
+        value: "left,var(--slot-bg-position-2)",
         variables: {
-          "--slot-2": "left",
+          "--slot-bg-position-2": "left",
         },
       },
     ],
@@ -1761,10 +1820,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
           "background-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-repeat-style),var(--slot-repeat-style-2)",
         variables: {
-          "--slot-1": "repeat-x",
-          "--slot-2": "repeat-x",
+          "--slot-repeat-style": "repeat-x",
+          "--slot-repeat-style-2": "repeat-x",
         },
       },
       {
@@ -1772,9 +1831,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
         ],
-        value: "var(--slot-1),repeat-x",
+        value: "var(--slot-repeat-style),repeat-x",
         variables: {
-          "--slot-1": "repeat-x",
+          "--slot-repeat-style": "repeat-x",
         },
       },
       {
@@ -1782,9 +1841,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
         ],
-        value: "repeat-x,var(--slot-2)",
+        value: "repeat-x,var(--slot-repeat-style-2)",
         variables: {
-          "--slot-2": "repeat-x",
+          "--slot-repeat-style-2": "repeat-x",
         },
       },
     ],
@@ -1800,10 +1859,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "background-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
           "background-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-bg-size),var(--slot-bg-size-2)",
         variables: {
-          "--slot-1": "cover",
-          "--slot-2": "cover",
+          "--slot-bg-size": "cover",
+          "--slot-bg-size-2": "cover",
         },
       },
       {
@@ -1811,9 +1870,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
         ],
-        value: "var(--slot-1),cover",
+        value: "var(--slot-bg-size),cover",
         variables: {
-          "--slot-1": "cover",
+          "--slot-bg-size": "cover",
         },
       },
       {
@@ -1821,9 +1880,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "background-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
         ],
-        value: "cover,var(--slot-2)",
+        value: "cover,var(--slot-bg-size-2)",
         variables: {
-          "--slot-2": "cover",
+          "--slot-bg-size-2": "cover",
         },
       },
     ],
@@ -1870,27 +1929,28 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border:term:1:type:line-style:branch:0:keyword:none",
           "border:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["border:term:0:type:line-width:branch:0:type:length"],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["border:term:1:type:line-style:branch:0:keyword:none"],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -1898,9 +1958,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -1917,11 +1977,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-block:term:0:property:border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
           "border-block:term:0:property:border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
@@ -1929,9 +1990,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block:term:0:property:border-block-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -1939,9 +2000,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block:term:0:property:border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -1949,9 +2010,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block:term:0:property:border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -1967,10 +2028,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-block-color:term:0:repeat:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
           "border-block-color:term:0:repeat:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-color) var(--slot-color-2)",
         variables: {
-          "--slot-1": "red",
-          "--slot-2": "red",
+          "--slot-color": "red",
+          "--slot-color-2": "red",
         },
       },
       {
@@ -1978,9 +2039,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-color:term:0:repeat:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) red",
+        value: "var(--slot-color) red",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
       {
@@ -1988,9 +2049,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-color:term:0:repeat:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "red var(--slot-2)",
+        value: "red var(--slot-color-2)",
         variables: {
-          "--slot-2": "red",
+          "--slot-color-2": "red",
         },
       },
     ],
@@ -2007,11 +2068,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-block-end:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
           "border-block-end:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
@@ -2019,9 +2081,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-end:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -2029,9 +2091,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-end:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -2039,9 +2101,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-end:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -2056,9 +2118,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-end-color:term:0:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -2073,9 +2135,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-end-style:term:0:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-style)",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
     ],
@@ -2090,9 +2152,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-end-width:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-width)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
     ],
@@ -2109,11 +2171,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
           "border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
@@ -2121,9 +2184,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -2131,9 +2194,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -2141,9 +2204,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -2158,9 +2221,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-start-color:term:0:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -2175,9 +2238,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-start-style:term:0:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-style)",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
     ],
@@ -2192,9 +2255,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-start-width:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-width)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
     ],
@@ -2210,10 +2273,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-block-style:term:0:repeat:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
           "border-block-style:term:0:repeat:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-line-style) var(--slot-line-style-2)",
         variables: {
-          "--slot-1": "none",
-          "--slot-2": "none",
+          "--slot-line-style": "none",
+          "--slot-line-style-2": "none",
         },
       },
       {
@@ -2221,9 +2284,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-style:term:0:repeat:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1) none",
+        value: "var(--slot-line-style) none",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -2231,9 +2294,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-style:term:0:repeat:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "none var(--slot-2)",
+        value: "none var(--slot-line-style-2)",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style-2": "none",
         },
       },
     ],
@@ -2249,10 +2312,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-block-width:term:0:repeat:property:border-top-width:term:0:type:line-width:branch:0:type:length",
           "border-block-width:term:0:repeat:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-line-width) var(--slot-line-width-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-line-width": "1px",
+          "--slot-line-width-2": "1px",
         },
       },
       {
@@ -2260,9 +2323,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-width:term:0:repeat:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-line-width) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -2270,9 +2333,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-block-width:term:0:repeat:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-line-width-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-line-width-2": "1px",
         },
       },
     ],
@@ -2289,11 +2352,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-bottom:term:1:type:line-style:branch:0:keyword:none",
           "border-bottom:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
@@ -2301,9 +2365,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-bottom:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -2311,9 +2375,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-bottom:term:1:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -2321,9 +2385,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-bottom:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -2338,9 +2402,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-bottom-color:term:0:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -2356,10 +2420,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-bottom-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
           "border-bottom-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -2367,9 +2431,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-bottom-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -2377,9 +2441,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-bottom-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -2395,10 +2459,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-bottom-right-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
           "border-bottom-right-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -2406,9 +2470,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-bottom-right-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -2416,9 +2480,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-bottom-right-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -2433,9 +2497,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-bottom-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-style)",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
     ],
@@ -2450,9 +2514,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-bottom-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-width)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
     ],
@@ -2485,12 +2549,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-color:term:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
           "border-color:term:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-color) var(--slot-color-2) var(--slot-color-3) var(--slot-color-4)",
         variables: {
-          "--slot-1": "red",
-          "--slot-2": "red",
-          "--slot-3": "red",
-          "--slot-4": "red",
+          "--slot-color": "red",
+          "--slot-color-2": "red",
+          "--slot-color-3": "red",
+          "--slot-color-4": "red",
         },
       },
       {
@@ -2498,9 +2563,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-color:term:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) red red red",
+        value: "var(--slot-color) red red red",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
       {
@@ -2508,9 +2573,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-color:term:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "red var(--slot-2) red red",
+        value: "red var(--slot-color-2) red red",
         variables: {
-          "--slot-2": "red",
+          "--slot-color-2": "red",
         },
       },
       {
@@ -2518,9 +2583,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-color:term:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "red red var(--slot-3) red",
+        value: "red red var(--slot-color-3) red",
         variables: {
-          "--slot-3": "red",
+          "--slot-color-3": "red",
         },
       },
       {
@@ -2528,9 +2593,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-color:term:0:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "red red red var(--slot-4)",
+        value: "red red red var(--slot-color-4)",
         variables: {
-          "--slot-4": "red",
+          "--slot-color-4": "red",
         },
       },
     ],
@@ -2546,10 +2611,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-end-end-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
           "border-end-end-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -2557,9 +2622,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-end-end-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -2567,9 +2632,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-end-end-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -2585,10 +2650,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-end-start-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
           "border-end-start-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -2596,9 +2661,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-end-start-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -2606,9 +2671,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-end-start-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -2635,18 +2700,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-image:term:2:property:border-image-repeat:term:0:repeat:branch:0:keyword:stretch",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6)/var(--slot-7) var(--slot-8) var(--slot-9) var(--slot-10) var(--slot-11) var(--slot-12)",
+          "var(--slot-1) var(--slot-number) var(--slot-number-2) var(--slot-number-3) var(--slot-number-4) var(--slot-6)/var(--slot-length-percentage) var(--slot-length-percentage-2) var(--slot-length-percentage-3) var(--slot-length-percentage-4) var(--slot-11) var(--slot-12)",
         variables: {
           "--slot-1": "none",
-          "--slot-2": "1",
-          "--slot-3": "1",
-          "--slot-4": "1",
-          "--slot-5": "1",
+          "--slot-number": "1",
+          "--slot-number-2": "1",
+          "--slot-number-3": "1",
+          "--slot-number-4": "1",
           "--slot-6": "fill",
-          "--slot-7": "1px",
-          "--slot-8": "1px",
-          "--slot-9": "1px",
-          "--slot-10": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+          "--slot-length-percentage-3": "1px",
+          "--slot-length-percentage-4": "1px",
           "--slot-11": "stretch",
           "--slot-12": "stretch",
         },
@@ -2666,9 +2731,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image:term:1:term:1:repeat:branch:0:term:1:property:border-image-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "none 1 1 1 1 fill/1px 1px 1px var(--slot-10) stretch stretch",
+        value:
+          "none 1 1 1 1 fill/1px 1px 1px var(--slot-length-percentage-4) stretch stretch",
         variables: {
-          "--slot-10": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
       {
@@ -2696,9 +2762,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image:term:1:term:0:property:border-image-slice:term:0:repeat:branch:0:type:number",
         ],
-        value: "none var(--slot-2)1 1 1 fill/1px 1px 1px 1px stretch stretch",
+        value:
+          "none var(--slot-number)1 1 1 fill/1px 1px 1px 1px stretch stretch",
         variables: {
-          "--slot-2": "1",
+          "--slot-number": "1",
         },
       },
       {
@@ -2706,9 +2773,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image:term:1:term:0:property:border-image-slice:term:0:repeat:branch:0:type:number",
         ],
-        value: "none 1 var(--slot-3)1 1 fill/1px 1px 1px 1px stretch stretch",
+        value:
+          "none 1 var(--slot-number-2)1 1 fill/1px 1px 1px 1px stretch stretch",
         variables: {
-          "--slot-3": "1",
+          "--slot-number-2": "1",
         },
       },
       {
@@ -2716,9 +2784,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image:term:1:term:0:property:border-image-slice:term:0:repeat:branch:0:type:number",
         ],
-        value: "none 1 1 var(--slot-4)1 fill/1px 1px 1px 1px stretch stretch",
+        value:
+          "none 1 1 var(--slot-number-3)1 fill/1px 1px 1px 1px stretch stretch",
         variables: {
-          "--slot-4": "1",
+          "--slot-number-3": "1",
         },
       },
       {
@@ -2726,9 +2795,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image:term:1:term:0:property:border-image-slice:term:0:repeat:branch:0:type:number",
         ],
-        value: "none 1 1 1 var(--slot-5) fill/1px 1px 1px 1px stretch stretch",
+        value:
+          "none 1 1 1 var(--slot-number-4) fill/1px 1px 1px 1px stretch stretch",
         variables: {
-          "--slot-5": "1",
+          "--slot-number-4": "1",
         },
       },
       {
@@ -2746,9 +2816,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image:term:1:term:1:repeat:branch:0:term:1:property:border-image-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "none 1 1 1 1 fill/var(--slot-7) 1px 1px 1px stretch stretch",
+        value:
+          "none 1 1 1 1 fill/var(--slot-length-percentage) 1px 1px 1px stretch stretch",
         variables: {
-          "--slot-7": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -2756,9 +2827,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image:term:1:term:1:repeat:branch:0:term:1:property:border-image-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "none 1 1 1 1 fill/1px var(--slot-8) 1px 1px stretch stretch",
+        value:
+          "none 1 1 1 1 fill/1px var(--slot-length-percentage-2) 1px 1px stretch stretch",
         variables: {
-          "--slot-8": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -2766,9 +2838,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image:term:1:term:1:repeat:branch:0:term:1:property:border-image-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "none 1 1 1 1 fill/1px 1px var(--slot-9) 1px stretch stretch",
+        value:
+          "none 1 1 1 1 fill/1px 1px var(--slot-length-percentage-3) 1px stretch stretch",
         variables: {
-          "--slot-9": "1px",
+          "--slot-length-percentage-3": "1px",
         },
       },
     ],
@@ -2787,44 +2860,45 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-image-outset:term:0:repeat:branch:0:type:length",
           "border-image-outset:term:0:repeat:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-length) var(--slot-length-2) var(--slot-length-3) var(--slot-length-4)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-length": "1px",
+          "--slot-length-2": "1px",
+          "--slot-length-3": "1px",
+          "--slot-length-4": "1px",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["border-image-outset:term:0:repeat:branch:0:type:length"],
-        value: "var(--slot-1) 1px 1px 1px",
+        value: "var(--slot-length) 1px 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["border-image-outset:term:0:repeat:branch:0:type:length"],
-        value: "1px var(--slot-2) 1px 1px",
+        value: "1px var(--slot-length-2) 1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-2": "1px",
         },
       },
       {
         id: "pattern-1-slot-3",
         positions: ["border-image-outset:term:0:repeat:branch:0:type:length"],
-        value: "1px 1px var(--slot-3) 1px",
+        value: "1px 1px var(--slot-length-3) 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-length-3": "1px",
         },
       },
       {
         id: "pattern-1-slot-4",
         positions: ["border-image-outset:term:0:repeat:branch:0:type:length"],
-        value: "1px 1px 1px var(--slot-4)",
+        value: "1px 1px 1px var(--slot-length-4)",
         variables: {
-          "--slot-4": "1px",
+          "--slot-length-4": "1px",
         },
       },
     ],
@@ -2883,45 +2957,45 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-image-slice:term:1:repeat:keyword:fill",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5)",
+          "var(--slot-number) var(--slot-number-2) var(--slot-number-3) var(--slot-number-4) var(--slot-5)",
         variables: {
-          "--slot-1": "1",
-          "--slot-2": "1",
-          "--slot-3": "1",
-          "--slot-4": "1",
+          "--slot-number": "1",
+          "--slot-number-2": "1",
+          "--slot-number-3": "1",
+          "--slot-number-4": "1",
           "--slot-5": "fill",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["border-image-slice:term:0:repeat:branch:0:type:number"],
-        value: "var(--slot-1)1 1 1 fill",
+        value: "var(--slot-number)1 1 1 fill",
         variables: {
-          "--slot-1": "1",
+          "--slot-number": "1",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["border-image-slice:term:0:repeat:branch:0:type:number"],
-        value: "1 var(--slot-2)1 1 fill",
+        value: "1 var(--slot-number-2)1 1 fill",
         variables: {
-          "--slot-2": "1",
+          "--slot-number-2": "1",
         },
       },
       {
         id: "pattern-1-slot-3",
         positions: ["border-image-slice:term:0:repeat:branch:0:type:number"],
-        value: "1 1 var(--slot-3)1 fill",
+        value: "1 1 var(--slot-number-3)1 fill",
         variables: {
-          "--slot-3": "1",
+          "--slot-number-3": "1",
         },
       },
       {
         id: "pattern-1-slot-4",
         positions: ["border-image-slice:term:0:repeat:branch:0:type:number"],
-        value: "1 1 1 var(--slot-4) fill",
+        value: "1 1 1 var(--slot-number-4) fill",
         variables: {
-          "--slot-4": "1",
+          "--slot-number-4": "1",
         },
       },
       {
@@ -2940,13 +3014,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["border-image-source:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "border-image-source:branch:1:type:image:branch:0:type:url",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-image)",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-image": "url(hero.png)",
         },
       },
     ],
@@ -2964,12 +3046,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-image-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
           "border-image-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-length-percentage) var(--slot-length-percentage-2) var(--slot-length-percentage-3) var(--slot-length-percentage-4)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+          "--slot-length-percentage-3": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
       {
@@ -2977,9 +3060,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px 1px 1px",
+        value: "var(--slot-length-percentage) 1px 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -2987,9 +3070,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2) 1px 1px",
+        value: "1px var(--slot-length-percentage-2) 1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -2997,9 +3080,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px var(--slot-3) 1px",
+        value: "1px 1px var(--slot-length-percentage-3) 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-length-percentage-3": "1px",
         },
       },
       {
@@ -3007,9 +3090,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-image-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px 1px var(--slot-4)",
+        value: "1px 1px 1px var(--slot-length-percentage-4)",
         variables: {
-          "--slot-4": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
     ],
@@ -3026,11 +3109,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-inline:term:0:property:border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
           "border-inline:term:0:property:border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
@@ -3038,9 +3122,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline:term:0:property:border-block-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -3048,9 +3132,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline:term:0:property:border-block-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -3058,9 +3142,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline:term:0:property:border-block-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3076,10 +3160,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-inline-color:term:0:repeat:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
           "border-inline-color:term:0:repeat:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-color) var(--slot-color-2)",
         variables: {
-          "--slot-1": "red",
-          "--slot-2": "red",
+          "--slot-color": "red",
+          "--slot-color-2": "red",
         },
       },
       {
@@ -3087,9 +3171,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-color:term:0:repeat:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) red",
+        value: "var(--slot-color) red",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
       {
@@ -3097,9 +3181,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-color:term:0:repeat:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "red var(--slot-2)",
+        value: "red var(--slot-color-2)",
         variables: {
-          "--slot-2": "red",
+          "--slot-color-2": "red",
         },
       },
     ],
@@ -3116,11 +3200,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-inline-end:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
           "border-inline-end:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
@@ -3128,9 +3213,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-end:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -3138,9 +3223,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-end:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -3148,9 +3233,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-end:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3165,9 +3250,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-end-color:term:0:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3182,9 +3267,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-end-style:term:0:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-style)",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
     ],
@@ -3199,9 +3284,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-end-width:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-width)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
     ],
@@ -3218,11 +3303,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-inline-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
           "border-inline-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
@@ -3230,9 +3316,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-start:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -3240,9 +3326,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-start:term:1:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -3250,9 +3336,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-start:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3267,9 +3353,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-start-color:term:0:property:border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3284,9 +3370,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-start-style:term:0:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-style)",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
     ],
@@ -3301,9 +3387,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-start-width:term:0:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-width)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
     ],
@@ -3319,10 +3405,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-inline-style:term:0:repeat:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
           "border-inline-style:term:0:repeat:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-line-style) var(--slot-line-style-2)",
         variables: {
-          "--slot-1": "none",
-          "--slot-2": "none",
+          "--slot-line-style": "none",
+          "--slot-line-style-2": "none",
         },
       },
       {
@@ -3330,9 +3416,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-style:term:0:repeat:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1) none",
+        value: "var(--slot-line-style) none",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -3340,9 +3426,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-style:term:0:repeat:property:border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "none var(--slot-2)",
+        value: "none var(--slot-line-style-2)",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style-2": "none",
         },
       },
     ],
@@ -3358,10 +3444,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-inline-width:term:0:repeat:property:border-top-width:term:0:type:line-width:branch:0:type:length",
           "border-inline-width:term:0:repeat:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-line-width) var(--slot-line-width-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-line-width": "1px",
+          "--slot-line-width-2": "1px",
         },
       },
       {
@@ -3369,9 +3455,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-width:term:0:repeat:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-line-width) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -3379,9 +3465,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-inline-width:term:0:repeat:property:border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-line-width-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-line-width-2": "1px",
         },
       },
     ],
@@ -3398,27 +3484,28 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-left:term:1:type:line-style:branch:0:keyword:none",
           "border-left:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["border-left:term:0:type:line-width:branch:0:type:length"],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["border-left:term:1:type:line-style:branch:0:keyword:none"],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -3426,9 +3513,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-left:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3443,9 +3530,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-left-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3460,9 +3547,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-left-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-style)",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
     ],
@@ -3477,9 +3564,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-left-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-width)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
     ],
@@ -3502,16 +3589,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)/var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8)",
+          "var(--slot-length-percentage) var(--slot-length-percentage-2) var(--slot-length-percentage-3) var(--slot-length-percentage-4)/var(--slot-length-percentage-5) var(--slot-length-percentage-6) var(--slot-length-percentage-7) var(--slot-length-percentage-8)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
-          "--slot-5": "1px",
-          "--slot-6": "1px",
-          "--slot-7": "1px",
-          "--slot-8": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+          "--slot-length-percentage-3": "1px",
+          "--slot-length-percentage-4": "1px",
+          "--slot-length-percentage-5": "1px",
+          "--slot-length-percentage-6": "1px",
+          "--slot-length-percentage-7": "1px",
+          "--slot-length-percentage-8": "1px",
         },
       },
       {
@@ -3519,9 +3606,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px 1px 1px/1px 1px 1px 1px",
+        value: "var(--slot-length-percentage) 1px 1px 1px/1px 1px 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -3529,9 +3616,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2) 1px 1px/1px 1px 1px 1px",
+        value: "1px var(--slot-length-percentage-2) 1px 1px/1px 1px 1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -3539,9 +3626,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px var(--slot-3) 1px/1px 1px 1px 1px",
+        value: "1px 1px var(--slot-length-percentage-3) 1px/1px 1px 1px 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-length-percentage-3": "1px",
         },
       },
       {
@@ -3549,9 +3636,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px 1px var(--slot-4)/1px 1px 1px 1px",
+        value: "1px 1px 1px var(--slot-length-percentage-4)/1px 1px 1px 1px",
         variables: {
-          "--slot-4": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
       {
@@ -3559,9 +3646,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px 1px 1px/var(--slot-5) 1px 1px 1px",
+        value: "1px 1px 1px 1px/var(--slot-length-percentage-5) 1px 1px 1px",
         variables: {
-          "--slot-5": "1px",
+          "--slot-length-percentage-5": "1px",
         },
       },
       {
@@ -3569,9 +3656,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px 1px 1px/1px var(--slot-6) 1px 1px",
+        value: "1px 1px 1px 1px/1px var(--slot-length-percentage-6) 1px 1px",
         variables: {
-          "--slot-6": "1px",
+          "--slot-length-percentage-6": "1px",
         },
       },
       {
@@ -3579,9 +3666,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px 1px 1px/1px 1px var(--slot-7) 1px",
+        value: "1px 1px 1px 1px/1px 1px var(--slot-length-percentage-7) 1px",
         variables: {
-          "--slot-7": "1px",
+          "--slot-length-percentage-7": "1px",
         },
       },
       {
@@ -3589,9 +3676,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-radius:term:1:repeat:term:1:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px 1px 1px/1px 1px 1px var(--slot-8)",
+        value: "1px 1px 1px 1px/1px 1px 1px var(--slot-length-percentage-8)",
         variables: {
-          "--slot-8": "1px",
+          "--slot-length-percentage-8": "1px",
         },
       },
     ],
@@ -3609,19 +3696,20 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-right:term:1:type:line-style:branch:0:keyword:none",
           "border-right:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["border-right:term:0:type:line-width:branch:0:type:length"],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -3629,9 +3717,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-right:term:1:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -3639,9 +3727,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-right:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3656,9 +3744,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-right-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3673,9 +3761,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-right-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-style)",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
     ],
@@ -3690,9 +3778,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-right-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-width)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
     ],
@@ -3708,26 +3796,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-spacing:term:0:repeat:type:length",
           "border-spacing:term:0:repeat:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length) var(--slot-length-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length": "1px",
+          "--slot-length-2": "1px",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["border-spacing:term:0:repeat:type:length"],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["border-spacing:term:0:repeat:type:length"],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-2": "1px",
         },
       },
     ],
@@ -3743,10 +3831,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-start-end-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
           "border-start-end-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -3754,9 +3842,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-start-end-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -3764,9 +3852,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-start-end-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -3782,10 +3870,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-start-start-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
           "border-start-start-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -3793,9 +3881,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-start-start-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -3803,9 +3891,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-start-start-radius:term:0:property:border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -3823,12 +3911,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
           "border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-line-style) var(--slot-line-style-2) var(--slot-line-style-3) var(--slot-line-style-4)",
         variables: {
-          "--slot-1": "none",
-          "--slot-2": "none",
-          "--slot-3": "none",
-          "--slot-4": "none",
+          "--slot-line-style": "none",
+          "--slot-line-style-2": "none",
+          "--slot-line-style-3": "none",
+          "--slot-line-style-4": "none",
         },
       },
       {
@@ -3836,9 +3925,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1) none none none",
+        value: "var(--slot-line-style) none none none",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -3846,9 +3935,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "none var(--slot-2) none none",
+        value: "none var(--slot-line-style-2) none none",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style-2": "none",
         },
       },
       {
@@ -3856,9 +3945,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "none none var(--slot-3) none",
+        value: "none none var(--slot-line-style-3) none",
         variables: {
-          "--slot-3": "none",
+          "--slot-line-style-3": "none",
         },
       },
       {
@@ -3866,9 +3955,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "none none none var(--slot-4)",
+        value: "none none none var(--slot-line-style-4)",
         variables: {
-          "--slot-4": "none",
+          "--slot-line-style-4": "none",
         },
       },
     ],
@@ -3885,27 +3974,28 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-top:term:1:type:line-style:branch:0:keyword:none",
           "border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-line-width) var(--slot-line-style) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "none",
-          "--slot-3": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-style": "none",
+          "--slot-color": "red",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["border-top:term:0:type:line-width:branch:0:type:length"],
-        value: "var(--slot-1) none red",
+        value: "var(--slot-line-width) none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["border-top:term:1:type:line-style:branch:0:keyword:none"],
-        value: "1px var(--slot-2) red",
+        value: "1px var(--slot-line-style) red",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -3913,9 +4003,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-top:term:2:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px none var(--slot-3)",
+        value: "1px none var(--slot-color)",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3930,9 +4020,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-top-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -3948,10 +4038,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
           "border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -3959,9 +4049,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -3969,9 +4059,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-top-left-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -3987,10 +4077,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-top-right-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
           "border-top-right-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -3998,9 +4088,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-top-right-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -4008,9 +4098,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-top-right-radius:term:0:repeat:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -4025,9 +4115,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-top-style:term:0:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-style)",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
     ],
@@ -4042,9 +4132,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-top-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-width)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
     ],
@@ -4062,12 +4152,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "border-width:term:0:repeat:type:line-width:branch:0:type:length",
           "border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-line-width) var(--slot-line-width-2) var(--slot-line-width-3) var(--slot-line-width-4)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-line-width": "1px",
+          "--slot-line-width-2": "1px",
+          "--slot-line-width-3": "1px",
+          "--slot-line-width-4": "1px",
         },
       },
       {
@@ -4075,9 +4166,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px 1px 1px",
+        value: "var(--slot-line-width) 1px 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -4085,9 +4176,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "1px var(--slot-2) 1px 1px",
+        value: "1px var(--slot-line-width-2) 1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-line-width-2": "1px",
         },
       },
       {
@@ -4095,9 +4186,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "1px 1px var(--slot-3) 1px",
+        value: "1px 1px var(--slot-line-width-3) 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-line-width-3": "1px",
         },
       },
       {
@@ -4105,9 +4196,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "1px 1px 1px var(--slot-4)",
+        value: "1px 1px 1px var(--slot-line-width-4)",
         variables: {
-          "--slot-4": "1px",
+          "--slot-line-width-4": "1px",
         },
       },
     ],
@@ -4118,57 +4209,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["bottom:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "bottom:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
-        },
-      },
-      {
-        id: "pattern-3-all-slots",
-        positions: [
-          "bottom:branch:3:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-          "bottom:branch:3:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-          "bottom:branch:3:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(var(--slot-1) var(--slot-2),var(--slot-3))",
-        variables: {
-          "--slot-1": "--custom-ident",
-          "--slot-2": "width",
-          "--slot-3": "1px",
-        },
-      },
-      {
-        id: "pattern-3-slot-1",
-        positions: [
-          "bottom:branch:3:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-        ],
-        value: "anchor-size(var(--slot-1) width,1px)",
-        variables: {
-          "--slot-1": "--custom-ident",
-        },
-      },
-      {
-        id: "pattern-3-slot-2",
-        positions: [
-          "bottom:branch:3:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-        ],
-        value: "anchor-size(--custom-ident var(--slot-2),1px)",
-        variables: {
-          "--slot-2": "width",
-        },
-      },
-      {
-        id: "pattern-3-slot-3",
-        positions: [
-          "bottom:branch:3:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(--custom-ident width,var(--slot-3))",
-        variables: {
-          "--slot-3": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -4218,20 +4273,20 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "box-shadow:branch:1:repeat:type:shadow:term:2:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6),var(--slot-7) var(--slot-8) var(--slot-9) var(--slot-10) var(--slot-11) var(--slot-12)",
+          "var(--slot-shadow) var(--slot-shadow-2) var(--slot-shadow-3) var(--slot-shadow-4) var(--slot-shadow-5) var(--slot-shadow-6),var(--slot-shadow-7) var(--slot-shadow-8) var(--slot-shadow-9) var(--slot-shadow-10) var(--slot-shadow-11) var(--slot-shadow-12)",
         variables: {
-          "--slot-1": "inset",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
-          "--slot-5": "1px",
-          "--slot-6": "red",
-          "--slot-7": "inset",
-          "--slot-8": "1px",
-          "--slot-9": "1px",
-          "--slot-10": "1px",
-          "--slot-11": "1px",
-          "--slot-12": "red",
+          "--slot-shadow": "inset",
+          "--slot-shadow-2": "1px",
+          "--slot-shadow-3": "1px",
+          "--slot-shadow-4": "1px",
+          "--slot-shadow-5": "1px",
+          "--slot-shadow-6": "red",
+          "--slot-shadow-7": "inset",
+          "--slot-shadow-8": "1px",
+          "--slot-shadow-9": "1px",
+          "--slot-shadow-10": "1px",
+          "--slot-shadow-11": "1px",
+          "--slot-shadow-12": "red",
         },
       },
       {
@@ -4239,9 +4294,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:0:repeat:keyword:inset",
         ],
-        value: "var(--slot-1) 1px 1px 1px 1px red,inset 1px 1px 1px 1px red",
+        value:
+          "var(--slot-shadow) 1px 1px 1px 1px red,inset 1px 1px 1px 1px red",
         variables: {
-          "--slot-1": "inset",
+          "--slot-shadow": "inset",
         },
       },
       {
@@ -4249,9 +4305,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:1:repeat:type:length",
         ],
-        value: "inset 1px 1px 1px 1px red,inset 1px 1px var(--slot-10) 1px red",
+        value:
+          "inset 1px 1px 1px 1px red,inset 1px 1px var(--slot-shadow-10) 1px red",
         variables: {
-          "--slot-10": "1px",
+          "--slot-shadow-10": "1px",
         },
       },
       {
@@ -4259,9 +4316,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:1:repeat:type:length",
         ],
-        value: "inset 1px 1px 1px 1px red,inset 1px 1px 1px var(--slot-11) red",
+        value:
+          "inset 1px 1px 1px 1px red,inset 1px 1px 1px var(--slot-shadow-11) red",
         variables: {
-          "--slot-11": "1px",
+          "--slot-shadow-11": "1px",
         },
       },
       {
@@ -4269,9 +4327,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:2:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "inset 1px 1px 1px 1px red,inset 1px 1px 1px 1px var(--slot-12)",
+        value:
+          "inset 1px 1px 1px 1px red,inset 1px 1px 1px 1px var(--slot-shadow-12)",
         variables: {
-          "--slot-12": "red",
+          "--slot-shadow-12": "red",
         },
       },
       {
@@ -4279,9 +4338,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:1:repeat:type:length",
         ],
-        value: "inset var(--slot-2) 1px 1px 1px red,inset 1px 1px 1px 1px red",
+        value:
+          "inset var(--slot-shadow-2) 1px 1px 1px red,inset 1px 1px 1px 1px red",
         variables: {
-          "--slot-2": "1px",
+          "--slot-shadow-2": "1px",
         },
       },
       {
@@ -4289,9 +4349,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:1:repeat:type:length",
         ],
-        value: "inset 1px var(--slot-3) 1px 1px red,inset 1px 1px 1px 1px red",
+        value:
+          "inset 1px var(--slot-shadow-3) 1px 1px red,inset 1px 1px 1px 1px red",
         variables: {
-          "--slot-3": "1px",
+          "--slot-shadow-3": "1px",
         },
       },
       {
@@ -4299,9 +4360,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:1:repeat:type:length",
         ],
-        value: "inset 1px 1px var(--slot-4) 1px red,inset 1px 1px 1px 1px red",
+        value:
+          "inset 1px 1px var(--slot-shadow-4) 1px red,inset 1px 1px 1px 1px red",
         variables: {
-          "--slot-4": "1px",
+          "--slot-shadow-4": "1px",
         },
       },
       {
@@ -4309,9 +4371,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:1:repeat:type:length",
         ],
-        value: "inset 1px 1px 1px var(--slot-5) red,inset 1px 1px 1px 1px red",
+        value:
+          "inset 1px 1px 1px var(--slot-shadow-5) red,inset 1px 1px 1px 1px red",
         variables: {
-          "--slot-5": "1px",
+          "--slot-shadow-5": "1px",
         },
       },
       {
@@ -4319,9 +4382,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:2:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "inset 1px 1px 1px 1px var(--slot-6),inset 1px 1px 1px 1px red",
+        value:
+          "inset 1px 1px 1px 1px var(--slot-shadow-6),inset 1px 1px 1px 1px red",
         variables: {
-          "--slot-6": "red",
+          "--slot-shadow-6": "red",
         },
       },
       {
@@ -4329,9 +4393,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:0:repeat:keyword:inset",
         ],
-        value: "inset 1px 1px 1px 1px red,var(--slot-7) 1px 1px 1px 1px red",
+        value:
+          "inset 1px 1px 1px 1px red,var(--slot-shadow-7) 1px 1px 1px 1px red",
         variables: {
-          "--slot-7": "inset",
+          "--slot-shadow-7": "inset",
         },
       },
       {
@@ -4339,9 +4404,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:1:repeat:type:length",
         ],
-        value: "inset 1px 1px 1px 1px red,inset var(--slot-8) 1px 1px 1px red",
+        value:
+          "inset 1px 1px 1px 1px red,inset var(--slot-shadow-8) 1px 1px 1px red",
         variables: {
-          "--slot-8": "1px",
+          "--slot-shadow-8": "1px",
         },
       },
       {
@@ -4349,9 +4415,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "box-shadow:branch:1:repeat:type:shadow:term:1:repeat:type:length",
         ],
-        value: "inset 1px 1px 1px 1px red,inset 1px var(--slot-9) 1px 1px red",
+        value:
+          "inset 1px 1px 1px 1px red,inset 1px var(--slot-shadow-9) 1px 1px red",
         variables: {
-          "--slot-9": "1px",
+          "--slot-shadow-9": "1px",
         },
       },
     ],
@@ -4454,13 +4521,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["caret-color:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "caret-color:branch:1:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -4486,6 +4561,14 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["clip-path:branch:0:type:clip-source:term:0:type:url"],
+        value: "var(--slot-clip-source)",
+        variables: {
+          "--slot-clip-source": "url(hero.png)",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["clip-path:branch:2:keyword:none"],
         value: "var(--slot-1)",
@@ -4500,11 +4583,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "clip-path:branch:1:term:0:type:basic-shape:branch:6:type:path():term:3:type:string",
           "clip-path:branch:1:term:1:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "path(var(--slot-1),var(--slot-2)) var(--slot-3)",
+        value:
+          "path(var(--slot-basic-shape),var(--slot-basic-shape-2)) var(--slot-geometry-box)",
         variables: {
-          "--slot-1": "nonzero",
-          "--slot-2": '"x"',
-          "--slot-3": "content-box",
+          "--slot-basic-shape": "nonzero",
+          "--slot-basic-shape-2": '"x"',
+          "--slot-geometry-box": "content-box",
         },
       },
       {
@@ -4512,9 +4596,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "clip-path:branch:1:term:0:type:basic-shape:branch:6:type:path():term:1:repeat:property:fill-rule:branch:0:keyword:nonzero",
         ],
-        value: 'path(var(--slot-1),"x") content-box',
+        value: 'path(var(--slot-basic-shape),"x") content-box',
         variables: {
-          "--slot-1": "nonzero",
+          "--slot-basic-shape": "nonzero",
         },
       },
       {
@@ -4522,9 +4606,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "clip-path:branch:1:term:0:type:basic-shape:branch:6:type:path():term:3:type:string",
         ],
-        value: "path(nonzero,var(--slot-2)) content-box",
+        value: "path(nonzero,var(--slot-basic-shape-2)) content-box",
         variables: {
-          "--slot-2": '"x"',
+          "--slot-basic-shape-2": '"x"',
         },
       },
       {
@@ -4532,9 +4616,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "clip-path:branch:1:term:1:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: 'path(nonzero,"x") var(--slot-3)',
+        value: 'path(nonzero,"x") var(--slot-geometry-box)',
         variables: {
-          "--slot-3": "content-box",
+          "--slot-geometry-box": "content-box",
         },
       },
     ],
@@ -4564,9 +4648,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -4649,6 +4733,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: [
+          "column-count:branch:0:type:integer:term:0:type:number-token",
+        ],
+        value: "var(--slot-integer)",
+        variables: {
+          "--slot-integer": "1",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["column-count:branch:1:keyword:auto"],
         value: "var(--slot-1)",
@@ -4679,13 +4773,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["column-gap:branch:0:keyword:normal"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "column-gap:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -4696,11 +4798,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["column-height:branch:1:type:length"],
+        id: "pattern-1-slot-1",
+        positions: ["column-height:branch:0:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["column-height:branch:1:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
         },
       },
     ],
@@ -4724,17 +4834,17 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "column-rule:term:2:property:column-rule-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8) var(--slot-9)",
+          "var(--slot-line-width) var(--slot-line-width-2) var(--slot-line-width-3) var(--slot-line-width-4) var(--slot-line-style) var(--slot-line-style-2) var(--slot-line-style-3) var(--slot-line-style-4) var(--slot-color)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
-          "--slot-5": "none",
-          "--slot-6": "none",
-          "--slot-7": "none",
-          "--slot-8": "none",
-          "--slot-9": "red",
+          "--slot-line-width": "1px",
+          "--slot-line-width-2": "1px",
+          "--slot-line-width-3": "1px",
+          "--slot-line-width-4": "1px",
+          "--slot-line-style": "none",
+          "--slot-line-style-2": "none",
+          "--slot-line-style-3": "none",
+          "--slot-line-style-4": "none",
+          "--slot-color": "red",
         },
       },
       {
@@ -4742,9 +4852,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px 1px 1px none none none none red",
+        value: "var(--slot-line-width) 1px 1px 1px none none none none red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -4752,9 +4862,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "1px var(--slot-2) 1px 1px none none none none red",
+        value: "1px var(--slot-line-width-2) 1px 1px none none none none red",
         variables: {
-          "--slot-2": "1px",
+          "--slot-line-width-2": "1px",
         },
       },
       {
@@ -4762,9 +4872,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "1px 1px var(--slot-3) 1px none none none none red",
+        value: "1px 1px var(--slot-line-width-3) 1px none none none none red",
         variables: {
-          "--slot-3": "1px",
+          "--slot-line-width-3": "1px",
         },
       },
       {
@@ -4772,9 +4882,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule:term:0:property:column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "1px 1px 1px var(--slot-4) none none none none red",
+        value: "1px 1px 1px var(--slot-line-width-4) none none none none red",
         variables: {
-          "--slot-4": "1px",
+          "--slot-line-width-4": "1px",
         },
       },
       {
@@ -4782,9 +4892,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px 1px 1px 1px var(--slot-5) none none none red",
+        value: "1px 1px 1px 1px var(--slot-line-style) none none none red",
         variables: {
-          "--slot-5": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -4792,9 +4902,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px 1px 1px 1px none var(--slot-6) none none red",
+        value: "1px 1px 1px 1px none var(--slot-line-style-2) none none red",
         variables: {
-          "--slot-6": "none",
+          "--slot-line-style-2": "none",
         },
       },
       {
@@ -4802,9 +4912,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px 1px 1px 1px none none var(--slot-7) none red",
+        value: "1px 1px 1px 1px none none var(--slot-line-style-3) none red",
         variables: {
-          "--slot-7": "none",
+          "--slot-line-style-3": "none",
         },
       },
       {
@@ -4812,9 +4922,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule:term:1:property:column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "1px 1px 1px 1px none none none var(--slot-8) red",
+        value: "1px 1px 1px 1px none none none var(--slot-line-style-4) red",
         variables: {
-          "--slot-8": "none",
+          "--slot-line-style-4": "none",
         },
       },
       {
@@ -4822,9 +4932,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule:term:2:property:column-rule-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px 1px 1px 1px none none none none var(--slot-9)",
+        value: "1px 1px 1px 1px none none none none var(--slot-color)",
         variables: {
-          "--slot-9": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -4840,9 +4950,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -4860,12 +4970,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
           "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-line-style) var(--slot-line-style-2) var(--slot-line-style-3) var(--slot-line-style-4)",
         variables: {
-          "--slot-1": "none",
-          "--slot-2": "none",
-          "--slot-3": "none",
-          "--slot-4": "none",
+          "--slot-line-style": "none",
+          "--slot-line-style-2": "none",
+          "--slot-line-style-3": "none",
+          "--slot-line-style-4": "none",
         },
       },
       {
@@ -4873,9 +4984,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1) none none none",
+        value: "var(--slot-line-style) none none none",
         variables: {
-          "--slot-1": "none",
+          "--slot-line-style": "none",
         },
       },
       {
@@ -4883,9 +4994,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "none var(--slot-2) none none",
+        value: "none var(--slot-line-style-2) none none",
         variables: {
-          "--slot-2": "none",
+          "--slot-line-style-2": "none",
         },
       },
       {
@@ -4893,9 +5004,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "none none var(--slot-3) none",
+        value: "none none var(--slot-line-style-3) none",
         variables: {
-          "--slot-3": "none",
+          "--slot-line-style-3": "none",
         },
       },
       {
@@ -4903,9 +5014,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule-style:term:0:property:border-style:term:0:repeat:type:line-style:branch:0:keyword:none",
         ],
-        value: "none none none var(--slot-4)",
+        value: "none none none var(--slot-line-style-4)",
         variables: {
-          "--slot-4": "none",
+          "--slot-line-style-4": "none",
         },
       },
     ],
@@ -4923,12 +5034,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
           "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-line-width) var(--slot-line-width-2) var(--slot-line-width-3) var(--slot-line-width-4)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-line-width": "1px",
+          "--slot-line-width-2": "1px",
+          "--slot-line-width-3": "1px",
+          "--slot-line-width-4": "1px",
         },
       },
       {
@@ -4936,9 +5048,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px 1px 1px",
+        value: "var(--slot-line-width) 1px 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -4946,9 +5058,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "1px var(--slot-2) 1px 1px",
+        value: "1px var(--slot-line-width-2) 1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-line-width-2": "1px",
         },
       },
       {
@@ -4956,9 +5068,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "1px 1px var(--slot-3) 1px",
+        value: "1px 1px var(--slot-line-width-3) 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-line-width-3": "1px",
         },
       },
       {
@@ -4966,9 +5078,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "column-rule-width:term:0:property:border-width:term:0:repeat:type:line-width:branch:0:type:length",
         ],
-        value: "1px 1px 1px var(--slot-4)",
+        value: "1px 1px 1px var(--slot-line-width-4)",
         variables: {
-          "--slot-4": "1px",
+          "--slot-line-width-4": "1px",
         },
       },
     ],
@@ -4994,11 +5106,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["column-width:branch:1:type:length"],
+        id: "pattern-1-slot-1",
+        positions: ["column-width:branch:0:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["column-width:branch:1:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
         },
       },
     ],
@@ -5030,10 +5150,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "columns:term:0:term:1:property:column-count:branch:0:type:integer:term:0:type:number-token",
           "columns:term:1:repeat:term:1:property:column-height:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1) var(--slot-2)/var(--slot-3)",
+        value: "var(--slot-1) var(--slot-integer)/var(--slot-3)",
         variables: {
           "--slot-1": "auto",
-          "--slot-2": "1",
+          "--slot-integer": "1",
           "--slot-3": "auto",
         },
       },
@@ -5052,9 +5172,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "columns:term:0:term:1:property:column-count:branch:0:type:integer:term:0:type:number-token",
         ],
-        value: "auto var(--slot-2)/auto",
+        value: "auto var(--slot-integer)/auto",
         variables: {
-          "--slot-2": "1",
+          "--slot-integer": "1",
         },
       },
       {
@@ -5150,6 +5270,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-all-slots",
+        positions: [
+          "contain-intrinsic-block-size:term:0:repeat:keyword:auto",
+          "contain-intrinsic-block-size:term:1:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1) var(--slot-2)",
+        variables: {
+          "--slot-1": "auto",
+          "--slot-2": "none",
+        },
+      },
+      {
         id: "pattern-1-slot-1",
         positions: ["contain-intrinsic-block-size:term:0:repeat:keyword:auto"],
         value: "var(--slot-1) none",
@@ -5158,15 +5290,25 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
       {
+        id: "pattern-1-slot-2",
+        positions: [
+          "contain-intrinsic-block-size:term:1:branch:0:keyword:none",
+        ],
+        value: "auto var(--slot-2)",
+        variables: {
+          "--slot-2": "none",
+        },
+      },
+      {
         id: "pattern-2-all-slots",
         positions: [
           "contain-intrinsic-block-size:term:0:repeat:keyword:auto",
           "contain-intrinsic-block-size:term:1:branch:1:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-1) var(--slot-length)",
         variables: {
           "--slot-1": "auto",
-          "--slot-2": "1px",
+          "--slot-length": "1px",
         },
       },
       {
@@ -5180,9 +5322,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-2-slot-2",
         positions: ["contain-intrinsic-block-size:term:1:branch:1:type:length"],
-        value: "auto var(--slot-2)",
+        value: "auto var(--slot-length)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -5193,6 +5335,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-all-slots",
+        positions: [
+          "contain-intrinsic-height:term:0:repeat:keyword:auto",
+          "contain-intrinsic-height:term:1:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1) var(--slot-2)",
+        variables: {
+          "--slot-1": "auto",
+          "--slot-2": "none",
+        },
+      },
+      {
         id: "pattern-1-slot-1",
         positions: ["contain-intrinsic-height:term:0:repeat:keyword:auto"],
         value: "var(--slot-1) none",
@@ -5201,15 +5355,23 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
       {
+        id: "pattern-1-slot-2",
+        positions: ["contain-intrinsic-height:term:1:branch:0:keyword:none"],
+        value: "auto var(--slot-2)",
+        variables: {
+          "--slot-2": "none",
+        },
+      },
+      {
         id: "pattern-2-all-slots",
         positions: [
           "contain-intrinsic-height:term:0:repeat:keyword:auto",
           "contain-intrinsic-height:term:1:branch:1:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-1) var(--slot-length)",
         variables: {
           "--slot-1": "auto",
-          "--slot-2": "1px",
+          "--slot-length": "1px",
         },
       },
       {
@@ -5223,9 +5385,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-2-slot-2",
         positions: ["contain-intrinsic-height:term:1:branch:1:type:length"],
-        value: "auto var(--slot-2)",
+        value: "auto var(--slot-length)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -5236,6 +5398,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-all-slots",
+        positions: [
+          "contain-intrinsic-inline-size:term:0:repeat:keyword:auto",
+          "contain-intrinsic-inline-size:term:1:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1) var(--slot-2)",
+        variables: {
+          "--slot-1": "auto",
+          "--slot-2": "none",
+        },
+      },
+      {
         id: "pattern-1-slot-1",
         positions: ["contain-intrinsic-inline-size:term:0:repeat:keyword:auto"],
         value: "var(--slot-1) none",
@@ -5244,15 +5418,25 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
       {
+        id: "pattern-1-slot-2",
+        positions: [
+          "contain-intrinsic-inline-size:term:1:branch:0:keyword:none",
+        ],
+        value: "auto var(--slot-2)",
+        variables: {
+          "--slot-2": "none",
+        },
+      },
+      {
         id: "pattern-2-all-slots",
         positions: [
           "contain-intrinsic-inline-size:term:0:repeat:keyword:auto",
           "contain-intrinsic-inline-size:term:1:branch:1:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-1) var(--slot-length)",
         variables: {
           "--slot-1": "auto",
-          "--slot-2": "1px",
+          "--slot-length": "1px",
         },
       },
       {
@@ -5268,9 +5452,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "contain-intrinsic-inline-size:term:1:branch:1:type:length",
         ],
-        value: "auto var(--slot-2)",
+        value: "auto var(--slot-length)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -5344,6 +5528,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-all-slots",
+        positions: [
+          "contain-intrinsic-width:term:0:repeat:keyword:auto",
+          "contain-intrinsic-width:term:1:branch:0:keyword:none",
+        ],
+        value: "var(--slot-1) var(--slot-2)",
+        variables: {
+          "--slot-1": "auto",
+          "--slot-2": "none",
+        },
+      },
+      {
         id: "pattern-1-slot-1",
         positions: ["contain-intrinsic-width:term:0:repeat:keyword:auto"],
         value: "var(--slot-1) none",
@@ -5352,15 +5548,23 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         },
       },
       {
+        id: "pattern-1-slot-2",
+        positions: ["contain-intrinsic-width:term:1:branch:0:keyword:none"],
+        value: "auto var(--slot-2)",
+        variables: {
+          "--slot-2": "none",
+        },
+      },
+      {
         id: "pattern-2-all-slots",
         positions: [
           "contain-intrinsic-width:term:0:repeat:keyword:auto",
           "contain-intrinsic-width:term:1:branch:1:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-1) var(--slot-length)",
         variables: {
           "--slot-1": "auto",
-          "--slot-2": "1px",
+          "--slot-length": "1px",
         },
       },
       {
@@ -5374,9 +5578,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-2-slot-2",
         positions: ["contain-intrinsic-width:term:1:branch:1:type:length"],
-        value: "auto var(--slot-2)",
+        value: "auto var(--slot-length)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -5439,26 +5643,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "container-name:branch:1:repeat:type:custom-ident",
           "container-name:branch:1:repeat:type:custom-ident",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-custom-ident) var(--slot-custom-ident-2)",
         variables: {
-          "--slot-1": "custom-ident",
-          "--slot-2": "custom-ident",
+          "--slot-custom-ident": "custom-ident",
+          "--slot-custom-ident-2": "custom-ident",
         },
       },
       {
         id: "pattern-2-slot-1",
         positions: ["container-name:branch:1:repeat:type:custom-ident"],
-        value: "var(--slot-1) custom-ident",
+        value: "var(--slot-custom-ident) custom-ident",
         variables: {
-          "--slot-1": "custom-ident",
+          "--slot-custom-ident": "custom-ident",
         },
       },
       {
         id: "pattern-2-slot-2",
         positions: ["container-name:branch:1:repeat:type:custom-ident"],
-        value: "custom-ident var(--slot-2)",
+        value: "custom-ident var(--slot-custom-ident-2)",
         variables: {
-          "--slot-2": "custom-ident",
+          "--slot-custom-ident-2": "custom-ident",
         },
       },
     ],
@@ -5526,11 +5730,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "content:branch:2:term:1:repeat:term:1:repeat:branch:0:type:string",
           "content:branch:2:term:1:repeat:term:1:repeat:branch:0:type:string",
         ],
-        value: "var(--slot-1)/var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-content-replacement)/var(--slot-string) var(--slot-string-2)",
         variables: {
-          "--slot-1": "url(hero.png)",
-          "--slot-2": '"x"',
-          "--slot-3": '"x"',
+          "--slot-content-replacement": "url(hero.png)",
+          "--slot-string": '"x"',
+          "--slot-string-2": '"x"',
         },
       },
       {
@@ -5538,9 +5743,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "content:branch:2:term:0:branch:0:type:content-replacement:term:0:type:image:branch:0:type:url",
         ],
-        value: 'var(--slot-1)/"x""x"',
+        value: 'var(--slot-content-replacement)/"x""x"',
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-content-replacement": "url(hero.png)",
         },
       },
       {
@@ -5548,9 +5753,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "content:branch:2:term:1:repeat:term:1:repeat:branch:0:type:string",
         ],
-        value: 'url(hero.png)/var(--slot-2)"x"',
+        value: 'url(hero.png)/var(--slot-string)"x"',
         variables: {
-          "--slot-2": '"x"',
+          "--slot-string": '"x"',
         },
       },
       {
@@ -5558,9 +5763,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "content:branch:2:term:1:repeat:term:1:repeat:branch:0:type:string",
         ],
-        value: 'url(hero.png)/"x"var(--slot-3)',
+        value: 'url(hero.png)/"x"var(--slot-string-2)',
         variables: {
-          "--slot-3": '"x"',
+          "--slot-string-2": '"x"',
         },
       },
     ],
@@ -5592,10 +5797,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "corner-block-end-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
           "corner-block-end-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value:
+          "var(--slot-corner-shape-value) var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-1": "round",
-          "--slot-2": "round",
+          "--slot-corner-shape-value": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
       {
@@ -5603,9 +5809,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-block-end-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) round",
+        value: "var(--slot-corner-shape-value) round",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
       {
@@ -5613,9 +5819,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-block-end-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round var(--slot-2)",
+        value: "round var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-2": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
     ],
@@ -5631,10 +5837,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "corner-block-start-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
           "corner-block-start-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value:
+          "var(--slot-corner-shape-value) var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-1": "round",
-          "--slot-2": "round",
+          "--slot-corner-shape-value": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
       {
@@ -5642,9 +5849,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-block-start-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) round",
+        value: "var(--slot-corner-shape-value) round",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
       {
@@ -5652,9 +5859,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-block-start-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round var(--slot-2)",
+        value: "round var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-2": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
     ],
@@ -5669,9 +5876,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-bottom-left-shape:term:0:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-corner-shape-value)",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
     ],
@@ -5686,9 +5893,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-bottom-right-shape:term:0:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-corner-shape-value)",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
     ],
@@ -5704,10 +5911,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "corner-bottom-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
           "corner-bottom-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value:
+          "var(--slot-corner-shape-value) var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-1": "round",
-          "--slot-2": "round",
+          "--slot-corner-shape-value": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
       {
@@ -5715,9 +5923,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-bottom-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) round",
+        value: "var(--slot-corner-shape-value) round",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
       {
@@ -5725,9 +5933,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-bottom-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round var(--slot-2)",
+        value: "round var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-2": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
     ],
@@ -5742,9 +5950,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-end-end-shape:term:0:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-corner-shape-value)",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
     ],
@@ -5759,9 +5967,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-end-start-shape:term:0:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-corner-shape-value)",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
     ],
@@ -5777,10 +5985,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "corner-inline-end-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
           "corner-inline-end-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value:
+          "var(--slot-corner-shape-value) var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-1": "round",
-          "--slot-2": "round",
+          "--slot-corner-shape-value": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
       {
@@ -5788,9 +5997,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-inline-end-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) round",
+        value: "var(--slot-corner-shape-value) round",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
       {
@@ -5798,9 +6007,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-inline-end-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round var(--slot-2)",
+        value: "round var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-2": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
     ],
@@ -5816,10 +6025,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "corner-inline-start-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
           "corner-inline-start-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value:
+          "var(--slot-corner-shape-value) var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-1": "round",
-          "--slot-2": "round",
+          "--slot-corner-shape-value": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
       {
@@ -5827,9 +6037,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-inline-start-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) round",
+        value: "var(--slot-corner-shape-value) round",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
       {
@@ -5837,9 +6047,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-inline-start-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round var(--slot-2)",
+        value: "round var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-2": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
     ],
@@ -5855,10 +6065,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "corner-left-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
           "corner-left-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value:
+          "var(--slot-corner-shape-value) var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-1": "round",
-          "--slot-2": "round",
+          "--slot-corner-shape-value": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
       {
@@ -5866,9 +6077,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-left-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) round",
+        value: "var(--slot-corner-shape-value) round",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
       {
@@ -5876,9 +6087,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-left-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round var(--slot-2)",
+        value: "round var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-2": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
     ],
@@ -5894,10 +6105,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "corner-right-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
           "corner-right-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value:
+          "var(--slot-corner-shape-value) var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-1": "round",
-          "--slot-2": "round",
+          "--slot-corner-shape-value": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
       {
@@ -5905,9 +6117,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-right-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) round",
+        value: "var(--slot-corner-shape-value) round",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
       {
@@ -5915,9 +6127,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-right-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round var(--slot-2)",
+        value: "round var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-2": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
     ],
@@ -5935,12 +6147,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "corner-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
           "corner-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-corner-shape-value) var(--slot-corner-shape-value-2) var(--slot-corner-shape-value-3) var(--slot-corner-shape-value-4)",
         variables: {
-          "--slot-1": "round",
-          "--slot-2": "round",
-          "--slot-3": "round",
-          "--slot-4": "round",
+          "--slot-corner-shape-value": "round",
+          "--slot-corner-shape-value-2": "round",
+          "--slot-corner-shape-value-3": "round",
+          "--slot-corner-shape-value-4": "round",
         },
       },
       {
@@ -5948,9 +6161,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) round round round",
+        value: "var(--slot-corner-shape-value) round round round",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
       {
@@ -5958,9 +6171,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round var(--slot-2) round round",
+        value: "round var(--slot-corner-shape-value-2) round round",
         variables: {
-          "--slot-2": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
       {
@@ -5968,9 +6181,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round round var(--slot-3) round",
+        value: "round round var(--slot-corner-shape-value-3) round",
         variables: {
-          "--slot-3": "round",
+          "--slot-corner-shape-value-3": "round",
         },
       },
       {
@@ -5978,9 +6191,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round round round var(--slot-4)",
+        value: "round round round var(--slot-corner-shape-value-4)",
         variables: {
-          "--slot-4": "round",
+          "--slot-corner-shape-value-4": "round",
         },
       },
     ],
@@ -5995,9 +6208,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-start-end-shape:term:0:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-corner-shape-value)",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
     ],
@@ -6012,9 +6225,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-start-start-shape:term:0:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-corner-shape-value)",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
     ],
@@ -6029,9 +6242,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-top-left-shape:term:0:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-corner-shape-value)",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
     ],
@@ -6046,9 +6259,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-top-right-shape:term:0:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-corner-shape-value)",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
     ],
@@ -6064,10 +6277,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "corner-top-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
           "corner-top-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value:
+          "var(--slot-corner-shape-value) var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-1": "round",
-          "--slot-2": "round",
+          "--slot-corner-shape-value": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
       {
@@ -6075,9 +6289,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-top-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "var(--slot-1) round",
+        value: "var(--slot-corner-shape-value) round",
         variables: {
-          "--slot-1": "round",
+          "--slot-corner-shape-value": "round",
         },
       },
       {
@@ -6085,9 +6299,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "corner-top-shape:term:0:repeat:type:corner-shape-value:branch:0:keyword:round",
         ],
-        value: "round var(--slot-2)",
+        value: "round var(--slot-corner-shape-value-2)",
         variables: {
-          "--slot-2": "round",
+          "--slot-corner-shape-value-2": "round",
         },
       },
     ],
@@ -6113,12 +6327,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "counter-increment:branch:0:repeat:term:0:type:counter-name:term:0:type:custom-ident",
           "counter-increment:branch:0:repeat:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-counter-name) var(--slot-integer) var(--slot-counter-name-2) var(--slot-integer-2)",
         variables: {
-          "--slot-1": "custom-ident",
-          "--slot-2": "1",
-          "--slot-3": "custom-ident",
-          "--slot-4": "1",
+          "--slot-counter-name": "custom-ident",
+          "--slot-integer": "1",
+          "--slot-counter-name-2": "custom-ident",
+          "--slot-integer-2": "1",
         },
       },
       {
@@ -6126,9 +6341,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-increment:branch:0:repeat:term:0:type:counter-name:term:0:type:custom-ident",
         ],
-        value: "var(--slot-1)1 custom-ident 1",
+        value: "var(--slot-counter-name)1 custom-ident 1",
         variables: {
-          "--slot-1": "custom-ident",
+          "--slot-counter-name": "custom-ident",
         },
       },
       {
@@ -6136,9 +6351,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-increment:branch:0:repeat:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "custom-ident var(--slot-2) custom-ident 1",
+        value: "custom-ident var(--slot-integer) custom-ident 1",
         variables: {
-          "--slot-2": "1",
+          "--slot-integer": "1",
         },
       },
       {
@@ -6146,9 +6361,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-increment:branch:0:repeat:term:0:type:counter-name:term:0:type:custom-ident",
         ],
-        value: "custom-ident 1 var(--slot-3)1",
+        value: "custom-ident 1 var(--slot-counter-name-2)1",
         variables: {
-          "--slot-3": "custom-ident",
+          "--slot-counter-name-2": "custom-ident",
         },
       },
       {
@@ -6156,9 +6371,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-increment:branch:0:repeat:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "custom-ident 1 custom-ident var(--slot-4)",
+        value: "custom-ident 1 custom-ident var(--slot-integer-2)",
         variables: {
-          "--slot-4": "1",
+          "--slot-integer-2": "1",
         },
       },
     ],
@@ -6184,12 +6399,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "counter-reset:branch:0:repeat:branch:0:term:0:type:counter-name:term:0:type:custom-ident",
           "counter-reset:branch:0:repeat:branch:0:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-counter-name) var(--slot-integer) var(--slot-counter-name-2) var(--slot-integer-2)",
         variables: {
-          "--slot-1": "custom-ident",
-          "--slot-2": "1",
-          "--slot-3": "custom-ident",
-          "--slot-4": "1",
+          "--slot-counter-name": "custom-ident",
+          "--slot-integer": "1",
+          "--slot-counter-name-2": "custom-ident",
+          "--slot-integer-2": "1",
         },
       },
       {
@@ -6197,9 +6413,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-reset:branch:0:repeat:branch:0:term:0:type:counter-name:term:0:type:custom-ident",
         ],
-        value: "var(--slot-1)1 custom-ident 1",
+        value: "var(--slot-counter-name)1 custom-ident 1",
         variables: {
-          "--slot-1": "custom-ident",
+          "--slot-counter-name": "custom-ident",
         },
       },
       {
@@ -6207,9 +6423,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-reset:branch:0:repeat:branch:0:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "custom-ident var(--slot-2) custom-ident 1",
+        value: "custom-ident var(--slot-integer) custom-ident 1",
         variables: {
-          "--slot-2": "1",
+          "--slot-integer": "1",
         },
       },
       {
@@ -6217,9 +6433,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-reset:branch:0:repeat:branch:0:term:0:type:counter-name:term:0:type:custom-ident",
         ],
-        value: "custom-ident 1 var(--slot-3)1",
+        value: "custom-ident 1 var(--slot-counter-name-2)1",
         variables: {
-          "--slot-3": "custom-ident",
+          "--slot-counter-name-2": "custom-ident",
         },
       },
       {
@@ -6227,9 +6443,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-reset:branch:0:repeat:branch:0:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "custom-ident 1 custom-ident var(--slot-4)",
+        value: "custom-ident 1 custom-ident var(--slot-integer-2)",
         variables: {
-          "--slot-4": "1",
+          "--slot-integer-2": "1",
         },
       },
     ],
@@ -6256,12 +6472,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "counter-set:branch:0:repeat:term:0:type:counter-name:term:0:type:custom-ident",
           "counter-set:branch:0:repeat:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-counter-name) var(--slot-integer) var(--slot-counter-name-2) var(--slot-integer-2)",
         variables: {
-          "--slot-1": "custom-ident",
-          "--slot-2": "1",
-          "--slot-3": "custom-ident",
-          "--slot-4": "1",
+          "--slot-counter-name": "custom-ident",
+          "--slot-integer": "1",
+          "--slot-counter-name-2": "custom-ident",
+          "--slot-integer-2": "1",
         },
       },
       {
@@ -6269,9 +6486,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-set:branch:0:repeat:term:0:type:counter-name:term:0:type:custom-ident",
         ],
-        value: "var(--slot-1)1 custom-ident 1",
+        value: "var(--slot-counter-name)1 custom-ident 1",
         variables: {
-          "--slot-1": "custom-ident",
+          "--slot-counter-name": "custom-ident",
         },
       },
       {
@@ -6279,9 +6496,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-set:branch:0:repeat:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "custom-ident var(--slot-2) custom-ident 1",
+        value: "custom-ident var(--slot-integer) custom-ident 1",
         variables: {
-          "--slot-2": "1",
+          "--slot-integer": "1",
         },
       },
       {
@@ -6289,9 +6506,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-set:branch:0:repeat:term:0:type:counter-name:term:0:type:custom-ident",
         ],
-        value: "custom-ident 1 var(--slot-3)1",
+        value: "custom-ident 1 var(--slot-counter-name-2)1",
         variables: {
-          "--slot-3": "custom-ident",
+          "--slot-counter-name-2": "custom-ident",
         },
       },
       {
@@ -6299,9 +6516,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "counter-set:branch:0:repeat:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "custom-ident 1 custom-ident var(--slot-4)",
+        value: "custom-ident 1 custom-ident var(--slot-integer-2)",
         variables: {
-          "--slot-4": "1",
+          "--slot-integer-2": "1",
         },
       },
     ],
@@ -6323,63 +6540,63 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "cursor:term:1:type:cursor-predefined:branch:0:keyword:auto",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3),var(--slot-4) var(--slot-5) var(--slot-6),var(--slot-7)",
+          "var(--slot-url) var(--slot-x) var(--slot-y),var(--slot-url-2) var(--slot-x-2) var(--slot-y-2),var(--slot-cursor-predefined)",
         variables: {
-          "--slot-1": "url(hero.png)",
-          "--slot-2": "1",
-          "--slot-3": "1",
-          "--slot-4": "url(hero.png)",
-          "--slot-5": "1",
-          "--slot-6": "1",
-          "--slot-7": "auto",
+          "--slot-url": "url(hero.png)",
+          "--slot-x": "1",
+          "--slot-y": "1",
+          "--slot-url-2": "url(hero.png)",
+          "--slot-x-2": "1",
+          "--slot-y-2": "1",
+          "--slot-cursor-predefined": "auto",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["cursor:term:0:repeat:term:0:type:url"],
-        value: "var(--slot-1)1 1,url(hero.png)1 1,auto",
+        value: "var(--slot-url)1 1,url(hero.png)1 1,auto",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-url": "url(hero.png)",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["cursor:term:0:repeat:term:1:repeat:term:0:type:x"],
-        value: "url(hero.png)var(--slot-2)1,url(hero.png)1 1,auto",
+        value: "url(hero.png)var(--slot-x)1,url(hero.png)1 1,auto",
         variables: {
-          "--slot-2": "1",
+          "--slot-x": "1",
         },
       },
       {
         id: "pattern-1-slot-3",
         positions: ["cursor:term:0:repeat:term:1:repeat:term:1:type:y"],
-        value: "url(hero.png)1 var(--slot-3),url(hero.png)1 1,auto",
+        value: "url(hero.png)1 var(--slot-y),url(hero.png)1 1,auto",
         variables: {
-          "--slot-3": "1",
+          "--slot-y": "1",
         },
       },
       {
         id: "pattern-1-slot-4",
         positions: ["cursor:term:0:repeat:term:0:type:url"],
-        value: "url(hero.png)1 1,var(--slot-4)1 1,auto",
+        value: "url(hero.png)1 1,var(--slot-url-2)1 1,auto",
         variables: {
-          "--slot-4": "url(hero.png)",
+          "--slot-url-2": "url(hero.png)",
         },
       },
       {
         id: "pattern-1-slot-5",
         positions: ["cursor:term:0:repeat:term:1:repeat:term:0:type:x"],
-        value: "url(hero.png)1 1,url(hero.png)var(--slot-5)1,auto",
+        value: "url(hero.png)1 1,url(hero.png)var(--slot-x-2)1,auto",
         variables: {
-          "--slot-5": "1",
+          "--slot-x-2": "1",
         },
       },
       {
         id: "pattern-1-slot-6",
         positions: ["cursor:term:0:repeat:term:1:repeat:term:1:type:y"],
-        value: "url(hero.png)1 1,url(hero.png)1 var(--slot-6),auto",
+        value: "url(hero.png)1 1,url(hero.png)1 var(--slot-y-2),auto",
         variables: {
-          "--slot-6": "1",
+          "--slot-y-2": "1",
         },
       },
       {
@@ -6387,9 +6604,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "cursor:term:1:type:cursor-predefined:branch:0:keyword:auto",
         ],
-        value: "url(hero.png)1 1,url(hero.png)1 1,var(--slot-7)",
+        value:
+          "url(hero.png)1 1,url(hero.png)1 1,var(--slot-cursor-predefined)",
         variables: {
-          "--slot-7": "auto",
+          "--slot-cursor-predefined": "auto",
         },
       },
     ],
@@ -6400,11 +6618,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["cx:branch:0:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["cx:branch:1:type:percentage"],
-        value: "var(--slot-1)",
+        value: "var(--slot-percentage)",
         variables: {
-          "--slot-1": "10%",
+          "--slot-percentage": "10%",
         },
       },
     ],
@@ -6415,11 +6641,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["cy:branch:0:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["cy:branch:1:type:percentage"],
-        value: "var(--slot-1)",
+        value: "var(--slot-percentage)",
         variables: {
-          "--slot-1": "10%",
+          "--slot-percentage": "10%",
         },
       },
     ],
@@ -6440,9 +6674,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-2-slot-1",
         positions: ["d:branch:1:term:1:type:string"],
-        value: "path(var(--slot-1))",
+        value: "path(var(--slot-string))",
         variables: {
-          "--slot-1": '"x"',
+          "--slot-string": '"x"',
         },
       },
     ],
@@ -6468,13 +6702,33 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: [
+          "display:branch:2:type:display-internal:branch:0:keyword:table-row-group",
+        ],
+        value: "var(--slot-display-internal)",
+        variables: {
+          "--slot-display-internal": "table-row-group",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "display:branch:3:type:display-box:branch:0:keyword:contents",
+        ],
+        value: "var(--slot-display-box)",
+        variables: {
+          "--slot-display-box": "contents",
+        },
+      },
+      {
         id: "pattern-3-slot-1",
         positions: [
           "display:branch:4:type:display-legacy:branch:0:keyword:inline-block",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-display-legacy)",
         variables: {
-          "--slot-1": "inline-block",
+          "--slot-display-legacy": "inline-block",
         },
       },
       {
@@ -6483,10 +6737,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "display:branch:0:term:0:type:display-outside:branch:0:keyword:block",
           "display:branch:0:term:1:type:display-inside:branch:0:keyword:flow",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-display-outside) var(--slot-display-inside)",
         variables: {
-          "--slot-1": "block",
-          "--slot-2": "flow",
+          "--slot-display-outside": "block",
+          "--slot-display-inside": "flow",
         },
       },
       {
@@ -6494,9 +6748,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "display:branch:0:term:0:type:display-outside:branch:0:keyword:block",
         ],
-        value: "var(--slot-1) flow",
+        value: "var(--slot-display-outside) flow",
         variables: {
-          "--slot-1": "block",
+          "--slot-display-outside": "block",
         },
       },
       {
@@ -6504,9 +6758,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "display:branch:0:term:1:type:display-inside:branch:0:keyword:flow",
         ],
-        value: "block var(--slot-2)",
+        value: "block var(--slot-display-inside)",
         variables: {
-          "--slot-2": "flow",
+          "--slot-display-inside": "flow",
         },
       },
     ],
@@ -6581,9 +6835,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["fill:term:0:type:paint:branch:0:keyword:none"],
-        value: "var(--slot-1)",
+        value: "var(--slot-paint)",
         variables: {
-          "--slot-1": "none",
+          "--slot-paint": "none",
         },
       },
     ],
@@ -6598,9 +6852,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "fill-opacity:term:0:property:opacity:term:0:type:opacity-value:branch:0:type:number",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-opacity-value)",
         variables: {
-          "--slot-1": "1",
+          "--slot-opacity-value": "1",
         },
       },
     ],
@@ -6639,10 +6893,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "filter:branch:1:type:filter-value-list:term:0:repeat:branch:1:type:url",
           "filter:branch:1:type:filter-value-list:term:0:repeat:branch:1:type:url",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-filter-value-list) var(--slot-filter-value-list-2)",
         variables: {
-          "--slot-1": "url(hero.png)",
-          "--slot-2": "url(hero.png)",
+          "--slot-filter-value-list": "url(hero.png)",
+          "--slot-filter-value-list-2": "url(hero.png)",
         },
       },
       {
@@ -6650,9 +6904,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "filter:branch:1:type:filter-value-list:term:0:repeat:branch:1:type:url",
         ],
-        value: "var(--slot-1)url(hero.png)",
+        value: "var(--slot-filter-value-list)url(hero.png)",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-filter-value-list": "url(hero.png)",
         },
       },
       {
@@ -6660,9 +6914,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "filter:branch:1:type:filter-value-list:term:0:repeat:branch:1:type:url",
         ],
-        value: "url(hero.png)var(--slot-2)",
+        value: "url(hero.png)var(--slot-filter-value-list-2)",
         variables: {
-          "--slot-2": "url(hero.png)",
+          "--slot-filter-value-list-2": "url(hero.png)",
         },
       },
     ],
@@ -6687,10 +6941,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "flex:branch:1:term:0:term:1:repeat:property:flex-shrink:term:0:type:number",
           "flex:branch:1:term:1:property:flex-basis:branch:0:keyword:content",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value: "var(--slot-number) var(--slot-number-2) var(--slot-3)",
         variables: {
-          "--slot-1": "1",
-          "--slot-2": "1",
+          "--slot-number": "1",
+          "--slot-number-2": "1",
           "--slot-3": "content",
         },
       },
@@ -6699,9 +6953,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "flex:branch:1:term:0:term:0:property:flex-grow:term:0:type:number",
         ],
-        value: "var(--slot-1)1 content",
+        value: "var(--slot-number)1 content",
         variables: {
-          "--slot-1": "1",
+          "--slot-number": "1",
         },
       },
       {
@@ -6709,9 +6963,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "flex:branch:1:term:0:term:1:repeat:property:flex-shrink:term:0:type:number",
         ],
-        value: "1 var(--slot-2) content",
+        value: "1 var(--slot-number-2) content",
         variables: {
-          "--slot-2": "1",
+          "--slot-number-2": "1",
         },
       },
       {
@@ -6803,9 +7057,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["flex-grow:term:0:type:number"],
-        value: "var(--slot-1)",
+        value: "var(--slot-number)",
         variables: {
-          "--slot-1": "1",
+          "--slot-number": "1",
         },
       },
     ],
@@ -6818,9 +7072,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["flex-shrink:term:0:type:number"],
-        value: "var(--slot-1)",
+        value: "var(--slot-number)",
         variables: {
-          "--slot-1": "1",
+          "--slot-number": "1",
         },
       },
     ],
@@ -6865,9 +7119,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "flood-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -6882,9 +7136,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "flood-opacity:term:0:property:opacity:term:0:type:opacity-value:branch:0:type:number",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-opacity-value)",
         variables: {
-          "--slot-1": "1",
+          "--slot-opacity-value": "1",
         },
       },
     ],
@@ -6967,10 +7221,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-family:term:0:repeat:branch:0:type:family-name:branch:0:type:string",
           "font-family:term:0:repeat:branch:0:type:family-name:branch:0:type:string",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-family-name),var(--slot-family-name-2)",
         variables: {
-          "--slot-1": '"x"',
-          "--slot-2": '"x"',
+          "--slot-family-name": '"x"',
+          "--slot-family-name-2": '"x"',
         },
       },
       {
@@ -6978,9 +7232,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-family:term:0:repeat:branch:0:type:family-name:branch:0:type:string",
         ],
-        value: 'var(--slot-1),"x"',
+        value: 'var(--slot-family-name),"x"',
         variables: {
-          "--slot-1": '"x"',
+          "--slot-family-name": '"x"',
         },
       },
       {
@@ -6988,9 +7242,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-family:term:0:repeat:branch:0:type:family-name:branch:0:type:string",
         ],
-        value: '"x",var(--slot-2)',
+        value: '"x",var(--slot-family-name-2)',
         variables: {
-          "--slot-2": '"x"',
+          "--slot-family-name-2": '"x"',
         },
       },
     ],
@@ -7016,12 +7270,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-feature-settings:branch:1:repeat:type:feature-tag-value:term:0:type:string",
           "font-feature-settings:branch:1:repeat:type:feature-tag-value:term:1:repeat:branch:0:type:integer:term:0:type:number-token",
         ],
-        value: "var(--slot-1) var(--slot-2),var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-feature-tag-value) var(--slot-feature-tag-value-2),var(--slot-feature-tag-value-3) var(--slot-feature-tag-value-4)",
         variables: {
-          "--slot-1": '"x"',
-          "--slot-2": "1",
-          "--slot-3": '"x"',
-          "--slot-4": "1",
+          "--slot-feature-tag-value": '"x"',
+          "--slot-feature-tag-value-2": "1",
+          "--slot-feature-tag-value-3": '"x"',
+          "--slot-feature-tag-value-4": "1",
         },
       },
       {
@@ -7029,9 +7284,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-feature-settings:branch:1:repeat:type:feature-tag-value:term:0:type:string",
         ],
-        value: 'var(--slot-1)1,"x"1',
+        value: 'var(--slot-feature-tag-value)1,"x"1',
         variables: {
-          "--slot-1": '"x"',
+          "--slot-feature-tag-value": '"x"',
         },
       },
       {
@@ -7039,9 +7294,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-feature-settings:branch:1:repeat:type:feature-tag-value:term:1:repeat:branch:0:type:integer:term:0:type:number-token",
         ],
-        value: '"x"var(--slot-2),"x"1',
+        value: '"x"var(--slot-feature-tag-value-2),"x"1',
         variables: {
-          "--slot-2": "1",
+          "--slot-feature-tag-value-2": "1",
         },
       },
       {
@@ -7049,9 +7304,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-feature-settings:branch:1:repeat:type:feature-tag-value:term:0:type:string",
         ],
-        value: '"x"1,var(--slot-3)1',
+        value: '"x"1,var(--slot-feature-tag-value-3)1',
         variables: {
-          "--slot-3": '"x"',
+          "--slot-feature-tag-value-3": '"x"',
         },
       },
       {
@@ -7059,9 +7314,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-feature-settings:branch:1:repeat:type:feature-tag-value:term:1:repeat:branch:0:type:integer:term:0:type:number-token",
         ],
-        value: '"x"1,"x"var(--slot-4)',
+        value: '"x"1,"x"var(--slot-feature-tag-value-4)',
         variables: {
-          "--slot-4": "1",
+          "--slot-feature-tag-value-4": "1",
         },
       },
     ],
@@ -7087,11 +7342,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["font-language-override:branch:1:type:string"],
+        id: "pattern-1-slot-1",
+        positions: ["font-language-override:branch:0:keyword:normal"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": '"x"',
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["font-language-override:branch:1:type:string"],
+        value: "var(--slot-string)",
+        variables: {
+          "--slot-string": '"x"',
         },
       },
     ],
@@ -7117,13 +7380,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-3-slot-1",
+        positions: ["font-palette:branch:2:keyword:dark"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "dark",
+        },
+      },
+      {
         id: "pattern-4-slot-1",
         positions: [
           "font-palette:branch:3:type:palette-identifier:term:0:type:dashed-ident",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-palette-identifier)",
         variables: {
-          "--slot-1": "--custom-ident",
+          "--slot-palette-identifier": "--custom-ident",
         },
       },
     ],
@@ -7133,6 +7404,36 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   },
   {
     cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "font-size:branch:0:type:absolute-size:branch:0:keyword:xx-small",
+        ],
+        value: "var(--slot-absolute-size)",
+        variables: {
+          "--slot-absolute-size": "xx-small",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "font-size:branch:1:type:relative-size:branch:0:keyword:larger",
+        ],
+        value: "var(--slot-relative-size)",
+        variables: {
+          "--slot-relative-size": "larger",
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: [
+          "font-size:branch:2:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
       {
         id: "pattern-4-slot-1",
         positions: ["font-size:branch:3:keyword:math"],
@@ -7211,10 +7512,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-style:branch:2:term:0:keyword:oblique",
           "font-style:branch:2:term:1:repeat:type:angle",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-1) var(--slot-angle)",
         variables: {
           "--slot-1": "oblique",
-          "--slot-2": "1deg",
+          "--slot-angle": "1deg",
         },
       },
       {
@@ -7228,9 +7529,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-3-slot-2",
         positions: ["font-style:branch:2:term:1:repeat:type:angle"],
-        value: "oblique var(--slot-2)",
+        value: "oblique var(--slot-angle)",
         variables: {
-          "--slot-2": "1deg",
+          "--slot-angle": "1deg",
         },
       },
     ],
@@ -7383,29 +7684,29 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:19:keyword:ruby",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) stylistic(var(--slot-5)) var(--slot-6) styleset(var(--slot-7),var(--slot-8)) character-variant(var(--slot-9),var(--slot-10)) swash(var(--slot-11)) ornaments(var(--slot-12)) annotation(var(--slot-13)) var(--slot-14) var(--slot-15) var(--slot-16) var(--slot-17) var(--slot-18) var(--slot-19) var(--slot-20) var(--slot-21) var(--slot-22)",
+          "var(--slot-common-lig-values) var(--slot-discretionary-lig-values) var(--slot-historical-lig-values) var(--slot-contextual-alt-values) stylistic(var(--slot-feature-value-name)) var(--slot-6) styleset(var(--slot-feature-value-name-2),var(--slot-feature-value-name-3)) character-variant(var(--slot-feature-value-name-4),var(--slot-feature-value-name-5)) swash(var(--slot-feature-value-name-6)) ornaments(var(--slot-feature-value-name-7)) annotation(var(--slot-feature-value-name-8)) var(--slot-14) var(--slot-numeric-figure-values) var(--slot-numeric-spacing-values) var(--slot-numeric-fraction-values) var(--slot-18) var(--slot-19) var(--slot-east-asian-variant-values) var(--slot-east-asian-width-values) var(--slot-22)",
         variables: {
-          "--slot-1": "common-ligatures",
-          "--slot-2": "discretionary-ligatures",
-          "--slot-3": "historical-ligatures",
-          "--slot-4": "contextual",
-          "--slot-5": "custom-ident",
+          "--slot-common-lig-values": "common-ligatures",
+          "--slot-discretionary-lig-values": "discretionary-ligatures",
+          "--slot-historical-lig-values": "historical-ligatures",
+          "--slot-contextual-alt-values": "contextual",
+          "--slot-feature-value-name": "custom-ident",
           "--slot-6": "historical-forms",
-          "--slot-7": "custom-ident",
-          "--slot-8": "custom-ident",
-          "--slot-9": "custom-ident",
-          "--slot-10": "custom-ident",
-          "--slot-11": "custom-ident",
-          "--slot-12": "custom-ident",
-          "--slot-13": "custom-ident",
+          "--slot-feature-value-name-2": "custom-ident",
+          "--slot-feature-value-name-3": "custom-ident",
+          "--slot-feature-value-name-4": "custom-ident",
+          "--slot-feature-value-name-5": "custom-ident",
+          "--slot-feature-value-name-6": "custom-ident",
+          "--slot-feature-value-name-7": "custom-ident",
+          "--slot-feature-value-name-8": "custom-ident",
           "--slot-14": "small-caps",
-          "--slot-15": "lining-nums",
-          "--slot-16": "proportional-nums",
-          "--slot-17": "diagonal-fractions",
+          "--slot-numeric-figure-values": "lining-nums",
+          "--slot-numeric-spacing-values": "proportional-nums",
+          "--slot-numeric-fraction-values": "diagonal-fractions",
           "--slot-18": "ordinal",
           "--slot-19": "slashed-zero",
-          "--slot-20": "jis78",
-          "--slot-21": "full-width",
+          "--slot-east-asian-variant-values": "jis78",
+          "--slot-east-asian-width-values": "full-width",
           "--slot-22": "ruby",
         },
       },
@@ -7415,9 +7716,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:0:type:common-lig-values:branch:0:keyword:common-ligatures",
         ],
         value:
-          "var(--slot-1) discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "var(--slot-common-lig-values) discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-1": "common-ligatures",
+          "--slot-common-lig-values": "common-ligatures",
         },
       },
       {
@@ -7426,9 +7727,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:7:term:1:repeat:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,var(--slot-10)) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,var(--slot-feature-value-name-5)) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-10": "custom-ident",
+          "--slot-feature-value-name-5": "custom-ident",
         },
       },
       {
@@ -7437,9 +7738,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:8:term:1:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(var(--slot-11)) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(var(--slot-feature-value-name-6)) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-11": "custom-ident",
+          "--slot-feature-value-name-6": "custom-ident",
         },
       },
       {
@@ -7448,9 +7749,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:9:term:1:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(var(--slot-12)) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(var(--slot-feature-value-name-7)) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-12": "custom-ident",
+          "--slot-feature-value-name-7": "custom-ident",
         },
       },
       {
@@ -7459,9 +7760,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:10:term:1:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(var(--slot-13)) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(var(--slot-feature-value-name-8)) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-13": "custom-ident",
+          "--slot-feature-value-name-8": "custom-ident",
         },
       },
       {
@@ -7481,9 +7782,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:12:type:numeric-figure-values:branch:0:keyword:lining-nums",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps var(--slot-15) proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps var(--slot-numeric-figure-values) proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-15": "lining-nums",
+          "--slot-numeric-figure-values": "lining-nums",
         },
       },
       {
@@ -7492,9 +7793,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:13:type:numeric-spacing-values:branch:0:keyword:proportional-nums",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums var(--slot-16) diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums var(--slot-numeric-spacing-values) diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-16": "proportional-nums",
+          "--slot-numeric-spacing-values": "proportional-nums",
         },
       },
       {
@@ -7503,9 +7804,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:14:type:numeric-fraction-values:branch:0:keyword:diagonal-fractions",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums var(--slot-17) ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums var(--slot-numeric-fraction-values) ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-17": "diagonal-fractions",
+          "--slot-numeric-fraction-values": "diagonal-fractions",
         },
       },
       {
@@ -7532,9 +7833,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:1:type:discretionary-lig-values:branch:0:keyword:discretionary-ligatures",
         ],
         value:
-          "common-ligatures var(--slot-2) historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures var(--slot-discretionary-lig-values) historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-2": "discretionary-ligatures",
+          "--slot-discretionary-lig-values": "discretionary-ligatures",
         },
       },
       {
@@ -7543,9 +7844,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:17:type:east-asian-variant-values:branch:0:keyword:jis78",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero var(--slot-20) full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero var(--slot-east-asian-variant-values) full-width ruby",
         variables: {
-          "--slot-20": "jis78",
+          "--slot-east-asian-variant-values": "jis78",
         },
       },
       {
@@ -7554,9 +7855,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:18:type:east-asian-width-values:branch:0:keyword:full-width",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 var(--slot-21) ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 var(--slot-east-asian-width-values) ruby",
         variables: {
-          "--slot-21": "full-width",
+          "--slot-east-asian-width-values": "full-width",
         },
       },
       {
@@ -7574,9 +7875,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:2:type:historical-lig-values:branch:0:keyword:historical-ligatures",
         ],
         value:
-          "common-ligatures discretionary-ligatures var(--slot-3) contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures var(--slot-historical-lig-values) contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-3": "historical-ligatures",
+          "--slot-historical-lig-values": "historical-ligatures",
         },
       },
       {
@@ -7585,9 +7886,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:3:type:contextual-alt-values:branch:0:keyword:contextual",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures var(--slot-4) stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures var(--slot-contextual-alt-values) stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-4": "contextual",
+          "--slot-contextual-alt-values": "contextual",
         },
       },
       {
@@ -7596,9 +7897,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:4:term:1:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(var(--slot-5)) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(var(--slot-feature-value-name)) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-5": "custom-ident",
+          "--slot-feature-value-name": "custom-ident",
         },
       },
       {
@@ -7616,9 +7917,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:6:term:1:repeat:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(var(--slot-7),custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(var(--slot-feature-value-name-2),custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-7": "custom-ident",
+          "--slot-feature-value-name-2": "custom-ident",
         },
       },
       {
@@ -7627,9 +7928,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:6:term:1:repeat:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,var(--slot-8)) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,var(--slot-feature-value-name-3)) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-8": "custom-ident",
+          "--slot-feature-value-name-3": "custom-ident",
         },
       },
       {
@@ -7638,9 +7939,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant:branch:2:term:7:term:1:repeat:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(var(--slot-9),custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
+          "common-ligatures discretionary-ligatures historical-ligatures contextual stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(var(--slot-feature-value-name-4),custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident) small-caps lining-nums proportional-nums diagonal-fractions ordinal slashed-zero jis78 full-width ruby",
         variables: {
-          "--slot-9": "custom-ident",
+          "--slot-feature-value-name-4": "custom-ident",
         },
       },
     ],
@@ -7673,17 +7974,17 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-alternates:branch:1:term:6:term:1:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "stylistic(var(--slot-1)) var(--slot-2) styleset(var(--slot-3),var(--slot-4)) character-variant(var(--slot-5),var(--slot-6)) swash(var(--slot-7)) ornaments(var(--slot-8)) annotation(var(--slot-9))",
+          "stylistic(var(--slot-feature-value-name)) var(--slot-2) styleset(var(--slot-feature-value-name-2),var(--slot-feature-value-name-3)) character-variant(var(--slot-feature-value-name-4),var(--slot-feature-value-name-5)) swash(var(--slot-feature-value-name-6)) ornaments(var(--slot-feature-value-name-7)) annotation(var(--slot-feature-value-name-8))",
         variables: {
-          "--slot-1": "custom-ident",
+          "--slot-feature-value-name": "custom-ident",
           "--slot-2": "historical-forms",
-          "--slot-3": "custom-ident",
-          "--slot-4": "custom-ident",
-          "--slot-5": "custom-ident",
-          "--slot-6": "custom-ident",
-          "--slot-7": "custom-ident",
-          "--slot-8": "custom-ident",
-          "--slot-9": "custom-ident",
+          "--slot-feature-value-name-2": "custom-ident",
+          "--slot-feature-value-name-3": "custom-ident",
+          "--slot-feature-value-name-4": "custom-ident",
+          "--slot-feature-value-name-5": "custom-ident",
+          "--slot-feature-value-name-6": "custom-ident",
+          "--slot-feature-value-name-7": "custom-ident",
+          "--slot-feature-value-name-8": "custom-ident",
         },
       },
       {
@@ -7692,9 +7993,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-alternates:branch:1:term:0:term:1:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "stylistic(var(--slot-1)) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident)",
+          "stylistic(var(--slot-feature-value-name)) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident)",
         variables: {
-          "--slot-1": "custom-ident",
+          "--slot-feature-value-name": "custom-ident",
         },
       },
       {
@@ -7714,9 +8015,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-alternates:branch:1:term:2:term:1:repeat:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "stylistic(custom-ident) historical-forms styleset(var(--slot-3),custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident)",
+          "stylistic(custom-ident) historical-forms styleset(var(--slot-feature-value-name-2),custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident)",
         variables: {
-          "--slot-3": "custom-ident",
+          "--slot-feature-value-name-2": "custom-ident",
         },
       },
       {
@@ -7725,9 +8026,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-alternates:branch:1:term:2:term:1:repeat:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "stylistic(custom-ident) historical-forms styleset(custom-ident,var(--slot-4)) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident)",
+          "stylistic(custom-ident) historical-forms styleset(custom-ident,var(--slot-feature-value-name-3)) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident)",
         variables: {
-          "--slot-4": "custom-ident",
+          "--slot-feature-value-name-3": "custom-ident",
         },
       },
       {
@@ -7736,9 +8037,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-alternates:branch:1:term:3:term:1:repeat:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(var(--slot-5),custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident)",
+          "stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(var(--slot-feature-value-name-4),custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident)",
         variables: {
-          "--slot-5": "custom-ident",
+          "--slot-feature-value-name-4": "custom-ident",
         },
       },
       {
@@ -7747,9 +8048,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-alternates:branch:1:term:3:term:1:repeat:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,var(--slot-6)) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident)",
+          "stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,var(--slot-feature-value-name-5)) swash(custom-ident) ornaments(custom-ident) annotation(custom-ident)",
         variables: {
-          "--slot-6": "custom-ident",
+          "--slot-feature-value-name-5": "custom-ident",
         },
       },
       {
@@ -7758,9 +8059,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-alternates:branch:1:term:4:term:1:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(var(--slot-7)) ornaments(custom-ident) annotation(custom-ident)",
+          "stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(var(--slot-feature-value-name-6)) ornaments(custom-ident) annotation(custom-ident)",
         variables: {
-          "--slot-7": "custom-ident",
+          "--slot-feature-value-name-6": "custom-ident",
         },
       },
       {
@@ -7769,9 +8070,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-alternates:branch:1:term:5:term:1:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(var(--slot-8)) annotation(custom-ident)",
+          "stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(var(--slot-feature-value-name-7)) annotation(custom-ident)",
         variables: {
-          "--slot-8": "custom-ident",
+          "--slot-feature-value-name-7": "custom-ident",
         },
       },
       {
@@ -7780,9 +8081,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-alternates:branch:1:term:6:term:1:type:feature-value-name:term:0:type:custom-ident",
         ],
         value:
-          "stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(var(--slot-9))",
+          "stylistic(custom-ident) historical-forms styleset(custom-ident,custom-ident) character-variant(custom-ident,custom-ident) swash(custom-ident) ornaments(custom-ident) annotation(var(--slot-feature-value-name-8))",
         variables: {
-          "--slot-9": "custom-ident",
+          "--slot-feature-value-name-8": "custom-ident",
         },
       },
     ],
@@ -7824,10 +8125,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-east-asian:branch:1:term:1:type:east-asian-width-values:branch:0:keyword:full-width",
           "font-variant-east-asian:branch:1:term:2:keyword:ruby",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-east-asian-variant-values) var(--slot-east-asian-width-values) var(--slot-3)",
         variables: {
-          "--slot-1": "jis78",
-          "--slot-2": "full-width",
+          "--slot-east-asian-variant-values": "jis78",
+          "--slot-east-asian-width-values": "full-width",
           "--slot-3": "ruby",
         },
       },
@@ -7836,9 +8138,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-variant-east-asian:branch:1:term:0:type:east-asian-variant-values:branch:0:keyword:jis78",
         ],
-        value: "var(--slot-1) full-width ruby",
+        value: "var(--slot-east-asian-variant-values) full-width ruby",
         variables: {
-          "--slot-1": "jis78",
+          "--slot-east-asian-variant-values": "jis78",
         },
       },
       {
@@ -7846,9 +8148,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-variant-east-asian:branch:1:term:1:type:east-asian-width-values:branch:0:keyword:full-width",
         ],
-        value: "jis78 var(--slot-2) ruby",
+        value: "jis78 var(--slot-east-asian-width-values) ruby",
         variables: {
-          "--slot-2": "full-width",
+          "--slot-east-asian-width-values": "full-width",
         },
       },
       {
@@ -7898,12 +8200,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-ligatures:branch:2:term:2:type:historical-lig-values:branch:0:keyword:historical-ligatures",
           "font-variant-ligatures:branch:2:term:3:type:contextual-alt-values:branch:0:keyword:contextual",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-common-lig-values) var(--slot-discretionary-lig-values) var(--slot-historical-lig-values) var(--slot-contextual-alt-values)",
         variables: {
-          "--slot-1": "common-ligatures",
-          "--slot-2": "discretionary-ligatures",
-          "--slot-3": "historical-ligatures",
-          "--slot-4": "contextual",
+          "--slot-common-lig-values": "common-ligatures",
+          "--slot-discretionary-lig-values": "discretionary-ligatures",
+          "--slot-historical-lig-values": "historical-ligatures",
+          "--slot-contextual-alt-values": "contextual",
         },
       },
       {
@@ -7912,9 +8215,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-ligatures:branch:2:term:0:type:common-lig-values:branch:0:keyword:common-ligatures",
         ],
         value:
-          "var(--slot-1) discretionary-ligatures historical-ligatures contextual",
+          "var(--slot-common-lig-values) discretionary-ligatures historical-ligatures contextual",
         variables: {
-          "--slot-1": "common-ligatures",
+          "--slot-common-lig-values": "common-ligatures",
         },
       },
       {
@@ -7922,9 +8225,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-variant-ligatures:branch:2:term:1:type:discretionary-lig-values:branch:0:keyword:discretionary-ligatures",
         ],
-        value: "common-ligatures var(--slot-2) historical-ligatures contextual",
+        value:
+          "common-ligatures var(--slot-discretionary-lig-values) historical-ligatures contextual",
         variables: {
-          "--slot-2": "discretionary-ligatures",
+          "--slot-discretionary-lig-values": "discretionary-ligatures",
         },
       },
       {
@@ -7933,9 +8237,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-ligatures:branch:2:term:2:type:historical-lig-values:branch:0:keyword:historical-ligatures",
         ],
         value:
-          "common-ligatures discretionary-ligatures var(--slot-3) contextual",
+          "common-ligatures discretionary-ligatures var(--slot-historical-lig-values) contextual",
         variables: {
-          "--slot-3": "historical-ligatures",
+          "--slot-historical-lig-values": "historical-ligatures",
         },
       },
       {
@@ -7944,9 +8248,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-ligatures:branch:2:term:3:type:contextual-alt-values:branch:0:keyword:contextual",
         ],
         value:
-          "common-ligatures discretionary-ligatures historical-ligatures var(--slot-4)",
+          "common-ligatures discretionary-ligatures historical-ligatures var(--slot-contextual-alt-values)",
         variables: {
-          "--slot-4": "contextual",
+          "--slot-contextual-alt-values": "contextual",
         },
       },
     ],
@@ -7975,11 +8279,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-numeric:branch:1:term:4:keyword:slashed-zero",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5)",
+          "var(--slot-numeric-figure-values) var(--slot-numeric-spacing-values) var(--slot-numeric-fraction-values) var(--slot-4) var(--slot-5)",
         variables: {
-          "--slot-1": "lining-nums",
-          "--slot-2": "proportional-nums",
-          "--slot-3": "diagonal-fractions",
+          "--slot-numeric-figure-values": "lining-nums",
+          "--slot-numeric-spacing-values": "proportional-nums",
+          "--slot-numeric-fraction-values": "diagonal-fractions",
           "--slot-4": "ordinal",
           "--slot-5": "slashed-zero",
         },
@@ -7990,9 +8294,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-numeric:branch:1:term:0:type:numeric-figure-values:branch:0:keyword:lining-nums",
         ],
         value:
-          "var(--slot-1) proportional-nums diagonal-fractions ordinal slashed-zero",
+          "var(--slot-numeric-figure-values) proportional-nums diagonal-fractions ordinal slashed-zero",
         variables: {
-          "--slot-1": "lining-nums",
+          "--slot-numeric-figure-values": "lining-nums",
         },
       },
       {
@@ -8001,9 +8305,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-numeric:branch:1:term:1:type:numeric-spacing-values:branch:0:keyword:proportional-nums",
         ],
         value:
-          "lining-nums var(--slot-2) diagonal-fractions ordinal slashed-zero",
+          "lining-nums var(--slot-numeric-spacing-values) diagonal-fractions ordinal slashed-zero",
         variables: {
-          "--slot-2": "proportional-nums",
+          "--slot-numeric-spacing-values": "proportional-nums",
         },
       },
       {
@@ -8012,9 +8316,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variant-numeric:branch:1:term:2:type:numeric-fraction-values:branch:0:keyword:diagonal-fractions",
         ],
         value:
-          "lining-nums proportional-nums var(--slot-3) ordinal slashed-zero",
+          "lining-nums proportional-nums var(--slot-numeric-fraction-values) ordinal slashed-zero",
         variables: {
-          "--slot-3": "diagonal-fractions",
+          "--slot-numeric-fraction-values": "diagonal-fractions",
         },
       },
       {
@@ -8076,12 +8380,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "font-variation-settings:branch:1:repeat:term:0:type:string",
           "font-variation-settings:branch:1:repeat:term:1:type:number",
         ],
-        value: "var(--slot-1) var(--slot-2),var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-string) var(--slot-number),var(--slot-string-2) var(--slot-number-2)",
         variables: {
-          "--slot-1": '"x"',
-          "--slot-2": "1",
-          "--slot-3": '"x"',
-          "--slot-4": "1",
+          "--slot-string": '"x"',
+          "--slot-number": "1",
+          "--slot-string-2": '"x"',
+          "--slot-number-2": "1",
         },
       },
       {
@@ -8089,9 +8394,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-variation-settings:branch:1:repeat:term:0:type:string",
         ],
-        value: 'var(--slot-1)1,"x"1',
+        value: 'var(--slot-string)1,"x"1',
         variables: {
-          "--slot-1": '"x"',
+          "--slot-string": '"x"',
         },
       },
       {
@@ -8099,9 +8404,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-variation-settings:branch:1:repeat:term:1:type:number",
         ],
-        value: '"x"var(--slot-2),"x"1',
+        value: '"x"var(--slot-number),"x"1',
         variables: {
-          "--slot-2": "1",
+          "--slot-number": "1",
         },
       },
       {
@@ -8109,9 +8414,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-variation-settings:branch:1:repeat:term:0:type:string",
         ],
-        value: '"x"1,var(--slot-3)1',
+        value: '"x"1,var(--slot-string-2)1',
         variables: {
-          "--slot-3": '"x"',
+          "--slot-string-2": '"x"',
         },
       },
       {
@@ -8119,9 +8424,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "font-variation-settings:branch:1:repeat:term:1:type:number",
         ],
-        value: '"x"1,"x"var(--slot-4)',
+        value: '"x"1,"x"var(--slot-number-2)',
         variables: {
-          "--slot-4": "1",
+          "--slot-number-2": "1",
         },
       },
     ],
@@ -8131,6 +8436,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   },
   {
     cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "font-weight:branch:0:type:font-weight-absolute:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-font-weight-absolute)",
+        variables: {
+          "--slot-font-weight-absolute": "normal",
+        },
+      },
       {
         id: "pattern-3-slot-1",
         positions: ["font-weight:branch:2:keyword:lighter"],
@@ -8220,13 +8535,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid:branch:1:term:3:repeat:property:grid-auto-columns:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          "var(--slot-1)/var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5)",
+          "var(--slot-1)/var(--slot-2) var(--slot-3) var(--slot-track-size) var(--slot-track-size-2)",
         variables: {
           "--slot-1": "none",
           "--slot-2": "auto-flow",
           "--slot-3": "dense",
-          "--slot-4": "1px",
-          "--slot-5": "1px",
+          "--slot-track-size": "1px",
+          "--slot-track-size-2": "1px",
         },
       },
       {
@@ -8260,9 +8575,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid:branch:1:term:3:repeat:property:grid-auto-columns:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "none/auto-flow dense var(--slot-4) 1px",
+        value: "none/auto-flow dense var(--slot-track-size) 1px",
         variables: {
-          "--slot-4": "1px",
+          "--slot-track-size": "1px",
         },
       },
       {
@@ -8270,9 +8585,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid:branch:1:term:3:repeat:property:grid-auto-columns:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "none/auto-flow dense 1px var(--slot-5)",
+        value: "none/auto-flow dense 1px var(--slot-track-size-2)",
         variables: {
-          "--slot-5": "1px",
+          "--slot-track-size-2": "1px",
         },
       },
       {
@@ -8285,12 +8600,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid:branch:2:term:3:property:grid-template-columns:branch:0:keyword:none",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)/var(--slot-5)",
+          "var(--slot-1) var(--slot-2) var(--slot-track-size) var(--slot-track-size-2)/var(--slot-5)",
         variables: {
           "--slot-1": "auto-flow",
           "--slot-2": "dense",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-track-size": "1px",
+          "--slot-track-size-2": "1px",
           "--slot-5": "none",
         },
       },
@@ -8315,9 +8630,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid:branch:2:term:1:repeat:property:grid-auto-rows:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "auto-flow dense var(--slot-3) 1px/none",
+        value: "auto-flow dense var(--slot-track-size) 1px/none",
         variables: {
-          "--slot-3": "1px",
+          "--slot-track-size": "1px",
         },
       },
       {
@@ -8325,9 +8640,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid:branch:2:term:1:repeat:property:grid-auto-rows:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "auto-flow dense 1px var(--slot-4)/none",
+        value: "auto-flow dense 1px var(--slot-track-size-2)/none",
         variables: {
-          "--slot-4": "1px",
+          "--slot-track-size-2": "1px",
         },
       },
       {
@@ -8356,20 +8671,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-area:term:1:repeat:term:1:type:grid-line:branch:0:keyword:auto",
           "grid-area:term:1:repeat:term:1:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1)/var(--slot-2)/var(--slot-3)/var(--slot-4)",
+        value:
+          "var(--slot-grid-line)/var(--slot-grid-line-2)/var(--slot-grid-line-3)/var(--slot-grid-line-4)",
         variables: {
-          "--slot-1": "auto",
-          "--slot-2": "auto",
-          "--slot-3": "auto",
-          "--slot-4": "auto",
+          "--slot-grid-line": "auto",
+          "--slot-grid-line-2": "auto",
+          "--slot-grid-line-3": "auto",
+          "--slot-grid-line-4": "auto",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["grid-area:term:0:type:grid-line:branch:0:keyword:auto"],
-        value: "var(--slot-1)/auto/auto/auto",
+        value: "var(--slot-grid-line)/auto/auto/auto",
         variables: {
-          "--slot-1": "auto",
+          "--slot-grid-line": "auto",
         },
       },
       {
@@ -8377,9 +8693,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-area:term:1:repeat:term:1:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "auto/var(--slot-2)/auto/auto",
+        value: "auto/var(--slot-grid-line-2)/auto/auto",
         variables: {
-          "--slot-2": "auto",
+          "--slot-grid-line-2": "auto",
         },
       },
       {
@@ -8387,9 +8703,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-area:term:1:repeat:term:1:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "auto/auto/var(--slot-3)/auto",
+        value: "auto/auto/var(--slot-grid-line-3)/auto",
         variables: {
-          "--slot-3": "auto",
+          "--slot-grid-line-3": "auto",
         },
       },
       {
@@ -8397,9 +8713,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-area:term:1:repeat:term:1:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "auto/auto/auto/var(--slot-4)",
+        value: "auto/auto/auto/var(--slot-grid-line-4)",
         variables: {
-          "--slot-4": "auto",
+          "--slot-grid-line-4": "auto",
         },
       },
     ],
@@ -8415,10 +8731,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-auto-columns:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
           "grid-auto-columns:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-track-size) var(--slot-track-size-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-track-size": "1px",
+          "--slot-track-size-2": "1px",
         },
       },
       {
@@ -8426,9 +8742,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-auto-columns:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-track-size) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-track-size": "1px",
         },
       },
       {
@@ -8436,9 +8752,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-auto-columns:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-track-size-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-track-size-2": "1px",
         },
       },
     ],
@@ -8497,10 +8813,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-auto-rows:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
           "grid-auto-rows:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-track-size) var(--slot-track-size-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-track-size": "1px",
+          "--slot-track-size-2": "1px",
         },
       },
       {
@@ -8508,9 +8824,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-auto-rows:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-track-size) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-track-size": "1px",
         },
       },
       {
@@ -8518,9 +8834,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-auto-rows:term:0:repeat:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-track-size-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-track-size-2": "1px",
         },
       },
     ],
@@ -8536,18 +8852,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-column:term:0:type:grid-line:branch:0:keyword:auto",
           "grid-column:term:1:repeat:term:1:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1)/var(--slot-2)",
+        value: "var(--slot-grid-line)/var(--slot-grid-line-2)",
         variables: {
-          "--slot-1": "auto",
-          "--slot-2": "auto",
+          "--slot-grid-line": "auto",
+          "--slot-grid-line-2": "auto",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["grid-column:term:0:type:grid-line:branch:0:keyword:auto"],
-        value: "var(--slot-1)/auto",
+        value: "var(--slot-grid-line)/auto",
         variables: {
-          "--slot-1": "auto",
+          "--slot-grid-line": "auto",
         },
       },
       {
@@ -8555,9 +8871,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-column:term:1:repeat:term:1:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "auto/var(--slot-2)",
+        value: "auto/var(--slot-grid-line-2)",
         variables: {
-          "--slot-2": "auto",
+          "--slot-grid-line-2": "auto",
         },
       },
     ],
@@ -8572,9 +8888,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-column-end:term:0:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-grid-line)",
         variables: {
-          "--slot-1": "auto",
+          "--slot-grid-line": "auto",
         },
       },
     ],
@@ -8589,9 +8905,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-column-start:term:0:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-grid-line)",
         variables: {
-          "--slot-1": "auto",
+          "--slot-grid-line": "auto",
         },
       },
     ],
@@ -8607,18 +8923,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-row:term:0:type:grid-line:branch:0:keyword:auto",
           "grid-row:term:1:repeat:term:1:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1)/var(--slot-2)",
+        value: "var(--slot-grid-line)/var(--slot-grid-line-2)",
         variables: {
-          "--slot-1": "auto",
-          "--slot-2": "auto",
+          "--slot-grid-line": "auto",
+          "--slot-grid-line-2": "auto",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["grid-row:term:0:type:grid-line:branch:0:keyword:auto"],
-        value: "var(--slot-1)/auto",
+        value: "var(--slot-grid-line)/auto",
         variables: {
-          "--slot-1": "auto",
+          "--slot-grid-line": "auto",
         },
       },
       {
@@ -8626,9 +8942,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-row:term:1:repeat:term:1:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "auto/var(--slot-2)",
+        value: "auto/var(--slot-grid-line-2)",
         variables: {
-          "--slot-2": "auto",
+          "--slot-grid-line-2": "auto",
         },
       },
     ],
@@ -8641,9 +8957,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["grid-row-end:term:0:type:grid-line:branch:0:keyword:auto"],
-        value: "var(--slot-1)",
+        value: "var(--slot-grid-line)",
         variables: {
-          "--slot-1": "auto",
+          "--slot-grid-line": "auto",
         },
       },
     ],
@@ -8658,9 +8974,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "grid-row-start:term:0:type:grid-line:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-grid-line)",
         variables: {
-          "--slot-1": "auto",
+          "--slot-grid-line": "auto",
         },
       },
     ],
@@ -8755,26 +9071,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-areas:branch:1:repeat:type:string",
           "grid-template-areas:branch:1:repeat:type:string",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-string) var(--slot-string-2)",
         variables: {
-          "--slot-1": '"x"',
-          "--slot-2": '"x"',
+          "--slot-string": '"x"',
+          "--slot-string-2": '"x"',
         },
       },
       {
         id: "pattern-2-slot-1",
         positions: ["grid-template-areas:branch:1:repeat:type:string"],
-        value: 'var(--slot-1)"x"',
+        value: 'var(--slot-string)"x"',
         variables: {
-          "--slot-1": '"x"',
+          "--slot-string": '"x"',
         },
       },
       {
         id: "pattern-2-slot-2",
         positions: ["grid-template-areas:branch:1:repeat:type:string"],
-        value: '"x"var(--slot-2)',
+        value: '"x"var(--slot-string-2)',
         variables: {
-          "--slot-2": '"x"',
+          "--slot-string-2": '"x"',
         },
       },
     ],
@@ -8806,17 +9122,17 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:2:string",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8) var(--slot-9)",
+          "var(--slot-1) var(--slot-line-name-list) var(--slot-line-name-list-2) var(--slot-line-name-list-3) var(--slot-line-name-list-4) var(--slot-line-name-list-5) var(--slot-line-name-list-6) var(--slot-line-name-list-7) var(--slot-line-name-list-8)",
         variables: {
           "--slot-1": "subgrid",
-          "--slot-2": '"x"',
-          "--slot-3": "custom-ident",
-          "--slot-4": "custom-ident",
-          "--slot-5": '"x"',
-          "--slot-6": '"x"',
-          "--slot-7": "custom-ident",
-          "--slot-8": "custom-ident",
-          "--slot-9": '"x"',
+          "--slot-line-name-list": '"x"',
+          "--slot-line-name-list-2": "custom-ident",
+          "--slot-line-name-list-3": "custom-ident",
+          "--slot-line-name-list-4": '"x"',
+          "--slot-line-name-list-5": '"x"',
+          "--slot-line-name-list-6": "custom-ident",
+          "--slot-line-name-list-7": "custom-ident",
+          "--slot-line-name-list-8": '"x"',
         },
       },
       {
@@ -8834,9 +9150,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:0:string",
         ],
         value:
-          'subgrid var(--slot-2) custom-ident custom-ident"x""x"custom-ident custom-ident"x"',
+          'subgrid var(--slot-line-name-list) custom-ident custom-ident"x""x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-2": '"x"',
+          "--slot-line-name-list": '"x"',
         },
       },
       {
@@ -8845,9 +9161,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          'subgrid"x"var(--slot-3) custom-ident"x""x"custom-ident custom-ident"x"',
+          'subgrid"x"var(--slot-line-name-list-2) custom-ident"x""x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-3": "custom-ident",
+          "--slot-line-name-list-2": "custom-ident",
         },
       },
       {
@@ -8856,9 +9172,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          'subgrid"x"custom-ident var(--slot-4)"x""x"custom-ident custom-ident"x"',
+          'subgrid"x"custom-ident var(--slot-line-name-list-3)"x""x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-4": "custom-ident",
+          "--slot-line-name-list-3": "custom-ident",
         },
       },
       {
@@ -8867,9 +9183,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:2:string",
         ],
         value:
-          'subgrid"x"custom-ident custom-ident var(--slot-5)"x"custom-ident custom-ident"x"',
+          'subgrid"x"custom-ident custom-ident var(--slot-line-name-list-4)"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-5": '"x"',
+          "--slot-line-name-list-4": '"x"',
         },
       },
       {
@@ -8878,9 +9194,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:0:string",
         ],
         value:
-          'subgrid"x"custom-ident custom-ident"x"var(--slot-6) custom-ident custom-ident"x"',
+          'subgrid"x"custom-ident custom-ident"x"var(--slot-line-name-list-5) custom-ident custom-ident"x"',
         variables: {
-          "--slot-6": '"x"',
+          "--slot-line-name-list-5": '"x"',
         },
       },
       {
@@ -8889,9 +9205,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          'subgrid"x"custom-ident custom-ident"x""x"var(--slot-7) custom-ident"x"',
+          'subgrid"x"custom-ident custom-ident"x""x"var(--slot-line-name-list-6) custom-ident"x"',
         variables: {
-          "--slot-7": "custom-ident",
+          "--slot-line-name-list-6": "custom-ident",
         },
       },
       {
@@ -8900,9 +9216,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          'subgrid"x"custom-ident custom-ident"x""x"custom-ident var(--slot-8)"x"',
+          'subgrid"x"custom-ident custom-ident"x""x"custom-ident var(--slot-line-name-list-7)"x"',
         variables: {
-          "--slot-8": "custom-ident",
+          "--slot-line-name-list-7": "custom-ident",
         },
       },
       {
@@ -8911,9 +9227,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:2:string",
         ],
         value:
-          'subgrid"x"custom-ident custom-ident"x""x"custom-ident custom-ident var(--slot-9)',
+          'subgrid"x"custom-ident custom-ident"x""x"custom-ident custom-ident var(--slot-line-name-list-8)',
         variables: {
-          "--slot-9": '"x"',
+          "--slot-line-name-list-8": '"x"',
         },
       },
       {
@@ -8935,22 +9251,22 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:2:string",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8) var(--slot-9) var(--slot-10) var(--slot-11) var(--slot-12) var(--slot-13) var(--slot-14)",
+          "var(--slot-track-list) var(--slot-track-list-2) var(--slot-track-list-3) var(--slot-track-list-4) var(--slot-track-list-5) var(--slot-track-list-6) var(--slot-track-list-7) var(--slot-track-list-8) var(--slot-track-list-9) var(--slot-track-list-10) var(--slot-track-list-11) var(--slot-track-list-12) var(--slot-track-list-13) var(--slot-track-list-14)",
         variables: {
-          "--slot-1": '"x"',
-          "--slot-2": "custom-ident",
-          "--slot-3": "custom-ident",
-          "--slot-4": '"x"',
-          "--slot-5": "1px",
-          "--slot-6": '"x"',
-          "--slot-7": "custom-ident",
-          "--slot-8": "custom-ident",
-          "--slot-9": '"x"',
-          "--slot-10": "1px",
-          "--slot-11": '"x"',
-          "--slot-12": "custom-ident",
-          "--slot-13": "custom-ident",
-          "--slot-14": '"x"',
+          "--slot-track-list": '"x"',
+          "--slot-track-list-2": "custom-ident",
+          "--slot-track-list-3": "custom-ident",
+          "--slot-track-list-4": '"x"',
+          "--slot-track-list-5": "1px",
+          "--slot-track-list-6": '"x"',
+          "--slot-track-list-7": "custom-ident",
+          "--slot-track-list-8": "custom-ident",
+          "--slot-track-list-9": '"x"',
+          "--slot-track-list-10": "1px",
+          "--slot-track-list-11": '"x"',
+          "--slot-track-list-12": "custom-ident",
+          "--slot-track-list-13": "custom-ident",
+          "--slot-track-list-14": '"x"',
         },
       },
       {
@@ -8959,9 +9275,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          'var(--slot-1) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          'var(--slot-track-list) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-1": '"x"',
+          "--slot-track-list": '"x"',
         },
       },
       {
@@ -8970,9 +9286,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-10)"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-track-list-10)"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-10": "1px",
+          "--slot-track-list-10": "1px",
         },
       },
       {
@@ -8981,9 +9297,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-11) custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-track-list-11) custom-ident custom-ident"x"',
         variables: {
-          "--slot-11": '"x"',
+          "--slot-track-list-11": '"x"',
         },
       },
       {
@@ -8992,9 +9308,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-12) custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-track-list-12) custom-ident"x"',
         variables: {
-          "--slot-12": "custom-ident",
+          "--slot-track-list-12": "custom-ident",
         },
       },
       {
@@ -9003,9 +9319,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-13)"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-track-list-13)"x"',
         variables: {
-          "--slot-13": "custom-ident",
+          "--slot-track-list-13": "custom-ident",
         },
       },
       {
@@ -9014,9 +9330,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:1:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-14)',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-track-list-14)',
         variables: {
-          "--slot-14": '"x"',
+          "--slot-track-list-14": '"x"',
         },
       },
       {
@@ -9025,9 +9341,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"var(--slot-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"var(--slot-track-list-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-2": "custom-ident",
+          "--slot-track-list-2": "custom-ident",
         },
       },
       {
@@ -9036,9 +9352,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident var(--slot-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident var(--slot-track-list-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-3": "custom-ident",
+          "--slot-track-list-3": "custom-ident",
         },
       },
       {
@@ -9047,9 +9363,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident var(--slot-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident var(--slot-track-list-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-4": '"x"',
+          "--slot-track-list-4": '"x"',
         },
       },
       {
@@ -9058,9 +9374,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"var(--slot-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"var(--slot-track-list-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-5": "1px",
+          "--slot-track-list-5": "1px",
         },
       },
       {
@@ -9069,9 +9385,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px var(--slot-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px var(--slot-track-list-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-6": '"x"',
+          "--slot-track-list-6": '"x"',
         },
       },
       {
@@ -9080,9 +9396,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"var(--slot-7) custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"var(--slot-track-list-7) custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-7": "custom-ident",
+          "--slot-track-list-7": "custom-ident",
         },
       },
       {
@@ -9091,9 +9407,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-8)"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-track-list-8)"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-8": "custom-ident",
+          "--slot-track-list-8": "custom-ident",
         },
       },
       {
@@ -9102,9 +9418,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-9) 1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-track-list-9) 1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-9": '"x"',
+          "--slot-track-list-9": '"x"',
         },
       },
       {
@@ -9155,51 +9471,51 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:2:string",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8) var(--slot-9) var(--slot-10) var(--slot-11) var(--slot-12) var(--slot-13) var(--slot-14) repeat(var(--slot-15),var(--slot-16) var(--slot-17) var(--slot-18) var(--slot-19) var(--slot-20) var(--slot-21) var(--slot-22) var(--slot-23) var(--slot-24) var(--slot-25) var(--slot-26) var(--slot-27) var(--slot-28) var(--slot-29)) var(--slot-30) var(--slot-31) var(--slot-32) var(--slot-33) var(--slot-34) var(--slot-35) var(--slot-36) var(--slot-37) var(--slot-38) var(--slot-39) var(--slot-40) var(--slot-41) var(--slot-42) var(--slot-43)",
+          "var(--slot-auto-track-list) var(--slot-auto-track-list-2) var(--slot-auto-track-list-3) var(--slot-auto-track-list-4) var(--slot-auto-track-list-5) var(--slot-auto-track-list-6) var(--slot-auto-track-list-7) var(--slot-auto-track-list-8) var(--slot-auto-track-list-9) var(--slot-auto-track-list-10) var(--slot-auto-track-list-11) var(--slot-auto-track-list-12) var(--slot-auto-track-list-13) var(--slot-auto-track-list-14) repeat(var(--slot-auto-track-list-15),var(--slot-auto-track-list-16) var(--slot-auto-track-list-17) var(--slot-auto-track-list-18) var(--slot-auto-track-list-19) var(--slot-auto-track-list-20) var(--slot-auto-track-list-21) var(--slot-auto-track-list-22) var(--slot-auto-track-list-23) var(--slot-auto-track-list-24) var(--slot-auto-track-list-25) var(--slot-auto-track-list-26) var(--slot-auto-track-list-27) var(--slot-auto-track-list-28) var(--slot-auto-track-list-29)) var(--slot-auto-track-list-30) var(--slot-auto-track-list-31) var(--slot-auto-track-list-32) var(--slot-auto-track-list-33) var(--slot-auto-track-list-34) var(--slot-auto-track-list-35) var(--slot-auto-track-list-36) var(--slot-auto-track-list-37) var(--slot-auto-track-list-38) var(--slot-auto-track-list-39) var(--slot-auto-track-list-40) var(--slot-auto-track-list-41) var(--slot-auto-track-list-42) var(--slot-auto-track-list-43)",
         variables: {
-          "--slot-1": '"x"',
-          "--slot-2": "custom-ident",
-          "--slot-3": "custom-ident",
-          "--slot-4": '"x"',
-          "--slot-5": "1px",
-          "--slot-6": '"x"',
-          "--slot-7": "custom-ident",
-          "--slot-8": "custom-ident",
-          "--slot-9": '"x"',
-          "--slot-10": "1px",
-          "--slot-11": '"x"',
-          "--slot-12": "custom-ident",
-          "--slot-13": "custom-ident",
-          "--slot-14": '"x"',
-          "--slot-15": "auto-fill",
-          "--slot-16": '"x"',
-          "--slot-17": "custom-ident",
-          "--slot-18": "custom-ident",
-          "--slot-19": '"x"',
-          "--slot-20": "1px",
-          "--slot-21": '"x"',
-          "--slot-22": "custom-ident",
-          "--slot-23": "custom-ident",
-          "--slot-24": '"x"',
-          "--slot-25": "1px",
-          "--slot-26": '"x"',
-          "--slot-27": "custom-ident",
-          "--slot-28": "custom-ident",
-          "--slot-29": '"x"',
-          "--slot-30": '"x"',
-          "--slot-31": "custom-ident",
-          "--slot-32": "custom-ident",
-          "--slot-33": '"x"',
-          "--slot-34": "1px",
-          "--slot-35": '"x"',
-          "--slot-36": "custom-ident",
-          "--slot-37": "custom-ident",
-          "--slot-38": '"x"',
-          "--slot-39": "1px",
-          "--slot-40": '"x"',
-          "--slot-41": "custom-ident",
-          "--slot-42": "custom-ident",
-          "--slot-43": '"x"',
+          "--slot-auto-track-list": '"x"',
+          "--slot-auto-track-list-2": "custom-ident",
+          "--slot-auto-track-list-3": "custom-ident",
+          "--slot-auto-track-list-4": '"x"',
+          "--slot-auto-track-list-5": "1px",
+          "--slot-auto-track-list-6": '"x"',
+          "--slot-auto-track-list-7": "custom-ident",
+          "--slot-auto-track-list-8": "custom-ident",
+          "--slot-auto-track-list-9": '"x"',
+          "--slot-auto-track-list-10": "1px",
+          "--slot-auto-track-list-11": '"x"',
+          "--slot-auto-track-list-12": "custom-ident",
+          "--slot-auto-track-list-13": "custom-ident",
+          "--slot-auto-track-list-14": '"x"',
+          "--slot-auto-track-list-15": "auto-fill",
+          "--slot-auto-track-list-16": '"x"',
+          "--slot-auto-track-list-17": "custom-ident",
+          "--slot-auto-track-list-18": "custom-ident",
+          "--slot-auto-track-list-19": '"x"',
+          "--slot-auto-track-list-20": "1px",
+          "--slot-auto-track-list-21": '"x"',
+          "--slot-auto-track-list-22": "custom-ident",
+          "--slot-auto-track-list-23": "custom-ident",
+          "--slot-auto-track-list-24": '"x"',
+          "--slot-auto-track-list-25": "1px",
+          "--slot-auto-track-list-26": '"x"',
+          "--slot-auto-track-list-27": "custom-ident",
+          "--slot-auto-track-list-28": "custom-ident",
+          "--slot-auto-track-list-29": '"x"',
+          "--slot-auto-track-list-30": '"x"',
+          "--slot-auto-track-list-31": "custom-ident",
+          "--slot-auto-track-list-32": "custom-ident",
+          "--slot-auto-track-list-33": '"x"',
+          "--slot-auto-track-list-34": "1px",
+          "--slot-auto-track-list-35": '"x"',
+          "--slot-auto-track-list-36": "custom-ident",
+          "--slot-auto-track-list-37": "custom-ident",
+          "--slot-auto-track-list-38": '"x"',
+          "--slot-auto-track-list-39": "1px",
+          "--slot-auto-track-list-40": '"x"',
+          "--slot-auto-track-list-41": "custom-ident",
+          "--slot-auto-track-list-42": "custom-ident",
+          "--slot-auto-track-list-43": '"x"',
         },
       },
       {
@@ -9208,9 +9524,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          'var(--slot-1) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          'var(--slot-auto-track-list) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-1": '"x"',
+          "--slot-auto-track-list": '"x"',
         },
       },
       {
@@ -9219,9 +9535,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-10)"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-10)"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-10": "1px",
+          "--slot-auto-track-list-10": "1px",
         },
       },
       {
@@ -9230,9 +9546,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-11) custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-11) custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-11": '"x"',
+          "--slot-auto-track-list-11": '"x"',
         },
       },
       {
@@ -9241,9 +9557,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-12) custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-12) custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-12": "custom-ident",
+          "--slot-auto-track-list-12": "custom-ident",
         },
       },
       {
@@ -9252,9 +9568,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-13)"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-13)"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-13": "custom-ident",
+          "--slot-auto-track-list-13": "custom-ident",
         },
       },
       {
@@ -9263,9 +9579,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-14) repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-14) repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-14": '"x"',
+          "--slot-auto-track-list-14": '"x"',
         },
       },
       {
@@ -9274,9 +9590,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:1:branch:0:keyword:auto-fill",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(var(--slot-15),"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(var(--slot-auto-track-list-15),"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-15": "auto-fill",
+          "--slot-auto-track-list-15": "auto-fill",
         },
       },
       {
@@ -9285,9 +9601,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,var(--slot-16) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,var(--slot-auto-track-list-16) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-16": '"x"',
+          "--slot-auto-track-list-16": '"x"',
         },
       },
       {
@@ -9296,9 +9612,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"var(--slot-17) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"var(--slot-auto-track-list-17) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-17": "custom-ident",
+          "--slot-auto-track-list-17": "custom-ident",
         },
       },
       {
@@ -9307,9 +9623,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident var(--slot-18)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident var(--slot-auto-track-list-18)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-18": "custom-ident",
+          "--slot-auto-track-list-18": "custom-ident",
         },
       },
       {
@@ -9318,9 +9634,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident var(--slot-19) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident var(--slot-auto-track-list-19) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-19": '"x"',
+          "--slot-auto-track-list-19": '"x"',
         },
       },
       {
@@ -9329,9 +9645,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"var(--slot-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"var(--slot-auto-track-list-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-2": "custom-ident",
+          "--slot-auto-track-list-2": "custom-ident",
         },
       },
       {
@@ -9340,9 +9656,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"var(--slot-20)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"var(--slot-auto-track-list-20)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-20": "1px",
+          "--slot-auto-track-list-20": "1px",
         },
       },
       {
@@ -9351,9 +9667,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px var(--slot-21) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-21) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-21": '"x"',
+          "--slot-auto-track-list-21": '"x"',
         },
       },
       {
@@ -9362,9 +9678,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"var(--slot-22) custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-22) custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-22": "custom-ident",
+          "--slot-auto-track-list-22": "custom-ident",
         },
       },
       {
@@ -9373,9 +9689,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-23)"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-23)"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-23": "custom-ident",
+          "--slot-auto-track-list-23": "custom-ident",
         },
       },
       {
@@ -9384,9 +9700,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-24) 1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-24) 1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-24": '"x"',
+          "--slot-auto-track-list-24": '"x"',
         },
       },
       {
@@ -9395,9 +9711,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-25)"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-25)"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-25": "1px",
+          "--slot-auto-track-list-25": "1px",
         },
       },
       {
@@ -9406,9 +9722,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-26) custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-26) custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-26": '"x"',
+          "--slot-auto-track-list-26": '"x"',
         },
       },
       {
@@ -9417,9 +9733,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-27) custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-27) custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-27": "custom-ident",
+          "--slot-auto-track-list-27": "custom-ident",
         },
       },
       {
@@ -9428,9 +9744,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-28)"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-28)"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-28": "custom-ident",
+          "--slot-auto-track-list-28": "custom-ident",
         },
       },
       {
@@ -9439,9 +9755,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-29))"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-29))"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-29": '"x"',
+          "--slot-auto-track-list-29": '"x"',
         },
       },
       {
@@ -9450,9 +9766,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident var(--slot-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident var(--slot-auto-track-list-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-3": "custom-ident",
+          "--slot-auto-track-list-3": "custom-ident",
         },
       },
       {
@@ -9461,9 +9777,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x") var(--slot-30) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x") var(--slot-auto-track-list-30) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-30": '"x"',
+          "--slot-auto-track-list-30": '"x"',
         },
       },
       {
@@ -9472,9 +9788,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"var(--slot-31) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"var(--slot-auto-track-list-31) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-31": "custom-ident",
+          "--slot-auto-track-list-31": "custom-ident",
         },
       },
       {
@@ -9483,9 +9799,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident var(--slot-32)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident var(--slot-auto-track-list-32)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-32": "custom-ident",
+          "--slot-auto-track-list-32": "custom-ident",
         },
       },
       {
@@ -9494,9 +9810,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident var(--slot-33) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident var(--slot-auto-track-list-33) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-33": '"x"',
+          "--slot-auto-track-list-33": '"x"',
         },
       },
       {
@@ -9505,9 +9821,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"var(--slot-34)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"var(--slot-auto-track-list-34)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-34": "1px",
+          "--slot-auto-track-list-34": "1px",
         },
       },
       {
@@ -9516,9 +9832,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px var(--slot-35) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-35) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-35": '"x"',
+          "--slot-auto-track-list-35": '"x"',
         },
       },
       {
@@ -9527,9 +9843,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"var(--slot-36) custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-36) custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-36": "custom-ident",
+          "--slot-auto-track-list-36": "custom-ident",
         },
       },
       {
@@ -9538,9 +9854,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-37)"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-37)"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-37": "custom-ident",
+          "--slot-auto-track-list-37": "custom-ident",
         },
       },
       {
@@ -9549,9 +9865,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-38) 1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-38) 1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-38": '"x"',
+          "--slot-auto-track-list-38": '"x"',
         },
       },
       {
@@ -9560,9 +9876,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-39)"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-39)"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-39": "1px",
+          "--slot-auto-track-list-39": "1px",
         },
       },
       {
@@ -9571,9 +9887,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident var(--slot-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident var(--slot-auto-track-list-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-4": '"x"',
+          "--slot-auto-track-list-4": '"x"',
         },
       },
       {
@@ -9582,9 +9898,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-40) custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-40) custom-ident custom-ident"x"',
         variables: {
-          "--slot-40": '"x"',
+          "--slot-auto-track-list-40": '"x"',
         },
       },
       {
@@ -9593,9 +9909,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-41) custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-41) custom-ident"x"',
         variables: {
-          "--slot-41": "custom-ident",
+          "--slot-auto-track-list-41": "custom-ident",
         },
       },
       {
@@ -9604,9 +9920,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-42)"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-42)"x"',
         variables: {
-          "--slot-42": "custom-ident",
+          "--slot-auto-track-list-42": "custom-ident",
         },
       },
       {
@@ -9615,9 +9931,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-43)',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-43)',
         variables: {
-          "--slot-43": '"x"',
+          "--slot-auto-track-list-43": '"x"',
         },
       },
       {
@@ -9626,9 +9942,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"var(--slot-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"var(--slot-auto-track-list-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-5": "1px",
+          "--slot-auto-track-list-5": "1px",
         },
       },
       {
@@ -9637,9 +9953,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px var(--slot-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-6": '"x"',
+          "--slot-auto-track-list-6": '"x"',
         },
       },
       {
@@ -9648,9 +9964,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"var(--slot-7) custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-7) custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-7": "custom-ident",
+          "--slot-auto-track-list-7": "custom-ident",
         },
       },
       {
@@ -9659,9 +9975,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-8)"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-8)"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-8": "custom-ident",
+          "--slot-auto-track-list-8": "custom-ident",
         },
       },
       {
@@ -9670,9 +9986,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-columns:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-9) 1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-9) 1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-9": '"x"',
+          "--slot-auto-track-list-9": '"x"',
         },
       },
     ],
@@ -9705,17 +10021,17 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:2:string",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8) var(--slot-9)",
+          "var(--slot-1) var(--slot-line-name-list) var(--slot-line-name-list-2) var(--slot-line-name-list-3) var(--slot-line-name-list-4) var(--slot-line-name-list-5) var(--slot-line-name-list-6) var(--slot-line-name-list-7) var(--slot-line-name-list-8)",
         variables: {
           "--slot-1": "subgrid",
-          "--slot-2": '"x"',
-          "--slot-3": "custom-ident",
-          "--slot-4": "custom-ident",
-          "--slot-5": '"x"',
-          "--slot-6": '"x"',
-          "--slot-7": "custom-ident",
-          "--slot-8": "custom-ident",
-          "--slot-9": '"x"',
+          "--slot-line-name-list": '"x"',
+          "--slot-line-name-list-2": "custom-ident",
+          "--slot-line-name-list-3": "custom-ident",
+          "--slot-line-name-list-4": '"x"',
+          "--slot-line-name-list-5": '"x"',
+          "--slot-line-name-list-6": "custom-ident",
+          "--slot-line-name-list-7": "custom-ident",
+          "--slot-line-name-list-8": '"x"',
         },
       },
       {
@@ -9733,9 +10049,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:0:string",
         ],
         value:
-          'subgrid var(--slot-2) custom-ident custom-ident"x""x"custom-ident custom-ident"x"',
+          'subgrid var(--slot-line-name-list) custom-ident custom-ident"x""x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-2": '"x"',
+          "--slot-line-name-list": '"x"',
         },
       },
       {
@@ -9744,9 +10060,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          'subgrid"x"var(--slot-3) custom-ident"x""x"custom-ident custom-ident"x"',
+          'subgrid"x"var(--slot-line-name-list-2) custom-ident"x""x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-3": "custom-ident",
+          "--slot-line-name-list-2": "custom-ident",
         },
       },
       {
@@ -9755,9 +10071,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          'subgrid"x"custom-ident var(--slot-4)"x""x"custom-ident custom-ident"x"',
+          'subgrid"x"custom-ident var(--slot-line-name-list-3)"x""x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-4": "custom-ident",
+          "--slot-line-name-list-3": "custom-ident",
         },
       },
       {
@@ -9766,9 +10082,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:2:string",
         ],
         value:
-          'subgrid"x"custom-ident custom-ident var(--slot-5)"x"custom-ident custom-ident"x"',
+          'subgrid"x"custom-ident custom-ident var(--slot-line-name-list-4)"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-5": '"x"',
+          "--slot-line-name-list-4": '"x"',
         },
       },
       {
@@ -9777,9 +10093,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:0:string",
         ],
         value:
-          'subgrid"x"custom-ident custom-ident"x"var(--slot-6) custom-ident custom-ident"x"',
+          'subgrid"x"custom-ident custom-ident"x"var(--slot-line-name-list-5) custom-ident custom-ident"x"',
         variables: {
-          "--slot-6": '"x"',
+          "--slot-line-name-list-5": '"x"',
         },
       },
       {
@@ -9788,9 +10104,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          'subgrid"x"custom-ident custom-ident"x""x"var(--slot-7) custom-ident"x"',
+          'subgrid"x"custom-ident custom-ident"x""x"var(--slot-line-name-list-6) custom-ident"x"',
         variables: {
-          "--slot-7": "custom-ident",
+          "--slot-line-name-list-6": "custom-ident",
         },
       },
       {
@@ -9799,9 +10115,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          'subgrid"x"custom-ident custom-ident"x""x"custom-ident var(--slot-8)"x"',
+          'subgrid"x"custom-ident custom-ident"x""x"custom-ident var(--slot-line-name-list-7)"x"',
         variables: {
-          "--slot-8": "custom-ident",
+          "--slot-line-name-list-7": "custom-ident",
         },
       },
       {
@@ -9810,9 +10126,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:3:term:1:repeat:type:line-name-list:term:0:repeat:branch:0:type:line-names:term:2:string",
         ],
         value:
-          'subgrid"x"custom-ident custom-ident"x""x"custom-ident custom-ident var(--slot-9)',
+          'subgrid"x"custom-ident custom-ident"x""x"custom-ident custom-ident var(--slot-line-name-list-8)',
         variables: {
-          "--slot-9": '"x"',
+          "--slot-line-name-list-8": '"x"',
         },
       },
       {
@@ -9834,22 +10150,22 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:2:string",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8) var(--slot-9) var(--slot-10) var(--slot-11) var(--slot-12) var(--slot-13) var(--slot-14)",
+          "var(--slot-track-list) var(--slot-track-list-2) var(--slot-track-list-3) var(--slot-track-list-4) var(--slot-track-list-5) var(--slot-track-list-6) var(--slot-track-list-7) var(--slot-track-list-8) var(--slot-track-list-9) var(--slot-track-list-10) var(--slot-track-list-11) var(--slot-track-list-12) var(--slot-track-list-13) var(--slot-track-list-14)",
         variables: {
-          "--slot-1": '"x"',
-          "--slot-2": "custom-ident",
-          "--slot-3": "custom-ident",
-          "--slot-4": '"x"',
-          "--slot-5": "1px",
-          "--slot-6": '"x"',
-          "--slot-7": "custom-ident",
-          "--slot-8": "custom-ident",
-          "--slot-9": '"x"',
-          "--slot-10": "1px",
-          "--slot-11": '"x"',
-          "--slot-12": "custom-ident",
-          "--slot-13": "custom-ident",
-          "--slot-14": '"x"',
+          "--slot-track-list": '"x"',
+          "--slot-track-list-2": "custom-ident",
+          "--slot-track-list-3": "custom-ident",
+          "--slot-track-list-4": '"x"',
+          "--slot-track-list-5": "1px",
+          "--slot-track-list-6": '"x"',
+          "--slot-track-list-7": "custom-ident",
+          "--slot-track-list-8": "custom-ident",
+          "--slot-track-list-9": '"x"',
+          "--slot-track-list-10": "1px",
+          "--slot-track-list-11": '"x"',
+          "--slot-track-list-12": "custom-ident",
+          "--slot-track-list-13": "custom-ident",
+          "--slot-track-list-14": '"x"',
         },
       },
       {
@@ -9858,9 +10174,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          'var(--slot-1) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          'var(--slot-track-list) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-1": '"x"',
+          "--slot-track-list": '"x"',
         },
       },
       {
@@ -9869,9 +10185,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-10)"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-track-list-10)"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-10": "1px",
+          "--slot-track-list-10": "1px",
         },
       },
       {
@@ -9880,9 +10196,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-11) custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-track-list-11) custom-ident custom-ident"x"',
         variables: {
-          "--slot-11": '"x"',
+          "--slot-track-list-11": '"x"',
         },
       },
       {
@@ -9891,9 +10207,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-12) custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-track-list-12) custom-ident"x"',
         variables: {
-          "--slot-12": "custom-ident",
+          "--slot-track-list-12": "custom-ident",
         },
       },
       {
@@ -9902,9 +10218,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-13)"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-track-list-13)"x"',
         variables: {
-          "--slot-13": "custom-ident",
+          "--slot-track-list-13": "custom-ident",
         },
       },
       {
@@ -9913,9 +10229,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:1:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-14)',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-track-list-14)',
         variables: {
-          "--slot-14": '"x"',
+          "--slot-track-list-14": '"x"',
         },
       },
       {
@@ -9924,9 +10240,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"var(--slot-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"var(--slot-track-list-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-2": "custom-ident",
+          "--slot-track-list-2": "custom-ident",
         },
       },
       {
@@ -9935,9 +10251,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident var(--slot-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident var(--slot-track-list-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-3": "custom-ident",
+          "--slot-track-list-3": "custom-ident",
         },
       },
       {
@@ -9946,9 +10262,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident var(--slot-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident var(--slot-track-list-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-4": '"x"',
+          "--slot-track-list-4": '"x"',
         },
       },
       {
@@ -9957,9 +10273,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:0:repeat:term:1:branch:0:type:track-size:branch:0:type:track-breadth:branch:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"var(--slot-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"var(--slot-track-list-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-5": "1px",
+          "--slot-track-list-5": "1px",
         },
       },
       {
@@ -9968,9 +10284,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px var(--slot-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px var(--slot-track-list-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-6": '"x"',
+          "--slot-track-list-6": '"x"',
         },
       },
       {
@@ -9979,9 +10295,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"var(--slot-7) custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"var(--slot-track-list-7) custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-7": "custom-ident",
+          "--slot-track-list-7": "custom-ident",
         },
       },
       {
@@ -9990,9 +10306,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-8)"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-track-list-8)"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-8": "custom-ident",
+          "--slot-track-list-8": "custom-ident",
         },
       },
       {
@@ -10001,9 +10317,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:1:type:track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-9) 1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-track-list-9) 1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-9": '"x"',
+          "--slot-track-list-9": '"x"',
         },
       },
       {
@@ -10054,51 +10370,51 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:2:string",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8) var(--slot-9) var(--slot-10) var(--slot-11) var(--slot-12) var(--slot-13) var(--slot-14) repeat(var(--slot-15),var(--slot-16) var(--slot-17) var(--slot-18) var(--slot-19) var(--slot-20) var(--slot-21) var(--slot-22) var(--slot-23) var(--slot-24) var(--slot-25) var(--slot-26) var(--slot-27) var(--slot-28) var(--slot-29)) var(--slot-30) var(--slot-31) var(--slot-32) var(--slot-33) var(--slot-34) var(--slot-35) var(--slot-36) var(--slot-37) var(--slot-38) var(--slot-39) var(--slot-40) var(--slot-41) var(--slot-42) var(--slot-43)",
+          "var(--slot-auto-track-list) var(--slot-auto-track-list-2) var(--slot-auto-track-list-3) var(--slot-auto-track-list-4) var(--slot-auto-track-list-5) var(--slot-auto-track-list-6) var(--slot-auto-track-list-7) var(--slot-auto-track-list-8) var(--slot-auto-track-list-9) var(--slot-auto-track-list-10) var(--slot-auto-track-list-11) var(--slot-auto-track-list-12) var(--slot-auto-track-list-13) var(--slot-auto-track-list-14) repeat(var(--slot-auto-track-list-15),var(--slot-auto-track-list-16) var(--slot-auto-track-list-17) var(--slot-auto-track-list-18) var(--slot-auto-track-list-19) var(--slot-auto-track-list-20) var(--slot-auto-track-list-21) var(--slot-auto-track-list-22) var(--slot-auto-track-list-23) var(--slot-auto-track-list-24) var(--slot-auto-track-list-25) var(--slot-auto-track-list-26) var(--slot-auto-track-list-27) var(--slot-auto-track-list-28) var(--slot-auto-track-list-29)) var(--slot-auto-track-list-30) var(--slot-auto-track-list-31) var(--slot-auto-track-list-32) var(--slot-auto-track-list-33) var(--slot-auto-track-list-34) var(--slot-auto-track-list-35) var(--slot-auto-track-list-36) var(--slot-auto-track-list-37) var(--slot-auto-track-list-38) var(--slot-auto-track-list-39) var(--slot-auto-track-list-40) var(--slot-auto-track-list-41) var(--slot-auto-track-list-42) var(--slot-auto-track-list-43)",
         variables: {
-          "--slot-1": '"x"',
-          "--slot-2": "custom-ident",
-          "--slot-3": "custom-ident",
-          "--slot-4": '"x"',
-          "--slot-5": "1px",
-          "--slot-6": '"x"',
-          "--slot-7": "custom-ident",
-          "--slot-8": "custom-ident",
-          "--slot-9": '"x"',
-          "--slot-10": "1px",
-          "--slot-11": '"x"',
-          "--slot-12": "custom-ident",
-          "--slot-13": "custom-ident",
-          "--slot-14": '"x"',
-          "--slot-15": "auto-fill",
-          "--slot-16": '"x"',
-          "--slot-17": "custom-ident",
-          "--slot-18": "custom-ident",
-          "--slot-19": '"x"',
-          "--slot-20": "1px",
-          "--slot-21": '"x"',
-          "--slot-22": "custom-ident",
-          "--slot-23": "custom-ident",
-          "--slot-24": '"x"',
-          "--slot-25": "1px",
-          "--slot-26": '"x"',
-          "--slot-27": "custom-ident",
-          "--slot-28": "custom-ident",
-          "--slot-29": '"x"',
-          "--slot-30": '"x"',
-          "--slot-31": "custom-ident",
-          "--slot-32": "custom-ident",
-          "--slot-33": '"x"',
-          "--slot-34": "1px",
-          "--slot-35": '"x"',
-          "--slot-36": "custom-ident",
-          "--slot-37": "custom-ident",
-          "--slot-38": '"x"',
-          "--slot-39": "1px",
-          "--slot-40": '"x"',
-          "--slot-41": "custom-ident",
-          "--slot-42": "custom-ident",
-          "--slot-43": '"x"',
+          "--slot-auto-track-list": '"x"',
+          "--slot-auto-track-list-2": "custom-ident",
+          "--slot-auto-track-list-3": "custom-ident",
+          "--slot-auto-track-list-4": '"x"',
+          "--slot-auto-track-list-5": "1px",
+          "--slot-auto-track-list-6": '"x"',
+          "--slot-auto-track-list-7": "custom-ident",
+          "--slot-auto-track-list-8": "custom-ident",
+          "--slot-auto-track-list-9": '"x"',
+          "--slot-auto-track-list-10": "1px",
+          "--slot-auto-track-list-11": '"x"',
+          "--slot-auto-track-list-12": "custom-ident",
+          "--slot-auto-track-list-13": "custom-ident",
+          "--slot-auto-track-list-14": '"x"',
+          "--slot-auto-track-list-15": "auto-fill",
+          "--slot-auto-track-list-16": '"x"',
+          "--slot-auto-track-list-17": "custom-ident",
+          "--slot-auto-track-list-18": "custom-ident",
+          "--slot-auto-track-list-19": '"x"',
+          "--slot-auto-track-list-20": "1px",
+          "--slot-auto-track-list-21": '"x"',
+          "--slot-auto-track-list-22": "custom-ident",
+          "--slot-auto-track-list-23": "custom-ident",
+          "--slot-auto-track-list-24": '"x"',
+          "--slot-auto-track-list-25": "1px",
+          "--slot-auto-track-list-26": '"x"',
+          "--slot-auto-track-list-27": "custom-ident",
+          "--slot-auto-track-list-28": "custom-ident",
+          "--slot-auto-track-list-29": '"x"',
+          "--slot-auto-track-list-30": '"x"',
+          "--slot-auto-track-list-31": "custom-ident",
+          "--slot-auto-track-list-32": "custom-ident",
+          "--slot-auto-track-list-33": '"x"',
+          "--slot-auto-track-list-34": "1px",
+          "--slot-auto-track-list-35": '"x"',
+          "--slot-auto-track-list-36": "custom-ident",
+          "--slot-auto-track-list-37": "custom-ident",
+          "--slot-auto-track-list-38": '"x"',
+          "--slot-auto-track-list-39": "1px",
+          "--slot-auto-track-list-40": '"x"',
+          "--slot-auto-track-list-41": "custom-ident",
+          "--slot-auto-track-list-42": "custom-ident",
+          "--slot-auto-track-list-43": '"x"',
         },
       },
       {
@@ -10107,9 +10423,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          'var(--slot-1) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          'var(--slot-auto-track-list) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-1": '"x"',
+          "--slot-auto-track-list": '"x"',
         },
       },
       {
@@ -10118,9 +10434,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-10)"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-10)"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-10": "1px",
+          "--slot-auto-track-list-10": "1px",
         },
       },
       {
@@ -10129,9 +10445,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-11) custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-11) custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-11": '"x"',
+          "--slot-auto-track-list-11": '"x"',
         },
       },
       {
@@ -10140,9 +10456,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-12) custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-12) custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-12": "custom-ident",
+          "--slot-auto-track-list-12": "custom-ident",
         },
       },
       {
@@ -10151,9 +10467,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-13)"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-13)"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-13": "custom-ident",
+          "--slot-auto-track-list-13": "custom-ident",
         },
       },
       {
@@ -10162,9 +10478,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:1:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-14) repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-14) repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-14": '"x"',
+          "--slot-auto-track-list-14": '"x"',
         },
       },
       {
@@ -10173,9 +10489,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:1:branch:0:keyword:auto-fill",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(var(--slot-15),"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(var(--slot-auto-track-list-15),"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-15": "auto-fill",
+          "--slot-auto-track-list-15": "auto-fill",
         },
       },
       {
@@ -10184,9 +10500,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,var(--slot-16) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,var(--slot-auto-track-list-16) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-16": '"x"',
+          "--slot-auto-track-list-16": '"x"',
         },
       },
       {
@@ -10195,9 +10511,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"var(--slot-17) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"var(--slot-auto-track-list-17) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-17": "custom-ident",
+          "--slot-auto-track-list-17": "custom-ident",
         },
       },
       {
@@ -10206,9 +10522,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident var(--slot-18)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident var(--slot-auto-track-list-18)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-18": "custom-ident",
+          "--slot-auto-track-list-18": "custom-ident",
         },
       },
       {
@@ -10217,9 +10533,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident var(--slot-19) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident var(--slot-auto-track-list-19) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-19": '"x"',
+          "--slot-auto-track-list-19": '"x"',
         },
       },
       {
@@ -10228,9 +10544,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"var(--slot-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"var(--slot-auto-track-list-2) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-2": "custom-ident",
+          "--slot-auto-track-list-2": "custom-ident",
         },
       },
       {
@@ -10239,9 +10555,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"var(--slot-20)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"var(--slot-auto-track-list-20)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-20": "1px",
+          "--slot-auto-track-list-20": "1px",
         },
       },
       {
@@ -10250,9 +10566,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px var(--slot-21) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-21) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-21": '"x"',
+          "--slot-auto-track-list-21": '"x"',
         },
       },
       {
@@ -10261,9 +10577,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"var(--slot-22) custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-22) custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-22": "custom-ident",
+          "--slot-auto-track-list-22": "custom-ident",
         },
       },
       {
@@ -10272,9 +10588,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-23)"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-23)"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-23": "custom-ident",
+          "--slot-auto-track-list-23": "custom-ident",
         },
       },
       {
@@ -10283,9 +10599,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-24) 1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-24) 1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-24": '"x"',
+          "--slot-auto-track-list-24": '"x"',
         },
       },
       {
@@ -10294,9 +10610,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:3:repeat:term:1:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-25)"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-25)"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-25": "1px",
+          "--slot-auto-track-list-25": "1px",
         },
       },
       {
@@ -10305,9 +10621,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-26) custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-26) custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-26": '"x"',
+          "--slot-auto-track-list-26": '"x"',
         },
       },
       {
@@ -10316,9 +10632,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-27) custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-27) custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-27": "custom-ident",
+          "--slot-auto-track-list-27": "custom-ident",
         },
       },
       {
@@ -10327,9 +10643,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-28)"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-28)"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-28": "custom-ident",
+          "--slot-auto-track-list-28": "custom-ident",
         },
       },
       {
@@ -10338,9 +10654,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:2:type:auto-repeat:term:4:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-29))"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-29))"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-29": '"x"',
+          "--slot-auto-track-list-29": '"x"',
         },
       },
       {
@@ -10349,9 +10665,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident var(--slot-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident var(--slot-auto-track-list-3)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-3": "custom-ident",
+          "--slot-auto-track-list-3": "custom-ident",
         },
       },
       {
@@ -10360,9 +10676,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x") var(--slot-30) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x") var(--slot-auto-track-list-30) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-30": '"x"',
+          "--slot-auto-track-list-30": '"x"',
         },
       },
       {
@@ -10371,9 +10687,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"var(--slot-31) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"var(--slot-auto-track-list-31) custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-31": "custom-ident",
+          "--slot-auto-track-list-31": "custom-ident",
         },
       },
       {
@@ -10382,9 +10698,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident var(--slot-32)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident var(--slot-auto-track-list-32)"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-32": "custom-ident",
+          "--slot-auto-track-list-32": "custom-ident",
         },
       },
       {
@@ -10393,9 +10709,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident var(--slot-33) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident var(--slot-auto-track-list-33) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-33": '"x"',
+          "--slot-auto-track-list-33": '"x"',
         },
       },
       {
@@ -10404,9 +10720,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"var(--slot-34)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"var(--slot-auto-track-list-34)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-34": "1px",
+          "--slot-auto-track-list-34": "1px",
         },
       },
       {
@@ -10415,9 +10731,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px var(--slot-35) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-35) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-35": '"x"',
+          "--slot-auto-track-list-35": '"x"',
         },
       },
       {
@@ -10426,9 +10742,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"var(--slot-36) custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-36) custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-36": "custom-ident",
+          "--slot-auto-track-list-36": "custom-ident",
         },
       },
       {
@@ -10437,9 +10753,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-37)"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-37)"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-37": "custom-ident",
+          "--slot-auto-track-list-37": "custom-ident",
         },
       },
       {
@@ -10448,9 +10764,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:3:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-38) 1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-38) 1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-38": '"x"',
+          "--slot-auto-track-list-38": '"x"',
         },
       },
       {
@@ -10459,9 +10775,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:3:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-39)"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"var(--slot-auto-track-list-39)"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-39": "1px",
+          "--slot-auto-track-list-39": "1px",
         },
       },
       {
@@ -10470,9 +10786,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident var(--slot-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident var(--slot-auto-track-list-4) 1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-4": '"x"',
+          "--slot-auto-track-list-4": '"x"',
         },
       },
       {
@@ -10481,9 +10797,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-40) custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-40) custom-ident custom-ident"x"',
         variables: {
-          "--slot-40": '"x"',
+          "--slot-auto-track-list-40": '"x"',
         },
       },
       {
@@ -10492,9 +10808,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-41) custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-41) custom-ident"x"',
         variables: {
-          "--slot-41": "custom-ident",
+          "--slot-auto-track-list-41": "custom-ident",
         },
       },
       {
@@ -10503,9 +10819,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-42)"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-42)"x"',
         variables: {
-          "--slot-42": "custom-ident",
+          "--slot-auto-track-list-42": "custom-ident",
         },
       },
       {
@@ -10514,9 +10830,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:4:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-43)',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-43)',
         variables: {
-          "--slot-43": '"x"',
+          "--slot-auto-track-list-43": '"x"',
         },
       },
       {
@@ -10525,9 +10841,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:0:repeat:term:1:branch:0:type:fixed-size:branch:0:type:fixed-breadth:term:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          '"x"custom-ident custom-ident"x"var(--slot-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"var(--slot-auto-track-list-5)"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-5": "1px",
+          "--slot-auto-track-list-5": "1px",
         },
       },
       {
@@ -10536,9 +10852,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:0:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px var(--slot-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px var(--slot-auto-track-list-6) custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-6": '"x"',
+          "--slot-auto-track-list-6": '"x"',
         },
       },
       {
@@ -10547,9 +10863,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"var(--slot-7) custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"var(--slot-auto-track-list-7) custom-ident"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-7": "custom-ident",
+          "--slot-auto-track-list-7": "custom-ident",
         },
       },
       {
@@ -10558,9 +10874,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:1:repeat:type:custom-ident",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-8)"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident var(--slot-auto-track-list-8)"x"1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-8": "custom-ident",
+          "--slot-auto-track-list-8": "custom-ident",
         },
       },
       {
@@ -10569,9 +10885,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "grid-template-rows:branch:2:type:auto-track-list:term:0:repeat:term:0:repeat:type:line-names:term:2:string",
         ],
         value:
-          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-9) 1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
+          '"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident var(--slot-auto-track-list-9) 1px"x"custom-ident custom-ident"x"repeat(auto-fill,"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x")"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"1px"x"custom-ident custom-ident"x"',
         variables: {
-          "--slot-9": '"x"',
+          "--slot-auto-track-list-9": '"x"',
         },
       },
     ],
@@ -10638,6 +10954,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-2-slot-1",
+        positions: [
+          "height:branch:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-4-slot-1",
         positions: ["height:branch:3:keyword:max-content"],
         value: "var(--slot-1)",
@@ -10654,11 +10980,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["hyphenate-character:branch:1:type:string"],
+        id: "pattern-1-slot-1",
+        positions: ["hyphenate-character:branch:0:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": '"x"',
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["hyphenate-character:branch:1:type:string"],
+        value: "var(--slot-string)",
+        variables: {
+          "--slot-string": '"x"',
         },
       },
     ],
@@ -10735,11 +11069,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["image-orientation:branch:1:type:angle"],
+        id: "pattern-1-slot-1",
+        positions: ["image-orientation:branch:0:keyword:from-image"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1deg",
+          "--slot-1": "from-image",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["image-orientation:branch:1:type:angle"],
+        value: "var(--slot-angle)",
+        variables: {
+          "--slot-angle": "1deg",
         },
       },
       {
@@ -10748,18 +11090,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "image-orientation:branch:2:term:0:repeat:type:angle",
           "image-orientation:branch:2:term:1:keyword:flip",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-angle) var(--slot-2)",
         variables: {
-          "--slot-1": "1deg",
+          "--slot-angle": "1deg",
           "--slot-2": "flip",
         },
       },
       {
         id: "pattern-3-slot-1",
         positions: ["image-orientation:branch:2:term:0:repeat:type:angle"],
-        value: "var(--slot-1) flip",
+        value: "var(--slot-angle) flip",
         variables: {
-          "--slot-1": "1deg",
+          "--slot-angle": "1deg",
         },
       },
       {
@@ -10806,18 +11148,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "initial-letter:branch:1:term:0:type:number",
           "initial-letter:branch:1:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-number) var(--slot-integer)",
         variables: {
-          "--slot-1": "1",
-          "--slot-2": "1",
+          "--slot-number": "1",
+          "--slot-integer": "1",
         },
       },
       {
         id: "pattern-2-slot-1",
         positions: ["initial-letter:branch:1:term:0:type:number"],
-        value: "var(--slot-1)1",
+        value: "var(--slot-number)1",
         variables: {
-          "--slot-1": "1",
+          "--slot-number": "1",
         },
       },
       {
@@ -10825,9 +11167,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "initial-letter:branch:1:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "1 var(--slot-2)",
+        value: "1 var(--slot-integer)",
         variables: {
-          "--slot-2": "1",
+          "--slot-integer": "1",
         },
       },
     ],
@@ -11108,11 +11450,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["interest-delay-end:branch:1:type:time"],
+        id: "pattern-1-slot-1",
+        positions: ["interest-delay-end:branch:0:keyword:normal"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1s",
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["interest-delay-end:branch:1:type:time"],
+        value: "var(--slot-time)",
+        variables: {
+          "--slot-time": "1s",
         },
       },
     ],
@@ -11123,11 +11473,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["interest-delay-start:branch:1:type:time"],
+        id: "pattern-1-slot-1",
+        positions: ["interest-delay-start:branch:0:keyword:normal"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1s",
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["interest-delay-start:branch:1:type:time"],
+        value: "var(--slot-time)",
+        variables: {
+          "--slot-time": "1s",
         },
       },
     ],
@@ -11153,13 +11511,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["justify-content:branch:0:keyword:normal"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "justify-content:branch:1:type:content-distribution:branch:0:keyword:space-between",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-content-distribution)",
         variables: {
-          "--slot-1": "space-between",
+          "--slot-content-distribution": "space-between",
         },
       },
       {
@@ -11168,10 +11534,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "justify-content:branch:2:term:0:repeat:type:overflow-position:branch:0:keyword:unsafe",
           "justify-content:branch:2:term:1:branch:0:type:content-position:branch:0:keyword:center",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-overflow-position) var(--slot-content-position)",
         variables: {
-          "--slot-1": "unsafe",
-          "--slot-2": "center",
+          "--slot-overflow-position": "unsafe",
+          "--slot-content-position": "center",
         },
       },
       {
@@ -11179,9 +11545,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "justify-content:branch:2:term:0:repeat:type:overflow-position:branch:0:keyword:unsafe",
         ],
-        value: "var(--slot-1) center",
+        value: "var(--slot-overflow-position) center",
         variables: {
-          "--slot-1": "unsafe",
+          "--slot-overflow-position": "unsafe",
         },
       },
       {
@@ -11189,9 +11555,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "justify-content:branch:2:term:1:branch:0:type:content-position:branch:0:keyword:center",
         ],
-        value: "unsafe var(--slot-2)",
+        value: "unsafe var(--slot-content-position)",
         variables: {
-          "--slot-2": "center",
+          "--slot-content-position": "center",
         },
       },
     ],
@@ -11235,57 +11601,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["left:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "left:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
-        },
-      },
-      {
-        id: "pattern-3-all-slots",
-        positions: [
-          "left:branch:3:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-          "left:branch:3:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-          "left:branch:3:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(var(--slot-1) var(--slot-2),var(--slot-3))",
-        variables: {
-          "--slot-1": "--custom-ident",
-          "--slot-2": "width",
-          "--slot-3": "1px",
-        },
-      },
-      {
-        id: "pattern-3-slot-1",
-        positions: [
-          "left:branch:3:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-        ],
-        value: "anchor-size(var(--slot-1) width,1px)",
-        variables: {
-          "--slot-1": "--custom-ident",
-        },
-      },
-      {
-        id: "pattern-3-slot-2",
-        positions: [
-          "left:branch:3:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-        ],
-        value: "anchor-size(--custom-ident var(--slot-2),1px)",
-        variables: {
-          "--slot-2": "width",
-        },
-      },
-      {
-        id: "pattern-3-slot-3",
-        positions: [
-          "left:branch:3:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(--custom-ident width,var(--slot-3))",
-        variables: {
-          "--slot-3": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -11296,11 +11626,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["letter-spacing:branch:1:type:length"],
+        id: "pattern-1-slot-1",
+        positions: ["letter-spacing:branch:0:keyword:normal"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["letter-spacing:branch:1:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
         },
       },
     ],
@@ -11315,9 +11653,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "lighting-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -11343,13 +11681,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["line-clamp:branch:0:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "line-clamp:branch:1:type:integer:term:0:type:number-token",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-integer)",
         variables: {
-          "--slot-1": "1",
+          "--slot-integer": "1",
         },
       },
     ],
@@ -11360,11 +11706,35 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-4-slot-1",
-        positions: ["line-height:branch:3:type:percentage"],
+        id: "pattern-1-slot-1",
+        positions: ["line-height:branch:0:keyword:normal"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "10%",
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["line-height:branch:1:type:number"],
+        value: "var(--slot-number)",
+        variables: {
+          "--slot-number": "1",
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: ["line-height:branch:2:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
+        id: "pattern-4-slot-1",
+        positions: ["line-height:branch:3:type:percentage"],
+        value: "var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
         },
       },
     ],
@@ -11421,6 +11791,14 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["list-style-image:branch:0:type:image:branch:0:type:url"],
+        value: "var(--slot-image)",
+        variables: {
+          "--slot-image": "url(hero.png)",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["list-style-image:branch:1:keyword:none"],
         value: "var(--slot-1)",
@@ -11451,6 +11829,24 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: [
+          "list-style-type:branch:0:type:counter-style:branch:0:type:counter-style-name:term:0:type:custom-ident",
+        ],
+        value: "var(--slot-counter-style)",
+        variables: {
+          "--slot-counter-style": "custom-ident",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["list-style-type:branch:1:type:string"],
+        value: "var(--slot-string)",
+        variables: {
+          "--slot-string": '"x"',
+        },
+      },
+      {
         id: "pattern-3-slot-1",
         positions: ["list-style-type:branch:2:keyword:none"],
         value: "var(--slot-1)",
@@ -11473,12 +11869,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "margin:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
           "margin:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-length-percentage) var(--slot-length-percentage-2) var(--slot-length-percentage-3) var(--slot-length-percentage-4)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+          "--slot-length-percentage-3": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
       {
@@ -11486,9 +11883,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px 1px 1px",
+        value: "var(--slot-length-percentage) 1px 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -11496,9 +11893,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2) 1px 1px",
+        value: "1px var(--slot-length-percentage-2) 1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -11506,9 +11903,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px var(--slot-3) 1px",
+        value: "1px 1px var(--slot-length-percentage-3) 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-length-percentage-3": "1px",
         },
       },
       {
@@ -11516,9 +11913,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px 1px var(--slot-4)",
+        value: "1px 1px 1px var(--slot-length-percentage-4)",
         variables: {
-          "--slot-4": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
     ],
@@ -11534,10 +11931,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "margin-block:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
           "margin-block:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -11545,9 +11942,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin-block:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -11555,9 +11952,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin-block:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -11572,9 +11969,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin-block-end:term:0:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -11589,9 +11986,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin-block-start:term:0:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -11602,55 +11999,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: [
+          "margin-bottom:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["margin-bottom:branch:1:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
           "--slot-1": "auto",
-        },
-      },
-      {
-        id: "pattern-3-all-slots",
-        positions: [
-          "margin-bottom:branch:2:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-          "margin-bottom:branch:2:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-          "margin-bottom:branch:2:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(var(--slot-1) var(--slot-2),var(--slot-3))",
-        variables: {
-          "--slot-1": "--custom-ident",
-          "--slot-2": "width",
-          "--slot-3": "1px",
-        },
-      },
-      {
-        id: "pattern-3-slot-1",
-        positions: [
-          "margin-bottom:branch:2:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-        ],
-        value: "anchor-size(var(--slot-1) width,1px)",
-        variables: {
-          "--slot-1": "--custom-ident",
-        },
-      },
-      {
-        id: "pattern-3-slot-2",
-        positions: [
-          "margin-bottom:branch:2:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-        ],
-        value: "anchor-size(--custom-ident var(--slot-2),1px)",
-        variables: {
-          "--slot-2": "width",
-        },
-      },
-      {
-        id: "pattern-3-slot-3",
-        positions: [
-          "margin-bottom:branch:2:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(--custom-ident width,var(--slot-3))",
-        variables: {
-          "--slot-3": "1px",
         },
       },
     ],
@@ -11666,10 +12029,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "margin-inline:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
           "margin-inline:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -11677,9 +12040,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin-inline:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -11687,9 +12050,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin-inline:term:0:repeat:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -11704,9 +12067,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin-inline-end:term:0:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -11721,9 +12084,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "margin-inline-start:term:0:property:margin-top:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -11734,55 +12097,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: [
+          "margin-left:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["margin-left:branch:1:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
           "--slot-1": "auto",
-        },
-      },
-      {
-        id: "pattern-3-all-slots",
-        positions: [
-          "margin-left:branch:2:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-          "margin-left:branch:2:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-          "margin-left:branch:2:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(var(--slot-1) var(--slot-2),var(--slot-3))",
-        variables: {
-          "--slot-1": "--custom-ident",
-          "--slot-2": "width",
-          "--slot-3": "1px",
-        },
-      },
-      {
-        id: "pattern-3-slot-1",
-        positions: [
-          "margin-left:branch:2:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-        ],
-        value: "anchor-size(var(--slot-1) width,1px)",
-        variables: {
-          "--slot-1": "--custom-ident",
-        },
-      },
-      {
-        id: "pattern-3-slot-2",
-        positions: [
-          "margin-left:branch:2:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-        ],
-        value: "anchor-size(--custom-ident var(--slot-2),1px)",
-        variables: {
-          "--slot-2": "width",
-        },
-      },
-      {
-        id: "pattern-3-slot-3",
-        positions: [
-          "margin-left:branch:2:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(--custom-ident width,var(--slot-3))",
-        variables: {
-          "--slot-3": "1px",
         },
       },
     ],
@@ -11793,55 +12122,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: [
+          "margin-right:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["margin-right:branch:1:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
           "--slot-1": "auto",
-        },
-      },
-      {
-        id: "pattern-3-all-slots",
-        positions: [
-          "margin-right:branch:2:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-          "margin-right:branch:2:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-          "margin-right:branch:2:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(var(--slot-1) var(--slot-2),var(--slot-3))",
-        variables: {
-          "--slot-1": "--custom-ident",
-          "--slot-2": "width",
-          "--slot-3": "1px",
-        },
-      },
-      {
-        id: "pattern-3-slot-1",
-        positions: [
-          "margin-right:branch:2:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-        ],
-        value: "anchor-size(var(--slot-1) width,1px)",
-        variables: {
-          "--slot-1": "--custom-ident",
-        },
-      },
-      {
-        id: "pattern-3-slot-2",
-        positions: [
-          "margin-right:branch:2:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-        ],
-        value: "anchor-size(--custom-ident var(--slot-2),1px)",
-        variables: {
-          "--slot-2": "width",
-        },
-      },
-      {
-        id: "pattern-3-slot-3",
-        positions: [
-          "margin-right:branch:2:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(--custom-ident width,var(--slot-3))",
-        variables: {
-          "--slot-3": "1px",
         },
       },
     ],
@@ -11852,55 +12147,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: [
+          "margin-top:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["margin-top:branch:1:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
           "--slot-1": "auto",
-        },
-      },
-      {
-        id: "pattern-3-all-slots",
-        positions: [
-          "margin-top:branch:2:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-          "margin-top:branch:2:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-          "margin-top:branch:2:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(var(--slot-1) var(--slot-2),var(--slot-3))",
-        variables: {
-          "--slot-1": "--custom-ident",
-          "--slot-2": "width",
-          "--slot-3": "1px",
-        },
-      },
-      {
-        id: "pattern-3-slot-1",
-        positions: [
-          "margin-top:branch:2:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-        ],
-        value: "anchor-size(var(--slot-1) width,1px)",
-        variables: {
-          "--slot-1": "--custom-ident",
-        },
-      },
-      {
-        id: "pattern-3-slot-2",
-        positions: [
-          "margin-top:branch:2:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-        ],
-        value: "anchor-size(--custom-ident var(--slot-2),1px)",
-        variables: {
-          "--slot-2": "width",
-        },
-      },
-      {
-        id: "pattern-3-slot-3",
-        positions: [
-          "margin-top:branch:2:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(--custom-ident width,var(--slot-3))",
-        variables: {
-          "--slot-3": "1px",
         },
       },
     ],
@@ -11911,11 +12172,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["marker:branch:1:type:url"],
+        id: "pattern-1-slot-1",
+        positions: ["marker:branch:0:keyword:none"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["marker:branch:1:type:url"],
+        value: "var(--slot-url)",
+        variables: {
+          "--slot-url": "url(hero.png)",
         },
       },
     ],
@@ -11926,11 +12195,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["marker-end:branch:1:type:url"],
+        id: "pattern-1-slot-1",
+        positions: ["marker-end:branch:0:keyword:none"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["marker-end:branch:1:type:url"],
+        value: "var(--slot-url)",
+        variables: {
+          "--slot-url": "url(hero.png)",
         },
       },
     ],
@@ -11941,11 +12218,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["marker-mid:branch:1:type:url"],
+        id: "pattern-1-slot-1",
+        positions: ["marker-mid:branch:0:keyword:none"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["marker-mid:branch:1:type:url"],
+        value: "var(--slot-url)",
+        variables: {
+          "--slot-url": "url(hero.png)",
         },
       },
     ],
@@ -11956,11 +12241,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["marker-start:branch:1:type:url"],
+        id: "pattern-1-slot-1",
+        positions: ["marker-start:branch:0:keyword:none"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["marker-start:branch:1:type:url"],
+        value: "var(--slot-url)",
+        variables: {
+          "--slot-url": "url(hero.png)",
         },
       },
     ],
@@ -11993,26 +12286,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:6:type:masking-mode:branch:0:keyword:alpha",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3)/var(--slot-4) var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8) var(--slot-9),var(--slot-10) var(--slot-11) var(--slot-12)/var(--slot-13) var(--slot-14) var(--slot-15) var(--slot-16) var(--slot-17) var(--slot-18)",
+          "var(--slot-mask-layer) var(--slot-mask-layer-2) var(--slot-mask-layer-3)/var(--slot-mask-layer-4) var(--slot-mask-layer-5) var(--slot-mask-layer-6) var(--slot-mask-layer-7) var(--slot-mask-layer-8) var(--slot-mask-layer-9),var(--slot-mask-layer-10) var(--slot-mask-layer-11) var(--slot-mask-layer-12)/var(--slot-mask-layer-13) var(--slot-mask-layer-14) var(--slot-mask-layer-15) var(--slot-mask-layer-16) var(--slot-mask-layer-17) var(--slot-mask-layer-18)",
         variables: {
-          "--slot-1": "none",
-          "--slot-2": "left",
-          "--slot-3": "top",
-          "--slot-4": "cover",
-          "--slot-5": "repeat-x",
-          "--slot-6": "content-box",
-          "--slot-7": "content-box",
-          "--slot-8": "add",
-          "--slot-9": "alpha",
-          "--slot-10": "none",
-          "--slot-11": "left",
-          "--slot-12": "top",
-          "--slot-13": "cover",
-          "--slot-14": "repeat-x",
-          "--slot-15": "content-box",
-          "--slot-16": "content-box",
-          "--slot-17": "add",
-          "--slot-18": "alpha",
+          "--slot-mask-layer": "none",
+          "--slot-mask-layer-2": "left",
+          "--slot-mask-layer-3": "top",
+          "--slot-mask-layer-4": "cover",
+          "--slot-mask-layer-5": "repeat-x",
+          "--slot-mask-layer-6": "content-box",
+          "--slot-mask-layer-7": "content-box",
+          "--slot-mask-layer-8": "add",
+          "--slot-mask-layer-9": "alpha",
+          "--slot-mask-layer-10": "none",
+          "--slot-mask-layer-11": "left",
+          "--slot-mask-layer-12": "top",
+          "--slot-mask-layer-13": "cover",
+          "--slot-mask-layer-14": "repeat-x",
+          "--slot-mask-layer-15": "content-box",
+          "--slot-mask-layer-16": "content-box",
+          "--slot-mask-layer-17": "add",
+          "--slot-mask-layer-18": "alpha",
         },
       },
       {
@@ -12021,9 +12314,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:0:type:mask-reference:branch:0:keyword:none",
         ],
         value:
-          "var(--slot-1) left top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
+          "var(--slot-mask-layer) left top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-1": "none",
+          "--slot-mask-layer": "none",
         },
       },
       {
@@ -12032,9 +12325,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:0:type:mask-reference:branch:0:keyword:none",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box add alpha,var(--slot-10) left top/cover repeat-x content-box content-box add alpha",
+          "none left top/cover repeat-x content-box content-box add alpha,var(--slot-mask-layer-10) left top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-10": "none",
+          "--slot-mask-layer-10": "none",
         },
       },
       {
@@ -12043,9 +12336,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:1:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box add alpha,none var(--slot-11) top/cover repeat-x content-box content-box add alpha",
+          "none left top/cover repeat-x content-box content-box add alpha,none var(--slot-mask-layer-11) top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-11": "left",
+          "--slot-mask-layer-11": "left",
         },
       },
       {
@@ -12054,9 +12347,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:1:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box add alpha,none left var(--slot-12)/cover repeat-x content-box content-box add alpha",
+          "none left top/cover repeat-x content-box content-box add alpha,none left var(--slot-mask-layer-12)/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-12": "top",
+          "--slot-mask-layer-12": "top",
         },
       },
       {
@@ -12065,9 +12358,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:1:term:1:repeat:term:1:type:bg-size:branch:1:keyword:cover",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box add alpha,none left top/var(--slot-13) repeat-x content-box content-box add alpha",
+          "none left top/cover repeat-x content-box content-box add alpha,none left top/var(--slot-mask-layer-13) repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-13": "cover",
+          "--slot-mask-layer-13": "cover",
         },
       },
       {
@@ -12076,9 +12369,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:2:type:repeat-style:branch:0:keyword:repeat-x",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box add alpha,none left top/cover var(--slot-14) content-box content-box add alpha",
+          "none left top/cover repeat-x content-box content-box add alpha,none left top/cover var(--slot-mask-layer-14) content-box content-box add alpha",
         variables: {
-          "--slot-14": "repeat-x",
+          "--slot-mask-layer-14": "repeat-x",
         },
       },
       {
@@ -12087,9 +12380,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:3:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x var(--slot-15) content-box add alpha",
+          "none left top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x var(--slot-mask-layer-15) content-box add alpha",
         variables: {
-          "--slot-15": "content-box",
+          "--slot-mask-layer-15": "content-box",
         },
       },
       {
@@ -12098,9 +12391,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:4:branch:0:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box var(--slot-16) add alpha",
+          "none left top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box var(--slot-mask-layer-16) add alpha",
         variables: {
-          "--slot-16": "content-box",
+          "--slot-mask-layer-16": "content-box",
         },
       },
       {
@@ -12109,9 +12402,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:5:type:compositing-operator:branch:0:keyword:add",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box var(--slot-17) alpha",
+          "none left top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box var(--slot-mask-layer-17) alpha",
         variables: {
-          "--slot-17": "add",
+          "--slot-mask-layer-17": "add",
         },
       },
       {
@@ -12120,9 +12413,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:6:type:masking-mode:branch:0:keyword:alpha",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box add var(--slot-18)",
+          "none left top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box add var(--slot-mask-layer-18)",
         variables: {
-          "--slot-18": "alpha",
+          "--slot-mask-layer-18": "alpha",
         },
       },
       {
@@ -12131,9 +12424,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:1:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
         ],
         value:
-          "none var(--slot-2) top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
+          "none var(--slot-mask-layer-2) top/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-2": "left",
+          "--slot-mask-layer-2": "left",
         },
       },
       {
@@ -12142,9 +12435,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:1:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
         value:
-          "none left var(--slot-3)/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
+          "none left var(--slot-mask-layer-3)/cover repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-3": "top",
+          "--slot-mask-layer-3": "top",
         },
       },
       {
@@ -12153,9 +12446,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:1:term:1:repeat:term:1:type:bg-size:branch:1:keyword:cover",
         ],
         value:
-          "none left top/var(--slot-4) repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
+          "none left top/var(--slot-mask-layer-4) repeat-x content-box content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-4": "cover",
+          "--slot-mask-layer-4": "cover",
         },
       },
       {
@@ -12164,9 +12457,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:2:type:repeat-style:branch:0:keyword:repeat-x",
         ],
         value:
-          "none left top/cover var(--slot-5) content-box content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
+          "none left top/cover var(--slot-mask-layer-5) content-box content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-5": "repeat-x",
+          "--slot-mask-layer-5": "repeat-x",
         },
       },
       {
@@ -12175,9 +12468,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:3:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
         value:
-          "none left top/cover repeat-x var(--slot-6) content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
+          "none left top/cover repeat-x var(--slot-mask-layer-6) content-box add alpha,none left top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-6": "content-box",
+          "--slot-mask-layer-6": "content-box",
         },
       },
       {
@@ -12186,9 +12479,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:4:branch:0:type:geometry-box:branch:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
         value:
-          "none left top/cover repeat-x content-box var(--slot-7) add alpha,none left top/cover repeat-x content-box content-box add alpha",
+          "none left top/cover repeat-x content-box var(--slot-mask-layer-7) add alpha,none left top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-7": "content-box",
+          "--slot-mask-layer-7": "content-box",
         },
       },
       {
@@ -12197,9 +12490,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:5:type:compositing-operator:branch:0:keyword:add",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box var(--slot-8) alpha,none left top/cover repeat-x content-box content-box add alpha",
+          "none left top/cover repeat-x content-box content-box var(--slot-mask-layer-8) alpha,none left top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-8": "add",
+          "--slot-mask-layer-8": "add",
         },
       },
       {
@@ -12208,9 +12501,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask:term:0:repeat:type:mask-layer:term:6:type:masking-mode:branch:0:keyword:alpha",
         ],
         value:
-          "none left top/cover repeat-x content-box content-box add var(--slot-9),none left top/cover repeat-x content-box content-box add alpha",
+          "none left top/cover repeat-x content-box content-box add var(--slot-mask-layer-9),none left top/cover repeat-x content-box content-box add alpha",
         variables: {
-          "--slot-9": "alpha",
+          "--slot-mask-layer-9": "alpha",
         },
       },
     ],
@@ -12242,22 +12535,22 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:3:property:mask-border-mode:branch:0:keyword:luminance",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5) var(--slot-6)/var(--slot-7) var(--slot-8) var(--slot-9) var(--slot-10)/var(--slot-11) var(--slot-12) var(--slot-13) var(--slot-14) var(--slot-15) var(--slot-16) var(--slot-17)",
+          "var(--slot-1) var(--slot-number-percentage) var(--slot-number-percentage-2) var(--slot-number-percentage-3) var(--slot-number-percentage-4) var(--slot-6)/var(--slot-length-percentage) var(--slot-length-percentage-2) var(--slot-length-percentage-3) var(--slot-length-percentage-4)/var(--slot-length) var(--slot-length-2) var(--slot-length-3) var(--slot-length-4) var(--slot-15) var(--slot-16) var(--slot-17)",
         variables: {
           "--slot-1": "none",
-          "--slot-2": "1",
-          "--slot-3": "1",
-          "--slot-4": "1",
-          "--slot-5": "1",
+          "--slot-number-percentage": "1",
+          "--slot-number-percentage-2": "1",
+          "--slot-number-percentage-3": "1",
+          "--slot-number-percentage-4": "1",
           "--slot-6": "fill",
-          "--slot-7": "1px",
-          "--slot-8": "1px",
-          "--slot-9": "1px",
-          "--slot-10": "1px",
-          "--slot-11": "1px",
-          "--slot-12": "1px",
-          "--slot-13": "1px",
-          "--slot-14": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+          "--slot-length-percentage-3": "1px",
+          "--slot-length-percentage-4": "1px",
+          "--slot-length": "1px",
+          "--slot-length-2": "1px",
+          "--slot-length-3": "1px",
+          "--slot-length-4": "1px",
           "--slot-15": "stretch",
           "--slot-16": "stretch",
           "--slot-17": "luminance",
@@ -12280,9 +12573,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:1:repeat:term:1:repeat:property:mask-border-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          "none 1 1 1 1 fill/1px 1px 1px var(--slot-10)/1px 1px 1px 1px stretch stretch luminance",
+          "none 1 1 1 1 fill/1px 1px 1px var(--slot-length-percentage-4)/1px 1px 1px 1px stretch stretch luminance",
         variables: {
-          "--slot-10": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
       {
@@ -12291,9 +12584,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:1:repeat:term:2:repeat:term:1:property:mask-border-outset:term:0:repeat:branch:0:type:length",
         ],
         value:
-          "none 1 1 1 1 fill/1px 1px 1px 1px/var(--slot-11) 1px 1px 1px stretch stretch luminance",
+          "none 1 1 1 1 fill/1px 1px 1px 1px/var(--slot-length) 1px 1px 1px stretch stretch luminance",
         variables: {
-          "--slot-11": "1px",
+          "--slot-length": "1px",
         },
       },
       {
@@ -12302,9 +12595,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:1:repeat:term:2:repeat:term:1:property:mask-border-outset:term:0:repeat:branch:0:type:length",
         ],
         value:
-          "none 1 1 1 1 fill/1px 1px 1px 1px/1px var(--slot-12) 1px 1px stretch stretch luminance",
+          "none 1 1 1 1 fill/1px 1px 1px 1px/1px var(--slot-length-2) 1px 1px stretch stretch luminance",
         variables: {
-          "--slot-12": "1px",
+          "--slot-length-2": "1px",
         },
       },
       {
@@ -12313,9 +12606,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:1:repeat:term:2:repeat:term:1:property:mask-border-outset:term:0:repeat:branch:0:type:length",
         ],
         value:
-          "none 1 1 1 1 fill/1px 1px 1px 1px/1px 1px var(--slot-13) 1px stretch stretch luminance",
+          "none 1 1 1 1 fill/1px 1px 1px 1px/1px 1px var(--slot-length-3) 1px stretch stretch luminance",
         variables: {
-          "--slot-13": "1px",
+          "--slot-length-3": "1px",
         },
       },
       {
@@ -12324,9 +12617,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:1:repeat:term:2:repeat:term:1:property:mask-border-outset:term:0:repeat:branch:0:type:length",
         ],
         value:
-          "none 1 1 1 1 fill/1px 1px 1px 1px/1px 1px 1px var(--slot-14) stretch stretch luminance",
+          "none 1 1 1 1 fill/1px 1px 1px 1px/1px 1px 1px var(--slot-length-4) stretch stretch luminance",
         variables: {
-          "--slot-14": "1px",
+          "--slot-length-4": "1px",
         },
       },
       {
@@ -12368,9 +12661,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:0:property:mask-border-slice:term:0:repeat:type:number-percentage:branch:0:type:number",
         ],
         value:
-          "none var(--slot-2)1 1 1 fill/1px 1px 1px 1px/1px 1px 1px 1px stretch stretch luminance",
+          "none var(--slot-number-percentage)1 1 1 fill/1px 1px 1px 1px/1px 1px 1px 1px stretch stretch luminance",
         variables: {
-          "--slot-2": "1",
+          "--slot-number-percentage": "1",
         },
       },
       {
@@ -12379,9 +12672,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:0:property:mask-border-slice:term:0:repeat:type:number-percentage:branch:0:type:number",
         ],
         value:
-          "none 1 var(--slot-3)1 1 fill/1px 1px 1px 1px/1px 1px 1px 1px stretch stretch luminance",
+          "none 1 var(--slot-number-percentage-2)1 1 fill/1px 1px 1px 1px/1px 1px 1px 1px stretch stretch luminance",
         variables: {
-          "--slot-3": "1",
+          "--slot-number-percentage-2": "1",
         },
       },
       {
@@ -12390,9 +12683,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:0:property:mask-border-slice:term:0:repeat:type:number-percentage:branch:0:type:number",
         ],
         value:
-          "none 1 1 var(--slot-4)1 fill/1px 1px 1px 1px/1px 1px 1px 1px stretch stretch luminance",
+          "none 1 1 var(--slot-number-percentage-3)1 fill/1px 1px 1px 1px/1px 1px 1px 1px stretch stretch luminance",
         variables: {
-          "--slot-4": "1",
+          "--slot-number-percentage-3": "1",
         },
       },
       {
@@ -12401,9 +12694,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:0:property:mask-border-slice:term:0:repeat:type:number-percentage:branch:0:type:number",
         ],
         value:
-          "none 1 1 1 var(--slot-5) fill/1px 1px 1px 1px/1px 1px 1px 1px stretch stretch luminance",
+          "none 1 1 1 var(--slot-number-percentage-4) fill/1px 1px 1px 1px/1px 1px 1px 1px stretch stretch luminance",
         variables: {
-          "--slot-5": "1",
+          "--slot-number-percentage-4": "1",
         },
       },
       {
@@ -12423,9 +12716,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:1:repeat:term:1:repeat:property:mask-border-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          "none 1 1 1 1 fill/var(--slot-7) 1px 1px 1px/1px 1px 1px 1px stretch stretch luminance",
+          "none 1 1 1 1 fill/var(--slot-length-percentage) 1px 1px 1px/1px 1px 1px 1px stretch stretch luminance",
         variables: {
-          "--slot-7": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -12434,9 +12727,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:1:repeat:term:1:repeat:property:mask-border-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          "none 1 1 1 1 fill/1px var(--slot-8) 1px 1px/1px 1px 1px 1px stretch stretch luminance",
+          "none 1 1 1 1 fill/1px var(--slot-length-percentage-2) 1px 1px/1px 1px 1px 1px stretch stretch luminance",
         variables: {
-          "--slot-8": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -12445,9 +12738,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border:term:1:term:1:repeat:term:1:repeat:property:mask-border-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
         value:
-          "none 1 1 1 1 fill/1px 1px var(--slot-9) 1px/1px 1px 1px 1px stretch stretch luminance",
+          "none 1 1 1 1 fill/1px 1px var(--slot-length-percentage-3) 1px/1px 1px 1px 1px stretch stretch luminance",
         variables: {
-          "--slot-9": "1px",
+          "--slot-length-percentage-3": "1px",
         },
       },
     ],
@@ -12481,44 +12774,45 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border-outset:term:0:repeat:branch:0:type:length",
           "mask-border-outset:term:0:repeat:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-length) var(--slot-length-2) var(--slot-length-3) var(--slot-length-4)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-length": "1px",
+          "--slot-length-2": "1px",
+          "--slot-length-3": "1px",
+          "--slot-length-4": "1px",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["mask-border-outset:term:0:repeat:branch:0:type:length"],
-        value: "var(--slot-1) 1px 1px 1px",
+        value: "var(--slot-length) 1px 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["mask-border-outset:term:0:repeat:branch:0:type:length"],
-        value: "1px var(--slot-2) 1px 1px",
+        value: "1px var(--slot-length-2) 1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-2": "1px",
         },
       },
       {
         id: "pattern-1-slot-3",
         positions: ["mask-border-outset:term:0:repeat:branch:0:type:length"],
-        value: "1px 1px var(--slot-3) 1px",
+        value: "1px 1px var(--slot-length-3) 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-length-3": "1px",
         },
       },
       {
         id: "pattern-1-slot-4",
         positions: ["mask-border-outset:term:0:repeat:branch:0:type:length"],
-        value: "1px 1px 1px var(--slot-4)",
+        value: "1px 1px 1px var(--slot-length-4)",
         variables: {
-          "--slot-4": "1px",
+          "--slot-length-4": "1px",
         },
       },
     ],
@@ -12577,12 +12871,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border-slice:term:1:repeat:keyword:fill",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5)",
+          "var(--slot-number-percentage) var(--slot-number-percentage-2) var(--slot-number-percentage-3) var(--slot-number-percentage-4) var(--slot-5)",
         variables: {
-          "--slot-1": "1",
-          "--slot-2": "1",
-          "--slot-3": "1",
-          "--slot-4": "1",
+          "--slot-number-percentage": "1",
+          "--slot-number-percentage-2": "1",
+          "--slot-number-percentage-3": "1",
+          "--slot-number-percentage-4": "1",
           "--slot-5": "fill",
         },
       },
@@ -12591,9 +12885,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-border-slice:term:0:repeat:type:number-percentage:branch:0:type:number",
         ],
-        value: "var(--slot-1)1 1 1 fill",
+        value: "var(--slot-number-percentage)1 1 1 fill",
         variables: {
-          "--slot-1": "1",
+          "--slot-number-percentage": "1",
         },
       },
       {
@@ -12601,9 +12895,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-border-slice:term:0:repeat:type:number-percentage:branch:0:type:number",
         ],
-        value: "1 var(--slot-2)1 1 fill",
+        value: "1 var(--slot-number-percentage-2)1 1 fill",
         variables: {
-          "--slot-2": "1",
+          "--slot-number-percentage-2": "1",
         },
       },
       {
@@ -12611,9 +12905,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-border-slice:term:0:repeat:type:number-percentage:branch:0:type:number",
         ],
-        value: "1 1 var(--slot-3)1 fill",
+        value: "1 1 var(--slot-number-percentage-3)1 fill",
         variables: {
-          "--slot-3": "1",
+          "--slot-number-percentage-3": "1",
         },
       },
       {
@@ -12621,9 +12915,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-border-slice:term:0:repeat:type:number-percentage:branch:0:type:number",
         ],
-        value: "1 1 1 var(--slot-4) fill",
+        value: "1 1 1 var(--slot-number-percentage-4) fill",
         variables: {
-          "--slot-4": "1",
+          "--slot-number-percentage-4": "1",
         },
       },
       {
@@ -12642,11 +12936,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["mask-border-source:branch:1:type:image:branch:0:type:url"],
+        id: "pattern-1-slot-1",
+        positions: ["mask-border-source:branch:0:keyword:none"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["mask-border-source:branch:1:type:image:branch:0:type:url"],
+        value: "var(--slot-image)",
+        variables: {
+          "--slot-image": "url(hero.png)",
         },
       },
     ],
@@ -12664,12 +12966,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-border-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
           "mask-border-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-length-percentage) var(--slot-length-percentage-2) var(--slot-length-percentage-3) var(--slot-length-percentage-4)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+          "--slot-length-percentage-3": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
       {
@@ -12677,9 +12980,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-border-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px 1px 1px",
+        value: "var(--slot-length-percentage) 1px 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -12687,9 +12990,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-border-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2) 1px 1px",
+        value: "1px var(--slot-length-percentage-2) 1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -12697,9 +13000,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-border-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px var(--slot-3) 1px",
+        value: "1px 1px var(--slot-length-percentage-3) 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-length-percentage-3": "1px",
         },
       },
       {
@@ -12707,9 +13010,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-border-width:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px 1px var(--slot-4)",
+        value: "1px 1px 1px var(--slot-length-percentage-4)",
         variables: {
-          "--slot-4": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
     ],
@@ -12725,10 +13028,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-clip:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
           "mask-clip:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-coord-box),var(--slot-coord-box-2)",
         variables: {
-          "--slot-1": "content-box",
-          "--slot-2": "content-box",
+          "--slot-coord-box": "content-box",
+          "--slot-coord-box-2": "content-box",
         },
       },
       {
@@ -12736,9 +13039,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-clip:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "var(--slot-1),content-box",
+        value: "var(--slot-coord-box),content-box",
         variables: {
-          "--slot-1": "content-box",
+          "--slot-coord-box": "content-box",
         },
       },
       {
@@ -12746,9 +13049,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-clip:term:0:repeat:branch:0:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "content-box,var(--slot-2)",
+        value: "content-box,var(--slot-coord-box-2)",
         variables: {
-          "--slot-2": "content-box",
+          "--slot-coord-box-2": "content-box",
         },
       },
     ],
@@ -12764,10 +13067,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-composite:term:0:repeat:type:compositing-operator:branch:0:keyword:add",
           "mask-composite:term:0:repeat:type:compositing-operator:branch:0:keyword:add",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value:
+          "var(--slot-compositing-operator),var(--slot-compositing-operator-2)",
         variables: {
-          "--slot-1": "add",
-          "--slot-2": "add",
+          "--slot-compositing-operator": "add",
+          "--slot-compositing-operator-2": "add",
         },
       },
       {
@@ -12775,9 +13079,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-composite:term:0:repeat:type:compositing-operator:branch:0:keyword:add",
         ],
-        value: "var(--slot-1),add",
+        value: "var(--slot-compositing-operator),add",
         variables: {
-          "--slot-1": "add",
+          "--slot-compositing-operator": "add",
         },
       },
       {
@@ -12785,9 +13089,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-composite:term:0:repeat:type:compositing-operator:branch:0:keyword:add",
         ],
-        value: "add,var(--slot-2)",
+        value: "add,var(--slot-compositing-operator-2)",
         variables: {
-          "--slot-2": "add",
+          "--slot-compositing-operator-2": "add",
         },
       },
     ],
@@ -12803,10 +13107,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-image:term:0:repeat:type:mask-reference:branch:0:keyword:none",
           "mask-image:term:0:repeat:type:mask-reference:branch:0:keyword:none",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-mask-reference),var(--slot-mask-reference-2)",
         variables: {
-          "--slot-1": "none",
-          "--slot-2": "none",
+          "--slot-mask-reference": "none",
+          "--slot-mask-reference-2": "none",
         },
       },
       {
@@ -12814,9 +13118,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-image:term:0:repeat:type:mask-reference:branch:0:keyword:none",
         ],
-        value: "var(--slot-1),none",
+        value: "var(--slot-mask-reference),none",
         variables: {
-          "--slot-1": "none",
+          "--slot-mask-reference": "none",
         },
       },
       {
@@ -12824,9 +13128,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-image:term:0:repeat:type:mask-reference:branch:0:keyword:none",
         ],
-        value: "none,var(--slot-2)",
+        value: "none,var(--slot-mask-reference-2)",
         variables: {
-          "--slot-2": "none",
+          "--slot-mask-reference-2": "none",
         },
       },
     ],
@@ -12842,10 +13146,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-mode:term:0:repeat:type:masking-mode:branch:0:keyword:alpha",
           "mask-mode:term:0:repeat:type:masking-mode:branch:0:keyword:alpha",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-masking-mode),var(--slot-masking-mode-2)",
         variables: {
-          "--slot-1": "alpha",
-          "--slot-2": "alpha",
+          "--slot-masking-mode": "alpha",
+          "--slot-masking-mode-2": "alpha",
         },
       },
       {
@@ -12853,9 +13157,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-mode:term:0:repeat:type:masking-mode:branch:0:keyword:alpha",
         ],
-        value: "var(--slot-1),alpha",
+        value: "var(--slot-masking-mode),alpha",
         variables: {
-          "--slot-1": "alpha",
+          "--slot-masking-mode": "alpha",
         },
       },
       {
@@ -12863,9 +13167,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-mode:term:0:repeat:type:masking-mode:branch:0:keyword:alpha",
         ],
-        value: "alpha,var(--slot-2)",
+        value: "alpha,var(--slot-masking-mode-2)",
         variables: {
-          "--slot-2": "alpha",
+          "--slot-masking-mode-2": "alpha",
         },
       },
     ],
@@ -12881,10 +13185,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-origin:term:0:repeat:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
           "mask-origin:term:0:repeat:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-coord-box),var(--slot-coord-box-2)",
         variables: {
-          "--slot-1": "content-box",
-          "--slot-2": "content-box",
+          "--slot-coord-box": "content-box",
+          "--slot-coord-box-2": "content-box",
         },
       },
       {
@@ -12892,9 +13196,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-origin:term:0:repeat:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "var(--slot-1),content-box",
+        value: "var(--slot-coord-box),content-box",
         variables: {
-          "--slot-1": "content-box",
+          "--slot-coord-box": "content-box",
         },
       },
       {
@@ -12902,9 +13206,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-origin:term:0:repeat:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "content-box,var(--slot-2)",
+        value: "content-box,var(--slot-coord-box-2)",
         variables: {
-          "--slot-2": "content-box",
+          "--slot-coord-box-2": "content-box",
         },
       },
     ],
@@ -12922,12 +13226,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-position:term:0:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
           "mask-position:term:0:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "var(--slot-1) var(--slot-2),var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-position) var(--slot-position-2),var(--slot-position-3) var(--slot-position-4)",
         variables: {
-          "--slot-1": "left",
-          "--slot-2": "top",
-          "--slot-3": "left",
-          "--slot-4": "top",
+          "--slot-position": "left",
+          "--slot-position-2": "top",
+          "--slot-position-3": "left",
+          "--slot-position-4": "top",
         },
       },
       {
@@ -12935,9 +13240,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-position:term:0:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
         ],
-        value: "var(--slot-1) top,left top",
+        value: "var(--slot-position) top,left top",
         variables: {
-          "--slot-1": "left",
+          "--slot-position": "left",
         },
       },
       {
@@ -12945,9 +13250,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-position:term:0:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "left var(--slot-2),left top",
+        value: "left var(--slot-position-2),left top",
         variables: {
-          "--slot-2": "top",
+          "--slot-position-2": "top",
         },
       },
       {
@@ -12955,9 +13260,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-position:term:0:repeat:type:position:branch:0:term:0:branch:0:keyword:left",
         ],
-        value: "left top,var(--slot-3) top",
+        value: "left top,var(--slot-position-3) top",
         variables: {
-          "--slot-3": "left",
+          "--slot-position-3": "left",
         },
       },
       {
@@ -12965,9 +13270,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-position:term:0:repeat:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "left top,left var(--slot-4)",
+        value: "left top,left var(--slot-position-4)",
         variables: {
-          "--slot-4": "top",
+          "--slot-position-4": "top",
         },
       },
     ],
@@ -12983,10 +13288,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
           "mask-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-repeat-style),var(--slot-repeat-style-2)",
         variables: {
-          "--slot-1": "repeat-x",
-          "--slot-2": "repeat-x",
+          "--slot-repeat-style": "repeat-x",
+          "--slot-repeat-style-2": "repeat-x",
         },
       },
       {
@@ -12994,9 +13299,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
         ],
-        value: "var(--slot-1),repeat-x",
+        value: "var(--slot-repeat-style),repeat-x",
         variables: {
-          "--slot-1": "repeat-x",
+          "--slot-repeat-style": "repeat-x",
         },
       },
       {
@@ -13004,9 +13309,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-repeat:term:0:repeat:type:repeat-style:branch:0:keyword:repeat-x",
         ],
-        value: "repeat-x,var(--slot-2)",
+        value: "repeat-x,var(--slot-repeat-style-2)",
         variables: {
-          "--slot-2": "repeat-x",
+          "--slot-repeat-style-2": "repeat-x",
         },
       },
     ],
@@ -13022,10 +13327,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "mask-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
           "mask-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-bg-size),var(--slot-bg-size-2)",
         variables: {
-          "--slot-1": "cover",
-          "--slot-2": "cover",
+          "--slot-bg-size": "cover",
+          "--slot-bg-size-2": "cover",
         },
       },
       {
@@ -13033,9 +13338,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
         ],
-        value: "var(--slot-1),cover",
+        value: "var(--slot-bg-size),cover",
         variables: {
-          "--slot-1": "cover",
+          "--slot-bg-size": "cover",
         },
       },
       {
@@ -13043,9 +13348,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "mask-size:term:0:repeat:type:bg-size:branch:1:keyword:cover",
         ],
-        value: "cover,var(--slot-2)",
+        value: "cover,var(--slot-bg-size-2)",
         variables: {
-          "--slot-2": "cover",
+          "--slot-bg-size-2": "cover",
         },
       },
     ],
@@ -13071,13 +13376,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["math-depth:branch:0:keyword:auto-add"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto-add",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "math-depth:branch:2:type:integer:term:0:type:number-token",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-integer)",
         variables: {
-          "--slot-1": "1",
+          "--slot-integer": "1",
         },
       },
       {
@@ -13085,9 +13398,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "math-depth:branch:1:term:1:type:integer:term:0:type:number-token",
         ],
-        value: "add(var(--slot-1))",
+        value: "add(var(--slot-integer))",
         variables: {
-          "--slot-1": "1",
+          "--slot-integer": "1",
         },
       },
     ],
@@ -13130,6 +13443,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-2-slot-1",
+        positions: [
+          "max-height:branch:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-4-slot-1",
         positions: ["max-height:branch:3:keyword:max-content"],
         value: "var(--slot-1)",
@@ -13162,6 +13485,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   },
   {
     cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "max-width:branch:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
       {
         id: "pattern-4-slot-1",
         positions: ["max-width:branch:3:keyword:max-content"],
@@ -13196,6 +13529,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-2-slot-1",
+        positions: [
+          "min-height:branch:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-4-slot-1",
         positions: ["min-height:branch:3:keyword:max-content"],
         value: "var(--slot-1)",
@@ -13229,6 +13572,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-2-slot-1",
+        positions: [
+          "min-width:branch:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-4-slot-1",
         positions: ["min-width:branch:3:keyword:max-content"],
         value: "var(--slot-1)",
@@ -13244,6 +13597,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   },
   {
     cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "mix-blend-mode:branch:0:type:blend-mode:branch:0:keyword:normal",
+        ],
+        value: "var(--slot-blend-mode)",
+        variables: {
+          "--slot-blend-mode": "normal",
+        },
+      },
       {
         id: "pattern-3-slot-1",
         positions: ["mix-blend-mode:branch:2:keyword:plus-lighter"],
@@ -13280,10 +13643,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "object-position:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
           "object-position:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-position) var(--slot-position-2)",
         variables: {
-          "--slot-1": "left",
-          "--slot-2": "top",
+          "--slot-position": "left",
+          "--slot-position-2": "top",
         },
       },
       {
@@ -13291,9 +13654,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "object-position:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
         ],
-        value: "var(--slot-1) top",
+        value: "var(--slot-position) top",
         variables: {
-          "--slot-1": "left",
+          "--slot-position": "left",
         },
       },
       {
@@ -13301,9 +13664,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "object-position:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "left var(--slot-2)",
+        value: "left var(--slot-position-2)",
         variables: {
-          "--slot-2": "top",
+          "--slot-position-2": "top",
         },
       },
     ],
@@ -13324,13 +13687,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "offset:term:1:repeat:term:1:property:offset-anchor:branch:0:keyword:auto",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5)/var(--slot-6)",
+          "var(--slot-1) var(--slot-2) var(--slot-length-percentage) var(--slot-4) var(--slot-angle)/var(--slot-6)",
         variables: {
           "--slot-1": "normal",
           "--slot-2": "none",
-          "--slot-3": "1px",
+          "--slot-length-percentage": "1px",
           "--slot-4": "auto",
-          "--slot-5": "1deg",
+          "--slot-angle": "1deg",
           "--slot-6": "auto",
         },
       },
@@ -13359,9 +13722,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "offset:term:0:term:1:repeat:term:1:repeat:term:0:property:offset-distance:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "normal none var(--slot-3) auto 1deg/auto",
+        value: "normal none var(--slot-length-percentage) auto 1deg/auto",
         variables: {
-          "--slot-3": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -13379,9 +13742,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "offset:term:0:term:1:repeat:term:1:repeat:term:1:property:offset-rotate:term:1:type:angle",
         ],
-        value: "normal none 1px auto var(--slot-5)/auto",
+        value: "normal none 1px auto var(--slot-angle)/auto",
         variables: {
-          "--slot-5": "1deg",
+          "--slot-angle": "1deg",
         },
       },
       {
@@ -13416,10 +13779,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "offset-anchor:branch:1:type:position:branch:0:term:0:branch:0:keyword:left",
           "offset-anchor:branch:1:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-position) var(--slot-position-2)",
         variables: {
-          "--slot-1": "left",
-          "--slot-2": "top",
+          "--slot-position": "left",
+          "--slot-position-2": "top",
         },
       },
       {
@@ -13427,9 +13790,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "offset-anchor:branch:1:type:position:branch:0:term:0:branch:0:keyword:left",
         ],
-        value: "var(--slot-1) top",
+        value: "var(--slot-position) top",
         variables: {
-          "--slot-1": "left",
+          "--slot-position": "left",
         },
       },
       {
@@ -13437,9 +13800,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "offset-anchor:branch:1:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "left var(--slot-2)",
+        value: "left var(--slot-position-2)",
         variables: {
-          "--slot-2": "top",
+          "--slot-position-2": "top",
         },
       },
     ],
@@ -13454,9 +13817,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "offset-distance:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -13480,10 +13843,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "offset-path:branch:1:term:0:type:offset-path:branch:1:type:url",
           "offset-path:branch:1:term:1:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-offset-path) var(--slot-coord-box)",
         variables: {
-          "--slot-1": "url(hero.png)",
-          "--slot-2": "content-box",
+          "--slot-offset-path": "url(hero.png)",
+          "--slot-coord-box": "content-box",
         },
       },
       {
@@ -13491,9 +13854,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "offset-path:branch:1:term:0:type:offset-path:branch:1:type:url",
         ],
-        value: "var(--slot-1) content-box",
+        value: "var(--slot-offset-path) content-box",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-offset-path": "url(hero.png)",
         },
       },
       {
@@ -13501,9 +13864,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "offset-path:branch:1:term:1:type:coord-box:branch:0:type:paint-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "url(hero.png)var(--slot-2)",
+        value: "url(hero.png)var(--slot-coord-box)",
         variables: {
-          "--slot-2": "content-box",
+          "--slot-coord-box": "content-box",
         },
       },
     ],
@@ -13527,10 +13890,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "offset-position:branch:2:type:position:branch:0:term:0:branch:0:keyword:left",
           "offset-position:branch:2:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-position) var(--slot-position-2)",
         variables: {
-          "--slot-1": "left",
-          "--slot-2": "top",
+          "--slot-position": "left",
+          "--slot-position-2": "top",
         },
       },
       {
@@ -13538,9 +13901,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "offset-position:branch:2:type:position:branch:0:term:0:branch:0:keyword:left",
         ],
-        value: "var(--slot-1) top",
+        value: "var(--slot-position) top",
         variables: {
-          "--slot-1": "left",
+          "--slot-position": "left",
         },
       },
       {
@@ -13548,9 +13911,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "offset-position:branch:2:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "left var(--slot-2)",
+        value: "left var(--slot-position-2)",
         variables: {
-          "--slot-2": "top",
+          "--slot-position-2": "top",
         },
       },
     ],
@@ -13563,9 +13926,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-2",
         positions: ["offset-rotate:term:1:type:angle"],
-        value: "auto var(--slot-2)",
+        value: "auto var(--slot-angle)",
         variables: {
-          "--slot-2": "1deg",
+          "--slot-angle": "1deg",
         },
       },
       {
@@ -13574,10 +13937,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "offset-rotate:term:0:branch:1:keyword:reverse",
           "offset-rotate:term:1:type:angle",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-1) var(--slot-angle)",
         variables: {
           "--slot-1": "reverse",
-          "--slot-2": "1deg",
+          "--slot-angle": "1deg",
         },
       },
       {
@@ -13591,9 +13954,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-2-slot-2",
         positions: ["offset-rotate:term:1:type:angle"],
-        value: "reverse var(--slot-2)",
+        value: "reverse var(--slot-angle)",
         variables: {
-          "--slot-2": "1deg",
+          "--slot-angle": "1deg",
         },
       },
     ],
@@ -13606,9 +13969,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["opacity:term:0:type:opacity-value:branch:0:type:number"],
-        value: "var(--slot-1)",
+        value: "var(--slot-opacity-value)",
         variables: {
-          "--slot-1": "1",
+          "--slot-opacity-value": "1",
         },
       },
     ],
@@ -13621,9 +13984,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["order:term:0:type:integer:term:0:type:number-token"],
-        value: "var(--slot-1)",
+        value: "var(--slot-integer)",
         variables: {
-          "--slot-1": "1",
+          "--slot-integer": "1",
         },
       },
     ],
@@ -13636,9 +13999,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["orphans:term:0:type:integer:term:0:type:number-token"],
-        value: "var(--slot-1)",
+        value: "var(--slot-integer)",
         variables: {
-          "--slot-1": "1",
+          "--slot-integer": "1",
         },
       },
     ],
@@ -13655,9 +14018,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "outline:term:1:property:outline-style:branch:0:keyword:auto",
           "outline:term:2:property:outline-color:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value: "var(--slot-line-width) var(--slot-2) var(--slot-3)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
           "--slot-2": "auto",
           "--slot-3": "auto",
         },
@@ -13667,9 +14030,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "outline:term:0:property:outline-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1) auto auto",
+        value: "var(--slot-line-width) auto auto",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
       {
@@ -13700,13 +14063,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["outline-color:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "outline-color:branch:1:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -13719,9 +14090,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["outline-offset:term:0:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -13732,13 +14103,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["outline-style:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "outline-style:branch:1:type:outline-line-style:branch:0:keyword:none",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-outline-line-style)",
         variables: {
-          "--slot-1": "none",
+          "--slot-outline-line-style": "none",
         },
       },
     ],
@@ -13753,9 +14132,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "outline-width:term:0:type:line-width:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-line-width)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-line-width": "1px",
         },
       },
     ],
@@ -13836,10 +14215,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "overflow-clip-margin:term:0:type:visual-box:branch:0:keyword:content-box",
           "overflow-clip-margin:term:1:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-visual-box) var(--slot-length)",
         variables: {
-          "--slot-1": "content-box",
-          "--slot-2": "1px",
+          "--slot-visual-box": "content-box",
+          "--slot-length": "1px",
         },
       },
       {
@@ -13847,17 +14226,17 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "overflow-clip-margin:term:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-visual-box) 1px",
         variables: {
-          "--slot-1": "content-box",
+          "--slot-visual-box": "content-box",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["overflow-clip-margin:term:1:type:length"],
-        value: "content-box var(--slot-2)",
+        value: "content-box var(--slot-length)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -14034,12 +14413,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "padding:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
           "padding:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-length-percentage) var(--slot-length-percentage-2) var(--slot-length-percentage-3) var(--slot-length-percentage-4)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+          "--slot-length-percentage-3": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
       {
@@ -14047,9 +14427,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px 1px 1px",
+        value: "var(--slot-length-percentage) 1px 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -14057,9 +14437,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2) 1px 1px",
+        value: "1px var(--slot-length-percentage-2) 1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -14067,9 +14447,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px var(--slot-3) 1px",
+        value: "1px 1px var(--slot-length-percentage-3) 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-length-percentage-3": "1px",
         },
       },
       {
@@ -14077,9 +14457,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px 1px var(--slot-4)",
+        value: "1px 1px 1px var(--slot-length-percentage-4)",
         variables: {
-          "--slot-4": "1px",
+          "--slot-length-percentage-4": "1px",
         },
       },
     ],
@@ -14095,10 +14475,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "padding-block:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
           "padding-block:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -14106,9 +14486,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-block:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -14116,9 +14496,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-block:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -14133,9 +14513,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-block-end:term:0:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -14150,9 +14530,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-block-start:term:0:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -14167,9 +14547,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-bottom:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -14185,10 +14565,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "padding-inline:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
           "padding-inline:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length-percentage) var(--slot-length-percentage-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -14196,9 +14576,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-inline:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length-percentage) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -14206,9 +14586,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-inline:term:0:repeat:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-percentage-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
     ],
@@ -14223,9 +14603,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-inline-end:term:0:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -14240,9 +14620,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-inline-start:term:0:property:padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -14257,9 +14637,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-left:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -14274,9 +14654,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-right:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -14291,9 +14671,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "padding-top:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -14304,11 +14684,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["page:branch:1:type:custom-ident"],
+        id: "pattern-1-slot-1",
+        positions: ["page:branch:0:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "custom-ident",
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["page:branch:1:type:custom-ident"],
+        value: "var(--slot-custom-ident)",
+        variables: {
+          "--slot-custom-ident": "custom-ident",
         },
       },
     ],
@@ -14372,11 +14760,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["perspective:branch:1:type:length"],
+        id: "pattern-1-slot-1",
+        positions: ["perspective:branch:0:keyword:none"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["perspective:branch:1:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
         },
       },
     ],
@@ -14392,10 +14788,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "perspective-origin:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
           "perspective-origin:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-position) var(--slot-position-2)",
         variables: {
-          "--slot-1": "left",
-          "--slot-2": "top",
+          "--slot-position": "left",
+          "--slot-position-2": "top",
         },
       },
       {
@@ -14403,9 +14799,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "perspective-origin:term:0:type:position:branch:0:term:0:branch:0:keyword:left",
         ],
-        value: "var(--slot-1) top",
+        value: "var(--slot-position) top",
         variables: {
-          "--slot-1": "left",
+          "--slot-position": "left",
         },
       },
       {
@@ -14413,9 +14809,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "perspective-origin:term:0:type:position:branch:0:term:1:branch:0:keyword:top",
         ],
-        value: "left var(--slot-2)",
+        value: "left var(--slot-position-2)",
         variables: {
-          "--slot-2": "top",
+          "--slot-position-2": "top",
         },
       },
     ],
@@ -14604,44 +15000,45 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "quotes:branch:2:repeat:term:0:type:string",
           "quotes:branch:2:repeat:term:1:type:string",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-string) var(--slot-string-2) var(--slot-string-3) var(--slot-string-4)",
         variables: {
-          "--slot-1": '"x"',
-          "--slot-2": '"x"',
-          "--slot-3": '"x"',
-          "--slot-4": '"x"',
+          "--slot-string": '"x"',
+          "--slot-string-2": '"x"',
+          "--slot-string-3": '"x"',
+          "--slot-string-4": '"x"',
         },
       },
       {
         id: "pattern-3-slot-1",
         positions: ["quotes:branch:2:repeat:term:0:type:string"],
-        value: 'var(--slot-1)"x""x""x"',
+        value: 'var(--slot-string)"x""x""x"',
         variables: {
-          "--slot-1": '"x"',
+          "--slot-string": '"x"',
         },
       },
       {
         id: "pattern-3-slot-2",
         positions: ["quotes:branch:2:repeat:term:1:type:string"],
-        value: '"x"var(--slot-2)"x""x"',
+        value: '"x"var(--slot-string-2)"x""x"',
         variables: {
-          "--slot-2": '"x"',
+          "--slot-string-2": '"x"',
         },
       },
       {
         id: "pattern-3-slot-3",
         positions: ["quotes:branch:2:repeat:term:0:type:string"],
-        value: '"x""x"var(--slot-3)"x"',
+        value: '"x""x"var(--slot-string-3)"x"',
         variables: {
-          "--slot-3": '"x"',
+          "--slot-string-3": '"x"',
         },
       },
       {
         id: "pattern-3-slot-4",
         positions: ["quotes:branch:2:repeat:term:1:type:string"],
-        value: '"x""x""x"var(--slot-4)',
+        value: '"x""x""x"var(--slot-string-4)',
         variables: {
-          "--slot-4": '"x"',
+          "--slot-string-4": '"x"',
         },
       },
     ],
@@ -14652,11 +15049,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["r:branch:0:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["r:branch:1:type:percentage"],
-        value: "var(--slot-1)",
+        value: "var(--slot-percentage)",
         variables: {
-          "--slot-1": "10%",
+          "--slot-percentage": "10%",
         },
       },
     ],
@@ -14687,9 +15092,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "reading-order:term:0:type:integer:term:0:type:number-token",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-integer)",
         variables: {
-          "--slot-1": "1",
+          "--slot-integer": "1",
         },
       },
     ],
@@ -14715,57 +15120,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["right:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "right:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
-        },
-      },
-      {
-        id: "pattern-3-all-slots",
-        positions: [
-          "right:branch:3:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-          "right:branch:3:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-          "right:branch:3:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(var(--slot-1) var(--slot-2),var(--slot-3))",
-        variables: {
-          "--slot-1": "--custom-ident",
-          "--slot-2": "width",
-          "--slot-3": "1px",
-        },
-      },
-      {
-        id: "pattern-3-slot-1",
-        positions: [
-          "right:branch:3:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-        ],
-        value: "anchor-size(var(--slot-1) width,1px)",
-        variables: {
-          "--slot-1": "--custom-ident",
-        },
-      },
-      {
-        id: "pattern-3-slot-2",
-        positions: [
-          "right:branch:3:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-        ],
-        value: "anchor-size(--custom-ident var(--slot-2),1px)",
-        variables: {
-          "--slot-2": "width",
-        },
-      },
-      {
-        id: "pattern-3-slot-3",
-        positions: [
-          "right:branch:3:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(--custom-ident width,var(--slot-3))",
-        variables: {
-          "--slot-3": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -14776,11 +15145,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["rotate:branch:1:type:angle"],
+        id: "pattern-1-slot-1",
+        positions: ["rotate:branch:0:keyword:none"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1deg",
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["rotate:branch:1:type:angle"],
+        value: "var(--slot-angle)",
+        variables: {
+          "--slot-angle": "1deg",
         },
       },
       {
@@ -14789,10 +15166,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "rotate:branch:2:term:0:branch:0:keyword:x",
           "rotate:branch:2:term:1:type:angle",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-1) var(--slot-angle)",
         variables: {
           "--slot-1": "x",
-          "--slot-2": "1deg",
+          "--slot-angle": "1deg",
         },
       },
       {
@@ -14806,9 +15183,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-3-slot-2",
         positions: ["rotate:branch:2:term:1:type:angle"],
-        value: "x var(--slot-2)",
+        value: "x var(--slot-angle)",
         variables: {
-          "--slot-2": "1deg",
+          "--slot-angle": "1deg",
         },
       },
     ],
@@ -14819,13 +15196,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["row-gap:branch:0:keyword:normal"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "normal",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "row-gap:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -14894,6 +15279,14 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["rx:branch:0:type:length-percentage:branch:0:type:length"],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["rx:branch:1:keyword:auto"],
         value: "var(--slot-1)",
@@ -14908,6 +15301,14 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   },
   {
     cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: ["ry:branch:0:type:length-percentage:branch:0:type:length"],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
       {
         id: "pattern-2-slot-1",
         positions: ["ry:branch:1:keyword:auto"],
@@ -14938,35 +15339,35 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "scale:branch:1:repeat:branch:0:type:number",
           "scale:branch:1:repeat:branch:0:type:number",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value: "var(--slot-number) var(--slot-number-2) var(--slot-number-3)",
         variables: {
-          "--slot-1": "1",
-          "--slot-2": "1",
-          "--slot-3": "1",
+          "--slot-number": "1",
+          "--slot-number-2": "1",
+          "--slot-number-3": "1",
         },
       },
       {
         id: "pattern-2-slot-1",
         positions: ["scale:branch:1:repeat:branch:0:type:number"],
-        value: "var(--slot-1)1 1",
+        value: "var(--slot-number)1 1",
         variables: {
-          "--slot-1": "1",
+          "--slot-number": "1",
         },
       },
       {
         id: "pattern-2-slot-2",
         positions: ["scale:branch:1:repeat:branch:0:type:number"],
-        value: "1 var(--slot-2)1",
+        value: "1 var(--slot-number-2)1",
         variables: {
-          "--slot-2": "1",
+          "--slot-number-2": "1",
         },
       },
       {
         id: "pattern-2-slot-3",
         positions: ["scale:branch:1:repeat:branch:0:type:number"],
-        value: "1 1 var(--slot-3)",
+        value: "1 1 var(--slot-number-3)",
         variables: {
-          "--slot-3": "1",
+          "--slot-number-3": "1",
         },
       },
     ],
@@ -14999,44 +15400,45 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "scroll-margin:term:0:repeat:type:length",
           "scroll-margin:term:0:repeat:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-length) var(--slot-length-2) var(--slot-length-3) var(--slot-length-4)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-length": "1px",
+          "--slot-length-2": "1px",
+          "--slot-length-3": "1px",
+          "--slot-length-4": "1px",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin:term:0:repeat:type:length"],
-        value: "var(--slot-1) 1px 1px 1px",
+        value: "var(--slot-length) 1px 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["scroll-margin:term:0:repeat:type:length"],
-        value: "1px var(--slot-2) 1px 1px",
+        value: "1px var(--slot-length-2) 1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-2": "1px",
         },
       },
       {
         id: "pattern-1-slot-3",
         positions: ["scroll-margin:term:0:repeat:type:length"],
-        value: "1px 1px var(--slot-3) 1px",
+        value: "1px 1px var(--slot-length-3) 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-length-3": "1px",
         },
       },
       {
         id: "pattern-1-slot-4",
         positions: ["scroll-margin:term:0:repeat:type:length"],
-        value: "1px 1px 1px var(--slot-4)",
+        value: "1px 1px 1px var(--slot-length-4)",
         variables: {
-          "--slot-4": "1px",
+          "--slot-length-4": "1px",
         },
       },
     ],
@@ -15052,26 +15454,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "scroll-margin-block:term:0:repeat:type:length",
           "scroll-margin-block:term:0:repeat:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length) var(--slot-length-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length": "1px",
+          "--slot-length-2": "1px",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin-block:term:0:repeat:type:length"],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["scroll-margin-block:term:0:repeat:type:length"],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-2": "1px",
         },
       },
     ],
@@ -15084,9 +15486,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin-block-end:term:0:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -15099,9 +15501,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin-block-start:term:0:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -15114,9 +15516,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin-bottom:term:0:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -15132,26 +15534,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "scroll-margin-inline:term:0:repeat:type:length",
           "scroll-margin-inline:term:0:repeat:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length) var(--slot-length-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length": "1px",
+          "--slot-length-2": "1px",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin-inline:term:0:repeat:type:length"],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["scroll-margin-inline:term:0:repeat:type:length"],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-2": "1px",
         },
       },
     ],
@@ -15164,9 +15566,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin-inline-end:term:0:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -15179,9 +15581,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin-inline-start:term:0:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -15194,9 +15596,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin-left:term:0:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -15209,9 +15611,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin-right:term:0:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -15224,9 +15626,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["scroll-margin-top:term:0:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -15342,13 +15744,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-padding-block-end:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "scroll-padding-block-end:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -15359,13 +15769,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-padding-block-start:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "scroll-padding-block-start:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -15376,13 +15794,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-padding-bottom:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "scroll-padding-bottom:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -15432,13 +15858,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-padding-inline-end:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "scroll-padding-inline-end:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -15449,13 +15883,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-padding-inline-start:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "scroll-padding-inline-start:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -15466,13 +15908,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-padding-left:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "scroll-padding-left:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -15483,13 +15933,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-padding-right:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "scroll-padding-right:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -15500,13 +15958,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["scroll-padding-top:branch:0:keyword:auto"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "auto",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: [
           "scroll-padding-top:branch:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -15641,10 +16107,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "scrollbar-color:branch:1:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
           "scrollbar-color:branch:1:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-color) var(--slot-color-2)",
         variables: {
-          "--slot-1": "red",
-          "--slot-2": "red",
+          "--slot-color": "red",
+          "--slot-color-2": "red",
         },
       },
       {
@@ -15652,9 +16118,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "scrollbar-color:branch:1:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) red",
+        value: "var(--slot-color) red",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
       {
@@ -15662,9 +16128,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "scrollbar-color:branch:1:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "red var(--slot-2)",
+        value: "red var(--slot-color-2)",
         variables: {
-          "--slot-2": "red",
+          "--slot-color-2": "red",
         },
       },
     ],
@@ -15739,9 +16205,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "shape-image-threshold:term:0:type:opacity-value:branch:0:type:number",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-opacity-value)",
         variables: {
-          "--slot-1": "1",
+          "--slot-opacity-value": "1",
         },
       },
     ],
@@ -15756,9 +16222,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "shape-margin:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -15769,11 +16235,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["shape-outside:branch:2:type:image:branch:0:type:url"],
+        id: "pattern-1-slot-1",
+        positions: ["shape-outside:branch:0:keyword:none"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "url(hero.png)",
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["shape-outside:branch:2:type:image:branch:0:type:url"],
+        value: "var(--slot-image)",
+        variables: {
+          "--slot-image": "url(hero.png)",
         },
       },
       {
@@ -15783,11 +16257,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "shape-outside:branch:1:term:1:type:basic-shape:branch:6:type:path():term:1:repeat:property:fill-rule:branch:0:keyword:nonzero",
           "shape-outside:branch:1:term:1:type:basic-shape:branch:6:type:path():term:3:type:string",
         ],
-        value: "var(--slot-1) path(var(--slot-2),var(--slot-3))",
+        value:
+          "var(--slot-shape-box) path(var(--slot-basic-shape),var(--slot-basic-shape-2))",
         variables: {
-          "--slot-1": "content-box",
-          "--slot-2": "nonzero",
-          "--slot-3": '"x"',
+          "--slot-shape-box": "content-box",
+          "--slot-basic-shape": "nonzero",
+          "--slot-basic-shape-2": '"x"',
         },
       },
       {
@@ -15795,9 +16270,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "shape-outside:branch:1:term:0:type:shape-box:branch:0:type:visual-box:branch:0:keyword:content-box",
         ],
-        value: 'var(--slot-1) path(nonzero,"x")',
+        value: 'var(--slot-shape-box) path(nonzero,"x")',
         variables: {
-          "--slot-1": "content-box",
+          "--slot-shape-box": "content-box",
         },
       },
       {
@@ -15805,9 +16280,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "shape-outside:branch:1:term:1:type:basic-shape:branch:6:type:path():term:1:repeat:property:fill-rule:branch:0:keyword:nonzero",
         ],
-        value: 'content-box path(var(--slot-2),"x")',
+        value: 'content-box path(var(--slot-basic-shape),"x")',
         variables: {
-          "--slot-2": "nonzero",
+          "--slot-basic-shape": "nonzero",
         },
       },
       {
@@ -15815,9 +16290,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "shape-outside:branch:1:term:1:type:basic-shape:branch:6:type:path():term:3:type:string",
         ],
-        value: "content-box path(nonzero,var(--slot-3))",
+        value: "content-box path(nonzero,var(--slot-basic-shape-2))",
         variables: {
-          "--slot-3": '"x"',
+          "--slot-basic-shape-2": '"x"',
         },
       },
     ],
@@ -15847,9 +16322,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "stop-color:term:0:property:color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -15864,9 +16339,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "stop-opacity:term:0:property:opacity:term:0:type:opacity-value:branch:0:type:number",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-opacity-value)",
         variables: {
-          "--slot-1": "1",
+          "--slot-opacity-value": "1",
         },
       },
     ],
@@ -15879,9 +16354,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["stroke:term:0:type:paint:branch:0:keyword:none"],
-        value: "var(--slot-1)",
+        value: "var(--slot-paint)",
         variables: {
-          "--slot-1": "none",
+          "--slot-paint": "none",
         },
       },
     ],
@@ -15907,12 +16382,13 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "stroke-dasharray:branch:1:type:dasharray:term:0:repeat:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
           "stroke-dasharray:branch:1:type:dasharray:term:0:repeat:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2),var(--slot-3) var(--slot-4)",
+        value:
+          "var(--slot-dasharray) var(--slot-dasharray-2),var(--slot-dasharray-3) var(--slot-dasharray-4)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "1px",
+          "--slot-dasharray": "1px",
+          "--slot-dasharray-2": "1px",
+          "--slot-dasharray-3": "1px",
+          "--slot-dasharray-4": "1px",
         },
       },
       {
@@ -15920,9 +16396,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "stroke-dasharray:branch:1:type:dasharray:term:0:repeat:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px,1px 1px",
+        value: "var(--slot-dasharray) 1px,1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-dasharray": "1px",
         },
       },
       {
@@ -15930,9 +16406,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "stroke-dasharray:branch:1:type:dasharray:term:0:repeat:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2),1px 1px",
+        value: "1px var(--slot-dasharray-2),1px 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-dasharray-2": "1px",
         },
       },
       {
@@ -15940,9 +16416,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "stroke-dasharray:branch:1:type:dasharray:term:0:repeat:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px,var(--slot-3) 1px",
+        value: "1px 1px,var(--slot-dasharray-3) 1px",
         variables: {
-          "--slot-3": "1px",
+          "--slot-dasharray-3": "1px",
         },
       },
       {
@@ -15950,9 +16426,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "stroke-dasharray:branch:1:type:dasharray:term:0:repeat:term:0:repeat:branch:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px 1px,1px var(--slot-4)",
+        value: "1px 1px,1px var(--slot-dasharray-4)",
         variables: {
-          "--slot-4": "1px",
+          "--slot-dasharray-4": "1px",
         },
       },
     ],
@@ -15963,11 +16439,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: [
+          "stroke-dashoffset:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["stroke-dashoffset:branch:1:type:number"],
-        value: "var(--slot-1)",
+        value: "var(--slot-number)",
         variables: {
-          "--slot-1": "1",
+          "--slot-number": "1",
         },
       },
     ],
@@ -16010,9 +16496,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["stroke-miterlimit:term:0:type:number"],
-        value: "var(--slot-1)",
+        value: "var(--slot-number)",
         variables: {
-          "--slot-1": "1",
+          "--slot-number": "1",
         },
       },
     ],
@@ -16027,9 +16513,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "stroke-opacity:term:0:property:opacity:term:0:type:opacity-value:branch:0:type:number",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-opacity-value)",
         variables: {
-          "--slot-1": "1",
+          "--slot-opacity-value": "1",
         },
       },
     ],
@@ -16040,11 +16526,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: [
+          "stroke-width:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["stroke-width:branch:1:type:number"],
-        value: "var(--slot-1)",
+        value: "var(--slot-number)",
         variables: {
-          "--slot-1": "1",
+          "--slot-number": "1",
         },
       },
     ],
@@ -16055,11 +16551,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["tab-size:branch:0:type:integer:term:0:type:number-token"],
+        value: "var(--slot-integer)",
+        variables: {
+          "--slot-integer": "1",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["tab-size:branch:1:type:length"],
-        value: "var(--slot-1)",
+        value: "var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -16158,10 +16662,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "text-combine-upright:branch:2:term:0:keyword:digits",
           "text-combine-upright:branch:2:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-1) var(--slot-integer)",
         variables: {
           "--slot-1": "digits",
-          "--slot-2": "1",
+          "--slot-integer": "1",
         },
       },
       {
@@ -16177,9 +16681,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-combine-upright:branch:2:term:1:repeat:type:integer:term:0:type:number-token",
         ],
-        value: "digits var(--slot-2)",
+        value: "digits var(--slot-integer)",
         variables: {
-          "--slot-2": "1",
+          "--slot-integer": "1",
         },
       },
     ],
@@ -16197,11 +16701,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "text-decoration:term:2:property:text-decoration-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
           "text-decoration:term:3:property:text-decoration-thickness:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4)",
+        value: "var(--slot-1) var(--slot-2) var(--slot-color) var(--slot-4)",
         variables: {
           "--slot-1": "none",
           "--slot-2": "solid",
-          "--slot-3": "red",
+          "--slot-color": "red",
           "--slot-4": "auto",
         },
       },
@@ -16230,9 +16734,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-decoration:term:2:property:text-decoration-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "none solid var(--slot-3) auto",
+        value: "none solid var(--slot-color) auto",
         variables: {
-          "--slot-3": "red",
+          "--slot-color": "red",
         },
       },
       {
@@ -16258,9 +16762,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-decoration-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -16284,26 +16788,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "text-decoration-inset:branch:0:repeat:type:length",
           "text-decoration-inset:branch:0:repeat:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-length) var(--slot-length-2)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-length": "1px",
+          "--slot-length-2": "1px",
         },
       },
       {
         id: "pattern-2-slot-1",
         positions: ["text-decoration-inset:branch:0:repeat:type:length"],
-        value: "var(--slot-1) 1px",
+        value: "var(--slot-length) 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length": "1px",
         },
       },
       {
         id: "pattern-2-slot-2",
         positions: ["text-decoration-inset:branch:0:repeat:type:length"],
-        value: "1px var(--slot-2)",
+        value: "1px var(--slot-length-2)",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-2": "1px",
         },
       },
     ],
@@ -16410,11 +16914,27 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-4-slot-1",
-        positions: ["text-decoration-thickness:branch:3:type:percentage"],
+        id: "pattern-2-slot-1",
+        positions: ["text-decoration-thickness:branch:1:keyword:from-font"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "10%",
+          "--slot-1": "from-font",
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: ["text-decoration-thickness:branch:2:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
+        id: "pattern-4-slot-1",
+        positions: ["text-decoration-thickness:branch:3:type:percentage"],
+        value: "var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
         },
       },
     ],
@@ -16430,10 +16950,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "text-emphasis:term:0:property:text-emphasis-style:branch:0:keyword:none",
           "text-emphasis:term:1:property:text-emphasis-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-1) var(--slot-color)",
         variables: {
           "--slot-1": "none",
-          "--slot-2": "red",
+          "--slot-color": "red",
         },
       },
       {
@@ -16451,9 +16971,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-emphasis:term:1:property:text-emphasis-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "none var(--slot-2)",
+        value: "none var(--slot-color)",
         variables: {
-          "--slot-2": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -16468,9 +16988,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-emphasis-color:term:0:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "var(--slot-1)",
+        value: "var(--slot-color)",
         variables: {
-          "--slot-1": "red",
+          "--slot-color": "red",
         },
       },
     ],
@@ -16528,11 +17048,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["text-emphasis-style:branch:2:type:string"],
+        id: "pattern-1-slot-1",
+        positions: ["text-emphasis-style:branch:0:keyword:none"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": '"x"',
+          "--slot-1": "none",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["text-emphasis-style:branch:2:type:string"],
+        value: "var(--slot-string)",
+        variables: {
+          "--slot-string": '"x"',
         },
       },
       {
@@ -16580,9 +17108,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "text-indent:term:1:repeat:keyword:hanging",
           "text-indent:term:2:repeat:keyword:each-line",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value: "var(--slot-length-percentage) var(--slot-2) var(--slot-3)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
           "--slot-2": "hanging",
           "--slot-3": "each-line",
         },
@@ -16592,9 +17120,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-indent:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) hanging each-line",
+        value: "var(--slot-length-percentage) hanging each-line",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -16721,16 +17249,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "text-shadow:branch:1:repeat:type:shadow-t:term:1:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4),var(--slot-5) var(--slot-6) var(--slot-7) var(--slot-8)",
+          "var(--slot-shadow-t) var(--slot-shadow-t-2) var(--slot-shadow-t-3) var(--slot-shadow-t-4),var(--slot-shadow-t-5) var(--slot-shadow-t-6) var(--slot-shadow-t-7) var(--slot-shadow-t-8)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
-          "--slot-4": "red",
-          "--slot-5": "1px",
-          "--slot-6": "1px",
-          "--slot-7": "1px",
-          "--slot-8": "red",
+          "--slot-shadow-t": "1px",
+          "--slot-shadow-t-2": "1px",
+          "--slot-shadow-t-3": "1px",
+          "--slot-shadow-t-4": "red",
+          "--slot-shadow-t-5": "1px",
+          "--slot-shadow-t-6": "1px",
+          "--slot-shadow-t-7": "1px",
+          "--slot-shadow-t-8": "red",
         },
       },
       {
@@ -16738,9 +17266,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-shadow:branch:1:repeat:type:shadow-t:term:0:repeat:type:length",
         ],
-        value: "var(--slot-1) 1px 1px red,1px 1px 1px red",
+        value: "var(--slot-shadow-t) 1px 1px red,1px 1px 1px red",
         variables: {
-          "--slot-1": "1px",
+          "--slot-shadow-t": "1px",
         },
       },
       {
@@ -16748,9 +17276,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-shadow:branch:1:repeat:type:shadow-t:term:0:repeat:type:length",
         ],
-        value: "1px var(--slot-2) 1px red,1px 1px 1px red",
+        value: "1px var(--slot-shadow-t-2) 1px red,1px 1px 1px red",
         variables: {
-          "--slot-2": "1px",
+          "--slot-shadow-t-2": "1px",
         },
       },
       {
@@ -16758,9 +17286,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-shadow:branch:1:repeat:type:shadow-t:term:0:repeat:type:length",
         ],
-        value: "1px 1px var(--slot-3) red,1px 1px 1px red",
+        value: "1px 1px var(--slot-shadow-t-3) red,1px 1px 1px red",
         variables: {
-          "--slot-3": "1px",
+          "--slot-shadow-t-3": "1px",
         },
       },
       {
@@ -16768,9 +17296,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-shadow:branch:1:repeat:type:shadow-t:term:1:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px 1px 1px var(--slot-4),1px 1px 1px red",
+        value: "1px 1px 1px var(--slot-shadow-t-4),1px 1px 1px red",
         variables: {
-          "--slot-4": "red",
+          "--slot-shadow-t-4": "red",
         },
       },
       {
@@ -16778,9 +17306,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-shadow:branch:1:repeat:type:shadow-t:term:0:repeat:type:length",
         ],
-        value: "1px 1px 1px red,var(--slot-5) 1px 1px red",
+        value: "1px 1px 1px red,var(--slot-shadow-t-5) 1px 1px red",
         variables: {
-          "--slot-5": "1px",
+          "--slot-shadow-t-5": "1px",
         },
       },
       {
@@ -16788,9 +17316,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-shadow:branch:1:repeat:type:shadow-t:term:0:repeat:type:length",
         ],
-        value: "1px 1px 1px red,1px var(--slot-6) 1px red",
+        value: "1px 1px 1px red,1px var(--slot-shadow-t-6) 1px red",
         variables: {
-          "--slot-6": "1px",
+          "--slot-shadow-t-6": "1px",
         },
       },
       {
@@ -16798,9 +17326,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-shadow:branch:1:repeat:type:shadow-t:term:0:repeat:type:length",
         ],
-        value: "1px 1px 1px red,1px 1px var(--slot-7) red",
+        value: "1px 1px 1px red,1px 1px var(--slot-shadow-t-7) red",
         variables: {
-          "--slot-7": "1px",
+          "--slot-shadow-t-7": "1px",
         },
       },
       {
@@ -16808,9 +17336,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "text-shadow:branch:1:repeat:type:shadow-t:term:1:repeat:type:color:branch:0:type:color-base:branch:0:type:hex-color",
         ],
-        value: "1px 1px 1px red,1px 1px 1px var(--slot-8)",
+        value: "1px 1px 1px red,1px 1px 1px var(--slot-shadow-t-8)",
         variables: {
-          "--slot-8": "red",
+          "--slot-shadow-t-8": "red",
         },
       },
     ],
@@ -16821,11 +17349,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-3-slot-1",
-        positions: ["text-size-adjust:branch:2:type:percentage"],
+        id: "pattern-2-slot-1",
+        positions: ["text-size-adjust:branch:1:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "10%",
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: ["text-size-adjust:branch:2:type:percentage"],
+        value: "var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
         },
       },
     ],
@@ -16892,11 +17428,27 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-3-slot-1",
-        positions: ["text-underline-offset:branch:2:type:percentage"],
+        id: "pattern-1-slot-1",
+        positions: ["text-underline-offset:branch:0:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "10%",
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["text-underline-offset:branch:1:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
+        id: "pattern-3-slot-1",
+        positions: ["text-underline-offset:branch:2:type:percentage"],
+        value: "var(--slot-percentage)",
+        variables: {
+          "--slot-percentage": "10%",
         },
       },
     ],
@@ -17073,11 +17625,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "timeline-trigger:branch:1:repeat:term:3:repeat:term:1:property:timeline-trigger-active-range:term:0:repeat:term:1:repeat:property:timeline-trigger-active-range-end:term:0:repeat:branch:0:keyword:auto",
         ],
         value:
-          "var(--slot-1) var(--slot-2),var(--slot-3) var(--slot-4),var(--slot-5) var(--slot-6),var(--slot-7),var(--slot-8),var(--slot-9) var(--slot-10),var(--slot-11) var(--slot-12) var(--slot-13),var(--slot-14) var(--slot-15),var(--slot-16),var(--slot-17),var(--slot-18) var(--slot-19),var(--slot-20),var(--slot-21) var(--slot-22),var(--slot-23) var(--slot-24),var(--slot-25) var(--slot-26),var(--slot-27),var(--slot-28),var(--slot-29) var(--slot-30),var(--slot-31) var(--slot-32) var(--slot-33),var(--slot-34) var(--slot-35),var(--slot-36),var(--slot-37),var(--slot-38) var(--slot-39),var(--slot-40)",
+          "var(--slot-1) var(--slot-single-animation-timeline),var(--slot-single-animation-timeline-2) var(--slot-4),var(--slot-5) var(--slot-6),var(--slot-7),var(--slot-8),var(--slot-9) var(--slot-10),var(--slot-11) var(--slot-12) var(--slot-13),var(--slot-14) var(--slot-15),var(--slot-16),var(--slot-17),var(--slot-18) var(--slot-19),var(--slot-20),var(--slot-21) var(--slot-single-animation-timeline-3),var(--slot-single-animation-timeline-4) var(--slot-24),var(--slot-25) var(--slot-26),var(--slot-27),var(--slot-28),var(--slot-29) var(--slot-30),var(--slot-31) var(--slot-32) var(--slot-33),var(--slot-34) var(--slot-35),var(--slot-36),var(--slot-37),var(--slot-38) var(--slot-39),var(--slot-40)",
         variables: {
           "--slot-1": "none",
-          "--slot-2": "auto",
-          "--slot-3": "auto",
+          "--slot-single-animation-timeline": "auto",
+          "--slot-single-animation-timeline-2": "auto",
           "--slot-4": "normal",
           "--slot-5": "normal",
           "--slot-6": "normal",
@@ -17096,8 +17648,8 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "--slot-19": "auto",
           "--slot-20": "auto",
           "--slot-21": "none",
-          "--slot-22": "auto",
-          "--slot-23": "auto",
+          "--slot-single-animation-timeline-3": "auto",
+          "--slot-single-animation-timeline-4": "auto",
           "--slot-24": "normal",
           "--slot-25": "normal",
           "--slot-26": "normal",
@@ -17244,9 +17796,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "timeline-trigger:branch:1:repeat:term:1:property:timeline-trigger-source:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
         ],
         value:
-          'none var(--slot-2),auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto,none auto,auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto',
+          'none var(--slot-single-animation-timeline),auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto,none auto,auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto',
         variables: {
-          "--slot-2": "auto",
+          "--slot-single-animation-timeline": "auto",
         },
       },
       {
@@ -17277,9 +17829,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "timeline-trigger:branch:1:repeat:term:1:property:timeline-trigger-source:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
         ],
         value:
-          'none auto,auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto,none var(--slot-22),auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto',
+          'none auto,auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto,none var(--slot-single-animation-timeline-3),auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto',
         variables: {
-          "--slot-22": "auto",
+          "--slot-single-animation-timeline-3": "auto",
         },
       },
       {
@@ -17288,9 +17840,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "timeline-trigger:branch:1:repeat:term:1:property:timeline-trigger-source:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
         ],
         value:
-          'none auto,auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto,none auto,var(--slot-23) normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto',
+          'none auto,auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto,none auto,var(--slot-single-animation-timeline-4) normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto',
         variables: {
-          "--slot-23": "auto",
+          "--slot-single-animation-timeline-4": "auto",
         },
       },
       {
@@ -17365,9 +17917,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "timeline-trigger:branch:1:repeat:term:1:property:timeline-trigger-source:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
         ],
         value:
-          'none auto,var(--slot-3) normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto,none auto,auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto',
+          'none auto,var(--slot-single-animation-timeline-2) normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto,none auto,auto normal,normal normal,normal,normal,normal normal,normal"x"auto,auto auto,auto,auto,auto auto,auto',
         variables: {
-          "--slot-3": "auto",
+          "--slot-single-animation-timeline-2": "auto",
         },
       },
       {
@@ -17965,26 +18517,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "timeline-trigger-name:branch:1:repeat:type:dashed-ident",
           "timeline-trigger-name:branch:1:repeat:type:dashed-ident",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-dashed-ident),var(--slot-dashed-ident-2)",
         variables: {
-          "--slot-1": "--custom-ident",
-          "--slot-2": "--custom-ident",
+          "--slot-dashed-ident": "--custom-ident",
+          "--slot-dashed-ident-2": "--custom-ident",
         },
       },
       {
         id: "pattern-2-slot-1",
         positions: ["timeline-trigger-name:branch:1:repeat:type:dashed-ident"],
-        value: "var(--slot-1),--custom-ident",
+        value: "var(--slot-dashed-ident),--custom-ident",
         variables: {
-          "--slot-1": "--custom-ident",
+          "--slot-dashed-ident": "--custom-ident",
         },
       },
       {
         id: "pattern-2-slot-2",
         positions: ["timeline-trigger-name:branch:1:repeat:type:dashed-ident"],
-        value: "--custom-ident,var(--slot-2)",
+        value: "--custom-ident,var(--slot-dashed-ident-2)",
         variables: {
-          "--slot-2": "--custom-ident",
+          "--slot-dashed-ident-2": "--custom-ident",
         },
       },
     ],
@@ -18000,10 +18552,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "timeline-trigger-source:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
           "timeline-trigger-source:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value:
+          "var(--slot-single-animation-timeline),var(--slot-single-animation-timeline-2)",
         variables: {
-          "--slot-1": "auto",
-          "--slot-2": "auto",
+          "--slot-single-animation-timeline": "auto",
+          "--slot-single-animation-timeline-2": "auto",
         },
       },
       {
@@ -18011,9 +18564,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "timeline-trigger-source:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
         ],
-        value: "var(--slot-1),auto",
+        value: "var(--slot-single-animation-timeline),auto",
         variables: {
-          "--slot-1": "auto",
+          "--slot-single-animation-timeline": "auto",
         },
       },
       {
@@ -18021,9 +18574,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "timeline-trigger-source:term:0:repeat:type:single-animation-timeline:branch:0:keyword:auto",
         ],
-        value: "auto,var(--slot-2)",
+        value: "auto,var(--slot-single-animation-timeline-2)",
         variables: {
-          "--slot-2": "auto",
+          "--slot-single-animation-timeline-2": "auto",
         },
       },
     ],
@@ -18034,55 +18587,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["top:branch:1:type:length-percentage:branch:0:type:length"],
+        id: "pattern-1-slot-1",
+        positions: ["top:branch:0:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-1": "auto",
         },
       },
       {
-        id: "pattern-3-all-slots",
-        positions: [
-          "top:branch:3:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-          "top:branch:3:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-          "top:branch:3:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(var(--slot-1) var(--slot-2),var(--slot-3))",
+        id: "pattern-2-slot-1",
+        positions: ["top:branch:1:type:length-percentage:branch:0:type:length"],
+        value: "var(--slot-length-percentage)",
         variables: {
-          "--slot-1": "--custom-ident",
-          "--slot-2": "width",
-          "--slot-3": "1px",
-        },
-      },
-      {
-        id: "pattern-3-slot-1",
-        positions: [
-          "top:branch:3:type:anchor-size():term:1:repeat:term:0:type:anchor-name:term:0:type:dashed-ident",
-        ],
-        value: "anchor-size(var(--slot-1) width,1px)",
-        variables: {
-          "--slot-1": "--custom-ident",
-        },
-      },
-      {
-        id: "pattern-3-slot-2",
-        positions: [
-          "top:branch:3:type:anchor-size():term:1:repeat:term:1:type:anchor-size:branch:0:keyword:width",
-        ],
-        value: "anchor-size(--custom-ident var(--slot-2),1px)",
-        variables: {
-          "--slot-2": "width",
-        },
-      },
-      {
-        id: "pattern-3-slot-3",
-        positions: [
-          "top:branch:3:type:anchor-size():term:3:repeat:type:length-percentage:branch:0:type:length",
-        ],
-        value: "anchor-size(--custom-ident width,var(--slot-3))",
-        variables: {
-          "--slot-3": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
     ],
@@ -18160,10 +18677,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "transform:branch:1:type:transform-list:term:0:repeat:type:transform-function:branch:2:type:translateX():term:1:type:length-percentage:branch:0:type:length",
           "transform:branch:1:type:transform-list:term:0:repeat:type:transform-function:branch:2:type:translateX():term:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "translateX(var(--slot-1)) translateX(var(--slot-2))",
+        value:
+          "translateX(var(--slot-transform-list)) translateX(var(--slot-transform-list-2))",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
+          "--slot-transform-list": "1px",
+          "--slot-transform-list-2": "1px",
         },
       },
       {
@@ -18171,9 +18689,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transform:branch:1:type:transform-list:term:0:repeat:type:transform-function:branch:2:type:translateX():term:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "translateX(var(--slot-1)) translateX(1px)",
+        value: "translateX(var(--slot-transform-list)) translateX(1px)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-transform-list": "1px",
         },
       },
       {
@@ -18181,9 +18699,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transform:branch:1:type:transform-list:term:0:repeat:type:transform-function:branch:2:type:translateX():term:1:type:length-percentage:branch:0:type:length",
         ],
-        value: "translateX(1px) translateX(var(--slot-2))",
+        value: "translateX(1px) translateX(var(--slot-transform-list-2))",
         variables: {
-          "--slot-2": "1px",
+          "--slot-transform-list-2": "1px",
         },
       },
     ],
@@ -18208,6 +18726,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   },
   {
     cases: [
+      {
+        id: "pattern-1-slot-1",
+        positions: [
+          "transform-origin:branch:0:branch:0:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
       {
         id: "pattern-4-slot-1",
         positions: ["transform-origin:branch:0:branch:3:keyword:right"],
@@ -18254,18 +18782,18 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "transition:term:0:repeat:type:single-transition:term:4:type:transition-behavior-value:branch:0:keyword:normal",
         ],
         value:
-          "var(--slot-1) var(--slot-2) var(--slot-3) var(--slot-4) var(--slot-5),var(--slot-6) var(--slot-7) var(--slot-8) var(--slot-9) var(--slot-10)",
+          "var(--slot-single-transition) var(--slot-single-transition-2) var(--slot-single-transition-3) var(--slot-single-transition-4) var(--slot-single-transition-5),var(--slot-single-transition-6) var(--slot-single-transition-7) var(--slot-single-transition-8) var(--slot-single-transition-9) var(--slot-single-transition-10)",
         variables: {
-          "--slot-1": "none",
-          "--slot-2": "1s",
-          "--slot-3": "linear",
-          "--slot-4": "1s",
-          "--slot-5": "normal",
-          "--slot-6": "none",
-          "--slot-7": "1s",
-          "--slot-8": "linear",
-          "--slot-9": "1s",
-          "--slot-10": "normal",
+          "--slot-single-transition": "none",
+          "--slot-single-transition-2": "1s",
+          "--slot-single-transition-3": "linear",
+          "--slot-single-transition-4": "1s",
+          "--slot-single-transition-5": "normal",
+          "--slot-single-transition-6": "none",
+          "--slot-single-transition-7": "1s",
+          "--slot-single-transition-8": "linear",
+          "--slot-single-transition-9": "1s",
+          "--slot-single-transition-10": "normal",
         },
       },
       {
@@ -18273,9 +18801,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition:term:0:repeat:type:single-transition:term:0:branch:0:keyword:none",
         ],
-        value: "var(--slot-1) 1s linear 1s normal,none 1s linear 1s normal",
+        value:
+          "var(--slot-single-transition) 1s linear 1s normal,none 1s linear 1s normal",
         variables: {
-          "--slot-1": "none",
+          "--slot-single-transition": "none",
         },
       },
       {
@@ -18283,9 +18812,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition:term:0:repeat:type:single-transition:term:4:type:transition-behavior-value:branch:0:keyword:normal",
         ],
-        value: "none 1s linear 1s normal,none 1s linear 1s var(--slot-10)",
+        value:
+          "none 1s linear 1s normal,none 1s linear 1s var(--slot-single-transition-10)",
         variables: {
-          "--slot-10": "normal",
+          "--slot-single-transition-10": "normal",
         },
       },
       {
@@ -18293,9 +18823,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition:term:0:repeat:type:single-transition:term:1:type:time",
         ],
-        value: "none var(--slot-2) linear 1s normal,none 1s linear 1s normal",
+        value:
+          "none var(--slot-single-transition-2) linear 1s normal,none 1s linear 1s normal",
         variables: {
-          "--slot-2": "1s",
+          "--slot-single-transition-2": "1s",
         },
       },
       {
@@ -18303,9 +18834,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition:term:0:repeat:type:single-transition:term:2:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
-        value: "none 1s var(--slot-3) 1s normal,none 1s linear 1s normal",
+        value:
+          "none 1s var(--slot-single-transition-3) 1s normal,none 1s linear 1s normal",
         variables: {
-          "--slot-3": "linear",
+          "--slot-single-transition-3": "linear",
         },
       },
       {
@@ -18313,9 +18845,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition:term:0:repeat:type:single-transition:term:3:type:time",
         ],
-        value: "none 1s linear var(--slot-4) normal,none 1s linear 1s normal",
+        value:
+          "none 1s linear var(--slot-single-transition-4) normal,none 1s linear 1s normal",
         variables: {
-          "--slot-4": "1s",
+          "--slot-single-transition-4": "1s",
         },
       },
       {
@@ -18323,9 +18856,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition:term:0:repeat:type:single-transition:term:4:type:transition-behavior-value:branch:0:keyword:normal",
         ],
-        value: "none 1s linear 1s var(--slot-5),none 1s linear 1s normal",
+        value:
+          "none 1s linear 1s var(--slot-single-transition-5),none 1s linear 1s normal",
         variables: {
-          "--slot-5": "normal",
+          "--slot-single-transition-5": "normal",
         },
       },
       {
@@ -18333,9 +18867,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition:term:0:repeat:type:single-transition:term:0:branch:0:keyword:none",
         ],
-        value: "none 1s linear 1s normal,var(--slot-6) 1s linear 1s normal",
+        value:
+          "none 1s linear 1s normal,var(--slot-single-transition-6) 1s linear 1s normal",
         variables: {
-          "--slot-6": "none",
+          "--slot-single-transition-6": "none",
         },
       },
       {
@@ -18343,9 +18878,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition:term:0:repeat:type:single-transition:term:1:type:time",
         ],
-        value: "none 1s linear 1s normal,none var(--slot-7) linear 1s normal",
+        value:
+          "none 1s linear 1s normal,none var(--slot-single-transition-7) linear 1s normal",
         variables: {
-          "--slot-7": "1s",
+          "--slot-single-transition-7": "1s",
         },
       },
       {
@@ -18353,9 +18889,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition:term:0:repeat:type:single-transition:term:2:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
-        value: "none 1s linear 1s normal,none 1s var(--slot-8) 1s normal",
+        value:
+          "none 1s linear 1s normal,none 1s var(--slot-single-transition-8) 1s normal",
         variables: {
-          "--slot-8": "linear",
+          "--slot-single-transition-8": "linear",
         },
       },
       {
@@ -18363,9 +18900,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition:term:0:repeat:type:single-transition:term:3:type:time",
         ],
-        value: "none 1s linear 1s normal,none 1s linear var(--slot-9) normal",
+        value:
+          "none 1s linear 1s normal,none 1s linear var(--slot-single-transition-9) normal",
         variables: {
-          "--slot-9": "1s",
+          "--slot-single-transition-9": "1s",
         },
       },
     ],
@@ -18381,10 +18919,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "transition-behavior:term:0:repeat:type:transition-behavior-value:branch:0:keyword:normal",
           "transition-behavior:term:0:repeat:type:transition-behavior-value:branch:0:keyword:normal",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value:
+          "var(--slot-transition-behavior-value),var(--slot-transition-behavior-value-2)",
         variables: {
-          "--slot-1": "normal",
-          "--slot-2": "normal",
+          "--slot-transition-behavior-value": "normal",
+          "--slot-transition-behavior-value-2": "normal",
         },
       },
       {
@@ -18392,9 +18931,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition-behavior:term:0:repeat:type:transition-behavior-value:branch:0:keyword:normal",
         ],
-        value: "var(--slot-1),normal",
+        value: "var(--slot-transition-behavior-value),normal",
         variables: {
-          "--slot-1": "normal",
+          "--slot-transition-behavior-value": "normal",
         },
       },
       {
@@ -18402,9 +18941,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition-behavior:term:0:repeat:type:transition-behavior-value:branch:0:keyword:normal",
         ],
-        value: "normal,var(--slot-2)",
+        value: "normal,var(--slot-transition-behavior-value-2)",
         variables: {
-          "--slot-2": "normal",
+          "--slot-transition-behavior-value-2": "normal",
         },
       },
     ],
@@ -18420,26 +18959,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "transition-delay:term:0:repeat:type:time",
           "transition-delay:term:0:repeat:type:time",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-time),var(--slot-time-2)",
         variables: {
-          "--slot-1": "1s",
-          "--slot-2": "1s",
+          "--slot-time": "1s",
+          "--slot-time-2": "1s",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["transition-delay:term:0:repeat:type:time"],
-        value: "var(--slot-1),1s",
+        value: "var(--slot-time),1s",
         variables: {
-          "--slot-1": "1s",
+          "--slot-time": "1s",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["transition-delay:term:0:repeat:type:time"],
-        value: "1s,var(--slot-2)",
+        value: "1s,var(--slot-time-2)",
         variables: {
-          "--slot-2": "1s",
+          "--slot-time-2": "1s",
         },
       },
     ],
@@ -18455,26 +18994,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "transition-duration:term:0:repeat:type:time",
           "transition-duration:term:0:repeat:type:time",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-time),var(--slot-time-2)",
         variables: {
-          "--slot-1": "1s",
-          "--slot-2": "1s",
+          "--slot-time": "1s",
+          "--slot-time-2": "1s",
         },
       },
       {
         id: "pattern-1-slot-1",
         positions: ["transition-duration:term:0:repeat:type:time"],
-        value: "var(--slot-1),1s",
+        value: "var(--slot-time),1s",
         variables: {
-          "--slot-1": "1s",
+          "--slot-time": "1s",
         },
       },
       {
         id: "pattern-1-slot-2",
         positions: ["transition-duration:term:0:repeat:type:time"],
-        value: "1s,var(--slot-2)",
+        value: "1s,var(--slot-time-2)",
         variables: {
-          "--slot-2": "1s",
+          "--slot-time-2": "1s",
         },
       },
     ],
@@ -18498,10 +19037,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "transition-property:branch:1:repeat:type:single-transition-property:branch:0:keyword:all",
           "transition-property:branch:1:repeat:type:single-transition-property:branch:0:keyword:all",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value:
+          "var(--slot-single-transition-property),var(--slot-single-transition-property-2)",
         variables: {
-          "--slot-1": "all",
-          "--slot-2": "all",
+          "--slot-single-transition-property": "all",
+          "--slot-single-transition-property-2": "all",
         },
       },
       {
@@ -18509,9 +19049,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition-property:branch:1:repeat:type:single-transition-property:branch:0:keyword:all",
         ],
-        value: "var(--slot-1),all",
+        value: "var(--slot-single-transition-property),all",
         variables: {
-          "--slot-1": "all",
+          "--slot-single-transition-property": "all",
         },
       },
       {
@@ -18519,9 +19059,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition-property:branch:1:repeat:type:single-transition-property:branch:0:keyword:all",
         ],
-        value: "all,var(--slot-2)",
+        value: "all,var(--slot-single-transition-property-2)",
         variables: {
-          "--slot-2": "all",
+          "--slot-single-transition-property-2": "all",
         },
       },
     ],
@@ -18537,10 +19077,10 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "transition-timing-function:term:0:repeat:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
           "transition-timing-function:term:0:repeat:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-easing-function),var(--slot-easing-function-2)",
         variables: {
-          "--slot-1": "linear",
-          "--slot-2": "linear",
+          "--slot-easing-function": "linear",
+          "--slot-easing-function-2": "linear",
         },
       },
       {
@@ -18548,9 +19088,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition-timing-function:term:0:repeat:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
-        value: "var(--slot-1),linear",
+        value: "var(--slot-easing-function),linear",
         variables: {
-          "--slot-1": "linear",
+          "--slot-easing-function": "linear",
         },
       },
       {
@@ -18558,9 +19098,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "transition-timing-function:term:0:repeat:type:easing-function:branch:0:type:linear-easing-function:branch:0:keyword:linear",
         ],
-        value: "linear,var(--slot-2)",
+        value: "linear,var(--slot-easing-function-2)",
         variables: {
-          "--slot-2": "linear",
+          "--slot-easing-function-2": "linear",
         },
       },
     ],
@@ -18585,11 +19125,12 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "translate:branch:1:term:1:repeat:term:0:type:length-percentage:branch:0:type:length",
           "translate:branch:1:term:1:repeat:term:1:repeat:type:length",
         ],
-        value: "var(--slot-1) var(--slot-2) var(--slot-3)",
+        value:
+          "var(--slot-length-percentage) var(--slot-length-percentage-2) var(--slot-length)",
         variables: {
-          "--slot-1": "1px",
-          "--slot-2": "1px",
-          "--slot-3": "1px",
+          "--slot-length-percentage": "1px",
+          "--slot-length-percentage-2": "1px",
+          "--slot-length": "1px",
         },
       },
       {
@@ -18597,9 +19138,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "translate:branch:1:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "var(--slot-1) 1px 1px",
+        value: "var(--slot-length-percentage) 1px 1px",
         variables: {
-          "--slot-1": "1px",
+          "--slot-length-percentage": "1px",
         },
       },
       {
@@ -18607,9 +19148,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "translate:branch:1:term:1:repeat:term:0:type:length-percentage:branch:0:type:length",
         ],
-        value: "1px var(--slot-2) 1px",
+        value: "1px var(--slot-length-percentage-2) 1px",
         variables: {
-          "--slot-2": "1px",
+          "--slot-length-percentage-2": "1px",
         },
       },
       {
@@ -18617,9 +19158,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "translate:branch:1:term:1:repeat:term:1:repeat:type:length",
         ],
-        value: "1px 1px var(--slot-3)",
+        value: "1px 1px var(--slot-length)",
         variables: {
-          "--slot-3": "1px",
+          "--slot-length": "1px",
         },
       },
     ],
@@ -18643,26 +19184,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "trigger-scope:branch:2:repeat:type:dashed-ident",
           "trigger-scope:branch:2:repeat:type:dashed-ident",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value: "var(--slot-dashed-ident),var(--slot-dashed-ident-2)",
         variables: {
-          "--slot-1": "--custom-ident",
-          "--slot-2": "--custom-ident",
+          "--slot-dashed-ident": "--custom-ident",
+          "--slot-dashed-ident-2": "--custom-ident",
         },
       },
       {
         id: "pattern-3-slot-1",
         positions: ["trigger-scope:branch:2:repeat:type:dashed-ident"],
-        value: "var(--slot-1),--custom-ident",
+        value: "var(--slot-dashed-ident),--custom-ident",
         variables: {
-          "--slot-1": "--custom-ident",
+          "--slot-dashed-ident": "--custom-ident",
         },
       },
       {
         id: "pattern-3-slot-2",
         positions: ["trigger-scope:branch:2:repeat:type:dashed-ident"],
-        value: "--custom-ident,var(--slot-2)",
+        value: "--custom-ident,var(--slot-dashed-ident-2)",
         variables: {
-          "--slot-2": "--custom-ident",
+          "--slot-dashed-ident-2": "--custom-ident",
         },
       },
     ],
@@ -18736,6 +19277,14 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-2-slot-1",
+        positions: ["view-transition-name:branch:1:type:custom-ident"],
+        value: "var(--slot-custom-ident)",
+        variables: {
+          "--slot-custom-ident": "custom-ident",
+        },
+      },
+      {
         id: "pattern-3-slot-1",
         positions: ["view-transition-name:branch:2:keyword:match-element"],
         value: "var(--slot-1)",
@@ -18800,9 +19349,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
       {
         id: "pattern-1-slot-1",
         positions: ["widows:term:0:type:integer:term:0:type:number-token"],
-        value: "var(--slot-1)",
+        value: "var(--slot-integer)",
         variables: {
-          "--slot-1": "1",
+          "--slot-integer": "1",
         },
       },
     ],
@@ -18812,6 +19361,16 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   },
   {
     cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: [
+          "width:branch:1:type:length-percentage:branch:0:type:length",
+        ],
+        value: "var(--slot-length-percentage)",
+        variables: {
+          "--slot-length-percentage": "1px",
+        },
+      },
       {
         id: "pattern-4-slot-1",
         positions: ["width:branch:3:keyword:max-content"],
@@ -18842,10 +19401,11 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "will-change:branch:1:repeat:type:animateable-feature:branch:0:keyword:scroll-position",
           "will-change:branch:1:repeat:type:animateable-feature:branch:0:keyword:scroll-position",
         ],
-        value: "var(--slot-1),var(--slot-2)",
+        value:
+          "var(--slot-animateable-feature),var(--slot-animateable-feature-2)",
         variables: {
-          "--slot-1": "scroll-position",
-          "--slot-2": "scroll-position",
+          "--slot-animateable-feature": "scroll-position",
+          "--slot-animateable-feature-2": "scroll-position",
         },
       },
       {
@@ -18853,9 +19413,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "will-change:branch:1:repeat:type:animateable-feature:branch:0:keyword:scroll-position",
         ],
-        value: "var(--slot-1),scroll-position",
+        value: "var(--slot-animateable-feature),scroll-position",
         variables: {
-          "--slot-1": "scroll-position",
+          "--slot-animateable-feature": "scroll-position",
         },
       },
       {
@@ -18863,9 +19423,9 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
         positions: [
           "will-change:branch:1:repeat:type:animateable-feature:branch:0:keyword:scroll-position",
         ],
-        value: "scroll-position,var(--slot-2)",
+        value: "scroll-position,var(--slot-animateable-feature-2)",
         variables: {
-          "--slot-2": "scroll-position",
+          "--slot-animateable-feature-2": "scroll-position",
         },
       },
     ],
@@ -18891,11 +19451,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["word-spacing:branch:1:type:length"],
+        id: "pattern-1-slot-1",
+        positions: ["word-spacing:branch:0:keyword:normal"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1px",
+          "--slot-1": "normal",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["word-spacing:branch:1:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
         },
       },
     ],
@@ -18937,11 +19505,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["x:branch:0:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["x:branch:1:type:percentage"],
-        value: "var(--slot-1)",
+        value: "var(--slot-percentage)",
         variables: {
-          "--slot-1": "10%",
+          "--slot-percentage": "10%",
         },
       },
     ],
@@ -18952,11 +19528,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
+        id: "pattern-1-slot-1",
+        positions: ["y:branch:0:type:length"],
+        value: "var(--slot-length)",
+        variables: {
+          "--slot-length": "1px",
+        },
+      },
+      {
         id: "pattern-2-slot-1",
         positions: ["y:branch:1:type:percentage"],
-        value: "var(--slot-1)",
+        value: "var(--slot-percentage)",
         variables: {
-          "--slot-1": "10%",
+          "--slot-percentage": "10%",
         },
       },
     ],
@@ -18967,11 +19551,19 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
   {
     cases: [
       {
-        id: "pattern-2-slot-1",
-        positions: ["z-index:branch:1:type:integer:term:0:type:number-token"],
+        id: "pattern-1-slot-1",
+        positions: ["z-index:branch:0:keyword:auto"],
         value: "var(--slot-1)",
         variables: {
-          "--slot-1": "1",
+          "--slot-1": "auto",
+        },
+      },
+      {
+        id: "pattern-2-slot-1",
+        positions: ["z-index:branch:1:type:integer:term:0:type:number-token"],
+        value: "var(--slot-integer)",
+        variables: {
+          "--slot-integer": "1",
         },
       },
     ],
@@ -18995,26 +19587,26 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
           "zoom:branch:2:term:0:type:number",
           "zoom:branch:2:term:1:type:percentage",
         ],
-        value: "var(--slot-1) var(--slot-2)",
+        value: "var(--slot-number) var(--slot-percentage)",
         variables: {
-          "--slot-1": "1",
-          "--slot-2": "10%",
+          "--slot-number": "1",
+          "--slot-percentage": "10%",
         },
       },
       {
         id: "pattern-3-slot-1",
         positions: ["zoom:branch:2:term:0:type:number"],
-        value: "var(--slot-1) 10%",
+        value: "var(--slot-number) 10%",
         variables: {
-          "--slot-1": "1",
+          "--slot-number": "1",
         },
       },
       {
         id: "pattern-3-slot-2",
         positions: ["zoom:branch:2:term:1:type:percentage"],
-        value: "1 var(--slot-2)",
+        value: "1 var(--slot-percentage)",
         variables: {
-          "--slot-2": "10%",
+          "--slot-percentage": "10%",
         },
       },
     ],

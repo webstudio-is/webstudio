@@ -2645,11 +2645,7 @@ describe("parseCss — external cssVars parameter", () => {
     }
   );
 
-  const longhandGeneratedCases = generatedCases.filter(
-    (testCase) => testCase.kind === "longhand"
-  );
-
-  test.each(longhandGeneratedCases)(
+  test.each(generatedCases)(
     "grammar var case: $property / $caseId — authored var references stay parseable",
     ({ property, value }) => {
       const result = decls(`${property}: ${value};`);

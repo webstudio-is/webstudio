@@ -265,6 +265,41 @@ const preserveOriginalVarLonghands = (
     }
   }
 
+  const hasAnyPreservedVar = [...parsedCss.values()].some((styleValue) => {
+    const serialized = JSON.stringify(styleValue);
+    return serialized.includes('"type":"var"') || serialized.includes("var(");
+  });
+
+  const firstFallbacklessVarText = getFallbacklessVarTexts(value)[0];
+
+  if (firstFallbacklessVarText !== undefined) {
+    for (const [prop, styleValue] of parsedCss) {
+      if (styleValue.type !== "invalid") {
+        continue;
+      }
+      parsedCss.set(
+        prop,
+        parseCssValueLonghand(prop, firstFallbacklessVarText)
+      );
+    }
+  }
+
+  // Last-resort authored-var preservation for unresolved shorthand vars.
+  // Some complex shorthands (animation/background/mask/transition/...) still
+  // don't provide enough signal for placeholder-based longhand mapping.
+  // When no var() survived at all, keep the first unresolved var() on all
+  // parsed longhands so authored references are not lost.
+  if (!hasAnyPreservedVar) {
+    if (firstFallbacklessVarText !== undefined) {
+      for (const prop of parsedCss.keys()) {
+        parsedCss.set(
+          prop,
+          parseCssValueLonghand(prop, firstFallbacklessVarText)
+        );
+      }
+    }
+  }
+
   // css-tree shorthand expansion doesn't currently recover background-image
   // from authored gradient shorthands that still contain var() references.
   if (

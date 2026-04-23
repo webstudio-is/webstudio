@@ -639,6 +639,28 @@ const buildPatterns = ({
   return current;
 };
 
+/**
+ * Derive a semantic CSS variable name from a slot's grammar position label.
+ * The label looks like "border:term:2:type:color:branch:0:type:hex-color".
+ * We extract the first `type:XXX` segment to build `--slot-XXX`.
+ * When multiple slots in the same pattern share the same type we append
+ * a counter suffix: `--slot-color`, `--slot-color-2`, etc.
+ * Falling back to `--slot-N` when no type can be extracted.
+ */
+const slotVarName = (
+  label: string | undefined,
+  fallbackIndex: number,
+  used: Map<string, number>
+): string => {
+  const typeMatch = label?.match(/(?:^|:)type:([^:]+)/);
+  const base = typeMatch
+    ? `--slot-${typeMatch[1]}`
+    : `--slot-${fallbackIndex + 1}`;
+  const count = (used.get(base) ?? 0) + 1;
+  used.set(base, count);
+  return count === 1 ? base : `${base}-${count}`;
+};
+
 const buildCases = ({
   patterns,
   property,
@@ -658,7 +680,12 @@ const buildCases = ({
     }
 
     for (const [slotOrder, slot] of slots.entries()) {
-      const variableName = `--slot-${slotOrder + 1}`;
+      const used = new Map<string, number>();
+      // pre-register names for earlier slots so this slot gets the right suffix
+      for (let i = 0; i < slotOrder; i++) {
+        slotVarName(slots[i].part.label, i, used);
+      }
+      const variableName = slotVarName(slot.part.label, slotOrder, used);
       const parts = pattern.parts.map((part, index) => {
         if (index !== slot.index || part.kind !== "slot") {
           return part;
@@ -685,12 +712,13 @@ const buildCases = ({
     }
 
     const variables: Record<string, string> = {};
+    const allUsed = new Map<string, number>();
     const parts = pattern.parts.map((part, index) => {
       const slotOrder = slots.findIndex((slot) => slot.index === index);
       if (slotOrder === -1 || part.kind !== "slot") {
         return part;
       }
-      const variableName = `--slot-${slotOrder + 1}`;
+      const variableName = slotVarName(part.label, slotOrder, allUsed);
       variables[variableName] = part.text;
       return {
         kind: "text" as const,
