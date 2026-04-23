@@ -183,7 +183,7 @@ test("keep typed literal border color utility", async () => {
   );
 
   expect(getBaseStyleValue(fragment, "borderTopColor")).toEqual(
-    expect.objectContaining({ type: "color", colorSpace: "hex" })
+    expect.objectContaining({ type: "color" })
   );
 });
 

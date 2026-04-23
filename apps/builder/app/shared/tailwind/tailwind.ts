@@ -249,7 +249,6 @@ const parseTailwindClasses = async (
   let hasRowGaps = false;
   let hasFlexOrGrid = false;
   let hasContainer = false;
-  const borderColorLiteralOverrides: string[] = [];
   classes = classes
     .split(" ")
     .map((item) => {
@@ -259,12 +258,6 @@ const parseTailwindClasses = async (
       if (/^border-\(--[\w-]+\)$/.test(item)) {
         const varName = item.slice("border-(".length, -1);
         return `[border-color:var(${varName})]`;
-      }
-      const borderColorLiteralMatch = item.match(
-        /^border-\[color:(#[0-9a-fA-F]{3,8})\]$/
-      );
-      if (borderColorLiteralMatch) {
-        borderColorLiteralOverrides.push(borderColorLiteralMatch[1]);
       }
       // styles data cannot express space-x and space-y selectors
       // with lobotomized owl so replace with gaps
@@ -312,12 +305,6 @@ const parseTailwindClasses = async (
     parsedStyles.push(...parseCss(reset, new Map()).styles);
   }
   parsedStyles.push(...parseCss(normalizedCss, finalVars).styles);
-  // Preserve typed literal classes like `border-[color:#000]` as authored hex
-  // values instead of UnoCSS's RGB/opacity-variable normalization.
-  for (const literal of borderColorLiteralOverrides) {
-    const overrideCss = `.styles { border-color: ${literal}; }`;
-    parsedStyles.push(...parseCss(overrideCss, new Map()).styles);
-  }
   // skip preflights with ::before, ::after and ::backdrop
   parsedStyles = parsedStyles.filter(
     (styleDecl) => !styleDecl.state?.startsWith("::")
