@@ -447,8 +447,8 @@ const parseTailwindClasses = async (
       return {
         ...styleDecl,
         value: {
-          ...value,
-          unit: "number",
+          type: "unit" as const,
+          unit: "number" as const,
           value: value.value / 100,
         },
       };
