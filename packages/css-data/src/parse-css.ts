@@ -571,7 +571,7 @@ const substituteVarsInShorthand = (
       if (parsed.size > 0) {
         return {
           result: parsed,
-          droppedVars: [],
+          droppedVars: dropped,
         };
       }
     }
