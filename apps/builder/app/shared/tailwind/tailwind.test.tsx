@@ -11,6 +11,36 @@ const getBaseStyleValue = (
   )?.value;
 };
 
+const hasStyleValue = (
+  fragment: Awaited<ReturnType<typeof generateFragmentFromTailwind>>,
+  property: string,
+  predicate: (value: unknown) => boolean,
+  options: { breakpointId?: string; state?: string } = {}
+) => {
+  const breakpointId = options.breakpointId ?? "base";
+  return fragment.styles.some(
+    (style) =>
+      style.breakpointId === breakpointId &&
+      style.property === property &&
+      style.state === options.state &&
+      predicate(style.value)
+  );
+};
+
+const getStyleValue = (
+  fragment: Awaited<ReturnType<typeof generateFragmentFromTailwind>>,
+  property: string,
+  options: { breakpointId?: string; state?: string } = {}
+) => {
+  const breakpointId = options.breakpointId ?? "base";
+  return fragment.styles.find(
+    (style) =>
+      style.breakpointId === breakpointId &&
+      style.property === property &&
+      style.state === options.state
+  )?.value;
+};
+
 test("extract local styles from tailwind classes", async () => {
   expect(
     await generateFragmentFromTailwind(
@@ -41,23 +71,25 @@ test("extract local styles from tailwind classes", async () => {
 });
 
 test("ignore dark mode", async () => {
-  expect(
-    await generateFragmentFromTailwind(
-      renderTemplate(
-        <ws.element ws:tag="div" class="bg-white dark:bg-gray-800"></ws.element>
-      )
-    )
-  ).toEqual(
+  const fragment = await generateFragmentFromTailwind(
     renderTemplate(
-      <ws.element
-        ws:tag="div"
-        ws:style={css`
-          --tw-bg-opacity: 1;
-          background-color: rgb(255 255 255 / var(--tw-bg-opacity));
-        `}
-      ></ws.element>
+      <ws.element ws:tag="div" class="bg-white dark:bg-gray-800"></ws.element>
     )
   );
+
+  expect(fragment.breakpoints).toEqual([{ id: "base", label: "" }]);
+  expect(getStyleValue(fragment, "backgroundColor")).toEqual(
+    expect.objectContaining({
+      type: "color",
+      colorSpace: "srgb",
+      components: [1, 1, 1],
+    })
+  );
+  expect(
+    hasStyleValue(fragment, "backgroundColor", (value) => value !== undefined, {
+      state: ":hover",
+    })
+  ).toBe(false);
 });
 
 test("ignore empty class", async () => {
@@ -108,27 +140,23 @@ test("generate border", async () => {
 });
 
 test("override border opacity", async () => {
-  expect(
-    await generateFragmentFromTailwind(
-      renderTemplate(
-        <ws.element
-          ws:tag="div"
-          class="border border-gray-200 border-opacity-60"
-        ></ws.element>
-      )
-    )
-  ).toEqual(
+  const fragment = await generateFragmentFromTailwind(
     renderTemplate(
       <ws.element
         ws:tag="div"
-        ws:style={css`
-          border-style: solid;
-          border-color: rgb(229 231 235 / var(--tw-border-opacity));
-          border-width: 1px;
-          --tw-border-opacity: 0.6;
-        `}
+        class="border border-gray-200 border-opacity-60"
       ></ws.element>
     )
+  );
+
+  expect(getBaseStyleValue(fragment, "borderTopStyle")).toEqual(
+    expect.objectContaining({ type: "keyword", value: "solid" })
+  );
+  expect(getBaseStyleValue(fragment, "borderTopWidth")).toEqual(
+    expect.objectContaining({ type: "unit", unit: "px", value: 1 })
+  );
+  expect(getBaseStyleValue(fragment, "borderTopColor")).toEqual(
+    expect.objectContaining({ type: "color", alpha: 0.6 })
   );
 });
 
@@ -206,29 +234,27 @@ test("keep inline border shorthand var color override", async () => {
 });
 
 test("generate shadow", async () => {
-  expect(
-    await generateFragmentFromTailwind(
-      renderTemplate(<ws.element ws:tag="div" class="shadow"></ws.element>)
-    )
-  ).toEqual(
-    renderTemplate(
-      <ws.element
-        ws:tag="div"
-        ws:style={css`
-          --tw-ring-offset-shadow: 0 0 rgb(0 0 0 / 0);
-          --tw-ring-shadow: 0 0 rgb(0 0 0 / 0);
-          --tw-shadow-inset: ;
-          --tw-shadow:
-            var(--tw-shadow-inset) 0 1px 3px 0
-              var(--tw-shadow-color, rgb(0 0 0 / 0.1)),
-            var(--tw-shadow-inset) 0 1px 2px -1px
-              var(--tw-shadow-color, rgb(0 0 0 / 0.1));
-          box-shadow:
-            var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
-            var(--tw-shadow);
-        `}
-      ></ws.element>
-    )
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(<ws.element ws:tag="div" class="shadow"></ws.element>)
+  );
+
+  expect(getStyleValue(fragment, "--tw-shadow")).toEqual(
+    expect.objectContaining({
+      type: "unparsed",
+      value: expect.stringContaining("0 1px 3px 0"),
+    })
+  );
+  expect(getStyleValue(fragment, "boxShadow")).toEqual(
+    expect.objectContaining({
+      type: "layers",
+      value: expect.arrayContaining([
+        expect.objectContaining({
+          type: "var",
+          value: "tw-ring-offset-shadow",
+        }),
+        expect.objectContaining({ type: "var", value: "tw-ring-shadow" }),
+      ]),
+    })
   );
 });
 
@@ -361,29 +387,23 @@ test("preflight does not overwrite h1 inline styles", async () => {
 });
 
 test("extract states from tailwind classes", async () => {
-  expect(
-    await generateFragmentFromTailwind(
-      renderTemplate(
-        <ws.element
-          ws:tag="div"
-          class="bg-indigo-600 hover:bg-indigo-500"
-        ></ws.element>
-      )
-    )
-  ).toEqual(
+  const fragment = await generateFragmentFromTailwind(
     renderTemplate(
       <ws.element
         ws:tag="div"
-        ws:style={css`
-          --tw-bg-opacity: 1;
-          background-color: rgb(79 70 229 / var(--tw-bg-opacity));
-          &:hover {
-            --tw-bg-opacity: 1;
-            background-color: rgb(99 102 241 / var(--tw-bg-opacity));
-          }
-        `}
+        class="bg-indigo-600 hover:bg-indigo-500"
       ></ws.element>
     )
+  );
+
+  expect(getStyleValue(fragment, "backgroundColor")).toEqual(
+    expect.objectContaining({ type: "color", colorSpace: "oklch" })
+  );
+  expect(
+    getStyleValue(fragment, "backgroundColor", { state: ":hover" })
+  ).toEqual(expect.objectContaining({ type: "color", colorSpace: "oklch" }));
+  expect(getStyleValue(fragment, "backgroundColor")).not.toEqual(
+    getStyleValue(fragment, "backgroundColor", { state: ":hover" })
   );
 });
 
@@ -906,39 +926,62 @@ test("generate space without display property", async () => {
 });
 
 test("generate space with display property", async () => {
-  expect(
-    await generateFragmentFromTailwind(
-      renderTemplate(
-        <>
-          <ws.element ws:tag="div" class="flex space-x-4"></ws.element>
-          <ws.element
-            ws:tag="div"
-            class="hidden md:flex space-y-4"
-          ></ws.element>
-        </>
-      )
-    )
-  ).toEqual(
+  const fragment = await generateFragmentFromTailwind(
     renderTemplate(
       <>
-        <ws.element
-          ws:tag="div"
-          ws:style={css`
-            display: flex;
-            column-gap: 1rem;
-          `}
-        ></ws.element>
-        <ws.element
-          ws:tag="div"
-          ws:style={css`
-            @media (max-width: 767px) {
-              display: none;
-            }
-            display: flex;
-            row-gap: 1rem;
-          `}
-        ></ws.element>
+        <ws.element ws:tag="div" class="flex space-x-4"></ws.element>
+        <ws.element ws:tag="div" class="hidden md:flex space-y-4"></ws.element>
       </>
     )
   );
+
+  const firstStyleSourceId = fragment.styleSourceSelections
+    .find((selection) => selection.instanceId === "0")
+    ?.values.at(-1);
+  const secondStyleSourceId = fragment.styleSourceSelections
+    .find((selection) => selection.instanceId === "1")
+    ?.values.at(-1);
+
+  expect(
+    fragment.styles.some(
+      (style) =>
+        style.styleSourceId === firstStyleSourceId &&
+        style.breakpointId === "base" &&
+        style.property === "display" &&
+        (style.value as { value?: string }).value === "flex"
+    )
+  ).toBe(true);
+  expect(
+    fragment.styles.some(
+      (style) =>
+        style.styleSourceId === firstStyleSourceId &&
+        style.breakpointId === "base" &&
+        style.property === "columnGap"
+    )
+  ).toBe(true);
+  expect(
+    fragment.styles.some(
+      (style) =>
+        style.styleSourceId === secondStyleSourceId &&
+        style.breakpointId === "base" &&
+        style.property === "display" &&
+        (style.value as { value?: string }).value === "flex"
+    )
+  ).toBe(true);
+  expect(
+    fragment.styles.some(
+      (style) =>
+        style.styleSourceId === secondStyleSourceId &&
+        style.property === "rowGap"
+    )
+  ).toBe(true);
+  expect(
+    fragment.styles.some(
+      (style) =>
+        style.styleSourceId === secondStyleSourceId &&
+        style.property === "display" &&
+        (style.value as { value?: string }).value === "none" &&
+        style.breakpointId !== "base"
+    )
+  ).toBe(true);
 });

@@ -212,14 +212,8 @@ importers:
         specifier: ^2.5.3
         version: 2.5.3
       '@unocss/core':
-        specifier: 66.1.2
-        version: 66.1.2
-      '@unocss/preset-legacy-compat':
-        specifier: 66.1.2
-        version: 66.1.2
-      '@unocss/preset-wind3':
-        specifier: 66.1.2
-        version: 66.1.2
+        specifier: 66.6.8
+        version: 66.6.8
       '@vercel/remix':
         specifier: 2.15.3
         version: 2.15.3(@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.5(typescript@5.8.2))(@types/node@22.13.10)(jiti@2.4.2)(tsx@4.19.3)(typescript@5.8.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(tsx@4.19.3))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.16.5(typescript@5.8.2))(@remix-run/server-runtime@2.16.5(typescript@5.8.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -443,6 +437,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@unocss/preset-wind4':
+        specifier: ^66.6.8
+        version: 66.6.8
       '@vitest/coverage-v8':
         specifier: 3.1.2
         version: 3.1.2(@vitest/browser@3.1.2)(vitest@3.1.2)
@@ -3793,6 +3790,9 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.0':
     resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
 
+  '@jridgewell/sourcemap-codec@1.5.5':
+    resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
+
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
@@ -5634,23 +5634,17 @@ packages:
     resolution: {integrity: sha512-nnEf37C9ue7OBRnF2zmV/OCBmV5Y7T/K4mCHa+nxgiXcF/1w8sA0cgdFl+gHQ0mysqUJ+Bu5btAMeWgpLyjrgg==}
     hasBin: true
 
-  '@unocss/core@66.1.2':
-    resolution: {integrity: sha512-mN9h1hHEuhDcdbI4z74o7UnxlBZYVsJpYcdC1YLWBKROcLYTkuyZ7hgBzpo1FBNox2Bt3JnrSinVDmc44Bxjow==}
+  '@unocss/core@66.6.8':
+    resolution: {integrity: sha512-P9IlQfgms+8/nka7fBhiiWU4SPwrTNKbTdK0z1SLnttXMHHjsB2zpG+Vi1JQDpICfY9Y1/2pWtguPE+zeOVu9Q==}
 
-  '@unocss/extractor-arbitrary-variants@66.1.2':
-    resolution: {integrity: sha512-F570wH9VYeFTb4r8qgcbN5QpEVIAvFC1zOnrAPUr6B6kbU2YChMXxHP7PHK0AzLHnEr458Pwpzl6hmP6bzxZ8g==}
+  '@unocss/extractor-arbitrary-variants@66.6.8':
+    resolution: {integrity: sha512-cOXstpPTOLt/HYcL0OsqFkNau0e8ktZ5Q8fgnXBZjmLGmi+VzdESNlwxZyCXLuamZGnbrZ8lDsKdsGG7P1pMKQ==}
 
-  '@unocss/preset-legacy-compat@66.1.2':
-    resolution: {integrity: sha512-s1SnCXm9ywmp0plWQsXr8APxRhQEeblF7E6UmanFMj012/DU0bxWVUafnXBbeYUjtfBKCFlDvbW2pm30UGNQOw==}
+  '@unocss/preset-wind4@66.6.8':
+    resolution: {integrity: sha512-CheOm7KXOsTI5t4RXgeYz95CO5p589F6jsyYp+inOCk4N0/d+DWiDHrQ+V0x0HWs3JXWlD+/Va/yXjlc3o2sIw==}
 
-  '@unocss/preset-mini@66.1.2':
-    resolution: {integrity: sha512-oiDe+VhwZ8B5Z0UGfggtOwgpRZMLtH1RTDFvmJmJEXYYX5BPWknS6wYcQzxy0i/y9ym0xp2QnEaTpGmR7LKdkg==}
-
-  '@unocss/preset-wind3@66.1.2':
-    resolution: {integrity: sha512-S09imGOngAAOXCBCHb3JAtxD1/L7nDWrgEeX6NT0ElDp3X1T6XxUXYJlpjCfcqV/klMoXyYouKvp0YuG9QSgVg==}
-
-  '@unocss/rule-utils@66.1.2':
-    resolution: {integrity: sha512-nn0ehvDh7yyWq2mcBDLVpmMAivjRATUroZ8ETinyN1rmfsGesm71R0d1gV3K+Z6YC7a3+dMLc+/qzI7VK3AG/Q==}
+  '@unocss/rule-utils@66.6.8':
+    resolution: {integrity: sha512-WR35L07mLP6PElD4hlUHo5KbQ48uz2HT/XCuJyAsHP+15Gv6539hPWA5SresPuva9r8rl+PeGIgMSIKf4A5Ihw==}
     engines: {node: '>=14'}
 
   '@vanilla-extract/babel-plugin-debug-ids@1.0.6':
@@ -7359,6 +7353,9 @@ packages:
 
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
+
+  magic-string@0.30.21:
+    resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
   magicast@0.3.5:
     resolution: {integrity: sha512-L0WhttDl+2BOsybvEOLK7fW3UA0OQ0IQ2d6Zl2x/a6vVRs3bAY0ECOSHHeL5jD+SbOpOCUEi0y1DgHEn9Qn1AQ==}
@@ -10783,6 +10780,8 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.0': {}
 
+  '@jridgewell/sourcemap-codec@1.5.5': {}
+
   '@jridgewell/trace-mapping@0.3.25':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.0
@@ -12865,32 +12864,22 @@ snapshots:
       '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260120.1
       '@typescript/native-preview-win32-x64': 7.0.0-dev.20260120.1
 
-  '@unocss/core@66.1.2': {}
+  '@unocss/core@66.6.8': {}
 
-  '@unocss/extractor-arbitrary-variants@66.1.2':
+  '@unocss/extractor-arbitrary-variants@66.6.8':
     dependencies:
-      '@unocss/core': 66.1.2
+      '@unocss/core': 66.6.8
 
-  '@unocss/preset-legacy-compat@66.1.2':
+  '@unocss/preset-wind4@66.6.8':
     dependencies:
-      '@unocss/core': 66.1.2
+      '@unocss/core': 66.6.8
+      '@unocss/extractor-arbitrary-variants': 66.6.8
+      '@unocss/rule-utils': 66.6.8
 
-  '@unocss/preset-mini@66.1.2':
+  '@unocss/rule-utils@66.6.8':
     dependencies:
-      '@unocss/core': 66.1.2
-      '@unocss/extractor-arbitrary-variants': 66.1.2
-      '@unocss/rule-utils': 66.1.2
-
-  '@unocss/preset-wind3@66.1.2':
-    dependencies:
-      '@unocss/core': 66.1.2
-      '@unocss/preset-mini': 66.1.2
-      '@unocss/rule-utils': 66.1.2
-
-  '@unocss/rule-utils@66.1.2':
-    dependencies:
-      '@unocss/core': 66.1.2
-      magic-string: 0.30.17
+      '@unocss/core': 66.6.8
+      magic-string: 0.30.21
 
   '@vanilla-extract/babel-plugin-debug-ids@1.0.6':
     dependencies:
@@ -14886,6 +14875,10 @@ snapshots:
   magic-string@0.30.17:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
+
+  magic-string@0.30.21:
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.5.5
 
   magicast@0.3.5:
     dependencies:
