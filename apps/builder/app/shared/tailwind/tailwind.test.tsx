@@ -215,6 +215,21 @@ test("keep typed literal border color utility", async () => {
   );
 });
 
+test("keep border side typed arbitrary var color utility", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element
+        ws:tag="div"
+        class="p-8 border-t border-[color:var(--border-color)]"
+      ></ws.element>
+    )
+  );
+
+  expect(getBaseStyleValue(fragment, "borderTopColor")).toEqual(
+    expect.objectContaining({ type: "var", value: "border-color" })
+  );
+});
+
 test("keep inline border shorthand var color override", async () => {
   const fragment = await generateFragmentFromTailwind(
     renderTemplate(
@@ -984,4 +999,18 @@ test("generate space with display property", async () => {
         style.breakpointId !== "base"
     )
   ).toBe(true);
+});
+
+test("keep typed arbitrary var border color utility", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element
+        ws:tag="div"
+        class="p-8 border border-[color:var(--border-color)]"
+      ></ws.element>
+    )
+  );
+  expect(getBaseStyleValue(fragment, "borderTopColor")).toEqual(
+    expect.objectContaining({ type: "var", value: "border-color" })
+  );
 });

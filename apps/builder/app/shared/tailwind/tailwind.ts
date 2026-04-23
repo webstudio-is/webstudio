@@ -381,6 +381,13 @@ const parseTailwindClasses = async (
         const varName = item.slice("border-(".length, -1);
         return `[border-color:var(${varName})]`;
       }
+      // Tailwind v4 typed arbitrary border color: border-[color:value]
+      // UnoCSS wind4 incorrectly maps this to border-width. Rewrite to the
+      // explicit arbitrary property form so it resolves to border-color.
+      const borderColorMatch = item.match(/^border-\[color:(.+)\]$/);
+      if (borderColorMatch) {
+        return `[border-color:${borderColorMatch[1]}]`;
+      }
       // styles data cannot express space-x and space-y selectors
       // with lobotomized owl so replace with gaps
       if (item.includes("space-x-")) {
