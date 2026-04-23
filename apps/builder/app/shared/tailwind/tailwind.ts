@@ -377,6 +377,7 @@ const parseTailwindClasses = async (
       // Tailwind v4 css variable shorthand: border-(--x)
       // UnoCSS doesn't parse this alias directly, so normalize it to
       // an explicit arbitrary property utility it understands.
+      // TODO: remove workaround once fixed https://github.com/unocss/unocss/issues/5188
       if (/^border-\(--[\w-]+\)$/.test(item)) {
         const varName = item.slice("border-(".length, -1);
         return `[border-color:var(${varName})]`;
@@ -384,6 +385,7 @@ const parseTailwindClasses = async (
       // Tailwind v4 typed arbitrary border color: border-[color:value]
       // UnoCSS wind4 incorrectly maps this to border-width. Rewrite to the
       // explicit arbitrary property form so it resolves to border-color.
+      // TODO: remove workaround once fixed https://github.com/unocss/unocss/issues/5188
       const borderColorMatch = item.match(/^border-\[color:(.+)\]$/);
       if (borderColorMatch) {
         return `[border-color:${borderColorMatch[1]}]`;
