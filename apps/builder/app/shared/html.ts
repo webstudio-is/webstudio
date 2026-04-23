@@ -1088,7 +1088,7 @@ export const generateFragmentFromHtml = (
     if (tokenIds.length > 0) {
       const existingSelection = selectionsByInstance.get(instanceId);
       if (existingSelection) {
-        existingSelection.values.push(...tokenIds);
+        existingSelection.values = [...tokenIds, ...existingSelection.values];
       } else {
         const newSelection: StyleSourceSelection = {
           instanceId,

@@ -10,8 +10,8 @@
     "build:html.css": "tsx ./bin/html.css.ts && prettier --write ./src/__generated__/html.ts",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/\" \"../css-engine/src/__generated__/\"",
     "build:descriptions": "tsx ./bin/property-value-descriptions.ts && prettier --write ./src/__generated__/property-value-descriptions.ts",
-    "build:shorthand-fixtures": "tsx ./bin/shorthand-test-fixtures.ts && prettier --write ./src/__generated__/shorthand-test-fixtures.ts",
-    "build:all": "pnpm build:html.css && pnpm build:mdn-data && pnpm build:descriptions && pnpm build:shorthand-fixtures",
+    "build:property-var-fixtures": "tsx ./bin/property-var-test-fixtures.ts && prettier --write ./src/__generated__/property-var-test-fixtures.ts",
+    "build:all": "pnpm build:html.css && pnpm build:mdn-data && pnpm build:descriptions && pnpm build:property-var-fixtures",
     "test": "vitest run"
   },
   "bin": {

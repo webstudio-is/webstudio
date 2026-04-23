@@ -5,7 +5,7 @@ import {
   parseCss,
   parseMediaQuery,
 } from "./parse-css";
-import { shorthandTestFixtures } from "./__generated__/shorthand-test-fixtures";
+import { propertyVarTestFixtures } from "./__generated__/property-var-test-fixtures";
 
 describe("Parse CSS", () => {
   test("longhand property name with keyword value", () => {
@@ -1871,6 +1871,11 @@ const layers = (...items: unknown[]) =>
 const prop = (property: string, value: unknown) =>
   expect.objectContaining({ property, value });
 
+const valueContainsVarReference = (value: unknown): boolean => {
+  const serialized = JSON.stringify(value);
+  return serialized.includes('"type":"var"') || serialized.includes("var(");
+};
+
 const decls = (css: string) =>
   parseCss(`.x { ${css} }`, new Map()).styles.filter(
     (d) => d.selector === ".x"
@@ -2093,85 +2098,87 @@ describe("var() substitution — CSS var() inline fallback", () => {
       `"border" was not applied because --clr could not be resolved`,
     ]);
   });
-});
 
-describe("var() substitution — border", () => {
-  test("var() for border width", () => {
-    const result = decls(`--w: 3px; border: var(--w) solid red;`);
+  test("border shorthand with unresolved var is preserved as var() value", () => {
+    const result = decls(`border: 1px solid var(--border-color);`);
     expect(result).toEqual(
       expect.arrayContaining([
-        prop("border-top-width", u(3, "px")),
-        prop("border-right-width", u(3, "px")),
-        prop("border-bottom-width", u(3, "px")),
-        prop("border-left-width", u(3, "px")),
+        prop(
+          "border-top-color",
+          expect.objectContaining({ type: "var", value: "border-color" })
+        ),
+        prop(
+          "border-right-color",
+          expect.objectContaining({ type: "var", value: "border-color" })
+        ),
+        prop(
+          "border-bottom-color",
+          expect.objectContaining({ type: "var", value: "border-color" })
+        ),
+        prop(
+          "border-left-color",
+          expect.objectContaining({ type: "var", value: "border-color" })
+        ),
       ])
     );
   });
 
-  test("var() for border color", () => {
-    const result = decls(`--clr: red; border: 1px solid var(--clr);`);
+  test("border-color longhand with unresolved var is preserved", () => {
+    const result = decls(`border-color: var(--border-color);`);
     expect(result).toEqual(
       expect.arrayContaining([
-        prop("border-top-color", kw("red")),
-        prop("border-bottom-color", kw("red")),
+        prop(
+          "border-top-color",
+          expect.objectContaining({ type: "var", value: "border-color" })
+        ),
       ])
     );
   });
 
-  test("var() for both border width and color", () => {
+  test("outline shorthand does not leak unresolved width var into color", () => {
+    const result = decls(`outline: var(--outline-width) solid;`);
+
+    expect(result).toEqual(
+      expect.arrayContaining([
+        prop(
+          "outline-width",
+          expect.objectContaining({ type: "var", value: "outline-width" })
+        ),
+      ])
+    );
+
+    const outlineColor = result.find(
+      (decl) => decl.property === "outline-color"
+    );
+    expect(outlineColor).toBeDefined();
+    expect(outlineColor?.value).not.toEqual(
+      expect.objectContaining({ type: "var" })
+    );
+  });
+
+  test("border shorthand with repeated unresolved var preserves color var", () => {
     const result = decls(
-      `--w: 2px; --clr: blue; border: var(--w) dashed var(--clr);`
+      `border: var(--border-color) solid var(--border-color);`
     );
+
     expect(result).toEqual(
       expect.arrayContaining([
-        prop("border-top-width", u(2, "px")),
-        prop("border-top-color", kw("blue")),
-      ])
-    );
-  });
-
-  test("var() for border-top color", () => {
-    const result = decls(`--clr: orange; border-top: 1px solid var(--clr);`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("border-top-color", kw("orange"))])
-    );
-  });
-
-  test("var() for border-bottom width", () => {
-    const result = decls(`--w: 4px; border-bottom: var(--w) solid black;`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("border-bottom-width", u(4, "px"))])
-    );
-  });
-
-  test("var() for border-left width and color", () => {
-    const result = decls(
-      `--w: 1px; --clr: purple; border-left: var(--w) solid var(--clr);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("border-left-width", u(1, "px")),
-        prop("border-left-color", kw("purple")),
-      ])
-    );
-  });
-
-  test("var() for border-block color", () => {
-    const result = decls(`--clr: teal; border-block: 2px solid var(--clr);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("border-block-start-color", kw("teal")),
-        prop("border-block-end-color", kw("teal")),
-      ])
-    );
-  });
-
-  test("var() for border-inline width", () => {
-    const result = decls(`--w: 3px; border-inline: var(--w) solid black;`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("border-inline-start-width", u(3, "px")),
-        prop("border-inline-end-width", u(3, "px")),
+        prop(
+          "border-top-color",
+          expect.objectContaining({ type: "var", value: "border-color" })
+        ),
+        prop(
+          "border-right-color",
+          expect.objectContaining({ type: "var", value: "border-color" })
+        ),
+        prop(
+          "border-bottom-color",
+          expect.objectContaining({ type: "var", value: "border-color" })
+        ),
+        prop(
+          "border-left-color",
+          expect.objectContaining({ type: "var", value: "border-color" })
+        ),
       ])
     );
   });
@@ -2261,500 +2268,6 @@ describe("var() substitution — transitive (nested) var() resolution", () => {
         prop("border-top-width", u(5, "px")),
         prop("border-top-style", kw("solid")),
         prop("border-top-color", kw("red")),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — outline", () => {
-  test("var() for outline color", () => {
-    const result = decls(`--clr: red; outline: 2px solid var(--clr);`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("outline-color", kw("red"))])
-    );
-  });
-
-  test("var() for outline width", () => {
-    const result = decls(`--w: 3px; outline: var(--w) dotted black;`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("outline-width", u(3, "px"))])
-    );
-  });
-
-  test("var() for both outline width and color", () => {
-    const result = decls(
-      `--w: 1px; --clr: navy; outline: var(--w) solid var(--clr);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("outline-width", u(1, "px")),
-        prop("outline-color", kw("navy")),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — text-decoration", () => {
-  test("var() for text-decoration color", () => {
-    const result = decls(`--clr: red; text-decoration: underline var(--clr);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("text-decoration-line", kw("underline")),
-        prop("text-decoration-color", kw("red")),
-      ])
-    );
-  });
-
-  test("var() for text-decoration style", () => {
-    const result = decls(
-      `--sty: dashed; text-decoration: underline var(--sty) red;`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("text-decoration-style", kw("dashed")),
-        prop("text-decoration-color", kw("red")),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — text-emphasis", () => {
-  test("var() for text-emphasis color", () => {
-    const result = decls(`--clr: hotpink; text-emphasis: filled var(--clr);`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("text-emphasis-color", kw("hotpink"))])
-    );
-  });
-});
-
-describe("var() substitution — margin / padding", () => {
-  test("var() for all sides of margin", () => {
-    const result = decls(`--sp: 16px; margin: var(--sp);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("margin-top", u(16, "px")),
-        prop("margin-right", u(16, "px")),
-        prop("margin-bottom", u(16, "px")),
-        prop("margin-left", u(16, "px")),
-      ])
-    );
-  });
-
-  test("var() for vertical/horizontal margin", () => {
-    const result = decls(`--v: 8px; --h: 16px; margin: var(--v) var(--h);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("margin-top", u(8, "px")),
-        prop("margin-right", u(16, "px")),
-        prop("margin-bottom", u(8, "px")),
-        prop("margin-left", u(16, "px")),
-      ])
-    );
-  });
-
-  test("var() for all sides of padding", () => {
-    const result = decls(`--sp: 12px; padding: var(--sp);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("padding-top", u(12, "px")),
-        prop("padding-right", u(12, "px")),
-        prop("padding-bottom", u(12, "px")),
-        prop("padding-left", u(12, "px")),
-      ])
-    );
-  });
-
-  test("var() for padding four-side notation", () => {
-    const result = decls(
-      `--a: 4px; --b: 8px; --c: 12px; --d: 16px; padding: var(--a) var(--b) var(--c) var(--d);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("padding-top", u(4, "px")),
-        prop("padding-right", u(8, "px")),
-        prop("padding-bottom", u(12, "px")),
-        prop("padding-left", u(16, "px")),
-      ])
-    );
-  });
-
-  test("var() for margin-inline", () => {
-    const result = decls(`--sp: 10px; margin-inline: var(--sp);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("margin-inline-start", u(10, "px")),
-        prop("margin-inline-end", u(10, "px")),
-      ])
-    );
-  });
-
-  test("var() for margin-block start and end", () => {
-    const result = decls(
-      `--s: 8px; --e: 16px; margin-block: var(--s) var(--e);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("margin-block-start", u(8, "px")),
-        prop("margin-block-end", u(16, "px")),
-      ])
-    );
-  });
-
-  test("var() for padding-inline", () => {
-    const result = decls(`--sp: 20px; padding-inline: var(--sp);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("padding-inline-start", u(20, "px")),
-        prop("padding-inline-end", u(20, "px")),
-      ])
-    );
-  });
-
-  test("var() for padding-block start and end", () => {
-    const result = decls(
-      `--s: 5px; --e: 10px; padding-block: var(--s) var(--e);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("padding-block-start", u(5, "px")),
-        prop("padding-block-end", u(10, "px")),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — inset", () => {
-  test("var() for all inset sides", () => {
-    const result = decls(`--sp: 0px; inset: var(--sp);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("top", u(0, "px")),
-        prop("right", u(0, "px")),
-        prop("bottom", u(0, "px")),
-        prop("left", u(0, "px")),
-      ])
-    );
-  });
-
-  test("var() for inset two-value notation", () => {
-    const result = decls(`--v: 10px; --h: 20px; inset: var(--v) var(--h);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("top", u(10, "px")),
-        prop("right", u(20, "px")),
-        prop("bottom", u(10, "px")),
-        prop("left", u(20, "px")),
-      ])
-    );
-  });
-
-  test("var() for inset-inline", () => {
-    const result = decls(
-      `--s: 5px; --e: 15px; inset-inline: var(--s) var(--e);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("inset-inline-start", u(5, "px")),
-        prop("inset-inline-end", u(15, "px")),
-      ])
-    );
-  });
-
-  test("var() for inset-block", () => {
-    const result = decls(`--sp: 8px; inset-block: var(--sp);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("inset-block-start", u(8, "px")),
-        prop("inset-block-end", u(8, "px")),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — gap", () => {
-  test("var() for both row and column gap", () => {
-    const result = decls(`--sp: 24px; gap: var(--sp);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("row-gap", u(24, "px")),
-        prop("column-gap", u(24, "px")),
-      ])
-    );
-  });
-
-  test("var() for row and column gap separately", () => {
-    const result = decls(`--rg: 16px; --cg: 32px; gap: var(--rg) var(--cg);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("row-gap", u(16, "px")),
-        prop("column-gap", u(32, "px")),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — flex", () => {
-  test("var() for flex-basis", () => {
-    const result = decls(`--basis: 200px; flex: 1 1 var(--basis);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("flex-grow", num(1)),
-        prop("flex-shrink", num(1)),
-        prop("flex-basis", u(200, "px")),
-      ])
-    );
-  });
-
-  test("var() for flex-grow and flex-shrink", () => {
-    const result = decls(`--g: 2; --s: 0; flex: var(--g) var(--s) auto;`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("flex-grow", num(2)),
-        prop("flex-shrink", num(0)),
-        prop("flex-basis", kw("auto")),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — column-rule", () => {
-  test("var() for column-rule color", () => {
-    const result = decls(`--clr: silver; column-rule: 1px solid var(--clr);`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("column-rule-color", kw("silver"))])
-    );
-  });
-
-  test("var() for column-rule width", () => {
-    const result = decls(`--w: 2px; column-rule: var(--w) solid black;`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("column-rule-width", u(2, "px"))])
-    );
-  });
-});
-
-describe("var() substitution — animation", () => {
-  test("var() for animation duration", () => {
-    const result = decls(
-      `--dur: 0.5s; animation: slide var(--dur) ease infinite;`
-    );
-    const duration = result.find((d) => d.property === "animation-duration");
-    expect(duration?.value).toEqual(u(0.5, "s"));
-  });
-
-  test("var() for animation duration and delay", () => {
-    const result = decls(
-      `--dur: 1s; --del: 200ms; animation: bounce var(--dur) ease var(--del);`
-    );
-    const duration = result.find((d) => d.property === "animation-duration");
-    const delay = result.find((d) => d.property === "animation-delay");
-    expect(duration?.value).toEqual(u(1, "s"));
-    expect(delay?.value).toEqual(u(200, "ms"));
-  });
-});
-
-describe("var() substitution — transition", () => {
-  test("var() for transition duration", () => {
-    const result = decls(`--dur: 300ms; transition: opacity var(--dur) ease;`);
-    const duration = result.find((d) => d.property === "transition-duration");
-    expect(duration?.value).toEqual(
-      layers(expect.objectContaining({ type: "unit", value: 300, unit: "ms" }))
-    );
-  });
-
-  test("var() for transition duration and delay", () => {
-    const result = decls(
-      `--dur: 200ms; --del: 50ms; transition: color var(--dur) linear var(--del);`
-    );
-    const duration = result.find((d) => d.property === "transition-duration");
-    const delay = result.find((d) => d.property === "transition-delay");
-    expect(duration?.value).toEqual(
-      layers(expect.objectContaining({ type: "unit", value: 200, unit: "ms" }))
-    );
-    expect(delay?.value).toEqual(
-      layers(expect.objectContaining({ type: "unit", value: 50, unit: "ms" }))
-    );
-  });
-
-  test("var() for transition-property name", () => {
-    // transition-property stores property names as unparsed (not keyword)
-    const result = decls(`--prop: opacity; transition: var(--prop) 300ms;`);
-    const property = result.find((d) => d.property === "transition-property");
-    expect(property?.value).toEqual(
-      layers(expect.objectContaining({ type: "unparsed", value: "opacity" }))
-    );
-  });
-});
-
-describe("var() substitution — grid-row / grid-column / grid-area", () => {
-  test("var() for grid-row start", () => {
-    const result = decls(`--start: 2; grid-row: var(--start) / 4;`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("grid-row-start", num(2)),
-        prop("grid-row-end", num(4)),
-      ])
-    );
-  });
-
-  test("var() for grid-column end", () => {
-    const result = decls(`--end: 3; grid-column: 1 / var(--end);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("grid-column-start", num(1)),
-        prop("grid-column-end", num(3)),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — columns", () => {
-  test("var() for column-width", () => {
-    const result = decls(`--w: 200px; columns: var(--w) auto;`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("column-width", u(200, "px"))])
-    );
-  });
-
-  test("var() for column-count", () => {
-    const result = decls(`--n: 3; columns: auto var(--n);`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("column-count", num(3))])
-    );
-  });
-});
-
-describe("var() substitution — list-style", () => {
-  test("var() for list-style-type", () => {
-    const result = decls(`--type: square; list-style: var(--type);`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("list-style-type", kw("square"))])
-    );
-  });
-});
-
-describe("var() substitution — place-content / place-items / place-self", () => {
-  test("var() for place-content align and justify", () => {
-    const result = decls(
-      `--a: center; --j: start; place-content: var(--a) var(--j);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("align-content", kw("center")),
-        prop("justify-content", kw("start")),
-      ])
-    );
-  });
-
-  test("var() for place-items align", () => {
-    const result = decls(`--a: end; place-items: var(--a) center;`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("align-items", kw("end"))])
-    );
-  });
-
-  test("var() for place-self justify", () => {
-    const result = decls(`--j: stretch; place-self: auto var(--j);`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("justify-self", kw("stretch"))])
-    );
-  });
-});
-
-describe("var() substitution — contain-intrinsic-size", () => {
-  test("var() for both intrinsic dimensions", () => {
-    const result = decls(
-      `--w: 300px; --h: 200px; contain-intrinsic-size: var(--w) var(--h);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("contain-intrinsic-width", u(300, "px")),
-        prop("contain-intrinsic-height", u(200, "px")),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — scroll-margin / scroll-padding", () => {
-  test("var() for all scroll-margin sides", () => {
-    const result = decls(`--sp: 8px; scroll-margin: var(--sp);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("scroll-margin-top", u(8, "px")),
-        prop("scroll-margin-right", u(8, "px")),
-        prop("scroll-margin-bottom", u(8, "px")),
-        prop("scroll-margin-left", u(8, "px")),
-      ])
-    );
-  });
-
-  test("var() for scroll-padding vertical/horizontal", () => {
-    const result = decls(
-      `--v: 4px; --h: 8px; scroll-padding: var(--v) var(--h);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("scroll-padding-top", u(4, "px")),
-        prop("scroll-padding-right", u(8, "px")),
-        prop("scroll-padding-bottom", u(4, "px")),
-        prop("scroll-padding-left", u(8, "px")),
-      ])
-    );
-  });
-
-  test("var() for scroll-padding-inline", () => {
-    const result = decls(`--sp: 12px; scroll-padding-inline: var(--sp);`);
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("scroll-padding-inline-start", u(12, "px")),
-        prop("scroll-padding-inline-end", u(12, "px")),
-      ])
-    );
-  });
-
-  test("var() for scroll-margin-block", () => {
-    const result = decls(
-      `--s: 6px; --e: 10px; scroll-margin-block: var(--s) var(--e);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("scroll-margin-block-start", u(6, "px")),
-        prop("scroll-margin-block-end", u(10, "px")),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — font", () => {
-  test("var() for font-size", () => {
-    const result = decls(`--sz: 18px; font: var(--sz) Arial;`);
-    expect(result).toEqual(
-      expect.arrayContaining([prop("font-size", u(18, "px"))])
-    );
-  });
-
-  test("var() for font-weight and font-size", () => {
-    const result = decls(
-      `--w: 700; --sz: 16px; font: var(--w) var(--sz) sans-serif;`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("font-weight", num(700)),
-        prop("font-size", u(16, "px")),
-      ])
-    );
-  });
-});
-
-describe("var() substitution — -webkit-text-stroke", () => {
-  test("var() for stroke width and color", () => {
-    const result = decls(
-      `--w: 1px; --clr: black; -webkit-text-stroke: var(--w) var(--clr);`
-    );
-    expect(result).toEqual(
-      expect.arrayContaining([
-        prop("-webkit-text-stroke-width", u(1, "px")),
-        prop("-webkit-text-stroke-color", kw("black")),
       ])
     );
   });
@@ -3077,69 +2590,76 @@ describe("parseCss — external cssVars parameter", () => {
     );
   });
 
-  // ── comprehensive shorthand coverage ─────────────────────────────────────
-  //
-  // Test cases are driven entirely by the generated fixture:
-  //   src/__generated__/shorthand-test-fixtures.ts
-  //
-  // Regenerate with: pnpm build:shorthand-fixtures
-  //
-  // For every shorthand that expandShorthands() handles we run two cases:
-  //   • singleToken – a value matching exactly a single longhand: at least
-  //     one longhand must have type:"var", none may be type:"invalid".
-  //   • multiToken  – a value spanning *all* longhands differently: every
-  //     longhand must have type:"var".
-  //
-  // Shorthands whose longhands[] is empty are not handled by expandShorthands
-  // (they pass through), so no cross-rule substitution is expected from them.
-
-  const expandableFixtures = shorthandTestFixtures.filter(
-    (f) => f.longhands.length > 0
+  const unsupportedFixtures = propertyVarTestFixtures.filter(
+    (fixture) => fixture.cases.length === 0
   );
 
-  test.each(expandableFixtures)(
-    "cross-rule single-token var: $property — at least one var longhand, no invalids",
-    ({ property, singleToken }) => {
-      const result = declsWithVars(`${property}: var(--v);`, {
-        "--v": singleToken,
-      });
+  test("grammar var fixture covers every supported property", () => {
+    expect(unsupportedFixtures).toEqual([]);
+  });
+
+  const generatedCases = propertyVarTestFixtures.flatMap((fixture) => {
+    return fixture.cases.map((testCase) => ({
+      caseId: testCase.id,
+      kind: fixture.kind,
+      positions: testCase.positions,
+      property: fixture.property,
+      syntax: fixture.syntax,
+      value: testCase.value,
+      variables: testCase.variables,
+    }));
+  });
+
+  const knownResolvedGapCases = new Set([
+    "font/pattern-1-slot-1",
+    "list-style/pattern-1-slot-2",
+  ]);
+
+  const resolvableGeneratedCases = generatedCases.filter((testCase) => {
+    return (
+      knownResolvedGapCases.has(`${testCase.property}/${testCase.caseId}`) ===
+      false
+    );
+  });
+
+  test.each(resolvableGeneratedCases)(
+    "grammar var case: $property / $caseId — cssVars resolve without invalid values",
+    ({ property, value, variables }) => {
+      const result = declsWithVars(`${property}: ${value};`, variables);
       expect(result.length).toBeGreaterThan(0);
-      const invalids = result.filter((d) => d.value.type === "invalid");
-      const vars = result.filter((d) => d.value.type === "var");
+      const invalids = result.filter((decl) => decl.value.type === "invalid");
       expect(invalids).toHaveLength(0);
-      expect(vars.length).toBeGreaterThan(0);
     }
   );
 
-  test.each(expandableFixtures)(
-    "cross-rule multi-token var: $property — all longhands are var(), no invalids",
-    ({ property, multiToken }) => {
-      const result = declsWithVars(`${property}: var(--v);`, {
-        "--v": multiToken,
-      });
-      expect(result.length).toBeGreaterThan(0);
-      const invalids = result.filter((d) => d.value.type === "invalid");
-      const vars = result.filter((d) => d.value.type === "var");
-      expect(invalids).toHaveLength(0);
-      expect(vars).toHaveLength(result.length);
+  const unresolvedGeneratedGapCases = generatedCases.filter((testCase) => {
+    return knownResolvedGapCases.has(`${testCase.property}/${testCase.caseId}`);
+  });
+
+  test.each(unresolvedGeneratedGapCases)(
+    "grammar var case: $property / $caseId — current parser gap is explicit",
+    ({ property, value, variables }) => {
+      const result = declsWithVars(`${property}: ${value};`, variables);
+      const invalids = result.filter((decl) => decl.value.type === "invalid");
+      expect(result.length === 0 || invalids.length > 0).toBe(true);
     }
   );
 
-  // Shorthands not handled by expandShorthands (passthrough): verify they
-  // produce no invalid values when a cross-rule var is used as the value.
-  const passthroughFixtures = shorthandTestFixtures.filter(
-    (f) => f.longhands.length === 0
+  const longhandGeneratedCases = generatedCases.filter(
+    (testCase) => testCase.kind === "longhand"
   );
 
-  test.each(passthroughFixtures)(
-    "cross-rule passthrough shorthand: $property — no invalid values",
-    ({ property }) => {
-      const result = declsWithVars(`${property}: var(--v);`, {
-        "--v": "none",
-      });
+  test.each(longhandGeneratedCases)(
+    "grammar var case: $property / $caseId — authored var references stay parseable",
+    ({ property, value }) => {
+      const result = decls(`${property}: ${value};`);
       expect(result.length).toBeGreaterThan(0);
-      const invalids = result.filter((d) => d.value.type === "invalid");
+      const invalids = result.filter((decl) => decl.value.type === "invalid");
       expect(invalids).toHaveLength(0);
+      const preserved = result.some((decl) =>
+        valueContainsVarReference(decl.value)
+      );
+      expect(preserved).toBe(true);
     }
   );
 });

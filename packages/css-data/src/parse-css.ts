@@ -201,29 +201,263 @@ const resolveVars = (
   return { resolved, dropped, usedCssVarsSubstitution };
 };
 
-const preserveOriginalBackgroundImageVars = (
+const preserveOriginalVarLonghands = (
+  property: string,
   value: string,
   parsedCss: Map<CssProperty, StyleValue>
 ) => {
-  const originalExpanded = new Map(expandShorthands([["background", value]]));
-  const originalBackgroundImage = value.includes("gradient(")
-    ? value
-    : originalExpanded.get("background-image");
+  const originalExpanded = new Map(expandShorthands([[property, value]]));
+  const wholeValueVarText = getWholeValueFallbacklessVarText(value);
 
-  if (
-    originalBackgroundImage === undefined ||
-    !originalBackgroundImage.includes("var(")
-  ) {
-    return parsedCss;
+  for (const [prop, expandedValue] of originalExpanded) {
+    if (!expandedValue.includes("var(")) {
+      continue;
+    }
+    parsedCss.set(
+      prop as CssProperty,
+      parseCssValueLonghand(prop as CssProperty, expandedValue)
+    );
   }
 
-  parsedCss.set(
-    "background-image",
-    parseCssValueLonghand("background-image", originalBackgroundImage)
-  );
+  // Recover unresolved var()->longhand mapping when shorthand expansion drops
+  // the var() token (e.g. outline/border cases that default to currentcolor).
+  for (const varText of getFallbacklessVarTexts(value)) {
+    const varName = getVarNameFromVarText(varText);
+    if (varName === undefined) {
+      continue;
+    }
+
+    const placeholder = inferVarPlaceholder(varName);
+    if (placeholder === undefined) {
+      continue;
+    }
+
+    const substituted = value.split(varText).join(placeholder);
+    const expandedWithPlaceholder = new Map(
+      expandShorthands([[property, substituted]])
+    );
+    const normalizedPlaceholder = normalizeCssValueText(placeholder);
+
+    for (const [prop, expandedValue] of expandedWithPlaceholder) {
+      if (normalizeCssValueText(expandedValue) !== normalizedPlaceholder) {
+        continue;
+      }
+
+      parsedCss.set(
+        prop as CssProperty,
+        parseCssValueLonghand(prop as CssProperty, varText)
+      );
+    }
+  }
+
+  if (wholeValueVarText !== undefined) {
+    const preservedVarLonghands = new Map<CssProperty, StyleValue>();
+
+    for (const prop of parsedCss.keys()) {
+      preservedVarLonghands.set(
+        prop,
+        parseCssValueLonghand(prop, wholeValueVarText)
+      );
+    }
+
+    if (preservedVarLonghands.size > 0) {
+      return preservedVarLonghands;
+    }
+  }
+
+  // css-tree shorthand expansion doesn't currently recover background-image
+  // from authored gradient shorthands that still contain var() references.
+  if (
+    property === "background" &&
+    value.includes("gradient(") &&
+    value.includes("var(")
+  ) {
+    parsedCss.set(
+      "background-image",
+      parseCssValueLonghand("background-image", value)
+    );
+  }
 
   return parsedCss;
 };
+
+const preserveOriginalBackgroundImageVars = (
+  property: string,
+  value: string,
+  parsedCss: Map<CssProperty, StyleValue>
+) => {
+  if (
+    property === "background" &&
+    value.includes("gradient(") &&
+    value.includes("var(")
+  ) {
+    parsedCss.set(
+      "background-image",
+      parseCssValueLonghand("background-image", value)
+    );
+  }
+
+  return parsedCss;
+};
+
+const getSingleFallbacklessVarText = (value: string): string | undefined => {
+  try {
+    const ast = csstree.parse(value, { context: "value" });
+    const vars: string[] = [];
+    let hasFallback = false;
+
+    csstree.walk(ast, {
+      visit: "Function",
+      enter(node) {
+        const fnNode = node as csstree.FunctionNode;
+        if (fnNode.name !== "var") {
+          return;
+        }
+        const parsedVar = parseCssVar(fnNode);
+        if (!parsedVar || parsedVar.fallback !== undefined) {
+          hasFallback = true;
+          return walkSkip;
+        }
+        vars.push(csstree.generate(fnNode));
+      },
+    });
+
+    if (hasFallback || vars.length !== 1) {
+      return;
+    }
+
+    return vars[0];
+  } catch {
+    return;
+  }
+};
+
+const getFallbacklessVarTexts = (value: string): string[] => {
+  try {
+    const ast = csstree.parse(value, { context: "value" });
+    const vars: string[] = [];
+
+    csstree.walk(ast, {
+      visit: "Function",
+      enter(node) {
+        const fnNode = node as csstree.FunctionNode;
+        if (fnNode.name !== "var") {
+          return;
+        }
+        const parsedVar = parseCssVar(fnNode);
+        if (!parsedVar || parsedVar.fallback !== undefined) {
+          return;
+        }
+        vars.push(csstree.generate(fnNode));
+      },
+    });
+
+    return [...new Set(vars)];
+  } catch {
+    return [];
+  }
+};
+
+const getVarNameFromVarText = (varText: string): string | undefined => {
+  const match = varText.trim().match(/^var\(\s*(--[\w-]+)\s*\)$/);
+  return match?.[1];
+};
+
+const normalizeCssValueText = (value: string): string => {
+  try {
+    return csstree.generate(csstree.parse(value, { context: "value" }));
+  } catch {
+    return value;
+  }
+};
+
+const inferVarPlaceholder = (varName: string): string | undefined => {
+  if (/(^|-)color(s)?($|-)|(^|-)fill($|-)|(^|-)stroke($|-)/.test(varName)) {
+    return "rgb(1,2,3)";
+  }
+  if (/(^|-)style($|-)|(^|-)line($|-)/.test(varName)) {
+    return "solid";
+  }
+  if (
+    /(^|-)(width|height|size|radius|thickness|offset|gap|inset|spacing|margin|padding)($|-)/.test(
+      varName
+    )
+  ) {
+    return "1px";
+  }
+  if (/(^|-)opacity($|-)/.test(varName)) {
+    return "0.5";
+  }
+  return;
+};
+
+const getWholeValueFallbacklessVarText = (
+  value: string
+): string | undefined => {
+  const singleVarText = getSingleFallbacklessVarText(value);
+  if (singleVarText === undefined) {
+    return;
+  }
+
+  try {
+    const normalizedValue = csstree.generate(
+      csstree.parse(value, { context: "value" })
+    );
+    if (normalizedValue !== singleVarText) {
+      return;
+    }
+    return singleVarText;
+  } catch {
+    return;
+  }
+};
+
+const hasOnlyFallbacklessVars = (value: string): boolean => {
+  let hasVar = false;
+
+  try {
+    const ast = csstree.parse(value, { context: "value" });
+    let allFallbackless = true;
+
+    csstree.walk(ast, {
+      visit: "Function",
+      enter(node) {
+        const fnNode = node as csstree.FunctionNode;
+        if (fnNode.name !== "var") {
+          return;
+        }
+        const parsedVar = parseCssVar(fnNode);
+        if (!parsedVar) {
+          allFallbackless = false;
+          return walkSkip;
+        }
+        hasVar = true;
+        if (parsedVar.fallback !== undefined) {
+          allFallbackless = false;
+          return walkSkip;
+        }
+      },
+    });
+
+    return hasVar && allFallbackless;
+  } catch {
+    return false;
+  }
+};
+
+// css-tree keeps escaped selector identifiers as-is.
+// Example: `.border-\[color\:var\(--border-color\)\]` is parsed with
+// node.name = "border-\\[color\\:var\\(--border-color\\)\\]".
+// We unescape it so class names match authored HTML class attributes.
+const unescapeCssIdentifier = (value: string): string =>
+  value.replace(/\\([0-9a-fA-F]{1,6}\s?|.)/g, (_match, escaped: string) => {
+    const hexMatch = escaped.match(/^([0-9a-fA-F]{1,6})\s?$/);
+    if (hexMatch) {
+      const codePoint = Number.parseInt(hexMatch[1], 16);
+      return String.fromCodePoint(codePoint);
+    }
+    return escaped;
+  });
 
 /**
  * Substitute var() references in a shorthand value then expand the result.
@@ -328,14 +562,18 @@ const substituteVarsInShorthand = (
       // No recognizable var() nodes — let caller fall through to default.
       return;
     }
-    if (property === "background" && value.includes("gradient(")) {
-      return {
-        result: preserveOriginalBackgroundImageVars(
-          value,
-          parseCssValue(property as CssProperty, value)
-        ),
-        droppedVars: [],
-      };
+    if (hasOnlyFallbacklessVars(value)) {
+      const parsed = preserveOriginalVarLonghands(
+        property,
+        value,
+        parseCssValue(property as CssProperty, value)
+      );
+      if (parsed.size > 0) {
+        return {
+          result: parsed,
+          droppedVars: [],
+        };
+      }
     }
     // All vars were unresolvable — signal that the property will be dropped.
     return { result: new Map(), droppedVars: dropped };
@@ -343,8 +581,8 @@ const substituteVarsInShorthand = (
 
   let parsed = parseCssValue(property as CssProperty, resolved);
 
-  if (property === "background" && usedCssVarsSubstitution) {
-    parsed = preserveOriginalBackgroundImageVars(value, parsed);
+  if (value.includes("var(") && usedCssVarsSubstitution) {
+    parsed = preserveOriginalBackgroundImageVars(property, value, parsed);
   }
 
   return {
@@ -749,7 +987,7 @@ export const parseClassBasedSelector = (
     const segClassNames: string[] = [];
     for (const node of segment.nodes) {
       if (node.type === "ClassSelector") {
-        segClassNames.push(node.name);
+        segClassNames.push(unescapeCssIdentifier(node.name));
       } else {
         // Non-class node in an ancestor segment — reject
         return undefined;
@@ -772,7 +1010,7 @@ export const parseClassBasedSelector = (
   for (const node of lastSegment.nodes) {
     switch (node.type) {
       case "ClassSelector":
-        classNames.push(node.name);
+        classNames.push(unescapeCssIdentifier(node.name));
         break;
       case "AttributeSelector":
       case "PseudoClassSelector":

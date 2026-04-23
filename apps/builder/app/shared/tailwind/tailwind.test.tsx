@@ -2,6 +2,15 @@ import { describe, expect, test } from "vitest";
 import { css, renderTemplate, ws } from "@webstudio-is/template";
 import { generateFragmentFromTailwind } from "./tailwind";
 
+const getBaseStyleValue = (
+  fragment: Awaited<ReturnType<typeof generateFragmentFromTailwind>>,
+  property: string
+) => {
+  return fragment.styles.find(
+    (style) => style.breakpointId === "base" && style.property === property
+  )?.value;
+};
+
 test("extract local styles from tailwind classes", async () => {
   expect(
     await generateFragmentFromTailwind(
@@ -120,6 +129,79 @@ test("override border opacity", async () => {
         `}
       ></ws.element>
     )
+  );
+});
+
+test("keep css variable shorthand border color", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element
+        ws:tag="div"
+        class="p-8 border border-(--border-color)"
+      ></ws.element>
+    )
+  );
+
+  expect(fragment.props.some((prop) => prop.name === "class")).toBe(false);
+  expect(getBaseStyleValue(fragment, "borderTopStyle")).toEqual(
+    expect.objectContaining({ type: "keyword", value: "solid" })
+  );
+  expect(getBaseStyleValue(fragment, "borderTopWidth")).toEqual(
+    expect.objectContaining({ type: "unit", unit: "px", value: 1 })
+  );
+  expect(getBaseStyleValue(fragment, "borderTopColor")).toEqual(
+    expect.objectContaining({ type: "var", value: "border-color" })
+  );
+});
+
+test("keep inline border-color var override", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element
+        ws:tag="div"
+        class="p-8 border"
+        ws:style={css`
+          border-color: var(--border-color);
+        `}
+      ></ws.element>
+    )
+  );
+
+  expect(getBaseStyleValue(fragment, "borderTopColor")).toEqual(
+    expect.objectContaining({ type: "var", value: "border-color" })
+  );
+});
+
+test("keep typed literal border color utility", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element
+        ws:tag="div"
+        class="p-8 border border-[color:#000]"
+      ></ws.element>
+    )
+  );
+
+  expect(getBaseStyleValue(fragment, "borderTopColor")).toEqual(
+    expect.objectContaining({ type: "color", colorSpace: "hex" })
+  );
+});
+
+test("keep inline border shorthand var color override", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element
+        ws:tag="div"
+        class="p-8 border"
+        ws:style={css`
+          border: 1px solid var(--border-color);
+        `}
+      ></ws.element>
+    )
+  );
+
+  expect(getBaseStyleValue(fragment, "borderTopColor")).toEqual(
+    expect.objectContaining({ type: "var", value: "border-color" })
   );
 });
 

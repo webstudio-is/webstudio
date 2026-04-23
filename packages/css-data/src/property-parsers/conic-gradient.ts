@@ -6,13 +6,14 @@ import {
   type VarValue,
 } from "@webstudio-is/css-engine";
 import {
-  getColor,
   isAngleUnit,
-  isColorStop,
-  mapLengthPercentageOrVar,
   formatGradientStops,
+  mapLengthPercentageOrVar,
   normalizeRepeatingGradient,
+  parseGradientHintFromParts,
+  parseGradientStopFromParts,
   forEachGradientParts,
+  withoutWhitespaceNodes,
 } from "./gradient-utils";
 import type { GradientStop, ParsedConicGradient } from "./types";
 
@@ -28,7 +29,7 @@ const isIdentifier = (node: csstree.CssNode, value: string) =>
 const parseGradientPart = (
   nodes: csstree.CssNode[]
 ): GradientPartResult | undefined => {
-  const filtered = nodes.filter((node) => node.type !== "WhiteSpace");
+  const filtered = withoutWhitespaceNodes(nodes);
   if (filtered.length === 0) {
     return;
   }
@@ -58,23 +59,12 @@ const parseGradientPart = (
     return;
   }
 
-  const colorNode = filtered.find(isColorStop);
-  if (colorNode !== undefined) {
-    const color = getColor(colorNode);
-    const colorIndex = filtered.indexOf(colorNode);
-    const positionNode = filtered[colorIndex + 1];
-    const hintNode = filtered[colorIndex + 2];
-
-    const stop: GradientStop = {
-      color,
-      position: mapLengthPercentageOrVar(positionNode),
-      hint: mapLengthPercentageOrVar(hintNode),
-    };
-
+  const stop = parseGradientStopFromParts(filtered);
+  if (stop !== undefined) {
     return { type: "stop", value: stop };
   }
 
-  const hint = mapLengthPercentageOrVar(filtered[0]);
+  const hint = parseGradientHintFromParts(filtered);
   if (hint !== undefined) {
     return { type: "hint", value: hint };
   }
@@ -107,10 +97,9 @@ export const parseConicGradient = (
   const stops: GradientStop[] = [];
 
   forEachGradientParts(ast, "conic-gradient", (gradientParts) => {
-    const filteredParts = gradientParts.filter(
-      (node) => node.type !== "WhiteSpace"
-    );
-    const containsStop = filteredParts.some(isColorStop);
+    const filteredParts = withoutWhitespaceNodes(gradientParts);
+    const containsStop =
+      parseGradientStopFromParts(filteredParts) !== undefined;
 
     let handledDirective = false;
     const fromIndex = filteredParts.findIndex((node) =>

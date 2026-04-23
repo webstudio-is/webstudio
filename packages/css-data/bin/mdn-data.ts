@@ -18,6 +18,7 @@ import type {
 } from "@webstudio-is/css-engine";
 import * as customData from "../src/custom-data";
 import { camelCaseProperty } from "../src/parse-css";
+import { supportedExperimentalPropertySet } from "./property-filter";
 
 const units: Record<string, Array<string>> = {
   number: [],
@@ -234,11 +235,15 @@ const writeToFile = (fileName: string, constant: string, data: unknown) => {
   writeFileSync(join(targetDir, fileName), content, "utf8");
 };
 
-const supportedExperimentalProperties = [
-  "field-sizing",
-  "text-size-adjust",
-  "-webkit-tap-highlight-color",
-  "-webkit-overflow-scrolling",
+// Most shorthands are identifiable in MDN data because their `initial` value
+// is an array of subproperties. These additional shorthands still expand into
+// multiple longhands, but MDN models them with a scalar initial value like
+// `normal`, so we need to include them explicitly.
+const additionalShorthandProperties = [
+  "font-synthesis",
+  "font-variant",
+  "text-wrap",
+  "white-space",
 ];
 
 // Properties we don't support in this form.
@@ -249,11 +254,7 @@ const unsupportedProperties = [
   "-webkit-text-stroke-width",
   // shorthand properties
   "all",
-  "font-synthesis",
-  "font-variant",
   "overflow",
-  "white-space",
-  "text-wrap",
   "background-position",
   "border-block-style",
   "border-block-width",
@@ -283,7 +284,7 @@ const filterData = () => {
       config.status === "standard" && "mdn_url" in config;
 
     const isSupportedExperimentalProperty =
-      supportedExperimentalProperties.includes(property);
+      supportedExperimentalPropertySet.has(property);
 
     if (
       isStandardProperty === false &&
@@ -297,7 +298,9 @@ const filterData = () => {
       config.animationType !== "discrete" &&
       config.animationType !== "notAnimatable";
 
-    const isShorthandProperty = Array.isArray(config.initial);
+    const isShorthandProperty =
+      Array.isArray(config.initial) ||
+      additionalShorthandProperties.includes(property);
 
     if (isShorthandProperty) {
       allShorthands[property] = config;

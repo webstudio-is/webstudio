@@ -1,5 +1,6 @@
 import { expect, test, describe } from "vitest";
 import { $, css, renderTemplate, token, ws } from "@webstudio-is/template";
+import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { generateFragmentFromHtml as _generateFragmentFromHtml } from "./html";
 
 // Wrapper that strips skippedSelectors for tests that only compare fragment shape
@@ -472,29 +473,42 @@ describe("style tag to tokens", () => {
   });
 
   test("combine inline style attribute with class token", () => {
-    const cardToken = token(
-      "card",
-      css`
-        display: flex;
-      `
+    const fragment = generateFragmentFromHtml(`
+      <style>.card { display: flex; }</style>
+      <div class="card" style="color: red">Hello</div>
+    `);
+    const cardToken = fragment.styleSources.find(
+      (source) => source.type === "token" && source.name === "card"
     );
-    expect(
-      generateFragmentFromHtml(`
-        <style>.card { display: flex; }</style>
-        <div class="card" style="color: red">Hello</div>
-      `)
-    ).toEqual(
-      renderTemplate(
-        <ws.element
-          ws:tag="div"
-          ws:style={css`
-            color: red;
-          `}
-          ws:tokens={[cardToken]}
-        >
-          Hello
-        </ws.element>
-      )
+    expect(cardToken).toBeDefined();
+    expect(fragment.children).toEqual([{ type: "id", value: "0" }]);
+    expect(fragment.instances).toEqual([
+      {
+        type: "instance",
+        id: "0",
+        component: "ws:element",
+        tag: "div",
+        children: [{ type: "text", value: "Hello" }],
+      },
+    ]);
+    expect(fragment.styleSourceSelections).toEqual([
+      { instanceId: "0", values: [cardToken!.id, "0:ws:style"] },
+    ]);
+    expect(fragment.styles).toEqual(
+      expect.arrayContaining([
+        {
+          styleSourceId: cardToken!.id,
+          breakpointId: "base",
+          property: "display",
+          value: { type: "keyword", value: "flex" },
+        },
+        {
+          styleSourceId: "0:ws:style",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ])
     );
   });
 
@@ -810,30 +824,51 @@ describe("style tag to tokens", () => {
   });
 
   test("element with both resolved and unresolved classes plus inline style", () => {
-    const cardToken = token(
-      "card",
-      css`
-        display: flex;
-      `
+    const fragment = generateFragmentFromHtml(`
+      <style>.card { display: flex; }</style>
+      <div class="card external" style="color: red">Hello</div>
+    `);
+    const cardToken = fragment.styleSources.find(
+      (source) => source.type === "token" && source.name === "card"
     );
-    expect(
-      generateFragmentFromHtml(`
-        <style>.card { display: flex; }</style>
-        <div class="card external" style="color: red">Hello</div>
-      `)
-    ).toEqual(
-      renderTemplate(
-        <ws.element
-          ws:tag="div"
-          class="external"
-          ws:style={css`
-            color: red;
-          `}
-          ws:tokens={[cardToken]}
-        >
-          Hello
-        </ws.element>
-      )
+    expect(cardToken).toBeDefined();
+    expect(fragment.children).toEqual([{ type: "id", value: "0" }]);
+    expect(fragment.instances).toEqual([
+      {
+        type: "instance",
+        id: "0",
+        component: "ws:element",
+        tag: "div",
+        children: [{ type: "text", value: "Hello" }],
+      },
+    ]);
+    expect(fragment.props).toEqual([
+      {
+        id: "0:class",
+        instanceId: "0",
+        name: "class",
+        type: "string",
+        value: "external",
+      },
+    ]);
+    expect(fragment.styleSourceSelections).toEqual([
+      { instanceId: "0", values: [cardToken!.id, "0:ws:style"] },
+    ]);
+    expect(fragment.styles).toEqual(
+      expect.arrayContaining([
+        {
+          styleSourceId: cardToken!.id,
+          breakpointId: "base",
+          property: "display",
+          value: { type: "keyword", value: "flex" },
+        },
+        {
+          styleSourceId: "0:ws:style",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ])
     );
   });
 
@@ -3061,5 +3096,168 @@ describe("style tag to tokens", () => {
     expect(bgColor?.value).toEqual(
       expect.objectContaining({ type: "var", value: "clr-red" })
     );
+  });
+
+  describe("preserve border color var() references", () => {
+    const getTokenStyle = (
+      fragment: WebstudioFragment,
+      tokenName: string,
+      property: string
+    ) => {
+      const tokenSource = fragment.styleSources.find(
+        (source) => source.type === "token" && source.name === tokenName
+      );
+      expect(tokenSource).toBeDefined();
+      return fragment.styles.find(
+        (style) =>
+          style.styleSourceId === tokenSource!.id && style.property === property
+      );
+    };
+
+    const getSelection = (fragment: WebstudioFragment, instanceId: string) => {
+      return fragment.styleSourceSelections.find(
+        (selection) => selection.instanceId === instanceId
+      );
+    };
+
+    test("typed arbitrary color utility keeps var reference", () => {
+      const fragment = _generateFragmentFromHtml(`
+        <style>
+          .border { border-width: 1px; border-style: solid; border-color: #e5e7eb; }
+          .border-\\[color\\:var\\(--border-color\\)\\] { border-color: var(--border-color); }
+        </style>
+        <div class="p-8 border border-[color:var(--border-color)]"></div>
+      `);
+      const borderColorStyle = getTokenStyle(
+        fragment,
+        "border-[color:var(--border-color)]",
+        "borderTopColor"
+      );
+      expect(borderColorStyle?.value).toEqual(
+        expect.objectContaining({ type: "var", value: "border-color" })
+      );
+    });
+
+    test("css variable shorthand utility keeps var reference", () => {
+      const fragment = _generateFragmentFromHtml(`
+        <style>
+          .border { border-width: 1px; border-style: solid; border-color: #e5e7eb; }
+          .border-\\(--border-color\\) { border-color: var(--border-color); }
+        </style>
+        <div class="p-8 border border-(--border-color)"></div>
+      `);
+      const borderColorStyle = getTokenStyle(
+        fragment,
+        "border-(--border-color)",
+        "borderTopColor"
+      );
+      expect(borderColorStyle?.value).toEqual(
+        expect.objectContaining({ type: "var", value: "border-color" })
+      );
+    });
+
+    test("inline border-color style keeps var reference", () => {
+      const fragment = _generateFragmentFromHtml(`
+        <style>
+          .border { border-width: 1px; border-style: solid; border-color: #e5e7eb; }
+        </style>
+        <div class="p-8 border" style="border-color: var(--border-color)"></div>
+      `);
+      const divInstance = fragment.instances.find(
+        (instance) => instance.tag === "div"
+      );
+      expect(divInstance).toBeDefined();
+      expect(getSelection(fragment, divInstance!.id)?.values).toEqual([
+        expect.any(String),
+        `${divInstance!.id}:ws:style`,
+      ]);
+      const localStyle = fragment.styles.find(
+        (style) =>
+          style.styleSourceId === `${divInstance!.id}:ws:style` &&
+          style.property === "borderTopColor"
+      );
+      expect(localStyle?.value).toEqual(
+        expect.objectContaining({ type: "var", value: "border-color" })
+      );
+    });
+
+    test("arbitrary property utility keeps var reference", () => {
+      const fragment = _generateFragmentFromHtml(`
+        <style>
+          .border { border-width: 1px; border-style: solid; border-color: #e5e7eb; }
+          .\\[border-color\\:var\\(--border-color\\)\\] { border-color: var(--border-color); }
+        </style>
+        <div class="p-8 border [border-color:var(--border-color)]"></div>
+      `);
+      const borderColorStyle = getTokenStyle(
+        fragment,
+        "[border-color:var(--border-color)]",
+        "borderTopColor"
+      );
+      expect(borderColorStyle?.value).toEqual(
+        expect.objectContaining({ type: "var", value: "border-color" })
+      );
+    });
+
+    test("typed literal utility keeps literal color", () => {
+      const fragment = _generateFragmentFromHtml(`
+        <style>
+          .border { border-width: 1px; border-style: solid; border-color: #e5e7eb; }
+          .border-\\[color\\:\\#000\\] { border-color: #000; }
+        </style>
+        <div class="p-8 border border-[color:#000]"></div>
+      `);
+      const borderColorStyle = getTokenStyle(
+        fragment,
+        "border-[color:#000]",
+        "borderTopColor"
+      );
+      expect(borderColorStyle?.value).toEqual(
+        expect.objectContaining({ type: "color", colorSpace: "hex" })
+      );
+    });
+
+    test("border side utility with var color keeps var reference", () => {
+      const fragment = _generateFragmentFromHtml(`
+        <style>
+          .border-t { border-top-width: 1px; border-top-style: solid; border-color: #e5e7eb; }
+          .border-\\[color\\:var\\(--border-color\\)\\] { border-color: var(--border-color); }
+        </style>
+        <div class="p-8 border-t border-[color:var(--border-color)]"></div>
+      `);
+      const borderColorStyle = getTokenStyle(
+        fragment,
+        "border-[color:var(--border-color)]",
+        "borderTopColor"
+      );
+      expect(borderColorStyle?.value).toEqual(
+        expect.objectContaining({ type: "var", value: "border-color" })
+      );
+    });
+
+    test("inline border shorthand keeps var color reference", () => {
+      const fragment = _generateFragmentFromHtml(`
+        <style>
+          .border { border-width: 1px; border-style: solid; border-color: #e5e7eb; }
+        </style>
+        <div class="p-8 border" style="border: 1px solid var(--border-color)"></div>
+      `);
+      const divInstance = fragment.instances.find(
+        (instance) => instance.tag === "div"
+      );
+      expect(divInstance).toBeDefined();
+      expect(getSelection(fragment, divInstance!.id)?.values).toEqual([
+        expect.any(String),
+        `${divInstance!.id}:ws:style`,
+      ]);
+      const localStyle = fragment.styles.find(
+        (style) =>
+          style.styleSourceId === `${divInstance!.id}:ws:style` &&
+          style.property === "borderTopColor"
+      );
+      expect(localStyle?.value).toEqual(
+        expect.objectContaining({ type: "var", value: "border-color" })
+      );
+    });
   });
 });

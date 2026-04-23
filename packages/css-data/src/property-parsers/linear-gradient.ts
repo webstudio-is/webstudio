@@ -7,12 +7,12 @@ import {
   type VarValue,
 } from "@webstudio-is/css-engine";
 import {
-  getColor,
   isAngleDimension,
   isAngleUnit,
   isColorStop,
   isVarAngle,
   mapLengthPercentageOrVar,
+  parseGradientStopFromParts,
   formatGradientStops,
   normalizeRepeatingGradient,
   forEachGradientParts,
@@ -102,18 +102,8 @@ export const parseLinearGradient = (
     }
 
     if (handledAsAngle === false) {
-      const colorStop = gradientParts.find(isColorStop);
-      if (colorStop !== undefined) {
-        const colorIndex = gradientParts.indexOf(colorStop);
-        const position = gradientParts[colorIndex + 1];
-        const hint = gradientParts[colorIndex + 2];
-
-        const stop: GradientStop = {
-          color: getColor(colorStop),
-          position: mapLengthPercentageOrVar(position),
-          hint: mapLengthPercentageOrVar(hint),
-        };
-
+      const stop = parseGradientStopFromParts(gradientParts);
+      if (stop !== undefined) {
         stops.push(stop);
       }
     }
