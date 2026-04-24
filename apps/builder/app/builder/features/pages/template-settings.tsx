@@ -1,0 +1,807 @@
+import { nanoid } from "nanoid";
+import { z } from "zod";
+import { useState, useCallback, useId, type JSX } from "react";
+import { useStore } from "@nanostores/react";
+import { useDebouncedCallback } from "use-debounce";
+import slugify from "slugify";
+import {
+  type PageTemplate,
+  PageName,
+  PageTitle,
+  findPageByIdOrPath,
+  ROOT_FOLDER_ID,
+  elementComponent,
+  type Page,
+  type Pages,
+  PagePath,
+  isLiteralExpression,
+} from "@webstudio-is/sdk";
+import {
+  theme,
+  Button,
+  Label,
+  InputErrorsTooltip,
+  InputField,
+  Grid,
+  Separator,
+  ScrollArea,
+  DialogClose,
+  DialogTitle,
+  DialogTitleActions,
+  TitleSuffixSpacer,
+  TextArea,
+  Checkbox,
+  Text,
+} from "@webstudio-is/design-system";
+import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
+import {
+  $instances,
+  $pages,
+  $isDesignMode,
+  $assets,
+} from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
+import { selectInstance } from "~/shared/awareness";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
+import { useUnmount } from "~/shared/hook-utils/use-mount";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
+import { ImageControl } from "~/shared/project-settings";
+import { computeExpression } from "~/shared/data-variables";
+import { ImageInfo } from "./image-info";
+import { SocialPreview } from "./social-preview";
+import { CustomMetadata } from "./custom-metadata";
+import {
+  $pageRootScope,
+  duplicateTemplate,
+  instantiateTemplate,
+  isPathAvailable,
+} from "./page-utils";
+import { Form } from "./form";
+
+type CustomMeta = { property: string; content: string };
+
+const TemplateValues = z.object({
+  name: PageName,
+  title: PageTitle,
+});
+
+type TemplateFormValues = {
+  name: string;
+  title: string;
+  description: string;
+  excludePageFromSearch: string;
+  language: string;
+  socialImageUrl: string;
+  socialImageAssetId: string;
+  customMetas: CustomMeta[];
+};
+
+type TemplateErrors = {
+  name?: string[];
+  title?: string[];
+};
+
+const validateTemplateValues = (values: TemplateFormValues): TemplateErrors => {
+  const result = TemplateValues.safeParse(values);
+  if (result.success) {
+    return {};
+  }
+  return result.error.formErrors.fieldErrors;
+};
+
+const templateFieldDefaultValues: TemplateFormValues = {
+  name: "Untitled Template",
+  title: `Untitled`,
+  description: `""`,
+  excludePageFromSearch: "false",
+  language: `""`,
+  socialImageUrl: `""`,
+  socialImageAssetId: "",
+  customMetas: [{ property: "", content: `""` }],
+};
+
+const createTemplate = (
+  templateId: PageTemplate["id"],
+  values: TemplateFormValues
+) => {
+  serverSyncStore.createTransaction(
+    [$pages, $instances],
+    (pages, instances) => {
+      if (pages === undefined) {
+        return;
+      }
+      const rootInstanceId = nanoid();
+      pages.pageTemplates ??= new Map();
+      pages.pageTemplates.set(templateId, {
+        id: templateId,
+        name: values.name,
+        title: values.title,
+        rootInstanceId,
+        meta: {
+          description: values.description,
+          excludePageFromSearch: values.excludePageFromSearch,
+          language: values.language,
+          socialImageUrl: values.socialImageUrl,
+          socialImageAssetId: values.socialImageAssetId,
+          custom: values.customMetas,
+        },
+      });
+      instances.set(rootInstanceId, {
+        type: "instance",
+        id: rootInstanceId,
+        component: elementComponent,
+        tag: "body",
+        children: [],
+      });
+      selectInstance(undefined);
+    }
+  );
+};
+
+const updateTemplate = (
+  templateId: PageTemplate["id"],
+  values: Partial<TemplateFormValues>
+) => {
+  serverSyncStore.createTransaction([$pages], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+    const template = pages.pageTemplates?.get(templateId);
+    if (template === undefined) {
+      return;
+    }
+    if (values.name !== undefined) {
+      template.name = values.name;
+    }
+    if (values.title !== undefined) {
+      template.title = values.title;
+    }
+    if (values.description !== undefined) {
+      template.meta.description = values.description;
+    }
+    if (values.excludePageFromSearch !== undefined) {
+      template.meta.excludePageFromSearch = values.excludePageFromSearch;
+    }
+    if (values.language !== undefined) {
+      template.meta.language = values.language;
+    }
+    if (values.socialImageUrl !== undefined) {
+      template.meta.socialImageUrl = values.socialImageUrl;
+    }
+    if (values.socialImageAssetId !== undefined) {
+      template.meta.socialImageAssetId = values.socialImageAssetId;
+    }
+    if (values.customMetas !== undefined) {
+      template.meta.custom = values.customMetas;
+    }
+  });
+};
+
+export const NewTemplateSettings = ({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: (templateId: PageTemplate["id"]) => void;
+}) => {
+  const [values, setValues] = useState<TemplateFormValues>(
+    templateFieldDefaultValues
+  );
+  const errors = validateTemplateValues(values);
+
+  const handleSubmit = () => {
+    if (Object.keys(errors).length === 0) {
+      const templateId = nanoid();
+      createTemplate(templateId, values);
+      onSuccess(templateId);
+    }
+  };
+
+  return (
+    <NewTemplateSettingsView
+      onSubmit={handleSubmit}
+      onClose={onClose}
+      isSubmitting={false}
+    >
+      <TemplateFormFields
+        autoSelect
+        errors={errors}
+        values={values}
+        onChange={(field, value) =>
+          setValues((prev) => ({ ...prev, [field]: value }))
+        }
+      />
+    </NewTemplateSettingsView>
+  );
+};
+
+const NewTemplateSettingsView = ({
+  onSubmit,
+  isSubmitting,
+  children,
+}: {
+  onSubmit: () => void;
+  isSubmitting: boolean;
+  onClose: () => void;
+  children: JSX.Element;
+}) => {
+  return (
+    <>
+      <DialogTitle
+        suffix={
+          <DialogTitleActions>
+            <TitleSuffixSpacer />
+            <Button
+              state={isSubmitting ? "pending" : "auto"}
+              onClick={onSubmit}
+              tabIndex={2}
+            >
+              {isSubmitting ? "Creating" : "Create template"}
+            </Button>
+            <DialogClose />
+          </DialogTitleActions>
+        }
+      >
+        New Template Settings
+      </DialogTitle>
+      <Form onSubmit={onSubmit}>{children}</Form>
+    </>
+  );
+};
+
+export const TemplateSettings = ({
+  onClose,
+  onDuplicate,
+  onDelete,
+  templateId,
+}: {
+  onClose: () => void;
+  onDuplicate: (newTemplateId: string) => void;
+  onDelete?: () => void;
+  templateId: string;
+}) => {
+  const pages = useStore($pages);
+  const template = pages?.pageTemplates?.get(templateId);
+
+  const [unsavedValues, setUnsavedValues] = useState<
+    Partial<TemplateFormValues>
+  >({});
+
+  const values: TemplateFormValues = {
+    ...(template
+      ? {
+          name: template.name,
+          title: template.title,
+          description:
+            template.meta.description ?? templateFieldDefaultValues.description,
+          excludePageFromSearch:
+            template.meta.excludePageFromSearch ??
+            templateFieldDefaultValues.excludePageFromSearch,
+          language:
+            template.meta.language ?? templateFieldDefaultValues.language,
+          socialImageUrl:
+            template.meta.socialImageUrl ??
+            templateFieldDefaultValues.socialImageUrl,
+          socialImageAssetId:
+            template.meta.socialImageAssetId ??
+            templateFieldDefaultValues.socialImageAssetId,
+          customMetas:
+            template.meta.custom ?? templateFieldDefaultValues.customMetas,
+        }
+      : templateFieldDefaultValues),
+    ...unsavedValues,
+  };
+
+  const errors = validateTemplateValues(values);
+
+  const debouncedFn = useEffectEvent(() => {
+    if (
+      Object.keys(unsavedValues).length === 0 ||
+      Object.keys(errors).length !== 0
+    ) {
+      return;
+    }
+    updateTemplate(templateId, unsavedValues);
+    setUnsavedValues({});
+  });
+
+  const handleSubmitDebounced = useDebouncedCallback(debouncedFn, 1000);
+
+  const handleChange = useCallback(
+    (
+      field: keyof TemplateFormValues,
+      value: TemplateFormValues[keyof TemplateFormValues]
+    ) => {
+      setUnsavedValues((prev) => ({ ...prev, [field]: value }));
+      handleSubmitDebounced();
+    },
+    [handleSubmitDebounced]
+  );
+
+  useUnmount(() => {
+    if (
+      Object.keys(unsavedValues).length === 0 ||
+      Object.keys(errors).length !== 0
+    ) {
+      return;
+    }
+    updateTemplate(templateId, unsavedValues);
+  });
+
+  if (template === undefined) {
+    return null;
+  }
+
+  return (
+    <TemplateSettingsView
+      onClose={onClose}
+      onDelete={onDelete}
+      onDuplicate={() => {
+        const newId = duplicateTemplate(templateId);
+        if (newId !== undefined) {
+          onDuplicate(newId);
+        }
+      }}
+    >
+      <TemplateFormFields
+        errors={errors}
+        values={values}
+        onChange={handleChange}
+      />
+    </TemplateSettingsView>
+  );
+};
+
+const TemplateSettingsView = ({
+  onDelete,
+  onDuplicate,
+  onClose,
+  children,
+}: {
+  onDelete?: () => void;
+  onDuplicate: () => void;
+  onClose: () => void;
+  children: JSX.Element;
+}) => {
+  const isDesignMode = useStore($isDesignMode);
+  return (
+    <>
+      <DialogTitle
+        suffix={
+          <DialogTitleActions>
+            {isDesignMode && onDelete && (
+              <Button
+                color="ghost"
+                prefix={<TrashIcon />}
+                onClick={onDelete}
+                aria-label="Delete template"
+                tabIndex={2}
+              />
+            )}
+            {isDesignMode && (
+              <Button
+                color="ghost"
+                prefix={<CopyIcon />}
+                onClick={onDuplicate}
+                aria-label="Duplicate template"
+                tabIndex={2}
+              />
+            )}
+            <DialogClose />
+          </DialogTitleActions>
+        }
+      >
+        Template Settings
+      </DialogTitle>
+      <Form onSubmit={onClose}>
+        <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
+          {children}
+        </fieldset>
+      </Form>
+    </>
+  );
+};
+
+const TemplateFormFields = ({
+  autoSelect,
+  errors,
+  values,
+  onChange,
+}: {
+  autoSelect?: boolean;
+  errors: TemplateErrors;
+  values: TemplateFormValues;
+  onChange: (
+    field: keyof TemplateFormValues,
+    value: TemplateFormValues[keyof TemplateFormValues]
+  ) => void;
+}) => {
+  const nameId = useId();
+  const titleId = useId();
+  const descriptionId = useId();
+  const excludePageFromSearchId = useId();
+  const socialImageFieldId = useId();
+
+  const { variableValues, scope, aliases } = useStore($pageRootScope);
+  const assets = useStore($assets);
+
+  const description = String(
+    computeExpression(values.description, variableValues)
+  );
+  const excludePageFromSearch = Boolean(
+    computeExpression(values.excludePageFromSearch, variableValues)
+  );
+  const socialImageUrl = String(
+    computeExpression(values.socialImageUrl, variableValues)
+  );
+  const socialImageAsset = assets.get(values.socialImageAssetId);
+
+  return (
+    <Grid css={{ height: "100%" }}>
+      <ScrollArea>
+        <Grid gap={2} css={{ padding: theme.panel.padding }}>
+          {/* Template name */}
+          <Grid gap={1}>
+            <Label htmlFor={nameId}>Template name</Label>
+            <InputErrorsTooltip errors={errors.name}>
+              <InputField
+                color={errors.name && "error"}
+                id={nameId}
+                autoFocus={autoSelect}
+                placeholder="About"
+                value={values.name}
+                onChange={(event) => onChange("name", event.target.value)}
+              />
+            </InputErrorsTooltip>
+          </Grid>
+        </Grid>
+
+        <Separator />
+
+        {/* Search settings */}
+        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+          <Label text="title">Search</Label>
+          <Text color="subtle">
+            Optimize the way pages created from this template appear in search
+            engine results.
+          </Text>
+
+          {/* Page title */}
+          <Grid gap={1}>
+            <Label htmlFor={titleId}>Page title (default)</Label>
+            <InputErrorsTooltip errors={errors.title}>
+              <InputField
+                color={errors.title && "error"}
+                id={titleId}
+                placeholder={`"My Page"`}
+                value={values.title}
+                onChange={(event) => onChange("title", event.target.value)}
+              />
+            </InputErrorsTooltip>
+          </Grid>
+
+          {/* Description */}
+          <Grid gap={1}>
+            <Label htmlFor={descriptionId}>Description</Label>
+            <BindingControl>
+              <BindingPopover
+                scope={scope}
+                aliases={aliases}
+                variant={
+                  isLiteralExpression(values.description) ? "default" : "bound"
+                }
+                value={values.description}
+                onChange={(value) => onChange("description", value)}
+                onRemove={(evaluatedValue) =>
+                  onChange("description", JSON.stringify(evaluatedValue ?? ""))
+                }
+              />
+              <InputErrorsTooltip errors={undefined}>
+                <TextArea
+                  id={descriptionId}
+                  disabled={isLiteralExpression(values.description) === false}
+                  value={description}
+                  onChange={(value) =>
+                    onChange("description", JSON.stringify(value))
+                  }
+                  autoGrow
+                  maxRows={10}
+                />
+              </InputErrorsTooltip>
+            </BindingControl>
+
+            {/* Exclude from search */}
+            <BindingControl>
+              <Grid
+                flow={"column"}
+                gap={1}
+                justify={"start"}
+                align={"center"}
+                css={{ py: theme.spacing[2] }}
+              >
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.excludePageFromSearch)
+                      ? "default"
+                      : "bound"
+                  }
+                  value={values.excludePageFromSearch}
+                  onChange={(value) => onChange("excludePageFromSearch", value)}
+                  onRemove={(evaluatedValue) =>
+                    onChange(
+                      "excludePageFromSearch",
+                      JSON.stringify(evaluatedValue ?? "")
+                    )
+                  }
+                />
+                <Checkbox
+                  id={excludePageFromSearchId}
+                  disabled={
+                    isLiteralExpression(values.excludePageFromSearch) === false
+                  }
+                  checked={excludePageFromSearch}
+                  onCheckedChange={() => {
+                    onChange(
+                      "excludePageFromSearch",
+                      (!excludePageFromSearch).toString()
+                    );
+                  }}
+                />
+                <Label htmlFor={excludePageFromSearchId}>
+                  Exclude this page from search results
+                </Label>
+              </Grid>
+            </BindingControl>
+          </Grid>
+        </Grid>
+
+        <Separator />
+
+        {/* Social image */}
+        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+          <Label htmlFor={socialImageFieldId} text="title">
+            Social Image
+          </Label>
+          <Text color="subtle">
+            This image appears when pages from this template are shared on
+            social media. The optimal dimensions are 1200x630 px or larger with
+            a 1.91:1 aspect ratio.
+          </Text>
+          <BindingControl>
+            <BindingPopover
+              scope={scope}
+              aliases={aliases}
+              variant={
+                isLiteralExpression(values.socialImageUrl) ? "default" : "bound"
+              }
+              value={values.socialImageUrl}
+              onChange={(value) => onChange("socialImageUrl", value)}
+              onRemove={(evaluatedValue) =>
+                onChange("socialImageUrl", JSON.stringify(evaluatedValue ?? ""))
+              }
+            />
+            <InputErrorsTooltip errors={undefined}>
+              <InputField
+                placeholder="https://www.url.com"
+                disabled={isLiteralExpression(values.socialImageUrl) === false}
+                value={socialImageUrl}
+                onChange={(event) => {
+                  onChange(
+                    "socialImageUrl",
+                    JSON.stringify(event.target.value)
+                  );
+                  onChange("socialImageAssetId", "");
+                }}
+              />
+            </InputErrorsTooltip>
+          </BindingControl>
+          <Grid gap={1} flow={"column"}>
+            <ImageControl
+              onAssetIdChange={(assetId) => {
+                onChange("socialImageAssetId", assetId);
+                onChange("socialImageUrl", `""`);
+              }}
+            >
+              <Button
+                id={socialImageFieldId}
+                css={{ justifySelf: "start" }}
+                color="neutral"
+              >
+                Choose Image From Assets
+              </Button>
+            </ImageControl>
+          </Grid>
+          {socialImageAsset?.type === "image" && (
+            <ImageInfo
+              asset={socialImageAsset}
+              onDelete={() => onChange("socialImageAssetId", "")}
+            />
+          )}
+          <div />
+          <SocialPreview
+            ogImageUrl={
+              socialImageAsset?.type === "image"
+                ? socialImageAsset.name
+                : socialImageUrl
+            }
+            ogUrl="/"
+            ogTitle={String(computeExpression(values.title, variableValues))}
+            ogDescription={description}
+          />
+        </Grid>
+
+        <Separator />
+
+        {/* Custom metadata */}
+        <CustomMetadata
+          customMetas={values.customMetas}
+          onChange={(customMetas) => onChange("customMetas", customMetas)}
+        />
+
+        <Separator />
+      </ScrollArea>
+    </Grid>
+  );
+};
+
+// ── Create-page-from-template dialog ────────────────────────────────────────
+
+const PageFromTemplateValues = z.object({
+  name: PageName,
+  path: PagePath,
+});
+
+type PageFromTemplateFormValues = {
+  name: string;
+  path: string;
+};
+
+type PageFromTemplateErrors = {
+  name?: string[];
+  path?: string[];
+};
+
+const validatePageFromTemplate = (
+  pages: Pages | undefined,
+  values: PageFromTemplateFormValues
+): PageFromTemplateErrors => {
+  const result = PageFromTemplateValues.safeParse(values);
+  if (result.success === false) {
+    return result.error.formErrors.fieldErrors;
+  }
+  const errors: PageFromTemplateErrors = {};
+  if (pages !== undefined) {
+    if (
+      isPathAvailable({
+        pages,
+        path: values.path,
+        parentFolderId: ROOT_FOLDER_ID,
+      }) === false
+    ) {
+      errors.path = ["All paths must be unique"];
+    }
+  }
+  return errors;
+};
+
+const nameToPath = (pages: Pages | undefined, name: string) => {
+  if (name === "") return "";
+  const slug = slugify(name, { lower: true, strict: true });
+  const path = `/${slug}`;
+  if (pages === undefined) return path;
+  if (findPageByIdOrPath(path, pages) === undefined) return path;
+  let suffix = 1;
+  while (findPageByIdOrPath(`${path}${suffix}`, pages) !== undefined) {
+    suffix++;
+  }
+  return `${path}${suffix}`;
+};
+
+export const CreatePageFromTemplateSettings = ({
+  templateId,
+  onSuccess,
+}: {
+  templateId: PageTemplate["id"];
+  onClose: () => void;
+  onSuccess: (pageId: Page["id"]) => void;
+}) => {
+  const pages = useStore($pages);
+  const template = pages?.pageTemplates?.get(templateId);
+
+  const [values, setValues] = useState<PageFromTemplateFormValues>(() => {
+    const name = template?.name ?? "Untitled";
+    return { name, path: nameToPath(pages, name) };
+  });
+
+  const errors = validatePageFromTemplate(pages, values);
+  const nameId = useId();
+  const pathId = useId();
+
+  const handleSubmit = () => {
+    if (Object.keys(errors).length === 0) {
+      const newPageId = instantiateTemplate({
+        templateId,
+        overrides: values,
+        folderId: ROOT_FOLDER_ID,
+      });
+      if (newPageId) {
+        onSuccess(newPageId);
+      }
+    }
+  };
+
+  if (template === undefined) {
+    return null;
+  }
+
+  return (
+    <>
+      <DialogTitle
+        suffix={
+          <DialogTitleActions>
+            <TitleSuffixSpacer />
+            <Button onClick={handleSubmit} tabIndex={2}>
+              Create page
+            </Button>
+            <DialogClose />
+          </DialogTitleActions>
+        }
+      >
+        Create Page from Template
+      </DialogTitle>
+      <Form onSubmit={handleSubmit}>
+        <Grid css={{ height: "100%" }}>
+          <ScrollArea>
+            <Grid gap={2} css={{ padding: theme.panel.padding }}>
+              <Grid gap={1}>
+                <Label htmlFor={nameId}>Page name</Label>
+                <InputErrorsTooltip errors={errors.name}>
+                  <InputField
+                    color={errors.name && "error"}
+                    id={nameId}
+                    autoFocus
+                    value={values.name}
+                    onChange={(event) => {
+                      const name = event.target.value;
+                      setValues((prev) => {
+                        const changes: Partial<PageFromTemplateFormValues> = {
+                          name,
+                        };
+                        if (prev.path === nameToPath(pages, prev.name)) {
+                          changes.path = nameToPath(pages, name);
+                        }
+                        return { ...prev, ...changes };
+                      });
+                    }}
+                  />
+                </InputErrorsTooltip>
+              </Grid>
+              <Grid gap={1}>
+                <Label htmlFor={pathId}>Path</Label>
+                <InputErrorsTooltip errors={errors.path}>
+                  <InputField
+                    color={errors.path && "error"}
+                    id={pathId}
+                    placeholder="/about"
+                    value={values.path}
+                    onChange={(event) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        path: event.target.value,
+                      }))
+                    }
+                  />
+                </InputErrorsTooltip>
+              </Grid>
+            </Grid>
+          </ScrollArea>
+        </Grid>
+      </Form>
+    </>
+  );
+};

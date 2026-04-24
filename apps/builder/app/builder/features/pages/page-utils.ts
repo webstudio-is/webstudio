@@ -2,6 +2,7 @@ import { computed } from "nanostores";
 import { nanoid } from "nanoid";
 import {
   type Page,
+  type PageTemplate,
   type Folder,
   type WebstudioData,
   Pages,
@@ -18,12 +19,16 @@ import {
 } from "@webstudio-is/sdk";
 import {
   deleteInstanceMutable,
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
-import { $dataSources } from "~/shared/sync/data-stores";
-import { $pages } from "~/shared/sync/data-stores";
-import { insertPageCopyMutable } from "~/shared/page-utils";
+import { $dataSources, $pages } from "~/shared/sync/data-stores";
+import {
+  insertPageCopyMutable,
+  insertPageFromTemplateMutable,
+} from "~/shared/page-utils";
 import {
   $selectedPage,
   getInstanceKey,
@@ -515,4 +520,80 @@ export const canDrop = (dropTarget: DropTarget, pages: Pages) => {
     return false;
   }
   return true;
+};
+
+export const deleteTemplateMutable = (
+  templateId: PageTemplate["id"],
+  data: WebstudioData
+) => {
+  const template = data.pages.pageTemplates?.get(templateId);
+  if (template === undefined) {
+    return;
+  }
+  deleteInstanceMutable(
+    data,
+    getInstancePath([template.rootInstanceId], data.instances)
+  );
+  data.pages.pageTemplates?.delete(templateId);
+};
+
+export const duplicateTemplate = (templateId: PageTemplate["id"]) => {
+  const pages = $pages.get();
+  const template = pages?.pageTemplates?.get(templateId);
+  if (template === undefined) {
+    return;
+  }
+  let newTemplateId: undefined | string;
+  updateWebstudioData((data) => {
+    data.pages.pageTemplates ??= new Map();
+    const usedNames = new Set(
+      Array.from(data.pages.pageTemplates.values()).map((t) => t.name)
+    );
+    const { name: baseName = template.name, copyNumber } =
+      template.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
+    let nameNumber = Number(copyNumber ?? "0");
+    let newName = baseName;
+    while (usedNames.has(newName)) {
+      nameNumber += 1;
+      newName = `${baseName} (${nameNumber})`;
+    }
+    newTemplateId = nanoid();
+    const { newInstanceIds } = insertWebstudioFragmentCopy({
+      data,
+      fragment: extractWebstudioFragment(data, template.rootInstanceId),
+      availableVariables: [],
+      projectId: newTemplateId,
+    });
+    const newTemplate: PageTemplate = {
+      id: newTemplateId,
+      name: newName,
+      title: template.title,
+      rootInstanceId:
+        newInstanceIds.get(template.rootInstanceId) ?? template.rootInstanceId,
+      meta: structuredClone(template.meta),
+    };
+    data.pages.pageTemplates.set(newTemplate.id, newTemplate);
+  });
+  return newTemplateId;
+};
+
+export const instantiateTemplate = ({
+  templateId,
+  overrides,
+  folderId,
+}: {
+  templateId: PageTemplate["id"];
+  overrides: { name: string; path: string };
+  folderId: Folder["id"];
+}) => {
+  let newPageId: undefined | string;
+  updateWebstudioData((data) => {
+    newPageId = insertPageFromTemplateMutable({
+      templateId,
+      source: { data },
+      target: { data, folderId },
+      overrides,
+    });
+  });
+  return newPageId;
 };

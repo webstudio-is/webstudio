@@ -1,14 +1,18 @@
 import { atom, computed } from "nanostores";
 import {
   type Page,
+  type PageTemplate,
   findPageByIdOrPath,
   findParentFolderByChildId,
   getPagePath,
+  isPage,
 } from "@webstudio-is/sdk";
 import { $pages } from "../sync/data-stores";
 import { $selectedInstanceSelector } from "./instance-selection";
 
-export const $selectedPageId = atom<undefined | Page["id"]>(undefined);
+export const $selectedPageId = atom<
+  undefined | Page["id"] | PageTemplate["id"]
+>(undefined);
 
 export const $selectedPageHash = atom<{ hash: string }>({ hash: "" });
 
@@ -20,7 +24,9 @@ export const $selectedPage = computed(
     if (pages === undefined || selectedPageId === undefined) {
       return;
     }
-    return findPageByIdOrPath(selectedPageId, pages);
+    return findPageByIdOrPath(selectedPageId, pages, {
+      includeTemplates: true,
+    });
   }
 );
 
@@ -28,6 +34,9 @@ export const $selectedPagePath = computed(
   [$selectedPage, $pages],
   (page, pages) => {
     if (pages === undefined || page === undefined) {
+      return "/";
+    }
+    if (!isPage(page)) {
       return "/";
     }
     const parentFolder = findParentFolderByChildId(page.id, pages.folders);
@@ -40,12 +49,12 @@ export const $selectedPagePath = computed(
   }
 );
 
-export const selectPage = (pageId: Page["id"]) => {
+export const selectPage = (pageId: Page["id"] | PageTemplate["id"]) => {
   const pages = $pages.get();
   if (pages === undefined) {
     return;
   }
-  const page = findPageByIdOrPath(pageId, pages);
+  const page = findPageByIdOrPath(pageId, pages, { includeTemplates: true });
   if (page === undefined) {
     return;
   }

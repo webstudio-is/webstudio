@@ -39,13 +39,13 @@ import {
   $stagingPassword,
   $stagingUsername,
 } from "~/shared/nano-states";
+import { isPage } from "@webstudio-is/sdk";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
 import { $project, $publisherHost } from "~/shared/sync/data-stores";
 import { getPublishUrl } from "./publish/publish-url";
 
-const $selectedPageHistory = computed(
-  $selectedPage,
-  (page) => page?.history ?? []
+const $selectedPageHistory = computed($selectedPage, (page): string[] =>
+  page !== undefined && isPage(page) ? (page.history ?? []) : []
 );
 
 const useCopyUrl = (pageUrl: string) => {

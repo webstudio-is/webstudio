@@ -29,6 +29,11 @@ import {
 import { NewPageSettings, PageSettings } from "./page-settings/page-settings";
 import { PageContextMenu } from "./page-context-menu";
 import {
+  NewTemplateSettings,
+  TemplateSettings,
+  CreatePageFromTemplateSettings,
+} from "./template-settings";
+import {
   DeletePageConfirmationDialog,
   DeleteFolderConfirmationDialog,
 } from "./confirmation-dialogs";
@@ -48,6 +53,7 @@ import {
   isFolder,
   getStoredDropTarget,
   canDrop,
+  deleteTemplateMutable,
 } from "./page-utils";
 import {
   FolderSettings,
@@ -59,6 +65,7 @@ import { useMount } from "~/shared/hook-utils/use-mount";
 import {
   type Folder,
   type Page,
+  type PageTemplate,
   findPageByIdOrPath,
   getFolderById,
 } from "@webstudio-is/sdk";
@@ -412,6 +419,10 @@ const PagesTree = ({
 };
 
 const newPageId = "new-page";
+const newTemplateId = "new-template";
+
+// Separate atom for which template's settings panel is open
+const $editingTemplateId = atom<undefined | string>();
 
 const PageEditor = ({
   editingPageId,
@@ -559,9 +570,160 @@ const FolderEditor = ({
   );
 };
 
+const TemplateItem = ({
+  template,
+  isSelected,
+  isEditing,
+  onSelect,
+  onEdit,
+}: {
+  template: PageTemplate;
+  isSelected: boolean;
+  isEditing: boolean;
+  onSelect: (id: string) => void;
+  onEdit: (id: string | undefined) => void;
+}) => {
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const prevIsEditing = useRef(isEditing);
+  useEffect(() => {
+    if (!isEditing && prevIsEditing.current && buttonRef.current) {
+      buttonRef.current.focus();
+    }
+    prevIsEditing.current = isEditing;
+  }, [isEditing]);
+
+  return (
+    <TreeNode
+      level={1}
+      isSelected={isSelected}
+      buttonProps={{
+        onClick: () => onSelect(template.id),
+      }}
+      action={
+        <Tooltip
+          content={
+            isEditing ? "Close template settings" : "Open template settings"
+          }
+          disableHoverableContent
+        >
+          <SmallIconButton
+            tabIndex={-1}
+            aria-label={
+              isEditing ? "Close template settings" : "Open template settings"
+            }
+            state={isSelected ? "open" : undefined}
+            onClick={() => onEdit(isEditing ? undefined : template.id)}
+            ref={buttonRef}
+            aria-current={isEditing}
+            icon={isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
+          />
+        </Tooltip>
+      }
+    >
+      <TreeNodeLabel prefix={<PageIcon />}>{template.name}</TreeNodeLabel>
+    </TreeNode>
+  );
+};
+
+const TemplatesSection = ({
+  selectedPageId,
+  onSelectTemplate,
+  editingTemplateId,
+  onEditTemplate,
+}: {
+  selectedPageId: string;
+  onSelectTemplate: (id: string) => void;
+  editingTemplateId: string | undefined;
+  onEditTemplate: (id: string | undefined) => void;
+}) => {
+  const pages = useStore($pages);
+  const templates = Array.from(pages?.pageTemplates?.values() ?? []);
+
+  if (templates.length === 0) {
+    return null;
+  }
+
+  return (
+    <TreeRoot>
+      {templates.map((template) => (
+        <TemplateItem
+          key={template.id}
+          template={template}
+          isSelected={template.id === selectedPageId}
+          isEditing={editingTemplateId === template.id}
+          onSelect={onSelectTemplate}
+          onEdit={onEditTemplate}
+        />
+      ))}
+    </TreeRoot>
+  );
+};
+
+const TemplateEditor = ({
+  editingTemplateId,
+  onClose,
+}: {
+  editingTemplateId: string;
+  onClose: () => void;
+}) => {
+  const currentPage = useStore($selectedPage);
+  const pages = useStore($pages);
+  const [createFromTemplateId, setCreateFromTemplateId] = useState<
+    string | undefined
+  >();
+
+  if (editingTemplateId === newTemplateId) {
+    return (
+      <NewTemplateSettings
+        onClose={onClose}
+        onSuccess={(templateId) => {
+          onClose();
+          selectPage(templateId);
+        }}
+      />
+    );
+  }
+
+  if (createFromTemplateId) {
+    return (
+      <CreatePageFromTemplateSettings
+        templateId={createFromTemplateId}
+        onClose={() => setCreateFromTemplateId(undefined)}
+        onSuccess={(pageId) => {
+          setCreateFromTemplateId(undefined);
+          onClose();
+          selectPage(pageId);
+        }}
+      />
+    );
+  }
+
+  return (
+    <TemplateSettings
+      onClose={onClose}
+      onDelete={() => {
+        updateWebstudioData((data) => {
+          deleteTemplateMutable(editingTemplateId, data);
+        });
+        if (currentPage?.id === editingTemplateId && pages) {
+          selectPage(pages.homePageId);
+        }
+        onClose();
+      }}
+      onDuplicate={(newId) => {
+        onClose();
+        selectPage(newId);
+      }}
+      templateId={editingTemplateId}
+      key={editingTemplateId}
+    />
+  );
+};
+
 export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const currentPage = useStore($selectedPage);
   const editingItemId = useStore($editingPageId);
+  const editingTemplateItemId = useStore($editingTemplateId);
   const pages = useStore($pages);
   const isDesignMode = useStore($isDesignMode);
   const [containerElement, setContainerElement] =
@@ -596,7 +758,6 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       updateWebstudioData((data) => {
         deletePageMutable(pageIdToDelete, data);
       });
-      // Close settings if this page was being edited
       if (editingItemId === pageIdToDelete) {
         $editingPageId.set(undefined);
       }
@@ -615,7 +776,6 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           deletePageMutable(pageId, data);
         });
       });
-      // Close settings if this folder was being edited
       if (editingItemId === folderIdToDelete) {
         $editingPageId.set(undefined);
       }
@@ -694,6 +854,46 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           />
         </div>
       </PageContextMenu>
+
+      {isDesignMode && (
+        <>
+          <Separator />
+          <PanelTitle
+            suffix={
+              <Tooltip content="New template" side="bottom">
+                <Button
+                  onClick={() => {
+                    $editingTemplateId.set(
+                      editingTemplateItemId === newTemplateId
+                        ? undefined
+                        : newTemplateId
+                    );
+                  }}
+                  aria-label="New template"
+                  prefix={<NewPageIcon />}
+                  color="ghost"
+                />
+              </Tooltip>
+            }
+          >
+            Page Templates
+          </PanelTitle>
+          <TemplatesSection
+            selectedPageId={currentPage.id}
+            onSelectTemplate={(id) => {
+              selectPage(id);
+            }}
+            editingTemplateId={editingTemplateItemId}
+            onEditTemplate={(id) => {
+              if (id) {
+                selectPage(id);
+              }
+              $editingTemplateId.set(id);
+            }}
+          />
+        </>
+      )}
+
       {editingItemId !== undefined && (
         <FloatingPanel
           content={
@@ -733,6 +933,28 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           />
         </FloatingPanel>
       )}
+
+      {editingTemplateItemId !== undefined && (
+        <FloatingPanel
+          content={
+            <TemplateEditor
+              editingTemplateId={editingTemplateItemId}
+              onClose={() => $editingTemplateId.set(undefined)}
+            />
+          }
+          placement="right-start"
+          width={Number.parseFloat(rawTheme.spacing[35])}
+          open={true}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              $editingTemplateId.set(undefined);
+            }
+          }}
+        >
+          <span style={{ display: "none" }} />
+        </FloatingPanel>
+      )}
+
       {pageIdToDelete && (
         <DeletePageConfirmationDialog
           page={findPageByIdOrPath(pageIdToDelete, pages)!}

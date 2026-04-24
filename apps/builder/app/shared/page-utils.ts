@@ -9,6 +9,7 @@ import {
   type Folder,
   type DataSource,
   type Page,
+  type PageTemplate,
   type Pages,
   type WebstudioData,
   ROOT_INSTANCE_ID,
@@ -91,6 +92,105 @@ const replaceDataSources = (
       );
     },
   });
+};
+
+export const insertPageFromTemplateMutable = ({
+  templateId,
+  source,
+  target,
+  overrides,
+  conflictResolution,
+}: {
+  templateId: PageTemplate["id"];
+  source: { data: WebstudioData };
+  target: { data: WebstudioData; folderId: Folder["id"] };
+  overrides: { name: string; path: string };
+  conflictResolution?: ConflictResolution;
+}) => {
+  const project = $project.get();
+  const template = source.data.pages.pageTemplates?.get(templateId);
+  if (project === undefined || template === undefined) {
+    return;
+  }
+  insertWebstudioFragmentCopy({
+    data: target.data,
+    fragment: extractWebstudioFragment(source.data, ROOT_INSTANCE_ID),
+    availableVariables: findAvailableVariables({
+      ...target.data,
+      startingInstanceId: ROOT_INSTANCE_ID,
+    }),
+    projectId: project.id,
+    conflictResolution,
+  });
+  const unsetVariables = new Set<DataSource["id"]>();
+  const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
+  if (template.systemDataSourceId) {
+    unsetVariables.add(template.systemDataSourceId);
+    unsetNameById.set(template.systemDataSourceId, "system");
+  }
+  const availableVariables = findAvailableVariables({
+    ...target.data,
+    startingInstanceId: ROOT_INSTANCE_ID,
+  });
+  const maskedIdByName = new Map<DataSource["name"], DataSource["id"]>();
+  for (const dataSource of availableVariables) {
+    maskedIdByName.set(dataSource.name, dataSource.id);
+  }
+  const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
+    data: target.data,
+    fragment: extractWebstudioFragment(source.data, template.rootInstanceId, {
+      unsetVariables,
+    }),
+    availableVariables,
+    projectId: project.id,
+    conflictResolution,
+  });
+  const transformExpression = (expression: string) => {
+    expression = unsetExpressionVariables({ expression, unsetNameById });
+    expression = restoreExpressionVariables({ expression, maskedIdByName });
+    expression = replaceDataSources(expression, newDataSourceIds);
+    return expression;
+  };
+  const newPage: Page = {
+    id: nanoid(),
+    name: deduplicateName(target.data.pages, target.folderId, overrides.name),
+    path: deduplicatePath(target.data.pages, target.folderId, overrides.path),
+    title: transformExpression(template.title),
+    rootInstanceId:
+      newInstanceIds.get(template.rootInstanceId) ?? template.rootInstanceId,
+    meta: {},
+  };
+  if (template.meta.description !== undefined) {
+    newPage.meta.description = transformExpression(template.meta.description);
+  }
+  if (template.meta.excludePageFromSearch !== undefined) {
+    newPage.meta.excludePageFromSearch = transformExpression(
+      template.meta.excludePageFromSearch
+    );
+  }
+  if (template.meta.socialImageUrl !== undefined) {
+    newPage.meta.socialImageUrl = transformExpression(
+      template.meta.socialImageUrl
+    );
+  }
+  if (template.meta.language !== undefined) {
+    newPage.meta.language = transformExpression(template.meta.language);
+  }
+  if (template.meta.status !== undefined) {
+    newPage.meta.status = transformExpression(template.meta.status);
+  }
+  if (template.meta.redirect !== undefined) {
+    newPage.meta.redirect = transformExpression(template.meta.redirect);
+  }
+  if (template.meta.custom) {
+    newPage.meta.custom = template.meta.custom.map(({ property, content }) => ({
+      property,
+      content: transformExpression(content),
+    }));
+  }
+  target.data.pages.pages.set(newPage.id, newPage);
+  target.data.pages.folders.get(target.folderId)?.children.push(newPage.id);
+  return newPage.id;
 };
 
 export const insertPageCopyMutable = ({
