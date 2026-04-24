@@ -639,3 +639,36 @@ export const instantiateTemplateAsNewPage = (
     folderId: pages.rootFolderId,
   });
 };
+
+export const reorderTemplatesMutable = (
+  sourceId: string,
+  targetId: string,
+  position: "before" | "after",
+  data: WebstudioData
+) => {
+  const templates = data.pages.pageTemplates;
+  if (templates === undefined || sourceId === targetId) {
+    return;
+  }
+
+  const orderedTemplates = Array.from(templates.values());
+  const sourceIndex = orderedTemplates.findIndex((t) => t.id === sourceId);
+  if (sourceIndex === -1) {
+    return;
+  }
+
+  const [sourceTemplate] = orderedTemplates.splice(sourceIndex, 1);
+
+  const targetIndex = orderedTemplates.findIndex((t) => t.id === targetId);
+  if (targetIndex === -1) {
+    orderedTemplates.push(sourceTemplate);
+  } else {
+    const insertIndex = position === "before" ? targetIndex : targetIndex + 1;
+    orderedTemplates.splice(insertIndex, 0, sourceTemplate);
+  }
+
+  templates.clear();
+  for (const template of orderedTemplates) {
+    templates.set(template.id, template);
+  }
+};

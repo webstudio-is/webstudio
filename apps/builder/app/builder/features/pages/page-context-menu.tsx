@@ -5,7 +5,12 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@webstudio-is/design-system";
-import { duplicatePage, duplicateFolder } from "./page-utils";
+import {
+  duplicatePage,
+  duplicateFolder,
+  duplicateTemplate,
+} from "./page-utils";
+import { selectPage } from "~/shared/awareness";
 
 type PageContextMenuProps = {
   children: ReactNode;
@@ -77,6 +82,72 @@ export const PageContextMenu = ({
             }}
             destructive
             disabled={!pageId && !folderId}
+          >
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+    </>
+  );
+};
+
+type TemplateContextMenuProps = {
+  children: ReactNode;
+  onRequestDeleteTemplate: (templateId: string) => void;
+};
+
+export const TemplateContextMenu = ({
+  children,
+  onRequestDeleteTemplate,
+}: TemplateContextMenuProps) => {
+  const [templateId, setTemplateId] = useState<string | undefined>();
+
+  const handleDuplicate = () => {
+    if (templateId) {
+      const newTemplateId = duplicateTemplate(templateId);
+      if (newTemplateId) {
+        selectPage(newTemplateId);
+      }
+    }
+  };
+
+  return (
+    <>
+      <ContextMenu
+        onOpenChange={(open) => {
+          if (!open) {
+            setTemplateId(undefined);
+          }
+        }}
+      >
+        <ContextMenuTrigger
+          asChild
+          onPointerDown={(event) => {
+            if (!(event.target instanceof HTMLElement)) {
+              return;
+            }
+            const button =
+              event.target.closest<HTMLElement>("[data-tree-button]");
+            const templateId = button?.getAttribute("data-template-id");
+            if (templateId) {
+              setTemplateId(templateId);
+            }
+          }}
+        >
+          {children}
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onSelect={handleDuplicate} disabled={!templateId}>
+            Duplicate
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() => {
+              if (templateId) {
+                onRequestDeleteTemplate(templateId);
+              }
+            }}
+            destructive
+            disabled={!templateId}
           >
             Delete
           </ContextMenuItem>
