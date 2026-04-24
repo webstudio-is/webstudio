@@ -39,6 +39,7 @@ import {
   $pages,
   $isDesignMode,
   $assets,
+  $publishedOrigin,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { selectInstance } from "~/shared/awareness";
@@ -94,7 +95,7 @@ const validateTemplateValues = (values: TemplateFormValues): TemplateErrors => {
 
 const templateFieldDefaultValues: TemplateFormValues = {
   name: "Untitled Template",
-  title: `Untitled`,
+  title: `"Untitled"`,
   description: `""`,
   excludePageFromSearch: "false",
   language: `""`,
@@ -427,7 +428,9 @@ const TemplateFormFields = ({
 
   const { variableValues, scope, aliases } = useStore($pageRootScope);
   const assets = useStore($assets);
+  const publishedOrigin = useStore($publishedOrigin);
 
+  const title = String(computeExpression(values.title, variableValues));
   const description = String(
     computeExpression(values.description, variableValues)
   );
@@ -472,15 +475,32 @@ const TemplateFormFields = ({
           {/* Page title */}
           <Grid gap={1}>
             <Label htmlFor={titleId}>Page title (default)</Label>
-            <InputErrorsTooltip errors={errors.title}>
-              <InputField
-                color={errors.title && "error"}
-                id={titleId}
-                placeholder={`"My Page"`}
+            <BindingControl>
+              <BindingPopover
+                scope={scope}
+                aliases={aliases}
+                variant={
+                  isLiteralExpression(values.title) ? "default" : "bound"
+                }
                 value={values.title}
-                onChange={(event) => onChange("title", event.target.value)}
+                onChange={(value) => onChange("title", value)}
+                onRemove={(evaluatedValue) =>
+                  onChange("title", JSON.stringify(evaluatedValue ?? ""))
+                }
               />
-            </InputErrorsTooltip>
+              <InputErrorsTooltip errors={errors.title}>
+                <InputField
+                  color={errors.title && "error"}
+                  id={titleId}
+                  placeholder="My Page"
+                  disabled={isLiteralExpression(values.title) === false}
+                  value={title}
+                  onChange={(event) =>
+                    onChange("title", JSON.stringify(event.target.value))
+                  }
+                />
+              </InputErrorsTooltip>
+            </BindingControl>
           </Grid>
 
           {/* Description */}
@@ -629,8 +649,8 @@ const TemplateFormFields = ({
                 ? socialImageAsset.name
                 : socialImageUrl
             }
-            ogUrl="/"
-            ogTitle={String(computeExpression(values.title, variableValues))}
+            ogUrl={publishedOrigin}
+            ogTitle={title}
             ogDescription={description}
           />
         </Grid>

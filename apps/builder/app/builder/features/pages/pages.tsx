@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react";
 import {
   Tooltip,
   Button,
+  Flex,
   SmallIconButton,
   TreeNode,
   TreeRoot,
@@ -25,6 +26,7 @@ import {
   NewPageIcon,
   PageIcon,
   DynamicPageIcon,
+  PlusIcon,
 } from "@webstudio-is/icons";
 import { NewPageSettings, PageSettings } from "./page-settings/page-settings";
 import { PageContextMenu } from "./page-context-menu";
@@ -54,6 +56,7 @@ import {
   getStoredDropTarget,
   canDrop,
   deleteTemplateMutable,
+  instantiateTemplateAsNewPage,
 } from "./page-utils";
 import {
   FolderSettings,
@@ -576,12 +579,14 @@ const TemplateItem = ({
   isEditing,
   onSelect,
   onEdit,
+  onCreatePage,
 }: {
   template: PageTemplate;
   isSelected: boolean;
   isEditing: boolean;
   onSelect: (id: string) => void;
   onEdit: (id: string | undefined) => void;
+  onCreatePage: (id: string) => void;
 }) => {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const prevIsEditing = useRef(isEditing);
@@ -599,25 +604,36 @@ const TemplateItem = ({
       buttonProps={{
         onClick: () => onSelect(template.id),
       }}
+      actionCount={2}
       action={
-        <Tooltip
-          content={
-            isEditing ? "Close template settings" : "Open template settings"
-          }
-          disableHoverableContent
-        >
-          <SmallIconButton
-            tabIndex={-1}
-            aria-label={
+        <Flex align="center" gap={2}>
+          <Tooltip content="Create page from template" disableHoverableContent>
+            <SmallIconButton
+              tabIndex={-1}
+              aria-label="Create page from template"
+              onClick={() => onCreatePage(template.id)}
+              icon={<PlusIcon />}
+            />
+          </Tooltip>
+          <Tooltip
+            content={
               isEditing ? "Close template settings" : "Open template settings"
             }
-            state={isSelected ? "open" : undefined}
-            onClick={() => onEdit(isEditing ? undefined : template.id)}
-            ref={buttonRef}
-            aria-current={isEditing}
-            icon={isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
-          />
-        </Tooltip>
+            disableHoverableContent
+          >
+            <SmallIconButton
+              tabIndex={-1}
+              aria-label={
+                isEditing ? "Close template settings" : "Open template settings"
+              }
+              state={isSelected ? "open" : undefined}
+              onClick={() => onEdit(isEditing ? undefined : template.id)}
+              ref={buttonRef}
+              aria-current={isEditing}
+              icon={isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
+            />
+          </Tooltip>
+        </Flex>
       }
     >
       <TreeNodeLabel prefix={<PageIcon />}>{template.name}</TreeNodeLabel>
@@ -630,11 +646,13 @@ const TemplatesSection = ({
   onSelectTemplate,
   editingTemplateId,
   onEditTemplate,
+  onCreatePageFromTemplate,
 }: {
   selectedPageId: string;
   onSelectTemplate: (id: string) => void;
   editingTemplateId: string | undefined;
   onEditTemplate: (id: string | undefined) => void;
+  onCreatePageFromTemplate: (id: string) => void;
 }) => {
   const pages = useStore($pages);
   const templates = Array.from(pages?.pageTemplates?.values() ?? []);
@@ -653,6 +671,7 @@ const TemplatesSection = ({
           isEditing={editingTemplateId === template.id}
           onSelect={onSelectTemplate}
           onEdit={onEditTemplate}
+          onCreatePage={onCreatePageFromTemplate}
         />
       ))}
     </TreeRoot>
@@ -889,6 +908,13 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                 selectPage(id);
               }
               $editingTemplateId.set(id);
+            }}
+            onCreatePageFromTemplate={(id) => {
+              const newPageId = instantiateTemplateAsNewPage(id);
+              if (newPageId) {
+                selectPage(newPageId);
+                $editingPageId.set(newPageId);
+              }
             }}
           />
         </>

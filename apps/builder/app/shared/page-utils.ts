@@ -173,6 +173,9 @@ export const insertPageFromTemplateMutable = ({
       template.meta.socialImageUrl
     );
   }
+  if (template.meta.socialImageAssetId !== undefined) {
+    newPage.meta.socialImageAssetId = template.meta.socialImageAssetId;
+  }
   if (template.meta.language !== undefined) {
     newPage.meta.language = transformExpression(template.meta.language);
   }
