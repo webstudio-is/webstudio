@@ -71,7 +71,7 @@ import {
   type Values,
 } from "./shared";
 
-const fieldDefaultValues: Values = {
+export const fieldDefaultValues: Values = {
   name: "Untitled",
   parentFolderId: ROOT_FOLDER_ID,
   path: "/untitled",
@@ -113,7 +113,7 @@ const nonAuthFieldNames = Object.keys(fieldDefaultValues).filter(
   (fieldName): fieldName is Exclude<FieldName, "auth"> => fieldName !== "auth"
 );
 
-const validateValues = (
+export const validateValues = (
   pages: undefined | Pages,
   // undefined page id means new page
   pageId: undefined | Page["id"],
@@ -218,7 +218,7 @@ export const __testing__ = {
   validateValues,
 };
 
-const FormFields = ({
+export const FormFields = ({
   autoSelect,
   errors,
   values,
@@ -483,7 +483,7 @@ const createPage = (pageId: Page["id"], values: Values) => {
   );
 };
 
-const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
+export const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
   const updatePageMutable = (
     page: Page,
     values: Partial<Values>,

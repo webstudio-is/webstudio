@@ -18,6 +18,10 @@ export const $selectedPageHash = atom<{ hash: string }>({ hash: "" });
 
 export const $editingPageId = atom<undefined | Page["id"]>();
 
+export const $editingTemplateId = atom<undefined | string>();
+
+export const $creatingPageFromTemplateId = atom<undefined | string>();
+
 export const $selectedPage = computed(
   [$pages, $selectedPageId],
   (pages, selectedPageId) => {
