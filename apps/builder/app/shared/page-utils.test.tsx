@@ -239,6 +239,51 @@ describe("insert page copy", () => {
     expect(rootPage.path).toEqual("/my-path");
   });
 
+  test("deduplicate path when duplicating inside a folder with empty slug", () => {
+    const data = getWebstudioDataStub({
+      instances: toMap<Instance>([
+        { type: "instance", id: "bodyId", component: "Body", children: [] },
+      ]),
+      pages: {
+        meta: {},
+        homePage: {
+          id: "homePageId",
+          name: "Home",
+          path: "",
+          title: `"Home"`,
+          meta: {},
+          rootInstanceId: "bodyId",
+        },
+        pages: [
+          {
+            id: "pageId",
+            name: "My Name",
+            path: "/my-path",
+            title: `"My Title"`,
+            meta: {},
+            rootInstanceId: "bodyId",
+          },
+        ],
+        folders: [
+          createRootFolder(["folderId"]),
+          {
+            id: "folderId",
+            name: "Folder",
+            slug: "",
+            children: ["pageId"],
+          },
+        ],
+      },
+    });
+    insertPageCopyMutable({
+      source: { data, pageId: "pageId" },
+      target: { data, folderId: "folderId" },
+    });
+    expect(data.pages.pages.length).toEqual(2);
+    const newPage = data.pages.pages[1];
+    expect(newPage.path).toEqual("/copy-1/my-path");
+  });
+
   test("replace variables in page copy meta", () => {
     const bodyVariable = new Variable("bodyVariable", "");
     const dataWithoutPage = renderData(
