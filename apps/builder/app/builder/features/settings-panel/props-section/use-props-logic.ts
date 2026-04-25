@@ -163,6 +163,11 @@ const contentModePropertiesByTag: Partial<Record<string, string[]>> = {
   a: ["href"],
 };
 
+const contentModePropertiesByComponent: Partial<Record<string, string[]>> = {
+  YouTube: ["url"],
+  Vimeo: ["url"],
+};
+
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
   (selectedInstance, instanceTags) => {
@@ -190,9 +195,14 @@ export const usePropsLogic = ({
     if (!isContentMode) {
       return true;
     }
-    const allowedProperties =
+    const allowedPropertiesByTag =
       contentModePropertiesByTag[selectedInstanceTag ?? ""] ?? [];
-    return allowedProperties.includes(propName);
+    const allowedPropertiesByComponent =
+      contentModePropertiesByComponent[instance.component] ?? [];
+    return (
+      allowedPropertiesByTag.includes(propName) ||
+      allowedPropertiesByComponent.includes(propName)
+    );
   };
 
   const savedProps = props;
