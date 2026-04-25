@@ -105,8 +105,8 @@ test("skip whitespace-only text nodes between element siblings", async () => {
   const span1Id = child0?.type === "id" ? child0.value : undefined;
   const span2Id = child1?.type === "id" ? child1.value : undefined;
 
-  const span1 = $instances.get().get(span1Id);
-  const span2 = $instances.get().get(span2Id);
+  const span1 = span1Id ? $instances.get().get(span1Id) : undefined;
+  const span2 = span2Id ? $instances.get().get(span2Id) : undefined;
 
   const span1Text =
     span1?.children[0]?.type === "text" ? span1.children[0].value : "";
