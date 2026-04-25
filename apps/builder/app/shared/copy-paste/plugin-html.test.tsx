@@ -100,8 +100,10 @@ test("skip whitespace-only text nodes between element siblings", async () => {
   expect(pastedDiv?.children.some((c) => c.type === "text")).toBe(false);
 
   // Verify the space is preserved in one of the spans' text content
-  const span1Id = (pastedDiv?.children[0] as any)?.value;
-  const span2Id = (pastedDiv?.children[1] as any)?.value;
+  const child0 = pastedDiv?.children[0];
+  const child1 = pastedDiv?.children[1];
+  const span1Id = child0?.type === "id" ? child0.value : undefined;
+  const span2Id = child1?.type === "id" ? child1.value : undefined;
 
   const span1 = $instances.get().get(span1Id);
   const span2 = $instances.get().get(span2Id);
