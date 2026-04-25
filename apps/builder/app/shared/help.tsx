@@ -5,6 +5,7 @@ import {
   XLogoIcon,
   BlueskyIcon,
   FacebookIcon,
+  LinkedinIcon,
   RedditIcon,
 } from "@webstudio-is/icons";
 
@@ -19,6 +20,11 @@ export const socialLinks = [
     label: "Facebook",
     url: "https://www.facebook.com/webstudiois",
     icon: <FacebookIcon />,
+  },
+  {
+    label: "LinkedIn",
+    url: "https://www.linkedin.com/company/getwebstudio/",
+    icon: <LinkedinIcon />,
   },
   {
     label: "Reddit",
