@@ -887,13 +887,16 @@ export const generateFragmentFromHtml = (
         }
       }
     }
+    let spaceAttachedToPrev = false;
     for (let index = 0; index < node.childNodes.length; index += 1) {
       const childNode = node.childNodes[index];
       if (defaultTreeAdapter.isElementNode(childNode)) {
         const lastChild = instance.children.at(-1);
         const nextPreserveLeadingSpace =
+          !spaceAttachedToPrev &&
           instance.children.length > 0 &&
           !(lastChild?.type === "text" && lastChild.value.endsWith(" "));
+        spaceAttachedToPrev = false;
         const child = convertElementToInstance(childNode, {
           preserveLeadingSpace: nextPreserveLeadingSpace,
         });
@@ -902,30 +905,36 @@ export const generateFragmentFromHtml = (
         }
       }
       if (defaultTreeAdapter.isTextNode(childNode)) {
-        // For whitespace-only text nodes between elements, attach to previous element
-        // instead of creating a separate text node (preserves space but avoids breaking rich-text detection)
+        // trim spaces around rich text, do not for code
         if (spaceRegex.test(childNode.value) && node.tagName !== "code") {
-          const prevChild = index > 0 ? node.childNodes[index - 1] : undefined;
-          const nextChild =
-            index < node.childNodes.length - 1
-              ? node.childNodes[index + 1]
-              : undefined;
-          const prevIsElement =
-            prevChild && defaultTreeAdapter.isElementNode(prevChild);
-          const nextIsElement =
-            nextChild && defaultTreeAdapter.isElementNode(nextChild);
+          // Skip whitespace at start or end of parent
+          if (index === 0 || index === node.childNodes.length - 1) {
+            continue;
+          }
+          const prevChild = node.childNodes[index - 1];
+          const nextChild = node.childNodes[index + 1];
+          const prevIsElement = defaultTreeAdapter.isElementNode(prevChild);
+          const nextIsElement = defaultTreeAdapter.isElementNode(nextChild);
 
-          // If whitespace is between two elements, attach it to the previous element
-          if (prevIsElement && nextIsElement && instance.children.length > 0) {
+          // In rich-text contexts, attach whitespace between two sibling elements
+          // to the previous element instead of creating a separate text node.
+          // This avoids a standalone space child that would prevent the next element
+          // from being recognized as the last child for text-content control.
+          if (
+            prevIsElement &&
+            nextIsElement &&
+            !hasNonRichTextContent &&
+            instance.children.length > 0
+          ) {
             const lastChild = instance.children.at(-1);
             if (lastChild?.type === "id") {
-              // Find the previous instance and append space to its last text child
               const prevInstanceId = lastChild.value;
               const prevInstance = instances.get(prevInstanceId);
               if (prevInstance && prevInstance.children.length > 0) {
                 const prevLastChild = prevInstance.children.at(-1);
                 if (prevLastChild?.type === "text") {
                   prevLastChild.value += " ";
+                  spaceAttachedToPrev = true;
                   continue;
                 }
               }
