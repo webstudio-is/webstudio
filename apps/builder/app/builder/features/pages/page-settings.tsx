@@ -340,8 +340,8 @@ const PathField = ({
                   <br />
                   <Text>
                     To make the path dynamic and use it with CMS, you can use
-                    parameters and other features. CMS features are part of the
-                    Pro plan.
+                    parameters and other features. You can publish to staging
+                    for free; upgrade to Pro to publish to custom domains.
                   </Text>
                   <Link
                     className={buttonStyle({ color: "gradient" })}
@@ -855,8 +855,9 @@ const FormFields = ({
           {allowDynamicData === false && (
             <PanelBanner>
               <Text>
-                Dynamic routing and redirect are a part of the CMS
-                functionality.
+                Dynamic routing and redirect are part of the CMS functionality.
+                You can publish to staging for free; upgrade to Pro to publish
+                to custom domains.
               </Text>
               <Flex align="center" gap={1}>
                 <UploadIcon />

@@ -401,19 +401,28 @@ const Publish = ({
   timesLeft,
   disabled,
   refresh,
+  restrictedFeatures,
 }: {
   project: Project;
   timesLeft: number;
   disabled: boolean;
   refresh: () => Promise<void>;
+  restrictedFeatures: Map<
+    string,
+    | undefined
+    | { awareness?: Awareness; view?: "pageSettings"; info?: ReactNode }
+  >;
 }) => {
   const { maxDailyPublishesPerUser } = useStore($permissions);
+  const { userPublishCount } = useUserPublishCount();
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
+  const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
+    useState(false);
   const countdown = usePublishCountdown(isPublishing);
 
   useEffect(() => {
@@ -425,8 +434,18 @@ const Publish = ({
 
     const handleFormInput = () => {
       const formData = new FormData(form);
-      const domainsSelected = formData.getAll(domainToPublishName).length;
-      setHasSelectedDomains(domainsSelected > 0);
+      const domainsSelected = formData
+        .getAll(domainToPublishName)
+        .map((domain) => domain.toString());
+
+      setHasSelectedDomains(domainsSelected.length > 0);
+
+      // Check if any custom domains are selected
+      // Custom domains are those that are NOT the staging domain (project.domain)
+      const hasCustom = domainsSelected.some(
+        (domain) => domain !== project.domain
+      );
+      setHasCustomDomainsSelected(hasCustom);
     };
 
     const observer = new MutationObserver(() => {
@@ -445,7 +464,7 @@ const Publish = ({
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [project.domain]);
 
   const handlePublish = async (formData: FormData) => {
     setPublishError(undefined);
@@ -582,7 +601,12 @@ const Publish = ({
           formAction={handlePublish}
           color="positive"
           state={showPendingState ? "pending" : undefined}
-          disabled={hasSelectedDomains === false || disabled}
+          disabled={
+            hasSelectedDomains === false ||
+            disabled ||
+            (restrictedFeatures.size > 0 && hasCustomDomainsSelected) ||
+            userPublishCount >= maxDailyPublishesPerUser
+          }
         >
           {countdown !== undefined && countdown > 0
             ? `Publishing (${countdown}s)`
@@ -789,7 +813,7 @@ const buttonLinkClass = css({
   ...textVariants.link,
 }).toString();
 
-const UpgradeBanner = () => {
+const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
   const restrictedFeatures = useStore($restrictedFeatures);
   const { canAddDomain } = useCanAddDomain();
   const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
@@ -812,7 +836,9 @@ const UpgradeBanner = () => {
     );
   }
 
-  if (restrictedFeatures.size > 0) {
+  // Only show Pro feature upgrade banner if custom domains are available
+  // Free tier users can still publish to staging domain with Pro features
+  if (restrictedFeatures.size > 0 && hasCustomDomains) {
     return (
       <PanelBanner>
         <img
@@ -854,7 +880,9 @@ const UpgradeBanner = () => {
             )
           )}
         </Text>
-        <Text>You can delete these features or upgrade.</Text>
+        <Text>
+          You can delete these features or upgrade to publish to custom domains.
+        </Text>
         <Flex align="center" gap={1}>
           <UpgradeIcon />
           <Link
@@ -915,6 +943,11 @@ const Content = (props: {
       domain.latestBuildVirtual == null
   );
 
+  // Check if any custom domains exist (active and verified)
+  const hasCustomDomains = project.domainsVirtual.some(
+    (domain) => domain.status === "ACTIVE" && domain.verified
+  );
+
   return (
     <form>
       <ScrollArea>
@@ -947,7 +980,7 @@ const Content = (props: {
           }}
           onExportClick={props.onExportClick}
         />
-        <UpgradeBanner />
+        <UpgradeBanner hasCustomDomains={hasCustomDomains} />
         {hasUnpublishedDomains && (
           <PanelBanner>
             <Flex align="center" gap="1">
@@ -964,10 +997,8 @@ const Content = (props: {
           project={project}
           refresh={refreshProject}
           timesLeft={maxDailyPublishesPerUser - userPublishCount}
-          disabled={
-            restrictedFeatures.size > 0 ||
-            userPublishCount >= maxDailyPublishesPerUser
-          }
+          disabled={false}
+          restrictedFeatures={restrictedFeatures}
         />
       </Flex>
     </form>
