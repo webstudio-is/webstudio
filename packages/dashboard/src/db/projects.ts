@@ -213,8 +213,7 @@ export const countByUserId = async ({
 
 export const findManyByIds = async (
   projectIds: string[],
-  context: AppContext,
-  { skipApprovalCheck = false }: { skipApprovalCheck?: boolean } = {}
+  context: AppContext
 ) => {
   if (projectIds.length === 0) {
     return [];
@@ -231,16 +230,12 @@ export const findManyByIds = async (
     .in("id", projectIds)
     .eq("isDeleted", false);
 
-  // PROJECT_TEMPLATES IDs are admin-curated via env var and skip approval.
-  // Other callers require ownership or marketplace approval.
-  if (skipApprovalCheck === false) {
-    if (userId !== undefined) {
-      query = query.or(
-        `userId.eq.${userId},marketplaceApprovalStatus.eq.APPROVED`
-      );
-    } else {
-      query = query.eq("marketplaceApprovalStatus", "APPROVED");
-    }
+  if (userId !== undefined) {
+    query = query.or(
+      `userId.eq.${userId},marketplaceApprovalStatus.eq.APPROVED`
+    );
+  } else {
+    query = query.eq("marketplaceApprovalStatus", "APPROVED");
   }
 
   const data = await query

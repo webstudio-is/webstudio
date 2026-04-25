@@ -23,7 +23,6 @@ import { notification as notificationApi } from "@webstudio-is/project/index.ser
 import type { Role } from "@webstudio-is/project";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
-import { db as dashboardDb } from "@webstudio-is/dashboard/index.server";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
 import { getSetting, setSetting } from "~/builder/shared/client-settings";
 import env from "~/env/env.server";
@@ -129,12 +128,6 @@ const loadDashboardData = async (request: Request) => {
     ? []
     : await dashboardProjectCaller(context).findMany(findManyInput);
 
-  const templates = await dashboardDb.db.findManyByIds(
-    env.PROJECT_TEMPLATES,
-    context,
-    { skipApprovalCheck: true }
-  );
-
   const notifications = await notificationApi.list(context);
 
   return {
@@ -144,7 +137,6 @@ const loadDashboardData = async (request: Request) => {
     planFeatures,
     purchases,
     projects,
-    templates,
     workspaces,
     currentWorkspaceId,
     role,
@@ -198,7 +190,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     purchases,
     origin,
     projects,
-    templates,
     workspaces,
     currentWorkspaceId,
     role,
@@ -210,7 +201,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {
     user,
     projects,
-    templates,
     planFeatures,
     purchases,
     publisherHost: env.PUBLISHER_HOST,

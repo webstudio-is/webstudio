@@ -1,4 +1,31 @@
-import { ContentIcon, DiscordIcon, YoutubeIcon } from "@webstudio-is/icons";
+import {
+  ContentIcon,
+  DiscordIcon,
+  YoutubeIcon,
+  XLogoIcon,
+  BlueskyIcon,
+  FacebookIcon,
+  RedditIcon,
+} from "@webstudio-is/icons";
+
+export const socialLinks = [
+  { label: "X", url: "https://x.com/getwebstudio", icon: <XLogoIcon /> },
+  {
+    label: "Bluesky",
+    url: "https://bsky.app/profile/webstudio.is",
+    icon: <BlueskyIcon />,
+  },
+  {
+    label: "Facebook",
+    url: "https://www.facebook.com/webstudiois",
+    icon: <FacebookIcon />,
+  },
+  {
+    label: "Reddit",
+    url: "https://www.reddit.com/r/webstudio/",
+    icon: <RedditIcon />,
+  },
+] as const;
 
 export const help = [
   {

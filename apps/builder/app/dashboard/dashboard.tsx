@@ -17,7 +17,7 @@ import {
   Grid,
   IconButton,
 } from "@webstudio-is/design-system";
-import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
+import { BodyIcon } from "@webstudio-is/icons";
 import {
   NavLink,
   useLocation,
@@ -33,10 +33,9 @@ import { dashboardPath } from "~/shared/router-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ProfileMenu } from "./profile-menu";
 import { Projects } from "./projects/projects";
-import { Templates } from "./templates/templates";
 import { Welcome } from "./welcome/welcome";
 import { Header } from "./shared/layout";
-import { help } from "~/shared/help";
+import { help, socialLinks } from "~/shared/help";
 import { SearchResults } from "./search/search-results";
 import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
@@ -194,22 +193,16 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
 const getView = (
   pathname: string,
   hasProjects: boolean,
-  isDefaultWorkspace: boolean
+  isWorkspaceSuspended: boolean
 ) => {
   if (pathname === dashboardPath("search")) {
     return "search";
   }
 
-  // Only show the onboarding welcome page on the default workspace
-  // when the user has no projects yet. Non-default workspaces that are
-  // empty should show the normal (empty) projects view.
-  if (hasProjects === false && isDefaultWorkspace) {
+  if (hasProjects === false && isWorkspaceSuspended === false) {
     return "welcome";
   }
 
-  if (pathname === dashboardPath("templates")) {
-    return "templates";
-  }
   return "projects";
 };
 
@@ -229,7 +222,6 @@ export const Dashboard = () => {
     publisherHost,
     projectToClone,
     projects,
-    templates,
     workspaces,
     currentWorkspaceId,
   } = data;
@@ -243,38 +235,21 @@ export const Dashboard = () => {
   }
 
   const isWorkspaceSuspended = isDowngradedForMember(currentWorkspace);
-  const hasProjects = projects.length > 0 || isWorkspaceSuspended;
-  const isDefaultWorkspace =
-    currentWorkspaceId === undefined ||
-    workspaces?.find((w) => w.id === currentWorkspaceId)?.isDefault === true;
-  const view = getView(location.pathname, hasProjects, isDefaultWorkspace);
+  const hasProjects = projects.length > 0;
+  const view = getView(location.pathname, hasProjects, isWorkspaceSuspended);
 
   const showWorkspaceSelector =
     workspaces !== undefined &&
     workspaces.length > 0 &&
     currentWorkspaceId !== undefined;
 
-  const navItems =
-    view === "welcome"
-      ? [
-          {
-            to: dashboardPath(),
-            prefix: <ExtensionIcon />,
-            children: "Welcome",
-          },
-        ]
-      : [
-          {
-            to: dashboardPath("projects"),
-            prefix: <BodyIcon />,
-            children: "Projects",
-          },
-          {
-            to: dashboardPath("templates"),
-            prefix: <ExtensionIcon />,
-            children: "Starter templates",
-          },
-        ];
+  const navItems = [
+    {
+      to: dashboardPath("projects"),
+      prefix: <BodyIcon />,
+      children: "Projects",
+    },
+  ];
 
   return (
     <TooltipProvider>
@@ -360,6 +335,29 @@ export const Dashboard = () => {
                 children: item.label,
               }))}
             />
+            <Flex
+              align="center"
+              gap="3"
+              css={{
+                paddingInline: theme.panel.paddingInline,
+                paddingBlock: theme.spacing[5],
+              }}
+            >
+              <Text variant="labels" color="subtle">
+                Follow us:
+              </Text>
+              {socialLinks.map(({ label, url, icon }) => (
+                <Link
+                  key={url}
+                  href={url}
+                  target="_blank"
+                  color="subtle"
+                  aria-label={label}
+                >
+                  {icon}
+                </Link>
+              ))}
+            </Flex>
           </CollapsibleSection>
         </Grid>
         {view === "projects" && (
@@ -372,17 +370,8 @@ export const Dashboard = () => {
             isWorkspaceSuspended={isWorkspaceSuspended}
           />
         )}
-        {view === "templates" && (
-          <Templates
-            projects={templates}
-            currentWorkspaceId={currentWorkspaceId}
-          />
-        )}
         {view === "welcome" && (
-          <Welcome
-            projects={templates}
-            currentWorkspaceId={currentWorkspaceId}
-          />
+          <Welcome currentWorkspaceId={currentWorkspaceId} />
         )}
         {view === "search" && <SearchResults {...data} />}
       </Flex>

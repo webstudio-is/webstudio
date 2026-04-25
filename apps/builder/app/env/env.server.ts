@@ -44,17 +44,6 @@ const envSchema = z.object({
   ENTRI_APPLICATION_ID: z.string().default("webstudio"),
   ENTRI_SECRET: z.string().optional(),
 
-  // Projects as templates in dashboard (comma-separated IDs)
-  PROJECT_TEMPLATES: z
-    .string()
-    .default("")
-    .transform((val) =>
-      val
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean)
-    ),
-
   PUBLISHER_HOST: z.string().default("wstd.work"),
 
   STAGING_USERNAME: z.string().default("admin"),
@@ -114,7 +103,6 @@ const rawEnv = {
   RESIZE_ORIGIN: process.env.RESIZE_ORIGIN,
   ENTRI_APPLICATION_ID: process.env.ENTRI_APPLICATION_ID,
   ENTRI_SECRET: process.env.ENTRI_SECRET,
-  PROJECT_TEMPLATES: process.env.PROJECT_TEMPLATES,
   PUBLISHER_HOST: process.env.PUBLISHER_HOST,
   STAGING_USERNAME: process.env.STAGING_USERNAME,
   STAGING_PASSWORD: process.env.STAGING_PASSWORD,

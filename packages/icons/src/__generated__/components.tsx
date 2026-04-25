@@ -1171,6 +1171,28 @@ export const BlockquoteIcon: IconComponent = forwardRef(
 );
 BlockquoteIcon.displayName = "BlockquoteIcon";
 
+export const BlueskyIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          d="M8 7.3c-.634-1.233-2.36-3.531-3.965-4.664-1.538-1.086-2.124-.898-2.509-.723-.445.2-.526.883-.526 1.285 0 .402.22 3.296.364 3.78.475 1.595 2.166 2.134 3.723 1.961-2.282.339-4.309 1.17-1.65 4.13 2.924 3.027 4.007-.65 4.563-2.514.556 1.864 1.196 5.408 4.51 2.513 2.49-2.513.685-3.79-1.597-4.129 1.557.174 3.248-.366 3.723-1.962C14.78 6.494 15 3.6 15 3.198c0-.402-.081-1.085-.526-1.287-.385-.173-.97-.361-2.508.724C10.36 3.769 8.634 6.067 8 7.3Z"
+        />
+      </svg>
+    );
+  }
+);
+BlueskyIcon.displayName = "BlueskyIcon";
+
 export const BodyIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -2636,6 +2658,28 @@ export const EyedropperIcon: IconComponent = forwardRef(
 );
 EyedropperIcon.displayName = "EyedropperIcon";
 
+export const FacebookIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          d="M6.309 14.82v-4.655H4.866v-2.14h1.443v-.921c0-2.383 1.078-3.487 3.417-3.487.234 0 .557.024.856.06.225.023.447.061.666.114v1.94a5.032 5.032 0 0 0-.38-.022 15.632 15.632 0 0 0-.428-.005c-.413 0-.735.056-.978.18a.984.984 0 0 0-.396.363c-.15.245-.218.58-.218 1.022v.757h2.286l-.225 1.226-.167.913H8.848v4.81a7 7 0 1 0-2.54-.155Z"
+        />
+      </svg>
+    );
+  }
+);
+FacebookIcon.displayName = "FacebookIcon";
+
 export const FolderIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -3438,6 +3482,28 @@ export const LinkIcon: IconComponent = forwardRef(
   }
 );
 LinkIcon.displayName = "LinkIcon";
+
+export const LinkedinIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          d="M13.444 1C14.304 1 15 1.697 15 2.556v10.888c0 .86-.697 1.556-1.556 1.556H2.556C1.696 15 1 14.303 1 13.444V2.556C1 1.696 1.697 1 2.556 1h10.888ZM3.146 13.056h2.087V6.314H3.146v6.742Zm7.456-6.948c-1.43 0-2.033 1.115-2.033 1.115v-.909H6.567v6.742H8.57v-3.54c0-.947.438-1.511 1.273-1.511.767 0 1.136.542 1.136 1.512v3.539h2.078V8.788c0-1.806-1.024-2.68-2.454-2.68ZM4.18 2.944a1.24 1.24 0 0 0-1.235 1.244A1.24 1.24 0 0 0 4.18 5.433a1.24 1.24 0 0 0 1.234-1.245A1.24 1.24 0 0 0 4.18 2.944Z"
+        />
+      </svg>
+    );
+  }
+);
+LinkedinIcon.displayName = "LinkedinIcon";
 
 export const ListItemIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
@@ -4400,6 +4466,30 @@ export const RangeCoverIcon: IconComponent = forwardRef(
   }
 );
 RangeCoverIcon.displayName = "RangeCoverIcon";
+
+export const RedditIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M16 8.27C16 7.02 14.98 6 13.73 6c-.58 0-1.1.22-1.5.58A9.784 9.784 0 0 0 8 5.54l.74-3.47 2.4.51A1.5 1.5 0 1 0 13 1a1.5 1.5 0 0 0-1.43 1.05l-2.68-.57a.27.27 0 0 0-.32.2L7.7 5.54c-1.55.03-2.95.39-4.24 1.04A2.27 2.27 0 0 0 2.27 6C1.02 6 0 7.02 0 8.27c0 .9.53 1.68 1.3 2.04a3.7 3.7 0 0 0-.03.69c0 2.21 3.05 4 6.73 4s6.73-1.79 6.73-4a3.7 3.7 0 0 0-.03-.69A2.27 2.27 0 0 0 16 8.27ZM5.5 10a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm5.5 2.5c-.7.7-2.83.72-3 .72s-2.3-.02-3-.72a.27.27 0 0 1 .38-.38c.48.48 1.96.6 2.62.6s2.14-.12 2.62-.6a.27.27 0 0 1 .38.38Zm-.5-1.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+RedditIcon.displayName = "RedditIcon";
 
 export const RefreshCcwIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {

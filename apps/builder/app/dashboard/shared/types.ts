@@ -7,7 +7,6 @@ import type { Notifications } from "~/shared/polly/types";
 export type DashboardData = {
   user: User;
   projects: Array<DashboardProject>;
-  templates: Array<DashboardProject>;
   planFeatures: PlanFeatures;
   purchases: Array<Purchase>;
   publisherHost: string;
