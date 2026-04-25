@@ -1,10 +1,4 @@
-import {
-  Flex,
-  Text,
-  Link,
-  buttonStyle,
-  theme,
-} from "@webstudio-is/design-system";
+import { Flex, Text, Link, buttonStyle } from "@webstudio-is/design-system";
 import {
   YoutubeIcon,
   ContentIcon,
@@ -15,7 +9,7 @@ import {
   RedditIcon,
 } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
-import { Main, Header } from "../shared/layout";
+import { Main } from "../shared/layout";
 import { CreateProject } from "../projects/project-dialogs";
 import { $permissions } from "~/shared/nano-states";
 
