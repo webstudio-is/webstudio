@@ -14,6 +14,7 @@ const common = {
   label: z.string().optional(),
   description: z.string().optional(),
   required: z.boolean(),
+  contentMode: z.boolean().optional(),
 };
 
 const Tag = z.object({

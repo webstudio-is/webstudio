@@ -44,5 +44,11 @@ export const meta: WsComponentMeta = {
   },
   presetStyle: { div },
   initialProps,
-  props,
+  props: {
+    ...props,
+    url: {
+      ...props.url,
+      contentMode: true,
+    },
+  },
 };

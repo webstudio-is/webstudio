@@ -16,14 +16,13 @@ import {
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
 import { isRichText } from "~/shared/content-model";
-import { $selectedInstance, $selectedInstancePath } from "~/shared/nano-states";
+import { $selectedInstancePath } from "~/shared/nano-states";
 import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
   showAttributeMeta,
   type PropValue,
 } from "../shared";
-import { $instanceTags } from "../../style-panel/shared/model";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -158,26 +157,6 @@ const $canHaveTextContent = computed(
   }
 );
 
-const contentModePropertiesByTag: Partial<Record<string, string[]>> = {
-  img: ["src", "width", "height", "alt"],
-  a: ["href"],
-};
-
-const contentModePropertiesByComponent: Partial<Record<string, string[]>> = {
-  YouTube: ["url"],
-  Vimeo: ["url"],
-};
-
-const $selectedInstanceTag = computed(
-  [$selectedInstance, $instanceTags],
-  (selectedInstance, instanceTags) => {
-    if (selectedInstance === undefined) {
-      return;
-    }
-    return instanceTags.get(selectedInstance.id);
-  }
-);
-
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
@@ -185,32 +164,24 @@ export const usePropsLogic = ({
   updateProp,
 }: UsePropsLogicInput) => {
   const isContentMode = useStore($isContentMode);
-  const selectedInstanceTag = useStore($selectedInstanceTag);
+  const propsMetas = useStore($selectedInstancePropsMetas);
 
   /**
-   * In content edit mode we show only Image and Link props
+   * In content edit mode we show only props marked with contentMode: true
    * In the future I hope the only thing we will show will be Components
    */
   const isPropVisible = (propName: string) => {
     if (!isContentMode) {
       return true;
     }
-    const allowedPropertiesByTag =
-      contentModePropertiesByTag[selectedInstanceTag ?? ""] ?? [];
-    const allowedPropertiesByComponent =
-      contentModePropertiesByComponent[instance.component] ?? [];
-    return (
-      allowedPropertiesByTag.includes(propName) ||
-      allowedPropertiesByComponent.includes(propName)
-    );
+    const propMeta = propsMetas.get(propName);
+    return propMeta?.contentMode === true;
   };
 
   const savedProps = props;
 
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
-
-  const propsMetas = useStore($selectedInstancePropsMetas);
 
   const initialPropNames = useStore($selectedInstanceInitialPropNames);
 
