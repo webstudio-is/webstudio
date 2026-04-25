@@ -337,7 +337,7 @@ export const Dashboard = () => {
             />
             <Flex
               align="center"
-              gap="3"
+              gap="2"
               css={{
                 paddingInline: theme.panel.paddingInline,
                 paddingBlock: theme.spacing[5],

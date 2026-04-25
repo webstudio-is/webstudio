@@ -1,54 +1,8 @@
 import { Flex, Text, Link, buttonStyle } from "@webstudio-is/design-system";
-import {
-  YoutubeIcon,
-  ContentIcon,
-  DiscordIcon,
-  XLogoIcon,
-  BlueskyIcon,
-  FacebookIcon,
-  RedditIcon,
-} from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import { Main } from "../shared/layout";
 import { CreateProject } from "../projects/project-dialogs";
 import { $permissions } from "~/shared/nano-states";
-
-const guideItems = [
-  {
-    icon: <YoutubeIcon />,
-    label: "Watch video tutorials",
-    href: "https://wstd.us/101",
-  },
-  {
-    icon: <ContentIcon />,
-    label: "Read the docs",
-    href: "https://docs.webstudio.is/",
-  },
-  {
-    icon: <DiscordIcon />,
-    label: "Join the community on Discord",
-    href: "https://wstd.us/community",
-  },
-];
-
-const socialItems = [
-  { icon: <XLogoIcon />, label: "X", href: "https://x.com/getwebstudio" },
-  {
-    icon: <BlueskyIcon />,
-    label: "Bluesky",
-    href: "https://bsky.app/profile/webstudio.is",
-  },
-  {
-    icon: <FacebookIcon />,
-    label: "Facebook",
-    href: "https://www.facebook.com/getwebstudio1/",
-  },
-  {
-    icon: <RedditIcon />,
-    label: "Reddit",
-    href: "https://www.reddit.com/r/webstudio/",
-  },
-];
 
 export const Welcome = ({
   currentWorkspaceId,
@@ -87,30 +41,16 @@ export const Welcome = ({
           )}
         </Flex>
 
-        <Flex direction="column" gap="2">
-          {guideItems.map(({ icon, label, href }) => (
-            <Flex key={href} align="center" gap="2">
-              {icon}
-              <Link href={href} target="_blank" color="subtle">
-                {label}
-              </Link>
-            </Flex>
-          ))}
-          <Flex align="center" gap="2">
-            <Text color="subtle">Follow for updates on:</Text>
-            {socialItems.map(({ icon, label, href }) => (
-              <Link
-                key={href}
-                href={href}
-                target="_blank"
-                color="subtle"
-                aria-label={label}
-              >
-                {icon}
-              </Link>
-            ))}
-          </Flex>
-        </Flex>
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube-nocookie.com/embed/W43QpuT3fW0?si=eGE-OU8emtIxzKPn"
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        ></iframe>
       </Flex>
     </Main>
   );
