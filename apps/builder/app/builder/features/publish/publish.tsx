@@ -414,6 +414,7 @@ const Publish = ({
   >;
 }) => {
   const { maxDailyPublishesPerUser } = useStore($permissions);
+  const { userPublishCount } = useUserPublishCount();
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
