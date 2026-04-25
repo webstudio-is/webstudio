@@ -382,7 +382,9 @@ export const UpgradeBanners = () => (
           <li>Redirect</li>
           <li>Custom contact email</li>
         </Text>
-        <Text>You can delete these features or upgrade.</Text>
+        <Text>
+          You can delete these features or upgrade to publish to custom domains.
+        </Text>
         <Flex align="center" gap={1}>
           <UpgradeIcon />
           <Link color="inherit" href="#">
