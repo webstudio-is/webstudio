@@ -1,6 +1,6 @@
 import type { Asset } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
-import { $assets, $pages, $props, $styles } from "~/shared/nano-states";
+import { $assets, $pages, $props, $styles } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";

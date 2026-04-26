@@ -9,7 +9,8 @@
   "type": "module",
   "exports": {
     ".": {
-      "webstudio": "./src/index.ts"
+      "webstudio": "./src/index.ts",
+      "partykit": "./src/index.ts"
     },
     "./index.server": {
       "webstudio": "./src/index.server.ts"

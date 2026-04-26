@@ -3,7 +3,7 @@ import type { Page, Pages } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { updateCurrentSystem } from "./system";
-import { selectPage } from "./awareness";
+import { selectPage } from "./nano-states";
 
 registerContainers();
 

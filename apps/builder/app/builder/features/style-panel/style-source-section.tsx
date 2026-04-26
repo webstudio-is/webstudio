@@ -14,9 +14,9 @@ import {
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import { type ItemSource, StyleSourceInput } from "./style-source";
+import { type RenameStyleSourceError } from "~/shared/style-source-utils";
 import {
   renameStyleSource,
-  type RenameStyleSourceError,
   deleteStyleSource,
   DeleteStyleSourceDialog,
   setStyleSourceLocked,
@@ -28,15 +28,17 @@ import {
   $selectedOrLastStyleSourceSelector,
   $selectedStyleSources,
   $selectedStyleState,
+} from "~/shared/nano-states";
+import {
   $styleSourceSelections,
   $styleSources,
   $styles,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import { removeByMutable } from "~/shared/array-utils";
 import { cloneStyles } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { subscribe } from "~/shared/pubsub";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/nano-states";
 import { $instanceTags } from "./shared/model";
 
 // Declare command for this module

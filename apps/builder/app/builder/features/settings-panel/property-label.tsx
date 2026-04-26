@@ -16,7 +16,7 @@ import { AlertIcon } from "@webstudio-is/icons";
 import type { Prop } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/nano-states";
 import { $props } from "~/shared/sync/data-stores";
 import {
   $selectedInstanceInitialPropNames,

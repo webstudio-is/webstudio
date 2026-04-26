@@ -142,8 +142,11 @@ describe("command-queue", () => {
 
       const commands = dequeueAll();
       // The setDetails breaks the merge chain, so we get 3 commands
-      // (note: the internal reverse() may reorder them)
-      expect(commands.length).toBeGreaterThanOrEqual(3);
+      expect(commands).toEqual([
+        expect.objectContaining({ type: "transactions", projectId: "p1" }),
+        expect.objectContaining({ type: "setDetails", projectId: "p1" }),
+        expect.objectContaining({ type: "transactions", projectId: "p1" }),
+      ]);
     });
 
     test("merges multiple transactions in a single batch", () => {
@@ -165,9 +168,7 @@ describe("command-queue", () => {
       }
     });
 
-    test("merges with the last matching transactions command", () => {
-      // Enqueue transactions for two different projects, then another for p1.
-      // The second p1 batch should merge with the first p1 batch.
+    test("does not merge across another project's pending transactions", () => {
       enqueue({
         type: "transactions",
         projectId: "p1",
@@ -185,15 +186,12 @@ describe("command-queue", () => {
       });
 
       const commands = dequeueAll();
-      // After merging, p1's transactions should contain t1 and t3
-      const p1Commands = commands.filter(
-        (c) => c.type === "transactions" && c.projectId === "p1"
-      );
-      expect(p1Commands).toHaveLength(1);
-      if (p1Commands[0].type === "transactions") {
-        expect(p1Commands[0].transactions.map((t) => t.id)).toContain("t1");
-        expect(p1Commands[0].transactions.map((t) => t.id)).toContain("t3");
-      }
+      expect(commands).toHaveLength(3);
+      expect(commands).toEqual([
+        expect.objectContaining({ type: "transactions", projectId: "p1" }),
+        expect.objectContaining({ type: "transactions", projectId: "p2" }),
+        expect.objectContaining({ type: "transactions", projectId: "p1" }),
+      ]);
     });
 
     test("empty queue followed by a transactions command is not merged", () => {
@@ -230,8 +228,12 @@ describe("command-queue", () => {
 
       const commands = dequeueAll();
       expect(commands).toHaveLength(2);
-      expect(commands.some((c) => c.type === "setDetails")).toBe(true);
-      expect(commands.some((c) => c.type === "transactions")).toBe(true);
+      expect(commands[0]).toEqual(
+        expect.objectContaining({ type: "setDetails" })
+      );
+      expect(commands[1]).toEqual(
+        expect.objectContaining({ type: "transactions" })
+      );
     });
 
     test("multiple dequeueAll calls return disjoint results", () => {

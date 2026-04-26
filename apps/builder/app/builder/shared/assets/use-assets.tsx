@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Asset } from "@webstudio-is/sdk";
-import { $assets, $uploadingFilesDataStore } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
+import { $uploadingFilesDataStore } from "~/shared/nano-states";
 import type {
   AssetContainer,
   UploadedAssetContainer,

@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { map } from "nanostores";
 import { useCallback } from "react";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/nano-states";
 
 const instancesKv = map<Record<string, unknown>>({});
 

@@ -23,15 +23,15 @@ import {
   reparentPageOrFolderMutable,
   deletePageMutable,
 } from "./page-utils";
+import { $dataSourceVariables } from "~/shared/nano-states";
 import {
-  $dataSourceVariables,
   $dataSources,
   $pages,
   $project,
   $resources,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { $awareness } from "~/shared/awareness";
+import { $selectedPageId } from "~/shared/nano-states";
 import { updateCurrentSystem } from "~/shared/system";
 import { $resourcesCache, getResourceKey } from "~/shared/resources";
 
@@ -464,7 +464,7 @@ test("page root scope should rely on selected page", () => {
     meta: {},
   });
   $pages.set(pages);
-  $awareness.set({ pageId: "pageId" });
+  $selectedPageId.set("pageId");
   $dataSources.set(
     toMap([
       {
@@ -506,7 +506,7 @@ test("page root scope should use variable and resource values", () => {
       homePageId: "homePageId",
     })
   );
-  $awareness.set({ pageId: "homePageId" });
+  $selectedPageId.set("homePageId");
   $dataSources.set(
     toMap([
       {
@@ -574,7 +574,7 @@ test("page root scope should provide page system variable value", () => {
       systemDataSourceId: "systemId",
     })
   );
-  $awareness.set({ pageId: "homePageId" });
+  $selectedPageId.set("homePageId");
   $dataSources.set(
     toMap([
       {

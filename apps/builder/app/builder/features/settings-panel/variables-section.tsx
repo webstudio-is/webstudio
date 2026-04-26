@@ -22,14 +22,14 @@ import {
 import { EllipsesIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
 import { findPageByIdOrPath } from "@webstudio-is/sdk";
+import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
 import {
-  $dataSources,
   $instances,
   $pages,
   $props,
   $resources,
-  $variableValuesByInstanceSelector,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import {
   CollapsibleSectionRoot,
   useOpenState,
@@ -40,7 +40,7 @@ import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
   $selectedPage,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   deleteVariableMutable,

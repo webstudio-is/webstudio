@@ -4,12 +4,10 @@ import {
   matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
-import { $selectedPage, selectPage } from "~/shared/awareness";
-import {
-  $isPreviewMode,
-  $pages,
-  $selectedPageHash,
-} from "~/shared/nano-states";
+import { $selectedPage } from "~/shared/nano-states";
+import { selectPage } from "~/shared/nano-states";
+import { $isPreviewMode, $selectedPageHash } from "~/shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
 import { comparePatterns } from "./shared/routing-priority";
 

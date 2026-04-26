@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { $instanceContextMenu } from "~/shared/nano-states";
 import { useEffect, useRef } from "react";
-import { selectInstance } from "~/shared/awareness";
+import { selectInstance } from "~/shared/nano-states";
 import {
   ContextMenu,
   ContextMenuTrigger,

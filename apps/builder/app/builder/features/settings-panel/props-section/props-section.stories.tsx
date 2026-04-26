@@ -9,15 +9,11 @@ import {
 } from "@webstudio-is/design-system";
 import { PropsSection as PropsSectionComponent } from "./props-section";
 import { usePropsLogic } from "./use-props-logic";
-import {
-  $assets,
-  $instances,
-  $pages,
-  $props,
-  registerComponentLibrary,
-} from "~/shared/nano-states";
+import { registerComponentLibrary } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
+import { $instances, $pages, $props } from "~/shared/sync/data-stores";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $awareness } from "~/shared/awareness";
+import { $selectedPageId } from "~/shared/nano-states";
 
 let id = 0;
 const unique = () => `${++id}`;
@@ -95,7 +91,7 @@ const rootInstance = addLinkableSections(
   ["company", "employees"],
   $pages.get()?.pages[0]
 );
-$awareness.set({ pageId: $pages.get()?.homePage.id ?? "" });
+$selectedPageId.set($pages.get()?.homePage.id ?? "");
 
 const instance: Instance = {
   id: instanceId,

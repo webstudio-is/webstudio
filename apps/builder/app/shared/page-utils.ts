@@ -22,7 +22,7 @@ import {
   restoreExpressionVariables,
   unsetExpressionVariables,
 } from "./data-variables";
-import { $project } from "./nano-states";
+import { $project } from "./sync/data-stores";
 import type { ConflictResolution } from "./token-conflict-dialog";
 
 const deduplicateName = (

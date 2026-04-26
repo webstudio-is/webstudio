@@ -10,13 +10,13 @@ import {
   textContentAttribute,
 } from "@webstudio-is/react-sdk";
 import {
-  $instances,
   $isContentMode,
-  $props,
   $registeredComponentMetas,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import { $props } from "~/shared/sync/data-stores";
 import { isRichText } from "~/shared/content-model";
-import { $selectedInstance, $selectedInstancePath } from "~/shared/awareness";
+import { $selectedInstance, $selectedInstancePath } from "~/shared/nano-states";
 import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,

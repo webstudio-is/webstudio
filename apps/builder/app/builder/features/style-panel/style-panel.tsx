@@ -29,7 +29,7 @@ import {
 } from "~/shared/nano-states";
 import { isStyleSourceLocked } from "~/shared/style-source-utils";
 import { ReadonlyProvider } from "./shared/readonly";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/nano-states";
 import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
 import {
   $settings,

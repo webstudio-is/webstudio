@@ -7,10 +7,12 @@ import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createBackoff } from "~/shared/polly/backoff";
 import { fetch } from "~/shared/fetch.client";
 import { toast } from "@webstudio-is/design-system";
+import { $collabUnsaved } from "@webstudio-is/collab";
 import { restPatchPath } from "~/shared/router-utils";
 import { loadBuilderData } from "~/shared/builder-data";
 import * as commandQueue from "./command-queue";
-import type { SyncStorage, Transaction } from "~/shared/sync-client";
+import type { SyncStorage } from "~/shared/sync-client";
+import type { Transaction } from "@webstudio-is/collab";
 
 export { commandQueue };
 
@@ -38,6 +40,9 @@ export type QueueStatus =
   | { status: "fatal"; error: string };
 
 export const $queueStatus = atom<QueueStatus>({ status: "idle" });
+
+/** Last server-confirmed build version. Updated after each successful PATCH. */
+export const $committedVersion = atom<number>(0);
 
 // Transaction completion tracking
 type TransactionCompleteCallback = (success: boolean) => void;
@@ -195,7 +200,11 @@ const pollQueue = async (signal: AbortSignal) => {
 
   const detailsMap = new Map<
     Project["id"],
-    { version: number; buildId: Build["id"]; authToken: string | undefined }
+    {
+      version: number;
+      buildId: Build["id"];
+      authToken: string | undefined;
+    }
   >();
 
   polling: for await (const command of pollCommands()) {
@@ -280,13 +289,13 @@ const pollQueue = async (signal: AbortSignal) => {
         }));
         const response = await fetch(restPatchPath(), {
           method: "post",
+          headers,
           body: JSON.stringify({
             transactions: optimizedTransactions,
             buildId: details.buildId,
             projectId,
             // provide latest stored version to server
             version: details.version,
-            headers,
           }),
         });
 
@@ -295,6 +304,7 @@ const pollQueue = async (signal: AbortSignal) => {
           const result = (await response.json()) as any;
           if (result.status === "ok") {
             details.version += 1;
+            $committedVersion.set(details.version);
 
             // Notify all transaction completion callbacks
             for (const transaction of transactions) {
@@ -444,11 +454,15 @@ export const isSyncIdle = () => {
   });
 };
 
+export const hasUnsavedSyncChanges = () => {
+  const { status } = $queueStatus.get();
+  return (status !== "idle" && status !== "fatal") || $collabUnsaved.get();
+};
+
 export const usePreventUnload = () => {
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
-      const { status } = $queueStatus.get();
-      if (status === "idle" || status === "fatal") {
+      if (hasUnsavedSyncChanges() === false) {
         return;
       }
       event.preventDefault();

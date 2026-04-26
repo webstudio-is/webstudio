@@ -21,7 +21,7 @@ import { AddressBarPopover } from "~/builder/features/address-bar";
 import { toggleActiveSidebarPanel } from "~/builder/shared/nano-states";
 import type { ReactNode } from "react";
 import { CloneButton } from "~/builder/features/clone";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage } from "~/shared/nano-states";
 import { BuilderModeDropDown } from "~/builder/features/builder-mode";
 import { SafeModeButton } from "~/builder/features/safe-mode";
 import { NotificationPopover } from "~/shared/notifications/notification-popover";

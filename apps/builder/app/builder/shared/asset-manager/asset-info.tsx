@@ -51,22 +51,18 @@ import {
 } from "@webstudio-is/icons";
 import { hyphenateProperty } from "@webstudio-is/css-engine";
 import {
-  $assets,
   $authPermit,
   $editingPageId,
-  $instances,
-  $pages,
   $permissions,
-  $props,
-  $styles,
-  $styleSourceSelections,
 } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
+import { $styleSourceSelections } from "~/shared/sync/data-stores";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
-import {
-  $awareness,
-  findAwarenessByInstanceId,
-  selectPage,
-} from "~/shared/awareness";
+import { $styles } from "~/shared/sync/data-stores";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
+import { selectPage } from "~/shared/nano-states";
+import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils";
+import { $selectedPageId } from "~/shared/nano-states";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { deleteAssets, replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
@@ -74,6 +70,7 @@ import {
   $activeInspectorPanel,
   setActiveSidebarPanel,
 } from "~/builder/shared/nano-states";
+import { $instances, $pages, $props } from "~/shared/sync/data-stores";
 import {
   formatAssetName,
   parseAssetName,
@@ -266,12 +263,14 @@ const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
                   if (!prop || !pages) {
                     return;
                   }
-                  const awareness = findAwarenessByInstanceId(
-                    pages,
-                    instances,
-                    prop.instanceId
-                  );
-                  $awareness.set(awareness);
+                  const { pageId, instanceSelector } =
+                    findPageAndSelectorByInstanceId(
+                      pages,
+                      instances,
+                      prop.instanceId
+                    );
+                  $selectedPageId.set(pageId);
+                  $selectedInstanceSelector.set(instanceSelector);
                   setActiveSidebarPanel("auto");
                   $activeInspectorPanel.set("settings");
                 }}
@@ -311,12 +310,14 @@ const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
                   if (!styleInstanceId || !pages) {
                     return;
                   }
-                  const awareness = findAwarenessByInstanceId(
-                    pages,
-                    instances,
-                    styleInstanceId
-                  );
-                  $awareness.set(awareness);
+                  const { pageId, instanceSelector } =
+                    findPageAndSelectorByInstanceId(
+                      pages,
+                      instances,
+                      styleInstanceId
+                    );
+                  $selectedPageId.set(pageId);
+                  $selectedInstanceSelector.set(instanceSelector);
                   setActiveSidebarPanel("auto");
                   $activeInspectorPanel.set("style");
                 }}

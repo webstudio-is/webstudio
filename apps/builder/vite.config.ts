@@ -48,6 +48,30 @@ export default defineConfig(({ mode }) => {
         name: "request-timing-logger",
         configureServer(server) {
           server.middlewares.use((req, res, next) => {
+            // Some dev proxies can forward HTTP/2 pseudo-headers such as
+            // ":method". Remix converts Node headers to Fetch Headers, where
+            // those names are invalid and crash before the request reaches app
+            // code. Vite still needs a normal req.url, so preserve ":path"
+            // before removing the pseudo-headers.
+            if (req.url === undefined) {
+              const path = req.headers[":path"];
+              if (typeof path === "string") {
+                req.url = path;
+              }
+            }
+            for (const header of Object.keys(req.headers)) {
+              if (header.startsWith(":")) {
+                delete req.headers[header];
+              }
+            }
+            // Pre-bundled dep chunks must never be served from a stale browser
+            // cache. Vite uses ?v= to bust the cache, but some browsers (or
+            // service workers) still serve cached chunks with old hashes,
+            // causing duplicate-React errors during hydration. no-store removes
+            // the files from the browser cache entirely.
+            if (req.url?.includes("/node_modules/.vite/deps/")) {
+              res.setHeader("Cache-Control", "no-store");
+            }
             const start = Date.now();
             res.on("finish", () => {
               const duration = Date.now() - start;
@@ -94,9 +118,19 @@ export default defineConfig(({ mode }) => {
     server: {
       // Service-to-service OAuth token call requires a specified host for the wstd.dev domain
       host: "wstd.dev",
-      // Needed for SSL
-      proxy: {},
-
+      // Vite 6 creates an HTTP/2 dev server when HTTPS is enabled and no proxy
+      // object exists. Remix/Vite's middleware stack expects HTTP/1-style
+      // IncomingMessage URLs, so keep proxy configured. In remote workspaces,
+      // browser-side localhost points at the user's machine, not this dev
+      // container, so websocket connections for the local collab worker go
+      // through the builder origin and are proxied to PartyKit.
+      proxy: {
+        "/parties": {
+          target: "http://127.0.0.1:1999",
+          ws: true,
+          changeOrigin: true,
+        },
+      },
       https: {
         key: readFileSync("../../https/privkey.pem"),
         cert: readFileSync("../../https/fullchain.pem"),
@@ -135,6 +169,6 @@ export default defineConfig(({ mode }) => {
         });
       }) as never,
     },
-    envPrefix: "GITHUB_",
+    envPrefix: ["GITHUB_", "PUBLIC_"],
   };
 });

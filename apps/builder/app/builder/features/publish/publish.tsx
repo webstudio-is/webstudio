@@ -43,28 +43,25 @@ import {
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import {
-  $awareness,
   $selectedPagePath,
-  findAwarenessByInstanceId,
-  type Awareness,
-} from "~/shared/awareness";
+  $selectedInstanceSelector,
+} from "~/shared/nano-states";
+import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils";
+import { $selectedPageId } from "~/shared/nano-states";
 import {
   $authTokenPermissions,
-  $dataSources,
   $editingPageId,
-  $instances,
-  $pages,
-  $project,
   $publishedOrigin,
   $permissions,
   $stagingUsername,
   $stagingPassword,
-  $publisherHost,
 } from "~/shared/nano-states";
+import { $publisherHost } from "~/shared/sync/data-stores";
 import {
   $publishDialog,
   setActiveSidebarPanel,
 } from "../../shared/nano-states";
+import { $project } from "~/shared/sync/data-stores";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
@@ -83,6 +80,7 @@ import { isPathnamePattern, type Templates } from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
+import { $dataSources, $instances, $pages } from "~/shared/sync/data-stores";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 
@@ -327,7 +325,11 @@ const $restrictedFeatures = computed(
     const features = new Map<
       string,
       | undefined
-      | { awareness?: Awareness; view?: "pageSettings"; info?: ReactNode }
+      | {
+          navigate?: { pageId: string; instanceSelector: string[] };
+          view?: "pageSettings";
+          info?: ReactNode;
+        }
     >();
     if (pages === undefined) {
       return features;
@@ -342,16 +344,16 @@ const $restrictedFeatures = computed(
     if (!permissions.allowDynamicData) {
       // pages with dynamic paths
       for (const page of [pages.homePage, ...pages.pages]) {
-        const awareness = {
+        const navigate = {
           pageId: page.id,
           instanceSelector: [page.rootInstanceId],
         };
         // allow catch all for 404 pages on free plan
         if (isPathnamePattern(page.path) && page.path !== "/*") {
-          features.set("Dynamic path", { awareness, view: "pageSettings" });
+          features.set("Dynamic path", { navigate, view: "pageSettings" });
         }
         if (page.meta.redirect && page.meta.redirect !== `""`) {
-          features.set("Redirect", { awareness, view: "pageSettings" });
+          features.set("Redirect", { navigate, view: "pageSettings" });
         }
       }
       // has resource variables
@@ -359,7 +361,11 @@ const $restrictedFeatures = computed(
         if (dataSource.type === "resource") {
           const instanceId = dataSource.scopeInstanceId ?? "";
           features.set("Resource variable", {
-            awareness: findAwarenessByInstanceId(pages, instances, instanceId),
+            navigate: findPageAndSelectorByInstanceId(
+              pages,
+              instances,
+              instanceId
+            ),
           });
         }
       }
@@ -410,7 +416,11 @@ const Publish = ({
   restrictedFeatures: Map<
     string,
     | undefined
-    | { awareness?: Awareness; view?: "pageSettings"; info?: ReactNode }
+    | {
+        navigate?: { pageId: string; instanceSelector: string[] };
+        view?: "pageSettings";
+        info?: ReactNode;
+      }
   >;
 }) => {
   const { maxDailyPublishesPerUser } = useStore($permissions);
@@ -850,18 +860,21 @@ const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
         <Text variant="regularBold">Following Pro features are used:</Text>
         <Text as="ul" color="destructive" css={{ paddingLeft: "1em" }}>
           {Array.from(restrictedFeatures).map(
-            ([message, { awareness, view, info } = {}], index) => (
+            ([message, { navigate, view, info } = {}], index) => (
               <li key={index}>
                 <Flex align="center" gap="1">
-                  {awareness ? (
+                  {navigate ? (
                     <button
                       className={buttonLinkClass}
                       type="button"
                       onClick={() => {
-                        $awareness.set(awareness);
+                        $selectedPageId.set(navigate.pageId);
+                        $selectedInstanceSelector.set(
+                          navigate.instanceSelector
+                        );
                         if (view === "pageSettings") {
                           setActiveSidebarPanel("pages");
-                          $editingPageId.set(awareness.pageId);
+                          $editingPageId.set(navigate.pageId);
                         }
                       }}
                     >

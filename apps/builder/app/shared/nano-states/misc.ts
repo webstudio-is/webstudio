@@ -27,34 +27,16 @@ import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
 import type { ChildrenOrientation } from "@webstudio-is/design-system";
-import { $awareness, $selectedInstance } from "../awareness";
+import { $selectedInstance, $selectedInstanceSelector } from "./instances";
 import { getPermissions } from "../permissions";
 import {
   $project,
   $publisherHost,
-  $dataSources,
-  $resources,
   $props,
   $styles,
   $styleSources,
   $styleSourceSelections,
-  $assets,
-  $marketplaceProduct,
 } from "../sync/data-stores";
-
-// Re-export data stores for backward compatibility
-export {
-  $project,
-  $publisherHost,
-  $dataSources,
-  $resources,
-  $props,
-  $styles,
-  $styleSources,
-  $styleSourceSelections,
-  $assets,
-  $marketplaceProduct,
-};
 
 export const $publishedOrigin = computed(
   [$project, $publisherHost],
@@ -89,7 +71,7 @@ export const $selectedStyleSources = atom(
 );
 export const $selectedStyleState = atom<StyleDecl["state"]>();
 // reset style state whenever selected instance change
-onSet($awareness, () => {
+onSet($selectedInstanceSelector, () => {
   $selectedStyleState.set(undefined);
 });
 

@@ -40,27 +40,26 @@ import {
   $blockChildOutline,
   $editingItemSelector,
   $hoveredInstanceSelector,
-  $instances,
   $isContentMode,
-  $props,
   $propsIndex,
   $propValuesByInstanceSelector,
   $registeredComponentMetas,
-  $selectedInstanceSelector,
   getIndexedInstanceId,
   type ItemDropTarget,
   $propValuesByInstanceSelectorWithMemoryProps,
 } from "~/shared/nano-states";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { reparentInstance, toggleInstanceShow } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
 import {
+  $selectedInstanceSelector,
   $selectedPage,
   getInstanceKey,
-  selectInstance,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import {
   findClosestContainer,
   isRichTextContent,

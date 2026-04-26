@@ -1,17 +1,17 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
+import { $pages, $project } from "~/shared/sync/data-stores";
 import {
   $authToken,
-  $pages,
-  $project,
   $selectedPageHash,
   $builderMode,
   isBuilderMode,
   setBuilderMode,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
-import { $selectedPage, selectPage } from "../awareness";
+import { $selectedPage } from "../nano-states";
+import { selectPage } from "../nano-states";
 import { findPageByIdOrPath } from "@webstudio-is/sdk";
 
 const setPageStateFromUrl = () => {

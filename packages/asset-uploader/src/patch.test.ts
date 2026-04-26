@@ -8,6 +8,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { patchAssetsWithClient } from "./asset-patch-core";
 import { patchAssets } from "./patch";
 import type { Patch } from "immer";
 
@@ -147,5 +148,65 @@ describe("patchAssets (msw)", () => {
 
     await patchAssets({ projectId }, patches, createContext());
     expect(insertedAssets).toBeDefined();
+  });
+
+  test("core helper deletes assets and marks unused files as deleted", async () => {
+    const projectId = uid();
+    const localAssetRow = { ...assetRow, projectId };
+    let resetPreviewImage = false;
+    let deletedAsset = false;
+    let deletedFile = false;
+
+    server.use(
+      db.get("Asset", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("id")) {
+          return json([
+            {
+              id: "asset-1",
+              projectId,
+              name: "photo.jpg",
+              file: localAssetRow.file,
+            },
+          ]);
+        }
+        if (url.searchParams.has("name")) {
+          return json([]);
+        }
+        return json([localAssetRow]);
+      }),
+      db.patch("Project", async ({ request }) => {
+        const body = (await request.json()) as {
+          previewImageAssetId?: string | null;
+        };
+        resetPreviewImage = body.previewImageAssetId === null;
+        return empty({ status: 204 });
+      }),
+      db.delete("Asset", () => {
+        deletedAsset = true;
+        return empty({ status: 204 });
+      }),
+      db.patch("File", async ({ request }) => {
+        const body = (await request.json()) as { isDeleted?: boolean };
+        deletedFile = body.isDeleted === true;
+        return empty({ status: 204 });
+      })
+    );
+
+    const patches: Patch[] = [
+      {
+        op: "remove",
+        path: ["asset-1"],
+      },
+    ];
+
+    await patchAssetsWithClient(
+      { projectId, client: testContext.postgrest.client },
+      patches
+    );
+
+    expect(resetPreviewImage).toBe(true);
+    expect(deletedAsset).toBe(true);
+    expect(deletedFile).toBe(true);
   });
 });

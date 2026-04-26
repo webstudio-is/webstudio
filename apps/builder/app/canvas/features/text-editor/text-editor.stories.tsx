@@ -8,15 +8,15 @@ import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances, Props } from "@webstudio-is/sdk";
 import { $, renderData } from "@webstudio-is/template";
 import {
-  $instances,
-  $pages,
   $registeredComponentMetas,
   $textEditingInstanceSelector,
   $textToolbar,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import { $pages } from "~/shared/sync/data-stores";
 import { TextEditor } from "./text-editor";
 import { emitCommand, subscribeCommands } from "~/canvas/shared/commands";
-import { $awareness } from "~/shared/awareness";
+import { $selectedPageId } from "~/shared/nano-states";
 
 export default {
   component: TextEditor,
@@ -242,7 +242,7 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
       ],
     });
 
-    $awareness.set({ pageId: "pageId" });
+    $selectedPageId.set("pageId");
 
     $registeredComponentMetas.set(
       new Map([

@@ -35,7 +35,7 @@ import { builderApi } from "~/shared/builder-api";
 import { insertPageCopyMutable } from "~/shared/page-utils";
 import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
-import { selectPage } from "~/shared/awareness";
+import { selectPage } from "~/shared/nano-states";
 
 const isBody = (instance: Instance) =>
   instance.component === "Body" ||

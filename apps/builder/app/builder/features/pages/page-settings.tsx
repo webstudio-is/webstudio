@@ -68,15 +68,14 @@ import {
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import {
-  $assets,
-  $instances,
-  $pages,
   $publishedOrigin,
-  $project,
   $permissions,
   $isDesignMode,
 } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
+import { $project } from "~/shared/sync/data-stores";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
+import { $instances, $pages } from "~/shared/sync/data-stores";
 import {
   BindingControl,
   BindingPopover,
@@ -92,7 +91,7 @@ import {
   validatePathnamePattern,
 } from "~/builder/shared/url-pattern";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
-import { selectInstance } from "~/shared/awareness";
+import { selectInstance } from "~/shared/nano-states";
 import { computeExpression } from "~/shared/data-variables";
 import { $currentSystem } from "~/shared/system";
 import { Card } from "../marketplace/card";

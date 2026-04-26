@@ -2,15 +2,20 @@ import { enableMapSet } from "immer";
 import { describe, expect, test } from "vitest";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import {
-  $breakpoints,
-  $instances,
   $selectedBreakpointId,
   $selectedStyleSources,
+} from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import {
+  $instances,
   $styleSourceSelections,
   $styleSources,
   $styles,
+} from "~/shared/sync/data-stores";
+import {
+  $selectedPageId,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
-import { $awareness } from "~/shared/awareness";
 import { deleteProperty, setProperty } from "./use-style-data";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 
@@ -31,10 +36,8 @@ const setupSelection = (styleSource: {
       ],
     ])
   );
-  $awareness.set({
-    pageId: "",
-    instanceSelector: ["body"],
-  });
+  $selectedPageId.set("");
+  $selectedInstanceSelector.set(["body"]);
   $breakpoints.set(new Map([["base", { id: "base", label: "Base" }]]));
   $selectedBreakpointId.set("base");
   $styleSources.set(new Map([[styleSource.id, styleSource]]));

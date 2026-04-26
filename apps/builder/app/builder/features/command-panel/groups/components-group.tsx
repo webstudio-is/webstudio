@@ -19,7 +19,7 @@ import {
   insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import { humanizeString } from "~/shared/string-utils";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage } from "~/shared/nano-states";
 import {
   getInstanceLabel,
   InstanceIcon,

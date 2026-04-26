@@ -42,16 +42,16 @@ import {
 } from "@webstudio-is/design-system";
 import {
   $dataSourceVariables,
-  $dataSources,
   $registeredComponentMetas,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
 import { humanizeString } from "~/shared/string-utils";
 import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
 import { $instanceTags } from "../style-panel/shared/model";
 
 export const showAttributeMeta: PropMeta = {

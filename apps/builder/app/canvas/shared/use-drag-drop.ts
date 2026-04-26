@@ -9,11 +9,10 @@ import {
 } from "@webstudio-is/design-system";
 import {
   $dragAndDropState,
-  $instances,
-  $props,
   $registeredComponentMetas,
   type ItemDropTarget,
 } from "~/shared/nano-states";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
   getComponentTemplateData,

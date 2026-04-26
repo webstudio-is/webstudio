@@ -22,15 +22,17 @@ import {
 } from "@webstudio-is/sdk";
 import { rootComponent } from "@webstudio-is/sdk";
 import {
-  $breakpoints,
-  $props,
   $registeredComponentMetas,
   $selectedBreakpoint,
   $selectedInstanceStates,
   $selectedOrLastStyleSourceSelector,
+} from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import {
+  $props,
   $styles,
   $styleSourceSelections,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import {
   getComputedStyleDecl,
   getPresetStyleDeclKey,
@@ -40,7 +42,7 @@ import {
 import {
   $selectedInstancePathWithRoot,
   type InstancePath,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {

@@ -26,7 +26,7 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
 } from "./instance-utils";
-import { $project } from "./nano-states";
+import { $project } from "~/shared/sync/data-stores";
 import { findAvailableVariables } from "./data-variables";
 import { camelCaseProperty } from "@webstudio-is/css-data";
 

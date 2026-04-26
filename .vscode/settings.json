@@ -12,5 +12,6 @@
   // Exclude SQL files from auto-formatting
   "files.associations": {
     "*.sql": "sql"
-  }
+  },
+  "typescript.native-preview.tsdk": "/workspaces/webstudio/node_modules/@typescript/native-preview"
 }

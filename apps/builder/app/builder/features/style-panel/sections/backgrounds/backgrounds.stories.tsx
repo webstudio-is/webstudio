@@ -8,15 +8,18 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { registerContainers } from "~/shared/sync/sync-stores";
+import { $selectedBreakpointId } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 import {
-  $breakpoints,
   $instances,
-  $selectedBreakpointId,
   $styles,
   $styleSourceSelections,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import { Section as SectionComponent } from "./backgrounds";
-import { $awareness } from "~/shared/awareness";
+import {
+  $selectedPageId,
+  $selectedInstanceSelector,
+} from "~/shared/nano-states";
 
 const backgroundImage: StyleDecl = {
   breakpointId: "base",
@@ -53,10 +56,8 @@ $instances.set(
     ["box", { type: "instance", id: "box", component: "Box", children: [] }],
   ])
 );
-$awareness.set({
-  pageId: "",
-  instanceSelector: ["box"],
-});
+$selectedPageId.set("");
+$selectedInstanceSelector.set(["box"]);
 
 const SingleLayerVariant = () => {
   useEffect(() => {

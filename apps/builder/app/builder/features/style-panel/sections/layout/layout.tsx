@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type JSX, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { $selectedInstanceKey } from "~/shared/awareness";
+import { $selectedInstanceKey } from "~/shared/nano-states";
 import {
   theme,
   Box,

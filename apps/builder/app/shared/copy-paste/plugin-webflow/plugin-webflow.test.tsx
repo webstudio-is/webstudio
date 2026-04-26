@@ -13,13 +13,9 @@ import {
 import { $, renderData } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import { __testing__ } from "./plugin-webflow";
-import {
-  $breakpoints,
-  $project,
-  $registeredComponentMetas,
-  $styleSources,
-  $styles,
-} from "../../nano-states";
+import { $registeredComponentMetas } from "../../nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $project, $styleSources, $styles } from "~/shared/sync/data-stores";
 import invariant from "tiny-invariant";
 import { WfData } from "./schema";
 

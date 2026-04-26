@@ -11,7 +11,7 @@ import {
   createDefaultPages,
   createRootFolder,
 } from "@webstudio-is/project-build";
-import { $project } from "./nano-states";
+import { $project } from "./sync/data-stores";
 import { insertPageCopyMutable } from "./page-utils";
 import {
   $,

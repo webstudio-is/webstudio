@@ -36,7 +36,7 @@ import {
   insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import type { Publish } from "~/shared/pubsub";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage } from "~/shared/nano-states";
 import { mapGroupBy } from "~/shared/shim";
 import {
   getInstanceLabel,

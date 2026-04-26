@@ -9,12 +9,12 @@ import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
 import { fetch } from "~/shared/fetch.client";
 import type { AssetActionResponse } from "~/builder/shared/assets";
 import {
-  $assets,
   $authToken,
-  $project,
   $uploadingFilesDataStore,
   type UploadingFileData,
 } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
+import { $project } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";

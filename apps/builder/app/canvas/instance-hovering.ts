@@ -2,10 +2,10 @@ import { idAttribute } from "@webstudio-is/react-sdk";
 import {
   $blockChildOutline,
   $hoveredInstanceSelector,
-  $instances,
   $textEditingInstanceSelector,
   findBlockChildSelector,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import { $hoveredInstanceOutline } from "~/shared/nano-states";
 import {
   getAllElementsBoundingBox,
@@ -14,7 +14,7 @@ import {
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "./shared/scroll-state";
 import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
-import { $awareness } from "~/shared/awareness";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;
 
@@ -196,21 +196,22 @@ export const subscribeInstanceHovering = ({
     (instanceSelector) => {
       if (instanceSelector) {
         updateHoveredRect(instanceSelector);
-      } else {
-        $hoveredInstanceOutline.set(undefined);
+        return;
       }
+      $hoveredInstanceOutline.set(undefined);
     }
   );
 
   // selected instance selection can change hovered instance outlines (example Block/Template/Child)
-  const usubscribeSelectedInstanceSelector = $awareness.subscribe(() => {
-    const instanceSelector = $hoveredInstanceSelector.get();
-    if (instanceSelector) {
-      updateHoveredRect(instanceSelector);
-    } else {
+  const usubscribeSelectedInstanceSelector =
+    $selectedInstanceSelector.subscribe(() => {
+      const instanceSelector = $hoveredInstanceSelector.get();
+      if (instanceSelector) {
+        updateHoveredRect(instanceSelector);
+        return;
+      }
       $hoveredInstanceOutline.set(undefined);
-    }
-  });
+    });
 
   signal.addEventListener("abort", () => {
     unsubscribeScrollState();

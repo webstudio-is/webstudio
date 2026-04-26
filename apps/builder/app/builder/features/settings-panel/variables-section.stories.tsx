@@ -4,7 +4,7 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import { $pages, $instances } from "~/shared/sync/data-stores";
 import { $planFeatures } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { $awareness } from "~/shared/awareness";
+import { $selectedPageId } from "~/shared/nano-states";
 import { VariablesSection as VariablesSectionComponent } from "./variables-section";
 
 $planFeatures.set({
@@ -24,7 +24,8 @@ $instances.set(
   ])
 );
 $pages.set(createDefaultPages({ rootInstanceId: "box" }));
-$awareness.set({ pageId: "home", instanceSelector: ["box"] });
+$selectedPageId.set("home");
+// awareness not needed for stories - instanceSelector set via selectInstance if required
 
 export const VariablesSection: StoryObj = {
   render: () => (

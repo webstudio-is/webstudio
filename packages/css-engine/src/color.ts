@@ -33,7 +33,7 @@ colorjs.ColorSpace.registry["display-p3"] = colorjs.P3;
 colorjs.ColorSpace.registry["a98-rgb"] = colorjs.A98RGB;
 colorjs.ColorSpace.registry["prophoto-rgb"] = colorjs.ProPhoto;
 
-// Re-export colorjs as `color` so consumers never need to import colorjs.io/fn
+// Export colorjs as `color` so consumers never need to import colorjs.io/fn
 // directly. Importing this module guarantees all color spaces are registered.
 export const color = colorjs;
 

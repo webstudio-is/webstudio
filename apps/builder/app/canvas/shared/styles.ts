@@ -28,22 +28,27 @@ import {
   toVarFallback,
 } from "@webstudio-is/css-engine";
 import {
-  $assets,
+  $registeredComponentMetas,
+  $selectedBreakpoint,
+  $selectedStyleState,
+  assetBaseUrl,
+} from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
+import {
   $breakpoints,
   $instances,
   $props,
-  $registeredComponentMetas,
-  $selectedBreakpoint,
-  $selectedInstanceSelector,
-  $selectedStyleState,
   $styleSourceSelections,
   $styles,
-  assetBaseUrl,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import { setDifference } from "~/shared/shim";
 import { $ephemeralStyles } from "../stores";
 import { canvasApi } from "~/shared/canvas-api";
-import { $selectedInstance, $selectedPage } from "~/shared/awareness";
+import {
+  $selectedInstance,
+  $selectedInstanceSelector,
+  $selectedPage,
+} from "~/shared/nano-states";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
@@ -448,21 +453,66 @@ const simulateConditionBreakpoints = ({
   return result;
 };
 
+const shouldRenderInBackgroundTask = (
+  visibilityState: DocumentVisibilityState | "prerender" | undefined
+) => {
+  return visibilityState !== undefined && visibilityState !== "visible";
+};
+
 /**
  * track new or deleted styles and style source selections items
  * and update style sheet accordingly
  */
 export const subscribeStyles = () => {
-  let animationFrameId: undefined | number;
+  let renderJob:
+    | undefined
+    | {
+        type: "raf";
+        id: number;
+      }
+    | {
+        type: "timeout";
+        id: ReturnType<typeof setTimeout>;
+      };
+
+  const cancelScheduledRender = () => {
+    if (renderJob === undefined) {
+      return;
+    }
+    if (renderJob.type === "raf") {
+      cancelAnimationFrame(renderJob.id);
+    }
+    if (renderJob.type === "timeout") {
+      clearTimeout(renderJob.id);
+    }
+    renderJob = undefined;
+  };
 
   const renderUserSheetInTheNextFrame = () => {
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
+    cancelScheduledRender();
+    const visibilityState =
+      typeof document === "undefined" ? undefined : document.visibilityState;
+    if (shouldRenderInBackgroundTask(visibilityState)) {
+      // Background tabs throttle or pause requestAnimationFrame, which would
+      // delay remote style updates until the window regains focus.
+      renderJob = {
+        type: "timeout",
+        id: setTimeout(() => {
+          renderJob = undefined;
+          userSheet.setTransformer($transformValue.get());
+          userSheet.render();
+        }, 50),
+      };
+      return;
     }
-    animationFrameId = requestAnimationFrame(() => {
-      userSheet.setTransformer($transformValue.get());
-      userSheet.render();
-    });
+    renderJob = {
+      type: "raf",
+      id: requestAnimationFrame(() => {
+        renderJob = undefined;
+        userSheet.setTransformer($transformValue.get());
+        userSheet.render();
+      }),
+    };
   };
 
   const unsubscribeBreakpoints = computed(
@@ -559,9 +609,7 @@ export const subscribeStyles = () => {
     unsubscribeStyleSourceSelections();
     unsubscribeDescendantSelectors();
     unsubscribeTransformValue();
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-    }
+    cancelScheduledRender();
   };
 };
 
@@ -873,4 +921,5 @@ export const __testing__ = {
   hasExpressionChildren,
   renderStateStyles,
   simulateConditionBreakpoints,
+  shouldRenderInBackgroundTask,
 };

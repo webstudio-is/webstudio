@@ -36,8 +36,8 @@ import {
   $editingPageId,
   $isContentMode,
   $isDesignMode,
-  $pages,
 } from "~/shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
 import {
   getAllChildrenAndSelf,
   reparentOrphansMutable,
@@ -66,7 +66,8 @@ import {
 import { atom, computed } from "nanostores";
 import { isPathnamePattern } from "~/builder/shared/url-pattern";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { $selectedPage, selectPage } from "~/shared/awareness";
+import { $selectedPage } from "~/shared/nano-states";
+import { selectPage } from "~/shared/nano-states";
 
 const ItemSuffix = ({
   isParentSelected,

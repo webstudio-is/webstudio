@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
-import { createNanoEvents } from "nanoevents";
 import { atom } from "nanostores";
 import { Store } from "immerhin";
 import { enableMapSet } from "immer";
 import {
   ImmerhinSyncObject,
   NanostoresSyncObject,
+  NanoEventsSyncEmitter,
   SyncClient,
   SyncObjectPool,
   type SyncStorage,
@@ -34,7 +34,7 @@ const createLeaderStore = () => {
 };
 
 test("synchronize initial state when follower is connected", () => {
-  const emitter = createNanoEvents();
+  const emitter = new NanoEventsSyncEmitter();
   const leaderStore = createLeaderStore();
   const followerStore = createFollowerStore();
   const leader = new SyncClient({
@@ -63,7 +63,7 @@ test("synchronize initial state when follower is connected", () => {
 });
 
 test("synchronize initial state when leader is connected", () => {
-  const emitter = createNanoEvents();
+  const emitter = new NanoEventsSyncEmitter();
   const leaderStore = createLeaderStore();
   const followerStore = createFollowerStore();
   const leader = new SyncClient({
@@ -92,7 +92,7 @@ test("synchronize initial state when leader is connected", () => {
 });
 
 test("synchronize initial state when one of followers become leader", () => {
-  const emitter = createNanoEvents();
+  const emitter = new NanoEventsSyncEmitter();
   const leaderStore = createLeaderStore();
   const followerStore = createFollowerStore();
   const leader = new SyncClient({
@@ -120,7 +120,7 @@ test("synchronize initial state when one of followers become leader", () => {
 });
 
 test("exchange transactions between leader and follower", async () => {
-  const emitter = createNanoEvents();
+  const emitter = new NanoEventsSyncEmitter();
   const leaderStore = createLeaderStore();
   const followerStore = createFollowerStore();
   const leader = new SyncClient({
@@ -157,7 +157,7 @@ test("exchange transactions between leader and follower", async () => {
 });
 
 test("exchange transactions between followers", async () => {
-  const emitter = createNanoEvents();
+  const emitter = new NanoEventsSyncEmitter();
   const follower1Store = createFollowerStore();
   const follower2Store = createFollowerStore();
   const follower1 = new SyncClient({
@@ -232,7 +232,7 @@ test("merge state in pool object to partially restore from storage", () => {
 
 describe("nanostores sync object", () => {
   test("sync initial state and exchange transactions", () => {
-    const emitter = createNanoEvents();
+    const emitter = new NanoEventsSyncEmitter();
     const $leader = atom(1);
     const $follower = atom(2);
     new SyncClient({

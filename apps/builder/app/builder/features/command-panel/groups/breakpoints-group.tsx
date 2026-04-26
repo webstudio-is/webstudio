@@ -9,10 +9,10 @@ import { computed } from "nanostores";
 import { compareMedia } from "@webstudio-is/css-engine";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import {
-  $breakpoints,
   $selectedBreakpoint,
   $selectedBreakpointId,
 } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
 import { setCanvasWidth } from "~/builder/shared/calc-canvas-width";

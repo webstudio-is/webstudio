@@ -1,14 +1,14 @@
 import {
-  $instances,
   $isResizingCanvas,
   $stylesIndex,
   $propValuesByInstanceSelectorWithMemoryProps,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import { $gridCellData, type GridCellData } from "~/shared/nano-states";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { $awareness } from "~/shared/awareness";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
 import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
 import { doNotTrackMutation } from "~/shared/dom-utils";
@@ -310,15 +310,16 @@ export const subscribeGridGuidesOnSelected = () => {
   let previousSelectedInstance: readonly string[] | undefined = undefined;
   let unsubscribeGridGuides = () => {};
 
-  const unsubscribe = $awareness.subscribe((awareness) => {
-    const instanceSelector = awareness?.instanceSelector;
-    if (instanceSelector !== previousSelectedInstance) {
-      unsubscribeGridGuides();
-      unsubscribeGridGuides =
-        subscribeGridGuides(instanceSelector ?? []) ?? (() => {});
-      previousSelectedInstance = instanceSelector;
+  const unsubscribe = $selectedInstanceSelector.subscribe(
+    (instanceSelector) => {
+      if (instanceSelector !== previousSelectedInstance) {
+        unsubscribeGridGuides();
+        unsubscribeGridGuides =
+          subscribeGridGuides(instanceSelector ?? []) ?? (() => {});
+        previousSelectedInstance = instanceSelector;
+      }
     }
-  });
+  );
 
   return () => {
     unsubscribe();

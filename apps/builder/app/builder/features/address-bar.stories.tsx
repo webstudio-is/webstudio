@@ -7,7 +7,8 @@ import { TopbarLayout } from "~/builder/shared/topbar-layout";
 import { AddressBarPopover } from "./address-bar";
 import { $dataSources, $pages } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { $awareness, $selectedPage } from "~/shared/awareness";
+import { $selectedPage } from "~/shared/nano-states";
+import { $selectedPageId } from "~/shared/nano-states";
 import { $currentSystem } from "~/shared/system";
 
 registerContainers();
@@ -67,7 +68,7 @@ export default {
 } satisfies Meta;
 
 export const AddressBar: StoryFn = () => {
-  $awareness.set({ pageId: "dynamicId" });
+  $selectedPageId.set("dynamicId");
   return (
     <StorySection title="Address Bar">
       <TopbarLayout

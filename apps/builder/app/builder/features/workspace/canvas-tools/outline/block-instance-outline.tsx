@@ -23,13 +23,13 @@ import {
   $blockChildOutline,
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
-  $instances,
   $isContentMode,
   $modifierKeys,
   findBlockSelector,
   findTemplates,
   type BlockChildOutline,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import {
@@ -38,7 +38,7 @@ import {
 } from "~/shared/instance-utils";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { getInstancePath } from "~/shared/awareness";
+import { getInstancePath } from "~/shared/nano-states";
 import { insertTemplateAt } from "./block-utils";
 import { Outline } from "./outline";
 import { applyScale } from "../apply-scale";

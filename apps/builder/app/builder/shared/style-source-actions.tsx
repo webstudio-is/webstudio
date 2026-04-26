@@ -16,12 +16,11 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance, StyleSource } from "@webstudio-is/sdk";
 import {
-  $styleSources,
-  $styleSourceSelections,
-  $styles,
   $selectedStyleSources,
   $selectedStyleState,
 } from "~/shared/nano-states";
+import { $styleSources } from "~/shared/sync/data-stores";
+import { $styleSourceSelections, $styles } from "~/shared/sync/data-stores";
 import {
   deleteStyleSourceMutable,
   findUnusedTokens,
@@ -32,10 +31,7 @@ import {
   type RenameStyleSourceError,
 } from "~/shared/style-source-utils";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { $selectedInstance } from "~/shared/awareness";
-
-// Re-export the type for convenience
-export type { RenameStyleSourceError };
+import { $selectedInstance } from "~/shared/nano-states";
 
 const $isDeleteUnusedTokensDialogOpen = atom(false);
 

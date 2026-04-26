@@ -9,8 +9,8 @@ import {
   $editingItemSelector,
   $isDesignMode,
   toggleBuilderMode,
-  $project,
 } from "~/shared/nano-states";
+import { $project } from "~/shared/sync/data-stores";
 
 // Declare command for type safety
 declare module "~/shared/pubsub" {
@@ -39,7 +39,8 @@ import {
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
-import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
+import { $selectedInstancePath } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
 import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";

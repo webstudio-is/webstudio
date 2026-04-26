@@ -21,18 +21,16 @@ import {
   deleteInstanceMutable,
   updateWebstudioData,
 } from "~/shared/instance-utils";
-import {
-  $dataSources,
-  $pages,
-  $variableValuesByInstanceSelector,
-} from "~/shared/nano-states";
+import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
+import { $pages } from "~/shared/sync/data-stores";
 import { insertPageCopyMutable } from "~/shared/page-utils";
 import {
   $selectedPage,
   getInstanceKey,
   getInstancePath,
-  selectPage,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
+import { selectPage } from "~/shared/nano-states";
 
 /**
  * When page or folder needs to be deleted or moved to a different parent,

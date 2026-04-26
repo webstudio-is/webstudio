@@ -17,11 +17,11 @@ import {
   $selectedInstancePath,
   $selectedPage,
   getInstanceKey,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
 import { canUnwrapInstance } from "~/shared/instance-utils";
 import { $propValuesByInstanceSelector } from "~/shared/nano-states";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
-import type { InstancePath } from "~/shared/awareness";
+import type { InstancePath } from "~/shared/nano-states";
 
 const getMenuPermissions = (instancePath: InstancePath | undefined) => {
   const instanceId = instancePath?.[0]?.instance.id;

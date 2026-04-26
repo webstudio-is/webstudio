@@ -5,13 +5,15 @@ import {
   $selectedBreakpoint,
   $selectedOrLastStyleSourceSelector,
   $selectedStyleSource,
+} from "~/shared/nano-states";
+import {
   $styleSourceSelections,
   $styleSources,
   $styles,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/nano-states";
 import { isStyleSourceLocked } from "~/shared/style-source-utils";
 
 type StyleUpdate =

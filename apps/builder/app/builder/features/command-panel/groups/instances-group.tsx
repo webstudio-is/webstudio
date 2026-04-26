@@ -11,7 +11,11 @@ import { parseComponentName } from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { $awareness, findAwarenessByInstanceId } from "~/shared/awareness";
+import {
+  $selectedPageId,
+  $selectedInstanceSelector,
+} from "~/shared/nano-states";
+import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
@@ -79,13 +83,14 @@ export const InstancesGroup = ({ options }: { options: InstanceOption[] }) => {
               const pages = $pages.get();
               const instances = $instances.get();
               if (pages && instances) {
-                const awareness = findAwarenessByInstanceId(
+                const awareness = findPageAndSelectorByInstanceId(
                   pages,
                   instances,
                   instance.id
                 );
                 if (awareness) {
-                  $awareness.set(awareness);
+                  $selectedPageId.set(awareness.pageId);
+                  $selectedInstanceSelector.set(awareness.instanceSelector);
                   setActiveSidebarPanel("auto");
                 }
               }

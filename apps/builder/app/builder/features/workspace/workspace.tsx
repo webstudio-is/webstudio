@@ -8,7 +8,7 @@ import {
 } from "~/builder/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
-import { selectInstance } from "~/shared/awareness";
+import { selectInstance } from "~/shared/nano-states";
 import { ResizeHandles } from "./canvas-tools/resize-handles";
 import { MediaBadge } from "./canvas-tools/media-badge";
 import { useSetCanvasWidth } from "~/builder/shared/calc-canvas-width";

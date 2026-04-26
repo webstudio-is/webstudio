@@ -5,8 +5,9 @@ import {
   matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
-import { $selectedPage } from "./awareness";
-import { $pages, $publishedOrigin } from "./nano-states";
+import { $selectedPage } from "./nano-states/pages";
+import { $pages } from "./sync/data-stores";
+import { $publishedOrigin } from "./nano-states/misc";
 import { serverSyncStore } from "./sync/sync-stores";
 
 export const $systemDataByPage = atom(

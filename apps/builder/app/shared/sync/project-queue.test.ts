@@ -4,7 +4,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Backoff } from "~/shared/polly/backoff";
 
-// ── Module mocks ─────────────────────────────────────────────────
+//  Module mocks
 
 const { mockFetch, mockToastError, mockCreateBackoff, mockLoadBuilderData } =
   vi.hoisted(() => ({
@@ -34,13 +34,15 @@ vi.mock("~/shared/builder-data", () => ({
   loadBuilderData: mockLoadBuilderData,
 }));
 
-// ── Imports (after mocks) ────────────────────────────────────────
+//  Imports (after mocks)
 
 import type { Change } from "immerhin";
+import { $collabUnsaved } from "@webstudio-is/collab";
 import {
   $queueStatus,
   $lastTransactionId,
   commandQueue,
+  hasUnsavedSyncChanges,
   isSyncIdle,
   onTransactionComplete,
   onNextTransactionComplete,
@@ -52,14 +54,14 @@ import {
 
 const { retry, pollCommands, transactionCallbacks } = __testing__;
 
-// ── Constants (duplicated to avoid exporting them just for tests) ─
+//  Constants (duplicated to avoid exporting them just for tests)
 
 const NEW_ENTRIES_INTERVAL = 1000;
 const INTERVAL_RECOVERY = 2000;
 const MAX_RETRY_RECOVERY = 5;
 const MAX_ALLOWED_API_ERRORS = 5;
 
-// ── Helpers ──────────────────────────────────────────────────────
+//  Helpers
 
 const flush = () => vi.advanceTimersByTimeAsync(0);
 
@@ -87,12 +89,13 @@ const createMockBackoff = (overrides: Partial<Backoff> = {}): Backoff => {
   };
 };
 
-// ── Tests ────────────────────────────────────────────────────────
+//  Tests
 
 describe("project-queue", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     $queueStatus.set({ status: "idle" });
+    $collabUnsaved.set(false);
     $lastTransactionId.set(undefined);
     commandQueue.dequeueAll();
     transactionCallbacks.clear();
@@ -111,7 +114,32 @@ describe("project-queue", () => {
     vi.restoreAllMocks();
   });
 
-  // ── isSyncIdle ─────────────────────────────────────────────────
+  //  unload protection
+
+  describe("hasUnsavedSyncChanges", () => {
+    test("is false when regular sync is idle and realtime has no pending changes", () => {
+      $queueStatus.set({ status: "idle" });
+      $collabUnsaved.set(false);
+
+      expect(hasUnsavedSyncChanges()).toBe(false);
+    });
+
+    test("is true while regular sync has pending changes", () => {
+      $queueStatus.set({ status: "running" });
+      $collabUnsaved.set(false);
+
+      expect(hasUnsavedSyncChanges()).toBe(true);
+    });
+
+    test("is true while realtime changes are not durable yet", () => {
+      $queueStatus.set({ status: "idle" });
+      $collabUnsaved.set(true);
+
+      expect(hasUnsavedSyncChanges()).toBe(true);
+    });
+  });
+
+  //  isSyncIdle
 
   describe("isSyncIdle", () => {
     test("resolves immediately when status is idle", async () => {
@@ -180,7 +208,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── onTransactionComplete ──────────────────────────────────────
+  //  onTransactionComplete
 
   describe("onTransactionComplete", () => {
     test("cleans up callbacks after 60s timeout", async () => {
@@ -195,7 +223,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── onNextTransactionComplete ──────────────────────────────────
+  //  onNextTransactionComplete
 
   describe("onNextTransactionComplete", () => {
     test("fires when $lastTransactionId changes and transaction succeeds", async () => {
@@ -224,7 +252,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── retry generator ────────────────────────────────────────────
+  //  retry generator
 
   describe("retry generator (backoff integration)", () => {
     test("uses 'recovering' status for the first MAX_RETRY_RECOVERY attempts", async () => {
@@ -335,7 +363,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── pollCommands generator ─────────────────────────────────────
+  //  pollCommands generator
 
   describe("pollCommands generator", () => {
     test("yields commands from the queue", async () => {
@@ -392,7 +420,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── enqueueProjectDetails ──────────────────────────────────────
+  //  enqueueProjectDetails
 
   describe("enqueueProjectDetails", () => {
     test("skips enqueue for 'view' permit", () => {
@@ -451,7 +479,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── ServerSyncStorage ──────────────────────────────────────────
+  //  ServerSyncStorage
 
   describe("ServerSyncStorage", () => {
     test("sendTransaction enqueues only for 'server' object", () => {
@@ -496,7 +524,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── pollQueue integration ──────────────────────────────────────
+  //  pollQueue integration
 
   describe("pollQueue integration", () => {
     test("successful transaction increments version and fires callbacks", async () => {
@@ -526,6 +554,36 @@ describe("project-queue", () => {
       await flush();
 
       expect(txCallback).toHaveBeenCalledWith(true);
+    });
+
+    test("sends auth token as request header", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ status: "ok" }),
+      } as Response);
+
+      enqueueProjectDetails({
+        projectId: "p1",
+        buildId: "b1",
+        version: 1,
+        authPermit: "edit",
+        authToken: "tok",
+      });
+      commandQueue.enqueue({
+        type: "transactions",
+        projectId: "p1",
+        transactions: [makeTx("tx-auth")],
+      });
+
+      await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
+      await flush();
+
+      const [, init] = mockFetch.mock.calls[0] as [
+        string,
+        { headers: Headers; body: string },
+      ];
+      expect(init.headers.get("x-auth-token")).toBe("tok");
+      expect(JSON.parse(init.body)).not.toHaveProperty("headers");
     });
 
     test("version_mismatched response sets fatal status", async () => {
@@ -784,7 +842,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── stopPolling ────────────────────────────────────────────────
+  //  stopPolling
 
   describe("stopPolling", () => {
     test("can be called safely when not polling", () => {

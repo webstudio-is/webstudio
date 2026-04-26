@@ -4,14 +4,12 @@ import { useStore } from "@nanostores/react";
 import { Box, Combobox, Select, theme } from "@webstudio-is/design-system";
 import { elementsByTag } from "@webstudio-is/html-data";
 import { tags } from "@webstudio-is/sdk";
-import { $selectedInstance, $selectedInstancePath } from "~/shared/awareness";
+import { $selectedInstance, $selectedInstancePath } from "~/shared/nano-states";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { isTreeSatisfyingContentModel } from "~/shared/content-model";
-import {
-  $instances,
-  $props,
-  $registeredComponentMetas,
-} from "~/shared/nano-states";
+import { $registeredComponentMetas } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import { $props } from "~/shared/sync/data-stores";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { FieldLabel } from "../property-label";
 

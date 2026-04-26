@@ -10,7 +10,7 @@ import {
   type StyleSourceSelections,
 } from "@webstudio-is/sdk";
 
-import { isBaseBreakpoint } from "~/shared/nano-states";
+import { isBaseBreakpoint } from "~/shared/breakpoints-utils";
 import { camelCaseProperty } from "@webstudio-is/css-data";
 
 export const setListedCssProperty =

@@ -26,15 +26,15 @@ import {
 import {
   $propValuesByInstanceSelector,
   $propsIndex,
-  $props,
   $isDesignMode,
   $isContentMode,
   $memoryProps,
   $selectedBreakpoint,
 } from "~/shared/nano-states";
+import { $props } from "~/shared/sync/data-stores";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { $selectedInstance, $selectedInstanceKey } from "~/shared/awareness";
+import { $selectedInstance, $selectedInstanceKey } from "~/shared/nano-states";
 import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { AnimationSection } from "./animation/animation-section";

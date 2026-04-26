@@ -2,7 +2,47 @@ import { describe, test, expect } from "vitest";
 import type { ColorSpace } from "hdr-color-input";
 import type { ColorValue } from "@webstudio-is/css-engine";
 import { __testing__ } from "./color-picker";
-const { cssStringToStyleValue } = __testing__;
+const { cssStringToStyleValue, shouldCommitColorChange } = __testing__;
+
+describe("shouldCommitColorChange", () => {
+  test("returns false when values serialize identically", () => {
+    expect(
+      shouldCommitColorChange(
+        {
+          type: "color",
+          colorSpace: "srgb",
+          components: [1, 0, 0],
+          alpha: 1,
+        },
+        {
+          type: "color",
+          colorSpace: "srgb",
+          components: [1, 0, 0],
+          alpha: 1,
+        }
+      )
+    ).toBe(false);
+  });
+
+  test("returns true when values differ", () => {
+    expect(
+      shouldCommitColorChange(
+        {
+          type: "color",
+          colorSpace: "srgb",
+          components: [1, 0, 0],
+          alpha: 1,
+        },
+        {
+          type: "color",
+          colorSpace: "srgb",
+          components: [0, 1, 0],
+          alpha: 1,
+        }
+      )
+    ).toBe(true);
+  });
+});
 
 // All ColorSpace values from hdr-color-input and their expected CSS input strings
 // (as <color-input> would emit in its change event).

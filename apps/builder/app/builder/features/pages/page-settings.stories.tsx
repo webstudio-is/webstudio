@@ -1,4 +1,4 @@
-import { $pages } from "~/shared/nano-states/pages";
+import { $pages } from "~/shared/sync/data-stores";
 import { PageSettings as PageSettingsComponent } from "./page-settings";
 import {
   Grid,

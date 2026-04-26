@@ -27,8 +27,6 @@ import {
   $authPermit,
   $authToken,
   $isPreviewMode,
-  $pages,
-  $project,
   subscribeResources,
   $authTokenPermissions,
   $isDesignMode,
@@ -38,6 +36,7 @@ import {
   $stagingUsername,
   $stagingPassword,
 } from "~/shared/nano-states";
+import { $project } from "~/shared/sync/data-stores";
 import { $settings, type Settings } from "./shared/client-settings";
 import { builderUrl, getCanvasUrl } from "~/shared/router-utils";
 import { BlockingAlerts } from "./features/blocking-alerts";
@@ -52,6 +51,7 @@ import {
   $isCloneDialogOpen,
   $loadingState,
 } from "./shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";

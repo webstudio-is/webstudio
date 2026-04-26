@@ -3,12 +3,10 @@ import { useEffect } from "react";
 import { initialBreakpoints, coreMetas } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import {
-  $breakpoints,
-  $pages,
-  $registeredComponentMetas,
-} from "~/shared/nano-states";
-import { $awareness } from "~/shared/awareness";
+import { $registeredComponentMetas } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $pages } from "~/shared/sync/data-stores";
+import { $selectedPageId } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { StorySection } from "@webstudio-is/design-system";
 import { CommandPanel as CommandPanelComponent } from "./command-panel";
@@ -57,7 +55,7 @@ pages.pages.push({
   meta: {},
 });
 $pages.set(pages);
-$awareness.set({ pageId: pages.homePage.id });
+$selectedPageId.set(pages.homePage.id);
 
 export const CommandPanel: StoryFn = () => {
   useEffect(() => {

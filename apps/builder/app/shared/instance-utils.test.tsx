@@ -53,9 +53,10 @@ import {
   deleteSelectedInstance,
   detectPageTokenConflicts,
 } from "./instance-utils";
-import type { InstancePath } from "./awareness";
+import type { InstancePath } from "./nano-states";
+import { $registeredComponentMetas } from "./nano-states";
+import { $assets } from "~/shared/sync/data-stores";
 import {
-  $assets,
   $breakpoints,
   $dataSources,
   $instances,
@@ -65,16 +66,13 @@ import {
   $styleSourceSelections,
   $styleSources,
   $styles,
-  $registeredComponentMetas,
   $resources,
-} from "./nano-states";
+} from "~/shared/sync/data-stores";
 import { registerContainers } from "./sync/sync-stores";
-import {
-  $awareness,
-  getInstancePath,
-  selectInstance,
-  selectPage,
-} from "./awareness";
+import { $selectedInstanceSelector, getInstancePath } from "./nano-states";
+import { selectPage } from "./nano-states";
+import { selectInstance } from "./nano-states";
+import { $selectedPageId } from "./nano-states/pages";
 
 enableMapSet();
 registerContainers();
@@ -2601,10 +2599,12 @@ describe("find closest insertable", () => {
         rootInstanceId: "",
       })
     );
-    $awareness.set({
-      pageId: "homePageId",
-      instanceSelector: ["collectionId[1]", "collectionId", "bodyId"],
-    });
+    $selectedPageId.set("homePageId");
+    $selectedInstanceSelector.set([
+      "collectionId[1]",
+      "collectionId",
+      "bodyId",
+    ]);
     $registeredComponentMetas.set(defaultMetasMap);
   });
 
@@ -3112,7 +3112,7 @@ describe("canUnwrapInstance", () => {
     $props.set(props);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
 
     const instancePath = [
       {
@@ -3144,7 +3144,7 @@ describe("canUnwrapInstance", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
 
     const instancePath = [
       {
@@ -3174,7 +3174,7 @@ describe("canUnwrapInstance", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
 
     const instancePath = [
       {
@@ -3206,7 +3206,7 @@ describe("canUnwrapInstance", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
 
     const instancePath = [
       {
@@ -3509,7 +3509,7 @@ describe("convertInstance", () => {
   test("prevents converting body instance", () => {
     const pages = createDefaultPages({ rootInstanceId: "bodyId" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
 
     const initialInstances = renderData(
       <ws.element ws:tag="html" ws:id="rootId">
@@ -3540,10 +3540,10 @@ describe("deleteSelectedInstance", () => {
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
     selectInstance(["child2", "parent", "body"]);
     deleteSelectedInstance();
-    expect($awareness.get()?.instanceSelector).toEqual([
+    expect($selectedInstanceSelector.get()).toEqual([
       "child3",
       "parent",
       "body",
@@ -3563,10 +3563,10 @@ describe("deleteSelectedInstance", () => {
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
     selectInstance(["child3", "parent", "body"]);
     deleteSelectedInstance();
-    expect($awareness.get()?.instanceSelector).toEqual([
+    expect($selectedInstanceSelector.get()).toEqual([
       "child2",
       "parent",
       "body",
@@ -3584,10 +3584,10 @@ describe("deleteSelectedInstance", () => {
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
     selectInstance(["child1", "parent", "body"]);
     deleteSelectedInstance();
-    expect($awareness.get()?.instanceSelector).toEqual(["parent", "body"]);
+    expect($selectedInstanceSelector.get()).toEqual(["parent", "body"]);
   });
 });
 
@@ -3632,7 +3632,7 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
     setDataStores(data);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
     selectInstance(["body"]);
 
     // Insert without explicit conflictResolution (defaults to "theirs")
@@ -3707,7 +3707,7 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
     setDataStores(data);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
     selectInstance(["body"]);
 
     // Insert with conflictResolution="ours" to keep existing styles
@@ -3782,7 +3782,7 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
     setDataStores(data);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $awareness.set({ pageId: pages.homePage.id });
+    $selectedPageId.set(pages.homePage.id);
     selectInstance(["body"]);
 
     // Insert with conflictResolution="merge"

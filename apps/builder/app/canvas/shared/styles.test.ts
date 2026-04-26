@@ -28,6 +28,7 @@ const {
   hasExpressionChildren,
   renderStateStyles,
   simulateConditionBreakpoints,
+  shouldRenderInBackgroundTask,
 } = __testing__;
 
 const createTestSheet = () =>
@@ -229,6 +230,24 @@ describe("renderStateStyles", () => {
     expect(sheet.cssText).toContain('content: ""');
     expect(sheet.cssText).toContain("color: red");
     expect(sheet.cssText).toContain("font-size: 16px");
+  });
+});
+
+describe("shouldRenderInBackgroundTask", () => {
+  test("returns true when document is hidden", () => {
+    expect(shouldRenderInBackgroundTask("hidden")).toBe(true);
+  });
+
+  test("returns true when document is prerender", () => {
+    expect(shouldRenderInBackgroundTask("prerender")).toBe(true);
+  });
+
+  test("returns false when document is visible", () => {
+    expect(shouldRenderInBackgroundTask("visible")).toBe(false);
+  });
+
+  test("returns false when visibility state is unavailable", () => {
+    expect(shouldRenderInBackgroundTask(undefined)).toBe(false);
   });
 });
 
