@@ -47,11 +47,20 @@ describe("createUploadName", () => {
       db.post("File", async ({ request }) => {
         insertedFile = await request.json();
         return empty({ status: 201 });
+      }),
+      db.post("Asset", async ({ request }) => {
+        expect(await request.json()).toEqual({
+          id: "asset-1",
+          projectId: "project-1",
+          name: expect.stringMatching(/^photo_.+\.png$/),
+        });
+        return empty({ status: 201 });
       })
     );
 
     const name = await createUploadName(
       {
+        assetId: "asset-1",
         projectId: "project-1",
         type: "image/png",
         filename: "photo.png",
@@ -78,6 +87,7 @@ describe("createUploadName", () => {
     await expect(
       createUploadName(
         {
+          assetId: "asset-2",
           projectId: "project-2",
           type: "image/png",
           filename: "photo.png",

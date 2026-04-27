@@ -10,6 +10,7 @@ import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 
 type UploadData = {
+  assetId: Asset["id"];
   projectId: string;
   type: string;
   filename: string;
@@ -22,7 +23,7 @@ export const createUploadName = async (
   data: UploadData,
   context: AppContext
 ): Promise<string> => {
-  const { projectId, maxAssetsPerProject, type, filename } = data;
+  const { assetId, projectId, maxAssetsPerProject, type, filename } = data;
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context
@@ -80,7 +81,7 @@ export const createUploadName = async (
    **/
   const name = getUniqueFilename(sanitizeS3Key(filename));
 
-  await context.postgrest.client.from("File").insert({
+  const fileInsert = await context.postgrest.client.from("File").insert({
     name,
     status: "UPLOADING",
     // store content type in related field
@@ -88,6 +89,20 @@ export const createUploadName = async (
     size: 0,
     uploaderProjectId: projectId,
   });
+  if (fileInsert.error) {
+    throw new Error(fileInsert.error.message);
+  }
+
+  const assetInsert = await context.postgrest.client.from("Asset").insert({
+    id: assetId,
+    projectId,
+    name,
+  });
+  if (assetInsert.error) {
+    await context.postgrest.client.from("File").delete().eq("name", name);
+    throw new Error(assetInsert.error.message);
+  }
+
   return name;
 };
 
@@ -145,6 +160,7 @@ export const uploadFile = async (
       file: file.data,
     });
   } catch (error) {
+    await context.postgrest.client.from("Asset").delete().eq("name", name);
     await context.postgrest.client.from("File").delete().eq("name", name);
 
     throw error;

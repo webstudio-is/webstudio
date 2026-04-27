@@ -184,4 +184,48 @@ describe("patchAssets (msw)", () => {
     await patchAssets({ projectId }, patches, createContext());
     expect(insertedAssets).toBeDefined();
   });
+
+  test("updates existing server-reserved asset when client sync sends add patch", async () => {
+    const projectId = uid();
+    const localAssetRow = { ...assetRow, projectId };
+    let insertedAsset = false;
+    let updatedAsset: unknown;
+
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([localAssetRow])),
+      db.patch("Asset", async ({ request }) => {
+        updatedAsset = await request.json();
+        return json({ id: "asset-1" });
+      }),
+      db.post("Asset", () => {
+        insertedAsset = true;
+        return empty({ status: 201 });
+      })
+    );
+
+    const patches: Patch[] = [
+      {
+        op: "add",
+        path: ["asset-1"],
+        value: {
+          id: "asset-1",
+          name: "photo.jpg",
+          type: "image",
+          projectId,
+          format: "jpg",
+          size: 1000,
+          description: "Synced description",
+          createdAt: "2024-01-01T00:00:00.000Z",
+          path: "",
+          meta: { width: 100, height: 100 },
+        },
+      },
+    ];
+
+    await patchAssets({ projectId }, patches, createContext());
+
+    expect(insertedAsset).toBe(false);
+    expect(updatedAsset).toMatchObject({ description: "Synced description" });
+  });
 });
