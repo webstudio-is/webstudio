@@ -8,6 +8,7 @@ import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
   $isDesignMode,
+  $isPreviewMode,
   toggleBuilderMode,
   $project,
 } from "~/shared/nano-states";
@@ -75,6 +76,15 @@ const makeBreakpointCommand = <CommandName extends string>(
   },
 });
 
+const exitPreviewModeFromNonCanvasSource = (source: string) => {
+  if (source === "canvas") {
+    return;
+  }
+
+  setActiveSidebarPanel("auto");
+  toggleBuilderMode("preview");
+};
+
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
   externalCommands: [
@@ -99,7 +109,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["escape"],
       // radix check event.defaultPrevented before invoking callbacks
       preventDefault: false,
-      handler: () => {
+      handler: (source) => {
+        if ($isPreviewMode.get()) {
+          exitPreviewModeFromNonCanvasSource(source);
+          return;
+        }
+
         const { publish } = $publisher.get();
         publish?.({ type: "cancelCurrentDrag" });
       },
