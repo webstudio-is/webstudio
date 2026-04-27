@@ -37,6 +37,23 @@ type SyncModeClient = {
   onDataLoaded(data: LoadedBuilderData): void;
 };
 
+const resolveMultiplayerRelayUrl = (relayUrl: string) => {
+  if (typeof window === "undefined") {
+    return relayUrl;
+  }
+  const configuredUrl = new URL(relayUrl, window.location.origin);
+  const currentUrl = new URL(window.location.href);
+  const isLocalWstdDev =
+    currentUrl.hostname === "wstd.dev" ||
+    currentUrl.hostname.endsWith(".wstd.dev");
+
+  if (isLocalWstdDev && currentUrl.port === "5173") {
+    return new URL(configuredUrl.pathname, currentUrl.origin).href;
+  }
+
+  return configuredUrl.href;
+};
+
 const applyBuilderData = (data: LoadedBuilderData) => {
   $publisherHost.set(data.publisherHost);
   $project.set(data.project);
@@ -73,7 +90,11 @@ export const initializeClientSync = ({
   const multiplayerRelayUrl = isFeatureEnabled("collabRelay")
     ? publicStaticEnv.COLLAB_RELAY_URL?.trim() || undefined
     : undefined;
-  const useMultiplayer = multiplayerRelayUrl !== undefined;
+  const resolvedMultiplayerRelayUrl =
+    multiplayerRelayUrl === undefined
+      ? undefined
+      : resolveMultiplayerRelayUrl(multiplayerRelayUrl);
+  const useMultiplayer = resolvedMultiplayerRelayUrl !== undefined;
 
   // Note: "view" permit will skip transaction synchronization
 
@@ -87,13 +108,13 @@ export const initializeClientSync = ({
     registerContainers();
     const object = createObjectPool();
     const nextModeClient: SyncModeClient =
-      useMultiplayer && multiplayerRelayUrl !== undefined
+      useMultiplayer && resolvedMultiplayerRelayUrl !== undefined
         ? createMultiplayerSyncClient({
             applyBuilderData,
             authPermit,
             authToken,
             projectId,
-            relayUrl: multiplayerRelayUrl,
+            relayUrl: resolvedMultiplayerRelayUrl,
             signal,
           })
         : createSingleplayerSyncClient({

@@ -1,5 +1,5 @@
 import path, { resolve } from "node:path";
-import { defineConfig, type CorsOptions } from "vite";
+import { defineConfig, loadEnv, type CorsOptions } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
 import type { IncomingMessage } from "node:http";
@@ -31,6 +31,12 @@ export default defineConfig(({ mode }) => {
     // This is particularly important for secure communication with the oauth.ws.token endpoint.
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
   }
+
+  const env = loadEnv(mode, __dirname, "");
+  const collabRelayProxyTarget =
+    process.env.COLLAB_RELAY_PROXY_TARGET ??
+    env.COLLAB_RELAY_PROXY_TARGET ??
+    "http://127.0.0.1:1999";
 
   return {
     plugins: [
@@ -118,11 +124,12 @@ export default defineConfig(({ mode }) => {
     server: {
       // Service-to-service OAuth token call requires a specified host for the wstd.dev domain
       host: "wstd.dev",
-      // Vite 6 creates an HTTP/2 dev server when HTTPS is enabled and no proxy
-      // object exists. Remix/Vite's middleware stack expects HTTP/1-style
-      // IncomingMessage URLs, so keep the proxy object present without routing
-      // collab traffic through the builder dev server.
-      proxy: {},
+      proxy: {
+        "/collab-relay": {
+          target: collabRelayProxyTarget,
+          ws: true,
+        },
+      },
       https: {
         key: readFileSync("../../https/privkey.pem"),
         cert: readFileSync("../../https/fullchain.pem"),
