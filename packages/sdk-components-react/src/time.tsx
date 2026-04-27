@@ -395,7 +395,10 @@ const formatDate = (date: Date, template: string, locale = "en-US"): string => {
   return template.replace(pattern, (match) => String(tokens[match]));
 };
 
-type TimeProps = Pick<ComponentProps<"time">, "dateTime"> & {
+type TimeDateTime = ComponentProps<"time">["dateTime"];
+
+type TimeProps = {
+  datetime?: TimeDateTime;
   language?: Language;
   country?: Country;
   dateStyle?: DateStyle;
@@ -423,8 +426,7 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
       dateStyle = DEFAULT_DATE_STYLE,
       timeStyle = DEFAULT_TIME_STYLE,
       format,
-      // native html attribute in react style
-      dateTime = INITIAL_DATE_STRING,
+      datetime = INITIAL_DATE_STRING,
       ...props
     },
     ref
@@ -439,7 +441,7 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
     };
 
     const datetimeString =
-      dateTime === null ? INVALID_DATE_STRING : dateTime.toString();
+      datetime === null ? INVALID_DATE_STRING : datetime.toString();
 
     const date = parseDate(datetimeString);
     let formattedDate = datetimeString;
