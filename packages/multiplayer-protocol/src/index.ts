@@ -1,9 +1,18 @@
-import type { Transaction } from "./types";
-
 /**
  * Relay protocol types - the messages exchanged between clients and the
  * realtime relay service.
  */
+export type Transaction<Payload = unknown> = {
+  id: string;
+  object: string;
+  payload: Payload;
+};
+
+export type RevertedTransaction = {
+  id: string;
+  object: string;
+};
+
 export type CollaboratorInfo = {
   name?: string;
   avatarUrl?: string;
@@ -65,8 +74,19 @@ export type AppliedMessage = {
   seq: number;
   status: /** Rejected by the service without applying or saving. */
   | "dropped"
+    /** Rejected by persistence authorization. */
+    | "rejected"
+    /** Could not be persisted after the relay accepted it. */
+    | "failed"
     /** Already sequenced earlier; still wait for ack before treating it as durable. */
     | "settled";
+  errors?: string;
+};
+
+export type RevertMessage = {
+  type: "revert";
+  clientId: string;
+  transaction: RevertedTransaction;
 };
 
 export type PresenceMessage = {
@@ -81,6 +101,7 @@ export type RelayServerMessage =
   | BroadcastMessage
   | AckMessage
   | AppliedMessage
+  | RevertMessage
   | ReloadMessage
   | ErrorMessage
   | PresenceMessage;

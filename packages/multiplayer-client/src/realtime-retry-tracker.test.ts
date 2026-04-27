@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { ApplyMessage } from "./protocol";
+import type { ApplyMessage } from "@webstudio-is/multiplayer-protocol";
 import {
   ACK_TIMEOUT_MS,
   FAST_RETRY_MS,
@@ -182,6 +182,53 @@ describe("createRealtimeRetryTracker", () => {
       seq: 0,
       status: "dropped",
     });
+    expect(tracker.getPendingCount()).toBe(0);
+  });
+
+  test("drops pending state when persistence rejects or fails an apply", () => {
+    const sendApply = vi.fn();
+    const onDropped = vi.fn();
+    const onUserMessage = vi.fn();
+    const tracker = createRealtimeRetryTracker({
+      createBackoff: createBackoff(),
+      onDropped,
+      onUserMessage,
+      sendApply,
+    });
+    const rejected = makeApply();
+    const failed = makeApply({ transactionId: "tx-2", clientSeq: 2 });
+
+    tracker.track(rejected);
+    tracker.track(failed);
+    tracker.handleApplied({
+      type: "applied",
+      transactionId: "tx-1",
+      seq: 1,
+      status: "rejected",
+      errors: "No permission",
+    });
+    tracker.handleApplied({
+      type: "applied",
+      transactionId: "tx-2",
+      seq: 2,
+      status: "failed",
+      errors: "Patch failed",
+    });
+
+    expect(onDropped).toHaveBeenCalledWith({
+      message: rejected,
+      seq: 1,
+      status: "rejected",
+      errors: "No permission",
+    });
+    expect(onDropped).toHaveBeenCalledWith({
+      message: failed,
+      seq: 2,
+      status: "failed",
+      errors: "Patch failed",
+    });
+    expect(onUserMessage).toHaveBeenCalledWith("No permission");
+    expect(onUserMessage).toHaveBeenCalledWith("Patch failed");
     expect(tracker.getPendingCount()).toBe(0);
   });
 

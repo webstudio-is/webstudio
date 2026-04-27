@@ -7,7 +7,7 @@ import type {
   RevertedTransaction,
   SyncMessage,
   SyncEmitter,
-} from "@webstudio-is/collab";
+} from "@webstudio-is/multiplayer-client";
 
 export interface SyncStorage {
   name: string;

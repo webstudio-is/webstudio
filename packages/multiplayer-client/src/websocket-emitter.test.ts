@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 const { partySocketOptions } = vi.hoisted(() => ({
   partySocketOptions: [] as Array<{
     host: string;
+    prefix?: string;
     protocol: "ws" | "wss" | undefined;
     query: () => Promise<Record<string, string>>;
   }>,
@@ -49,7 +50,35 @@ describe("dispatchWebSocketMessage", () => {
       callbacks,
     });
 
-    expect(callbacks.onApplied).toHaveBeenCalledWith("tx-1", 7, "settled");
+    expect(callbacks.onApplied).toHaveBeenCalledWith(
+      "tx-1",
+      7,
+      "settled",
+      undefined
+    );
+  });
+
+  test("forwards applied errors from websocket messages", () => {
+    const callbacks = createCallbacks();
+
+    dispatchWebSocketMessage({
+      data: JSON.stringify({
+        type: "applied",
+        transactionId: "tx-1",
+        seq: 7,
+        status: "rejected",
+        errors: "No permission",
+      }),
+      handlers: new Set(),
+      callbacks,
+    });
+
+    expect(callbacks.onApplied).toHaveBeenCalledWith(
+      "tx-1",
+      7,
+      "rejected",
+      "No permission"
+    );
   });
 
   test("forwards broadcast messages", () => {
@@ -158,7 +187,7 @@ describe("createWebSocketSyncEmitter", () => {
     partySocketOptions.length = 0;
 
     createWebSocketSyncEmitter({
-      host: "localhost:1999",
+      url: "localhost:1999",
       buildId: "build-1",
       clientId: "client-1",
       onAck: vi.fn(),
@@ -175,7 +204,7 @@ describe("createWebSocketSyncEmitter", () => {
     partySocketOptions.length = 0;
 
     createWebSocketSyncEmitter({
-      host: "localhost:1999",
+      url: "localhost:1999",
       buildId: "build-1",
       clientId: "client-1",
       authToken: "token-1",
@@ -195,7 +224,7 @@ describe("createWebSocketSyncEmitter", () => {
     partySocketOptions.length = 0;
 
     createWebSocketSyncEmitter({
-      host: "localhost:1999",
+      url: "localhost:1999",
       buildId: "build-1",
       clientId: "client-1",
       onAck: vi.fn(),
@@ -215,7 +244,7 @@ describe("createWebSocketSyncEmitter", () => {
     partySocketOptions.length = 0;
 
     createWebSocketSyncEmitter({
-      host: "localhost:1999",
+      url: "localhost:1999",
       buildId: "build-1",
       clientId: "client-1",
       onAck: vi.fn(),
@@ -235,7 +264,7 @@ describe("createWebSocketSyncEmitter", () => {
     partySocketOptions.length = 0;
 
     createWebSocketSyncEmitter({
-      host: "collab.example.com",
+      url: "collab.example.com",
       buildId: "build-1",
       clientId: "client-1",
       onAck: vi.fn(),
@@ -251,11 +280,32 @@ describe("createWebSocketSyncEmitter", () => {
     });
   });
 
+  test("preserves relay URL path as PartySocket prefix", () => {
+    partySocketOptions.length = 0;
+
+    createWebSocketSyncEmitter({
+      url: "apps.webstudio.is/collab-relay",
+      buildId: "build-1",
+      clientId: "client-1",
+      onAck: vi.fn(),
+      onApplied: vi.fn(),
+      onBroadcast: vi.fn(),
+      onErrorMessage: vi.fn(),
+      onPresence: vi.fn(),
+    });
+
+    expect(partySocketOptions[0]).toMatchObject({
+      host: "apps.webstudio.is",
+      prefix: "collab-relay/parties",
+      protocol: undefined,
+    });
+  });
+
   test("normalizes explicit http websocket hosts", () => {
     partySocketOptions.length = 0;
 
     createWebSocketSyncEmitter({
-      host: "https://collab.example.com",
+      url: "https://collab.example.com",
       buildId: "build-1",
       clientId: "client-1",
       onAck: vi.fn(),

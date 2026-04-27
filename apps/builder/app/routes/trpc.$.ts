@@ -1,13 +1,19 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
-import { createContext } from "~/shared/context.server";
+import { createContext, isServiceAuthorization } from "~/shared/context.server";
 import { appRouter } from "~/services/trcp-router.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 
+const isServiceRequest = (request: Request) => {
+  return isServiceAuthorization(request.headers.get("Authorization"));
+};
+
 export const action = async ({ request }: ActionFunctionArgs) => {
-  preventCrossOriginCookie(request);
-  await checkCsrf(request);
+  if (isServiceRequest(request) === false) {
+    preventCrossOriginCookie(request);
+    await checkCsrf(request);
+  }
 
   // https://trpc.io/docs/server/adapters/fetch
   const response = await fetchRequestHandler({

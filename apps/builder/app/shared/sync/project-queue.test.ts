@@ -6,24 +6,31 @@ import type { Backoff } from "~/shared/polly/backoff";
 
 //  Module mocks
 
-const { mockFetch, mockToastError, mockCreateBackoff, mockLoadBuilderData } =
-  vi.hoisted(() => ({
-    mockFetch: vi.fn(),
-    mockToastError: vi.fn(),
-    mockCreateBackoff: vi.fn(),
-    mockLoadBuilderData: vi.fn(),
-  }));
+const {
+  mockBuildPatch,
+  mockCreateNativeClient,
+  mockToastError,
+  mockCreateBackoff,
+  mockLoadBuilderData,
+} = vi.hoisted(() => ({
+  mockBuildPatch: vi.fn(),
+  mockCreateNativeClient: vi.fn(),
+  mockToastError: vi.fn(),
+  mockCreateBackoff: vi.fn(),
+  mockLoadBuilderData: vi.fn(),
+}));
 
-vi.mock("~/shared/fetch.client", () => ({
-  fetch: mockFetch,
+vi.mock("~/shared/trpc/trpc-client", () => ({
+  createNativeClient: mockCreateNativeClient,
+  nativeClient: { build: { patch: { mutate: mockBuildPatch } } },
 }));
 
 vi.mock("@webstudio-is/design-system", () => ({
   toast: { error: mockToastError },
 }));
 
-vi.mock("~/shared/router-utils", () => ({
-  restPatchPath: () => "/rest/patch",
+vi.mock("~/env/env.static", () => ({
+  publicStaticEnv: { VERSION: "test-version" },
 }));
 
 vi.mock("~/shared/polly/backoff", () => ({
@@ -37,7 +44,7 @@ vi.mock("~/shared/builder-data", () => ({
 //  Imports (after mocks)
 
 import type { Change } from "immerhin";
-import { $collabUnsaved } from "@webstudio-is/collab";
+import { $collabUnsaved } from "@webstudio-is/multiplayer-client";
 import {
   $queueStatus,
   $lastTransactionId,
@@ -103,7 +110,10 @@ describe("project-queue", () => {
 
     // Default mocks
     mockCreateBackoff.mockReturnValue(createMockBackoff());
-    mockFetch.mockResolvedValue(new Response());
+    mockCreateNativeClient.mockReturnValue({
+      build: { patch: { mutate: mockBuildPatch } },
+    });
+    mockBuildPatch.mockResolvedValue({ status: "ok" });
     mockToastError.mockClear();
     mockLoadBuilderData.mockResolvedValue({});
   });
@@ -528,10 +538,7 @@ describe("project-queue", () => {
 
   describe("pollQueue integration", () => {
     test("successful transaction increments version and fires callbacks", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ status: "ok" }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({ status: "ok" });
 
       const txCallback = vi.fn();
       onTransactionComplete("tx-success", txCallback);
@@ -556,11 +563,8 @@ describe("project-queue", () => {
       expect(txCallback).toHaveBeenCalledWith(true);
     });
 
-    test("sends auth token as request header", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ status: "ok" }),
-      } as Response);
+    test("sends auth token in RPC input and header", async () => {
+      mockBuildPatch.mockResolvedValue({ status: "ok" });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -578,12 +582,15 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
       await flush();
 
-      const [, init] = mockFetch.mock.calls[0] as [
-        string,
-        { headers: Headers; body: string },
-      ];
-      expect(init.headers.get("x-auth-token")).toBe("tok");
-      expect(JSON.parse(init.body)).not.toHaveProperty("headers");
+      expect(mockBuildPatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          authToken: "tok",
+          source: "browser",
+        })
+      );
+      expect(mockCreateNativeClient).toHaveBeenCalledWith({
+        "x-auth-token": "tok",
+      });
     });
 
     test("version_mismatched response sets fatal status", async () => {
@@ -592,13 +599,10 @@ describe("project-queue", () => {
         vi.fn(() => false)
       );
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          status: "version_mismatched",
-          errors: "Version mismatch",
-        }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({
+        status: "version_mismatched",
+        errors: "Version mismatch",
+      });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -627,13 +631,10 @@ describe("project-queue", () => {
         vi.fn(() => false)
       );
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          status: "authorization_error",
-          errors: "Not authorized",
-        }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({
+        status: "authorization_error",
+        errors: "Not authorized",
+      });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -657,13 +658,10 @@ describe("project-queue", () => {
     });
 
     test("fatal after MAX_ALLOWED_API_ERRORS unknown API errors", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          status: "unknown_error",
-          errors: "Something bad",
-        }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({
+        status: "unknown_error",
+        errors: "Something bad",
+      });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -692,17 +690,14 @@ describe("project-queue", () => {
       expect($queueStatus.get().status).toBe("fatal");
     });
 
-    test("non-ok response retries without crashing", async () => {
+    test("rpc errors retry without crashing", async () => {
       let callCount = 0;
-      mockFetch.mockImplementation(async () => {
+      mockBuildPatch.mockImplementation(async () => {
         callCount += 1;
         if (callCount <= 2) {
-          return { ok: false, text: async () => "Server Error" } as Response;
+          throw new Error("Server Error");
         }
-        return {
-          ok: true,
-          json: async () => ({ status: "ok" }),
-        } as Response;
+        return { status: "ok" };
       });
 
       enqueueProjectDetails({
@@ -730,15 +725,12 @@ describe("project-queue", () => {
 
     test("network error retries without crashing", async () => {
       let callCount = 0;
-      mockFetch.mockImplementation(async () => {
+      mockBuildPatch.mockImplementation(async () => {
         callCount += 1;
         if (callCount <= 1) {
           throw new Error("ERR_CONNECTION_REFUSED");
         }
-        return {
-          ok: true,
-          json: async () => ({ status: "ok" }),
-        } as Response;
+        return { status: "ok" };
       });
 
       Object.defineProperty(navigator, "onLine", {
@@ -801,10 +793,7 @@ describe("project-queue", () => {
         vi.fn(() => false)
       );
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ status: "ok" }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({ status: "ok" });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -850,10 +839,7 @@ describe("project-queue", () => {
     });
 
     test("stops the polling loop", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ status: "ok" }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({ status: "ok" });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -864,7 +850,7 @@ describe("project-queue", () => {
       });
 
       stopPolling();
-      mockFetch.mockClear();
+      mockBuildPatch.mockClear();
 
       commandQueue.enqueue({
         type: "transactions",
@@ -876,7 +862,7 @@ describe("project-queue", () => {
       await flush();
 
       // No fetch calls should have happened after stopping
-      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockBuildPatch).not.toHaveBeenCalled();
     });
   });
 });

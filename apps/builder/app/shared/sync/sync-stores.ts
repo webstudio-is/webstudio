@@ -54,7 +54,7 @@ import type {
   RevertedTransaction,
   SyncEmitter,
   Transaction,
-} from "@webstudio-is/collab";
+} from "@webstudio-is/multiplayer-client";
 import { $canvasScrollbarSize } from "~/builder/shared/nano-states";
 import {
   $pages,

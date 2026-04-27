@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import type { WebSocketEmitterOptions } from "@webstudio-is/collab/websocket";
-import { $collaborators, $collabUnsaved } from "@webstudio-is/collab";
+import type { WebSocketEmitterOptions } from "@webstudio-is/multiplayer-client/websocket";
+import {
+  $collaborators,
+  $collabUnsaved,
+} from "@webstudio-is/multiplayer-client";
 import { createRealtimeSyncEmitter } from "./realtime-sync";
 
 const createTransportFactory = () => {
@@ -40,7 +43,7 @@ describe("createRealtimeSyncEmitter", () => {
       authToken: "token",
       clientId: "client-1",
       createTransport: transport.createTransport,
-      host: "localhost:1999",
+      url: "localhost:1999",
     });
     $collabUnsaved.set(false);
 
@@ -91,7 +94,7 @@ describe("createRealtimeSyncEmitter", () => {
       authToken: "token",
       clientId: "client-1",
       createTransport: transport.createTransport,
-      host: "localhost:1999",
+      url: "localhost:1999",
     });
 
     emitter.connect("build-1");
@@ -118,7 +121,7 @@ describe("createRealtimeSyncEmitter", () => {
       authToken: "token",
       clientId: "client-1",
       createTransport: transport.createTransport,
-      host: "localhost:1999",
+      url: "localhost:1999",
     });
     const handler = vi.fn();
     emitter.on(handler);
@@ -143,7 +146,7 @@ describe("createRealtimeSyncEmitter", () => {
       authToken: "token",
       clientId: "client-1",
       createTransport: transport.createTransport,
-      host: "localhost:1999",
+      url: "localhost:1999",
     });
     const handler = vi.fn();
     emitter.on(handler);
@@ -168,7 +171,7 @@ describe("createRealtimeSyncEmitter", () => {
     const emitter = createRealtimeSyncEmitter({
       clientId: "client-1",
       createTransport: transport.createTransport,
-      host: "localhost:1999",
+      url: "localhost:1999",
     });
     const handler = vi.fn();
     emitter.on(handler);
@@ -191,12 +194,35 @@ describe("createRealtimeSyncEmitter", () => {
     });
   });
 
+  test("surfaces relay applied errors to user messages", () => {
+    const transport = createTransportFactory();
+    const onUserMessage = vi.fn();
+    const emitter = createRealtimeSyncEmitter({
+      authToken: "token",
+      clientId: "client-1",
+      createTransport: transport.createTransport,
+      onUserMessage,
+      url: "localhost:1999",
+    });
+
+    emitter.connect("build-1");
+    emitter.emit({
+      type: "apply",
+      clientId: "client-1",
+      transaction: { id: "tx-1", object: "server", payload: [] },
+    });
+    transport.callbacks.onApplied("tx-1", 1, "rejected", "No permission");
+
+    expect(onUserMessage).toHaveBeenCalledWith("No permission");
+    expect($collabUnsaved.get()).toBe(false);
+  });
+
   test("updates collaborators from relay presence", () => {
     const transport = createTransportFactory();
     const emitter = createRealtimeSyncEmitter({
       clientId: "client-1",
       createTransport: transport.createTransport,
-      host: "localhost:1999",
+      url: "localhost:1999",
     });
     $collaborators.set(new Map());
 

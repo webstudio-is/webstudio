@@ -1,5 +1,5 @@
 /**
- * @webstudio-is/collab - realtime collaboration client
+ * @webstudio-is/multiplayer-client - realtime multiplayer client
  *
  * Public exports (framework-agnostic, browser + Node.js compatible):
  *   - Protocol types: relay message shapes
@@ -20,23 +20,24 @@ export type {
   ReloadMessage,
   ErrorMessage,
   AppliedMessage,
+  RevertMessage,
   PresenceMessage,
   RelayClientMessage,
   RelayServerMessage,
   CollaboratorInfo,
-} from "./protocol";
+} from "@webstudio-is/multiplayer-protocol";
 export {
   persistenceBacklogErrorMessage,
   rateLimitedErrorMessage,
   stripRevisePatchesFromTransaction,
-} from "./protocol";
+} from "@webstudio-is/multiplayer-protocol";
 export { $collaborators, $collabUnsaved } from "./collab-state";
 export {
   assignCollaboratorColors,
   collaboratorColor,
   collaboratorColorPalette,
 } from "./collaborator-colors";
-export type { OperationOrder } from "./protocol";
+export type { OperationOrder } from "@webstudio-is/multiplayer-protocol";
 export {
   ACK_TIMEOUT_MS,
   FAST_RETRY_MS,

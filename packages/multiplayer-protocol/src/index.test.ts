@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { stripRevisePatchesFromTransaction } from "./protocol";
+import { stripRevisePatchesFromTransaction } from ".";
 
 describe("stripRevisePatchesFromTransaction", () => {
   test("removes revisePatches from server payload entries", () => {

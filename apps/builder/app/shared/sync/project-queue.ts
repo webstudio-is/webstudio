@@ -5,14 +5,14 @@ import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createBackoff } from "~/shared/polly/backoff";
-import { fetch } from "~/shared/fetch.client";
 import { toast } from "@webstudio-is/design-system";
-import { $collabUnsaved } from "@webstudio-is/collab";
-import { restPatchPath } from "~/shared/router-utils";
+import { $collabUnsaved } from "@webstudio-is/multiplayer-client";
 import { loadBuilderData } from "~/shared/builder-data";
+import { publicStaticEnv } from "~/env/env.static";
+import { createNativeClient, nativeClient } from "~/shared/trpc/trpc-client";
 import * as commandQueue from "./command-queue";
 import type { SyncStorage } from "~/shared/sync-client";
-import type { Transaction } from "@webstudio-is/collab";
+import type { Transaction } from "@webstudio-is/multiplayer-client";
 
 export { commandQueue };
 
@@ -275,10 +275,6 @@ const pollQueue = async (signal: AbortSignal) => {
     for await (const _ of retry()) {
       // in case of any error continue retrying
       try {
-        const headers = new Headers();
-        if (details.authToken) {
-          headers.append("x-auth-token", details.authToken);
-        }
         // revise patches are not used on the server and reduce possible patch size
         const optimizedTransactions = transactions.map((transaction) => ({
           ...transaction,
@@ -287,23 +283,26 @@ const pollQueue = async (signal: AbortSignal) => {
             patches: change.patches,
           })),
         }));
-        const response = await fetch(restPatchPath(), {
-          method: "post",
-          headers,
-          body: JSON.stringify({
-            transactions: optimizedTransactions,
-            buildId: details.buildId,
-            projectId,
-            // provide latest stored version to server
-            version: details.version,
-          }),
+        const patchClient =
+          details.authToken === undefined
+            ? nativeClient
+            : createNativeClient({ "x-auth-token": details.authToken });
+        const result = await patchClient.build.patch.mutate({
+          source: "browser",
+          appVersion: publicStaticEnv.VERSION,
+          authToken: details.authToken,
+          entries: optimizedTransactions.map((transaction) => ({
+            transaction,
+          })),
+          buildId: details.buildId,
+          projectId,
+          // provide latest stored version to server
+          version: details.version,
         });
 
-        if (response.ok) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const result = (await response.json()) as any;
+        if (result) {
           if (result.status === "ok") {
-            details.version += 1;
+            details.version = result.version ?? details.version + 1;
             $committedVersion.set(details.version);
 
             // Notify all transaction completion callbacks
@@ -324,10 +323,18 @@ const pollQueue = async (signal: AbortSignal) => {
           // user may cancel to copy own state before reloading
           if (
             result.status === "version_mismatched" ||
-            result.status === "authorization_error"
+            result.status === "authorization_error" ||
+            result.status === "partial"
           ) {
             const error =
-              result.errors ?? "Unknown version mismatch. Please reload.";
+              ("errors" in result ? result.errors : undefined) ??
+              ("entries" in result
+                ? result.entries
+                    .filter((entry) => entry.status !== "accepted")
+                    .map((entry) => entry.errors)
+                    .join("\n")
+                : undefined) ??
+              "Unknown version mismatch. Please reload.";
 
             const shouldReload = confirm(error);
             if (shouldReload) {
@@ -364,13 +371,6 @@ const pollQueue = async (signal: AbortSignal) => {
           }
 
           apiErrorCount += 1;
-        } else {
-          // Various 500 responses, from proxies etc
-          // It's usually ok to be here, probably restorable with retries
-          const text = await response.text();
-          // To investigate some strange errors we have seen
-
-          console.info(`Non ok response: ${text}`);
         }
       } catch (error) {
         if (navigator.onLine) {

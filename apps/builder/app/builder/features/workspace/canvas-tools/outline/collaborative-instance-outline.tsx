@@ -1,6 +1,9 @@
 import { useStore } from "@nanostores/react";
 import { useMemo } from "react";
-import { $collaborators, assignCollaboratorColors } from "@webstudio-is/collab";
+import {
+  $collaborators,
+  assignCollaboratorColors,
+} from "@webstudio-is/multiplayer-client";
 import {
   $collaborativeInstanceRect,
   $collaborativeInstanceSelector,

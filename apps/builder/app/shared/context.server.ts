@@ -32,15 +32,24 @@ export const extractAuthFromRequest = async (request: Request) => {
     ? await builderAuthenticator.isAuthenticated(request)
     : await authenticator.isAuthenticated(request);
 
-  const isServiceCall =
-    request.headers.has("Authorization") &&
-    request.headers.get("Authorization") === env.TRPC_SERVER_API_TOKEN;
+  const isServiceCall = isServiceAuthorization(
+    request.headers.get("Authorization")
+  );
 
   return {
     authToken,
-    sessionData,
     isServiceCall,
+    sessionData,
   };
+};
+
+export const isServiceAuthorization = (authorizationHeader: string | null) => {
+  return (
+    authorizationHeader != null &&
+    env.TRPC_SERVER_API_TOKEN !== undefined &&
+    env.TRPC_SERVER_API_TOKEN.length > 0 &&
+    authorizationHeader === env.TRPC_SERVER_API_TOKEN
+  );
 };
 
 const createTokenAuthorizationContext = async (

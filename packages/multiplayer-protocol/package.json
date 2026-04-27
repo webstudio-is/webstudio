@@ -1,7 +1,7 @@
 {
-  "name": "@webstudio-is/collab",
+  "name": "@webstudio-is/multiplayer-protocol",
   "version": "0.0.0",
-  "description": "Realtime collaboration client — protocol, transport, and presence helpers",
+  "description": "Wire protocol for Webstudio multiplayer synchronization",
   "author": "Webstudio <github@webstudio.is>",
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -10,23 +10,12 @@
       "webstudio": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
-    },
-    "./websocket": {
-      "webstudio": "./src/websocket-emitter.ts",
-      "import": "./src/websocket-emitter.ts",
-      "default": "./src/websocket-emitter.ts"
     }
   },
   "sideEffects": false,
   "scripts": {
     "typecheck": "tsgo --noEmit",
     "test": "vitest run"
-  },
-  "dependencies": {
-    "nanostores": "^0.11.3",
-    "nanoid": "^5.1.5",
-    "immerhin": "*",
-    "partysocket": "^1.1.18"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",

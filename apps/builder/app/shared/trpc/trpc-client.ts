@@ -11,14 +11,20 @@ import { createRecursiveProxy } from "@trpc/server/shared";
 import { useMemo, useState } from "react";
 import { fetch } from "~/shared/fetch.client";
 
-export const nativeClient = createTRPCProxyClient<AppRouter>({
-  links: [
-    httpBatchLink({
-      fetch,
-      url: "/trpc",
-    }),
-  ],
-});
+export const createNativeClient = (
+  headers?: Record<string, string | undefined>
+) =>
+  createTRPCProxyClient<AppRouter>({
+    links: [
+      httpBatchLink({
+        fetch,
+        headers: () => headers ?? {},
+        url: "/trpc",
+      }),
+    ],
+  });
+
+export const nativeClient = createNativeClient();
 
 type Procedures<T> = T extends AnyRouter
   ? {

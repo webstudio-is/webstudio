@@ -9,5 +9,5 @@
 
 export const publicStaticEnv = {
   VERSION: import.meta.env.GITHUB_SHA ?? "local",
-  COLLAB_RELAY_HOST: import.meta.env.PUBLIC_COLLAB_RELAY_HOST,
+  COLLAB_RELAY_URL: import.meta.env.PUBLIC_COLLAB_RELAY_URL,
 };

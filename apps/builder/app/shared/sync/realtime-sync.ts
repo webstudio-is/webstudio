@@ -9,18 +9,18 @@ import {
   type ReloadMessage,
   type SyncEmitter,
   type SyncMessage,
-} from "@webstudio-is/collab";
+} from "@webstudio-is/multiplayer-client";
 import {
   createWebSocketSyncEmitter,
   type WebSocketEmitterOptions,
   type WebSocketSyncEmitter,
-} from "@webstudio-is/collab/websocket";
+} from "@webstudio-is/multiplayer-client/websocket";
 import type { Awareness } from "~/shared/awareness";
 
 type RealtimeSyncEmitterOptions = {
-  authToken?: string;
+  authToken?: string | (() => Promise<string | undefined>);
   clientId: string;
-  host: string;
+  url: string;
   onReload?: (message: ReloadMessage) => void;
   onUserMessage?: (message: string) => void;
   createTransport?: (options: WebSocketEmitterOptions) => WebSocketSyncEmitter;
@@ -48,7 +48,7 @@ const updateCollaborator = (clientId: string, payload: unknown) => {
 export const createRealtimeSyncEmitter = ({
   authToken,
   clientId,
-  host,
+  url,
   onReload,
   onUserMessage,
   createTransport = createWebSocketSyncEmitter,
@@ -84,18 +84,24 @@ export const createRealtimeSyncEmitter = ({
       log("connect skipped; websocket already exists", { buildId });
       return;
     }
-    log("connect", { buildId, host, hasAuthToken: authToken !== undefined });
+    log("connect", { buildId, url, hasAuthToken: authToken !== undefined });
     ws = createTransport({
       authToken,
       buildId,
       clientId,
-      host,
+      url,
       onAck: (seq, version) => {
         tracker.handleAck({ type: "ack", seq, version });
         updateUnsaved();
       },
-      onApplied: (transactionId, seq, status) => {
-        tracker.handleApplied({ type: "applied", transactionId, seq, status });
+      onApplied: (transactionId, seq, status, errors) => {
+        tracker.handleApplied({
+          type: "applied",
+          transactionId,
+          seq,
+          status,
+          errors,
+        });
         updateUnsaved();
       },
       onBroadcast: (message) => {

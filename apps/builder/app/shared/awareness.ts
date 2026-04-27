@@ -1,6 +1,6 @@
 import { atom, computed } from "nanostores";
 import type { Rect } from "@webstudio-is/design-system";
-import type { CollaboratorInfo } from "@webstudio-is/collab";
+import type { CollaboratorInfo } from "@webstudio-is/multiplayer-client";
 import { $selectedInstanceSelector } from "./nano-states/instances";
 import { $selectedPageId } from "./nano-states/pages";
 

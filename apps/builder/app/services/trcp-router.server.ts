@@ -9,8 +9,10 @@ import { userRouter } from "./user-router.server";
 import { logoutRouter } from "./logout-router.server";
 import { notificationRouter } from "./notification-router.server";
 import { workspaceRouter } from "./workspace-router.server";
+import { buildRouter } from "./build-router.server";
 
 export const appRouter = router({
+  build: buildRouter,
   user: userRouter,
   marketplace: marketplaceRouter,
   domain: domainRouter,

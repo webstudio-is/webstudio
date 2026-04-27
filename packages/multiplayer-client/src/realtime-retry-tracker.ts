@@ -5,7 +5,7 @@ import type {
   BroadcastMessage,
   ErrorMessage,
   ReloadMessage,
-} from "./protocol";
+} from "@webstudio-is/multiplayer-protocol";
 import { createBackoff as createDefaultBackoff } from "./backoff";
 
 export const ACK_TIMEOUT_MS = 15_000;
@@ -44,6 +44,7 @@ export type RealtimeRetryTrackerOptions = {
     message: ApplyMessage;
     seq: number;
     status: AppliedMessage["status"];
+    errors?: string;
   }) => void;
   onRetry?: (event: {
     message: ApplyMessage;
@@ -217,6 +218,23 @@ export const createRealtimeRetryTracker = ({
         message: entry.message,
         seq: message.seq,
         status: message.status,
+      });
+      return;
+    }
+
+    if (message.status === "rejected" || message.status === "failed") {
+      deletePending(entry);
+      onUserMessage?.(
+        message.errors ??
+          (message.status === "rejected"
+            ? "You don't have permission to save this change."
+            : "This change could not be saved.")
+      );
+      onDropped?.({
+        message: entry.message,
+        seq: message.seq,
+        status: message.status,
+        errors: message.errors,
       });
       return;
     }

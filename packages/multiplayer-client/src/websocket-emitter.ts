@@ -20,8 +20,8 @@ import type {
   ReloadMessage,
   RelayClientMessage,
   RelayServerMessage,
-} from "./protocol";
-import { stripRevisePatchesFromTransaction } from "./protocol";
+} from "@webstudio-is/multiplayer-protocol";
+import { stripRevisePatchesFromTransaction } from "@webstudio-is/multiplayer-protocol";
 
 interface MessageCallbacks
   extends Pick<
@@ -35,15 +35,16 @@ interface MessageCallbacks
   > {}
 
 export type WebSocketEmitterOptions = {
-  host: string;
+  url: string;
   buildId: string;
   clientId: string;
-  authToken?: string;
+  authToken?: string | (() => Promise<string | undefined>);
   onAck: (seq: number, version: number) => void;
   onApplied: (
     transactionId: string,
     seq: number,
-    status: AppliedMessage["status"]
+    status: AppliedMessage["status"],
+    errors?: string
   ) => void;
   onPresence: (clientId: string, payload: unknown) => void;
   onBroadcast: (message: BroadcastMessage) => void;
@@ -90,7 +91,12 @@ export const dispatchWebSocketMessage = ({
   }
   if (type === "applied") {
     const applied = parsed as AppliedMessage;
-    callbacks.onApplied(applied.transactionId, applied.seq, applied.status);
+    callbacks.onApplied(
+      applied.transactionId,
+      applied.seq,
+      applied.status,
+      applied.errors
+    );
     return;
   }
   if (type === "presence") {
@@ -133,9 +139,9 @@ export const createWebSocketSyncEmitter = (
     console.warn(`${warnPrefix} ${message}`, ...args);
 
   const hasExplicitProtocol =
-    opts.host.match(/^https?:\/\//) !== null ||
-    opts.host.match(/^wss?:\/\//) !== null;
-  const url = new URL(hasExplicitProtocol ? opts.host : `ws://${opts.host}`);
+    opts.url.match(/^https?:\/\//) !== null ||
+    opts.url.match(/^wss?:\/\//) !== null;
+  const url = new URL(hasExplicitProtocol ? opts.url : `ws://${opts.url}`);
   const isLoopbackHost =
     url.hostname === "localhost" ||
     url.hostname === "127.0.0.1" ||
@@ -153,17 +159,29 @@ export const createWebSocketSyncEmitter = (
             : isLoopbackHost
               ? "ws"
               : undefined;
+  const relayPathPrefix = url.pathname.replace(/^\/+|\/+$/g, "");
+  const prefix =
+    relayPathPrefix.length === 0 ? undefined : `${relayPathPrefix}/parties`;
+  const roomUrl = `${resolvedProtocol ?? "ws(s)"}://${url.host}/${prefix ?? "parties"}/main/${opts.buildId}`;
 
   const ws = new PartySocket({
     host: url.host,
+    prefix,
     protocol: resolvedProtocol,
     room: opts.buildId,
     id: opts.clientId,
-    query: async () =>
-      opts.authToken === undefined || opts.authToken.length === 0
+    query: async () => {
+      const authToken =
+        typeof opts.authToken === "function"
+          ? await opts.authToken()
+          : opts.authToken;
+      return authToken === undefined || authToken.length === 0
         ? {}
-        : { token: opts.authToken },
+        : { token: authToken };
+    },
   });
+  const socketRoomUrl =
+    "roomUrl" in ws && typeof ws.roomUrl === "string" ? ws.roomUrl : roomUrl;
 
   const handlers = new Set<(message: SyncMessage) => void>();
 
@@ -182,11 +200,20 @@ export const createWebSocketSyncEmitter = (
   ws.addEventListener("open", () => {
     opts.onOpen?.();
   });
-  ws.addEventListener("close", () => {
+  ws.addEventListener("close", (event) => {
+    if (event.code !== 1000) {
+      warn(
+        "socket closed url=%s code=%d reason=%s wasClean=%s",
+        socketRoomUrl,
+        event.code,
+        event.reason,
+        event.wasClean
+      );
+    }
     opts.onClose?.();
   });
   ws.addEventListener("error", (event) => {
-    warn("socket error event=%o", event);
+    warn("socket error url=%s event=%o", socketRoomUrl, event);
   });
 
   ws.addEventListener("message", (ev) => {

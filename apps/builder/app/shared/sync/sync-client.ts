@@ -9,6 +9,7 @@ import {
 } from "./project-queue";
 import { loadBuilderData, type LoadedBuilderData } from "~/shared/builder-data";
 import { publicStaticEnv } from "~/env/env.static";
+import { nativeClient } from "~/shared/trpc/trpc-client";
 import { $awareness, type Awareness } from "~/shared/awareness";
 import { toast } from "@webstudio-is/design-system";
 import {
@@ -35,9 +36,40 @@ import {
 let client: SyncClient | undefined;
 let currentProjectId: string | undefined;
 let realtimeEmitter: RealtimeSyncEmitter | undefined;
+let realtimeBuildId: string | undefined;
 let unsubscribeAwarenessPresence: (() => void) | undefined;
 
 const logSync = (_message: string, _details?: Record<string, unknown>) => {};
+
+const createCollabAuthTokenLoader = ({
+  authPermit,
+  authToken,
+  buildId,
+  projectId,
+}: {
+  authPermit: AuthPermit;
+  authToken: string | undefined;
+  buildId: () => string | undefined;
+  projectId: Project["id"];
+}) => {
+  if (authPermit === "view") {
+    return undefined;
+  }
+  if (authToken !== undefined) {
+    return authToken;
+  }
+  return async () => {
+    const currentBuildId = buildId();
+    if (currentBuildId === undefined) {
+      throw new Error("Build id is not ready for collaboration token");
+    }
+    const result = await nativeClient.build.createCollabToken.query({
+      buildId: currentBuildId,
+      projectId,
+    });
+    return result.token;
+  };
+};
 
 export const createPresenceSendQueue = (
   sendPresence: (awareness: Awareness) => void
@@ -69,6 +101,29 @@ export const createPresenceSendQueue = (
 let presenceSendQueue = createPresenceSendQueue((awareness) => {
   realtimeEmitter?.sendPresence(awareness);
 });
+
+const resolveRealtimeCollabUrl = (url: string) => {
+  if (typeof window === "undefined") {
+    return url;
+  }
+  try {
+    const collabUrl = new URL(url);
+    if (
+      collabUrl.hostname === "wstd.dev" &&
+      (window.location.hostname === "wstd.dev" ||
+        window.location.hostname.endsWith(".wstd.dev"))
+    ) {
+      const currentOrigin = new URL(window.location.origin);
+      collabUrl.protocol = currentOrigin.protocol;
+      collabUrl.hostname = currentOrigin.hostname;
+      collabUrl.port = currentOrigin.port;
+      return collabUrl.toString();
+    }
+  } catch {
+    return url;
+  }
+  return url;
+};
 
 const applyBuilderData = (data: LoadedBuilderData) => {
   $publisherHost.set(data.publisherHost);
@@ -103,20 +158,23 @@ export const initializeClientSync = ({
   signal: AbortSignal;
   onReady?: () => void;
 }) => {
-  const realtimeCollabHost = publicStaticEnv.COLLAB_RELAY_HOST;
+  const realtimeCollabUrl =
+    publicStaticEnv.COLLAB_RELAY_URL === undefined
+      ? undefined
+      : resolveRealtimeCollabUrl(publicStaticEnv.COLLAB_RELAY_URL);
   const useRealtime =
-    realtimeCollabHost !== undefined && realtimeCollabHost.length > 0;
+    realtimeCollabUrl !== undefined && realtimeCollabUrl.length > 0;
   logSync("initialize", {
     projectId,
     authPermit,
     hasAuthToken: authToken !== undefined,
     realtime: useRealtime ? "enabled" : "disabled",
-    realtimeCollabHost,
+    realtimeCollabUrl,
     persistence: useRealtime
       ? "collab-worker"
       : authPermit === "view"
         ? "none"
-        : "rest.patch",
+        : "build.patch",
   });
 
   // Note: "view" permit will skip transaction synchronization
@@ -136,15 +194,16 @@ export const initializeClientSync = ({
     const object = createObjectPool();
     const realtimeClientId = crypto.randomUUID();
     const emitter =
-      useRealtime && realtimeCollabHost !== undefined
+      useRealtime && realtimeCollabUrl !== undefined
         ? createRealtimeSyncEmitter({
-            // Shared-link users already have an auth token. Signed-in owners do
-            // not, so pass a non-empty session marker; the private service is
-            // responsible for turning that into real entitlement validation.
-            authToken:
-              authPermit === "view" ? undefined : (authToken ?? "session"),
+            authToken: createCollabAuthTokenLoader({
+              authPermit,
+              authToken,
+              buildId: () => realtimeBuildId,
+              projectId,
+            }),
             clientId: realtimeClientId,
-            host: realtimeCollabHost,
+            url: realtimeCollabUrl,
             onReload: async (message) => {
               logSync("realtime reload requested", {
                 reason: message.reason,
@@ -200,6 +259,7 @@ export const initializeClientSync = ({
           applyBuilderData(data);
 
           if (useRealtime) {
+            realtimeBuildId = data.id;
             realtimeEmitter?.connect(data.id);
             unsubscribeAwarenessPresence?.();
             unsubscribeAwarenessPresence = $awareness.listen((awareness) => {
@@ -208,7 +268,7 @@ export const initializeClientSync = ({
           }
 
           if (authPermit !== "view" && useRealtime === false) {
-            logSync("enqueue rest.patch persistence", {
+            logSync("enqueue build.patch persistence", {
               projectId,
               buildId: data.id,
               version: data.version,
@@ -245,6 +305,7 @@ export const destroyClientSync = () => {
   });
   realtimeEmitter?.close();
   realtimeEmitter = undefined;
+  realtimeBuildId = undefined;
   unsubscribeAwarenessPresence?.();
   unsubscribeAwarenessPresence = undefined;
   presenceSendQueue.clear();

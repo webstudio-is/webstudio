@@ -223,9 +223,6 @@ importers:
       '@webstudio-is/authorization-token':
         specifier: workspace:*
         version: link:../../packages/authorization-token
-      '@webstudio-is/collab':
-        specifier: workspace:*
-        version: link:../../packages/collab
       '@webstudio-is/css-data':
         specifier: workspace:*
         version: link:../../packages/css-data
@@ -259,6 +256,9 @@ importers:
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
+      '@webstudio-is/multiplayer-client':
+        specifier: workspace:*
+        version: link:../../packages/multiplayer-client
       '@webstudio-is/plans':
         specifier: workspace:*
         version: link:../../packages/plans
@@ -1244,28 +1244,6 @@ importers:
         specifier: ^3.63.2
         version: 3.63.2(@cloudflare/workers-types@4.20240718.0)
 
-  packages/collab:
-    dependencies:
-      immerhin:
-        specifier: '*'
-        version: 0.10.0
-      nanoid:
-        specifier: ^5.1.5
-        version: 5.1.5
-      nanostores:
-        specifier: ^0.11.3
-        version: 0.11.3
-      partysocket:
-        specifier: ^1.1.18
-        version: 1.1.18(react@18.3.0-canary-14898b6a9-20240318)
-    devDependencies:
-      '@webstudio-is/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
-      vitest:
-        specifier: ^3.1.2
-        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)
-
   packages/css-data:
     dependencies:
       '@webstudio-is/css-engine':
@@ -1717,6 +1695,40 @@ importers:
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)
+
+  packages/multiplayer-client:
+    dependencies:
+      '@webstudio-is/multiplayer-protocol':
+        specifier: workspace:*
+        version: link:../multiplayer-protocol
+      immerhin:
+        specifier: '*'
+        version: 0.10.0
+      nanoid:
+        specifier: ^5.1.5
+        version: 5.1.5
+      nanostores:
+        specifier: ^0.11.3
+        version: 0.11.3
+      partysocket:
+        specifier: ^1.1.18
+        version: 1.1.18(react@18.3.0-canary-14898b6a9-20240318)
+    devDependencies:
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)
+
+  packages/multiplayer-protocol:
+    devDependencies:
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       vitest:
         specifier: ^3.1.2
         version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)

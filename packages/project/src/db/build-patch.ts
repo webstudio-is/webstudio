@@ -13,7 +13,7 @@ import {
 export type { BuildPatchChange, BuildPatchTransaction };
 
 export type PatchBuildResult =
-  | { status: "ok" }
+  | { status: "ok"; version: number }
   | { status: "version_mismatched"; errors: string }
   | { status: "error"; errors: string };
 
@@ -43,10 +43,10 @@ export const patchBuild = async (
   }
 
   if (result.update === undefined) {
-    return { status: "ok" };
+    return { status: "ok", version: result.nextVersion };
   }
 
-  // /rest.patch does not have the worker's atomic Build+asset commit path.
+  // build.patch does not have the worker's atomic Build+asset commit path.
   // Apply app-side asset mutations before marking the Build with
   // lastTransactionId so a failed asset mutation is not later treated as an
   // already-saved retry.
@@ -86,5 +86,5 @@ export const patchBuild = async (
     );
   }
 
-  return { status: "ok" };
+  return { status: "ok", version: result.nextVersion };
 };

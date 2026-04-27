@@ -108,7 +108,7 @@ describe("patchBuild", () => {
       createContext()
     );
 
-    expect(result).toEqual({ status: "ok" });
+    expect(result).toEqual({ status: "ok", version: 4 });
     expect(updatedBuild).toMatchObject({
       version: 4,
       lastTransactionId: "tx-1",
@@ -146,7 +146,7 @@ describe("patchBuild", () => {
       createContext()
     );
 
-    expect(result).toEqual({ status: "ok" });
+    expect(result).toEqual({ status: "ok", version: 4 });
     expect(didPatch).toBe(false);
   });
 

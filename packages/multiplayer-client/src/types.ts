@@ -1,19 +1,9 @@
-/**
- * Minimal types the collab package needs from the sync-client world.
- * Kept lean so they can be independently satisfied by any host
- * (builder, Durable Object, test harness).
- */
+import type {
+  RevertedTransaction,
+  Transaction,
+} from "@webstudio-is/multiplayer-protocol";
 
-export type Transaction<Payload = unknown> = {
-  id: string;
-  object: string;
-  payload: Payload;
-};
-
-export type RevertedTransaction = {
-  id: string;
-  object: string;
-};
+export type { RevertedTransaction, Transaction };
 
 export type SyncMessage =
   | { type: "connect"; clientId: string }

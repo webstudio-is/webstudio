@@ -1,5 +1,5 @@
 import path, { resolve } from "node:path";
-import { defineConfig, type CorsOptions } from "vite";
+import { defineConfig, loadEnv, type CorsOptions } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
 import type { IncomingMessage } from "node:http";
@@ -26,6 +26,10 @@ const conditions = hasPrivateFolders
   : ["webstudio"];
 
 export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, __dirname, "");
+  const collabRelayProxyTarget =
+    env.COLLAB_RELAY_PROXY_TARGET ?? "http://127.0.0.1:1999";
+
   if (mode === "development") {
     // Enable self-signed certificates for development service 2 service fetch calls.
     // This is particularly important for secure communication with the oauth.ws.token endpoint.
@@ -123,10 +127,10 @@ export default defineConfig(({ mode }) => {
       // IncomingMessage URLs, so keep proxy configured. In remote workspaces,
       // browser-side localhost points at the user's machine, not this dev
       // container, so websocket connections for the local collab worker go
-      // through the builder origin and are proxied to PartyKit.
+      // through the builder origin and are proxied to Wrangler.
       proxy: {
-        "/parties": {
-          target: "http://127.0.0.1:1999",
+        "/collab-relay": {
+          target: collabRelayProxyTarget,
           ws: true,
           changeOrigin: true,
         },
