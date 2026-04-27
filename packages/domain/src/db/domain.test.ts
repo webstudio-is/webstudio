@@ -7,18 +7,31 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { countTotalDomains, create } from "./domain";
+import { countTotalDomains, create, remove } from "./domain";
 
 const server = createTestServer();
 
-const createContext = (): AppContext =>
+const createContext = (overrides: Partial<AppContext> = {}): AppContext =>
   ({
     ...testContext,
     authorization: { type: "user", userId: "owner-1" },
     getOwnerPlanFeatures: () => Promise.resolve({}),
     domain: {},
-    deployment: {},
+    deployment: {
+      deploymentTrpc: {
+        unpublish: {
+          mutate: () => Promise.resolve({ success: true }),
+        },
+      },
+      env: {
+        BUILDER_ORIGIN: "https://apps.webstudio.is",
+        GITHUB_REF_NAME: "main",
+        GITHUB_SHA: undefined,
+        PUBLISHER_HOST: "wstd.io",
+      },
+    },
     entri: {},
+    ...overrides,
   }) as unknown as AppContext;
 
 /**
@@ -122,5 +135,126 @@ describe("create — domain limit guard (msw)", () => {
     );
 
     expect(result).toEqual({ success: true });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// remove
+// Detaches the domain only after unpublishing and marks unreferenced domains
+// inactive so they do not remain ACTIVE orphans.
+// ---------------------------------------------------------------------------
+
+describe("remove (msw)", () => {
+  test("unpublishes, detaches, and marks an unreferenced domain inactive", async () => {
+    let unpublishedDomain: string | undefined;
+    let projectDomainDeleted = false;
+    let domainUpdate: unknown;
+
+    server.use(
+      projectHandler,
+      db.get("ProjectDomain", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("domainId")).toBe("eq.domain-id-1");
+        expect(url.searchParams.get("projectId")).toBe("eq.proj-1");
+        return json({
+          domain: {
+            id: "domain-id-1",
+            domain: "example.com",
+          },
+        });
+      }),
+      db.get("Build", () => json([])),
+      db.delete("ProjectDomain", () => {
+        projectDomainDeleted = true;
+        return empty({ status: 204 });
+      }),
+      db.head("ProjectDomain", () =>
+        empty({ headers: { "Content-Range": "*/0" } })
+      ),
+      db.patch("Domain", async ({ request }) => {
+        domainUpdate = await request.json();
+        return json({ id: "domain-id-1" });
+      })
+    );
+
+    const result = await remove(
+      { projectId: "proj-1", domainId: "domain-id-1" },
+      createContext({
+        deployment: {
+          deploymentTrpc: {
+            publish: {
+              mutate: () => Promise.resolve({ success: true }),
+            },
+            unpublish: {
+              mutate: ({ domain }: { domain: string }) => {
+                unpublishedDomain = domain;
+                return Promise.resolve({ success: true });
+              },
+            },
+          },
+          env: {
+            BUILDER_ORIGIN: "https://apps.webstudio.is",
+            GITHUB_REF_NAME: "main",
+            GITHUB_SHA: undefined,
+            PUBLISHER_HOST: "wstd.io",
+          },
+        },
+      })
+    );
+
+    expect(result).toEqual({ success: true });
+    expect(unpublishedDomain).toBe("example.com");
+    expect(projectDomainDeleted).toBe(true);
+    expect(domainUpdate).toEqual({
+      status: "INITIALIZING",
+      error: "Removed from project",
+      txtRecord: null,
+    });
+  });
+
+  test("does not detach when unpublish fails", async () => {
+    let projectDomainDeleted = false;
+
+    server.use(
+      projectHandler,
+      db.get("ProjectDomain", () =>
+        json({
+          domain: {
+            id: "domain-id-1",
+            domain: "example.com",
+          },
+        })
+      ),
+      db.delete("ProjectDomain", () => {
+        projectDomainDeleted = true;
+        return empty({ status: 204 });
+      })
+    );
+
+    const result = await remove(
+      { projectId: "proj-1", domainId: "domain-id-1" },
+      createContext({
+        deployment: {
+          deploymentTrpc: {
+            publish: {
+              mutate: () => Promise.resolve({ success: true }),
+            },
+            unpublish: {
+              mutate: () =>
+                Promise.resolve({ success: false, error: "Cloudflare failed" }),
+            },
+          },
+          env: {
+            BUILDER_ORIGIN: "https://apps.webstudio.is",
+            GITHUB_REF_NAME: "main",
+            GITHUB_SHA: undefined,
+            PUBLISHER_HOST: "wstd.io",
+          },
+        },
+      })
+    );
+
+    expect(result).toEqual({ success: false, error: "Cloudflare failed" });
+    expect(projectDomainDeleted).toBe(false);
   });
 });
