@@ -106,41 +106,6 @@ export type RelayServerMessage =
   | ErrorMessage
   | PresenceMessage;
 
-export const stripRevisePatchesFromTransaction = (
-  transaction: Transaction
-): Transaction => {
-  if (transaction.object !== "server" || !Array.isArray(transaction.payload)) {
-    return transaction;
-  }
-
-  let changed = false;
-  const nextPayload = transaction.payload.map((entry) => {
-    if (
-      entry === null ||
-      typeof entry !== "object" ||
-      Array.isArray(entry) ||
-      !Object.hasOwn(entry, "revisePatches")
-    ) {
-      return entry;
-    }
-    changed = true;
-    const { revisePatches: _revisePatches, ...rest } = entry as Record<
-      string,
-      unknown
-    >;
-    return rest;
-  });
-
-  if (!changed) {
-    return transaction;
-  }
-
-  return {
-    ...transaction,
-    payload: nextPayload,
-  };
-};
-
 export interface OperationOrder {
   actorId: string;
   clientSeq: number;

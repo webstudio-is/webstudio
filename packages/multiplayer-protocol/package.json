@@ -15,7 +15,7 @@
   "sideEffects": false,
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",

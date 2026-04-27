@@ -1,6 +1,7 @@
 import type { Project } from "@webstudio-is/project";
 import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
 import type { Build } from "@webstudio-is/project-build";
+import { stripRevisePatchesFromPayload } from "@webstudio-is/sync-client";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 
 export type PatchWriter =
@@ -32,23 +33,11 @@ export type PatchData<Entry extends PatchDataEntry = PatchDataEntry> = {
   entries: Entry[];
 };
 
-const stripRevisePatchesFromPatchTransaction = (
+const normalizePatchTransaction = (
   transaction: BuildPatchTransaction
 ): BuildPatchTransaction => {
-  let changed = false;
-  const payload = transaction.payload.map((change) => {
-    if (Object.hasOwn(change, "revisePatches") === false) {
-      return change;
-    }
-    changed = true;
-    const { revisePatches: _revisePatches, ...rest } =
-      change as typeof change & {
-        revisePatches?: unknown;
-      };
-    return rest;
-  });
-
-  if (changed === false) {
+  const payload = stripRevisePatchesFromPayload(transaction.payload);
+  if (payload === transaction.payload) {
     return transaction;
   }
   return { ...transaction, payload };
@@ -73,7 +62,7 @@ export const normalizePatchRequest = <Entry extends PatchDataEntry>(
     clientVersion: data.version,
     entries: data.entries.map((entry) => ({
       seq: entry.seq,
-      transaction: stripRevisePatchesFromPatchTransaction(entry.transaction),
+      transaction: normalizePatchTransaction(entry.transaction),
       writer: getWriter(entry),
     })),
   };

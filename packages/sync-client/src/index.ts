@@ -30,8 +30,11 @@ export type {
 export {
   persistenceBacklogErrorMessage,
   rateLimitedErrorMessage,
-  stripRevisePatchesFromTransaction,
 } from "@webstudio-is/multiplayer-protocol";
+export {
+  stripRevisePatchesFromPayload,
+  stripRevisePatchesFromTransaction,
+} from "./transaction-utils";
 export { $collaborators } from "./multiplayer/collab-state";
 export {
   $hasUnsavedSyncChanges,

@@ -1,5 +1,27 @@
 import { describe, expect, test } from "vitest";
-import { stripRevisePatchesFromTransaction } from ".";
+import {
+  stripRevisePatchesFromPayload,
+  stripRevisePatchesFromTransaction,
+} from "./transaction-utils";
+
+describe("stripRevisePatchesFromPayload", () => {
+  test("removes revisePatches from array payload entries", () => {
+    const payload = [
+      {
+        namespace: "instances",
+        patches: [{ op: "add", path: ["x"], value: 1 }],
+        revisePatches: [{ op: "remove", path: ["x"] }],
+      },
+    ];
+
+    expect(stripRevisePatchesFromPayload(payload)).toEqual([
+      {
+        namespace: "instances",
+        patches: [{ op: "add", path: ["x"], value: 1 }],
+      },
+    ]);
+  });
+});
 
 describe("stripRevisePatchesFromTransaction", () => {
   test("removes revisePatches from server payload entries", () => {

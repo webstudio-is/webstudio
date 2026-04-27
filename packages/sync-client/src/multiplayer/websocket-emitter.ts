@@ -21,7 +21,7 @@ import type {
   RelayClientMessage,
   RelayServerMessage,
 } from "@webstudio-is/multiplayer-protocol";
-import { stripRevisePatchesFromTransaction } from "@webstudio-is/multiplayer-protocol";
+import { stripRevisePatchesFromTransaction } from "../transaction-utils";
 
 interface MessageCallbacks
   extends Pick<
