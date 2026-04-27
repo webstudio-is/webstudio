@@ -42,8 +42,8 @@ jobs:
             echo "main already up to date"
           fi
 
-  rebase-develop:
-    name: Rebase develop onto main
+  merge-develop:
+    name: Merge main into develop
     needs: sync-main
     if: needs.sync-main.outputs.has_new_commits == 'true'
     runs-on: ubuntu-24.04
@@ -57,70 +57,70 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.14.4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Rebase develop onto main
-        id: rebase
+      - name: Merge main into develop
+        id: merge
         continue-on-error: true
         run: |
           git fetch origin main
 
-          rebase_with_lockfile_fix() {
-            git rebase origin/main && return 0
+          # Snapshot custom commits (in develop but not in main) before merge
+          CUSTOM_BEFORE=$(git log origin/main..HEAD --format="%H %s")
+          if [ -n "$CUSTOM_BEFORE" ]; then
+            echo "Custom commits to preserve:"
+            echo "$CUSTOM_BEFORE"
+          fi
 
-            CONFLICTS=$(git diff --name-only --diff-filter=U)
-            if [ "$CONFLICTS" = "pnpm-lock.yaml" ]; then
-              echo "Auto-resolving pnpm-lock.yaml conflict..."
-              git checkout --ours -- pnpm-lock.yaml
-              pnpm install --no-frozen-lockfile
-              git add pnpm-lock.yaml
-              GIT_EDITOR=true git rebase --continue
-              return $?
+          # Attempt merge — no history rewrite, no commit can be dropped
+          git merge origin/main --no-edit
+
+          # Verify every custom commit is still reachable from the new HEAD
+          MISSING=""
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            SHA=$(echo "$line" | cut -d' ' -f1)
+            if ! git merge-base --is-ancestor "$SHA" HEAD 2>/dev/null; then
+              MISSING="$MISSING\n- $line"
             fi
+          done <<< "$CUSTOM_BEFORE"
 
-            return 1
-          }
+          if [ -n "$MISSING" ]; then
+            echo "ERROR: the following custom commits are unreachable after merge:"
+            printf "%b\n" "$MISSING"
+            exit 1
+          fi
 
-          rebase_with_lockfile_fix
-          git push origin develop --force-with-lease
+          git push origin develop
 
-      - name: Create PR on rebase conflict
-        if: steps.rebase.outcome == 'failure'
+      - name: Create PR on merge conflict
+        if: steps.merge.outcome == 'failure'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git rebase --abort || true
+          git merge --abort || true
           BRANCH="sync/upstream-$(date +%Y%m%d)"
           git checkout -b "$BRANCH" origin/main
           git push origin "$BRANCH"
           gh pr create \
             --title "chore(sync): merge upstream into develop (conflicts to resolve)" \
-            --body "The automatic rebase of \`develop\` onto \`main\` failed due to conflicts.
+            --body "The automatic merge of \`main\` into \`develop\` failed due to conflicts.
 
-          Please resolve the conflicts locally and merge this PR to complete the upstream sync:
+          Please resolve the conflicts locally:
 
           \`\`\`bash
           git fetch origin
           git checkout develop
-          git rebase origin/main
+          git merge origin/main
           # resolve conflicts, then:
-          git push origin develop --force-with-lease
+          git push origin develop
           \`\`\`" \
             --base develop \
             --head "$BRANCH"
 
-      - name: Fail if rebase did not succeed
-        if: steps.rebase.outcome == 'failure'
+      - name: Fail if merge did not succeed
+        if: steps.merge.outcome == 'failure'
         run: exit 1
