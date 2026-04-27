@@ -45,10 +45,7 @@ vi.mock("~/shared/builder-data", () => ({
 //  Imports (after mocks)
 
 import type { Change } from "immerhin";
-import {
-  $hasUnsavedSyncChanges,
-  $syncStatus,
-} from "@webstudio-is/sync-client";
+import { $hasUnsavedSyncChanges, $syncStatus } from "@webstudio-is/sync-client";
 import {
   $lastTransactionId,
   commandQueue,

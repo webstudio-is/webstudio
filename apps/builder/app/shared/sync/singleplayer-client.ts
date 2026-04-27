@@ -24,8 +24,7 @@ export const createSingleplayerSyncClient = ({
   projectId: Project["id"];
 }): SingleplayerSyncClient => {
   return {
-    storages:
-      authPermit === "view" ? [] : [new ServerSyncStorage(projectId)],
+    storages: authPermit === "view" ? [] : [new ServerSyncStorage(projectId)],
     destroy() {
       stopPolling();
     },

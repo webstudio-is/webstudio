@@ -229,13 +229,13 @@ describe("parseCollabRelayUrl", () => {
   });
 
   test("trims leading and trailing path slashes for prefix", () => {
-    expect(parseCollabRelayUrl("https://apps.webstudio.is/collab-relay/")).toEqual(
-      {
-        host: "apps.webstudio.is",
-        prefix: "collab-relay/parties",
-        protocol: "wss",
-      }
-    );
+    expect(
+      parseCollabRelayUrl("https://apps.webstudio.is/collab-relay/")
+    ).toEqual({
+      host: "apps.webstudio.is",
+      prefix: "collab-relay/parties",
+      protocol: "wss",
+    });
   });
 });
 

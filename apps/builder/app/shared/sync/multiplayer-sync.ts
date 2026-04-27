@@ -68,9 +68,7 @@ export const createMultiplayerSyncEmitter = ({
 
   const updateUnsaved = () => {
     $syncStatus.set(
-      tracker.getPendingCount() > 0
-        ? { status: "syncing" }
-        : { status: "idle" }
+      tracker.getPendingCount() > 0 ? { status: "syncing" } : { status: "idle" }
     );
   };
 

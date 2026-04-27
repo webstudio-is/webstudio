@@ -192,9 +192,7 @@ export const createWebSocketSyncEmitter = (
     },
   });
   const socketRoomUrl =
-    "roomUrl" in ws && typeof ws.roomUrl === "string"
-      ? ws.roomUrl
-      : undefined;
+    "roomUrl" in ws && typeof ws.roomUrl === "string" ? ws.roomUrl : undefined;
 
   const handlers = new Set<(message: SyncMessage) => void>();
 

@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import type { WebSocketEmitterOptions } from "@webstudio-is/sync-client/websocket";
-import {
-  $collaborators,
-  $syncStatus,
-} from "@webstudio-is/sync-client";
+import { $collaborators, $syncStatus } from "@webstudio-is/sync-client";
 import { __testing__ as awarenessTesting } from "~/shared/awareness";
 import {
   createMultiplayerSyncEmitter,

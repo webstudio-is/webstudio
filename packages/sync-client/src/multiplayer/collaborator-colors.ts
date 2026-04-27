@@ -10,9 +10,8 @@ const collaboratorColorForSlot = (slot: number): string => {
   return `oklch(${lightness}% ${chroma.toFixed(2)} ${hue.toFixed(1)})`;
 };
 
-export const collaboratorColorPalette = Array.from(
-  { length: 50 },
-  (_, slot) => collaboratorColorForSlot(slot)
+export const collaboratorColorPalette = Array.from({ length: 50 }, (_, slot) =>
+  collaboratorColorForSlot(slot)
 );
 
 /**
