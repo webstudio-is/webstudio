@@ -415,6 +415,7 @@ export const PropsSection = () => {
             instanceId={instanceId}
             propsLogic={logic}
             propValues={new Map()}
+            propValuesByInstanceSelector={new Map()}
             component="Button"
             selectedInstanceKey={instanceId}
           />
