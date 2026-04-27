@@ -5,6 +5,12 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Asset } from "@webstudio-is/sdk";
 
+const throwOnError = (error: null | { message: string }) => {
+  if (error) {
+    throw new Error(error.message);
+  }
+};
+
 export const deleteAssets = async (
   props: {
     ids: Array<Asset["id"]>;
@@ -35,22 +41,25 @@ export const deleteAssets = async (
     )
     .in("id", props.ids)
     .eq("projectId", props.projectId);
+  throwOnError(assets.error);
 
   if ((assets.data ?? []).length === 0) {
     throw new Error("Assets not found");
   }
 
-  await context.postgrest.client
+  const projectUpdate = await context.postgrest.client
     .from("Project")
     .update({ previewImageAssetId: null })
     .eq("id", props.projectId)
     .in("previewImageAssetId", props.ids);
+  throwOnError(projectUpdate.error);
 
-  await context.postgrest.client
+  const assetDelete = await context.postgrest.client
     .from("Asset")
     .delete()
     .in("id", props.ids)
     .eq("projectId", props.projectId);
+  throwOnError(assetDelete.error);
 
   // find unused files
   const unusedFileNames = new Set(assets.data?.map((asset) => asset.name));
@@ -58,15 +67,18 @@ export const deleteAssets = async (
     .from("Asset")
     .select("name")
     .in("name", Array.from(unusedFileNames));
+  throwOnError(assetsByStillUsedFileName.error);
+
   for (const asset of assetsByStillUsedFileName.data ?? []) {
     unusedFileNames.delete(asset.name);
   }
 
   // delete unused files
   if (unusedFileNames.size > 0) {
-    await context.postgrest.client
+    const fileUpdate = await context.postgrest.client
       .from("File")
       .update({ isDeleted: true })
       .in("name", Array.from(unusedFileNames));
+    throwOnError(fileUpdate.error);
   }
 };

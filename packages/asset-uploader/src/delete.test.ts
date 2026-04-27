@@ -127,4 +127,34 @@ describe("deleteAssets (msw)", () => {
 
     expect(markedFileDeleted).toBe(false);
   });
+
+  test("throws and does not mark file deleted when asset delete fails", async () => {
+    const projectId = uid();
+    const assetRow = {
+      id: "asset-1",
+      projectId,
+      name: "photo.jpg",
+      file: { name: "photo.jpg" },
+    };
+    let markedFileDeleted = false;
+
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([assetRow])),
+      db.patch("Project", () => json({ id: projectId })),
+      db.delete("Asset", () =>
+        json({ message: "Asset delete failed" }, { status: 500 })
+      ),
+      db.patch("File", () => {
+        markedFileDeleted = true;
+        return empty({ status: 204 });
+      })
+    );
+
+    await expect(
+      deleteAssets({ ids: ["asset-1"], projectId }, createContext())
+    ).rejects.toThrow("Asset delete failed");
+
+    expect(markedFileDeleted).toBe(false);
+  });
 });
