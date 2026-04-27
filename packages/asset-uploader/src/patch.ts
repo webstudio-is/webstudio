@@ -42,7 +42,7 @@ export const patchAssets = async (
     }
   }
   if (deletedAssetIds.length !== 0) {
-    deleteAssets({ projectId, ids: deletedAssetIds }, context);
+    await deleteAssets({ projectId, ids: deletedAssetIds }, context);
   }
 
   // update assets

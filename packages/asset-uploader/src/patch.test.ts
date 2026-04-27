@@ -101,6 +101,42 @@ describe("patchAssets (msw)", () => {
     expect(updatedDescription).toBe("New description");
   });
 
+  test("waits for deleted asset cleanup", async () => {
+    const projectId = uid();
+    const localAssetRow = { ...assetRow, projectId };
+    let deletedAsset = false;
+    let markedFileDeleted = false;
+
+    server.use(
+      ownershipHandler,
+      db.get("Asset", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("name")) {
+          return json([]);
+        }
+        return json([localAssetRow]);
+      }),
+      db.patch("Project", () => json({ id: projectId })),
+      db.delete("Asset", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        deletedAsset = true;
+        return empty({ status: 204 });
+      }),
+      db.patch("File", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        markedFileDeleted = true;
+        return empty({ status: 204 });
+      })
+    );
+
+    const patches: Patch[] = [{ op: "remove", path: ["asset-1"] }];
+
+    await patchAssets({ projectId }, patches, createContext());
+
+    expect(deletedAsset).toBe(true);
+    expect(markedFileDeleted).toBe(true);
+  });
+
   test("adds new asset when patch inserts an entry", async () => {
     const projectId = uid();
     let insertedAssets: unknown;
