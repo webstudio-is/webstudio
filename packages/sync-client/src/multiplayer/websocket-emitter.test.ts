@@ -24,6 +24,7 @@ vi.mock("partysocket", () => ({
 import {
   createWebSocketSyncEmitter,
   dispatchWebSocketMessage,
+  parseCollabRelayUrl,
 } from "./websocket-emitter";
 
 const createCallbacks = () => ({
@@ -182,6 +183,62 @@ describe("dispatchWebSocketMessage", () => {
   });
 });
 
+describe("parseCollabRelayUrl", () => {
+  test("uses ws for loopback hosts", () => {
+    expect(parseCollabRelayUrl("localhost:1999")).toEqual({
+      host: "localhost:1999",
+      protocol: "ws",
+    });
+  });
+
+  test("lets PartySocket choose protocol for bare remote hosts", () => {
+    expect(parseCollabRelayUrl("collab.example.com")).toEqual({
+      host: "collab.example.com",
+      protocol: undefined,
+    });
+  });
+
+  test("preserves relay URL path as PartySocket prefix", () => {
+    expect(parseCollabRelayUrl("apps.webstudio.is/collab-relay")).toEqual({
+      host: "apps.webstudio.is",
+      prefix: "collab-relay/parties",
+      protocol: undefined,
+    });
+  });
+
+  test("normalizes explicit http and https URLs to websocket protocols", () => {
+    expect(parseCollabRelayUrl("http://collab.example.com")).toEqual({
+      host: "collab.example.com",
+      protocol: "ws",
+    });
+    expect(parseCollabRelayUrl("https://collab.example.com")).toEqual({
+      host: "collab.example.com",
+      protocol: "wss",
+    });
+  });
+
+  test("keeps explicit websocket protocols", () => {
+    expect(parseCollabRelayUrl("ws://collab.example.com")).toEqual({
+      host: "collab.example.com",
+      protocol: "ws",
+    });
+    expect(parseCollabRelayUrl("wss://collab.example.com")).toEqual({
+      host: "collab.example.com",
+      protocol: "wss",
+    });
+  });
+
+  test("trims leading and trailing path slashes for prefix", () => {
+    expect(parseCollabRelayUrl("https://apps.webstudio.is/collab-relay/")).toEqual(
+      {
+        host: "apps.webstudio.is",
+        prefix: "collab-relay/parties",
+        protocol: "wss",
+      }
+    );
+  });
+});
+
 describe("createWebSocketSyncEmitter", () => {
   test("omits auth token query for view-only connections", async () => {
     partySocketOptions.length = 0;
@@ -207,7 +264,7 @@ describe("createWebSocketSyncEmitter", () => {
       url: "localhost:1999",
       buildId: "build-1",
       clientId: "client-1",
-      authToken: "token-1",
+      getAuthToken: async () => "token-1",
       onAck: vi.fn(),
       onApplied: vi.fn(),
       onBroadcast: vi.fn(),
@@ -220,71 +277,11 @@ describe("createWebSocketSyncEmitter", () => {
     });
   });
 
-  test("connects directly to loopback hosts instead of rewriting to same origin", () => {
+  test("passes parsed relay URL options to PartySocket", () => {
     partySocketOptions.length = 0;
 
     createWebSocketSyncEmitter({
-      url: "localhost:1999",
-      buildId: "build-1",
-      clientId: "client-1",
-      onAck: vi.fn(),
-      onApplied: vi.fn(),
-      onBroadcast: vi.fn(),
-      onErrorMessage: vi.fn(),
-      onPresence: vi.fn(),
-    });
-
-    expect(partySocketOptions[0]).toMatchObject({
-      host: "localhost:1999",
-      protocol: "ws",
-    });
-  });
-
-  test("connects directly to loopback hosts in remote browsers", () => {
-    partySocketOptions.length = 0;
-
-    createWebSocketSyncEmitter({
-      url: "localhost:1999",
-      buildId: "build-1",
-      clientId: "client-1",
-      onAck: vi.fn(),
-      onApplied: vi.fn(),
-      onBroadcast: vi.fn(),
-      onErrorMessage: vi.fn(),
-      onPresence: vi.fn(),
-    });
-
-    expect(partySocketOptions[0]).toMatchObject({
-      host: "localhost:1999",
-      protocol: "ws",
-    });
-  });
-
-  test("lets PartySocket pick the protocol for bare remote hosts", () => {
-    partySocketOptions.length = 0;
-
-    createWebSocketSyncEmitter({
-      url: "collab.example.com",
-      buildId: "build-1",
-      clientId: "client-1",
-      onAck: vi.fn(),
-      onApplied: vi.fn(),
-      onBroadcast: vi.fn(),
-      onErrorMessage: vi.fn(),
-      onPresence: vi.fn(),
-    });
-
-    expect(partySocketOptions[0]).toMatchObject({
-      host: "collab.example.com",
-      protocol: undefined,
-    });
-  });
-
-  test("preserves relay URL path as PartySocket prefix", () => {
-    partySocketOptions.length = 0;
-
-    createWebSocketSyncEmitter({
-      url: "apps.webstudio.is/collab-relay",
+      url: "https://apps.webstudio.is/collab-relay",
       buildId: "build-1",
       clientId: "client-1",
       onAck: vi.fn(),
@@ -297,26 +294,6 @@ describe("createWebSocketSyncEmitter", () => {
     expect(partySocketOptions[0]).toMatchObject({
       host: "apps.webstudio.is",
       prefix: "collab-relay/parties",
-      protocol: undefined,
-    });
-  });
-
-  test("normalizes explicit http websocket hosts", () => {
-    partySocketOptions.length = 0;
-
-    createWebSocketSyncEmitter({
-      url: "https://collab.example.com",
-      buildId: "build-1",
-      clientId: "client-1",
-      onAck: vi.fn(),
-      onApplied: vi.fn(),
-      onBroadcast: vi.fn(),
-      onErrorMessage: vi.fn(),
-      onPresence: vi.fn(),
-    });
-
-    expect(partySocketOptions[0]).toMatchObject({
-      host: "collab.example.com",
       protocol: "wss",
     });
   });

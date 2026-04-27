@@ -1,7 +1,7 @@
 import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
 import type { Change } from "immerhin";
-import type { Transaction } from "@webstudio-is/multiplayer-client";
+import type { Transaction } from "@webstudio-is/sync-client";
 
 type Command =
   | {

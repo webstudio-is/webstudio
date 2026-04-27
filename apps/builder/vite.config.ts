@@ -1,5 +1,5 @@
 import path, { resolve } from "node:path";
-import { defineConfig, loadEnv, type CorsOptions } from "vite";
+import { defineConfig, type CorsOptions } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
 import type { IncomingMessage } from "node:http";
@@ -26,10 +26,6 @@ const conditions = hasPrivateFolders
   : ["webstudio"];
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, __dirname, "");
-  const collabRelayProxyTarget =
-    env.COLLAB_RELAY_PROXY_TARGET ?? "http://127.0.0.1:1999";
-
   if (mode === "development") {
     // Enable self-signed certificates for development service 2 service fetch calls.
     // This is particularly important for secure communication with the oauth.ws.token endpoint.
@@ -124,17 +120,9 @@ export default defineConfig(({ mode }) => {
       host: "wstd.dev",
       // Vite 6 creates an HTTP/2 dev server when HTTPS is enabled and no proxy
       // object exists. Remix/Vite's middleware stack expects HTTP/1-style
-      // IncomingMessage URLs, so keep proxy configured. In remote workspaces,
-      // browser-side localhost points at the user's machine, not this dev
-      // container, so websocket connections for the local collab worker go
-      // through the builder origin and are proxied to Wrangler.
-      proxy: {
-        "/collab-relay": {
-          target: collabRelayProxyTarget,
-          ws: true,
-          changeOrigin: true,
-        },
-      },
+      // IncomingMessage URLs, so keep the proxy object present without routing
+      // collab traffic through the builder dev server.
+      proxy: {},
       https: {
         key: readFileSync("../../https/privkey.pem"),
         cert: readFileSync("../../https/fullchain.pem"),

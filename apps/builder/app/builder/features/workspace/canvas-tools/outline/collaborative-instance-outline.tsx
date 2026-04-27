@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import {
   $collaborators,
   assignCollaboratorColors,
-} from "@webstudio-is/multiplayer-client";
+} from "@webstudio-is/sync-client";
 import {
   $collaborativeInstanceRect,
   $collaborativeInstanceSelector,

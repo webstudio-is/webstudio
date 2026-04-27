@@ -6,7 +6,7 @@ import type {
   ErrorMessage,
   ReloadMessage,
 } from "@webstudio-is/multiplayer-protocol";
-import { createBackoff as createDefaultBackoff } from "./backoff";
+import { createBackoff, type Backoff } from "../backoff";
 
 export const ACK_TIMEOUT_MS = 15_000;
 export const FAST_RETRY_MS = 2_000;
@@ -14,13 +14,8 @@ export const MAX_FAST_RETRIES = 3;
 export const syncDelayedMessage =
   "Changes are taking longer than expected to save. Retrying in X seconds.";
 
-export type RealtimeRetryBackoff = {
-  next: () => number;
-  reset: () => void;
-};
-
 type PendingApply = {
-  backoff: RealtimeRetryBackoff;
+  backoff: Backoff;
   message: ApplyMessage;
   retryTimer: ReturnType<typeof setTimeout> | undefined;
   seq: number | undefined;
@@ -33,7 +28,7 @@ export type RetryReason =
   | "persistence_backlog_full"
   | "reconnect";
 
-export type RealtimeRetryTrackerOptions = {
+export type MultiplayerRetryTrackerOptions = {
   sendApply: (message: ApplyMessage) => void;
   onDurable?: (event: {
     message: ApplyMessage;
@@ -56,15 +51,13 @@ export type RealtimeRetryTrackerOptions = {
   ackTimeoutMs?: number;
   fastRetryMs?: number;
   maxFastRetries?: number;
-  createBackoff?: () => RealtimeRetryBackoff;
   setTimeout?: typeof setTimeout;
   clearTimeout?: typeof clearTimeout;
 };
 
-export const createRealtimeRetryTracker = ({
+export const createMultiplayerRetryTracker = ({
   ackTimeoutMs = ACK_TIMEOUT_MS,
   clearTimeout: clearTimer = globalThis.clearTimeout,
-  createBackoff,
   fastRetryMs = FAST_RETRY_MS,
   maxFastRetries = MAX_FAST_RETRIES,
   onDropped,
@@ -74,7 +67,7 @@ export const createRealtimeRetryTracker = ({
   onUserMessage,
   sendApply,
   setTimeout: setTimer = globalThis.setTimeout,
-}: RealtimeRetryTrackerOptions) => {
+}: MultiplayerRetryTrackerOptions) => {
   const pendingByTransactionId = new Map<string, PendingApply>();
   const pendingByOperationKey = new Map<string, PendingApply>();
   let lastAckSeq = 0;
@@ -166,7 +159,7 @@ export const createRealtimeRetryTracker = ({
     }
 
     const entry: PendingApply = {
-      backoff: (createBackoff ?? createDefaultBackoff)(),
+      backoff: createBackoff(),
       message,
       retryTimer: undefined,
       seq: undefined,

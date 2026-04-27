@@ -1,10 +1,14 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import type { WebSocketEmitterOptions } from "@webstudio-is/multiplayer-client/websocket";
+import type { WebSocketEmitterOptions } from "@webstudio-is/sync-client/websocket";
 import {
   $collaborators,
-  $collabUnsaved,
-} from "@webstudio-is/multiplayer-client";
-import { createRealtimeSyncEmitter } from "./realtime-sync";
+  $syncStatus,
+} from "@webstudio-is/sync-client";
+import { __testing__ as awarenessTesting } from "~/shared/awareness";
+import {
+  createMultiplayerSyncEmitter,
+  startMultiplayerPresenceSync,
+} from "./multiplayer-sync";
 
 const createTransportFactory = () => {
   let callbacks: WebSocketEmitterOptions | undefined;
@@ -31,21 +35,21 @@ const createTransportFactory = () => {
   };
 };
 
-describe("createRealtimeSyncEmitter", () => {
+describe("createMultiplayerSyncEmitter", () => {
   afterEach(() => {
-    $collabUnsaved.set(false);
+    $syncStatus.set({ status: "idle" });
     $collaborators.set(new Map());
   });
 
   test("keeps unsaved state until all local applies are durable", () => {
     const transport = createTransportFactory();
-    const emitter = createRealtimeSyncEmitter({
-      authToken: "token",
+    const emitter = createMultiplayerSyncEmitter({
+      getAuthToken: async () => "token",
       clientId: "client-1",
       createTransport: transport.createTransport,
       url: "localhost:1999",
     });
-    $collabUnsaved.set(false);
+    $syncStatus.set({ status: "idle" });
 
     emitter.connect("build-1");
     emitter.emit({
@@ -59,7 +63,7 @@ describe("createRealtimeSyncEmitter", () => {
       transaction: { id: "tx-2", object: "server", payload: [] },
     });
 
-    expect($collabUnsaved.get()).toBe(true);
+    expect($syncStatus.get()).toEqual({ status: "syncing" });
 
     transport.callbacks.onBroadcast({
       type: "broadcast",
@@ -72,7 +76,7 @@ describe("createRealtimeSyncEmitter", () => {
     });
     transport.callbacks.onAck(1, 2);
 
-    expect($collabUnsaved.get()).toBe(true);
+    expect($syncStatus.get()).toEqual({ status: "syncing" });
 
     transport.callbacks.onBroadcast({
       type: "broadcast",
@@ -85,13 +89,13 @@ describe("createRealtimeSyncEmitter", () => {
     });
     transport.callbacks.onAck(2, 3);
 
-    expect($collabUnsaved.get()).toBe(false);
+    expect($syncStatus.get()).toEqual({ status: "idle" });
   });
 
   test("connects to the build room and sends local transactions as relay applies", () => {
     const transport = createTransportFactory();
-    const emitter = createRealtimeSyncEmitter({
-      authToken: "token",
+    const emitter = createMultiplayerSyncEmitter({
+      getAuthToken: async () => "token",
       clientId: "client-1",
       createTransport: transport.createTransport,
       url: "localhost:1999",
@@ -117,8 +121,8 @@ describe("createRealtimeSyncEmitter", () => {
 
   test("forwards sync messages locally before relaying server transactions", () => {
     const transport = createTransportFactory();
-    const emitter = createRealtimeSyncEmitter({
-      authToken: "token",
+    const emitter = createMultiplayerSyncEmitter({
+      getAuthToken: async () => "token",
       clientId: "client-1",
       createTransport: transport.createTransport,
       url: "localhost:1999",
@@ -140,10 +144,10 @@ describe("createRealtimeSyncEmitter", () => {
     expect(transport.sendToRelay).not.toHaveBeenCalled();
   });
 
-  test("does not relay client-only sync transactions to the realtime worker", () => {
+  test("does not relay client-only sync transactions to the multiplayer service", () => {
     const transport = createTransportFactory();
-    const emitter = createRealtimeSyncEmitter({
-      authToken: "token",
+    const emitter = createMultiplayerSyncEmitter({
+      getAuthToken: async () => "token",
       clientId: "client-1",
       createTransport: transport.createTransport,
       url: "localhost:1999",
@@ -168,7 +172,7 @@ describe("createRealtimeSyncEmitter", () => {
 
   test("applies relay broadcasts to sync handlers", () => {
     const transport = createTransportFactory();
-    const emitter = createRealtimeSyncEmitter({
+    const emitter = createMultiplayerSyncEmitter({
       clientId: "client-1",
       createTransport: transport.createTransport,
       url: "localhost:1999",
@@ -197,8 +201,8 @@ describe("createRealtimeSyncEmitter", () => {
   test("surfaces relay applied errors to user messages", () => {
     const transport = createTransportFactory();
     const onUserMessage = vi.fn();
-    const emitter = createRealtimeSyncEmitter({
-      authToken: "token",
+    const emitter = createMultiplayerSyncEmitter({
+      getAuthToken: async () => "token",
       clientId: "client-1",
       createTransport: transport.createTransport,
       onUserMessage,
@@ -214,12 +218,12 @@ describe("createRealtimeSyncEmitter", () => {
     transport.callbacks.onApplied("tx-1", 1, "rejected", "No permission");
 
     expect(onUserMessage).toHaveBeenCalledWith("No permission");
-    expect($collabUnsaved.get()).toBe(false);
+    expect($syncStatus.get()).toEqual({ status: "idle" });
   });
 
   test("updates collaborators from relay presence", () => {
     const transport = createTransportFactory();
-    const emitter = createRealtimeSyncEmitter({
+    const emitter = createMultiplayerSyncEmitter({
       clientId: "client-1",
       createTransport: transport.createTransport,
       url: "localhost:1999",
@@ -238,5 +242,63 @@ describe("createRealtimeSyncEmitter", () => {
       pointerPosition: { x: 1, y: 2, xRatio: 0.1, yRatio: 0.2 },
       selectedInstanceIds: ["instance-1"],
     });
+  });
+});
+
+describe("startMultiplayerPresenceSync", () => {
+  afterEach(() => {
+    awarenessTesting.$pointerPosition.set(undefined);
+  });
+
+  test("sends only the latest awareness update in one microtask", async () => {
+    const emitter = { sendPresence: vi.fn() };
+    const unsubscribe = startMultiplayerPresenceSync(emitter);
+
+    await Promise.resolve();
+    emitter.sendPresence.mockClear();
+
+    awarenessTesting.$pointerPosition.set({
+      x: 1,
+      y: 2,
+      xRatio: 0.1,
+      yRatio: 0.2,
+    });
+    awarenessTesting.$pointerPosition.set({
+      x: 3,
+      y: 4,
+      xRatio: 0.3,
+      yRatio: 0.4,
+    });
+
+    expect(emitter.sendPresence).not.toHaveBeenCalled();
+    await Promise.resolve();
+
+    expect(emitter.sendPresence).toHaveBeenCalledTimes(1);
+    expect(emitter.sendPresence).toHaveBeenCalledWith({
+      pageId: undefined,
+      pointerPosition: { x: 3, y: 4, xRatio: 0.3, yRatio: 0.4 },
+      selectedInstanceIds: undefined,
+    });
+    unsubscribe();
+  });
+
+  test("does not send scheduled presence after unsubscribe", async () => {
+    const emitter = { sendPresence: vi.fn() };
+    const unsubscribe = startMultiplayerPresenceSync(emitter);
+
+    await Promise.resolve();
+    emitter.sendPresence.mockClear();
+
+    awarenessTesting.$pointerPosition.set({
+      x: 1,
+      y: 2,
+      xRatio: 0.1,
+      yRatio: 0.2,
+    });
+    unsubscribe();
+
+    await Promise.resolve();
+
+    expect(emitter.sendPresence).not.toHaveBeenCalled();
   });
 });

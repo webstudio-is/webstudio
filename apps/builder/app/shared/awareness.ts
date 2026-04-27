@@ -1,6 +1,6 @@
 import { atom, computed } from "nanostores";
 import type { Rect } from "@webstudio-is/design-system";
-import type { CollaboratorInfo } from "@webstudio-is/multiplayer-client";
+import type { CollaboratorInfo } from "@webstudio-is/sync-client";
 import { $selectedInstanceSelector } from "./nano-states/instances";
 import { $selectedPageId } from "./nano-states/pages";
 
@@ -14,7 +14,7 @@ export type Awareness = Pick<
 
 export const $pointerPosition = atom<CollaboratorInfo["pointerPosition"]>();
 
-export const $awareness = computed(
+const $computedAwareness = computed(
   [$pointerPosition, $selectedPageId, $selectedInstanceSelector],
   (pointerPosition, pageId, selectedInstanceIds): Awareness => ({
     pageId,
@@ -22,6 +22,25 @@ export const $awareness = computed(
     pointerPosition,
   })
 );
+
+export const $awareness = atom<Awareness>($computedAwareness.get());
+
+let scheduledAwareness: Awareness | undefined;
+let isAwarenessFlushScheduled = false;
+
+$computedAwareness.listen((awareness) => {
+  scheduledAwareness = awareness;
+  if (isAwarenessFlushScheduled) {
+    return;
+  }
+  isAwarenessFlushScheduled = true;
+  queueMicrotask(() => {
+    isAwarenessFlushScheduled = false;
+    if (scheduledAwareness !== undefined) {
+      $awareness.set(scheduledAwareness);
+    }
+  });
+});
 
 export const startPointerTracking = () => {
   const sourceWindow = window;

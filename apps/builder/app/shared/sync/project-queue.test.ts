@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-import type { Backoff } from "~/shared/polly/backoff";
+import type { Backoff } from "@webstudio-is/sync-client";
 
 //  Module mocks
 
@@ -33,7 +33,8 @@ vi.mock("~/env/env.static", () => ({
   publicStaticEnv: { VERSION: "test-version" },
 }));
 
-vi.mock("~/shared/polly/backoff", () => ({
+vi.mock("@webstudio-is/sync-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@webstudio-is/sync-client")>()),
   createBackoff: mockCreateBackoff,
 }));
 
@@ -44,12 +45,13 @@ vi.mock("~/shared/builder-data", () => ({
 //  Imports (after mocks)
 
 import type { Change } from "immerhin";
-import { $collabUnsaved } from "@webstudio-is/multiplayer-client";
 import {
-  $queueStatus,
+  $hasUnsavedSyncChanges,
+  $syncStatus,
+} from "@webstudio-is/sync-client";
+import {
   $lastTransactionId,
   commandQueue,
-  hasUnsavedSyncChanges,
   isSyncIdle,
   onTransactionComplete,
   onNextTransactionComplete,
@@ -101,8 +103,7 @@ const createMockBackoff = (overrides: Partial<Backoff> = {}): Backoff => {
 describe("project-queue", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    $queueStatus.set({ status: "idle" });
-    $collabUnsaved.set(false);
+    $syncStatus.set({ status: "idle" });
     $lastTransactionId.set(undefined);
     commandQueue.dequeueAll();
     transactionCallbacks.clear();
@@ -126,26 +127,17 @@ describe("project-queue", () => {
 
   //  unload protection
 
-  describe("hasUnsavedSyncChanges", () => {
-    test("is false when regular sync is idle and realtime has no pending changes", () => {
-      $queueStatus.set({ status: "idle" });
-      $collabUnsaved.set(false);
+  describe("$hasUnsavedSyncChanges", () => {
+    test("is false when sync is idle", () => {
+      $syncStatus.set({ status: "idle" });
 
-      expect(hasUnsavedSyncChanges()).toBe(false);
+      expect($hasUnsavedSyncChanges.get()).toBe(false);
     });
 
-    test("is true while regular sync has pending changes", () => {
-      $queueStatus.set({ status: "running" });
-      $collabUnsaved.set(false);
+    test("is true while changes are not saved yet", () => {
+      $syncStatus.set({ status: "syncing" });
 
-      expect(hasUnsavedSyncChanges()).toBe(true);
-    });
-
-    test("is true while realtime changes are not durable yet", () => {
-      $queueStatus.set({ status: "idle" });
-      $collabUnsaved.set(true);
-
-      expect(hasUnsavedSyncChanges()).toBe(true);
+      expect($hasUnsavedSyncChanges.get()).toBe(true);
     });
   });
 
@@ -153,20 +145,20 @@ describe("project-queue", () => {
 
   describe("isSyncIdle", () => {
     test("resolves immediately when status is idle", async () => {
-      $queueStatus.set({ status: "idle" });
+      $syncStatus.set({ status: "idle" });
       const result = await isSyncIdle();
       expect(result).toEqual({ status: "idle" });
     });
 
     test("rejects immediately when status is fatal", async () => {
-      $queueStatus.set({ status: "fatal", error: "broken" });
+      $syncStatus.set({ status: "fatal", error: "broken" });
       await expect(isSyncIdle()).rejects.toThrow(
         "Synchronization is in fatal state"
       );
     });
 
     test("waits and resolves when status transitions to idle", async () => {
-      $queueStatus.set({ status: "running" });
+      $syncStatus.set({ status: "syncing" });
 
       let resolved = false;
       isSyncIdle().then(() => {
@@ -175,13 +167,13 @@ describe("project-queue", () => {
       await flush();
       expect(resolved).toBe(false);
 
-      $queueStatus.set({ status: "idle" });
+      $syncStatus.set({ status: "idle" });
       await flush();
       expect(resolved).toBe(true);
     });
 
     test("waits and rejects when status transitions to fatal", async () => {
-      $queueStatus.set({ status: "running" });
+      $syncStatus.set({ status: "syncing" });
 
       let error: Error | undefined;
       isSyncIdle().catch((err: Error) => {
@@ -190,13 +182,13 @@ describe("project-queue", () => {
       await flush();
       expect(error).toBeUndefined();
 
-      $queueStatus.set({ status: "fatal", error: "crashed" });
+      $syncStatus.set({ status: "fatal", error: "crashed" });
       await flush();
       expect(error?.message).toMatch("Synchronization is in fatal state");
     });
 
     test("ignores intermediate non-idle/non-fatal statuses", async () => {
-      $queueStatus.set({ status: "running" });
+      $syncStatus.set({ status: "syncing" });
 
       let resolved = false;
       isSyncIdle().then(() => {
@@ -204,15 +196,15 @@ describe("project-queue", () => {
       });
       await flush();
 
-      $queueStatus.set({ status: "recovering" });
+      $syncStatus.set({ status: "recovering" });
       await flush();
       expect(resolved).toBe(false);
 
-      $queueStatus.set({ status: "failed" });
+      $syncStatus.set({ status: "failed" });
       await flush();
       expect(resolved).toBe(false);
 
-      $queueStatus.set({ status: "idle" });
+      $syncStatus.set({ status: "idle" });
       await flush();
       expect(resolved).toBe(true);
     });
@@ -285,7 +277,7 @@ describe("project-queue", () => {
         await vi.advanceTimersByTimeAsync(INTERVAL_RECOVERY);
         await p;
 
-        expect($queueStatus.get()).toEqual({ status: "recovering" });
+        expect($syncStatus.get()).toEqual({ status: "recovering" });
       }
     });
 
@@ -315,7 +307,7 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(15_000);
       await failedPromise;
 
-      expect($queueStatus.get()).toEqual({ status: "failed" });
+      expect($syncStatus.get()).toEqual({ status: "failed" });
     });
 
     test("uses backoff.next() delay and shows toast in failed state", async () => {
@@ -393,7 +385,7 @@ describe("project-queue", () => {
       );
     });
 
-    test("sets status to running when commands are available", async () => {
+    test("sets status to syncing when commands are available", async () => {
       commandQueue.enqueue({
         type: "setDetails",
         projectId: "p1",
@@ -405,7 +397,7 @@ describe("project-queue", () => {
       const gen = pollCommands();
       await gen.next();
 
-      expect($queueStatus.get()).toEqual({ status: "running" });
+      expect($syncStatus.get()).toEqual({ status: "syncing" });
     });
 
     test("sets status to idle and waits when queue is empty", async () => {
@@ -620,7 +612,7 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
       await flush();
 
-      expect($queueStatus.get().status).toBe("fatal");
+      expect($syncStatus.get().status).toBe("fatal");
 
       vi.unstubAllGlobals();
     });
@@ -652,7 +644,7 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
       await flush();
 
-      expect($queueStatus.get().status).toBe("fatal");
+      expect($syncStatus.get().status).toBe("fatal");
 
       vi.unstubAllGlobals();
     });
@@ -687,7 +679,7 @@ describe("project-queue", () => {
         await flush();
       }
 
-      expect($queueStatus.get().status).toBe("fatal");
+      expect($syncStatus.get().status).toBe("fatal");
     });
 
     test("rpc errors retry without crashing", async () => {
@@ -780,7 +772,7 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 5);
       await flush();
 
-      expect($queueStatus.get().status).toBe("fatal");
+      expect($syncStatus.get().status).toBe("fatal");
       expect(mockToastError).toHaveBeenCalledWith(
         expect.stringContaining("Project details not found"),
         expect.anything()
@@ -825,7 +817,7 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 2);
       await flush();
 
-      expect($queueStatus.get().status).toBe("fatal");
+      expect($syncStatus.get().status).toBe("fatal");
 
       vi.unstubAllGlobals();
     });

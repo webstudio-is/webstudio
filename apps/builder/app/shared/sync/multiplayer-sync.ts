@@ -1,38 +1,36 @@
 import { createNanoEvents } from "nanoevents";
 import {
   $collaborators,
-  $collabUnsaved,
-  createRealtimeRetryTracker,
+  $syncStatus,
+  createMultiplayerRetryTracker,
   type ApplyMessage,
   type ErrorMessage,
   type PresenceMessage,
   type ReloadMessage,
   type SyncEmitter,
   type SyncMessage,
-} from "@webstudio-is/multiplayer-client";
+} from "@webstudio-is/sync-client";
 import {
   createWebSocketSyncEmitter,
   type WebSocketEmitterOptions,
   type WebSocketSyncEmitter,
-} from "@webstudio-is/multiplayer-client/websocket";
-import type { Awareness } from "~/shared/awareness";
+} from "@webstudio-is/sync-client/websocket";
+import { $awareness, type Awareness } from "~/shared/awareness";
 
-type RealtimeSyncEmitterOptions = {
-  authToken?: string | (() => Promise<string | undefined>);
+type MultiplayerSyncEmitterOptions = {
   clientId: string;
+  getAuthToken?: () => Promise<string | undefined>;
   url: string;
   onReload?: (message: ReloadMessage) => void;
   onUserMessage?: (message: string) => void;
   createTransport?: (options: WebSocketEmitterOptions) => WebSocketSyncEmitter;
 };
 
-export type RealtimeSyncEmitter = SyncEmitter & {
+export type MultiplayerSyncEmitter = SyncEmitter & {
   close(): void;
   connect(buildId: string): void;
   sendPresence(payload: Awareness): void;
 };
-
-const log = (_message: string, _details?: Record<string, unknown>) => {};
 
 const updateCollaborator = (clientId: string, payload: unknown) => {
   const next = new Map($collaborators.get());
@@ -45,35 +43,39 @@ const updateCollaborator = (clientId: string, payload: unknown) => {
   $collaborators.set(next);
 };
 
-export const createRealtimeSyncEmitter = ({
-  authToken,
+export const startMultiplayerPresenceSync = (
+  emitter: Pick<MultiplayerSyncEmitter, "sendPresence">
+) => {
+  return $awareness.listen((awareness) => {
+    emitter.sendPresence(awareness);
+  });
+};
+
+export const createMultiplayerSyncEmitter = ({
   clientId,
+  getAuthToken,
   url,
   onReload,
   onUserMessage,
   createTransport = createWebSocketSyncEmitter,
-}: RealtimeSyncEmitterOptions): RealtimeSyncEmitter => {
+}: MultiplayerSyncEmitterOptions): MultiplayerSyncEmitter => {
   const events = createNanoEvents<{
     message: (message: SyncMessage) => void;
   }>();
   let clientSeq = 0;
-  let tracker: ReturnType<typeof createRealtimeRetryTracker>;
+  let tracker: ReturnType<typeof createMultiplayerRetryTracker>;
   let ws: WebSocketSyncEmitter | undefined;
 
   const updateUnsaved = () => {
-    $collabUnsaved.set(tracker.getPendingCount() > 0);
+    $syncStatus.set(
+      tracker.getPendingCount() > 0
+        ? { status: "syncing" }
+        : { status: "idle" }
+    );
   };
 
   const sendApply = (message: ApplyMessage) => {
-    log("send apply", {
-      transactionId: message.transactionId,
-      object: message.transaction.object,
-      clientSeq: message.clientSeq,
-    });
     if (ws === undefined) {
-      log("send apply skipped; websocket not connected", {
-        transactionId: message.transactionId,
-      });
       return;
     }
     ws.sendToRelay(message);
@@ -81,14 +83,12 @@ export const createRealtimeSyncEmitter = ({
 
   const connect = (buildId: string) => {
     if (ws !== undefined) {
-      log("connect skipped; websocket already exists", { buildId });
       return;
     }
-    log("connect", { buildId, url, hasAuthToken: authToken !== undefined });
     ws = createTransport({
-      authToken,
       buildId,
       clientId,
+      getAuthToken,
       url,
       onAck: (seq, version) => {
         tracker.handleAck({ type: "ack", seq, version });
@@ -105,13 +105,6 @@ export const createRealtimeSyncEmitter = ({
         updateUnsaved();
       },
       onBroadcast: (message) => {
-        log("broadcast", {
-          seq: message.seq,
-          originClientId: message.originClientId,
-          object: message.transaction.object,
-          actorId: message.actorId,
-          clientSeq: message.clientSeq,
-        });
         tracker.handleBroadcast(message);
         updateUnsaved();
         events.emit("message", {
@@ -120,19 +113,15 @@ export const createRealtimeSyncEmitter = ({
           transaction: message.transaction,
         });
       },
-      onClose: () => {
-        log("socket close");
-      },
+      onClose: () => {},
       onErrorMessage: (message: ErrorMessage) => {
         tracker.handleErrorMessage(message);
         updateUnsaved();
       },
       onOpen: () => {
-        log("socket open");
         tracker.handleReconnect();
       },
       onPresence: (presenceClientId, payload) => {
-        log("presence", { clientId: presenceClientId });
         updateCollaborator(presenceClientId, payload);
       },
       onReload: (message) => {
@@ -142,21 +131,11 @@ export const createRealtimeSyncEmitter = ({
     });
   };
 
-  tracker = createRealtimeRetryTracker({
-    onDropped: ({ message, seq, status }) => {
-      log("dropped", {
-        transactionId: message.transactionId,
-        seq,
-        status,
-      });
+  tracker = createMultiplayerRetryTracker({
+    onDropped: () => {
       updateUnsaved();
     },
-    onDurable: ({ message, seq, version }) => {
-      log("durable", {
-        transactionId: message.transactionId,
-        seq,
-        version,
-      });
+    onDurable: () => {
       updateUnsaved();
     },
     onReload,
@@ -166,7 +145,6 @@ export const createRealtimeSyncEmitter = ({
 
   return {
     close() {
-      log("close");
       tracker.destroy();
       updateUnsaved();
       ws?.close();
@@ -176,24 +154,13 @@ export const createRealtimeSyncEmitter = ({
     emit(message) {
       // Preserve the regular in-browser SyncEmitter contract. The builder and
       // canvas iframe still use this emitter for local state handshakes and
-      // client-only stores; realtime only adds remote relay for server patches.
+      // client-only stores; multiplayer only adds remote relay for server patches.
       events.emit("message", message);
 
-      if (ws === undefined) {
-        log("sync message before websocket connect", { type: message.type });
-      }
       if (message.type !== "apply") {
-        log("skip relay sync message", {
-          type: message.type,
-          object: undefined,
-        });
         return;
       }
       if (message.transaction.object !== "server") {
-        log("skip relay sync message", {
-          type: message.type,
-          object: message.transaction.object,
-        });
         return;
       }
 
@@ -218,13 +185,7 @@ export const createRealtimeSyncEmitter = ({
         clientId,
         payload,
       };
-      log("send presence", {
-        pageId: payload.pageId,
-        hasPointer: payload.pointerPosition !== undefined,
-        selectedCount: payload.selectedInstanceIds?.length,
-      });
       if (ws === undefined) {
-        log("send presence skipped; websocket not connected");
         return;
       }
       ws.sendToRelay(message);

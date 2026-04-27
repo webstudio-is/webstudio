@@ -10,7 +10,7 @@
  */
 
 import PartySocket from "partysocket";
-import type { SyncEmitter, SyncMessage } from "./types";
+import type { SyncEmitter, SyncMessage } from "../types";
 import type {
   AckMessage,
   AppliedMessage,
@@ -38,7 +38,7 @@ export type WebSocketEmitterOptions = {
   url: string;
   buildId: string;
   clientId: string;
-  authToken?: string | (() => Promise<string | undefined>);
+  getAuthToken?: () => Promise<string | undefined>;
   onAck: (seq: number, version: number) => void;
   onApplied: (
     transactionId: string,
@@ -54,10 +54,48 @@ export type WebSocketEmitterOptions = {
   onClose?: () => void;
 };
 
-/** The realtime transport interface used by browser and CLI clients. */
+/** The multiplayer transport interface used by browser and CLI clients. */
 export type WebSocketSyncEmitter = SyncEmitter & {
   sendToRelay(message: RelayClientMessage): void;
   close(): void;
+};
+
+export type CollabRelayUrl = {
+  host: string;
+  prefix?: string;
+  protocol: "ws" | "wss" | undefined;
+};
+
+export const parseCollabRelayUrl = (relayUrl: string): CollabRelayUrl => {
+  const hasExplicitProtocol =
+    relayUrl.match(/^https?:\/\//) !== null ||
+    relayUrl.match(/^wss?:\/\//) !== null;
+  const url = new URL(hasExplicitProtocol ? relayUrl : `ws://${relayUrl}`);
+  const isLoopbackHost =
+    url.hostname === "localhost" ||
+    url.hostname === "127.0.0.1" ||
+    url.hostname === "0.0.0.0" ||
+    url.hostname === "[::1]";
+  const protocol =
+    hasExplicitProtocol && url.protocol === "ws:"
+      ? "ws"
+      : hasExplicitProtocol && url.protocol === "wss:"
+        ? "wss"
+        : hasExplicitProtocol && url.protocol === "http:"
+          ? "ws"
+          : hasExplicitProtocol && url.protocol === "https:"
+            ? "wss"
+            : isLoopbackHost
+              ? "ws"
+              : undefined;
+  const relayPathPrefix = url.pathname.replace(/^\/+|\/+$/g, "");
+  const prefix =
+    relayPathPrefix.length === 0 ? undefined : `${relayPathPrefix}/parties`;
+  return {
+    host: url.host,
+    prefix,
+    protocol,
+  };
 };
 
 export const dispatchWebSocketMessage = ({
@@ -138,50 +176,25 @@ export const createWebSocketSyncEmitter = (
   const warn = (message: string, ...args: unknown[]) =>
     console.warn(`${warnPrefix} ${message}`, ...args);
 
-  const hasExplicitProtocol =
-    opts.url.match(/^https?:\/\//) !== null ||
-    opts.url.match(/^wss?:\/\//) !== null;
-  const url = new URL(hasExplicitProtocol ? opts.url : `ws://${opts.url}`);
-  const isLoopbackHost =
-    url.hostname === "localhost" ||
-    url.hostname === "127.0.0.1" ||
-    url.hostname === "0.0.0.0" ||
-    url.hostname === "[::1]";
-  const resolvedProtocol =
-    hasExplicitProtocol && url.protocol === "ws:"
-      ? "ws"
-      : hasExplicitProtocol && url.protocol === "wss:"
-        ? "wss"
-        : hasExplicitProtocol && url.protocol === "http:"
-          ? "ws"
-          : hasExplicitProtocol && url.protocol === "https:"
-            ? "wss"
-            : isLoopbackHost
-              ? "ws"
-              : undefined;
-  const relayPathPrefix = url.pathname.replace(/^\/+|\/+$/g, "");
-  const prefix =
-    relayPathPrefix.length === 0 ? undefined : `${relayPathPrefix}/parties`;
-  const roomUrl = `${resolvedProtocol ?? "ws(s)"}://${url.host}/${prefix ?? "parties"}/main/${opts.buildId}`;
+  const relayUrl = parseCollabRelayUrl(opts.url);
 
   const ws = new PartySocket({
-    host: url.host,
-    prefix,
-    protocol: resolvedProtocol,
+    host: relayUrl.host,
+    prefix: relayUrl.prefix,
+    protocol: relayUrl.protocol,
     room: opts.buildId,
     id: opts.clientId,
     query: async () => {
-      const authToken =
-        typeof opts.authToken === "function"
-          ? await opts.authToken()
-          : opts.authToken;
+      const authToken = await opts.getAuthToken?.();
       return authToken === undefined || authToken.length === 0
         ? {}
         : { token: authToken };
     },
   });
   const socketRoomUrl =
-    "roomUrl" in ws && typeof ws.roomUrl === "string" ? ws.roomUrl : roomUrl;
+    "roomUrl" in ws && typeof ws.roomUrl === "string"
+      ? ws.roomUrl
+      : undefined;
 
   const handlers = new Set<(message: SyncMessage) => void>();
 

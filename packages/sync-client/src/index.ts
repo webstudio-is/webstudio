@@ -1,9 +1,10 @@
 /**
- * @webstudio-is/multiplayer-client - realtime multiplayer client
+ * @webstudio-is/sync-client - shared single-player and multiplayer sync client
  *
  * Public exports (framework-agnostic, browser + Node.js compatible):
  *   - Protocol types: relay message shapes
- *   - Atom exports: $collaborators, $collabUnsaved
+ *   - Sync state primitives
+ *   - Atom exports: $collaborators, $syncStatus
  */
 
 export type {
@@ -31,21 +32,26 @@ export {
   rateLimitedErrorMessage,
   stripRevisePatchesFromTransaction,
 } from "@webstudio-is/multiplayer-protocol";
-export { $collaborators, $collabUnsaved } from "./collab-state";
+export { $collaborators } from "./multiplayer/collab-state";
+export {
+  $hasUnsavedSyncChanges,
+  $syncStatus,
+  type SyncStatus,
+} from "./sync-status";
+export { createTransactionCompletionStore } from "./transaction-completion";
 export {
   assignCollaboratorColors,
   collaboratorColor,
   collaboratorColorPalette,
-} from "./collaborator-colors";
+} from "./multiplayer/collaborator-colors";
 export type { OperationOrder } from "@webstudio-is/multiplayer-protocol";
 export {
   ACK_TIMEOUT_MS,
   FAST_RETRY_MS,
   MAX_FAST_RETRIES,
-  createRealtimeRetryTracker,
+  createMultiplayerRetryTracker,
   syncDelayedMessage,
-  type RealtimeRetryBackoff,
-  type RealtimeRetryTrackerOptions,
+  type MultiplayerRetryTrackerOptions,
   type RetryReason,
-} from "./realtime-retry-tracker";
+} from "./multiplayer/multiplayer-retry-tracker";
 export { createBackoff, type Backoff, type BackoffOptions } from "./backoff";

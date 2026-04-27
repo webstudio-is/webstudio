@@ -15,7 +15,7 @@ import {
   ShieldIcon,
   WebstudioIcon,
 } from "@webstudio-is/icons";
-import { $queueStatus } from "~/shared/sync/project-queue";
+import { $syncStatus } from "@webstudio-is/sync-client";
 import { $authPermit } from "~/shared/nano-states";
 import { SyncStatus } from "~/builder/features/sync-status";
 import { ViewMode } from "~/builder/features/view-mode";
@@ -75,7 +75,7 @@ const SafeModeIndicator = () => (
 );
 
 export const TopbarLayouts = () => {
-  $queueStatus.set({ status: "failed" });
+  $syncStatus.set({ status: "failed" });
   $authPermit.set("view");
   return (
     <StorySection title="Topbar Layouts">

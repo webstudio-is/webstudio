@@ -3,6 +3,12 @@ import { type Asset, Assets } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import { formatAsset } from "./utils/format-asset";
 
+const assertPostgrestSuccess = (result: { error: unknown }) => {
+  if (result.error) {
+    throw result.error;
+  }
+};
+
 export const loadAssetsByProjectWithClient = async (
   projectId: string,
   client: Client
@@ -25,6 +31,7 @@ export const loadAssetsByProjectWithClient = async (
     // always sort by primary key to get stable list
     // required to not break fixtures
     .order("id");
+  assertPostgrestSuccess(assets);
 
   const result: Asset[] = [];
   for (const {
@@ -63,37 +70,42 @@ export const deleteAssetsWithClient = async (
     )
     .in("id", props.ids)
     .eq("projectId", props.projectId);
+  assertPostgrestSuccess(assets);
 
   if ((assets.data ?? []).length === 0) {
     throw new Error("Assets not found");
   }
 
-  await client
+  const previewUpdate = await client
     .from("Project")
     .update({ previewImageAssetId: null })
     .eq("id", props.projectId)
     .in("previewImageAssetId", props.ids);
+  assertPostgrestSuccess(previewUpdate);
 
-  await client
+  const deletedAssets = await client
     .from("Asset")
     .delete()
     .in("id", props.ids)
     .eq("projectId", props.projectId);
+  assertPostgrestSuccess(deletedAssets);
 
   const unusedFileNames = new Set(assets.data?.map((asset) => asset.name));
   const assetsByStillUsedFileName = await client
     .from("Asset")
     .select("name")
     .in("name", Array.from(unusedFileNames));
+  assertPostgrestSuccess(assetsByStillUsedFileName);
   for (const asset of assetsByStillUsedFileName.data ?? []) {
     unusedFileNames.delete(asset.name);
   }
 
   if (unusedFileNames.size > 0) {
-    await client
+    const deletedFiles = await client
       .from("File")
       .update({ isDeleted: true })
       .in("name", Array.from(unusedFileNames));
+    assertPostgrestSuccess(deletedFiles);
   }
 };
 
@@ -128,11 +140,12 @@ export const patchAssetsWithClient = async (
     const patchedAsset = patchedAssets.get(asset.id);
     if (asset !== patchedAsset && patchedAsset) {
       const { filename, description } = patchedAsset;
-      await client
+      const updatedAsset = await client
         .from("Asset")
         .update({ filename, description })
         .eq("id", asset.id)
         .eq("projectId", asset.projectId);
+      assertPostgrestSuccess(updatedAsset);
     }
   }
 
@@ -150,16 +163,18 @@ export const patchAssetsWithClient = async (
         "name",
         addedAssets.map((asset) => asset.name)
       );
+    assertPostgrestSuccess(files);
 
     const fileNames = new Set(files.data?.map((file) => file.name));
 
     // restore file when undo is triggered
-    await client
+    const restoredFiles = await client
       .from("File")
       .update({ isDeleted: false })
       .in("name", Array.from(fileNames));
+    assertPostgrestSuccess(restoredFiles);
 
-    await client.from("Asset").insert(
+    const insertedAssets = await client.from("Asset").insert(
       addedAssets
         // making sure corresponding file exist before creating an asset that references it
         .filter((asset) => fileNames.has(asset.name))
@@ -169,5 +184,6 @@ export const patchAssetsWithClient = async (
           name: asset.name,
         }))
     );
+    assertPostgrestSuccess(insertedAssets);
   }
 };

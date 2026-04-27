@@ -3,8 +3,8 @@ import type { ApplyMessage } from "@webstudio-is/multiplayer-protocol";
 import {
   ACK_TIMEOUT_MS,
   FAST_RETRY_MS,
-  createRealtimeRetryTracker,
-} from "./realtime-retry-tracker";
+  createMultiplayerRetryTracker,
+} from "./multiplayer-retry-tracker";
 
 const makeApply = (overrides: Partial<ApplyMessage> = {}): ApplyMessage => ({
   type: "apply",
@@ -16,27 +16,20 @@ const makeApply = (overrides: Partial<ApplyMessage> = {}): ApplyMessage => ({
   ...overrides,
 });
 
-const createBackoff = (delay = 5_000) => {
-  return vi.fn(() => ({
-    next: vi.fn(() => delay),
-    reset: vi.fn(),
-  }));
-};
-
-describe("createRealtimeRetryTracker", () => {
+describe("createMultiplayerRetryTracker", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.useRealTimers();
   });
 
   test("retries the exact same apply when durable ack does not arrive", async () => {
     const sendApply = vi.fn();
     const apply = makeApply();
-    const tracker = createRealtimeRetryTracker({
-      createBackoff: createBackoff(),
+    const tracker = createMultiplayerRetryTracker({
       sendApply,
     });
 
@@ -66,8 +59,7 @@ describe("createRealtimeRetryTracker", () => {
     const sendApply = vi.fn();
     const onDurable = vi.fn();
     const apply = makeApply();
-    const tracker = createRealtimeRetryTracker({
-      createBackoff: createBackoff(),
+    const tracker = createMultiplayerRetryTracker({
       onDurable,
       sendApply,
     });
@@ -99,8 +91,7 @@ describe("createRealtimeRetryTracker", () => {
     const sendApply = vi.fn();
     const onDurable = vi.fn();
     const apply = makeApply({ transactionId: "tx-2", clientSeq: 2 });
-    const tracker = createRealtimeRetryTracker({
-      createBackoff: createBackoff(),
+    const tracker = createMultiplayerRetryTracker({
       onDurable,
       sendApply,
     });
@@ -129,9 +120,8 @@ describe("createRealtimeRetryTracker", () => {
     const sendApply = vi.fn();
     const onDurable = vi.fn();
     const apply = makeApply();
-    const tracker = createRealtimeRetryTracker({
+    const tracker = createMultiplayerRetryTracker({
       ackTimeoutMs: 100,
-      createBackoff: createBackoff(),
       onDurable,
       sendApply,
     });
@@ -163,8 +153,7 @@ describe("createRealtimeRetryTracker", () => {
     const sendApply = vi.fn();
     const onDropped = vi.fn();
     const apply = makeApply();
-    const tracker = createRealtimeRetryTracker({
-      createBackoff: createBackoff(),
+    const tracker = createMultiplayerRetryTracker({
       onDropped,
       sendApply,
     });
@@ -189,8 +178,7 @@ describe("createRealtimeRetryTracker", () => {
     const sendApply = vi.fn();
     const onDropped = vi.fn();
     const onUserMessage = vi.fn();
-    const tracker = createRealtimeRetryTracker({
-      createBackoff: createBackoff(),
+    const tracker = createMultiplayerRetryTracker({
       onDropped,
       onUserMessage,
       sendApply,
@@ -232,14 +220,13 @@ describe("createRealtimeRetryTracker", () => {
     expect(tracker.getPendingCount()).toBe(0);
   });
 
-  test("uses injected backoff after fast retries are exhausted", async () => {
+  test("uses backoff after fast retries are exhausted", async () => {
     const sendApply = vi.fn();
     const onUserMessage = vi.fn();
     const apply = makeApply();
-    const backoffFactory = createBackoff(9_000);
-    const tracker = createRealtimeRetryTracker({
+    vi.spyOn(Math, "random").mockReturnValue(0.4);
+    const tracker = createMultiplayerRetryTracker({
       ackTimeoutMs: 100,
-      createBackoff: backoffFactory,
       fastRetryMs: 200,
       maxFastRetries: 1,
       onUserMessage,
@@ -261,7 +248,6 @@ describe("createRealtimeRetryTracker", () => {
     await vi.advanceTimersByTimeAsync(200);
 
     expect(sendApply).toHaveBeenCalledTimes(3);
-    expect(backoffFactory).toHaveBeenCalledTimes(1);
     expect(onUserMessage).toHaveBeenCalledWith(
       "Changes are taking longer than expected to save. Retrying in 9 seconds."
     );
@@ -271,8 +257,7 @@ describe("createRealtimeRetryTracker", () => {
     const sendApply = vi.fn();
     const onUserMessage = vi.fn();
     const apply = makeApply();
-    const tracker = createRealtimeRetryTracker({
-      createBackoff: createBackoff(),
+    const tracker = createMultiplayerRetryTracker({
       fastRetryMs: 2_000,
       onUserMessage,
       sendApply,
@@ -301,8 +286,7 @@ describe("createRealtimeRetryTracker", () => {
     const sendApply = vi.fn();
     const onRetry = vi.fn();
     const apply = makeApply();
-    const tracker = createRealtimeRetryTracker({
-      createBackoff: createBackoff(),
+    const tracker = createMultiplayerRetryTracker({
       onRetry,
       sendApply,
     });
@@ -323,9 +307,8 @@ describe("createRealtimeRetryTracker", () => {
     const sendApply = vi.fn();
     const onReload = vi.fn();
     const apply = makeApply();
-    const tracker = createRealtimeRetryTracker({
+    const tracker = createMultiplayerRetryTracker({
       ackTimeoutMs: 100,
-      createBackoff: createBackoff(),
       onReload,
       sendApply,
     });

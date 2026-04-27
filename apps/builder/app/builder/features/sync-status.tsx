@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/design-system";
 import { OfflineIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
-import { $queueStatus } from "~/shared/sync/project-queue";
+import { $syncStatus } from "@webstudio-is/sync-client";
 
 const $isOnline = atom(false);
 
@@ -24,13 +24,13 @@ const subscribeIsOnline = () => {
 };
 
 export const SyncStatus = () => {
-  const statusObject = useStore($queueStatus);
+  const statusObject = useStore($syncStatus);
   const isOnline = useStore($isOnline);
   useEffect(subscribeIsOnline, []);
 
   if (
     statusObject.status === "idle" ||
-    statusObject.status === "running" ||
+    statusObject.status === "syncing" ||
     statusObject.status === "recovering"
   ) {
     return null;

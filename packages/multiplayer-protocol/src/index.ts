@@ -1,6 +1,6 @@
 /**
  * Relay protocol types - the messages exchanged between clients and the
- * realtime relay service.
+ * multiplayer relay service.
  */
 export type Transaction<Payload = unknown> = {
   id: string;

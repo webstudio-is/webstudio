@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { __testing__, startPointerTracking } from "./awareness";
+import { $awareness, __testing__, startPointerTracking } from "./awareness";
 
 const { $pointerPosition } = __testing__;
 import { findPageAndSelectorByInstanceId } from "./instance-utils";
@@ -50,10 +50,34 @@ test("find awareness by instance inside of slot", () => {
   });
 });
 
-afterEach(() => {
+afterEach(async () => {
   vi.useRealTimers();
   $selectedPageId.set(undefined);
   $pointerPosition.set(undefined);
+  await Promise.resolve();
+});
+
+test("awareness updates are coalesced into one microtask", async () => {
+  const listener = vi.fn();
+  const unsubscribe = $awareness.listen(listener);
+
+  await Promise.resolve();
+  listener.mockClear();
+
+  $pointerPosition.set({ x: 1, y: 2, xRatio: 0.1, yRatio: 0.2 });
+  $pointerPosition.set({ x: 3, y: 4, xRatio: 0.3, yRatio: 0.4 });
+
+  expect(listener).not.toHaveBeenCalled();
+  await Promise.resolve();
+
+  expect(listener).toHaveBeenCalledTimes(1);
+  expect(listener.mock.calls[0]?.[0]).toEqual({
+    pageId: undefined,
+    pointerPosition: { x: 3, y: 4, xRatio: 0.3, yRatio: 0.4 },
+    selectedInstanceIds: undefined,
+  });
+
+  unsubscribe();
 });
 
 test("pointer tracking is throttled to 8fps and keeps latest position", () => {

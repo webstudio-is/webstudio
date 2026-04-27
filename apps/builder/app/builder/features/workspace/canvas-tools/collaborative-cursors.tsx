@@ -5,7 +5,7 @@ import {
   $collaborators,
   assignCollaboratorColors,
   type CollaboratorInfo,
-} from "@webstudio-is/multiplayer-client";
+} from "@webstudio-is/sync-client";
 import {
   $collaborativeInstanceSelector,
   $selectedPageId,

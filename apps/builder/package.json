@@ -64,7 +64,7 @@
     "@webstudio-is/dashboard": "workspace:*",
     "@webstudio-is/design-system": "workspace:*",
     "@webstudio-is/domain": "workspace:*",
-    "@webstudio-is/multiplayer-client": "workspace:*",
+    "@webstudio-is/sync-client": "workspace:*",
     "@webstudio-is/feature-flags": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/html-data": "workspace:*",

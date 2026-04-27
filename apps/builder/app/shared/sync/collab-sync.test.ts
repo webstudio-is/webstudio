@@ -18,7 +18,7 @@ import type {
   SyncEmitter,
   SyncMessage,
   Transaction,
-} from "@webstudio-is/multiplayer-client";
+} from "@webstudio-is/sync-client";
 
 enableMapSet();
 
