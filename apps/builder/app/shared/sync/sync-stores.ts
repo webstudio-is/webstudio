@@ -5,10 +5,6 @@ import { batched } from "nanostores";
 import { nanoid } from "nanoid";
 import { $project } from "./data-stores";
 import {
-  normalizePagesPatch,
-  denormalizePagesPatch,
-} from "@webstudio-is/project/pages-patch-normalizer";
-import {
   $selectedPageHash,
   $selectedInstanceSizes,
   $authTokenPermissions,

@@ -135,8 +135,18 @@ describe("patchBuild", () => {
           {
             ...buildRow,
             pages: JSON.stringify({
-              ...JSON.parse(buildRow.pages),
+              meta: {},
+              homePageId: "page-1",
+              rootFolderId: "root",
               pages: [
+                {
+                  id: "page-1",
+                  name: "Home",
+                  path: "",
+                  title: "Home",
+                  meta: {},
+                  rootInstanceId: "body-1",
+                },
                 {
                   id: "page-2",
                   name: "About",
@@ -144,6 +154,14 @@ describe("patchBuild", () => {
                   title: "About",
                   meta: {},
                   rootInstanceId: "body-1",
+                },
+              ],
+              folders: [
+                {
+                  id: "root",
+                  name: "Root",
+                  slug: "",
+                  children: ["page-1", "page-2"],
                 },
               ],
             }),
@@ -169,7 +187,7 @@ describe("patchBuild", () => {
                 patches: [
                   {
                     op: "replace",
-                    path: ["pages", "@page-2", "path"],
+                    path: ["pages", "page-2", "path"],
                     value: "/company",
                   },
                 ],
@@ -183,7 +201,9 @@ describe("patchBuild", () => {
 
     expect(result).toEqual({ status: "ok", version: 4 });
     expect(
-      JSON.parse((updatedBuild as { pages: string }).pages).pages[0].path
+      JSON.parse((updatedBuild as { pages: string }).pages).pages.find(
+        (page: { id: string }) => page.id === "page-2"
+      )?.path
     ).toBe("/company");
   });
 
