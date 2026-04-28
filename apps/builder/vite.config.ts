@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
   }
 
   const env = loadEnv(mode, __dirname, "");
-  const collabRelayProxyTarget =
+  const multiplayerRelayProxyTarget =
     process.env.COLLAB_RELAY_PROXY_TARGET ??
     env.COLLAB_RELAY_PROXY_TARGET ??
     "http://127.0.0.1:1999";
@@ -126,7 +126,7 @@ export default defineConfig(({ mode }) => {
       host: "wstd.dev",
       proxy: {
         "/collab-relay": {
-          target: collabRelayProxyTarget,
+          target: multiplayerRelayProxyTarget,
           ws: true,
         },
       },

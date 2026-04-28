@@ -312,6 +312,9 @@ const CollaborativeCursor = ({
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const previousSampleRef = useRef<CursorSample>();
+  const { x, y } = coordinates;
+  const layerWidth = layerRect?.width;
+  const layerHeight = layerRect?.height;
 
   useLayoutEffect(() => {
     const element = elementRef.current;
@@ -319,26 +322,25 @@ const CollaborativeCursor = ({
       return;
     }
     const currentSample = {
-      ...coordinates,
+      x,
+      y,
       time: sampleTime ?? Date.now(),
     };
+    const predictionLayerRect =
+      layerWidth === undefined || layerHeight === undefined
+        ? undefined
+        : { left: 0, top: 0, width: layerWidth, height: layerHeight };
     const prediction = computePredictedCursor({
       current: currentSample,
       previous: previousSampleRef.current,
-      layerRect,
+      layerRect: predictionLayerRect,
     });
     element.style.transform = `translate3d(${prediction.coordinates.x}px, ${prediction.coordinates.y}px, 0)`;
     previousSampleRef.current = {
       ...currentSample,
       velocity: prediction.velocity,
     };
-  }, [
-    coordinates.x,
-    coordinates.y,
-    layerRect?.height,
-    layerRect?.width,
-    sampleTime,
-  ]);
+  }, [x, y, layerHeight, layerWidth, sampleTime]);
 
   return (
     <div

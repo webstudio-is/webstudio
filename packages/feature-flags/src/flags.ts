@@ -2,5 +2,4 @@
 export const internalComponents = false;
 export const unsupportedBrowsers = false;
 export const resourceProp = false;
-export const tailwind = false;
-export const collabRelay = false;
+export const multiplayer = false;

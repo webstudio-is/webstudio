@@ -87,7 +87,7 @@ export const initializeClientSync = ({
   signal: AbortSignal;
   onReady?: () => void;
 }) => {
-  const multiplayerRelayUrl = isFeatureEnabled("collabRelay")
+  const multiplayerRelayUrl = isFeatureEnabled("multiplayer")
     ? publicStaticEnv.COLLAB_RELAY_URL?.trim() || undefined
     : undefined;
   const resolvedMultiplayerRelayUrl =
