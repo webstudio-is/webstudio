@@ -35,6 +35,7 @@ import {
   subscribeModifierKeys,
   $stagingUsername,
   $stagingPassword,
+  $user,
 } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { $settings, type Settings } from "./shared/client-settings";
@@ -67,6 +68,7 @@ import { DeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-ut
 import { DeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { KeyboardShortcutsDialog } from "./features/keyboard-shortcuts-dialog";
 import { TokenConflictDialog } from "~/shared/token-conflict-dialog";
+import type { User } from "~/shared/db/user.server";
 
 import {
   initCopyPaste,
@@ -231,6 +233,7 @@ export type BuilderProps = {
   projectId: string;
   authToken?: string;
   authPermit: AuthPermit;
+  user?: User;
   role: Role | "own";
   authTokenPermissions: TokenPermissions;
   planFeatures: PlanFeatures;
@@ -255,6 +258,7 @@ export const Builder = (props: BuilderProps) => {
     // additional data stores
     $authPermit.set(authPermit);
     $authToken.set(authToken);
+    $user.set(props.user);
     setSharedStores(props);
     $authTokenPermissions.set(authTokenPermissions);
     $stagingUsername.set(stagingUsername);

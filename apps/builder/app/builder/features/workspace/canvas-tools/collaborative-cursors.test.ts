@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { __testing__ } from "./collaborative-cursors";
 
 const {
+  getCollaboratorLabel,
   shouldSkipCollaborator,
   hasCursorPosition,
   computeCursorCoordinates,
@@ -10,6 +11,12 @@ const {
 } = __testing__;
 
 describe("collaborative-cursors helpers", () => {
+  test("getCollaboratorLabel trims names and skips empty labels", () => {
+    expect(getCollaboratorLabel({ name: " Ada " })).toBe("Ada");
+    expect(getCollaboratorLabel({ name: " " })).toBeUndefined();
+    expect(getCollaboratorLabel({})).toBeUndefined();
+  });
+
   test("shouldSkipCollaborator returns true only for different known pages", () => {
     expect(
       shouldSkipCollaborator({

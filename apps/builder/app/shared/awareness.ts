@@ -2,6 +2,7 @@ import { atom, computed } from "nanostores";
 import type { Rect } from "@webstudio-is/design-system";
 import type { CollaboratorInfo } from "@webstudio-is/sync-client";
 import { $selectedInstanceSelector } from "./nano-states/instances";
+import { $user } from "./nano-states/misc";
 import { $selectedPageId } from "./nano-states/pages";
 
 const POINTER_FPS_LIMIT = 8;
@@ -9,14 +10,27 @@ const POINTER_FRAME_MS = Math.ceil(1000 / POINTER_FPS_LIMIT);
 
 export type Awareness = Pick<
   CollaboratorInfo,
-  "pageId" | "selectedInstanceIds" | "pointerPosition"
+  "name" | "avatarUrl" | "pageId" | "selectedInstanceIds" | "pointerPosition"
 >;
 
 export const $pointerPosition = atom<CollaboratorInfo["pointerPosition"]>();
 
+const getUserAwareness = (user: ReturnType<typeof $user.get>) => {
+  if (user === undefined) {
+    return {};
+  }
+  const name = user.username?.trim() || user.email?.trim();
+  const avatarUrl = user.image || undefined;
+  return {
+    ...(name === undefined || name.length === 0 ? {} : { name }),
+    ...(avatarUrl === undefined || avatarUrl.length === 0 ? {} : { avatarUrl }),
+  };
+};
+
 const $computedAwareness = computed(
-  [$pointerPosition, $selectedPageId, $selectedInstanceSelector],
-  (pointerPosition, pageId, selectedInstanceIds): Awareness => ({
+  [$pointerPosition, $selectedPageId, $selectedInstanceSelector, $user],
+  (pointerPosition, pageId, selectedInstanceIds, user): Awareness => ({
+    ...getUserAwareness(user),
     pageId,
     selectedInstanceIds,
     pointerPosition,
@@ -160,4 +174,4 @@ export const startPointerTracking = () => {
   };
 };
 
-export const __testing__ = { $pointerPosition };
+export const __testing__ = { $pointerPosition, getUserAwareness };

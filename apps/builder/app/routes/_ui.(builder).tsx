@@ -37,6 +37,7 @@ import {
   isFetchDestination,
 } from "~/services/destinations.server";
 import { loader as authWsLoader } from "./auth.ws";
+import { getUserById } from "~/shared/db/user.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const links = () => {
@@ -211,6 +212,10 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
     }
 
     const { planFeatures, purchases } = context;
+    const user =
+      context.authorization.type === "user"
+        ? await getUserById(context, context.authorization.userId)
+        : undefined;
 
     if (project.userId === null) {
       throw new AuthorizationError("Project must have project userId defined");
@@ -253,6 +258,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         authToken,
         authTokenPermissions,
         authPermit,
+        user,
         role,
         planFeatures,
         purchases,

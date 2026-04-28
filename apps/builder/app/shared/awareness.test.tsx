@@ -1,9 +1,10 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { $awareness, __testing__, startPointerTracking } from "./awareness";
 
-const { $pointerPosition } = __testing__;
+const { $pointerPosition, getUserAwareness } = __testing__;
 import { findPageAndSelectorByInstanceId } from "./instance-utils";
 import { $selectedPageId } from "./nano-states/pages";
+import { $user } from "./nano-states/misc";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $, renderData } from "@webstudio-is/template";
 
@@ -54,7 +55,59 @@ afterEach(async () => {
   vi.useRealTimers();
   $selectedPageId.set(undefined);
   $pointerPosition.set(undefined);
+  $user.set(undefined);
   await Promise.resolve();
+});
+
+test("user awareness uses username and avatar", async () => {
+  const user = {
+    username: " Ada ",
+    email: "ada@example.com",
+    image: "https://example.com/avatar.png",
+  } as NonNullable<Parameters<typeof $user.set>[0]>;
+
+  expect(getUserAwareness(user)).toEqual({
+    name: "Ada",
+    avatarUrl: "https://example.com/avatar.png",
+  });
+});
+
+test("user awareness falls back to email", async () => {
+  const user = {
+    username: "",
+    email: "ada@example.com",
+    image: "",
+  } as NonNullable<Parameters<typeof $user.set>[0]>;
+
+  expect(getUserAwareness(user)).toEqual({
+    name: "ada@example.com",
+  });
+});
+
+test("awareness includes user identity", async () => {
+  const listener = vi.fn();
+  const unsubscribe = $awareness.listen(listener);
+  const user = {
+    username: "Ada",
+    email: "ada@example.com",
+    image: "https://example.com/avatar.png",
+  } as NonNullable<Parameters<typeof $user.set>[0]>;
+
+  await Promise.resolve();
+  listener.mockClear();
+
+  $user.set(user);
+  await Promise.resolve();
+
+  expect(listener.mock.calls[0]?.[0]).toEqual({
+    avatarUrl: "https://example.com/avatar.png",
+    name: "Ada",
+    pageId: undefined,
+    pointerPosition: undefined,
+    selectedInstanceIds: undefined,
+  });
+
+  unsubscribe();
 });
 
 test("awareness updates are coalesced into one microtask", async () => {

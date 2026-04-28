@@ -27,6 +27,28 @@ const cursorStyle = css({
   willChange: "transform",
 });
 
+const cursorLabelStyle = css({
+  position: "absolute",
+  top: 14,
+  left: 12,
+  padding: "2px 6px",
+  borderRadius: 3,
+  color: "white",
+  fontSize: 11,
+  fontWeight: 500,
+  lineHeight: "16px",
+  whiteSpace: "nowrap",
+  boxShadow: "0 1px 2px rgb(0 0 0 / 20%)",
+});
+
+const getCollaboratorLabel = (collaborator: CollaboratorInfo) => {
+  const name = collaborator.name?.trim();
+  if (name === undefined || name.length === 0) {
+    return;
+  }
+  return name;
+};
+
 const shouldSkipCollaborator = ({
   currentPageId,
   collaboratorPageId,
@@ -205,6 +227,7 @@ export const CollaborativeCursors = () => {
         const { x, y } = coordinates;
 
         const color = collaboratorColors.get(clientId);
+        const label = getCollaboratorLabel(collaborator);
 
         return (
           <div
@@ -229,6 +252,14 @@ export const CollaborativeCursors = () => {
                 strokeWidth="1"
               />
             </svg>
+            {label && (
+              <div
+                className={cursorLabelStyle()}
+                style={{ backgroundColor: color }}
+              >
+                {label}
+              </div>
+            )}
           </div>
         );
       })}
@@ -237,6 +268,7 @@ export const CollaborativeCursors = () => {
 };
 
 export const __testing__ = {
+  getCollaboratorLabel,
   shouldSkipCollaborator,
   hasCursorPosition,
   computeCursorCoordinates,
