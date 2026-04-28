@@ -11,16 +11,18 @@
         "faviconAssetId": "d0974db9300c1a3b0fb8b291dd9fabd45ad136478908394280af2f7087e3aecd",
         "code": ""
       },
-      "homePage": {
-        "id": "9di_L14CzctvSruIoKVvE",
-        "name": "Home",
-        "title": "\"Home\"",
-        "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
-        "systemDataSourceId": "2KT4-bRzToj9cAGAN_woK",
-        "meta": {},
-        "path": ""
-      },
+      "homePageId": "9di_L14CzctvSruIoKVvE",
+      "rootFolderId": "root",
       "pages": [
+        {
+          "id": "9di_L14CzctvSruIoKVvE",
+          "name": "Home",
+          "title": "\"Home\"",
+          "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
+          "systemDataSourceId": "2KT4-bRzToj9cAGAN_woK",
+          "meta": {},
+          "path": ""
+        },
         {
           "id": "WPPAbLFyJD_02vhjRd8P4",
           "name": "Another page",

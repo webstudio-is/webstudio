@@ -7,16 +7,18 @@
     "updatedAt": "2026-01-04T10:46:48.415+00:00",
     "pages": {
       "meta": {},
-      "homePage": {
-        "id": "Y60VJnVZMU_ifI0GnAR1N",
-        "name": "Home",
-        "title": "\"Home\"",
-        "rootInstanceId": "iavYtlaxaMTf7HB5DBf8e",
-        "systemDataSourceId": "XE93KQdVwfiA3TCf8hQAQ",
-        "meta": {},
-        "path": ""
-      },
+      "homePageId": "Y60VJnVZMU_ifI0GnAR1N",
+      "rootFolderId": "root",
       "pages": [
+        {
+          "id": "Y60VJnVZMU_ifI0GnAR1N",
+          "name": "Home",
+          "title": "\"Home\"",
+          "rootInstanceId": "iavYtlaxaMTf7HB5DBf8e",
+          "systemDataSourceId": "XE93KQdVwfiA3TCf8hQAQ",
+          "meta": {},
+          "path": ""
+        },
         {
           "id": "fOBamlMdmM461hLaITmV7",
           "name": "Untitled",
