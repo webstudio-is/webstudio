@@ -124,6 +124,32 @@ test("migrates serialized array pages into maps", () => {
   ).toEqual(new Map([["home", expect.objectContaining({ id: "home" })]]));
 });
 
+test("adds missing page meta while migrating serialized pages", () => {
+  expect(
+    migratePages({
+      homePageId: "home",
+      rootFolderId: "root",
+      pages: [
+        {
+          id: "home",
+          name: "Home",
+          path: "",
+          title: `"Home"`,
+          rootInstanceId: "homeRoot",
+        },
+      ],
+      folders: [
+        {
+          id: "root",
+          name: "Root",
+          slug: "",
+          children: ["home"],
+        },
+      ],
+    }).pages.get("home")?.meta
+  ).toEqual({});
+});
+
 test("migrates serialized record pages into maps", () => {
   expect(
     migratePages({

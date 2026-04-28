@@ -26,14 +26,22 @@ type MigratablePages = Omit<Pages, "pages" | "folders"> & {
 };
 
 const toMap = <Item extends { id: string }>(
-  items: Item[] | Record<Item["id"], Item> | Map<Item["id"], Item>
+  items: Item[] | Record<Item["id"], Item> | Map<Item["id"], Item>,
+  normalizeItem: (item: Item) => Item = (item) => item
 ) => {
   if (items instanceof Map) {
-    return items;
+    return new Map(
+      Array.from(items, ([id, item]) => [id, normalizeItem(item)])
+    );
   }
   const list: Item[] = Array.isArray(items) ? items : Object.values(items);
-  return new Map(list.map((item) => [item.id, item]));
+  return new Map(list.map((item) => [item.id, normalizeItem(item)]));
 };
+
+const normalizePage = (page: Page): Page => ({
+  ...page,
+  meta: page.meta ?? {},
+});
 
 const isLegacyPages = (pages: unknown): pages is LegacyPages => {
   if (typeof pages !== "object" || pages === null) {
@@ -86,7 +94,7 @@ export const migratePages = (pages: unknown): Pages => {
       redirects: pages.redirects,
       homePageId: pages.homePageId,
       rootFolderId: pages.rootFolderId,
-      pages: toMap<Page>(pages.pages),
+      pages: toMap<Page>(pages.pages, normalizePage),
       folders: toMap<Folder>(pages.folders),
     };
   }
@@ -96,7 +104,7 @@ export const migratePages = (pages: unknown): Pages => {
   }
 
   const homePage: Page = {
-    ...pages.homePage,
+    ...normalizePage(pages.homePage),
     path: "",
   };
   const nextPages: Pages["pages"] = new Map([[homePage.id, homePage]]);
@@ -104,7 +112,7 @@ export const migratePages = (pages: unknown): Pages => {
     if (page.id === homePage.id) {
       continue;
     }
-    nextPages.set(page.id, page);
+    nextPages.set(page.id, normalizePage(page));
   }
 
   const nextFolders: Pages["folders"] = new Map();
