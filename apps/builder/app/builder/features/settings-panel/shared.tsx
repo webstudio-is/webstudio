@@ -27,7 +27,7 @@ import {
   SYSTEM_VARIABLE_ID,
   systemParameter,
 } from "@webstudio-is/sdk";
-import type { PropMeta, Prop, Asset, WsComponentMeta } from "@webstudio-is/sdk";
+import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
   Label as BaseLabel,
@@ -461,42 +461,54 @@ const attributeToMeta = (attribute: Attribute): PropMeta => {
 // Derive tag → content-mode attribute names from registered component metas,
 // so a prop marked `contentMode: true` in a .ws.ts file also surfaces on
 // `ws:element` instances rendering the same tag.
-const getContentModeAttributesByTag = (metas: Map<string, WsComponentMeta>) => {
-  const byTag = new Map<string, Set<string>>();
-  for (const componentMeta of metas.values()) {
-    const tags = Object.keys(componentMeta.presetStyle ?? {});
-    if (tags.length === 0) {
-      continue;
-    }
-    for (const [propName, propMeta] of Object.entries(
-      componentMeta.props ?? {}
-    )) {
-      if (propMeta.contentMode !== true) {
+const $contentModeAttributesByTag = computed(
+  [$registeredComponentMetas],
+  (metas) => {
+    const byTag = new Map<string, Set<string>>();
+    for (const componentMeta of metas.values()) {
+      const tags = Object.keys(componentMeta.presetStyle ?? {});
+      if (tags.length === 0) {
         continue;
       }
-      for (const tag of tags) {
-        let names = byTag.get(tag);
-        if (names === undefined) {
-          names = new Set();
-          byTag.set(tag, names);
+      for (const [propName, propMeta] of Object.entries(
+        componentMeta.props ?? {}
+      )) {
+        if (propMeta.contentMode !== true) {
+          continue;
         }
-        names.add(propName);
+        for (const tag of tags) {
+          let names = byTag.get(tag);
+          if (names === undefined) {
+            names = new Set();
+            byTag.set(tag, names);
+          }
+          names.add(propName);
+        }
       }
     }
+    return byTag;
   }
-  return byTag;
-};
+);
 
 export const $selectedInstancePropsMetas = computed(
-  [$selectedInstance, $registeredComponentMetas, $instanceTags],
-  (instance, metas, instanceTags): Map<string, PropMeta> => {
+  [
+    $selectedInstance,
+    $registeredComponentMetas,
+    $instanceTags,
+    $contentModeAttributesByTag,
+  ],
+  (
+    instance,
+    metas,
+    instanceTags,
+    contentModeAttributesByTag
+  ): Map<string, PropMeta> => {
     if (instance === undefined) {
       return new Map();
     }
     const meta = metas.get(instance.component);
     const tag = instanceTags.get(instance.id);
     const propsMetas = new Map<Prop["name"], PropMeta>();
-    const contentModeAttributesByTag = getContentModeAttributesByTag(metas);
     const contentModeAttributes =
       tag === undefined ? undefined : contentModeAttributesByTag.get(tag);
     const toAttributeMeta = (attribute: Attribute): PropMeta => {

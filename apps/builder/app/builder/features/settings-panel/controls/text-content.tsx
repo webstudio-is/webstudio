@@ -28,7 +28,7 @@ import {
   updateExpressionValue,
   useBindingState,
 } from "../shared";
-import { FieldLabel, useIsResettingBindingForbidden } from "../property-label";
+import { FieldLabel, useIsBindingResetForbidden } from "../property-label";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -78,9 +78,9 @@ export const TextContent = ({
   const { overwritable, variant } = useBindingState(
     child.type === "expression" ? child.value : undefined
   );
-  const isResettingBindingForbidden = useIsResettingBindingForbidden(
-    child.type === "expression"
-  );
+  const isBindingResetForbidden = useIsBindingResetForbidden();
+  const isResetDisabled =
+    child.type === "expression" && isBindingResetForbidden;
 
   return (
     <VerticalLayout
@@ -105,11 +105,8 @@ export const TextContent = ({
             </>
           }
           resettable={hasChildren}
-          resetDisabled={isResettingBindingForbidden}
+          resetDisabled={isResetDisabled}
           onReset={() => {
-            if (isResettingBindingForbidden) {
-              return;
-            }
             updateWebstudioData((data) => {
               const instance = data.instances.get(instanceId);
               if (instance) {

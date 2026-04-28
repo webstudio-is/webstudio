@@ -28,10 +28,10 @@ import {
   humanizeAttribute,
 } from "./shared";
 
-export const useIsResettingBindingForbidden = (isBound: boolean) => {
+export const useIsBindingResetForbidden = () => {
   const isContentMode = useStore($isContentMode);
   const authPermit = useStore($authPermit);
-  return isBound && (isContentMode || authPermit === "edit");
+  return isContentMode || authPermit === "edit";
 };
 
 const usePropMeta = (name: string) => {
@@ -113,10 +113,9 @@ export const PropertyLabel = ({
   // not existing properties cannot be deleted
   const isDeletable = prop !== undefined;
   const isResettable = useIsResettable(name);
-  const isResettingBindingForbidden = useIsResettingBindingForbidden(
-    prop?.type === "expression"
-  );
-  const canDelete = isDeletable && isResettingBindingForbidden === false;
+  const isBindingResetForbidden = useIsBindingResetForbidden();
+  const canDelete =
+    isDeletable && !(prop?.type === "expression" && isBindingResetForbidden);
   return (
     <Flex align="center" css={{ gap: theme.spacing[3] }}>
       {/* prevent label growing */}
@@ -205,7 +204,7 @@ export const FieldLabel = ({
   children: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const canReset = resettable && resetDisabled === false;
+  const canReset = resettable && !resetDisabled;
   if (typeof description === "string") {
     description = (
       <Text
