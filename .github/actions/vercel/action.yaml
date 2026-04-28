@@ -20,7 +20,7 @@ inputs:
   environment:
     description: "Sha"
     required: true
-  PUBLIC_COLLAB_RELAY_URL:
+  public-collab-relay-url:
     description: "Public collaboration relay URL injected into the builder bundle"
     required: false
     default: ""
@@ -76,12 +76,10 @@ runs:
       shell: bash
 
     - name: Build
-      env:
-        PUBLIC_COLLAB_RELAY_URL: ${{ vars.PUBLIC_COLLAB_RELAY_URL }}
       run: |
         export GITHUB_SHA=${{ inputs.sha }}
         export GITHUB_REF_NAME=${{ inputs.ref-name }}
-        export PUBLIC_COLLAB_RELAY_URL=${{ inputs.PUBLIC_COLLAB_RELAY_URL }}
+        export PUBLIC_COLLAB_RELAY_URL=${{ inputs.public-collab-relay-url }}
 
         if [ "${{ inputs.environment }}" = "production" ]; then
           pnpx vercel build --prod
