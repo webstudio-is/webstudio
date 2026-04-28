@@ -48,8 +48,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // CSRF token checks are not necessary for dashboard-only pages.
   // All POST requests from the builder or canvas app are safeguarded by preventCrossOriginCookie
 
-  debug("Token request received");
-
   const authorizationHeader = request.headers.get("Authorization");
 
   if (authorizationHeader === null) {
@@ -144,7 +142,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const isAuthorized = await isUserAuthorizedForProject(userId, projectId);
 
   if (false === isAuthorized) {
-    debug("User does not have access to the project", userId, projectId);
+    debug("User does not have access to the project");
     return json(
       {
         error: "invalid_grant",
@@ -165,8 +163,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       maxAge,
     }
   );
-
-  debug("Token created");
 
   return json(
     {

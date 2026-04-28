@@ -24,10 +24,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     allowedDestinations(request, ["document"]);
     // CSRF is not needed for document only routes
 
-    debug(
-      "Authenticate request received, starting authentication and authorization process"
-    );
-
     return await builderAuthenticator.authenticate("ws", request, {
       throwOnError: true,
     });

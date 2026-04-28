@@ -28,8 +28,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 
     const returnTo = (await returnToPath(request)) ?? builderPath();
 
-    debug("Start exchanging the code for the access token");
-
     await builderAuthenticator.authenticate("ws", request, {
       throwOnError: true,
       successRedirect: returnTo,
@@ -37,8 +35,6 @@ export const loader: LoaderFunction = async ({ request }) => {
   } catch (error) {
     // all redirects are basically errors and in that case we don't want to catch it
     if (error instanceof Response) {
-      debug("Response with Cookie");
-
       const session = await builderSessionStorage.getSession(
         error.headers.get("Set-Cookie")
       );
