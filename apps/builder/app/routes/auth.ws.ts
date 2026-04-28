@@ -12,7 +12,7 @@ const debug = createDebug(import.meta.url);
 // Endpoint to force user relogin
 export const loader: LoaderFunction = async ({ request }) => {
   if (false === isBuilder(request)) {
-    debug(`Request url is not the builder URL ${request.url}`);
+    debug("Request url is not the builder URL");
 
     return new Response("Only builder URL is allowed", {
       status: 404,

@@ -93,7 +93,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   // or by allowedDestinations for iframe requests.
 
   try {
-    debug("Authorize request received", request.url);
+    debug("Authorize request received");
 
     const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams);
@@ -230,9 +230,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       // state: If present, store the state parameter to return it unchanged in the response
       redirectUri.searchParams.set("state", oAuthParams.state);
 
-      debug(
-        `Code ${code} created, redirecting to redirect_uri: ${redirectUri.href}`
-      );
+      debug("Code created, redirecting to redirect_uri");
 
       const bloomFilter = await session.readLoginSessionBloomFilter(request);
 

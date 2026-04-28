@@ -12,7 +12,7 @@
     "build:tailwind-preflight": "tsx --conditions=webstudio ./app/shared/tailwind/preflight-bin.ts && prettier --write ./app/shared/tailwind/__generated__/preflight.ts",
     "start": "remix-serve build/server/index.js",
     "dev": "remix vite:dev",
-    "dev:auth": "DEBUG=OAuth2Strategy,ws:* remix vite:dev",
+    "dev:auth": "DEBUG=ws:* remix vite:dev",
     "typecheck": "tsgo --noEmit --emitDeclarationOnly false",
     "test": "vitest run"
   },
