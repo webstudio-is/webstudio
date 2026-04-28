@@ -118,7 +118,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
 
     console.info({
       $assets: $assets.get().size,
-      $pages: $pages.get()?.pages.length ?? 0,
+      $pages: $pages.get()?.pages.size ?? 0,
       $instances: $instances.get().size,
     });
   }

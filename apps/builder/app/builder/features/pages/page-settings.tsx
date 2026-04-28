@@ -20,7 +20,6 @@ import {
   HomePagePath,
   PageTitle,
   PagePath,
-  Folder,
   getPagePath,
   findPageByIdOrPath,
   ROOT_FOLDER_ID,
@@ -28,7 +27,7 @@ import {
   ProjectNewRedirectPath,
   isLiteralExpression,
   documentTypes,
-  isRootFolder,
+  getHomePage,
   elementComponent,
 } from "@webstudio-is/sdk";
 import {
@@ -100,6 +99,7 @@ import { SearchPreview } from "./search-preview";
 import { SocialPreview } from "./social-preview";
 import {
   registerFolderChildMutable,
+  cleanupChildRefsMutable,
   $pageRootScope,
   duplicatePage,
   isPathAvailable,
@@ -284,7 +284,7 @@ const toFormValues = (
   const parentFolder = findParentFolderByChildId(page.id, pages.folders);
   return {
     name: page.name,
-    parentFolderId: parentFolder?.id ?? ROOT_FOLDER_ID,
+    parentFolderId: parentFolder?.id ?? pages.rootFolderId,
     path: page.path,
     title: page.title,
     description: page.meta.description ?? fieldDefaultValues.description,
@@ -778,7 +778,7 @@ const FormFields = ({
                     “{values.name}” is the home page
                   </Text>
                 </>
-              ) : isRootFolder({ id: values.parentFolderId }) === false ? (
+              ) : values.parentFolderId !== pages.rootFolderId ? (
                 <>
                   <HomeIcon color={rawTheme.colors.foregroundSubtle} />
                   <Text
@@ -1253,6 +1253,7 @@ export const NewPageSettings = ({
 
   const [values, setValues] = useState<Values>({
     ...fieldDefaultValues,
+    parentFolderId: pages?.rootFolderId ?? fieldDefaultValues.parentFolderId,
     path: nameToPath(pages, fieldDefaultValues.name),
   });
   const { variableValues } = useStore($pageRootScope);
@@ -1339,7 +1340,7 @@ const createPage = (pageId: Page["id"], values: Values) => {
         return;
       }
       const rootInstanceId = nanoid();
-      pages.pages.push({
+      pages.pages.set(pageId, {
         id: pageId,
         name: values.name,
         path: values.path,
@@ -1354,7 +1355,7 @@ const createPage = (pageId: Page["id"], values: Values) => {
         tag: "body",
         children: [],
       });
-      registerFolderChildMutable(pages.folders, pageId, values.parentFolderId);
+      registerFolderChildMutable(pages, pageId, values.parentFolderId);
       selectInstance(undefined);
     }
   );
@@ -1364,13 +1365,13 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
   const updatePageMutable = (
     page: Page,
     values: Partial<Values>,
-    folders: Array<Folder>
+    pages: Pages
   ) => {
     if (values.name !== undefined) {
       page.name = values.name;
     }
     if (values.path !== undefined) {
-      page.path = values.path;
+      page.path = page.id === pages.homePageId ? "" : values.path;
     }
     if (values.title !== undefined) {
       page.title = values.title;
@@ -1418,7 +1419,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
     }
 
     if (values.parentFolderId !== undefined) {
-      registerFolderChildMutable(folders, page.id, values.parentFolderId);
+      registerFolderChildMutable(pages, page.id, values.parentFolderId);
     }
 
     if (values.marketplaceInclude !== undefined) {
@@ -1446,59 +1447,36 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       return;
     }
 
-    if (pages.homePage.id === pageId) {
-      updatePageMutable(pages.homePage, values, pages.folders);
-    }
-
-    const pageToUpdate = pages.pages.find((page) => page.id === pageId);
+    const pageToUpdate = pages.pages.get(pageId);
 
     if (pageToUpdate !== undefined) {
-      updatePageMutable(pageToUpdate, values, pages.folders);
+      updatePageMutable(pageToUpdate, values, pages);
     }
 
     // swap home page
-    if (values.isHomePage && pages.homePage.id !== pageId) {
-      const newHomePageIndex = pages.pages.findIndex(
-        (page) => page.id === pageId
-      );
-
-      if (newHomePageIndex === -1) {
+    if (values.isHomePage && pages.homePageId !== pageId) {
+      const newHomePage = pages.pages.get(pageId);
+      const oldHomePage = getHomePage(pages);
+      if (newHomePage === undefined) {
         throw new Error(`Page with id ${pageId} not found`);
       }
 
-      const oldHomePage = pages.homePage as (typeof pages.pages)[0];
-
-      pages.homePage = pages.pages[newHomePageIndex] as typeof pages.homePage;
-
-      pages.homePage.path = "";
-
-      pages.homePage.name = "Home";
-
-      pages.pages[newHomePageIndex] = oldHomePage;
+      pages.homePageId = newHomePage.id;
+      newHomePage.path = "";
+      newHomePage.name = "Home";
 
       // For simplicity skip logic in case of names are same i.e. Old Home 1, Old Home 2
       oldHomePage.name = "Old Home";
       oldHomePage.path = nameToPath(pages, oldHomePage.name);
 
-      const rootFolder = pages.folders.find((folder) => isRootFolder(folder));
+      const rootFolder = pages.folders.get(pages.rootFolderId);
 
       if (rootFolder === undefined) {
         throw new Error("Root folder not found");
       }
 
-      if (rootFolder.children === undefined) {
-        throw new Error("Root folder must have children");
-      }
-
-      // Swap home to the first position in the root folder
-      const childIndexOfHome = rootFolder?.children.indexOf(pages.homePage.id);
-
-      if (childIndexOfHome === -1) {
-        throw new Error("Both pages must be children of Root folder");
-      }
-
-      rootFolder.children[childIndexOfHome] = rootFolder.children[0];
-      rootFolder.children[0] = pages.homePage.id;
+      cleanupChildRefsMutable(newHomePage.id, pages.folders);
+      rootFolder.children.unshift(newHomePage.id);
     }
   });
 };
@@ -1517,7 +1495,7 @@ export const PageSettings = ({
   const pages = useStore($pages);
   const page = pages && findPageByIdOrPath(pageId, pages);
 
-  const isHomePage = page?.id === pages?.homePage.id;
+  const isHomePage = page?.id === pages?.homePageId;
 
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 

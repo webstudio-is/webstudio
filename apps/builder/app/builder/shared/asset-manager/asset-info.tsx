@@ -4,7 +4,11 @@ import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { getMimeTypeByExtension, IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
+import {
+  getAllPages,
+  getMimeTypeByExtension,
+  IMAGE_MIME_TYPES,
+} from "@webstudio-is/sdk";
 import type { Asset, Pages, Props, Styles, Instance } from "@webstudio-is/sdk";
 import type {
   ImageValue,
@@ -134,7 +138,7 @@ export const calculateUsagesByAssetId = ({
     usages.push({ type: "favicon" });
   }
   if (pages) {
-    for (const page of [pages.homePage, ...pages.pages]) {
+    for (const page of getAllPages(pages)) {
       if (page.meta.socialImageAssetId) {
         const usages = mapGetOrInsert(
           usagesByAsset,

@@ -34,16 +34,32 @@ export const General = () => {
 
 export const Redirects = () => {
   $pages.set({
-    homePage: {
-      id: "pageId",
-      name: "My Name",
-      path: "",
-      title: `"My Title"`,
-      meta: {},
-      rootInstanceId: "body",
-    },
-    pages: [],
-    folders: [],
+    homePageId: "pageId",
+    rootFolderId: "root",
+    pages: new Map([
+      [
+        "pageId",
+        {
+          id: "pageId",
+          name: "My Name",
+          path: "",
+          title: `"My Title"`,
+          meta: {},
+          rootInstanceId: "body",
+        },
+      ],
+    ]),
+    folders: new Map([
+      [
+        "root",
+        {
+          id: "root",
+          name: "",
+          slug: "",
+          children: ["pageId"],
+        },
+      ],
+    ]),
     redirects: [
       { old: "/old", new: "/new" },
       { old: "/old", new: "https://google.com" },

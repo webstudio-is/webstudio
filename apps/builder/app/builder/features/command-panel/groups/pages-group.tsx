@@ -6,7 +6,7 @@ import {
   useSelectedAction,
 } from "@webstudio-is/design-system";
 import { computed } from "nanostores";
-import type { Page } from "@webstudio-is/sdk";
+import { getAllPages, type Page } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
 import { $editingPageId } from "~/shared/nano-states";
 import { $selectedPage } from "~/shared/nano-states";
@@ -28,7 +28,7 @@ export const $pageOptions = computed(
     }
     const pageOptions: PageOption[] = [];
     if (pages) {
-      for (const page of [pages.homePage, ...pages.pages]) {
+      for (const page of getAllPages(pages)) {
         if (page.id === selectedPage?.id) {
           continue;
         }

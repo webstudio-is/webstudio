@@ -76,7 +76,11 @@ import {
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import { isPathnamePattern, type Templates } from "@webstudio-is/sdk";
+import {
+  getAllPages,
+  isPathnamePattern,
+  type Templates,
+} from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
@@ -343,7 +347,7 @@ const $restrictedFeatures = computed(
     }
     if (!permissions.allowDynamicData) {
       // pages with dynamic paths
-      for (const page of [pages.homePage, ...pages.pages]) {
+      for (const page of getAllPages(pages)) {
         const navigate = {
           pageId: page.id,
           instanceSelector: [page.rootInstanceId],

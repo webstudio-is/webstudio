@@ -10,6 +10,36 @@ export const ROOT_FOLDER_ID = "root";
 export const isRootFolder = ({ id }: { id: Folder["id"] }) =>
   id === ROOT_FOLDER_ID;
 
+export const getPageById = (
+  pages: Pages,
+  pageId: Page["id"]
+): Page | undefined => {
+  return pages.pages.get(pageId);
+};
+
+export const getFolderById = (
+  pages: Pages,
+  folderId: Folder["id"]
+): Folder | undefined => {
+  return pages.folders.get(folderId);
+};
+
+export const getAllPages = (pages: Pages): Page[] => {
+  return Array.from(pages.pages.values());
+};
+
+export const getAllFolders = (pages: Pages): Folder[] => {
+  return Array.from(pages.folders.values());
+};
+
+export const getHomePage = (pages: Pages): Page => {
+  const homePage = getPageById(pages, pages.homePageId);
+  if (homePage === undefined) {
+    throw new Error(`Home page "${pages.homePageId}" was not found.`);
+  }
+  return homePage;
+};
+
 /**
  * Find a page by id or path.
  */
@@ -17,10 +47,10 @@ export const findPageByIdOrPath = (
   idOrPath: string,
   pages: Pages
 ): Page | undefined => {
-  if (idOrPath === "" || idOrPath === "/" || idOrPath === pages.homePage.id) {
-    return pages.homePage;
+  if (idOrPath === "" || idOrPath === "/" || idOrPath === pages.homePageId) {
+    return getHomePage(pages);
   }
-  return pages.pages.find(
+  return getAllPages(pages).find(
     (page) => page.id === idOrPath || getPagePath(page.id, pages) === idOrPath
   );
 };
@@ -30,9 +60,10 @@ export const findPageByIdOrPath = (
  */
 export const findParentFolderByChildId = (
   id: Folder["id"] | Page["id"],
-  folders: Array<Folder>
+  folders: Iterable<Folder> | Map<Folder["id"], Folder>
 ): Folder | undefined => {
-  for (const folder of folders) {
+  const folderList = folders instanceof Map ? folders.values() : folders;
+  for (const folder of folderList) {
     if (folder.children.includes(id)) {
       return folder;
     }
@@ -45,7 +76,7 @@ export const findParentFolderByChildId = (
 export const getPagePath = (id: Folder["id"] | Page["id"], pages: Pages) => {
   const foldersMap = new Map<Folder["id"], Folder>();
   const childParentMap = new Map<Folder["id"] | Page["id"], Folder["id"]>();
-  for (const folder of pages.folders) {
+  for (const folder of getAllFolders(pages)) {
     foldersMap.set(folder.id, folder);
     for (const childId of folder.children) {
       childParentMap.set(childId, folder.id);
@@ -56,7 +87,7 @@ export const getPagePath = (id: Folder["id"] | Page["id"], pages: Pages) => {
   let currentId: undefined | string = id;
 
   // In case id is a page id
-  const allPages = [pages.homePage, ...pages.pages];
+  const allPages = getAllPages(pages);
   for (const page of allPages) {
     if (page.id === id) {
       paths.push(page.path);
@@ -78,7 +109,7 @@ export const getPagePath = (id: Folder["id"] | Page["id"], pages: Pages) => {
 };
 
 export const getStaticSiteMapXml = (pages: Pages, updatedAt: string) => {
-  const allPages = [pages.homePage, ...pages.pages];
+  const allPages = getAllPages(pages);
   return (
     allPages
       .filter((page) => (page.meta.documentType ?? "html") === "html")

@@ -1,4 +1,4 @@
-import { getPagePath, isAbsoluteUrl } from "@webstudio-is/sdk";
+import { getAllPages, getPagePath, isAbsoluteUrl } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
   matchPathnamePattern,
@@ -46,8 +46,8 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
   }
   const pageHref = new URL(href, "https://any-valid.url");
   // sort pages before matching to not depend on order of page creation
-  const sortedPages = [pages.homePage, ...pages.pages].toSorted(
-    (leftPage, rightPage) => comparePatterns(leftPage.path, rightPage.path)
+  const sortedPages = getAllPages(pages).toSorted((leftPage, rightPage) =>
+    comparePatterns(leftPage.path, rightPage.path)
   );
   for (const page of sortedPages) {
     const pagePath = getPagePath(page.id, pages);

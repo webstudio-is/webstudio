@@ -2,7 +2,12 @@ import type { Data } from "@webstudio-is/http-client";
 import { loadBuildById } from "@webstudio-is/project-build/index.server";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { findPageByIdOrPath, getStyleDeclKey } from "@webstudio-is/sdk";
+import {
+  findPageByIdOrPath,
+  getAllPages,
+  getStyleDeclKey,
+  serializePages,
+} from "@webstudio-is/sdk";
 import * as projectApi from "@webstudio-is/project/index.server";
 
 const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
@@ -78,7 +83,7 @@ export const loadProductionCanvasData = async (
       version: build.version,
       createdAt: build.createdAt,
       updatedAt: build.updatedAt,
-      pages: build.pages,
+      pages: serializePages(build.pages),
       breakpoints: build.breakpoints.map(getPair),
       styles: build.styles.map((item) => [getStyleDeclKey(item), item]),
       styleSources: build.styleSources.map(getPair),
@@ -93,7 +98,7 @@ export const loadProductionCanvasData = async (
       deployment,
     },
     page,
-    pages: [build.pages.homePage, ...build.pages.pages],
+    pages: getAllPages(build.pages),
     assets,
   };
 };

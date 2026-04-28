@@ -16,32 +16,43 @@ registerContainers();
 $dataSources.set(new Map());
 
 $pages.set({
-  folders: [
-    {
-      id: "rootId",
-      name: "",
-      slug: "",
-      children: ["homeId", "dynamicId"],
-    },
-  ],
-  homePage: {
-    id: "homeId",
-    path: "",
-    name: "",
-    title: "",
-    meta: {},
-    rootInstanceId: "",
-  },
-  pages: [
-    {
-      id: "dynamicId",
-      path: "/blog/:date/post/:slug",
-      name: "",
-      title: "",
-      meta: {},
-      rootInstanceId: "rootInstanceId",
-    },
-  ],
+  homePageId: "homeId",
+  rootFolderId: "rootId",
+  folders: new Map([
+    [
+      "rootId",
+      {
+        id: "rootId",
+        name: "",
+        slug: "",
+        children: ["homeId", "dynamicId"],
+      },
+    ],
+  ]),
+  pages: new Map([
+    [
+      "homeId",
+      {
+        id: "homeId",
+        path: "",
+        name: "",
+        title: "",
+        meta: {},
+        rootInstanceId: "",
+      },
+    ],
+    [
+      "dynamicId",
+      {
+        id: "dynamicId",
+        path: "/blog/:date/post/:slug",
+        name: "",
+        title: "",
+        meta: {},
+        rootInstanceId: "rootInstanceId",
+      },
+    ],
+  ]),
 });
 
 const SystemInspect = () => {

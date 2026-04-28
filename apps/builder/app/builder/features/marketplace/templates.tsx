@@ -13,6 +13,7 @@ import {
 import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import {
   elementComponent,
+  getAllPages,
   Instance,
   ROOT_FOLDER_ID,
   type Asset,
@@ -116,7 +117,7 @@ const getTemplatesDataByCategory = (
   if (data === undefined) {
     return new Map();
   }
-  const pages = [data.pages.homePage, ...data.pages.pages]
+  const pages = getAllPages(data.pages)
     .filter((page) => page.marketplace?.include)
     .map((page) => {
       // category can be empty string

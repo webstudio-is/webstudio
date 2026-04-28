@@ -38,7 +38,7 @@ $breakpoints.set(
 );
 
 const pages = createDefaultPages({ rootInstanceId: "" });
-pages.pages.push({
+pages.pages.set("page2", {
   id: "page2",
   path: "",
   name: "Second Page",
@@ -46,7 +46,7 @@ pages.pages.push({
   title: "",
   meta: {},
 });
-pages.pages.push({
+pages.pages.set("page3", {
   id: "page3",
   path: "",
   name: "Thrid Page",
@@ -55,7 +55,7 @@ pages.pages.push({
   meta: {},
 });
 $pages.set(pages);
-$selectedPageId.set(pages.homePage.id);
+$selectedPageId.set(pages.homePageId);
 
 export const CommandPanel: StoryFn = () => {
   useEffect(() => {

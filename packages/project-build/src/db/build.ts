@@ -7,17 +7,18 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import type {
-  Deployment,
-  Resource,
-  StyleSource,
-  Prop,
-  DataSource,
-  Instance,
-  Breakpoint,
-  StyleSourceSelection,
-  StyleDecl,
-  Pages,
+import {
+  migratePages,
+  type Deployment,
+  type Resource,
+  type StyleSource,
+  type Prop,
+  type DataSource,
+  type Instance,
+  type Breakpoint,
+  type StyleSourceSelection,
+  type StyleDecl,
+  serializePages,
 } from "@webstudio-is/sdk";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
@@ -26,7 +27,7 @@ import { breakCyclesMutable } from "../shared/graph-utils";
 import { createPages } from "../template";
 import { serializeStyles } from "./styles";
 import { serializeStyleSourceSelections } from "./style-source-selections";
-import { parseConfig, serializeConfig, serializeData } from "./build-parser";
+import { parseConfig, serializeData } from "./build-parser";
 
 export {
   parseConfig,
@@ -60,7 +61,7 @@ const parseCompactBuild = async (
       version: build.version,
       createdAt: build.createdAt,
       updatedAt: build.updatedAt,
-      pages: parseConfig<Pages>(build.pages),
+      pages: migratePages(parseConfig<unknown>(build.pages)),
       breakpoints: parseCompactData<Breakpoint>(build.breakpoints),
       styles: parseCompactData<StyleDecl>(build.styles),
       styleSources: parseCompactData<StyleSource>(build.styleSources),
@@ -192,7 +193,7 @@ export const createBuild = async (
   const newBuild = await context.postgrest.client.from("Build").insert({
     id: crypto.randomUUID(),
     projectId: props.projectId,
-    pages: serializeConfig<Pages>(data.pages),
+    pages: JSON.stringify(serializePages(data.pages)),
     breakpoints: serializeData<Breakpoint>(data.breakpoints),
     styles: serializeStyles(data.styles),
     styleSources: serializeData<StyleSource>(data.styleSources),

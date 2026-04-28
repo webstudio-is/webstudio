@@ -11,6 +11,8 @@ import {
 } from "@webstudio-is/template";
 import {
   encodeDataVariableId,
+  getAllPages,
+  getHomePage,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
@@ -770,7 +772,7 @@ test("prevent rebinding with variables outside of slot content scope", () => {
 test("unset global variables on all pages when delete", () => {
   const globalVariable = new Variable("globalVariable", "");
   const pages = createDefaultPages({ rootInstanceId: "homeBodyId" });
-  pages.pages.push({
+  pages.pages.set("aboutPage", {
     id: "",
     name: "",
     path: "",
@@ -839,8 +841,9 @@ test("unset body variables in page meta when delete", () => {
   expect(data.dataSources.size).toEqual(1);
   const [bodyVariableId] = data.dataSources.keys();
   const bodyIdentifier = encodeDataVariableId(bodyVariableId);
-  data.pages.homePage.title = bodyIdentifier;
-  data.pages.homePage.meta = {
+  const homePage = getHomePage(data.pages);
+  homePage.title = bodyIdentifier;
+  homePage.meta = {
     description: bodyIdentifier,
     excludePageFromSearch: bodyIdentifier,
     socialImageUrl: bodyIdentifier,
@@ -850,16 +853,14 @@ test("unset body variables in page meta when delete", () => {
     custom: [{ property: "auth", content: bodyIdentifier }],
   };
   deleteVariableMutable(data, bodyVariableId);
-  expect(data.pages.homePage.title).toEqual(`bodyVariable`);
-  expect(data.pages.homePage.meta.description).toEqual(`bodyVariable`);
-  expect(data.pages.homePage.meta.excludePageFromSearch).toEqual(
-    `bodyVariable`
-  );
-  expect(data.pages.homePage.meta.socialImageUrl).toEqual(`bodyVariable`);
-  expect(data.pages.homePage.meta.language).toEqual(`bodyVariable`);
-  expect(data.pages.homePage.meta.status).toEqual(`bodyVariable`);
-  expect(data.pages.homePage.meta.redirect).toEqual(`bodyVariable`);
-  expect(data.pages.homePage.meta.custom?.[0].content).toEqual(`bodyVariable`);
+  expect(homePage.title).toEqual(`bodyVariable`);
+  expect(homePage.meta.description).toEqual(`bodyVariable`);
+  expect(homePage.meta.excludePageFromSearch).toEqual(`bodyVariable`);
+  expect(homePage.meta.socialImageUrl).toEqual(`bodyVariable`);
+  expect(homePage.meta.language).toEqual(`bodyVariable`);
+  expect(homePage.meta.status).toEqual(`bodyVariable`);
+  expect(homePage.meta.redirect).toEqual(`bodyVariable`);
+  expect(homePage.meta.custom?.[0].content).toEqual(`bodyVariable`);
 });
 
 test("unset global variables in all pages meta when delete", () => {
@@ -874,7 +875,7 @@ test("unset global variables in all pages meta when delete", () => {
     ),
   };
   data.instances.delete(ROOT_INSTANCE_ID);
-  data.pages.pages.push({
+  data.pages.pages.set("aboutPage", {
     id: "",
     name: "",
     path: "",
@@ -885,7 +886,7 @@ test("unset global variables in all pages meta when delete", () => {
   expect(data.dataSources.size).toEqual(1);
   const [globalVariableId] = data.dataSources.keys();
   const globalIdentifier = encodeDataVariableId(globalVariableId);
-  for (const page of [data.pages.homePage, ...data.pages.pages]) {
+  for (const page of getAllPages(data.pages)) {
     page.title = globalIdentifier;
     page.meta = {
       description: globalIdentifier,
@@ -898,7 +899,7 @@ test("unset global variables in all pages meta when delete", () => {
     };
   }
   deleteVariableMutable(data, globalVariableId);
-  for (const page of [data.pages.homePage, ...data.pages.pages]) {
+  for (const page of getAllPages(data.pages)) {
     expect(page.title).toEqual(`globalVariable`);
     expect(page.meta.description).toEqual(`globalVariable`);
     expect(page.meta.excludePageFromSearch).toEqual(`globalVariable`);
@@ -965,7 +966,7 @@ test("find variable usages from root includes all pages", () => {
     ),
   };
   data.instances.delete(ROOT_INSTANCE_ID);
-  data.pages.pages.push({
+  data.pages.pages.set("aboutPage", {
     id: "aboutPage",
     name: "About",
     path: "/about",
@@ -998,8 +999,9 @@ test("find variable usages in page meta", () => {
   const [bodyVariableId] = data.dataSources.keys();
   const bodyIdentifier = encodeDataVariableId(bodyVariableId);
 
-  data.pages.homePage.title = bodyIdentifier;
-  data.pages.homePage.meta = {
+  const homePage = getHomePage(data.pages);
+  homePage.title = bodyIdentifier;
+  homePage.meta = {
     description: bodyIdentifier,
     excludePageFromSearch: bodyIdentifier,
     socialImageUrl: bodyIdentifier,

@@ -71,7 +71,7 @@ const selectPageRoot = (
     systemDataSourceId,
   });
   $pages.set(defaultPages);
-  $selectedPageId.set(defaultPages.homePage.id);
+  $selectedPageId.set(defaultPages.homePageId);
 };
 
 beforeEach(() => {

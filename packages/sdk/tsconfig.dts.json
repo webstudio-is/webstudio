@@ -3,7 +3,8 @@
   "include": [
     "src/index.ts",
     "src/runtime.ts",
-    "src/__generated__/normalize.css.ts"
+    "src/__generated__/normalize.css.ts",
+    "src/migrations/webstudio-data.ts"
   ],
   "compilerOptions": {
     "declarationDir": "lib/types"

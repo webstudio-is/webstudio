@@ -10,23 +10,32 @@ test("createDefaultPages", () => {
     })
   ).toEqual({
     meta: {},
-    homePage: {
-      id: "homePageId",
-      name: "Home",
-      path: "",
-      title: `"Home"`,
-      meta: {},
-      rootInstanceId: "rootInstanceId",
-      systemDataSourceId: "systemDataSourceId",
-    },
-    pages: [],
-    folders: [
-      {
-        id: "root",
-        name: "Root",
-        slug: "",
-        children: ["homePageId"],
-      },
-    ],
+    homePageId: "homePageId",
+    rootFolderId: "root",
+    pages: new Map([
+      [
+        "homePageId",
+        {
+          id: "homePageId",
+          name: "Home",
+          path: "",
+          title: `"Home"`,
+          meta: {},
+          rootInstanceId: "rootInstanceId",
+          systemDataSourceId: "systemDataSourceId",
+        },
+      ],
+    ]),
+    folders: new Map([
+      [
+        "root",
+        {
+          id: "root",
+          name: "Root",
+          slug: "",
+          children: ["homePageId"],
+        },
+      ],
+    ]),
   });
 });

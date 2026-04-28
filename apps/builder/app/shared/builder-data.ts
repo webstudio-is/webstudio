@@ -1,4 +1,8 @@
-import { getStyleDeclKey, type WebstudioData } from "@webstudio-is/sdk";
+import {
+  getStyleDeclKey,
+  migratePages,
+  type WebstudioData,
+} from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import type { loader } from "~/routes/rest.data.$projectId";
@@ -83,7 +87,7 @@ export const loadBuilderData = async ({
       dataSources: new Map(data.dataSources.map(getPair)),
       resources: new Map(data.resources.map(getPair)),
       props: new Map(data.props.map(getPair)),
-      pages: data.pages,
+      pages: migratePages(data.pages),
       breakpoints: new Map(data.breakpoints.map(getPair)),
       styleSources: new Map(data.styleSources.map(getPair)),
       styleSourceSelections: new Map(

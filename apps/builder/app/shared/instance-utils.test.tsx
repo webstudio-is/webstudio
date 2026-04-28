@@ -3112,7 +3112,7 @@ describe("canUnwrapInstance", () => {
     $props.set(props);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
 
     const instancePath = [
       {
@@ -3144,7 +3144,7 @@ describe("canUnwrapInstance", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
 
     const instancePath = [
       {
@@ -3174,7 +3174,7 @@ describe("canUnwrapInstance", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
 
     const instancePath = [
       {
@@ -3206,7 +3206,7 @@ describe("canUnwrapInstance", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
 
     const instancePath = [
       {
@@ -3509,7 +3509,7 @@ describe("convertInstance", () => {
   test("prevents converting body instance", () => {
     const pages = createDefaultPages({ rootInstanceId: "bodyId" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
 
     const initialInstances = renderData(
       <ws.element ws:tag="html" ws:id="rootId">
@@ -3540,7 +3540,7 @@ describe("deleteSelectedInstance", () => {
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
     selectInstance(["child2", "parent", "body"]);
     deleteSelectedInstance();
     expect($selectedInstanceSelector.get()).toEqual([
@@ -3563,7 +3563,7 @@ describe("deleteSelectedInstance", () => {
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
     selectInstance(["child3", "parent", "body"]);
     deleteSelectedInstance();
     expect($selectedInstanceSelector.get()).toEqual([
@@ -3584,7 +3584,7 @@ describe("deleteSelectedInstance", () => {
     $instances.set(instances);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
     selectInstance(["child1", "parent", "body"]);
     deleteSelectedInstance();
     expect($selectedInstanceSelector.get()).toEqual(["parent", "body"]);
@@ -3632,7 +3632,7 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
     setDataStores(data);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
     selectInstance(["body"]);
 
     // Insert without explicit conflictResolution (defaults to "theirs")
@@ -3707,7 +3707,7 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
     setDataStores(data);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
     selectInstance(["body"]);
 
     // Insert with conflictResolution="ours" to keep existing styles
@@ -3782,7 +3782,7 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
     setDataStores(data);
     const pages = createDefaultPages({ rootInstanceId: "body" });
     $pages.set(pages);
-    $selectedPageId.set(pages.homePage.id);
+    $selectedPageId.set(pages.homePageId);
     selectInstance(["body"]);
 
     // Insert with conflictResolution="merge"
@@ -3879,7 +3879,7 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectPageTokenConflicts({
       sourceData: sourceWebstudioData,
-      pageId: sourcePages.homePage.id,
+      pageId: sourcePages.homePageId,
     });
 
     // No conflicts
@@ -3931,7 +3931,7 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectPageTokenConflicts({
       sourceData: sourceWebstudioData,
-      pageId: sourcePages.homePage.id,
+      pageId: sourcePages.homePageId,
     });
 
     // Should return conflicts
@@ -4004,7 +4004,7 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectPageTokenConflicts({
       sourceData: sourceWebstudioData,
-      pageId: sourcePages.homePage.id,
+      pageId: sourcePages.homePageId,
     });
 
     // Should detect conflict from ROOT_INSTANCE token

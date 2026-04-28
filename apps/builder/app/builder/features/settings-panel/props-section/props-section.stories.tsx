@@ -1,5 +1,12 @@
 import { useState } from "react";
-import type { PropMeta, Instance, Prop, Asset, Page } from "@webstudio-is/sdk";
+import {
+  getHomePage,
+  type PropMeta,
+  type Instance,
+  type Prop,
+  type Asset,
+  type Page,
+} from "@webstudio-is/sdk";
 import {
   Box,
   Flex,
@@ -30,24 +37,34 @@ const page = (name: string, path: string): Page => ({
   rootInstanceId: unique(),
 });
 
-$pages.set({
-  ...createDefaultPages({ rootInstanceId: unique() }),
-  homePage: page("Home", "") as Page & { path: "" },
-  pages: [
-    page("About", "/about"),
-    page("Pricing", "/pricing"),
-    page("Contacts", "/contacts"),
-  ],
-});
+const pages = createDefaultPages({ rootInstanceId: unique() });
+const homePage = page("Home", "") as Page & { path: "" };
+const aboutPage = page("About", "/about");
+const pricingPage = page("Pricing", "/pricing");
+const contactsPage = page("Contacts", "/contacts");
+pages.homePageId = homePage.id;
+pages.pages = new Map([
+  [homePage.id, homePage],
+  [aboutPage.id, aboutPage],
+  [pricingPage.id, pricingPage],
+  [contactsPage.id, contactsPage],
+]);
+pages.folders.get(pages.rootFolderId)!.children = [
+  homePage.id,
+  aboutPage.id,
+  pricingPage.id,
+  contactsPage.id,
+];
+$pages.set(pages);
 
 const getSectionInstanceId = (
   name: string,
-  page: Page = $pages.get()?.homePage as Page
+  page: Page = getHomePage($pages.get() ?? pages)
 ) => (page === undefined ? "" : `${page.id}-${name}`);
 
 const addLinkableSections = (
   names: string[],
-  page: Page = $pages.get()?.homePage as Page
+  page: Page = getHomePage($pages.get() ?? pages)
 ) => {
   if (page === undefined) {
     return;
@@ -89,9 +106,9 @@ const addLinkableSections = (
 addLinkableSections(["contacts", "about"]);
 const rootInstance = addLinkableSections(
   ["company", "employees"],
-  $pages.get()?.pages[0]
+  Object.values($pages.get()?.pages ?? {})[1]
 );
-$selectedPageId.set($pages.get()?.homePage.id ?? "");
+$selectedPageId.set($pages.get()?.homePageId ?? "");
 
 const instance: Instance = {
   id: instanceId,
@@ -325,7 +342,7 @@ const startingProps: Prop[] = [
     instanceId,
     name: "addedUrlPage",
     type: "page",
-    value: $pages.get()?.pages[0].id ?? "",
+    value: Object.values($pages.get()?.pages ?? {})[1]?.id ?? "",
   },
   {
     id: unique(),
@@ -333,7 +350,7 @@ const startingProps: Prop[] = [
     name: "addedUrlSection",
     type: "page",
     value: {
-      pageId: $pages.get()?.homePage.id ?? "",
+      pageId: $pages.get()?.homePageId ?? "",
       instanceId: getSectionInstanceId("about"),
     },
   },

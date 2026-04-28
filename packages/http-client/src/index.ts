@@ -5,7 +5,7 @@ import type {
   Deployment,
   Instance,
   Page,
-  Pages,
+  SerializedPages,
   Prop,
   Resource,
   StyleDecl,
@@ -23,7 +23,7 @@ export type Data = {
     version: number;
     createdAt: string;
     updatedAt: string;
-    pages: Pages;
+    pages: SerializedPages;
     breakpoints: [Breakpoint["id"], Breakpoint][];
     styles: [StyleDeclKey, StyleDecl][];
     styleSources: [StyleSource["id"], StyleSource][];

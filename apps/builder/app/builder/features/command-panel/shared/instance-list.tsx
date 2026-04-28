@@ -13,7 +13,7 @@ import {
   useSelectedAction,
   useCommandState,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
+import { getPageById, type Instance } from "@webstudio-is/sdk";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { buildInstancePath } from "~/shared/instance-utils";
@@ -61,7 +61,7 @@ export const InstanceList = ({
       instances,
       instanceId
     );
-    const page = pages.pages.find((p) => p.id === awareness.pageId);
+    const page = getPageById(pages, awareness.pageId);
     usedInInstances.push({
       label: getInstanceLabel(instance),
       id: instance.id,

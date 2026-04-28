@@ -5,10 +5,6 @@ import { batched } from "nanostores";
 import { nanoid } from "nanoid";
 import { $project } from "./data-stores";
 import {
-  normalizePagesPatch,
-  denormalizePagesPatch,
-} from "@webstudio-is/project/pages-patch-normalizer";
-import {
   $selectedPageHash,
   $selectedInstanceSizes,
   $authTokenPermissions,
@@ -188,16 +184,7 @@ export const __testing__ = {
 
 export const createObjectPool = () => {
   return new SyncObjectPool([
-    new ImmerhinSyncObject("server", serverSyncStore, {
-      onSend: (changes) => {
-        const pages = $pages.get();
-        return pages ? normalizePagesPatch(changes, pages) : changes;
-      },
-      onReceive: (changes) => {
-        const pages = $pages.get();
-        return pages ? denormalizePagesPatch(changes, pages) : changes;
-      },
-    }),
+    new ImmerhinSyncObject("server", serverSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
     new SelectedPageAndInstanceSyncObject(),
     new NanostoresSyncObject("pointerPosition", $pointerPosition),

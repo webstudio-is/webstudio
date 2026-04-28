@@ -23,6 +23,9 @@ import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   transpileExpression,
+  getAllPages,
+  getHomePage,
+  findPageByIdOrPath,
   ROOT_INSTANCE_ID,
   portalComponent,
   collectionComponent,
@@ -1849,12 +1852,12 @@ export const findPageAndSelectorByInstanceId = (
     currentInstanceId = parentInstanceById.get(currentInstanceId);
   }
   const rootInstanceId = instanceSelector.at(-1);
-  for (const page of [pages.homePage, ...pages.pages]) {
+  for (const page of getAllPages(pages)) {
     if (page.rootInstanceId === rootInstanceId) {
       return { pageId: page.id, instanceSelector };
     }
   }
-  return { pageId: pages.homePage.id, instanceSelector };
+  return { pageId: pages.homePageId, instanceSelector };
 };
 
 export const detectFragmentTokenConflicts = ({
@@ -1896,11 +1899,11 @@ export const detectPageTokenConflicts = ({
 }) => {
   const data = getWebstudioData();
 
-  const page = sourceData.pages.pages.find((p) => p.id === pageId);
-  if (page === undefined && sourceData.pages.homePage.id !== pageId) {
+  const page = findPageByIdOrPath(pageId, sourceData.pages);
+  if (page === undefined) {
     throw new Error("Page not found");
   }
-  const targetPage = page ?? sourceData.pages.homePage;
+  const targetPage = page ?? getHomePage(sourceData.pages);
 
   // Extract fragments for both ROOT_INSTANCE and page body
   const rootFragment = extractWebstudioFragment(sourceData, ROOT_INSTANCE_ID);

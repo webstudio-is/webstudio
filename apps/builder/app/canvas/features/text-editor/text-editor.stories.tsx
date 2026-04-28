@@ -221,25 +221,43 @@ export const CursorPositioning: StoryFn<typeof TextEditor> = () => {
 export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
   const [{ instances }, setState] = useState(() => {
     $pages.set({
-      folders: [],
-      homePage: {
-        id: "homePageId",
-        rootInstanceId: "bodyId",
-        meta: {},
-        path: "",
-        title: "",
-        name: "",
-      },
-      pages: [
-        {
-          id: "pageId",
-          rootInstanceId: "bodyId",
-          path: "",
-          title: "",
-          name: "",
-          meta: {},
-        },
-      ],
+      homePageId: "homePageId",
+      rootFolderId: "root",
+      folders: new Map([
+        [
+          "root",
+          {
+            id: "root",
+            name: "",
+            slug: "",
+            children: ["homePageId", "pageId"],
+          },
+        ],
+      ]),
+      pages: new Map([
+        [
+          "homePageId",
+          {
+            id: "homePageId",
+            rootInstanceId: "bodyId",
+            meta: {},
+            path: "",
+            title: "",
+            name: "",
+          },
+        ],
+        [
+          "pageId",
+          {
+            id: "pageId",
+            rootInstanceId: "bodyId",
+            path: "",
+            title: "",
+            name: "",
+            meta: {},
+          },
+        ],
+      ]),
     });
 
     $selectedPageId.set("pageId");

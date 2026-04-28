@@ -4,7 +4,6 @@ import {
   findPageByIdOrPath,
   findParentFolderByChildId,
   getPagePath,
-  ROOT_FOLDER_ID,
 } from "@webstudio-is/sdk";
 import { $pages } from "../sync/data-stores";
 import { $selectedInstanceSelector } from "./instance-selection";
@@ -32,7 +31,7 @@ export const $selectedPagePath = computed(
       return "/";
     }
     const parentFolder = findParentFolderByChildId(page.id, pages.folders);
-    const parentFolderId = parentFolder?.id ?? ROOT_FOLDER_ID;
+    const parentFolderId = parentFolder?.id ?? pages.rootFolderId;
     const foldersPath = getPagePath(parentFolderId, pages);
     return [foldersPath, page?.path ?? ""]
       .filter(Boolean)
