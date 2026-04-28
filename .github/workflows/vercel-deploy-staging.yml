@@ -86,7 +86,7 @@ jobs:
           ref-name: ${{ github.event_name == 'pull_request_target' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
           sha: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
           environment: ${{ matrix.environment }}
-          public-collab-relay-url: ${{ vars.PUBLIC_COLLAB_RELAY_URL }}
+          PUBLIC_COLLAB_RELAY_URL: ${{ vars.PUBLIC_COLLAB_RELAY_URL }}
 
       - uses: ./.github/actions/vercel
         if: matrix.environment == 'staging'
@@ -99,7 +99,7 @@ jobs:
           ref-name: ${{ github.ref_name }}
           sha: ${{ github.sha }}
           environment: "production"
-          public-collab-relay-url: ${{ vars.PUBLIC_COLLAB_RELAY_URL }}
+          PUBLIC_COLLAB_RELAY_URL: ${{ vars.PUBLIC_COLLAB_RELAY_URL }}
 
       - name: Debug Vercel Outputs
         run: |
