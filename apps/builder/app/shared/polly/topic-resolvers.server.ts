@@ -13,7 +13,12 @@ import type { TopicResolvers, TopicName, SubscriptionResponse } from "./types";
  * to the registry without implementing it causes a compile error.
  */
 const resolvers: TopicResolvers = {
-  notifications: (ctx) => notification.list(ctx),
+  notifications: (ctx) => {
+    if (ctx.authorization.type !== "user") {
+      return Promise.resolve([]);
+    }
+    return notification.list(ctx);
+  },
   projectCount: (ctx) => {
     if (ctx.authorization.type !== "user") {
       return Promise.resolve(0);
