@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { css, type Rect } from "@webstudio-is/design-system";
 import {
   $collaborators,
@@ -47,6 +47,138 @@ const getCollaboratorLabel = (collaborator: CollaboratorInfo) => {
     return;
   }
   return name;
+};
+
+type CursorCoordinates = {
+  x: number;
+  y: number;
+};
+
+type CursorVelocity = {
+  x: number;
+  y: number;
+};
+
+type CursorSample = CursorCoordinates & {
+  time: number;
+  velocity?: CursorVelocity;
+};
+
+const CURSOR_PREDICTION_MS = 80;
+const CURSOR_VELOCITY_SMOOTHING = 0.5;
+const MAX_PREDICTION_SAMPLE_MS = 250;
+const MAX_PREDICTION_DISTANCE = 80;
+const ZERO_CURSOR_VELOCITY = { x: 0, y: 0 };
+
+const clampCoordinate = ({
+  value,
+  max,
+}: {
+  value: number;
+  max: number | undefined;
+}) => {
+  if (max === undefined) {
+    return value;
+  }
+  return Math.min(Math.max(value, 0), max);
+};
+
+const capPredictionDistance = ({
+  x,
+  y,
+}: CursorCoordinates): CursorCoordinates => {
+  const distance = Math.hypot(x, y);
+  if (distance <= MAX_PREDICTION_DISTANCE) {
+    return { x, y };
+  }
+  const scale = MAX_PREDICTION_DISTANCE / distance;
+  return {
+    x: x * scale,
+    y: y * scale,
+  };
+};
+
+const toCursorCoordinates = (sample: CursorSample): CursorCoordinates => ({
+  x: sample.x,
+  y: sample.y,
+});
+
+const computeSmoothedVelocity = ({
+  measuredVelocity,
+  previousVelocity,
+}: {
+  measuredVelocity: CursorVelocity;
+  previousVelocity: CursorVelocity | undefined;
+}) => {
+  if (previousVelocity === undefined) {
+    return measuredVelocity;
+  }
+  const dot =
+    measuredVelocity.x * previousVelocity.x +
+    measuredVelocity.y * previousVelocity.y;
+  if (dot < 0) {
+    return measuredVelocity;
+  }
+  return {
+    x:
+      previousVelocity.x * (1 - CURSOR_VELOCITY_SMOOTHING) +
+      measuredVelocity.x * CURSOR_VELOCITY_SMOOTHING,
+    y:
+      previousVelocity.y * (1 - CURSOR_VELOCITY_SMOOTHING) +
+      measuredVelocity.y * CURSOR_VELOCITY_SMOOTHING,
+  };
+};
+
+const computePredictedCursor = ({
+  current,
+  previous,
+  layerRect,
+}: {
+  current: CursorSample;
+  previous: CursorSample | undefined;
+  layerRect: Rect | undefined;
+}): { coordinates: CursorCoordinates; velocity: CursorVelocity } => {
+  if (previous === undefined) {
+    return {
+      coordinates: toCursorCoordinates(current),
+      velocity: ZERO_CURSOR_VELOCITY,
+    };
+  }
+  const elapsed = current.time - previous.time;
+  if (
+    elapsed <= 0 ||
+    elapsed > MAX_PREDICTION_SAMPLE_MS ||
+    (current.x === previous.x && current.y === previous.y)
+  ) {
+    return {
+      coordinates: toCursorCoordinates(current),
+      velocity: ZERO_CURSOR_VELOCITY,
+    };
+  }
+  const velocity = computeSmoothedVelocity({
+    measuredVelocity: {
+      x: (current.x - previous.x) / elapsed,
+      y: (current.y - previous.y) / elapsed,
+    },
+    previousVelocity: previous.velocity,
+  });
+  const prediction = capPredictionDistance({
+    x: velocity.x * CURSOR_PREDICTION_MS,
+    y: velocity.y * CURSOR_PREDICTION_MS,
+  });
+  return {
+    coordinates: {
+      x: clampCoordinate({
+        value: current.x + prediction.x,
+        max: layerRect?.width,
+      }),
+      y: clampCoordinate({
+        value: current.y + prediction.y,
+        max: layerRect?.height,
+      }),
+    },
+    velocity,
+  };
 };
 
 const shouldSkipCollaborator = ({
@@ -165,6 +297,80 @@ const areInstanceSelectorsEqual = (
   return left.every((id, index) => id === right[index]);
 };
 
+const CollaborativeCursor = ({
+  color,
+  coordinates,
+  label,
+  layerRect,
+  sampleTime,
+}: {
+  color: string | undefined;
+  coordinates: CursorCoordinates;
+  label: string | undefined;
+  layerRect: Rect | undefined;
+  sampleTime: number | undefined;
+}) => {
+  const elementRef = useRef<HTMLDivElement>(null);
+  const previousSampleRef = useRef<CursorSample>();
+
+  useLayoutEffect(() => {
+    const element = elementRef.current;
+    if (element === null) {
+      return;
+    }
+    const currentSample = {
+      ...coordinates,
+      time: sampleTime ?? Date.now(),
+    };
+    const prediction = computePredictedCursor({
+      current: currentSample,
+      previous: previousSampleRef.current,
+      layerRect,
+    });
+    element.style.transform = `translate3d(${prediction.coordinates.x}px, ${prediction.coordinates.y}px, 0)`;
+    previousSampleRef.current = {
+      ...currentSample,
+      velocity: prediction.velocity,
+    };
+  }, [
+    coordinates.x,
+    coordinates.y,
+    layerRect?.height,
+    layerRect?.width,
+    sampleTime,
+  ]);
+
+  return (
+    <div
+      ref={elementRef}
+      className={cursorStyle()}
+      style={{
+        color,
+      }}
+    >
+      <svg
+        width="14"
+        height="20"
+        viewBox="0 0 14 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M1 1.5L1 17.7L4.8 13.4L8 19L11 17.4L7.8 11.8L13 11.8L1 1.5Z"
+          fill="currentColor"
+          stroke="white"
+          strokeWidth="1"
+        />
+      </svg>
+      {label && (
+        <div className={cursorLabelStyle()} style={{ backgroundColor: color }}>
+          {label}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const CollaborativeCursors = () => {
   const collaborators = useStore($collaborators);
   const canvasRect = useStore($canvasRect);
@@ -224,43 +430,18 @@ export const CollaborativeCursors = () => {
           return;
         }
 
-        const { x, y } = coordinates;
-
         const color = collaboratorColors.get(clientId);
         const label = getCollaboratorLabel(collaborator);
 
         return (
-          <div
+          <CollaborativeCursor
             key={clientId}
-            className={cursorStyle()}
-            style={{
-              color,
-              transform: `translate3d(${x}px, ${y}px, 0)`,
-            }}
-          >
-            <svg
-              width="14"
-              height="20"
-              viewBox="0 0 14 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M1 1.5L1 17.7L4.8 13.4L8 19L11 17.4L7.8 11.8L13 11.8L1 1.5Z"
-                fill="currentColor"
-                stroke="white"
-                strokeWidth="1"
-              />
-            </svg>
-            {label && (
-              <div
-                className={cursorLabelStyle()}
-                style={{ backgroundColor: color }}
-              >
-                {label}
-              </div>
-            )}
-          </div>
+            color={color}
+            coordinates={coordinates}
+            label={label}
+            layerRect={layerRect}
+            sampleTime={collaborator.lastSeen}
+          />
         );
       })}
     </div>
@@ -269,6 +450,7 @@ export const CollaborativeCursors = () => {
 
 export const __testing__ = {
   getCollaboratorLabel,
+  computePredictedCursor,
   shouldSkipCollaborator,
   hasCursorPosition,
   computeCursorCoordinates,

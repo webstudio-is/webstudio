@@ -5,7 +5,7 @@ import { $selectedInstanceSelector } from "./nano-states/instances";
 import { $user } from "./nano-states/misc";
 import { $selectedPageId } from "./nano-states/pages";
 
-const POINTER_FPS_LIMIT = 8;
+const POINTER_FPS_LIMIT = 5;
 const POINTER_FRAME_MS = Math.ceil(1000 / POINTER_FPS_LIMIT);
 
 export type Awareness = Pick<

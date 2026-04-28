@@ -3,6 +3,7 @@ import { __testing__ } from "./collaborative-cursors";
 
 const {
   getCollaboratorLabel,
+  computePredictedCursor,
   shouldSkipCollaborator,
   hasCursorPosition,
   computeCursorCoordinates,
@@ -91,6 +92,80 @@ describe("collaborative-cursors helpers", () => {
     expect(isWithinLayer({ x: -1, y: 10, layerRect })).toBe(false);
     expect(isWithinLayer({ x: 10, y: 401, layerRect })).toBe(false);
     expect(isWithinLayer({ x: 999, y: 999, layerRect: undefined })).toBe(true);
+  });
+
+  test("computePredictedCursor extrapolates from cursor velocity", () => {
+    expect(
+      computePredictedCursor({
+        current: { x: 20, y: 30, time: 100 },
+        previous: { x: 10, y: 10, time: 0 },
+        layerRect: { left: 0, top: 0, width: 500, height: 400 },
+      }).coordinates
+    ).toEqual({ x: 28, y: 46 });
+  });
+
+  test("computePredictedCursor smooths velocity across updates", () => {
+    const prediction = computePredictedCursor({
+      current: { x: 20, y: 0, time: 100 },
+      previous: { x: 10, y: 0, time: 0, velocity: { x: 0.3, y: 0 } },
+      layerRect: { left: 0, top: 0, width: 500, height: 400 },
+    });
+
+    expect(prediction.coordinates.x).toBe(36);
+    expect(prediction.velocity.x).toBe(0.2);
+  });
+
+  test("computePredictedCursor resets velocity when direction reverses", () => {
+    const prediction = computePredictedCursor({
+      current: { x: 90, y: 0, time: 100 },
+      previous: { x: 100, y: 0, time: 0, velocity: { x: 0.5, y: 0 } },
+      layerRect: { left: 0, top: 0, width: 500, height: 400 },
+    });
+
+    expect(prediction.coordinates.x).toBe(82);
+    expect(prediction.velocity.x).toBe(-0.1);
+  });
+
+  test("computePredictedCursor skips stale samples", () => {
+    expect(
+      computePredictedCursor({
+        current: { x: 20, y: 30, time: 500 },
+        previous: { x: 10, y: 10, time: 0 },
+        layerRect: { left: 0, top: 0, width: 500, height: 400 },
+      }).coordinates
+    ).toEqual({ x: 20, y: 30 });
+  });
+
+  test("computePredictedCursor stops predicting when the cursor stops", () => {
+    const prediction = computePredictedCursor({
+      current: { x: 20, y: 30, time: 100 },
+      previous: { x: 20, y: 30, time: 0, velocity: { x: 0.5, y: 0 } },
+      layerRect: { left: 0, top: 0, width: 500, height: 400 },
+    });
+
+    expect(prediction.coordinates).toEqual({ x: 20, y: 30 });
+    expect(prediction.velocity).toEqual({ x: 0, y: 0 });
+  });
+
+  test("computePredictedCursor caps prediction distance", () => {
+    const result = computePredictedCursor({
+      current: { x: 200, y: 0, time: 10 },
+      previous: { x: 0, y: 0, time: 0 },
+      layerRect: { left: 0, top: 0, width: 500, height: 400 },
+    }).coordinates;
+
+    expect(result.x).toBe(280);
+    expect(result.y).toBe(0);
+  });
+
+  test("computePredictedCursor clamps prediction to layer", () => {
+    expect(
+      computePredictedCursor({
+        current: { x: 490, y: 390, time: 100 },
+        previous: { x: 450, y: 350, time: 0 },
+        layerRect: { left: 0, top: 0, width: 500, height: 400 },
+      }).coordinates
+    ).toEqual({ x: 500, y: 400 });
   });
 
   test("toRenderableCollaboratorCursor returns coordinates only for visible collaborator cursor", () => {
