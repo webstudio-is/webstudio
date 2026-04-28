@@ -76,6 +76,8 @@ runs:
       shell: bash
 
     - name: Build
+      env:
+        PUBLIC_COLLAB_RELAY_URL: ${{ vars.PUBLIC_COLLAB_RELAY_URL }}
       run: |
         export GITHUB_SHA=${{ inputs.sha }}
         export GITHUB_REF_NAME=${{ inputs.ref-name }}
