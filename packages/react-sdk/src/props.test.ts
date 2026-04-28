@@ -4,23 +4,56 @@ import { isAttributeNameSafe, normalizeProps } from "./props";
 
 const pagesBase: Pages = {
   meta: {},
-  homePage: {
-    id: "home",
-    path: "",
-    name: "Home",
-    title: "Home",
-    rootInstanceId: "instance-1",
-    meta: {},
-  },
-  pages: [],
-  folders: [
-    {
-      id: "root",
-      name: "Root",
-      slug: "",
-      children: [],
-    },
-  ],
+  homePageId: "home",
+  rootFolderId: "root",
+  pages: new Map([
+    [
+      "home",
+      {
+        id: "home",
+        path: "",
+        name: "Home",
+        title: "Home",
+        rootInstanceId: "instance-1",
+        meta: {},
+      },
+    ],
+  ]),
+  folders: new Map([
+    [
+      "root",
+      {
+        id: "root",
+        name: "Root",
+        slug: "",
+        children: [],
+      },
+    ],
+  ]),
+};
+
+const createPages = ({
+  pages,
+  folders,
+}: {
+  pages: Array<Pages["pages"] extends Map<string, infer Page> ? Page : never>;
+  folders: Array<
+    Pages["folders"] extends Map<string, infer Folder> ? Folder : never
+  >;
+}): Pages => ({
+  ...pagesBase,
+  pages: new Map([
+    ...pagesBase.pages,
+    ...pages.map((page) => [page.id, page] as const),
+  ]),
+  folders: new Map(folders.map((folder) => [folder.id, folder] as const)),
+});
+
+const rootFolder = {
+  id: "root",
+  name: "Root",
+  slug: "",
+  children: [],
 };
 
 test("normalize asset prop into string", () => {
@@ -194,8 +227,7 @@ test("normalize page prop with path into string", () => {
       assetBaseUrl: "",
       assets: new Map(),
       uploadingImageAssets: [],
-      pages: {
-        ...pagesBase,
+      pages: createPages({
         pages: [
           {
             id: "page1",
@@ -206,8 +238,8 @@ test("normalize page prop with path into string", () => {
             meta: {},
           },
         ],
-        folders: [],
-      },
+        folders: [rootFolder],
+      }),
       source: "prebuild",
     })
   ).toEqual([
@@ -246,8 +278,7 @@ test("normalize page prop with path and hash into string", () => {
     assetBaseUrl: "",
     assets: new Map(),
     uploadingImageAssets: [],
-    pages: {
-      ...pagesBase,
+    pages: createPages({
       pages: [
         {
           id: "page1",
@@ -272,7 +303,7 @@ test("normalize page prop with path and hash into string", () => {
           children: ["page1"],
         },
       ],
-    },
+    }),
     source: "prebuild",
   });
   expect(result).toEqual([
