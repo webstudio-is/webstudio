@@ -36,11 +36,11 @@ export const requestNotificationPermission =
  *
  * Will silently no-op when:
  * - Permission hasn't been granted.
- * - The tab is currently focused (the in-app toast is enough).
+ * - The tab is currently focused, unless `showWhenFocused` is true.
  */
 export const showBrowserNotification = (
   title: string,
-  options?: NotificationOptions
+  options?: NotificationOptions & { showWhenFocused?: boolean }
 ) => {
   if (typeof Notification === "undefined") {
     return;
@@ -50,10 +50,12 @@ export const showBrowserNotification = (
   }
   // Skip when the user is already looking at the page — the in-app
   // toast handles that case.
-  if (document.hasFocus()) {
+  if (options?.showWhenFocused !== true && document.hasFocus()) {
     return;
   }
-  const notification = new Notification(title, options);
+  const { showWhenFocused, ...notificationOptions } = options ?? {};
+  void showWhenFocused;
+  const notification = new Notification(title, notificationOptions);
   notification.onclick = () => {
     window.focus();
     notification.close();

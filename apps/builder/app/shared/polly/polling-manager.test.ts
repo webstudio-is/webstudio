@@ -54,6 +54,40 @@ describe("createPollingManager", () => {
       manager.destroy();
     });
 
+    test("can keep polling when document is hidden", async () => {
+      const addSpy = vi.spyOn(document, "addEventListener");
+      const fetcher = createMockFetcher();
+      const manager = createPollingManager({
+        fetcher,
+        interval: 1_000,
+        pauseOnHidden: false,
+      });
+
+      manager.subscribe("notifications", vi.fn());
+      await flush();
+
+      expect(addSpy).not.toHaveBeenCalledWith(
+        "visibilitychange",
+        expect.any(Function)
+      );
+
+      Object.defineProperty(document, "visibilityState", {
+        value: "hidden",
+        writable: true,
+        configurable: true,
+      });
+
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(fetcher).toHaveBeenCalledTimes(2);
+
+      Object.defineProperty(document, "visibilityState", {
+        value: "visible",
+        writable: true,
+        configurable: true,
+      });
+      manager.destroy();
+    });
+
     test("removing the last subscription stops polling", async () => {
       const fetcher = createMockFetcher();
       const manager = createPollingManager({ fetcher, interval: 1_000 });

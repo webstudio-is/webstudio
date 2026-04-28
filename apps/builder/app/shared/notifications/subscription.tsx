@@ -20,11 +20,15 @@ import {
 import { publicStaticEnv } from "~/env/env.static";
 
 const knownNotificationTypes = new Set<string>(notificationTypes);
+const NEW_NOTIFICATIONS_TOAST_DURATION = 10_000;
 
 export const $notifications = atom<Notifications>([]);
 export const $shouldRevalidateProjects = atom(0);
 
 let manager: ReturnType<typeof createCrossTabPollingManager> | undefined;
+const pendingBrowserNotificationTimeouts = new Set<
+  ReturnType<typeof setTimeout>
+>();
 
 export const refreshNotifications = () => manager?.refresh();
 
@@ -49,6 +53,7 @@ export const startSubscription = () => {
       nativeClient.polly.poll.query({
         topics,
       }) as Promise<SubscriptionResponse>,
+    pauseOnHidden: false,
     onError: (error) => {
       console.warn("[subscription] poll failed", error);
     },
@@ -71,11 +76,32 @@ export const startSubscription = () => {
     const hasNew = known.some((n) => prevIds.has(n.id) === false);
 
     if (hasNew) {
-      toast.info("You have new notifications");
-      // Best-effort browser notification (may be silenced by the OS).
-      showBrowserNotification("Webstudio", {
-        body: "You have new notifications",
+      const newIds = new Set(
+        known.filter((n) => prevIds.has(n.id) === false).map((n) => n.id)
+      );
+      toast.info("You have new notifications", {
+        duration: NEW_NOTIFICATIONS_TOAST_DURATION,
       });
+      // Best-effort browser notification (may be silenced by the OS).
+      if (document.hasFocus()) {
+        const timeoutId = setTimeout(() => {
+          pendingBrowserNotificationTimeouts.delete(timeoutId);
+          const hasUnresolvedNewNotification = $notifications
+            .get()
+            .some((n) => newIds.has(n.id));
+          if (hasUnresolvedNewNotification) {
+            showBrowserNotification("Webstudio", {
+              body: "You have new notifications",
+              showWhenFocused: true,
+            });
+          }
+        }, NEW_NOTIFICATIONS_TOAST_DURATION);
+        pendingBrowserNotificationTimeouts.add(timeoutId);
+      } else {
+        showBrowserNotification("Webstudio", {
+          body: "You have new notifications",
+        });
+      }
     }
   };
 
@@ -115,6 +141,10 @@ export const startSubscription = () => {
 };
 
 export const stopSubscription = () => {
+  for (const timeoutId of pendingBrowserNotificationTimeouts) {
+    clearTimeout(timeoutId);
+  }
+  pendingBrowserNotificationTimeouts.clear();
   manager?.destroy();
   manager = undefined;
 };
