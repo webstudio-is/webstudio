@@ -87,12 +87,12 @@ export const CanvasTools = () => {
     <>
       {isPreviewMode === false && (
         <>
-          <CollaborativeCursors />
           {isStylePanelGridVisible && <GridGuides />}
           <SelectedInstanceOutline />
           <HoveredInstanceOutline />
           <CollaborativeInstanceOutline />
           <BlockChildHoveredInstanceOutline />
+          <CollaborativeCursors />
           <TextEditorContextMenu />
           <CanvasInstanceContextMenu />
         </>
