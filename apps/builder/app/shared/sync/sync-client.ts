@@ -100,6 +100,12 @@ export const initializeClientSync = ({
       ? undefined
       : resolveMultiplayerRelayUrl(multiplayerRelayUrl);
   const useMultiplayer = resolvedMultiplayerRelayUrl !== undefined;
+  if (useMultiplayer) {
+    console.info("[builder-sync] multiplayer mode enabled", {
+      projectId,
+      relayUrl: resolvedMultiplayerRelayUrl,
+    });
+  }
 
   // Note: "view" permit will skip transaction synchronization
 

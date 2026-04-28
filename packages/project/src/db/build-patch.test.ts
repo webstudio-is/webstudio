@@ -127,6 +127,66 @@ describe("patchBuild", () => {
     ]);
   });
 
+  test("applies page path changes from normalized page id patches", async () => {
+    let updatedBuild: unknown;
+    server.use(
+      db.get("Build", () =>
+        json([
+          {
+            ...buildRow,
+            pages: JSON.stringify({
+              ...JSON.parse(buildRow.pages),
+              pages: [
+                {
+                  id: "page-2",
+                  name: "About",
+                  path: "/about",
+                  title: "About",
+                  meta: {},
+                  rootInstanceId: "body-1",
+                },
+              ],
+            }),
+          },
+        ])
+      ),
+      db.patch("Build", async ({ request }) => {
+        updatedBuild = await request.json();
+        return empty({ headers: { "Content-Range": "*/1" } });
+      })
+    );
+
+    const result = await patchBuild(
+      {
+        buildId: "build-1",
+        projectId: "project-1",
+        clientVersion: 3,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "pages",
+                patches: [
+                  {
+                    op: "replace",
+                    path: ["pages", "@page-2", "path"],
+                    value: "/company",
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      },
+      createContext()
+    );
+
+    expect(result).toEqual({ status: "ok", version: 4 });
+    expect(
+      JSON.parse((updatedBuild as { pages: string }).pages).pages[0].path
+    ).toBe("/company");
+  });
+
   test("returns ok when retrying a transaction already saved by the server", async () => {
     let didPatch = false;
     server.use(

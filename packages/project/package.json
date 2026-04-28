@@ -40,6 +40,10 @@
     "./build-patch-core.server": {
       "webstudio": "./src/db/build-patch-core.ts",
       "import": "./src/db/build-patch-core.ts"
+    },
+    "./pages-patch-normalizer": {
+      "webstudio": "./src/shared/pages-patch-normalizer.ts",
+      "import": "./src/shared/pages-patch-normalizer.ts"
     }
   },
   "license": "AGPL-3.0-or-later",

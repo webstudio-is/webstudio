@@ -4,7 +4,7 @@ import type { Pages } from "@webstudio-is/sdk";
 import {
   normalizePagesPatch,
   denormalizePagesPatch,
-} from "./pages-patch-normalizer";
+} from "@webstudio-is/project/pages-patch-normalizer";
 import type { Change } from "immerhin";
 
 enableMapSet();
@@ -195,6 +195,26 @@ describe("denormalizePagesPatch", () => {
     ];
     const result = denormalizePagesPatch(changes, pages);
     expect(result[0].patches[0].path).toEqual(["pages", 1]);
+  });
+
+  test("denormalizes broadcast patches without revise patches", () => {
+    const pages = makePages([{ id: "p1", name: "About" }]);
+    const newPage = {
+      id: "p2",
+      name: "New",
+      path: "/new",
+      title: "New",
+      meta: {},
+    };
+    const changes = [
+      {
+        namespace: "pages",
+        patches: [{ op: "add", path: ["pages", "@p2"], value: newPage }],
+      },
+    ] as Change[];
+    const result = denormalizePagesPatch(changes, pages);
+    expect(result[0].patches[0].path).toEqual(["pages", 1]);
+    expect("revisePatches" in result[0]).toBe(false);
   });
 
   test("leaves path unchanged when page id not found (stale patch)", () => {

@@ -7,7 +7,7 @@ import { $project } from "./data-stores";
 import {
   normalizePagesPatch,
   denormalizePagesPatch,
-} from "./pages-patch-normalizer";
+} from "@webstudio-is/project/pages-patch-normalizer";
 import {
   $selectedPageHash,
   $selectedInstanceSizes,
