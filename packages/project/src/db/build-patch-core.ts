@@ -2,8 +2,6 @@ import { applyPatches, enableMapSet, enablePatches, type Patch } from "immer";
 import {
   Breakpoints,
   type Breakpoint,
-  type Folder,
-  type Page,
   DataSources,
   type DataSource,
   Instances,
@@ -17,8 +15,6 @@ import {
   StyleSources,
   type StyleSource,
   Styles,
-  getAllFolders,
-  getAllPages,
   getHomePage,
 } from "@webstudio-is/sdk";
 import {
@@ -69,71 +65,6 @@ export const singlePlayerVersionMismatchResult = {
   status: "version_mismatched",
   errors: singlePlayerVersionMismatchError,
 } as const satisfies BuildPatchUpdateResult;
-
-const legacyIdPrefix = "@";
-
-const decodeLegacyId = (segment: string) => {
-  if (segment.startsWith(legacyIdPrefix)) {
-    return segment.slice(legacyIdPrefix.length);
-  }
-  return segment;
-};
-
-const getLegacyPageIdByIndex = (pages: Pages, index: number) => {
-  return getAllPages(pages).filter((page) => page.id !== pages.homePageId)[
-    index
-  ]?.id;
-};
-
-const getLegacyFolderIdByIndex = (pages: Pages, index: number) => {
-  return getAllFolders(pages)[index]?.id;
-};
-
-const getIdFromPatchValue = (value: unknown) => {
-  if (typeof value !== "object" || value === null) {
-    return;
-  }
-  const { id } = value as Partial<Page | Folder>;
-  return typeof id === "string" ? id : undefined;
-};
-
-const normalizePagesPatchPath = (patch: Patch, pages: Pages): Patch => {
-  const [namespace, idOrIndex, ...rest] = patch.path;
-
-  if (namespace === "homePage") {
-    return { ...patch, path: ["pages", pages.homePageId, ...rest] };
-  }
-
-  if (namespace !== "pages" && namespace !== "folders") {
-    return patch;
-  }
-
-  if (typeof idOrIndex === "string") {
-    return {
-      ...patch,
-      path: [namespace, decodeLegacyId(idOrIndex), ...rest],
-    };
-  }
-
-  if (typeof idOrIndex !== "number") {
-    return patch;
-  }
-
-  let id = patch.op === "add" ? getIdFromPatchValue(patch.value) : undefined;
-
-  id ??=
-    namespace === "pages"
-      ? getLegacyPageIdByIndex(pages, idOrIndex)
-      : getLegacyFolderIdByIndex(pages, idOrIndex);
-
-  return id === undefined
-    ? patch
-    : { ...patch, path: [namespace, id, ...rest] };
-};
-
-const normalizePagesPatches = (patches: Patch[], pages: Pages) => {
-  return patches.map((patch) => normalizePagesPatchPath(patch, pages));
-};
 
 export const createBuildPatchUpdate = async ({
   build,
@@ -190,10 +121,7 @@ export const createBuildPatchUpdate = async ({
         const pages = buildData.pages ?? parsePages(build.pages);
         const currentSocialImageAssetId =
           getHomePage(pages).meta.socialImageAssetId;
-        buildData.pages = applyPatches(
-          pages,
-          normalizePagesPatches(patches, pages)
-        );
+        buildData.pages = applyPatches(pages, patches);
         const newSocialImageAssetId = getHomePage(buildData.pages).meta
           .socialImageAssetId;
         if (currentSocialImageAssetId !== newSocialImageAssetId) {
