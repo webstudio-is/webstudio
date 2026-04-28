@@ -13,6 +13,7 @@ import type {
   StyleSource,
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
+import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 
 export type Data = {
   page: Page;
@@ -38,32 +39,6 @@ export type Data = {
   origin?: string;
 };
 
-// @todo: broken as expects non 200 code
-const getLatestBuildUsingProjectId = async (params: {
-  projectId: string;
-  origin: string;
-  authToken: string;
-}): Promise<{ buildId: string | null }> => {
-  const { origin, projectId, authToken } = params;
-
-  const { sourceOrigin } = parseBuilderUrl(origin);
-
-  const url = new URL(sourceOrigin);
-  url.pathname = `/rest/buildId/${projectId}`;
-
-  const headers = new Headers();
-  headers.set("x-auth-token", authToken);
-
-  const response = await fetch(url.href, { headers });
-
-  if (response.ok) {
-    return await response.json();
-  }
-
-  const message = await response.text();
-  throw new Error(message.slice(0, 1000));
-};
-
 export const loadProjectDataByBuildId = async (
   params: {
     buildId: string;
@@ -75,29 +50,29 @@ export const loadProjectDataByBuildId = async (
     | { authToken: string }
   )
 ): Promise<Data> => {
-  const { sourceOrigin } = parseBuilderUrl(params.origin);
+  const headers: Record<string, string> =
+    "seviceToken" in params
+      ? { Authorization: params.seviceToken }
+      : { "x-auth-token": params.authToken };
 
-  const url = new URL(sourceOrigin);
+  return (await createTrpcClient(params.origin, headers).query(
+    "build.loadProjectDataByBuildId",
+    { buildId: params.buildId }
+  )) as Data;
+};
 
-  url.pathname = `/rest/build/${params.buildId}`;
+const createTrpcClient = (origin: string, headers: Record<string, string>) => {
+  const { sourceOrigin } = parseBuilderUrl(origin);
+  const url = new URL("/trpc", sourceOrigin);
 
-  const headers = new Headers();
-  if ("seviceToken" in params) {
-    headers.set("Authorization", params.seviceToken);
-  } else {
-    headers.set("x-auth-token", params.authToken);
-  }
-
-  const response = await fetch(url.href, {
-    headers,
+  return createTRPCUntypedClient({
+    links: [
+      httpBatchLink({
+        url: url.href,
+        headers,
+      }),
+    ],
   });
-
-  if (response.ok) {
-    return await response.json();
-  }
-
-  const message = await response.text();
-  throw new Error(message.slice(0, 1000));
 };
 
 export const loadProjectDataByProjectId = async (params: {
@@ -105,16 +80,11 @@ export const loadProjectDataByProjectId = async (params: {
   origin: string;
   authToken: string;
 }): Promise<Data> => {
-  const result = await getLatestBuildUsingProjectId(params);
-  if (result.buildId === null) {
-    throw new Error(`The project is not published yet`);
-  }
-
-  return await loadProjectDataByBuildId({
-    buildId: result.buildId,
-    origin: params.origin,
-    authToken: params.authToken,
-  });
+  return (await createTrpcClient(params.origin, {
+    "x-auth-token": params.authToken,
+  }).query("build.loadProjectDataByProjectId", {
+    projectId: params.projectId,
+  })) as Data;
 };
 
 // For easier detecting the builder URL

@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@trpc/client": "^10.45.2",
     "@webstudio-is/sdk": "workspace:*"
   },
   "devDependencies": {

@@ -1086,6 +1086,9 @@ importers:
       '@emotion/hash':
         specifier: ^0.9.2
         version: 0.9.2
+      '@trpc/client':
+        specifier: ^10.45.2
+        version: 10.45.2(@trpc/server@10.45.2)
       acorn:
         specifier: ^8.14.1
         version: 8.14.1
@@ -1627,6 +1630,9 @@ importers:
 
   packages/http-client:
     dependencies:
+      '@trpc/client':
+        specifier: ^10.45.2
+        version: 10.45.2(@trpc/server@10.45.2)
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk

@@ -9,10 +9,16 @@ const isServiceRequest = (request: Request) => {
   return isServiceAuthorization(request.headers.get("Authorization"));
 };
 
+const isAuthTokenRequest = (request: Request) => {
+  return request.headers.has("x-auth-token");
+};
+
 export const action = async ({ request }: ActionFunctionArgs) => {
   if (isServiceRequest(request) === false) {
     preventCrossOriginCookie(request);
-    await checkCsrf(request);
+    if (isAuthTokenRequest(request) === false) {
+      await checkCsrf(request);
+    }
   }
 
   // https://trpc.io/docs/server/adapters/fetch

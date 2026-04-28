@@ -18,6 +18,10 @@ import {
 } from "~/shared/sync/patch/patch-service.server";
 import { normalizePatchRequest } from "~/shared/sync/patch/patch-normalize.server";
 import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
+import {
+  loadPublishedProjectDataByBuildId,
+  loadPublishedProjectDataByProjectId,
+} from "~/shared/db";
 
 const patchEntryInput = z.object({
   seq: z.number().optional(),
@@ -93,6 +97,18 @@ const assertRelayPatchContext = (
 };
 
 export const buildRouter = router({
+  loadProjectDataByBuildId: procedure
+    .input(z.object({ buildId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await loadPublishedProjectDataByBuildId(input.buildId, ctx);
+    }),
+
+  loadProjectDataByProjectId: procedure
+    .input(z.object({ projectId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await loadPublishedProjectDataByProjectId(input.projectId, ctx);
+    }),
+
   createCollabToken: procedure
     .input(
       z.object({

@@ -1,6 +1,6 @@
 import { cwd, exit } from "node:process";
 import { join } from "node:path";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { cancel, isCancel, log, text } from "@clack/prompts";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import {
@@ -15,6 +15,42 @@ import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
+
+const wait = (duration: number) =>
+  new Promise((resolve) => setTimeout(resolve, duration));
+
+const withConfigLock = async <Result>(callback: () => Promise<Result>) => {
+  const lockPath = `${GLOBAL_CONFIG_FILE}.lock`;
+  const start = Date.now();
+
+  while (true) {
+    try {
+      await mkdir(lockPath);
+      break;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== "EEXIST") {
+        throw error;
+      }
+      if (Date.now() - start > 10_000) {
+        throw new Error(`Timed out waiting for config lock ${lockPath}`);
+      }
+      await wait(50);
+    }
+  }
+
+  try {
+    return await callback();
+  } finally {
+    await rm(lockPath, { recursive: true, force: true });
+  }
+};
+
+const writeConfigFile = async (content: string) => {
+  const temporaryFile = `${GLOBAL_CONFIG_FILE}.${process.pid}.tmp`;
+  await writeFile(temporaryFile, content, "utf8");
+  await rename(temporaryFile, GLOBAL_CONFIG_FILE);
+};
 
 const parseShareLink = (value: string) => {
   // value.replaceAll("'", "") is used to remove single quotes from the URL on Windows.
@@ -88,18 +124,20 @@ export const link = async (
 
   const { origin, projectId, token } = parseShareLink(shareLink);
 
-  const currentConfig = await readFile(GLOBAL_CONFIG_FILE, "utf-8");
-  const currentConfigJson = jsonToGlobalConfig(JSON.parse(currentConfig));
+  await withConfigLock(async () => {
+    const currentConfig = await readFile(GLOBAL_CONFIG_FILE, "utf-8");
+    const currentConfigJson = jsonToGlobalConfig(JSON.parse(currentConfig));
 
-  const newConfig: GlobalConfig = {
-    ...currentConfigJson,
-    [projectId]: {
-      origin,
-      token,
-    },
-  };
+    const newConfig: GlobalConfig = {
+      ...currentConfigJson,
+      [projectId]: {
+        origin,
+        token,
+      },
+    };
 
-  await writeFile(GLOBAL_CONFIG_FILE, JSON.stringify(newConfig, null, 2));
+    await writeConfigFile(JSON.stringify(newConfig, null, 2));
+  });
   log.info(`Saved credentials for project ${projectId}.
 You can find your config at ${GLOBAL_CONFIG_FILE}`);
 

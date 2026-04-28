@@ -157,9 +157,6 @@ export const restAssetsUploadPath = ({
   return `/rest/assets/${name}`;
 };
 
-export const restBuildVersionPath = (buildId: string) =>
-  `/rest/build-version?buildId=${encodeURIComponent(buildId)}`;
-
 export const getCanvasUrl = () => {
   return `/canvas`;
 };

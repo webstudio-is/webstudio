@@ -3,7 +3,7 @@ import { router, procedure } from "./trpc";
 
 // Has corresponding type in saas
 export const PublishInput = z.object({
-  // used to load build data from the builder see routes/rest.build.$buildId.ts
+  // used to load build data from the builder with build.loadProjectDataByBuildId
   buildId: z.string(),
   builderOrigin: z.string(),
   githubSha: z.string().optional(),
