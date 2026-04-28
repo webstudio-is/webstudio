@@ -44,7 +44,7 @@ builderAuthenticator.use(
       );
 
       if (accessToken === undefined) {
-        debug("Invalid or expired access token", tokens.access_token);
+        debug("Invalid or expired access token");
 
         throw new AuthorizationError("Invalid or expired access token");
       }

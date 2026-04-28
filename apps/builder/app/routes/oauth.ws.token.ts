@@ -6,7 +6,6 @@ import { fromError } from "zod-validation-error";
 import env from "~/env/env.server";
 import {
   createAccessToken,
-  readAccessToken,
   readCodeToken,
   verifyChallenge,
 } from "~/services/token.server";
@@ -78,7 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     clientId !== env.AUTH_WS_CLIENT_ID ||
     clientSecret !== env.AUTH_WS_CLIENT_SECRET
   ) {
-    debug("client_id and client_secret do not match", clientId, clientSecret);
+    debug("client_id and client_secret do not match", clientId);
     return json(
       {
         error: "invalid_client",
@@ -90,7 +89,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const jsonBody = Object.fromEntries((await request.formData()).entries());
-  debug("Token request received", jsonBody);
 
   const parsedBody = TokenRequest.safeParse(jsonBody);
 
@@ -113,7 +111,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const codeToken = await readCodeToken(body.code, env.AUTH_WS_CLIENT_SECRET);
 
   if (codeToken === undefined) {
-    debug("Code can not be read", body.code);
+    debug("Code can not be read");
     return json(
       {
         error: "invalid_grant",
@@ -130,11 +128,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     codeToken.codeChallenge
   );
   if (false === isChallengeVerified) {
-    debug(
-      "Code verifier does not match",
-      body.code_verifier,
-      codeToken.codeChallenge
-    );
+    debug("Code verifier does not match");
     return json(
       {
         error: "invalid_grant",
@@ -172,12 +166,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   );
 
-  debug("Token created", accessToken);
-
-  debug(
-    "readAccessToken",
-    await readAccessToken(accessToken, env.AUTH_WS_CLIENT_SECRET)
-  );
+  debug("Token created");
 
   return json(
     {
