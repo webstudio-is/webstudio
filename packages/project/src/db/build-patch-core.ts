@@ -57,6 +57,14 @@ export type BuildPatchUpdateResult =
   | { status: "version_mismatched"; errors: string }
   | { status: "error"; errors: string };
 
+export const singlePlayerVersionMismatchError =
+  "You are currently in single-player mode. The project has been edited in a different tab, browser, or by another user. Realtime collaboration, also known as multiplayer, is available on the Team plan and helps avoid this conflict. Please reload the page to get the latest version.";
+
+export const singlePlayerVersionMismatchResult = {
+  status: "version_mismatched",
+  errors: singlePlayerVersionMismatchError,
+} as const satisfies BuildPatchUpdateResult;
+
 export const createBuildPatchUpdate = async ({
   build,
   clientVersion,
@@ -81,10 +89,7 @@ export const createBuildPatchUpdate = async ({
       return { status: "ok", assetPatches: [], nextVersion: serverVersion };
     }
 
-    return {
-      status: "version_mismatched",
-      errors: `You are currently in single-player mode. The project has been edited in a different tab, browser, or by another user. Please reload the page to get the latest version.`,
-    };
+    return singlePlayerVersionMismatchResult;
   }
 
   const buildData: {

@@ -37,17 +37,22 @@ type SyncModeClient = {
   onDataLoaded(data: LoadedBuilderData): void;
 };
 
-const resolveMultiplayerRelayUrl = (relayUrl: string) => {
-  if (typeof window === "undefined") {
+const resolveMultiplayerRelayUrl = (
+  relayUrl: string,
+  currentHref = typeof window === "undefined" ? undefined : window.location.href
+) => {
+  if (currentHref === undefined) {
     return relayUrl;
   }
-  const configuredUrl = new URL(relayUrl, window.location.origin);
-  const currentUrl = new URL(window.location.href);
+  const currentUrl = new URL(currentHref);
+  const configuredUrl = new URL(relayUrl, currentUrl.origin);
+  const isRelativeRelayUrl =
+    relayUrl.startsWith("/") || relayUrl.startsWith(".");
   const isLocalWstdDev =
     currentUrl.hostname === "wstd.dev" ||
     currentUrl.hostname.endsWith(".wstd.dev");
 
-  if (isLocalWstdDev && currentUrl.port === "5173") {
+  if (isRelativeRelayUrl && isLocalWstdDev && currentUrl.port === "5173") {
     return new URL(configuredUrl.pathname, currentUrl.origin).href;
   }
 
@@ -166,3 +171,7 @@ export const destroyClientSync = () => {
 };
 
 export const getSyncClient = () => client;
+
+export const __testing__ = {
+  resolveMultiplayerRelayUrl,
+};

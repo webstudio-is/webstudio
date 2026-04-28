@@ -6,6 +6,7 @@ import type { Project } from "./project";
 import { updatePreviewImage } from "./project";
 import {
   createBuildPatchUpdate,
+  singlePlayerVersionMismatchResult,
   type BuildPatchChange,
   type BuildPatchTransaction,
 } from "./build-patch-core";
@@ -73,10 +74,7 @@ export const patchBuild = async (
   }
 
   if (update.count === 0) {
-    return {
-      status: "version_mismatched",
-      errors: `You are currently in single-player mode. The project has been edited in a different tab, browser, or by another user. Please reload the page to get the latest version.`,
-    };
+    return singlePlayerVersionMismatchResult;
   }
 
   if (result.previewImageAssetId !== undefined) {

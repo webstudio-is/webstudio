@@ -9,7 +9,10 @@ import {
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { Patch } from "immer";
 import { patchBuild, type BuildPatchTransaction } from "./build-patch";
-import { createBuildPatchUpdate } from "./build-patch-core";
+import {
+  createBuildPatchUpdate,
+  singlePlayerVersionMismatchResult,
+} from "./build-patch-core";
 
 const server = createTestServer();
 
@@ -163,7 +166,7 @@ describe("patchBuild", () => {
       createContext()
     );
 
-    expect(result.status).toBe("version_mismatched");
+    expect(result).toEqual(singlePlayerVersionMismatchResult);
   });
 
   test("returns version_mismatched when optimistic update affects no rows", async () => {
@@ -182,7 +185,7 @@ describe("patchBuild", () => {
       createContext()
     );
 
-    expect(result.status).toBe("version_mismatched");
+    expect(result).toEqual(singlePlayerVersionMismatchResult);
   });
 
   test("rejects unknown namespaces", async () => {
