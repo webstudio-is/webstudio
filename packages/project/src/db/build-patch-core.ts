@@ -33,6 +33,7 @@ import {
   serializeData,
 } from "@webstudio-is/project-build";
 import type { Database } from "@webstudio-is/postgrest/index.server";
+import { denormalizePagesPatch } from "../shared/pages-patch-normalizer";
 
 enableMapSet();
 enablePatches();
@@ -65,6 +66,12 @@ export const singlePlayerVersionMismatchResult = {
   status: "version_mismatched",
   errors: singlePlayerVersionMismatchError,
 } as const satisfies BuildPatchUpdateResult;
+
+const denormalizePagesPatches = (patches: Patch[], pages: Pages): Patch[] => {
+  return denormalizePagesPatch([{ namespace: "pages", patches }], pages, {
+    onMissing: "throw",
+  })[0].patches;
+};
 
 export const createBuildPatchUpdate = async ({
   build,
@@ -120,10 +127,13 @@ export const createBuildPatchUpdate = async ({
       if (namespace === "pages") {
         const pages = buildData.pages ?? parsePages(build.pages);
         const currentSocialImageAssetId =
-          getHomePage(pages).meta.socialImageAssetId;
-        buildData.pages = applyPatches(pages, patches);
-        const newSocialImageAssetId = getHomePage(buildData.pages).meta
-          .socialImageAssetId;
+          pages.homePage.meta.socialImageAssetId;
+        buildData.pages = applyPatches(
+          pages,
+          denormalizePagesPatches(patches, pages)
+        );
+        const newSocialImageAssetId =
+          buildData.pages.homePage.meta.socialImageAssetId;
         if (currentSocialImageAssetId !== newSocialImageAssetId) {
           previewImageAssetId = newSocialImageAssetId || null;
         }
