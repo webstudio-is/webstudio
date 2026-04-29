@@ -54,7 +54,7 @@ jobs:
             is-staging: false
 
     environment:
-      name: ${{ github.event_name == 'push' && matrix.environment == 'staging' && startsWith(github.ref_name, 'release-') && endsWith(github.ref_name, '.staging') && 'production' || matrix.environment }}
+      name: ${{ matrix.environment }}
 
     timeout-minutes: 20
 

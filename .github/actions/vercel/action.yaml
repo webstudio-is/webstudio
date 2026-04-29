@@ -83,11 +83,12 @@ runs:
       run: |
         export GITHUB_SHA=${{ inputs.sha }}
         export GITHUB_REF_NAME=${{ inputs.ref-name }}
-        export PUBLIC_COLLAB_RELAY_URL=${{ inputs.PUBLIC_COLLAB_RELAY_URL }}
 
         if [ "${{ inputs.production-staged }}" = "true" ]; then
+          unset PUBLIC_COLLAB_RELAY_URL
           pnpx vercel build --prod --token "${{ inputs.vercel-token }}"
         else
+          export PUBLIC_COLLAB_RELAY_URL=${{ inputs.PUBLIC_COLLAB_RELAY_URL }}
           pnpx vercel build --token "${{ inputs.vercel-token }}"
         fi
       shell: bash
