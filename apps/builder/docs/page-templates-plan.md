@@ -124,9 +124,9 @@ Editors should be able to edit the following page settings, subject to the condi
 | ------------------------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------- |
 | Page name                            | Yes                 | Always                                                                                                         |
 | Page path                            | Yes                 | Only if the path is a plain static value — not dynamic (no path parameters) and not using any variable binding |
+| Title                                | Yes                 | Only if the title is a plain static value and is not using any variable binding                                |
 | Search settings (SEO indexing, etc.) | Yes                 | Only if none of the search setting fields are using variable bindings                                          |
 | Social image settings                | Yes                 | Only if none of the social image fields are using any variable binding                                         |
-| Title                                | No                  | —                                                                                                              |
 | Redirect                             | No                  | —                                                                                                              |
 | Custom metadata                      | No                  | —                                                                                                              |
 | Any field with a variable binding    | No                  | Binding presence locks the field for editors regardless of which setting it belongs to                         |
@@ -139,6 +139,7 @@ Editors should be able to edit the following page settings, subject to the condi
 - The creation flow mirrors the designer flow, but is scoped to only the settings editors are permitted to set:
   - Page name
   - Page path (static only, following the same binding rule as above)
+  - Title (if not bound)
   - Search settings (if not bound)
   - Social image settings (if not bound)
 - After creation, the editor lands on the new page with the template's content already in place and can immediately begin editing content within their existing permissions.
