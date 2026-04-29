@@ -1,8 +1,7 @@
 import { expect, test } from "vitest";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { WebstudioData } from "../schema/webstudio";
-import type { Pages } from "../schema/pages";
-import { migrateWebstudioDataMutable } from "./webstudio-data";
+import type { Pages, WebstudioData } from "@webstudio-is/sdk";
+import { migrateWebstudioDataMutable } from "./index";
 
 const emptyData: WebstudioData = {
   pages: {

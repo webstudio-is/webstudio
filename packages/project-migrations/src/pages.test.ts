@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { Pages } from "../schema/pages";
+import type { Pages } from "@webstudio-is/sdk";
 import { migratePages, serializePages } from "./pages";
 
 test("keeps current pages shape unchanged", () => {

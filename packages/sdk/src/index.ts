@@ -17,7 +17,6 @@ export * from "./assets";
 export * from "./core-metas";
 export * from "./instances-utils";
 export * from "./page-utils";
-export * from "./migrations";
 export * from "./scope";
 export * from "./expression";
 export * from "./resources-generator";

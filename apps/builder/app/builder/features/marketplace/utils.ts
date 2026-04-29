@@ -1,10 +1,12 @@
 import {
   getStyleDeclKey,
-  migratePages,
   type Asset,
-  type SerializedPages,
   type WebstudioData,
 } from "@webstudio-is/sdk";
+import {
+  migratePages,
+  type SerializedPages,
+} from "@webstudio-is/project-migrations/pages";
 import type { CompactBuild } from "@webstudio-is/project-build";
 
 const getPair = <Item extends { id: string }>(item: Item) =>

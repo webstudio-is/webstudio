@@ -8,7 +8,6 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import {
-  migratePages,
   type Deployment,
   type Resource,
   type StyleSource,
@@ -18,8 +17,11 @@ import {
   type Breakpoint,
   type StyleSourceSelection,
   type StyleDecl,
-  serializePages,
 } from "@webstudio-is/sdk";
+import {
+  migratePages,
+  serializePages,
+} from "@webstudio-is/project-migrations/pages";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
 import type { MarketplaceProduct } from "../shared//marketplace";

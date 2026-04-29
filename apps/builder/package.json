@@ -7,7 +7,7 @@
   "scripts": {
     "prebuild": "which remix",
     "build": "remix vite:build",
-    "css-to-ws": "NODE_OPTIONS=--conditions=webstudio css-to-ws",
+    "css-to-ws": "tsx --conditions=webstudio ../../packages/css-data/bin/css-to-ws.ts",
     "build:webflow-presets": "pnpm css-to-ws ./app/shared/copy-paste/plugin-webflow/style-presets.css ./app/shared/copy-paste/plugin-webflow/__generated__/style-presets.ts",
     "build:tailwind-preflight": "tsx --conditions=webstudio ./app/shared/tailwind/preflight-bin.ts && prettier --write ./app/shared/tailwind/__generated__/preflight.ts",
     "start": "remix-serve build/server/index.js",
@@ -75,6 +75,7 @@
     "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/project": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
+    "@webstudio-is/project-migrations": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/sdk-components-animation": "workspace:*",

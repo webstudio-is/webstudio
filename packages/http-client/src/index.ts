@@ -5,7 +5,6 @@ import type {
   Deployment,
   Instance,
   Page,
-  SerializedPages,
   Prop,
   Resource,
   StyleDecl,
@@ -13,6 +12,7 @@ import type {
   StyleSource,
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
+import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 
 export type Data = {

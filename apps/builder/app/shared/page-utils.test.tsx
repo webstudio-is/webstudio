@@ -5,10 +5,10 @@ import {
   ROOT_INSTANCE_ID,
   encodeDataVariableId,
   getHomePage,
-  migratePages,
   type Instance,
   type WebstudioData,
 } from "@webstudio-is/sdk";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
   createDefaultPages,
   createRootFolder,

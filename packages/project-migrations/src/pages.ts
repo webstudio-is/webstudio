@@ -3,8 +3,9 @@ import {
   type Folder,
   type Page,
   type Pages,
-} from "../schema/pages";
-import { isRootFolder, ROOT_FOLDER_ID } from "../page-utils";
+  isRootFolder,
+  ROOT_FOLDER_ID,
+} from "@webstudio-is/sdk";
 
 type LegacyPages = {
   meta?: Pages["meta"];

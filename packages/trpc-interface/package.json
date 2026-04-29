@@ -10,7 +10,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@webstudio-is/feature-flags": "workspace:*",
     "@webstudio-is/plans": "workspace:*",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
