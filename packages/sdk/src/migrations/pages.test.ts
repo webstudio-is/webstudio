@@ -35,6 +35,39 @@ test("keeps current pages shape unchanged", () => {
   expect(migratePages(pages)).toBe(pages);
 });
 
+test("removes orphan folder children from current pages shape", () => {
+  expect(
+    migratePages({
+      homePageId: "home",
+      rootFolderId: "root",
+      pages: new Map([
+        [
+          "home",
+          {
+            id: "home",
+            name: "Home",
+            path: "",
+            title: `"Home"`,
+            meta: {},
+            rootInstanceId: "homeRoot",
+          },
+        ],
+      ]),
+      folders: new Map([
+        [
+          "root",
+          {
+            id: "root",
+            name: "Root",
+            slug: "",
+            children: ["home", "missing"],
+          },
+        ],
+      ]),
+    }).folders.get("root")?.children
+  ).toEqual(["home"]);
+});
+
 test("serializes map pages into arrays for JSON storage", () => {
   expect(
     serializePages({
