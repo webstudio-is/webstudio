@@ -42,6 +42,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       remix({
         presets: [vercelPreset()],
+        ignoredRouteFiles: ["**/.*", "**/*.test.{ts,tsx}"],
         future: {
           v3_lazyRouteDiscovery: false,
           v3_relativeSplatPath: false,
