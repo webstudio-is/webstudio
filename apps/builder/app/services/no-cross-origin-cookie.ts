@@ -41,7 +41,7 @@ export const preventCrossOriginCookie = (
   }
 
   if (throwError) {
-    console.error(`Cross-origin request to ${request.url} blocked`, [
+    console.info(`Blocked cross-origin request to ${request.url}`, [
       ...request.headers.entries(),
     ]);
 
