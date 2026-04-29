@@ -1,4 +1,12 @@
-import { describe, expect, test, beforeEach, vi, type Mock } from "vitest";
+import {
+  afterEach,
+  describe,
+  expect,
+  test,
+  beforeEach,
+  vi,
+  type Mock,
+} from "vitest";
 
 import { loadResource } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
@@ -11,6 +19,10 @@ describe("loadResource", () => {
   beforeEach(() => {
     mockFetch = vi.fn();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   test("should successfully fetch a resource and return a JSON response", async () => {
@@ -155,5 +167,38 @@ describe("loadResource", () => {
         ["filter", '{"type":"AND","left":"a","right":"b"}'],
       ]),
     });
+  });
+
+  test("should log failed resource responses as info", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => {});
+    const mockResponse = new Response("not found", {
+      status: 404,
+    });
+    mockFetch.mockResolvedValue(mockResponse);
+
+    const resourceRequest: ResourceRequest = {
+      name: "resource",
+      url: "https://example.com/resource",
+      searchParams: [],
+      method: "get",
+      headers: [],
+      body: undefined,
+    };
+
+    const result = await loadResource(mockFetch, resourceRequest);
+
+    expect(result).toEqual({
+      data: "not found",
+      ok: false,
+      status: 404,
+      statusText: "",
+    });
+    expect(consoleError).not.toHaveBeenCalled();
+    expect(consoleInfo).toHaveBeenCalledWith(
+      'Failed to load resource: https://example.com/resource - 404: "not found"'
+    );
   });
 });
