@@ -194,10 +194,6 @@ export const computeExpression = (
 const getParentInstanceById = (instances: Instances) => {
   const parentInstanceById = new Map<Instance["id"], Instance["id"]>();
   for (const instance of instances.values()) {
-    // interrupt lookup because slot variables cannot be passed to slot content
-    if (instance.component === "Slot") {
-      continue;
-    }
     for (const child of instance.children) {
       if (child.type === "id") {
         parentInstanceById.set(child.value, instance.id);

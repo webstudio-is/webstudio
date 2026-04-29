@@ -89,6 +89,17 @@ export const evaluateExpressionWithinScope = (
   return computeExpression(expression, variables);
 };
 
+export const validateExpressionScope = (
+  expression: string,
+  aliases: Map<string, string>
+) => {
+  const diagnostics = lintExpression({
+    expression,
+    availableVariables: new Set(aliases.keys()),
+  });
+  return diagnostics[0]?.message;
+};
+
 const BindingPanel = ({
   scope,
   aliases,
@@ -385,7 +396,9 @@ export const BindingPopover = ({
     return;
   }
 
-  const valueError = validate?.(evaluateExpressionWithinScope(value, scope));
+  const valueError =
+    validateExpressionScope(value, aliases) ??
+    validate?.(evaluateExpressionWithinScope(value, scope));
   return (
     <FloatingPanel
       placement="left-start"

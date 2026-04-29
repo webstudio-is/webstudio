@@ -1016,7 +1016,7 @@ test("compute resource variable values", () => {
   ).toEqual("my-value");
 });
 
-test("stop variables lookup outside of slots", () => {
+test("inherit variables from outside of slots", () => {
   const bodyVariable = new Variable("bodyVariable", "body");
   const slotVariable = new Variable("slotVariable", "slot");
   const boxVariable = new Variable("boxVariable", "box");
@@ -1041,7 +1041,7 @@ test("stop variables lookup outside of slots", () => {
     values.get(
       getInstanceKey(["fragmentId", "slotId", "bodyId", ROOT_INSTANCE_ID])
     )?.size
-  ).toEqual(1);
+  ).toEqual(3);
   expect(
     values.get(
       getInstanceKey([
@@ -1052,8 +1052,7 @@ test("stop variables lookup outside of slots", () => {
         ROOT_INSTANCE_ID,
       ])
     )?.size
-    // global system and box variable
-  ).toEqual(2);
+  ).toEqual(4);
 });
 
 test("compute parameter and resource variables without values to make it available in scope", () => {
@@ -1259,7 +1258,7 @@ test("inherit variables from global root inside slots", () => {
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
   $props.set(data.props);
-  const [rootVariableId, _bodyVariableId, boxVariableId] =
+  const [rootVariableId, bodyVariableId, boxVariableId] =
     data.dataSources.keys();
   selectPageRoot("bodyId");
   expect(
@@ -1278,6 +1277,7 @@ test("inherit variables from global root inside slots", () => {
     new Map<string, unknown>([
       [SYSTEM_VARIABLE_ID, initialSystem],
       [rootVariableId, "root"],
+      [bodyVariableId, "body"],
       [boxVariableId, "box"],
     ])
   );
