@@ -1,6 +1,12 @@
 import { toast } from "@webstudio-is/design-system";
+import {
+  apiClientHeader,
+  apiClientVersionHeader,
+  getApiCompatibilityPayload,
+} from "@webstudio-is/trpc-interface/api-compatibility";
 import { csrfToken } from "./csrf.client";
 import { $authToken } from "./nano-states";
+import { publicStaticEnv } from "~/env/env.static";
 
 /**
  * To avoid fetch interception from the canvas, i.e., `globalThis.fetch = () => console.log('INTERCEPTED');`,
@@ -11,7 +17,10 @@ const _fetch = globalThis.fetch;
  * To avoid fetch interception from the canvas, i.e., `globalThis.fetch = () => console.log('INTERCEPTED');`,
  * To add csrf token to the headers.
  */
-export const fetch: typeof globalThis.fetch = (requestInfo, requestInit) => {
+export const fetch: typeof globalThis.fetch = async (
+  requestInfo,
+  requestInit
+) => {
   if (csrfToken === undefined) {
     toast.error("CSRF token is not set.");
     throw new Error("CSRF token is not set.");
@@ -20,6 +29,8 @@ export const fetch: typeof globalThis.fetch = (requestInfo, requestInit) => {
   const headers = new Headers(requestInit?.headers);
 
   headers.set("X-CSRF-Token", csrfToken);
+  headers.set(apiClientHeader, "browser");
+  headers.set(apiClientVersionHeader, publicStaticEnv.VERSION);
 
   const authToken = $authToken.get();
 
@@ -34,5 +45,24 @@ export const fetch: typeof globalThis.fetch = (requestInfo, requestInit) => {
     headers,
   };
 
-  return _fetch(requestInfo, modifiedInit);
+  const response = await _fetch(requestInfo, modifiedInit);
+  if (response.ok === false) {
+    const contentType = response.headers.get("Content-Type") ?? "";
+    if (contentType.includes("application/json")) {
+      const body: unknown = await response
+        .clone()
+        .json()
+        .catch(() => undefined);
+      const payload = getApiCompatibilityPayload(body);
+      if (payload?.action.type === "reloadBrowser") {
+        toast.error(payload.message, {
+          id: "api-compatibility",
+          duration: Number.POSITIVE_INFINITY,
+        });
+        throw new Error(payload.message, { cause: payload });
+      }
+    }
+  }
+
+  return response;
 };

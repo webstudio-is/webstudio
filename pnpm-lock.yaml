@@ -1089,6 +1089,9 @@ importers:
       '@trpc/client':
         specifier: ^10.45.2
         version: 10.45.2(@trpc/server@10.45.2)
+      '@webstudio-is/trpc-interface':
+        specifier: workspace:*
+        version: link:../trpc-interface
       acorn:
         specifier: ^8.14.1
         version: 8.14.1

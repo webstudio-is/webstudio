@@ -4,10 +4,16 @@ import { join } from "node:path";
 import pc from "picocolors";
 import { spinner } from "@clack/prompts";
 import {
+  apiClientHeader,
+  apiClientVersionHeader,
+  getApiCompatibilityPayload,
+} from "@webstudio-is/trpc-interface/api-compatibility";
+import {
+  type Data,
   loadProjectDataByBuildId,
   loadProjectDataByProjectId,
-  type Data,
 } from "@webstudio-is/http-client";
+import packageJson from "../../package.json";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import {
   GLOBAL_CONFIG_FILE,
@@ -20,6 +26,42 @@ import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
+import { HandledCliError } from "../errors";
+
+const apiCompatibilityHeaders = {
+  [apiClientHeader]: "cli",
+  [apiClientVersionHeader]: packageJson.version,
+};
+
+const updateCliCommand = "npm install -g webstudio@latest";
+
+const getCliCompatibilityMessage = (error: unknown) => {
+  const payload = getApiCompatibilityPayload(error);
+  if (payload?.action.type !== "updateCli") {
+    return;
+  }
+
+  return `${payload.message}
+
+Update the CLI with:
+  ${updateCliCommand}
+
+Or run the latest version once with:
+  npx webstudio@latest sync`;
+};
+
+const stopSyncingWithError = (
+  syncing: ReturnType<typeof spinner>,
+  error: unknown
+) => {
+  const compatibilityMessage = getCliCompatibilityMessage(error);
+  const message =
+    error instanceof Error
+      ? error.message
+      : "Unable to synchronize project data";
+  syncing.stop(compatibilityMessage ?? message, 2);
+  return compatibilityMessage;
+};
 
 export const syncOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -50,12 +92,21 @@ export const sync = async (
     options.authToken !== undefined
   ) {
     syncing.message(`Synchronizing project data from ${options.origin}`);
-    project = await loadProjectDataByBuildId({
-      buildId: options.buildId,
-      seviceToken: options.authToken,
-      origin: options.origin,
-    });
-    project.origin = options.origin;
+    try {
+      project = await loadProjectDataByBuildId({
+        buildId: options.buildId,
+        seviceToken: options.authToken,
+        origin: options.origin,
+        headers: apiCompatibilityHeaders,
+      });
+      project.origin = options.origin;
+    } catch (error) {
+      const compatibilityMessage = stopSyncingWithError(syncing, error);
+      if (compatibilityMessage !== undefined) {
+        throw new HandledCliError();
+      }
+      throw error;
+    }
   } else {
     const globalConfigText = await readFile(GLOBAL_CONFIG_FILE, "utf-8");
     const globalConfig = jsonToGlobalConfig(JSON.parse(globalConfigText));
@@ -95,16 +146,21 @@ export const sync = async (
               buildId: options.buildId,
               authToken: token,
               origin,
+              headers: apiCompatibilityHeaders,
             })
           : await loadProjectDataByProjectId({
               projectId: localConfig.projectId,
               authToken: token,
               origin,
+              headers: apiCompatibilityHeaders,
             });
       project.origin = origin;
     } catch (error) {
       // catch errors about unpublished project
-      syncing.stop((error as Error).message, 2);
+      const compatibilityMessage = stopSyncingWithError(syncing, error);
+      if (compatibilityMessage !== undefined) {
+        throw new HandledCliError();
+      }
 
       throw error;
     }

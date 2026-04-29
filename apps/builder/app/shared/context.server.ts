@@ -16,6 +16,11 @@ import { readLoginSessionBloomFilter } from "~/services/session.server";
 import type { BloomFilter } from "~/services/bloom-filter.server";
 import { isBuilder, isCanvas } from "./router-utils";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
+import {
+  ApiClient,
+  apiClientHeader,
+  apiClientVersionHeader,
+} from "@webstudio-is/trpc-interface/api-compatibility";
 
 export const extractAuthFromRequest = async (request: Request) => {
   if (isCanvas(request)) {
@@ -180,6 +185,21 @@ const createTrpcCache = () => {
   };
 };
 
+const createApiClientContext = (request: Request): AppContext["apiClient"] => {
+  const client = ApiClient.safeParse(request.headers.get(apiClientHeader));
+  if (client.success === false) {
+    return {
+      type: "unknown",
+      version: undefined,
+    };
+  }
+
+  return {
+    type: client.data,
+    version: request.headers.get(apiClientVersionHeader) ?? undefined,
+  };
+};
+
 export const createPostgrestContext = () => {
   return { client: createClient(env.POSTGREST_URL, env.POSTGREST_API_KEY) };
 };
@@ -212,6 +232,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const entri = createEntriContext();
   const { planFeatures, purchases } = await resolvePlanInfo(authorization);
   const trpcCache = createTrpcCache();
+  const apiClient = createApiClientContext(request);
 
   const getOwnerPlanFeatures = async (userId: string) => {
     const results = await getPlanInfo([userId], { postgrest });
@@ -233,6 +254,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
       entri,
       planFeatures,
       purchases,
+      apiClient,
       trpcCache,
       postgrest,
       createTokenContext,
@@ -247,6 +269,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
     entri,
     planFeatures,
     purchases,
+    apiClient,
     trpcCache,
     postgrest,
     createTokenContext,
