@@ -27,11 +27,15 @@ type Meta = {
 type CustomMetadataProps = {
   customMetas: Meta[];
   onChange: (value: Meta[]) => void;
+  disabled?: boolean;
+  showBindingControls?: boolean;
 };
 
 const MetadataItem = (props: {
   property: string;
   content: string;
+  disabled?: boolean;
+  showBindingControls?: boolean;
   onDelete: () => void;
   onChange: (property: string, content: string) => void;
 }) => {
@@ -61,6 +65,7 @@ const MetadataItem = (props: {
           css={{ gridArea: "property-input" }}
           id={propertyId}
           property="path"
+          disabled={props.disabled}
           value={props.property}
           onChange={(event) => {
             props.onChange(event.target.value, props.content);
@@ -71,24 +76,28 @@ const MetadataItem = (props: {
         Content
       </Label>
       <BindingControl>
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={isLiteralExpression(props.content) ? "default" : "bound"}
-          value={props.content}
-          onChange={(value) => {
-            props.onChange(props.property, value);
-          }}
-          onRemove={(evaluatedValue) => {
-            props.onChange(props.property, JSON.stringify(evaluatedValue));
-          }}
-        />
+        {props.showBindingControls && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(props.content) ? "default" : "bound"}
+            value={props.content}
+            onChange={(value) => {
+              props.onChange(props.property, value);
+            }}
+            onRemove={(evaluatedValue) => {
+              props.onChange(props.property, JSON.stringify(evaluatedValue));
+            }}
+          />
+        )}
         <InputErrorsTooltip errors={undefined}>
           <InputField
             css={{
               gridArea: "content-input",
             }}
-            disabled={isLiteralExpression(props.content) === false}
+            disabled={
+              props.disabled || isLiteralExpression(props.content) === false
+            }
             color={typeof content !== "string" ? "error" : undefined}
             id={contentId}
             property="path"
@@ -123,6 +132,7 @@ const MetadataItem = (props: {
         <SmallIconButton
           variant="destructive"
           icon={<TrashIcon />}
+          disabled={props.disabled}
           onClick={props.onDelete}
         />
 
@@ -167,6 +177,8 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
             key={index}
             property={meta.property}
             content={meta.content}
+            disabled={props.disabled}
+            showBindingControls={props.showBindingControls}
             onChange={(property, content) => {
               const newCustomMetas = [...props.customMetas];
               newCustomMetas[index] = { property, content };
@@ -187,6 +199,7 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
             justifySelf: "center",
           }}
           prefix={<PlusIcon />}
+          disabled={props.disabled}
           onClick={() => {
             const newCustomMetas = [
               ...props.customMetas,
