@@ -36,6 +36,10 @@ describe("parsePlansEnv", () => {
     { name: "Workspaces", features: { ...fullFeatures, maxWorkspaces: 10 } },
   ]);
 
+  test("default plan allows 100 assets per project", () => {
+    expect(defaultPlanFeatures.maxAssetsPerProject).toBe(100);
+  });
+
   test("returns empty map for empty JSON array", () => {
     expect(parsePlansEnv("[]").size).toBe(0);
   });

@@ -16,4 +16,4 @@ export const MaxAssets: z.ZodEffects<
   z.ZodDefault<z.ZodString>,
   number,
   string | undefined
-> = z.string().default("50").transform(Number.parseFloat);
+> = z.string().default("100").transform(Number.parseFloat);

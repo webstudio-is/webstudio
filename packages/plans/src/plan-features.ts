@@ -44,7 +44,7 @@ export const defaultPlanFeatures: PlanFeatures = {
   maxDailyPublishesPerUser: 10,
   maxWorkspaces: 1,
   maxProjectsAllowedPerUser: 100,
-  maxAssetsPerProject: 50,
+  maxAssetsPerProject: 100,
   seatsIncluded: 0,
   maxSeatsPerWorkspace: 0,
 };
