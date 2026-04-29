@@ -66,7 +66,7 @@ export const loadResource = async (
     }
 
     if (!response.ok) {
-      console.error(
+      console.info(
         `Failed to load resource: ${href} - ${response.status}: ${JSON.stringify(data).slice(0, 300)}`
       );
     }
