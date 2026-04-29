@@ -6,6 +6,7 @@ import type { Asset } from "@webstudio-is/sdk";
 import {
   loadAssetsByProject,
   createUploadName,
+  MaxAssetsPerProjectError,
 } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -61,10 +62,16 @@ export const action = async (props: ActionFunctionArgs) => {
       };
     }
   } catch (error) {
-    console.error(error);
+    const parsedError = parseError(error);
+
+    if (error instanceof MaxAssetsPerProjectError) {
+      console.info(error);
+    } else {
+      console.error(error);
+    }
 
     return {
-      errors: parseError(error).message,
+      errors: parsedError.message,
     };
   }
 };

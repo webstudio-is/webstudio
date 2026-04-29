@@ -17,6 +17,15 @@ type UploadData = {
   maxAssetsPerProject: number;
 };
 
+export class MaxAssetsPerProjectError extends Error {
+  constructor(maxAssetsPerProject: number) {
+    super(
+      `The maximum number of assets per project is ${maxAssetsPerProject}.`
+    );
+    this.name = "MaxAssetsPerProjectError";
+  }
+}
+
 const UPLOADING_STALE_TIMEOUT = 1000 * 60 * 30; // 30 minutes
 
 export const createUploadName = async (
@@ -65,9 +74,7 @@ export const createUploadName = async (
      * it's probable that the user can exceed the limit a little bit.
      * So it can be a little bit strange that the limit is 5 but the user already has 7.
      **/
-    throw new Error(
-      `The maximum number of assets per project is ${maxAssetsPerProject}.`
-    );
+    throw new MaxAssetsPerProjectError(maxAssetsPerProject);
   }
 
   /**
