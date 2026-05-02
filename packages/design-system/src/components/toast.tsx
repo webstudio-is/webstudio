@@ -1,4 +1,4 @@
-import type { JSX } from "react";
+import { Children, isValidElement, type JSX } from "react";
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import hotToast, {
   resolveValue,
@@ -343,6 +343,26 @@ const mapToVariant: Record<HotToast["type"], ToastVariant> = {
   custom: "warning",
 };
 
+const getTextContent = (node: React.ReactNode): string => {
+  if (node === undefined || node === null || typeof node === "boolean") {
+    return "";
+  }
+
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node);
+  }
+
+  if (Array.isArray(node)) {
+    return node.map(getTextContent).join("");
+  }
+
+  if (isValidElement<{ children?: React.ReactNode }>(node)) {
+    return getTextContent(node.props.children);
+  }
+
+  return Children.toArray(node).map(getTextContent).join("");
+};
+
 export const Toaster = () => {
   const { toasts, handlers } = useToaster();
   const { startPause, endPause } = handlers;
@@ -352,6 +372,10 @@ export const Toaster = () => {
       {toasts.map((toastData) => {
         const toastVariant = mapToVariant[toastData.type];
         const children = resolveValue(toastData.message, toastData);
+        const copyText =
+          "copyText" in toastData && typeof toastData.copyText === "string"
+            ? toastData.copyText
+            : getTextContent(children);
 
         return (
           <AnimatedToast
@@ -366,7 +390,7 @@ export const Toaster = () => {
                 hotToast.remove(toastData.id);
               }}
               onCopy={() => {
-                navigator.clipboard.writeText(children?.toString() ?? "");
+                navigator.clipboard.writeText(copyText);
               }}
               icon={toastData.icon}
             >
@@ -380,7 +404,9 @@ export const Toaster = () => {
   );
 };
 
-type Options = Pick<ToastOptions, "duration" | "id" | "icon">;
+type Options = Pick<ToastOptions, "duration" | "id" | "icon"> & {
+  copyText?: string;
+};
 
 export const toast = {
   info: (value: JSX.Element | string, options?: Options) =>
@@ -392,4 +418,8 @@ export const toast = {
   success: (value: JSX.Element | string, options?: Options) =>
     hotToast.success(value, options),
   dismiss: hotToast.dismiss,
+};
+
+export const __testingToast__ = {
+  getTextContent,
 };
