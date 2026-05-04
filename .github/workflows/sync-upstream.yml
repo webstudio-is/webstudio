@@ -13,6 +13,7 @@ jobs:
       contents: write
     outputs:
       has_new_commits: ${{ steps.sync.outputs.has_new_commits }}
+      develop_needs_merge: ${{ steps.sync.outputs.develop_needs_merge }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,10 +43,18 @@ jobs:
             echo "main already up to date"
           fi
 
+          if git merge-base --is-ancestor origin/main origin/develop 2>/dev/null; then
+            echo "develop_needs_merge=false" >> "$GITHUB_OUTPUT"
+            echo "develop already up to date with main"
+          else
+            echo "develop_needs_merge=true" >> "$GITHUB_OUTPUT"
+            echo "develop needs merge with main"
+          fi
+
   merge-develop:
     name: Merge main into develop
     needs: sync-main
-    if: needs.sync-main.outputs.has_new_commits == 'true'
+    if: needs.sync-main.outputs.has_new_commits == 'true' || needs.sync-main.outputs.develop_needs_merge == 'true'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
