@@ -55,7 +55,7 @@ jobs:
         with:
           ref: develop
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.WORKFLOW_PAT }}
 
       - name: Configure git
         run: |
@@ -99,7 +99,7 @@ jobs:
       - name: Create PR on merge conflict
         if: steps.merge.outcome == 'failure'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.WORKFLOW_PAT }}
         run: |
           git merge --abort || true
           BRANCH="sync/upstream-$(date +%Y%m%d)"
