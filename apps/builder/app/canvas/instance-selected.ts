@@ -10,14 +10,12 @@ import {
   $selectedInstanceSizes,
   $selectedInstanceRenderState,
   $stylesIndex,
-  $instances,
   $propValuesByInstanceSelectorWithMemoryProps,
-  $styles,
   $selectedInstanceStates,
-  $styleSourceSelections,
   type UnitSizes,
   type PropertySizes,
 } from "~/shared/nano-states";
+import { $styleSourceSelections } from "~/shared/sync/data-stores";
 import {
   getAllElementsBoundingBox,
   getVisibleElementsByInstanceSelector,
@@ -27,9 +25,10 @@ import {
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
+import { $instances, $styles } from "~/shared/sync/data-stores";
 import { inflateInstance } from "~/canvas/inflator";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { $awareness } from "~/shared/awareness";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
 
 const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {
   $selectedInstanceOutline.set({
@@ -344,16 +343,17 @@ export const subscribeSelected = (
   let previousSelectedInstance: readonly string[] | undefined = undefined;
   let unsubscribeSelectedInstance = () => {};
 
-  const unsubscribe = $awareness.subscribe((awareness) => {
-    const instanceSelector = awareness?.instanceSelector;
-    if (instanceSelector !== previousSelectedInstance) {
-      unsubscribeSelectedInstance();
-      unsubscribeSelectedInstance =
-        subscribeSelectedInstance(instanceSelector ?? [], debounceEffect) ??
-        (() => {});
-      previousSelectedInstance = instanceSelector;
+  const unsubscribe = $selectedInstanceSelector.subscribe(
+    (instanceSelector) => {
+      if (instanceSelector !== previousSelectedInstance) {
+        unsubscribeSelectedInstance();
+        unsubscribeSelectedInstance =
+          subscribeSelectedInstance(instanceSelector ?? [], debounceEffect) ??
+          (() => {});
+        previousSelectedInstance = instanceSelector;
+      }
     }
-  });
+  );
 
   return () => {
     unsubscribe();

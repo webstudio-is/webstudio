@@ -1,4 +1,4 @@
-import { $pages } from "~/shared/nano-states/pages";
+import { $pages } from "~/shared/sync/data-stores";
 import { PageSettings as PageSettingsComponent } from "./page-settings";
 import {
   Grid,
@@ -9,7 +9,6 @@ import {
 } from "@webstudio-is/design-system";
 import { $assets, $project } from "~/shared/sync/data-stores";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { isRootFolder } from "@webstudio-is/sdk";
 
 export default {
   title: "Pages/Page Settings",
@@ -50,7 +49,7 @@ pages.meta = {
   faviconAssetId: "imageId",
   code: "code",
 };
-pages.pages.push({
+pages.pages.set("pageId", {
   id: "pageId",
   title: "Page title",
   path: "/page-path",
@@ -58,7 +57,7 @@ pages.pages.push({
   meta: {},
   rootInstanceId: "root-instance-id",
 });
-const rootFolder = pages.folders.find(isRootFolder);
+const rootFolder = pages.folders.get(pages.rootFolderId);
 rootFolder?.children.push("pageId");
 
 $pages.set(pages);

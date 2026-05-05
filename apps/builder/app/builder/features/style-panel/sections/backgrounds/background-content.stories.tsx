@@ -8,17 +8,20 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { $selectedBreakpointId } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 import {
-  $breakpoints,
   $instances,
   $pages,
-  $selectedBreakpointId,
   $styles,
   $styleSourceSelections,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { BackgroundContent as BackgroundContentPanel } from "./background-content";
-import { $awareness } from "~/shared/awareness";
+import {
+  $selectedPageId,
+  $selectedInstanceSelector,
+} from "~/shared/nano-states";
 import { useComputedStyleDecl } from "../../shared/model";
 import { setRepeatedStyleItem } from "../../shared/repeated-style";
 import { type StyleValue } from "@webstudio-is/css-engine";
@@ -55,10 +58,8 @@ $styles.set(
   new Map([[getStyleDeclKey(defaultBackgroundImage), defaultBackgroundImage]])
 );
 
-$awareness.set({
-  pageId: "homePageId",
-  instanceSelector: ["box"],
-});
+$selectedPageId.set("homePageId");
+$selectedInstanceSelector.set(["box"]);
 
 const BackgroundStory = ({ styleValue }: { styleValue: StyleValue }) => {
   const backgroundImage = useComputedStyleDecl("background-image");

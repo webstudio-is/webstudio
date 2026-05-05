@@ -60,13 +60,13 @@ export const __testing__ = { computeComponentKey };
 import {
   $propValuesByInstanceSelectorWithMemoryProps,
   getIndexedInstanceId,
-  $instances,
   $registeredComponentMetas,
   $selectedInstanceRenderState,
   findBlockSelector,
-  $props,
 } from "~/shared/nano-states";
+import { $props } from "~/shared/sync/data-stores";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
@@ -75,11 +75,8 @@ import { inflateInstance } from "~/canvas/inflator";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { TextEditor } from "../text-editor";
-import {
-  $selectedPage,
-  getInstanceKey,
-  selectInstance,
-} from "~/shared/awareness";
+import { $selectedPage, getInstanceKey } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,

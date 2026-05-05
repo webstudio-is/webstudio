@@ -9,7 +9,8 @@
   "type": "module",
   "exports": {
     ".": {
-      "webstudio": "./src/index.ts"
+      "webstudio": "./src/index.ts",
+      "partykit": "./src/index.ts"
     },
     "./index.server": {
       "webstudio": "./src/index.server.ts"
@@ -23,6 +24,7 @@
   "dependencies": {
     "@webstudio-is/authorization-token": "workspace:*",
     "@webstudio-is/postgrest": "workspace:*",
+    "@webstudio-is/project-migrations": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",

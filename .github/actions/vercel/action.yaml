@@ -18,8 +18,16 @@ inputs:
     description: "Sha"
     required: true
   environment:
-    description: "Sha"
+    description: "Alias environment"
     required: true
+  production-staged:
+    description: "Create a production deployment without assigning production domains"
+    required: false
+    default: "false"
+  PUBLIC_COLLAB_RELAY_URL:
+    description: "Public collaboration relay URL injected into the builder bundle"
+    required: false
+    default: ""
 
 outputs:
   domain:
@@ -76,7 +84,13 @@ runs:
         export GITHUB_SHA=${{ inputs.sha }}
         export GITHUB_REF_NAME=${{ inputs.ref-name }}
 
-        pnpx vercel build
+        if [ "${{ inputs.production-staged }}" = "true" ]; then
+          unset PUBLIC_COLLAB_RELAY_URL
+          pnpx vercel build --prod --token "${{ inputs.vercel-token }}"
+        else
+          export PUBLIC_COLLAB_RELAY_URL=${{ inputs.PUBLIC_COLLAB_RELAY_URL }}
+          pnpx vercel build --token "${{ inputs.vercel-token }}"
+        fi
       shell: bash
 
     - name: Patch
@@ -103,9 +117,17 @@ runs:
     - name: Deploy
       id: deploy
       run: |
+        deploy_args=(
+          --prebuilt
+          --token "${{ inputs.vercel-token }}"
+        )
+
+        if [ "${{ inputs.production-staged }}" = "true" ]; then
+          deploy_args+=(--prod --skip-domain)
+        fi
+
         pnpx vercel deploy \
-        --prebuilt \
-        --token ${{ inputs.vercel-token }} \
+        "${deploy_args[@]}" \
         2> >(tee info.txt >&2) | tee domain.txt
 
         echo "domain=$(cat ./domain.txt)" >> $GITHUB_OUTPUT

@@ -21,6 +21,7 @@ import {
   Pages,
   ROOT_FOLDER_ID,
   findParentFolderByChildId,
+  getFolderById,
 } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
 import { useCallback, useState, type FocusEventHandler } from "react";
@@ -82,16 +83,14 @@ const validateValues = (
   return errors;
 };
 
-const toFormValues = (
-  folderId: Folder["id"],
-  folders: Array<Folder>
-): Values => {
-  const folder = folders.find(({ id }) => id === folderId);
+const toFormValues = (folderId: Folder["id"], pages: Pages): Values => {
+  const { folders } = pages;
+  const folder = folders.get(folderId);
   const parentFolder = findParentFolderByChildId(folderId, folders);
   return {
     name: folder?.name ?? "",
     slug: folder?.slug ?? "",
-    parentFolderId: parentFolder?.id ?? ROOT_FOLDER_ID,
+    parentFolderId: parentFolder?.id ?? pages.rootFolderId,
   };
 };
 
@@ -211,6 +210,7 @@ export const NewFolderSettings = ({
 
   const [values, setValues] = useState<Values>({
     ...fieldDefaultValues,
+    parentFolderId: pages?.rootFolderId ?? fieldDefaultValues.parentFolderId,
     slug: nameToSlug(fieldDefaultValues.name),
   });
 
@@ -292,15 +292,15 @@ const createFolder = (folderId: Folder["id"], values: Values) => {
     if (pages === undefined) {
       return;
     }
-    pages.folders.push({
+    pages.folders.set(folderId, {
       id: folderId,
       name: values.name,
       slug: values.slug,
       children: [],
     } satisfies Folder);
-    const parentFolder = pages.folders.find(
-      ({ id }) => id === values.parentFolderId
-    );
+    const parentFolder =
+      getFolderById(pages, values.parentFolderId) ??
+      getFolderById(pages, pages.rootFolderId);
     parentFolder?.children.push(folderId);
   });
 };
@@ -310,8 +310,8 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
     if (pages === undefined) {
       return;
     }
-    const folder = pages.folders.find((folder) => folder.id === folderId);
-    if (folder === undefined) {
+    const folder = getFolderById(pages, folderId);
+    if (folder === undefined || folderId === pages.rootFolderId) {
       return;
     }
     if (values.name !== undefined) {
@@ -321,11 +321,7 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
       folder.slug = values.slug;
     }
     if (values.parentFolderId !== undefined) {
-      registerFolderChildMutable(
-        pages.folders,
-        folderId,
-        values.parentFolderId
-      );
+      registerFolderChildMutable(pages, folderId, values.parentFolderId);
     }
   });
 };
@@ -342,12 +338,13 @@ export const FolderSettings = ({
   folderId: string;
 }) => {
   const pages = useStore($pages);
-  const folder = pages?.folders.find(({ id }) => id === folderId);
+  const folder =
+    pages === undefined ? undefined : getFolderById(pages, folderId);
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
   const isDesignMode = useStore($isDesignMode);
 
   const values: Values = {
-    ...(pages ? toFormValues(folderId, pages.folders) : fieldDefaultValues),
+    ...(pages ? toFormValues(folderId, pages) : fieldDefaultValues),
     ...unsavedValues,
   };
 

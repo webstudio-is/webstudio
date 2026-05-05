@@ -39,7 +39,7 @@ jobs:
     if: |
       github.event_name == 'push' ||
       (github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'safe-to-deploy')
-    
+
     # Execute development and staging on staging branches
     # Execute only development on all other branches
     strategy:
@@ -86,6 +86,8 @@ jobs:
           ref-name: ${{ github.event_name == 'pull_request_target' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
           sha: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
           environment: ${{ matrix.environment }}
+          production-staged: ${{ github.event_name == 'push' && matrix.environment == 'staging' && startsWith(github.ref_name, 'release-') && endsWith(github.ref_name, '.staging') }}
+          PUBLIC_COLLAB_RELAY_URL: ${{ vars.PUBLIC_COLLAB_RELAY_URL }}
 
       - name: Debug Vercel Outputs
         run: |
@@ -119,14 +121,12 @@ jobs:
             });
 
     outputs:
-      builder-url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
       builder-host: "${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
 
   fixtures-test:
     needs: deployment
     uses: ./.github/workflows/fixtures-test.yml
     with:
-      builder-url: ${{ needs.deployment.outputs.builder-url }}
       builder-host: ${{ needs.deployment.outputs.builder-host }}
       environment: development
     secrets:

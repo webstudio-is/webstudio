@@ -3,14 +3,11 @@ import { inflatedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import { compareMedia, type StyleValue } from "@webstudio-is/css-engine";
 import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
 import type { Breakpoint, StyleDecl, WsComponentMeta } from "@webstudio-is/sdk";
-import {
-  $breakpoints,
-  $instances,
-  $registeredComponentMetas,
-  $stylesIndex,
-} from "~/shared/nano-states";
+import { $registeredComponentMetas, $stylesIndex } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $instances } from "~/shared/sync/data-stores";
 import { $selectedBreakpoint } from "~/shared/nano-states";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { doNotTrackMutation } from "~/shared/dom-utils";
 

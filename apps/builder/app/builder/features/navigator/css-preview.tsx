@@ -12,7 +12,7 @@ import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { highlightCss } from "~/shared/code-highlight";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { $computedStyleDeclarations } from "~/builder/features/style-panel/shared/model";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/nano-states";
 
 const preStyle = css(textVariants.mono, {
   margin: 0,

@@ -14,7 +14,7 @@ import {
   type Prop,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
-import { isBaseBreakpoint } from "../nano-states";
+import { isBaseBreakpoint } from "../breakpoints-utils";
 import { preflight } from "./__generated__/preflight";
 
 // breakpoints used to map tailwind classes to webstudio breakpoints

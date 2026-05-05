@@ -4,20 +4,20 @@ import { createCommandsEmitter } from "~/shared/commands-emitter";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import {
-  $instances,
-  $props,
   $registeredComponentMetas,
-  $selectedInstanceSelector,
   $textEditingInstanceSelector,
   $textToolbar,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import { $props } from "~/shared/sync/data-stores";
 import {
   CLEAR_FORMAT_COMMAND,
   TOGGLE_SPAN_COMMAND,
   getActiveEditor,
   hasSelectionFormat,
 } from "../features/text-editor/toolbar-connector";
-import { selectInstance } from "~/shared/awareness";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { findClosestRichText } from "~/shared/content-model";

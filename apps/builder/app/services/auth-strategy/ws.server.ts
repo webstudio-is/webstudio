@@ -6,6 +6,7 @@ import {
   type OAuth2StrategyVerifyParams,
 } from "remix-auth-oauth2";
 import { AsyncLocalStorage } from "node:async_hooks";
+import createDebugRaw from "debug";
 
 type DynamicProps = "authorizationEndpoint" | "tokenEndpoint" | "redirectURI";
 
@@ -15,6 +16,12 @@ export type OAuth2StrategyOptionsOverrides = Partial<OAuth2StrategyOptions> &
 const asyncLocalStorage = new AsyncLocalStorage<
   Partial<OAuth2StrategyOptions>
 >();
+
+// remix-auth-oauth2 logs OAuth state, PKCE verifier, and full callback URLs.
+// Match both the exact namespace and any prefixed namespace enabled by DEBUG=*.
+createDebugRaw.enable(
+  `${createDebugRaw.disable()},-OAuth2Strategy,-*OAuth2Strategy*`
+);
 
 /**
  * The main issue with OAuth2Strategy is that it forces us to define authorizationEndpoint, tokenEndpoint, and redirectURI

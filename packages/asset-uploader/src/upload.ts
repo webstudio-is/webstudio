@@ -10,6 +10,7 @@ import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 
 type UploadData = {
+  assetId: Asset["id"];
   projectId: string;
   type: string;
   filename: string;
@@ -22,7 +23,7 @@ export const createUploadName = async (
   data: UploadData,
   context: AppContext
 ): Promise<string> => {
-  const { projectId, maxAssetsPerProject, type, filename } = data;
+  const { assetId, projectId, maxAssetsPerProject, type, filename } = data;
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context
@@ -39,12 +40,11 @@ export const createUploadName = async (
    * than UPLOADING_STALE_TIMEOUT milliseconds ago
    **/
 
-  const uploadedCount = await context.postgrest.client
-    .from("File")
-    .select("*", { count: "exact", head: true })
-    .eq("isDeleted", false)
-    .eq("uploaderProjectId", projectId)
-    .eq("status", "UPLOADED");
+  const assetCount = await context.postgrest.client
+    .from("Asset")
+    .select("id, file:File!inner(status)", { count: "exact", head: true })
+    .eq("projectId", projectId)
+    .eq("file.status", "UPLOADED");
 
   const uploadingCount = await context.postgrest.client
     .from("File")
@@ -57,11 +57,11 @@ export const createUploadName = async (
       new Date(Date.now() - UPLOADING_STALE_TIMEOUT).toISOString()
     );
 
-  const count = (uploadedCount.count ?? 0) + (uploadingCount.count ?? 0);
+  const count = (assetCount.count ?? 0) + (uploadingCount.count ?? 0);
 
   if (count >= maxAssetsPerProject) {
     /**
-     * Here is right to write `Max ${MAX_ASSETS_PER_PROJECT}` but see the comment below,
+     * Here is right to write `Max ${maxAssetsPerProject}` but see the comment below,
      * it's probable that the user can exceed the limit a little bit.
      * So it can be a little bit strange that the limit is 5 but the user already has 7.
      **/
@@ -73,7 +73,7 @@ export const createUploadName = async (
   /**
    * Create a temporary "UPLOADING" asset, so it can be counted in the next query
    * Assumptions:
-   * - it's possible to create more assets than MAX_ASSETS_PER_PROJECT,
+   * - it's possible to create more assets than maxAssetsPerProject,
    *   but for now we assume that the time since the `count` query above and the `create` query below is negligible,
    *   and some kind of rate limiting exists on API.
    * Also no locking exists in Prisma, and no raw query locking like
@@ -81,7 +81,7 @@ export const createUploadName = async (
    **/
   const name = getUniqueFilename(sanitizeS3Key(filename));
 
-  await context.postgrest.client.from("File").insert({
+  const fileInsert = await context.postgrest.client.from("File").insert({
     name,
     status: "UPLOADING",
     // store content type in related field
@@ -89,6 +89,20 @@ export const createUploadName = async (
     size: 0,
     uploaderProjectId: projectId,
   });
+  if (fileInsert.error) {
+    throw new Error(fileInsert.error.message);
+  }
+
+  const assetInsert = await context.postgrest.client.from("Asset").insert({
+    id: assetId,
+    projectId,
+    name,
+  });
+  if (assetInsert.error) {
+    await context.postgrest.client.from("File").delete().eq("name", name);
+    throw new Error(assetInsert.error.message);
+  }
+
   return name;
 };
 
@@ -146,6 +160,7 @@ export const uploadFile = async (
       file: file.data,
     });
   } catch (error) {
+    await context.postgrest.client.from("Asset").delete().eq("name", name);
     await context.postgrest.client.from("File").delete().eq("name", name);
 
     throw error;

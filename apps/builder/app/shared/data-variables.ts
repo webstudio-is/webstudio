@@ -15,6 +15,7 @@ import {
   encodeDataVariableId,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
+  getAllPages,
   getExpressionIdentifiers,
   systemParameter,
   transpileExpression,
@@ -300,7 +301,7 @@ const traverseExpressions = ({
     args?: string[]
   ) => void | string;
 }) => {
-  const pagesList = pages ? [pages.homePage, ...pages.pages] : [];
+  const pagesList = pages ? getAllPages(pages) : [];
 
   let instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
     instances,

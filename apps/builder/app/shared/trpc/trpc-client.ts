@@ -1,5 +1,6 @@
 import type { AppRouter } from "~/services/trcp-router.server";
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
+import { getApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
 
 import type {
   AnyMutationProcedure,
@@ -11,14 +12,20 @@ import { createRecursiveProxy } from "@trpc/server/shared";
 import { useMemo, useState } from "react";
 import { fetch } from "~/shared/fetch.client";
 
-export const nativeClient = createTRPCProxyClient<AppRouter>({
-  links: [
-    httpBatchLink({
-      fetch,
-      url: "/trpc",
-    }),
-  ],
-});
+export const createNativeClient = (
+  headers?: Record<string, string | undefined>
+) =>
+  createTRPCProxyClient<AppRouter>({
+    links: [
+      httpBatchLink({
+        fetch,
+        headers: () => headers ?? {},
+        url: "/trpc",
+      }),
+    ],
+  });
+
+export const nativeClient = createNativeClient();
 
 type Procedures<T> = T extends AnyRouter
   ? {
@@ -110,6 +117,12 @@ export const trpcClient: {
         }
 
         console.error("TRPC ERROR", error);
+
+        const payload = getApiCompatibilityPayload(error);
+        if (payload?.action.type === "reloadBrowser") {
+          setError(payload.message);
+          return;
+        }
 
         if (error instanceof Error) {
           setError(error.message);

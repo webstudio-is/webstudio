@@ -18,18 +18,21 @@ import {
 } from "./repeated-style";
 import { createComputedStyleDeclStore } from "./model";
 import { parseCssFragment } from "./css-fragment";
+import { $selectedBreakpointId } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 import {
-  $breakpoints,
   $instances,
-  $selectedBreakpointId,
   $styles,
   $styleSources,
   $styleSourceSelections,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { setProperty } from "./use-style-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { $awareness } from "~/shared/awareness";
+import {
+  $selectedPageId,
+  $selectedInstanceSelector,
+} from "~/shared/nano-states";
 
 setEnv("*");
 registerContainers();
@@ -37,10 +40,8 @@ registerContainers();
 beforeEach(() => {
   $breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
   $selectedBreakpointId.set("base");
-  $awareness.set({
-    pageId: "",
-    instanceSelector: ["box"],
-  });
+  $selectedPageId.set("");
+  $selectedInstanceSelector.set(["box"]);
   $instances.set(
     new Map([
       ["box", { type: "instance", id: "box", component: "Box", children: [] }],

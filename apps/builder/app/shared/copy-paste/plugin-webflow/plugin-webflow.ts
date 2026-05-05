@@ -5,7 +5,7 @@ import {
   insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "../../instance-utils";
-import { $project } from "../../nano-states";
+import { $project } from "~/shared/sync/data-stores";
 import {
   WfData,
   wfNodeTypes,

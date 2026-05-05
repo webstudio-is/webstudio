@@ -3,28 +3,38 @@ import type { Page, Pages } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { updateCurrentSystem } from "./system";
-import { selectPage } from "./awareness";
+import { selectPage } from "./nano-states";
 
 registerContainers();
 
 const getInitialPages = (page: Page): Pages => ({
-  folders: [
-    {
-      id: "rootId",
-      name: "",
-      slug: "",
-      children: ["homeId", "dynamicId"],
-    },
-  ],
-  homePage: {
-    id: "homeId",
-    path: "",
-    name: "",
-    title: "",
-    meta: {},
-    rootInstanceId: "",
-  },
-  pages: [page],
+  homePageId: "homeId",
+  rootFolderId: "rootId",
+  folders: new Map([
+    [
+      "rootId",
+      {
+        id: "rootId",
+        name: "",
+        slug: "",
+        children: ["homeId", "dynamicId"],
+      },
+    ],
+  ]),
+  pages: new Map([
+    [
+      "homeId",
+      {
+        id: "homeId",
+        path: "",
+        name: "",
+        title: "",
+        meta: {},
+        rootInstanceId: "",
+      },
+    ],
+    [page.id, page],
+  ]),
 });
 
 describe("history", () => {
@@ -43,13 +53,13 @@ describe("history", () => {
     updateCurrentSystem({
       params: { date: "my-date", slug: "my-slug" },
     });
-    expect($pages.get()?.pages[0].history).toEqual([
+    expect($pages.get()?.pages.get("dynamicId")?.history).toEqual([
       "/blog/my-date/post/my-slug",
     ]);
     updateCurrentSystem({
       params: { date: "another-date", slug: "another-slug" },
     });
-    expect($pages.get()?.pages[0].history).toEqual([
+    expect($pages.get()?.pages.get("dynamicId")?.history).toEqual([
       "/blog/another-date/post/another-slug",
       "/blog/my-date/post/my-slug",
     ]);
@@ -74,7 +84,7 @@ describe("history", () => {
     updateCurrentSystem({
       params: { date: "my-date", slug: "my-slug" },
     });
-    expect($pages.get()?.pages[0].history).toEqual([
+    expect($pages.get()?.pages.get("dynamicId")?.history).toEqual([
       "/blog/my-date/post/my-slug",
       "/blog/another-date/post/another-slug",
     ]);

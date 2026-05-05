@@ -7,18 +7,21 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import type {
-  Deployment,
-  Resource,
-  StyleSource,
-  Prop,
-  DataSource,
-  Instance,
-  Breakpoint,
-  StyleSourceSelection,
-  StyleDecl,
-  Pages,
+import {
+  type Deployment,
+  type Resource,
+  type StyleSource,
+  type Prop,
+  type DataSource,
+  type Instance,
+  type Breakpoint,
+  type StyleSourceSelection,
+  type StyleDecl,
 } from "@webstudio-is/sdk";
+import {
+  migratePages,
+  serializePages,
+} from "@webstudio-is/project-migrations/pages";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
 import type { MarketplaceProduct } from "../shared//marketplace";
@@ -26,6 +29,15 @@ import { breakCyclesMutable } from "../shared/graph-utils";
 import { createPages } from "../template";
 import { serializeStyles } from "./styles";
 import { serializeStyleSourceSelections } from "./style-source-selections";
+import { parseConfig, serializeData } from "./build-parser";
+
+export {
+  parseConfig,
+  parseData,
+  parseInstanceData,
+  serializeConfig,
+  serializeData,
+} from "./build-parser";
 
 const parseCompactData = <Item>(serialized: string) =>
   JSON.parse(serialized) as Item[];
@@ -41,35 +53,6 @@ const parseCompactInstanceData = (serialized: string) => {
   return instances;
 };
 
-export const parseData = <Type extends { id: string }>(
-  string: string
-): Map<Type["id"], Type> => {
-  const list = JSON.parse(string) as Type[];
-  return new Map(list.map((item) => [item.id, item]));
-};
-
-export const parseInstanceData = (
-  string: string
-): Map<Instance["id"], Instance> => {
-  const list = parseCompactInstanceData(string);
-  return new Map(list.map((item) => [item.id, item]));
-};
-
-export const serializeData = <Type extends { id: string }>(
-  data: Map<Type["id"], Type>
-) => {
-  const dataSourcesList: Type[] = Array.from(data.values());
-  return JSON.stringify(dataSourcesList);
-};
-
-export const parseConfig = <Type>(string: string): Type => {
-  return JSON.parse(string);
-};
-
-export const serializeConfig = <Type>(data: Type) => {
-  return JSON.stringify(data);
-};
-
 const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
@@ -80,7 +63,7 @@ const parseCompactBuild = async (
       version: build.version,
       createdAt: build.createdAt,
       updatedAt: build.updatedAt,
-      pages: parseConfig<Pages>(build.pages),
+      pages: migratePages(parseConfig<unknown>(build.pages)),
       breakpoints: parseCompactData<Breakpoint>(build.breakpoints),
       styles: parseCompactData<StyleDecl>(build.styles),
       styleSources: parseCompactData<StyleSource>(build.styleSources),
@@ -212,7 +195,7 @@ export const createBuild = async (
   const newBuild = await context.postgrest.client.from("Build").insert({
     id: crypto.randomUUID(),
     projectId: props.projectId,
-    pages: serializeConfig<Pages>(data.pages),
+    pages: JSON.stringify(serializePages(data.pages)),
     breakpoints: serializeData<Breakpoint>(data.breakpoints),
     styles: serializeStyles(data.styles),
     styleSources: serializeData<StyleSource>(data.styleSources),

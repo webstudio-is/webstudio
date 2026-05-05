@@ -11,25 +11,27 @@
         "faviconAssetId": "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59",
         "code": "<script>console.log('KittyGuardedZone')</script>\n"
       },
-      "homePage": {
-        "id": "7Db64ZXgYiRqKSQNR-qTQ",
-        "name": "Home",
-        "title": "\"The Ultimate Cat Protection Zone\"",
-        "rootInstanceId": "On9cvWCxr5rdZtY9O1Bv0",
-        "systemDataSourceId": "u9wtUkt2-E0RDaljl_I6E",
-        "meta": {
-          "description": "\"Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \\nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.\"",
-          "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
-          "custom": [
-            {
-              "property": "fb:app_id",
-              "content": "\"app_id_app_id_app_id\""
-            }
-          ]
-        },
-        "path": ""
-      },
+      "homePageId": "7Db64ZXgYiRqKSQNR-qTQ",
+      "rootFolderId": "root",
       "pages": [
+        {
+          "id": "7Db64ZXgYiRqKSQNR-qTQ",
+          "name": "Home",
+          "title": "\"The Ultimate Cat Protection Zone\"",
+          "rootInstanceId": "On9cvWCxr5rdZtY9O1Bv0",
+          "systemDataSourceId": "u9wtUkt2-E0RDaljl_I6E",
+          "meta": {
+            "description": "\"Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \\nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.\"",
+            "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
+            "custom": [
+              {
+                "property": "fb:app_id",
+                "content": "\"app_id_app_id_app_id\""
+              }
+            ]
+          },
+          "path": ""
+        },
         {
           "id": "xfvB4UThQXmQ_OubPYrkg",
           "name": "radix excluded from the search",

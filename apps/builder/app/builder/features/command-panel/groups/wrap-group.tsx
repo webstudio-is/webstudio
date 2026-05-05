@@ -19,12 +19,10 @@ import type {
   Props,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import {
-  $instances,
-  $props,
-  $registeredComponentMetas,
-} from "~/shared/nano-states";
-import { $selectedInstancePath } from "~/shared/awareness";
+import { $registeredComponentMetas } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import { $props } from "~/shared/sync/data-stores";
+import { $selectedInstancePath } from "~/shared/nano-states";
 import {
   getInstanceLabel,
   InstanceIcon,

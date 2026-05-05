@@ -4,14 +4,12 @@ import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import * as animationMetas from "@webstudio-is/sdk-components-animation/metas";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $, renderData } from "@webstudio-is/template";
-import {
-  $instances,
-  $pages,
-  $props,
-  $registeredComponentMetas,
-} from "~/shared/nano-states";
+import { $registeredComponentMetas } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import { $pages, $props } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { $awareness, selectInstance } from "~/shared/awareness";
+import { $selectedPageId } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { __testing__ } from "./wrap-group";
 
 const { canWrapInstance } = __testing__;
@@ -25,7 +23,7 @@ const metas = new Map(
 beforeEach(() => {
   $registeredComponentMetas.set(metas);
   $pages.set(createDefaultPages({ rootInstanceId: "" }));
-  $awareness.set({ pageId: "" });
+  $selectedPageId.set("");
 });
 
 describe("canWrapInstance for components", () => {

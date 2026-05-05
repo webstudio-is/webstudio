@@ -4,8 +4,9 @@ import { renderData, ws } from "@webstudio-is/template";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { registerContainers } from "../sync/sync-stores";
-import { $instances, $pages, $project } from "../nano-states";
-import { $awareness } from "../awareness";
+import { $instances } from "~/shared/sync/data-stores";
+import { $pages, $project } from "~/shared/sync/data-stores";
+import { $selectedPageId, $selectedInstanceSelector } from "../nano-states";
 import { html } from "./plugin-html";
 
 setEnv("*");
@@ -22,7 +23,8 @@ test("paste html fragment", async () => {
   $pages.set(
     createDefaultPages({ rootInstanceId: "bodyId", homePageId: "pageId" })
   );
-  $awareness.set({ pageId: "pageId", instanceSelector: ["divId", "bodyId"] });
+  $selectedPageId.set("pageId");
+  $selectedInstanceSelector.set(["divId", "bodyId"]);
   expect(
     await html.onPaste?.(`
       <section>
@@ -59,7 +61,8 @@ test("ignore html without any tags", async () => {
   $pages.set(
     createDefaultPages({ rootInstanceId: "bodyId", homePageId: "pageId" })
   );
-  $awareness.set({ pageId: "pageId", instanceSelector: ["divId", "bodyId"] });
+  $selectedPageId.set("pageId");
+  $selectedInstanceSelector.set(["divId", "bodyId"]);
   expect(await html.onPaste?.(`It works`)).toEqual(false);
   expect($instances.get()).toEqual(data.instances);
 });
@@ -75,7 +78,8 @@ test("skip whitespace-only text nodes between element siblings", async () => {
   $pages.set(
     createDefaultPages({ rootInstanceId: "bodyId", homePageId: "pageId" })
   );
-  $awareness.set({ pageId: "pageId", instanceSelector: ["divId", "bodyId"] });
+  $selectedPageId.set("pageId");
+  $selectedInstanceSelector.set(["divId", "bodyId"]);
 
   // Regression test: whitespace between elements should not create separate text nodes
   // but the space should be preserved as part of one of the adjacent span instances

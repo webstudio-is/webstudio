@@ -31,7 +31,7 @@ import {
   $selectedInstance,
   $selectedInstanceKey,
   $selectedPage,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
 import { InstanceIcon, getInstanceLabel } from "./shared/instance-label";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {

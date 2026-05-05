@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { shallowEqual } from "shallow-equal";
 import type { ExoticComponent } from "react";
-import { atom, computed } from "nanostores";
+import { atom } from "nanostores";
 import type {
   AnyComponent,
   Hook,
@@ -14,9 +14,10 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
-import { $memoryProps, $props } from "./misc";
-import { $instances } from "./instances";
-import { $awareness, $selectedPage, getInstanceKey } from "../awareness";
+import { $props, $instances } from "../sync/data-stores";
+import { $memoryProps } from "./misc";
+import { $selectedPage } from "./pages";
+import { $selectedInstanceSelector, getInstanceKey } from "./instances";
 import {
   renderTemplate,
   type GeneratedTemplateMeta,
@@ -101,16 +102,11 @@ const createHookContext = (): HookContext => {
   };
 };
 
-const $instanceSelector = computed(
-  $awareness,
-  (awareness) => awareness?.instanceSelector
-);
-
 // subscribe builder events and invoke all component hooks
 export const subscribeComponentHooks = () => {
   let lastInstanceSelector: undefined | InstanceSelector = undefined;
-  const unsubscribeSelectedInstanceSelector = $instanceSelector.subscribe(
-    (instanceSelector) => {
+  const unsubscribeSelectedInstanceSelector =
+    $selectedInstanceSelector.subscribe((instanceSelector) => {
       // prevent executing hooks when selected instance is not changed
       if (shallowEqual(lastInstanceSelector, instanceSelector)) {
         return;
@@ -157,8 +153,7 @@ export const subscribeComponentHooks = () => {
 
       // store converts values to readonly
       lastInstanceSelector = instanceSelector as InstanceSelector;
-    }
-  );
+    });
 
   return () => {
     unsubscribeSelectedInstanceSelector();

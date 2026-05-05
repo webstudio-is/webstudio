@@ -4,6 +4,7 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Asset } from "@webstudio-is/sdk";
+import { deleteAssetsWithClient } from "./asset-patch-core";
 
 export const deleteAssets = async (
   props: {
@@ -23,50 +24,5 @@ export const deleteAssets = async (
     );
   }
 
-  const assets = await context.postgrest.client
-    .from("Asset")
-    .select(
-      `
-        id,
-        projectId,
-        name,
-        file:File!inner (*)
-      `
-    )
-    .in("id", props.ids)
-    .eq("projectId", props.projectId);
-
-  if ((assets.data ?? []).length === 0) {
-    throw new Error("Assets not found");
-  }
-
-  await context.postgrest.client
-    .from("Project")
-    .update({ previewImageAssetId: null })
-    .eq("id", props.projectId)
-    .in("previewImageAssetId", props.ids);
-
-  await context.postgrest.client
-    .from("Asset")
-    .delete()
-    .in("id", props.ids)
-    .eq("projectId", props.projectId);
-
-  // find unused files
-  const unusedFileNames = new Set(assets.data?.map((asset) => asset.name));
-  const assetsByStillUsedFileName = await context.postgrest.client
-    .from("Asset")
-    .select("name")
-    .in("name", Array.from(unusedFileNames));
-  for (const asset of assetsByStillUsedFileName.data ?? []) {
-    unusedFileNames.delete(asset.name);
-  }
-
-  // delete unused files
-  if (unusedFileNames.size > 0) {
-    await context.postgrest.client
-      .from("File")
-      .update({ isDeleted: true })
-      .in("name", Array.from(unusedFileNames));
-  }
+  await deleteAssetsWithClient(props, context.postgrest.client);
 };

@@ -26,12 +26,10 @@ import {
 import { useComputedStyleDecl } from "../../../shared/model";
 import { createBatchUpdate } from "../../../shared/use-style-data";
 import { useReadonly } from "../../../shared/readonly";
-import {
-  $breakpoints,
-  $gridCellData,
-  $instances,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $gridCellData } from "~/shared/nano-states";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $instances } from "~/shared/sync/data-stores";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { DEFAULT_GRID_TRACK_COUNT } from "./constants";
 

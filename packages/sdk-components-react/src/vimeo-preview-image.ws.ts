@@ -19,6 +19,7 @@ export const meta: WsComponentMeta = {
       control: "file",
       label: "Source",
       required: false,
+      contentMode: true,
     },
   },
 };

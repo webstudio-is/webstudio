@@ -20,6 +20,11 @@ const createContext = (userId = "user-1"): AppContext =>
     authorization: { type: "user", userId },
   }) as unknown as AppContext;
 
+const anonymousContext = {
+  ...testContext,
+  authorization: { type: "anonymous" },
+} as unknown as AppContext;
+
 // Helper: member row with workspace embedded
 const memberRow = (workspaceId: string, ownerId: string, name: string) => ({
   workspaceId,
@@ -28,14 +33,16 @@ const memberRow = (workspaceId: string, ownerId: string, name: string) => ({
 
 // ─── seatSuspended ─────────────────────────────────────────────
 
+describe("notifications (msw)", () => {
+  test("returns empty list for non-user authorization", async () => {
+    const result = await resolveTopics(["notifications"], anonymousContext);
+    expect(result.notifications).toEqual([]);
+  });
+});
+
 describe("seatSuspended (msw)", () => {
   test("returns false for non-user authorization", async () => {
-    const ctx = {
-      ...testContext,
-      authorization: { type: "anonymous" },
-    } as unknown as AppContext;
-
-    const result = await resolveTopics(["seatSuspended"], ctx);
+    const result = await resolveTopics(["seatSuspended"], anonymousContext);
     expect(result.seatSuspended).toBe(false);
   });
 

@@ -2,31 +2,39 @@
  * @vitest-environment jsdom
  */
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-import type { Backoff } from "~/shared/polly/backoff";
+import type { Backoff } from "@webstudio-is/sync-client";
 
-// ── Module mocks ─────────────────────────────────────────────────
+//  Module mocks
 
-const { mockFetch, mockToastError, mockCreateBackoff, mockLoadBuilderData } =
-  vi.hoisted(() => ({
-    mockFetch: vi.fn(),
-    mockToastError: vi.fn(),
-    mockCreateBackoff: vi.fn(),
-    mockLoadBuilderData: vi.fn(),
-  }));
+const {
+  mockBuildPatch,
+  mockCreateNativeClient,
+  mockToastError,
+  mockCreateBackoff,
+  mockLoadBuilderData,
+} = vi.hoisted(() => ({
+  mockBuildPatch: vi.fn(),
+  mockCreateNativeClient: vi.fn(),
+  mockToastError: vi.fn(),
+  mockCreateBackoff: vi.fn(),
+  mockLoadBuilderData: vi.fn(),
+}));
 
-vi.mock("~/shared/fetch.client", () => ({
-  fetch: mockFetch,
+vi.mock("~/shared/trpc/trpc-client", () => ({
+  createNativeClient: mockCreateNativeClient,
+  nativeClient: { build: { patch: { mutate: mockBuildPatch } } },
 }));
 
 vi.mock("@webstudio-is/design-system", () => ({
   toast: { error: mockToastError },
 }));
 
-vi.mock("~/shared/router-utils", () => ({
-  restPatchPath: () => "/rest/patch",
+vi.mock("~/env/env.static", () => ({
+  publicStaticEnv: { VERSION: "test-version" },
 }));
 
-vi.mock("~/shared/polly/backoff", () => ({
+vi.mock("@webstudio-is/sync-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@webstudio-is/sync-client")>()),
   createBackoff: mockCreateBackoff,
 }));
 
@@ -34,11 +42,11 @@ vi.mock("~/shared/builder-data", () => ({
   loadBuilderData: mockLoadBuilderData,
 }));
 
-// ── Imports (after mocks) ────────────────────────────────────────
+//  Imports (after mocks)
 
 import type { Change } from "immerhin";
+import { $hasUnsavedSyncChanges, $syncStatus } from "@webstudio-is/sync-client";
 import {
-  $queueStatus,
   $lastTransactionId,
   commandQueue,
   isSyncIdle,
@@ -52,14 +60,14 @@ import {
 
 const { retry, pollCommands, transactionCallbacks } = __testing__;
 
-// ── Constants (duplicated to avoid exporting them just for tests) ─
+//  Constants (duplicated to avoid exporting them just for tests)
 
 const NEW_ENTRIES_INTERVAL = 1000;
 const INTERVAL_RECOVERY = 2000;
 const MAX_RETRY_RECOVERY = 5;
 const MAX_ALLOWED_API_ERRORS = 5;
 
-// ── Helpers ──────────────────────────────────────────────────────
+//  Helpers
 
 const flush = () => vi.advanceTimersByTimeAsync(0);
 
@@ -87,12 +95,12 @@ const createMockBackoff = (overrides: Partial<Backoff> = {}): Backoff => {
   };
 };
 
-// ── Tests ────────────────────────────────────────────────────────
+//  Tests
 
 describe("project-queue", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    $queueStatus.set({ status: "idle" });
+    $syncStatus.set({ status: "idle" });
     $lastTransactionId.set(undefined);
     commandQueue.dequeueAll();
     transactionCallbacks.clear();
@@ -100,7 +108,10 @@ describe("project-queue", () => {
 
     // Default mocks
     mockCreateBackoff.mockReturnValue(createMockBackoff());
-    mockFetch.mockResolvedValue(new Response());
+    mockCreateNativeClient.mockReturnValue({
+      build: { patch: { mutate: mockBuildPatch } },
+    });
+    mockBuildPatch.mockResolvedValue({ status: "ok" });
     mockToastError.mockClear();
     mockLoadBuilderData.mockResolvedValue({});
   });
@@ -111,24 +122,40 @@ describe("project-queue", () => {
     vi.restoreAllMocks();
   });
 
-  // ── isSyncIdle ─────────────────────────────────────────────────
+  //  unload protection
+
+  describe("$hasUnsavedSyncChanges", () => {
+    test("is false when sync is idle", () => {
+      $syncStatus.set({ status: "idle" });
+
+      expect($hasUnsavedSyncChanges.get()).toBe(false);
+    });
+
+    test("is true while changes are not saved yet", () => {
+      $syncStatus.set({ status: "syncing" });
+
+      expect($hasUnsavedSyncChanges.get()).toBe(true);
+    });
+  });
+
+  //  isSyncIdle
 
   describe("isSyncIdle", () => {
     test("resolves immediately when status is idle", async () => {
-      $queueStatus.set({ status: "idle" });
+      $syncStatus.set({ status: "idle" });
       const result = await isSyncIdle();
       expect(result).toEqual({ status: "idle" });
     });
 
     test("rejects immediately when status is fatal", async () => {
-      $queueStatus.set({ status: "fatal", error: "broken" });
+      $syncStatus.set({ status: "fatal", error: "broken" });
       await expect(isSyncIdle()).rejects.toThrow(
         "Synchronization is in fatal state"
       );
     });
 
     test("waits and resolves when status transitions to idle", async () => {
-      $queueStatus.set({ status: "running" });
+      $syncStatus.set({ status: "syncing" });
 
       let resolved = false;
       isSyncIdle().then(() => {
@@ -137,13 +164,13 @@ describe("project-queue", () => {
       await flush();
       expect(resolved).toBe(false);
 
-      $queueStatus.set({ status: "idle" });
+      $syncStatus.set({ status: "idle" });
       await flush();
       expect(resolved).toBe(true);
     });
 
     test("waits and rejects when status transitions to fatal", async () => {
-      $queueStatus.set({ status: "running" });
+      $syncStatus.set({ status: "syncing" });
 
       let error: Error | undefined;
       isSyncIdle().catch((err: Error) => {
@@ -152,13 +179,13 @@ describe("project-queue", () => {
       await flush();
       expect(error).toBeUndefined();
 
-      $queueStatus.set({ status: "fatal", error: "crashed" });
+      $syncStatus.set({ status: "fatal", error: "crashed" });
       await flush();
       expect(error?.message).toMatch("Synchronization is in fatal state");
     });
 
     test("ignores intermediate non-idle/non-fatal statuses", async () => {
-      $queueStatus.set({ status: "running" });
+      $syncStatus.set({ status: "syncing" });
 
       let resolved = false;
       isSyncIdle().then(() => {
@@ -166,21 +193,21 @@ describe("project-queue", () => {
       });
       await flush();
 
-      $queueStatus.set({ status: "recovering" });
+      $syncStatus.set({ status: "recovering" });
       await flush();
       expect(resolved).toBe(false);
 
-      $queueStatus.set({ status: "failed" });
+      $syncStatus.set({ status: "failed" });
       await flush();
       expect(resolved).toBe(false);
 
-      $queueStatus.set({ status: "idle" });
+      $syncStatus.set({ status: "idle" });
       await flush();
       expect(resolved).toBe(true);
     });
   });
 
-  // ── onTransactionComplete ──────────────────────────────────────
+  //  onTransactionComplete
 
   describe("onTransactionComplete", () => {
     test("cleans up callbacks after 60s timeout", async () => {
@@ -195,7 +222,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── onNextTransactionComplete ──────────────────────────────────
+  //  onNextTransactionComplete
 
   describe("onNextTransactionComplete", () => {
     test("fires when $lastTransactionId changes and transaction succeeds", async () => {
@@ -224,7 +251,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── retry generator ────────────────────────────────────────────
+  //  retry generator
 
   describe("retry generator (backoff integration)", () => {
     test("uses 'recovering' status for the first MAX_RETRY_RECOVERY attempts", async () => {
@@ -247,7 +274,7 @@ describe("project-queue", () => {
         await vi.advanceTimersByTimeAsync(INTERVAL_RECOVERY);
         await p;
 
-        expect($queueStatus.get()).toEqual({ status: "recovering" });
+        expect($syncStatus.get()).toEqual({ status: "recovering" });
       }
     });
 
@@ -277,7 +304,7 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(15_000);
       await failedPromise;
 
-      expect($queueStatus.get()).toEqual({ status: "failed" });
+      expect($syncStatus.get()).toEqual({ status: "failed" });
     });
 
     test("uses backoff.next() delay and shows toast in failed state", async () => {
@@ -335,7 +362,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── pollCommands generator ─────────────────────────────────────
+  //  pollCommands generator
 
   describe("pollCommands generator", () => {
     test("yields commands from the queue", async () => {
@@ -355,7 +382,7 @@ describe("project-queue", () => {
       );
     });
 
-    test("sets status to running when commands are available", async () => {
+    test("sets status to syncing when commands are available", async () => {
       commandQueue.enqueue({
         type: "setDetails",
         projectId: "p1",
@@ -367,7 +394,7 @@ describe("project-queue", () => {
       const gen = pollCommands();
       await gen.next();
 
-      expect($queueStatus.get()).toEqual({ status: "running" });
+      expect($syncStatus.get()).toEqual({ status: "syncing" });
     });
 
     test("sets status to idle and waits when queue is empty", async () => {
@@ -392,7 +419,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── enqueueProjectDetails ──────────────────────────────────────
+  //  enqueueProjectDetails
 
   describe("enqueueProjectDetails", () => {
     test("skips enqueue for 'view' permit", () => {
@@ -451,7 +478,7 @@ describe("project-queue", () => {
     });
   });
 
-  // ── ServerSyncStorage ──────────────────────────────────────────
+  //  ServerSyncStorage
 
   describe("ServerSyncStorage", () => {
     test("sendTransaction enqueues only for 'server' object", () => {
@@ -496,14 +523,11 @@ describe("project-queue", () => {
     });
   });
 
-  // ── pollQueue integration ──────────────────────────────────────
+  //  pollQueue integration
 
   describe("pollQueue integration", () => {
     test("successful transaction increments version and fires callbacks", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ status: "ok" }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({ status: "ok" });
 
       const txCallback = vi.fn();
       onTransactionComplete("tx-success", txCallback);
@@ -528,19 +552,46 @@ describe("project-queue", () => {
       expect(txCallback).toHaveBeenCalledWith(true);
     });
 
+    test("sends auth token in RPC input and header", async () => {
+      mockBuildPatch.mockResolvedValue({ status: "ok" });
+
+      enqueueProjectDetails({
+        projectId: "p1",
+        buildId: "b1",
+        version: 1,
+        authPermit: "edit",
+        authToken: "tok",
+      });
+      commandQueue.enqueue({
+        type: "transactions",
+        projectId: "p1",
+        transactions: [makeTx("tx-auth")],
+      });
+
+      await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
+      await flush();
+
+      expect(mockBuildPatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          authToken: "tok",
+          source: "browser",
+        })
+      );
+      expect(mockCreateNativeClient).toHaveBeenCalledWith({
+        "x-auth-token": "tok",
+      });
+    });
+
     test("version_mismatched response sets fatal status", async () => {
       vi.stubGlobal(
         "confirm",
         vi.fn(() => false)
       );
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          status: "version_mismatched",
-          errors: "Version mismatch",
-        }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({
+        status: "version_mismatched",
+        errors: "Version mismatch",
+      });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -558,7 +609,7 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
       await flush();
 
-      expect($queueStatus.get().status).toBe("fatal");
+      expect($syncStatus.get().status).toBe("fatal");
 
       vi.unstubAllGlobals();
     });
@@ -569,13 +620,10 @@ describe("project-queue", () => {
         vi.fn(() => false)
       );
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          status: "authorization_error",
-          errors: "Not authorized",
-        }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({
+        status: "authorization_error",
+        errors: "Not authorized",
+      });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -593,19 +641,16 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
       await flush();
 
-      expect($queueStatus.get().status).toBe("fatal");
+      expect($syncStatus.get().status).toBe("fatal");
 
       vi.unstubAllGlobals();
     });
 
     test("fatal after MAX_ALLOWED_API_ERRORS unknown API errors", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          status: "unknown_error",
-          errors: "Something bad",
-        }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({
+        status: "unknown_error",
+        errors: "Something bad",
+      });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -631,20 +676,17 @@ describe("project-queue", () => {
         await flush();
       }
 
-      expect($queueStatus.get().status).toBe("fatal");
+      expect($syncStatus.get().status).toBe("fatal");
     });
 
-    test("non-ok response retries without crashing", async () => {
+    test("rpc errors retry without crashing", async () => {
       let callCount = 0;
-      mockFetch.mockImplementation(async () => {
+      mockBuildPatch.mockImplementation(async () => {
         callCount += 1;
         if (callCount <= 2) {
-          return { ok: false, text: async () => "Server Error" } as Response;
+          throw new Error("Server Error");
         }
-        return {
-          ok: true,
-          json: async () => ({ status: "ok" }),
-        } as Response;
+        return { status: "ok" };
       });
 
       enqueueProjectDetails({
@@ -672,15 +714,12 @@ describe("project-queue", () => {
 
     test("network error retries without crashing", async () => {
       let callCount = 0;
-      mockFetch.mockImplementation(async () => {
+      mockBuildPatch.mockImplementation(async () => {
         callCount += 1;
         if (callCount <= 1) {
           throw new Error("ERR_CONNECTION_REFUSED");
         }
-        return {
-          ok: true,
-          json: async () => ({ status: "ok" }),
-        } as Response;
+        return { status: "ok" };
       });
 
       Object.defineProperty(navigator, "onLine", {
@@ -730,7 +769,7 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 5);
       await flush();
 
-      expect($queueStatus.get().status).toBe("fatal");
+      expect($syncStatus.get().status).toBe("fatal");
       expect(mockToastError).toHaveBeenCalledWith(
         expect.stringContaining("Project details not found"),
         expect.anything()
@@ -743,10 +782,7 @@ describe("project-queue", () => {
         vi.fn(() => false)
       );
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ status: "ok" }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({ status: "ok" });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -778,13 +814,13 @@ describe("project-queue", () => {
       await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 2);
       await flush();
 
-      expect($queueStatus.get().status).toBe("fatal");
+      expect($syncStatus.get().status).toBe("fatal");
 
       vi.unstubAllGlobals();
     });
   });
 
-  // ── stopPolling ────────────────────────────────────────────────
+  //  stopPolling
 
   describe("stopPolling", () => {
     test("can be called safely when not polling", () => {
@@ -792,10 +828,7 @@ describe("project-queue", () => {
     });
 
     test("stops the polling loop", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ status: "ok" }),
-      } as Response);
+      mockBuildPatch.mockResolvedValue({ status: "ok" });
 
       enqueueProjectDetails({
         projectId: "p1",
@@ -806,7 +839,7 @@ describe("project-queue", () => {
       });
 
       stopPolling();
-      mockFetch.mockClear();
+      mockBuildPatch.mockClear();
 
       commandQueue.enqueue({
         type: "transactions",
@@ -818,7 +851,7 @@ describe("project-queue", () => {
       await flush();
 
       // No fetch calls should have happened after stopping
-      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockBuildPatch).not.toHaveBeenCalled();
     });
   });
 });

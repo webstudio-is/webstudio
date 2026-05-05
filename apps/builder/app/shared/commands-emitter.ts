@@ -30,7 +30,7 @@ export type CommandMeta<CommandName extends string> = {
   keepCommandPanelOpen?: boolean;
 };
 
-type CommandHandler = () => void;
+type CommandHandler = (source: string) => void;
 
 /**
  * Command can be registered by builder, canvas or plugin
@@ -124,7 +124,7 @@ export const createCommandsEmitter = <CommandName extends string>({
         },
       });
     } else {
-      commandHandlers.get(name)?.();
+      commandHandlers.get(name)?.(source);
     }
   };
 
@@ -143,8 +143,8 @@ export const createCommandsEmitter = <CommandName extends string>({
       });
     }
 
-    const unsubscribePubsub = subscribe("command", ({ name }) => {
-      commandHandlers.get(name)?.();
+    const unsubscribePubsub = subscribe("command", ({ name, source }) => {
+      commandHandlers.get(name)?.(source);
     });
     const handleKeyDown = (event: KeyboardEvent) => {
       let emitted = false;

@@ -2,13 +2,13 @@ import { useStore } from "@nanostores/react";
 import { styled } from "@webstudio-is/design-system";
 
 import {
-  $instances,
   $modifierKeys,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   $textEditorContextMenuCommand,
   findTemplates,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import { applyScale } from "./outline";
 import { $scale } from "~/builder/shared/nano-states";
 import { TemplatesMenu } from "./outline/block-instance-outline";

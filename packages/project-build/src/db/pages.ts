@@ -1,10 +1,13 @@
-// DEPRECATED: use parseData and serializeData from build.ts
+import {
+  migratePages,
+  serializePages as serializePagesData,
+} from "@webstudio-is/project-migrations/pages";
 import type { Pages } from "@webstudio-is/sdk";
 
 export const parsePages = (pagesString: string): Pages => {
-  return JSON.parse(pagesString) as Pages;
+  return migratePages(JSON.parse(pagesString));
 };
 
 export const serializePages = (pages: Pages) => {
-  return JSON.stringify(pages);
+  return JSON.stringify(serializePagesData(pages));
 };

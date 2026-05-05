@@ -3,10 +3,6 @@ import type { Breakpoint } from "@webstudio-is/sdk";
 import { $breakpoints } from "../sync/data-stores";
 import { isBaseBreakpoint } from "../breakpoints-utils";
 
-// Re-export for backward compatibility
-export { $breakpoints };
-export { isBaseBreakpoint };
-
 export const $selectedBreakpointId = atom<undefined | Breakpoint["id"]>(
   undefined
 );

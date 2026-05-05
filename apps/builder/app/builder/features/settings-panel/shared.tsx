@@ -42,16 +42,16 @@ import {
 } from "@webstudio-is/design-system";
 import {
   $dataSourceVariables,
-  $dataSources,
   $registeredComponentMetas,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
 import { humanizeString } from "~/shared/string-utils";
 import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
 import { $instanceTags } from "../style-panel/shared/model";
 
 export const showAttributeMeta: PropMeta = {
@@ -458,31 +458,82 @@ const attributeToMeta = (attribute: Attribute): PropMeta => {
   throw Error("impossible case");
 };
 
+// Derive tag → content-mode attribute names from registered component metas,
+// so a prop marked `contentMode: true` in a .ws.ts file also surfaces on
+// `ws:element` instances rendering the same tag.
+const $contentModeAttributesByTag = computed(
+  [$registeredComponentMetas],
+  (metas) => {
+    const byTag = new Map<string, Set<string>>();
+    for (const componentMeta of metas.values()) {
+      const tags = Object.keys(componentMeta.presetStyle ?? {});
+      if (tags.length === 0) {
+        continue;
+      }
+      for (const [propName, propMeta] of Object.entries(
+        componentMeta.props ?? {}
+      )) {
+        if (propMeta.contentMode !== true) {
+          continue;
+        }
+        for (const tag of tags) {
+          let names = byTag.get(tag);
+          if (names === undefined) {
+            names = new Set();
+            byTag.set(tag, names);
+          }
+          names.add(propName);
+        }
+      }
+    }
+    return byTag;
+  }
+);
+
 export const $selectedInstancePropsMetas = computed(
-  [$selectedInstance, $registeredComponentMetas, $instanceTags],
-  (instance, metas, instanceTags): Map<string, PropMeta> => {
+  [
+    $selectedInstance,
+    $registeredComponentMetas,
+    $instanceTags,
+    $contentModeAttributesByTag,
+  ],
+  (
+    instance,
+    metas,
+    instanceTags,
+    contentModeAttributesByTag
+  ): Map<string, PropMeta> => {
     if (instance === undefined) {
       return new Map();
     }
     const meta = metas.get(instance.component);
     const tag = instanceTags.get(instance.id);
     const propsMetas = new Map<Prop["name"], PropMeta>();
+    const contentModeAttributes =
+      tag === undefined ? undefined : contentModeAttributesByTag.get(tag);
+    const toAttributeMeta = (attribute: Attribute): PropMeta => {
+      const propMeta = attributeToMeta(attribute);
+      if (contentModeAttributes?.has(attribute.name)) {
+        return { ...propMeta, contentMode: true };
+      }
+      return propMeta;
+    };
     // add html attributes only when instance has tag
     if (tag) {
       if (elementsByTag[tag].categories.includes("html-element")) {
         for (const attribute of [...ariaAttributes].reverse()) {
-          propsMetas.set(attribute.name, attributeToMeta(attribute));
+          propsMetas.set(attribute.name, toAttributeMeta(attribute));
         }
         // include global attributes only for html elements
         if (attributesByTag["*"]) {
           for (const attribute of [...attributesByTag["*"]].reverse()) {
-            propsMetas.set(attribute.name, attributeToMeta(attribute));
+            propsMetas.set(attribute.name, toAttributeMeta(attribute));
           }
         }
       }
       if (attributesByTag[tag]) {
         for (const attribute of [...attributesByTag[tag]].reverse()) {
-          propsMetas.set(attribute.name, attributeToMeta(attribute));
+          propsMetas.set(attribute.name, toAttributeMeta(attribute));
         }
       }
     }

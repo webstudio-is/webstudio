@@ -2,11 +2,11 @@ import { useStore } from "@nanostores/react";
 import { css } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
-  $instances,
   $isPreviewMode,
   $dragAndDropState,
   $canvasToolsVisible,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import {
   CollaborativeInstanceOutline,
   HoveredInstanceOutline,
@@ -26,6 +26,7 @@ import {
 import { BlockChildHoveredInstanceOutline } from "./outline/block-instance-outline";
 import { TextEditorContextMenu } from "./block-editor-context-menu";
 import { CanvasInstanceContextMenu } from "./canvas-instance-context-menu";
+import { CollaborativeCursors } from "./collaborative-cursors";
 
 const containerStyle = css({
   position: "absolute",
@@ -91,6 +92,7 @@ export const CanvasTools = () => {
           <HoveredInstanceOutline />
           <CollaborativeInstanceOutline />
           <BlockChildHoveredInstanceOutline />
+          <CollaborativeCursors />
           <TextEditorContextMenu />
           <CanvasInstanceContextMenu />
         </>

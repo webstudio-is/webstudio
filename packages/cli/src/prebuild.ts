@@ -36,6 +36,7 @@ import {
   createScope,
   findTreeInstanceIds,
   getPagePath,
+  getAllPages,
   generateResources,
   generatePageMeta,
   getStaticSiteMapXml,
@@ -49,6 +50,7 @@ import {
   getAssetUrl,
   toRuntimeAsset,
 } from "@webstudio-is/sdk";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
 import type { Data } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "./config";
 import {
@@ -290,6 +292,8 @@ export const prebuild = async (options: {
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
   );
+  const pages = migratePages(siteData.build.pages);
+  const allPages = getAllPages(pages);
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], string[]> = {};
   const backgroundImageAssetsByPage: Record<Page["id"], string[]> = {};
@@ -300,11 +304,11 @@ export const prebuild = async (options: {
     assetBaseUrl,
     assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
     uploadingImageAssets: [],
-    pages: siteData.build.pages,
+    pages,
     source: "prebuild",
   });
 
-  for (const page of Object.values(siteData.pages)) {
+  for (const page of allPages) {
     const instanceMap = new Map(siteData.build.instances);
     const pageInstanceSet = findTreeInstanceIds(
       instanceMap,
@@ -360,7 +364,7 @@ export const prebuild = async (options: {
         dataSources,
         resources,
       },
-      pages: siteData.pages,
+      pages: allPages,
       page,
       assets: siteData.assets,
     };
@@ -459,12 +463,12 @@ export const prebuild = async (options: {
     // pass only used metas to not generate unused preset styles
     componentMetas: usedMetas,
     assetBaseUrl,
-    atomic: siteData.build.pages.compiler?.atomicStyles ?? true,
+    atomic: pages.compiler?.atomicStyles ?? true,
   });
 
   await createFileIfNotExists(join(generatedDir, "index.css"), cssText);
 
-  for (const page of Object.values(siteData.pages)) {
+  for (const page of allPages) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "useState",
@@ -572,13 +576,13 @@ export const prebuild = async (options: {
       tagsOverrides: framework.tags,
     });
 
-    const projectMeta = siteData.build.pages.meta;
+    const projectMeta = pages.meta;
     const contactEmail: undefined | string =
       // fallback to user email when contact email is empty string
       projectMeta?.contactEmail || siteData.user?.email || undefined;
     const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "")?.name;
 
-    const pagePath = getPagePath(page.id, siteData.build.pages);
+    const pagePath = getPagePath(page.id, pages);
 
     const breakpoints = siteData.build.breakpoints
       .map(([_, value]) => ({
@@ -724,7 +728,7 @@ export const prebuild = async (options: {
     join(generatedDir, "$resources.sitemap.xml.ts"),
     `
       export const sitemap = ${JSON.stringify(
-        getStaticSiteMapXml(siteData.build.pages, siteData.build.updatedAt),
+        getStaticSiteMapXml(pages, siteData.build.updatedAt),
         null,
         2
       )};
@@ -748,7 +752,7 @@ export const prebuild = async (options: {
     `
   );
 
-  const redirects = siteData.build.pages?.redirects;
+  const redirects = pages.redirects;
   if (redirects !== undefined && redirects.length > 0) {
     for (const redirect of redirects) {
       const generatedBasename = generateRemixRoute(redirect.old);

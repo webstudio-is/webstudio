@@ -21,5 +21,33 @@ export const meta: WsComponentMeta = {
     "timeStyle",
     "format",
   ],
-  props,
+  props: {
+    ...props,
+    datetime: {
+      type: "string",
+      control: "text",
+      required: false,
+      contentMode: true,
+    },
+    language: {
+      ...props.language,
+      contentMode: true,
+    },
+    country: {
+      ...props.country,
+      contentMode: true,
+    },
+    dateStyle: {
+      ...props.dateStyle,
+      contentMode: true,
+    },
+    timeStyle: {
+      ...props.timeStyle,
+      contentMode: true,
+    },
+    format: {
+      ...props.format,
+      contentMode: true,
+    },
+  },
 };

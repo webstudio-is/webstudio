@@ -4,15 +4,18 @@ import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { InsetControl } from "./inset-control";
 import { registerContainers } from "~/shared/sync/sync-stores";
+import { $selectedBreakpointId } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 import {
-  $breakpoints,
   $pages,
-  $selectedBreakpointId,
   $styles,
   $styleSources,
   $styleSourceSelections,
+} from "~/shared/sync/data-stores";
+import {
+  $selectedPageId,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
-import { $awareness } from "~/shared/awareness";
 
 const top: StyleDecl = {
   breakpointId: "base",
@@ -88,10 +91,8 @@ $pages.set(
     rootInstanceId: "box",
   })
 );
-$awareness.set({
-  pageId: "homePageId",
-  instanceSelector: ["box"],
-});
+$selectedPageId.set("homePageId");
+$selectedInstanceSelector.set(["box"]);
 
 export const Inset = () => {
   return (

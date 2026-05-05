@@ -38,6 +38,11 @@ export type PollingManagerOptions = {
    * @default 30_000
    */
   interval?: number;
+  /**
+   * Pause polling while the document is hidden.
+   * @default true
+   */
+  pauseOnHidden?: boolean;
   /** Called when the fetcher throws. */
   onError?: (error: unknown) => void;
 };
@@ -68,7 +73,7 @@ export type PollingManager = {
 export const createPollingManager = (
   options: PollingManagerOptions
 ): PollingManager => {
-  const { fetcher, interval, onError } = options;
+  const { fetcher, interval, pauseOnHidden, onError } = options;
 
   // ── Subscription bookkeeping ───────────────────────────────────
 
@@ -121,6 +126,7 @@ export const createPollingManager = (
       // Always reads the *current* set of topics at call time.
       fetcher: () => fetcher(getActiveTopics()),
       interval,
+      pauseOnHidden,
       onData: dispatch,
       onError,
     });

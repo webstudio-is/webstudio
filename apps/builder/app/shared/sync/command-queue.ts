@@ -1,7 +1,7 @@
 import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
 import type { Change } from "immerhin";
-import type { Transaction } from "~/shared/sync-client";
+import type { Transaction } from "@webstudio-is/sync-client";
 
 type Command =
   | {
@@ -25,16 +25,15 @@ export const enqueue = (command: Command) => {
     return;
   }
 
-  // merge transactions in case of no commands in queue
-  for (const projectCommand of projectCommandsQueue.reverse()) {
-    if (projectCommand.type !== "transactions") {
-      break;
-    }
-
-    if (projectCommand.projectId === command.projectId) {
-      projectCommand.transactions.push(...command.transactions);
-      return;
-    }
+  // Merge only with the immediate tail command. Looking farther back can move
+  // transactions across another project's pending command and change save order.
+  const projectCommand = projectCommandsQueue.at(-1);
+  if (
+    projectCommand?.type === "transactions" &&
+    projectCommand.projectId === command.projectId
+  ) {
+    projectCommand.transactions.push(...command.transactions);
+    return;
   }
 
   projectCommandsQueue.push(command);

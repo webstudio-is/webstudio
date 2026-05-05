@@ -17,12 +17,9 @@ import {
   IconLink,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import {
-  $breakpoints,
-  $instances,
-  $registeredComponentMetas,
-  $styleSources,
-} from "~/shared/nano-states";
+import { $registeredComponentMetas } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $instances, $styleSources } from "~/shared/sync/data-stores";
 import type {
   ComputedStyleDecl,
   StyleValueSourceColor,
@@ -31,7 +28,7 @@ import { useComputedStyles } from "./shared/model";
 import { useReadonly } from "./shared/readonly";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
-import { $virtualInstances } from "~/shared/awareness";
+import { $virtualInstances } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 const $isAltPressed = atom(false);

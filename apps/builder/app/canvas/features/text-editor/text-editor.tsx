@@ -71,15 +71,14 @@ import {
   $blockChildOutline,
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
-  $instances,
   $registeredComponentMetas,
-  $selectedInstanceSelector,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   execTextEditorContextMenuCommand,
   findBlockChildSelector,
   findTemplates,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import {
   getElementByInstanceSelector,
   getVisibleElementsByInstanceSelector,
@@ -87,11 +86,12 @@ import {
 import deepEqual from "fast-deep-equal";
 import { inflateInstance } from "~/canvas/inflator";
 import {
+  $selectedInstanceSelector,
   $selectedPage,
   addTemporaryInstance,
   getInstancePath,
-  selectInstance,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { shallowEqual } from "shallow-equal";
 import {
   insertListItemAt,

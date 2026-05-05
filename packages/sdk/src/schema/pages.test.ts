@@ -1,5 +1,258 @@
-import { describe, test, expect } from "vitest";
-import { OldPagePath, PagePath, ProjectNewRedirectPath } from "./pages";
+import { describe, expect, test } from "vitest";
+import { OldPagePath, PagePath, Pages, ProjectNewRedirectPath } from "./pages";
+
+const validPages = {
+  homePageId: "home",
+  rootFolderId: "root",
+  pages: new Map([
+    [
+      "home",
+      {
+        id: "home",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "homeRoot",
+      },
+    ],
+  ]),
+  folders: new Map([
+    [
+      "root",
+      {
+        id: "root",
+        name: "Root",
+        slug: "",
+        children: ["home"],
+      },
+    ],
+  ]),
+};
+
+test("validates home page id references an existing page", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      homePageId: "missing",
+    }).error?.issues
+  ).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        path: ["homePageId"],
+        message: "Home page must reference an existing page",
+      }),
+    ])
+  );
+});
+
+test("validates root folder id references an existing folder", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      rootFolderId: "missing",
+    }).error?.issues
+  ).toEqual([
+    expect.objectContaining({
+      path: ["rootFolderId"],
+      message: "Root folder must reference an existing folder",
+    }),
+  ]);
+});
+
+test("validates home page path is empty", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      pages: new Map(validPages.pages).set("home", {
+        ...validPages.pages.get("home")!,
+        path: "/home",
+      }),
+    }).error?.issues
+  ).toEqual([
+    expect.objectContaining({
+      path: ["pages", "home", "path"],
+      message: "Home page path must be empty",
+    }),
+  ]);
+});
+
+test("validates non-home page path is not empty", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      pages: new Map(validPages.pages).set("other", {
+        id: "other",
+        name: "Other",
+        path: "",
+        title: `"Other"`,
+        meta: {},
+        rootInstanceId: "otherRoot",
+      }),
+      folders: new Map(validPages.folders).set("root", {
+        ...validPages.folders.get("root")!,
+        children: ["home", "other"],
+      }),
+    }).error?.issues
+  ).toEqual([
+    expect.objectContaining({
+      path: ["pages", "other", "path"],
+      message: "Page path can't be empty",
+    }),
+  ]);
+});
+
+test("validates page id matches its record key", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      pages: new Map(validPages.pages).set("home", {
+        ...validPages.pages.get("home")!,
+        id: "other",
+      }),
+    }).error?.issues
+  ).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        path: ["pages", "home", "id"],
+        message: "Page id must match its record key",
+      }),
+    ])
+  );
+});
+
+test("validates folder id matches its record key", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      folders: new Map(validPages.folders).set("root", {
+        ...validPages.folders.get("root")!,
+        id: "other",
+      }),
+    }).error?.issues
+  ).toEqual([
+    expect.objectContaining({
+      path: ["folders", "root", "id"],
+      message: "Folder id must match its record key",
+    }),
+  ]);
+});
+
+test("validates folder children reference existing pages or folders", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      folders: new Map(validPages.folders).set("root", {
+        ...validPages.folders.get("root")!,
+        children: ["home", "missing"],
+      }),
+    }).error?.issues
+  ).toEqual([
+    expect.objectContaining({
+      path: ["folders", "root", "children", 1],
+      message: "Folder child must reference an existing page or folder",
+    }),
+  ]);
+});
+
+test("validates root folder starts with home page", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      pages: new Map(validPages.pages).set("other", {
+        id: "other",
+        name: "Other",
+        path: "/other",
+        title: `"Other"`,
+        meta: {},
+        rootInstanceId: "otherRoot",
+      }),
+      folders: new Map(validPages.folders).set("root", {
+        ...validPages.folders.get("root")!,
+        children: ["other", "home"],
+      }),
+    }).error?.issues
+  ).toEqual([
+    expect.objectContaining({
+      path: ["folders", "root", "children"],
+      message: "Root folder must start with the home page",
+    }),
+  ]);
+});
+
+test("validates root folder is not nested", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      folders: new Map(validPages.folders).set("folder", {
+        id: "folder",
+        name: "Folder",
+        slug: "folder",
+        children: ["root"],
+      }),
+    }).error?.issues
+  ).toEqual([
+    expect.objectContaining({
+      path: ["folders", "folder", "children", 0],
+      message: "Root folder can't be nested",
+    }),
+  ]);
+});
+
+test("validates children are registered in only one folder", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      folders: new Map(validPages.folders).set("folder", {
+        id: "folder",
+        name: "Folder",
+        slug: "folder",
+        children: ["home"],
+      }),
+    }).error?.issues
+  ).toEqual([
+    expect.objectContaining({
+      path: ["folders", "folder", "children", 0],
+      message: `Child is already registered in folder "root"`,
+    }),
+  ]);
+});
+
+test("validates folders do not contain cycles", () => {
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      folders: new Map([
+        ...validPages.folders,
+        [
+          "folderA",
+          {
+            id: "folderA",
+            name: "Folder A",
+            slug: "folder-a",
+            children: ["folderB"],
+          },
+        ],
+        [
+          "folderB",
+          {
+            id: "folderB",
+            name: "Folder B",
+            slug: "folder-b",
+            children: ["folderA"],
+          },
+        ],
+      ]),
+    }).error?.issues
+  ).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        path: ["folders", "folderA", "children"],
+        message: "Folders can't contain cycles",
+      }),
+    ])
+  );
+});
 
 describe("OldPagePath", () => {
   describe("basic validation", () => {
@@ -101,8 +354,6 @@ describe("OldPagePath", () => {
   });
 
   describe("non-Latin characters (Unicode/UTF-8)", () => {
-    // Chinese characters - common in Chinese websites
-    // Examples from https://aubreyyung.com/chinese-url-seo/
     test("accepts Chinese characters (Simplified)", () => {
       expect(OldPagePath.safeParse("/关于我们").success).toBe(true);
       expect(OldPagePath.safeParse("/产品/手机").success).toBe(true);
@@ -115,7 +366,6 @@ describe("OldPagePath", () => {
       expect(OldPagePath.safeParse("/繁體中文").success).toBe(true);
     });
 
-    // Japanese characters
     test("accepts Japanese characters (Hiragana)", () => {
       expect(OldPagePath.safeParse("/こんにちは").success).toBe(true);
       expect(OldPagePath.safeParse("/ブログ/記事").success).toBe(true);
@@ -130,52 +380,44 @@ describe("OldPagePath", () => {
       expect(OldPagePath.safeParse("/東京").success).toBe(true);
     });
 
-    // Korean characters
     test("accepts Korean characters (Hangul)", () => {
       expect(OldPagePath.safeParse("/한국어").success).toBe(true);
       expect(OldPagePath.safeParse("/블로그/포스트").success).toBe(true);
       expect(OldPagePath.safeParse("/서울").success).toBe(true);
     });
 
-    // Cyrillic characters (Russian, etc.)
     test("accepts Cyrillic characters", () => {
       expect(OldPagePath.safeParse("/привет").success).toBe(true);
       expect(OldPagePath.safeParse("/о-нас").success).toBe(true);
       expect(OldPagePath.safeParse("/блог/статья").success).toBe(true);
     });
 
-    // Arabic characters
     test("accepts Arabic characters", () => {
       expect(OldPagePath.safeParse("/مرحبا").success).toBe(true);
       expect(OldPagePath.safeParse("/عن-الشركة").success).toBe(true);
     });
 
-    // Hebrew characters
     test("accepts Hebrew characters", () => {
       expect(OldPagePath.safeParse("/שלום").success).toBe(true);
       expect(OldPagePath.safeParse("/אודות").success).toBe(true);
     });
 
-    // Thai characters
     test("accepts Thai characters", () => {
       expect(OldPagePath.safeParse("/สวัสดี").success).toBe(true);
       expect(OldPagePath.safeParse("/เกี่ยวกับเรา").success).toBe(true);
     });
 
-    // Greek characters
     test("accepts Greek characters", () => {
       expect(OldPagePath.safeParse("/γεια").success).toBe(true);
       expect(OldPagePath.safeParse("/σχετικά").success).toBe(true);
     });
 
-    // Mixed Latin and non-Latin
     test("accepts mixed Latin and non-Latin characters", () => {
       expect(OldPagePath.safeParse("/blog/关于").success).toBe(true);
       expect(OldPagePath.safeParse("/news/港聞").success).toBe(true);
       expect(OldPagePath.safeParse("/category/日本語").success).toBe(true);
     });
 
-    // European characters with diacritics
     test("accepts European characters with diacritics", () => {
       expect(OldPagePath.safeParse("/über-uns").success).toBe(true);
       expect(OldPagePath.safeParse("/café").success).toBe(true);
@@ -184,7 +426,6 @@ describe("OldPagePath", () => {
       expect(OldPagePath.safeParse("/résumé").success).toBe(true);
     });
 
-    // Emoji (while unusual, they are valid Unicode)
     test("accepts emoji characters", () => {
       expect(OldPagePath.safeParse("/🎉").success).toBe(true);
       expect(OldPagePath.safeParse("/hello-🌍").success).toBe(true);
@@ -235,9 +476,6 @@ describe("ProjectNewRedirectPath", () => {
   });
 
   test("rejects truly invalid URLs", () => {
-    // Note: ProjectNewRedirectPath uses new URL(data, baseURL) which is very permissive
-    // It treats most strings as valid relative paths. The only truly invalid inputs
-    // are those that cannot be parsed as URLs at all.
     expect(ProjectNewRedirectPath.safeParse("http://[invalid").success).toBe(
       false
     );

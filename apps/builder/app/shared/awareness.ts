@@ -1,258 +1,177 @@
-import { atom, computed, onSet } from "nanostores";
-import {
-  findPageByIdOrPath,
-  Instance,
-  Instances,
-  ROOT_INSTANCE_ID,
-  type Page,
-  rootComponent,
-  Pages,
-  findParentFolderByChildId,
-  getPagePath,
-  ROOT_FOLDER_ID,
-} from "@webstudio-is/sdk";
-import { $pages } from "./nano-states/pages";
-import { $instances, $selectedInstanceSelector } from "./nano-states/instances";
-import type { InstanceSelector } from "./tree-utils";
+import { atom, computed } from "nanostores";
+import type { Rect } from "@webstudio-is/design-system";
+import type { CollaboratorInfo } from "@webstudio-is/sync-client";
+import { $selectedInstanceSelector } from "./nano-states/instances";
+import { $user } from "./nano-states/misc";
+import { $selectedPageId } from "./nano-states/pages";
 
-export type Awareness = {
-  pageId: Page["id"];
-  instanceSelector?: Instance["id"][];
+const POINTER_FPS_LIMIT = 5;
+const POINTER_FRAME_MS = Math.ceil(1000 / POINTER_FPS_LIMIT);
+
+export type Awareness = Pick<
+  CollaboratorInfo,
+  "name" | "avatarUrl" | "pageId" | "selectedInstanceIds" | "pointerPosition"
+>;
+
+export const $pointerPosition = atom<CollaboratorInfo["pointerPosition"]>();
+
+const getUserAwareness = (user: ReturnType<typeof $user.get>) => {
+  if (user === undefined) {
+    return {};
+  }
+  const name = user.username?.trim() || user.email?.trim();
+  const avatarUrl = user.image || undefined;
+  return {
+    ...(name === undefined || name.length === 0 ? {} : { name }),
+    ...(avatarUrl === undefined || avatarUrl.length === 0 ? {} : { avatarUrl }),
+  };
 };
 
-export const $awareness = atom<undefined | Awareness>();
+const $computedAwareness = computed(
+  [$pointerPosition, $selectedPageId, $selectedInstanceSelector, $user],
+  (pointerPosition, pageId, selectedInstanceIds, user): Awareness => ({
+    ...getUserAwareness(user),
+    pageId,
+    selectedInstanceIds,
+    pointerPosition,
+  })
+);
 
-onSet($awareness, ({ newValue }) => {
-  $selectedInstanceSelector.set(newValue?.instanceSelector);
+export const $awareness = atom<Awareness>($computedAwareness.get());
+
+let scheduledAwareness: Awareness | undefined;
+let isAwarenessFlushScheduled = false;
+
+$computedAwareness.listen((awareness) => {
+  scheduledAwareness = awareness;
+  if (isAwarenessFlushScheduled) {
+    return;
+  }
+  isAwarenessFlushScheduled = true;
+  queueMicrotask(() => {
+    isAwarenessFlushScheduled = false;
+    if (scheduledAwareness !== undefined) {
+      $awareness.set(scheduledAwareness);
+    }
+  });
 });
 
-export const $selectedPage = computed(
-  [$pages, $awareness],
-  (pages, awareness) => {
-    if (pages === undefined || awareness === undefined) {
+export const startPointerTracking = () => {
+  const sourceWindow = window;
+
+  const clampRatio = (value: number) => {
+    return Math.min(1, Math.max(0, value));
+  };
+
+  const getNormalizationRect = (): Rect => {
+    const frameElement = sourceWindow.frameElement;
+    if (frameElement !== null) {
+      const frameRect = frameElement.getBoundingClientRect();
+      return {
+        left: frameRect.left,
+        top: frameRect.top,
+        width: frameRect.width > 0 ? frameRect.width : sourceWindow.innerWidth,
+        height:
+          frameRect.height > 0 ? frameRect.height : sourceWindow.innerHeight,
+      };
+    }
+    return {
+      left: 0,
+      top: 0,
+      width: sourceWindow.innerWidth,
+      height: sourceWindow.innerHeight,
+    };
+  };
+
+  const toViewportPosition = (
+    x: number,
+    y: number
+  ): { x: number; y: number } => {
+    const frameElement = sourceWindow.frameElement;
+    if (frameElement === null) {
+      return { x, y };
+    }
+
+    // When running inside the canvas iframe, project pointer coordinates into
+    // the parent viewport so remote cursors align with builder overlays.
+    const frameRect = frameElement.getBoundingClientRect();
+    const frameWidth =
+      typeof frameRect.width === "number" && Number.isFinite(frameRect.width)
+        ? frameRect.width
+        : sourceWindow.innerWidth;
+    const frameHeight =
+      typeof frameRect.height === "number" && Number.isFinite(frameRect.height)
+        ? frameRect.height
+        : sourceWindow.innerHeight;
+    const scaleX =
+      sourceWindow.innerWidth === 0 ? 1 : frameWidth / sourceWindow.innerWidth;
+    const scaleY =
+      sourceWindow.innerHeight === 0
+        ? 1
+        : frameHeight / sourceWindow.innerHeight;
+    return {
+      x: frameRect.left + x * scaleX,
+      y: frameRect.top + y * scaleY,
+    };
+  };
+
+  let latestPointer: CollaboratorInfo["pointerPosition"];
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let lastFlushAt = 0;
+
+  const flush = () => {
+    timer = undefined;
+    if (latestPointer === undefined) {
       return;
     }
-    return findPageByIdOrPath(awareness.pageId, pages);
-  }
-);
 
-export const $selectedPagePath = computed(
-  [$selectedPage, $pages],
-  (page, pages) => {
-    if (pages === undefined || page === undefined) {
-      return "/";
-    }
-    const parentFolder = findParentFolderByChildId(page.id, pages.folders);
-    const parentFolderId = parentFolder?.id ?? ROOT_FOLDER_ID;
-    const foldersPath = getPagePath(parentFolderId, pages);
-    return [foldersPath, page?.path ?? ""]
-      .filter(Boolean)
-      .join("/")
-      .replace(/\/+/g, "/");
-  }
-);
-
-export const $temporaryInstances = atom<Instances>(new Map());
-export const addTemporaryInstance = (instance: Instance) => {
-  $temporaryInstances.get().set(instance.id, instance);
-  $temporaryInstances.set($temporaryInstances.get());
-};
-
-export const $virtualInstances = computed($selectedPage, (selectedPage) => {
-  const virtualInstances: Instances = new Map();
-  if (selectedPage) {
-    virtualInstances.set(ROOT_INSTANCE_ID, {
-      type: "instance",
-      id: ROOT_INSTANCE_ID,
-      component: rootComponent,
-      children: [{ type: "id", value: selectedPage.rootInstanceId }],
-    });
-  }
-  return virtualInstances;
-});
-
-export const $selectedInstance = computed(
-  [$instances, $virtualInstances, $temporaryInstances, $awareness],
-  (instances, virtualInstances, tempInstances, awareness) => {
-    if (awareness?.instanceSelector === undefined) {
+    const prev = $pointerPosition.get();
+    if (
+      prev?.x === latestPointer.x &&
+      prev?.y === latestPointer.y &&
+      prev?.xRatio === latestPointer.xRatio &&
+      prev?.yRatio === latestPointer.yRatio
+    ) {
       return;
     }
-    const [selectedInstanceId] = awareness.instanceSelector;
-    return (
-      instances.get(selectedInstanceId) ??
-      virtualInstances.get(selectedInstanceId) ??
-      tempInstances.get(selectedInstanceId)
-    );
-  }
-);
 
-export const getInstanceKey = <
-  InstanceSelector extends undefined | Instance["id"][],
->(
-  instanceSelector: InstanceSelector
-): (InstanceSelector extends undefined ? undefined : never) | string =>
-  JSON.stringify(instanceSelector);
+    lastFlushAt = Date.now();
+    $pointerPosition.set(latestPointer);
+  };
 
-export const $selectedInstanceKeyWithRoot = computed(
-  $awareness,
-  (awareness) => {
-    const instanceSelector = awareness?.instanceSelector;
-    if (instanceSelector) {
-      if (instanceSelector[0] === ROOT_INSTANCE_ID) {
-        return getInstanceKey(instanceSelector);
-      }
-      return getInstanceKey([...instanceSelector, ROOT_INSTANCE_ID]);
-    }
-  }
-);
-
-export const $selectedInstanceKey = computed($awareness, (awareness) =>
-  getInstanceKey(awareness?.instanceSelector)
-);
-
-export type InstancePath = Array<{
-  instance: Instance;
-  instanceSelector: string[];
-}>;
-
-export const getInstancePath = (
-  instanceSelector: string[],
-  instances: Instances,
-  virtualInstances?: Instances,
-  temporaryInstances?: Instances
-): undefined | InstancePath => {
-  const instancePath: InstancePath = [];
-  for (let index = 0; index < instanceSelector.length; index += 1) {
-    const instanceId = instanceSelector[index];
-    const instance =
-      instances.get(instanceId) ??
-      virtualInstances?.get(instanceId) ??
-      temporaryInstances?.get(instanceId);
-    // collection item can be undefined
-    if (instance === undefined) {
-      continue;
-    }
-    instancePath.push({
-      instance,
-      instanceSelector: instanceSelector.slice(index),
-    });
-  }
-  // all consuming code expect at least one instance to be selected
-  // though it is possible to get empty array when undo created page
-  if (instancePath.length === 0) {
-    return;
-  }
-  return instancePath;
-};
-
-export const $selectedInstancePath = computed(
-  [$instances, $virtualInstances, $temporaryInstances, $awareness],
-  (instances, virtualInstances, temporaryInstances, awareness) => {
-    const instanceSelector = awareness?.instanceSelector;
-    if (instanceSelector === undefined) {
+  const scheduleFlush = () => {
+    if (timer !== undefined) {
       return;
     }
-    return getInstancePath(
-      instanceSelector,
-      instances,
-      virtualInstances,
-      temporaryInstances
-    );
-  }
-);
+    const elapsed = Date.now() - lastFlushAt;
+    const delay = Math.max(0, POINTER_FRAME_MS - elapsed);
+    timer = setTimeout(flush, delay);
+  };
 
-export const $selectedInstancePathWithRoot = computed(
-  [$instances, $virtualInstances, $temporaryInstances, $awareness],
-  (instances, virtualInstances, temporaryInstances, awareness) => {
-    let instanceSelector = awareness?.instanceSelector;
-    if (instanceSelector === undefined) {
-      return;
-    }
-    // add root as ancestor when root is not selected
-    if (instanceSelector[0] !== ROOT_INSTANCE_ID) {
-      instanceSelector = [...instanceSelector, ROOT_INSTANCE_ID];
-    }
-    return getInstancePath(
-      instanceSelector,
-      instances,
-      virtualInstances,
-      temporaryInstances
-    );
-  }
-);
+  const onPointerMove = (event: PointerEvent) => {
+    const viewportPosition = toViewportPosition(event.clientX, event.clientY);
+    const normalizationRect = getNormalizationRect();
+    latestPointer = {
+      ...viewportPosition,
+      xRatio: clampRatio(
+        (viewportPosition.x - normalizationRect.left) / normalizationRect.width
+      ),
+      yRatio: clampRatio(
+        (viewportPosition.y - normalizationRect.top) / normalizationRect.height
+      ),
+    };
+    scheduleFlush();
+  };
 
-export const selectPage = (pageId: Page["id"]) => {
-  const pages = $pages.get();
-  if (pages === undefined) {
-    return;
-  }
-  const page = findPageByIdOrPath(pageId, pages);
-  if (page === undefined) {
-    return;
-  }
-  $awareness.set({ pageId: page.id, instanceSelector: [page.rootInstanceId] });
+  window.addEventListener("pointermove", onPointerMove, { passive: true });
+
+  return () => {
+    window.removeEventListener("pointermove", onPointerMove);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+  };
 };
 
-export const selectInstance = (
-  instanceSelector: undefined | Instance["id"][]
-) => {
-  const awareness = $awareness.get();
-  if (
-    awareness &&
-    // prevent triggering select across the builder when selector is the same
-    // useful when click and focus events have to select instance
-    awareness.instanceSelector?.join() !== instanceSelector?.join()
-  ) {
-    $awareness.set({
-      pageId: awareness.pageId,
-      instanceSelector,
-    });
-  }
-};
-
-const findPageId = (pages: Pages, instanceSelector: InstanceSelector) => {
-  const rootInstanceId = instanceSelector.at(-1);
-  for (const page of [pages.homePage, ...pages.pages]) {
-    if (page.rootInstanceId === rootInstanceId) {
-      return page.id;
-    }
-  }
-  return pages.homePage.id;
-};
-
-const parentInstanceByIdCache = new WeakMap<
-  Instances,
-  Map<Instance["id"], Instance["id"]>
->();
-
-/**
- * traverse the tree up until body to build awareness
- * when instance id is inside of slot last matching parent is used to further
- */
-export const findAwarenessByInstanceId = (
-  pages: Pages,
-  instances: Instances,
-  startingInstanceId: Instance["id"]
-): Awareness => {
-  // recompute parent instances only when instances are changed
-  let parentInstanceById = parentInstanceByIdCache.get(instances);
-  if (parentInstanceById === undefined) {
-    parentInstanceById = new Map<Instance["id"], Instance["id"]>();
-    for (const instance of instances.values()) {
-      for (const child of instance.children) {
-        if (child.type === "id") {
-          parentInstanceById.set(child.value, instance.id);
-        }
-      }
-    }
-    parentInstanceByIdCache.set(instances, parentInstanceById);
-  }
-  const instanceSelector = [];
-  let currentInstanceId: undefined | Instance["id"] = startingInstanceId;
-  while (currentInstanceId) {
-    instanceSelector.push(currentInstanceId);
-    currentInstanceId = parentInstanceById.get(currentInstanceId);
-  }
-  const pageId = findPageId(pages, instanceSelector);
-  return { pageId, instanceSelector };
-};
+export const __testing__ = { $pointerPosition, getUserAwareness };

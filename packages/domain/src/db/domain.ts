@@ -5,6 +5,7 @@ import {
   createErrorResponse,
 } from "@webstudio-is/trpc-interface/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
+import { unpublishBuild } from "@webstudio-is/project-build/index.server";
 import { validateDomain } from "./validate";
 import { cnameFromUserId } from "./cname-from-user-id";
 import type { Project } from "@webstudio-is/project";
@@ -196,6 +197,48 @@ export const remove = async (
     throw new Error("You don't have access to delete this project domains");
   }
 
+  const projectDomainResult = await context.postgrest.client
+    .from("ProjectDomain")
+    .select("domain:Domain(id, domain)")
+    .eq("domainId", props.domainId)
+    .eq("projectId", props.projectId)
+    .single();
+
+  if (projectDomainResult.error) {
+    return createErrorResponse(projectDomainResult.error);
+  }
+
+  const domain = projectDomainResult.data.domain;
+  if (domain === null) {
+    return createErrorResponse("Domain not found");
+  }
+
+  const deploymentResult = await context.deployment.deploymentTrpc.unpublish
+    .mutate({
+      domain: domain.domain,
+    })
+    .catch((error) => createErrorResponse(error));
+
+  if (
+    deploymentResult.success === false &&
+    deploymentResult.error !== "NOT_IMPLEMENTED"
+  ) {
+    return deploymentResult;
+  }
+
+  await unpublishBuild(
+    { projectId: props.projectId, domain: domain.domain },
+    context
+  ).catch((error) => {
+    if (
+      error instanceof Error &&
+      error.message === `Domain ${domain.domain} is not published`
+    ) {
+      return;
+    }
+    throw error;
+  });
+
   const deleteResult = await context.postgrest.client
     .from("ProjectDomain")
     .delete()
@@ -204,6 +247,30 @@ export const remove = async (
 
   if (deleteResult.error) {
     return createErrorResponse(deleteResult.error);
+  }
+
+  const remainingDomains = await context.postgrest.client
+    .from("ProjectDomain")
+    .select("domainId", { count: "exact", head: true })
+    .eq("domainId", props.domainId);
+
+  if (remainingDomains.error) {
+    return createErrorResponse(remainingDomains.error);
+  }
+
+  if (remainingDomains.count === 0) {
+    const updateResult = await context.postgrest.client
+      .from("Domain")
+      .update({
+        status: "INITIALIZING",
+        error: "Removed from project",
+        txtRecord: null,
+      })
+      .eq("id", props.domainId);
+
+    if (updateResult.error) {
+      return createErrorResponse(updateResult.error);
+    }
   }
 
   return { success: true };

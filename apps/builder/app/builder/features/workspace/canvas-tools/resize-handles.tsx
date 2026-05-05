@@ -9,11 +9,8 @@ import {
 import { useEffect, useRef } from "react";
 import { $canvasWidth } from "~/builder/shared/nano-states";
 import { minCanvasWidth } from "~/shared/breakpoints";
-import {
-  $breakpoints,
-  $isResizingCanvas,
-  $selectedBreakpointId,
-} from "~/shared/nano-states";
+import { $isResizingCanvas, $selectedBreakpointId } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 
 const handlesContainerStyle = css({
   position: "absolute",

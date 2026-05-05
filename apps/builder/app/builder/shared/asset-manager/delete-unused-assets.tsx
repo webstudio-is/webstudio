@@ -15,7 +15,7 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/sdk";
-import { $assets, $pages, $props, $styles } from "~/shared/nano-states";
+import { $assets, $pages, $props, $styles } from "~/shared/sync/data-stores";
 import { deleteAssets } from "~/builder/shared/assets";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
 import { calculateUsagesByAssetId } from "./asset-info";

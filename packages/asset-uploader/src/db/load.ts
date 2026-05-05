@@ -4,7 +4,7 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Asset } from "@webstudio-is/sdk";
-import { formatAsset } from "../utils/format-asset";
+import { loadAssetsByProjectWithClient } from "../asset-patch-core";
 
 export const loadAssetsByProject = async (
   projectId: string,
@@ -24,39 +24,5 @@ export const loadAssetsByProject = async (
     );
   }
 
-  const assets = await context.postgrest.client
-    .from("Asset")
-    // use inner to filter out assets without file
-    // when file is not uploaded
-    .select(
-      `
-        assetId:id,
-        projectId,
-        filename,
-        description,
-        file:File!inner (*)
-      `
-    )
-    .eq("projectId", projectId)
-    .eq("file.status", "UPLOADED")
-    // always sort by primary key to get stable list
-    // required to not break fixtures
-    .order("id");
-
-  const result: Asset[] = [];
-  for (const {
-    assetId,
-    projectId,
-    filename,
-    description,
-    file,
-  } of assets.data ?? []) {
-    if (file) {
-      result.push(
-        formatAsset({ assetId, projectId, filename, description, file })
-      );
-    }
-  }
-
-  return result;
+  return loadAssetsByProjectWithClient(projectId, context.postgrest.client);
 };

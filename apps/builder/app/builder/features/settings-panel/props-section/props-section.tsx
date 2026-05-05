@@ -26,15 +26,19 @@ import {
 import {
   $propValuesByInstanceSelector,
   $propsIndex,
-  $props,
   $isDesignMode,
   $isContentMode,
   $memoryProps,
   $selectedBreakpoint,
 } from "~/shared/nano-states";
+import { $props } from "~/shared/sync/data-stores";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { $selectedInstance, $selectedInstanceKey } from "~/shared/awareness";
+import {
+  $selectedInstance,
+  $selectedInstanceKey,
+  getInstanceKey,
+} from "~/shared/nano-states";
 import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { AnimationSection } from "./animation/animation-section";
@@ -77,18 +81,33 @@ const matchOrSuggestToCreate = (
 };
 
 const renderProperty = (
-  { propsLogic: logic, propValues, component, instanceId }: PropsSectionProps,
-  { prop, propName, meta }: PropAndMeta
-) =>
-  renderControl({
-    key: propName,
+  {
+    propsLogic: logic,
+    propValues,
+    propValuesByInstanceSelector,
+    component,
     instanceId,
+  }: PropsSectionProps,
+  item: PropAndMeta
+) => {
+  const { prop, propName, meta } = item;
+  const targetInstanceId = item.instanceId ?? instanceId;
+  const targetPropValues =
+    item.instanceSelector === undefined
+      ? propValues
+      : (propValuesByInstanceSelector.get(
+          getInstanceKey(item.instanceSelector)
+        ) ?? propValues);
+
+  return renderControl({
+    key: propName,
+    instanceId: targetInstanceId,
     meta,
     prop,
     computedValue:
-      propValues.get(propName) ??
+      targetPropValues.get(propName) ??
       // support legacy html props with react names
-      propValues.get(standardAttributesToReactProps[propName]) ??
+      targetPropValues.get(standardAttributesToReactProps[propName]) ??
       meta.defaultValue,
     propName,
     onChange: (propValue) => {
@@ -105,6 +124,7 @@ const renderProperty = (
       }
     },
   });
+};
 
 const forbiddenProperties = new Set(["style"]);
 
@@ -192,6 +212,7 @@ const AddPropertyOrAttribute = ({
 type PropsSectionProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;
   propValues: Map<string, unknown>;
+  propValuesByInstanceSelector: Map<string, Map<string, unknown>>;
   component: Instance["component"];
   instanceId: string;
   selectedInstanceKey: string;
@@ -322,6 +343,7 @@ export const PropsSectionContainer = ({
 }) => {
   const { propsByInstanceId } = useStore($propsIndex);
   const propValues = useStore($propValues);
+  const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
 
   const logic = usePropsLogic({
     instance,
@@ -357,6 +379,7 @@ export const PropsSectionContainer = ({
       <PropsSection
         propsLogic={logic}
         propValues={propValues ?? new Map()}
+        propValuesByInstanceSelector={propValuesByInstanceSelector}
         component={instance.component}
         instanceId={instance.id}
         selectedInstanceKey={selectedInstanceKey}

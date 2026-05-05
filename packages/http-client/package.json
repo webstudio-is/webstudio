@@ -12,6 +12,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@trpc/client": "^10.45.2",
+    "@webstudio-is/project-migrations": "workspace:*",
     "@webstudio-is/sdk": "workspace:*"
   },
   "devDependencies": {

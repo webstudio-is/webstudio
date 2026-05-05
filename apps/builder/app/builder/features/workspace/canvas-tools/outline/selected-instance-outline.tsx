@@ -1,10 +1,8 @@
 import { useStore } from "@nanostores/react";
-import {
-  $instances,
-  $selectedInstanceOutlineAndInstance,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedInstanceOutlineAndInstance } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { isDescendantOrSelf } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { applyScale } from "../apply-scale";

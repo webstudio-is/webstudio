@@ -1,6 +1,6 @@
 import { expect, test, describe } from "vitest";
 import { generateRemixParams, generateRemixRoute } from "./remix";
-import { STATIC_PATHS } from "@webstudio-is/sdk/router-paths.test";
+import { STATIC_PATHS } from "@webstudio-is/sdk/router-path-test-data";
 
 /**
  * These tests use the shared test data from @webstudio-is/sdk to ensure

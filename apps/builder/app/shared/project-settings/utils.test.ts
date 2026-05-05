@@ -10,7 +10,7 @@ describe("getExistingRoutePaths", () => {
       homePageId: "homePageId",
     });
 
-    pages.pages.push({
+    pages.pages.set("pageId", {
       id: "pageId",
       meta: {},
       name: "Page",
@@ -19,7 +19,7 @@ describe("getExistingRoutePaths", () => {
       title: `"Page"`,
     });
 
-    pages.pages.push({
+    pages.pages.set("blogId", {
       id: "blogId",
       meta: {},
       name: "Blog",

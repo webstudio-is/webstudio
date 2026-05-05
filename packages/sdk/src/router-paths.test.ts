@@ -13,16 +13,6 @@ import { describe, test, expect } from "vitest";
 import { OldPagePath, ProjectNewRedirectPath } from "./schema/pages";
 import { ALL_VALID_PATHS, ALL_INVALID_PATHS } from "./router-path-test-data";
 
-// Re-export for use in other packages
-export {
-  VALID_ROUTER_PATHS,
-  INVALID_ROUTER_PATHS,
-  ALL_VALID_PATHS,
-  ALL_INVALID_PATHS,
-  VALID_URLPATTERN_PATHS,
-  STATIC_PATHS,
-} from "./router-path-test-data";
-
 describe("Router path validation consistency", () => {
   describe("OldPagePath schema - valid paths", () => {
     test.each(ALL_VALID_PATHS)("accepts: %s", (path) => {

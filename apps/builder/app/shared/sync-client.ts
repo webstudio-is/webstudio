@@ -1,18 +1,13 @@
 import { nanoid } from "nanoid";
-import { createNanoEvents, type Emitter } from "nanoevents";
+import { createNanoEvents } from "nanoevents";
 import type { Change, Store } from "immerhin";
 import type { WritableAtom } from "nanostores";
-
-export type Transaction<Payload = unknown> = {
-  id: string;
-  object: string;
-  payload: Payload;
-};
-
-export type RevertedTransaction = {
-  id: string;
-  object: string;
-};
+import type {
+  Transaction,
+  RevertedTransaction,
+  SyncMessage,
+  SyncEmitter,
+} from "@webstudio-is/sync-client";
 
 export interface SyncStorage {
   name: string;
@@ -54,9 +49,20 @@ interface SyncObject {
 export class ImmerhinSyncObject implements SyncObject {
   name: string;
   store: Store;
-  constructor(name: string, store: Store) {
+  transformOnSend?: (changes: Change[]) => Change[];
+  transformOnReceive?: (changes: Change[]) => Change[];
+  constructor(
+    name: string,
+    store: Store,
+    transform?: {
+      onSend?: (changes: Change[]) => Change[];
+      onReceive?: (changes: Change[]) => Change[];
+    }
+  ) {
     this.name = name;
     this.store = store;
+    this.transformOnSend = transform?.onSend;
+    this.transformOnReceive = transform?.onReceive;
   }
   getState() {
     const state = new Map<string, unknown>();
@@ -79,7 +85,10 @@ export class ImmerhinSyncObject implements SyncObject {
     }
   }
   applyTransaction(transaction: Transaction<Change[]>) {
-    this.store.addTransaction(transaction.id, transaction.payload, "remote");
+    const payload = this.transformOnReceive
+      ? this.transformOnReceive(transaction.payload)
+      : transaction.payload;
+    this.store.addTransaction(transaction.id, payload, "remote");
   }
   revertTransaction(transaction: RevertedTransaction) {
     this.store.revertTransaction(transaction.id);
@@ -92,7 +101,10 @@ export class ImmerhinSyncObject implements SyncObject {
       if (source === "remote") {
         return;
       }
-      sendTransaction({ id, object: this.name, payload });
+      const outgoing = this.transformOnSend
+        ? this.transformOnSend(payload)
+        : payload;
+      sendTransaction({ id, object: this.name, payload: outgoing });
     });
     signal.addEventListener("abort", unsubscribe);
   }
@@ -185,15 +197,15 @@ export class SyncObjectPool implements SyncObject {
   }
 }
 
-type SyncMessage =
-  | { type: "connect"; clientId: string }
-  | { type: "state"; clientId: string; state: unknown }
-  | { type: "apply"; clientId: string; transaction: Transaction }
-  | { type: "revert"; clientId: string; transaction: RevertedTransaction };
-
-export type SyncEmitter = Emitter<{
-  message: (message: SyncMessage) => void;
-}>;
+export class NanoEventsSyncEmitter implements SyncEmitter {
+  private inner = createNanoEvents<{ message: (m: SyncMessage) => void }>();
+  emit(message: SyncMessage): void {
+    this.inner.emit("message", message);
+  }
+  on(handler: (message: SyncMessage) => void): () => void {
+    return this.inner.on("message", handler);
+  }
+}
 
 type SyncClientOptions = {
   role: "leader" | "follower";
@@ -214,12 +226,12 @@ export class SyncClient {
     this.role = options.role;
     this.object = options.object;
     this.storages = options.storages ?? [];
-    this.emitter = options.emitter ?? createNanoEvents();
+    this.emitter = options.emitter ?? new NanoEventsSyncEmitter();
   }
 
   lead() {
     this.role = "leader";
-    this.emitter.emit("message", {
+    this.emitter.emit({
       clientId: this.clientId,
       type: "state",
       state: this.object.getState(),
@@ -227,7 +239,7 @@ export class SyncClient {
   }
 
   connect({ signal, onReady }: { signal: AbortSignal; onReady?: () => void }) {
-    const off = this.emitter.on("message", (message) => {
+    const off = this.emitter.on((message) => {
       // ignore own messages
       if (this.clientId === message.clientId) {
         return;
@@ -236,7 +248,7 @@ export class SyncClient {
         if (this.role !== "leader") {
           return;
         }
-        this.emitter.emit("message", {
+        this.emitter.emit({
           clientId: this.clientId,
           type: "state",
           state: this.object.getState(),
@@ -250,14 +262,6 @@ export class SyncClient {
         this.object.setState(message.state);
       }
       if (message.type === "apply") {
-        /*
-        // leader interacts with server
-        // and should validate transactions from various actors
-        if (this.role === "leader" && invalid(event.transaction)) {
-          this.emitter.emit('revert', { clientId, transactions: [transaction.id] })
-          return;
-        }
-        */
         this.object.applyTransaction(message.transaction);
         if (this.role === "leader") {
           for (const storage of this.storages) {
@@ -272,7 +276,7 @@ export class SyncClient {
     signal.addEventListener("abort", off);
 
     this.object.subscribe((transaction) => {
-      this.emitter.emit("message", {
+      this.emitter.emit({
         clientId: this.clientId,
         type: "apply",
         transaction,
@@ -284,7 +288,7 @@ export class SyncClient {
       }
     }, signal);
 
-    this.emitter.emit("message", {
+    this.emitter.emit({
       clientId: this.clientId,
       type: "connect",
     });
@@ -298,7 +302,7 @@ export class SyncClient {
           // fallback to default object state
           state ??= this.object.getState();
           this.object.setState(state);
-          this.emitter.emit("message", {
+          this.emitter.emit({
             clientId: this.clientId,
             type: "state",
             state,

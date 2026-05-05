@@ -93,8 +93,6 @@ export const loader: LoaderFunction = async ({ request }) => {
   // or by allowedDestinations for iframe requests.
 
   try {
-    debug("Authorize request received", request.url);
-
     const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams);
 
@@ -165,8 +163,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     const sessionData = await authenticator.isAuthenticated(request);
 
     if (sessionData) {
-      debug(`User id=${sessionData.userId} is authenticated`);
-
       const isAuthorized = await isUserAuthorizedForProject(
         sessionData.userId,
         oAuthParams.scope.projectId
@@ -174,9 +170,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
       // scope: Ensure the requested scope is valid, authorized, and within the permissions granted to the client.
       if (false === isAuthorized) {
-        debug(
-          `User ${sessionData.userId} is not the owner of ${oAuthParams.scope.projectId}, denying access`
-        );
+        debug("User does not have access to the project");
         return oauthError(
           "unauthorized_client",
           "User does not have access to the project"
@@ -207,10 +201,6 @@ export const loader: LoaderFunction = async ({ request }) => {
         );
       }
 
-      debug(
-        `User ${sessionData.userId} is the owner of ${oAuthParams.scope.projectId}, creating token`
-      );
-
       // We do not use database now.
       // https://datatracker.ietf.org/doc/html/rfc7636#section-4.4
       const code = await createCodeToken(
@@ -230,10 +220,6 @@ export const loader: LoaderFunction = async ({ request }) => {
       // state: If present, store the state parameter to return it unchanged in the response
       redirectUri.searchParams.set("state", oAuthParams.state);
 
-      debug(
-        `Code ${code} created, redirecting to redirect_uri: ${redirectUri.href}`
-      );
-
       const bloomFilter = await session.readLoginSessionBloomFilter(request);
 
       bloomFilter.add(oAuthParams.scope.projectId);
@@ -246,10 +232,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     }
 
     sessionData satisfies null;
-
-    debug(
-      "User is not authenticated, saving current url to returnTo cookie and redirecting to login"
-    );
 
     return redirect(loginPath({ returnTo: request.url }));
   } catch (error) {

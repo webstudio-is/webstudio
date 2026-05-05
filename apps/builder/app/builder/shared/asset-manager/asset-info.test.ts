@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import type { Pages, Props, Styles, Asset } from "@webstudio-is/sdk";
+import type { Pages, Props, Styles, Asset, Page } from "@webstudio-is/sdk";
 import type {
   ImageValue,
   FontFamilyValue,
@@ -8,6 +8,45 @@ import type {
 import { __testing__ } from "./asset-info";
 
 const { traverseStyleValue, calculateUsagesByAssetId } = __testing__;
+
+const createPages = ({
+  meta = {},
+  homeMeta = {},
+  pages = new Map(),
+}: {
+  meta?: Pages["meta"];
+  homeMeta?: Page["meta"];
+  pages?: Map<Page["id"], Page>;
+} = {}): Pages => ({
+  meta,
+  homePageId: "home",
+  rootFolderId: "root",
+  pages: new Map([
+    [
+      "home",
+      {
+        id: "home",
+        name: "Home",
+        path: "",
+        title: "Home",
+        meta: homeMeta,
+        rootInstanceId: "root",
+      },
+    ],
+    ...pages,
+  ]),
+  folders: new Map([
+    [
+      "root",
+      {
+        id: "root",
+        name: "Root",
+        slug: "",
+        children: ["home", ...pages.keys()],
+      },
+    ],
+  ]),
+});
 
 describe("asset-info", () => {
   describe("traverseStyleValue", () => {
@@ -98,19 +137,9 @@ describe("asset-info", () => {
 
   describe("calculateUsagesByAssetId", () => {
     test("tracks favicon asset usage", () => {
-      const pages: Pages = {
+      const pages = createPages({
         meta: { faviconAssetId: "favicon-asset" },
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      });
       const props: Props = new Map();
       const styles: Styles = new Map();
       const assets = new Map<Asset["id"], Asset>();
@@ -121,19 +150,9 @@ describe("asset-info", () => {
     });
 
     test("tracks social image asset usage", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: { socialImageAssetId: "social-asset" },
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      const pages = createPages({
+        homeMeta: { socialImageAssetId: "social-asset" },
+      });
       const props: Props = new Map();
       const styles: Styles = new Map();
       const assets = new Map<Asset["id"], Asset>();
@@ -146,29 +165,22 @@ describe("asset-info", () => {
     });
 
     test("tracks marketplace thumbnail asset usage", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [
-          {
-            id: "page-1",
-            name: "Page 1",
-            path: "/page-1",
-            title: "Page 1",
-            meta: {},
-            rootInstanceId: "root-1",
-            marketplace: { thumbnailAssetId: "thumbnail-asset" },
-          },
-        ],
-        folders: [],
-      };
+      const pages = createPages({
+        pages: new Map([
+          [
+            "page-1",
+            {
+              id: "page-1",
+              name: "Page 1",
+              path: "/page-1",
+              title: "Page 1",
+              meta: {},
+              rootInstanceId: "root-1",
+              marketplace: { thumbnailAssetId: "thumbnail-asset" },
+            },
+          ],
+        ]),
+      });
       const props: Props = new Map();
       const styles: Styles = new Map();
       const assets = new Map<Asset["id"], Asset>();
@@ -181,19 +193,7 @@ describe("asset-info", () => {
     });
 
     test("tracks prop asset usage", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      const pages = createPages();
       const props: Props = new Map([
         [
           "prop-1",
@@ -217,19 +217,7 @@ describe("asset-info", () => {
     });
 
     test("ignores width and height props", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      const pages = createPages();
       const props: Props = new Map([
         [
           "prop-width",
@@ -261,19 +249,7 @@ describe("asset-info", () => {
     });
 
     test("tracks image asset usage in styles", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      const pages = createPages();
       const props: Props = new Map();
       const styles: Styles = new Map([
         [
@@ -299,19 +275,7 @@ describe("asset-info", () => {
     });
 
     test("returns empty map when no usages", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      const pages = createPages();
       const props: Props = new Map();
       const styles: Styles = new Map();
       const assets = new Map<Asset["id"], Asset>();
@@ -322,19 +286,10 @@ describe("asset-info", () => {
     });
 
     test("aggregates multiple usages for same asset", () => {
-      const pages: Pages = {
+      const pages = createPages({
         meta: { faviconAssetId: "asset-1" },
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: { socialImageAssetId: "asset-1" },
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+        homeMeta: { socialImageAssetId: "asset-1" },
+      });
       const props: Props = new Map([
         [
           "prop-1",
@@ -386,19 +341,7 @@ describe("asset-info", () => {
     });
 
     test("tracks multiple assets in tuple style value", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      const pages = createPages();
       const props: Props = new Map();
       const styles: Styles = new Map([
         [
@@ -436,19 +379,7 @@ describe("asset-info", () => {
     });
 
     test("tracks font asset usage in fontFamily styles", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      const pages = createPages();
       const props: Props = new Map();
       const styles: Styles = new Map([
         [
@@ -488,19 +419,7 @@ describe("asset-info", () => {
     });
 
     test("tracks multiple font assets in same fontFamily style", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      const pages = createPages();
       const props: Props = new Map();
       const styles: Styles = new Map([
         [
@@ -556,19 +475,7 @@ describe("asset-info", () => {
     });
 
     test("ignores font families without matching assets", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      const pages = createPages();
       const props: Props = new Map();
       const styles: Styles = new Map([
         [
@@ -592,19 +499,7 @@ describe("asset-info", () => {
     });
 
     test("tracks same font used in multiple styles", () => {
-      const pages: Pages = {
-        meta: {},
-        homePage: {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: {},
-          rootInstanceId: "root",
-        },
-        pages: [],
-        folders: [],
-      };
+      const pages = createPages();
       const props: Props = new Map();
       const styles: Styles = new Map([
         [

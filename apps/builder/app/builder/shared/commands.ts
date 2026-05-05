@@ -8,9 +8,10 @@ import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
   $isDesignMode,
+  $isPreviewMode,
   toggleBuilderMode,
-  $project,
 } from "~/shared/nano-states";
+import { $project } from "~/shared/sync/data-stores";
 
 // Declare command for type safety
 declare module "~/shared/pubsub" {
@@ -39,7 +40,8 @@ import {
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
-import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
+import { $selectedInstancePath } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
 import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";
@@ -75,6 +77,15 @@ const makeBreakpointCommand = <CommandName extends string>(
   },
 });
 
+const exitPreviewModeFromNonCanvasSource = (source: string) => {
+  if (source === "canvas") {
+    return;
+  }
+
+  setActiveSidebarPanel("auto");
+  toggleBuilderMode("preview");
+};
+
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
   externalCommands: [
@@ -99,7 +110,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["escape"],
       // radix check event.defaultPrevented before invoking callbacks
       preventDefault: false,
-      handler: () => {
+      handler: (source) => {
+        if ($isPreviewMode.get()) {
+          exitPreviewModeFromNonCanvasSource(source);
+          return;
+        }
+
         const { publish } = $publisher.get();
         publish?.({ type: "cancelCurrentDrag" });
       },

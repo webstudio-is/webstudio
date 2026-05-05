@@ -15,7 +15,7 @@
  * The client is intentionally framework-agnostic. Wrap it with
  * nanostores, React state, Svelte stores, or anything else.
  */
-import { createBackoff, type BackoffOptions } from "./backoff";
+import { createBackoff, type BackoffOptions } from "@webstudio-is/sync-client";
 
 export type PollingClientOptions<T> = {
   /** Async function that fetches the data. */

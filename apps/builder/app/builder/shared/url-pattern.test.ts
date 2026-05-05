@@ -6,7 +6,7 @@ import {
   tokenizePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
-import { VALID_URLPATTERN_PATHS } from "@webstudio-is/sdk/router-paths.test";
+import { VALID_URLPATTERN_PATHS } from "@webstudio-is/sdk/router-path-test-data";
 
 /**
  * These tests use the shared test data from @webstudio-is/sdk to ensure

@@ -92,6 +92,7 @@ type OutlineProps = {
   rect: Rect;
   clampingRect: Rect;
   variant?: "default" | "collaboration" | "slot";
+  color?: string;
 };
 
 export const Outline = ({
@@ -99,6 +100,7 @@ export const Outline = ({
   rect,
   clampingRect,
   variant,
+  color,
 }: OutlineProps) => {
   const outlineRect = {
     top: Math.max(rect.top, clampingRect.top),
@@ -112,6 +114,10 @@ export const Outline = ({
       Math.max(rect.left, clampingRect.left),
   };
   const dynamicStyle = useDynamicStyle(outlineRect);
+  const style =
+    color === undefined
+      ? dynamicStyle
+      : { ...dynamicStyle, borderColor: color };
   if (outlineRect.width <= 0 || outlineRect.height <= 0) {
     return;
   }
@@ -130,7 +136,7 @@ export const Outline = ({
       {propertyStyle}
       <div
         className={`${baseStyle()} ${baseOutlineStyle({ variant, isLeftClamped, isRightClamped, isBottomClamped, isTopClamped })}`}
-        style={dynamicStyle}
+        style={style}
       >
         {children}
       </div>

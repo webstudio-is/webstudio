@@ -5,7 +5,7 @@ import { InputField } from "@webstudio-is/design-system";
 import { $instances } from "~/shared/sync/data-stores";
 import { HorizontalLayout, Label, Row, useLocalValue } from "./shared";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 const saveLabel = (label: string, selectedInstance: Instance) => {

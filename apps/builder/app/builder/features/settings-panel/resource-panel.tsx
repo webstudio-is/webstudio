@@ -47,11 +47,9 @@ import {
 } from "@webstudio-is/design-system";
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
-import {
-  $dataSources,
-  $resources,
-  $variableValuesByInstanceSelector,
-} from "~/shared/nano-states";
+import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
+import { $resources } from "~/shared/sync/data-stores";
 import {
   BindingControl,
   BindingPopover,
@@ -69,7 +67,7 @@ import {
   $selectedPage,
   getInstanceKey,
   type InstancePath,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { rebindTreeVariablesMutable } from "~/shared/data-variables";
 import { parseCurl, type CurlRequest } from "./curl";

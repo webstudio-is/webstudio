@@ -17,17 +17,18 @@ import {
 import type { Project } from "@webstudio-is/project";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { registerContainers } from "../sync/sync-stores";
+import { $registeredComponentMetas } from "../nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import {
-  $instances,
   $dataSources,
   $pages,
   $project,
   $props,
-  $registeredComponentMetas,
-} from "../nano-states";
+} from "~/shared/sync/data-stores";
 import { instanceText } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $awareness, selectInstance } from "../awareness";
+import { selectInstance } from "~/shared/nano-states";
+import { $selectedPageId } from "../nano-states/pages";
 import * as instanceUtils from "../instance-utils";
 
 const expectString = expect.any(String) as unknown as string;
@@ -50,7 +51,7 @@ $pages.set(
     rootInstanceId: "body0",
   })
 );
-$awareness.set({ pageId: "home-page" });
+$selectedPageId.set("home-page");
 
 const createInstance = (
   id: Instance["id"],

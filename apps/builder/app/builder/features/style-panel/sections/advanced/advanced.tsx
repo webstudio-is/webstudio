@@ -21,7 +21,7 @@ import { useComputedStyles } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
 import { $advancedStyleDeclarations } from "./stores";
-import { $selectedInstanceKey } from "~/shared/awareness";
+import { $selectedInstanceKey } from "~/shared/nano-states";
 import { useReadonly } from "../../shared/readonly";
 
 // Only here to keep the same section module interface

@@ -193,3 +193,12 @@
    - The name should change in the pages list as well (with a small delay)
    - Change the page path
    - Reload browser tab and open the page settings again and make sure your changes are persisted
+
+1. Preview mode
+
+   - Enter preview mode from the top bar
+   - Press `escape` while focus is outside the canvas
+   - Check that preview mode exits and the builder UI is shown
+   - Enter preview mode again
+   - Press `escape` while interacting with the canvas
+   - Check that preview mode stays active and the canvas handles the key press

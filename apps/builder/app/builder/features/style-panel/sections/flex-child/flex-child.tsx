@@ -32,7 +32,8 @@ import { createBatchUpdate } from "../../shared/use-style-data";
 import { useReadonly } from "../../shared/readonly";
 import { AlignSelfControl } from "../shared/align-self";
 import { OrderControl } from "../shared/order";
-import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
+import { $selectedInstancePath } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 
 export const properties = [
   "flex-shrink",

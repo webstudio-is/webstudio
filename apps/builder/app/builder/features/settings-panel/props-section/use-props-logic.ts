@@ -10,20 +10,19 @@ import {
   textContentAttribute,
 } from "@webstudio-is/react-sdk";
 import {
-  $instances,
   $isContentMode,
-  $props,
   $registeredComponentMetas,
 } from "~/shared/nano-states";
-import { isRichText } from "~/shared/content-model";
-import { $selectedInstance, $selectedInstancePath } from "~/shared/awareness";
+import { $instances } from "~/shared/sync/data-stores";
+import { $props } from "~/shared/sync/data-stores";
+import { isRichText, isRichTextTree } from "~/shared/content-model";
+import { $selectedInstancePath } from "~/shared/nano-states";
 import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
   showAttributeMeta,
   type PropValue,
 } from "../shared";
-import { $instanceTags } from "../../style-panel/shared/model";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -31,6 +30,8 @@ export type PropAndMeta = {
   prop?: Prop;
   propName: string;
   meta: PropMeta;
+  instanceId?: Instance["id"];
+  instanceSelector?: Instance["id"][];
 };
 
 // The value we set prop to when it's added
@@ -143,33 +144,32 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
 };
 
 const $canHaveTextContent = computed(
-  [$instances, $props, $registeredComponentMetas, $selectedInstancePath],
-  (instances, props, metas, instancePath) => {
+  [
+    $instances,
+    $props,
+    $registeredComponentMetas,
+    $selectedInstancePath,
+    $isContentMode,
+  ],
+  (instances, props, metas, instancePath, isContentMode) => {
     if (instancePath === undefined) {
       return false;
     }
     const [{ instanceSelector }] = instancePath;
+    if (isContentMode) {
+      return isRichTextTree({
+        instanceId: instanceSelector[0],
+        instances,
+        props,
+        metas,
+      });
+    }
     return isRichText({
       instances,
       props,
       metas,
       instanceSelector,
     });
-  }
-);
-
-const contentModePropertiesByTag: Partial<Record<string, string[]>> = {
-  img: ["src", "width", "height", "alt"],
-  a: ["href"],
-};
-
-const $selectedInstanceTag = computed(
-  [$selectedInstance, $instanceTags],
-  (selectedInstance, instanceTags) => {
-    if (selectedInstance === undefined) {
-      return;
-    }
-    return instanceTags.get(selectedInstance.id);
   }
 );
 
@@ -180,27 +180,27 @@ export const usePropsLogic = ({
   updateProp,
 }: UsePropsLogicInput) => {
   const isContentMode = useStore($isContentMode);
-  const selectedInstanceTag = useStore($selectedInstanceTag);
+  const propsMetas = useStore($selectedInstancePropsMetas);
 
   /**
-   * In content edit mode we show only Image and Link props
+   * In content edit mode we show only props marked with contentMode: true
    * In the future I hope the only thing we will show will be Components
    */
   const isPropVisible = (propName: string) => {
     if (!isContentMode) {
       return true;
     }
-    const allowedProperties =
-      contentModePropertiesByTag[selectedInstanceTag ?? ""] ?? [];
-    return allowedProperties.includes(propName);
+    if (propName === textContentAttribute) {
+      return true;
+    }
+    const propMeta = propsMetas.get(propName);
+    return propMeta?.contentMode === true;
   };
 
   const savedProps = props;
 
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
-
-  const propsMetas = useStore($selectedInstancePropsMetas);
 
   const initialPropNames = useStore($selectedInstanceInitialPropNames);
 
@@ -217,19 +217,57 @@ export const usePropsLogic = ({
   }
 
   const canHaveTextContent = useStore($canHaveTextContent);
+  const instances = useStore($instances);
+  const selectedInstancePath = useStore($selectedInstancePath);
 
-  const hasNoChildren = instance.children.length === 0;
-  const hasOnlyTextChild =
-    instance.children.length === 1 && instance.children[0].type === "text";
-  const hasOnlyExpressionChild =
-    instance.children.length === 1 &&
-    instance.children[0].type === "expression";
-  if (
-    canHaveTextContent &&
-    (hasNoChildren || hasOnlyTextChild || hasOnlyExpressionChild)
-  ) {
+  const getTextContentTarget = () => {
+    const canEditChildren = (target: Instance) => {
+      const hasNoChildren = target.children.length === 0;
+      const hasOnlyTextChild =
+        target.children.length === 1 && target.children[0].type === "text";
+      const hasOnlyExpressionChild =
+        target.children.length === 1 &&
+        target.children[0].type === "expression";
+      return hasNoChildren || hasOnlyTextChild || hasOnlyExpressionChild;
+    };
+
+    if (canHaveTextContent && canEditChildren(instance)) {
+      return {
+        instanceId: instance.id,
+        instanceSelector: selectedInstancePath?.[0].instanceSelector,
+      };
+    }
+
+    if (isContentMode && instance.component === "Link") {
+      const [child] = instance.children;
+      if (child?.type === "id") {
+        const childInstance = instances.get(child.value);
+        if (
+          childInstance?.component === "Text" &&
+          canEditChildren(childInstance)
+        ) {
+          return {
+            instanceId: childInstance.id,
+            instanceSelector:
+              selectedInstancePath === undefined
+                ? undefined
+                : [
+                    childInstance.id,
+                    ...selectedInstancePath[0].instanceSelector,
+                  ],
+          };
+        }
+      }
+    }
+  };
+
+  const textContentTarget = getTextContentTarget();
+
+  if (textContentTarget) {
     systemProps.push({
       propName: textContentAttribute,
+      instanceId: textContentTarget.instanceId,
+      instanceSelector: textContentTarget.instanceSelector,
       meta: {
         required: false,
         control: "textContent",

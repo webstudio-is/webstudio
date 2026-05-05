@@ -26,19 +26,16 @@ import {
   validatePrimitiveValue,
   type BindingVariant,
 } from "~/builder/shared/binding-popover";
-import {
-  $dataSources,
-  $props,
-  $resources,
-  $variableValuesByInstanceSelector,
-} from "~/shared/nano-states";
+import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
+import { $props, $resources } from "~/shared/sync/data-stores";
 import { computeExpression } from "~/shared/data-variables";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
   $selectedPage,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
 import {
   UrlField,
   MethodField,

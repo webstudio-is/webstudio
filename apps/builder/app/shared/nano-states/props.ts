@@ -22,21 +22,15 @@ import {
   getCollectionEntries,
 } from "@webstudio-is/react-sdk";
 import { mapGroupBy } from "~/shared/shim";
-import { $instances } from "./instances";
-import {
-  $dataSources,
-  $props,
-  $assets,
-  $resources,
-  $uploadingFilesDataStore,
-  $memoryProps,
-  $isPreviewMode,
-} from "./misc";
-import { $pages } from "./pages";
+import { $instances } from "../sync/data-stores";
+import { $dataSources, $props, $assets, $resources } from "../sync/data-stores";
+import { $uploadingFilesDataStore, $memoryProps, $isPreviewMode } from "./misc";
+import { $pages } from "../sync/data-stores";
 import type { InstanceSelector } from "../tree-utils";
 import { $dataSourceVariables } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
-import { $selectedPage, getInstanceKey } from "../awareness";
+import { $selectedPage } from "./pages";
+import { getInstanceKey } from "./instances";
 import { computeExpression } from "../data-variables";
 import { $currentSystem } from "../system";
 import {

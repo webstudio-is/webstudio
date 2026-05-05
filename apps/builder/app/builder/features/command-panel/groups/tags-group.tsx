@@ -9,13 +9,11 @@ import {
 import { computed } from "nanostores";
 import { elementComponent, tags } from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
-import {
-  $instances,
-  $props,
-  $registeredComponentMetas,
-} from "~/shared/nano-states";
+import { $registeredComponentMetas } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import { $props } from "~/shared/sync/data-stores";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils";
-import { $selectedInstancePath } from "~/shared/awareness";
+import { $selectedInstancePath } from "~/shared/nano-states";
 import { InstanceIcon } from "~/builder/shared/instance-label";
 import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";

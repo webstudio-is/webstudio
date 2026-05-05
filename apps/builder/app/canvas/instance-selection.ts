@@ -2,15 +2,16 @@ import { getInstanceSelectorFromElement } from "~/shared/dom-utils";
 import {
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
-  $instances,
   $isContentMode,
-  $props,
   $registeredComponentMetas,
 } from "~/shared/nano-states";
+import { $props } from "~/shared/sync/data-stores";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import { emitCommand } from "./shared/commands";
 import { shallowEqual } from "shallow-equal";
-import { $awareness, selectInstance } from "~/shared/awareness";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { findClosestRichText } from "~/shared/content-model";
 
 const isElementBeingEdited = (element: Element) => {
@@ -44,7 +45,7 @@ const handleSelect = (event: MouseEvent) => {
   }
 
   // Prevent unnecessary updates (2 clicks are registered before a double click)
-  if (!shallowEqual(instanceSelector, $awareness.get()?.instanceSelector)) {
+  if (!shallowEqual(instanceSelector, $selectedInstanceSelector.get())) {
     selectInstance(instanceSelector);
   }
 };
@@ -100,7 +101,7 @@ const handleEdit = (event: MouseEvent) => {
     }
 
     // Select the instance when no editable parent is found
-    if (!shallowEqual(instanceSelector, $awareness.get()?.instanceSelector)) {
+    if (!shallowEqual(instanceSelector, $selectedInstanceSelector.get())) {
       selectInstance(instanceSelector);
     }
 
@@ -109,7 +110,7 @@ const handleEdit = (event: MouseEvent) => {
 
   // Avoid redundant selection if the instance is already selected
   if (
-    !shallowEqual($awareness.get()?.instanceSelector, editableInstanceSelector)
+    !shallowEqual($selectedInstanceSelector.get(), editableInstanceSelector)
   ) {
     selectInstance(editableInstanceSelector);
   }

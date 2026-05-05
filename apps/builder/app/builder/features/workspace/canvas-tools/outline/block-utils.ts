@@ -1,7 +1,7 @@
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import { blockTemplateComponent } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
-import { selectInstance } from "~/shared/awareness";
+import { selectInstance } from "~/shared/nano-states";
 import { builderApi } from "~/shared/builder-api";
 import { findAvailableVariables } from "~/shared/data-variables";
 import {
@@ -14,13 +14,13 @@ import {
   detectFragmentTokenConflicts,
 } from "~/shared/instance-utils";
 import {
-  $instances,
-  $project,
   $registeredComponentMetas,
   $textEditingInstanceSelector,
   findBlockChildSelector,
   findBlockSelector,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import { $project } from "~/shared/sync/data-stores";
 import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
 
 const getInsertionIndex = (

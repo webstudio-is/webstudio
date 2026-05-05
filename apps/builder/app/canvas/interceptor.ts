@@ -1,15 +1,13 @@
-import { getPagePath, isAbsoluteUrl } from "@webstudio-is/sdk";
+import { getAllPages, getPagePath, isAbsoluteUrl } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
   matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
-import { $selectedPage, selectPage } from "~/shared/awareness";
-import {
-  $isPreviewMode,
-  $pages,
-  $selectedPageHash,
-} from "~/shared/nano-states";
+import { $selectedPage } from "~/shared/nano-states";
+import { selectPage } from "~/shared/nano-states";
+import { $isPreviewMode, $selectedPageHash } from "~/shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
 import { comparePatterns } from "./shared/routing-priority";
 
@@ -48,8 +46,8 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
   }
   const pageHref = new URL(href, "https://any-valid.url");
   // sort pages before matching to not depend on order of page creation
-  const sortedPages = [pages.homePage, ...pages.pages].toSorted(
-    (leftPage, rightPage) => comparePatterns(leftPage.path, rightPage.path)
+  const sortedPages = getAllPages(pages).toSorted((leftPage, rightPage) =>
+    comparePatterns(leftPage.path, rightPage.path)
   );
   for (const page of sortedPages) {
     const pagePath = getPagePath(page.id, pages);

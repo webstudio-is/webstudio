@@ -150,11 +150,21 @@ type ColorPickerProps = {
   disabled?: boolean;
 };
 
+const shouldCommitColorChange = (
+  previousValue: StyleValue,
+  nextValue: StyleValue
+) => {
+  return toValue(previousValue) !== toValue(nextValue);
+};
+
 // Renders <color-input> with its built-in trigger chip, hiding the text input.
 // The chip opens the panel natively via the Popover API.
 // Our own ColorThumb is rendered on top (pointer-events: none) so that clicks
 // pass through to the real chip underneath.
-export const __testing__ = { cssStringToStyleValue };
+export const __testing__ = {
+  cssStringToStyleValue,
+  shouldCommitColorChange,
+};
 
 export const ColorPicker = ({
   value,
@@ -244,7 +254,23 @@ export const ColorPicker = ({
 
     const controller = new AbortController();
     const { signal } = controller;
+    let isOpen = false;
     let lastStyleValue: StyleValue = callbacksRef.current.value;
+    let lastCommittedStyleValue: StyleValue = callbacksRef.current.value;
+
+    const commitIfChanged = () => {
+      if (disabled) {
+        return;
+      }
+      if (
+        shouldCommitColorChange(lastCommittedStyleValue, lastStyleValue) ===
+        false
+      ) {
+        return;
+      }
+      lastCommittedStyleValue = lastStyleValue;
+      callbacksRef.current.onChangeComplete(lastStyleValue);
+    };
 
     colorInputElement.addEventListener(
       "change",
@@ -273,6 +299,7 @@ export const ColorPicker = ({
         // Set contrast immediately on open so the initial color is correct
         // before any change event fires (the component's own JS sets --contrast
         // based on raw color only, ignoring alpha).
+        isOpen = true;
         callbacksRef.current.disableCanvasPointerEvents();
         document.body.style.userSelect = "none";
         callbacksRef.current.onOpenChange?.(true);
@@ -281,15 +308,30 @@ export const ColorPicker = ({
       { signal }
     );
 
+    const handleInteractionEnd = () => {
+      if (isOpen === false) {
+        return;
+      }
+      commitIfChanged();
+    };
+
+    document.addEventListener("pointerup", handleInteractionEnd, {
+      signal,
+      capture: true,
+    });
+    document.addEventListener("pointercancel", handleInteractionEnd, {
+      signal,
+      capture: true,
+    });
+
     colorInputElement.addEventListener(
       "close",
       () => {
+        isOpen = false;
         callbacksRef.current.enableCanvasPointerEvents();
         document.body.style.removeProperty("user-select");
         callbacksRef.current.onOpenChange?.(false);
-        if (!disabled) {
-          callbacksRef.current.onChangeComplete(lastStyleValue);
-        }
+        commitIfChanged();
       },
       { signal }
     );

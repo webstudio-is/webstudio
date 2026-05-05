@@ -4,7 +4,7 @@ import { builderUrl } from "~/shared/router-utils";
 import { trpcClient } from "../trpc/trpc-client";
 import { ShareProject, type LinkOptions } from "./share-project";
 import { useStore } from "@nanostores/react";
-import { $permissions } from "../nano-states";
+import { $permissions, $purchases } from "../nano-states";
 
 const useShareProjectContainer = (projectId: string) => {
   const {
@@ -99,6 +99,7 @@ type ShareButtonProps = {
  */
 export const ShareProjectContainer = ({ projectId }: ShareButtonProps) => {
   const { allowAdditionalPermissions } = useStore($permissions);
+  const purchases = useStore($purchases);
   const {
     links,
     handleChangeDebounced,
@@ -110,6 +111,7 @@ export const ShareProjectContainer = ({ projectId }: ShareButtonProps) => {
   return (
     <ShareProject
       allowAdditionalPermissions={allowAdditionalPermissions}
+      isFreePlan={purchases.length === 0}
       links={links}
       onChange={handleChangeDebounced}
       onDelete={handleDelete}

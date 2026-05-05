@@ -39,6 +39,19 @@ export const meta: WsComponentMeta = {
       label: "Source",
       required: false,
       accept: ".mp4,.webm,.mpg,.mpeg,.mov",
+      contentMode: true,
+    },
+    width: {
+      type: "number",
+      control: "number",
+      required: false,
+      contentMode: true,
+    },
+    height: {
+      type: "number",
+      control: "number",
+      required: false,
+      contentMode: true,
     },
   },
 };

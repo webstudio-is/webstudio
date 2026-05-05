@@ -36,8 +36,8 @@ import {
   $editingPageId,
   $isContentMode,
   $isDesignMode,
-  $pages,
 } from "~/shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
 import {
   getAllChildrenAndSelf,
   reparentOrphansMutable,
@@ -57,16 +57,16 @@ import {
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import {
-  isRootFolder,
-  ROOT_FOLDER_ID,
   type Folder,
   type Page,
   findPageByIdOrPath,
+  getFolderById,
 } from "@webstudio-is/sdk";
 import { atom, computed } from "nanostores";
 import { isPathnamePattern } from "~/builder/shared/url-pattern";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { $selectedPage, selectPage } from "~/shared/awareness";
+import { $selectedPage } from "~/shared/nano-states";
+import { selectPage } from "~/shared/nano-states";
 
 const ItemSuffix = ({
   isParentSelected,
@@ -180,11 +180,8 @@ const $flatPagesTree = computed(
     if (pagesData === undefined) {
       return flatPagesTree;
     }
-    const folders = new Map(
-      pagesData.folders.map((folder) => [folder.id, folder])
-    );
-    const pages = new Map(pagesData.pages.map((page) => [page.id, page]));
-    pages.set(pagesData.homePage.id, pagesData.homePage);
+    const folders = pagesData.folders;
+    const pages = pagesData.pages;
     const traverse = (selector: string[], level = 0, isLastChild = false) => {
       const [itemId] = selector;
       let treeItem: undefined | PagesTreeItem;
@@ -209,7 +206,7 @@ const $flatPagesTree = computed(
           isExpanded = expandedItems.has(folder.id);
         }
         // hide root folder
-        if (itemId !== ROOT_FOLDER_ID) {
+        if (itemId !== pagesData.rootFolderId) {
           treeItem = {
             id: itemId,
             selector,
@@ -249,7 +246,7 @@ const $flatPagesTree = computed(
       }
       return lastTreeItem;
     };
-    traverse([ROOT_FOLDER_ID]);
+    traverse([pagesData.rootFolderId]);
     return flatPagesTree;
   }
 );
@@ -314,7 +311,7 @@ const PagesTree = ({
                 }
 
                 // forbid dragging home page
-                if (item.id === pages.homePage.id) {
+                if (item.id === pages.homePageId) {
                   toast.error("Home page cannot be moved");
                   return false;
                 }
@@ -328,10 +325,7 @@ const PagesTree = ({
                     item.selector,
                     dropTarget
                   );
-                  if (
-                    storedDropTarget &&
-                    canDrop(storedDropTarget, pages.folders)
-                  ) {
+                  if (storedDropTarget && canDrop(storedDropTarget, pages)) {
                     $dropTarget.set(storedDropTarget);
                   }
                 } else {
@@ -370,11 +364,11 @@ const PagesTree = ({
                     }
                   },
                   ...(item.type === "page" &&
-                    item.id !== pages?.homePage.id && {
+                    item.id !== pages?.homePageId && {
                       "data-page-id": item.id,
                     }),
                   ...(item.type === "folder" &&
-                    !isRootFolder({ id: item.id }) && {
+                    item.id !== pages.rootFolderId && {
                       "data-folder-id": item.id,
                     }),
                 }}
@@ -396,7 +390,7 @@ const PagesTree = ({
                 {item.type === "page" && (
                   <TreeNodeLabel
                     prefix={
-                      item.id === pages?.homePage.id ? (
+                      item.id === pages?.homePageId ? (
                         <HomeIcon />
                       ) : isPathnamePattern(item.page.path) ? (
                         <DynamicPageIcon />
@@ -461,7 +455,7 @@ const PageEditor = ({
     // switch to home page when deleted currently selected page
     if (editingPageId === currentPage?.id) {
       if (pages) {
-        selectPage(pages.homePage.id);
+        selectPage(pages.homePageId);
       }
     }
   };
@@ -530,7 +524,7 @@ const FolderEditor = ({
       updateWebstudioData((data) => {
         const { pageIds } = deleteFolderWithChildrenMutable(
           folderIdToDelete,
-          data.pages.folders
+          data.pages
         );
         pageIds.forEach((pageId) => {
           deletePageMutable(pageId, data);
@@ -540,7 +534,8 @@ const FolderEditor = ({
     onClose();
   };
 
-  const folder = pages?.folders.find(({ id }) => id === editingFolderId);
+  const folder =
+    pages === undefined ? undefined : getFolderById(pages, editingFolderId);
 
   return (
     <>
@@ -598,7 +593,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       updateWebstudioData((data) => {
         const { pageIds } = deleteFolderWithChildrenMutable(
           folderIdToDelete,
-          data.pages.folders
+          data.pages
         );
         pageIds.forEach((pageId) => {
           deletePageMutable(pageId, data);
@@ -711,7 +706,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       )}
       {folderIdToDelete && (
         <DeleteFolderConfirmationDialog
-          folder={pages.folders.find(({ id }) => id === folderIdToDelete)!}
+          folder={getFolderById(pages, folderIdToDelete)!}
           onClose={() => setFolderIdToDelete(undefined)}
           onConfirm={handleDeleteFolderConfirm}
         />

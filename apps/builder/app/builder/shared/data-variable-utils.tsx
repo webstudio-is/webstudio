@@ -16,13 +16,13 @@ import {
 } from "@webstudio-is/design-system";
 import type { DataSource, Instance } from "@webstudio-is/sdk";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import { $pages } from "~/shared/sync/data-stores";
 import {
-  $pages,
   $instances,
   $props,
   $dataSources,
   $resources,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { findVariableUsagesByInstance } from "~/shared/data-variables";
 

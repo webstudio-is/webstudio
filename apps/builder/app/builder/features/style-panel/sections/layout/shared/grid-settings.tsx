@@ -26,7 +26,7 @@ import {
 } from "@webstudio-is/css-data";
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/nano-states";
 import { useReadonly } from "../../../shared/readonly";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { CssValueInputContainer } from "../../../shared/css-value-input";

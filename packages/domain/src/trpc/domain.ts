@@ -143,15 +143,14 @@ export const domainRouter = router({
         }
 
         const result = await deploymentTrpc.publish.mutate({
-          // used to load build data from the builder see routes/rest.build.$buildId.ts
+          // used to load build data from the builder with build.loadProjectDataByBuildId
           builderOrigin: env.BUILDER_ORIGIN,
           githubSha: env.GITHUB_SHA,
           buildId: build.id,
           // preview support
           branchName: env.GITHUB_REF_NAME,
           destination: input.destination,
-          buildMode:
-            input.destination === "saas" ? input.buildMode : "ssg",
+          buildMode: input.destination === "saas" ? input.buildMode : "ssg",
           // action log helper (not used for deployment, but for action logs readablity)
           logProjectName: `${project.title} - ${project.id}`,
         });

@@ -13,6 +13,7 @@ import {
 import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import {
   elementComponent,
+  getAllPages,
   Instance,
   ROOT_FOLDER_ID,
   type Asset,
@@ -35,7 +36,7 @@ import { builderApi } from "~/shared/builder-api";
 import { insertPageCopyMutable } from "~/shared/page-utils";
 import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
-import { selectPage } from "~/shared/awareness";
+import { selectPage } from "~/shared/nano-states";
 
 const isBody = (instance: Instance) =>
   instance.component === "Body" ||
@@ -116,7 +117,7 @@ const getTemplatesDataByCategory = (
   if (data === undefined) {
     return new Map();
   }
-  const pages = [data.pages.homePage, ...data.pages.pages]
+  const pages = getAllPages(data.pages)
     .filter((page) => page.marketplace?.include)
     .map((page) => {
       // category can be empty string

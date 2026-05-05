@@ -23,6 +23,9 @@ import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   transpileExpression,
+  getAllPages,
+  getHomePage,
+  findPageByIdOrPath,
   ROOT_INSTANCE_ID,
   portalComponent,
   collectionComponent,
@@ -37,24 +40,26 @@ import { detectTokenConflicts } from "./style-source-utils";
 import { type ConflictResolution } from "./token-conflict-dialog";
 import { buildMergedBreakpointIds } from "./breakpoints-utils";
 import {
-  $props,
-  $styles,
-  $styleSourceSelections,
-  $styleSources,
-  $instances,
   $registeredComponentMetas,
-  $dataSources,
-  $assets,
-  $breakpoints,
-  $pages,
-  $resources,
   $registeredTemplates,
-  $project,
   $isPreviewMode,
   $textEditingInstanceSelector,
   $isContentMode,
   findBlockSelector,
 } from "./nano-states";
+import { $props } from "~/shared/sync/data-stores";
+import {
+  $styles,
+  $styleSourceSelections,
+  $styleSources,
+  $instances,
+  $dataSources,
+  $assets,
+  $breakpoints,
+  $pages,
+  $resources,
+  $project,
+} from "~/shared/sync/data-stores";
 import {
   type DroppableTarget,
   type InstanceSelector,
@@ -75,14 +80,13 @@ import { serverSyncStore } from "./sync/sync-stores";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
 import {
-  $awareness,
   $selectedInstancePath,
+  $selectedInstanceSelector,
   $selectedPage,
-  findAwarenessByInstanceId,
   getInstancePath,
-  selectInstance,
   type InstancePath,
-} from "./awareness";
+} from "./nano-states";
+import { selectInstance } from "./nano-states";
 import { findClosestInstanceMatchingFragment } from "./matcher";
 import {
   findAvailableVariables,
@@ -1703,13 +1707,12 @@ export const findClosestInsertable = (
   from?: Insertable
 ): undefined | Insertable => {
   const selectedPage = $selectedPage.get();
-  const awareness = $awareness.get();
   if (selectedPage === undefined) {
     return;
   }
   // paste to the page root if nothing is selected
   const instanceSelector = from?.parentSelector ??
-    awareness?.instanceSelector ?? [selectedPage.rootInstanceId];
+    $selectedInstanceSelector.get() ?? [selectedPage.rootInstanceId];
   if (instanceSelector[0] === ROOT_INSTANCE_ID) {
     toast.error(`Cannot insert into Global root`);
     return;
@@ -1782,7 +1785,11 @@ export const buildInstancePath = (
   pages: Pages,
   instances: Instances
 ): string[] => {
-  const awareness = findAwarenessByInstanceId(pages, instances, instanceId);
+  const awareness = findPageAndSelectorByInstanceId(
+    pages,
+    instances,
+    instanceId
+  );
   if (!awareness.instanceSelector) {
     return [];
   }
@@ -1811,6 +1818,48 @@ export const buildInstancePath = (
  * @param fragment - The fragment to check for conflicts
  * @returns Array of token conflicts (empty if no conflicts)
  */
+const parentInstanceByIdCache = new WeakMap<
+  Instances,
+  Map<Instance["id"], Instance["id"]>
+>();
+
+/**
+ * Traverse the instance tree up to the root to find the page and full instance
+ * selector for a given instance id. When an instance appears via a slot,
+ * the last matching parent is used.
+ */
+export const findPageAndSelectorByInstanceId = (
+  pages: Pages,
+  instances: Instances,
+  startingInstanceId: Instance["id"]
+): { pageId: string; instanceSelector: string[] } => {
+  let parentInstanceById = parentInstanceByIdCache.get(instances);
+  if (parentInstanceById === undefined) {
+    parentInstanceById = new Map<Instance["id"], Instance["id"]>();
+    for (const instance of instances.values()) {
+      for (const child of instance.children) {
+        if (child.type === "id") {
+          parentInstanceById.set(child.value, instance.id);
+        }
+      }
+    }
+    parentInstanceByIdCache.set(instances, parentInstanceById);
+  }
+  const instanceSelector: string[] = [];
+  let currentInstanceId: undefined | Instance["id"] = startingInstanceId;
+  while (currentInstanceId) {
+    instanceSelector.push(currentInstanceId);
+    currentInstanceId = parentInstanceById.get(currentInstanceId);
+  }
+  const rootInstanceId = instanceSelector.at(-1);
+  for (const page of getAllPages(pages)) {
+    if (page.rootInstanceId === rootInstanceId) {
+      return { pageId: page.id, instanceSelector };
+    }
+  }
+  return { pageId: pages.homePageId, instanceSelector };
+};
+
 export const detectFragmentTokenConflicts = ({
   fragment,
 }: {
@@ -1850,11 +1899,11 @@ export const detectPageTokenConflicts = ({
 }) => {
   const data = getWebstudioData();
 
-  const page = sourceData.pages.pages.find((p) => p.id === pageId);
-  if (page === undefined && sourceData.pages.homePage.id !== pageId) {
+  const page = findPageByIdOrPath(pageId, sourceData.pages);
+  if (page === undefined) {
     throw new Error("Page not found");
   }
-  const targetPage = page ?? sourceData.pages.homePage;
+  const targetPage = page ?? getHomePage(sourceData.pages);
 
   // Extract fragments for both ROOT_INSTANCE and page body
   const rootFragment = extractWebstudioFragment(sourceData, ROOT_INSTANCE_ID);

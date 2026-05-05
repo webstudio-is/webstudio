@@ -1,6 +1,6 @@
 import { StorySection } from "@webstudio-is/design-system";
 import { BreakpointsSelector as BreakpointsSelectorComponent } from "./breakpoints-selector";
-import { $breakpoints } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 import { $selectedBreakpointId } from "~/shared/nano-states/breakpoints";
 
 const breakpointsMap = new Map([

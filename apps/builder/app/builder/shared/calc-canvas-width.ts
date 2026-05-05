@@ -7,11 +7,8 @@ import {
   minCanvasWidth,
 } from "~/shared/breakpoints-utils";
 import { $workspaceRect, $canvasWidth } from "~/builder/shared/nano-states";
-import {
-  $breakpoints,
-  $isPreviewMode,
-  $selectedBreakpoint,
-} from "~/shared/nano-states";
+import { $isPreviewMode, $selectedBreakpoint } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 
 const defaultWidth = 320;
 

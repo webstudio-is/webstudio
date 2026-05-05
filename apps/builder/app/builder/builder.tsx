@@ -27,8 +27,6 @@ import {
   $authPermit,
   $authToken,
   $isPreviewMode,
-  $pages,
-  $project,
   subscribeResources,
   $authTokenPermissions,
   $isDesignMode,
@@ -38,7 +36,9 @@ import {
   $stagingUsername,
   $stagingPassword,
   $entriEnabled,
+  $user,
 } from "~/shared/nano-states";
+import { $project } from "~/shared/sync/data-stores";
 import { $settings, type Settings } from "./shared/client-settings";
 import { builderUrl, getCanvasUrl } from "~/shared/router-utils";
 import { BlockingAlerts } from "./features/blocking-alerts";
@@ -53,12 +53,13 @@ import {
   $isCloneDialogOpen,
   $loadingState,
 } from "./shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
 import { initBuilderApi } from "~/shared/builder-api";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
+import { migrateWebstudioDataMutable } from "@webstudio-is/project-migrations";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
 import { CommandPanel } from "./features/command-panel";
@@ -68,6 +69,7 @@ import { DeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-ut
 import { DeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { KeyboardShortcutsDialog } from "./features/keyboard-shortcuts-dialog";
 import { TokenConflictDialog } from "~/shared/token-conflict-dialog";
+import type { User } from "~/shared/db/user.server";
 
 import {
   initCopyPaste,
@@ -232,6 +234,7 @@ export type BuilderProps = {
   projectId: string;
   authToken?: string;
   authPermit: AuthPermit;
+  user?: User;
   role: Role | "own";
   authTokenPermissions: TokenPermissions;
   planFeatures: PlanFeatures;
@@ -257,6 +260,7 @@ export const Builder = (props: BuilderProps) => {
     // additional data stores
     $authPermit.set(authPermit);
     $authToken.set(authToken);
+    $user.set(props.user);
     setSharedStores(props);
     $authTokenPermissions.set(authTokenPermissions);
     $stagingUsername.set(stagingUsername);

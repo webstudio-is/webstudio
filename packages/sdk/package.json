@@ -9,6 +9,7 @@
   "exports": {
     ".": {
       "webstudio": "./src/index.ts",
+      "partykit": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
       "import": "./lib/index.js"
     },
@@ -27,8 +28,8 @@
       "types": "./lib/types/core-templates.d.ts",
       "import": "./lib/core-templates.js"
     },
-    "./router-paths.test": {
-      "webstudio": "./src/router-paths.test.ts"
+    "./router-path-test-data": {
+      "webstudio": "./src/router-path-test-data.ts"
     }
   },
   "files": [

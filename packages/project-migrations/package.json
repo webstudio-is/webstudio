@@ -1,0 +1,43 @@
+{
+  "name": "@webstudio-is/project-migrations",
+  "version": "0.0.0-webstudio-version",
+  "description": "Webstudio project data migrations",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./pages": {
+      "webstudio": "./src/pages.ts",
+      "types": "./lib/types/pages.d.ts",
+      "import": "./lib/pages.js"
+    }
+  },
+  "files": [
+    "lib/*",
+    "!*.{test,stories}.*"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "rm -rf lib && esbuild src/index.ts src/pages.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --project tsconfig.dts.json",
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@webstudio-is/css-data": "workspace:*",
+    "@webstudio-is/css-engine": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "esbuild": "^0.25.3",
+    "typescript": "5.8.2",
+    "vitest": "^3.1.2"
+  }
+}

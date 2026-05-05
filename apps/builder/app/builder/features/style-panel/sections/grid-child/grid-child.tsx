@@ -42,7 +42,8 @@ import { useLocalValue } from "../../../settings-panel/shared";
 import { AlignSelfControl, JustifySelfControl } from "../shared/align-self";
 import { OrderControl } from "../shared/order";
 import { useStore } from "@nanostores/react";
-import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
+import { $selectedInstancePath } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { $isStylePanelGridVisible } from "~/builder/shared/nano-states";
 import { ExternalLinkIcon } from "@webstudio-is/icons";
 

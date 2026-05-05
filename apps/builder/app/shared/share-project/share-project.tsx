@@ -30,12 +30,14 @@ import {
   IconButton,
   Checkbox,
   Grid,
+  PanelBanner,
 } from "@webstudio-is/design-system";
 import {
   CopyIcon,
   EllipsesIcon,
   PlusIcon,
   InfoCircleIcon,
+  UpgradeIcon,
 } from "@webstudio-is/icons";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { useIds } from "../form-utils";
@@ -48,6 +50,37 @@ const Item = (props: ComponentProps<typeof Flex>) => (
     gap="1"
     {...props}
   />
+);
+
+const PricingUpgradeLink = ({
+  children = "Upgrade",
+}: {
+  children?: string;
+}) => (
+  <Link
+    className={buttonStyle({ color: "gradient" })}
+    color="contrast"
+    underline="none"
+    href="https://webstudio.is/pricing"
+    target="_blank"
+  >
+    {children}
+  </Link>
+);
+
+export const ShareLinkSecurityNotice = () => (
+  <PanelBanner variant="warning">
+    <Text>
+      Sharing links over insecure channels can expose project access. Upgrade to
+      the Team plan for safer collaboration with realtime multiplayer.
+    </Text>
+    <Flex align="center" gap={1}>
+      <UpgradeIcon />
+      <Link color="inherit" target="_blank" href="https://webstudio.is/pricing">
+        Upgrade
+      </Link>
+    </Flex>
+  </PanelBanner>
 );
 
 type PermissionProps = {
@@ -176,15 +209,7 @@ const Menu = ({
                     <br />
                     Upgrade to a Pro account to set additional permissions.
                     <br /> <br />
-                    <Link
-                      className={buttonStyle({ color: "gradient" })}
-                      color="contrast"
-                      underline="none"
-                      href="https://webstudio.is/pricing"
-                      target="_blank"
-                    >
-                      Upgrade
-                    </Link>
+                    <PricingUpgradeLink />
                   </>
                 )}
               </Flex>
@@ -267,15 +292,7 @@ const Menu = ({
                     Upgrade to a Pro account to share with Content Edit
                     permissions.
                     <br /> <br />
-                    <Link
-                      className={buttonStyle({ color: "gradient" })}
-                      color="contrast"
-                      underline="none"
-                      href="https://webstudio.is/pricing"
-                      target="_blank"
-                    >
-                      Upgrade
-                    </Link>
+                    <PricingUpgradeLink />
                   </>
                 )}
               </Flex>
@@ -336,15 +353,7 @@ const Menu = ({
                     <br />
                     Upgrade to a Pro account to share with Admin permissions.
                     <br /> <br />
-                    <Link
-                      className={buttonStyle({ color: "gradient" })}
-                      color="contrast"
-                      underline="none"
-                      href="https://webstudio.is/pricing"
-                      target="_blank"
-                    >
-                      Upgrade
-                    </Link>
+                    <PricingUpgradeLink />
                   </>
                 )}
               </Flex>
@@ -445,6 +454,7 @@ type ShareProjectProps = {
   builderUrl: SharedLinkItemType["builderUrl"];
   isPending: boolean;
   allowAdditionalPermissions: boolean;
+  isFreePlan: boolean;
 };
 
 const animateCollapsibleHeight = keyframes({
@@ -472,6 +482,7 @@ export const ShareProject = ({
   builderUrl,
   isPending,
   allowAdditionalPermissions,
+  isFreePlan,
 }: ShareProjectProps) => {
   const items = links.map((link) => (
     <Fragment key={link.token}>
@@ -509,6 +520,13 @@ export const ShareProject = ({
 
   return (
     <Flex direction="column" css={{ width: theme.spacing[33] }}>
+      {isFreePlan && (
+        <>
+          <ShareLinkSecurityNotice />
+          <Separator />
+        </>
+      )}
+
       <Collapsible.Root open={items.length > 0}>
         <Collapsible.Content className={collapsibleStyle()}>
           {items}

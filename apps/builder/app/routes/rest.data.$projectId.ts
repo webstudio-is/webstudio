@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -28,6 +29,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const assets = await loadAssetsByProject(project.id, context);
   return {
     ...build,
+    pages: serializePages(build.pages),
     assets,
     project,
     publisherHost: env.PUBLISHER_HOST,

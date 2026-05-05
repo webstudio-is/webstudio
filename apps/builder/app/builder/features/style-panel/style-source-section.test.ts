@@ -1,15 +1,18 @@
 import { enableMapSet } from "immer";
 import { expect, test, describe } from "vitest";
 import { registerContainers } from "~/shared/sync/sync-stores";
+import { $selectedStyleSources } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import {
-  $instances,
-  $selectedStyleSources,
   $styleSourceSelections,
   $styleSources,
   $styles,
-} from "~/shared/nano-states";
+} from "~/shared/sync/data-stores";
 import { addStyleSourceToInstance, __testing__ } from "./style-source-section";
-import { $awareness } from "~/shared/awareness";
+import {
+  $selectedPageId,
+  $selectedInstanceSelector,
+} from "~/shared/nano-states";
 
 const { duplicateStyleSource, getComponentStates } = __testing__;
 
@@ -154,10 +157,8 @@ test("add style source to instance", () => {
       ],
     ])
   );
-  $awareness.set({
-    pageId: "",
-    instanceSelector: ["body"],
-  });
+  $selectedPageId.set("");
+  $selectedInstanceSelector.set(["body"]);
   $styleSources.set(new Map([["local1", { id: "local1", type: "local" }]]));
   $styleSourceSelections.set(new Map());
   $selectedStyleSources.set(new Map());
@@ -193,10 +194,8 @@ test("duplicate locked style source creates an unlocked copy", () => {
       ],
     ])
   );
-  $awareness.set({
-    pageId: "",
-    instanceSelector: ["body"],
-  });
+  $selectedPageId.set("");
+  $selectedInstanceSelector.set(["body"]);
   $styleSources.set(
     new Map([
       [

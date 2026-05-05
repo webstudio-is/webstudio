@@ -20,10 +20,13 @@ import {
   PageIcon,
   PhoneIcon,
 } from "@webstudio-is/icons";
-import type { Folder, Instance, Page } from "@webstudio-is/sdk";
 import {
   findParentFolderByChildId,
   findTreeInstanceIds,
+  getAllPages,
+  type Folder,
+  type Instance,
+  type Page,
 } from "@webstudio-is/sdk";
 import { $instances, $pages, $props } from "~/shared/sync/data-stores";
 import {
@@ -266,7 +269,7 @@ const BaseEmail = ({
 const instancesPerPageStore = computed(
   [$instances, $pages],
   (instances, pages) =>
-    (pages ? [pages.homePage, ...pages.pages] : []).map((page) => ({
+    (pages ? getAllPages(pages) : []).map((page) => ({
       pageId: page.id,
       instancesIds: findTreeInstanceIds(instances, page.rootInstanceId),
     }))
@@ -310,7 +313,7 @@ const getInstanceId = (data: { instanceId: string }) => data.instanceId;
 const BasePage = ({ prop, onChange }: BaseControlProps) => {
   const pages = useStore($pages);
   const { allPages, pageSelectOptions } = useMemo(() => {
-    const allPages = pages ? [pages.homePage, ...pages.pages] : [];
+    const allPages = pages ? getAllPages(pages) : [];
     const rootFolder = createRootFolder();
     const pageSelectOptions = new Map<
       Folder["id"],

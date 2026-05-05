@@ -3,9 +3,6 @@ name: Fixtures tests
 on:
   workflow_call:
     inputs:
-      builder-url:
-        required: true
-        type: string
       builder-host:
         required: true
         type: string
@@ -35,7 +32,6 @@ jobs:
     env:
       DATABASE_URL: postgres://
       AUTH_SECRET: test
-      BUILDER_URL_DEPRECATED: ${{ inputs.builder-url }}
       BUILDER_HOST: ${{ inputs.builder-host }}
 
     steps:

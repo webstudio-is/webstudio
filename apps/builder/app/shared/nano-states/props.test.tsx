@@ -11,15 +11,21 @@ import {
   collectionComponent,
 } from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
-import { $instances } from "./instances";
+import {
+  $instances,
+  $pages,
+  $assets,
+  $dataSources,
+  $props,
+  $resources,
+} from "../sync/data-stores";
 import {
   $propValuesByInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "./props";
-import { $pages } from "./pages";
-import { $assets, $dataSources, $props, $resources } from "./misc";
 import { $dataSourceVariables } from "./variables";
-import { $awareness, getInstanceKey } from "../awareness";
+import { $selectedPageId } from "./pages";
+import { getInstanceKey } from "../nano-states";
 import {
   $,
   expression,
@@ -65,7 +71,7 @@ const selectPageRoot = (
     systemDataSourceId,
   });
   $pages.set(defaultPages);
-  $awareness.set({ pageId: defaultPages.homePage.id });
+  $selectedPageId.set(defaultPages.homePageId);
 };
 
 beforeEach(() => {
