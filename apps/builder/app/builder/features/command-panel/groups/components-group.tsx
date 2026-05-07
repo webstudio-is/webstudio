@@ -69,8 +69,13 @@ export const $componentOptions = computed(
       order?: number;
       firstInstance: { component: string };
     }) => {
+      const documentType = selectedPage?.meta.documentType;
+      // text pages serve plain text content and accept no insertions
+      if (documentType === "text") {
+        return;
+      }
       // show only xml category and collection component in xml documents
-      if (selectedPage?.meta.documentType === "xml") {
+      if (documentType === "xml") {
         if (category !== "xml" && name !== collectionComponent) {
           return;
         }

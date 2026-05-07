@@ -16,7 +16,7 @@ import { elementComponent, tags } from "@webstudio-is/sdk";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
-import { $selectedInstancePath } from "~/shared/nano-states";
+import { $selectedInstancePath, $selectedPage } from "~/shared/nano-states";
 import {
   getInstanceLabel,
   InstanceIcon,
@@ -28,6 +28,7 @@ import {
   closeCommandPanel,
   openCommandPanel,
 } from "../command-state";
+import { allowsHtmlMutations } from "../shared/document-utils";
 import { useState } from "react";
 import { convertInstance } from "~/shared/instance-utils";
 
@@ -46,13 +47,17 @@ const $convertOptions = computed(
     $instances,
     $props,
     $registeredComponentMetas,
+    $selectedPage,
   ],
-  (isOpen, instancePath, instances, props, metas) => {
+  (isOpen, instancePath, instances, props, metas, selectedPage) => {
     const convertOptions: ConvertOption[] = [];
     if (!isOpen) {
       return convertOptions;
     }
     if (instancePath === undefined || instancePath.length === 1) {
+      return convertOptions;
+    }
+    if (!allowsHtmlMutations(selectedPage)) {
       return convertOptions;
     }
     const [selectedItem] = instancePath;

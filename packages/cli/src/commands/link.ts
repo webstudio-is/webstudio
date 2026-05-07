@@ -10,7 +10,7 @@ import {
   jsonToGlobalConfig,
   type LocalConfig,
 } from "../config";
-import { createFileIfNotExists } from "../fs-utils";
+import { createFolderIfNotExists } from "../fs-utils";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -145,9 +145,12 @@ You can find your config at ${GLOBAL_CONFIG_FILE}`);
     projectId,
   };
 
-  await createFileIfNotExists(
-    join(cwd(), LOCAL_CONFIG_FILE),
-    JSON.stringify(localConfig, null, 2)
+  const localConfigPath = join(cwd(), LOCAL_CONFIG_FILE);
+  await createFolderIfNotExists(join(cwd(), ".webstudio"));
+  await writeFile(
+    localConfigPath,
+    JSON.stringify(localConfig, null, 2),
+    "utf8"
   );
   log.step("The project is linked successfully");
 };

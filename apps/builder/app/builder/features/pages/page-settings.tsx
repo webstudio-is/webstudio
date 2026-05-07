@@ -50,7 +50,6 @@ import {
   Link,
   buttonStyle,
   PanelBanner,
-  css,
   Switch,
   TitleSuffixSpacer,
   ProBadge,
@@ -126,6 +125,7 @@ const fieldDefaultValues = {
   status: undefined as string | undefined,
   redirect: `""`,
   documentType: "html" as (typeof documentTypes)[number],
+  content: `""`,
   customMetas: [{ property: "", content: `""` }],
   marketplaceInclude: false,
   marketplaceCategory: "",
@@ -181,6 +181,7 @@ const SharedPageValues = z.object({
   status: Status.optional(),
   redirect: z.optional(ProjectNewRedirectPath.or(EmptyString)),
   documentType: z.optional(z.enum(documentTypes)),
+  content: z.string().optional(),
   customMetas: z
     .array(
       z.object({
@@ -225,6 +226,7 @@ const validateValues = (
     socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
     status: computeExpression(values.status ?? `undefined`, variableValues),
     redirect: computeExpression(values.redirect, variableValues),
+    content: computeExpression(values.content, variableValues),
     customMetas: values.customMetas.map((item) => ({
       property: item.property,
       content: computeExpression(item.content, variableValues),
@@ -299,6 +301,7 @@ const toFormValues = (
     status: page.meta.status ?? fieldDefaultValues.status,
     redirect: page.meta.redirect ?? fieldDefaultValues.redirect,
     documentType: page.meta.documentType ?? fieldDefaultValues.documentType,
+    content: page.meta.content ?? fieldDefaultValues.content,
     isHomePage,
     customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
     marketplaceInclude: page.marketplace?.include ?? false,
@@ -573,14 +576,6 @@ const usePageUrl = (values: Values) => {
   return `${publishedOrigin}${compiledPath}`;
 };
 
-const fieldsetStyle = css({
-  all: "unset",
-  display: "block",
-  "&:disabled": {
-    opacity: 0.4,
-  },
-});
-
 const MarketplaceSection = ({
   values,
   onChange,
@@ -793,7 +788,7 @@ const FormFields = ({
                     page
                   </Text>
                 </>
-              ) : values.documentType === "xml" ? (
+              ) : values.documentType !== "html" ? (
                 <>
                   <HomeIcon color={rawTheme.colors.foregroundSubtle} />
                   <Text
@@ -804,7 +799,8 @@ const FormFields = ({
                     }}
                     color="subtle"
                   >
-                    XML pages cannot be set as the home page
+                    {values.documentType.toUpperCase()} pages cannot be set as
+                    the home page
                   </Text>
                 </>
               ) : (
@@ -877,7 +873,7 @@ const FormFields = ({
               options={documentTypes}
               getValue={(docType: (typeof documentTypes)[number]) => docType}
               getLabel={(docType: (typeof documentTypes)[number]) =>
-                docType.toLocaleUpperCase()
+                docType.toUpperCase()
               }
               value={values.documentType}
               disabled={values.isHomePage}
@@ -891,324 +887,375 @@ const FormFields = ({
           </Grid>
         </Grid>
 
-        <Separator />
-
-        {/**
-         * ----------------------========<<<Search Results>>>>========----------------------
-         */}
-        <fieldset
-          disabled={values.documentType === "xml"}
-          className={fieldsetStyle()}
-        >
-          <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-            <Grid gap={2}>
-              <Label text="title">Search</Label>
+        {values.documentType === "text" && (
+          <>
+            <Separator />
+            <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+              <Label text="title">Content</Label>
               <Text color="subtle">
-                Optimize the way this page appears in search engine results
-                pages.
+                The plain text content served for this page.
               </Text>
               <Grid gap={1}>
-                <Label>Search result preview</Label>
-                <Box
-                  css={{
-                    padding: theme.spacing[5],
-                    background: theme.colors.white,
-                    borderRadius: theme.borderRadius[4],
-                    border: `1px solid ${theme.colors.borderMain}`,
-                  }}
-                >
-                  <Box
-                    css={{
-                      transformOrigin: "top left",
-                      transform: "scale(0.667)",
-                      width: 600,
-                      height: 80,
-                    }}
-                  >
-                    <SearchPreview
-                      siteName={pages?.meta?.siteName ?? ""}
-                      faviconUrl={faviconUrl}
-                      pageUrl={pageUrl}
-                      titleLink={title}
-                      snippet={description}
-                    />
-                  </Box>
-                </Box>
-              </Grid>
-            </Grid>
-
-            <Grid gap={1}>
-              <Label htmlFor={fieldIds.title}>Title</Label>
-              <BindingControl>
-                <BindingPopover
-                  scope={scope}
-                  aliases={aliases}
-                  variant={
-                    isLiteralExpression(values.title) ? "default" : "bound"
-                  }
-                  value={values.title}
-                  onChange={(value) => {
-                    onChange({
-                      field: "title",
-                      value,
-                    });
-                  }}
-                  onRemove={(evaluatedValue) => {
-                    onChange({
-                      field: "title",
-                      value: JSON.stringify(evaluatedValue ?? ""),
-                    });
-                  }}
-                />
-                <InputErrorsTooltip errors={errors.title}>
-                  <InputField
-                    color={errors.title && "error"}
-                    id={fieldIds.title}
-                    name="title"
-                    placeholder="My awesome project - About"
-                    disabled={isLiteralExpression(values.title) === false}
-                    value={title}
-                    onChange={(event) => {
-                      onChange({
-                        field: "title",
-                        value: JSON.stringify(event.target.value),
-                      });
-                    }}
-                  />
-                </InputErrorsTooltip>
-              </BindingControl>
-            </Grid>
-
-            <Grid gap={1}>
-              <Label htmlFor={fieldIds.description}>Description</Label>
-              <BindingControl>
-                <BindingPopover
-                  scope={scope}
-                  aliases={aliases}
-                  variant={
-                    isLiteralExpression(values.description)
-                      ? "default"
-                      : "bound"
-                  }
-                  value={values.description}
-                  onChange={(value) => {
-                    onChange({
-                      field: "description",
-                      value,
-                    });
-                  }}
-                  onRemove={(evaluatedValue) => {
-                    onChange({
-                      field: "description",
-                      value: JSON.stringify(evaluatedValue ?? ""),
-                    });
-                  }}
-                />
-                <InputErrorsTooltip errors={errors.description}>
-                  <TextArea
-                    color={errors.description ? "error" : undefined}
-                    id={fieldIds.description}
-                    name="description"
-                    disabled={isLiteralExpression(values.description) === false}
-                    value={description}
-                    onChange={(value) => {
-                      onChange({
-                        field: "description",
-                        value: JSON.stringify(value),
-                      });
-                    }}
-                    autoGrow
-                    maxRows={10}
-                  />
-                </InputErrorsTooltip>
-              </BindingControl>
-              <BindingControl>
-                <Grid
-                  flow={"column"}
-                  gap={1}
-                  justify={"start"}
-                  align={"center"}
-                  css={{ py: theme.spacing[2] }}
-                >
+                <Label htmlFor={fieldIds.content}>Text</Label>
+                <BindingControl>
                   <BindingPopover
                     scope={scope}
                     aliases={aliases}
                     variant={
-                      isLiteralExpression(values.excludePageFromSearch)
-                        ? "default"
-                        : "bound"
+                      isLiteralExpression(values.content) ? "default" : "bound"
                     }
-                    value={values.excludePageFromSearch}
+                    value={values.content}
+                    onChange={(value) => {
+                      onChange({ field: "content", value });
+                    }}
+                    onRemove={(evaluatedValue) => {
+                      onChange({
+                        field: "content",
+                        value: JSON.stringify(evaluatedValue ?? ""),
+                      });
+                    }}
+                  />
+                  <TextArea
+                    id={fieldIds.content}
+                    disabled={isLiteralExpression(values.content) === false}
+                    value={String(
+                      computeExpression(values.content, variableValues) ?? ""
+                    )}
                     onChange={(value) => {
                       onChange({
-                        field: "excludePageFromSearch",
+                        field: "content",
+                        value: JSON.stringify(value),
+                      });
+                    }}
+                    autoGrow
+                    maxRows={20}
+                  />
+                </BindingControl>
+              </Grid>
+            </Grid>
+          </>
+        )}
+
+        {values.documentType === "html" && (
+          <>
+            <Separator />
+
+            {/**
+             * ----------------------========<<<Search Results>>>>========----------------------
+             */}
+            <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+              <Grid gap={2}>
+                <Label text="title">Search</Label>
+                <Text color="subtle">
+                  Optimize the way this page appears in search engine results
+                  pages.
+                </Text>
+                <Grid gap={1}>
+                  <Label>Search result preview</Label>
+                  <Box
+                    css={{
+                      padding: theme.spacing[5],
+                      background: theme.colors.white,
+                      borderRadius: theme.borderRadius[4],
+                      border: `1px solid ${theme.colors.borderMain}`,
+                    }}
+                  >
+                    <Box
+                      css={{
+                        transformOrigin: "top left",
+                        transform: "scale(0.667)",
+                        width: 600,
+                        height: 80,
+                      }}
+                    >
+                      <SearchPreview
+                        siteName={pages?.meta?.siteName ?? ""}
+                        faviconUrl={faviconUrl}
+                        pageUrl={pageUrl}
+                        titleLink={title}
+                        snippet={description}
+                      />
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+
+              <Grid gap={1}>
+                <Label htmlFor={fieldIds.title}>Title</Label>
+                <BindingControl>
+                  <BindingPopover
+                    scope={scope}
+                    aliases={aliases}
+                    variant={
+                      isLiteralExpression(values.title) ? "default" : "bound"
+                    }
+                    value={values.title}
+                    onChange={(value) => {
+                      onChange({
+                        field: "title",
                         value,
                       });
                     }}
                     onRemove={(evaluatedValue) => {
                       onChange({
-                        field: "excludePageFromSearch",
+                        field: "title",
                         value: JSON.stringify(evaluatedValue ?? ""),
                       });
                     }}
                   />
-                  <Checkbox
-                    id={fieldIds.excludePageFromSearch}
-                    disabled={
-                      isLiteralExpression(values.excludePageFromSearch) ===
-                      false
+                  <InputErrorsTooltip errors={errors.title}>
+                    <InputField
+                      color={errors.title && "error"}
+                      id={fieldIds.title}
+                      name="title"
+                      placeholder="My awesome project - About"
+                      disabled={isLiteralExpression(values.title) === false}
+                      value={title}
+                      onChange={(event) => {
+                        onChange({
+                          field: "title",
+                          value: JSON.stringify(event.target.value),
+                        });
+                      }}
+                    />
+                  </InputErrorsTooltip>
+                </BindingControl>
+              </Grid>
+
+              <Grid gap={1}>
+                <Label htmlFor={fieldIds.description}>Description</Label>
+                <BindingControl>
+                  <BindingPopover
+                    scope={scope}
+                    aliases={aliases}
+                    variant={
+                      isLiteralExpression(values.description)
+                        ? "default"
+                        : "bound"
                     }
-                    checked={excludePageFromSearch}
-                    onCheckedChange={() => {
-                      const newValue = !excludePageFromSearch;
+                    value={values.description}
+                    onChange={(value) => {
                       onChange({
-                        field: "excludePageFromSearch",
-                        value: newValue.toString(),
+                        field: "description",
+                        value,
+                      });
+                    }}
+                    onRemove={(evaluatedValue) => {
+                      onChange({
+                        field: "description",
+                        value: JSON.stringify(evaluatedValue ?? ""),
                       });
                     }}
                   />
-
-                  <InputErrorsTooltip errors={errors.excludePageFromSearch}>
-                    <Label htmlFor={fieldIds.excludePageFromSearch}>
-                      Exclude this page from search results
-                    </Label>
+                  <InputErrorsTooltip errors={errors.description}>
+                    <TextArea
+                      color={errors.description ? "error" : undefined}
+                      id={fieldIds.description}
+                      name="description"
+                      disabled={
+                        isLiteralExpression(values.description) === false
+                      }
+                      value={description}
+                      onChange={(value) => {
+                        onChange({
+                          field: "description",
+                          value: JSON.stringify(value),
+                        });
+                      }}
+                      autoGrow
+                      maxRows={10}
+                    />
                   </InputErrorsTooltip>
-                </Grid>
-              </BindingControl>
+                </BindingControl>
+                <BindingControl>
+                  <Grid
+                    flow={"column"}
+                    gap={1}
+                    justify={"start"}
+                    align={"center"}
+                    css={{ py: theme.spacing[2] }}
+                  >
+                    <BindingPopover
+                      scope={scope}
+                      aliases={aliases}
+                      variant={
+                        isLiteralExpression(values.excludePageFromSearch)
+                          ? "default"
+                          : "bound"
+                      }
+                      value={values.excludePageFromSearch}
+                      onChange={(value) => {
+                        onChange({
+                          field: "excludePageFromSearch",
+                          value,
+                        });
+                      }}
+                      onRemove={(evaluatedValue) => {
+                        onChange({
+                          field: "excludePageFromSearch",
+                          value: JSON.stringify(evaluatedValue ?? ""),
+                        });
+                      }}
+                    />
+                    <Checkbox
+                      id={fieldIds.excludePageFromSearch}
+                      disabled={
+                        isLiteralExpression(values.excludePageFromSearch) ===
+                        false
+                      }
+                      checked={excludePageFromSearch}
+                      onCheckedChange={() => {
+                        const newValue = !excludePageFromSearch;
+                        onChange({
+                          field: "excludePageFromSearch",
+                          value: newValue.toString(),
+                        });
+                      }}
+                    />
+
+                    <InputErrorsTooltip errors={errors.excludePageFromSearch}>
+                      <Label htmlFor={fieldIds.excludePageFromSearch}>
+                        Exclude this page from search results
+                      </Label>
+                    </InputErrorsTooltip>
+                  </Grid>
+                </BindingControl>
+              </Grid>
+
+              <LanguageField
+                errors={errors.language}
+                value={values.language}
+                onChange={(value) => onChange({ field: "language", value })}
+              />
             </Grid>
 
-            <LanguageField
-              errors={errors.language}
-              value={values.language}
-              onChange={(value) => onChange({ field: "language", value })}
-            />
-          </Grid>
+            <Separator />
 
-          <Separator />
-
-          {/**
-           * ----------------------========<<<Social Sharing>>>>========----------------------
-           */}
-          <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-            <Label htmlFor={fieldIds.socialImageAssetId} text="title">
-              Social Image
-            </Label>
-            <Text color="subtle">
-              This image appears when you share a link to this page on social
-              media sites. If no image is set here, the Social Image set in the
-              project settings will be used. The optimal dimensions for the
-              image are 1200x630 px or larger with a 1.91:1 aspect ratio.
-            </Text>
-            <BindingControl>
-              <BindingPopover
-                scope={scope}
-                aliases={aliases}
-                variant={
-                  isLiteralExpression(values.socialImageUrl)
-                    ? "default"
-                    : "bound"
-                }
-                value={values.socialImageUrl}
-                onChange={(value) => {
-                  onChange({
-                    field: "socialImageUrl",
-                    value,
-                  });
-                }}
-                onRemove={(evaluatedValue) => {
-                  onChange({
-                    field: "socialImageUrl",
-                    value: JSON.stringify(evaluatedValue ?? ""),
-                  });
-                }}
-              />
-              <InputErrorsTooltip errors={errors.socialImageUrl}>
-                <InputField
-                  placeholder="https://www.url.com"
-                  disabled={
-                    isLiteralExpression(values.socialImageUrl) === false
+            {/**
+             * ----------------------========<<<Social Sharing>>>>========----------------------
+             */}
+            <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+              <Label htmlFor={fieldIds.socialImageAssetId} text="title">
+                Social Image
+              </Label>
+              <Text color="subtle">
+                This image appears when you share a link to this page on social
+                media sites. If no image is set here, the Social Image set in
+                the project settings will be used. The optimal dimensions for
+                the image are 1200x630 px or larger with a 1.91:1 aspect ratio.
+              </Text>
+              <BindingControl>
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.socialImageUrl)
+                      ? "default"
+                      : "bound"
                   }
-                  color={errors.socialImageUrl && "error"}
-                  value={socialImageUrl}
-                  onChange={(event) => {
+                  value={values.socialImageUrl}
+                  onChange={(value) => {
                     onChange({
                       field: "socialImageUrl",
-                      value: JSON.stringify(event.target.value),
+                      value,
                     });
-                    onChange({ field: "socialImageAssetId", value: "" });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "socialImageUrl",
+                      value: JSON.stringify(evaluatedValue ?? ""),
+                    });
                   }}
                 />
-              </InputErrorsTooltip>
-            </BindingControl>
-            <Grid gap={1} flow={"column"}>
-              <ImageControl
-                onAssetIdChange={(socialImageAssetId) => {
-                  onChange({
-                    field: "socialImageAssetId",
-                    value: socialImageAssetId,
-                  });
-                  onChange({ field: "socialImageUrl", value: "" });
-                }}
-              >
-                <Button
-                  id={fieldIds.socialImageAssetId}
-                  css={{ justifySelf: "start" }}
-                  color="neutral"
+                <InputErrorsTooltip errors={errors.socialImageUrl}>
+                  <InputField
+                    placeholder="https://www.url.com"
+                    disabled={
+                      isLiteralExpression(values.socialImageUrl) === false
+                    }
+                    color={errors.socialImageUrl && "error"}
+                    value={socialImageUrl}
+                    onChange={(event) => {
+                      onChange({
+                        field: "socialImageUrl",
+                        value: JSON.stringify(event.target.value),
+                      });
+                      onChange({ field: "socialImageAssetId", value: "" });
+                    }}
+                  />
+                </InputErrorsTooltip>
+              </BindingControl>
+              <Grid gap={1} flow={"column"}>
+                <ImageControl
+                  onAssetIdChange={(socialImageAssetId) => {
+                    onChange({
+                      field: "socialImageAssetId",
+                      value: socialImageAssetId,
+                    });
+                    onChange({ field: "socialImageUrl", value: "" });
+                  }}
                 >
-                  Choose Image From Assets
-                </Button>
-              </ImageControl>
+                  <Button
+                    id={fieldIds.socialImageAssetId}
+                    css={{ justifySelf: "start" }}
+                    color="neutral"
+                  >
+                    Choose Image From Assets
+                  </Button>
+                </ImageControl>
+              </Grid>
+
+              {socialImageAsset?.type === "image" && (
+                <ImageInfo
+                  asset={socialImageAsset}
+                  onDelete={() => {
+                    onChange({
+                      field: "socialImageAssetId",
+                      value: "",
+                    });
+                  }}
+                />
+              )}
+              <div />
+              <SocialPreview
+                ogImageUrl={
+                  socialImageAsset?.type === "image"
+                    ? socialImageAsset.name
+                    : socialImageUrl
+                }
+                ogUrl={pageUrl}
+                ogTitle={title}
+                ogDescription={description}
+              />
             </Grid>
 
-            {socialImageAsset?.type === "image" && (
-              <ImageInfo
-                asset={socialImageAsset}
-                onDelete={() => {
-                  onChange({
-                    field: "socialImageAssetId",
-                    value: "",
-                  });
-                }}
-              />
-            )}
-            <div />
-            <SocialPreview
-              ogImageUrl={
-                socialImageAsset?.type === "image"
-                  ? socialImageAsset.name
-                  : socialImageUrl
-              }
-              ogUrl={pageUrl}
-              ogTitle={title}
-              ogDescription={description}
-            />
-          </Grid>
-
-          <Separator />
-
-          <InputErrorsTooltip errors={errors.customMetas}>
-            <div>
-              <CustomMetadata
-                customMetas={values.customMetas}
-                onChange={(customMetas) => {
-                  onChange({
-                    field: "customMetas",
-                    value: customMetas,
-                  });
-                }}
-              />
-            </div>
-          </InputErrorsTooltip>
-        </fieldset>
-
-        {(project?.marketplaceApprovalStatus === "PENDING" ||
-          project?.marketplaceApprovalStatus === "APPROVED" ||
-          project?.marketplaceApprovalStatus === "REJECTED") && (
-          <>
             <Separator />
-            <MarketplaceSection values={values} onChange={onChange} />
+
+            <InputErrorsTooltip errors={errors.customMetas}>
+              <div>
+                <CustomMetadata
+                  customMetas={values.customMetas}
+                  onChange={(customMetas) => {
+                    onChange({
+                      field: "customMetas",
+                      value: customMetas,
+                    });
+                  }}
+                />
+              </div>
+            </InputErrorsTooltip>
           </>
         )}
+
+        {values.documentType === "html" &&
+          (project?.marketplaceApprovalStatus === "PENDING" ||
+            project?.marketplaceApprovalStatus === "APPROVED" ||
+            project?.marketplaceApprovalStatus === "REJECTED") && (
+            <>
+              <Separator />
+              <MarketplaceSection values={values} onChange={onChange} />
+            </>
+          )}
 
         <Box css={{ height: theme.spacing[10] }} />
       </ScrollArea>
@@ -1416,6 +1463,10 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
     if (values.documentType !== undefined) {
       page.meta.documentType = values.documentType;
+    }
+
+    if (values.content !== undefined) {
+      page.meta.content = values.content;
     }
 
     if (values.parentFolderId !== undefined) {

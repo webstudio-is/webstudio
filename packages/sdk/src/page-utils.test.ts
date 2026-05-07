@@ -4,6 +4,7 @@ import {
   findPageByIdOrPath,
   findParentFolderByChildId,
   getPagePath,
+  getStaticSiteMapXml,
 } from "./page-utils";
 
 const pages = {
@@ -135,5 +136,42 @@ describe("findParentFolderByChildId", () => {
     expect(
       findParentFolderByChildId("folderId-1-1-1", pages.folders)?.id
     ).toEqual("folderId-1-1");
+  });
+});
+
+describe("getStaticSiteMapXml", () => {
+  test("includes html pages and excludes xml and text pages", () => {
+    const pagesWithDocumentTypes: Pages = {
+      ...pages,
+      pages: new Map(pages.pages)
+        .set("xml", {
+          id: "xml",
+          path: "/sitemap-extra.xml",
+          name: "XML",
+          title: "XML",
+          rootInstanceId: "rootInstanceId",
+          meta: { documentType: "xml" },
+        })
+        .set("text", {
+          id: "text",
+          path: "/llms.txt",
+          name: "LLMs",
+          title: "LLMs",
+          rootInstanceId: "rootInstanceId",
+          meta: { documentType: "text" },
+        }),
+      folders: new Map(pages.folders).set("root", {
+        ...pages.folders.get("root")!,
+        children: ["folderId-1", "xml", "text"],
+      }),
+    };
+
+    expect(getStaticSiteMapXml(pagesWithDocumentTypes, "2026-04-30")).toEqual([
+      { path: "", lastModified: "2026-04-30" },
+      {
+        path: "/folder-1/folder-1-1/folder-1-1-1/page-1",
+        lastModified: "2026-04-30",
+      },
+    ]);
   });
 });

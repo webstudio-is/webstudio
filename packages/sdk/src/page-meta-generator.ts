@@ -13,6 +13,7 @@ export type PageMeta = {
   socialImageUrl?: string;
   status?: number;
   redirect?: string;
+  content?: string;
   custom: Array<{ property: string; content: string }>;
 };
 
@@ -73,6 +74,12 @@ export const generatePageMeta = ({
   });
   const redirectExpression = generateExpression({
     expression: page.meta.redirect ?? "undefined",
+    dataSources,
+    usedDataSources,
+    scope: localScope,
+  });
+  const contentExpression = generateExpression({
+    expression: page.meta.content ?? "undefined",
     dataSources,
     usedDataSources,
     scope: localScope,
@@ -141,6 +148,7 @@ export const generatePageMeta = ({
   generated += `    socialImageUrl: ${socialImageUrlExpression},\n`;
   generated += `    status: ${statusExpression},\n`;
   generated += `    redirect: ${redirectExpression},\n`;
+  generated += `    content: ${contentExpression},\n`;
   generated += `    custom: ${customExpression},\n`;
   generated += `  };\n`;
   generated += `};\n`;

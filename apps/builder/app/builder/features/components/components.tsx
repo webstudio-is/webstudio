@@ -7,6 +7,7 @@ import {
   type WsComponentMeta,
   componentCategories,
   collectionComponent,
+  documentTypes,
   elementComponent,
 } from "@webstudio-is/sdk";
 import {
@@ -110,7 +111,7 @@ const filterAndGroupComponents = ({
   metasByCategory,
   search,
 }: {
-  documentType?: "html" | "xml";
+  documentType?: (typeof documentTypes)[number];
   metasByCategory: Map<string, Array<Meta>>;
   search: string;
 }): Groups => {
