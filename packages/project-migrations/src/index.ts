@@ -1,6 +1,8 @@
-import type { WebstudioData } from "../schema/webstudio";
+import type { WebstudioData } from "@webstudio-is/sdk";
 import { migratePages } from "./pages";
 import { migrateStylesMutable } from "./styles";
+
+export { migratePages, serializePages, type SerializedPages } from "./pages";
 
 /**
  * Normalizes persisted project data after loading.

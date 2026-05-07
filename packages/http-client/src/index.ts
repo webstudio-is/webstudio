@@ -5,7 +5,6 @@ import type {
   Deployment,
   Instance,
   Page,
-  SerializedPages,
   Prop,
   Resource,
   StyleDecl,
@@ -13,6 +12,7 @@ import type {
   StyleSource,
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
+import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 
 export type Data = {
@@ -39,29 +39,10 @@ export type Data = {
   origin?: string;
 };
 
-export const loadProjectDataByBuildId = async (
-  params: {
-    buildId: string;
-    origin: string;
-  } & (
-    | {
-        seviceToken: string;
-      }
-    | { authToken: string }
-  )
-): Promise<Data> => {
-  const headers: Record<string, string> =
-    "seviceToken" in params
-      ? { Authorization: params.seviceToken }
-      : { "x-auth-token": params.authToken };
-
-  return (await createTrpcClient(params.origin, headers).query(
-    "build.loadProjectDataByBuildId",
-    { buildId: params.buildId }
-  )) as Data;
-};
-
-const createTrpcClient = (origin: string, headers: Record<string, string>) => {
+const createTrpcClient = (
+  origin: string,
+  headers: Record<string, string | undefined>
+) => {
   const { sourceOrigin } = parseBuilderUrl(origin);
   const url = new URL("/trpc", sourceOrigin);
 
@@ -75,12 +56,39 @@ const createTrpcClient = (origin: string, headers: Record<string, string>) => {
   });
 };
 
+export const loadProjectDataByBuildId = async (
+  params: {
+    buildId: string;
+    origin: string;
+    headers?: Record<string, string | undefined>;
+  } & (
+    | {
+        seviceToken: string;
+      }
+    | { authToken: string }
+  )
+): Promise<Data> => {
+  const headers: Record<string, string | undefined> =
+    "seviceToken" in params
+      ? { Authorization: params.seviceToken }
+      : { "x-auth-token": params.authToken };
+
+  return (await createTrpcClient(params.origin, {
+    ...params.headers,
+    ...headers,
+  }).query("build.loadProjectDataByBuildId", {
+    buildId: params.buildId,
+  })) as Data;
+};
+
 export const loadProjectDataByProjectId = async (params: {
   projectId: string;
   origin: string;
   authToken: string;
+  headers?: Record<string, string | undefined>;
 }): Promise<Data> => {
   return (await createTrpcClient(params.origin, {
+    ...params.headers,
     "x-auth-token": params.authToken,
   }).query("build.loadProjectDataByProjectId", {
     projectId: params.projectId,

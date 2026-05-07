@@ -3,8 +3,9 @@ import {
   type Folder,
   type Page,
   type Pages,
-} from "../schema/pages";
-import { isRootFolder, ROOT_FOLDER_ID } from "../page-utils";
+  isRootFolder,
+  ROOT_FOLDER_ID,
+} from "@webstudio-is/sdk";
 
 type LegacyPages = {
   meta?: Pages["meta"];
@@ -65,6 +66,22 @@ const isSerializedPages = (pages: unknown): pages is MigratablePages => {
   );
 };
 
+const removeOrphanFolderChildren = (
+  pages: Map<Page["id"], Page>,
+  folders: Map<Folder["id"], Folder>
+) => {
+  const nextFolders = new Map<Folder["id"], Folder>();
+  for (const [folderId, folder] of folders) {
+    nextFolders.set(folderId, {
+      ...folder,
+      children: folder.children.filter(
+        (childId) => pages.has(childId) || folders.has(childId)
+      ),
+    });
+  }
+  return nextFolders;
+};
+
 export const serializePages = (pages: Pages): SerializedPages => {
   const parsedPages = PagesSchema.parse(pages);
   return {
@@ -84,18 +101,31 @@ export const migratePages = (pages: unknown): Pages => {
     pages.pages instanceof Map &&
     pages.folders instanceof Map
   ) {
-    return pages as Pages;
+    const currentPages = pages as Pages;
+    const result = PagesSchema.safeParse(currentPages);
+    if (result.success) {
+      return currentPages;
+    }
+    return {
+      ...currentPages,
+      folders: removeOrphanFolderChildren(
+        currentPages.pages,
+        currentPages.folders
+      ),
+    };
   }
 
   if (isSerializedPages(pages)) {
+    const nextPages = toMap<Page>(pages.pages, normalizePage);
+    const nextFolders = toMap<Folder>(pages.folders);
     return {
       meta: pages.meta,
       compiler: pages.compiler,
       redirects: pages.redirects,
       homePageId: pages.homePageId,
       rootFolderId: pages.rootFolderId,
-      pages: toMap<Page>(pages.pages, normalizePage),
-      folders: toMap<Folder>(pages.folders),
+      pages: nextPages,
+      folders: removeOrphanFolderChildren(nextPages, nextFolders),
     };
   }
 
@@ -141,7 +171,9 @@ export const migratePages = (pages: unknown): Pages => {
 
   for (const folder of nextFolders.values()) {
     folder.children = folder.children.filter(
-      (childId) => childId !== homePage.id
+      (childId) =>
+        childId !== homePage.id &&
+        (nextPages.has(childId) || nextFolders.has(childId))
     );
   }
   nextRootFolder.children.unshift(homePage.id);

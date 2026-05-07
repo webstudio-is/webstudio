@@ -1,5 +1,6 @@
 import type { AppRouter } from "~/services/trcp-router.server";
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
+import { getApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
 
 import type {
   AnyMutationProcedure,
@@ -116,6 +117,12 @@ export const trpcClient: {
         }
 
         console.error("TRPC ERROR", error);
+
+        const payload = getApiCompatibilityPayload(error);
+        if (payload?.action.type === "reloadBrowser") {
+          setError(payload.message);
+          return;
+        }
 
         if (error instanceof Error) {
           setError(error.message);

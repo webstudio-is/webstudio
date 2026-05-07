@@ -1,12 +1,14 @@
 {
   "name": "@webstudio-is/css-data",
-  "version": "0.0.0",
+  "version": "0.0.0-webstudio-version",
   "description": "CSS Data",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
     "typecheck": "tsgo --noEmit",
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --project tsconfig.dts.json && node ./scripts/prepare-dts.mjs",
     "build:html.css": "tsx ./bin/html.css.ts && prettier --write ./src/__generated__/html.ts",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/\" \"../css-engine/src/__generated__/\"",
     "build:descriptions": "tsx ./bin/property-value-descriptions.ts && prettier --write ./src/__generated__/property-value-descriptions.ts",
@@ -14,13 +16,14 @@
     "build:all": "pnpm build:html.css && pnpm build:mdn-data && pnpm build:descriptions && pnpm build:property-var-fixtures",
     "test": "vitest run"
   },
-  "bin": {
-    "css-to-ws": "./bin/css-to-ws.ts"
-  },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
+    "esbuild": "^0.25.3",
     "html-tags": "^4.0.0",
     "mdn-data": "2.28.0",
+    "openai": "^3.2.1",
+    "p-retry": "^6.2.1",
+    "typescript": "5.8.2",
     "vitest": "^3.1.2",
     "zod": "^3.24.2"
   },
@@ -28,17 +31,22 @@
     "zod": "^3.19.1"
   },
   "exports": {
-    "webstudio": "./src/index.ts"
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    }
   },
+  "files": [
+    "lib/*",
+    "!*.{test,stories}.*"
+  ],
   "license": "AGPL-3.0-or-later",
-  "private": true,
   "sideEffects": false,
   "dependencies": {
     "@webstudio-is/css-engine": "workspace:*",
     "change-case": "^5.4.4",
     "css-tree": "^3.1.0",
-    "openai": "^3.2.1",
-    "p-retry": "^6.2.1",
     "warn-once": "^0.1.1"
   }
 }

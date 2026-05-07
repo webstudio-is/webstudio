@@ -48,9 +48,9 @@ import {
   ROOT_INSTANCE_ID,
   elementComponent,
   getAssetUrl,
-  migratePages,
   toRuntimeAsset,
 } from "@webstudio-is/sdk";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
 import type { Data } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "./config";
 import {

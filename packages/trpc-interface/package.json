@@ -10,7 +10,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@webstudio-is/feature-flags": "workspace:*",
     "@webstudio-is/plans": "workspace:*",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
@@ -24,6 +23,10 @@
     "vitest": "^3.1.2"
   },
   "exports": {
+    "./api-compatibility": {
+      "webstudio": "./src/api-compatibility.ts",
+      "import": "./src/api-compatibility.ts"
+    },
     "./index.server": {
       "webstudio": "./src/index.server.ts",
       "import": "./src/index.server.ts"

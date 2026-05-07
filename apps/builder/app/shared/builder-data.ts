@@ -1,8 +1,5 @@
-import {
-  getStyleDeclKey,
-  migratePages,
-  type WebstudioData,
-} from "@webstudio-is/sdk";
+import { getStyleDeclKey, type WebstudioData } from "@webstudio-is/sdk";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import type { loader } from "~/routes/rest.data.$projectId";

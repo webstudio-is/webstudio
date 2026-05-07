@@ -12,6 +12,7 @@ export const trpcSharedClient = createTrpcProxyServiceClient(
         url: TRPC_SERVER_URL,
         token: TRPC_SERVER_API_TOKEN,
         branchName: GITHUB_REF_NAME,
+        clientVersion: staticEnv.GITHUB_SHA ?? "local",
       }
     : undefined
 );

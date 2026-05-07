@@ -1,6 +1,7 @@
 import type { TrpcInterfaceClient } from "../shared/shared-router";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import type { PlanFeatures, Purchase } from "@webstudio-is/plans";
+import type { ApiClient } from "../api-compatibility";
 
 /**
  * All necessary parameters for Authorization
@@ -74,6 +75,16 @@ type PostgrestContext = {
   client: Client;
 };
 
+type ApiClientContext =
+  | {
+      type: ApiClient;
+      version: string | undefined;
+    }
+  | {
+      type: "unknown";
+      version: undefined;
+    };
+
 /**
  * AppContext is a global context that is passed to all trpc/api queries/mutations
  * "authorization" is made inside the namespace because eventually there will be
@@ -86,6 +97,7 @@ export type AppContext = {
   entri: EntriContext;
   planFeatures: PlanFeatures;
   purchases: Array<Purchase>;
+  apiClient: ApiClientContext;
   trpcCache: TrpcCache;
   postgrest: PostgrestContext;
   createTokenContext: (token: string) => Promise<AppContext>;

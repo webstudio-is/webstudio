@@ -6,8 +6,8 @@ import {
   findPageByIdOrPath,
   getAllPages,
   getStyleDeclKey,
-  serializePages,
 } from "@webstudio-is/sdk";
+import { serializePages } from "@webstudio-is/project-migrations/pages";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { getUserById, type User } from "./user.server";
 

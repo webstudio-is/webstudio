@@ -18,7 +18,10 @@ const asyncLocalStorage = new AsyncLocalStorage<
 >();
 
 // remix-auth-oauth2 logs OAuth state, PKCE verifier, and full callback URLs.
-createDebugRaw.enable(`${createDebugRaw.disable()},-OAuth2Strategy`);
+// Match both the exact namespace and any prefixed namespace enabled by DEBUG=*.
+createDebugRaw.enable(
+  `${createDebugRaw.disable()},-OAuth2Strategy,-*OAuth2Strategy*`
+);
 
 /**
  * The main issue with OAuth2Strategy is that it forces us to define authorizationEndpoint, tokenEndpoint, and redirectURI

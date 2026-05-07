@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { Styles } from "../schema/styles";
+import type { Styles } from "@webstudio-is/sdk";
 import { migrateStylesMutable } from "./styles";
 
 test("expands overflow shorthand", () => {

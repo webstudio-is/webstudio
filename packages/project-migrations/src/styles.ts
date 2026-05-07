@@ -4,8 +4,11 @@ import {
   expandShorthands,
   parseCssValue,
 } from "@webstudio-is/css-data";
-import { getStyleDeclKey } from "../schema/styles";
-import type { StyleDecl, Styles } from "../schema/styles";
+import {
+  getStyleDeclKey,
+  type StyleDecl,
+  type Styles,
+} from "@webstudio-is/sdk";
 
 const migratedShorthands = new Set([
   "overflow",

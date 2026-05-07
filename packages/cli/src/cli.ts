@@ -9,6 +9,7 @@ import { initFlow } from "./commands/init-flow";
 import makeCLI from "yargs";
 import packageJson from "../package.json" assert { type: "json" };
 import type { CommonYargsArgv } from "./commands/yargs-types";
+import { isHandledCliError } from "./errors";
 
 export const main = async () => {
   try {
@@ -61,6 +62,9 @@ export const main = async () => {
 
     await cmd.parse();
   } catch (error) {
+    if (isHandledCliError(error)) {
+      exit(1);
+    }
     console.error(error);
     exit(1);
   }

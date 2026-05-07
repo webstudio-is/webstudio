@@ -7,7 +7,7 @@ import {
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { Project } from "@webstudio-is/project";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
-import { serializePages } from "@webstudio-is/sdk";
+import { serializePages } from "@webstudio-is/project-migrations/pages";
 
 export const getBuildProdData = async (
   { projectId }: { projectId: Project["id"] },
