@@ -6,6 +6,7 @@ import {
   AuthorizationError,
   authorizeProject,
   createErrorResponse,
+  getProjectOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
 import { Title } from "../shared/project-schema";
 import { MarketplaceApprovalStatus } from "../shared/marketplace-schema";
@@ -84,34 +85,54 @@ export const projectRouter = router({
     return projectIds.map((project) => project.id);
   }),
 
-  userPublishCount: procedure.query(async ({ ctx }) => {
-    try {
-      if (
-        ctx.authorization.type !== "user" &&
-        ctx.authorization.type !== "token"
-      ) {
-        throw new Error("Not authorized");
+  userPublishCount: procedure
+    .input(z.object({ projectId: z.string() }).optional())
+    .query(async ({ input, ctx }) => {
+      try {
+        if (
+          ctx.authorization.type !== "user" &&
+          ctx.authorization.type !== "token"
+        ) {
+          throw new Error("Not authorized");
+        }
+        const userId =
+          ctx.authorization.type === "user"
+            ? ctx.authorization.userId
+            : ctx.authorization.ownerId;
+
+        let ownerId = userId;
+
+        if (input?.projectId !== undefined) {
+          const canView = await authorizeProject.hasProjectPermit(
+            { projectId: input.projectId, permit: "view" },
+            ctx
+          );
+
+          if (canView === false) {
+            throw new AuthorizationError(
+              "Not authorized to access this project"
+            );
+          }
+
+          ownerId = await getProjectOwnerId(input.projectId, ctx);
+        }
+
+        const result = await ctx.postgrest.client
+          .from("user_publish_count")
+          .select("count")
+          .eq("user_id", ownerId)
+          .maybeSingle();
+        if (result.error) {
+          throw result.error;
+        }
+        return {
+          success: true,
+          data: result.data?.count ?? 0,
+        };
+      } catch (error) {
+        return createErrorResponse(error);
       }
-      const userId =
-        ctx.authorization.type === "user"
-          ? ctx.authorization.userId
-          : ctx.authorization.ownerId;
-      const result = await ctx.postgrest.client
-        .from("user_publish_count")
-        .select("count")
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (result.error) {
-        throw result.error;
-      }
-      return {
-        success: true,
-        data: result.data?.count ?? 0,
-      };
-    } catch (error) {
-      return createErrorResponse(error);
-    }
-  }),
+    }),
 
   publishedBuilds: procedure
     .input(

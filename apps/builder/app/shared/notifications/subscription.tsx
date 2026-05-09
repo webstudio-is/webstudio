@@ -122,6 +122,8 @@ export const startSubscription = () => {
   const NEW_VERSION_TOAST_ID = "new-builder-version";
   manager.subscribe("builderVersion", (serverVersion) => {
     if (serverVersion !== publicStaticEnv.VERSION) {
+      const message =
+        "A new version of Webstudio is available. Reload to get the latest - see what's new at https://wstd.us/changelog";
       toast.info(
         <>
           A new version of Webstudio is available. Reload to get the latest —
@@ -134,7 +136,11 @@ export const startSubscription = () => {
             wstd.us/changelog
           </Link>
         </>,
-        { id: NEW_VERSION_TOAST_ID, duration: Number.POSITIVE_INFINITY }
+        {
+          id: NEW_VERSION_TOAST_ID,
+          duration: Number.POSITIVE_INFINITY,
+          copyText: message,
+        }
       );
     }
   });

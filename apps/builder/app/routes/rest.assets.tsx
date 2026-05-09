@@ -53,7 +53,6 @@ export const action = async (props: ActionFunctionArgs) => {
           projectId,
           type,
           filename,
-          maxAssetsPerProject: context.planFeatures.maxAssetsPerProject,
         },
         context
       );
