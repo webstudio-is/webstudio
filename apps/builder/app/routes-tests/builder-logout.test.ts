@@ -8,7 +8,7 @@ vi.mock("~/services/builder-auth.server", () => ({
   },
 }));
 
-import { action } from "./builder-logout";
+import { action } from "../routes/builder-logout";
 
 const projectOrigin =
   "https://p-042d35b0-718e-4c5f-a5dd-8568282366e5.apps.webstudio.is";
