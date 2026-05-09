@@ -3,6 +3,7 @@ import {
   authorizeProject,
   type AppContext,
   AuthorizationError,
+  getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createBuild } from "@webstudio-is/project-build/index.server";
 import { Title } from "../shared/project-schema";
@@ -150,7 +151,7 @@ export const create = async (
   }
 
   // Enforce the per-user project limit before creating anything
-  const ownerPlan = await context.getOwnerPlanFeatures(projectOwnerUserId);
+  const ownerPlan = await getPlanFeaturesByOwnerId(projectOwnerUserId, context);
   const projectCountResult = await context.postgrest.client
     .from("Project")
     .select("id", { count: "exact", head: true })

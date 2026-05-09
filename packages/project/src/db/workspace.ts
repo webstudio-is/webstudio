@@ -2,6 +2,7 @@ import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   type AppContext,
   AuthorizationError,
+  getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
 import { softDeleteProject } from "./project";
 import { defaultRole, type Role } from "@webstudio-is/trpc-interface/authorize";
@@ -247,7 +248,7 @@ export const findMany = async (userId: string, context: AppContext) => {
     // break the entire workspace list. Failed checks default to not-downgraded.
     const checks = await Promise.allSettled(
       ownerIds.map(async (ownerId) => {
-        const plan = await context.getOwnerPlanFeatures(ownerId);
+        const plan = await getPlanFeaturesByOwnerId(ownerId, context);
         if (plan.maxWorkspaces <= 1) {
           return { ownerId, isDowngraded: true };
         }
@@ -281,7 +282,7 @@ export const findMany = async (userId: string, context: AppContext) => {
   return [...ownedWithRelation, ...memberWithRelation];
 };
 
-const assertOwner = async (
+const assertWorkspaceOwnerByUserId = async (
   workspaceId: string,
   userId: string,
   context: AppContext
@@ -302,6 +303,25 @@ const assertOwner = async (
   }
 
   return workspace.data;
+};
+
+export const assertWorkspaceOwner = async (
+  workspaceId: string,
+  context: AppContext
+) => {
+  const userId = assertUser(context);
+  return await assertWorkspaceOwnerByUserId(workspaceId, userId, context);
+};
+
+export const assertWorkspaceOwnerPlan = async (
+  workspaceId: string,
+  context: AppContext
+) => {
+  const workspace = await assertWorkspaceOwner(workspaceId, context);
+  return {
+    workspace,
+    plan: await getPlanFeaturesByOwnerId(workspace.userId, context),
+  };
 };
 
 /**
@@ -368,7 +388,7 @@ export const addMember = async (
   context: AppContext
 ): Promise<{ notificationId: string }> => {
   const userId = assertUser(context);
-  await assertOwner(workspaceId, userId, context);
+  await assertWorkspaceOwnerByUserId(workspaceId, userId, context);
 
   // Look up the user by email
   const user = await context.postgrest.client
@@ -433,7 +453,7 @@ export const updateRole = async (
   context: AppContext
 ) => {
   const userId = assertUser(context);
-  await assertOwner(workspaceId, userId, context);
+  await assertWorkspaceOwnerByUserId(workspaceId, userId, context);
 
   if (memberUserId === userId) {
     throw new Error("Cannot change the workspace owner's role");
@@ -484,7 +504,7 @@ export const removeMember = async (
     }
   } else {
     // Only the owner can remove other members.
-    await assertOwner(workspaceId, userId, context);
+    await assertWorkspaceOwnerByUserId(workspaceId, userId, context);
   }
 
   const result = await context.postgrest.client

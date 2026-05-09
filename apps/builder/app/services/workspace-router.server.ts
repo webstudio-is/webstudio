@@ -3,6 +3,7 @@ import {
   router,
   procedure,
   createErrorResponse,
+  getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
 import { workspace as workspaceApi } from "@webstudio-is/project/index.server";
 import { roles } from "@webstudio-is/trpc-interface/authorize";
@@ -118,7 +119,12 @@ export const workspaceRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        if (ctx.planFeatures.maxWorkspaces <= 1) {
+        const { plan } = await workspaceApi.assertWorkspaceOwnerPlan(
+          input.workspaceId,
+          ctx
+        );
+
+        if (plan.maxWorkspaces <= 1) {
           throw new Error("Upgrade your plan to invite members to workspaces.");
         }
 
@@ -132,7 +138,7 @@ export const workspaceRouter = router({
           );
         }
 
-        const { maxSeatsPerWorkspace } = ctx.planFeatures;
+        const { maxSeatsPerWorkspace } = plan;
         if (maxSeatsPerWorkspace > 0) {
           const [membersResult, pendingResult] = await Promise.all([
             ctx.postgrest.client
@@ -229,7 +235,12 @@ export const workspaceRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        if (ctx.planFeatures.maxWorkspaces <= 1) {
+        const { plan } = await workspaceApi.assertWorkspaceOwnerPlan(
+          input.workspaceId,
+          ctx
+        );
+
+        if (plan.maxWorkspaces <= 1) {
           throw new Error(
             "Upgrade your plan to manage workspace member roles."
           );
@@ -258,7 +269,12 @@ export const workspaceRouter = router({
     .input(z.object({ workspaceId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       try {
-        if (ctx.planFeatures.maxWorkspaces <= 1) {
+        const { plan } = await workspaceApi.assertWorkspaceOwnerPlan(
+          input.workspaceId,
+          ctx
+        );
+
+        if (plan.maxWorkspaces <= 1) {
           throw new Error("Upgrade your plan to manage workspace seats.");
         }
         await syncSeats(input.workspaceId);
@@ -273,10 +289,10 @@ export const workspaceRouter = router({
     .query(async ({ input, ctx }) => {
       try {
         const members = await workspaceApi.listMembers(input, ctx);
-        const extraPaidSeats = await getExtraPaidSeats(
-          members.owner.userId,
-          ctx
-        );
+        const [ownerPlan, extraPaidSeats] = await Promise.all([
+          getPlanFeaturesByOwnerId(members.owner.userId, ctx),
+          getExtraPaidSeats(members.owner.userId, ctx),
+        ]);
         return {
           success: true as const,
           data: {
@@ -284,7 +300,7 @@ export const workspaceRouter = router({
             // seatsIncluded = seats covered by the Team plan.
             // extraPaidSeats = extra seats from the Seats subscription.
             // Total capacity = included + extras.
-            maxSeats: ctx.planFeatures.seatsIncluded + (extraPaidSeats ?? 0),
+            maxSeats: ownerPlan.seatsIncluded + (extraPaidSeats ?? 0),
           },
         };
       } catch (error) {
@@ -316,8 +332,9 @@ export const workspaceRouter = router({
           throw new Error("Target workspace not found");
         }
 
-        const ownerPlan = await ctx.getOwnerPlanFeatures(
-          targetWorkspace.data.userId
+        const ownerPlan = await getPlanFeaturesByOwnerId(
+          targetWorkspace.data.userId,
+          ctx
         );
 
         if (ownerPlan.maxWorkspaces <= 1) {

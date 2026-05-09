@@ -11,11 +11,23 @@ import { createUploadName } from "./upload";
 
 const server = createTestServer();
 
-const createContext = (): AppContext =>
+const createContext = ({
+  maxAssetsPerProject = 350,
+  maxWorkspaces = 20,
+  ownerPlanCalls,
+}: {
+  maxAssetsPerProject?: number;
+  maxWorkspaces?: number;
+  ownerPlanCalls?: string[];
+} = {}): AppContext =>
   ({
     ...testContext,
     authorization: { type: "user", userId: "user-1" },
-    getOwnerPlanFeatures: () => Promise.resolve({}),
+    planFeatures: { maxAssetsPerProject: 100 },
+    getOwnerPlanFeatures: (userId: string) => {
+      ownerPlanCalls?.push(userId);
+      return Promise.resolve({ maxAssetsPerProject, maxWorkspaces });
+    },
   }) as unknown as AppContext;
 
 const ownershipHandler = db.get("Project", ({ request }) => {
@@ -23,7 +35,7 @@ const ownershipHandler = db.get("Project", ({ request }) => {
   if (url.searchParams.has("userId")) {
     return json({ id: url.searchParams.get("id")?.replace("eq.", "") });
   }
-  return json(null);
+  return json({ userId: "owner-1", workspaceId: null });
 });
 
 describe("createUploadName", () => {
@@ -64,7 +76,6 @@ describe("createUploadName", () => {
         projectId: "project-1",
         type: "image/png",
         filename: "photo.png",
-        maxAssetsPerProject: 350,
       },
       createContext()
     );
@@ -91,10 +102,49 @@ describe("createUploadName", () => {
           projectId: "project-2",
           type: "image/png",
           filename: "photo.png",
-          maxAssetsPerProject: 350,
         },
         createContext()
       )
     ).rejects.toThrow("The maximum number of assets per project is 350.");
+  });
+
+  test("uses project owner's asset limit for shared workspace projects", async () => {
+    let insertedFile = false;
+    const ownerPlanCalls: string[] = [];
+
+    server.use(
+      db.get("Project", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("userId")) {
+          return json(null);
+        }
+        return json({ userId: "team-owner" });
+      }),
+      db.get("WorkspaceProjectAuthorization", () =>
+        json([{ relation: "editors" }])
+      ),
+      db.head("Asset", () => empty({ headers: { "Content-Range": "*/100" } })),
+      db.head("File", () => empty({ headers: { "Content-Range": "*/0" } })),
+      db.post("File", () => {
+        insertedFile = true;
+        return empty({ status: 201 });
+      }),
+      db.post("Asset", () => empty({ status: 201 }))
+    );
+
+    await expect(
+      createUploadName(
+        {
+          assetId: "asset-3",
+          projectId: "workspace-project",
+          type: "image/png",
+          filename: "photo.png",
+        },
+        createContext({ maxAssetsPerProject: 350, ownerPlanCalls })
+      )
+    ).resolves.toMatch(/^photo_.+\.png$/);
+
+    expect(insertedFile).toBe(true);
+    expect(ownerPlanCalls).toEqual(["team-owner"]);
   });
 });
