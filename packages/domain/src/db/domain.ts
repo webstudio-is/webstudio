@@ -3,6 +3,7 @@ import {
   type AppContext,
   AuthorizationError,
   createErrorResponse,
+  getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { unpublishBuild } from "@webstudio-is/project-build/index.server";
@@ -21,7 +22,6 @@ export const create = async (
   props: {
     projectId: Project["id"];
     domain: string;
-    maxDomainsAllowedPerUser: number;
   },
   context: AppContext
 ): Promise<Result> => {
@@ -45,9 +45,10 @@ export const create = async (
     throw new AuthorizationError("Project must have project userId defined");
   }
 
+  const ownerPlan = await getPlanFeaturesByOwnerId(ownerId, context);
   const totalDomainsCount = await countTotalDomains(ownerId, context);
 
-  if (totalDomainsCount >= props.maxDomainsAllowedPerUser) {
+  if (totalDomainsCount >= ownerPlan.maxDomainsAllowedPerUser) {
     return {
       success: false,
       error:

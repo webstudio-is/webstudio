@@ -784,8 +784,10 @@ const useCanAddDomain = () => {
     (domain) => domain.status === "ACTIVE" && domain.verified
   ).length;
   useEffect(() => {
-    load();
-  }, [load, activeDomainsCount]);
+    if (project?.id !== undefined) {
+      load({ projectId: project.id });
+    }
+  }, [load, activeDomainsCount, project?.id]);
   const canAddDomain = data
     ? data.success && data.data < maxDomainsAllowedPerUser
     : true;
@@ -795,9 +797,12 @@ const useCanAddDomain = () => {
 const useUserPublishCount = () => {
   const { load, data } = trpcClient.project.userPublishCount.useQuery();
   const { maxDailyPublishesPerUser } = useStore($permissions);
+  const project = useStore($project);
   useEffect(() => {
-    load();
-  }, [load]);
+    if (project?.id !== undefined) {
+      load({ projectId: project.id });
+    }
+  }, [load, project?.id]);
   return {
     userPublishCount: data?.success ? data.data : 0,
     maxDailyPublishesPerUser,

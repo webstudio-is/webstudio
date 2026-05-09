@@ -15,7 +15,8 @@ const createContext = (overrides: Partial<AppContext> = {}): AppContext =>
   ({
     ...testContext,
     authorization: { type: "user", userId: "owner-1" },
-    getOwnerPlanFeatures: () => Promise.resolve({}),
+    getOwnerPlanFeatures: () =>
+      Promise.resolve({ maxDomainsAllowedPerUser: 5, maxWorkspaces: 20 }),
     domain: {},
     deployment: {
       deploymentTrpc: {
@@ -101,7 +102,6 @@ describe("create — domain limit guard (msw)", () => {
       {
         projectId: "proj-1",
         domain: "example.com",
-        maxDomainsAllowedPerUser: 5,
       },
       createContext()
     );
@@ -129,12 +129,69 @@ describe("create — domain limit guard (msw)", () => {
       {
         projectId: "proj-1",
         domain: "example.com",
-        maxDomainsAllowedPerUser: 5,
       },
       createContext()
     );
 
     expect(result).toEqual({ success: true });
+  });
+
+  test("uses project owner's domain limit for workspace member admins", async () => {
+    const ownerPlanCalls: string[] = [];
+    let projectDomainInserted = false;
+
+    server.use(
+      db.get("Project", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("userId")) {
+          return json(null);
+        }
+        return json({
+          id: "proj-1",
+          userId: "owner-1",
+          workspaceId: "ws-1",
+          title: "Test",
+          domain: "test",
+          isDeleted: false,
+          previewImageAsset: null,
+          latestBuildVirtual: null,
+          domainsVirtual: [],
+          latestStaticBuild: [],
+        });
+      }),
+      db.get("WorkspaceProjectAuthorization", () =>
+        json([{ relation: "administrators" }])
+      ),
+      db.head("Domain", () => empty({ headers: { "Content-Range": "*/1" } })),
+      db.post("Domain", () => empty({ status: 204 })),
+      db.get("Domain", () => json({ id: "domain-id-1" })),
+      db.post("ProjectDomain", () => {
+        projectDomainInserted = true;
+        return empty({ status: 201 });
+      })
+    );
+
+    const result = await create(
+      {
+        projectId: "proj-1",
+        domain: "example.com",
+      },
+      createContext({
+        authorization: { type: "user", userId: "member-1" },
+        planFeatures: { maxDomainsAllowedPerUser: 0 },
+        getOwnerPlanFeatures: (userId: string) => {
+          ownerPlanCalls.push(userId);
+          return Promise.resolve({
+            maxDomainsAllowedPerUser: 5,
+            maxWorkspaces: 20,
+          });
+        },
+      } as unknown as Partial<AppContext>)
+    );
+
+    expect(result).toEqual({ success: true });
+    expect(projectDomainInserted).toBe(true);
+    expect(ownerPlanCalls).toEqual(["owner-1"]);
   });
 });
 

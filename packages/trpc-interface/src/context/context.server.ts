@@ -103,8 +103,8 @@ export type AppContext = {
   createTokenContext: (token: string) => Promise<AppContext>;
   /**
    * Resolves plan features for a given user ID.
-   * Used by workspace authorization to check whether the workspace owner's plan
-   * still supports workspace features (maxWorkspaces > 1) after a potential downgrade.
+   * Use the shared plan helper when possible so repeated lookups are cached
+   * consistently within the request.
    */
   getOwnerPlanFeatures: (userId: string) => Promise<PlanFeatures>;
 };
