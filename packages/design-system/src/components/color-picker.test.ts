@@ -5,6 +5,7 @@ import { __testing__ } from "./color-picker";
 const {
   cssStringToStyleValue,
   shouldCommitColorChange,
+  shouldHandleColorInputChange,
   styleValueToColorInputColorSpace,
   styleValueToColorInputValue,
 } = __testing__;
@@ -46,6 +47,26 @@ describe("shouldCommitColorChange", () => {
         }
       )
     ).toBe(true);
+  });
+});
+
+describe("shouldHandleColorInputChange", () => {
+  test("ignores color input changes while picker is closed", () => {
+    expect(
+      shouldHandleColorInputChange({ disabled: false, isOpen: false })
+    ).toBe(false);
+  });
+
+  test("handles color input changes while picker is open", () => {
+    expect(
+      shouldHandleColorInputChange({ disabled: false, isOpen: true })
+    ).toBe(true);
+  });
+
+  test("ignores color input changes while disabled", () => {
+    expect(shouldHandleColorInputChange({ disabled: true, isOpen: true })).toBe(
+      false
+    );
   });
 });
 
