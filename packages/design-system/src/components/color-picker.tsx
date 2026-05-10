@@ -187,6 +187,16 @@ const shouldCommitColorChange = (
   return toValue(previousValue) !== toValue(nextValue);
 };
 
+const shouldHandleColorInputChange = ({
+  disabled,
+  isOpen,
+}: {
+  disabled: boolean;
+  isOpen: boolean;
+}) => {
+  return disabled === false && isOpen;
+};
+
 // Renders <color-input> with its built-in trigger chip, hiding the text input.
 // The chip opens the panel natively via the Popover API.
 // Our own ColorThumb is rendered on top (pointer-events: none) so that clicks
@@ -196,6 +206,7 @@ export const __testing__ = {
   styleValueToColorInputColorSpace,
   styleValueToColorInputValue,
   shouldCommitColorChange,
+  shouldHandleColorInputChange,
 };
 
 export const ColorPicker = ({
@@ -314,7 +325,7 @@ export const ColorPicker = ({
     colorInputElement.addEventListener(
       "change",
       (event: Event) => {
-        if (disabled) {
+        if (shouldHandleColorInputChange({ disabled, isOpen }) === false) {
           return;
         }
         const { value, colorspace } = (event as CustomEvent<ChangeDetail>)
@@ -339,6 +350,8 @@ export const ColorPicker = ({
         // before any change event fires (the component's own JS sets --contrast
         // based on raw color only, ignoring alpha).
         isOpen = true;
+        lastStyleValue = callbacksRef.current.value;
+        lastCommittedStyleValue = callbacksRef.current.value;
         callbacksRef.current.disableCanvasPointerEvents();
         document.body.style.userSelect = "none";
         callbacksRef.current.onOpenChange?.(true);
