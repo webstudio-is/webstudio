@@ -73,6 +73,36 @@ const cssStringToStyleValue = (
   };
 };
 
+const styleValueToColorInputColorSpace = (
+  value: StyleValue
+): ColorSpace | undefined => {
+  if (value.type === "rgb") {
+    return "srgb";
+  }
+  if (value.type === "color") {
+    switch (value.colorSpace) {
+      case "p3":
+        return "display-p3";
+      case "a98rgb":
+        return "a98-rgb";
+      default:
+        return value.colorSpace;
+    }
+  }
+  if (parseColor(toValue(value)) !== undefined) {
+    return "srgb";
+  }
+};
+
+const styleValueToColorInputValue = (value: StyleValue) => {
+  const valueString = toValue(value);
+  if (value.type === "color" || value.type === "rgb") {
+    return valueString;
+  }
+  const parsedColor = parseColor(valueString);
+  return parsedColor === undefined ? valueString : serializeColor(parsedColor);
+};
+
 // ─── ColorThumb ──────────────────────────────────────────────────────────────
 
 const borderColorSwatch = parseColor(rawTheme.colors.borderColorSwatch);
@@ -163,6 +193,8 @@ const shouldCommitColorChange = (
 // pass through to the real chip underneath.
 export const __testing__ = {
   cssStringToStyleValue,
+  styleValueToColorInputColorSpace,
+  styleValueToColorInputValue,
   shouldCommitColorChange,
 };
 
@@ -200,6 +232,8 @@ export const ColorPicker = ({
   };
 
   const colorString = toValue(value);
+  const colorSpace = styleValueToColorInputColorSpace(value);
+  const colorInputValue = styleValueToColorInputValue(value);
 
   const overrideContrast = useCallback(() => {
     const colorInputElement = colorInputRef.current;
@@ -239,11 +273,16 @@ export const ColorPicker = ({
   // Sync external value changes into the web component.
   useEffect(() => {
     const colorInputElement = colorInputRef.current;
-    if (colorInputElement && colorInputElement.value !== colorString) {
-      colorInputElement.value = colorString;
+    if (colorInputElement && colorSpace !== undefined) {
+      colorInputElement.colorspace = colorSpace;
+    } else {
+      colorInputElement?.removeAttribute("colorspace");
+    }
+    if (colorInputElement && colorInputElement.value !== colorInputValue) {
+      colorInputElement.value = colorInputValue;
     }
     overrideContrast();
-  }, [colorString, overrideContrast]);
+  }, [colorSpace, colorInputValue, overrideContrast]);
 
   // Wire up change / open / close events.
   useEffect(() => {
@@ -380,7 +419,8 @@ export const ColorPicker = ({
         {disabled === false && (
           <color-input
             ref={colorInputRef}
-            value={colorString}
+            value={colorInputValue}
+            colorspace={colorSpace}
             theme="light"
             class={`${textClass} ${scopeClass}`}
           />
