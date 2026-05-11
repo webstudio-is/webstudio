@@ -32,7 +32,11 @@ const teamPlan: PlanFeatures = {
 };
 
 const createContext = (
-  overrides?: Partial<{ planFeatures: PlanFeatures; userId: string }>
+  overrides?: Partial<{
+    planFeatures: PlanFeatures;
+    ownerPlanFeatures: PlanFeatures;
+    userId: string;
+  }>
 ): AppContext =>
   ({
     ...testContext,
@@ -43,7 +47,8 @@ const createContext = (
     planFeatures: overrides?.planFeatures ?? teamPlan,
     purchases: [],
     trpcCache: { setMaxAge: () => {} },
-    getOwnerPlanFeatures: async () => overrides?.planFeatures ?? teamPlan,
+    getOwnerPlanFeatures: async () =>
+      overrides?.ownerPlanFeatures ?? overrides?.planFeatures ?? teamPlan,
   }) as unknown as AppContext;
 
 // ---------------------------------------------------------------------------
@@ -134,7 +139,11 @@ const setupAddMemberMocks = (opts?: {
 
 describe("addMember", () => {
   test("rejects when maxWorkspaces <= 1 (free/pro plan)", async () => {
-    // No DB mocks needed — the check happens before any queries.
+    server.use(
+      db.get("Workspace", () =>
+        json({ id: "ws-1", userId: "owner-1", isDeleted: false })
+      )
+    );
     const ctx = createContext({ planFeatures: defaultPlanFeatures });
     const caller = createCaller(ctx);
 
@@ -148,6 +157,35 @@ describe("addMember", () => {
     if (!result.success) {
       expect(result.error).toContain("Upgrade your plan");
     }
+  });
+
+  test("rejects non-owners before billing sync", async () => {
+    let paymentWorkerCalled = false;
+
+    server.use(
+      db.get("Workspace", () =>
+        json({ id: "ws-1", userId: "owner-1", isDeleted: false })
+      ),
+      http.post(`${env.PAYMENT_WORKER_URL}/seats/sync`, () => {
+        paymentWorkerCalled = true;
+        return HttpResponse.json({ type: "success", seats: 1 });
+      })
+    );
+
+    const ctx = createContext({ userId: "member-1" });
+    const caller = createCaller(ctx);
+
+    const result = await caller.addMember({
+      workspaceId: "ws-1",
+      email: "invitee@test.com",
+      relation: "editors",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain("Only the workspace owner");
+    }
+    expect(paymentWorkerCalled).toBe(false);
   });
 
   test("rejects when workspace seat limit reached", async () => {
@@ -320,6 +358,11 @@ describe("removeMember", () => {
 
 describe("syncSeats", () => {
   test("rejects when maxWorkspaces <= 1", async () => {
+    server.use(
+      db.get("Workspace", () =>
+        json({ id: "ws-1", userId: "owner-1", isDeleted: false })
+      )
+    );
     const ctx = createContext({ planFeatures: defaultPlanFeatures });
     const caller = createCaller(ctx);
 
@@ -335,6 +378,9 @@ describe("syncSeats", () => {
     let capturedBody: { workspaceId: string; delta?: number } | undefined;
 
     server.use(
+      db.get("Workspace", () =>
+        json({ id: "ws-1", userId: "owner-1", isDeleted: false })
+      ),
       http.post(`${env.PAYMENT_WORKER_URL}/seats/sync`, async ({ request }) => {
         capturedBody = (await request.json()) as typeof capturedBody;
         return HttpResponse.json({ type: "success", seats: 3 });
@@ -376,7 +422,13 @@ describe("listMembers", () => {
         json({ id: "ws-1", userId: "owner-1", isDeleted: false })
       ),
       // listMembers: WorkspaceMember SELECT (members list + access check)
-      db.get("WorkspaceMember", () => json(members)),
+      db.get("WorkspaceMember", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.has("userId")) {
+          return json({ userId: url.searchParams.get("userId") });
+        }
+        return json(members);
+      }),
       // listMembers: Notification GET (pending invites for this workspace)
       db.get("Notification", () => json([])),
       // listMembers: User batch lookup
@@ -446,6 +498,23 @@ describe("listMembers", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.maxSeats).toBe(4); // 4 + 0
+    }
+  });
+
+  test("maxSeats uses workspace owner's seats for member callers", async () => {
+    setupListMembersMocks({ transactionLog: null });
+
+    const ctx = createContext({
+      userId: "m-1",
+      planFeatures: defaultPlanFeatures,
+      ownerPlanFeatures: teamPlan,
+    });
+    const caller = createCaller(ctx);
+    const result = await caller.listMembers({ workspaceId: "ws-1" });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.maxSeats).toBe(4);
     }
   });
 

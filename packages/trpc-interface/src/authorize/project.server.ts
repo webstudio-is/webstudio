@@ -1,6 +1,7 @@
 import type { AppContext } from "../context/context.server";
 import type { Role } from "./role";
 import memoize from "memoize";
+import { getProjectPlanFeatures } from "../context/project-plan.server";
 
 type Relation = Role;
 
@@ -228,34 +229,6 @@ export const checkProjectPermit = async ({
   return allowed;
 };
 
-/**
- * Look up the workspace owner's userId for a given project.
- * Returns undefined when the project has no workspace.
- */
-const getWorkspaceOwnerIdForProject = async (
-  projectId: string,
-  context: Pick<AppContext, "postgrest">
-): Promise<string | undefined> => {
-  const project = await context.postgrest.client
-    .from("Project")
-    .select("workspaceId")
-    .eq("id", projectId)
-    .maybeSingle();
-
-  if (project.error || project.data?.workspaceId == null) {
-    return;
-  }
-
-  const workspace = await context.postgrest.client
-    .from("Workspace")
-    .select("userId")
-    .eq("id", project.data.workspaceId)
-    .eq("isDeleted", false)
-    .maybeSingle();
-
-  return workspace.data?.userId ?? undefined;
-};
-
 export const hasProjectPermit = async (
   props: {
     projectId: string;
@@ -287,11 +260,11 @@ export const hasProjectPermit = async (
   }
 
   // Workspace downgrade check: when a workspace member accesses a project,
-  // verify the workspace owner's plan still supports workspace features.
-  // Direct project owners and workspace owners are not affected.
+  // verify the project owner's plan still supports workspace features.
+  // Direct project owners are not affected.
   if (authorization.type === "user") {
-    // "own" permit is only granted to direct owners and workspace owners —
-    // both are unaffected by downgrade. This call is memoized.
+    // "own" permit is only granted to direct project owners.
+    // They are unaffected by downgrade. This call is memoized.
     const isOwner = await checkProjectPermit({
       projectId: props.projectId,
       permit: "own",
@@ -300,17 +273,10 @@ export const hasProjectPermit = async (
     });
 
     if (isOwner === false) {
-      // User is a workspace member — verify the owner's plan
-      const workspaceOwnerId = await getWorkspaceOwnerIdForProject(
-        props.projectId,
-        context
-      );
-
-      if (workspaceOwnerId !== undefined) {
-        const ownerPlan = await context.getOwnerPlanFeatures(workspaceOwnerId);
-        if (ownerPlan.maxWorkspaces <= 1) {
-          return false;
-        }
+      // User is a workspace member — verify the project owner's plan.
+      const ownerPlan = await getProjectPlanFeatures(props.projectId, context);
+      if (ownerPlan.maxWorkspaces <= 1) {
+        return false;
       }
     }
   }
@@ -351,5 +317,4 @@ export const getProjectPermit = async (
 
 export const __testing__ = {
   isRolePermitted,
-  getWorkspaceOwnerIdForProject,
 };

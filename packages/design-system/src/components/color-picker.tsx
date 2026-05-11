@@ -73,6 +73,36 @@ const cssStringToStyleValue = (
   };
 };
 
+const styleValueToColorInputColorSpace = (
+  value: StyleValue
+): ColorSpace | undefined => {
+  if (value.type === "rgb") {
+    return "srgb";
+  }
+  if (value.type === "color") {
+    switch (value.colorSpace) {
+      case "p3":
+        return "display-p3";
+      case "a98rgb":
+        return "a98-rgb";
+      default:
+        return value.colorSpace;
+    }
+  }
+  if (parseColor(toValue(value)) !== undefined) {
+    return "srgb";
+  }
+};
+
+const styleValueToColorInputValue = (value: StyleValue) => {
+  const valueString = toValue(value);
+  if (value.type === "color" || value.type === "rgb") {
+    return valueString;
+  }
+  const parsedColor = parseColor(valueString);
+  return parsedColor === undefined ? valueString : serializeColor(parsedColor);
+};
+
 // ─── ColorThumb ──────────────────────────────────────────────────────────────
 
 const borderColorSwatch = parseColor(rawTheme.colors.borderColorSwatch);
@@ -157,13 +187,26 @@ const shouldCommitColorChange = (
   return toValue(previousValue) !== toValue(nextValue);
 };
 
+const shouldHandleColorInputChange = ({
+  disabled,
+  isOpen,
+}: {
+  disabled: boolean;
+  isOpen: boolean;
+}) => {
+  return disabled === false && isOpen;
+};
+
 // Renders <color-input> with its built-in trigger chip, hiding the text input.
 // The chip opens the panel natively via the Popover API.
 // Our own ColorThumb is rendered on top (pointer-events: none) so that clicks
 // pass through to the real chip underneath.
 export const __testing__ = {
   cssStringToStyleValue,
+  styleValueToColorInputColorSpace,
+  styleValueToColorInputValue,
   shouldCommitColorChange,
+  shouldHandleColorInputChange,
 };
 
 export const ColorPicker = ({
@@ -200,6 +243,8 @@ export const ColorPicker = ({
   };
 
   const colorString = toValue(value);
+  const colorSpace = styleValueToColorInputColorSpace(value);
+  const colorInputValue = styleValueToColorInputValue(value);
 
   const overrideContrast = useCallback(() => {
     const colorInputElement = colorInputRef.current;
@@ -239,11 +284,16 @@ export const ColorPicker = ({
   // Sync external value changes into the web component.
   useEffect(() => {
     const colorInputElement = colorInputRef.current;
-    if (colorInputElement && colorInputElement.value !== colorString) {
-      colorInputElement.value = colorString;
+    if (colorInputElement && colorSpace !== undefined) {
+      colorInputElement.colorspace = colorSpace;
+    } else {
+      colorInputElement?.removeAttribute("colorspace");
+    }
+    if (colorInputElement && colorInputElement.value !== colorInputValue) {
+      colorInputElement.value = colorInputValue;
     }
     overrideContrast();
-  }, [colorString, overrideContrast]);
+  }, [colorSpace, colorInputValue, overrideContrast]);
 
   // Wire up change / open / close events.
   useEffect(() => {
@@ -275,7 +325,7 @@ export const ColorPicker = ({
     colorInputElement.addEventListener(
       "change",
       (event: Event) => {
-        if (disabled) {
+        if (shouldHandleColorInputChange({ disabled, isOpen }) === false) {
           return;
         }
         const { value, colorspace } = (event as CustomEvent<ChangeDetail>)
@@ -300,6 +350,8 @@ export const ColorPicker = ({
         // before any change event fires (the component's own JS sets --contrast
         // based on raw color only, ignoring alpha).
         isOpen = true;
+        lastStyleValue = callbacksRef.current.value;
+        lastCommittedStyleValue = callbacksRef.current.value;
         callbacksRef.current.disableCanvasPointerEvents();
         document.body.style.userSelect = "none";
         callbacksRef.current.onOpenChange?.(true);
@@ -380,7 +432,8 @@ export const ColorPicker = ({
         {disabled === false && (
           <color-input
             ref={colorInputRef}
-            value={colorString}
+            value={colorInputValue}
+            colorspace={colorSpace}
             theme="light"
             class={`${textClass} ${scopeClass}`}
           />

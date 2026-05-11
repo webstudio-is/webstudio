@@ -1,6 +1,7 @@
 import {
   type AppContext,
   AuthorizationError,
+  getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
 import {
   type NotificationType,
@@ -590,7 +591,7 @@ const performAcceptSideEffect = async ({
     }
 
     // Check receiver's plan limit before accepting the transfer
-    const receiverPlan = await context.getOwnerPlanFeatures(userId);
+    const receiverPlan = await getPlanFeaturesByOwnerId(userId, context);
     const projectCount = await context.postgrest.client
       .from("Project")
       .select("id", { count: "exact", head: true })
