@@ -1,5 +1,6 @@
 import {
   type CssNode,
+  definitionSyntax,
   type FunctionNode,
   generate,
   lexer,
@@ -80,11 +81,40 @@ const cssNumericFunctionNames = new Set([
 
 const cssMathConstants = new Set(["e", "pi", "infinity", "-infinity", "nan"]);
 
-const cssNumericSyntaxRegex =
-  /<(?:length|length-percentage|percentage|number|integer|angle|time|frequency|resolution|flex|alpha-value)>/;
+const cssNumericTypeNames = new Set([
+  "length",
+  "length-percentage",
+  "percentage",
+  "number",
+  "integer",
+  "angle",
+  "time",
+  "frequency",
+  "resolution",
+  "flex",
+  "alpha-value",
+]);
 
 const canFallbackToCssMath = (ast: CssNode, syntax: string | undefined) => {
-  if (syntax === undefined || cssNumericSyntaxRegex.test(syntax) === false) {
+  if (syntax === undefined) {
+    return false;
+  }
+
+  let hasCssNumericType = false;
+  try {
+    definitionSyntax.walk(definitionSyntax.parse(syntax), (node) => {
+      if (
+        node.type === "Type" &&
+        "name" in node &&
+        cssNumericTypeNames.has(node.name)
+      ) {
+        hasCssNumericType = true;
+      }
+    });
+  } catch {
+    return false;
+  }
+  if (hasCssNumericType === false) {
     return false;
   }
 
