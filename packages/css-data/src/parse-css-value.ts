@@ -54,6 +54,62 @@ const splitRepeated = (nodes: CssNode[]) => {
   return lists;
 };
 
+const cssNumericFunctionNames = new Set([
+  "calc",
+  "min",
+  "max",
+  "clamp",
+  "round",
+  "mod",
+  "rem",
+  "sin",
+  "cos",
+  "tan",
+  "asin",
+  "acos",
+  "atan",
+  "atan2",
+  "pow",
+  "sqrt",
+  "hypot",
+  "log",
+  "exp",
+  "abs",
+  "sign",
+]);
+
+const cssMathConstants = new Set(["e", "pi", "infinity", "-infinity", "nan"]);
+
+const cssNumericSyntaxRegex =
+  /<(?:length|length-percentage|percentage|number|integer|angle|time|frequency|resolution|flex|alpha-value)>/;
+
+const canFallbackToCssMath = (ast: CssNode, syntax: string | undefined) => {
+  if (syntax === undefined || cssNumericSyntaxRegex.test(syntax) === false) {
+    return false;
+  }
+
+  let hasCssNumericFunction = false;
+  let hasUnknownIdentifier = false;
+  walk(ast, (node) => {
+    if (node.type === "Function" && cssNumericFunctionNames.has(node.name)) {
+      hasCssNumericFunction = true;
+    }
+    if (
+      node.type === "Identifier" &&
+      cssMathConstants.has(node.name.toLowerCase()) === false
+    ) {
+      hasUnknownIdentifier = true;
+    }
+  });
+  return hasCssNumericFunction && hasUnknownIdentifier === false;
+};
+
+const getSyntaxMatchErrorSyntax = (error: Error | null | undefined) => {
+  if (error != null && "syntax" in error && typeof error.syntax === "string") {
+    return error.syntax;
+  }
+};
+
 // Because csstree parser has bugs we use CSSStyleValue to validate css properties if available
 // and fall back to csstree.
 export const isValidDeclaration = (
@@ -109,6 +165,10 @@ export const isValidDeclaration = (
   // @todo remove after csstree fixes
   // - https://github.com/csstree/csstree/issues/246
   // - https://github.com/csstree/csstree/issues/164
+  if (typeof CSS !== "undefined" && CSS.supports(property, value)) {
+    return true;
+  }
+
   if (typeof CSSStyleValue !== "undefined") {
     try {
       CSSStyleValue.parse(property, value);
@@ -140,6 +200,17 @@ export const isValidDeclaration = (
 
   // allow to parse unknown properties as unparsed
   if (matchResult.error?.message.includes("Unknown property")) {
+    return true;
+  }
+
+  // css-tree does not fully validate modern CSS math with nested calc()
+  // operators, for example `font-size: clamp(... calc(... / ...) ...)`.
+  // Browser-valid values should be preserved as unparsed instead of stored as
+  // invalid values, which are intended for transient editor state.
+  if (
+    matchResult.matched == null &&
+    canFallbackToCssMath(ast, getSyntaxMatchErrorSyntax(matchResult.error))
+  ) {
     return true;
   }
 
