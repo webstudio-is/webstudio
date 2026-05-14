@@ -73,10 +73,43 @@ describe("Parse CSS value", () => {
       });
     });
 
+    test("Nested CSS math values", () => {
+      const value =
+        "clamp(1rem, calc(1rem + (2rem - 1rem) * ((100vw - 20rem) / (80rem - 20rem))), 2rem)";
+
+      expect(parseCssValue("font-size", value)).toEqual({
+        type: "unparsed",
+        value,
+      });
+    });
+
+    test("CSS numeric functions", () => {
+      expect(parseCssValue("width", "round(10px, 1px)")).toEqual({
+        type: "unparsed",
+        value: "round(10px, 1px)",
+      });
+      expect(parseCssValue("width", "abs(-10px)")).toEqual({
+        type: "unparsed",
+        value: "abs(-10px)",
+      });
+      expect(parseCssValue("width", "calc(pi * 1px)")).toEqual({
+        type: "unparsed",
+        value: "calc(pi * 1px)",
+      });
+    });
+
     test("Invalid function values", () => {
       expect(parseCssValue("width", "blur(4)")).toEqual({
         type: "invalid",
         value: "blur(4)",
+      });
+      expect(parseCssValue("font-size", "clamp(foo)")).toEqual({
+        type: "invalid",
+        value: "clamp(foo)",
+      });
+      expect(parseCssValue("color", "abs(-10px)")).toEqual({
+        type: "invalid",
+        value: "abs(-10px)",
       });
     });
   });
