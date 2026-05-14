@@ -26,7 +26,10 @@ import {
 } from "@webstudio-is/css-data";
 import { richTextContentTags } from "./content-model";
 import { setIsSubsetOf } from "./shim";
-import { isAttributeNameSafe } from "@webstudio-is/react-sdk";
+import {
+  isAttributeNameSafe,
+  textContentAttribute,
+} from "@webstudio-is/react-sdk";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import * as csstree from "css-tree";
 import { titleCase } from "title-case";
@@ -34,6 +37,7 @@ import { titleCase } from "title-case";
 type ElementNode = DefaultTreeAdapterMap["element"];
 
 const spaceRegex = /^\s*$/;
+const wsAttributePrefix = "data-ws-";
 
 const getAttributeType = (
   attribute: (typeof ariaAttributes)[number]
@@ -742,7 +746,15 @@ export const generateFragmentFromHtml = (
       delete instance.tag;
     }
     instances.set(instance.id, instance);
+    const wsTextContentAttr = node.attrs.find(
+      (attr) => attr.name === textContentAttribute
+    );
     for (const attr of node.attrs) {
+      // Webstudio runtime metadata can appear when users copy rendered canvas
+      // DOM. Do not import it as user-authored attributes.
+      if (attr.name.startsWith(wsAttributePrefix)) {
+        continue;
+      }
       // skip attributes which cannot be rendered in jsx
       if (!isAttributeNameSafe(attr.name)) {
         continue;
@@ -886,6 +898,21 @@ export const generateFragmentFromHtml = (
           }
         }
       }
+    }
+    if (
+      wsTextContentAttr !== undefined &&
+      node.tagName !== "textarea" &&
+      node.childNodes.every((childNode) =>
+        defaultTreeAdapter.isTextNode(childNode)
+      )
+    ) {
+      if (wsTextContentAttr.value !== "") {
+        instance.children.push({
+          type: "text",
+          value: wsTextContentAttr.value,
+        });
+      }
+      return { type: "id" as const, value: instance.id };
     }
     let spaceAttachedToPrev = false;
     for (let index = 0; index < node.childNodes.length; index += 1) {
