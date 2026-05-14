@@ -280,6 +280,27 @@ test("generate style attribute as local styles", () => {
   );
 });
 
+test("generate nested css math functions as unparsed local styles", () => {
+  const value =
+    "clamp(1rem, calc(1rem + (2rem - 1rem) * ((100vw - 20rem) / (80rem - 20rem))), 2rem)";
+  const fragment = generateFragmentFromHtml(`
+    <div style="font-size:${value}">One clamp div</div>
+  `);
+
+  expect(fragment.styles).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        property: "fontSize",
+        value: {
+          type: "unparsed",
+          value:
+            "clamp(1rem,calc(1rem + (2rem - 1rem)*((100vw - 20rem)/(80rem - 20rem))),2rem)",
+        },
+      }),
+    ])
+  );
+});
+
 test("script as html embed", () => {
   expect(generateFragmentFromHtml(`<script>a;</script>`)).toEqual(
     renderTemplate(
