@@ -7,6 +7,7 @@ import {
   parseMediaQuery,
   type ParsedStyleDecl,
 } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
   type Breakpoint,
@@ -474,7 +475,7 @@ const isTailwindDefaultBorderColorStyle = (styleDecl: StyleDecl): boolean => {
   );
 };
 
-const stylePropertyGroups: Record<string, Set<string>> = {
+const stylePropertyGroups: Record<string, Set<StyleProperty>> = {
   margin: new Set([
     "marginTop",
     "marginRight",
@@ -497,7 +498,7 @@ const stylePropertyGroups: Record<string, Set<string>> = {
   ]),
 };
 
-const getStylePropertyGroup = (property: string) => {
+const getStylePropertyGroup = (property: StyleProperty) => {
   for (const [groupName, properties] of Object.entries(stylePropertyGroups)) {
     if (properties.has(property)) {
       return groupName;
