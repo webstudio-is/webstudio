@@ -12,6 +12,7 @@ import {
 import { isUserAuthorizedForProject } from "~/services/builder-access.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { isDashboard } from "~/shared/router-utils";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 
 /**
  * OAuth 2.0 Token Request
@@ -57,7 +58,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         error_description: "missing client credentials",
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 401 }
+      { status: 401, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -82,7 +83,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         error_description: "invalid client credentials",
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 401 }
+      { status: 401, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -99,7 +100,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         error_description: fromError(parsedBody.error).toString(),
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 400 }
+      { status: 400, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -116,7 +117,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         error_description: "invalid code",
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 400 }
+      { status: 400, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -133,7 +134,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         error_description: "invalid code_verifier",
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 400 }
+      { status: 400, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -149,7 +150,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         error_description: "user does not have access to the project",
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 400 }
+      { status: 400, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -170,6 +171,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       token_type: "Bearer",
       expires_in: Date.now() + maxAge,
     },
-    { status: 200 }
+    { status: 200, headers: privateNoStoreResponseHeaders }
   );
 };

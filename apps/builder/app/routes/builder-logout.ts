@@ -4,6 +4,10 @@ import { builderAuthenticator } from "~/services/builder-auth.server";
 import { getAuthorizationServerOrigin } from "~/shared/router-utils/origins";
 import { isBuilder, loginPath } from "~/shared/router-utils";
 import { isRedirectResponse } from "~/services/cookie.server";
+import {
+  appendVaryHeader,
+  createPrivateNoStoreHeaders,
+} from "~/services/cache-control.server";
 
 const debug = createDebug(import.meta.url);
 
@@ -29,11 +33,11 @@ const withCors = (request: Request, response: Response) => {
     return response;
   }
 
-  const headers = new Headers(response.headers);
+  const headers = createPrivateNoStoreHeaders(response.headers);
   for (const [name, value] of Object.entries(corsHeaders)) {
     headers.set(name, value);
   }
-  headers.append("Vary", "Origin");
+  appendVaryHeader(headers, "Origin");
 
   return new Response(response.body, {
     status: response.status,
@@ -62,12 +66,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
     }
 
+    const headers = createPrivateNoStoreHeaders(corsHeaders);
+    appendVaryHeader(headers, "Origin");
+
     return new Response(null, {
       status: 204,
-      headers: {
-        ...corsHeaders,
-        Vary: "Origin",
-      },
+      headers,
     });
   }
 

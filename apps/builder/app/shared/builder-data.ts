@@ -2,7 +2,8 @@ import { getStyleDeclKey, type WebstudioData } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
-import type { loader } from "~/routes/rest.data.$projectId";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "~/services/trcp-router.server";
 import { $project } from "~/shared/sync/data-stores";
 import {
   $assets,
@@ -17,18 +18,17 @@ import {
   $styleSources,
   $styles,
 } from "~/shared/sync/data-stores";
-import { fetch } from "~/shared/fetch.client";
+import { nativeClient } from "~/shared/trpc/trpc-client";
 
 export type BuilderData = WebstudioData & {
   marketplaceProduct: undefined | MarketplaceProduct;
   project: Project;
 };
 
+type LoadDataOutput = inferRouterOutputs<AppRouter>["build"]["loadData"];
+
 export type LoadedBuilderData = BuilderData &
-  Pick<
-    Awaited<ReturnType<typeof loader>>,
-    "id" | "version" | "publisherHost" | "projectId"
-  >;
+  Pick<LoadDataOutput, "id" | "version" | "publisherHost" | "projectId">;
 
 export const getBuilderData = (): BuilderData => {
   const pages = $pages.get();
@@ -65,14 +65,11 @@ export const loadBuilderData = async ({
   projectId: string;
   signal: AbortSignal;
 }): Promise<LoadedBuilderData> => {
-  const currentUrl = new URL(location.href);
-  const url = new URL(`/rest/data/${projectId}`, currentUrl.origin);
-  const headers = new Headers();
-
-  const response = await fetch(url, { headers, signal });
-
-  if (response.ok) {
-    const data = (await response.json()) as Awaited<ReturnType<typeof loader>>;
+  try {
+    const data = await nativeClient.build.loadData.query(
+      { projectId },
+      { signal }
+    );
     return {
       id: data.id,
       version: data.version,
@@ -93,16 +90,17 @@ export const loadBuilderData = async ({
       styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
       marketplaceProduct: data.marketplaceProduct,
     };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : JSON.stringify(error);
+
+    if (signal.aborted === false) {
+      // No toasts available in this context
+      alert(`Unable to load builder data. ${message}`);
+    }
+
+    throw new Error(`Unable to load builder data. ${message}`, {
+      cause: error,
+    });
   }
-
-  const text = await response.text();
-
-  // No toasts available in this context
-  alert(
-    `Unable to load builder data. Response status: ${response.status}. Response text: ${text}`
-  );
-
-  throw Error(
-    `Unable to load builder data. Response status: ${response.status}. Response text: ${text}`
-  );
 };

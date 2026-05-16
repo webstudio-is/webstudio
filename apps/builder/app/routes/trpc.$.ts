@@ -4,6 +4,7 @@ import { createContext, isServiceAuthorization } from "~/shared/context.server";
 import { appRouter } from "~/services/trcp-router.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
+import { getTrpcResponseMeta } from "~/services/trpc-response-meta.server";
 
 const isServiceRequest = (request: Request) => {
   return isServiceAuthorization(request.headers.get("Authorization"));
@@ -28,50 +29,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     endpoint: "/trpc",
     batching: { enabled: true },
     responseMeta(opts) {
-      // Disable trpc cache
-      if (process.env.NODE_ENV !== "production") {
-        return {};
-      }
-
-      // tRPC batches multiple requests into a single network call.
-      // The `paths` array lists all request paths included in the batch.
-      const { paths, errors, type, ctx } = opts;
-
-      if (paths === undefined) {
-        return {};
-      }
-
-      if (type !== "query") {
-        // Only queries can be cached
-        return {};
-      }
-
-      if (errors.length > 0) {
-        // Errors should not be cached
-        return {};
-      }
-
-      // To enable efficient batching of tRPC requests,
-      // adopt the least max age among all paths for caching, or disable caching entirely if no max-age is set.
-      let minMaxAge = Number.MAX_SAFE_INTEGER;
-      for (const path of paths) {
-        const maxAge = ctx?.trpcCache.getMaxAge(path);
-
-        if (maxAge === undefined) {
-          return {};
-        }
-
-        minMaxAge = Math.min(minMaxAge, maxAge);
-      }
-
-      // Cap the max age at 1 hour
-      minMaxAge = Math.min(minMaxAge, 60 * 60);
-
-      return {
-        headers: {
-          "Cache-Control": `public, max-age=${minMaxAge}, s-maxage=${minMaxAge}`,
-        },
-      };
+      return getTrpcResponseMeta({
+        ...opts,
+        isProduction: process.env.NODE_ENV === "production",
+      });
     },
     async createContext(opts) {
       return await createContext(opts.req);

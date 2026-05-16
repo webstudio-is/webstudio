@@ -42,6 +42,7 @@ export const fetch: typeof globalThis.fetch = async (
 
   const modifiedInit: RequestInit = {
     ...requestInit,
+    cache: requestInit?.cache ?? "no-store",
     headers,
   };
 

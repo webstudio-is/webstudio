@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import {
   Box,
   Flex,
@@ -162,17 +162,21 @@ const $data = atom<DashboardData | undefined>();
 export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   const revalidator = useRevalidator();
   const revalidateVersion = useStore($shouldRevalidateProjects);
-  useEffect(() => {
+  // Apply user-scoped loader data before paint so stale account data is never visible.
+  useLayoutEffect(() => {
     $data.set(data);
     setSharedStores(data);
     $workspaces.set(data.workspaces);
     $user.set(data.user);
-  }, [data]);
-  // Seed notifications from loader data so the indicator renders instantly.
-  // Runs on every revalidation to keep loader → store in sync.
-  useEffect(() => {
     seedNotifications(data.notifications);
-  }, [data.notifications]);
+
+    return () => {
+      $data.set(undefined);
+      $workspaces.set([]);
+      $user.set(undefined);
+      seedNotifications([]);
+    };
+  }, [data]);
   // Revalidate when the polled project count changes (e.g. a transfer was accepted).
   useEffect(() => {
     if (revalidateVersion > 0) {
