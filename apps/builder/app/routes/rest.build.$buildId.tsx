@@ -20,6 +20,7 @@ export const loader = async ({
   | (Data & { user: { email: User["email"] } | undefined } & {
       projectDomain: string;
       projectTitle: string;
+      customDomains: string[];
     })
   | TypedResponse<{ error: string; message: string }>
 > => {

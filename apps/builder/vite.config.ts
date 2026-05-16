@@ -1,5 +1,5 @@
 import path, { resolve } from "node:path";
-import { defineConfig, loadEnv, type CorsOptions } from "vite";
+import { defineConfig, type CorsOptions } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
 import type { IncomingMessage } from "node:http";
@@ -31,12 +31,6 @@ export default defineConfig(({ mode }) => {
     // This is particularly important for secure communication with the oauth.ws.token endpoint.
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
   }
-
-  const env = loadEnv(mode, __dirname, "");
-  const multiplayerRelayProxyTarget =
-    process.env.COLLAB_RELAY_PROXY_TARGET ??
-    env.COLLAB_RELAY_PROXY_TARGET ??
-    "http://127.0.0.1:1999";
 
   return {
     plugins: [

@@ -20,6 +20,9 @@ const createContext = (overrides: Partial<AppContext> = {}): AppContext =>
     domain: {},
     deployment: {
       deploymentTrpc: {
+        capabilities: {
+          query: () => Promise.resolve({ cloudflare: false }),
+        },
         unpublish: {
           mutate: () => Promise.resolve({ success: true }),
         },
@@ -29,6 +32,7 @@ const createContext = (overrides: Partial<AppContext> = {}): AppContext =>
         GITHUB_REF_NAME: "main",
         GITHUB_SHA: undefined,
         PUBLISHER_HOST: "wstd.io",
+        TRPC_SERVER_URL: undefined,
       },
     },
     entri: {},
@@ -239,6 +243,9 @@ describe("remove (msw)", () => {
       createContext({
         deployment: {
           deploymentTrpc: {
+            capabilities: {
+              query: () => Promise.resolve({ cloudflare: false }),
+            },
             publish: {
               mutate: () => Promise.resolve({ success: true }),
             },
@@ -254,6 +261,7 @@ describe("remove (msw)", () => {
             GITHUB_REF_NAME: "main",
             GITHUB_SHA: undefined,
             PUBLISHER_HOST: "wstd.io",
+            TRPC_SERVER_URL: undefined,
           },
         },
       })
@@ -293,6 +301,9 @@ describe("remove (msw)", () => {
       createContext({
         deployment: {
           deploymentTrpc: {
+            capabilities: {
+              query: () => Promise.resolve({ cloudflare: false }),
+            },
             publish: {
               mutate: () => Promise.resolve({ success: true }),
             },
@@ -306,6 +317,7 @@ describe("remove (msw)", () => {
             GITHUB_REF_NAME: "main",
             GITHUB_SHA: undefined,
             PUBLISHER_HOST: "wstd.io",
+            TRPC_SERVER_URL: undefined,
           },
         },
       })

@@ -143,6 +143,7 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "css.escape": "^1.5.1",
     "fast-glob": "^3.3.2",
+    "msw": "^2.13.2",
     "html-tags": "^4.0.0",
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.37.0",
