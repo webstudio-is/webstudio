@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ActionFunctionArgs } from "@remix-run/server-runtime";
+import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
 import {
   isAllowedMimeCategory,
@@ -12,14 +12,13 @@ import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { parseError } from "~/shared/error/error-parse";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 
 const UrlBody = z.object({
   url: z.string(),
 });
 
-export const action = async (
-  props: ActionFunctionArgs
-): Promise<AssetActionResponse> => {
+export const action = async (props: ActionFunctionArgs) => {
   preventCrossOriginCookie(props.request);
   await checkCsrf(props.request);
 
@@ -121,19 +120,21 @@ export const action = async (
         context,
         assetInfoFallback
       );
-      return {
-        uploadedAssets: [asset],
-      };
+      return json({ uploadedAssets: [asset] } satisfies AssetActionResponse, {
+        headers: privateNoStoreResponseHeaders,
+      });
     }
   } catch (error) {
     console.error(error);
 
-    return {
-      errors: parseError(error).message,
-    };
+    return json(
+      { errors: parseError(error).message } satisfies AssetActionResponse,
+      { headers: privateNoStoreResponseHeaders }
+    );
   }
 
-  return {
-    errors: "Method not allowed",
-  };
+  return json({ errors: "Method not allowed" } satisfies AssetActionResponse, {
+    status: 405,
+    headers: privateNoStoreResponseHeaders,
+  });
 };

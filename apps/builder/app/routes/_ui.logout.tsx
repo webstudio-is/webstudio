@@ -5,11 +5,12 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createCallerFactory } from "@webstudio-is/trpc-interface/index.server";
 import { logoutRouter } from "~/services/logout-router.server";
 import { createContext } from "~/shared/context.server";
-import { redirect } from "react-router-dom";
+import { redirect } from "~/services/no-store-redirect";
 import { ClientOnly } from "~/shared/client-only";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { lazy } from "react";
 import { allowedDestinations } from "~/services/destinations.server";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 const logoutCaller = createCallerFactory(logoutRouter);
@@ -58,10 +59,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         `${builderUrl({ projectId, origin: url.origin })}builder-logout`
     );
 
-    return json({
-      redirectTo,
-      logoutUrls,
-    });
+    return json(
+      {
+        redirectTo,
+        logoutUrls,
+      },
+      { headers: privateNoStoreResponseHeaders }
+    );
   } catch (error) {
     if (error instanceof Response) {
       throw error;

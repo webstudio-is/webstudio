@@ -21,6 +21,7 @@ import { lazy } from "react";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
 import { allowedDestinations } from "~/services/destinations.server";
+import { createPrivateNoStoreHeaders } from "~/services/cache-control.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const links: LinksFunction = () => {
@@ -80,7 +81,7 @@ export const loader = async ({
     throw redirect(returnTo);
   }
 
-  const headers = new Headers();
+  const headers = createPrivateNoStoreHeaders();
 
   headers.append("Set-Cookie", await returnToCookie.serialize(returnTo));
 
