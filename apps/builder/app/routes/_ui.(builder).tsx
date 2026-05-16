@@ -38,6 +38,10 @@ import {
 } from "~/services/destinations.server";
 import { loader as authWsLoader } from "./auth.ws";
 import { getUserById } from "~/shared/db/user.server";
+import {
+  createPrivateNoStoreHeaders,
+  privateNoStoreResponseHeaders,
+} from "~/services/cache-control.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const links = () => {
@@ -221,7 +225,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       throw new AuthorizationError("Project must have project userId defined");
     }
 
-    const headers = new Headers();
+    const headers = createPrivateNoStoreHeaders();
 
     if (context.authorization.type === "token") {
       // To protect against cookie overwrites, we set a null session cookie if a user is using an authToken.
@@ -287,9 +291,13 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
  *
  */
 export const headers = ({ loaderHeaders }: HeadersArgs) => {
+  const contentSecurityPolicy = loaderHeaders.get("Content-Security-Policy");
+
   return {
-    "Cache-Control": "no-store",
-    "Content-Security-Policy": loaderHeaders.get("Content-Security-Policy"),
+    ...privateNoStoreResponseHeaders,
+    ...(contentSecurityPolicy === null
+      ? {}
+      : { "Content-Security-Policy": contentSecurityPolicy }),
   };
 };
 

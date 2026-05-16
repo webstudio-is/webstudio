@@ -20,6 +20,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import * as session from "~/services/session.server";
 import { redirect } from "~/services/no-store-redirect";
 import { allowedDestinations } from "~/services/destinations.server";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 
 const debug = createDebug(import.meta.url);
 
@@ -107,7 +108,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           error_description: "No redirect_uri provided",
           error_uri: "https://tools.ietf.org/html/rfc6749#section-3.1.2",
         },
-        { status: 400 }
+        { status: 400, headers: privateNoStoreResponseHeaders }
       );
     }
 
@@ -131,7 +132,7 @@ export const loader: LoaderFunction = async ({ request }) => {
             "The redirect_uri provided does not match the registered redirect URIs.",
           error_uri: "https://tools.ietf.org/html/rfc6749#section-3.1.2",
         },
-        { status: 400 }
+        { status: 400, headers: privateNoStoreResponseHeaders }
       );
     }
 
@@ -197,7 +198,7 @@ export const loader: LoaderFunction = async ({ request }) => {
               "The redirect_uri provided does not match the registered redirect URIs.",
             error_uri: "https://tools.ietf.org/html/rfc6749#section-3.1.2",
           },
-          { status: 400 }
+          { status: 400, headers: privateNoStoreResponseHeaders }
         );
       }
 
@@ -249,7 +250,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           error instanceof Error ? error.message : "Unknown error",
         error_uri: "",
       },
-      { status: 500 }
+      { status: 500, headers: privateNoStoreResponseHeaders }
     );
   }
 };
