@@ -26,7 +26,12 @@ export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
     // remix appends ?index in runtime but not in ssr
     href === "" ||
     href.startsWith("?") ||
-    (href.startsWith("/") && href.startsWith(assetBaseUrl) === false)
+    (href.startsWith("/") &&
+      href.startsWith(assetBaseUrl) === false &&
+      // Same-page hash anchors (e.g. /#section) share pathname "/" with every
+      // root page — NavLink would mark them all as aria-current="page" in SSR.
+      // Use a plain anchor instead; hash navigation doesn't cross page boundaries.
+      href.startsWith("/#") === false)
   ) {
     // In the future, we will switch to the :local-link pseudo-class (https://developer.mozilla.org/en-US/docs/Web/CSS/:local-link). (aria-current="page" is used now)
     // Therefore, we decided to use end={true} (exact route matching) for all links to facilitate easier migration.
