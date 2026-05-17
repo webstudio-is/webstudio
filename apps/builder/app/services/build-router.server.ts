@@ -103,6 +103,27 @@ export const buildRouter = router({
       return await loadPublishedProjectDataByBuildId(input.buildId, ctx);
     }),
 
+  updatePublishStatus: procedure
+    .input(
+      z.object({
+        buildId: z.string(),
+        publishStatus: z.enum(["PUBLISHED", "FAILED"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.authorization.type !== "service") {
+        throw new AuthorizationError("Service calls only");
+      }
+      const result = await ctx.postgrest.client
+        .from("Build")
+        .update({ publishStatus: input.publishStatus })
+        .eq("id", input.buildId);
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      return { success: true };
+    }),
+
   loadProjectDataByProjectId: procedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {

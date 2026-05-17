@@ -15,6 +15,7 @@ export type PublishedProjectData = Data & {
   user: { email: User["email"] } | undefined;
   projectDomain: string;
   projectTitle: string;
+  customDomains: string[];
 };
 
 const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
@@ -129,11 +130,20 @@ const addProjectMetadata = async (
       ? undefined
       : await getUserById(context, project.userId);
 
+  const deployment = data.build.deployment;
+  const customDomains =
+    deployment !== undefined && deployment.destination !== "static"
+      ? deployment.domains.filter(
+          (d) => d !== project.domain && d.includes(".")
+        )
+      : [];
+
   return {
     ...data,
     user: user ? { email: user.email } : undefined,
     projectDomain: project.domain,
     projectTitle: project.title,
+    customDomains,
   };
 };
 
