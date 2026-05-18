@@ -1,5 +1,9 @@
 import { redirect as remixRedirect } from "@remix-run/server-runtime";
 import { isRedirectResponse } from "./cookie.server";
+import {
+  createPrivateNoStoreHeaders,
+  privateNoStoreResponseHeaders,
+} from "./cache-control.server";
 
 /**
  * Chrome aggressively uses cache when restoring tabs (e.g., using Shift+Command+T or automatic session restore).
@@ -14,10 +18,12 @@ import { isRedirectResponse } from "./cookie.server";
 export const redirect: typeof remixRedirect = (url, init) => {
   const headers =
     typeof init === "object" ? new Headers(init.headers) : new Headers();
-  headers.set("Cache-Control", "no-store");
+  const noStoreHeaders = createPrivateNoStoreHeaders(headers);
 
   const responseInit: ResponseInit =
-    typeof init === "number" ? { status: init, headers } : { ...init, headers };
+    typeof init === "number"
+      ? { status: init, headers: noStoreHeaders }
+      : { ...init, headers: noStoreHeaders };
 
   return remixRedirect(url, responseInit);
 };
@@ -35,7 +41,13 @@ export const redirect: typeof remixRedirect = (url, init) => {
 export const setNoStoreToRedirect = (response: Response) => {
   if (isRedirectResponse(response)) {
     const newResponse = new Response(response.body, response);
-    newResponse.headers.set("Cache-Control", "no-store");
+    const noStoreHeaders = createPrivateNoStoreHeaders(newResponse.headers);
+    for (const name of Object.keys(privateNoStoreResponseHeaders)) {
+      const value = noStoreHeaders.get(name);
+      if (value !== null) {
+        newResponse.headers.set(name, value);
+      }
+    }
     return newResponse;
   }
 

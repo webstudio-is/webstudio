@@ -1,17 +1,13 @@
 import { lazy, useEffect } from "react";
 import { preconnect, prefetchDNS } from "react-dom";
-import {
-  Outlet,
-  redirect,
-  type ShouldRevalidateFunction,
-} from "react-router-dom";
+import { Outlet, type ShouldRevalidateFunction } from "react-router-dom";
 import {
   useLoaderData,
   useLocation,
   useNavigate,
   type MetaFunction,
 } from "@remix-run/react";
-import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import {
   createCallerFactory,
   AuthorizationError,
@@ -29,6 +25,8 @@ import env from "~/env/env.server";
 import { ClientOnly } from "~/shared/client-only";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { allowedDestinations } from "~/services/destinations.server";
+import { redirect } from "~/services/no-store-redirect";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
@@ -44,17 +42,8 @@ export const meta = () => {
   return metas;
 };
 
-/**
- * When deleting/adding a project, then navigating to a new project and pressing the back button,
- * the dashboard page may display stale data because it’s being retrieved from the browser’s back/forward cache (bfcache).
- *
- * https://web.dev/articles/bfcache
- *
- */
 export const headers = () => {
-  return {
-    "Cache-Control": "no-store",
-  };
+  return privateNoStoreResponseHeaders;
 };
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
@@ -198,19 +187,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const projectToClone = await getProjectToClone(request, context);
 
-  return {
-    user,
-    projects,
-    planFeatures,
-    purchases,
-    publisherHost: env.PUBLISHER_HOST,
-    origin,
-    projectToClone,
-    workspaces,
-    currentWorkspaceId,
-    role,
-    notifications,
-  };
+  return json(
+    {
+      user,
+      projects,
+      planFeatures,
+      purchases,
+      publisherHost: env.PUBLISHER_HOST,
+      origin,
+      projectToClone,
+      workspaces,
+      currentWorkspaceId,
+      role,
+      notifications,
+    },
+    { headers: privateNoStoreResponseHeaders }
+  );
 };
 
 export const shouldRevalidate: ShouldRevalidateFunction = ({

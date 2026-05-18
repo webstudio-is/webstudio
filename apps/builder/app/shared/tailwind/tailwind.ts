@@ -7,6 +7,7 @@ import {
   parseMediaQuery,
   type ParsedStyleDecl,
 } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
   type Breakpoint,
@@ -20,25 +21,13 @@ import { preflight } from "./__generated__/preflight";
 // breakpoints used to map tailwind classes to webstudio breakpoints
 // includes both min-width (desktop-first) and max-width (mobile-first) breakpoints
 const tailwindBreakpoints: Breakpoint[] = [
-  { id: "1920", label: "1920", minWidth: 1920 },
-  { id: "1440", label: "1440", minWidth: 1440 },
+  { id: "1536", label: "1536", minWidth: 1536 },
   { id: "1280", label: "1280", minWidth: 1280 },
   { id: "base", label: "" },
-  { id: "991", label: "991", maxWidth: 991 },
+  { id: "1023", label: "1023", maxWidth: 1023 },
   { id: "767", label: "767", maxWidth: 767 },
-  { id: "479", label: "479", maxWidth: 479 },
+  { id: "639", label: "639", maxWidth: 639 },
 ];
-
-const tailwindToWebstudioMappings: Record<number, undefined | number> = {
-  639.9: 479,
-  640: 480,
-  767.9: 767,
-  1023.9: 991,
-  1024: 992,
-  1279.9: 1279,
-  1535.9: 1439,
-  1536: 1440,
-};
 
 type StyleDecl = Omit<ParsedStyleDecl, "selector">;
 
@@ -143,6 +132,10 @@ const rangesToBreakpoints = (
   return breakpoints;
 };
 
+const normalizeMediaQueryWidth = (value: number, direction: "min" | "max") => {
+  return direction === "min" ? Math.ceil(value) : Math.floor(value);
+};
+
 const adaptBreakpoints = (
   parsedStyles: StyleDecl[],
   userBreakpoints: Breakpoint[]
@@ -164,13 +157,17 @@ const adaptBreakpoints = (
     ) {
       continue;
     }
-    if (mediaQuery?.minWidth) {
-      mediaQuery.minWidth =
-        tailwindToWebstudioMappings[mediaQuery.minWidth] ?? mediaQuery.minWidth;
+    if (mediaQuery?.minWidth !== undefined) {
+      mediaQuery.minWidth = normalizeMediaQueryWidth(
+        mediaQuery.minWidth,
+        "min"
+      );
     }
-    if (mediaQuery?.maxWidth) {
-      mediaQuery.maxWidth =
-        tailwindToWebstudioMappings[mediaQuery.maxWidth] ?? mediaQuery.maxWidth;
+    if (mediaQuery?.maxWidth !== undefined) {
+      mediaQuery.maxWidth = normalizeMediaQueryWidth(
+        mediaQuery.maxWidth,
+        "max"
+      );
     }
     const groupKey = `${styleDecl.property}:${styleDecl.state ?? ""}`;
     let group = breakpointGroups.get(groupKey);
@@ -235,7 +232,85 @@ const hexToRgb = (hex: string) => {
   return `${r} ${g} ${b}`;
 };
 
-const normalizeWind4Css = (css: string, finalVars: Map<string, string>) => {
+const extractPropertyInitialValues = (css: string) => {
+  const values = new Map<string, string>();
+  for (const match of css.matchAll(/@property\s+(--[\w-]+)\s*\{([^{}]*)\}/g)) {
+    const initialValue = match[2].match(/initial-value\s*:\s*([^;]+)\s*;?/);
+    if (initialValue) {
+      values.set(match[1], initialValue[1].trim());
+    }
+  }
+  return values;
+};
+
+const findMatchingParen = (text: string, openIndex: number) => {
+  let depth = 0;
+  for (let index = openIndex; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === "(") {
+      depth += 1;
+    } else if (char === ")") {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+};
+
+const splitCssVarArguments = (args: string) => {
+  let depth = 0;
+  for (let index = 0; index < args.length; index += 1) {
+    const char = args[index];
+    if (char === "(") {
+      depth += 1;
+    } else if (char === ")") {
+      depth -= 1;
+    } else if (char === "," && depth === 0) {
+      return [args.slice(0, index).trim(), args.slice(index + 1).trim()];
+    }
+  }
+  return [args.trim()];
+};
+
+const resolveCssVars = (
+  value: string,
+  vars: Map<string, string>,
+  seen = new Set<string>()
+): string => {
+  let result = "";
+  let index = 0;
+  while (index < value.length) {
+    const varIndex = value.indexOf("var(", index);
+    if (varIndex === -1) {
+      result += value.slice(index);
+      break;
+    }
+    result += value.slice(index, varIndex);
+    const openIndex = varIndex + "var".length;
+    const closeIndex = findMatchingParen(value, openIndex);
+    if (closeIndex === undefined) {
+      result += value.slice(varIndex);
+      break;
+    }
+    const args = value.slice(openIndex + 1, closeIndex);
+    const [name, fallback] = splitCssVarArguments(args);
+    const replacement = vars.get(name);
+    if (replacement !== undefined && seen.has(name) === false) {
+      seen.add(name);
+      result += resolveCssVars(replacement, vars, seen);
+      seen.delete(name);
+    } else if (fallback !== undefined) {
+      result += resolveCssVars(fallback, vars, seen);
+    } else {
+      result += value.slice(varIndex, closeIndex + 1);
+    }
+    index = closeIndex + 1;
+  }
+  return result;
+};
+
+const normalizeUnoCssValues = (css: string, finalVars: Map<string, string>) => {
   // Wind4 emits rem media queries (e.g. 40rem). Convert to px so existing
   // breakpoint mapping code can keep working unchanged.
   let normalized = css.replace(
@@ -254,19 +329,17 @@ const normalizeWind4Css = (css: string, finalVars: Map<string, string>) => {
     }
   );
 
-  // Inline tracked theme variables so parseCss can resolve computed values
-  // like calc(var(--spacing) * 2) and var(--text-sm-fontSize).
-  for (const [name, value] of finalVars.entries()) {
-    normalized = normalized
-      .replaceAll(`var(${name})`, value)
-      .replaceAll(`var(${name},`, `var(${value},`);
-  }
+  // Inline tracked theme and utility variables so parseCss can resolve computed
+  // values like calc(var(--spacing) * 2), gradients, and shadow fallbacks.
+  normalized = resolveCssVars(normalized, finalVars);
 
   // Wind4 uses a leading utility var fallback for typography.
   normalized = normalized.replace(
     /var\(--tw-leading,\s*([^\)]+)\)/g,
     (_match, fallback) => fallback.trim()
   );
+
+  normalized = normalized.replaceAll("calc(infinity * 1px)", "9999px");
 
   // Resolve wind4's color-mix based opacity pipeline into concrete colors that
   // parseCss can read as typed color values.
@@ -326,7 +399,50 @@ const normalizeWind4Css = (css: string, finalVars: Map<string, string>) => {
     }
   );
 
+  // Tailwind v4 emits gradients like `linear-gradient(to bottom right in oklab, ...)`.
+  // Keep imported gradients broadly renderable and parseable by dropping the
+  // interpolation color space from the direction argument.
+  normalized = normalized.replace(
+    /linear-gradient\((to\s+(?:top|bottom|left|right)(?:\s+(?:top|bottom|left|right))?|[-+]?\d*\.?\d+(?:deg|rad|grad|turn))\s+in\s+(?:srgb|srgb-linear|display-p3|a98-rgb|prophoto-rgb|rec2020|lab|oklab|lch|oklch|xyz(?:-d50|-d65)?),/gi,
+    "linear-gradient($1,"
+  );
+
   return normalized;
+};
+
+const normalizeUnoCssForWebstudio = (generatedCss: string) => {
+  // UnoCSS uses the --un-* namespace. Keep generated CSS in Tailwind's
+  // namespace so custom properties match familiar Tailwind output and existing
+  // Webstudio styles.
+  const css = generatedCss.replaceAll("--un-", "--tw-");
+
+  // Normalize CSS custom property values: when the same var is declared in
+  // multiple utility-class rules, replace every occurrence with the value from
+  // the LAST declaration (the final cascaded value). This allows per-rule
+  // two-pass pre-collection to see the correct final value regardless of which
+  // rule a shorthand (e.g. border-color) lives in.
+  const finalVars = new Map([
+    ...extractPropertyInitialValues(css),
+    ...extractCssCustomProperties(css),
+  ]);
+
+  let normalizedCss = normalizeUnoCssValues(css, finalVars);
+  if (finalVars.size > 0) {
+    normalizedCss = normalizedCss.replace(/--[\w-]+\s*:[^;{}\n]*/g, (match) => {
+      const colonIdx = match.indexOf(":");
+      const propName = match.slice(0, colonIdx).trim();
+      const finalValue = finalVars.get(propName);
+      return finalValue !== undefined
+        ? `${propName}: ${resolveCssVars(finalValue, finalVars)}`
+        : match;
+    });
+  }
+
+  return { css: normalizedCss, vars: finalVars };
+};
+
+export const __testing__ = {
+  normalizeUnoCssForWebstudio,
 };
 
 const isTailwindDefaultBorderColorStyle = (styleDecl: StyleDecl): boolean => {
@@ -357,6 +473,37 @@ const isTailwindDefaultBorderColorStyle = (styleDecl: StyleDecl): boolean => {
     Math.abs(g - 231 / 255) < 0.001 &&
     Math.abs(b - 235 / 255) < 0.001
   );
+};
+
+const stylePropertyGroups: Record<string, Set<StyleProperty>> = {
+  margin: new Set([
+    "marginTop",
+    "marginRight",
+    "marginBottom",
+    "marginLeft",
+    "marginBlockStart",
+    "marginBlockEnd",
+    "marginInlineStart",
+    "marginInlineEnd",
+  ]),
+  padding: new Set([
+    "paddingTop",
+    "paddingRight",
+    "paddingBottom",
+    "paddingLeft",
+    "paddingBlockStart",
+    "paddingBlockEnd",
+    "paddingInlineStart",
+    "paddingInlineEnd",
+  ]),
+};
+
+const getStylePropertyGroup = (property: StyleProperty) => {
+  for (const [groupName, properties] of Object.entries(stylePropertyGroups)) {
+    if (properties.has(property)) {
+      return groupName;
+    }
+  }
 };
 
 const parseTailwindClasses = async (
@@ -406,23 +553,9 @@ const parseTailwindClasses = async (
     })
     .join(" ");
   const generated = await generator.generate(classes);
-  // use tailwind prefix instead of unocss one
-  const css = generated.css.replaceAll("--un-", "--tw-");
-  // Normalize CSS custom property values: when the same var is declared in
-  // multiple utility-class rules, replace every occurrence with the value from
-  // the LAST declaration (the final cascaded value). This allows per-rule
-  // two-pass pre-collection to see the correct final value regardless of which
-  // rule a shorthand (e.g. border-color) lives in.
-  const finalVars = extractCssCustomProperties(css);
-  let normalizedCss = normalizeWind4Css(css, finalVars);
-  if (finalVars.size > 0) {
-    normalizedCss = normalizedCss.replace(/--[\w-]+\s*:[^;{}\n]*/g, (match) => {
-      const colonIdx = match.indexOf(":");
-      const propName = match.slice(0, colonIdx).trim();
-      const finalValue = finalVars.get(propName);
-      return finalValue !== undefined ? `${propName}: ${finalValue}` : match;
-    });
-  }
+  const { css: normalizedCss, vars: finalVars } = normalizeUnoCssForWebstudio(
+    generated.css
+  );
   let parsedStyles: StyleDecl[] = [];
   // @todo probably builtin in v4
   if (normalizedCss.includes("border")) {
@@ -534,10 +667,6 @@ const parseTailwindClasses = async (
       {
         property: "flex-direction",
         value: { type: "keyword", value: "column" },
-      },
-      {
-        property: "align-items",
-        value: { type: "keyword", value: "start" },
       }
     );
   }
@@ -618,6 +747,7 @@ export const generateFragmentFromTailwind = async (
   const styles = new Map(
     fragment.styles.map((item) => [getStyleDeclKey(item), item])
   );
+  const preflightStyleDeclKeys = new Set<string>();
   const getLocalStyleSource = (instanceId: Instance["id"]) => {
     const styleSourceSelection = styleSourceSelections.get(instanceId);
     const lastStyleSourceId = styleSourceSelection?.values.at(-1);
@@ -647,6 +777,7 @@ export const generateFragmentFromTailwind = async (
   ) => {
     const localStyleSource =
       getLocalStyleSource(instanceId) ?? createLocalStyleSource(instanceId);
+    const clearedPropertyGroups = new Set<string>();
     for (const parsedStyleDecl of newStyles) {
       const breakpointId = getBreakpointId(parsedStyleDecl.breakpoint);
       // ignore unknown breakpoints
@@ -666,8 +797,41 @@ export const generateFragmentFromTailwind = async (
       if (skipExisting && styles.has(styleDeclKey)) {
         continue;
       }
+      if (skipExisting === false) {
+        const propertyGroup = getStylePropertyGroup(styleDecl.property);
+        const groupProperties =
+          propertyGroup === undefined
+            ? undefined
+            : stylePropertyGroups[propertyGroup];
+        const groupKey =
+          propertyGroup === undefined
+            ? undefined
+            : `${styleDecl.styleSourceId}:${styleDecl.breakpointId}:${
+                styleDecl.state ?? ""
+              }:${propertyGroup}`;
+        if (
+          groupProperties !== undefined &&
+          groupKey !== undefined &&
+          clearedPropertyGroups.has(groupKey) === false
+        ) {
+          clearedPropertyGroups.add(groupKey);
+          for (const property of groupProperties) {
+            const groupStyleDeclKey = getStyleDeclKey({
+              ...styleDecl,
+              property,
+            });
+            if (preflightStyleDeclKeys.has(groupStyleDeclKey)) {
+              styles.delete(groupStyleDeclKey);
+              preflightStyleDeclKeys.delete(groupStyleDeclKey);
+            }
+          }
+        }
+      }
       styles.delete(styleDeclKey);
       styles.set(styleDeclKey, styleDecl);
+      if (skipExisting) {
+        preflightStyleDeclKeys.add(styleDeclKey);
+      }
     }
   };
 

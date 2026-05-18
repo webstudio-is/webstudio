@@ -14,6 +14,33 @@ test("prefix background-clip", () => {
   );
 });
 
+test("prefix text fill color for clipped text", () => {
+  expect(
+    prefixStyles(
+      new Map([
+        ["color", { type: "keyword", value: "transparent" }],
+        [
+          "background-clip",
+          { type: "layers", value: [{ type: "keyword", value: "text" }] },
+        ],
+      ])
+    )
+  ).toEqual(
+    new Map([
+      ["-webkit-text-fill-color", { type: "keyword", value: "transparent" }],
+      ["color", { type: "keyword", value: "transparent" }],
+      [
+        "-webkit-background-clip",
+        { type: "layers", value: [{ type: "keyword", value: "text" }] },
+      ],
+      [
+        "background-clip",
+        { type: "layers", value: [{ type: "keyword", value: "text" }] },
+      ],
+    ])
+  );
+});
+
 test("prefix user-select", () => {
   expect(
     prefixStyles(new Map([["user-select", { type: "keyword", value: "none" }]]))

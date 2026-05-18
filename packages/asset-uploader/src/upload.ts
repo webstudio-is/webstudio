@@ -34,6 +34,45 @@ export const createUploadName = async (
     );
   }
 
+  const existingUpload = await context.postgrest.client
+    .from("Asset")
+    .select(
+      `
+        name,
+        file:File!inner(status)
+      `
+    )
+    .eq("id", assetId)
+    .eq("projectId", projectId)
+    .eq("file.status", "UPLOADING")
+    .eq("file.isDeleted", false)
+    .eq("file.uploaderProjectId", projectId)
+    .maybeSingle();
+  if (existingUpload.error) {
+    throw new Error(existingUpload.error.message);
+  }
+
+  if (existingUpload.data !== null) {
+    const fileUpdate = await context.postgrest.client
+      .from("File")
+      .update({
+        // uploadFile uses createdAt as the reservation expiration timestamp
+        createdAt: new Date().toISOString(),
+      })
+      .eq("name", existingUpload.data.name)
+      .eq("status", "UPLOADING")
+      .eq("isDeleted", false)
+      .eq("uploaderProjectId", projectId)
+      .select("name")
+      .maybeSingle();
+    if (fileUpdate.error) {
+      throw new Error(fileUpdate.error.message);
+    }
+    if (fileUpdate.data !== null) {
+      return fileUpdate.data.name;
+    }
+  }
+
   const { maxAssetsPerProject } = await getProjectPlanFeatures(
     projectId,
     context

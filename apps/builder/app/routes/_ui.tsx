@@ -23,6 +23,10 @@ import {
   csrfToken as clientCsrfToken,
   updateCsrfToken,
 } from "~/shared/csrf.client";
+import {
+  createPrivateNoStoreHeaders,
+  privateNoStoreResponseHeaders,
+} from "~/services/cache-control.server";
 
 export const links: LinksFunction = () => {
   // `links` returns an array of objects whose
@@ -57,10 +61,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [csrfToken, setCookieValue] = await getCsrfTokenAndCookie(request);
 
   if (request.headers.get("sec-fetch-mode") !== "navigate") {
-    return json({ csrfToken: "" });
+    return json({ csrfToken: "" }, { headers: privateNoStoreResponseHeaders });
   }
 
-  const headers = new Headers();
+  const headers = createPrivateNoStoreHeaders();
 
   if (setCookieValue !== undefined) {
     headers.set("Set-Cookie", setCookieValue);

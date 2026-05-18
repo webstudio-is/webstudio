@@ -3288,6 +3288,7 @@ describe("Styles", () => {
           background-image: linear-gradient(350deg,hsl(256.3636363636363 72.13% 23.92%/0.00),hsl(256.2162162162162 72.55% 80.00%/1.00) 49%,#bba7f1);
           -webkit-background-clip: text;
           background-clip: text;
+          -webkit-text-fill-color: transparent;
           color: transparent
         }
       }"

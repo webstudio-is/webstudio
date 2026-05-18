@@ -150,6 +150,32 @@ test("generate props from number and boolean aria attributes", () => {
   );
 });
 
+test("skip webstudio runtime attributes from pasted html", () => {
+  const fragment = generateFragmentFromHtml(`
+    <a
+      data-ws-tag="a"
+      href="#services"
+      data-ws-text-content="View solutions "
+      data-ws-id="V8q7r5rwOIOz7m_od3wi3"
+      data-ws-component="ws:element"
+      data-ws-selector="V8q7r5rwOIOz7m_od3wi3,BUSoEKIavhIKiBd1COmHZ"
+    >View solutions </a>
+  `);
+
+  expect(fragment.props).toEqual([
+    expect.objectContaining({ name: "href", value: "#services" }),
+  ]);
+  expect(fragment.props.some((prop) => prop.name.startsWith("data-ws-"))).toBe(
+    false
+  );
+  expect(fragment.instances[0]).toEqual(
+    expect.objectContaining({
+      tag: "a",
+      children: [{ type: "text", value: "View solutions " }],
+    })
+  );
+});
+
 test("wrap text with span when spotted outside of rich text", () => {
   expect(
     generateFragmentFromHtml(`
@@ -251,6 +277,27 @@ test("generate style attribute as local styles", () => {
         `}
       ></ws.element>
     )
+  );
+});
+
+test("generate nested css math functions as unparsed local styles", () => {
+  const value =
+    "clamp(1rem, calc(1rem + (2rem - 1rem) * ((100vw - 20rem) / (80rem - 20rem))), 2rem)";
+  const fragment = generateFragmentFromHtml(`
+    <div style="font-size:${value}">One clamp div</div>
+  `);
+
+  expect(fragment.styles).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        property: "fontSize",
+        value: {
+          type: "unparsed",
+          value:
+            "clamp(1rem,calc(1rem + (2rem - 1rem)*((100vw - 20rem)/(80rem - 20rem))),2rem)",
+        },
+      }),
+    ])
   );
 });
 

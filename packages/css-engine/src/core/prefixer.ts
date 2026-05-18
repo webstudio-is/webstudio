@@ -1,7 +1,21 @@
 import type { StyleMap } from "./rules";
+import type { CssProperty, StyleValue } from "../schema";
 
-export const prefixStyles = (styleMap: StyleMap) => {
+const isKeyword = (value: StyleValue, keyword: string): boolean => {
+  if (value.type === "keyword") {
+    return value.value === keyword;
+  }
+  if (value.type === "layers") {
+    return value.value.some((layer) => isKeyword(layer, keyword));
+  }
+  return false;
+};
+
+export const prefixStyles = (styleMap: StyleMap): StyleMap => {
   const newStyleMap: StyleMap = new Map();
+  const backgroundClip = styleMap.get("background-clip");
+  const hasTextBackgroundClip =
+    backgroundClip !== undefined && isKeyword(backgroundClip, "text");
   for (const [property, value] of styleMap) {
     // chrome started to support unprefixed background-clip in December 2023
     // https://caniuse.com/background-clip-text
@@ -24,6 +38,13 @@ export const prefixStyles = (styleMap: StyleMap) => {
     // https://developer.mozilla.org/en-US/docs/Web/CSS/backdrop-filter
     if (property === "backdrop-filter") {
       newStyleMap.set("-webkit-backdrop-filter", value);
+    }
+    if (
+      property === "color" &&
+      hasTextBackgroundClip &&
+      isKeyword(value, "transparent")
+    ) {
+      newStyleMap.set("-webkit-text-fill-color" as CssProperty, value);
     }
 
     // Safari and FF do not support this property and strip it from the CSS
