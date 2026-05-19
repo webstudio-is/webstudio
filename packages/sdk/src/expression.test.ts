@@ -11,6 +11,8 @@ import {
   parseObjectExpression,
   generateObjectExpression,
   SYSTEM_VARIABLE_ID,
+  allowedArrayMethods,
+  allowedStringMethods,
 } from "./expression";
 
 describe("lint expression", () => {
@@ -230,6 +232,7 @@ describe("lint expression", () => {
     "endsWith",
     "includes",
     "startsWith",
+    "toString",
     "toUpperCase",
     "toLocaleLowerCase",
     "toLocaleUpperCase",
@@ -242,7 +245,7 @@ describe("lint expression", () => {
     ).toEqual([]);
   });
 
-  test.each(["at", "includes", "join", "slice"])(
+  test.each(["at", "includes", "join", "slice", "toString"])(
     "allow safe array method: %s",
     (method) => {
       expect(
@@ -253,6 +256,94 @@ describe("lint expression", () => {
       ).toEqual([]);
     }
   );
+
+  test("allow supported methods on known native-compatible receivers", () => {
+    expect(
+      lintExpression({
+        expression: `title.split("").toString()`,
+        availableVariables: new Set(["title"]),
+        variableValues: new Map([["title", "Test"]]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: `arr.join("").split("").toString()`,
+        availableVariables: new Set(["arr"]),
+        variableValues: new Map([["arr", ["T", "e", "s", "t"]]]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: `count.toString() + flag.toString() + object.toString()`,
+        availableVariables: new Set(["count", "flag", "object"]),
+        variableValues: new Map<string, unknown>([
+          ["count", 2],
+          ["flag", true],
+          ["object", {}],
+        ]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: `title.replace("e", "a").toLowerCase()`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: `arr.join("").toLowerCase()`,
+        availableVariables: new Set(["arr"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("forbid supported method names on known native-incompatible receivers", () => {
+    expect(
+      lintExpression({
+        expression: `arr.split()`,
+        availableVariables: new Set(["arr"]),
+        variableValues: new Map([["arr", []]]),
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"split" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `title.join()`,
+        availableVariables: new Set(["title"]),
+        variableValues: new Map([["title", "Test"]]),
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"join" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `[1, 2, 3].toLowerCase()`,
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"toLowerCase" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `"Test".join()`,
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"join" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `title.split("").toLowerCase()`,
+        availableVariables: new Set(["title"]),
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"toLowerCase" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `arr.join("").join()`,
+        availableVariables: new Set(["arr"]),
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([`"join" function is not supported`]);
+    expect(
+      lintExpression({
+        expression: `null.toString() + undefined.toString()`,
+      }).map((diagnostic) => diagnostic.message)
+    ).toEqual([
+      `"toString" function is not supported`,
+      `"undefined" is not defined in the scope`,
+      `"toString" function is not supported`,
+    ]);
+  });
 
   test("allow chained string methods", () => {
     expect(
@@ -331,6 +422,14 @@ describe("get expression identifiers", () => {
 });
 
 describe("transpile expression", () => {
+  const expectTranspiledExpressionToMatchNative = (expression: string) => {
+    const nativeResult = new Function(`return (${expression})`)();
+    const transpiledResult = new Function(
+      `return (${transpileExpression({ expression, executable: true })})`
+    )();
+    expect(transpiledResult).toEqual(nativeResult);
+  };
+
   test("preserve spaces and parentheses", () => {
     expect(
       transpileExpression({ expression: " 1 + (2 + 3) ", executable: true })
@@ -432,6 +531,48 @@ describe("transpile expression", () => {
         executable: true,
       })
     ).toEqual("data?.title?.split?.('-')");
+  });
+
+  test("preserve native behavior for all supported string methods", () => {
+    const expressionsByMethod = {
+      at: `"Hello".at(1)`,
+      endsWith: `"Hello".endsWith("lo")`,
+      includes: `"Hello".includes("ell")`,
+      replace: `"Hello".replace("l", "x")`,
+      slice: `"Hello".slice(1, 4)`,
+      split: `"Hello".split("l")`,
+      startsWith: `"Hello".startsWith("He")`,
+      toLocaleLowerCase: `"Hello".toLocaleLowerCase()`,
+      toLocaleUpperCase: `"Hello".toLocaleUpperCase()`,
+      toLowerCase: `"Hello".toLowerCase()`,
+      toString: `"Hello".toString()`,
+      toUpperCase: `"Hello".toUpperCase()`,
+    };
+
+    expect(new Set(Object.keys(expressionsByMethod))).toEqual(
+      allowedStringMethods
+    );
+    for (const expression of Object.values(expressionsByMethod)) {
+      expectTranspiledExpressionToMatchNative(expression);
+    }
+    expectTranspiledExpressionToMatchNative(`"Test".split(2).toString()`);
+  });
+
+  test("preserve native behavior for all supported array methods", () => {
+    const expressionsByMethod = {
+      at: `["a", "b", "c"].at(1)`,
+      includes: `["a", "b", "c"].includes("b")`,
+      join: `["a", "b", "c"].join("-")`,
+      slice: `["a", "b", "c"].slice(1, 3)`,
+      toString: `["a", "b", "c"].toString()`,
+    };
+
+    expect(new Set(Object.keys(expressionsByMethod))).toEqual(
+      allowedArrayMethods
+    );
+    for (const expression of Object.values(expressionsByMethod)) {
+      expectTranspiledExpressionToMatchNative(expression);
+    }
   });
 
   test("transpile chained string methods with optional chaining", () => {
