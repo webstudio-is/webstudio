@@ -35,7 +35,7 @@ export type PollingManagerOptions = {
   fetcher: (topics: TopicName[]) => Promise<SubscriptionResponse>;
   /**
    * Polling interval in milliseconds.
-   * @default 30_000
+   * @default 60_000
    */
   interval?: number;
   /**

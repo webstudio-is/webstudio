@@ -116,7 +116,7 @@ describe("createPollingClient", () => {
       client.stop();
     });
 
-    test("uses default 30s interval when not specified", async () => {
+    test("uses default 60s interval when not specified", async () => {
       const fetcher = vi.fn(async () => "tick");
       const client = createPollingClient({ fetcher, onData: vi.fn() });
 
@@ -124,7 +124,7 @@ describe("createPollingClient", () => {
       await flush();
       expect(fetcher).toHaveBeenCalledTimes(1);
 
-      await vi.advanceTimersByTimeAsync(29_000);
+      await vi.advanceTimersByTimeAsync(59_000);
       expect(fetcher).toHaveBeenCalledTimes(1);
 
       await vi.advanceTimersByTimeAsync(1_000);
@@ -575,6 +575,38 @@ describe("createPollingClient", () => {
         writable: true,
         configurable: true,
       });
+    });
+
+    test("does not fetch on start while tab is hidden", async () => {
+      Object.defineProperty(document, "visibilityState", {
+        value: "hidden",
+        writable: true,
+        configurable: true,
+      });
+
+      const fetcher = vi.fn(async () => "data");
+      const client = createPollingClient({
+        fetcher,
+        onData: vi.fn(),
+        interval: 1000,
+      });
+
+      client.start();
+      await flush();
+
+      expect(fetcher).not.toHaveBeenCalled();
+
+      Object.defineProperty(document, "visibilityState", {
+        value: "visible",
+        writable: true,
+        configurable: true,
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+      await flush();
+
+      expect(fetcher).toHaveBeenCalledOnce();
+
+      client.stop();
     });
 
     test("resumes and fetches immediately when tab becomes visible", async () => {
