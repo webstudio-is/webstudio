@@ -32,6 +32,7 @@ import {
   lintExpression,
   allowedStringMethods,
   allowedArrayMethods,
+  getExpressionValueKind,
 } from "@webstudio-is/sdk";
 import {
   EditorContent,
@@ -103,11 +104,50 @@ const VariablesData = Facet.define<{
 
 const Identifier = /^[\p{L}$][\p{L}\p{N}$]*$/u;
 
+type ExpressionCompletionOption = {
+  label: string;
+  displayLabel?: string;
+  detail: string;
+  type?: "method" | "property";
+  insertText?: string;
+};
+
+type CompletionPath =
+  | { path: string[]; name: string; expression?: undefined }
+  | { path: []; name: string; expression: string };
+
+const createMethodCompletionOptions = ({
+  methods,
+  pathName,
+  detail,
+}: {
+  methods: ReadonlySet<string>;
+  pathName: string;
+  detail: string;
+}): Array<ExpressionCompletionOption> => {
+  const query = pathName.toLowerCase();
+  const options: Array<ExpressionCompletionOption> = [];
+
+  for (const method of methods) {
+    if (method.toLowerCase().includes(query)) {
+      options.push({
+        label: method,
+        displayLabel: `${method}()`,
+        detail,
+        type: "method",
+        insertText: `${method}()`,
+      });
+    }
+  }
+
+  return options;
+};
+
 const pathFor = (
   read: (node: SyntaxNode) => string,
   member: SyntaxNode,
   name: string
-) => {
+): CompletionPath | undefined => {
   const path: string[] = [];
   // traverse from current node to the root variable
   for (;;) {
@@ -152,12 +192,22 @@ const pathFor = (
 /// it will return `{path: [], name: "x"}`. When not in a property or
 /// name, it will return undefined if `context.explicit` is false, and
 /// `{path: [], name: ""}` otherwise.
-const completionPath = (
+export const completionPath = (
   context: CompletionContext
-): { path: string[]; name: string } | undefined => {
+): CompletionPath | undefined => {
   const read = (node: SyntaxNode) =>
     context.state.doc.sliceString(node.from, node.to);
   const inner = syntaxTree(context.state).resolveInner(context.pos, -1);
+  const pathForMemberExpression = (member: SyntaxNode, name: string) => {
+    const path = pathFor(read, member, name);
+    if (path) {
+      return path;
+    }
+    const object = member.firstChild;
+    if (object) {
+      return { path: [] as [], name, expression: read(object) };
+    }
+  };
   // suggest global variable name when user start completion explicitly
   if (inner.name === "Script") {
     if (context.explicit) {
@@ -171,16 +221,47 @@ const completionPath = (
   }
   // suggest property name when enter `object.`
   if (inner.name === "." && inner.parent?.name === "MemberExpression") {
-    return pathFor(read, inner.parent, "");
+    return pathForMemberExpression(inner.parent, "");
   }
   // complete property when enter "object.prope"
   if (
     inner.name === "PropertyName" &&
     inner.parent?.name === "MemberExpression"
   ) {
-    return pathFor(read, inner.parent, read(inner));
+    return pathForMemberExpression(inner.parent, read(inner));
   }
   return;
+};
+
+export const getCompletionTarget = ({
+  expression,
+  path,
+  scope,
+}: CompletionPath & {
+  scope: Scope;
+}) => {
+  if (expression) {
+    const valueKind = getExpressionValueKind({
+      expression,
+      variableValues: scope,
+    });
+    if (valueKind === "array") {
+      return [];
+    }
+    if (valueKind === "string") {
+      return "";
+    }
+    return;
+  }
+
+  let target: unknown = scope;
+  for (const step of path) {
+    target = (target as Record<string, unknown> | undefined)?.[step];
+    if (target == null) {
+      return;
+    }
+  }
+  return target;
 };
 
 /**
@@ -195,8 +276,8 @@ export const generateCompletionOptions = ({
   target: unknown;
   pathName: string;
   pathLength: number;
-}): Array<{ label: string; detail: string; type?: string }> => {
-  const options: Array<{ label: string; detail: string; type?: string }> = [];
+}): Array<ExpressionCompletionOption> => {
+  const options: Array<ExpressionCompletionOption> = [];
 
   // Add object properties
   if (typeof target === "object" && target !== null) {
@@ -214,15 +295,13 @@ export const generateCompletionOptions = ({
     const isArray = Array.isArray(target);
 
     if (isString) {
-      for (const method of allowedStringMethods) {
-        if (method.toLowerCase().includes(pathName.toLowerCase())) {
-          options.push({
-            label: `${method}()`,
-            detail: "string method",
-            type: "method",
-          });
-        }
-      }
+      options.push(
+        ...createMethodCompletionOptions({
+          methods: allowedStringMethods,
+          pathName,
+          detail: "string method",
+        })
+      );
     }
 
     if (isArray) {
@@ -235,19 +314,57 @@ export const generateCompletionOptions = ({
         });
       }
 
-      for (const method of allowedArrayMethods) {
-        if (method.toLowerCase().includes(pathName.toLowerCase())) {
-          options.push({
-            label: `${method}()`,
-            detail: "array method",
-            type: "method",
-          });
-        }
-      }
+      options.push(
+        ...createMethodCompletionOptions({
+          methods: allowedArrayMethods,
+          pathName,
+          detail: "array method",
+        })
+      );
     }
   }
 
   return options;
+};
+
+export const getCompletionReplacement = ({
+  label,
+  insertText,
+  type,
+  pathLength,
+  from,
+  to,
+}: {
+  label: string;
+  insertText?: string;
+  type?: ExpressionCompletionOption["type"];
+  pathLength: number;
+  from: number;
+  to: number;
+}) => {
+  if (type === "method") {
+    const textToInsert =
+      insertText ?? (label.endsWith("()") ? label : `${label}()`);
+    return { text: textToInsert, from, to };
+  }
+
+  const textToInsert = insertText ?? label;
+
+  // complete valid js identifier or top level variable without quotes
+  if (Identifier.test(textToInsert) || pathLength === 0) {
+    return { text: textToInsert, from, to };
+  }
+
+  return {
+    // `param with spaces` -> ["param with spaces"]
+    // `0` -> [0]
+    text: `[${/^\d+$/.test(textToInsert) ? textToInsert : JSON.stringify(textToInsert)}]`,
+    // remove dot when autocomplete computed member expression
+    // variable.
+    // variable["name"]
+    from: from - 1,
+    to,
+  };
 };
 
 // Defines a completion source that completes from the given scope
@@ -259,20 +376,16 @@ const scopeCompletionSource: CompletionSource = (context) => {
   if (path === undefined) {
     return null;
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let target: any = scope;
-  for (const step of path.path) {
-    target = target?.[step];
-    if (target == null) {
-      return null;
-    }
+  const target = getCompletionTarget({ ...path, scope });
+  if (target === undefined) {
+    return null;
   }
 
   // Generate base completion options using exported function
   const baseOptions = generateCompletionOptions({
     target,
     pathName: path.name,
-    pathLength: path.path.length,
+    pathLength: path.expression ? 1 : path.path.length,
   });
 
   // Convert to CodeMirror Completion format with apply functions
@@ -280,35 +393,27 @@ const scopeCompletionSource: CompletionSource = (context) => {
     const name = option.label;
     return {
       label: name,
-      displayLabel: decodeDataVariableName(name),
+      displayLabel: option.displayLabel ?? decodeDataVariableName(name),
       detail: option.detail,
       type: option.type,
       apply: (view, completion, from, to) => {
-        const textToInsert = name;
-        // complete valid js identifier or top level variable without quotes
-        if (Identifier.test(textToInsert) || path.path.length === 0) {
-          // complete with dot
-          view.dispatch({
-            ...insertCompletionText(view.state, textToInsert, from, to),
-            annotations: pickedCompletion.of(completion),
-          });
-        } else {
-          // complete with computed member expression
-          view.dispatch({
-            ...insertCompletionText(
-              view.state,
-              // `param with spaces` -> ["param with spaces"]
-              // `0` -> [0]
-              `[${/^\d+$/.test(textToInsert) ? textToInsert : JSON.stringify(textToInsert)}]`,
-              // remove dot when autocomplete computed member expression
-              // variable.
-              // variable["name"]
-              from - 1,
-              to
-            ),
-            annotations: pickedCompletion.of(completion),
-          });
-        }
+        const replacement = getCompletionReplacement({
+          label: name,
+          insertText: option.insertText,
+          type: option.type,
+          pathLength: path.expression ? 1 : path.path.length,
+          from,
+          to,
+        });
+        view.dispatch({
+          ...insertCompletionText(
+            view.state,
+            replacement.text,
+            replacement.from,
+            replacement.to
+          ),
+          annotations: pickedCompletion.of(completion),
+        });
       },
     };
   });
@@ -442,6 +547,7 @@ const expressionLinter = linter((view) => {
   return lintExpression({
     expression: view.state.doc.toString(),
     availableVariables: new Set(Object.keys(scope)),
+    variableValues: scope,
   });
 });
 
