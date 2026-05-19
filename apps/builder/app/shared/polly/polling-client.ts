@@ -4,7 +4,7 @@
  * Repeatedly calls an async `fetcher` at a configurable interval and
  * delivers results via an `onData` callback. Handles:
  *
- * - Configurable interval (default 30 s)
+ * - Configurable interval (default 60 s)
  * - Incremental backoff with decorrelated jitter on errors
  * - Page Visibility API — pauses when the tab is hidden, resumes
  *   with an immediate fetch when visible
@@ -23,7 +23,7 @@ export type PollingClientOptions<T> = {
 
   /**
    * Polling interval in milliseconds (used while healthy).
-   * @default 30_000
+   * @default 60_000
    */
   interval?: number;
 
@@ -85,7 +85,7 @@ export type PollingClient = {
   isActive: () => boolean;
 };
 
-const DEFAULT_INTERVAL = 30_000;
+const DEFAULT_INTERVAL = 60_000;
 
 const hasDocument = () => typeof document !== "undefined";
 
@@ -190,10 +190,13 @@ export const createPollingClient = <T>(
       return;
     }
     active = true;
-    poll();
     if (pauseOnHidden && hasDocument()) {
       document.addEventListener("visibilitychange", handleVisibilityChange);
+      if (document.visibilityState === "hidden") {
+        return;
+      }
     }
+    poll();
   };
 
   const stop = () => {
