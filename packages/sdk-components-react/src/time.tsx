@@ -288,6 +288,7 @@ const DEFAULT_LANGUAGE = "en";
 const DEFAULT_COUNTRY = "GB";
 const DEFAULT_DATE_STYLE = "medium";
 const DEFAULT_TIME_STYLE = "none";
+const DEFAULT_TIME_ZONE = "UTC";
 
 const languageOrDefault = (language: unknown): Language => {
   return languages.includes(language as Language)
@@ -356,35 +357,39 @@ const formatDate = (date: Date, template: string, locale = "en-US"): string => {
 
   // Get localized day and month names
   const longDayName = new Intl.DateTimeFormat(locale, {
+    timeZone: DEFAULT_TIME_ZONE,
     weekday: "long",
   }).format(date);
   const shortDayName = new Intl.DateTimeFormat(locale, {
+    timeZone: DEFAULT_TIME_ZONE,
     weekday: "short",
   }).format(date);
   const longMonthName = new Intl.DateTimeFormat(locale, {
+    timeZone: DEFAULT_TIME_ZONE,
     month: "long",
   }).format(date);
   const shortMonthName = new Intl.DateTimeFormat(locale, {
+    timeZone: DEFAULT_TIME_ZONE,
     month: "short",
   }).format(date);
 
   const tokens: Record<string, string | number> = {
-    YYYY: date.getFullYear(),
-    YY: String(date.getFullYear()).slice(-2),
+    YYYY: date.getUTCFullYear(),
+    YY: String(date.getUTCFullYear()).slice(-2),
     MMMM: longMonthName,
     MMM: shortMonthName,
-    MM: pad(date.getMonth() + 1),
-    M: date.getMonth() + 1,
+    MM: pad(date.getUTCMonth() + 1),
+    M: date.getUTCMonth() + 1,
     DDDD: longDayName,
     DDD: shortDayName,
-    DD: pad(date.getDate()),
-    D: date.getDate(),
-    HH: pad(date.getHours()),
-    H: date.getHours(),
-    mm: pad(date.getMinutes()),
-    m: date.getMinutes(),
-    ss: pad(date.getSeconds()),
-    s: date.getSeconds(),
+    DD: pad(date.getUTCDate()),
+    D: date.getUTCDate(),
+    HH: pad(date.getUTCHours()),
+    H: date.getUTCHours(),
+    mm: pad(date.getUTCMinutes()),
+    m: date.getUTCMinutes(),
+    ss: pad(date.getUTCSeconds()),
+    s: date.getUTCSeconds(),
   };
 
   // Sort tokens by length (longest first) to avoid partial replacements
@@ -438,6 +443,7 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
     const options: Intl.DateTimeFormatOptions = {
       dateStyle: dateStyleOrUndefined(dateStyle),
       timeStyle: timeStyleOrUndefined(timeStyle),
+      timeZone: DEFAULT_TIME_ZONE,
     };
 
     const datetimeString =
