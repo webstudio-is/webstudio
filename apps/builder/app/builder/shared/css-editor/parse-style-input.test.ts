@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+import { toValue } from "@webstudio-is/css-engine";
 import { parseStyleInput } from "./parse-style-input";
 
 describe("parseStyleInput", () => {
@@ -51,6 +52,28 @@ describe("parseStyleInput", () => {
     const { styleMap: result } = parseStyleInput("color: red", new Map());
     expect(result).toEqual(
       new Map([["color", { type: "keyword", value: "red" }]])
+    );
+  });
+
+  test("parses transition timing functions", () => {
+    const parseTimingFunction = (value: string) => {
+      const { styleMap } = parseStyleInput(
+        `transition-timing-function: ${value}`,
+        new Map()
+      );
+      const parsedValue = styleMap.get("transition-timing-function");
+      expect(parsedValue).toBeDefined();
+      return toValue(parsedValue!);
+    };
+
+    expect(parseTimingFunction("cubic-bezier(.36,0,.66,-0.56)")).toEqual(
+      "cubic-bezier(0.36, 0, 0.66, -0.56)"
+    );
+    expect(parseTimingFunction("steps(4, jump-start)")).toEqual(
+      "steps(4, jump-start)"
+    );
+    expect(parseTimingFunction("linear(0 0%, 1 100%)")).toEqual(
+      "linear(0 0%,1 100%)"
     );
   });
 
