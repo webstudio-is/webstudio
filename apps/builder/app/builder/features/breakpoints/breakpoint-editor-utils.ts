@@ -50,9 +50,13 @@ export const buildBreakpointFromEditorState = (
   const trimmedCondition = conditionValue.trim();
   const hasCondition = trimmedCondition !== "";
 
+  if (trimmedLabel === "") {
+    return;
+  }
+
   const newBreakpoint: Breakpoint = {
     id,
-    label: trimmedLabel || originalBreakpoint?.label || "",
+    label: trimmedLabel,
   };
 
   if (hasCondition) {

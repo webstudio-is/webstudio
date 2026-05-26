@@ -149,7 +149,7 @@ describe("breakpoint-editor-utils", () => {
       });
     });
 
-    test("uses original label if new label is empty", () => {
+    test("does not build breakpoint when label is empty", () => {
       const original = {
         id: "id6",
         label: "Original",
@@ -165,11 +165,7 @@ describe("breakpoint-editor-utils", () => {
         original
       );
 
-      expect(result).toEqual({
-        id: "id6",
-        label: "Original",
-        minWidth: 1024,
-      });
+      expect(result).toBeUndefined();
     });
   });
 
