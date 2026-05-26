@@ -1,15 +1,15 @@
 import type { ReactNode } from "react";
 import { css, theme, type CSS } from "../stitches.config";
-import { Text } from "./text";
+import { textVariants } from "./text";
 
 const pricingUrl = "https://webstudio.is/pricing";
 
-const style = css({
-  display: "inline-flex",
+const style = css(textVariants.labels, {
+  display: "inline-grid",
+  placeItems: "center",
   borderRadius: theme.borderRadius[3],
   px: theme.spacing[3],
-  py: theme.spacing[1],
-  lineHeight: 1,
+  height: theme.spacing[9],
   color: theme.colors.foregroundContrastMain,
   alignItems: "center",
   maxWidth: "100%",
@@ -25,6 +25,10 @@ const style = css({
     outline: `2px solid ${theme.colors.borderFocus}`,
     outlineOffset: 1,
   },
+  "@supports (text-box-trim: trim-both) and (text-box-edge: cap alphabetic)": {
+    textBoxTrim: "trim-both",
+    textBoxEdge: "cap alphabetic",
+  },
 });
 
 export const ProBadge = ({
@@ -35,17 +39,13 @@ export const ProBadge = ({
   css?: CSS;
 }) => {
   return (
-    <Text
-      as="a"
+    <a
       className={style({ css })}
       href={pricingUrl}
       target="_blank"
       rel="noreferrer"
-      onClick={(event) => {
-        event.stopPropagation();
-      }}
     >
       {children}
-    </Text>
+    </a>
   );
 };
