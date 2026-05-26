@@ -222,7 +222,8 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
         <Label>Custom code</Label>
         <Text color="subtle">
           Custom code and scripts will be added at the end of the &lt;head&gt;
-          tag to every page across the published project.
+          tag to every page across the published project and will run{" "}
+          <strong>only</strong> on the published site.
         </Text>
         <CodeEditor
           title="Custom code"
