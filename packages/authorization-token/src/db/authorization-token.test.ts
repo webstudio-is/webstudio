@@ -40,13 +40,14 @@ describe("applyTokenPermissions", () => {
     expect(result.canCopy).toBe(false);
   });
 
-  test("editors: canClone and canCopy forced to true, canPublish unchanged", () => {
+  test("editors: canClone forced to false, canCopy forced to true, canPublish unchanged", () => {
     const result = applyTokenPermissions({
       ...baseToken,
       relation: "editors",
+      canClone: true,
       canPublish: false,
     });
-    expect(result.canClone).toBe(true);
+    expect(result.canClone).toBe(false);
     expect(result.canCopy).toBe(true);
     expect(result.canPublish).toBe(false);
   });

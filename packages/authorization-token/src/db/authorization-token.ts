@@ -14,7 +14,16 @@ const applyTokenPermissions = (
   let result = token;
 
   // @todo: fix this on SQL level
-  if (token.relation !== "viewers") {
+  if (token.relation === "editors") {
+    result = {
+      ...result,
+      canClone: false,
+      canCopy: true,
+    };
+  }
+
+  // @todo: fix this on SQL level
+  if (token.relation === "builders" || token.relation === "administrators") {
     result = {
       ...result,
       canClone: true,
