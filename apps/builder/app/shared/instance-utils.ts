@@ -38,7 +38,7 @@ import {
 } from "@webstudio-is/sdk";
 import { detectTokenConflicts } from "./style-source-utils";
 import { type ConflictResolution } from "./token-conflict-dialog";
-import { buildMergedBreakpointIds } from "./breakpoints-utils";
+import { buildMergedBreakpointIds, maxBreakpoints } from "./breakpoints-utils";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
@@ -338,7 +338,8 @@ export const insertWebstudioElementAt = (insertable?: Insertable) => {
 export const insertWebstudioFragmentAt = (
   fragment: WebstudioFragment,
   insertable?: Insertable,
-  conflictResolution?: ConflictResolution
+  conflictResolution?: ConflictResolution,
+  options?: { onBreakpointLimitMerge?: () => void }
 ): boolean => {
   const hasChildren = fragment.children.length > 0;
   const hasTokens = fragment.styleSources.length > 0;
@@ -358,6 +359,7 @@ export const insertWebstudioFragmentAt = (
         availableVariables: [],
         projectId: project.id,
         conflictResolution,
+        onBreakpointLimitMerge: options?.onBreakpointLimitMerge,
       });
     });
     return true;
@@ -385,6 +387,7 @@ export const insertWebstudioFragmentAt = (
       }),
       projectId: project.id,
       conflictResolution,
+      onBreakpointLimitMerge: options?.onBreakpointLimitMerge,
     });
     const children: Instance["children"] = fragment.children.map((child) => {
       if (child.type === "id") {
@@ -1348,12 +1351,14 @@ export const insertWebstudioFragmentCopy = ({
   availableVariables,
   projectId,
   conflictResolution = "theirs",
+  onBreakpointLimitMerge,
 }: {
   data: Omit<WebstudioData, "pages">;
   fragment: WebstudioFragment;
   availableVariables: DataSource[];
   projectId: Project["id"];
   conflictResolution?: ConflictResolution;
+  onBreakpointLimitMerge?: () => void;
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
@@ -1411,10 +1416,20 @@ export const insertWebstudioFragmentCopy = ({
 
   // merge breakpoints
 
+  let didMergeBreakpointsDueToLimit = false;
   const mergedBreakpointIds = buildMergedBreakpointIds(
     fragment.breakpoints,
-    breakpoints
+    breakpoints,
+    {
+      maxBreakpointCount: maxBreakpoints,
+      onBreakpointMergedDueToLimit: () => {
+        didMergeBreakpointsDueToLimit = true;
+      },
+    }
   );
+  if (didMergeBreakpointsDueToLimit) {
+    onBreakpointLimitMerge?.();
+  }
   for (const newBreakpoint of fragment.breakpoints) {
     if (mergedBreakpointIds.has(newBreakpoint.id) === false) {
       breakpoints.set(newBreakpoint.id, newBreakpoint);
@@ -1869,7 +1884,8 @@ export const detectFragmentTokenConflicts = ({
 
   const mergedBreakpointIds = buildMergedBreakpointIds(
     fragment.breakpoints,
-    data.breakpoints
+    data.breakpoints,
+    { maxBreakpointCount: maxBreakpoints }
   );
 
   return detectTokenConflicts({
@@ -1925,7 +1941,8 @@ export const detectPageTokenConflicts = ({
 
   const mergedBreakpointIds = buildMergedBreakpointIds(
     combinedBreakpoints,
-    data.breakpoints
+    data.breakpoints,
+    { maxBreakpointCount: maxBreakpoints }
   );
 
   return detectTokenConflicts({
