@@ -42,16 +42,12 @@ import {
   SmallIconButton,
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import {
-  $selectedPagePath,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils";
 import { $selectedPageId } from "~/shared/nano-states";
 import {
   $authTokenPermissions,
   $editingPageId,
-  $publishedOrigin,
   $permissions,
   $stagingUsername,
   $stagingPassword,
@@ -87,6 +83,8 @@ import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $dataSources, $instances, $pages } from "~/shared/sync/data-stores";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
+import { $currentSystem } from "~/shared/system";
+import { getPublishUrl } from "./publish-url";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -99,8 +97,7 @@ const ChangeProjectDomain = ({
   refresh,
 }: ChangeProjectDomainProps) => {
   const id = useId();
-  const publishedOrigin = useStore($publishedOrigin);
-  const selectedPagePath = useStore($selectedPagePath);
+  const currentSystem = useStore($currentSystem);
   const stagingUsername = useStore($stagingUsername);
   const stagingPassword = useStore($stagingPassword);
   const publisherHost = useStore($publisherHost);
@@ -110,18 +107,12 @@ const ChangeProjectDomain = ({
   const [isUpdateInProgress, setIsUpdateInProgress] = useOptimistic(false);
   const [isUnpublishing, setIsUnpublishing] = useOptimistic(false);
 
-  const pageUrl = new URL(publishedOrigin);
-  pageUrl.pathname = selectedPagePath;
-
-  // Add username:password@ for staging domains
-  if (
-    stagingUsername &&
-    stagingPassword &&
-    pageUrl.hostname.endsWith(`.${publisherHost}`)
-  ) {
-    pageUrl.username = stagingUsername;
-    pageUrl.password = stagingPassword;
-  }
+  const pageUrl = getPublishUrl({
+    domain: `${project.domain}.${publisherHost}`,
+    pathname: currentSystem.pathname,
+    username: stagingUsername,
+    password: stagingPassword,
+  });
 
   const updateProjectDomain = async () => {
     setIsUpdateInProgress(true);
