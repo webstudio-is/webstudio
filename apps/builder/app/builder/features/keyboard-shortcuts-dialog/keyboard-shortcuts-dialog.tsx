@@ -88,6 +88,7 @@ export const KeyboardShortcutsDialog = () => {
     General: [
       "cancelCurrentDrag",
       "openCommandPanel",
+      "toggleUiHidden",
       "openPublishDialog",
       "openExportDialog",
       "openKeyboardShortcuts",
