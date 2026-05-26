@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import {
   Flex,
@@ -20,32 +19,37 @@ import { setCanvasWidth } from "../../shared/calc-canvas-width";
 type BreakpointsMenuProps = {
   breakpoints: Breakpoints;
   selectedBreakpoint: Breakpoint;
+  open: boolean;
+  triggerOpen: boolean;
+  onOpenChange: (open: boolean) => void;
   onEditClick: () => void;
 };
 
 export const BreakpointsMenu = ({
   breakpoints,
   selectedBreakpoint,
+  open,
+  triggerOpen,
+  onOpenChange,
   onEditClick,
 }: BreakpointsMenuProps) => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const grouped = groupBreakpoints(Array.from(breakpoints.values()));
   const selectedCustom = grouped.custom.find(
     (bp) => bp.id === selectedBreakpoint.id
   );
 
   return (
-    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+    <DropdownMenu open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton
           variant="subtle"
           aria-label="Breakpoints with custom conditions"
-          data-state={selectedCustom ? "on" : "off"}
+          data-state={triggerOpen ? "open" : selectedCustom ? "on" : "off"}
         >
           {selectedCustom ? selectedCustom.label : <EllipsesIcon />}
         </ToolbarButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent css={{ width: theme.spacing[30] }}>
+      <DropdownMenuContent sideOffset={4} css={{ width: theme.spacing[30] }}>
         {grouped.widthBased.map((breakpoint) => {
           let description = "All Sizes";
           if (breakpoint.minWidth !== undefined) {
@@ -107,7 +111,6 @@ export const BreakpointsMenu = ({
           <Button
             color="neutral"
             onClick={() => {
-              setDropdownOpen(false);
               onEditClick();
             }}
             css={{ width: "100%" }}

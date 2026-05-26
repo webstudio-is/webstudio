@@ -46,7 +46,6 @@ export const CanvasSettingsPopover = () => {
         </ToolbarButton>
       </PopoverTrigger>
       <PopoverContent
-        sideOffset={0}
         collisionPadding={4}
         align="start"
         css={{ width: theme.spacing[30] }}
