@@ -17,6 +17,7 @@ import {
   formIdFieldName,
   formBotFieldName,
 } from "@webstudio-is/sdk/runtime";
+import { authenticateRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
   PageSettingsMeta,
@@ -42,6 +43,7 @@ import * as constants from "__CONSTANTS__";
 import css from "__CSS__?url";
 import { sitemap } from "__SITEMAP__";
 import { assets } from "__ASSETS__";
+import { authRoutes } from "__AUTH__";
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
@@ -83,6 +85,8 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
+  const authRoute = authenticateRequest(arg.request, authRoutes);
+
   const url = new URL(arg.request.url);
   const host =
     arg.request.headers.get("x-forwarded-host") ||
@@ -133,7 +137,8 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     {
       status: pageMeta.status,
       headers: {
-        "Cache-Control": "public, max-age=600",
+        "Cache-Control":
+          authRoute === undefined ? "public, max-age=600" : "private, no-store",
       },
     }
   );
@@ -220,6 +225,8 @@ export const action = async ({
 }: ActionFunctionArgs): Promise<
   { success: true } | { success: false; errors: string[] }
 > => {
+  authenticateRequest(request, authRoutes);
+
   try {
     const url = new URL(request.url);
     url.host = getRequestHost(request);

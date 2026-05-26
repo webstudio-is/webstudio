@@ -26,7 +26,7 @@ import {
   PageIcon,
   DynamicPageIcon,
 } from "@webstudio-is/icons";
-import { NewPageSettings, PageSettings } from "./page-settings";
+import { NewPageSettings, PageSettings } from "./page-settings/page-settings";
 import { PageContextMenu } from "./page-context-menu";
 import {
   DeletePageConfirmationDialog,
@@ -427,7 +427,6 @@ const PageEditor = ({
   if (editingPageId === newPageId) {
     return (
       <NewPageSettings
-        onClose={onClose}
         onSuccess={(pageId) => {
           onClose();
           selectPage(pageId);

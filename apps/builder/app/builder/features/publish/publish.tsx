@@ -336,6 +336,22 @@ const $restrictedFeatures = computed(
     ) {
       features.set("Custom contact email", undefined);
     }
+    if (!permissions.allowPageAuth) {
+      if ((pages.meta?.auth ?? "").trim()) {
+        features.set("Project auth", undefined);
+      }
+      for (const page of getAllPages(pages)) {
+        if (page.meta.auth !== undefined) {
+          features.set("Page auth", {
+            navigate: {
+              pageId: page.id,
+              instanceSelector: [page.rootInstanceId],
+            },
+            view: "pageSettings",
+          });
+        }
+      }
+    }
     if (!permissions.allowDynamicData) {
       // pages with dynamic paths
       for (const page of getAllPages(pages)) {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validateBasicAuth } from "@webstudio-is/wsauth";
 
 export type System = {
   params: Record<string, string | undefined>;
@@ -45,6 +46,52 @@ export const PageTitle = z
 
 export const documentTypes = ["html", "xml"] as const;
 
+const BasicAuthFields = {
+  login: z.string(),
+  password: z.string(),
+};
+
+const validateBasicAuthFields = (
+  {
+    login,
+    password,
+  }: {
+    login: string;
+    password: string;
+  },
+  context: z.RefinementCtx
+) => {
+  for (const issue of validateBasicAuth({ login, password }).issues ?? []) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: issue.path,
+      message: issue.message,
+    });
+  }
+};
+
+const PageBasicAuth = z
+  .object({
+    method: z.literal("basic"),
+    ...BasicAuthFields,
+  })
+  .superRefine(validateBasicAuthFields);
+
+const LegacyPageBasicAuth = z
+  .object({
+    type: z.literal("basic"),
+    ...BasicAuthFields,
+  })
+  .superRefine(validateBasicAuthFields)
+  .transform(({ login, password }) => ({
+    method: "basic" as const,
+    login,
+    password,
+  }));
+
+export const PageAuth = z.union([PageBasicAuth, LegacyPageBasicAuth]);
+export type PageAuth = z.infer<typeof PageAuth>;
+
 const commonPageFields = {
   id: PageId,
   name: PageName,
@@ -62,6 +109,7 @@ const commonPageFields = {
     status: z.string().optional(),
     redirect: z.string().optional(),
     documentType: z.optional(z.enum(documentTypes)),
+    auth: PageAuth.optional(),
     custom: z
       .array(
         z.object({
@@ -154,6 +202,7 @@ const ProjectMeta = z.object({
   contactEmail: z.string().optional(),
   faviconAssetId: z.string().optional(),
   code: z.string().optional(),
+  auth: z.string().optional(),
 });
 export type ProjectMeta = z.infer<typeof ProjectMeta>;
 

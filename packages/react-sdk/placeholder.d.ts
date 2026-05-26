@@ -51,6 +51,11 @@ declare module "__SERVER__" {
   export const contactEmail: undefined | string;
 }
 
+declare module "__AUTH__" {
+  import type { WsAuthRoute } from "@webstudio-is/wsauth";
+  export const authRoutes: WsAuthRoute[];
+}
+
 declare module "__SITEMAP__" {
   export const sitemap: Array<{
     path: string;

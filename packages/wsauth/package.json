@@ -1,0 +1,33 @@
+{
+  "name": "@webstudio-is/wsauth",
+  "version": "0.0.0-webstudio-version",
+  "description": "Webstudio auth primitives, validators, build-time helpers, and runtime enforcement",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --project tsconfig.dts.json",
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "vitest": "^3.1.2"
+  },
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib/*",
+    "README.md",
+    "!*.{test,stories}.*"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "private": false,
+  "sideEffects": false
+}

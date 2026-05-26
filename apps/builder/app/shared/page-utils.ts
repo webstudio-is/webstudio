@@ -181,6 +181,9 @@ export const insertPageCopyMutable = ({
   if (newPage.meta.redirect !== undefined) {
     newPage.meta.redirect = transformExpression(newPage.meta.redirect);
   }
+  if (newPage.meta.auth !== undefined) {
+    newPage.meta.auth = { ...newPage.meta.auth };
+  }
   if (newPage.meta.custom) {
     newPage.meta.custom = newPage.meta.custom.map(({ property, content }) => ({
       property,
