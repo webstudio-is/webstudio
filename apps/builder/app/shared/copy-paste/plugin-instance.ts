@@ -29,6 +29,7 @@ import {
 import { findAvailableVariables } from "../data-variables";
 import { builderApi } from "../builder-api";
 import type { Plugin } from "./init-copy-paste";
+import { breakpointPasteLimitWarning } from "../breakpoints";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -188,6 +189,9 @@ const onPaste = async (clipboardData: string) => {
         }),
         projectId: project.id,
         conflictResolution,
+        onBreakpointLimitMerge: () => {
+          toast.warn(breakpointPasteLimitWarning);
+        },
       });
       const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
       if (newRootInstanceId === undefined) {

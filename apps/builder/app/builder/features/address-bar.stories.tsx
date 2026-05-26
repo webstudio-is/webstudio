@@ -3,7 +3,7 @@ import type { Meta, StoryFn } from "@storybook/react";
 import { StorySection, Text } from "@webstudio-is/design-system";
 import { ToolbarButton } from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
-import { TopbarLayout } from "~/builder/shared/topbar-layout";
+import { TopbarLayout } from "~/builder/shared/topbar";
 import { AddressBarPopover } from "./address-bar";
 import { $dataSources, $pages } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";

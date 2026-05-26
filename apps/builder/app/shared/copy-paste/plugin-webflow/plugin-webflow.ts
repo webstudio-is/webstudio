@@ -20,6 +20,7 @@ import { denormalizeSrcProps } from "../asset-upload";
 import { nanoHash } from "~/shared/nano-hash";
 import { findAvailableVariables } from "~/shared/data-variables";
 import type { Plugin } from "../init-copy-paste";
+import { breakpointPasteLimitWarning } from "~/shared/breakpoints";
 
 const { toast } = builderApi;
 
@@ -191,6 +192,9 @@ const onPaste = async (clipboardData: string) => {
         startingInstanceId: insertable.parentSelector[0],
       }),
       projectId: project.id,
+      onBreakpointLimitMerge: () => {
+        toast.warn(breakpointPasteLimitWarning);
+      },
     });
 
     const children = fragment.children
