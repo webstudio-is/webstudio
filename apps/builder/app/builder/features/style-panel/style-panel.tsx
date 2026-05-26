@@ -39,11 +39,7 @@ import {
 } from "~/builder/shared/client-settings";
 import { sections } from "./sections";
 import { StyleSourcesSection } from "./style-source-section";
-import {
-  $instanceTags,
-  useComputedStyleDecl,
-  useParentComputedStyleDecl,
-} from "./shared/model";
+import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
 
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
@@ -129,7 +125,6 @@ export const StylePanel = () => {
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const readonly = isStyleSourceLocked(useStore($selectedStyleSource));
   const tag = useStore($selectedInstanceTag);
-  const display = toValue(useComputedStyleDecl("display").computedValue);
   const parentDisplay = toValue(
     useParentComputedStyleDecl("display").computedValue
   );
@@ -168,16 +163,6 @@ export const StylePanel = () => {
       tag !== "ul" &&
       tag !== "ol" &&
       tag !== "li"
-    ) {
-      continue;
-    }
-    // non-replaced inline boxes cannot be transformed
-    // https://drafts.csswg.org/css-transforms-1/#css-values
-    if (
-      category === "transforms" &&
-      (display === "inline" ||
-        display === "table-column" ||
-        display === "table-column-group")
     ) {
       continue;
     }
