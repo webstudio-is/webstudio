@@ -50,6 +50,7 @@ import {
   $activeSidebarPanel,
   $dataLoadingState,
   $isCloneDialogOpen,
+  $isUiHidden,
   $loadingState,
 } from "./shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
@@ -146,20 +147,35 @@ const Main = ({ children, css }: { children: ReactNode; css?: CSS }) => (
 type ChromeWrapperProps = {
   children: Array<JSX.Element | null | false>;
   isPreviewMode: boolean;
+  isFooterVisible: boolean;
+  isUiHidden: boolean;
   navigatorLayout: Settings["navigatorLayout"];
 };
 
 const getChromeLayout = ({
   isPreviewMode,
+  isUiHidden,
   navigatorLayout,
   activeSidebarPanel,
   leftSidebarWidth,
 }: {
   isPreviewMode: boolean;
+  isUiHidden: boolean;
   navigatorLayout: Settings["navigatorLayout"];
   activeSidebarPanel?: SidebarPanelName;
   leftSidebarWidth: number;
 }) => {
+  if (isUiHidden) {
+    return {
+      gridTemplateColumns: "1fr",
+      gridTemplateAreas: `
+            "header"
+            "main"
+            "footer"
+          `,
+    };
+  }
+
   if (isPreviewMode) {
     return {
       gridTemplateColumns: "auto 1fr",
@@ -197,6 +213,8 @@ const defaultSidebarWidth = Number.parseFloat(rawTheme.spacing[30]);
 const ChromeWrapper = ({
   children,
   isPreviewMode,
+  isFooterVisible,
+  isUiHidden,
   navigatorLayout,
 }: ChromeWrapperProps) => {
   const activeSidebarPanel = useStore($activeSidebarPanel);
@@ -209,6 +227,7 @@ const ChromeWrapper = ({
 
   const gridLayout = getChromeLayout({
     isPreviewMode,
+    isUiHidden,
     navigatorLayout,
     activeSidebarPanel,
     leftSidebarWidth,
@@ -217,10 +236,13 @@ const ChromeWrapper = ({
   return (
     <Grid
       css={{
+        position: "relative",
         height: "100vh",
         overflow: "hidden",
         display: "grid",
-        gridTemplateRows: "auto 1fr auto",
+        gridTemplateRows: `${isUiHidden ? "0" : "auto"} 1fr ${
+          isFooterVisible ? "auto" : "0"
+        }`,
         ...gridLayout,
       }}
     >
@@ -317,6 +339,7 @@ export const Builder = (props: BuilderProps) => {
   usePreventUnload();
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
+  const isUiHidden = useStore($isUiHidden);
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
 
@@ -378,6 +401,7 @@ export const Builder = (props: BuilderProps) => {
   const canvasUrl = getCanvasUrl();
 
   const inertHandlers = useInertHandlers();
+  const isFooterVisible = isPreviewMode === false && isUiHidden === false;
 
   // Show loading screen if project isn't ready yet
   if (!project || dataLoadingState !== "loaded") {
@@ -398,11 +422,14 @@ export const Builder = (props: BuilderProps) => {
       >
         <ChromeWrapper
           isPreviewMode={isPreviewMode}
+          isFooterVisible={isFooterVisible}
+          isUiHidden={isUiHidden}
           navigatorLayout={navigatorLayout}
         >
           <Box
             data-dialog-boundary
             css={{
+              display: isUiHidden ? "none" : "block",
               gridArea: "sidebar / sidebar / main / inspector",
               pointerEvents: "none",
             }}
@@ -427,6 +454,7 @@ export const Builder = (props: BuilderProps) => {
           <SidePanel
             gridArea="sidebar"
             css={{
+              display: isUiHidden ? "none" : "flex",
               order: navigatorLayout === "docked" ? 1 : undefined,
             }}
           >
@@ -437,6 +465,7 @@ export const Builder = (props: BuilderProps) => {
             gridArea="inspector"
             isPreviewMode={isPreviewMode}
             css={{
+              display: isUiHidden || isPreviewMode ? "none" : "flex",
               overflow: "hidden",
               // Drawing border this way to ensure content still has full width, avoid subpixels and give layout round numbers
               "&::after": {
@@ -459,6 +488,7 @@ export const Builder = (props: BuilderProps) => {
             <Topbar
               project={project}
               css={{ gridArea: "header" }}
+              isUiHidden={isUiHidden}
               loading={
                 <LoadingBackground
                   // Looks nicer when topbar is already visible earlier, so user has more sense of progress.
@@ -474,7 +504,7 @@ export const Builder = (props: BuilderProps) => {
           <Main css={{ pointerEvents: "none" }}>
             <TextToolbar />
           </Main>
-          {isPreviewMode === false && <Footer />}
+          {isFooterVisible && <Footer />}
           {project ? (
             <CloneProjectDialog
               isOpen={isCloneDialogOpen}
