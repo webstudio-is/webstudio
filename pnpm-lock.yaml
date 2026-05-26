@@ -518,6 +518,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
@@ -585,6 +588,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       h3:
         specifier: ^1.15.1
         version: 1.15.1
@@ -655,6 +661,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
@@ -719,6 +728,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
@@ -978,6 +990,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       isbot:
         specifier: ^5.1.25
         version: 5.1.25

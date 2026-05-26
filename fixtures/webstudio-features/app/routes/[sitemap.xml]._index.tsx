@@ -1,6 +1,7 @@
 import { renderToString } from "react-dom/server";
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
+import { authenticateRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
   xmlNodeTagSuffix,
@@ -14,6 +15,7 @@ import {
 import { assetBaseUrl, imageLoader } from "../constants.mjs";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 import { assets } from "../__generated__/$resources.assets";
+import { authRoutes } from "../__generated__/$resources.wsauth.server";
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
@@ -55,6 +57,8 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
+  const authRoute = authenticateRequest(arg.request, authRoutes);
+
   const url = new URL(arg.request.url);
   const host =
     arg.request.headers.get("x-forwarded-host") ||
@@ -112,6 +116,10 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   text = text.replaceAll(xmlNodeTagSuffix, "");
 
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n${text}`, {
-    headers: { "Content-Type": "application/xml" },
+    headers: {
+      "Content-Type": "application/xml",
+      "Cache-Control":
+        authRoute === undefined ? "public, max-age=600" : "private, no-store",
+    },
   });
 };
