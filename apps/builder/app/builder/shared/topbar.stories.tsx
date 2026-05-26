@@ -19,7 +19,7 @@ import { $syncStatus } from "@webstudio-is/sync-client";
 import { $authPermit } from "~/shared/nano-states";
 import { SyncStatus } from "~/builder/features/sync-status";
 import { ViewMode } from "~/builder/features/view-mode";
-import { TopbarLayout } from "./topbar-layout";
+import { TopbarLayout } from "./topbar";
 
 export default {
   title: "Topbar layout",

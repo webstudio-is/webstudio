@@ -225,7 +225,12 @@ export const TransitionContent = ({ index }: { index: number }) => {
             if (value.type === "layers") {
               [value] = value.value;
             }
-            if (value.type === "keyword" || value.type === "var") {
+            if (
+              value.type === "keyword" ||
+              value.type === "function" ||
+              value.type === "unparsed" ||
+              value.type === "var"
+            ) {
               updateIntermediateValue({ timing: value });
               setRepeatedStyleItem(
                 transitionTimingFunction,

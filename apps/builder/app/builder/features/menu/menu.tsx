@@ -17,6 +17,7 @@ import {
 import {
   $isCloneDialogOpen,
   $isShareDialogOpen,
+  $isUiHidden,
   $publishDialog,
   $remoteDialog,
 } from "~/builder/shared/nano-states";
@@ -37,11 +38,21 @@ import { help } from "~/shared/help";
 
 const ViewMenuItem = () => {
   const navigatorLayout = getSetting("navigatorLayout");
+  const isUiHidden = useStore($isUiHidden);
 
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>View</DropdownMenuSubTrigger>
       <DropdownMenuSubContent width="regular">
+        <DropdownMenuCheckboxItem
+          checked={isUiHidden}
+          onSelect={() => emitCommand("toggleUiHidden")}
+        >
+          Hide UI
+          <DropdownMenuItemRightSlot>
+            <Kbd value={["meta", "\\"]} />
+          </DropdownMenuItemRightSlot>
+        </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={navigatorLayout === "undocked"}
           onSelect={() => {

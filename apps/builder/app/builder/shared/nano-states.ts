@@ -15,6 +15,8 @@ export const $canvasWidth = atom<number | undefined>();
 
 export const $isCloneDialogOpen = atom<boolean>(false);
 
+export const $isUiHidden = atom<boolean>(false);
+
 export const $canvasRect = atom<DOMRect | undefined>();
 
 export const $workspaceRect = atom<DOMRect | undefined>();

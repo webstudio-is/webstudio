@@ -3,6 +3,9 @@ import {
   isBaseBreakpoint,
   groupBreakpoints,
   buildMergedBreakpointIds,
+  findClosestBreakpoint,
+  hasReachedBreakpointLimit,
+  maxBreakpoints,
 } from "./breakpoints-utils";
 import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 
@@ -251,5 +254,139 @@ describe("buildMergedBreakpointIds", () => {
     // So breakpoints with same dimensions but different labels will still merge
     expect(result.size).toBe(1);
     expect(result.get("frag-1")).toBe("exist-1");
+  });
+
+  test("keeps total breakpoints within max count by merging overflow into closest existing breakpoint", () => {
+    const existingBreakpoints: Breakpoints = new Map([
+      ["base", { id: "base", label: "" }],
+      ["desktop", { id: "desktop", label: "Desktop", minWidth: 1200 }],
+      ["tablet", { id: "tablet", label: "Tablet", maxWidth: 900 }],
+      ["mobile", { id: "mobile", label: "Mobile", maxWidth: 480 }],
+      ["wide", { id: "wide", label: "Wide", minWidth: 1600 }],
+      ["large", { id: "large", label: "Large", minWidth: 2000 }],
+      ["print", { id: "print", label: "Print", condition: "print" }],
+      ["hover", { id: "hover", label: "Hover", condition: "hover: hover" }],
+    ]);
+    const fragmentBreakpoints: Breakpoint[] = [
+      { id: "frag-existing", label: "Same", maxWidth: 480 },
+      { id: "frag-new", label: "New", minWidth: 1440 },
+      { id: "frag-overflow", label: "Overflow", maxWidth: 760 },
+    ];
+
+    const result = buildMergedBreakpointIds(
+      fragmentBreakpoints,
+      existingBreakpoints,
+      { maxBreakpointCount: maxBreakpoints }
+    );
+
+    expect(result.get("frag-existing")).toBe("mobile");
+    expect(result.has("frag-new")).toBe(false);
+    expect(result.get("frag-overflow")).toBe("tablet");
+  });
+
+  test("merges all new breakpoints when existing non-base breakpoints are already at the max count", () => {
+    const existingBreakpoints: Breakpoints = new Map([
+      ["base", { id: "base", label: "" }],
+      ["0", { id: "0", label: "320", maxWidth: 320 }],
+      ["1", { id: "1", label: "480", maxWidth: 480 }],
+      ["2", { id: "2", label: "768", maxWidth: 768 }],
+      ["3", { id: "3", label: "1024", maxWidth: 1024 }],
+      ["4", { id: "4", label: "1280", minWidth: 1280 }],
+      ["5", { id: "5", label: "1440", minWidth: 1440 }],
+      ["6", { id: "6", label: "1920", minWidth: 1920 }],
+      ["7", { id: "7", label: "2560", minWidth: 2560 }],
+    ]);
+
+    const result = buildMergedBreakpointIds(
+      [{ id: "frag", label: "New", minWidth: 1500 }],
+      existingBreakpoints,
+      { maxBreakpointCount: maxBreakpoints }
+    );
+
+    expect(result.get("frag")).toBe("5");
+  });
+
+  test("reports when breakpoint is merged because of max count", () => {
+    const existingBreakpoints: Breakpoints = new Map([
+      ["base", { id: "base", label: "" }],
+      ["0", { id: "0", label: "320", maxWidth: 320 }],
+      ["1", { id: "1", label: "480", maxWidth: 480 }],
+      ["2", { id: "2", label: "768", maxWidth: 768 }],
+      ["3", { id: "3", label: "1024", maxWidth: 1024 }],
+      ["4", { id: "4", label: "1280", minWidth: 1280 }],
+      ["5", { id: "5", label: "1440", minWidth: 1440 }],
+      ["6", { id: "6", label: "1920", minWidth: 1920 }],
+      ["7", { id: "7", label: "2560", minWidth: 2560 }],
+    ]);
+    let mergeCount = 0;
+
+    buildMergedBreakpointIds(
+      [{ id: "frag", label: "New", minWidth: 1500 }],
+      existingBreakpoints,
+      {
+        maxBreakpointCount: maxBreakpoints,
+        onBreakpointMergedDueToLimit: () => {
+          mergeCount += 1;
+        },
+      }
+    );
+
+    expect(mergeCount).toBe(1);
+  });
+
+  test("does not count base breakpoint against max count", () => {
+    const existingBreakpoints: Breakpoints = new Map([
+      ["base", { id: "base", label: "" }],
+      ["0", { id: "0", label: "320", maxWidth: 320 }],
+      ["1", { id: "1", label: "480", maxWidth: 480 }],
+      ["2", { id: "2", label: "768", maxWidth: 768 }],
+      ["3", { id: "3", label: "1024", maxWidth: 1024 }],
+      ["4", { id: "4", label: "1280", minWidth: 1280 }],
+      ["5", { id: "5", label: "1440", minWidth: 1440 }],
+      ["6", { id: "6", label: "1920", minWidth: 1920 }],
+    ]);
+
+    const result = buildMergedBreakpointIds(
+      [{ id: "frag", label: "New", minWidth: 1500 }],
+      existingBreakpoints,
+      { maxBreakpointCount: maxBreakpoints }
+    );
+
+    expect(result.has("frag")).toBe(false);
+  });
+});
+
+describe("findClosestBreakpoint", () => {
+  test("finds the closest width-based breakpoint", () => {
+    const result = findClosestBreakpoint(
+      { id: "new", label: "New", maxWidth: 760 },
+      [
+        { id: "base", label: "" },
+        { id: "mobile", label: "Mobile", maxWidth: 480 },
+        { id: "tablet", label: "Tablet", maxWidth: 768 },
+      ]
+    );
+
+    expect(result?.id).toBe("tablet");
+  });
+
+  test("falls back to base for condition breakpoints without comparable widths", () => {
+    const result = findClosestBreakpoint(
+      { id: "new", label: "Dark", condition: "prefers-color-scheme: dark" },
+      [
+        { id: "base", label: "" },
+        { id: "hover", label: "Hover", condition: "hover: hover" },
+      ]
+    );
+
+    expect(result?.id).toBe("base");
+  });
+});
+
+describe("hasReachedBreakpointLimit", () => {
+  test("counts saved and pending breakpoints", () => {
+    expect(hasReachedBreakpointLimit(maxBreakpoints - 1)).toBe(false);
+    expect(hasReachedBreakpointLimit(maxBreakpoints)).toBe(true);
+    expect(hasReachedBreakpointLimit(maxBreakpoints - 1, 1)).toBe(true);
   });
 });

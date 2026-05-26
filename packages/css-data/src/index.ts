@@ -1,4 +1,5 @@
 export { html } from "./__generated__/html";
+export * from "./html-elements";
 export * from "./__generated__/keyword-values";
 export * from "./__generated__/units";
 export {

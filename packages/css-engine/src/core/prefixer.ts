@@ -1,7 +1,7 @@
 import type { StyleMap } from "./rules";
 import type { CssProperty, StyleValue } from "../schema";
 
-const isKeyword = (value: StyleValue, keyword: string) => {
+const isKeyword = (value: StyleValue, keyword: string): boolean => {
   if (value.type === "keyword") {
     return value.value === keyword;
   }
@@ -11,7 +11,7 @@ const isKeyword = (value: StyleValue, keyword: string) => {
   return false;
 };
 
-export const prefixStyles = (styleMap: StyleMap) => {
+export const prefixStyles = (styleMap: StyleMap): StyleMap => {
   const newStyleMap: StyleMap = new Map();
   const backgroundClip = styleMap.get("background-clip");
   const hasTextBackgroundClip =
