@@ -173,7 +173,12 @@ const BasePhone = ({
   );
 };
 
-const propToEmail = (value: string) => {
+type EmailValue = {
+  email: string;
+  subject: string;
+};
+
+const propToEmail = (value: string): EmailValue => {
   let url;
   try {
     url = new URL(value);
@@ -191,6 +196,23 @@ const propToEmail = (value: string) => {
   };
 };
 
+const emailToProp = ({ email, subject }: EmailValue) => {
+  if (email === "" && subject === "") {
+    return "";
+  }
+
+  const url = new URL(`mailto:${email}`);
+  if (subject !== "") {
+    url.searchParams.set("subject", subject);
+  }
+  return url.toString();
+};
+
+export const __testing__ = {
+  emailToProp,
+  propToEmail,
+};
+
 const BaseEmail = ({
   readOnly,
   prop,
@@ -199,19 +221,7 @@ const BaseEmail = ({
   id,
 }: BaseControlProps) => {
   const localValue = useLocalValue(propToEmail(value), ({ email, subject }) => {
-    if (email === "") {
-      if (prop?.type === "expression") {
-        updateExpressionValue(prop.value, "");
-      } else {
-        onChange({ type: "string", value: "" });
-      }
-      return;
-    }
-    const url = new URL(`mailto:${email}`);
-    if (subject !== "") {
-      url.searchParams.set("subject", subject);
-    }
-    const value = url.toString();
+    const value = emailToProp({ email, subject });
     if (prop?.type === "expression") {
       updateExpressionValue(prop.value, value);
     } else {
