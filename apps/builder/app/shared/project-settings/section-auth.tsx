@@ -38,7 +38,7 @@ const saveSetting = <Name extends keyof ProjectMeta>(
 };
 
 export const SectionAuth = () => {
-  const { allowPageAuth } = useStore($permissions);
+  const { allowAuth } = useStore($permissions);
   const authId = useId();
   const pages = useStore($pages);
   const [auth, setAuth] = useState(() => {
@@ -57,7 +57,7 @@ export const SectionAuth = () => {
     <Grid gap={2}>
       <Flex align="center" gap={1} css={sectionSpacing}>
         <Text variant="titles">Authentication</Text>
-        {allowPageAuth === false && <ProBadge>PRO</ProBadge>}
+        {allowAuth === false && <ProBadge>PRO</ProBadge>}
         <Tooltip
           content={
             <>
@@ -84,7 +84,7 @@ export const SectionAuth = () => {
                 Lines starting with # are comments. Routes use the same syntax
                 as page paths, including :params and * wildcards.
               </Text>
-              {allowPageAuth === false && (
+              {allowAuth === false && (
                 <>
                   <br />
                   <Text>

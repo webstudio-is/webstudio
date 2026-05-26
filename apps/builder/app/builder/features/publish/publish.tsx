@@ -8,7 +8,6 @@ import {
   startTransition,
   useRef,
   useId,
-  type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -43,7 +42,6 @@ import {
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
-import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils";
 import { $selectedPageId } from "~/shared/nano-states";
 import {
   $authTokenPermissions,
@@ -72,11 +70,7 @@ import {
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import {
-  getAllPages,
-  isPathnamePattern,
-  type Templates,
-} from "@webstudio-is/sdk";
+import { type Templates } from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
@@ -85,6 +79,10 @@ import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
+import {
+  getRestrictedFeatures,
+  type RestrictedFeature,
+} from "./restricted-features";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -316,73 +314,8 @@ const ChangeProjectDomain = ({
 
 const $restrictedFeatures = computed(
   [$pages, $dataSources, $instances, $permissions],
-  (pages, dataSources, instances, permissions) => {
-    const features = new Map<
-      string,
-      | undefined
-      | {
-          navigate?: { pageId: string; instanceSelector: string[] };
-          view?: "pageSettings";
-          info?: ReactNode;
-        }
-    >();
-    if (pages === undefined) {
-      return features;
-    }
-    // specified emails for default webhook form
-    if (
-      permissions.maxContactEmailsPerProject === 0 &&
-      (pages?.meta?.contactEmail ?? "").trim()
-    ) {
-      features.set("Custom contact email", undefined);
-    }
-    if (!permissions.allowPageAuth) {
-      if ((pages.meta?.auth ?? "").trim()) {
-        features.set("Project auth", undefined);
-      }
-      for (const page of getAllPages(pages)) {
-        if (page.meta.auth !== undefined) {
-          features.set("Page auth", {
-            navigate: {
-              pageId: page.id,
-              instanceSelector: [page.rootInstanceId],
-            },
-            view: "pageSettings",
-          });
-        }
-      }
-    }
-    if (!permissions.allowDynamicData) {
-      // pages with dynamic paths
-      for (const page of getAllPages(pages)) {
-        const navigate = {
-          pageId: page.id,
-          instanceSelector: [page.rootInstanceId],
-        };
-        // allow catch all for 404 pages on free plan
-        if (isPathnamePattern(page.path) && page.path !== "/*") {
-          features.set("Dynamic path", { navigate, view: "pageSettings" });
-        }
-        if (page.meta.redirect && page.meta.redirect !== `""`) {
-          features.set("Redirect", { navigate, view: "pageSettings" });
-        }
-      }
-      // has resource variables
-      for (const dataSource of dataSources.values()) {
-        if (dataSource.type === "resource") {
-          const instanceId = dataSource.scopeInstanceId ?? "";
-          features.set("Resource variable", {
-            navigate: findPageAndSelectorByInstanceId(
-              pages,
-              instances,
-              instanceId
-            ),
-          });
-        }
-      }
-    }
-    return features;
-  }
+  (pages, dataSources, instances, permissions) =>
+    getRestrictedFeatures({ pages, dataSources, instances, permissions })
 );
 
 const usePublishCountdown = (isPublishing: boolean) => {
@@ -424,15 +357,7 @@ const Publish = ({
   timesLeft: number;
   disabled: boolean;
   refresh: () => Promise<void>;
-  restrictedFeatures: Map<
-    string,
-    | undefined
-    | {
-        navigate?: { pageId: string; instanceSelector: string[] };
-        view?: "pageSettings";
-        info?: ReactNode;
-      }
-  >;
+  restrictedFeatures: Map<string, RestrictedFeature>;
 }) => {
   const { maxDailyPublishesPerUser } = useStore($permissions);
   const { userPublishCount } = useUserPublishCount();

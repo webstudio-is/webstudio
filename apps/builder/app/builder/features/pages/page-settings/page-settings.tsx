@@ -229,7 +229,7 @@ const FormFields = ({
 }) => {
   const project = useStore($project);
   const pages = useStore($pages);
-  const { allowPageAuth } = useStore($permissions);
+  const { allowAuth } = useStore($permissions);
 
   if (pages === undefined) {
     return;
@@ -276,7 +276,7 @@ const FormFields = ({
             values={values}
             errors={errors}
             onChange={onChange}
-            showUpgrade={allowPageAuth === false}
+            showUpgrade={allowAuth === false}
             showErrors={showAuthErrors}
           />
         </CollapsibleSection>
