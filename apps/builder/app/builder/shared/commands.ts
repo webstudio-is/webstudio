@@ -36,6 +36,7 @@ import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $publisher } from "~/shared/pubsub";
 import {
   $activeInspectorPanel,
+  $isUiHidden,
   $publishDialog,
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
@@ -140,6 +141,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         setActiveSidebarPanel("auto");
         toggleBuilderMode("preview");
+      },
+    },
+    {
+      name: "toggleUiHidden",
+      description: "Hide UI",
+      category: "General",
+      defaultHotkeys: ["meta+\\", "ctrl+\\"],
+      handler: () => {
+        $isUiHidden.set($isUiHidden.get() === false);
       },
     },
     {
