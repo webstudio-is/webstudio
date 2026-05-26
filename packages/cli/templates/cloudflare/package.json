@@ -12,6 +12,7 @@
     "build-cf-types": "wrangler types"
   },
   "dependencies": {
+    "@webstudio-is/wsauth": "0.0.0-webstudio-version",
     "@remix-run/cloudflare": "2.16.5",
     "@remix-run/cloudflare-pages": "2.16.5"
   },
