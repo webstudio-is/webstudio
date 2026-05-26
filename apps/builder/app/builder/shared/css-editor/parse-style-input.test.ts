@@ -65,17 +65,22 @@ describe("parseStyleInput", () => {
         [
           "transition-timing-function",
           {
-            type: "function",
-            name: "cubic-bezier",
-            args: {
-              type: "layers",
-              value: [
-                { type: "unit", value: 0.36, unit: "number" },
-                { type: "unit", value: 0, unit: "number" },
-                { type: "unit", value: 0.66, unit: "number" },
-                { type: "unit", value: -0.56, unit: "number" },
-              ],
-            },
+            type: "layers",
+            value: [
+              {
+                type: "function",
+                name: "cubic-bezier",
+                args: {
+                  type: "layers",
+                  value: [
+                    { type: "unit", value: 0.36, unit: "number" },
+                    { type: "unit", value: 0, unit: "number" },
+                    { type: "unit", value: 0.66, unit: "number" },
+                    { type: "unit", value: -0.56, unit: "number" },
+                  ],
+                },
+              },
+            ],
           },
         ],
       ])
@@ -91,15 +96,20 @@ describe("parseStyleInput", () => {
         [
           "transition-timing-function",
           {
-            type: "function",
-            name: "steps",
-            args: {
-              type: "layers",
-              value: [
-                { type: "unit", value: 4, unit: "number" },
-                { type: "keyword", value: "jump-start" },
-              ],
-            },
+            type: "layers",
+            value: [
+              {
+                type: "function",
+                name: "steps",
+                args: {
+                  type: "layers",
+                  value: [
+                    { type: "unit", value: 4, unit: "number" },
+                    { type: "keyword", value: "jump-start" },
+                  ],
+                },
+              },
+            ],
           },
         ],
       ])
@@ -114,7 +124,10 @@ describe("parseStyleInput", () => {
       new Map([
         [
           "transition-timing-function",
-          { type: "unparsed", value: "linear(0 0%,1 100%)" },
+          {
+            type: "layers",
+            value: [{ type: "unparsed", value: "linear(0 0%,1 100%)" }],
+          },
         ],
       ])
     );
