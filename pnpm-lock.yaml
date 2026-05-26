@@ -783,6 +783,9 @@ importers:
       '@webstudio-is/sdk-components-react-remix':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -838,6 +841,9 @@ importers:
       '@webstudio-is/sdk-components-react-remix':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
