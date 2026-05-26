@@ -40,6 +40,8 @@ import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { DomainCheckbox } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { RelativeTime } from "~/builder/shared/relative-time";
+import { $currentSystem } from "~/shared/system";
+import { getPublishUrl } from "./publish-url";
 
 export type Domain = Project["domainsVirtual"][number];
 
@@ -308,6 +310,11 @@ const DomainItem = ({
   });
 
   const publisherHost = useStore($publisherHost);
+  const currentSystem = useStore($currentSystem);
+  const pageUrl = getPublishUrl({
+    domain: projectDomain.domain,
+    pathname: currentSystem.pathname,
+  });
   const cname = extractCname(projectDomain.domain);
   const dnsRecords = [
     {
@@ -349,8 +356,8 @@ const DomainItem = ({
           />
 
           <CopyToClipboard
-            text={`https://${projectDomain.domain}`}
-            copyText={`Copy link: https://${projectDomain.domain}`}
+            text={pageUrl.toString()}
+            copyText={`Copy link: ${pageUrl.toString()}`}
           >
             <IconButton type="button" tabIndex={-1}>
               <CopyIcon />
