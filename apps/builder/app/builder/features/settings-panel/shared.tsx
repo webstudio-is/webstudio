@@ -198,6 +198,12 @@ export const useLocalValue = <Type,>(
     }
   };
 
+  const finalSave = (value: Type) => {
+    localValueRef.current = value;
+    setRefresh((refresh) => refresh + 1);
+    save();
+  };
+
   const saveDebounced = useDebouncedCallback(save, 500);
 
   const setLocalValue = (value: Type) => {
@@ -247,6 +253,7 @@ export const useLocalValue = <Type,>(
      * Should be called on onBlur or similar event
      */
     save,
+    finalSave,
   };
 };
 
