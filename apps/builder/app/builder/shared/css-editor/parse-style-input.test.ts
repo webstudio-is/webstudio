@@ -54,6 +54,72 @@ describe("parseStyleInput", () => {
     );
   });
 
+  test("parses transition timing functions", () => {
+    expect(
+      parseStyleInput(
+        "transition-timing-function: cubic-bezier(.36,0,.66,-0.56)",
+        new Map()
+      ).styleMap
+    ).toEqual(
+      new Map([
+        [
+          "transition-timing-function",
+          {
+            type: "function",
+            name: "cubic-bezier",
+            args: {
+              type: "layers",
+              value: [
+                { type: "unit", value: 0.36, unit: "number" },
+                { type: "unit", value: 0, unit: "number" },
+                { type: "unit", value: 0.66, unit: "number" },
+                { type: "unit", value: -0.56, unit: "number" },
+              ],
+            },
+          },
+        ],
+      ])
+    );
+
+    expect(
+      parseStyleInput(
+        "transition-timing-function: steps(4, jump-start)",
+        new Map()
+      ).styleMap
+    ).toEqual(
+      new Map([
+        [
+          "transition-timing-function",
+          {
+            type: "function",
+            name: "steps",
+            args: {
+              type: "layers",
+              value: [
+                { type: "unit", value: 4, unit: "number" },
+                { type: "keyword", value: "jump-start" },
+              ],
+            },
+          },
+        ],
+      ])
+    );
+
+    expect(
+      parseStyleInput(
+        "transition-timing-function: linear(0 0%, 1 100%)",
+        new Map()
+      ).styleMap
+    ).toEqual(
+      new Map([
+        [
+          "transition-timing-function",
+          { type: "unparsed", value: "linear(0 0%,1 100%)" },
+        ],
+      ])
+    );
+  });
+
   test("parses multiple property-value pairs", () => {
     const { styleMap: result } = parseStyleInput(
       "color: red; display: block",
