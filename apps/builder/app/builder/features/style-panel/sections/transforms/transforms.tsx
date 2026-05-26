@@ -1,7 +1,13 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import type { CssProperty } from "@webstudio-is/css-engine";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import { computed } from "nanostores";
+import { useStore } from "@nanostores/react";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import {
+  isHtmlReplacedElementTag,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
+import {
+  Box,
   CssValueListArrowFocus,
   CssValueListItem,
   DropdownMenu,
@@ -39,8 +45,13 @@ import {
   PropertyLabel,
   PropertySectionLabel,
 } from "../../property-label";
-import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
+import {
+  $instanceTags,
+  useComputedStyleDecl,
+  useComputedStyles,
+} from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
+import { $selectedInstance } from "~/shared/nano-states";
 import { TextControl } from "../../controls";
 import {
   addDefaultsForTransormSection,
@@ -59,6 +70,35 @@ import { TransformAndPerspectiveOrigin } from "./transform-and-perspective-origi
 
 const label = "Transforms";
 
+const transformUnavailableTooltip =
+  "Transforms don't work on display: inline. Change display to inline-block or block.";
+
+const $selectedInstanceTag = computed(
+  [$selectedInstance, $instanceTags],
+  (selectedInstance, instanceTags) => {
+    if (selectedInstance === undefined) {
+      return;
+    }
+    return instanceTags.get(selectedInstance.id);
+  }
+);
+
+const isTransformUnavailable = ({
+  display,
+  tag,
+}: {
+  display: string;
+  tag: string | undefined;
+}) => {
+  if (display === "table-column" || display === "table-column-group") {
+    return true;
+  }
+  if (display === "inline") {
+    return tag === undefined || isHtmlReplacedElementTag(tag) === false;
+  }
+  return false;
+};
+
 const advancedProperties = [
   "transform-origin",
   "backface-visibility",
@@ -75,8 +115,8 @@ export const properties = [
 
 const TransformAdvancedButton = forwardRef<
   ElementRef<"button">,
-  ComponentProps<"button">
->((props, ref) => {
+  ComponentProps<"button"> & { unavailable?: boolean }
+>(({ unavailable, ...props }, ref) => {
   const readonly = useReadonly();
   const styles = useComputedStyles(advancedProperties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
@@ -86,7 +126,7 @@ const TransformAdvancedButton = forwardRef<
         {...props}
         ref={ref}
         variant={styleValueSourceColor}
-        disabled={readonly}
+        disabled={readonly || unavailable}
         onClick={(event) => {
           if (event.altKey) {
             const batch = createBatchUpdate();
@@ -105,7 +145,11 @@ const TransformAdvancedButton = forwardRef<
   );
 });
 
-const TransformAdvancedPopover = () => {
+const TransformAdvancedPopover = ({
+  unavailable,
+}: {
+  unavailable?: boolean;
+}) => {
   const readonly = useReadonly();
   return (
     <FloatingPanel
@@ -145,7 +189,7 @@ const TransformAdvancedPopover = () => {
         </Grid>
       }
     >
-      <TransformAdvancedButton />
+      <TransformAdvancedButton unavailable={unavailable || readonly} />
     </FloatingPanel>
   );
 };
@@ -153,6 +197,13 @@ const TransformAdvancedPopover = () => {
 export const Section = () => {
   const [isOpen, setIsOpen] = useOpenState(label);
   const readonly = useReadonly();
+  const tag = useStore($selectedInstanceTag);
+  const display = toValue(useComputedStyleDecl("display").computedValue);
+  // Transform applies to transformable elements. The spec excludes
+  // non-replaced inline boxes, table-column boxes, and table-column-group boxes.
+  // https://drafts.csswg.org/css-transforms-1/#transformable-element
+  const unavailable = isTransformUnavailable({ display, tag });
+  const controlsDisabled = unavailable || readonly;
 
   const styles = useComputedStyles(properties);
   const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
@@ -167,47 +218,58 @@ export const Section = () => {
     <CollapsibleSectionRoot
       fullWidth
       label={label}
-      isOpen={isOpen}
+      isOpen={unavailable ? false : isOpen}
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          inactive={dots.length === 0}
-          collapsible={dots.length !== 0}
+          inactive={unavailable || dots.length === 0}
+          collapsible={unavailable ? false : dots.length !== 0}
           dots={dots}
           suffix={
             <Flex gap="1" align="center">
-              <TransformAdvancedPopover />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SectionTitleButton
-                    disabled={readonly}
-                    prefix={<PlusIcon />}
-                  ></SectionTitleButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  collisionPadding={16}
-                  css={{ width: theme.spacing[24] }}
+              <TransformAdvancedPopover unavailable={unavailable} />
+              {unavailable ? (
+                <Tooltip
+                  content={transformUnavailableTooltip}
+                  variant="wrapped"
                 >
-                  {transformPanels.map((panel) => (
-                    <DropdownMenuItem
-                      disabled={isTransformPanelPropertyUsed({
-                        panel,
-                        styles,
-                      })}
-                      key={panel}
-                      onSelect={() => {
-                        addDefaultsForTransormSection({
+                  <Box>
+                    <SectionTitleButton disabled prefix={<PlusIcon />} />
+                  </Box>
+                </Tooltip>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SectionTitleButton
+                      disabled={controlsDisabled}
+                      prefix={<PlusIcon />}
+                    />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    collisionPadding={16}
+                    css={{ width: theme.spacing[24] }}
+                  >
+                    {transformPanels.map((panel) => (
+                      <DropdownMenuItem
+                        disabled={isTransformPanelPropertyUsed({
                           panel,
                           styles,
-                        });
-                        setIsOpen(true);
-                      }}
-                    >
-                      {humanizeString(panel)}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                        })}
+                        key={panel}
+                        onSelect={() => {
+                          addDefaultsForTransormSection({
+                            panel,
+                            styles,
+                          });
+                          setIsOpen(true);
+                        }}
+                      >
+                        {humanizeString(panel)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </Flex>
           }
         >
