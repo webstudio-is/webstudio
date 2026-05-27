@@ -8,6 +8,7 @@ import {
   getBasicAuthCredentials,
   parseWsAuth,
   validateBasicAuth,
+  validateWsAuthRoute,
 } from "./index";
 
 describe("wsauth", () => {
@@ -117,6 +118,15 @@ describe("wsauth", () => {
       login: ["Login can't contain a colon"],
       password: ["Password can't contain whitespace"],
     });
+  });
+
+  test("validates route syntax", () => {
+    expect(validateWsAuthRoute("/private")).toBeUndefined();
+    expect(validateWsAuthRoute("/docs/*")).toBeUndefined();
+    expect(validateWsAuthRoute("private")).toBe('Route must start with "/"');
+    expect(validateWsAuthRoute("/docs/*/page")).toBe(
+      "Wildcard route segment must be the last segment"
+    );
   });
 
   test("builds content from JSON and route sources", () => {

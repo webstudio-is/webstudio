@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
   ROOT_FOLDER_ID,
   type DataSource,
@@ -11,13 +11,6 @@ import {
   getRestrictedFeatures,
   type RestrictedFeaturesPermissions,
 } from "./restricted-features";
-
-vi.mock("~/shared/instance-utils", () => ({
-  findPageAndSelectorByInstanceId: () => ({
-    pageId: "home",
-    instanceSelector: [],
-  }),
-}));
 
 const createPage = (page: Partial<Page> & Pick<Page, "id">): Page => ({
   name: page.id,

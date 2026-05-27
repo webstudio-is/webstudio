@@ -128,77 +128,69 @@ export const AuthSection = ({
       </Grid>
 
       {isExpanded && (
-        <Grid gap={2}>
-          <Grid
-            gap={2}
-            align="center"
-            css={{ gridTemplateColumns: "auto 1fr" }}
+        <Grid
+          gapX={2}
+          gapY={2}
+          align="center"
+          css={{
+            gridTemplateColumns: `auto 1fr`,
+          }}
+        >
+          <Label htmlFor={loginId}>Login</Label>
+          <InputErrorsTooltip
+            errors={
+              showErrors || touchedFields.login ? errors.auth?.login : undefined
+            }
           >
-            <Label htmlFor={loginId}>Login</Label>
-            <InputErrorsTooltip
-              errors={
-                showErrors || touchedFields.login
-                  ? errors.auth?.login
+            <InputField
+              color={
+                (showErrors || touchedFields.login) && errors.auth?.login
+                  ? "error"
                   : undefined
               }
-            >
-              <InputField
-                color={
-                  (showErrors || touchedFields.login) && errors.auth?.login
-                    ? "error"
-                    : undefined
-                }
-                id={loginId}
-                value={values.auth.login}
-                onChange={(event) => {
-                  setTouchedFields((touchedFields) => ({
-                    ...touchedFields,
-                    login: true,
-                  }));
-                  onChange({
-                    field: "auth",
-                    value: { ...values.auth, login: event.target.value },
-                  });
-                }}
-              />
-            </InputErrorsTooltip>
-          </Grid>
-          <Grid
-            gap={2}
-            align="center"
-            css={{ gridTemplateColumns: "auto 1fr" }}
+              id={loginId}
+              value={values.auth.login}
+              onChange={(event) => {
+                setTouchedFields((touchedFields) => ({
+                  ...touchedFields,
+                  login: true,
+                }));
+                onChange({
+                  field: "auth",
+                  value: { ...values.auth, login: event.target.value },
+                });
+              }}
+            />
+          </InputErrorsTooltip>
+          <Label htmlFor={passwordId}>Password</Label>
+          <InputErrorsTooltip
+            errors={
+              showErrors || touchedFields.password
+                ? errors.auth?.password
+                : undefined
+            }
           >
-            <Label htmlFor={passwordId}>Password</Label>
-            <InputErrorsTooltip
-              errors={
-                showErrors || touchedFields.password
-                  ? errors.auth?.password
+            <InputField
+              color={
+                (showErrors || touchedFields.password) && errors.auth?.password
+                  ? "error"
                   : undefined
               }
-            >
-              <InputField
-                color={
-                  (showErrors || touchedFields.password) &&
-                  errors.auth?.password
-                    ? "error"
-                    : undefined
-                }
-                id={passwordId}
-                type="password"
-                value={values.auth.password}
-                onChange={(event) => {
-                  setTouchedFields((touchedFields) => ({
-                    ...touchedFields,
-                    password: true,
-                  }));
-                  onChange({
-                    field: "auth",
-                    value: { ...values.auth, password: event.target.value },
-                  });
-                }}
-              />
-            </InputErrorsTooltip>
-          </Grid>
+              id={passwordId}
+              type="password"
+              value={values.auth.password}
+              onChange={(event) => {
+                setTouchedFields((touchedFields) => ({
+                  ...touchedFields,
+                  password: true,
+                }));
+                onChange({
+                  field: "auth",
+                  value: { ...values.auth, password: event.target.value },
+                });
+              }}
+            />
+          </InputErrorsTooltip>
         </Grid>
       )}
     </Grid>

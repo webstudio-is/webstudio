@@ -2,7 +2,6 @@ import type { Client } from "@webstudio-is/postgrest/index.server";
 import {
   type PlanFeatures,
   PlanFeaturesSchema,
-  applyPlanFeatureCompatibility,
   defaultPlanFeatures,
   parsePlansEnv,
   type Purchase,
@@ -25,10 +24,7 @@ type PlanInfo = {
 
 export const parseProductMeta = (meta: unknown): Partial<PlanFeatures> => {
   const result = PlanFeaturesSchema.partial().safeParse(meta);
-  if (result.success === false) {
-    return {};
-  }
-  return applyPlanFeatureCompatibility(result.data, result.data);
+  return result.success ? result.data : {};
 };
 
 export const mergeProductMetas = (

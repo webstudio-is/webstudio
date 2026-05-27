@@ -71,22 +71,6 @@ describe("getPlanInfo (msw)", () => {
     ]);
   });
 
-  test("user with legacy Pro plan gets auth when dynamic data is enabled", async () => {
-    vi.stubEnv(
-      "PLANS",
-      JSON.stringify([{ name: "Pro", features: { allowDynamicData: true } }])
-    );
-    server.use(
-      db.get("UserProduct", () => json([proUserProduct])),
-      db.get("Product", () => json([proProduct]))
-    );
-
-    const result = await getPlanInfo(["user-1"], testContext);
-    const info = result.get("user-1");
-    expect(info?.planFeatures.allowDynamicData).toBe(true);
-    expect(info?.planFeatures.allowAuth).toBe(true);
-  });
-
   test("product not in PLANS falls back to defaultPlanFeatures for that product", async () => {
     vi.stubEnv("PLANS", JSON.stringify([]));
     server.use(
@@ -184,22 +168,6 @@ describe("parseProductMeta", () => {
     expect(result).toEqual({
       maxContactEmailsPerProject: 10,
       canDownloadAssets: true,
-    });
-  });
-
-  test("grants auth when legacy product meta grants dynamic data", () => {
-    expect(parseProductMeta({ allowDynamicData: true })).toEqual({
-      allowDynamicData: true,
-      allowAuth: true,
-    });
-  });
-
-  test("keeps explicit auth override from product meta", () => {
-    expect(
-      parseProductMeta({ allowDynamicData: true, allowAuth: false })
-    ).toEqual({
-      allowDynamicData: true,
-      allowAuth: false,
     });
   });
 

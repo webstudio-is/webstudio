@@ -168,7 +168,7 @@ export const createBasicAuthRoute = ({
   login: string;
   password: string;
 }): WsAuthRoute => {
-  const routeError = validateRoute(route);
+  const routeError = validateWsAuthRoute(route);
   if (routeError) {
     throw new Error(routeError);
   }
@@ -211,7 +211,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 
 const parameterSegment = /^:\w+[?*]?$/;
 
-const validateRoute = (route: string) => {
+export const validateWsAuthRoute = (route: string) => {
   if (route.startsWith("/") === false) {
     return 'Route must start with "/"';
   }
@@ -279,7 +279,7 @@ export const parseWsAuth = (content: string): WsAuthParseResult => {
   }
 
   for (const [route, authInput] of Object.entries(json.routes)) {
-    const routeError = validateRoute(route);
+    const routeError = validateWsAuthRoute(route);
     if (routeError) {
       errors.push({
         path: `routes.${JSON.stringify(route)}`,

@@ -7,87 +7,6 @@ const mocks = vi.hoisted(() => ({
   isPathAvailable: vi.fn(() => true),
 }));
 
-vi.mock("@webstudio-is/design-system", () => {
-  const Component = () => null;
-  return {
-    theme: { spacing: { 10: "" } },
-    rawTheme: { spacing: { 26: "", 35: "" } },
-    Button: Component,
-    Box: Component,
-    Checkbox: Component,
-    CheckboxAndLabel: Component,
-    Flex: Component,
-    Tooltip: Component,
-    Grid: Component,
-    InputErrorsTooltip: Component,
-    InputField: Component,
-    Label: Component,
-    ProBadge: Component,
-    Select: Component,
-    Text: Component,
-    TextArea: Component,
-    ScrollArea: Component,
-    Link: Component,
-    PanelBanner: Component,
-    TitleSuffixSpacer: Component,
-    DialogClose: Component,
-    DialogTitle: Component,
-    DialogTitleActions: Component,
-    toast: {
-      info: () => undefined,
-      warn: () => undefined,
-      error: () => undefined,
-    },
-    buttonStyle: () => "",
-    css: () => () => "",
-  };
-});
-
-vi.mock("@webstudio-is/icons", () => ({
-  CopyIcon: () => null,
-  HomeIcon: () => null,
-  InfoCircleIcon: () => null,
-  TrashIcon: () => null,
-  UploadIcon: () => null,
-}));
-
-vi.mock("~/builder/shared/binding-popover", () => ({
-  BindingControl: () => null,
-  BindingPopover: () => null,
-}));
-
-vi.mock("~/builder/shared/collapsible-section", () => ({
-  CollapsibleSection: () => null,
-}));
-
-vi.mock("~/shared/project-settings", () => ({
-  ImageControl: () => null,
-}));
-
-vi.mock("~/shared/project-settings/utils", () => ({
-  findMatchingRedirect: () => undefined,
-}));
-
-vi.mock("../form", () => ({
-  Form: () => null,
-}));
-
-vi.mock("../custom-metadata", () => ({
-  CustomMetadata: () => null,
-}));
-
-vi.mock("../image-info", () => ({
-  ImageInfo: () => null,
-}));
-
-vi.mock("../search-preview", () => ({
-  SearchPreview: () => null,
-}));
-
-vi.mock("../social-preview", () => ({
-  SocialPreview: () => null,
-}));
-
 vi.mock("../page-utils", () => ({
   registerFolderChildMutable: () => undefined,
   cleanupChildRefsMutable: () => undefined,
@@ -99,36 +18,7 @@ vi.mock("../page-utils", () => ({
   },
 }));
 
-vi.mock("./section-auth", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./section-auth")>()),
-  AuthSection: () => null,
-}));
-
-vi.mock("./section-custom-metadata", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./section-custom-metadata")>()),
-  CustomMetadataSection: () => null,
-}));
-
-vi.mock("./section-general", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./section-general")>()),
-  GeneralSection: () => null,
-}));
-
-vi.mock("./section-marketplace", () => ({
-  MarketplaceSection: () => null,
-}));
-
-vi.mock("./section-search", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./section-search")>()),
-  SearchSection: () => null,
-}));
-
-vi.mock("./section-social-image", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./section-social-image")>()),
-  SocialImageSection: () => null,
-}));
-
-import { __testing__ } from "./page-settings";
+const { __testing__ } = await import("./page-settings");
 
 const {
   computePagePath,
