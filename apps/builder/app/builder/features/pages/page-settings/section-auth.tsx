@@ -86,7 +86,7 @@ export const AuthSection = ({
               <>
                 <Text>
                   Authentication asks visitors for HTTP Basic Auth credentials
-                  before protected pages load.
+                  before protected pages load on custom domains.
                 </Text>
                 {showUpgrade && (
                   <>
