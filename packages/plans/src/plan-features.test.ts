@@ -13,6 +13,7 @@ const fullFeatures: PlanFeatures = {
   canRestoreBackups: true,
   allowAdditionalPermissions: true,
   allowDynamicData: true,
+  allowAuth: true,
   allowContentMode: true,
   allowStagingPublish: true,
   maxContactEmailsPerProject: 5,

@@ -1,0 +1,9 @@
+{
+  "extends": "@webstudio-is/tsconfig/base.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "outDir": "lib/types"
+  }
+}

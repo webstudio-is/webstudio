@@ -1,5 +1,5 @@
 import { $pages } from "~/shared/sync/data-stores";
-import { PageSettings as PageSettingsComponent } from "./page-settings";
+import { PageSettings as PageSettingsComponent } from "./page-settings/page-settings";
 import {
   Grid,
   theme,

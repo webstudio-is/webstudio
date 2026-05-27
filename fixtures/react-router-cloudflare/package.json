@@ -29,7 +29,8 @@
     "react-router": "^7.5.3",
     "vite": "^6.3.4",
     "webstudio": "workspace:*",
-    "wrangler": "^4.14.1"
+    "wrangler": "^4.14.1",
+    "@webstudio-is/wsauth": "workspace:*"
   },
   "type": "module",
   "private": true,

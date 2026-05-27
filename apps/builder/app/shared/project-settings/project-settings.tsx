@@ -21,6 +21,7 @@ import {
 import { $isDesignMode } from "~/shared/nano-states";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
 import { SectionGeneral } from "./section-general";
+import { SectionAuth } from "./section-auth";
 import { SectionRedirects } from "./section-redirects";
 import { SectionPublish } from "./section-publish";
 import { SectionMarketplace } from "./section-marketplace";
@@ -36,7 +37,12 @@ const sections = new Map<
   ["publish", SectionPublish],
   ["marketplace", SectionMarketplace],
   ["backups", SectionBackups],
+  ["auth", SectionAuth],
 ] as const);
+
+const sectionLabels = new Map<SectionName, string>([
+  ["auth", "Authentication"],
+]);
 
 export const ProjectSettingsDialog = ({
   currentSection,
@@ -109,7 +115,7 @@ export const ProjectSettingsDialog = ({
                         align="center"
                       >
                         <Text variant="labels" truncate>
-                          {titleCase(name)}
+                          {sectionLabels.get(name) ?? titleCase(name)}
                         </Text>
                       </Flex>
                     </ListItem>
