@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   Combobox,
@@ -99,12 +99,15 @@ export const SectionAuth = () => {
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const parseResult = parseAuthRoutes(pages?.meta?.auth);
+  const authContent = pages?.meta?.auth;
+  const parseResult = useMemo(() => {
+    return parseAuthRoutes(authContent);
+  }, [authContent]);
   const parseErrors = parseResult.errors;
 
   useEffect(() => {
     setAuthRoutes(parseResult.routes);
-  }, [pages?.meta?.auth]);
+  }, [parseResult.routes]);
 
   const existingPaths = getExistingRoutePaths(pages);
   const routeSuggestions = ["/", ...Array.from(existingPaths).sort()];
