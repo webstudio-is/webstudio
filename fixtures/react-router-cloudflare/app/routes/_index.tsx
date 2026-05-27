@@ -84,15 +84,7 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
-  let authRoute;
-  try {
-    authRoute = authenticateRequest(arg.request, authRoutes);
-  } catch (error) {
-    if (error instanceof Response) {
-      return error;
-    }
-    throw error;
-  }
+  const authRoute = authenticateRequest(arg.request, authRoutes);
 
   const url = new URL(arg.request.url);
   const host =
@@ -151,7 +143,11 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   );
 };
 
-export const headers: HeadersFunction = () => {
+export const headers: HeadersFunction = ({ errorHeaders }) => {
+  if (errorHeaders) {
+    return errorHeaders;
+  }
+
   return {
     "Cache-Control": "public, max-age=0, must-revalidate",
   };

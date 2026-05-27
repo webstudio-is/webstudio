@@ -143,7 +143,11 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   );
 };
 
-export const headers: HeadersFunction = () => {
+export const headers: HeadersFunction = ({ errorHeaders }) => {
+  if (errorHeaders) {
+    return errorHeaders;
+  }
+
   return {
     "Cache-Control": "public, max-age=0, must-revalidate",
   };
