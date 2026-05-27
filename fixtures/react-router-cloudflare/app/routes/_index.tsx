@@ -84,7 +84,15 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
-  const authRoute = authenticateRequest(arg.request, authRoutes);
+  let authRoute;
+  try {
+    authRoute = authenticateRequest(arg.request, authRoutes);
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+    throw error;
+  }
 
   const url = new URL(arg.request.url);
   const host =
