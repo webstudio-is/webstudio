@@ -417,6 +417,20 @@ export const createWsAuthResources = ({
     { name: projectSourceName, content: projectContent },
     { name: generatedSourceName, routes: generatedRoutes },
   ]);
+  console.info("[wsauth] create resources", {
+    existingContentLength: existingContent.length,
+    existingContent,
+    manualExistingContentLength: manualExistingContent.length,
+    manualExistingContent,
+    projectContentLength: projectContent.length,
+    projectContent,
+    pageCount: pages.length,
+    pages,
+    generatedRouteCount: generatedRoutes.length,
+    generatedRoutes,
+    routeCount: result.routes.length,
+    routes: result.routes,
+  });
   const content = mergeWsAuthContent({
     existingContent,
     routes: result.routes,
@@ -516,7 +530,17 @@ export const findWsAuthRoute = (
   authRoutes: WsAuthRoute[],
   pathname: string
 ) => {
-  return authRoutes.find(({ route }) => matchWsAuthRoute(route, pathname));
+  const authRoute = authRoutes.find(({ route }) =>
+    matchWsAuthRoute(route, pathname)
+  );
+  console.info("[wsauth] find route", {
+    pathname,
+    routeCount: authRoutes.length,
+    authRoutes,
+    matchedRoute: authRoute?.route,
+    matchedAuth: authRoute?.auth,
+  });
+  return authRoute;
 };
 
 export const authenticateRequest = (
@@ -524,17 +548,54 @@ export const authenticateRequest = (
   authRoutes: WsAuthRoute[]
 ) => {
   const url = new URL(request.url);
+  const authorization = request.headers.get("Authorization");
+  console.info("[wsauth] authenticate request", {
+    method: request.method,
+    url: url.href,
+    pathname: url.pathname,
+    routeCount: authRoutes.length,
+    authRoutes,
+    hasAuthorization: authorization !== null,
+    authorization,
+    authorizationScheme: authorization?.split(/\s+/, 1)[0]?.toLowerCase(),
+  });
   const authRoute = findWsAuthRoute(authRoutes, url.pathname);
   if (authRoute === undefined) {
+    console.info("[wsauth] authenticate result", {
+      pathname: url.pathname,
+      result: "not-protected",
+    });
     return;
   }
   if (authRoute.auth.method === "basic") {
-    const credentials = getBasicAuthCredentials(
-      request.headers.get("Authorization")
-    );
+    const credentials = getBasicAuthCredentials(authorization);
     if (credentials === authRoute.auth.credentials) {
+      console.info("[wsauth] authenticate result", {
+        pathname: url.pathname,
+        route: authRoute.route,
+        method: authRoute.auth.method,
+        result: "authorized",
+        hasParsedCredentials: credentials !== undefined,
+        parsedCredentials: credentials,
+        expectedCredentials: authRoute.auth.credentials,
+        expectedLogin: authRoute.auth.login,
+        expectedPassword: authRoute.auth.password,
+      });
       return authRoute;
     }
+    console.warn("[wsauth] authenticate result", {
+      pathname: url.pathname,
+      route: authRoute.route,
+      method: authRoute.auth.method,
+      result: "unauthorized",
+      hasAuthorization: authorization !== null,
+      hasParsedCredentials: credentials !== undefined,
+      authorization,
+      parsedCredentials: credentials,
+      expectedCredentials: authRoute.auth.credentials,
+      expectedLogin: authRoute.auth.login,
+      expectedPassword: authRoute.auth.password,
+    });
     throw new Response("Authentication required", {
       status: 401,
       headers: {
