@@ -68,7 +68,7 @@ import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg"
 import { compareMedia } from "@webstudio-is/css-engine";
 
 const limit = pLimit(10);
-const wsAuthFile = ".wsauth";
+const wsAuthFile = ".webstudio/auth.json";
 
 type SiteDataByPage = {
   [id: Page["id"]]: {
@@ -160,7 +160,7 @@ const writeWsAuthResources = async (generatedDir: string, pages: Pages) => {
     }
     throw error;
   });
-  console.info("[wsauth] prebuild read .wsauth", {
+  console.info("[wsauth] prebuild read auth config", {
     file: wsAuthFile,
     exists: existingFileExists,
     contentLength: existingContent.length,
@@ -182,13 +182,14 @@ const writeWsAuthResources = async (generatedDir: string, pages: Pages) => {
       auth: page.meta.auth,
     })),
   });
-  console.info("[wsauth] prebuild write .wsauth", {
+  console.info("[wsauth] prebuild write auth config", {
     file: wsAuthFile,
     contentLength: content.length,
     content,
     generatedModulePath: join(generatedDir, "$resources.wsauth.server.ts"),
     generatedModule: module,
   });
+  await createFolderIfNotExists(dirname(wsAuthFile));
   await writeFile(wsAuthFile, content);
   await createFileIfNotExists(
     join(generatedDir, "$resources.wsauth.server.ts"),

@@ -66,23 +66,29 @@ export const SectionAuth = () => {
                 before protected pages load.
               </Text>
               <br />
+              <Text>Use JSON with routes as keys.</Text>
+              <br />
               <Text>
-                Add one rule per line: route, a space, then login:password.
+                {"{"}
+                <br />
+                &nbsp;&nbsp;"version": 1,
+                <br />
+                &nbsp;&nbsp;"routes": {"{"}
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;"/preview": {"{"} "method": "basic",
+                "login": "demo", "password": "secret" {"}"}
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;"/docs/:slug": {"{"} "method": "basic",
+                "login": "editor", "password": "manual" {"}"}
+                <br />
+                &nbsp;&nbsp;{"}"}
+                <br />
+                {"}"}
               </Text>
               <br />
               <Text>
-                # Marketing pages
-                <br />
-                /preview demo:secret
-                <br />
-                /docs/:slug editor:manual
-                <br />
-                /team/* staff:private
-              </Text>
-              <br />
-              <Text>
-                Lines starting with # are comments. Routes use the same syntax
-                as page paths, including :params and * wildcards.
+                Routes use the same syntax as page paths, including :params and
+                * wildcards.
               </Text>
               {allowAuth === false && (
                 <>
@@ -118,9 +124,23 @@ export const SectionAuth = () => {
       <Grid gap={2} css={sectionSpacing}>
         <TextArea
           id={authId}
-          aria-label="Authentication rules"
+          aria-label="Authentication config"
           color={errors.length > 0 ? "error" : undefined}
-          placeholder={"/private admin:secret\n/docs/* team:secret"}
+          placeholder={`{
+  "version": 1,
+  "routes": {
+    "/private": {
+      "method": "basic",
+      "login": "admin",
+      "password": "secret"
+    },
+    "/docs/*": {
+      "method": "basic",
+      "login": "team",
+      "password": "secret"
+    }
+  }
+}`}
           rows={10}
           value={auth}
           onChange={(value) => {
@@ -134,8 +154,8 @@ export const SectionAuth = () => {
         {errors.length > 0 && (
           <Grid gap={1}>
             {errors.map((error) => (
-              <Text key={`${error.line}:${error.message}`} color="destructive">
-                Line {error.line}: {error.message}
+              <Text key={`${error.path}:${error.message}`} color="destructive">
+                {error.path}: {error.message}
               </Text>
             ))}
           </Grid>

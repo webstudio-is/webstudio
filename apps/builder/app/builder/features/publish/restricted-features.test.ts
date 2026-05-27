@@ -86,7 +86,20 @@ const getFeatures = ({
 describe("getRestrictedFeatures", () => {
   test("restricts project authentication when auth is not allowed", () => {
     const features = getFeatures({
-      pages: createPages({ meta: { auth: "/private admin:secret" } }),
+      pages: createPages({
+        meta: {
+          auth: JSON.stringify({
+            version: 1,
+            routes: {
+              "/private": {
+                method: "basic",
+                login: "admin",
+                password: "secret",
+              },
+            },
+          }),
+        },
+      }),
       permissions: { allowAuth: false },
     });
 
@@ -132,7 +145,18 @@ describe("getRestrictedFeatures", () => {
     const features = getFeatures({
       pages: createPages({
         pages: [homePage, privatePage],
-        meta: { auth: "/private admin:secret" },
+        meta: {
+          auth: JSON.stringify({
+            version: 1,
+            routes: {
+              "/private": {
+                method: "basic",
+                login: "admin",
+                password: "secret",
+              },
+            },
+          }),
+        },
       }),
       permissions: { allowAuth: true },
     });

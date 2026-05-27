@@ -13,7 +13,7 @@ export type WsAuthRoute = {
 };
 
 export type WsAuthParseError = {
-  line: number;
+  path: string;
   message: string;
 };
 
@@ -35,6 +35,11 @@ export type WsAuthSource =
 export type WsAuthBuildResult = {
   routes: WsAuthRoute[];
   content: string;
+};
+
+export type WsAuthConfig = {
+  version: 1;
+  routes: Record<string, BasicAuthInput>;
 };
 
 export type BasicAuthInput =
@@ -172,7 +177,7 @@ export const createBasicAuthRoute = ({
   const auth = validateBasicAuth({ login, password }).auth;
   if (auth === undefined) {
     throw new Error(
-      'Basic auth requires non-empty login:password; login cannot contain ":" and neither field can contain whitespace'
+      'Basic auth requires non-empty login and password; login cannot contain ":" and neither field can contain whitespace'
     );
   }
   return { route, auth };
@@ -196,6 +201,14 @@ export const createWsAuthRouteFromPage = ({
     login: auth.login,
     password: auth.password,
   });
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Array.isArray(value) === false
+  );
 };
 
 const parameterSegment = /^:\w+[?*]?$/;
@@ -234,40 +247,89 @@ const validateRoute = (route: string) => {
   }
 };
 
+const parseJson = (content: string, errors: WsAuthParseError[]) => {
+  if (content.trim() === "") {
+    return { version: 1, routes: {} };
+  }
+  try {
+    return JSON.parse(content) as unknown;
+  } catch (error) {
+    errors.push({
+      path: "$",
+      message: error instanceof Error ? error.message : "Invalid JSON",
+    });
+  }
+};
+
 export const parseWsAuth = (content: string): WsAuthParseResult => {
   const routes: WsAuthRoute[] = [];
   const errors: WsAuthParseError[] = [];
-  let lineNumber = 0;
-  for (const line of content.split(/\r?\n/)) {
-    lineNumber += 1;
-    const trimmedLine = line.trim();
-    if (trimmedLine === "" || trimmedLine.startsWith("#")) {
-      continue;
-    }
-    const parts = trimmedLine.split(/\s+/);
-    if (parts.length !== 2) {
-      errors.push({
-        line: lineNumber,
-        message:
-          "Line must contain exactly a route and auth expression separated by whitespace",
-      });
-      continue;
-    }
-    const [route, authExpression] = parts;
+  const json = parseJson(content, errors);
+  if (json === undefined) {
+    return { routes, errors };
+  }
+  if (isRecord(json) === false) {
+    errors.push({ path: "$", message: "Auth config must be an object" });
+    return { routes, errors };
+  }
+  if (json.version !== 1) {
+    errors.push({ path: "version", message: "Version must be 1" });
+  }
+  if (isRecord(json.routes) === false) {
+    errors.push({ path: "routes", message: "Routes must be an object" });
+    return { routes, errors };
+  }
+
+  for (const [route, authInput] of Object.entries(json.routes)) {
     const routeError = validateRoute(route);
     if (routeError) {
-      errors.push({ line: lineNumber, message: routeError });
-      continue;
-    }
-    const auth = parseBasicAuthExpression(authExpression);
-    if (auth === undefined) {
       errors.push({
-        line: lineNumber,
-        message:
-          'Basic auth expression must be non-empty login:password; login cannot contain ":" and neither field can contain whitespace',
+        path: `routes.${JSON.stringify(route)}`,
+        message: routeError,
       });
       continue;
     }
+    if (isRecord(authInput) === false) {
+      errors.push({
+        path: `routes.${JSON.stringify(route)}`,
+        message: "Auth rule must be an object",
+      });
+      continue;
+    }
+    if (authInput.method !== "basic") {
+      errors.push({
+        path: `routes.${JSON.stringify(route)}.method`,
+        message: 'Auth method must be "basic"',
+      });
+      continue;
+    }
+    const login = authInput.login;
+    const password = authInput.password;
+    if (typeof login !== "string") {
+      errors.push({
+        path: `routes.${JSON.stringify(route)}.login`,
+        message: "Login must be a string",
+      });
+      continue;
+    }
+    if (typeof password !== "string") {
+      errors.push({
+        path: `routes.${JSON.stringify(route)}.password`,
+        message: "Password must be a string",
+      });
+      continue;
+    }
+    const validation = validateBasicAuth({ login, password });
+    if (validation.auth === undefined) {
+      for (const issue of validation.issues ?? []) {
+        errors.push({
+          path: `routes.${JSON.stringify(route)}.${issue.path[0]}`,
+          message: issue.message,
+        });
+      }
+      continue;
+    }
+    const auth = validation.auth;
     routes.push({ route, auth });
   }
   return { routes, errors };
@@ -280,59 +342,27 @@ export const parseWsAuthOrThrow = (
   const result = parseWsAuth(content);
   if (result.errors.length > 0) {
     const message = result.errors
-      .map((error) => `${sourceName}:${error.line} ${error.message}`)
+      .map((error) => `${sourceName}:${error.path} ${error.message}`)
       .join("\n");
     throw new Error(message);
   }
   return result.routes;
 };
 
-export const serializeWsAuthRoute = ({ route, auth }: WsAuthRoute): string => {
-  switch (auth.method) {
-    case "basic":
-      return `${route} ${auth.credentials}`;
-  }
-};
-
 export const serializeWsAuth = (routes: WsAuthRoute[]) => {
-  const lines = ["# Webstudio auth pages"];
-  lines.push(...routes.map(serializeWsAuthRoute));
-  return `${lines.join("\n")}\n`;
-};
-
-const generatedBlockStart = "# webstudio-auth-generated-start";
-const generatedBlockEnd = "# webstudio-auth-generated-end";
-
-export const stripGeneratedWsAuthContent = (content: string) => {
-  const lines: string[] = [];
-  let isGeneratedBlock = false;
-  for (const line of content.split(/\r?\n/)) {
-    if (line.trim() === generatedBlockStart) {
-      isGeneratedBlock = true;
-      continue;
-    }
-    if (line.trim() === generatedBlockEnd) {
-      isGeneratedBlock = false;
-      continue;
-    }
-    if (isGeneratedBlock === false) {
-      lines.push(line);
+  const config: WsAuthConfig = { version: 1, routes: {} };
+  for (const { route, auth } of routes) {
+    switch (auth.method) {
+      case "basic":
+        config.routes[route] = {
+          method: "basic",
+          login: auth.login,
+          password: auth.password,
+        };
+        break;
     }
   }
-  return lines.join("\n");
-};
-
-const serializeGeneratedWsAuthBlock = (routes: WsAuthRoute[]) => {
-  if (routes.length === 0) {
-    return "";
-  }
-  return [
-    generatedBlockStart,
-    "# Webstudio generated auth pages. Move routes outside this block to manage them manually.",
-    ...routes.map(serializeWsAuthRoute),
-    generatedBlockEnd,
-    "",
-  ].join("\n");
+  return `${JSON.stringify(config, null, 2)}\n`;
 };
 
 export const mergeWsAuthRoutes = (routes: WsAuthRoute[]) => {
@@ -370,58 +400,40 @@ export const buildWsAuth = (sources: WsAuthSource[]): WsAuthBuildResult => {
 export const mergeWsAuthContent = ({
   existingContent,
   routes,
-  sourceName = ".wsauth",
+  sourceName = ".webstudio/auth.json",
 }: {
   existingContent: string;
   routes: WsAuthRoute[];
   sourceName?: string;
 }) => {
-  const manualContent = stripGeneratedWsAuthContent(existingContent);
-  const manualRoutes = parseWsAuthOrThrow(manualContent, sourceName);
+  const manualRoutes = parseWsAuthOrThrow(existingContent, sourceName);
   const manualRouteNames = new Set(manualRoutes.map(({ route }) => route));
-  const generatedRoutes = routes.filter(
-    ({ route }) => manualRouteNames.has(route) === false
-  );
-  const generatedBlock = serializeGeneratedWsAuthBlock(generatedRoutes);
-
-  if (manualContent.trim() === "") {
-    return generatedBlock;
-  }
-  if (generatedBlock === "") {
-    return manualContent;
-  }
-
-  const separator = manualContent.endsWith("\n\n")
-    ? ""
-    : manualContent.endsWith("\n")
-      ? "\n"
-      : "\n\n";
-  return `${manualContent}${separator}${generatedBlock}`;
+  return serializeWsAuth([
+    ...manualRoutes,
+    ...routes.filter(({ route }) => manualRouteNames.has(route) === false),
+  ]);
 };
 
 export const createWsAuthResources = ({
   existingContent,
   projectContent = "",
   pages,
-  existingSourceName = ".wsauth",
+  existingSourceName = ".webstudio/auth.json",
   projectSourceName = "Auth",
   generatedSourceName = "Generated page auth",
 }: WsAuthResourcesInput): WsAuthResources => {
-  const manualExistingContent = stripGeneratedWsAuthContent(existingContent);
   const generatedRoutes = pages.flatMap((page) => {
     const route = createWsAuthRouteFromPage(page);
     return route === undefined ? [] : [route];
   });
   const result = buildWsAuth([
-    { name: existingSourceName, content: manualExistingContent },
+    { name: existingSourceName, content: existingContent },
     { name: projectSourceName, content: projectContent },
     { name: generatedSourceName, routes: generatedRoutes },
   ]);
   console.info("[wsauth] create resources", {
     existingContentLength: existingContent.length,
     existingContent,
-    manualExistingContentLength: manualExistingContent.length,
-    manualExistingContent,
     projectContentLength: projectContent.length,
     projectContent,
     pageCount: pages.length,
