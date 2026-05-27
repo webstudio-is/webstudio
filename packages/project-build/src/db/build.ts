@@ -84,6 +84,26 @@ const parseCompactBuild = async (
   }
 };
 
+type AuthorizationToken = Awaited<ReturnType<typeof authDb.getTokenInfo>>;
+
+const canTokenPublishDeployment = (
+  token: AuthorizationToken,
+  deployment: Deployment
+) => {
+  if (token.canPublish) {
+    return true;
+  }
+
+  if (token.relation !== "builders" || deployment.destination !== "saas") {
+    return false;
+  }
+
+  return (
+    deployment.domains.length > 0 &&
+    deployment.domains.every((domain) => domain === deployment.assetsDomain)
+  );
+};
+
 export const loadRawBuildById = async (
   context: AppContext,
   id: Build["id"]
@@ -317,17 +337,16 @@ export const createProductionBuild = async (
     throw new AuthorizationError("You don't have access to build this project");
   }
 
-  // Get token permissions
   if (context.authorization.type === "token") {
-    const permissions = await authDb.getTokenPermissions(
-      {
-        projectId: props.projectId,
-        token: context.authorization.authToken,
-      },
+    const token = await authDb.getTokenInfo(
+      context.authorization.authToken,
       context
     );
 
-    if (!permissions.canPublish) {
+    if (
+      token.projectId !== props.projectId ||
+      canTokenPublishDeployment(token, props.deployment) === false
+    ) {
       throw new AuthorizationError(
         "The token does not have permission to build this project."
       );
@@ -350,3 +369,5 @@ export const createProductionBuild = async (
     id: build.data,
   };
 };
+
+export const __testing__ = { canTokenPublishDeployment };
