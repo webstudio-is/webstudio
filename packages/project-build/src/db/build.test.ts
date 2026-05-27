@@ -14,9 +14,11 @@ import {
   loadDevBuildByProjectId,
   createBuild,
   unpublishBuild,
+  __testing__,
 } from "./build";
 
 const server = createTestServer();
+const { canTokenPublishDeployment } = __testing__;
 
 const uid = () => `proj-${Math.random().toString(36).slice(2)}`;
 
@@ -158,6 +160,78 @@ describe("createBuild (msw)", () => {
     await expect(
       createBuild({ projectId: "proj-1" }, createContext())
     ).rejects.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// canTokenPublishDeployment
+// ---------------------------------------------------------------------------
+
+describe("canTokenPublishDeployment", () => {
+  const token = {
+    token: "token-1",
+    projectId: "proj-1",
+    name: "Share link",
+    createdAt: new Date().toISOString(),
+    canClone: true,
+    canCopy: true,
+    canPublish: false,
+  };
+
+  test("allows builder tokens to publish to the staging domain", () => {
+    expect(
+      canTokenPublishDeployment(
+        { ...token, relation: "builders" },
+        {
+          destination: "saas",
+          domains: ["project-domain"],
+          assetsDomain: "project-domain",
+          excludeWstdDomainFromSearch: false,
+        }
+      )
+    ).toBe(true);
+  });
+
+  test("rejects builder tokens publishing to custom domains", () => {
+    expect(
+      canTokenPublishDeployment(
+        { ...token, relation: "builders" },
+        {
+          destination: "saas",
+          domains: ["project-domain", "example.com"],
+          assetsDomain: "project-domain",
+          excludeWstdDomainFromSearch: true,
+        }
+      )
+    ).toBe(false);
+  });
+
+  test("rejects builder tokens publishing static builds", () => {
+    expect(
+      canTokenPublishDeployment(
+        { ...token, relation: "builders" },
+        {
+          destination: "static",
+          name: "build.zip",
+          assetsDomain: "project-domain",
+          templates: [],
+        }
+      )
+    ).toBe(false);
+  });
+
+  test("allows tokens with full publish permission", () => {
+    expect(
+      canTokenPublishDeployment(
+        { ...token, relation: "editors", canPublish: true },
+        {
+          destination: "saas",
+          domains: ["example.com"],
+          assetsDomain: "project-domain",
+          excludeWstdDomainFromSearch: true,
+        }
+      )
+    ).toBe(true);
   });
 });
 
