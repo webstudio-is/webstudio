@@ -60,10 +60,8 @@ export type WsAuthPageInput = {
 };
 
 export type WsAuthResourcesInput = {
-  existingContent: string;
   projectContent?: string;
   pages: WsAuthPageInput[];
-  existingSourceName?: string;
   projectSourceName?: string;
   generatedSourceName?: string;
 };
@@ -365,60 +363,27 @@ export const serializeWsAuth = (routes: WsAuthRoute[]) => {
   return `${JSON.stringify(config, null, 2)}\n`;
 };
 
-export const mergeWsAuthRoutes = (routes: WsAuthRoute[]) => {
-  const routeNames = new Set<string>();
-  const mergedRoutes: WsAuthRoute[] = [];
-  for (const route of routes) {
-    if (routeNames.has(route.route)) {
-      continue;
+const collectWsAuthRoutes = (sources: WsAuthSource[]) => {
+  return sources.flatMap((source) => {
+    if ("content" in source) {
+      return parseWsAuthOrThrow(source.content, source.name);
     }
-    routeNames.add(route.route);
-    mergedRoutes.push(route);
-  }
-  return mergedRoutes;
-};
-
-export const mergeWsAuthSources = (sources: WsAuthSource[]) => {
-  return mergeWsAuthRoutes(
-    sources.flatMap((source) => {
-      if ("content" in source) {
-        return parseWsAuthOrThrow(source.content, source.name);
-      }
-      return source.routes;
-    })
-  );
+    return source.routes;
+  });
 };
 
 export const buildWsAuth = (sources: WsAuthSource[]): WsAuthBuildResult => {
-  const routes = mergeWsAuthSources(sources);
+  const content = serializeWsAuth(collectWsAuthRoutes(sources));
+  const routes = parseWsAuthOrThrow(content, "Serialized auth config");
   return {
     routes,
-    content: serializeWsAuth(routes),
+    content,
   };
 };
 
-export const mergeWsAuthContent = ({
-  existingContent,
-  routes,
-  sourceName = ".webstudio/auth.json",
-}: {
-  existingContent: string;
-  routes: WsAuthRoute[];
-  sourceName?: string;
-}) => {
-  const manualRoutes = parseWsAuthOrThrow(existingContent, sourceName);
-  const manualRouteNames = new Set(manualRoutes.map(({ route }) => route));
-  return serializeWsAuth([
-    ...manualRoutes,
-    ...routes.filter(({ route }) => manualRouteNames.has(route) === false),
-  ]);
-};
-
 export const createWsAuthResources = ({
-  existingContent,
   projectContent = "",
   pages,
-  existingSourceName = ".webstudio/auth.json",
   projectSourceName = "Auth",
   generatedSourceName = "Generated page auth",
 }: WsAuthResourcesInput): WsAuthResources => {
@@ -427,13 +392,10 @@ export const createWsAuthResources = ({
     return route === undefined ? [] : [route];
   });
   const result = buildWsAuth([
-    { name: existingSourceName, content: existingContent },
     { name: projectSourceName, content: projectContent },
     { name: generatedSourceName, routes: generatedRoutes },
   ]);
   console.info("[wsauth] create resources", {
-    existingContentLength: existingContent.length,
-    existingContent,
     projectContentLength: projectContent.length,
     projectContent,
     pageCount: pages.length,
@@ -443,14 +405,8 @@ export const createWsAuthResources = ({
     routeCount: result.routes.length,
     routes: result.routes,
   });
-  const content = mergeWsAuthContent({
-    existingContent,
-    routes: result.routes,
-    sourceName: existingSourceName,
-  });
   return {
     ...result,
-    content,
     module: [
       `import type { WsAuthRoute } from "@webstudio-is/wsauth";`,
       "",

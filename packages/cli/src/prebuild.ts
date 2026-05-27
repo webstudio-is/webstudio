@@ -152,19 +152,8 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
 };
 
 const writeWsAuthResources = async (generatedDir: string, pages: Pages) => {
-  let existingFileExists = true;
-  const existingContent = await readFile(wsAuthFile, "utf8").catch((error) => {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      existingFileExists = false;
-      return "";
-    }
-    throw error;
-  });
-  console.info("[wsauth] prebuild read auth config", {
+  console.info("[wsauth] prebuild create auth config", {
     file: wsAuthFile,
-    exists: existingFileExists,
-    contentLength: existingContent.length,
-    content: existingContent,
     projectAuthContentLength: pages.meta?.auth?.length ?? 0,
     projectAuthContent: pages.meta?.auth,
     pages: getAllPages(pages).map((page) => ({
@@ -175,7 +164,6 @@ const writeWsAuthResources = async (generatedDir: string, pages: Pages) => {
     })),
   });
   const { content, module } = createWsAuthResources({
-    existingContent,
     projectContent: pages.meta?.auth,
     pages: getAllPages(pages).map((page) => ({
       route: getPagePath(page.id, pages),

@@ -6,7 +6,6 @@ import {
   createWsAuthResources,
   findWsAuthRoute,
   getBasicAuthCredentials,
-  mergeWsAuthRoutes,
   parseWsAuth,
   validateBasicAuth,
 } from "./index";
@@ -120,28 +119,10 @@ describe("wsauth", () => {
     });
   });
 
-  test("keeps the first rule for duplicate routes", () => {
-    const first = createBasicAuthRoute({
-      route: "/private",
-      login: "first",
-      password: "secret",
-    });
-    expect(
-      mergeWsAuthRoutes([
-        first,
-        createBasicAuthRoute({
-          route: "/private",
-          login: "second",
-          password: "secret",
-        }),
-      ])
-    ).toEqual([first]);
-  });
-
-  test("builds merged content from JSON and route sources", () => {
+  test("builds content from JSON and route sources", () => {
     const result = buildWsAuth([
       {
-        name: ".webstudio/auth.json",
+        name: "Auth",
         content: JSON.stringify({
           version: 1,
           routes: {
@@ -179,7 +160,7 @@ describe("wsauth", () => {
       routes: {
         "/private": {
           method: "basic",
-          login: "first",
+          login: "second",
           password: "secret",
         },
         "/generated": {
@@ -191,18 +172,8 @@ describe("wsauth", () => {
     });
   });
 
-  test("builds resources from existing, project, and page inputs", () => {
+  test("builds resources from project and page inputs", () => {
     const result = createWsAuthResources({
-      existingContent: JSON.stringify({
-        version: 1,
-        routes: {
-          "/manual": {
-            method: "basic",
-            login: "manual",
-            password: "secret",
-          },
-        },
-      }),
       projectContent: JSON.stringify({
         version: 1,
         routes: {
@@ -215,7 +186,7 @@ describe("wsauth", () => {
       }),
       pages: [
         {
-          route: "/manual",
+          route: "/project",
           auth: {
             method: "basic",
             login: "page",
@@ -237,21 +208,15 @@ describe("wsauth", () => {
     });
 
     expect(result.routes.map(({ route }) => route)).toEqual([
-      "/manual",
       "/project",
       "/legacy",
     ]);
     expect(JSON.parse(result.content)).toEqual({
       version: 1,
       routes: {
-        "/manual": {
-          method: "basic",
-          login: "manual",
-          password: "secret",
-        },
         "/project": {
           method: "basic",
-          login: "project",
+          login: "page",
           password: "secret",
         },
         "/legacy": {
@@ -278,7 +243,6 @@ describe("wsauth", () => {
   test("rejects invalid generated page auth inputs", () => {
     expect(() =>
       createWsAuthResources({
-        existingContent: "",
         pages: [
           {
             route: "/private",
