@@ -66,6 +66,22 @@ export type PlanConfig = {
   prices: Record<string, string>;
 };
 
+export const applyPlanFeatureCompatibility = <
+  Features extends Partial<PlanFeatures>,
+>(
+  features: Features,
+  source: Partial<PlanFeatures>
+): Features => {
+  if (
+    source.allowAuth === undefined &&
+    features.allowAuth !== true &&
+    features.allowDynamicData === true
+  ) {
+    return { ...features, allowAuth: true };
+  }
+  return features;
+};
+
 /**
  * Parse the PLANS env variable (JSON array of {name, extends?, features, prices?}).
  * - features is partial when extends is used; the parent plan fills in the rest.
@@ -163,7 +179,7 @@ export const parsePlansEnv = (raw: string): Map<string, PlanConfig> => {
       }
       resolved.set(entry.name, {
         name: entry.name,
-        features: result.data,
+        features: applyPlanFeatureCompatibility(result.data, entry.features),
         prices: entry.prices,
       });
     }

@@ -162,6 +162,27 @@ describe("parsePlansEnv", () => {
     );
   });
 
+  test("grants auth to legacy pro plans with dynamic data", () => {
+    const result = parsePlansEnv(
+      JSON.stringify([{ name: "Pro", features: { allowDynamicData: true } }])
+    );
+    expect(result.get("Pro")?.features.allowDynamicData).toBe(true);
+    expect(result.get("Pro")?.features.allowAuth).toBe(true);
+  });
+
+  test("allows plans to explicitly disable auth", () => {
+    const result = parsePlansEnv(
+      JSON.stringify([
+        {
+          name: "Pro",
+          features: { allowDynamicData: true, allowAuth: false },
+        },
+      ])
+    );
+    expect(result.get("Pro")?.features.allowDynamicData).toBe(true);
+    expect(result.get("Pro")?.features.allowAuth).toBe(false);
+  });
+
   test("strips unknown keys from features", () => {
     const result = parsePlansEnv(
       JSON.stringify([
