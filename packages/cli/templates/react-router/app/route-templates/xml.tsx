@@ -6,12 +6,30 @@ import {
   ReactSdkContext,
   xmlNodeTagSuffix,
 } from "@webstudio-is/react-sdk/runtime";
-import { Page, breakpoints } from "__CLIENT__";
+import { Page, breakpoints, projectDomain } from "__CLIENT__";
 import { getPageMeta, getRemixParams, getResources } from "__SERVER__";
 import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
 import { sitemap } from "__SITEMAP__";
 import { assets } from "__ASSETS__";
 import { authRoutes } from "__AUTH__";
+
+const authenticateProductionRequest = (request: Request) => {
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    "";
+
+  const requestHost = host.split(":")[0];
+  if (
+    projectDomain !== undefined &&
+    (requestHost === projectDomain ||
+      requestHost.startsWith(`${projectDomain}.`))
+  ) {
+    return;
+  }
+
+  return authenticateRequest(request, authRoutes);
+};
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
@@ -53,7 +71,7 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
-  const authRoute = authenticateRequest(arg.request, authRoutes);
+  const authRoute = authenticateProductionRequest(arg.request);
 
   const url = new URL(arg.request.url);
   const host =

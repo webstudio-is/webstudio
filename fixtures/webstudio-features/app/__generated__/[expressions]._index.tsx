@@ -12,6 +12,8 @@ import {
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
+export const projectDomain = "webstudio-fixture-project-a-0su3o";
+
 export const lastPublished = "2026-01-15T16:19:55.574Z";
 
 export const siteName = "KittyGuardedZone";

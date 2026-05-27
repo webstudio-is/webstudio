@@ -651,6 +651,8 @@ export const prebuild = async (options: {
 
       export const projectId = "${siteData.build.projectId}";
 
+      export const projectDomain = ${JSON.stringify(siteData.projectDomain)};
+
       export const lastPublished = "${new Date(siteData.build.createdAt).toISOString()}";
 
       export const siteName = ${JSON.stringify(projectMeta?.siteName)};

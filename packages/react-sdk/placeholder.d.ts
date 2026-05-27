@@ -10,6 +10,8 @@ declare module "__CLIENT__" {
 
   export const projectId: string;
 
+  export const projectDomain: string | undefined;
+
   export const lastPublished: string;
 
   export const siteName: string;

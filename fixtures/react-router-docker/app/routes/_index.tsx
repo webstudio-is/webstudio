@@ -25,6 +25,7 @@ import {
 } from "@webstudio-is/react-sdk/runtime";
 import {
   projectId,
+  projectDomain,
   Page,
   siteName,
   favIconAsset,
@@ -43,6 +44,24 @@ import css from "../__generated__/index.css?url";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 import { assets } from "../__generated__/$resources.assets";
 import { authRoutes } from "../__generated__/$resources.wsauth.server";
+
+const authenticateProductionRequest = (request: Request) => {
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    "";
+
+  const requestHost = host.split(":")[0];
+  if (
+    projectDomain !== undefined &&
+    (requestHost === projectDomain ||
+      requestHost.startsWith(`${projectDomain}.`))
+  ) {
+    return;
+  }
+
+  return authenticateRequest(request, authRoutes);
+};
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
@@ -84,7 +103,7 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
-  const authRoute = authenticateRequest(arg.request, authRoutes);
+  const authRoute = authenticateProductionRequest(arg.request);
 
   const url = new URL(arg.request.url);
   const host =
@@ -228,7 +247,7 @@ export const action = async ({
 }: ActionFunctionArgs): Promise<
   { success: true } | { success: false; errors: string[] }
 > => {
-  authenticateRequest(request, authRoutes);
+  authenticateProductionRequest(request);
 
   try {
     const url = new URL(request.url);
