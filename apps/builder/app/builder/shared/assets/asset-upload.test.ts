@@ -1,22 +1,12 @@
 import { describe, test, expect, vi, afterEach } from "vitest";
+import { toast } from "@webstudio-is/design-system";
 import {
   acceptFileTypeSpecifier,
   validateFiles,
   acceptUploadType,
 } from "./asset-upload";
 
-const mockToast = vi.hoisted(() => ({
-  error: vi.fn(),
-}));
-
-vi.mock("@webstudio-is/design-system", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@webstudio-is/design-system")>();
-  return {
-    ...actual,
-    toast: mockToast,
-  };
-});
+const toastError = vi.spyOn(toast, "error").mockImplementation(() => "");
 
 describe("validateFiles", () => {
   afterEach(() => {
@@ -36,7 +26,7 @@ describe("validateFiles", () => {
     expect(result).toHaveLength(2);
     expect(result).toContain(smallFile1);
     expect(result).toContain(smallFile2);
-    expect(mockToast.error).not.toHaveBeenCalled();
+    expect(toastError).not.toHaveBeenCalled();
   });
 
   test("filters out files exceeding size limit and shows toast error", () => {
@@ -55,7 +45,7 @@ describe("validateFiles", () => {
 
     expect(result).toHaveLength(1);
     expect(result).toContain(smallFile);
-    expect(mockToast.error).toHaveBeenCalledWith(
+    expect(toastError).toHaveBeenCalledWith(
       'Asset "large.jpg" cannot be bigger than 4.5MB'
     );
   });
@@ -78,11 +68,11 @@ describe("validateFiles", () => {
     const result = validateFiles([largeFile1, largeFile2]);
 
     expect(result).toHaveLength(0);
-    expect(mockToast.error).toHaveBeenCalledTimes(2);
-    expect(mockToast.error).toHaveBeenCalledWith(
+    expect(toastError).toHaveBeenCalledTimes(2);
+    expect(toastError).toHaveBeenCalledWith(
       'Asset "large1.jpg" cannot be bigger than 4.5MB'
     );
-    expect(mockToast.error).toHaveBeenCalledWith(
+    expect(toastError).toHaveBeenCalledWith(
       'Asset "large2.jpg" cannot be bigger than 4.5MB'
     );
   });

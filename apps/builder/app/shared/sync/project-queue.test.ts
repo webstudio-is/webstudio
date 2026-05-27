@@ -1,7 +1,15 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  test,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  type MockInstance,
+} from "vitest";
 import type { Backoff } from "@webstudio-is/sync-client";
 
 //  Module mocks
@@ -9,13 +17,11 @@ import type { Backoff } from "@webstudio-is/sync-client";
 const {
   mockBuildPatch,
   mockCreateNativeClient,
-  mockToastError,
   mockCreateBackoff,
   mockLoadBuilderData,
 } = vi.hoisted(() => ({
   mockBuildPatch: vi.fn(),
   mockCreateNativeClient: vi.fn(),
-  mockToastError: vi.fn(),
   mockCreateBackoff: vi.fn(),
   mockLoadBuilderData: vi.fn(),
 }));
@@ -23,10 +29,6 @@ const {
 vi.mock("~/shared/trpc/trpc-client", () => ({
   createNativeClient: mockCreateNativeClient,
   nativeClient: { build: { patch: { mutate: mockBuildPatch } } },
-}));
-
-vi.mock("@webstudio-is/design-system", () => ({
-  toast: { error: mockToastError },
 }));
 
 vi.mock("~/env/env.static", () => ({
@@ -46,6 +48,7 @@ vi.mock("~/shared/builder-data", () => ({
 
 import type { Change } from "immerhin";
 import { $hasUnsavedSyncChanges, $syncStatus } from "@webstudio-is/sync-client";
+import { toast } from "@webstudio-is/design-system";
 import {
   $lastTransactionId,
   commandQueue,
@@ -59,6 +62,7 @@ import {
 } from "./project-queue";
 
 const { retry, pollCommands, transactionCallbacks } = __testing__;
+let mockToastError: MockInstance<typeof toast.error>;
 
 //  Constants (duplicated to avoid exporting them just for tests)
 
@@ -112,7 +116,7 @@ describe("project-queue", () => {
       build: { patch: { mutate: mockBuildPatch } },
     });
     mockBuildPatch.mockResolvedValue({ status: "ok" });
-    mockToastError.mockClear();
+    mockToastError = vi.spyOn(toast, "error").mockImplementation(() => "");
     mockLoadBuilderData.mockResolvedValue({});
   });
 

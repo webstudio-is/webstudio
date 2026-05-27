@@ -10,6 +10,8 @@ declare module "__CLIENT__" {
 
   export const projectId: string;
 
+  export const projectDomain: string | undefined;
+
   export const lastPublished: string;
 
   export const siteName: string;
@@ -49,6 +51,11 @@ declare module "__SERVER__" {
   export const getRemixParams: ({ ...params }: Params) => Params;
 
   export const contactEmail: undefined | string;
+}
+
+declare module "__AUTH__" {
+  import type { WsAuthRoute } from "@webstudio-is/wsauth";
+  export const authRoutes: WsAuthRoute[];
 }
 
 declare module "__SITEMAP__" {
