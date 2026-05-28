@@ -120,9 +120,14 @@ export const AuthSection = ({
         </CheckboxAndLabel>
         <Grid gap={1}>
           <Text color="subtle">
-            {isExpanded
-              ? "Visitors will be asked for HTTP Basic Auth credentials before this page loads."
-              : "Anyone can access this page right now."}
+            {isExpanded ? (
+              <>
+                Visitors on <b>custom domains</b> will be asked for HTTP Basic
+                Auth credentials before this page loads.
+              </>
+            ) : (
+              "Anyone can access this page right now."
+            )}
           </Text>
         </Grid>
       </Grid>
