@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { css, renderTemplate, ws } from "@webstudio-is/template";
-import { generateFragmentFromTailwind } from "./tailwind";
+import { __testing__, generateFragmentFromTailwind } from "./tailwind";
 
 const getBaseStyleValue = (
   fragment: Awaited<ReturnType<typeof generateFragmentFromTailwind>>,
@@ -40,6 +40,24 @@ const getStyleValue = (
       style.state === options.state
   )?.value;
 };
+
+test("normalize unocss output for webstudio parser", () => {
+  const { css: normalizedCss } = __testing__.normalizeUnoCssForWebstudio(`
+    @property --un-shadow { syntax: "*"; inherits: false; initial-value: 0 0 #0000; }
+    @property --un-from-opacity { syntax: "<percentage>"; inherits: false; initial-value: 100%; }
+    .rounded-full { border-radius: calc(infinity * 1px); }
+    .from-brand { --un-gradient-from: color-mix(in oklab, #F5A623 var(--un-from-opacity), transparent); }
+    .bg-gradient { background-image: linear-gradient(to bottom right in oklab, var(--un-gradient-from) 0%, #E8920A 100%); }
+    .shadow { box-shadow: var(--un-shadow); }
+  `);
+
+  expect(normalizedCss).toContain("--tw-shadow");
+  expect(normalizedCss).toContain("border-radius: 9999px");
+  expect(normalizedCss).toMatch(
+    /linear-gradient\(to bottom right,\s*#F5A623 0%, #E8920A 100%\)/
+  );
+  expect(normalizedCss).toContain("box-shadow: 0 0 #0000");
+});
 
 test("extract local styles from tailwind classes", async () => {
   expect(
@@ -81,7 +99,6 @@ test("ignore dark mode", async () => {
   expect(getStyleValue(fragment, "backgroundColor")).toEqual(
     expect.objectContaining({
       type: "color",
-      colorSpace: "srgb",
       components: [1, 1, 1],
     })
   );
@@ -264,13 +281,288 @@ test("generate shadow", async () => {
       type: "layers",
       value: expect.arrayContaining([
         expect.objectContaining({
-          type: "var",
-          value: "tw-ring-offset-shadow",
+          type: "shadow",
+          offsetY: expect.objectContaining({ unit: "px", value: 1 }),
+          blur: expect.objectContaining({ unit: "px", value: 3 }),
         }),
-        expect.objectContaining({ type: "var", value: "tw-ring-shadow" }),
+        expect.objectContaining({
+          type: "shadow",
+          offsetY: expect.objectContaining({ unit: "px", value: 1 }),
+          blur: expect.objectContaining({ unit: "px", value: 2 }),
+          spread: expect.objectContaining({ unit: "px", value: -1 }),
+        }),
       ]),
     })
   );
+});
+
+test("generate arbitrary gradient, full radius and shadow", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element
+        ws:tag="a"
+        class="bg-gradient-to-br from-[#F5A623] to-[#E8920A] text-white text-sm font-bold px-6 py-2.5 rounded-full shadow-[0_4px_20px_rgba(245,166,35,0.35)]"
+      >
+        Free consultation
+      </ws.element>
+    )
+  );
+
+  expect(fragment.props.some((prop) => prop.name === "class")).toBe(false);
+  expect(getStyleValue(fragment, "backgroundImage")).toEqual(
+    expect.objectContaining({
+      type: "layers",
+      value: expect.arrayContaining([
+        expect.objectContaining({
+          value: expect.stringContaining("#F5A623"),
+        }),
+      ]),
+    })
+  );
+  expect(getStyleValue(fragment, "borderTopLeftRadius")).toEqual(
+    expect.objectContaining({ type: "unit", unit: "px", value: 9999 })
+  );
+  expect(getStyleValue(fragment, "boxShadow")).toEqual(
+    expect.objectContaining({
+      type: "layers",
+      value: expect.arrayContaining([
+        expect.objectContaining({
+          type: "shadow",
+          offsetY: expect.objectContaining({ unit: "px", value: 4 }),
+          blur: expect.objectContaining({ unit: "px", value: 20 }),
+          color: expect.objectContaining({ alpha: 0.35 }),
+        }),
+      ]),
+    })
+  );
+});
+
+test("generate clipped gradient text", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element
+        ws:tag="span"
+        class="text-transparent bg-clip-text bg-gradient-to-br from-[#F5A623] to-[#F97316]"
+      >
+        Your solar plant
+      </ws.element>
+    )
+  );
+
+  expect(fragment.props.some((prop) => prop.name === "class")).toBe(false);
+  expect(getStyleValue(fragment, "color")).toEqual(
+    expect.objectContaining({ type: "keyword", value: "transparent" })
+  );
+  expect(getStyleValue(fragment, "backgroundClip")).toEqual(
+    expect.objectContaining({
+      type: "layers",
+      value: expect.arrayContaining([
+        expect.objectContaining({ type: "keyword", value: "text" }),
+      ]),
+    })
+  );
+  expect(getStyleValue(fragment, "backgroundImage")).toEqual(
+    expect.objectContaining({
+      type: "layers",
+      value: expect.arrayContaining([
+        expect.objectContaining({
+          value: expect.stringContaining("#F97316"),
+        }),
+      ]),
+    })
+  );
+});
+
+test("generate gradient background with via color stop", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element
+        ws:tag="section"
+        class="py-24 px-4 bg-gradient-to-br from-[#0A2830] via-[#0D4F5C] to-[#0A3040]"
+      ></ws.element>
+    )
+  );
+
+  expect(fragment.props.some((prop) => prop.name === "class")).toBe(false);
+  expect(getStyleValue(fragment, "backgroundImage")).toEqual(
+    expect.objectContaining({
+      type: "layers",
+      value: expect.arrayContaining([
+        expect.objectContaining({
+          value:
+            "linear-gradient(to bottom right,#0A2830 0%,#0D4F5C 50%,#0A3040 100%)",
+        }),
+      ]),
+    })
+  );
+  expect(getStyleValue(fragment, "paddingBlockStart")).toEqual(
+    expect.objectContaining({ type: "unit", unit: "rem", value: 6 })
+  );
+  expect(getStyleValue(fragment, "paddingInlineStart")).toEqual(
+    expect.objectContaining({ type: "unit", unit: "rem", value: 1 })
+  );
+});
+
+test("input padding utilities override preflight reset", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element ws:tag="div" class="grid sm:grid-cols-2 gap-6">
+        <ws.element
+          ws:tag="input"
+          type="text"
+          placeholder="Full name"
+          class="w-full rounded-xl px-4 py-3 border border-gray-200"
+        ></ws.element>
+        <ws.element
+          ws:tag="input"
+          type="tel"
+          placeholder="Phone number"
+          class="w-full rounded-xl px-4 py-3 border border-gray-200"
+        ></ws.element>
+      </ws.element>
+    )
+  );
+
+  const inputStyleSourceId = fragment.styleSourceSelections
+    .find((selection) => selection.instanceId === "1")
+    ?.values.at(-1);
+  const inputStyles = fragment.styles.filter(
+    (style) => style.styleSourceId === inputStyleSourceId
+  );
+
+  expect(inputStyles).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        property: "width",
+        value: expect.objectContaining({ unit: "%", value: 100 }),
+      }),
+      expect.objectContaining({
+        property: "paddingInlineStart",
+        value: expect.objectContaining({ unit: "rem", value: 1 }),
+      }),
+      expect.objectContaining({
+        property: "paddingBlockStart",
+        value: expect.objectContaining({ unit: "rem", value: 0.75 }),
+      }),
+    ])
+  );
+  expect(
+    inputStyles.some((style) =>
+      ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"].includes(
+        style.property
+      )
+    )
+  ).toBe(false);
+  expect(getStyleValue(fragment, "gridTemplateColumns")).toEqual(
+    expect.objectContaining({
+      type: "unparsed",
+      value: "repeat(2,minmax(0,1fr))",
+    })
+  );
+});
+
+test("axis padding utilities do not clear unrelated inline padding", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element
+        ws:tag="input"
+        ws:style={css`
+          padding-top: 2rem;
+        `}
+        class="px-4"
+      ></ws.element>
+    )
+  );
+
+  expect(getStyleValue(fragment, "paddingTop")).toEqual(
+    expect.objectContaining({ type: "unit", unit: "rem", value: 2 })
+  );
+  expect(getStyleValue(fragment, "paddingInlineStart")).toEqual(
+    expect.objectContaining({ type: "unit", unit: "rem", value: 1 })
+  );
+  expect(getStyleValue(fragment, "paddingRight")).toBeUndefined();
+});
+
+test("space-y form children stretch by default", async () => {
+  const fragment = await generateFragmentFromTailwind(
+    renderTemplate(
+      <ws.element ws:tag="section" id="contact" class="py-24 px-4 bg-gray-50">
+        <ws.element
+          ws:tag="div"
+          class="max-w-3xl mx-auto bg-white p-10 rounded-3xl shadow-[0_8px_50px_rgba(0,0,0,0.08)]"
+        >
+          <ws.element ws:tag="form" class="space-y-6">
+            <ws.element ws:tag="div" class="grid sm:grid-cols-2 gap-6">
+              <ws.element
+                ws:tag="input"
+                type="text"
+                placeholder="Full name"
+                class="w-full rounded-xl px-4 py-3 border border-gray-200"
+              ></ws.element>
+              <ws.element
+                ws:tag="input"
+                type="tel"
+                placeholder="Phone number"
+                class="w-full rounded-xl px-4 py-3 border border-gray-200"
+              ></ws.element>
+            </ws.element>
+            <ws.element
+              ws:tag="textarea"
+              rows={4}
+              placeholder="Project details"
+              class="w-full rounded-xl px-4 py-3 border border-gray-200"
+            ></ws.element>
+            <ws.element
+              ws:tag="button"
+              type="button"
+              class="w-full bg-gradient-to-br from-[#F5A623] to-[#E8920A] text-white font-bold py-4 rounded-xl"
+            >
+              Send request
+            </ws.element>
+          </ws.element>
+        </ws.element>
+      </ws.element>
+    )
+  );
+
+  const cardStyleSourceId = fragment.styleSourceSelections
+    .find((selection) => selection.instanceId === "1")
+    ?.values.at(-1);
+  const formStyleSourceId = fragment.styleSourceSelections
+    .find((selection) => selection.instanceId === "2")
+    ?.values.at(-1);
+
+  expect(fragment.styles).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        styleSourceId: cardStyleSourceId,
+        property: "maxWidth",
+        value: expect.objectContaining({ unit: "rem", value: 48 }),
+      }),
+      expect.objectContaining({
+        styleSourceId: cardStyleSourceId,
+        property: "marginInlineStart",
+        value: expect.objectContaining({ type: "keyword", value: "auto" }),
+      }),
+      expect.objectContaining({
+        styleSourceId: formStyleSourceId,
+        property: "display",
+        value: expect.objectContaining({ type: "keyword", value: "flex" }),
+      }),
+      expect.objectContaining({
+        styleSourceId: formStyleSourceId,
+        property: "flexDirection",
+        value: expect.objectContaining({ type: "keyword", value: "column" }),
+      }),
+    ])
+  );
+  expect(
+    fragment.styles.some(
+      (style) =>
+        style.styleSourceId === formStyleSourceId &&
+        style.property === "alignItems"
+    )
+  ).toBe(false);
 });
 
 test("preserve or override existing local styles", async () => {
@@ -438,16 +730,16 @@ describe("extract breakpoints", () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            /* base -> max-width: 479px */
-            @media (max-width: 479px) {
+            /* base -> max-width: 639px */
+            @media (max-width: 639px) {
               opacity: 0.1;
             }
             /* min-width: 640px -> max-width: 767px */
             @media (max-width: 767px) {
               opacity: 0.2;
             }
-            /* min-width: 768px -> max-width: 991px */
-            @media (max-width: 991px) {
+            /* min-width: 768px -> max-width: 1023px */
+            @media (max-width: 1023px) {
               opacity: 0.3;
             }
             /* min-width: 1024px -> base */
@@ -456,8 +748,8 @@ describe("extract breakpoints", () => {
             @media (min-width: 1280px) {
               opacity: 0.5;
             }
-            /* min-width: 1536px -> min-width: 1440px */
-            @media (min-width: 1440px) {
+            /* min-width: 1536px -> min-width: 1536px */
+            @media (min-width: 1536px) {
               opacity: 0.6;
             }
           `}
@@ -481,7 +773,7 @@ describe("extract breakpoints", () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            @media (max-width: 479px) {
+            @media (max-width: 639px) {
               opacity: 0.1;
             }
             opacity: 0.2;
@@ -531,7 +823,7 @@ describe("extract breakpoints", () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            @media (max-width: 479px) {
+            @media (max-width: 639px) {
               opacity: 0.1;
             }
             opacity: 0.2;
@@ -556,13 +848,13 @@ describe("extract breakpoints", () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            @media (max-width: 479px) {
+            @media (max-width: 639px) {
               max-width: none;
             }
             @media (max-width: 767px) {
               max-width: 640px;
             }
-            @media (max-width: 991px) {
+            @media (max-width: 1023px) {
               max-width: 768px;
             }
             max-width: 1024px;
@@ -597,20 +889,20 @@ describe("extract breakpoints", () => {
             @media (min-width: 1280px) {
               color: red;
             }
-            @media (max-width: 479px) {
+            @media (max-width: 639px) {
               max-width: none;
             }
             @media (max-width: 767px) {
               max-width: 640px;
             }
-            @media (max-width: 991px) {
+            @media (max-width: 1023px) {
               max-width: 768px;
             }
             max-width: 1024px;
             @media (min-width: 1280px) {
               max-width: 1280px;
             }
-            @media (min-width: 1440px) {
+            @media (min-width: 1536px) {
               max-width: 1536px;
             }
             width: 100%;
@@ -662,13 +954,13 @@ describe("extract breakpoints", () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            @media (max-width: 479px) {
+            @media (max-width: 639px) {
               max-width: none;
             }
             @media (max-width: 767px) {
               max-width: 640px;
             }
-            @media (max-width: 991px) {
+            @media (max-width: 1023px) {
               max-width: 768px;
             }
             max-width: 1024px;
@@ -712,7 +1004,7 @@ describe("extract breakpoints", () => {
               color: red;
             }
             color: green;
-            @media (max-width: 479px) {
+            @media (max-width: 639px) {
               opacity: 0.1;
             }
             @media (max-width: 767px) {
@@ -741,7 +1033,7 @@ describe("extract breakpoints", () => {
           ws:tag="div"
           ws:style={css`
             opacity: 0.1;
-            @media (max-width: 479px) {
+            @media (max-width: 639px) {
               &:hover {
                 opacity: unset;
               }
@@ -770,20 +1062,20 @@ describe("extract breakpoints", () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            @media (max-width: 479px) {
+            @media (max-width: 639px) {
               opacity: 0.1;
             }
             @media (max-width: 767px) {
               opacity: 0.2;
             }
-            @media (max-width: 991px) {
+            @media (max-width: 1023px) {
               opacity: 0.3;
             }
             opacity: 0.4;
             @media (min-width: 1280px) {
               opacity: 0.5;
             }
-            @media (min-width: 1440px) {
+            @media (min-width: 1536px) {
               opacity: 0.6;
             }
           `}
@@ -826,7 +1118,7 @@ describe("extract breakpoints", () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            @media (max-width: 479px) {
+            @media (max-width: 639px) {
               opacity: unset;
             }
             opacity: 0.1;
@@ -851,7 +1143,7 @@ describe("extract breakpoints", () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            @media (max-width: 479px) {
+            @media (max-width: 639px) {
               opacity: 0.1;
             }
             @media (max-width: 767px) {
@@ -879,9 +1171,9 @@ describe("extract breakpoints", () => {
     );
     // container should only create max-width breakpoints, not 1280/1440/1920 min-width ones
     expect(fragment.breakpoints).toEqual([
-      { id: "0", label: "479", maxWidth: 479 },
+      { id: "0", label: "639", maxWidth: 639 },
       { id: "1", label: "767", maxWidth: 767 },
-      { id: "2", label: "991", maxWidth: 991 },
+      { id: "2", label: "1023", maxWidth: 1023 },
       { id: "base", label: "" },
     ]);
   });
@@ -892,9 +1184,9 @@ describe("extract breakpoints", () => {
         <ws.element ws:tag="div" class="opacity-50 sm:opacity-100"></ws.element>
       )
     );
-    // sm: should only create 479 max-width and base, not all breakpoints
+    // sm: should only create 639 max-width and base, not all breakpoints
     expect(fragment.breakpoints).toEqual([
-      { id: "0", label: "479", maxWidth: 479 },
+      { id: "0", label: "639", maxWidth: 639 },
       { id: "base", label: "" },
     ]);
   });
@@ -928,7 +1220,6 @@ test("generate space without display property", async () => {
           ws:style={css`
             display: flex;
             flex-direction: column;
-            align-items: start;
             @media (max-width: 767px) {
               row-gap: 1rem;
             }

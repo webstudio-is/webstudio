@@ -4,6 +4,7 @@ import {
   router,
   procedure,
   createErrorResponse,
+  getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
 import { roles } from "@webstudio-is/trpc-interface/authorize";
 
@@ -77,7 +78,12 @@ export const workspaceRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        if (ctx.planFeatures.maxWorkspaces <= 1) {
+        const { plan } = await workspaceApi.assertWorkspaceOwnerPlan(
+          input.workspaceId,
+          ctx
+        );
+
+        if (plan.maxWorkspaces <= 1) {
           throw new Error("Upgrade your plan to invite members to workspaces.");
         }
 
@@ -98,7 +104,12 @@ export const workspaceRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        if (ctx.planFeatures.maxWorkspaces <= 1) {
+        const { plan } = await workspaceApi.assertWorkspaceOwnerPlan(
+          input.workspaceId,
+          ctx
+        );
+
+        if (plan.maxWorkspaces <= 1) {
           throw new Error(
             "Upgrade your plan to manage workspace member roles."
           );
@@ -158,8 +169,9 @@ export const workspaceRouter = router({
           throw new Error("Target workspace not found");
         }
 
-        const ownerPlan = await ctx.getOwnerPlanFeatures(
-          targetWorkspace.data.userId
+        const ownerPlan = await getPlanFeaturesByOwnerId(
+          targetWorkspace.data.userId,
+          ctx
         );
 
         if (ownerPlan.maxWorkspaces <= 1) {

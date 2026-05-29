@@ -2,7 +2,13 @@ import { describe, test, expect } from "vitest";
 import type { ColorSpace } from "hdr-color-input";
 import type { ColorValue } from "@webstudio-is/css-engine";
 import { __testing__ } from "./color-picker";
-const { cssStringToStyleValue, shouldCommitColorChange } = __testing__;
+const {
+  cssStringToStyleValue,
+  shouldCommitColorChange,
+  shouldHandleColorInputChange,
+  styleValueToColorInputColorSpace,
+  styleValueToColorInputValue,
+} = __testing__;
 
 describe("shouldCommitColorChange", () => {
   test("returns false when values serialize identically", () => {
@@ -41,6 +47,26 @@ describe("shouldCommitColorChange", () => {
         }
       )
     ).toBe(true);
+  });
+});
+
+describe("shouldHandleColorInputChange", () => {
+  test("ignores color input changes while picker is closed", () => {
+    expect(
+      shouldHandleColorInputChange({ disabled: false, isOpen: false })
+    ).toBe(false);
+  });
+
+  test("handles color input changes while picker is open", () => {
+    expect(
+      shouldHandleColorInputChange({ disabled: false, isOpen: true })
+    ).toBe(true);
+  });
+
+  test("ignores color input changes while disabled", () => {
+    expect(shouldHandleColorInputChange({ disabled: true, isOpen: true })).toBe(
+      false
+    );
   });
 });
 
@@ -201,5 +227,88 @@ describe("cssStringToStyleValue", () => {
       components: [0.7, 0.1, 180],
       alpha: 0.5,
     });
+  });
+});
+
+describe("styleValueToColorInputColorSpace", () => {
+  test("keeps pasted hex values in hex mode", () => {
+    expect(
+      styleValueToColorInputColorSpace({
+        type: "color",
+        colorSpace: "hex",
+        components: [1, 0.3412, 0.2],
+        alpha: 1,
+      })
+    ).toBe("hex");
+  });
+
+  test("keeps rgb values in srgb mode", () => {
+    expect(
+      styleValueToColorInputColorSpace({
+        type: "color",
+        colorSpace: "srgb",
+        components: [1, 0.3412, 0.2],
+        alpha: 1,
+      })
+    ).toBe("srgb");
+    expect(
+      styleValueToColorInputColorSpace({
+        type: "rgb",
+        r: 255,
+        g: 87,
+        b: 51,
+        alpha: 1,
+      })
+    ).toBe("srgb");
+  });
+
+  test("maps internal color space names to color-input names", () => {
+    expect(
+      styleValueToColorInputColorSpace({
+        type: "color",
+        colorSpace: "p3",
+        components: [0.4, 0.6, 0.3],
+        alpha: 1,
+      })
+    ).toBe("display-p3");
+    expect(
+      styleValueToColorInputColorSpace({
+        type: "color",
+        colorSpace: "a98rgb",
+        components: [0.4, 0.6, 0.3],
+        alpha: 1,
+      })
+    ).toBe("a98-rgb");
+  });
+
+  test("uses srgb mode for color keywords", () => {
+    expect(
+      styleValueToColorInputColorSpace({
+        type: "keyword",
+        value: "red",
+      })
+    ).toBe("srgb");
+  });
+});
+
+describe("styleValueToColorInputValue", () => {
+  test("converts color keywords to concrete rgb input values", () => {
+    expect(
+      styleValueToColorInputValue({
+        type: "keyword",
+        value: "red",
+      })
+    ).toBe("rgb(255, 0, 0)");
+  });
+
+  test("keeps color values in their serialized format", () => {
+    expect(
+      styleValueToColorInputValue({
+        type: "color",
+        colorSpace: "hex",
+        components: [1, 0.3412, 0.2],
+        alpha: 1,
+      })
+    ).toBe("#ff5733");
   });
 });

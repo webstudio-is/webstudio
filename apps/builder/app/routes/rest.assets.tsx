@@ -1,26 +1,16 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-} from "@remix-run/server-runtime";
-import type { Asset } from "@webstudio-is/sdk";
-import {
-  loadAssetsByProject,
-  createUploadName,
-} from "@webstudio-is/asset-uploader/index.server";
+import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
+import { createUploadName } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { parseError } from "~/shared/error/error-parse";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 
-export const loader = async ({
-  params,
-  request,
-}: LoaderFunctionArgs): Promise<Array<Asset>> => {
-  if (params.projectId === undefined) {
-    throw new Error("Project id undefined");
-  }
-  const context = await createContext(request);
-  return await loadAssetsByProject(params.projectId, context);
+export const loader = async () => {
+  return json(
+    { errors: "Method not allowed" },
+    { status: 405, headers: privateNoStoreResponseHeaders }
+  );
 };
 
 export const action = async (props: ActionFunctionArgs) => {
@@ -52,19 +42,22 @@ export const action = async (props: ActionFunctionArgs) => {
           projectId,
           type,
           filename,
-          maxAssetsPerProject: context.planFeatures.maxAssetsPerProject,
         },
         context
       );
-      return {
-        name,
-      };
+      return json({ name }, { headers: privateNoStoreResponseHeaders });
     }
+
+    return json(
+      { errors: "Method not allowed" },
+      { status: 405, headers: privateNoStoreResponseHeaders }
+    );
   } catch (error) {
     console.error(error);
 
-    return {
-      errors: parseError(error).message,
-    };
+    return json(
+      { errors: parseError(error).message },
+      { headers: privateNoStoreResponseHeaders }
+    );
   }
 };

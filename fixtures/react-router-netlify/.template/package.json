@@ -7,6 +7,7 @@
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-router": "workspace:*",
+    "@webstudio-is/wsauth": "workspace:*",
     "webstudio": "workspace:*"
   }
 }

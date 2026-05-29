@@ -19,6 +19,20 @@ describe("getRequiredPermitForBuildPatchTransaction", () => {
     ).toBe("edit");
   });
 
+  test("allows content block instance edits with edit permit", () => {
+    expect(
+      getRequiredPermitForBuildPatchTransaction(
+        transaction("instances", [
+          {
+            op: "replace",
+            path: ["instance-1", "children"],
+            value: [{ type: "text", value: "Title" }],
+          },
+        ])
+      )
+    ).toBe("edit");
+  });
+
   test("requires build permit for style edits", () => {
     expect(
       getRequiredPermitForBuildPatchTransaction(transaction("styles"))

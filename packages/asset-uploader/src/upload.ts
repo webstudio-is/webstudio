@@ -2,6 +2,7 @@ import {
   type AppContext,
   authorizeProject,
   AuthorizationError,
+  getProjectPlanFeatures,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Asset } from "@webstudio-is/sdk";
 import type { AssetClient } from "./client";
@@ -14,7 +15,6 @@ type UploadData = {
   projectId: string;
   type: string;
   filename: string;
-  maxAssetsPerProject: number;
 };
 
 const UPLOADING_STALE_TIMEOUT = 1000 * 60 * 30; // 30 minutes
@@ -23,7 +23,7 @@ export const createUploadName = async (
   data: UploadData,
   context: AppContext
 ): Promise<string> => {
-  const { assetId, projectId, maxAssetsPerProject, type, filename } = data;
+  const { assetId, projectId, type, filename } = data;
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context
@@ -33,6 +33,50 @@ export const createUploadName = async (
       "You don't have access to create this project assets"
     );
   }
+
+  const existingUpload = await context.postgrest.client
+    .from("Asset")
+    .select(
+      `
+        name,
+        file:File!inner(status)
+      `
+    )
+    .eq("id", assetId)
+    .eq("projectId", projectId)
+    .eq("file.status", "UPLOADING")
+    .eq("file.isDeleted", false)
+    .eq("file.uploaderProjectId", projectId)
+    .maybeSingle();
+  if (existingUpload.error) {
+    throw new Error(existingUpload.error.message);
+  }
+
+  if (existingUpload.data !== null) {
+    const fileUpdate = await context.postgrest.client
+      .from("File")
+      .update({
+        // uploadFile uses createdAt as the reservation expiration timestamp
+        createdAt: new Date().toISOString(),
+      })
+      .eq("name", existingUpload.data.name)
+      .eq("status", "UPLOADING")
+      .eq("isDeleted", false)
+      .eq("uploaderProjectId", projectId)
+      .select("name")
+      .maybeSingle();
+    if (fileUpdate.error) {
+      throw new Error(fileUpdate.error.message);
+    }
+    if (fileUpdate.data !== null) {
+      return fileUpdate.data.name;
+    }
+  }
+
+  const { maxAssetsPerProject } = await getProjectPlanFeatures(
+    projectId,
+    context
+  );
 
   /**
    * sometimes for example on request timeout we don't know what happened to the "UPLOADING" asset,

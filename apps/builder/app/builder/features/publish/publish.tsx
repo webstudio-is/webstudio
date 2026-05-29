@@ -8,7 +8,6 @@ import {
   startTransition,
   useRef,
   useId,
-  type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -42,16 +41,11 @@ import {
   SmallIconButton,
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import {
-  $selectedPagePath,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
-import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { $selectedPageId } from "~/shared/nano-states";
 import {
   $authTokenPermissions,
   $editingPageId,
-  $publishedOrigin,
   $permissions,
   $stagingUsername,
   $stagingPassword,
@@ -76,17 +70,19 @@ import {
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import {
-  getAllPages,
-  isPathnamePattern,
-  type Templates,
-} from "@webstudio-is/sdk";
+import { type Templates } from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $dataSources, $instances, $pages } from "~/shared/sync/data-stores";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
+import { $currentSystem } from "~/shared/system";
+import { getPublishUrl } from "./publish-url";
+import {
+  getRestrictedFeatures,
+  type RestrictedFeature,
+} from "./restricted-features";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -99,8 +95,7 @@ const ChangeProjectDomain = ({
   refresh,
 }: ChangeProjectDomainProps) => {
   const id = useId();
-  const publishedOrigin = useStore($publishedOrigin);
-  const selectedPagePath = useStore($selectedPagePath);
+  const currentSystem = useStore($currentSystem);
   const stagingUsername = useStore($stagingUsername);
   const stagingPassword = useStore($stagingPassword);
   const publisherHost = useStore($publisherHost);
@@ -110,18 +105,12 @@ const ChangeProjectDomain = ({
   const [isUpdateInProgress, setIsUpdateInProgress] = useOptimistic(false);
   const [isUnpublishing, setIsUnpublishing] = useOptimistic(false);
 
-  const pageUrl = new URL(publishedOrigin);
-  pageUrl.pathname = selectedPagePath;
-
-  // Add username:password@ for staging domains
-  if (
-    stagingUsername &&
-    stagingPassword &&
-    pageUrl.hostname.endsWith(`.${publisherHost}`)
-  ) {
-    pageUrl.username = stagingUsername;
-    pageUrl.password = stagingPassword;
-  }
+  const pageUrl = getPublishUrl({
+    domain: `${project.domain}.${publisherHost}`,
+    pathname: currentSystem.pathname,
+    username: stagingUsername,
+    password: stagingPassword,
+  });
 
   const updateProjectDomain = async () => {
     setIsUpdateInProgress(true);
@@ -325,57 +314,8 @@ const ChangeProjectDomain = ({
 
 const $restrictedFeatures = computed(
   [$pages, $dataSources, $instances, $permissions],
-  (pages, dataSources, instances, permissions) => {
-    const features = new Map<
-      string,
-      | undefined
-      | {
-          navigate?: { pageId: string; instanceSelector: string[] };
-          view?: "pageSettings";
-          info?: ReactNode;
-        }
-    >();
-    if (pages === undefined) {
-      return features;
-    }
-    // specified emails for default webhook form
-    if (
-      permissions.maxContactEmailsPerProject === 0 &&
-      (pages?.meta?.contactEmail ?? "").trim()
-    ) {
-      features.set("Custom contact email", undefined);
-    }
-    if (!permissions.allowDynamicData) {
-      // pages with dynamic paths
-      for (const page of getAllPages(pages)) {
-        const navigate = {
-          pageId: page.id,
-          instanceSelector: [page.rootInstanceId],
-        };
-        // allow catch all for 404 pages on free plan
-        if (isPathnamePattern(page.path) && page.path !== "/*") {
-          features.set("Dynamic path", { navigate, view: "pageSettings" });
-        }
-        if (page.meta.redirect && page.meta.redirect !== `""`) {
-          features.set("Redirect", { navigate, view: "pageSettings" });
-        }
-      }
-      // has resource variables
-      for (const dataSource of dataSources.values()) {
-        if (dataSource.type === "resource") {
-          const instanceId = dataSource.scopeInstanceId ?? "";
-          features.set("Resource variable", {
-            navigate: findPageAndSelectorByInstanceId(
-              pages,
-              instances,
-              instanceId
-            ),
-          });
-        }
-      }
-    }
-    return features;
-  }
+  (pages, dataSources, instances, permissions) =>
+    getRestrictedFeatures({ pages, dataSources, instances, permissions })
 );
 
 const usePublishCountdown = (isPublishing: boolean) => {
@@ -417,15 +357,7 @@ const Publish = ({
   timesLeft: number;
   disabled: boolean;
   refresh: () => Promise<void>;
-  restrictedFeatures: Map<
-    string,
-    | undefined
-    | {
-        navigate?: { pageId: string; instanceSelector: string[] };
-        view?: "pageSettings";
-        info?: ReactNode;
-      }
-  >;
+  restrictedFeatures: Map<string, RestrictedFeature>;
 }) => {
   const { maxDailyPublishesPerUser } = useStore($permissions);
   const { userPublishCount } = useUserPublishCount();
@@ -784,8 +716,10 @@ const useCanAddDomain = () => {
     (domain) => domain.status === "ACTIVE" && domain.verified
   ).length;
   useEffect(() => {
-    load();
-  }, [load, activeDomainsCount]);
+    if (project?.id !== undefined) {
+      load({ projectId: project.id });
+    }
+  }, [load, activeDomainsCount, project?.id]);
   const canAddDomain = data
     ? data.success && data.data < maxDomainsAllowedPerUser
     : true;
@@ -795,9 +729,12 @@ const useCanAddDomain = () => {
 const useUserPublishCount = () => {
   const { load, data } = trpcClient.project.userPublishCount.useQuery();
   const { maxDailyPublishesPerUser } = useStore($permissions);
+  const project = useStore($project);
   useEffect(() => {
-    load();
-  }, [load]);
+    if (project?.id !== undefined) {
+      load({ projectId: project.id });
+    }
+  }, [load, project?.id]);
   return {
     userPublishCount: data?.success ? data.data : 0,
     maxDailyPublishesPerUser,

@@ -1,15 +1,35 @@
 import { renderToString } from "react-dom/server";
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
+import { authenticateRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
   xmlNodeTagSuffix,
 } from "@webstudio-is/react-sdk/runtime";
-import { Page, breakpoints } from "__CLIENT__";
+import { Page, breakpoints, projectDomain } from "__CLIENT__";
 import { getPageMeta, getRemixParams, getResources } from "__SERVER__";
 import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
 import { sitemap } from "__SITEMAP__";
 import { assets } from "__ASSETS__";
+import { authRoutes } from "__AUTH__";
+
+const authenticateProductionRequest = (request: Request) => {
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    "";
+
+  const requestHost = host.split(":")[0];
+  if (
+    projectDomain !== undefined &&
+    (requestHost === projectDomain ||
+      requestHost.startsWith(`${projectDomain}.`))
+  ) {
+    return;
+  }
+
+  return authenticateRequest(request, authRoutes);
+};
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
@@ -51,6 +71,8 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
+  const authRoute = authenticateProductionRequest(arg.request);
+
   const url = new URL(arg.request.url);
   const host =
     arg.request.headers.get("x-forwarded-host") ||
@@ -108,6 +130,10 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   text = text.replaceAll(xmlNodeTagSuffix, "");
 
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n${text}`, {
-    headers: { "Content-Type": "application/xml" },
+    headers: {
+      "Content-Type": "application/xml",
+      "Cache-Control":
+        authRoute === undefined ? "public, max-age=600" : "private, no-store",
+    },
   });
 };

@@ -1,5 +1,10 @@
 import { atom, computed } from "nanostores";
-import { findPageByIdOrPath, type Page, type System } from "@webstudio-is/sdk";
+import {
+  findPageByIdOrPath,
+  getPagePath,
+  type Page,
+  type System,
+} from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
   matchPathnamePattern,
@@ -14,13 +19,22 @@ export const $systemDataByPage = atom(
   new Map<Page["id"], Pick<System, "search" | "params">>()
 );
 
-const extractParams = (pattern: string, path?: string) => {
+const extractParams = (
+  pattern: string,
+  path?: string,
+  fallbackPattern?: string
+) => {
   const params: System["params"] = {};
   const tokens = tokenizePathnamePattern(pattern);
   // try to match the first item in history to let user
   // see the page without manually entering params
   // or selecting them in address bar
-  const matchedParams = path ? matchPathnamePattern(pattern, path) : undefined;
+  const matchedParams = path
+    ? (matchPathnamePattern(pattern, path) ??
+      (fallbackPattern
+        ? matchPathnamePattern(fallbackPattern, path)
+        : undefined))
+    : undefined;
   for (const token of tokens) {
     if (token.type === "param") {
       params[token.name] = matchedParams?.[token.name] ?? undefined;
@@ -30,21 +44,26 @@ const extractParams = (pattern: string, path?: string) => {
 };
 
 export const $currentSystem = computed(
-  [$publishedOrigin, $selectedPage, $systemDataByPage],
-  (origin, page, systemByPage) => {
+  [$publishedOrigin, $selectedPage, $pages, $systemDataByPage],
+  (origin, page, pages, systemByPage) => {
     const system: System = {
       search: {},
       params: {},
       pathname: "/",
       origin,
     };
-    if (page === undefined) {
+    if (page === undefined || pages === undefined) {
       return system;
     }
     const systemData = systemByPage.get(page.id);
-    const extractedParams = extractParams(page.path, page.history?.[0]);
+    const pagePath = getPagePath(page.id, pages);
+    const extractedParams = extractParams(
+      pagePath,
+      page.history?.[0],
+      page.path
+    );
     const params = { ...extractedParams, ...systemData?.params };
-    const pathname = compilePath(page.path, params) || "/";
+    const pathname = compilePath(pagePath, params) || "/";
     return {
       search: { ...system.search, ...systemData?.search },
       params,
@@ -72,8 +91,9 @@ const savePathInHistory = (pageId: string, path: string) => {
     if (page === undefined) {
       return;
     }
+    const pagePath = getPagePath(page.id, pages);
     const history = Array.from(page.history ?? []);
-    history.unshift(path);
+    history.unshift(path || pagePath);
     page.history = Array.from(new Set(history)).slice(0, 20);
   });
 };
@@ -91,5 +111,7 @@ export const updateCurrentSystem = (
   const params = update.params ?? systemData?.params ?? {};
   systemDataByPage.set(page.id, { search, params });
   $systemDataByPage.set(systemDataByPage);
-  savePathInHistory(page.id, compilePath(page.path, params));
+  const pages = $pages.get();
+  const pagePath = pages ? getPagePath(page.id, pages) : page.path;
+  savePathInHistory(page.id, compilePath(pagePath, params));
 };

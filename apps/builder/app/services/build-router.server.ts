@@ -17,7 +17,11 @@ import {
   toPatchResult,
 } from "~/shared/sync/patch/patch-service.server";
 import { normalizePatchRequest } from "~/shared/sync/patch/patch-normalize.server";
+import * as projectApi from "@webstudio-is/project/index.server";
 import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
+import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { serializePages } from "@webstudio-is/project-migrations/pages";
+import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import {
   loadPublishedProjectDataByBuildId,
   loadPublishedProjectDataByProjectId,
@@ -96,7 +100,37 @@ const assertRelayPatchContext = (
   }
 };
 
+export const loadBuilderDataByProjectId = async (
+  projectId: string,
+  ctx: AppContext
+) => {
+  const project = await projectApi.loadById(projectId, ctx);
+  if (project === null) {
+    throw new Error(`Project "${projectId}" not found`);
+  }
+  if (project.userId === null) {
+    throw new Error("Project must have project userId defined");
+  }
+
+  const build = await loadDevBuildByProjectId(ctx, project.id);
+  const assets = await loadAssetsByProject(project.id, ctx);
+
+  return {
+    ...build,
+    pages: serializePages(build.pages),
+    assets,
+    project,
+    publisherHost: env.PUBLISHER_HOST,
+  };
+};
+
 export const buildRouter = router({
+  loadData: procedure
+    .input(z.object({ projectId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await loadBuilderDataByProjectId(input.projectId, ctx);
+    }),
+
   loadProjectDataByBuildId: procedure
     .input(z.object({ buildId: z.string() }))
     .query(async ({ ctx, input }) => {

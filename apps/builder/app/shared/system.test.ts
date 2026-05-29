@@ -1,11 +1,19 @@
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import type { Page, Pages } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { updateCurrentSystem } from "./system";
+import {
+  $currentSystem,
+  $systemDataByPage,
+  updateCurrentSystem,
+} from "./system";
 import { selectPage } from "./nano-states";
 
 registerContainers();
+
+beforeEach(() => {
+  $systemDataByPage.set(new Map());
+});
 
 const getInitialPages = (page: Page): Pages => ({
   homePageId: "homeId",
@@ -88,5 +96,88 @@ describe("history", () => {
       "/blog/my-date/post/my-slug",
       "/blog/another-date/post/another-slug",
     ]);
+  });
+});
+
+test("system pathname includes parent folder slug", () => {
+  $pages.set({
+    ...getInitialPages({
+      id: "dynamicId",
+      path: "/post/:slug",
+      name: "",
+      title: "",
+      meta: {},
+      rootInstanceId: "",
+    }),
+    folders: new Map([
+      [
+        "rootId",
+        {
+          id: "rootId",
+          name: "",
+          slug: "",
+          children: ["homeId", "folderId"],
+        },
+      ],
+      [
+        "folderId",
+        {
+          id: "folderId",
+          name: "Blog",
+          slug: "blog",
+          children: ["dynamicId"],
+        },
+      ],
+    ]),
+  });
+  selectPage("dynamicId");
+
+  updateCurrentSystem({
+    params: { slug: "my-post" },
+  });
+
+  expect($currentSystem.get().pathname).toBe("/blog/post/my-post");
+  expect($pages.get()?.pages.get("dynamicId")?.history).toEqual([
+    "/blog/post/my-post",
+  ]);
+});
+
+test("system params support legacy history without parent folder slug", () => {
+  $pages.set({
+    ...getInitialPages({
+      id: "dynamicId",
+      path: "/post/:slug",
+      name: "",
+      title: "",
+      meta: {},
+      rootInstanceId: "",
+      history: ["/post/my-post"],
+    }),
+    folders: new Map([
+      [
+        "rootId",
+        {
+          id: "rootId",
+          name: "",
+          slug: "",
+          children: ["homeId", "folderId"],
+        },
+      ],
+      [
+        "folderId",
+        {
+          id: "folderId",
+          name: "Blog",
+          slug: "blog",
+          children: ["dynamicId"],
+        },
+      ],
+    ]),
+  });
+  selectPage("dynamicId");
+
+  expect($currentSystem.get()).toMatchObject({
+    params: { slug: "my-post" },
+    pathname: "/blog/post/my-post",
   });
 });

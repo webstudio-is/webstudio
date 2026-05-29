@@ -9,6 +9,9 @@ import {
   router,
   procedure,
   createErrorResponse,
+  authorizeProject,
+  getProjectOwnerId,
+  AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { Templates } from "@webstudio-is/sdk";
 import { db } from "../db";
@@ -240,13 +243,10 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const { planFeatures } = ctx;
-
         return await db.create(
           {
             projectId: input.projectId,
             domain: input.domain,
-            maxDomainsAllowedPerUser: planFeatures.maxDomainsAllowedPerUser,
           },
           ctx
         );
@@ -295,26 +295,43 @@ export const domainRouter = router({
         return createErrorResponse(error);
       }
     }),
-  countTotalDomains: procedure.query(async ({ ctx }) => {
-    try {
-      if (
-        ctx.authorization.type !== "user" &&
-        ctx.authorization.type !== "token"
-      ) {
-        throw new Error("Not authorized");
+  countTotalDomains: procedure
+    .input(z.object({ projectId: z.string() }).optional())
+    .query(async ({ input, ctx }) => {
+      try {
+        if (
+          ctx.authorization.type !== "user" &&
+          ctx.authorization.type !== "token"
+        ) {
+          throw new Error("Not authorized");
+        }
+
+        let ownerId =
+          ctx.authorization.type === "user"
+            ? ctx.authorization.userId
+            : ctx.authorization.ownerId;
+
+        if (input?.projectId !== undefined) {
+          const canView = await authorizeProject.hasProjectPermit(
+            { projectId: input.projectId, permit: "view" },
+            ctx
+          );
+
+          if (canView === false) {
+            throw new AuthorizationError(
+              "Not authorized to access this project"
+            );
+          }
+
+          ownerId = await getProjectOwnerId(input.projectId, ctx);
+        }
+
+        const data = await db.countTotalDomains(ownerId, ctx);
+        return { success: true, data } as const;
+      } catch (error) {
+        return createErrorResponse(error);
       }
-
-      const ownerId =
-        ctx.authorization.type === "user"
-          ? ctx.authorization.userId
-          : ctx.authorization.ownerId;
-
-      const data = await db.countTotalDomains(ownerId, ctx);
-      return { success: true, data } as const;
-    } catch (error) {
-      return createErrorResponse(error);
-    }
-  }),
+    }),
 
   updateStatus: procedure
     .input(

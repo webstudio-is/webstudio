@@ -2,6 +2,11 @@ export type { SharedRouter } from "./shared/shared-router";
 export { createTrpcProxyServiceClient } from "./shared/client";
 
 export type { AppContext } from "./context/context.server";
+export {
+  getProjectOwnerId,
+  getProjectPlanFeatures,
+  getPlanFeaturesByOwnerId,
+} from "./context/project-plan.server";
 
 export {
   AuthorizationError,

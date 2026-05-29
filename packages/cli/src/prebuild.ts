@@ -31,6 +31,7 @@ import type {
   Asset,
   Resource,
   WsComponentMeta,
+  Pages,
 } from "@webstudio-is/sdk";
 import {
   createScope,
@@ -50,6 +51,7 @@ import {
   getAssetUrl,
   toRuntimeAsset,
 } from "@webstudio-is/sdk";
+import { createWsAuthResources } from "@webstudio-is/wsauth";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import type { Data } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "./config";
@@ -66,6 +68,7 @@ import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg"
 import { compareMedia } from "@webstudio-is/css-engine";
 
 const limit = pLimit(10);
+const wsAuthFile = ".webstudio/auth.json";
 
 type SiteDataByPage = {
   [id: Page["id"]]: {
@@ -146,6 +149,40 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
   );
 
   await writeFile(destinationPath, content, "utf8");
+};
+
+const writeWsAuthResources = async (generatedDir: string, pages: Pages) => {
+  console.info("[wsauth] prebuild create auth config", {
+    file: wsAuthFile,
+    projectAuthContentLength: pages.meta?.auth?.length ?? 0,
+    projectAuthContent: pages.meta?.auth,
+    pages: getAllPages(pages).map((page) => ({
+      id: page.id,
+      name: page.name,
+      route: getPagePath(page.id, pages),
+      auth: page.meta.auth,
+    })),
+  });
+  const { content, module } = createWsAuthResources({
+    projectContent: pages.meta?.auth,
+    pages: getAllPages(pages).map((page) => ({
+      route: getPagePath(page.id, pages),
+      auth: page.meta.auth,
+    })),
+  });
+  console.info("[wsauth] prebuild write auth config", {
+    file: wsAuthFile,
+    contentLength: content.length,
+    content,
+    generatedModulePath: join(generatedDir, "$resources.wsauth.server.ts"),
+    generatedModule: module,
+  });
+  await createFolderIfNotExists(dirname(wsAuthFile));
+  await writeFile(wsAuthFile, content);
+  await createFileIfNotExists(
+    join(generatedDir, "$resources.wsauth.server.ts"),
+    module
+  );
 };
 
 /**
@@ -308,6 +345,7 @@ export const prebuild = async (options: {
   );
   const pages = migratePages(siteData.build.pages);
   const allPages = getAllPages(pages);
+  await writeWsAuthResources(generatedDir, pages);
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], string[]> = {};
   const backgroundImageAssetsByPage: Record<Page["id"], string[]> = {};
@@ -616,6 +654,8 @@ export const prebuild = async (options: {
 
       export const projectId = "${siteData.build.projectId}";
 
+      export const projectDomain = ${JSON.stringify(siteData.projectDomain)};
+
       export const lastPublished = "${new Date(siteData.build.createdAt).toISOString()}";
 
       export const siteName = ${JSON.stringify(projectMeta?.siteName)};
@@ -711,6 +751,10 @@ export const prebuild = async (options: {
         .replaceAll(
           "__ASSETS__",
           importFrom(`./app/__generated__/$resources.assets`, file)
+        )
+        .replaceAll(
+          "__AUTH__",
+          importFrom(`./app/__generated__/$resources.wsauth.server`, file)
         )
         .replaceAll(
           "__CLIENT__",

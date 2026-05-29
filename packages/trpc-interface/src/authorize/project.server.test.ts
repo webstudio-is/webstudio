@@ -14,7 +14,7 @@ import {
   __testing__,
 } from "./project.server";
 
-const { isRolePermitted, getWorkspaceOwnerIdForProject } = __testing__;
+const { isRolePermitted } = __testing__;
 
 describe("isRolePermitted", () => {
   describe("workspace owner (own relation)", () => {
@@ -176,41 +176,6 @@ const makeUserCtx = (userId = "user-1", maxWorkspaces = 5): AppContext =>
   }) as unknown as AppContext;
 
 // ---------------------------------------------------------------------------
-// getWorkspaceOwnerIdForProject
-// ---------------------------------------------------------------------------
-
-describe("getWorkspaceOwnerIdForProject (msw)", () => {
-  test("returns undefined when project has no workspace", async () => {
-    const projectId = uid();
-    server.use(
-      db.get("Project", () => json({ id: projectId, workspaceId: null }))
-    );
-    const result = await getWorkspaceOwnerIdForProject(projectId, testContext);
-    expect(result).toBeUndefined();
-  });
-
-  test("returns workspace owner userId when workspace exists", async () => {
-    const projectId = uid();
-    server.use(
-      db.get("Project", () => json({ id: projectId, workspaceId: "ws-1" })),
-      db.get("Workspace", () => json({ id: "ws-1", userId: "owner-99" }))
-    );
-    const result = await getWorkspaceOwnerIdForProject(projectId, testContext);
-    expect(result).toBe("owner-99");
-  });
-
-  test("returns undefined when workspace not found", async () => {
-    const projectId = uid();
-    server.use(
-      db.get("Project", () => json({ id: projectId, workspaceId: "ws-gone" })),
-      db.get("Workspace", () => json(null))
-    );
-    const result = await getWorkspaceOwnerIdForProject(projectId, testContext);
-    expect(result).toBeUndefined();
-  });
-});
-
-// ---------------------------------------------------------------------------
 // checkProjectPermit — user auth
 // ---------------------------------------------------------------------------
 
@@ -354,18 +319,16 @@ describe("hasProjectPermit — workspace downgrade guard (msw)", () => {
   test("denies workspace member when owner plan has maxWorkspaces <= 1", async () => {
     const projectId = uid();
     server.use(
-      // Per-call routing: ownership check uses userId param; workspaceId lookup does not
       db.get("Project", ({ request }) => {
         const url = new URL(request.url);
         if (url.searchParams.has("userId")) {
           return json(null);
         }
-        return json({ id: projectId, workspaceId: "ws-1" });
+        return json({ id: projectId, userId: "owner-1" });
       }),
       db.get("WorkspaceProjectAuthorization", () =>
         json([{ relation: "editors" }])
-      ),
-      db.get("Workspace", () => json({ id: "ws-1", userId: "owner-1" }))
+      )
     );
     const ctx = makeUserCtx("user-2", 1);
 
@@ -381,12 +344,11 @@ describe("hasProjectPermit — workspace downgrade guard (msw)", () => {
         if (url.searchParams.has("userId")) {
           return json(null);
         }
-        return json({ id: projectId, workspaceId: "ws-1" });
+        return json({ id: projectId, userId: "owner-1" });
       }),
       db.get("WorkspaceProjectAuthorization", () =>
         json([{ relation: "editors" }])
-      ),
-      db.get("Workspace", () => json({ id: "ws-1", userId: "owner-1" }))
+      )
     );
     const ctx = makeUserCtx("user-2", 5);
 

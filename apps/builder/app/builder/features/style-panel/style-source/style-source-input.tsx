@@ -243,6 +243,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           lineHeight: 1,
           order: 1,
           flex: 1,
+          minWidth: theme.spacing[5],
           "&:focus-within, &:hover": {
             borderColor: "transparent",
           },

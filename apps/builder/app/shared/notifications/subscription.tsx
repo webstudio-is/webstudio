@@ -53,7 +53,6 @@ export const startSubscription = () => {
       nativeClient.polly.poll.query({
         topics,
       }) as Promise<SubscriptionResponse>,
-    pauseOnHidden: false,
     onError: (error) => {
       console.warn("[subscription] poll failed", error);
     },

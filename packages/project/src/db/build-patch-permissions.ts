@@ -1,7 +1,7 @@
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { BuildPatchTransaction } from "./build-patch-core";
 
-const contentNamespaces = new Set(["props"]);
+const contentNamespaces = new Set(["instances", "props"]);
 
 export const getRequiredPermitForBuildPatchTransaction = (
   transaction: BuildPatchTransaction
