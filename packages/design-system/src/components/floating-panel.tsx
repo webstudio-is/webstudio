@@ -208,6 +208,11 @@ export const FloatingPanel = ({
       return;
     }
 
+    if (height !== undefined) {
+      maxHeightRef.current = undefined;
+      contentElement.style.removeProperty("max-height");
+    }
+
     const updatePosition = () => {
       if (
         triggerRef.current === null ||
@@ -231,7 +236,7 @@ export const FloatingPanel = ({
         // Calculate max height based on container bounds
         const containerRect = containerRef.current.getBoundingClientRect();
         const availableHeight = containerRect.bottom - y - 10; // 10px padding
-        if (availableHeight > 0) {
+        if (availableHeight > 0 && height === undefined) {
           maxHeightRef.current = availableHeight;
           contentElement.style.maxHeight = `${availableHeight}px`;
         }
@@ -280,7 +285,7 @@ export const FloatingPanel = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [contentElement, containerRef, placement, offsetProp, open]);
+  }, [contentElement, containerRef, placement, offsetProp, open, height]);
 
   return (
     <Dialog

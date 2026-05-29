@@ -565,11 +565,28 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const editingItemId = useStore($editingPageId);
   const pages = useStore($pages);
   const isDesignMode = useStore($isDesignMode);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerElement, setContainerElement] =
+    useState<HTMLDivElement | null>(null);
+  const [settingsPanelHeight, setSettingsPanelHeight] = useState<number>();
   const [pageIdToDelete, setPageIdToDelete] = useState<string | undefined>();
   const [folderIdToDelete, setFolderIdToDelete] = useState<
     string | undefined
   >();
+
+  useEffect(() => {
+    if (containerElement === null) {
+      return;
+    }
+    const updateHeight = () => {
+      setSettingsPanelHeight(containerElement.getBoundingClientRect().height);
+    };
+    updateHeight();
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(containerElement);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [containerElement]);
 
   if (currentPage === undefined || pages === undefined) {
     return;
@@ -608,7 +625,16 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   };
 
   return (
-    <div ref={containerRef} data-floating-panel-container>
+    <div
+      ref={setContainerElement}
+      data-floating-panel-container
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
+    >
       <PanelTitle
         suffix={
           <>
@@ -687,6 +713,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           }
           placement="right-start"
           width={Number.parseFloat(rawTheme.spacing[35])}
+          height={settingsPanelHeight}
           open={true}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
@@ -694,7 +721,17 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
             }
           }}
         >
-          <span style={{ display: "none" }} />
+          <span
+            aria-hidden
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              width: 0,
+              height: 0,
+              pointerEvents: "none",
+            }}
+          />
         </FloatingPanel>
       )}
       {pageIdToDelete && (
