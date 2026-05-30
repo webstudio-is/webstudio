@@ -61,8 +61,6 @@ const deduplicatePath = (
   if (path === "/") {
     path = "";
   }
-  // Normalize to avoid double slashes when folderPath is "/" (empty-slug folder)
-  const joinPath = (...parts: string[]) => parts.join("").replace(/\/+/g, "/");
   let matchedPage = findPageByIdOrPath(joinPath(folderPath, path), pages);
   if (matchedPage === undefined) {
     return path;
@@ -78,7 +76,10 @@ const deduplicatePath = (
   return `/copy-${counter}${path}`;
 };
 
-const replaceDataSources = (
+// Normalize to avoid double slashes when folderPath is "/" (empty-slug folder).
+const joinPath = (...parts: string[]) => parts.join("").replace(/\/+/g, "/");
+
+export const replaceDataSourcesInExpression = (
   expression: string,
   replacements: Map<DataSource["id"], DataSource["id"]>
 ) => {
@@ -96,6 +97,125 @@ const replaceDataSources = (
   });
 };
 
+/**
+ * Copies the project :root and the given page/template body from `source`
+ * into `target`. Returns the remapped instance ids plus an expression
+ * transformer that rebinds legacy page system variables to the global one.
+ */
+const copyPageRootAndBodyMutable = ({
+  source,
+  target,
+  sourceRootInstanceId,
+  systemDataSourceId,
+  conflictResolution,
+}: {
+  source: WebstudioData;
+  target: WebstudioData;
+  sourceRootInstanceId: string;
+  systemDataSourceId: string | undefined;
+  conflictResolution: ConflictResolution | undefined;
+}) => {
+  const project = $project.get();
+  if (project === undefined) {
+    return;
+  }
+  // copy paste project :root
+  insertWebstudioFragmentCopy({
+    data: target,
+    fragment: extractWebstudioFragment(source, ROOT_INSTANCE_ID),
+    availableVariables: findAvailableVariables({
+      ...target,
+      startingInstanceId: ROOT_INSTANCE_ID,
+    }),
+    projectId: project.id,
+    conflictResolution,
+  });
+  const unsetVariables = new Set<DataSource["id"]>();
+  const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
+  // replace legacy page system with global variable
+  if (systemDataSourceId) {
+    unsetVariables.add(systemDataSourceId);
+    unsetNameById.set(systemDataSourceId, "system");
+  }
+  const availableVariables = findAvailableVariables({
+    ...target,
+    startingInstanceId: ROOT_INSTANCE_ID,
+  });
+  const maskedIdByName = new Map<DataSource["name"], DataSource["id"]>();
+  for (const dataSource of availableVariables) {
+    maskedIdByName.set(dataSource.name, dataSource.id);
+  }
+  // copy paste page body
+  const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
+    data: target,
+    fragment: extractWebstudioFragment(source, sourceRootInstanceId, {
+      unsetVariables,
+    }),
+    availableVariables,
+    projectId: project.id,
+    conflictResolution,
+  });
+  const transformExpression = (expression: string) => {
+    // rebind expressions from page system variable to the global one
+    expression = unsetExpressionVariables({ expression, unsetNameById });
+    expression = restoreExpressionVariables({ expression, maskedIdByName });
+    expression = replaceDataSourcesInExpression(expression, newDataSourceIds);
+    return expression;
+  };
+  return { newInstanceIds, transformExpression };
+};
+
+/**
+ * For each defined field on `source.meta`, write a transformed copy onto
+ * `target.meta`. Safe to call with source === target (used by page copy,
+ * where the target was produced by structuredClone of the source page).
+ */
+export const copyAndTransformPageMeta = (
+  source: Page["meta"],
+  target: Page["meta"],
+  transform: (expression: string) => string
+) => {
+  if (source.description !== undefined) {
+    target.description = transform(source.description);
+  }
+  if (source.title !== undefined) {
+    target.title = transform(source.title);
+  }
+  if (source.excludePageFromSearch !== undefined) {
+    target.excludePageFromSearch = transform(source.excludePageFromSearch);
+  }
+  if (source.socialImageUrl !== undefined) {
+    target.socialImageUrl = transform(source.socialImageUrl);
+  }
+  if (source.socialImageAssetId !== undefined) {
+    target.socialImageAssetId = source.socialImageAssetId;
+  }
+  if (source.documentType !== undefined) {
+    target.documentType = source.documentType;
+  }
+  if (source.content !== undefined) {
+    target.content = source.content;
+  }
+  if (source.auth !== undefined) {
+    target.auth = { ...source.auth };
+  }
+  if (source.language !== undefined) {
+    target.language = transform(source.language);
+  }
+  if (source.status !== undefined) {
+    target.status = transform(source.status);
+  }
+  if (source.redirect !== undefined) {
+    target.redirect = transform(source.redirect);
+  }
+  if (source.custom) {
+    target.custom = source.custom.map(({ property, content }) => ({
+      property,
+      content: transform(content),
+    }));
+  }
+};
+
 export const insertPageFromTemplateMutable = ({
   templateId,
   source,
@@ -109,90 +229,35 @@ export const insertPageFromTemplateMutable = ({
   overrides: { name: string; path: string };
   conflictResolution?: ConflictResolution;
 }) => {
-  const project = $project.get();
   const template = source.data.pages.pageTemplates?.get(templateId);
-  if (project === undefined || template === undefined) {
+  if (template === undefined) {
     return;
   }
-  insertWebstudioFragmentCopy({
-    data: target.data,
-    fragment: extractWebstudioFragment(source.data, ROOT_INSTANCE_ID),
-    availableVariables: findAvailableVariables({
-      ...target.data,
-      startingInstanceId: ROOT_INSTANCE_ID,
-    }),
-    projectId: project.id,
+  const copied = copyPageRootAndBodyMutable({
+    source: source.data,
+    target: target.data,
+    sourceRootInstanceId: template.rootInstanceId,
+    systemDataSourceId: template.systemDataSourceId,
     conflictResolution,
   });
-  const unsetVariables = new Set<DataSource["id"]>();
-  const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
-  if (template.systemDataSourceId) {
-    unsetVariables.add(template.systemDataSourceId);
-    unsetNameById.set(template.systemDataSourceId, "system");
+  if (copied === undefined) {
+    return;
   }
-  const availableVariables = findAvailableVariables({
-    ...target.data,
-    startingInstanceId: ROOT_INSTANCE_ID,
-  });
-  const maskedIdByName = new Map<DataSource["name"], DataSource["id"]>();
-  for (const dataSource of availableVariables) {
-    maskedIdByName.set(dataSource.name, dataSource.id);
-  }
-  const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
-    data: target.data,
-    fragment: extractWebstudioFragment(source.data, template.rootInstanceId, {
-      unsetVariables,
-    }),
-    availableVariables,
-    projectId: project.id,
-    conflictResolution,
-  });
-  const transformExpression = (expression: string) => {
-    expression = unsetExpressionVariables({ expression, unsetNameById });
-    expression = restoreExpressionVariables({ expression, maskedIdByName });
-    expression = replaceDataSources(expression, newDataSourceIds);
-    return expression;
-  };
   const newPage: Page = {
     id: nanoid(),
     name: deduplicateName(target.data.pages, target.folderId, overrides.name),
     path: deduplicatePath(target.data.pages, target.folderId, overrides.path),
-    title: transformExpression(template.title),
+    title: copied.transformExpression(template.title),
     rootInstanceId:
-      newInstanceIds.get(template.rootInstanceId) ?? template.rootInstanceId,
+      copied.newInstanceIds.get(template.rootInstanceId) ??
+      template.rootInstanceId,
     meta: {},
   };
-  if (template.meta.description !== undefined) {
-    newPage.meta.description = transformExpression(template.meta.description);
-  }
-  if (template.meta.excludePageFromSearch !== undefined) {
-    newPage.meta.excludePageFromSearch = transformExpression(
-      template.meta.excludePageFromSearch
-    );
-  }
-  if (template.meta.socialImageUrl !== undefined) {
-    newPage.meta.socialImageUrl = transformExpression(
-      template.meta.socialImageUrl
-    );
-  }
-  if (template.meta.socialImageAssetId !== undefined) {
-    newPage.meta.socialImageAssetId = template.meta.socialImageAssetId;
-  }
-  if (template.meta.language !== undefined) {
-    newPage.meta.language = transformExpression(template.meta.language);
-  }
-  if (template.meta.status !== undefined) {
-    newPage.meta.status = transformExpression(template.meta.status);
-  }
-  if (template.meta.redirect !== undefined) {
-    newPage.meta.redirect = transformExpression(template.meta.redirect);
-  }
-  if (template.meta.custom) {
-    newPage.meta.custom = template.meta.custom.map(({ property, content }) => ({
-      property,
-      content: transformExpression(content),
-    }));
-  }
+  copyAndTransformPageMeta(
+    template.meta,
+    newPage.meta,
+    copied.transformExpression
+  );
   target.data.pages.pages.set(newPage.id, newPage);
   target.data.pages.folders.get(target.folderId)?.children.push(newPage.id);
   return newPage.id;
@@ -207,94 +272,34 @@ export const insertPageCopyMutable = ({
   target: { data: WebstudioData; folderId: Folder["id"] };
   conflictResolution?: ConflictResolution;
 }) => {
-  const project = $project.get();
   const page = findPageByIdOrPath(source.pageId, source.data.pages);
-  if (project === undefined || page === undefined) {
+  if (page === undefined) {
     return;
   }
-  // copy paste project :root
-  insertWebstudioFragmentCopy({
-    data: target.data,
-    fragment: extractWebstudioFragment(source.data, ROOT_INSTANCE_ID),
-    availableVariables: findAvailableVariables({
-      ...target.data,
-      startingInstanceId: ROOT_INSTANCE_ID,
-    }),
-    projectId: project.id,
+  const copied = copyPageRootAndBodyMutable({
+    source: source.data,
+    target: target.data,
+    sourceRootInstanceId: page.rootInstanceId,
+    systemDataSourceId: page.systemDataSourceId,
     conflictResolution,
   });
-  const unsetVariables = new Set<DataSource["id"]>();
-  const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
-  // replace legacy page system with global variable
-  if (page.systemDataSourceId) {
-    unsetVariables.add(page.systemDataSourceId);
-    unsetNameById.set(page.systemDataSourceId, "system");
+  if (copied === undefined) {
+    return;
   }
-  const availableVariables = findAvailableVariables({
-    ...target.data,
-    startingInstanceId: ROOT_INSTANCE_ID,
-  });
-  const maskedIdByName = new Map<DataSource["name"], DataSource["id"]>();
-  for (const dataSource of availableVariables) {
-    maskedIdByName.set(dataSource.name, dataSource.id);
-  }
-  // copy paste page body
-  const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
-    data: target.data,
-    fragment: extractWebstudioFragment(source.data, page.rootInstanceId, {
-      unsetVariables,
-    }),
-    availableVariables,
-    projectId: project.id,
-    conflictResolution,
-  });
   // unwrap page draft
   const newPage = structuredClone(unwrap(page));
   newPage.id = nanoid();
   delete newPage.systemDataSourceId;
   newPage.rootInstanceId =
-    newInstanceIds.get(page.rootInstanceId) ?? page.rootInstanceId;
+    copied.newInstanceIds.get(page.rootInstanceId) ?? page.rootInstanceId;
   newPage.name = deduplicateName(target.data.pages, target.folderId, page.name);
   newPage.path = deduplicatePath(target.data.pages, target.folderId, page.path);
-  const transformExpression = (expression: string) => {
-    // rebind expressions with from page system variable to global one
-    expression = unsetExpressionVariables({ expression, unsetNameById });
-    expression = restoreExpressionVariables({ expression, maskedIdByName });
-    expression = replaceDataSources(expression, newDataSourceIds);
-    return expression;
-  };
-  newPage.title = transformExpression(newPage.title);
-  if (newPage.meta.description !== undefined) {
-    newPage.meta.description = transformExpression(newPage.meta.description);
-  }
-  if (newPage.meta.excludePageFromSearch !== undefined) {
-    newPage.meta.excludePageFromSearch = transformExpression(
-      newPage.meta.excludePageFromSearch
-    );
-  }
-  if (newPage.meta.socialImageUrl !== undefined) {
-    newPage.meta.socialImageUrl = transformExpression(
-      newPage.meta.socialImageUrl
-    );
-  }
-  if (newPage.meta.language !== undefined) {
-    newPage.meta.language = transformExpression(newPage.meta.language);
-  }
-  if (newPage.meta.status !== undefined) {
-    newPage.meta.status = transformExpression(newPage.meta.status);
-  }
-  if (newPage.meta.redirect !== undefined) {
-    newPage.meta.redirect = transformExpression(newPage.meta.redirect);
-  }
-  if (newPage.meta.auth !== undefined) {
-    newPage.meta.auth = { ...newPage.meta.auth };
-  }
-  if (newPage.meta.custom) {
-    newPage.meta.custom = newPage.meta.custom.map(({ property, content }) => ({
-      property,
-      content: transformExpression(content),
-    }));
-  }
+  newPage.title = copied.transformExpression(newPage.title);
+  copyAndTransformPageMeta(
+    newPage.meta,
+    newPage.meta,
+    copied.transformExpression
+  );
   target.data.pages.pages.set(newPage.id, newPage);
   target.data.pages.folders.get(target.folderId)?.children.push(newPage.id);
   return newPage.id;

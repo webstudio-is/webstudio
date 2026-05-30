@@ -133,10 +133,12 @@ const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
 const PathField = ({
   errors,
   value,
+  disabled,
   onChange,
 }: {
   errors?: string[];
   value: string;
+  disabled?: boolean;
   onChange: (value: string) => void;
 }) => {
   const { allowDynamicData } = useStore($permissions);
@@ -189,6 +191,7 @@ const PathField = ({
           color={errors && "error"}
           id={id}
           placeholder="/about"
+          disabled={disabled}
           value={value}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -200,10 +203,14 @@ const PathField = ({
 const StatusField = ({
   errors,
   value = `undefined`,
+  disabled,
+  showBindingControls = true,
   onChange,
 }: {
   errors?: string[];
   value: undefined | string;
+  disabled?: boolean;
+  showBindingControls?: boolean;
   onChange: (value: undefined | string) => void;
 }) => {
   const id = useId();
@@ -236,23 +243,25 @@ const StatusField = ({
         </Tooltip>
       </Flex>
       <BindingControl>
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={isLiteralExpression(value) ? "default" : "bound"}
-          value={value}
-          onChange={onChange}
-          onRemove={(evaluatedValue) =>
-            onChange(JSON.stringify(evaluatedValue ?? ""))
-          }
-        />
+        {showBindingControls && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(value) ? "default" : "bound"}
+            value={value}
+            onChange={onChange}
+            onRemove={(evaluatedValue) =>
+              onChange(JSON.stringify(evaluatedValue ?? ""))
+            }
+          />
+        )}
         <InputErrorsTooltip errors={errors}>
           <InputField
             inputMode="numeric"
             color={errors && "error"}
             id={id}
             placeholder="200"
-            disabled={isLiteralExpression(value) === false}
+            disabled={disabled || isLiteralExpression(value) === false}
             value={String(computeExpression(value, variableValues) ?? "")}
             onChange={(event) => {
               if (event.target.value === "") {
@@ -276,10 +285,14 @@ const StatusField = ({
 const RedirectField = ({
   errors,
   value,
+  disabled,
+  showBindingControls = true,
   onChange,
 }: {
   errors?: string[];
   value: string;
+  disabled?: boolean;
+  showBindingControls?: boolean;
   onChange: (value: string) => void;
 }) => {
   const id = useId();
@@ -329,22 +342,24 @@ const RedirectField = ({
       </Flex>
 
       <BindingControl>
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={isLiteralExpression(value) ? "default" : "bound"}
-          value={value}
-          onChange={onChange}
-          onRemove={(evaluatedValue) =>
-            onChange(JSON.stringify(evaluatedValue ?? ""))
-          }
-        />
+        {showBindingControls && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(value) ? "default" : "bound"}
+            value={value}
+            onChange={onChange}
+            onRemove={(evaluatedValue) =>
+              onChange(JSON.stringify(evaluatedValue ?? ""))
+            }
+          />
+        )}
         <InputErrorsTooltip errors={errors}>
           <InputField
             color={errors && "error"}
             id={id}
             placeholder="/another-path"
-            disabled={isLiteralExpression(value) === false}
+            disabled={disabled || isLiteralExpression(value) === false}
             value={String(computeExpression(value, variableValues))}
             onChange={(event) => onChange(JSON.stringify(event.target.value))}
           />
@@ -359,12 +374,18 @@ export const GeneralSection = ({
   errors,
   values,
   pages,
+  isEditorContext = false,
+  canEditPath = true,
+  showBindingControls = true,
   onChange,
 }: {
   autoSelect?: boolean;
   errors: Errors;
   values: Values;
   pages: Pages;
+  isEditorContext?: boolean;
+  canEditPath?: boolean;
+  showBindingControls?: boolean;
   onChange: OnChange;
 }) => {
   const nameId = useId();
@@ -432,7 +453,7 @@ export const GeneralSection = ({
                 home page
               </Text>
             </>
-          ) : (
+          ) : isEditorContext ? null : (
             <>
               <Checkbox
                 id={isHomePageId}
@@ -462,6 +483,7 @@ export const GeneralSection = ({
         <PathField
           errors={errors.path}
           value={values.path}
+          disabled={canEditPath === false}
           onChange={(value) => onChange({ field: "path", value })}
         />
       )}
@@ -469,11 +491,15 @@ export const GeneralSection = ({
       <StatusField
         errors={errors.status}
         value={values.status}
+        disabled={isEditorContext}
+        showBindingControls={showBindingControls}
         onChange={(value) => onChange({ field: "status", value })}
       />
       <RedirectField
         errors={errors.redirect}
         value={values.redirect}
+        disabled={isEditorContext}
+        showBindingControls={showBindingControls}
         onChange={(value) => onChange({ field: "redirect", value })}
       />
 
@@ -486,7 +512,7 @@ export const GeneralSection = ({
             docType.toUpperCase()
           }
           value={values.documentType}
-          disabled={values.isHomePage}
+          disabled={values.isHomePage || isEditorContext}
           onChange={(value) => {
             onChange({
               field: "documentType",

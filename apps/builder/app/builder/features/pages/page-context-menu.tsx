@@ -10,7 +10,7 @@ import {
   duplicateFolder,
   duplicateTemplate,
 } from "./page-utils";
-import { selectPage } from "~/shared/awareness";
+import { selectPage } from "~/shared/nano-states";
 
 type PageContextMenuProps = {
   children: ReactNode;

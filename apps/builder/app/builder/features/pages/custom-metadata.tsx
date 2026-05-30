@@ -86,7 +86,10 @@ const MetadataItem = (props: {
               props.onChange(props.property, value);
             }}
             onRemove={(evaluatedValue) => {
-              props.onChange(props.property, JSON.stringify(evaluatedValue));
+              props.onChange(
+                props.property,
+                JSON.stringify(evaluatedValue ?? "")
+              );
             }}
           />
         )}
@@ -151,6 +154,7 @@ const MetadataItem = (props: {
 };
 
 export const CustomMetadata = (props: CustomMetadataProps) => {
+  const showBindingControls = props.showBindingControls ?? true;
   return (
     <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
       <Label text="title">Custom metadata</Label>
@@ -178,7 +182,7 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
             property={meta.property}
             content={meta.content}
             disabled={props.disabled}
-            showBindingControls={props.showBindingControls}
+            showBindingControls={showBindingControls}
             onChange={(property, content) => {
               const newCustomMetas = [...props.customMetas];
               newCustomMetas[index] = { property, content };

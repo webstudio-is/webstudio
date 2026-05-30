@@ -2,7 +2,6 @@ import { nanoid } from "nanoid";
 import { useState, useCallback, useEffect, type JSX } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
-import slugify from "slugify";
 import {
   ROOT_FOLDER_ID,
   documentTypes,
@@ -13,6 +12,7 @@ import {
   getPagePath,
   getHomePage,
   elementComponent,
+  isLiteralExpression,
 } from "@webstudio-is/sdk";
 import { validateBasicAuth } from "@webstudio-is/wsauth";
 import {
@@ -44,10 +44,12 @@ import {
   cleanupChildRefsMutable,
   $pageRootScope,
   duplicatePage,
+  nameToPath,
 } from "../page-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { Form } from "../form";
 import { findMatchingRedirect } from "~/shared/project-settings/utils";
+import { isPathnamePattern } from "~/builder/shared/url-pattern";
 import { AuthSection, validateAuthSection } from "./section-auth";
 import {
   CustomMetadataSection,
@@ -70,6 +72,8 @@ import {
   type OnChange,
   type Values,
 } from "./shared";
+
+export type { Values } from "./shared";
 
 export const fieldDefaultValues: Values = {
   name: "Untitled",
@@ -218,22 +222,33 @@ export const __testing__ = {
   validateValues,
 };
 
+export const isEditorEditablePagePath = (path: string) => {
+  return (
+    isPathnamePattern(path) === false &&
+    path.includes(":") === false &&
+    path.includes("*") === false
+  );
+};
+
 export const FormFields = ({
   autoSelect,
   errors,
   values,
   onChange,
   showAuthErrors,
+  isEditorContext = false,
 }: {
   autoSelect?: boolean;
   errors: Errors;
   values: Values;
   onChange: OnChange;
   showAuthErrors?: boolean;
+  isEditorContext?: boolean;
 }) => {
   const project = useStore($project);
   const pages = useStore($pages);
   const { allowAuth } = useStore($permissions);
+  const isDesignMode = useStore($isDesignMode);
 
   if (pages === undefined) {
     return;
@@ -244,6 +259,7 @@ export const FormFields = ({
     fullPagePath,
     pages.redirects ?? []
   );
+  const showBindingControls = isDesignMode && isEditorContext === false;
 
   return (
     <Grid css={{ height: "100%" }}>
@@ -271,19 +287,26 @@ export const FormFields = ({
             errors={errors}
             values={values}
             pages={pages}
+            isEditorContext={isEditorContext}
+            canEditPath={
+              isEditorContext === false || isEditorEditablePagePath(values.path)
+            }
+            showBindingControls={showBindingControls}
             onChange={onChange}
           />
         </CollapsibleSection>
 
-        <CollapsibleSection label="Authentication">
-          <AuthSection
-            values={values}
-            errors={errors}
-            onChange={onChange}
-            showUpgrade={allowAuth === false}
-            showErrors={showAuthErrors}
-          />
-        </CollapsibleSection>
+        {isEditorContext === false && (
+          <CollapsibleSection label="Authentication">
+            <AuthSection
+              values={values}
+              errors={errors}
+              onChange={onChange}
+              showUpgrade={allowAuth === false}
+              showErrors={showAuthErrors}
+            />
+          </CollapsibleSection>
+        )}
 
         {values.documentType === "text" && (
           <CollapsibleSection label="Content">
@@ -300,6 +323,22 @@ export const FormFields = ({
             <SearchSection
               values={values}
               errors={errors}
+              canEditTitle={
+                isEditorContext === false || isLiteralExpression(values.title)
+              }
+              canEditDescription={
+                isEditorContext === false ||
+                isLiteralExpression(values.description)
+              }
+              canEditExcludePageFromSearch={
+                isEditorContext === false ||
+                isLiteralExpression(values.excludePageFromSearch)
+              }
+              canEditLanguage={
+                isEditorContext === false ||
+                isLiteralExpression(values.language)
+              }
+              showBindingControls={showBindingControls}
               onChange={onChange}
             />
           </CollapsibleSection>
@@ -310,6 +349,11 @@ export const FormFields = ({
             <SocialImageSection
               values={values}
               errors={errors}
+              disabled={
+                isEditorContext &&
+                isLiteralExpression(values.socialImageUrl) === false
+              }
+              showBindingControls={showBindingControls}
               onChange={onChange}
             />
           </CollapsibleSection>
@@ -320,12 +364,15 @@ export const FormFields = ({
             <CustomMetadataSection
               values={values}
               errors={errors}
+              disabled={isEditorContext}
+              showBindingControls={showBindingControls}
               onChange={onChange}
             />
           </CollapsibleSection>
         )}
 
         {values.documentType === "html" &&
+          isEditorContext === false &&
           (project?.marketplaceApprovalStatus === "PENDING" ||
             project?.marketplaceApprovalStatus === "APPROVED" ||
             project?.marketplaceApprovalStatus === "REJECTED") && (
@@ -338,32 +385,6 @@ export const FormFields = ({
       </ScrollArea>
     </Grid>
   );
-};
-
-const nameToPath = (pages: Pages | undefined, name: string) => {
-  if (name === "") {
-    return "";
-  }
-
-  const slug = slugify(name, { lower: true, strict: true });
-  const path = `/${slug}`;
-
-  // for TypeScript
-  if (pages === undefined) {
-    return path;
-  }
-
-  if (findPageByIdOrPath(path, pages) === undefined) {
-    return path;
-  }
-
-  let suffix = 1;
-
-  while (findPageByIdOrPath(`${path}${suffix}`, pages) !== undefined) {
-    suffix++;
-  }
-
-  return `${path}${suffix}`;
 };
 
 export const NewPageSettings = ({
@@ -621,6 +642,7 @@ export const PageSettings = ({
 }) => {
   const pages = useStore($pages);
   const page = pages && findPageByIdOrPath(pageId, pages);
+  const isDesignMode = useStore($isDesignMode);
 
   const isHomePage = page?.id === pages?.homePageId;
 
@@ -712,7 +734,12 @@ export const PageSettings = ({
           }
         }}
       >
-        <FormFields errors={errors} values={values} onChange={handleChange} />
+        <FormFields
+          errors={errors}
+          values={values}
+          isEditorContext={isDesignMode === false}
+          onChange={handleChange}
+        />
       </PageSettingsView>
     </>
   );

@@ -25,10 +25,12 @@ import {
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
-import { $dataSources, $pages } from "~/shared/sync/data-stores";
+import { $dataSources, $pages, $project } from "~/shared/sync/data-stores";
 import {
+  copyAndTransformPageMeta,
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
+  replaceDataSourcesInExpression,
 } from "~/shared/page-utils";
 import {
   $selectedPage,
@@ -36,6 +38,25 @@ import {
   getInstancePath,
 } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
+
+export const nameToPath = (pages: Pages | undefined, name: string) => {
+  if (name === "") {
+    return "";
+  }
+  const slug = slugify(name, { lower: true, strict: true });
+  const path = `/${slug}`;
+  if (pages === undefined) {
+    return path;
+  }
+  if (findPageByIdOrPath(path, pages) === undefined) {
+    return path;
+  }
+  let suffix = 1;
+  while (findPageByIdOrPath(`${path}${suffix}`, pages) !== undefined) {
+    suffix++;
+  }
+  return `${path}${suffix}`;
+};
 
 /**
  * When page or folder needs to be deleted or moved to a different parent,
@@ -540,8 +561,9 @@ export const deleteTemplateMutable = (
 
 export const duplicateTemplate = (templateId: PageTemplate["id"]) => {
   const pages = $pages.get();
+  const project = $project.get();
   const template = pages?.pageTemplates?.get(templateId);
-  if (template === undefined) {
+  if (template === undefined || project === undefined) {
     return;
   }
   let newTemplateId: undefined | string;
@@ -559,20 +581,32 @@ export const duplicateTemplate = (templateId: PageTemplate["id"]) => {
       newName = `${baseName} (${nameNumber})`;
     }
     newTemplateId = nanoid();
-    const { newInstanceIds } = insertWebstudioFragmentCopy({
+    const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
       data,
       fragment: extractWebstudioFragment(data, template.rootInstanceId),
       availableVariables: [],
-      projectId: newTemplateId,
+      projectId: project.id,
     });
+    const transformExpression = (expression: string) =>
+      replaceDataSourcesInExpression(expression, newDataSourceIds);
     const newTemplate: PageTemplate = {
       id: newTemplateId,
       name: newName,
-      title: template.title,
+      title: transformExpression(template.title),
       rootInstanceId:
         newInstanceIds.get(template.rootInstanceId) ?? template.rootInstanceId,
-      meta: structuredClone(template.meta),
+      systemDataSourceId:
+        template.systemDataSourceId === undefined
+          ? undefined
+          : (newDataSourceIds.get(template.systemDataSourceId) ??
+            template.systemDataSourceId),
+      meta: {},
     };
+    copyAndTransformPageMeta(
+      template.meta,
+      newTemplate.meta,
+      transformExpression
+    );
     data.pages.pageTemplates.set(newTemplate.id, newTemplate);
   });
   return newTemplateId;
@@ -624,18 +658,9 @@ export const instantiateTemplateAsNewPage = (
     nameNum += 1;
   }
 
-  // Deduplicate path from the template name slug
-  const baseSlug = slugify(template.name, { lower: true, strict: true });
-  let path = `/${baseSlug}`;
-  let suffix = 1;
-  while (findPageByIdOrPath(path, pages) !== undefined) {
-    path = `/${baseSlug}${suffix}`;
-    suffix += 1;
-  }
-
   return instantiateTemplate({
     templateId,
-    overrides: { name, path },
+    overrides: { name, path: nameToPath(pages, name) },
     folderId: pages.rootFolderId,
   });
 };

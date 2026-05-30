@@ -7,7 +7,6 @@ import {
   type PageTemplate,
   PageName,
   PageTitle,
-  ROOT_FOLDER_ID,
   elementComponent,
   type Page,
   type Pages,
@@ -33,14 +32,13 @@ import {
 } from "@webstudio-is/design-system";
 import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
 import {
-  $instances,
-  $pages,
+  $isContentMode,
   $isDesignMode,
-  $assets,
   $publishedOrigin,
 } from "~/shared/nano-states";
+import { $assets, $instances, $pages } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { selectInstance } from "~/shared/awareness";
+import { selectInstance } from "~/shared/nano-states";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
 import {
@@ -62,6 +60,7 @@ import {
 import { Form } from "./form";
 import {
   fieldDefaultValues,
+  isEditorEditablePagePath,
   validateValues,
   updatePage,
   FormFields,
@@ -188,10 +187,8 @@ const updateTemplate = (
 };
 
 export const NewTemplateSettings = ({
-  onClose,
   onSuccess,
 }: {
-  onClose: () => void;
   onSuccess: (templateId: PageTemplate["id"]) => void;
 }) => {
   const [values, setValues] = useState<TemplateFormValues>(
@@ -208,11 +205,7 @@ export const NewTemplateSettings = ({
   };
 
   return (
-    <NewTemplateSettingsView
-      onSubmit={handleSubmit}
-      onClose={onClose}
-      isSubmitting={false}
-    >
+    <NewTemplateSettingsView onSubmit={handleSubmit} isSubmitting={false}>
       <TemplateFormFields
         autoSelect
         errors={errors}
@@ -232,7 +225,6 @@ const NewTemplateSettingsView = ({
 }: {
   onSubmit: () => void;
   isSubmitting: boolean;
-  onClose: () => void;
   children: JSX.Element;
 }) => {
   return (
@@ -713,6 +705,7 @@ const toFormValuesFromTemplate = (
 ): Values => ({
   ...fieldDefaultValues,
   name: template.name,
+  parentFolderId: pages?.rootFolderId ?? fieldDefaultValues.parentFolderId,
   path: nameToPath(pages, template.name),
   title: template.title,
   description: template.meta.description ?? fieldDefaultValues.description,
@@ -727,19 +720,50 @@ const toFormValuesFromTemplate = (
   customMetas: template.meta.custom ?? fieldDefaultValues.customMetas,
 });
 
+const getEditorCreatePageValues = (
+  initialValues: Values,
+  values: Values
+): Partial<Values> => {
+  const allowedValues: Partial<Values> = {
+    name: values.name,
+  };
+
+  if (isEditorEditablePagePath(initialValues.path)) {
+    allowedValues.path = values.path;
+  }
+  if (isLiteralExpression(initialValues.title)) {
+    allowedValues.title = values.title;
+  }
+  if (isLiteralExpression(initialValues.description)) {
+    allowedValues.description = values.description;
+  }
+  if (isLiteralExpression(initialValues.excludePageFromSearch)) {
+    allowedValues.excludePageFromSearch = values.excludePageFromSearch;
+  }
+  if (isLiteralExpression(initialValues.language)) {
+    allowedValues.language = values.language;
+  }
+  if (isLiteralExpression(initialValues.socialImageUrl)) {
+    allowedValues.socialImageUrl = values.socialImageUrl;
+    allowedValues.socialImageAssetId = values.socialImageAssetId;
+  }
+
+  return allowedValues;
+};
+
 export const CreatePageFromTemplateSettings = ({
   templateId,
   onSuccess,
 }: {
   templateId: PageTemplate["id"];
-  onClose: () => void;
   onSuccess: (pageId: Page["id"]) => void;
 }) => {
   const pages = useStore($pages);
+  const isContentMode = useStore($isContentMode);
   const template = pages?.pageTemplates?.get(templateId);
   const { variableValues } = useStore($pageRootScope);
 
-  const [values, setValues] = useState<Values>(() =>
+  const [initialValues] = useState<Values>(() =>
     template
       ? toFormValuesFromTemplate(template, pages)
       : {
@@ -747,6 +771,7 @@ export const CreatePageFromTemplateSettings = ({
           path: nameToPath(pages, fieldDefaultValues.name),
         }
   );
+  const [values, setValues] = useState<Values>(initialValues);
 
   const errors = validateValues(pages, undefined, values, variableValues);
 
@@ -755,10 +780,15 @@ export const CreatePageFromTemplateSettings = ({
       const newPageId = instantiateTemplate({
         templateId,
         overrides: { name: values.name, path: values.path },
-        folderId: ROOT_FOLDER_ID,
+        folderId: values.parentFolderId,
       });
       if (newPageId) {
-        updatePage(newPageId, values);
+        updatePage(
+          newPageId,
+          isContentMode
+            ? getEditorCreatePageValues(initialValues, values)
+            : values
+        );
         onSuccess(newPageId);
       }
     }
@@ -788,6 +818,7 @@ export const CreatePageFromTemplateSettings = ({
           autoSelect
           errors={errors}
           values={values}
+          isEditorContext={isContentMode}
           onChange={(change) => {
             setValues((prev) => {
               const next = { ...prev, [change.field]: change.value };

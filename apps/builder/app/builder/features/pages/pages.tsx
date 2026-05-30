@@ -433,9 +433,6 @@ const PagesTree = ({
 const newPageId = "new-page";
 const newTemplateId = "new-template";
 
-// Separate atom for which template's settings panel is open
-const $editingTemplateId = atom<undefined | string>();
-
 const PageEditor = ({
   editingPageId,
   onClose,
@@ -739,32 +736,14 @@ const TemplateEditor = ({
 }) => {
   const currentPage = useStore($selectedPage);
   const pages = useStore($pages);
-  const [createFromTemplateId, setCreateFromTemplateId] = useState<
-    string | undefined
-  >();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   if (editingTemplateId === newTemplateId) {
     return (
       <NewTemplateSettings
-        onClose={onClose}
         onSuccess={(templateId) => {
           onClose();
           selectPage(templateId);
-        }}
-      />
-    );
-  }
-
-  if (createFromTemplateId) {
-    return (
-      <CreatePageFromTemplateSettings
-        templateId={createFromTemplateId}
-        onClose={() => setCreateFromTemplateId(undefined)}
-        onSuccess={(pageId) => {
-          setCreateFromTemplateId(undefined);
-          onClose();
-          selectPage(pageId);
         }}
       />
     );
@@ -885,6 +864,11 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
     }
     setTemplateIdToDelete(undefined);
   };
+
+  const templateToDelete =
+    templateIdToDelete === undefined
+      ? undefined
+      : pages.pageTemplates?.get(templateIdToDelete);
 
   return (
     <div
@@ -1103,9 +1087,9 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           onConfirm={handleDeleteFolderConfirm}
         />
       )}
-      {templateIdToDelete && (
+      {templateToDelete && (
         <DeleteTemplateConfirmationDialog
-          template={pages.pageTemplates?.get(templateIdToDelete)!}
+          template={templateToDelete}
           onClose={() => setTemplateIdToDelete(undefined)}
           onConfirm={handleTemplateDeleteConfirm}
         />
