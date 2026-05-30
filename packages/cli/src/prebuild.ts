@@ -726,8 +726,7 @@ export const prebuild = async (options: {
     const serverFile = join(generatedDir, `${generatedBasename}.server.tsx`);
     await createFileIfNotExists(serverFile, serverExports);
 
-    const getTemplates =
-      documentType === "html" ? framework.html : framework.xml;
+    const getTemplates = framework[documentType];
     for (const { file, template } of getTemplates({ pagePath })) {
       const content = template
         .replaceAll("__CONSTANTS__", importFrom("./app/constants.mjs", file))

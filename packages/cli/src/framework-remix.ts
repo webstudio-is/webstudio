@@ -18,6 +18,10 @@ export const createFramework = async (): Promise<Framework> => {
     join(routeTemplatesDir, "xml.tsx"),
     "utf8"
   );
+  const textTemplate = await readFile(
+    join(routeTemplatesDir, "text.tsx"),
+    "utf8"
+  );
   const defaultSitemapTemplate = await readFile(
     join(routeTemplatesDir, "default-sitemap.tsx"),
     "utf8"
@@ -73,6 +77,12 @@ export const createFramework = async (): Promise<Framework> => {
       {
         file: join("app", "routes", `${generateRemixRoute(pagePath)}.tsx`),
         template: xmlTemplate,
+      },
+    ],
+    text: ({ pagePath }: { pagePath: string }) => [
+      {
+        file: join("app", "routes", `${generateRemixRoute(pagePath)}.tsx`),
+        template: textTemplate,
       },
     ],
     redirect: ({ pagePath }: { pagePath: string }) => [

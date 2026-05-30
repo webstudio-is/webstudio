@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  documentTypes,
   OldPagePath,
   PageAuth,
   PagePath,
@@ -106,6 +107,27 @@ test("validates non-home page path is not empty", () => {
       message: "Page path can't be empty",
     }),
   ]);
+});
+
+test("supports text document type", () => {
+  expect(documentTypes).toContain("text");
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      pages: new Map(validPages.pages).set("text", {
+        id: "text",
+        name: "LLMs",
+        path: "/llms.txt",
+        title: `"LLMs"`,
+        meta: { documentType: "text", content: `"Text content"` },
+        rootInstanceId: "textRoot",
+      }),
+      folders: new Map(validPages.folders).set("root", {
+        ...validPages.folders.get("root")!,
+        children: ["home", "text"],
+      }),
+    }).success
+  ).toBe(true);
 });
 
 test("validates page id matches its record key", () => {

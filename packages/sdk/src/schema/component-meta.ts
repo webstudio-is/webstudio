@@ -31,6 +31,7 @@ export const componentCategories = [
   "localization",
   "radix",
   "xml",
+  "text",
   "other",
   "hidden",
   "internal",

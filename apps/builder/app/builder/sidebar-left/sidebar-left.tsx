@@ -24,6 +24,7 @@ import {
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "~/builder/shared/nano-states";
+import { $selectedPage } from "~/shared/nano-states";
 import {
   SidebarButton,
   SidebarTabs,
@@ -70,8 +71,8 @@ type PanelConfig = {
   Icon: IconComponent;
   Panel: (props: { publish: Publish; onClose: () => void }) => ReactNode;
   visibility?: {
-    content?: boolean; // if set, controls visibility in edit mode, if not the panel is visible
-    // Probably other modes
+    content?: boolean;
+    text?: boolean;
   };
 };
 
@@ -80,7 +81,8 @@ const isPanelVisible = (
   {
     isPreviewMode,
     isContentMode,
-  }: { isPreviewMode: boolean; isContentMode: boolean }
+    isTextPage,
+  }: { isPreviewMode: boolean; isContentMode: boolean; isTextPage: boolean }
 ) => {
   if (isPreviewMode) {
     return false;
@@ -88,17 +90,27 @@ const isPanelVisible = (
 
   const { visibility } = panel;
 
-  // If visibility is not defined, the panel is always visible
   if (visibility === undefined) {
     return true;
   }
 
+  if (isTextPage) {
+    // Show all panels for text pages; panels with text: false are disabled, not hidden
+    return true;
+  }
+
   if (isContentMode) {
-    // If visibility.edit is not defined, the panel is visible
     return visibility.content ?? true;
   }
 
   return true;
+};
+
+const isPanelDisabled = (
+  panel: Pick<PanelConfig, "visibility">,
+  { isTextPage }: { isTextPage: boolean }
+) => {
+  return isTextPage === true && panel.visibility?.text === false;
 };
 
 const panels: PanelConfig[] = [
@@ -114,6 +126,7 @@ const panels: PanelConfig[] = [
     Panel: ComponentsPanel,
     visibility: {
       content: false,
+      text: false,
     },
   },
   {
@@ -176,6 +189,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const { Panel } = panels.find((item) => item.name === activePanel) ?? none;
   const isPreviewMode = useStore($isPreviewMode);
   const isContentMode = useStore($isContentMode);
+  const selectedPage = useStore($selectedPage);
+  const isTextPage = selectedPage?.meta.documentType === "text";
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
   const returnTabRef = useRef<SidebarPanelName | undefined>(undefined);
 
@@ -221,7 +236,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
     setActiveSidebarPanel("assets");
   });
 
-  const modes = { isContentMode, isPreviewMode };
+  const modes = { isContentMode, isPreviewMode, isTextPage };
 
   return (
     <SidebarTabs
@@ -244,12 +259,14 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             <SidebarTabsList>
               {panels
                 .filter((panel) => isPanelVisible(panel, modes))
-                .map(({ name, Icon, label }) => {
+                .map(({ name, Icon, label, visibility }) => {
+                  const disabled = isPanelDisabled({ visibility }, modes);
                   return (
                     <SidebarTabsTrigger
                       key={name}
                       label={label}
                       value={name}
+                      disabled={disabled}
                       onClick={() => {
                         toggleActiveSidebarPanel(name);
                       }}

@@ -44,7 +44,7 @@ export const PageTitle = z
     `Minimum ${MIN_TITLE_LENGTH} characters required`
   );
 
-export const documentTypes = ["html", "xml"] as const;
+export const documentTypes = ["html", "xml", "text"] as const;
 
 const BasicAuthFields = {
   login: z.string(),
@@ -109,6 +109,7 @@ const commonPageFields = {
     status: z.string().optional(),
     redirect: z.string().optional(),
     documentType: z.optional(z.enum(documentTypes)),
+    content: z.string().optional(),
     auth: PageAuth.optional(),
     custom: z
       .array(

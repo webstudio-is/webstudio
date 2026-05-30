@@ -22,6 +22,7 @@ export type Values = {
   status: string | undefined;
   redirect: string;
   documentType: NonNullable<Page["meta"]["documentType"]>;
+  content: string;
   auth: {
     login: string;
     password: string;

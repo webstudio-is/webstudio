@@ -25,7 +25,6 @@ import {
   ScrollArea,
   Link,
   PanelBanner,
-  css,
   TitleSuffixSpacer,
   DialogClose,
   DialogTitle,
@@ -62,6 +61,10 @@ import {
   validateSocialImageSection,
 } from "./section-social-image";
 import {
+  TextContentSection,
+  validateTextContentSection,
+} from "./section-text-content";
+import {
   type Errors,
   type FieldName,
   type OnChange,
@@ -82,6 +85,7 @@ const fieldDefaultValues: Values = {
   status: undefined,
   redirect: `""`,
   documentType: "html" as (typeof documentTypes)[number],
+  content: `""`,
   auth: {
     login: "",
     password: "",
@@ -120,10 +124,17 @@ const validateValues = (
   const sectionErrors = [
     validateGeneralSection({ pages, pageId, values, variableValues }),
     validateAuthSection(values),
-    validateSearchSection(values, variableValues),
-    validateSocialImageSection(values, variableValues),
-    validateCustomMetadataSection(values, variableValues),
   ];
+  if (values.documentType === "html") {
+    sectionErrors.push(
+      validateSearchSection(values, variableValues),
+      validateSocialImageSection(values, variableValues),
+      validateCustomMetadataSection(values, variableValues)
+    );
+  }
+  if (values.documentType === "text") {
+    sectionErrors.push(validateTextContentSection(values, variableValues));
+  }
   for (const sectionError of sectionErrors) {
     if (sectionError.auth) {
       errors.auth = { ...errors.auth, ...sectionError.auth };
@@ -162,6 +173,7 @@ const toFormValues = (
     status: page.meta.status ?? fieldDefaultValues.status,
     redirect: page.meta.redirect ?? fieldDefaultValues.redirect,
     documentType: page.meta.documentType ?? fieldDefaultValues.documentType,
+    content: page.meta.content ?? fieldDefaultValues.content,
     auth: {
       login: page.meta.auth?.login ?? fieldDefaultValues.auth.login,
       password: page.meta.auth?.password ?? fieldDefaultValues.auth.password,
@@ -205,14 +217,6 @@ export const __testing__ = {
   toFormValues,
   validateValues,
 };
-
-const fieldsetStyle = css({
-  all: "unset",
-  display: "block",
-  "&:disabled": {
-    opacity: 0.4,
-  },
-});
 
 const FormFields = ({
   autoSelect,
@@ -281,55 +285,54 @@ const FormFields = ({
           />
         </CollapsibleSection>
 
-        {/**
-         * ----------------------========<<<Search Results>>>>========----------------------
-         */}
-        <CollapsibleSection label="Search">
-          <fieldset
-            disabled={values.documentType === "xml"}
-            className={fieldsetStyle()}
-          >
+        {values.documentType === "text" && (
+          <CollapsibleSection label="Content">
+            <TextContentSection
+              values={values}
+              errors={errors}
+              onChange={onChange}
+            />
+          </CollapsibleSection>
+        )}
+
+        {values.documentType === "html" && (
+          <CollapsibleSection label="Search">
             <SearchSection
               values={values}
               errors={errors}
               onChange={onChange}
             />
-          </fieldset>
-        </CollapsibleSection>
+          </CollapsibleSection>
+        )}
 
-        <CollapsibleSection label="Social Image">
-          <fieldset
-            disabled={values.documentType === "xml"}
-            className={fieldsetStyle()}
-          >
+        {values.documentType === "html" && (
+          <CollapsibleSection label="Social Image">
             <SocialImageSection
               values={values}
               errors={errors}
               onChange={onChange}
             />
-          </fieldset>
-        </CollapsibleSection>
+          </CollapsibleSection>
+        )}
 
-        <CollapsibleSection label="Custom Metadata">
-          <fieldset
-            disabled={values.documentType === "xml"}
-            className={fieldsetStyle()}
-          >
+        {values.documentType === "html" && (
+          <CollapsibleSection label="Custom Metadata">
             <CustomMetadataSection
               values={values}
               errors={errors}
               onChange={onChange}
             />
-          </fieldset>
-        </CollapsibleSection>
-
-        {(project?.marketplaceApprovalStatus === "PENDING" ||
-          project?.marketplaceApprovalStatus === "APPROVED" ||
-          project?.marketplaceApprovalStatus === "REJECTED") && (
-          <CollapsibleSection label="Marketplace">
-            <MarketplaceSection values={values} onChange={onChange} />
           </CollapsibleSection>
         )}
+
+        {values.documentType === "html" &&
+          (project?.marketplaceApprovalStatus === "PENDING" ||
+            project?.marketplaceApprovalStatus === "APPROVED" ||
+            project?.marketplaceApprovalStatus === "REJECTED") && (
+            <CollapsibleSection label="Marketplace">
+              <MarketplaceSection values={values} onChange={onChange} />
+            </CollapsibleSection>
+          )}
 
         <Box css={{ height: theme.spacing[10] }} />
       </ScrollArea>
@@ -535,6 +538,10 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
     if (values.documentType !== undefined) {
       page.meta.documentType = values.documentType;
+    }
+
+    if (values.content !== undefined) {
+      page.meta.content = values.content;
     }
 
     if (values.auth !== undefined) {

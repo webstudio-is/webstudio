@@ -417,7 +417,7 @@ export const GeneralSection = ({
                 Move this page to the “Root” folder to set it as your home page
               </Text>
             </>
-          ) : values.documentType === "xml" ? (
+          ) : values.documentType !== "html" ? (
             <>
               <HomeIcon color={rawTheme.colors.foregroundSubtle} />
               <Text
@@ -428,7 +428,8 @@ export const GeneralSection = ({
                 }}
                 color="subtle"
               >
-                XML pages cannot be set as the home page
+                {values.documentType.toUpperCase()} pages cannot be set as the
+                home page
               </Text>
             </>
           ) : (
@@ -482,7 +483,7 @@ export const GeneralSection = ({
           options={documentTypes}
           getValue={(docType: (typeof documentTypes)[number]) => docType}
           getLabel={(docType: (typeof documentTypes)[number]) =>
-            docType.toLocaleUpperCase()
+            docType.toUpperCase()
           }
           value={values.documentType}
           disabled={values.isHomePage}
