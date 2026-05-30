@@ -27,6 +27,7 @@ export const getPageMeta = ({
     socialImageUrl: undefined,
     status: undefined,
     redirect: undefined,
+    content: undefined,
     custom: [
       {
         property: "fb:app_id",

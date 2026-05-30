@@ -25,6 +25,7 @@ export const getPageMeta = ({
     socialImageUrl: "",
     status: 200,
     redirect: "",
+    content: undefined,
     custom: [],
   };
 };
