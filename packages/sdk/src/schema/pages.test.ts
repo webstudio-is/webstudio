@@ -119,7 +119,7 @@ test("supports text document type", () => {
         name: "LLMs",
         path: "/llms.txt",
         title: `"LLMs"`,
-        meta: { documentType: "text" },
+        meta: { documentType: "text", content: `"Text content"` },
         rootInstanceId: "textRoot",
       }),
       folders: new Map(validPages.folders).set("root", {

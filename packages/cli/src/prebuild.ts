@@ -301,20 +301,6 @@ export const prebuild = async (options: {
     await copyTemplates(template);
   }
 
-  // Replace the monorepo version placeholder so the generated package.json
-  // resolves against published npm packages when running the CLI from source.
-  const packageJsonPath = join(cwd(), "package.json");
-  const packageJsonContent = await readFile(packageJsonPath, "utf8").catch(
-    () => null
-  );
-  if (packageJsonContent?.includes("0.0.0-webstudio-version")) {
-    await writeFile(
-      packageJsonPath,
-      packageJsonContent.replaceAll("0.0.0-webstudio-version", "latest"),
-      "utf8"
-    );
-  }
-
   let framework;
   if (options.template.includes("ssg")) {
     framework = await createVikeSsgFramework();

@@ -169,6 +169,43 @@ describe("validateValues", () => {
       validateValues(createPages(), undefined, createValues(), new Map()).auth
     ).toBeUndefined();
   });
+
+  test("validates only visible document type sections", () => {
+    const invalidHtmlMetadata = {
+      title: `""`,
+      language: `"not a locale"`,
+    };
+
+    const textErrors = validateValues(
+      createPages(),
+      undefined,
+      createValues({
+        ...invalidHtmlMetadata,
+        documentType: "text",
+        content: "42",
+      }),
+      new Map()
+    );
+
+    expect(textErrors.title).toBeUndefined();
+    expect(textErrors.language).toBeUndefined();
+    expect(textErrors.content).toBeDefined();
+
+    const xmlErrors = validateValues(
+      createPages(),
+      undefined,
+      createValues({
+        ...invalidHtmlMetadata,
+        documentType: "xml",
+        content: "42",
+      }),
+      new Map()
+    );
+
+    expect(xmlErrors.title).toBeUndefined();
+    expect(xmlErrors.language).toBeUndefined();
+    expect(xmlErrors.content).toBeUndefined();
+  });
 });
 
 describe("auth form values", () => {
@@ -217,5 +254,20 @@ describe("auth form values", () => {
       login: "admin",
       password: "secret",
     });
+  });
+
+  test("maps text content metadata into form values", () => {
+    const page = createPage({
+      id: "llms",
+      meta: {
+        documentType: "text",
+        content: `"Webstudio text content"`,
+      },
+    });
+    const pages = createPages({ pages: [homePage, page] });
+
+    expect(toFormValues(page, pages, false).content).toBe(
+      `"Webstudio text content"`
+    );
   });
 });

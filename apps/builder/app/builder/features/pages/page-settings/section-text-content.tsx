@@ -19,6 +19,10 @@ export const validateTextContentSection = (
   values: Values,
   variableValues: Map<string, unknown>
 ): Errors => {
+  if (values.documentType !== "text") {
+    return {};
+  }
+
   const parsedResult = TextContentValues.safeParse({
     content: computeExpression(values.content, variableValues),
   });

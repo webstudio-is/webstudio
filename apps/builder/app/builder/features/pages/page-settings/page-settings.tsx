@@ -124,11 +124,17 @@ const validateValues = (
   const sectionErrors = [
     validateGeneralSection({ pages, pageId, values, variableValues }),
     validateAuthSection(values),
-    validateSearchSection(values, variableValues),
-    validateSocialImageSection(values, variableValues),
-    validateCustomMetadataSection(values, variableValues),
-    validateTextContentSection(values, variableValues),
   ];
+  if (values.documentType === "html") {
+    sectionErrors.push(
+      validateSearchSection(values, variableValues),
+      validateSocialImageSection(values, variableValues),
+      validateCustomMetadataSection(values, variableValues)
+    );
+  }
+  if (values.documentType === "text") {
+    sectionErrors.push(validateTextContentSection(values, variableValues));
+  }
   for (const sectionError of sectionErrors) {
     if (sectionError.auth) {
       errors.auth = { ...errors.auth, ...sectionError.auth };
