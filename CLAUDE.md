@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Community Fork Maintenance
+
+This is a community fork. When a PR adds a community feature or self-host fix (i.e. not a pure upstream cherry-pick), **add a row to `COMMUNITY_CHANGES.md`** in the relevant section before merging. When a contribution is accepted upstream, move its row(s) to the `## Upstreamed` section.
+
 ## Overview
 
 Webstudio is an Open Source Visual Development Platform. This is a pnpm monorepo with three workspace types: `apps/`, `packages/`, and `fixtures/`.
