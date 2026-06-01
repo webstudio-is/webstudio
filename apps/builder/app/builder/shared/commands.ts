@@ -27,6 +27,7 @@ import {
 import {
   updateWebstudioData,
   unwrapInstance,
+  detachSharedSlotContentMutable,
   deleteSelectedInstance,
   extractWebstudioFragment,
   insertWebstudioFragmentAt,
@@ -373,9 +374,16 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         if (instancePath === undefined || instancePath.length === 1) {
           return;
         }
-        const [selectedItem, parentItem] = instancePath;
 
         updateWebstudioData((data) => {
+          const detachedInstancePath = detachSharedSlotContentMutable(
+            data,
+            instancePath
+          );
+          const [selectedItem, parentItem] = detachedInstancePath;
+          if (parentItem === undefined) {
+            return;
+          }
           const fragment = extractWebstudioFragment(
             data,
             selectedItem.instance.id

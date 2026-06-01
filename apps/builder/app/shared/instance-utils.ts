@@ -465,6 +465,32 @@ export const reparentInstanceMutable = (
   if (project === undefined) {
     return;
   }
+  const initialSourceInstancePath = getInstancePath(
+    sourceInstanceSelector,
+    data.instances
+  );
+  const sourceFragmentId =
+    initialSourceInstancePath?.[1]?.instance.component === "Fragment" &&
+    initialSourceInstancePath[2]?.instance.component === "Slot"
+      ? initialSourceInstancePath[1].instance.id
+      : undefined;
+  const targetSlot = data.instances.get(dropTarget.parentSelector[0]);
+  if (
+    sourceFragmentId !== undefined &&
+    targetSlot?.component === "Slot" &&
+    targetSlot.children[0]?.type === "id" &&
+    targetSlot.children[0].value === sourceFragmentId
+  ) {
+    return sourceInstanceSelector;
+  }
+  const sourceInstancePath = detachSharedSlotContentMutable(
+    data,
+    initialSourceInstancePath ?? []
+  );
+  sourceInstanceSelector = sourceInstancePath[0]?.instanceSelector;
+  if (sourceInstanceSelector === undefined) {
+    return;
+  }
   const [rootInstanceId] = sourceInstanceSelector;
   // delect is target is one of own descendants
   // prevent reparenting to avoid infinite loop
@@ -572,6 +598,7 @@ export const deleteInstanceMutable = (
   if (instancePath === undefined) {
     return false;
   }
+  instancePath = detachSharedSlotContentMutable(data, instancePath);
   const {
     instances,
     props,
@@ -650,6 +677,97 @@ export const deleteInstanceMutable = (
   return true;
 };
 
+const countInstanceChildReferences = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  let count = 0;
+  for (const instance of instances.values()) {
+    for (const child of instance.children) {
+      if (child.type === "id" && child.value === instanceId) {
+        count += 1;
+      }
+    }
+  }
+  return count;
+};
+
+const cloneSharedSlotFragmentMutable = (
+  data: Omit<WebstudioData, "pages">,
+  slotId: Instance["id"],
+  fragmentId: Instance["id"]
+) => {
+  if (countInstanceChildReferences(data.instances, fragmentId) < 2) {
+    return;
+  }
+  const projectId = $project.get()?.id ?? "";
+  const fragment = extractWebstudioFragment(data, fragmentId);
+  const { newInstanceIds } = insertWebstudioFragmentCopy({
+    data,
+    fragment,
+    availableVariables: findAvailableVariables({
+      ...data,
+      startingInstanceId: slotId,
+    }),
+    projectId,
+  });
+  const newFragmentId = newInstanceIds.get(fragmentId);
+  const slot = data.instances.get(slotId);
+  if (slot === undefined || newFragmentId === undefined) {
+    return;
+  }
+  for (const child of slot.children) {
+    if (child.type === "id" && child.value === fragmentId) {
+      child.value = newFragmentId;
+    }
+  }
+  return newInstanceIds;
+};
+
+export const detachSharedSlotChildrenMutable = (
+  data: Omit<WebstudioData, "pages">,
+  slotId: Instance["id"]
+) => {
+  const slot = data.instances.get(slotId);
+  const fragmentId =
+    slot?.children[0]?.type === "id" ? slot.children[0].value : undefined;
+  if (slot?.component !== "Slot" || fragmentId === undefined) {
+    return;
+  }
+  cloneSharedSlotFragmentMutable(data, slotId, fragmentId);
+};
+
+export const detachSharedSlotContentMutable = (
+  data: Omit<WebstudioData, "pages">,
+  instancePath: InstancePath
+) => {
+  const slotIndex = instancePath.findIndex(
+    (item, index) =>
+      item.instance.component === "Slot" &&
+      instancePath[index - 1]?.instance.component === "Fragment"
+  );
+  if (slotIndex === -1) {
+    return instancePath;
+  }
+  const fragmentItem = instancePath[slotIndex - 1];
+  const slotItem = instancePath[slotIndex];
+  const newInstanceIds = cloneSharedSlotFragmentMutable(
+    data,
+    slotItem.instance.id,
+    fragmentItem.instance.id
+  );
+  if (newInstanceIds === undefined) {
+    return instancePath;
+  }
+  const newInstanceSelector = instancePath[0].instanceSelector.map(
+    (instanceId, index) =>
+      index < slotIndex
+        ? (newInstanceIds.get(instanceId) ?? instanceId)
+        : instanceId
+  );
+  return getInstancePath(newInstanceSelector, data.instances) ?? instancePath;
+};
+
 export const unwrapInstanceMutable = ({
   instances,
   props,
@@ -692,6 +810,91 @@ export const unwrapInstanceMutable = ({
   const grandparentInstance = instances.get(grandparentId);
   if (!grandparentInstance) {
     return { success: false, error: "Grandparent instance not found" };
+  }
+
+  const selectedParentId = selectedItem.instanceSelector[1];
+  const selectedParentInstance = instances.get(selectedParentId);
+  if (
+    parentInstance.component === "Slot" &&
+    selectedParentInstance?.component === "Fragment" &&
+    selectedItem.instanceSelector[2] === parentItem.instance.id &&
+    selectedParentInstance.children.length === 1 &&
+    selectedParentInstance.children[0]?.type === "id" &&
+    selectedParentInstance.children[0].value === selectedItem.instance.id
+  ) {
+    const parentIndex = grandparentInstance.children.findIndex(
+      (child) => child.type === "id" && child.value === parentItem.instance.id
+    );
+    if (parentIndex !== -1) {
+      grandparentInstance.children[parentIndex] = {
+        type: "id",
+        value: selectedItem.instance.id,
+      };
+    }
+
+    const isInstanceReferenced = (instanceId: Instance["id"]) => {
+      for (const instance of instances.values()) {
+        if (
+          instance.children.some(
+            (child) => child.type === "id" && child.value === instanceId
+          )
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+    if (isInstanceReferenced(parentItem.instance.id) === false) {
+      instances.delete(parentItem.instance.id);
+    }
+    if (isInstanceReferenced(selectedParentInstance.id) === false) {
+      instances.delete(selectedParentInstance.id);
+    }
+
+    const matches = isTreeSatisfyingContentModel({
+      instances,
+      props,
+      metas,
+      instanceSelector: [
+        selectedItem.instance.id,
+        ...parentItem.instanceSelector.slice(1),
+      ],
+    });
+    if (matches === false) {
+      return { success: false, error: "Cannot unwrap instance" };
+    }
+
+    return { success: true };
+  }
+
+  // Slot children may be rendered through multiple slot instances with the same
+  // ids. In that case use the selected path to unwrap only the selected slot
+  // occurrence and preserve the shared parent tree for other slot occurrences.
+  if (instances.get(parentItem.instanceSelector[1])?.component === "Slot") {
+    const parentIndex = grandparentInstance.children.findIndex(
+      (child) => child.type === "id" && child.value === parentItem.instance.id
+    );
+    if (parentIndex !== -1) {
+      grandparentInstance.children[parentIndex] = {
+        type: "id",
+        value: selectedItem.instance.id,
+      };
+    }
+
+    const matches = isTreeSatisfyingContentModel({
+      instances,
+      props,
+      metas,
+      instanceSelector: [
+        selectedItem.instance.id,
+        ...parentItem.instanceSelector.slice(1),
+      ],
+    });
+    if (matches === false) {
+      return { success: false, error: "Cannot unwrap instance" };
+    }
+
+    return { success: true };
   }
 
   // Remove selected instance from parent's children
@@ -811,14 +1014,26 @@ export const wrapInstance = (component: string, tag?: string) => {
   if (instancePath === undefined || instancePath.length === 1) {
     return;
   }
-  const [selectedItem, parentItem] = instancePath;
-  const selectedInstance = selectedItem.instance;
   const newInstanceId = nanoid();
-  const newInstanceSelector = [newInstanceId, ...parentItem.instanceSelector];
+  let newInstanceSelector: InstanceSelector | undefined;
   const metas = $registeredComponentMetas.get();
 
   try {
     updateWebstudioData((data) => {
+      const detachedInstancePath = detachSharedSlotContentMutable(
+        data,
+        instancePath
+      );
+      const [selectedItem, parentItem] = detachedInstancePath;
+      if (parentItem === undefined) {
+        return;
+      }
+      const selectedInstance = selectedItem.instance;
+      const nextInstanceSelector = [
+        newInstanceId,
+        ...parentItem.instanceSelector,
+      ];
+      newInstanceSelector = nextInstanceSelector;
       const isContent = isRichTextContent({
         instanceSelector: selectedItem.instanceSelector,
         instances: data.instances,
@@ -853,7 +1068,7 @@ export const wrapInstance = (component: string, tag?: string) => {
         instances: data.instances,
         props: data.props,
         metas,
-        instanceSelector: newInstanceSelector,
+        instanceSelector: nextInstanceSelector,
       });
 
       if (isSatisfying === false) {
@@ -928,6 +1143,9 @@ export const convertInstance = (component: string, tag?: string) => {
   const instanceTags = $instanceTags.get();
   try {
     updateWebstudioData((data) => {
+      if (selectedInstance.component === "Slot" && component !== "Slot") {
+        detachSharedSlotChildrenMutable(data, selectedInstance.id);
+      }
       const instance = data.instances.get(selectedInstance.id);
       if (instance === undefined) {
         return;
@@ -976,7 +1194,15 @@ export const unwrapInstance = () => {
     return;
   }
 
-  const [selectedItem, parentItem] = instancePath;
+  const [selectedItem, defaultParentItem] = instancePath;
+  const parentItem =
+    defaultParentItem?.instance.component === "Fragment" &&
+    instancePath[2]?.instance.component === "Slot"
+      ? instancePath[2]
+      : defaultParentItem;
+  if (parentItem === undefined) {
+    return;
+  }
 
   try {
     updateWebstudioData((data) => {
