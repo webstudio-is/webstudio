@@ -1194,18 +1194,22 @@ export const unwrapInstance = () => {
     return;
   }
 
-  const [selectedItem, defaultParentItem] = instancePath;
-  const parentItem =
-    defaultParentItem?.instance.component === "Fragment" &&
-    instancePath[2]?.instance.component === "Slot"
-      ? instancePath[2]
-      : defaultParentItem;
-  if (parentItem === undefined) {
-    return;
-  }
-
   try {
     updateWebstudioData((data) => {
+      const detachedInstancePath = detachSharedSlotContentMutable(
+        data,
+        instancePath
+      );
+      const [selectedItem, defaultParentItem] = detachedInstancePath;
+      const parentItem =
+        defaultParentItem?.instance.component === "Fragment" &&
+        detachedInstancePath[2]?.instance.component === "Slot"
+          ? detachedInstancePath[2]
+          : defaultParentItem;
+      if (parentItem === undefined) {
+        return;
+      }
+
       const result = unwrapInstanceMutable({
         instances: data.instances,
         props: data.props,
@@ -1218,12 +1222,13 @@ export const unwrapInstance = () => {
         toast.error(result.error ?? "Cannot unwrap instance");
         throw Error("Abort transaction");
       }
+
+      // After unwrap, select the child that replaced the parent.
+      selectInstance([
+        selectedItem.instance.id,
+        ...parentItem.instanceSelector.slice(1),
+      ]);
     });
-    // After unwrap, select the child that replaced the parent
-    selectInstance([
-      selectedItem.instance.id,
-      ...parentItem.instanceSelector.slice(1),
-    ]);
   } catch {
     // do nothing
   }
