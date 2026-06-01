@@ -1385,6 +1385,40 @@ describe("insert webstudio fragment copy", () => {
     ]);
   });
 
+  test("reports breakpoint limit merge once when inserting fragment", () => {
+    const breakpoints = toMap<Breakpoint>([
+      { id: "base", label: "base" },
+      { id: "0", label: "320", maxWidth: 320 },
+      { id: "1", label: "480", maxWidth: 480 },
+      { id: "2", label: "768", maxWidth: 768 },
+      { id: "3", label: "1024", maxWidth: 1024 },
+      { id: "4", label: "1280", minWidth: 1280 },
+      { id: "5", label: "1440", minWidth: 1440 },
+      { id: "6", label: "1920", minWidth: 1920 },
+      { id: "7", label: "2560", minWidth: 2560 },
+    ]);
+    const data = getWebstudioDataStub({ breakpoints });
+    let mergeCount = 0;
+
+    insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        breakpoints: [
+          { id: "new_medium", label: "Medium", minWidth: 1500 },
+          { id: "new_large", label: "Large", minWidth: 1700 },
+        ],
+      },
+      availableVariables: [],
+      projectId: "",
+      onBreakpointLimitMerge: () => {
+        mergeCount += 1;
+      },
+    });
+
+    expect(mergeCount).toBe(1);
+  });
+
   // Case 2: Same styles AND same name -> reuse existing token
   test("token with same styles and same name reuses existing token", () => {
     const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);

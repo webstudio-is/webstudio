@@ -22,7 +22,7 @@ import type {
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
-import { $selectedInstancePath } from "~/shared/nano-states";
+import { $selectedInstancePath, $selectedPage } from "~/shared/nano-states";
 import {
   getInstanceLabel,
   InstanceIcon,
@@ -36,6 +36,7 @@ import {
 } from "../command-state";
 import { useState } from "react";
 import { wrapInstance } from "~/shared/instance-utils";
+import { allowsHtmlMutations } from "../shared/document-utils";
 
 type WrapOption = {
   component: string;
@@ -146,13 +147,17 @@ const $wrapOptions = computed(
     $instances,
     $props,
     $registeredComponentMetas,
+    $selectedPage,
   ],
-  (isOpen, instancePath, instances, props, metas) => {
+  (isOpen, instancePath, instances, props, metas, selectedPage) => {
     const wrapOptions: WrapOption[] = [];
     if (!isOpen) {
       return wrapOptions;
     }
     if (instancePath === undefined || instancePath.length === 1) {
+      return wrapOptions;
+    }
+    if (!allowsHtmlMutations(selectedPage)) {
       return wrapOptions;
     }
     const [selectedItem, parentItem] = instancePath;

@@ -13,11 +13,12 @@ import { $registeredComponentMetas } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils";
-import { $selectedInstancePath } from "~/shared/nano-states";
+import { $selectedInstancePath, $selectedPage } from "~/shared/nano-states";
 import { InstanceIcon } from "~/builder/shared/instance-label";
 import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
+import { allowsHtmlMutations } from "../shared/document-utils";
 
 export type TagOption = BaseOption & {
   type: "tag";
@@ -31,13 +32,17 @@ export const $tagOptions = computed(
     $instances,
     $props,
     $registeredComponentMetas,
+    $selectedPage,
   ],
-  (isOpen, instancePath, instances, props, metas) => {
+  (isOpen, instancePath, instances, props, metas, selectedPage) => {
     const tagOptions: TagOption[] = [];
     if (!isOpen) {
       return tagOptions;
     }
     if (instancePath === undefined) {
+      return tagOptions;
+    }
+    if (!allowsHtmlMutations(selectedPage)) {
       return tagOptions;
     }
     const [{ instance, instanceSelector }] = instancePath;

@@ -28,7 +28,8 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "react-router": "^7.5.3",
     "vite": "^6.3.4",
-    "webstudio": "workspace:*"
+    "webstudio": "workspace:*",
+    "@webstudio-is/wsauth": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.2.70",

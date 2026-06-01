@@ -45,6 +45,10 @@ const buttonStyle = css({
   color: theme.colors.foregroundIconMain,
   backgroundColor: theme.colors.backgroundPanel,
   border: "none",
+  "&:disabled": {
+    opacity: 0.4,
+    cursor: "not-allowed",
+  },
   "&:focus-visible": triggerFocusRing,
   "@hover": {
     "&:hover": {

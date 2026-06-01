@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { OldPagePath, PagePath, Pages, ProjectNewRedirectPath } from "./pages";
+import {
+  documentTypes,
+  OldPagePath,
+  PageAuth,
+  PagePath,
+  Pages,
+  ProjectNewRedirectPath,
+} from "./pages";
 
 const validPages = {
   homePageId: "home",
@@ -102,6 +109,27 @@ test("validates non-home page path is not empty", () => {
   ]);
 });
 
+test("supports text document type", () => {
+  expect(documentTypes).toContain("text");
+  expect(
+    Pages.safeParse({
+      ...validPages,
+      pages: new Map(validPages.pages).set("text", {
+        id: "text",
+        name: "LLMs",
+        path: "/llms.txt",
+        title: `"LLMs"`,
+        meta: { documentType: "text", content: `"Text content"` },
+        rootInstanceId: "textRoot",
+      }),
+      folders: new Map(validPages.folders).set("root", {
+        ...validPages.folders.get("root")!,
+        children: ["home", "text"],
+      }),
+    }).success
+  ).toBe(true);
+});
+
 test("validates page id matches its record key", () => {
   expect(
     Pages.safeParse({
@@ -197,6 +225,57 @@ test("validates root folder is not nested", () => {
       message: "Root folder can't be nested",
     }),
   ]);
+});
+
+describe("PageAuth", () => {
+  test("accepts basic auth metadata", () => {
+    expect(
+      PageAuth.parse({
+        method: "basic",
+        login: "admin",
+        password: "secret",
+      })
+    ).toEqual({
+      method: "basic",
+      login: "admin",
+      password: "secret",
+    });
+  });
+
+  test("normalizes legacy basic auth metadata", () => {
+    expect(
+      PageAuth.parse({
+        type: "basic",
+        login: "admin",
+        password: "secret",
+      })
+    ).toEqual({
+      method: "basic",
+      login: "admin",
+      password: "secret",
+    });
+  });
+
+  test("rejects invalid basic auth metadata", () => {
+    expect(
+      PageAuth.safeParse({
+        method: "basic",
+        login: "admin:root",
+        password: "secret phrase",
+      }).error?.issues
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: ["login"],
+          message: "Login can't contain a colon",
+        }),
+        expect.objectContaining({
+          path: ["password"],
+          message: "Password can't contain whitespace",
+        }),
+      ])
+    );
+  });
 });
 
 test("validates children are registered in only one folder", () => {

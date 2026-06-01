@@ -4,6 +4,8 @@ import { insertWebstudioFragmentAt } from "../instance-utils";
 import { denormalizeSrcProps } from "./asset-upload";
 import { generateFragmentFromHtml } from "../html";
 import type { Plugin } from "./init-copy-paste";
+import { builderApi } from "../builder-api";
+import { breakpointPasteLimitWarning } from "../breakpoints";
 
 const parse = (clipboardData: string) => {
   const html = micromark(clipboardData, "utf-8", {
@@ -32,7 +34,11 @@ export const markdown: Plugin = {
       return false;
     }
     fragment = await denormalizeSrcProps(fragment);
-    return insertWebstudioFragmentAt(fragment);
+    return insertWebstudioFragmentAt(fragment, undefined, undefined, {
+      onBreakpointLimitMerge: () => {
+        builderApi.toast.warn(breakpointPasteLimitWarning);
+      },
+    });
   },
 };
 

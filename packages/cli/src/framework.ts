@@ -14,6 +14,7 @@ export type Framework = {
   tags: Record<string, string>;
   html: (params: { pagePath: string }) => FrameworkTemplateEntry[];
   xml: (params: { pagePath: string }) => FrameworkTemplateEntry[];
+  text: (params: { pagePath: string }) => FrameworkTemplateEntry[];
   redirect: (params: { pagePath: string }) => FrameworkTemplateEntry[];
   defaultSitemap: () => FrameworkTemplateEntry[];
 };

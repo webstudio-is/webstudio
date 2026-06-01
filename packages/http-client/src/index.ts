@@ -36,6 +36,7 @@ export type Data = {
     deployment?: Deployment | undefined;
   };
   assets: Array<Asset>;
+  projectDomain?: string;
   origin?: string;
 };
 

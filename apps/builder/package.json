@@ -129,7 +129,8 @@
     "valid-filename": "^4.0.0",
     "warn-once": "^0.1.1",
     "zod": "^3.24.2",
-    "zod-validation-error": "^3.4.0"
+    "zod-validation-error": "^3.4.0",
+    "@webstudio-is/wsauth": "workspace:*"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.16.5",

@@ -62,6 +62,7 @@ export const getPermissions = ({
     canDownloadAssets: planFeatures.canDownloadAssets,
     canRestoreBackups: planFeatures.canRestoreBackups,
     allowDynamicData: planFeatures.allowDynamicData,
+    allowAuth: planFeatures.allowAuth,
     allowContentMode: isSharedProject || planFeatures.allowContentMode,
     allowStagingPublish: planFeatures.allowStagingPublish,
     allowAdditionalPermissions: planFeatures.allowAdditionalPermissions,

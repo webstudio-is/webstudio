@@ -1,9 +1,18 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import { Links, Meta, Outlet, useMatches } from "@remix-run/react";
+import type { HeadersFunction } from "@remix-run/server-runtime";
 // @todo think about how to make __generated__ typeable
 // @ts-ignore
 import { CustomCode, projectId, lastPublished } from "./__generated__/_index";
+
+export const headers: HeadersFunction = ({ errorHeaders }) => {
+  if (errorHeaders) {
+    return errorHeaders;
+  }
+
+  return {};
+};
 
 const Root = () => {
   // Get language from matches

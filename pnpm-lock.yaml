@@ -298,6 +298,9 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../../packages/trpc-interface
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       args-tokenizer:
         specifier: ^0.3.0
         version: 0.3.0
@@ -524,6 +527,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
@@ -591,6 +597,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       h3:
         specifier: ^1.15.1
         version: 1.15.1
@@ -661,6 +670,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
@@ -725,6 +737,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
@@ -777,6 +792,9 @@ importers:
       '@webstudio-is/sdk-components-react-remix':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -832,6 +850,9 @@ importers:
       '@webstudio-is/sdk-components-react-remix':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -902,6 +923,9 @@ importers:
       '@webstudio-is/sdk-components-react-remix':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
@@ -981,6 +1005,9 @@ importers:
       '@webstudio-is/sdk-components-react-router':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../../packages/wsauth
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
@@ -1228,6 +1255,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../wsauth
       h3:
         specifier: ^1.15.1
         version: 1.15.1
@@ -1987,6 +2017,9 @@ importers:
       '@webstudio-is/icons':
         specifier: workspace:*
         version: link:../icons
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../wsauth
       acorn:
         specifier: ^8.14.1
         version: 8.14.1
@@ -2422,6 +2455,15 @@ importers:
         version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)
 
   packages/tsconfig: {}
+
+  packages/wsauth:
+    devDependencies:
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)
 
 packages:
 

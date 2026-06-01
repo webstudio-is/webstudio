@@ -22,28 +22,29 @@ test("generate minimal static page meta factory", () => {
       assets: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  return {
-    title: "Page title",
-    description: undefined,
-    excludePageFromSearch: undefined,
-    language: undefined,
-    socialImageAssetName: undefined,
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
-    custom: [
-    ],
-  };
-};
-"
-`);
+    "export const getPageMeta = ({
+      system,
+      resources,
+    }: {
+      system: System;
+      resources: Record<string, any>;
+    }): PageMeta => {
+      return {
+        title: "Page title",
+        description: undefined,
+        excludePageFromSearch: undefined,
+        language: undefined,
+        socialImageAssetName: undefined,
+        socialImageUrl: undefined,
+        status: undefined,
+        redirect: undefined,
+        content: undefined,
+        custom: [
+        ],
+      };
+    };
+    "
+  `);
 });
 
 test("generate complete static page meta factory", () => {
@@ -88,36 +89,37 @@ test("generate complete static page meta factory", () => {
       ]),
     })
   ).toMatchInlineSnapshot(`
-"export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  return {
-    title: "Page title",
-    description: "Page description",
-    excludePageFromSearch: true,
-    language: "en-US",
-    socialImageAssetName: "social-image-name",
-    socialImageUrl: undefined,
-    status: 302,
-    redirect: "/new-path",
-    custom: [
-      {
-        property: "custom-property-1",
-        content: "custom content 1",
-      },
-      {
-        property: "custom-property-2",
-        content: "custom content 2",
-      },
-    ],
-  };
-};
-"
-`);
+    "export const getPageMeta = ({
+      system,
+      resources,
+    }: {
+      system: System;
+      resources: Record<string, any>;
+    }): PageMeta => {
+      return {
+        title: "Page title",
+        description: "Page description",
+        excludePageFromSearch: true,
+        language: "en-US",
+        socialImageAssetName: "social-image-name",
+        socialImageUrl: undefined,
+        status: 302,
+        redirect: "/new-path",
+        content: undefined,
+        custom: [
+          {
+            property: "custom-property-1",
+            content: "custom content 1",
+          },
+          {
+            property: "custom-property-2",
+            content: "custom content 2",
+          },
+        ],
+      };
+    };
+    "
+  `);
 });
 
 test("generate asset url instead of id", () => {
@@ -138,28 +140,29 @@ test("generate asset url instead of id", () => {
       assets: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  return {
-    title: "Page title",
-    description: undefined,
-    excludePageFromSearch: undefined,
-    language: undefined,
-    socialImageAssetName: undefined,
-    socialImageUrl: "https://my-image",
-    status: undefined,
-    redirect: undefined,
-    custom: [
-    ],
-  };
-};
-"
-`);
+    "export const getPageMeta = ({
+      system,
+      resources,
+    }: {
+      system: System;
+      resources: Record<string, any>;
+    }): PageMeta => {
+      return {
+        title: "Page title",
+        description: undefined,
+        excludePageFromSearch: undefined,
+        language: undefined,
+        socialImageAssetName: undefined,
+        socialImageUrl: "https://my-image",
+        status: undefined,
+        redirect: undefined,
+        content: undefined,
+        custom: [
+        ],
+      };
+    };
+    "
+  `);
 });
 
 test("generate custom meta ignoring empty property name", () => {
@@ -183,32 +186,33 @@ test("generate custom meta ignoring empty property name", () => {
       assets: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  return {
-    title: "Page title",
-    description: undefined,
-    excludePageFromSearch: undefined,
-    language: undefined,
-    socialImageAssetName: undefined,
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
-    custom: [
-      {
-        property: "custom-property",
-        content: "custom content 1",
-      },
-    ],
-  };
-};
-"
-`);
+    "export const getPageMeta = ({
+      system,
+      resources,
+    }: {
+      system: System;
+      resources: Record<string, any>;
+    }): PageMeta => {
+      return {
+        title: "Page title",
+        description: undefined,
+        excludePageFromSearch: undefined,
+        language: undefined,
+        socialImageAssetName: undefined,
+        socialImageUrl: undefined,
+        status: undefined,
+        redirect: undefined,
+        content: undefined,
+        custom: [
+          {
+            property: "custom-property",
+            content: "custom content 1",
+          },
+        ],
+      };
+    };
+    "
+  `);
 });
 
 test("generate page meta factory with variables", () => {
@@ -235,29 +239,30 @@ test("generate page meta factory with variables", () => {
       assets: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  let VariableName = ""
-  return {
-    title: VariableName,
-    description: undefined,
-    excludePageFromSearch: undefined,
-    language: undefined,
-    socialImageAssetName: undefined,
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
-    custom: [
-    ],
-  };
-};
-"
-`);
+    "export const getPageMeta = ({
+      system,
+      resources,
+    }: {
+      system: System;
+      resources: Record<string, any>;
+    }): PageMeta => {
+      let VariableName = ""
+      return {
+        title: VariableName,
+        description: undefined,
+        excludePageFromSearch: undefined,
+        language: undefined,
+        socialImageAssetName: undefined,
+        socialImageUrl: undefined,
+        status: undefined,
+        redirect: undefined,
+        content: undefined,
+        custom: [
+        ],
+      };
+    };
+    "
+  `);
 });
 
 test("generate page meta factory with page system variable", () => {
@@ -284,29 +289,30 @@ test("generate page meta factory with page system variable", () => {
       assets: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  let system_1 = system
-  return {
-    title: system_1?.params?.slug,
-    description: undefined,
-    excludePageFromSearch: undefined,
-    language: undefined,
-    socialImageAssetName: undefined,
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
-    custom: [
-    ],
-  };
-};
-"
-`);
+    "export const getPageMeta = ({
+      system,
+      resources,
+    }: {
+      system: System;
+      resources: Record<string, any>;
+    }): PageMeta => {
+      let system_1 = system
+      return {
+        title: system_1?.params?.slug,
+        description: undefined,
+        excludePageFromSearch: undefined,
+        language: undefined,
+        socialImageAssetName: undefined,
+        socialImageUrl: undefined,
+        status: undefined,
+        redirect: undefined,
+        content: undefined,
+        custom: [
+        ],
+      };
+    };
+    "
+  `);
 });
 
 test("generate page meta factory with global system variable", () => {
@@ -325,29 +331,30 @@ test("generate page meta factory with global system variable", () => {
       assets: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  let system_1 = system
-  return {
-    title: system_1?.params?.slug,
-    description: undefined,
-    excludePageFromSearch: undefined,
-    language: undefined,
-    socialImageAssetName: undefined,
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
-    custom: [
-    ],
-  };
-};
-"
-`);
+    "export const getPageMeta = ({
+      system,
+      resources,
+    }: {
+      system: System;
+      resources: Record<string, any>;
+    }): PageMeta => {
+      let system_1 = system
+      return {
+        title: system_1?.params?.slug,
+        description: undefined,
+        excludePageFromSearch: undefined,
+        language: undefined,
+        socialImageAssetName: undefined,
+        socialImageUrl: undefined,
+        status: undefined,
+        redirect: undefined,
+        content: undefined,
+        custom: [
+        ],
+      };
+    };
+    "
+  `);
 });
 
 test("generate page meta factory with resources", () => {
@@ -374,29 +381,30 @@ test("generate page meta factory with resources", () => {
       assets: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  let CmsPage = resources.CmsPage
-  return {
-    title: CmsPage?.data?.title,
-    description: undefined,
-    excludePageFromSearch: undefined,
-    language: undefined,
-    socialImageAssetName: undefined,
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
-    custom: [
-    ],
-  };
-};
-"
-`);
+    "export const getPageMeta = ({
+      system,
+      resources,
+    }: {
+      system: System;
+      resources: Record<string, any>;
+    }): PageMeta => {
+      let CmsPage = resources.CmsPage
+      return {
+        title: CmsPage?.data?.title,
+        description: undefined,
+        excludePageFromSearch: undefined,
+        language: undefined,
+        socialImageAssetName: undefined,
+        socialImageUrl: undefined,
+        status: undefined,
+        redirect: undefined,
+        content: undefined,
+        custom: [
+        ],
+      };
+    };
+    "
+  `);
 });
 
 test("generate page meta factory without unused variables", () => {
@@ -444,27 +452,28 @@ test("generate page meta factory without unused variables", () => {
       assets: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  let UsedName = ""
-  return {
-    title: UsedName,
-    description: undefined,
-    excludePageFromSearch: undefined,
-    language: undefined,
-    socialImageAssetName: undefined,
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
-    custom: [
-    ],
-  };
-};
-"
-`);
+    "export const getPageMeta = ({
+      system,
+      resources,
+    }: {
+      system: System;
+      resources: Record<string, any>;
+    }): PageMeta => {
+      let UsedName = ""
+      return {
+        title: UsedName,
+        description: undefined,
+        excludePageFromSearch: undefined,
+        language: undefined,
+        socialImageAssetName: undefined,
+        socialImageUrl: undefined,
+        status: undefined,
+        redirect: undefined,
+        content: undefined,
+        custom: [
+        ],
+      };
+    };
+    "
+  `);
 });

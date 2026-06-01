@@ -5,6 +5,7 @@ import { generateFragmentFromTailwind } from "../tailwind/tailwind";
 import { denormalizeSrcProps } from "./asset-upload";
 import type { Plugin } from "./init-copy-paste";
 import { builderApi } from "../builder-api";
+import { breakpointPasteLimitWarning } from "../breakpoints";
 
 const inceptionMark = `<!-- @webstudio/inception/1 -->`;
 
@@ -19,7 +20,11 @@ export const html: Plugin = {
     if (html.includes(inceptionMark)) {
       fragment = await generateFragmentFromTailwind(fragment);
     }
-    const result = insertWebstudioFragmentAt(fragment);
+    const result = insertWebstudioFragmentAt(fragment, undefined, undefined, {
+      onBreakpointLimitMerge: () => {
+        builderApi.toast.warn(breakpointPasteLimitWarning);
+      },
+    });
     if (skippedSelectors.length > 0) {
       builderApi.toast.info(
         `Skipped nested selectors (no matching elements): ${skippedSelectors.join(", ")}`

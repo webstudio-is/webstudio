@@ -32,6 +32,7 @@ export const getPageMeta = ({
     socialImageUrl: "",
     status: undefined,
     redirect: "",
+    content: undefined,
     custom: [],
   };
 };
