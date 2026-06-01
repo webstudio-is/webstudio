@@ -694,6 +694,91 @@ export const unwrapInstanceMutable = ({
     return { success: false, error: "Grandparent instance not found" };
   }
 
+  const selectedParentId = selectedItem.instanceSelector[1];
+  const selectedParentInstance = instances.get(selectedParentId);
+  if (
+    parentInstance.component === "Slot" &&
+    selectedParentInstance?.component === "Fragment" &&
+    selectedItem.instanceSelector[2] === parentItem.instance.id &&
+    selectedParentInstance.children.length === 1 &&
+    selectedParentInstance.children[0]?.type === "id" &&
+    selectedParentInstance.children[0].value === selectedItem.instance.id
+  ) {
+    const parentIndex = grandparentInstance.children.findIndex(
+      (child) => child.type === "id" && child.value === parentItem.instance.id
+    );
+    if (parentIndex !== -1) {
+      grandparentInstance.children[parentIndex] = {
+        type: "id",
+        value: selectedItem.instance.id,
+      };
+    }
+
+    const isInstanceReferenced = (instanceId: Instance["id"]) => {
+      for (const instance of instances.values()) {
+        if (
+          instance.children.some(
+            (child) => child.type === "id" && child.value === instanceId
+          )
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+    if (isInstanceReferenced(parentItem.instance.id) === false) {
+      instances.delete(parentItem.instance.id);
+    }
+    if (isInstanceReferenced(selectedParentInstance.id) === false) {
+      instances.delete(selectedParentInstance.id);
+    }
+
+    const matches = isTreeSatisfyingContentModel({
+      instances,
+      props,
+      metas,
+      instanceSelector: [
+        selectedItem.instance.id,
+        ...parentItem.instanceSelector.slice(1),
+      ],
+    });
+    if (matches === false) {
+      return { success: false, error: "Cannot unwrap instance" };
+    }
+
+    return { success: true };
+  }
+
+  // Slot children may be rendered through multiple slot instances with the same
+  // ids. In that case use the selected path to unwrap only the selected slot
+  // occurrence and preserve the shared parent tree for other slot occurrences.
+  if (instances.get(parentItem.instanceSelector[1])?.component === "Slot") {
+    const parentIndex = grandparentInstance.children.findIndex(
+      (child) => child.type === "id" && child.value === parentItem.instance.id
+    );
+    if (parentIndex !== -1) {
+      grandparentInstance.children[parentIndex] = {
+        type: "id",
+        value: selectedItem.instance.id,
+      };
+    }
+
+    const matches = isTreeSatisfyingContentModel({
+      instances,
+      props,
+      metas,
+      instanceSelector: [
+        selectedItem.instance.id,
+        ...parentItem.instanceSelector.slice(1),
+      ],
+    });
+    if (matches === false) {
+      return { success: false, error: "Cannot unwrap instance" };
+    }
+
+    return { success: true };
+  }
+
   // Remove selected instance from parent's children
   const selectedIndexInParent = parentInstance.children.findIndex(
     (child) => child.type === "id" && child.value === selectedItem.instance.id
@@ -976,7 +1061,15 @@ export const unwrapInstance = () => {
     return;
   }
 
-  const [selectedItem, parentItem] = instancePath;
+  const [selectedItem, defaultParentItem] = instancePath;
+  const parentItem =
+    defaultParentItem?.instance.component === "Fragment" &&
+    instancePath[2]?.instance.component === "Slot"
+      ? instancePath[2]
+      : defaultParentItem;
+  if (parentItem === undefined) {
+    return;
+  }
 
   try {
     updateWebstudioData((data) => {

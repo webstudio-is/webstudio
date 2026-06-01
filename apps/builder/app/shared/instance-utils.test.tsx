@@ -46,6 +46,7 @@ import {
   buildInstancePath,
   wrapInstance,
   toggleInstanceShow,
+  unwrapInstance,
   unwrapInstanceMutable,
   canUnwrapInstance,
   canConvertInstance,
@@ -3122,6 +3123,78 @@ describe("unwrap instance", () => {
 
     const parentInstance = instances.get("parent")!;
     expect(parentInstance.children).toEqual([{ type: "id", value: "link" }]);
+  });
+
+  test("unwraps selected slot occurrence instead of hidden slot fragment", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div"></ws.element>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div"></ws.element>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+
+    const result = unwrapInstanceMutable({
+      instances,
+      props,
+      metas: defaultMetasMap,
+      selectedItem: {
+        instanceSelector: ["div", "fragment", "slot1", "body"],
+        instance: instances.get("div")!,
+      },
+      parentItem: {
+        instanceSelector: ["slot1", "body"],
+        instance: instances.get("slot1")!,
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(instances.get("body")?.children).toEqual([
+      { type: "id", value: "div" },
+      { type: "id", value: "slot2" },
+    ]);
+    expect(instances.has("slot1")).toBe(false);
+    expect(instances.get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(instances.get("fragment")?.children).toEqual([
+      { type: "id", value: "div" },
+    ]);
+  });
+
+  test("unwrap command skips hidden slot fragment", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot">
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div"></ws.element>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    selectInstance(["div", "fragment", "slot", "body"]);
+
+    unwrapInstance();
+
+    expect($selectedInstanceSelector.get()).toEqual(["div", "body"]);
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "div" },
+    ]);
+    expect($instances.get().has("slot")).toBe(false);
+    expect($instances.get().has("fragment")).toBe(false);
   });
 });
 
