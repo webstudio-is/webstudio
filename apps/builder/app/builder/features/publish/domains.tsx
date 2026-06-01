@@ -106,10 +106,10 @@ const getStatusText = (props: {
       break;
 
     case "VERIFIED_INITIALIZING":
-      text = "Status: Initializing CNAME";
+      text = "Status: Initializing DNS";
       break;
     case "VERIFIED_PENDING":
-      text = "Status: Waiting for CNAME propagation";
+      text = "Status: Waiting for DNS propagation";
       break;
     case "VERIFIED_ACTIVE":
       isVerifiedActive = true;
@@ -309,20 +309,52 @@ const DomainItem = ({
 
   const publisherHost = useStore($publisherHost);
   const cname = extractCname(projectDomain.domain);
-  const dnsRecords = [
-    {
-      type: "CNAME",
-      host: cname,
-      value: `${projectDomain.cname}.customers.${publisherHost}`,
-      ttl: 300,
-    } as const,
-    {
-      type: "TXT",
-      host: cname === "@" ? "_webstudio_is" : `_webstudio_is.${cname}`,
-      value: projectDomain.expectedTxtRecord,
-      ttl: 300,
-    } as const,
-  ];
+  const isApexDomain = cname === "@";
+
+  // Records for the Entri automatic DNS setup widget.
+  // Entri only supports CNAME / ALIAS / TXT — A records are not included.
+  const entriRecords = isApexDomain
+    ? [
+        {
+          type: "TXT" as const,
+          host: "_webstudio_is",
+          value: projectDomain.expectedTxtRecord,
+          ttl: 300,
+        },
+      ]
+    : [
+        {
+          type: "CNAME" as const,
+          host: cname,
+          value: `${projectDomain.cname}.customers.${publisherHost}`,
+          ttl: 300,
+        },
+        {
+          type: "TXT" as const,
+          host: `_webstudio_is.${cname}`,
+          value: projectDomain.expectedTxtRecord,
+          ttl: 300,
+        },
+      ];
+
+  // Records shown in the DNS setup table.
+  // For apex domains show an A record placeholder instead of CNAME.
+  const displayRecords: Array<{
+    type: string;
+    host: string;
+    value: string;
+    copyable: boolean;
+  }> = isApexDomain
+    ? [
+        { type: "A", host: "@", value: "your server IP", copyable: false },
+        {
+          type: "TXT",
+          host: "_webstudio_is",
+          value: projectDomain.expectedTxtRecord,
+          copyable: true,
+        },
+      ]
+    : entriRecords.map((r) => ({ ...r, copyable: true }));
 
   return (
     <CollapsibleDomainSection
@@ -448,8 +480,9 @@ const DomainItem = ({
             content={
               <Text>
                 Visit the admin console of your domain registrar (the website
-                you purchased your domain from) and create one CNAME record and
-                one TXT record with the values shown below.{" "}
+                you purchased your domain from) and create one{" "}
+                {isApexDomain ? "A" : "CNAME"} record and one TXT record with
+                the values shown below.{" "}
                 <Link
                   color="inherit"
                   href="https://docs.webstudio.is/university/foundations/publishing-and-custom-domains"
@@ -479,7 +512,7 @@ const DomainItem = ({
             VALUE
           </Text>
 
-          {dnsRecords.map((record, index) => (
+          {displayRecords.map((record, index) => (
             <Fragment key={index}>
               <InputEllipsis readOnly value={record.type} />
               <InputEllipsis
@@ -497,11 +530,13 @@ const DomainItem = ({
                 readOnly
                 value={record.value}
                 suffix={
-                  <CopyToClipboard text={record.value}>
-                    <NestedInputButton type="button">
-                      <CopyIcon />
-                    </NestedInputButton>
-                  </CopyToClipboard>
+                  record.copyable ? (
+                    <CopyToClipboard text={record.value}>
+                      <NestedInputButton type="button">
+                        <CopyIcon />
+                      </NestedInputButton>
+                    </CopyToClipboard>
+                  ) : undefined
                 }
               />
             </Fragment>
@@ -521,7 +556,7 @@ const DomainItem = ({
         </Grid>
 
         <Entri
-          dnsRecords={dnsRecords}
+          dnsRecords={entriRecords}
           domain={projectDomain.domain}
           onClose={() => {
             // Sometimes Entri modal dialog hangs even if it's successful,

@@ -19,13 +19,14 @@ Additions on the `develop` branch versus [webstudio-is/webstudio](https://github
 
 ## Custom Domains
 
-| Commit                              | Description                                               |
-| ----------------------------------- | --------------------------------------------------------- |
-| [`7c87cc4`](../../commit/7c87cc436) | Real DNS TXT verification for self-hosted custom domains  |
-| [`7a4ddd9`](../../commit/7a4ddd910) | Fix TXT record prefix (`_webstudio_is`)                   |
-| [`f6a7efb`](../../commit/f6a7efba1) | Expose `customDomains` in `/rest/build/:buildId` response |
-| [`8e8c371`](../../commit/8e8c3e731) | Always re-verify TXT via DNS in `updateStatus`            |
-| [`7b53369`](../../commit/7b5336924) | Enable Entri domain setup without Pro plan requirement    |
+| Commit                              | Description                                                           |
+| ----------------------------------- | --------------------------------------------------------------------- |
+| [`7c87cc4`](../../commit/7c87cc436) | Real DNS TXT verification for self-hosted custom domains              |
+| [`7a4ddd9`](../../commit/7a4ddd910) | Fix TXT record prefix (`_webstudio_is`)                               |
+| [`f6a7efb`](../../commit/f6a7efba1) | Expose `customDomains` in `/rest/build/:buildId` response             |
+| [`8e8c371`](../../commit/8e8c3e731) | Always re-verify TXT via DNS in `updateStatus`                        |
+| [`7b53369`](../../commit/7b5336924) | Enable Entri domain setup without Pro plan requirement                |
+| TBD                                 | Allow apex domain publishing; show A record instruction in builder UI |
 
 ## Publish / SSR–SSG
 
