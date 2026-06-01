@@ -3351,6 +3351,47 @@ describe("unwrap instance", () => {
     expect($instances.get().has("slot")).toBe(false);
     expect($instances.get().has("fragment")).toBe(false);
   });
+
+  test("unwrap command detaches selected duplicated slot occurrence", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div"></ws.element>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div"></ws.element>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    selectInstance(["div", "fragment", "slot1", "body"]);
+
+    unwrapInstance();
+
+    const bodyChildren = $instances.get().get("body")?.children;
+    const unwrappedDivId =
+      bodyChildren?.[0]?.type === "id" ? bodyChildren[0].value : undefined;
+
+    expect(unwrappedDivId).toBeDefined();
+    expect(unwrappedDivId).not.toBe("div");
+    expect($selectedInstanceSelector.get()).toEqual([unwrappedDivId, "body"]);
+    expect($instances.get().get("slot1")).toBeUndefined();
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "div" },
+    ]);
+  });
 });
 
 describe("canUnwrapInstance", () => {
