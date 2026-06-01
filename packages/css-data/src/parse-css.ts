@@ -8,6 +8,7 @@ import type {
 import {
   parseCssValue as parseCssValueLonghand,
   parseCssVar,
+  isValidCustomPropertyValue,
 } from "./parse-css-value";
 import { expandShorthands } from "./shorthands";
 import { shorthandProperties } from "./__generated__/shorthand-properties";
@@ -85,6 +86,9 @@ export const camelCaseProperty = (
 };
 
 const parseCssValue = (property: CssProperty, value: string) => {
+  if (property.startsWith("--")) {
+    return new Map([[property, parseCssValueLonghand(property, value)]]);
+  }
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map<CssProperty, StyleValue>();
   for (const [property, value] of expanded) {
@@ -628,10 +632,32 @@ const substituteVarsInShorthand = (
 
 const cssTreeTryParse = (input: string) => {
   try {
-    const ast = csstree.parse(input);
+    const ast = csstree.parse(input, { positions: true });
     return ast;
   } catch {
     return;
+  }
+};
+
+const getRawDeclarationValue = (
+  css: string,
+  declaration: csstree.Declaration
+) => {
+  const loc = declaration.value.loc;
+  if (loc === null) {
+    return;
+  }
+  return css.slice(loc.start.offset, loc.end.offset).trim();
+};
+
+const normalizeCustomPropertyValue = (value: string) => {
+  if (value === "") {
+    return value;
+  }
+  try {
+    return csstree.generate(csstree.parse(value, { context: "value" }));
+  } catch {
+    return value;
   }
 };
 
@@ -665,7 +691,10 @@ export const extractCssCustomProperties = (
       const decl = node as csstree.Declaration;
       const prop = normalizeProperty(decl.property);
       if (prop.startsWith("--")) {
-        map.set(prop, csstree.generate(decl.value));
+        const value = getRawDeclarationValue(css, decl);
+        if (value !== undefined && isValidCustomPropertyValue(value)) {
+          map.set(prop, normalizeCustomPropertyValue(value));
+        }
       }
     },
   });
@@ -701,7 +730,10 @@ export const parseCss = (
         const decl = node as csstree.Declaration;
         const prop = normalizeProperty(decl.property);
         if (prop.startsWith("--")) {
-          customProperties.set(prop, csstree.generate(decl.value));
+          const value = getRawDeclarationValue(css, decl);
+          if (value !== undefined && isValidCustomPropertyValue(value)) {
+            customProperties.set(prop, normalizeCustomPropertyValue(value));
+          }
         }
       },
     });
@@ -862,8 +894,14 @@ export const parseCss = (
         }
       }
 
-      const stringValue = csstree.generate(node.value);
       const property = normalizeProperty(node.property);
+      const rawValue = getRawDeclarationValue(css, node);
+      const stringValue =
+        property.startsWith("--") && rawValue !== undefined
+          ? isValidCustomPropertyValue(rawValue)
+            ? normalizeCustomPropertyValue(rawValue)
+            : rawValue
+          : csstree.generate(node.value).trim();
 
       let parsedCss: Map<CssProperty, StyleValue>;
       if (shorthandSet.has(property)) {
@@ -885,6 +923,16 @@ export const parseCss = (
         }
       } else {
         parsedCss = parseCssValue(property, stringValue);
+      }
+
+      if (
+        property.startsWith("--") &&
+        [...parsedCss.values()].some((value) => value.type === "invalid")
+      ) {
+        errors.push(
+          `"${property}" was not applied because its value is invalid`
+        );
+        return;
       }
 
       for (const { name: selector, state } of selectors) {

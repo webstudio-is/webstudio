@@ -486,6 +486,22 @@ describe("Parse CSS", () => {
     ]);
   });
 
+  test("drops malformed custom property values", () => {
+    const result = parseCss(
+      `
+        a {
+          --my-property: #sd';
+          color: red;
+        }
+      `,
+      new Map()
+    );
+    expect(result.styles).toEqual([]);
+    expect(result.errors).toEqual([
+      `"--my-property" was not applied because its value is invalid`,
+    ]);
+  });
+
   test("parse empty custom property", () => {
     expect(parseCss(`a { --my-property: ; }`, new Map()).styles).toEqual([
       {
