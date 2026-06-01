@@ -6,6 +6,8 @@ import {
   lexer,
   List,
   parse,
+  tokenize,
+  tokenTypes,
   walk,
 } from "css-tree";
 import warnOnce from "warn-once";
@@ -140,15 +142,119 @@ const getSyntaxMatchErrorSyntax = (error: Error | null | undefined) => {
   }
 };
 
+const matchingOpenToken = new Map([
+  [tokenTypes.RightSquareBracket, tokenTypes.LeftSquareBracket],
+  [tokenTypes.RightCurlyBracket, tokenTypes.LeftCurlyBracket],
+]);
+
+const endsWithUnescaped = (value: string, char: string) => {
+  if (value.endsWith(char) === false) {
+    return false;
+  }
+  let backslashes = 0;
+  for (let index = value.length - 2; index >= 0; index -= 1) {
+    if (value[index] !== "\\") {
+      break;
+    }
+    backslashes += 1;
+  }
+  return backslashes % 2 === 0;
+};
+
+export const isValidCustomPropertyValue = (value: string): boolean => {
+  if (endsWithUnescaped(value, "\\")) {
+    return false;
+  }
+
+  const blockStack: number[] = [];
+  const tokenizeValue = tokenize as unknown as (
+    source: string,
+    onToken: (type: number, start: number, end: number) => void
+  ) => void;
+
+  tokenizeValue(value, (type, start, end) => {
+    const tokenValue = value.slice(start, end);
+
+    if (type === tokenTypes.BadString || type === tokenTypes.BadUrl) {
+      blockStack.push(Number.NaN);
+      return;
+    }
+
+    if (type === tokenTypes.String) {
+      const quote = tokenValue[0];
+      if (
+        quote !== undefined &&
+        (quote === `"` || quote === `'`) &&
+        (tokenValue.length < 2 ||
+          endsWithUnescaped(tokenValue, quote) === false)
+      ) {
+        blockStack.push(Number.NaN);
+      }
+      return;
+    }
+
+    if (type === tokenTypes.Url) {
+      if (endsWithUnescaped(tokenValue, ")") === false) {
+        blockStack.push(Number.NaN);
+      }
+      return;
+    }
+
+    if (type === tokenTypes.Comment) {
+      if (tokenValue.endsWith("*/") === false) {
+        blockStack.push(Number.NaN);
+      }
+      return;
+    }
+
+    if (
+      type === tokenTypes.Function ||
+      type === tokenTypes.LeftParenthesis ||
+      type === tokenTypes.LeftSquareBracket ||
+      type === tokenTypes.LeftCurlyBracket
+    ) {
+      blockStack.push(type);
+      return;
+    }
+
+    if (type === tokenTypes.RightParenthesis) {
+      const open = blockStack.at(-1);
+      if (open !== tokenTypes.LeftParenthesis && open !== tokenTypes.Function) {
+        blockStack.push(Number.NaN);
+        return;
+      }
+      blockStack.pop();
+      return;
+    }
+
+    const expectedOpen = matchingOpenToken.get(type);
+    if (expectedOpen !== undefined) {
+      if (blockStack.at(-1) !== expectedOpen) {
+        blockStack.push(Number.NaN);
+        return;
+      }
+      blockStack.pop();
+      return;
+    }
+
+    if (type === tokenTypes.Semicolon && blockStack.length === 0) {
+      blockStack.push(Number.NaN);
+    }
+  });
+
+  return blockStack.length === 0;
+};
+
 // Because csstree parser has bugs we use CSSStyleValue to validate css properties if available
 // and fall back to csstree.
 export const isValidDeclaration = (
   property: CssProperty,
   value: string
 ): boolean => {
-  // Custom properties accept any value.
+  // Custom properties accept any valid declaration value token stream, but
+  // malformed strings, URLs, comments, or blocks can invalidate the whole rule.
   if (property.startsWith("--")) {
-    return true;
+    return isValidCustomPropertyValue(value);
   }
 
   // Parse once upfront for structural inspection. cssTryParseValue may return
