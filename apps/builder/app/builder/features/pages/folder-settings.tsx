@@ -260,7 +260,7 @@ export const NewFolderSettings = ({
           </DialogTitleActions>
         }
       >
-        New Folder Settings
+        New folder settings
       </DialogTitle>
       <Form onSubmit={handleSubmit}>
         <FormFields
@@ -433,7 +433,7 @@ export const FolderSettings = ({
           </DialogTitleActions>
         }
       >
-        Folder Settings
+        Folder settings
       </DialogTitle>
       <Form onSubmit={onClose}>
         <FormFields

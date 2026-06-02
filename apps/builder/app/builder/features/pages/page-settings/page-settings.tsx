@@ -242,6 +242,8 @@ export const FormFields = ({
   onChange,
   showAuthErrors,
   isEditorContext = false,
+  canEditName = true,
+  canEditPath = true,
 }: {
   autoSelect?: boolean;
   errors: Errors;
@@ -249,6 +251,8 @@ export const FormFields = ({
   onChange: OnChange;
   showAuthErrors?: boolean;
   isEditorContext?: boolean;
+  canEditName?: boolean;
+  canEditPath?: boolean;
 }) => {
   const project = useStore($project);
   const pages = useStore($pages);
@@ -293,7 +297,8 @@ export const FormFields = ({
             values={values}
             pages={pages}
             isEditorContext={isEditorContext}
-            canEditPath={isEditorContext === false}
+            canEditName={canEditName}
+            canEditPath={canEditPath}
             showBindingControls={showBindingControls}
             onChange={onChange}
           />
@@ -348,7 +353,7 @@ export const FormFields = ({
         )}
 
         {values.documentType === "html" && (
-          <CollapsibleSection label="Social Image">
+          <CollapsibleSection label="Social image">
             <SocialImageSection
               values={values}
               errors={errors}
@@ -363,11 +368,10 @@ export const FormFields = ({
         )}
 
         {values.documentType === "html" && (
-          <CollapsibleSection label="Custom Metadata">
+          <CollapsibleSection label="Custom metadata">
             <CustomMetadataSection
               values={values}
               errors={errors}
-              disabled={isEditorContext}
               showBindingControls={showBindingControls}
               onChange={onChange}
             />
@@ -469,7 +473,7 @@ const NewPageSettingsView = ({
           </DialogTitleActions>
         }
       >
-        New Page Settings
+        New page settings
       </DialogTitle>
       <Form onSubmit={onSubmit}>{children}</Form>
     </>
@@ -741,6 +745,8 @@ export const PageSettings = ({
           errors={errors}
           values={values}
           isEditorContext={isDesignMode === false}
+          canEditName={isDesignMode}
+          canEditPath={isDesignMode}
           onChange={handleChange}
         />
       </PageSettingsView>
@@ -798,7 +804,7 @@ const PageSettingsView = ({
           </DialogTitleActions>
         }
       >
-        Page Settings
+        Page settings
       </DialogTitle>
       <Form onSubmit={onClose}>
         <fieldset

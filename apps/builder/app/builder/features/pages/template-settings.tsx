@@ -615,7 +615,7 @@ const TemplateFormFields = ({
         {/* Social image */}
         <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
           <Label htmlFor={socialImageFieldId} text="title">
-            Social Image
+            Social image
           </Label>
           <Text color="subtle">
             This image appears when pages from this template are shared on
@@ -662,7 +662,7 @@ const TemplateFormFields = ({
                 css={{ justifySelf: "start" }}
                 color="neutral"
               >
-                Choose Image From Assets
+                Choose image from assets
               </Button>
             </ImageControl>
           </Grid>
@@ -811,7 +811,7 @@ export const CreatePageFromTemplateSettings = ({
           </DialogTitleActions>
         }
       >
-        Create Page from Template
+        Create page from template
       </DialogTitle>
       <Form onSubmit={handleSubmit}>
         <FormFields
@@ -819,6 +819,11 @@ export const CreatePageFromTemplateSettings = ({
           errors={errors}
           values={values}
           isEditorContext={isContentMode}
+          canEditName
+          canEditPath={
+            isContentMode === false ||
+            isEditorEditablePagePath(initialValues.path)
+          }
           onChange={(change) => {
             setValues((prev) => {
               const next = { ...prev, [change.field]: change.value };

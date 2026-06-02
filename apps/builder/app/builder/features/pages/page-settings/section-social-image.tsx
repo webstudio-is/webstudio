@@ -64,7 +64,7 @@ export const SocialImageSection = ({
     <Grid gap={2}>
       <Text color="subtle">
         This image appears when you share a link to this page on social media
-        sites. If no image is set here, the Social Image set in the project
+        sites. If no image is set here, the social image set in the project
         settings will be used. The optimal dimensions for the image are 1200x630
         px or larger with a 1.91:1 aspect ratio.
       </Text>
@@ -125,7 +125,7 @@ export const SocialImageSection = ({
             color="neutral"
             disabled={disabled}
           >
-            Choose Image From Assets
+            Choose image from assets
           </Button>
         </ImageControl>
       </Grid>

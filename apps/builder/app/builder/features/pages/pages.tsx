@@ -44,6 +44,7 @@ import {
   $editingPageId,
   $editingTemplateId,
   $creatingPageFromTemplateId,
+  $authPermit,
   $isContentMode,
   $isDesignMode,
 } from "~/shared/nano-states";
@@ -586,6 +587,9 @@ const TemplateItem = ({
   onSelect,
   onEdit,
   onCreatePage,
+  canSelectTemplate,
+  canEditTemplate,
+  canCreatePage,
 }: {
   template: PageTemplate;
   isSelected: boolean;
@@ -593,6 +597,9 @@ const TemplateItem = ({
   onSelect: (id: string) => void;
   onEdit: (id: string | undefined) => void;
   onCreatePage: (id: string) => void;
+  canSelectTemplate: boolean;
+  canEditTemplate: boolean;
+  canCreatePage: boolean;
 }) => {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const prevIsEditing = useRef(isEditing);
@@ -608,38 +615,47 @@ const TemplateItem = ({
       level={1}
       isSelected={isSelected}
       buttonProps={Object.assign(
-        { onClick: () => onSelect(template.id) },
+        canSelectTemplate ? { onClick: () => onSelect(template.id) } : {},
         { "data-template-id": template.id }
       )}
-      actionCount={2}
+      actionCount={(canCreatePage ? 1 : 0) + (canEditTemplate ? 1 : 0)}
       action={
         <Flex align="center" gap={2}>
-          <Tooltip content="Create page from template" disableHoverableContent>
-            <SmallIconButton
-              tabIndex={-1}
-              aria-label="Create page from template"
-              onClick={() => onCreatePage(template.id)}
-              icon={<PlusIcon />}
-            />
-          </Tooltip>
-          <Tooltip
-            content={
-              isEditing ? "Close template settings" : "Open template settings"
-            }
-            disableHoverableContent
-          >
-            <SmallIconButton
-              tabIndex={-1}
-              aria-label={
+          {canCreatePage && (
+            <Tooltip
+              content="Create page from template"
+              disableHoverableContent
+            >
+              <SmallIconButton
+                tabIndex={-1}
+                aria-label="Create page from template"
+                onClick={() => onCreatePage(template.id)}
+                icon={<PlusIcon />}
+              />
+            </Tooltip>
+          )}
+          {canEditTemplate && (
+            <Tooltip
+              content={
                 isEditing ? "Close template settings" : "Open template settings"
               }
-              state={isSelected ? "open" : undefined}
-              onClick={() => onEdit(isEditing ? undefined : template.id)}
-              ref={buttonRef}
-              aria-current={isEditing}
-              icon={isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
-            />
-          </Tooltip>
+              disableHoverableContent
+            >
+              <SmallIconButton
+                tabIndex={-1}
+                aria-label={
+                  isEditing
+                    ? "Close template settings"
+                    : "Open template settings"
+                }
+                state={isSelected ? "open" : undefined}
+                onClick={() => onEdit(isEditing ? undefined : template.id)}
+                ref={buttonRef}
+                aria-current={isEditing}
+                icon={isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
+              />
+            </Tooltip>
+          )}
         </Flex>
       }
     >
@@ -654,12 +670,18 @@ const TemplatesSection = ({
   editingTemplateId,
   onEditTemplate,
   onCreatePageFromTemplate,
+  canManageTemplates,
+  canSelectTemplate,
+  canCreatePageFromTemplate,
 }: {
   selectedPageId: string;
   onSelectTemplate: (id: string) => void;
   editingTemplateId: string | undefined;
   onEditTemplate: (id: string | undefined) => void;
   onCreatePageFromTemplate: (id: string) => void;
+  canManageTemplates: boolean;
+  canSelectTemplate: boolean;
+  canCreatePageFromTemplate: boolean;
 }) => {
   const pages = useStore($pages);
   const dropInfo = useStore($templateDropInfo);
@@ -678,13 +700,16 @@ const TemplatesSection = ({
           isExpanded={undefined}
           isLastChild={index === templates.length - 1}
           data={template}
-          canDrag={() => true}
+          canDrag={() => canManageTemplates}
           dropTarget={
-            dropInfo?.targetId === template.id
+            canManageTemplates && dropInfo?.targetId === template.id
               ? dropInfo.treeDropTarget
               : undefined
           }
           onDropTargetChange={(treeDropTarget) => {
+            if (canManageTemplates === false) {
+              return;
+            }
             if (treeDropTarget) {
               $templateDropInfo.set({
                 targetId: template.id,
@@ -695,6 +720,9 @@ const TemplatesSection = ({
             }
           }}
           onDrop={(draggedTemplate) => {
+            if (canManageTemplates === false) {
+              return;
+            }
             const info = $templateDropInfo.get();
             if (info === undefined) {
               return;
@@ -720,6 +748,9 @@ const TemplatesSection = ({
             onSelect={onSelectTemplate}
             onEdit={onEditTemplate}
             onCreatePage={onCreatePageFromTemplate}
+            canSelectTemplate={canSelectTemplate}
+            canEditTemplate={canManageTemplates}
+            canCreatePage={canCreatePageFromTemplate}
           />
         </TreeSortableItem>
       ))}
@@ -790,6 +821,10 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const creatingFromTemplateId = useStore($creatingPageFromTemplateId);
   const pages = useStore($pages);
   const isDesignMode = useStore($isDesignMode);
+  const isContentMode = useStore($isContentMode);
+  const authPermit = useStore($authPermit);
+  const canCreatePageFromTemplate =
+    isDesignMode || (isContentMode && authPermit !== "view");
   const [containerElement, setContainerElement] =
     useState<HTMLDivElement | null>(null);
   const [settingsPanelHeight, setSettingsPanelHeight] = useState<number>();
@@ -942,30 +977,58 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         </div>
       </PageContextMenu>
 
-      {isDesignMode && (
+      {(isDesignMode || isContentMode) && (
         <>
           <Separator />
           <PanelTitle
             suffix={
-              <Tooltip content="New template" side="bottom">
-                <Button
-                  onClick={() => {
-                    $editingTemplateId.set(
-                      editingTemplateItemId === newTemplateId
-                        ? undefined
-                        : newTemplateId
-                    );
-                  }}
-                  aria-label="New template"
-                  prefix={<NewPageIcon />}
-                  color="ghost"
-                />
-              </Tooltip>
+              isDesignMode ? (
+                <Tooltip content="New template" side="bottom">
+                  <Button
+                    onClick={() => {
+                      $editingTemplateId.set(
+                        editingTemplateItemId === newTemplateId
+                          ? undefined
+                          : newTemplateId
+                      );
+                    }}
+                    aria-label="New template"
+                    prefix={<NewPageIcon />}
+                    color="ghost"
+                  />
+                </Tooltip>
+              ) : undefined
             }
           >
             Page Templates
           </PanelTitle>
-          <TemplateContextMenu onRequestDeleteTemplate={setTemplateIdToDelete}>
+          {isDesignMode ? (
+            <TemplateContextMenu
+              onRequestDeleteTemplate={setTemplateIdToDelete}
+            >
+              <div>
+                <TemplatesSection
+                  selectedPageId={currentPage.id}
+                  onSelectTemplate={(id) => {
+                    selectPage(id);
+                  }}
+                  editingTemplateId={editingTemplateItemId}
+                  onEditTemplate={(id) => {
+                    if (id) {
+                      selectPage(id);
+                    }
+                    $editingTemplateId.set(id);
+                  }}
+                  onCreatePageFromTemplate={(id) => {
+                    $creatingPageFromTemplateId.set(id);
+                  }}
+                  canManageTemplates={true}
+                  canSelectTemplate={true}
+                  canCreatePageFromTemplate={canCreatePageFromTemplate}
+                />
+              </div>
+            </TemplateContextMenu>
+          ) : (
             <div>
               <TemplatesSection
                 selectedPageId={currentPage.id}
@@ -973,18 +1036,16 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                   selectPage(id);
                 }}
                 editingTemplateId={editingTemplateItemId}
-                onEditTemplate={(id) => {
-                  if (id) {
-                    selectPage(id);
-                  }
-                  $editingTemplateId.set(id);
-                }}
+                onEditTemplate={() => {}}
                 onCreatePageFromTemplate={(id) => {
                   $creatingPageFromTemplateId.set(id);
                 }}
+                canManageTemplates={false}
+                canSelectTemplate={true}
+                canCreatePageFromTemplate={canCreatePageFromTemplate}
               />
             </div>
-          </TemplateContextMenu>
+          )}
         </>
       )}
 
@@ -1028,7 +1089,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         </FloatingPanel>
       )}
 
-      {editingTemplateItemId !== undefined && (
+      {isDesignMode && editingTemplateItemId !== undefined && (
         <FloatingPanel
           content={
             <TemplateEditor
@@ -1049,7 +1110,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         </FloatingPanel>
       )}
 
-      {creatingFromTemplateId !== undefined && (
+      {canCreatePageFromTemplate && creatingFromTemplateId !== undefined && (
         <FloatingPanel
           content={
             <CreatePageFromTemplateSettings

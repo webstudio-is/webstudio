@@ -375,6 +375,7 @@ export const GeneralSection = ({
   values,
   pages,
   isEditorContext = false,
+  canEditName = true,
   canEditPath = true,
   showBindingControls = true,
   onChange,
@@ -384,6 +385,7 @@ export const GeneralSection = ({
   values: Values;
   pages: Pages;
   isEditorContext?: boolean;
+  canEditName?: boolean;
   canEditPath?: boolean;
   showBindingControls?: boolean;
   onChange: OnChange;
@@ -403,7 +405,7 @@ export const GeneralSection = ({
             onFocus={autoSelect ? autoSelectHandler : undefined}
             name="name"
             placeholder="About"
-            disabled={isEditorContext}
+            disabled={canEditName === false}
             value={values.name}
             onChange={(event) => {
               onChange({ field: "name", value: event.target.value });
