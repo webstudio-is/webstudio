@@ -403,6 +403,7 @@ export const GeneralSection = ({
             onFocus={autoSelect ? autoSelectHandler : undefined}
             name="name"
             placeholder="About"
+            disabled={isEditorContext}
             value={values.name}
             onChange={(event) => {
               onChange({ field: "name", value: event.target.value });

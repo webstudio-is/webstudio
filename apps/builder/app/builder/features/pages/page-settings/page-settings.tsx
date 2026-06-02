@@ -31,7 +31,12 @@ import {
   DialogTitleActions,
 } from "@webstudio-is/design-system";
 import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
-import { $isDesignMode, $permissions } from "~/shared/nano-states";
+import {
+  $authPermit,
+  $isContentMode,
+  $isDesignMode,
+  $permissions,
+} from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $instances, $pages } from "~/shared/sync/data-stores";
@@ -288,9 +293,7 @@ export const FormFields = ({
             values={values}
             pages={pages}
             isEditorContext={isEditorContext}
-            canEditPath={
-              isEditorContext === false || isEditorEditablePagePath(values.path)
-            }
+            canEditPath={isEditorContext === false}
             showBindingControls={showBindingControls}
             onChange={onChange}
           />
@@ -757,6 +760,10 @@ const PageSettingsView = ({
   children: JSX.Element;
 }) => {
   const isDesignMode = useStore($isDesignMode);
+  const isContentMode = useStore($isContentMode);
+  const authPermit = useStore($authPermit);
+  const canEditPageSettings =
+    isDesignMode || (isContentMode && authPermit !== "view");
   return (
     <div
       data-floating-panel-container
@@ -794,7 +801,10 @@ const PageSettingsView = ({
         Page Settings
       </DialogTitle>
       <Form onSubmit={onClose}>
-        <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
+        <fieldset
+          style={{ display: "contents" }}
+          disabled={canEditPageSettings === false}
+        >
           {children}
         </fieldset>
       </Form>
