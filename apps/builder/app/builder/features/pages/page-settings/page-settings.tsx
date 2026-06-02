@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { useState, useCallback, useEffect, type JSX, useRef } from "react";
+import { useState, useCallback, useEffect, type JSX } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import slugify from "slugify";
@@ -730,9 +730,11 @@ const PageSettingsView = ({
   children: JSX.Element;
 }) => {
   const isDesignMode = useStore($isDesignMode);
-  const containerRef = useRef<HTMLFormElement>(null);
   return (
-    <>
+    <div
+      data-floating-panel-container
+      style={{ display: "flex", flexDirection: "column", height: "100%" }}
+    >
       <DialogTitle
         suffix={
           <DialogTitleActions>
@@ -764,11 +766,11 @@ const PageSettingsView = ({
       >
         Page Settings
       </DialogTitle>
-      <Form onSubmit={onClose} ref={containerRef} data-floating-panel-container>
+      <Form onSubmit={onClose}>
         <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
           {children}
         </fieldset>
       </Form>
-    </>
+    </div>
   );
 };
