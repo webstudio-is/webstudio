@@ -308,6 +308,13 @@ export const Pages = z
           message: "Page template id must match its record key",
         });
       }
+      if (pages.pages.has(templateId)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["pageTemplates", templateId, "id"],
+          message: "Page template id must not match an existing page id",
+        });
+      }
     }
     for (const [folderId, folder] of pages.folders) {
       if (folder.id !== folderId) {
