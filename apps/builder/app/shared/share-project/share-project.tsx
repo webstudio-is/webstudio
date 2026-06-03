@@ -72,7 +72,7 @@ export const ShareLinkSecurityNotice = () => (
   <PanelBanner variant="warning">
     <Text>
       Sharing links over insecure channels can expose project access. Upgrade to
-      the Team plan for safer collaboration with realtime multiplayer.
+      the Team plan for safer collaboration.
     </Text>
     <Flex align="center" gap={1}>
       <UpgradeIcon />

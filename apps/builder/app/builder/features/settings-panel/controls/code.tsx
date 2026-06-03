@@ -20,8 +20,8 @@ import {
   BindingPopover,
   validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
-  useLocalValue,
   type ControlProps,
   VerticalLayout,
   updateExpressionValue,
@@ -149,7 +149,7 @@ export const CodeControl = ({
     control: "text" as const,
   };
   const lang = meta.control === "code" ? meta.language : undefined;
-  const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
+  const localValue = useDraftValue(String(computedValue ?? ""), (value) => {
     if (lang === "html") {
       const error = validateHtml(value);
       setError(error);

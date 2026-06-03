@@ -77,12 +77,16 @@ test("migrates legacy pages inside webstudio data", () => {
   migrateWebstudioDataMutable(data);
 
   expect(data.pages).toEqual({
+    meta: undefined,
+    compiler: undefined,
+    redirects: undefined,
     homePageId: "homePageId",
     rootFolderId: "root",
     pages: new Map([
       ["homePageId", expect.objectContaining({ id: "homePageId" })],
       ["pageId", expect.objectContaining({ id: "pageId" })],
     ]),
+    pageTemplates: new Map(),
     folders: new Map([
       [
         "root",

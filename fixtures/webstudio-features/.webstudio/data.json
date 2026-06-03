@@ -320,6 +320,7 @@
           "path": "/assets1"
         }
       ],
+      "pageTemplates": [],
       "folders": [
         {
           "id": "root",

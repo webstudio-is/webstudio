@@ -6,10 +6,10 @@ import {
   BindingPopover,
   validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
   VerticalLayout,
-  useLocalValue,
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
@@ -25,7 +25,7 @@ const UrlInput = ({
 }: {
   id: string;
   readOnly: boolean;
-  localValue: ReturnType<typeof useLocalValue<undefined | string>>;
+  localValue: ReturnType<typeof useDraftValue<undefined | string>>;
 }) => (
   <InputField
     id={id}
@@ -52,7 +52,7 @@ export const FileControl = ({
 }: ControlProps<"file">) => {
   const id = useId();
 
-  const localStringValue = useLocalValue(
+  const localStringValue = useDraftValue(
     // use undefined for asset type to not delete
     // when url is reset by asset selector
     prop?.type === "string" || prop?.type === "expression"

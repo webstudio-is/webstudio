@@ -3,9 +3,11 @@ import { setEnv } from "@webstudio-is/feature-flags";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import {
+  encodeDataVariableId,
   isRootFolder,
   type Folder,
   ROOT_FOLDER_ID,
+  type DataSource,
   type Page,
   SYSTEM_VARIABLE_ID,
   Resource,
@@ -26,10 +28,17 @@ import {
 } from "./page-utils";
 import { $dataSourceVariables } from "~/shared/nano-states";
 import {
+  $assets,
+  $breakpoints,
   $dataSources,
+  $instances,
   $pages,
   $project,
+  $props,
   $resources,
+  $styles,
+  $styleSources,
+  $styleSourceSelections,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { $selectedPageId } from "~/shared/nano-states";
@@ -1116,5 +1125,93 @@ describe("duplicateFolder", () => {
       isRootFolder
     );
     expect(rootFolder?.children).toContain(newFolderId);
+  });
+});
+
+describe("duplicateTemplate", () => {
+  $project.set({ id: "projectId" } as Project);
+
+  test("remaps copied data source ids in title and metadata", async () => {
+    const { pages: pagesData } = createPages();
+    const variableId = "templateVariableId";
+    const variableIdentifier = encodeDataVariableId(variableId);
+
+    pagesData.pageTemplates = new Map([
+      [
+        "templateId",
+        {
+          id: "templateId",
+          name: "Template",
+          title: `"Title: " + ${variableIdentifier}`,
+          rootInstanceId: "templateRootId",
+          meta: {
+            description: `"Description: " + ${variableIdentifier}`,
+            custom: [
+              {
+                property: "Property",
+                content: `"Value: " + ${variableIdentifier}`,
+              },
+            ],
+          },
+        },
+      ],
+    ]);
+
+    const dataSource: DataSource = {
+      type: "variable",
+      id: variableId,
+      name: "templateVariable",
+      scopeInstanceId: "templateRootId",
+      value: { type: "string", value: "" },
+    };
+
+    $pages.set(pagesData);
+    $instances.set(
+      new Map([
+        [
+          "templateRootId",
+          {
+            type: "instance",
+            id: "templateRootId",
+            component: "Body",
+            children: [],
+          },
+        ],
+      ])
+    );
+    $props.set(new Map());
+    $dataSources.set(new Map([[dataSource.id, dataSource]]));
+    $resources.set(new Map());
+    $breakpoints.set(new Map());
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $styles.set(new Map());
+    $assets.set(new Map());
+
+    const { duplicateTemplate } = await import("./page-utils");
+    const newTemplateId = duplicateTemplate("templateId");
+
+    expect(newTemplateId).toBeDefined();
+    const newTemplate = $pages.get()?.pageTemplates?.get(newTemplateId ?? "");
+    const newVariable = Array.from($dataSources.get().values()).find(
+      (item) => item.name === "templateVariable" && item.id !== variableId
+    );
+    expect(newVariable).toBeDefined();
+    const newVariableIdentifier = encodeDataVariableId(newVariable?.id ?? "");
+    expect(newTemplate).toEqual({
+      id: newTemplateId,
+      name: "Template (1)",
+      title: `"Title: " + ${newVariableIdentifier}`,
+      rootInstanceId: expect.not.stringMatching("templateRootId"),
+      meta: {
+        description: `"Description: " + ${newVariableIdentifier}`,
+        custom: [
+          {
+            property: "Property",
+            content: `"Value: " + ${newVariableIdentifier}`,
+          },
+        ],
+      },
+    });
   });
 });

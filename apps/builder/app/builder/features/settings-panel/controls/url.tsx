@@ -34,9 +34,9 @@ import {
   BindingPopover,
   validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
-  useLocalValue,
   VerticalLayout,
   Label,
   updateExpressionValue,
@@ -97,7 +97,7 @@ const addHttpsIfMissing = (url: string) => {
 };
 
 const BaseUrl = ({ readOnly, prop, value, onChange, id }: BaseControlProps) => {
-  const localValue = useLocalValue(value, (value) => {
+  const localValue = useDraftValue(value, (value) => {
     if (prop?.type === "expression") {
       updateExpressionValue(prop.value, value);
     } else {
@@ -141,7 +141,7 @@ const BasePhone = ({
   onChange,
   id,
 }: BaseControlProps) => {
-  const localValue = useLocalValue(
+  const localValue = useDraftValue(
     value.startsWith("tel:") ? value.slice(4) : "",
     (value) => {
       if (prop?.type === "expression") {
@@ -220,7 +220,7 @@ const BaseEmail = ({
   onChange,
   id,
 }: BaseControlProps) => {
-  const localValue = useLocalValue(propToEmail(value), ({ email, subject }) => {
+  const localValue = useDraftValue(propToEmail(value), ({ email, subject }) => {
     const value = emailToProp({ email, subject });
     if (prop?.type === "expression") {
       updateExpressionValue(prop.value, value);
@@ -477,7 +477,7 @@ export const UrlControl = ({
   onChange,
 }: UrlControlProps) => {
   const value = String(computedValue ?? "");
-  const { value: mode, set: setMode } = useLocalValue<Mode>(
+  const { value: mode, set: setMode } = useDraftValue<Mode>(
     propToMode(prop, value),
     () => {}
   );

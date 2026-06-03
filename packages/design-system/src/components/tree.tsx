@@ -412,6 +412,7 @@ export const TreeNode = ({
   nodeProps,
   buttonProps,
   action,
+  actionCount = 1,
   children,
 }: {
   level: number;
@@ -425,6 +426,7 @@ export const TreeNode = ({
   nodeProps?: ComponentPropsWithoutRef<"div">;
   buttonProps: ComponentPropsWithoutRef<"button">;
   action: ReactNode;
+  actionCount?: number;
   children: ReactNode;
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -498,7 +500,12 @@ export const TreeNode = ({
           )}
         </ExpandButton>
       )}
-      <ActionContainer data-tree-action>{action}</ActionContainer>
+      <ActionContainer
+        data-tree-action
+        css={actionCount > 1 ? { translate: `-50% -100%` } : undefined}
+      >
+        {action}
+      </ActionContainer>
     </NodeContainer>
   );
 };

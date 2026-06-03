@@ -11,6 +11,8 @@ vi.mock("../page-utils", () => ({
   registerFolderChildMutable: () => undefined,
   cleanupChildRefsMutable: () => undefined,
   duplicatePage: () => undefined,
+  nameToPath: (_pages: unknown, name: string) =>
+    name === "" ? "" : `/${name.toLowerCase()}`,
   isPathAvailable: mocks.isPathAvailable,
   $pageRootScope: {
     get: () => ({ variableValues: new Map(), scope: {}, aliases: new Map() }),

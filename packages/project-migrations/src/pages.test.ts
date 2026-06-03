@@ -86,6 +86,18 @@ test("serializes map pages into arrays for JSON storage", () => {
           },
         ],
       ]),
+      pageTemplates: new Map([
+        [
+          "template",
+          {
+            id: "template",
+            name: "Template",
+            title: `"Template"`,
+            rootInstanceId: "templateRoot",
+            meta: {},
+          },
+        ],
+      ]),
       folders: new Map([
         [
           "root",
@@ -105,6 +117,7 @@ test("serializes map pages into arrays for JSON storage", () => {
     homePageId: "home",
     rootFolderId: "root",
     pages: [expect.objectContaining({ id: "home" })],
+    pageTemplates: [expect.objectContaining({ id: "template" })],
     folders: [expect.objectContaining({ id: "root", children: ["home"] })],
   });
 });
@@ -131,30 +144,43 @@ test("validates pages before serializing", () => {
 });
 
 test("migrates serialized array pages into maps", () => {
-  expect(
-    migratePages({
-      homePageId: "home",
-      rootFolderId: "root",
-      pages: [
-        {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: `"Home"`,
-          meta: {},
-          rootInstanceId: "homeRoot",
-        },
-      ],
-      folders: [
-        {
-          id: "root",
-          name: "Root",
-          slug: "",
-          children: ["home"],
-        },
-      ],
-    }).pages
-  ).toEqual(new Map([["home", expect.objectContaining({ id: "home" })]]));
+  const pages = migratePages({
+    homePageId: "home",
+    rootFolderId: "root",
+    pages: [
+      {
+        id: "home",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "homeRoot",
+      },
+    ],
+    pageTemplates: [
+      {
+        id: "template",
+        name: "Template",
+        title: `"Template"`,
+        meta: {},
+        rootInstanceId: "templateRoot",
+      },
+    ],
+    folders: [
+      {
+        id: "root",
+        name: "Root",
+        slug: "",
+        children: ["home"],
+      },
+    ],
+  });
+  expect(pages.pages).toEqual(
+    new Map([["home", expect.objectContaining({ id: "home" })]])
+  );
+  expect(pages.pageTemplates).toEqual(
+    new Map([["template", expect.objectContaining({ id: "template" })]])
+  );
 });
 
 test("adds missing page meta while migrating serialized pages", () => {
@@ -284,6 +310,7 @@ test("migrates legacy array pages into id-keyed pages and folders", () => {
       ["nested", expect.objectContaining({ id: "nested" })],
       ["orphan", expect.objectContaining({ id: "orphan" })],
     ]),
+    pageTemplates: new Map(),
     folders: new Map([
       [
         "root",
@@ -486,6 +513,7 @@ test("migrates legacy pages without folders into root folder", () => {
       ],
       ["page", expect.objectContaining({ id: "page" })],
     ]),
+    pageTemplates: new Map(),
     folders: new Map([
       [
         "root",

@@ -197,6 +197,17 @@ const Page = z.object({
   path: z.union([HomePagePath, PagePath]),
 });
 
+export const PageTemplate = z.object({
+  id: PageId,
+  name: PageName,
+  title: PageTitle,
+  rootInstanceId: z.string(),
+  systemDataSourceId: z.string().optional(),
+  meta: commonPageFields.meta,
+});
+
+export type PageTemplate = z.infer<typeof PageTemplate>;
+
 const ProjectMeta = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   siteName: z.string().optional(),
@@ -244,6 +255,7 @@ export const Pages = z
     homePageId: PageId,
     rootFolderId: FolderId,
     pages: z.map(PageId, Page),
+    pageTemplates: z.map(PageId, PageTemplate).optional(),
     folders: z
       .map(FolderId, Folder)
       .refine((folders) => folders.size > 0, "Folders can't be empty"),
@@ -285,6 +297,22 @@ export const Pages = z
           code: z.ZodIssueCode.custom,
           path: ["pages", pageId, "path"],
           message: "Page path can't be empty",
+        });
+      }
+    }
+    for (const [templateId, template] of pages.pageTemplates ?? []) {
+      if (template.id !== templateId) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["pageTemplates", templateId, "id"],
+          message: "Page template id must match its record key",
+        });
+      }
+      if (pages.pages.has(templateId)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["pageTemplates", templateId, "id"],
+          message: "Page template id must not match an existing page id",
         });
       }
     }

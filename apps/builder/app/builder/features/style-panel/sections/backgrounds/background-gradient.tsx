@@ -47,7 +47,7 @@ import {
   $availableUnitVariables,
 } from "../../shared/model";
 import { setRepeatedStyleItem } from "../../shared/repeated-style";
-import { useLocalValue } from "../../../settings-panel/shared";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { PropertyInlineLabel } from "../../property-label";
 import {
@@ -187,7 +187,7 @@ export const BackgroundGradient = ({
     value: gradient,
     set: setLocalGradient,
     save: saveLocalGradient,
-  } = useLocalValue<ParsedGradient>(parsedGradient, handleGradientSave, {
+  } = useDraftValue<ParsedGradient>(parsedGradient, handleGradientSave, {
     autoSave: false,
   });
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);

@@ -51,6 +51,7 @@
           "path": "/another-page"
         }
       ],
+      "pageTemplates": [],
       "folders": [
         {
           "id": "root",

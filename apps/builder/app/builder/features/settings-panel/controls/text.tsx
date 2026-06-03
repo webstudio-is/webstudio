@@ -6,9 +6,9 @@ import {
   BindingPopover,
   validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
-  useLocalValue,
   ResponsiveLayout,
   updateExpressionValue,
   $selectedInstanceScope,
@@ -24,7 +24,7 @@ export const TextControl = ({
   computedValue,
   onChange,
 }: ControlProps<"text">) => {
-  const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
+  const localValue = useDraftValue(String(computedValue ?? ""), (value) => {
     if (prop?.type === "expression") {
       updateExpressionValue(prop.value, value);
     } else {

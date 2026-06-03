@@ -18,9 +18,14 @@ import { getFormattedAspectRatio } from "~/builder/shared/asset-manager";
 type ImageInfoProps = {
   asset: ImageAsset;
   onDelete: () => void;
+  disabled?: boolean;
 };
 
-export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
+export const ImageInfo = ({
+  asset,
+  onDelete,
+  disabled = false,
+}: ImageInfoProps) => {
   return (
     <Grid gap={1} flow={"column"} align={"center"} justify={"between"}>
       <Grid
@@ -69,7 +74,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
           </Grid>
         </Grid>
       </Grid>
-      <IconButton onClick={onDelete}>
+      <IconButton onClick={onDelete} disabled={disabled}>
         <TrashIcon />
       </IconButton>
     </Grid>

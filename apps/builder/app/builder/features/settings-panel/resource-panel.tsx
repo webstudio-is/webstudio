@@ -46,6 +46,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
+import { isPage } from "@webstudio-is/sdk";
 import { humanizeString } from "~/shared/string-utils";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
@@ -607,7 +608,7 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
           ) => {
             const { scope, aliases, variableValues } =
               getResourceScopeForInstance({
-                page,
+                page: page !== undefined && isPage(page) ? page : undefined,
                 instanceKey: getVariableInstanceKey({
                   variable,
                   instancePath,
