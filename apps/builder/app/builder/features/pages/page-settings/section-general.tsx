@@ -133,10 +133,12 @@ const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
 const PathField = ({
   errors,
   value,
+  disabled,
   onChange,
 }: {
   errors?: string[];
   value: string;
+  disabled?: boolean;
   onChange: (value: string) => void;
 }) => {
   const { allowDynamicData } = useStore($permissions);
@@ -189,6 +191,7 @@ const PathField = ({
           color={errors && "error"}
           id={id}
           placeholder="/about"
+          disabled={disabled}
           value={value}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -200,10 +203,14 @@ const PathField = ({
 const StatusField = ({
   errors,
   value = `undefined`,
+  disabled,
+  showBindingControls = true,
   onChange,
 }: {
   errors?: string[];
   value: undefined | string;
+  disabled?: boolean;
+  showBindingControls?: boolean;
   onChange: (value: undefined | string) => void;
 }) => {
   const id = useId();
@@ -236,23 +243,25 @@ const StatusField = ({
         </Tooltip>
       </Flex>
       <BindingControl>
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={isLiteralExpression(value) ? "default" : "bound"}
-          value={value}
-          onChange={onChange}
-          onRemove={(evaluatedValue) =>
-            onChange(JSON.stringify(evaluatedValue ?? ""))
-          }
-        />
+        {showBindingControls && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(value) ? "default" : "bound"}
+            value={value}
+            onChange={onChange}
+            onRemove={(evaluatedValue) =>
+              onChange(JSON.stringify(evaluatedValue ?? ""))
+            }
+          />
+        )}
         <InputErrorsTooltip errors={errors}>
           <InputField
             inputMode="numeric"
             color={errors && "error"}
             id={id}
             placeholder="200"
-            disabled={isLiteralExpression(value) === false}
+            disabled={disabled || isLiteralExpression(value) === false}
             value={String(computeExpression(value, variableValues) ?? "")}
             onChange={(event) => {
               if (event.target.value === "") {
@@ -276,10 +285,14 @@ const StatusField = ({
 const RedirectField = ({
   errors,
   value,
+  disabled,
+  showBindingControls = true,
   onChange,
 }: {
   errors?: string[];
   value: string;
+  disabled?: boolean;
+  showBindingControls?: boolean;
   onChange: (value: string) => void;
 }) => {
   const id = useId();
@@ -329,22 +342,24 @@ const RedirectField = ({
       </Flex>
 
       <BindingControl>
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={isLiteralExpression(value) ? "default" : "bound"}
-          value={value}
-          onChange={onChange}
-          onRemove={(evaluatedValue) =>
-            onChange(JSON.stringify(evaluatedValue ?? ""))
-          }
-        />
+        {showBindingControls && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(value) ? "default" : "bound"}
+            value={value}
+            onChange={onChange}
+            onRemove={(evaluatedValue) =>
+              onChange(JSON.stringify(evaluatedValue ?? ""))
+            }
+          />
+        )}
         <InputErrorsTooltip errors={errors}>
           <InputField
             color={errors && "error"}
             id={id}
             placeholder="/another-path"
-            disabled={isLiteralExpression(value) === false}
+            disabled={disabled || isLiteralExpression(value) === false}
             value={String(computeExpression(value, variableValues))}
             onChange={(event) => onChange(JSON.stringify(event.target.value))}
           />
@@ -359,12 +374,32 @@ export const GeneralSection = ({
   errors,
   values,
   pages,
+  isEditorContext = false,
+  nameLabel = "Page name",
+  canEditName = true,
+  canEditPath = true,
+  showHomePageControl = true,
+  showPathField = true,
+  showStatusField = true,
+  showRedirectField = true,
+  showDocumentTypeField = true,
+  showBindingControls = true,
   onChange,
 }: {
   autoSelect?: boolean;
   errors: Errors;
   values: Values;
   pages: Pages;
+  isEditorContext?: boolean;
+  nameLabel?: string;
+  canEditName?: boolean;
+  canEditPath?: boolean;
+  showHomePageControl?: boolean;
+  showPathField?: boolean;
+  showStatusField?: boolean;
+  showRedirectField?: boolean;
+  showDocumentTypeField?: boolean;
+  showBindingControls?: boolean;
   onChange: OnChange;
 }) => {
   const nameId = useId();
@@ -373,15 +408,16 @@ export const GeneralSection = ({
   return (
     <>
       <Grid gap={1}>
-        <Label htmlFor={nameId}>Page name</Label>
+        <Label htmlFor={nameId}>{nameLabel}</Label>
         <InputErrorsTooltip errors={errors.name}>
           <InputField
             color={errors.name && "error"}
             id={nameId}
-            autoFocus
+            autoFocus={autoSelect}
             onFocus={autoSelect ? autoSelectHandler : undefined}
             name="name"
             placeholder="About"
+            disabled={canEditName === false}
             value={values.name}
             onChange={(event) => {
               onChange({ field: "name", value: event.target.value });
@@ -389,112 +425,126 @@ export const GeneralSection = ({
           />
         </InputErrorsTooltip>
 
-        <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
-          {values.isHomePage ? (
-            <>
-              <HomeIcon />
-              <Text
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                  my: 2,
-                }}
-              >
-                “{values.name}” is the home page
-              </Text>
-            </>
-          ) : values.parentFolderId !== pages.rootFolderId ? (
-            <>
-              <HomeIcon color={rawTheme.colors.foregroundSubtle} />
-              <Text
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                  my: 2,
-                }}
-                color="subtle"
-              >
-                Move this page to the “Root” folder to set it as your home page
-              </Text>
-            </>
-          ) : values.documentType !== "html" ? (
-            <>
-              <HomeIcon color={rawTheme.colors.foregroundSubtle} />
-              <Text
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                  my: 2,
-                }}
-                color="subtle"
-              >
-                {values.documentType.toUpperCase()} pages cannot be set as the
-                home page
-              </Text>
-            </>
-          ) : (
-            <>
-              <Checkbox
-                id={isHomePageId}
-                onCheckedChange={() => {
-                  onChange({ field: "path", value: "" });
-                  onChange({
-                    field: "isHomePage",
-                    value: !values.isHomePage,
-                  });
-                }}
-              />
-              <Label
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                }}
-                htmlFor={isHomePageId}
-              >
-                Make “{values.name}” the home page
-              </Label>
-            </>
-          )}
-        </Grid>
+        {showHomePageControl && (
+          <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
+            {values.isHomePage ? (
+              <>
+                <HomeIcon />
+                <Text
+                  css={{
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-all",
+                    my: 2,
+                  }}
+                >
+                  “{values.name}” is the home page
+                </Text>
+              </>
+            ) : values.parentFolderId !== pages.rootFolderId ? (
+              <>
+                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <Text
+                  css={{
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-all",
+                    my: 2,
+                  }}
+                  color="subtle"
+                >
+                  Move this page to the “Root” folder to set it as your home
+                  page
+                </Text>
+              </>
+            ) : values.documentType !== "html" ? (
+              <>
+                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <Text
+                  css={{
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-all",
+                    my: 2,
+                  }}
+                  color="subtle"
+                >
+                  {values.documentType.toUpperCase()} pages cannot be set as the
+                  home page
+                </Text>
+              </>
+            ) : isEditorContext ? null : (
+              <>
+                <Checkbox
+                  id={isHomePageId}
+                  onCheckedChange={() => {
+                    onChange({ field: "path", value: "" });
+                    onChange({
+                      field: "isHomePage",
+                      value: !values.isHomePage,
+                    });
+                  }}
+                />
+                <Label
+                  css={{
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-all",
+                  }}
+                  htmlFor={isHomePageId}
+                >
+                  Make “{values.name}” the home page
+                </Label>
+              </>
+            )}
+          </Grid>
+        )}
       </Grid>
 
-      {values.isHomePage === false && (
+      {showPathField && values.isHomePage === false && (
         <PathField
           errors={errors.path}
           value={values.path}
+          disabled={canEditPath === false}
           onChange={(value) => onChange({ field: "path", value })}
         />
       )}
 
-      <StatusField
-        errors={errors.status}
-        value={values.status}
-        onChange={(value) => onChange({ field: "status", value })}
-      />
-      <RedirectField
-        errors={errors.redirect}
-        value={values.redirect}
-        onChange={(value) => onChange({ field: "redirect", value })}
-      />
-
-      <Grid gap={1}>
-        <Label htmlFor={documentTypeId}>Document type</Label>
-        <Select
-          options={documentTypes}
-          getValue={(docType: (typeof documentTypes)[number]) => docType}
-          getLabel={(docType: (typeof documentTypes)[number]) =>
-            docType.toUpperCase()
-          }
-          value={values.documentType}
-          disabled={values.isHomePage}
-          onChange={(value) => {
-            onChange({
-              field: "documentType",
-              value,
-            });
-          }}
+      {showStatusField && (
+        <StatusField
+          errors={errors.status}
+          value={values.status}
+          disabled={isEditorContext}
+          showBindingControls={showBindingControls}
+          onChange={(value) => onChange({ field: "status", value })}
         />
-      </Grid>
+      )}
+      {showRedirectField && (
+        <RedirectField
+          errors={errors.redirect}
+          value={values.redirect}
+          disabled={isEditorContext}
+          showBindingControls={showBindingControls}
+          onChange={(value) => onChange({ field: "redirect", value })}
+        />
+      )}
+
+      {showDocumentTypeField && (
+        <Grid gap={1}>
+          <Label htmlFor={documentTypeId}>Document type</Label>
+          <Select
+            options={documentTypes}
+            getValue={(docType: (typeof documentTypes)[number]) => docType}
+            getLabel={(docType: (typeof documentTypes)[number]) =>
+              docType.toUpperCase()
+            }
+            value={values.documentType}
+            disabled={values.isHomePage || isEditorContext}
+            onChange={(value) => {
+              onChange({
+                field: "documentType",
+                value,
+              });
+            }}
+          />
+        </Grid>
+      )}
     </>
   );
 };

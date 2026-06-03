@@ -30,7 +30,7 @@ import {
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { ConditionInput } from "./condition-input";
 import { CssValueInput } from "~/builder/features/style-panel/shared/css-value-input";
-import { useLocalValue } from "~/builder/features/settings-panel/shared";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { buildBreakpointFromEditorState } from "./breakpoint-editor-utils";
 
 type BreakpointEditorItemProps = {
@@ -64,7 +64,7 @@ const BreakpointEditorItem = ({
     ]
   );
 
-  const localValue = useLocalValue(
+  const localValue = useDraftValue(
     initialValue,
     (value) => {
       const newBreakpoint = buildBreakpointFromEditorState(

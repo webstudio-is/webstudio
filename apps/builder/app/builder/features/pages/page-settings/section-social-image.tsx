@@ -38,10 +38,14 @@ export const validateSocialImageSection = (
 export const SocialImageSection = ({
   values,
   errors,
+  disabled = false,
+  showBindingControls = true,
   onChange,
 }: {
   values: Values;
   errors: Errors;
+  disabled?: boolean;
+  showBindingControls?: boolean;
   onChange: OnChange;
 }) => {
   const socialImageAssetButtonId = useId();
@@ -60,35 +64,39 @@ export const SocialImageSection = ({
     <Grid gap={2}>
       <Text color="subtle">
         This image appears when you share a link to this page on social media
-        sites. If no image is set here, the Social Image set in the project
+        sites. If no image is set here, the social image set in the project
         settings will be used. The optimal dimensions for the image are 1200x630
         px or larger with a 1.91:1 aspect ratio.
       </Text>
       <BindingControl>
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={
-            isLiteralExpression(values.socialImageUrl) ? "default" : "bound"
-          }
-          value={values.socialImageUrl}
-          onChange={(value) => {
-            onChange({
-              field: "socialImageUrl",
-              value,
-            });
-          }}
-          onRemove={(evaluatedValue) => {
-            onChange({
-              field: "socialImageUrl",
-              value: JSON.stringify(evaluatedValue ?? ""),
-            });
-          }}
-        />
+        {showBindingControls && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={
+              isLiteralExpression(values.socialImageUrl) ? "default" : "bound"
+            }
+            value={values.socialImageUrl}
+            onChange={(value) => {
+              onChange({
+                field: "socialImageUrl",
+                value,
+              });
+            }}
+            onRemove={(evaluatedValue) => {
+              onChange({
+                field: "socialImageUrl",
+                value: JSON.stringify(evaluatedValue ?? ""),
+              });
+            }}
+          />
+        )}
         <InputErrorsTooltip errors={errors.socialImageUrl}>
           <InputField
             placeholder="https://www.url.com"
-            disabled={isLiteralExpression(values.socialImageUrl) === false}
+            disabled={
+              disabled || isLiteralExpression(values.socialImageUrl) === false
+            }
             color={errors.socialImageUrl && "error"}
             value={socialImageUrl}
             onChange={(event) => {
@@ -115,8 +123,9 @@ export const SocialImageSection = ({
             id={socialImageAssetButtonId}
             css={{ justifySelf: "start" }}
             color="neutral"
+            disabled={disabled}
           >
-            Choose Image From Assets
+            Choose image from assets
           </Button>
         </ImageControl>
       </Grid>
@@ -124,6 +133,7 @@ export const SocialImageSection = ({
       {socialImageAsset?.type === "image" && (
         <ImageInfo
           asset={socialImageAsset}
+          disabled={disabled}
           onDelete={() => {
             onChange({
               field: "socialImageAssetId",

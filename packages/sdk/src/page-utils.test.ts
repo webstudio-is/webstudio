@@ -129,6 +129,42 @@ describe("findPageByIdOrPath", () => {
     );
     expect(page).toEqual(pages.pages.get("page-1"));
   });
+  test("does not find templates by default", () => {
+    const pagesWithTemplate: Pages = {
+      ...pages,
+      pageTemplates: new Map([
+        [
+          "template-1",
+          {
+            id: "template-1",
+            name: "Template",
+            title: "Template",
+            rootInstanceId: "rootInstanceId",
+            meta: {},
+          },
+        ],
+      ]),
+    };
+    expect(findPageByIdOrPath("template-1", pagesWithTemplate)).toBeUndefined();
+  });
+  test("finds templates when requested", () => {
+    const template = {
+      id: "template-1",
+      name: "Template",
+      title: "Template",
+      rootInstanceId: "rootInstanceId",
+      meta: {},
+    };
+    const pagesWithTemplate: Pages = {
+      ...pages,
+      pageTemplates: new Map([["template-1", template]]),
+    };
+    expect(
+      findPageByIdOrPath("template-1", pagesWithTemplate, {
+        includeTemplates: true,
+      })
+    ).toEqual(template);
+  });
 });
 
 describe("findParentFolderByChildId", () => {

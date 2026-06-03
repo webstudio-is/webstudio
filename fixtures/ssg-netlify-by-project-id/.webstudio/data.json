@@ -45,6 +45,7 @@
           "path": "/redirect"
         }
       ],
+      "pageTemplates": [],
       "folders": [
         {
           "id": "root",

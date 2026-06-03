@@ -9,7 +9,7 @@ import {
   Button,
   theme,
 } from "@webstudio-is/design-system";
-import type { Page, Folder } from "@webstudio-is/sdk";
+import type { Page, Folder, PageTemplate } from "@webstudio-is/sdk";
 
 type DeletePageConfirmationDialogProps = {
   onClose: () => void;
@@ -96,6 +96,56 @@ export const DeleteFolderConfirmationDialog = ({
               }}
             >
               Delete
+            </Button>
+          </DialogClose>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+type DeleteTemplateConfirmationDialogProps = {
+  onClose: () => void;
+  onConfirm: () => void;
+  template: PageTemplate;
+};
+
+export const DeleteTemplateConfirmationDialog = ({
+  onClose,
+  onConfirm,
+  template,
+}: DeleteTemplateConfirmationDialogProps) => {
+  return (
+    <Dialog
+      open
+      onOpenChange={(isOpen) => {
+        if (isOpen === false) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent>
+        <DialogTitle>Delete template</DialogTitle>
+        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+          <Text>{`Are you sure you want to delete the template "${template.name}"?`}</Text>
+          <Text>
+            You can undo it even if you delete the template as long as you don't
+            reload.
+          </Text>
+        </Flex>
+        <DialogActions>
+          <DialogClose>
+            <Button
+              autoFocus
+              color="destructive"
+              onClick={() => {
+                onConfirm();
+              }}
+            >
+              Delete Template
             </Button>
           </DialogClose>
           <DialogClose>

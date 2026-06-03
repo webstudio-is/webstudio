@@ -31,10 +31,14 @@ export const validateCustomMetadataSection = (
 export const CustomMetadataSection = ({
   values,
   errors,
+  disabled,
+  showBindingControls,
   onChange,
 }: {
   values: Values;
   errors: Errors;
+  disabled?: boolean;
+  showBindingControls?: boolean;
   onChange: OnChange;
 }) => {
   return (
@@ -42,6 +46,8 @@ export const CustomMetadataSection = ({
       <div>
         <CustomMetadata
           customMetas={values.customMetas}
+          disabled={disabled}
+          showBindingControls={showBindingControls}
           onChange={(customMetas) => {
             onChange({
               field: "customMetas",

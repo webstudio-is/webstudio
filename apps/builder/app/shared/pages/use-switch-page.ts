@@ -33,8 +33,9 @@ const setPageStateFromUrl = () => {
   // check the page actually exists
   // to avoid confusing the user with broken state
   const pageId =
-    findPageByIdOrPath(searchParams.get("pageId") ?? "", pages)?.id ??
-    pages.homePageId;
+    findPageByIdOrPath(searchParams.get("pageId") ?? "", pages, {
+      includeTemplates: true,
+    })?.id ?? pages.homePageId;
 
   $selectedPageHash.set({ hash: searchParams.get("pageHash") ?? "" });
   selectPage(pageId);

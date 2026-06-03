@@ -18,11 +18,11 @@ import {
   BindingPopover,
   validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { CodeEditor } from "~/shared/code-editor";
 import {
   type ControlProps,
-  useLocalValue,
   VerticalLayout,
   $selectedInstanceScope,
   updateExpressionValue,
@@ -58,7 +58,7 @@ export const TextContent = ({
   const hasChildren = (instance?.children.length ?? 0) > 0;
   // text content control is rendered only when empty or single child are present
   const child = instance?.children?.[0] ?? { type: "text", value: "" };
-  const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
+  const localValue = useDraftValue(String(computedValue ?? ""), (value) => {
     if (child.type === "expression") {
       updateExpressionValue(child.value, value);
     } else {

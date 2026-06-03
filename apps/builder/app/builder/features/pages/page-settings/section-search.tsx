@@ -61,10 +61,14 @@ export const validateSearchSection = (
 const LanguageField = ({
   errors,
   value,
+  disabled,
+  showBindingControls = true,
   onChange,
 }: {
   errors?: string[];
   value: string;
+  disabled?: boolean;
+  showBindingControls?: boolean;
   onChange: (value: string) => void;
 }) => {
   const id = useId();
@@ -73,22 +77,24 @@ const LanguageField = ({
     <Grid gap={1}>
       <Label htmlFor={id}>Language</Label>
       <BindingControl>
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          variant={isLiteralExpression(value) ? "default" : "bound"}
-          value={value}
-          onChange={onChange}
-          onRemove={(evaluatedValue) =>
-            onChange(JSON.stringify(evaluatedValue ?? ""))
-          }
-        />
+        {showBindingControls && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(value) ? "default" : "bound"}
+            value={value}
+            onChange={onChange}
+            onRemove={(evaluatedValue) =>
+              onChange(JSON.stringify(evaluatedValue ?? ""))
+            }
+          />
+        )}
         <InputErrorsTooltip errors={errors}>
           <InputField
             color={errors && "error"}
             id={id}
             placeholder="en-US"
-            disabled={isLiteralExpression(value) === false}
+            disabled={disabled || isLiteralExpression(value) === false}
             value={String(computeExpression(value, variableValues))}
             onChange={(event) => onChange(JSON.stringify(event.target.value))}
           />
@@ -101,10 +107,20 @@ const LanguageField = ({
 export const SearchSection = ({
   values,
   errors,
+  canEditTitle = true,
+  canEditDescription = true,
+  canEditExcludePageFromSearch = true,
+  canEditLanguage = true,
+  showBindingControls = true,
   onChange,
 }: {
   values: Values;
   errors: Errors;
+  canEditTitle?: boolean;
+  canEditDescription?: boolean;
+  canEditExcludePageFromSearch?: boolean;
+  canEditLanguage?: boolean;
+  showBindingControls?: boolean;
   onChange: OnChange;
 }) => {
   const titleId = useId();
@@ -162,31 +178,36 @@ export const SearchSection = ({
       <Grid gap={1}>
         <Label htmlFor={titleId}>Title</Label>
         <BindingControl>
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(values.title) ? "default" : "bound"}
-            value={values.title}
-            onChange={(value) => {
-              onChange({
-                field: "title",
-                value,
-              });
-            }}
-            onRemove={(evaluatedValue) => {
-              onChange({
-                field: "title",
-                value: JSON.stringify(evaluatedValue ?? ""),
-              });
-            }}
-          />
+          {showBindingControls && (
+            <BindingPopover
+              scope={scope}
+              aliases={aliases}
+              variant={isLiteralExpression(values.title) ? "default" : "bound"}
+              value={values.title}
+              onChange={(value) => {
+                onChange({
+                  field: "title",
+                  value,
+                });
+              }}
+              onRemove={(evaluatedValue) => {
+                onChange({
+                  field: "title",
+                  value: JSON.stringify(evaluatedValue ?? ""),
+                });
+              }}
+            />
+          )}
           <InputErrorsTooltip errors={errors.title}>
             <InputField
               color={errors.title && "error"}
               id={titleId}
               name="title"
               placeholder="My awesome project - About"
-              disabled={isLiteralExpression(values.title) === false}
+              disabled={
+                canEditTitle === false ||
+                isLiteralExpression(values.title) === false
+              }
               value={title}
               onChange={(event) => {
                 onChange({
@@ -202,32 +223,37 @@ export const SearchSection = ({
       <Grid gap={1}>
         <Label htmlFor={descriptionId}>Description</Label>
         <BindingControl>
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={
-              isLiteralExpression(values.description) ? "default" : "bound"
-            }
-            value={values.description}
-            onChange={(value) => {
-              onChange({
-                field: "description",
-                value,
-              });
-            }}
-            onRemove={(evaluatedValue) => {
-              onChange({
-                field: "description",
-                value: JSON.stringify(evaluatedValue ?? ""),
-              });
-            }}
-          />
+          {showBindingControls && (
+            <BindingPopover
+              scope={scope}
+              aliases={aliases}
+              variant={
+                isLiteralExpression(values.description) ? "default" : "bound"
+              }
+              value={values.description}
+              onChange={(value) => {
+                onChange({
+                  field: "description",
+                  value,
+                });
+              }}
+              onRemove={(evaluatedValue) => {
+                onChange({
+                  field: "description",
+                  value: JSON.stringify(evaluatedValue ?? ""),
+                });
+              }}
+            />
+          )}
           <InputErrorsTooltip errors={errors.description}>
             <TextArea
               color={errors.description ? "error" : undefined}
               id={descriptionId}
               name="description"
-              disabled={isLiteralExpression(values.description) === false}
+              disabled={
+                canEditDescription === false ||
+                isLiteralExpression(values.description) === false
+              }
               value={description}
               onChange={(value) => {
                 onChange({
@@ -248,31 +274,34 @@ export const SearchSection = ({
             align={"center"}
             css={{ py: theme.spacing[2] }}
           >
-            <BindingPopover
-              scope={scope}
-              aliases={aliases}
-              variant={
-                isLiteralExpression(values.excludePageFromSearch)
-                  ? "default"
-                  : "bound"
-              }
-              value={values.excludePageFromSearch}
-              onChange={(value) => {
-                onChange({
-                  field: "excludePageFromSearch",
-                  value,
-                });
-              }}
-              onRemove={(evaluatedValue) => {
-                onChange({
-                  field: "excludePageFromSearch",
-                  value: JSON.stringify(evaluatedValue ?? ""),
-                });
-              }}
-            />
+            {showBindingControls && (
+              <BindingPopover
+                scope={scope}
+                aliases={aliases}
+                variant={
+                  isLiteralExpression(values.excludePageFromSearch)
+                    ? "default"
+                    : "bound"
+                }
+                value={values.excludePageFromSearch}
+                onChange={(value) => {
+                  onChange({
+                    field: "excludePageFromSearch",
+                    value,
+                  });
+                }}
+                onRemove={(evaluatedValue) => {
+                  onChange({
+                    field: "excludePageFromSearch",
+                    value: JSON.stringify(evaluatedValue ?? ""),
+                  });
+                }}
+              />
+            )}
             <Checkbox
               id={excludePageFromSearchId}
               disabled={
+                canEditExcludePageFromSearch === false ||
                 isLiteralExpression(values.excludePageFromSearch) === false
               }
               checked={excludePageFromSearch}
@@ -297,6 +326,8 @@ export const SearchSection = ({
       <LanguageField
         errors={errors.language}
         value={values.language}
+        disabled={canEditLanguage === false}
+        showBindingControls={showBindingControls}
         onChange={(value) => onChange({ field: "language", value })}
       />
     </Grid>
