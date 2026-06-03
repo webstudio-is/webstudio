@@ -122,6 +122,59 @@ test("serializes map pages into arrays for JSON storage", () => {
   });
 });
 
+test("migrates mixed map pages with object page templates", () => {
+  expect(
+    migratePages({
+      homePageId: "home",
+      rootFolderId: "root",
+      pages: new Map([
+        [
+          "home",
+          {
+            id: "home",
+            name: "Home",
+            path: "",
+            title: `"Home"`,
+            meta: {},
+            rootInstanceId: "homeRoot",
+          },
+        ],
+      ]),
+      pageTemplates: {
+        template: {
+          id: "template",
+          name: "Template",
+          title: `"Template"`,
+          rootInstanceId: "templateRoot",
+          meta: {},
+        },
+      },
+      folders: new Map([
+        [
+          "root",
+          {
+            id: "root",
+            name: "Root",
+            slug: "",
+            children: ["home"],
+          },
+        ],
+      ]),
+    })
+  ).toEqual({
+    meta: undefined,
+    compiler: undefined,
+    redirects: undefined,
+    homePageId: "home",
+    rootFolderId: "root",
+    pages: new Map([["home", expect.objectContaining({ id: "home" })]]),
+    pageTemplates: new Map([
+      ["template", expect.objectContaining({ id: "template" })],
+    ]),
+    folders: new Map([["root", expect.objectContaining({ id: "root" })]]),
+  });
+});
+
 test("validates pages before serializing", () => {
   expect(() =>
     serializePages({

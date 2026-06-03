@@ -16,7 +16,6 @@ import {
   type StyleSource,
   Styles,
   getHomePage,
-  type PageTemplate,
 } from "@webstudio-is/sdk";
 import {
   findCycles,
@@ -33,6 +32,7 @@ import {
   serializeConfig,
   serializeData,
 } from "@webstudio-is/project-build";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 
 enableMapSet();
@@ -66,24 +66,6 @@ export const singlePlayerVersionMismatchResult = {
   status: "version_mismatched",
   errors: singlePlayerVersionMismatchError,
 } as const satisfies BuildPatchUpdateResult;
-
-const normalizePageTemplates = (pages: Pages): Pages => {
-  if (pages.pageTemplates === undefined || pages.pageTemplates instanceof Map) {
-    return pages;
-  }
-
-  return {
-    ...pages,
-    pageTemplates: new Map(
-      Object.values(
-        pages.pageTemplates as unknown as Record<
-          PageTemplate["id"],
-          PageTemplate
-        >
-      ).map((template) => [template.id, template])
-    ),
-  };
-};
 
 export const createBuildPatchUpdate = async ({
   build,
@@ -140,7 +122,7 @@ export const createBuildPatchUpdate = async ({
         const pages = buildData.pages ?? parsePages(build.pages);
         const currentSocialImageAssetId =
           getHomePage(pages).meta.socialImageAssetId;
-        buildData.pages = normalizePageTemplates(applyPatches(pages, patches));
+        buildData.pages = migratePages(applyPatches(pages, patches));
         const newSocialImageAssetId = getHomePage(buildData.pages).meta
           .socialImageAssetId;
         if (currentSocialImageAssetId !== newSocialImageAssetId) {
