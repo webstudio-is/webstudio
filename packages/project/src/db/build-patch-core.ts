@@ -32,7 +32,6 @@ import {
   serializeConfig,
   serializeData,
 } from "@webstudio-is/project-build";
-import { migratePages } from "@webstudio-is/project-migrations/pages";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 
 enableMapSet();
@@ -122,7 +121,7 @@ export const createBuildPatchUpdate = async ({
         const pages = buildData.pages ?? parsePages(build.pages);
         const currentSocialImageAssetId =
           getHomePage(pages).meta.socialImageAssetId;
-        buildData.pages = migratePages(applyPatches(pages, patches));
+        buildData.pages = applyPatches(pages, patches);
         const newSocialImageAssetId = getHomePage(buildData.pages).meta
           .socialImageAssetId;
         if (currentSocialImageAssetId !== newSocialImageAssetId) {
