@@ -970,6 +970,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
     templateIdToDelete === undefined
       ? undefined
       : pages.pageTemplates?.get(templateIdToDelete);
+  const hasPageTemplates = (pages.pageTemplates?.size ?? 0) > 0;
 
   return (
     <div
@@ -1019,7 +1020,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         </div>
       </PageContextMenu>
 
-      {(isDesignMode || isContentMode) && (
+      {(isDesignMode || isContentMode) && hasPageTemplates && (
         <>
           <Separator />
           <PanelTitle>Page templates</PanelTitle>
