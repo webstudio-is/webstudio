@@ -116,7 +116,7 @@ export const migratePages = (pages: unknown): Pages => {
   ) {
     const currentPages = pages as Pages;
     const result = PagesSchema.safeParse(currentPages);
-    if (result.success) {
+    if (result.success && currentPages.pageTemplates !== undefined) {
       return currentPages;
     }
     return {
@@ -141,7 +141,7 @@ export const migratePages = (pages: unknown): Pages => {
       pages: nextPages,
       pageTemplates:
         pages.pageTemplates === undefined
-          ? undefined
+          ? new Map()
           : toMap<PageTemplate>(pages.pageTemplates),
       folders: removeOrphanFolderChildren(nextPages, nextFolders),
     };
