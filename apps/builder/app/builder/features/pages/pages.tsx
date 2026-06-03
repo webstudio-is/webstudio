@@ -13,7 +13,7 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
   toast,
-  ScrollArea,
+  ScrollAreaNative,
   FloatingPanel,
   rawTheme,
 } from "@webstudio-is/design-system";
@@ -292,11 +292,9 @@ const PagesTree = ({
   }
 
   return (
-    <ScrollArea
-      direction="both"
+    <ScrollAreaNative
       css={{
         width: "100%",
-        overflow: "hidden",
         flexBasis: 0,
         flexGrow: 1,
       }}
@@ -427,7 +425,7 @@ const PagesTree = ({
           );
         })}
       </TreeRoot>
-    </ScrollArea>
+    </ScrollAreaNative>
   );
 };
 
@@ -1006,7 +1004,13 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
             <TemplateContextMenu
               onRequestDeleteTemplate={setTemplateIdToDelete}
             >
-              <div>
+              <ScrollAreaNative
+                css={{
+                  width: "100%",
+                  flexBasis: 0,
+                  flexGrow: 1,
+                }}
+              >
                 <TemplatesSection
                   selectedPageId={currentPage.id}
                   onSelectTemplate={(id) => {
@@ -1026,10 +1030,16 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                   canSelectTemplate={true}
                   canCreatePageFromTemplate={canCreatePageFromTemplate}
                 />
-              </div>
+              </ScrollAreaNative>
             </TemplateContextMenu>
           ) : (
-            <div>
+            <ScrollAreaNative
+              css={{
+                width: "100%",
+                flexBasis: 0,
+                flexGrow: 1,
+              }}
+            >
               <TemplatesSection
                 selectedPageId={currentPage.id}
                 onSelectTemplate={(id) => {
@@ -1044,7 +1054,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                 canSelectTemplate={true}
                 canCreatePageFromTemplate={canCreatePageFromTemplate}
               />
-            </div>
+            </ScrollAreaNative>
           )}
         </>
       )}

@@ -22,7 +22,7 @@ import {
   Tooltip,
   Grid,
   Text,
-  ScrollArea,
+  ScrollAreaNative,
   Link,
   PanelBanner,
   TitleSuffixSpacer,
@@ -272,7 +272,7 @@ export const FormFields = ({
 
   return (
     <Grid css={{ height: "100%" }}>
-      <ScrollArea>
+      <ScrollAreaNative>
         {matchingRedirect && (
           <PanelBanner variant="warning">
             <Text>
@@ -389,7 +389,7 @@ export const FormFields = ({
           )}
 
         <Box css={{ height: theme.spacing[10] }} />
-      </ScrollArea>
+      </ScrollAreaNative>
     </Grid>
   );
 };
