@@ -941,7 +941,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                       );
                     }}
                     aria-label="New page"
-                    prefix={<NewPageIcon />}
+                    prefix={<PlusIcon />}
                     color="ghost"
                   />
                 </Tooltip>
