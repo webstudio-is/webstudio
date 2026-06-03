@@ -998,7 +998,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
               ) : undefined
             }
           >
-            Page Templates
+            Page templates
           </PanelTitle>
           {isDesignMode ? (
             <TemplateContextMenu

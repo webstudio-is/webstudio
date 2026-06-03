@@ -244,7 +244,7 @@ const NewTemplateSettingsView = ({
           </DialogTitleActions>
         }
       >
-        New Template Settings
+        New template settings
       </DialogTitle>
       <Form onSubmit={onSubmit}>{children}</Form>
     </>
@@ -393,7 +393,7 @@ const TemplateSettingsView = ({
           </DialogTitleActions>
         }
       >
-        Template Settings
+        Template settings
       </DialogTitle>
       <Form onSubmit={onClose}>
         <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
