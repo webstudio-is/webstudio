@@ -112,7 +112,8 @@ export const migratePages = (pages: unknown): Pages => {
   if (
     isSerializedPages(pages) &&
     pages.pages instanceof Map &&
-    pages.folders instanceof Map
+    pages.folders instanceof Map &&
+    (pages.pageTemplates === undefined || pages.pageTemplates instanceof Map)
   ) {
     const currentPages = pages as Pages;
     const result = PagesSchema.safeParse(currentPages);

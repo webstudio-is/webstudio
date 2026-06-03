@@ -207,6 +207,44 @@ describe("patchBuild", () => {
     ).toBe("/company");
   });
 
+  test("normalizes object page templates after applying page patches", async () => {
+    const result = await createBuildPatchUpdate({
+      build: buildRow,
+      clientVersion: 3,
+      transactions: [
+        transaction({
+          payload: [
+            {
+              namespace: "pages",
+              patches: [
+                {
+                  op: "add",
+                  path: ["pageTemplates"],
+                  value: {
+                    template: {
+                      id: "template",
+                      name: "Template",
+                      title: `"Template"`,
+                      rootInstanceId: "templateRoot",
+                      meta: {},
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(result.status).toBe("ok");
+    expect(
+      JSON.parse(
+        (result as { status: "ok"; update: { pages: string } }).update.pages
+      ).pageTemplates
+    ).toEqual([expect.objectContaining({ id: "template" })]);
+  });
+
   test("returns ok when retrying a transaction already saved by the server", async () => {
     let didPatch = false;
     server.use(
