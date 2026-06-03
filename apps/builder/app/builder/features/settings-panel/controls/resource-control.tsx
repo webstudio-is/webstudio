@@ -48,7 +48,8 @@ import {
   parseResource,
   getResourceScopeForInstance,
 } from "../resource-panel";
-import { type ControlProps, useLocalValue, VerticalLayout } from "../shared";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
+import { type ControlProps, VerticalLayout } from "../shared";
 import { PropertyLabel } from "../property-label";
 
 // dirty, dirty hack
@@ -293,7 +294,7 @@ export const ResourceControl = ({
     variant = "default";
     readOnly = false;
   }
-  const localValue = useLocalValue(
+  const localValue = useDraftValue(
     String(computeExpression(resource.url, variableValues) ?? ""),
     (value) => updateResource({ ...resource, url: JSON.stringify(value) })
   );

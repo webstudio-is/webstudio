@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { isLiteralExpression } from "@webstudio-is/sdk";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
-  useLocalValue,
   VerticalLayout,
   updateExpressionValue,
   $selectedInstanceScope,
@@ -27,7 +27,7 @@ export const JsonControl = ({
 }: ControlProps<"json">) => {
   const [error, setError] = useState<boolean>(false);
   const valueString = formatValue(computedValue ?? "");
-  const localValue = useLocalValue(valueString, (value) => {
+  const localValue = useDraftValue(valueString, (value) => {
     const isLiteral = isLiteralExpression(value);
     setError(isLiteral ? false : true);
     // prevent executing expressions which depends on global variables

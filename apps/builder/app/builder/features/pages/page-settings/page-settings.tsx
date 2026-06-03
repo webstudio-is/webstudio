@@ -1,7 +1,6 @@
 import { nanoid } from "nanoid";
-import { useState, useCallback, useEffect, type JSX } from "react";
+import { useState, useEffect, type JSX } from "react";
 import { useStore } from "@nanostores/react";
-import { useDebouncedCallback } from "use-debounce";
 import {
   ROOT_FOLDER_ID,
   documentTypes,
@@ -41,8 +40,6 @@ import { $project } from "~/shared/sync/data-stores";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { selectInstance } from "~/shared/nano-states";
 import {
   registerFolderChildMutable,
@@ -77,6 +74,7 @@ import {
   type OnChange,
   type Values,
 } from "./shared";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 
 export type { Values } from "./shared";
 
@@ -106,6 +104,8 @@ export const fieldDefaultValues: Values = {
     thumbnailAssetId: "",
   },
 };
+
+const emptyUnsavedValues: Partial<Values> = {};
 
 const computePagePath = (values: Values, pages: Pages): string => {
   if (values.isHomePage) {
@@ -242,8 +242,18 @@ export const FormFields = ({
   onChange,
   showAuthErrors,
   isEditorContext = false,
+  nameLabel = "Page name",
   canEditName = true,
   canEditPath = true,
+  showHomePageControl = true,
+  showPathField = true,
+  showStatusField = true,
+  showRedirectField = true,
+  showDocumentTypeField = true,
+  showRedirectWarning = showPathField,
+  showAuthSection = isEditorContext === false,
+  showTextContentSection = true,
+  showMarketplaceSection = isEditorContext === false,
 }: {
   autoSelect?: boolean;
   errors: Errors;
@@ -251,8 +261,18 @@ export const FormFields = ({
   onChange: OnChange;
   showAuthErrors?: boolean;
   isEditorContext?: boolean;
+  nameLabel?: string;
   canEditName?: boolean;
   canEditPath?: boolean;
+  showHomePageControl?: boolean;
+  showPathField?: boolean;
+  showStatusField?: boolean;
+  showRedirectField?: boolean;
+  showDocumentTypeField?: boolean;
+  showRedirectWarning?: boolean;
+  showAuthSection?: boolean;
+  showTextContentSection?: boolean;
+  showMarketplaceSection?: boolean;
 }) => {
   const project = useStore($project);
   const pages = useStore($pages);
@@ -263,11 +283,12 @@ export const FormFields = ({
     return;
   }
 
-  const fullPagePath = computePagePath(values, pages);
-  const matchingRedirect = findMatchingRedirect(
-    fullPagePath,
-    pages.redirects ?? []
-  );
+  const matchingRedirect = showRedirectWarning
+    ? findMatchingRedirect(
+        computePagePath(values, pages),
+        pages.redirects ?? []
+      )
+    : undefined;
   const showBindingControls = isDesignMode && isEditorContext === false;
 
   return (
@@ -297,14 +318,20 @@ export const FormFields = ({
             values={values}
             pages={pages}
             isEditorContext={isEditorContext}
+            nameLabel={nameLabel}
             canEditName={canEditName}
             canEditPath={canEditPath}
+            showHomePageControl={showHomePageControl}
+            showPathField={showPathField}
+            showStatusField={showStatusField}
+            showRedirectField={showRedirectField}
+            showDocumentTypeField={showDocumentTypeField}
             showBindingControls={showBindingControls}
             onChange={onChange}
           />
         </CollapsibleSection>
 
-        {isEditorContext === false && (
+        {showAuthSection && (
           <CollapsibleSection label="Authentication">
             <AuthSection
               values={values}
@@ -316,7 +343,7 @@ export const FormFields = ({
           </CollapsibleSection>
         )}
 
-        {values.documentType === "text" && (
+        {showTextContentSection && values.documentType === "text" && (
           <CollapsibleSection label="Content">
             <TextContentSection
               values={values}
@@ -379,7 +406,7 @@ export const FormFields = ({
         )}
 
         {values.documentType === "html" &&
-          isEditorContext === false &&
+          showMarketplaceSection &&
           (project?.marketplaceApprovalStatus === "PENDING" ||
             project?.marketplaceApprovalStatus === "APPROVED" ||
             project?.marketplaceApprovalStatus === "REJECTED") && (
@@ -457,26 +484,25 @@ const NewPageSettingsView = ({
   children: JSX.Element;
 }) => {
   return (
-    <>
-      <DialogTitle
-        suffix={
-          <DialogTitleActions>
-            <TitleSuffixSpacer />
-            <Button
-              state={isSubmitting ? "pending" : "auto"}
-              onClick={onSubmit}
-              tabIndex={2}
-            >
-              {isSubmitting ? "Creating" : "Create page"}
-            </Button>
-            <DialogClose />
-          </DialogTitleActions>
-        }
-      >
-        New page settings
-      </DialogTitle>
-      <Form onSubmit={onSubmit}>{children}</Form>
-    </>
+    <PageSettingsPanel
+      title="New page settings"
+      onSubmit={onSubmit}
+      suffix={
+        <DialogTitleActions>
+          <TitleSuffixSpacer />
+          <Button
+            state={isSubmitting ? "pending" : "auto"}
+            onClick={onSubmit}
+            tabIndex={2}
+          >
+            {isSubmitting ? "Creating" : "Create page"}
+          </Button>
+          <DialogClose />
+        </DialogTitleActions>
+      }
+    >
+      {children}
+    </PageSettingsPanel>
   );
 };
 
@@ -653,7 +679,32 @@ export const PageSettings = ({
 
   const isHomePage = page?.id === pages?.homePageId;
 
-  const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
+  const [refreshDebounce, setRefreshDebounce] = useState(0);
+  let errors: Errors = {};
+  const {
+    value: unsavedValues,
+    set: setUnsavedValues,
+    flush: flushSave,
+  } = useDraftValue<Partial<Values>>(
+    emptyUnsavedValues,
+    (values) => {
+      updatePage(pageId, values);
+    },
+    {
+      resetOnSave: true,
+      shouldSave: () => Object.keys(errors).length === 0,
+    }
+  );
+
+  const handleChange: OnChange = (event) => {
+    setUnsavedValues((values) => ({
+      ...values,
+      [event.field]: event.value,
+    }));
+    if (event.field === "isHomePage") {
+      setRefreshDebounce((prev) => prev + 1);
+    }
+  };
 
   const values: Values = {
     ...(page ? toFormValues(page, pages, isHomePage) : fieldDefaultValues),
@@ -661,54 +712,12 @@ export const PageSettings = ({
   };
 
   const { variableValues } = useStore($pageRootScope);
-  const errors = validateValues(pages, pageId, values, variableValues);
-
-  const debouncedFn = useEffectEvent(() => {
-    if (
-      Object.keys(unsavedValues).length === 0 ||
-      Object.keys(errors).length !== 0
-    ) {
-      return;
-    }
-
-    updatePage(pageId, unsavedValues);
-
-    setUnsavedValues({});
-  });
-
-  const handleSubmitDebounced = useDebouncedCallback(debouncedFn, 1000);
-
-  const [refreshDebounce, setRefreshDebounce] = useState(0);
+  errors = validateValues(pages, pageId, values, variableValues);
 
   useEffect(() => {
     // we can't flush immediately as setState haven't propagated at that time
-    handleSubmitDebounced.flush();
-  }, [refreshDebounce, handleSubmitDebounced]);
-
-  const handleChange = useCallback(
-    <Name extends FieldName>(event: { field: Name; value: Values[Name] }) => {
-      setUnsavedValues((values) => ({
-        ...values,
-        [event.field]: event.value,
-      }));
-      handleSubmitDebounced();
-
-      if (event.field === "isHomePage") {
-        setRefreshDebounce((prev) => prev + 1);
-      }
-    },
-    [handleSubmitDebounced]
-  );
-
-  useUnmount(() => {
-    if (
-      Object.keys(unsavedValues).length === 0 ||
-      Object.keys(errors).length !== 0
-    ) {
-      return;
-    }
-    updatePage(pageId, unsavedValues);
-  });
+    flushSave();
+  }, [refreshDebounce, flushSave]);
 
   const handleRequestDelete = () => {
     if (onDelete) {
@@ -754,6 +763,34 @@ export const PageSettings = ({
   );
 };
 
+export const PageSettingsPanel = ({
+  title,
+  suffix,
+  disabled = false,
+  onSubmit,
+  children,
+}: {
+  title: string;
+  suffix: JSX.Element;
+  disabled?: boolean;
+  onSubmit: () => void;
+  children: JSX.Element;
+}) => {
+  return (
+    <div
+      data-floating-panel-container
+      style={{ display: "flex", flexDirection: "column", height: "100%" }}
+    >
+      <DialogTitle suffix={suffix}>{title}</DialogTitle>
+      <Form onSubmit={onSubmit}>
+        <fieldset style={{ display: "contents" }} disabled={disabled}>
+          {children}
+        </fieldset>
+      </Form>
+    </div>
+  );
+};
+
 const PageSettingsView = ({
   onDelete,
   onDuplicate,
@@ -771,49 +808,39 @@ const PageSettingsView = ({
   const canEditPageSettings =
     isDesignMode || (isContentMode && authPermit !== "view");
   return (
-    <div
-      data-floating-panel-container
-      style={{ display: "flex", flexDirection: "column", height: "100%" }}
+    <PageSettingsPanel
+      title="Page settings"
+      onSubmit={onClose}
+      disabled={canEditPageSettings === false}
+      suffix={
+        <DialogTitleActions>
+          {isDesignMode && onDelete && (
+            <Tooltip content="Delete page" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<TrashIcon />}
+                onClick={onDelete}
+                aria-label="Delete page"
+                tabIndex={2}
+              />
+            </Tooltip>
+          )}
+          {isDesignMode && (
+            <Tooltip content="Duplicate page" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<CopyIcon />}
+                onClick={onDuplicate}
+                aria-label="Duplicate page"
+                tabIndex={2}
+              />
+            </Tooltip>
+          )}
+          <DialogClose />
+        </DialogTitleActions>
+      }
     >
-      <DialogTitle
-        suffix={
-          <DialogTitleActions>
-            {isDesignMode && onDelete && (
-              <Tooltip content="Delete page" side="bottom">
-                <Button
-                  color="ghost"
-                  prefix={<TrashIcon />}
-                  onClick={onDelete}
-                  aria-label="Delete page"
-                  tabIndex={2}
-                />
-              </Tooltip>
-            )}
-            {isDesignMode && (
-              <Tooltip content="Duplicate page" side="bottom">
-                <Button
-                  color="ghost"
-                  prefix={<CopyIcon />}
-                  onClick={onDuplicate}
-                  aria-label="Duplicate page"
-                  tabIndex={2}
-                />
-              </Tooltip>
-            )}
-            <DialogClose />
-          </DialogTitleActions>
-        }
-      >
-        Page settings
-      </DialogTitle>
-      <Form onSubmit={onClose}>
-        <fieldset
-          style={{ display: "contents" }}
-          disabled={canEditPageSettings === false}
-        >
-          {children}
-        </fieldset>
-      </Form>
-    </div>
+      {children}
+    </PageSettingsPanel>
   );
 };

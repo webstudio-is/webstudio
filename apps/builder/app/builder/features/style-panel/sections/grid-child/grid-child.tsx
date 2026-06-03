@@ -38,7 +38,7 @@ import {
   GridPositionInputs,
   type GridPosition,
 } from "../layout/shared/grid-position-inputs";
-import { useLocalValue } from "../../../settings-panel/shared";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { AlignSelfControl, JustifySelfControl } from "../shared/align-self";
 import { OrderControl } from "../shared/order";
 import { useStore } from "@nanostores/react";
@@ -599,7 +599,7 @@ const GridChildPositionManual = () => {
     [colStart, colEnd, rStart, rEnd]
   );
 
-  const localValue = useLocalValue(
+  const localValue = useDraftValue(
     position,
     (newPosition) => {
       // Validate and fix the position before saving

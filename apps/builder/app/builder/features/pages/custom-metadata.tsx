@@ -156,8 +156,7 @@ const MetadataItem = (props: {
 export const CustomMetadata = (props: CustomMetadataProps) => {
   const showBindingControls = props.showBindingControls ?? true;
   return (
-    <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-      <Label text="title">Custom metadata</Label>
+    <Grid gap={2}>
       <Text color="subtle">
         Use this section to input metadata for the document, which will be used
         to generate{" "}
@@ -174,7 +173,6 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
         </Text>{" "}
         attribute, specifying its value.
       </Text>
-      <div />
       <Grid gap={3}>
         {props.customMetas.map((meta, index) => (
           <MetadataItem

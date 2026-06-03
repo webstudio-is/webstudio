@@ -375,8 +375,14 @@ export const GeneralSection = ({
   values,
   pages,
   isEditorContext = false,
+  nameLabel = "Page name",
   canEditName = true,
   canEditPath = true,
+  showHomePageControl = true,
+  showPathField = true,
+  showStatusField = true,
+  showRedirectField = true,
+  showDocumentTypeField = true,
   showBindingControls = true,
   onChange,
 }: {
@@ -385,8 +391,14 @@ export const GeneralSection = ({
   values: Values;
   pages: Pages;
   isEditorContext?: boolean;
+  nameLabel?: string;
   canEditName?: boolean;
   canEditPath?: boolean;
+  showHomePageControl?: boolean;
+  showPathField?: boolean;
+  showStatusField?: boolean;
+  showRedirectField?: boolean;
+  showDocumentTypeField?: boolean;
   showBindingControls?: boolean;
   onChange: OnChange;
 }) => {
@@ -396,12 +408,12 @@ export const GeneralSection = ({
   return (
     <>
       <Grid gap={1}>
-        <Label htmlFor={nameId}>Page name</Label>
+        <Label htmlFor={nameId}>{nameLabel}</Label>
         <InputErrorsTooltip errors={errors.name}>
           <InputField
             color={errors.name && "error"}
             id={nameId}
-            autoFocus
+            autoFocus={autoSelect}
             onFocus={autoSelect ? autoSelectHandler : undefined}
             name="name"
             placeholder="About"
@@ -413,76 +425,79 @@ export const GeneralSection = ({
           />
         </InputErrorsTooltip>
 
-        <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
-          {values.isHomePage ? (
-            <>
-              <HomeIcon />
-              <Text
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                  my: 2,
-                }}
-              >
-                “{values.name}” is the home page
-              </Text>
-            </>
-          ) : values.parentFolderId !== pages.rootFolderId ? (
-            <>
-              <HomeIcon color={rawTheme.colors.foregroundSubtle} />
-              <Text
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                  my: 2,
-                }}
-                color="subtle"
-              >
-                Move this page to the “Root” folder to set it as your home page
-              </Text>
-            </>
-          ) : values.documentType !== "html" ? (
-            <>
-              <HomeIcon color={rawTheme.colors.foregroundSubtle} />
-              <Text
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                  my: 2,
-                }}
-                color="subtle"
-              >
-                {values.documentType.toUpperCase()} pages cannot be set as the
-                home page
-              </Text>
-            </>
-          ) : isEditorContext ? null : (
-            <>
-              <Checkbox
-                id={isHomePageId}
-                onCheckedChange={() => {
-                  onChange({ field: "path", value: "" });
-                  onChange({
-                    field: "isHomePage",
-                    value: !values.isHomePage,
-                  });
-                }}
-              />
-              <Label
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                }}
-                htmlFor={isHomePageId}
-              >
-                Make “{values.name}” the home page
-              </Label>
-            </>
-          )}
-        </Grid>
+        {showHomePageControl && (
+          <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
+            {values.isHomePage ? (
+              <>
+                <HomeIcon />
+                <Text
+                  css={{
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-all",
+                    my: 2,
+                  }}
+                >
+                  “{values.name}” is the home page
+                </Text>
+              </>
+            ) : values.parentFolderId !== pages.rootFolderId ? (
+              <>
+                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <Text
+                  css={{
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-all",
+                    my: 2,
+                  }}
+                  color="subtle"
+                >
+                  Move this page to the “Root” folder to set it as your home
+                  page
+                </Text>
+              </>
+            ) : values.documentType !== "html" ? (
+              <>
+                <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                <Text
+                  css={{
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-all",
+                    my: 2,
+                  }}
+                  color="subtle"
+                >
+                  {values.documentType.toUpperCase()} pages cannot be set as the
+                  home page
+                </Text>
+              </>
+            ) : isEditorContext ? null : (
+              <>
+                <Checkbox
+                  id={isHomePageId}
+                  onCheckedChange={() => {
+                    onChange({ field: "path", value: "" });
+                    onChange({
+                      field: "isHomePage",
+                      value: !values.isHomePage,
+                    });
+                  }}
+                />
+                <Label
+                  css={{
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-all",
+                  }}
+                  htmlFor={isHomePageId}
+                >
+                  Make “{values.name}” the home page
+                </Label>
+              </>
+            )}
+          </Grid>
+        )}
       </Grid>
 
-      {values.isHomePage === false && (
+      {showPathField && values.isHomePage === false && (
         <PathField
           errors={errors.path}
           value={values.path}
@@ -491,39 +506,45 @@ export const GeneralSection = ({
         />
       )}
 
-      <StatusField
-        errors={errors.status}
-        value={values.status}
-        disabled={isEditorContext}
-        showBindingControls={showBindingControls}
-        onChange={(value) => onChange({ field: "status", value })}
-      />
-      <RedirectField
-        errors={errors.redirect}
-        value={values.redirect}
-        disabled={isEditorContext}
-        showBindingControls={showBindingControls}
-        onChange={(value) => onChange({ field: "redirect", value })}
-      />
-
-      <Grid gap={1}>
-        <Label htmlFor={documentTypeId}>Document type</Label>
-        <Select
-          options={documentTypes}
-          getValue={(docType: (typeof documentTypes)[number]) => docType}
-          getLabel={(docType: (typeof documentTypes)[number]) =>
-            docType.toUpperCase()
-          }
-          value={values.documentType}
-          disabled={values.isHomePage || isEditorContext}
-          onChange={(value) => {
-            onChange({
-              field: "documentType",
-              value,
-            });
-          }}
+      {showStatusField && (
+        <StatusField
+          errors={errors.status}
+          value={values.status}
+          disabled={isEditorContext}
+          showBindingControls={showBindingControls}
+          onChange={(value) => onChange({ field: "status", value })}
         />
-      </Grid>
+      )}
+      {showRedirectField && (
+        <RedirectField
+          errors={errors.redirect}
+          value={values.redirect}
+          disabled={isEditorContext}
+          showBindingControls={showBindingControls}
+          onChange={(value) => onChange({ field: "redirect", value })}
+        />
+      )}
+
+      {showDocumentTypeField && (
+        <Grid gap={1}>
+          <Label htmlFor={documentTypeId}>Document type</Label>
+          <Select
+            options={documentTypes}
+            getValue={(docType: (typeof documentTypes)[number]) => docType}
+            getLabel={(docType: (typeof documentTypes)[number]) =>
+              docType.toUpperCase()
+            }
+            value={values.documentType}
+            disabled={values.isHomePage || isEditorContext}
+            onChange={(value) => {
+              onChange({
+                field: "documentType",
+                value,
+              });
+            }}
+          />
+        </Grid>
+      )}
     </>
   );
 };

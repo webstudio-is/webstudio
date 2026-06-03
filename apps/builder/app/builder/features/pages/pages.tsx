@@ -16,14 +16,16 @@ import {
   ScrollAreaNative,
   FloatingPanel,
   rawTheme,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
 } from "@webstudio-is/design-system";
 import {
   ChevronRightIcon,
   FolderIcon,
   HomeIcon,
   EllipsesIcon,
-  NewFolderIcon,
-  NewPageIcon,
   PageIcon,
   DynamicPageIcon,
   PlusIcon,
@@ -83,13 +85,11 @@ import { $selectedPage } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
 
 const ItemSuffix = ({
-  isParentSelected,
   itemId,
   editingItemId,
   onEdit,
   type,
 }: {
-  isParentSelected: boolean;
   itemId: string;
   editingItemId: string | undefined;
   onEdit: (itemId: string | undefined) => void;
@@ -126,7 +126,7 @@ const ItemSuffix = ({
       <SmallIconButton
         tabIndex={-1}
         aria-label={menuLabel}
-        state={isParentSelected ? "open" : undefined}
+        state={isEditing ? "open" : undefined}
         onClick={() => onEdit(isEditing ? undefined : itemId)}
         ref={buttonRef}
         // forces to highlight tree node and show action
@@ -393,7 +393,6 @@ const PagesTree = ({
                 action={
                   <ItemSuffix
                     type={item.type}
-                    isParentSelected={item.id === selectedPageId}
                     itemId={item.id}
                     editingItemId={editingItemId}
                     onEdit={onEdit}
@@ -431,6 +430,75 @@ const PagesTree = ({
 
 const newPageId = "new-page";
 const newTemplateId = "new-template";
+
+const CreateItemMenu = ({
+  editingItemId,
+  editingTemplateItemId,
+}: {
+  editingItemId: string | undefined;
+  editingTemplateItemId: string | undefined;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const selectMenuItem = (callback: () => void) => {
+    setIsOpen(false);
+    requestAnimationFrame(callback);
+  };
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <Tooltip content="Create" side="bottom">
+        <DropdownMenuTrigger asChild>
+          <Button aria-label="Create" prefix={<PlusIcon />} color="ghost" />
+        </DropdownMenuTrigger>
+      </Tooltip>
+      <DropdownMenuContent
+        side="bottom"
+        align="end"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            selectMenuItem(() => {
+              $editingPageId.set(
+                editingItemId === newPageId ? undefined : newPageId
+              );
+            });
+          }}
+        >
+          New page
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            selectMenuItem(() => {
+              $editingPageId.set(
+                editingItemId === newFolderId ? undefined : newFolderId
+              );
+            });
+          }}
+        >
+          New folder
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            selectMenuItem(() => {
+              $editingTemplateId.set(
+                editingTemplateItemId === newTemplateId
+                  ? undefined
+                  : newTemplateId
+              );
+            });
+          }}
+        >
+          New page template
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 const PageEditor = ({
   editingPageId,
@@ -646,7 +714,7 @@ const TemplateItem = ({
                     ? "Close template settings"
                     : "Open template settings"
                 }
-                state={isSelected ? "open" : undefined}
+                state={isEditing ? "open" : undefined}
                 onClick={() => onEdit(isEditing ? undefined : template.id)}
                 ref={buttonRef}
                 aria-current={isEditing}
@@ -916,36 +984,12 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
     >
       <PanelTitle
         suffix={
-          <>
-            {isDesignMode && (
-              <>
-                <Tooltip content="New folder" side="bottom">
-                  <Button
-                    onClick={() => {
-                      $editingPageId.set(
-                        editingItemId === newFolderId ? undefined : newFolderId
-                      );
-                    }}
-                    aria-label="New folder"
-                    prefix={<NewFolderIcon />}
-                    color="ghost"
-                  />
-                </Tooltip>
-                <Tooltip content="New page" side="bottom">
-                  <Button
-                    onClick={() => {
-                      $editingPageId.set(
-                        editingItemId === newPageId ? undefined : newPageId
-                      );
-                    }}
-                    aria-label="New page"
-                    prefix={<PlusIcon />}
-                    color="ghost"
-                  />
-                </Tooltip>
-              </>
-            )}
-          </>
+          isDesignMode ? (
+            <CreateItemMenu
+              editingItemId={editingItemId}
+              editingTemplateItemId={editingTemplateItemId}
+            />
+          ) : undefined
         }
       >
         Pages
@@ -978,28 +1022,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       {(isDesignMode || isContentMode) && (
         <>
           <Separator />
-          <PanelTitle
-            suffix={
-              isDesignMode ? (
-                <Tooltip content="New template" side="bottom">
-                  <Button
-                    onClick={() => {
-                      $editingTemplateId.set(
-                        editingTemplateItemId === newTemplateId
-                          ? undefined
-                          : newTemplateId
-                      );
-                    }}
-                    aria-label="New template"
-                    prefix={<NewPageIcon />}
-                    color="ghost"
-                  />
-                </Tooltip>
-              ) : undefined
-            }
-          >
-            Page templates
-          </PanelTitle>
+          <PanelTitle>Page templates</PanelTitle>
           {isDesignMode ? (
             <TemplateContextMenu
               onRequestDeleteTemplate={setTemplateIdToDelete}

@@ -24,18 +24,16 @@ import {
   getFolderById,
 } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
-import { useCallback, useState, type FocusEventHandler } from "react";
+import { useState, type FocusEventHandler } from "react";
 import slugify from "slugify";
-import { useDebouncedCallback } from "use-debounce";
 import { z } from "zod";
 import { useIds } from "~/shared/form-utils";
-import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { $pages } from "~/shared/sync/data-stores";
 import { $isDesignMode } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { Form } from "./form";
 import { isSlugAvailable, registerFolderChildMutable } from "./page-utils";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 
 const Values = Folder.pick({ name: true, slug: true }).extend({
   parentFolderId: z.string(),
@@ -54,6 +52,8 @@ const fieldDefaultValues = {
   slug: "untitled",
   parentFolderId: ROOT_FOLDER_ID,
 } satisfies Values;
+
+const emptyUnsavedValues: Partial<Values> = {};
 
 const fieldNames = Object.keys(fieldDefaultValues) as Array<FieldName>;
 
@@ -340,51 +340,38 @@ export const FolderSettings = ({
   const pages = useStore($pages);
   const folder =
     pages === undefined ? undefined : getFolderById(pages, folderId);
-  const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
   const isDesignMode = useStore($isDesignMode);
+
+  let errors: Errors = {};
+  const { value: unsavedValues, set: setUnsavedValues } = useDraftValue<
+    Partial<Values>
+  >(
+    emptyUnsavedValues,
+    (values) => {
+      updateFolder(folderId, values);
+    },
+    {
+      resetOnSave: true,
+      shouldSave: () => Object.keys(errors).length === 0,
+    }
+  );
+
+  const handleChange = <Name extends FieldName>(event: {
+    field: Name;
+    value: Values[Name];
+  }) => {
+    setUnsavedValues((values) => ({
+      ...values,
+      [event.field]: event.value,
+    }));
+  };
 
   const values: Values = {
     ...(pages ? toFormValues(folderId, pages) : fieldDefaultValues),
     ...unsavedValues,
   };
 
-  const errors = validateValues(pages, values, folderId);
-
-  const debouncedFn = useEffectEvent(() => {
-    if (
-      Object.keys(unsavedValues).length === 0 ||
-      Object.keys(errors).length !== 0
-    ) {
-      return;
-    }
-
-    updateFolder(folderId, unsavedValues);
-
-    setUnsavedValues({});
-  });
-
-  const handleSubmitDebounced = useDebouncedCallback(debouncedFn, 1000);
-
-  const handleChange = useCallback(
-    <Name extends FieldName>(event: { field: Name; value: Values[Name] }) => {
-      setUnsavedValues((values) => ({
-        ...values,
-        [event.field]: event.value,
-      }));
-      handleSubmitDebounced();
-    },
-    [handleSubmitDebounced]
-  );
-
-  useUnmount(() => {
-    if (
-      Object.keys(unsavedValues).length === 0 ||
-      Object.keys(errors).length !== 0
-    ) {
-      return;
-    }
-    updateFolder(folderId, unsavedValues);
-  });
+  errors = validateValues(pages, values, folderId);
 
   if (folder === undefined) {
     return null;
