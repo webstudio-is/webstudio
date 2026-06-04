@@ -19,12 +19,7 @@ import {
   NestedInputButton,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  isLiteralExpression,
-  isPage,
-  Resource,
-  type Prop,
-} from "@webstudio-is/sdk";
+import { isLiteralExpression, Resource, type Prop } from "@webstudio-is/sdk";
 import {
   BindingControl,
   BindingPopover,
@@ -99,7 +94,7 @@ const $selectedInstanceResourceScope = computed(
   ],
   (page, instanceKey, variableValuesByInstanceSelector, dataSources) => {
     return getResourceScopeForInstance({
-      page: page !== undefined && isPage(page) ? page : undefined,
+      page,
       instanceKey,
       dataSources,
       variableValuesByInstanceSelector,

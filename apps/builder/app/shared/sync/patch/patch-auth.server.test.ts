@@ -37,11 +37,44 @@ import {
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
 
 const createContext = () => {
+  const buildRow = {
+    pages: JSON.stringify({
+      meta: {},
+      homePage: {
+        id: "page-1",
+        name: "Home",
+        path: "",
+        title: "Home",
+        meta: {},
+        rootInstanceId: "body-1",
+      },
+      pages: [],
+      folders: [{ id: "root", name: "Root", slug: "", children: [] }],
+    }),
+    instances: JSON.stringify([
+      { id: "body-1", type: "instance", component: "Body", children: [] },
+    ]),
+    props: JSON.stringify([]),
+  };
   const context = {
     authorization: { type: "anonymous" },
     createTokenContext: vi.fn(async (authToken: string) => ({
       authorization: { type: "token", authToken },
     })),
+    postgrest: {
+      client: {
+        from: vi.fn(() => ({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: buildRow,
+                error: undefined,
+              })),
+            })),
+          })),
+        })),
+      },
+    },
   };
   return context;
 };

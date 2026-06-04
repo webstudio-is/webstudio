@@ -5,6 +5,8 @@ import {
   findParentFolderByChildId,
   getPagePath,
   getStaticSiteMapXml,
+  isPage,
+  isPageTemplate,
 } from "./page-utils";
 
 const pages = {
@@ -74,6 +76,29 @@ const pages = {
     ],
   ]),
 } satisfies Pages;
+
+describe("page type guards", () => {
+  const page = pages.pages.get("page-1");
+  const template = {
+    id: "template-1",
+    name: "Template",
+    title: "Template",
+    rootInstanceId: "rootInstanceId",
+    meta: {},
+  };
+
+  test("detects pages", () => {
+    expect(isPage(page)).toBe(true);
+    expect(isPage(template)).toBe(false);
+    expect(isPage(undefined)).toBe(false);
+  });
+
+  test("detects page templates", () => {
+    expect(isPageTemplate(page)).toBe(false);
+    expect(isPageTemplate(template)).toBe(true);
+    expect(isPageTemplate(undefined)).toBe(false);
+  });
+});
 
 describe("getPagePath", () => {
   test("home page path", () => {
