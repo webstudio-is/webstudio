@@ -23,7 +23,7 @@ const dispatchPublisherEndpoint = async ({
   token,
   buildId,
   builderOrigin,
-  callbackUrl,
+  publisherCallbackUrl,
   githubSha,
   branchName,
   destination,
@@ -33,7 +33,7 @@ const dispatchPublisherEndpoint = async ({
   token?: string;
   buildId: string;
   builderOrigin: string;
-  callbackUrl: string;
+  publisherCallbackUrl: string;
   githubSha?: string;
   branchName: string;
   destination: "saas" | "static";
@@ -48,7 +48,10 @@ const dispatchPublisherEndpoint = async ({
       error: "Publisher endpoint is invalid",
     };
   }
-  publisherEndpoint.searchParams.set("callbackUrl", callbackUrl);
+  publisherEndpoint.searchParams.set(
+    "publisherCallbackUrl",
+    publisherCallbackUrl
+  );
 
   const response = await fetch(publisherEndpoint, {
     method: "POST",
@@ -61,7 +64,7 @@ const dispatchPublisherEndpoint = async ({
       inputs: {
         buildId,
         builderOrigin,
-        callbackUrl,
+        publisherCallbackUrl,
         githubSha: githubSha ?? "",
         destination,
         logProjectName,
@@ -81,7 +84,7 @@ const dispatchPublisherEndpoint = async ({
   };
 };
 
-const getPublishStatusCallbackUrl = (builderOrigin: string) =>
+const getPublisherCallbackUrl = (builderOrigin: string) =>
   `${builderOrigin}/trpc/build.publishStatus`;
 
 export const domainRouter = router({
@@ -211,7 +214,7 @@ export const domainRouter = router({
             endpoint: publisherEndpoint,
             token: publisherToken,
             builderOrigin: env.BUILDER_ORIGIN,
-            callbackUrl: getPublishStatusCallbackUrl(env.BUILDER_ORIGIN),
+            publisherCallbackUrl: getPublisherCallbackUrl(env.BUILDER_ORIGIN),
             githubSha: env.GITHUB_SHA,
             buildId: build.id,
             branchName: env.GITHUB_REF_NAME,
@@ -223,7 +226,7 @@ export const domainRouter = router({
         const result = await deploymentTrpc.publish.mutate({
           // used to load build data from the builder with build.loadProjectDataByBuildId
           builderOrigin: env.BUILDER_ORIGIN,
-          callbackUrl: getPublishStatusCallbackUrl(env.BUILDER_ORIGIN),
+          publisherCallbackUrl: getPublisherCallbackUrl(env.BUILDER_ORIGIN),
           githubSha: env.GITHUB_SHA,
           buildId: build.id,
           // preview support
