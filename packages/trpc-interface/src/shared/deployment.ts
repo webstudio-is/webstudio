@@ -6,7 +6,12 @@ export const PublishInput = z.object({
   // used to load build data from the builder with build.loadProjectDataByBuildId
   buildId: z.string(),
   builderOrigin: z.string(),
-  publisherCallbackUrl: z.string(),
+  publisherCallbackUrl: z
+    .string({
+      required_error:
+        "publisherCallbackUrl is required. Deploy a builder version that passes the publisher callback URL to the publisher service.",
+    })
+    .url("publisherCallbackUrl must be a valid URL."),
   githubSha: z.string().optional(),
 
   destination: z.enum(["saas", "static"]),
