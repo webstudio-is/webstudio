@@ -8,8 +8,16 @@ export const ROOT_FOLDER_ID = "root";
  * Narrows Page | PageTemplate to Page.
  * Templates have no `path` field; pages always do.
  */
-export const isPage = (page: Page | PageTemplate): page is Page =>
-  "path" in page;
+export const isPage = (page: Page | PageTemplate | undefined): page is Page =>
+  page !== undefined && "path" in page;
+
+/**
+ * Narrows Page | PageTemplate to PageTemplate.
+ */
+export const isPageTemplate = (
+  page: Page | PageTemplate | undefined
+): page is PageTemplate & { path?: never } =>
+  page !== undefined && !("path" in page);
 
 /**
  * Returns true if folder is the root folder.

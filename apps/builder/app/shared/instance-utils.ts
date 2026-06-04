@@ -35,6 +35,7 @@ import {
   tags,
   blockTemplateComponent,
   isComponentDetachable,
+  isPageTemplate,
 } from "@webstudio-is/sdk";
 import { detectTokenConflicts } from "./style-source-utils";
 import { type ConflictResolution } from "./token-conflict-dialog";
@@ -45,6 +46,7 @@ import {
   $isPreviewMode,
   $textEditingInstanceSelector,
   $isContentMode,
+  $canOpenPageTemplates,
   findBlockSelector,
 } from "./nano-states";
 import { $props } from "~/shared/sync/data-stores";
@@ -112,6 +114,10 @@ export const unwrap = <Value>(value: Value) =>
   isDraft(value) ? current(value) : value;
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
+  const selectedPage = $selectedPage.get();
+  if (isPageTemplate(selectedPage) && $canOpenPageTemplates.get() === false) {
+    return;
+  }
   serverSyncStore.createTransaction(
     [
       $pages,

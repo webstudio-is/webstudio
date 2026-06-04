@@ -47,6 +47,7 @@ import {
   $editingTemplateId,
   $creatingPageFromTemplateId,
   $authPermit,
+  $canOpenPageTemplates,
   $isContentMode,
   $isDesignMode,
 } from "~/shared/nano-states";
@@ -889,6 +890,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
   const authPermit = useStore($authPermit);
+  const canOpenPageTemplates = useStore($canOpenPageTemplates);
   const canCreatePageFromTemplate =
     isDesignMode || (isContentMode && authPermit !== "view");
   const [containerElement, setContainerElement] =
@@ -1024,7 +1026,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         <>
           <Separator />
           <PanelTitle>Page templates</PanelTitle>
-          {isDesignMode ? (
+          {canOpenPageTemplates ? (
             <TemplateContextMenu
               onRequestDeleteTemplate={setTemplateIdToDelete}
             >
@@ -1066,16 +1068,14 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
             >
               <TemplatesSection
                 selectedPageId={currentPage.id}
-                onSelectTemplate={(id) => {
-                  selectPage(id);
-                }}
+                onSelectTemplate={() => {}}
                 editingTemplateId={editingTemplateItemId}
                 onEditTemplate={() => {}}
                 onCreatePageFromTemplate={(id) => {
                   $creatingPageFromTemplateId.set(id);
                 }}
                 canManageTemplates={false}
-                canSelectTemplate={true}
+                canSelectTemplate={false}
                 canCreatePageFromTemplate={canCreatePageFromTemplate}
               />
             </ScrollAreaNative>
@@ -1123,7 +1123,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         </FloatingPanel>
       )}
 
-      {isDesignMode && editingTemplateItemId !== undefined && (
+      {canOpenPageTemplates && editingTemplateItemId !== undefined && (
         <FloatingPanel
           content={
             <TemplateEditor

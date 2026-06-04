@@ -103,7 +103,7 @@ export const updateCurrentSystem = (
   update: Partial<Pick<System, "search" | "params">>
 ) => {
   const page = $selectedPage.get();
-  if (page === undefined || !isPage(page)) {
+  if (!isPage(page)) {
     return;
   }
   const systemDataByPage = new Map($systemDataByPage.get());

@@ -13,7 +13,7 @@ import {
   Kbd,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { isPage } from "@webstudio-is/sdk";
+import { isPage, isPageTemplate } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
 import { $editingPageId, $editingTemplateId } from "~/shared/nano-states";
 
@@ -131,7 +131,7 @@ const PagesButton = () => {
             event.altKey && isPage(page) ? page.id : undefined
           );
           $editingTemplateId.set(
-            event.altKey && !isPage(page) ? page.id : undefined
+            event.altKey && isPageTemplate(page) ? page.id : undefined
           );
           toggleActiveSidebarPanel("pages");
         }}

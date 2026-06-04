@@ -16,6 +16,7 @@ import {
   Resource,
   type DataSource,
   type Page,
+  type PageTemplate,
 } from "@webstudio-is/sdk";
 import {
   encodeDataVariableId,
@@ -46,7 +47,6 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
-import { isPage } from "@webstudio-is/sdk";
 import { humanizeString } from "~/shared/string-utils";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
@@ -525,7 +525,7 @@ export const getResourceScopeForInstance = ({
   dataSources,
   variableValuesByInstanceSelector,
 }: {
-  page: undefined | Page;
+  page: undefined | Page | PageTemplate;
   instanceKey: undefined | string;
   dataSources: DataSources;
   variableValuesByInstanceSelector: Map<string, Map<string, unknown>>;
@@ -608,7 +608,7 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
           ) => {
             const { scope, aliases, variableValues } =
               getResourceScopeForInstance({
-                page: page !== undefined && isPage(page) ? page : undefined,
+                page,
                 instanceKey: getVariableInstanceKey({
                   variable,
                   instancePath,
