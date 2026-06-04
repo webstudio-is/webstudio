@@ -242,6 +242,8 @@ export type PageRedirect = z.infer<typeof PageRedirect>;
 export const CompilerSettings = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   atomicStyles: z.boolean().optional(),
+  publisherEndpoint: z.string().optional(),
+  publisherToken: z.string().optional(),
 });
 export type CompilerSettings = z.infer<typeof CompilerSettings>;
 

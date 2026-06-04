@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const env = vi.hoisted(() => ({
   TRPC_SERVER_API_TOKEN: undefined as string | undefined,
+  PUBLISHER_TOKEN: undefined as string | undefined,
   POSTGREST_URL: "http://localhost:3000",
   POSTGREST_API_KEY: "",
   PUBLISHER_HOST: "wstd.work",
@@ -74,6 +75,7 @@ import { extractAuthFromRequest } from "./context.server";
 describe("extractAuthFromRequest", () => {
   beforeEach(() => {
     env.TRPC_SERVER_API_TOKEN = undefined;
+    env.PUBLISHER_TOKEN = undefined;
     authenticator.isAuthenticated.mockResolvedValue(undefined);
     builderAuthenticator.isAuthenticated.mockResolvedValue(undefined);
     isBuilder.mockReturnValue(false);
@@ -92,6 +94,28 @@ describe("extractAuthFromRequest", () => {
   });
 
   test("accepts a matching non-empty service token", async () => {
+    env.PUBLISHER_TOKEN = "service-token";
+    const request = new Request("https://webstudio.is/trpc", {
+      headers: { Authorization: "service-token" },
+    });
+
+    const auth = await extractAuthFromRequest(request);
+
+    expect(auth.isServiceCall).toBe(true);
+  });
+
+  test("accepts a matching bearer service token", async () => {
+    env.PUBLISHER_TOKEN = "service-token";
+    const request = new Request("https://webstudio.is/trpc", {
+      headers: { Authorization: "Bearer service-token" },
+    });
+
+    const auth = await extractAuthFromRequest(request);
+
+    expect(auth.isServiceCall).toBe(true);
+  });
+
+  test("accepts legacy trpc service token", async () => {
     env.TRPC_SERVER_API_TOKEN = "service-token";
     const request = new Request("https://webstudio.is/trpc", {
       headers: { Authorization: "service-token" },

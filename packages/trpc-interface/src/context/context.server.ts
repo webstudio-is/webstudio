@@ -92,6 +92,7 @@ type ApiClientContext =
  */
 export type AppContext = {
   authorization: AuthorizationContext;
+  authorizationHeader?: string | null;
   domain: DomainContext;
   deployment: DeploymentContext;
   entri: EntriContext;

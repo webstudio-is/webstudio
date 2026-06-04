@@ -6,6 +6,7 @@ export const PublishInput = z.object({
   // used to load build data from the builder with build.loadProjectDataByBuildId
   buildId: z.string(),
   builderOrigin: z.string(),
+  callbackUrl: z.string().optional(),
   githubSha: z.string().optional(),
 
   destination: z.enum(["saas", "static"]),

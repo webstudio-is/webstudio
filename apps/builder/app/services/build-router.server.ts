@@ -20,6 +20,7 @@ import { normalizePatchRequest } from "~/shared/sync/patch/patch-normalize.serve
 import * as projectApi from "@webstudio-is/project/index.server";
 import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { loadBuildById } from "@webstudio-is/project-build/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import {
@@ -53,6 +54,22 @@ const relayPatchInput = z.object({
     })
   ),
 });
+
+const PublishStatusInput = z.object({
+  buildId: z.string(),
+  status: z.enum(["PUBLISHED", "FAILED"]),
+});
+
+const getAuthorizationToken = (authorizationHeader: string | null) => {
+  if (authorizationHeader === null) {
+    return;
+  }
+  const [type, token] = authorizationHeader.split(" ");
+  if (type === "Bearer" && token) {
+    return token;
+  }
+  return authorizationHeader;
+};
 
 const loadBuildProjectId = async (ctx: AppContext, buildId: string) => {
   const build = await ctx.postgrest.client
@@ -141,6 +158,38 @@ export const buildRouter = router({
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
       return await loadPublishedProjectDataByProjectId(input.projectId, ctx);
+    }),
+
+  publishStatus: procedure
+    .input(PublishStatusInput)
+    .mutation(async ({ ctx, input }) => {
+      const build = await loadBuildById(ctx, input.buildId);
+      const publisherToken = build.pages.compiler?.publisherToken;
+      const authorizationToken = getAuthorizationToken(
+        ctx.authorizationHeader ?? null
+      );
+
+      const isAuthorized =
+        ctx.authorization.type === "service" ||
+        (publisherToken !== undefined &&
+          publisherToken.length > 0 &&
+          authorizationToken === publisherToken);
+
+      if (isAuthorized === false) {
+        throw new AuthorizationError("Unauthorized");
+      }
+
+      const result = await ctx.postgrest.client
+        .from("Build")
+        .update({ publishStatus: input.status })
+        .eq("id", input.buildId)
+        .eq("projectId", build.projectId);
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      return { success: true };
     }),
 
   createCollabToken: procedure

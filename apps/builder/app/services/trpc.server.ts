@@ -2,15 +2,15 @@ import { createTrpcProxyServiceClient } from "@webstudio-is/trpc-interface/index
 import env from "~/env/env.server";
 import { staticEnv } from "~/env/env.static.server";
 
-const TRPC_SERVER_URL = env.TRPC_SERVER_URL ?? "";
-const TRPC_SERVER_API_TOKEN = env.TRPC_SERVER_API_TOKEN ?? "";
+const PUBLISHER_ENDPOINT = env.PUBLISHER_ENDPOINT ?? env.TRPC_SERVER_URL ?? "";
+const PUBLISHER_TOKEN = env.PUBLISHER_TOKEN ?? env.TRPC_SERVER_API_TOKEN ?? "";
 const GITHUB_REF_NAME = staticEnv.GITHUB_REF_NAME;
 
 export const trpcSharedClient = createTrpcProxyServiceClient(
-  TRPC_SERVER_URL !== "" && TRPC_SERVER_API_TOKEN !== ""
+  PUBLISHER_ENDPOINT !== "" && PUBLISHER_TOKEN !== ""
     ? {
-        url: TRPC_SERVER_URL,
-        token: TRPC_SERVER_API_TOKEN,
+        url: PUBLISHER_ENDPOINT,
+        token: PUBLISHER_TOKEN,
         branchName: GITHUB_REF_NAME,
         clientVersion: staticEnv.GITHUB_SHA ?? "local",
       }

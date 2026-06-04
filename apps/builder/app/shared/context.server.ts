@@ -48,12 +48,25 @@ export const extractAuthFromRequest = async (request: Request) => {
   };
 };
 
+const getAuthorizationToken = (authorizationHeader: string | null) => {
+  if (authorizationHeader === null) {
+    return;
+  }
+  const [type, token] = authorizationHeader.split(" ");
+  if (type === "Bearer" && token) {
+    return token;
+  }
+  return authorizationHeader;
+};
+
 export const isServiceAuthorization = (authorizationHeader: string | null) => {
+  const serviceToken = env.PUBLISHER_TOKEN ?? env.TRPC_SERVER_API_TOKEN;
+  const authorizationToken = getAuthorizationToken(authorizationHeader);
   return (
-    authorizationHeader != null &&
-    env.TRPC_SERVER_API_TOKEN !== undefined &&
-    env.TRPC_SERVER_API_TOKEN.length > 0 &&
-    authorizationHeader === env.TRPC_SERVER_API_TOKEN
+    authorizationToken !== undefined &&
+    serviceToken !== undefined &&
+    serviceToken.length > 0 &&
+    authorizationToken === serviceToken
   );
 };
 
@@ -264,6 +277,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
 
   return {
     authorization,
+    authorizationHeader: request.headers.get("Authorization"),
     domain,
     deployment,
     entri,
