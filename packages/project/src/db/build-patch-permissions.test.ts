@@ -39,6 +39,77 @@ describe("getRequiredPermitForBuildPatchTransaction", () => {
     ).toBe("build");
   });
 
+  test("allows editor page settings changes with edit permit", () => {
+    expect(
+      getRequiredPermitForBuildPatchTransaction(
+        transaction("pages", [
+          { op: "replace", path: ["pages", "page-1", "name"], value: "About" },
+          {
+            op: "replace",
+            path: ["pages", "page-1", "meta", "description"],
+            value: "About us",
+          },
+        ])
+      )
+    ).toBe("edit");
+  });
+
+  test("requires build permit for whole meta replacements", () => {
+    expect(
+      getRequiredPermitForBuildPatchTransaction(
+        transaction("pages", [
+          {
+            op: "replace",
+            path: ["pages", "page-1", "meta"],
+            value: {
+              description: "About us",
+            },
+          },
+        ])
+      )
+    ).toBe("build");
+  });
+
+  test("requires build permit for creating pages", () => {
+    expect(
+      getRequiredPermitForBuildPatchTransaction(
+        transaction("pages", [
+          {
+            op: "add",
+            path: ["pages", "page-1"],
+            value: {
+              id: "page-1",
+              name: "Landing",
+              path: "/landing",
+              title: "Landing",
+              meta: {},
+              rootInstanceId: "root-1",
+            },
+          },
+        ])
+      )
+    ).toBe("build");
+  });
+
+  test("requires build permit for design edits not tied to page creation", () => {
+    expect(
+      getRequiredPermitForBuildPatchTransaction(
+        transaction("styles", [
+          {
+            op: "add",
+            path: ["style-1"],
+            value: {
+              styleSourceId: "style-source-1",
+              breakpointId: "base",
+              property: "color",
+              value: { type: "keyword", value: "red" },
+            },
+          },
+        ])
+      )
+    ).toBe("build");
+  });
+
   test("requires build permit when any change in the transaction is design scoped", () => {
     expect(
       getRequiredPermitForBuildPatchTransaction({
@@ -51,6 +122,12 @@ describe("getRequiredPermitForBuildPatchTransaction", () => {
           },
         ],
       })
+    ).toBe("build");
+  });
+
+  test("requires build permit for unknown namespaces", () => {
+    expect(
+      getRequiredPermitForBuildPatchTransaction(transaction("unknown"))
     ).toBe("build");
   });
 });
