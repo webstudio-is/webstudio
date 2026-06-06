@@ -90,12 +90,18 @@ const ItemSuffix = ({
   editingItemId,
   onEdit,
   type,
+  canEdit,
 }: {
   itemId: string;
   editingItemId: string | undefined;
   onEdit: (itemId: string | undefined) => void;
   type: "folder" | "page";
+  canEdit: boolean;
 }) => {
+  if (canEdit === false) {
+    return null;
+  }
+
   const isEditing = editingItemId === itemId;
 
   const menuLabel =
@@ -277,11 +283,15 @@ const PagesTree = ({
   selectedPageId,
   onEdit,
   editingItemId,
+  canManagePages,
+  canEditPageSettings,
 }: {
   onSelect: (pageId: string) => void;
   selectedPageId: string;
   onEdit: (pageId: string | undefined) => void;
   editingItemId?: string;
+  canManagePages: boolean;
+  canEditPageSettings: boolean;
 }) => {
   const pages = useStore($pages);
   const flatPagesTree = useStore($flatPagesTree);
@@ -397,6 +407,11 @@ const PagesTree = ({
                     itemId={item.id}
                     editingItemId={editingItemId}
                     onEdit={onEdit}
+                    canEdit={canEditPagesTreeItemSettings({
+                      itemType: item.type,
+                      canManagePages,
+                      canEditPageSettings,
+                    })}
                   />
                 }
               >
@@ -431,6 +446,42 @@ const PagesTree = ({
 
 const newPageId = "new-page";
 const newTemplateId = "new-template";
+
+const canEditPagesTreeItemSettings = ({
+  itemType,
+  canManagePages,
+  canEditPageSettings,
+}: {
+  itemType: PagesTreeItem["type"];
+  canManagePages: boolean;
+  canEditPageSettings: boolean;
+}) => {
+  return itemType === "page" ? canEditPageSettings : canManagePages;
+};
+
+const canEditPagesPanelItemSettings = ({
+  itemId,
+  folders,
+  canManagePages,
+  canEditPageSettings,
+}: {
+  itemId: string;
+  folders: Map<Folder["id"], Folder>;
+  canManagePages: boolean;
+  canEditPageSettings: boolean;
+}) => {
+  return canEditPagesTreeItemSettings({
+    itemType:
+      itemId === newFolderId || isFolder(itemId, folders) ? "folder" : "page",
+    canManagePages,
+    canEditPageSettings,
+  });
+};
+
+export const __testing__ = {
+  canEditPagesPanelItemSettings,
+  canEditPagesTreeItemSettings,
+};
 
 const CreateItemMenu = ({
   editingItemId,
@@ -891,7 +942,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const isContentMode = useStore($isContentMode);
   const authPermit = useStore($authPermit);
   const canOpenPageTemplates = useStore($canOpenPageTemplates);
-  const canCreatePageFromTemplate =
+  const canEditPageContent =
     isDesignMode || (isContentMode && authPermit !== "view");
   const [containerElement, setContainerElement] =
     useState<HTMLDivElement | null>(null);
@@ -973,6 +1024,14 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       ? undefined
       : pages.pageTemplates?.get(templateIdToDelete);
   const hasPageTemplates = (pages.pageTemplates?.size ?? 0) > 0;
+  const canEditSettingsPanel =
+    editingItemId !== undefined &&
+    canEditPagesPanelItemSettings({
+      itemId: editingItemId,
+      folders: pages.folders,
+      canManagePages: isDesignMode,
+      canEditPageSettings: canEditPageContent,
+    });
 
   return (
     <div
@@ -1000,6 +1059,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       <Separator />
 
       <PageContextMenu
+        canManagePages={isDesignMode}
         onRequestDeletePage={setPageIdToDelete}
         onRequestDeleteFolder={setFolderIdToDelete}
       >
@@ -1011,7 +1071,20 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
               onClose();
             }}
             editingItemId={editingItemId}
+            canManagePages={isDesignMode}
+            canEditPageSettings={canEditPageContent}
             onEdit={(itemId) => {
+              if (
+                itemId &&
+                canEditPagesPanelItemSettings({
+                  itemId,
+                  folders: pages.folders,
+                  canManagePages: isDesignMode,
+                  canEditPageSettings: canEditPageContent,
+                }) === false
+              ) {
+                return;
+              }
               // always select page when edit its settings
               if (itemId && isFolder(itemId, pages.folders) === false) {
                 selectPage(itemId);
@@ -1022,12 +1095,13 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         </div>
       </PageContextMenu>
 
-      {(isDesignMode || isContentMode) && hasPageTemplates && (
+      {canEditPageContent && hasPageTemplates && (
         <>
           <Separator />
           <PanelTitle>Page templates</PanelTitle>
           {canOpenPageTemplates ? (
             <TemplateContextMenu
+              canManageTemplates={isDesignMode}
               onRequestDeleteTemplate={setTemplateIdToDelete}
             >
               <ScrollAreaNative
@@ -1052,9 +1126,9 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                   onCreatePageFromTemplate={(id) => {
                     $creatingPageFromTemplateId.set(id);
                   }}
-                  canManageTemplates={true}
+                  canManageTemplates={isDesignMode}
                   canSelectTemplate={true}
-                  canCreatePageFromTemplate={canCreatePageFromTemplate}
+                  canCreatePageFromTemplate={canEditPageContent}
                 />
               </ScrollAreaNative>
             </TemplateContextMenu>
@@ -1076,14 +1150,14 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                 }}
                 canManageTemplates={false}
                 canSelectTemplate={false}
-                canCreatePageFromTemplate={canCreatePageFromTemplate}
+                canCreatePageFromTemplate={canEditPageContent}
               />
             </ScrollAreaNative>
           )}
         </>
       )}
 
-      {editingItemId !== undefined && (
+      {canEditSettingsPanel && (
         <FloatingPanel
           content={
             editingItemId === newFolderId ||
@@ -1123,28 +1197,30 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         </FloatingPanel>
       )}
 
-      {canOpenPageTemplates && editingTemplateItemId !== undefined && (
-        <FloatingPanel
-          content={
-            <TemplateEditor
-              editingTemplateId={editingTemplateItemId}
-              onClose={() => $editingTemplateId.set(undefined)}
-            />
-          }
-          placement="right-start"
-          width={Number.parseFloat(rawTheme.spacing[35])}
-          open={true}
-          onOpenChange={(isOpen) => {
-            if (!isOpen) {
-              $editingTemplateId.set(undefined);
+      {isDesignMode &&
+        canOpenPageTemplates &&
+        editingTemplateItemId !== undefined && (
+          <FloatingPanel
+            content={
+              <TemplateEditor
+                editingTemplateId={editingTemplateItemId}
+                onClose={() => $editingTemplateId.set(undefined)}
+              />
             }
-          }}
-        >
-          <span style={{ display: "none" }} />
-        </FloatingPanel>
-      )}
+            placement="right-start"
+            width={Number.parseFloat(rawTheme.spacing[35])}
+            open={true}
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                $editingTemplateId.set(undefined);
+              }
+            }}
+          >
+            <span style={{ display: "none" }} />
+          </FloatingPanel>
+        )}
 
-      {canCreatePageFromTemplate && creatingFromTemplateId !== undefined && (
+      {canEditPageContent && creatingFromTemplateId !== undefined && (
         <FloatingPanel
           content={
             <CreatePageFromTemplateSettings

@@ -30,8 +30,8 @@ import {
   copyAndTransformPageMeta,
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
-  replaceDataSourcesInExpression,
 } from "~/shared/page-utils";
+import { replaceDataSourcesInExpression } from "~/shared/data-variables";
 import {
   $selectedPage,
   getInstanceKey,
@@ -616,10 +616,12 @@ export const instantiateTemplate = ({
   templateId,
   overrides,
   folderId,
+  contentMode,
 }: {
   templateId: PageTemplate["id"];
   overrides: { name: string; path: string };
   folderId: Folder["id"];
+  contentMode?: boolean;
 }) => {
   let newPageId: undefined | string;
   updateWebstudioData((data) => {
@@ -628,6 +630,7 @@ export const instantiateTemplate = ({
       source: { data },
       target: { data, folderId },
       overrides,
+      contentMode,
     });
   });
   return newPageId;

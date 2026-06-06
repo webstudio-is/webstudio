@@ -4,6 +4,10 @@ import { useStore } from "@nanostores/react";
 import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
 import { descendantComponent } from "@webstudio-is/sdk";
 import {
+  getContentModeCapabilities,
+  type ContentModeCapabilities,
+} from "@webstudio-is/project/content-mode-permissions";
+import {
   reactPropsToStandardAttributes,
   showAttribute,
   standardAttributesToReactProps,
@@ -15,6 +19,7 @@ import {
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
+import { $styleSources } from "~/shared/sync/data-stores";
 import { isRichText, isRichTextTree } from "~/shared/content-model";
 import { $selectedInstancePath } from "~/shared/nano-states";
 import {
@@ -32,6 +37,43 @@ export type PropAndMeta = {
   meta: PropMeta;
   instanceId?: Instance["id"];
   instanceSelector?: Instance["id"][];
+};
+
+const isPropVisibleInContentMode = ({
+  propName,
+  props,
+  propsMetas,
+  selectedInstanceSelector,
+  capabilities,
+}: {
+  propName: string;
+  props: Prop[];
+  propsMetas: Map<string, PropMeta>;
+  selectedInstanceSelector: undefined | Instance["id"][];
+  capabilities: ContentModeCapabilities;
+}) => {
+  if (
+    selectedInstanceSelector === undefined ||
+    capabilities.editableInstanceIds.has(selectedInstanceSelector[0]) === false
+  ) {
+    return false;
+  }
+  if (propName === textContentAttribute) {
+    return true;
+  }
+  if (
+    props.some(
+      (prop) =>
+        prop.name === propName && capabilities.editablePropIds.has(prop.id)
+    )
+  ) {
+    return true;
+  }
+  const propMeta = propsMetas.get(propName);
+  if (propMeta?.type === "string" && propMeta.control === "file") {
+    return true;
+  }
+  return propMeta?.contentMode === true;
 };
 
 // The value we set prop to when it's added
@@ -127,7 +169,7 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
         "A prop with type resource must have a meta, we can't provide a default one because we need a list of options"
       );
     default:
-      throw new Error(`Usupported data type: ${type satisfies never}`);
+      throw new Error(`Unsupported data type: ${type satisfies never}`);
   }
 };
 
@@ -141,6 +183,13 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
   const value = map.get(key);
   map.delete(key);
   return value;
+};
+
+export const __testing__ = {
+  isPropVisibleInContentMode,
+  getStartingValue,
+  getDefaultMetaForType,
+  getAndDelete,
 };
 
 const $canHaveTextContent = computed(
@@ -181,6 +230,19 @@ export const usePropsLogic = ({
 }: UsePropsLogicInput) => {
   const isContentMode = useStore($isContentMode);
   const propsMetas = useStore($selectedInstancePropsMetas);
+  const instances = useStore($instances);
+  const allProps = useStore($props);
+  const styleSources = useStore($styleSources);
+  const metas = useStore($registeredComponentMetas);
+  const selectedInstancePath = useStore($selectedInstancePath);
+  const contentModeCapabilities = isContentMode
+    ? getContentModeCapabilities({
+        instances,
+        metas,
+        props: allProps,
+        styleSources,
+      })
+    : undefined;
 
   /**
    * In content edit mode we show only props marked with contentMode: true
@@ -190,11 +252,16 @@ export const usePropsLogic = ({
     if (!isContentMode) {
       return true;
     }
-    if (propName === textContentAttribute) {
-      return true;
+    if (contentModeCapabilities === undefined) {
+      return false;
     }
-    const propMeta = propsMetas.get(propName);
-    return propMeta?.contentMode === true;
+    return isPropVisibleInContentMode({
+      propName,
+      props,
+      propsMetas,
+      selectedInstanceSelector: selectedInstancePath?.[0].instanceSelector,
+      capabilities: contentModeCapabilities,
+    });
   };
 
   const savedProps = props;
@@ -217,9 +284,6 @@ export const usePropsLogic = ({
   }
 
   const canHaveTextContent = useStore($canHaveTextContent);
-  const instances = useStore($instances);
-  const selectedInstancePath = useStore($selectedInstancePath);
-
   const getTextContentTarget = () => {
     const canEditChildren = (target: Instance) => {
       const hasNoChildren = target.children.length === 0;
@@ -296,8 +360,8 @@ export const usePropsLogic = ({
 
     // For initial props, if prop is not saved, we want to show default value if available.
     //
-    // Important to not use infer stating value if default is not available
-    // beacuse user may have this experience:
+    // Important to not infer starting value if default is not available
+    // because user may have this experience:
     //   - they open props panel of an Image
     //   - they see 0 in the control for "width"
     //   - where 0 is a fallback when no default is available
@@ -332,7 +396,9 @@ export const usePropsLogic = ({
       propMeta = propsMetas.get(name);
     }
     prop = { ...prop, name };
-    propMeta ??= getDefaultMetaForType("string");
+    propMeta ??= getDefaultMetaForType(
+      prop.type === "asset" ? "asset" : "string"
+    );
 
     addedProps.push({
       prop,
@@ -379,7 +445,7 @@ export const usePropsLogic = ({
     handleChange,
     handleChangeByPropName,
     /** Similar to Initial, but displayed as a separate group in UI etc.
-     * Currentrly used only for the ID prop. */
+     * Currently used only for the ID prop. */
     systemProps: systemProps.filter(({ propName }) => isPropVisible(propName)),
     /** Initial (not deletable) props */
     initialProps: initialProps.filter(({ propName }) =>

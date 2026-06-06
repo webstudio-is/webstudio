@@ -25,6 +25,7 @@ import {
   isPathAvailable,
   reparentPageOrFolderMutable,
   deletePageMutable,
+  instantiateTemplate,
 } from "./page-utils";
 import { $dataSourceVariables } from "~/shared/nano-states";
 import {
@@ -1211,6 +1212,94 @@ describe("duplicateTemplate", () => {
             content: `"Value: " + ${newVariableIdentifier}`,
           },
         ],
+      },
+    });
+  });
+});
+
+describe("instantiateTemplate", () => {
+  $project.set({ id: "projectId" } as Project);
+
+  test("uses content-safe copy when creating page from template in content mode", () => {
+    const { pages: pagesData } = createPages();
+    pagesData.pageTemplates = new Map([
+      [
+        "templateId",
+        {
+          id: "templateId",
+          name: "Template",
+          title: `"Template title"`,
+          rootInstanceId: "templateRootId",
+          meta: {
+            description: `"Description"`,
+            excludePageFromSearch: "false",
+            language: `"en-US"`,
+            socialImageAssetId: "assetId",
+            socialImageUrl: `"https://example.com/image.png"`,
+            custom: [{ property: "og:type", content: `"website"` }],
+            auth: { method: "basic", login: "user", password: "password" },
+            content: `"text"`,
+            documentType: "text",
+            redirect: `"/redirect"`,
+            status: "404",
+          },
+        },
+      ],
+    ]);
+
+    $pages.set(pagesData);
+    $instances.set(
+      new Map([
+        [
+          "rootInstanceId",
+          {
+            type: "instance",
+            id: "rootInstanceId",
+            component: "Body",
+            children: [],
+          },
+        ],
+        [
+          "templateRootId",
+          {
+            type: "instance",
+            id: "templateRootId",
+            component: "Body",
+            children: [],
+          },
+        ],
+      ])
+    );
+    $props.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+    $breakpoints.set(new Map());
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $styles.set(new Map());
+    $assets.set(new Map());
+
+    const pageId = instantiateTemplate({
+      templateId: "templateId",
+      overrides: { name: "New page", path: "/new-page" },
+      folderId: pagesData.rootFolderId,
+      contentMode: true,
+    });
+
+    const page = $pages.get()?.pages.get(pageId ?? "");
+    expect(page).toEqual({
+      id: pageId,
+      name: "New page",
+      path: "/new-page",
+      title: `"Template title"`,
+      rootInstanceId: expect.not.stringMatching("templateRootId"),
+      meta: {
+        description: `"Description"`,
+        excludePageFromSearch: "false",
+        language: `"en-US"`,
+        socialImageAssetId: "assetId",
+        socialImageUrl: `"https://example.com/image.png"`,
+        custom: [{ property: "og:type", content: `"website"` }],
       },
     });
   });

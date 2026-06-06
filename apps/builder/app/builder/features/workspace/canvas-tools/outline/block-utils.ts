@@ -1,4 +1,4 @@
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { Instance, Instances, WebstudioFragment } from "@webstudio-is/sdk";
 import { blockTemplateComponent } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
 import { selectInstance } from "~/shared/nano-states";
@@ -15,6 +15,7 @@ import {
 } from "~/shared/instance-utils";
 import {
   $registeredComponentMetas,
+  $isContentMode,
   $textEditingInstanceSelector,
   findBlockChildSelector,
   findBlockSelector,
@@ -69,6 +70,26 @@ const getInsertionIndex = (
   }
 
   return insertBefore ? index : index + 1;
+};
+
+const getTemplateTokenConflicts = ({
+  fragment,
+  contentMode,
+  detect = detectFragmentTokenConflicts,
+}: {
+  fragment: WebstudioFragment;
+  contentMode: boolean;
+  detect?: typeof detectFragmentTokenConflicts;
+}) => {
+  if (contentMode) {
+    return [];
+  }
+  return detect({ fragment });
+};
+
+export const __testing__ = {
+  getInsertionIndex,
+  getTemplateTokenConflicts,
 };
 
 export const insertListItemAt = (listItemSelector: InstanceSelector) => {
@@ -178,7 +199,8 @@ export const insertTemplateAt = async (
   };
 
   try {
-    const conflicts = detectFragmentTokenConflicts({ fragment });
+    const contentMode = $isContentMode.get();
+    const conflicts = getTemplateTokenConflicts({ fragment, contentMode });
     const conflictResolution =
       conflicts.length > 0
         ? await builderApi.showTokenConflictDialog(conflicts)
@@ -194,6 +216,7 @@ export const insertTemplateAt = async (
         }),
         projectId: project.id,
         conflictResolution,
+        contentMode,
       });
       const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
       if (newRootInstanceId === undefined) {

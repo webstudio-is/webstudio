@@ -16,39 +16,94 @@ import { emitCommand } from "./commands";
 import {
   $selectedInstancePath,
   $selectedPage,
+  $isContentMode,
+  $isDesignMode,
   getInstanceKey,
 } from "~/shared/nano-states";
-import { canUnwrapInstance } from "~/shared/instance-utils";
+import {
+  canDeleteInstanceInContentMode,
+  canUnwrapInstance,
+} from "~/shared/instance-utils";
 import { $propValuesByInstanceSelector } from "~/shared/nano-states";
-import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import { $instances } from "~/shared/sync/data-stores";
+import { ROOT_INSTANCE_ID, type Instances } from "@webstudio-is/sdk";
 import type { InstancePath } from "~/shared/nano-states";
 
-const getMenuPermissions = (instancePath: InstancePath | undefined) => {
+const canDeleteInContentMode = ({
+  instancePath,
+  instances,
+}: {
+  instancePath: InstancePath | undefined;
+  instances: Instances;
+}) => {
+  const instanceSelector = instancePath?.[0]?.instanceSelector;
+  return (
+    instanceSelector !== undefined &&
+    canDeleteInstanceInContentMode({ instanceSelector, instances })
+  );
+};
+
+const getMenuPermissions = ({
+  instancePath,
+  isContentMode,
+  isDesignMode,
+  instances,
+}: {
+  instancePath: InstancePath | undefined;
+  isContentMode: boolean;
+  isDesignMode: boolean;
+  instances: Instances;
+}) => {
   const instanceId = instancePath?.[0]?.instance.id;
   const rootInstanceId = $selectedPage.get()?.rootInstanceId;
 
   const isRoot = instanceId === ROOT_INSTANCE_ID;
   const isBody = instanceId === rootInstanceId;
   const isRootOrBody = isRoot || isBody;
-  const canUnwrap = instancePath ? canUnwrapInstance(instancePath) : false;
+
+  if (isContentMode) {
+    return {
+      canCopy: false,
+      canPaste: false,
+      canCut: false,
+      canDuplicate: false,
+      canHide: false,
+      canRename: false,
+      canWrap: false,
+      canUnwrap: false,
+      canConvert: false,
+      canAddToken: false,
+      canOpenSettings: true,
+      canDelete: canDeleteInContentMode({ instancePath, instances }),
+    };
+  }
+
+  const canMutateDesign = isDesignMode;
+  const canUnwrap =
+    canMutateDesign && instancePath ? canUnwrapInstance(instancePath) : false;
 
   return {
-    canCopy: !isRootOrBody,
-    canPaste: !isRoot,
-    canCut: !isRootOrBody,
-    canDuplicate: !isRootOrBody,
-    canHide: !isRoot,
-    canRename: !isRoot,
-    canWrap: !isRootOrBody,
+    canCopy: canMutateDesign && !isRootOrBody,
+    canPaste: canMutateDesign && !isRoot,
+    canCut: canMutateDesign && !isRootOrBody,
+    canDuplicate: canMutateDesign && !isRootOrBody,
+    canHide: canMutateDesign && !isRoot,
+    canRename: canMutateDesign && !isRoot,
+    canWrap: canMutateDesign && !isRootOrBody,
     canUnwrap,
-    canConvert: !isRootOrBody,
-    canDelete: !isRootOrBody,
+    canConvert: canMutateDesign && !isRootOrBody,
+    canAddToken: canMutateDesign,
+    canOpenSettings: true,
+    canDelete: canMutateDesign && !isRootOrBody,
   };
 };
 
 export const MenuItems = () => {
   const instancePath = useStore($selectedInstancePath);
+  const instances = useStore($instances);
   const propValues = useStore($propValuesByInstanceSelector);
+  const isContentMode = useStore($isContentMode);
+  const isDesignMode = useStore($isDesignMode);
 
   const instanceSelector = instancePath?.[0]?.instanceSelector;
 
@@ -59,7 +114,12 @@ export const MenuItems = () => {
       )
     : true;
 
-  const permissions = getMenuPermissions(instancePath);
+  const permissions = getMenuPermissions({
+    instancePath,
+    isContentMode,
+    isDesignMode,
+    instances,
+  });
 
   return (
     <Box css={{ width: theme.spacing[28] }}>
@@ -158,26 +218,30 @@ export const MenuItems = () => {
         Convert
       </ContextMenuItem>
       <ContextMenuSeparator />
-      <ContextMenuItem
-        onSelect={() => {
-          emitCommand("focusStyleSources");
-        }}
-      >
-        Add token
-        <ContextMenuItemRightSlot>
-          <Kbd value={["meta", "enter"]} />
-        </ContextMenuItemRightSlot>
-      </ContextMenuItem>
-      <ContextMenuItem
-        onSelect={() => {
-          emitCommand("openSettingsPanel");
-        }}
-      >
-        Open settings
-        <ContextMenuItemRightSlot>
-          <Kbd value={["d"]} />
-        </ContextMenuItemRightSlot>
-      </ContextMenuItem>
+      {permissions.canAddToken && (
+        <ContextMenuItem
+          onSelect={() => {
+            emitCommand("focusStyleSources");
+          }}
+        >
+          Add token
+          <ContextMenuItemRightSlot>
+            <Kbd value={["meta", "enter"]} />
+          </ContextMenuItemRightSlot>
+        </ContextMenuItem>
+      )}
+      {permissions.canOpenSettings && (
+        <ContextMenuItem
+          onSelect={() => {
+            emitCommand("openSettingsPanel");
+          }}
+        >
+          Open settings
+          <ContextMenuItemRightSlot>
+            <Kbd value={["d"]} />
+          </ContextMenuItemRightSlot>
+        </ContextMenuItem>
+      )}
       <ContextMenuSeparator />
       <ContextMenuItem
         disabled={!permissions.canDelete}
@@ -214,4 +278,9 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
       </ContextMenuContent>
     </ContextMenu>
   );
+};
+
+export const __testing__ = {
+  canDeleteInContentMode,
+  getMenuPermissions,
 };

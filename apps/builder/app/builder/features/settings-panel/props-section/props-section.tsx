@@ -80,6 +80,48 @@ const matchOrSuggestToCreate = (
   return matched;
 };
 
+const shouldShowPropertiesSection = ({
+  isDesignMode,
+  isContentMode,
+  hasProperties,
+}: {
+  isDesignMode: boolean;
+  isContentMode: boolean;
+  hasProperties: boolean;
+}) => {
+  return isDesignMode || (isContentMode && hasProperties);
+};
+
+const shouldRenderPropsSectionContainer = ({
+  component,
+  propsMetasSize,
+  hasVisibleProps,
+  isContentMode,
+}: {
+  component: Instance["component"];
+  propsMetasSize: number;
+  hasVisibleProps: boolean;
+  isContentMode: boolean;
+}) => {
+  if (component === rootComponent) {
+    return false;
+  }
+  return propsMetasSize > 0 || (isContentMode && hasVisibleProps);
+};
+
+const shouldSyncMediaAssetProps = ({
+  component,
+  propName,
+  propValue,
+}: {
+  component: Instance["component"];
+  propName: string;
+  propValue: { type: string };
+}) =>
+  (component === "Image" || component === "Video") &&
+  propName === "src" &&
+  propValue.type === "asset";
+
 const renderProperty = (
   {
     propsLogic: logic,
@@ -114,9 +156,11 @@ const renderProperty = (
       logic.handleChange({ prop, propName }, propValue);
 
       if (
-        (component === "Image" || component === "Video") &&
-        propName === "src" &&
-        propValue.type === "asset"
+        shouldSyncMediaAssetProps({
+          component,
+          propName,
+          propValue,
+        })
       ) {
         logic.handleChangeByPropName("width", propValue);
         logic.handleChangeByPropName("height", propValue);
@@ -229,8 +273,9 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   const matchMediaValue = matchMediaBreakpoints(matchingBreakpoints);
 
-  const hasItems =
-    logic.addedProps.length > 0 || addingProp || logic.initialProps.length > 0;
+  const hasProperties =
+    logic.addedProps.length > 0 || logic.initialProps.length > 0;
+  const hasItems = hasProperties || (isDesignMode && addingProp);
 
   const animationAction = logic.initialProps.find(
     (prop) => prop.meta.type === "animationAction"
@@ -238,8 +283,11 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   const hasAnimation = animationAction !== undefined;
 
-  const showPropertiesSection =
-    isDesignMode || (isContentMode && logic.initialProps.length > 0);
+  const showPropertiesSection = shouldShowPropertiesSection({
+    isDesignMode,
+    isContentMode,
+    hasProperties,
+  });
 
   return hasAnimation && selectedBreakpoint?.id !== undefined ? (
     <>
@@ -311,7 +359,7 @@ export const PropsSection = (props: PropsSectionProps) => {
           hasItems={hasItems}
         >
           <Flex gap="1" direction="column">
-            {addingProp && (
+            {isDesignMode && addingProp && (
               <AddPropertyOrAttribute
                 onPropSelected={(propName) => {
                   setAddingProp(false);
@@ -326,6 +374,12 @@ export const PropsSection = (props: PropsSectionProps) => {
       )}
     </>
   );
+};
+
+export const __testing__ = {
+  shouldShowPropertiesSection,
+  shouldRenderPropsSectionContainer,
+  shouldSyncMediaAssetProps,
 };
 
 const $propValues = computed(
@@ -367,7 +421,19 @@ export const PropsSectionContainer = ({
   });
 
   const propsMetas = useStore($selectedInstancePropsMetas);
-  if (propsMetas.size === 0 || instance.component === rootComponent) {
+  const isContentMode = useStore($isContentMode);
+  const hasVisibleProps =
+    logic.systemProps.length > 0 ||
+    logic.initialProps.length > 0 ||
+    logic.addedProps.length > 0;
+  if (
+    shouldRenderPropsSectionContainer({
+      component: instance.component,
+      propsMetasSize: propsMetas.size,
+      hasVisibleProps,
+      isContentMode,
+    }) === false
+  ) {
     return;
   }
 

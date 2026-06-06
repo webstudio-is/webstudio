@@ -6,6 +6,7 @@ import { patchBuild } from "@webstudio-is/project/index.server";
 import {
   assertProjectPermit,
   authorizePatchEntries,
+  createContentModeCapabilities,
   createWriterContext,
   type AuthorizedPatchEntry,
 } from "./patch-auth.server";
@@ -76,15 +77,40 @@ const loadBuildState = async (context: AppContext, buildId: string) => {
   };
 };
 
-const assertBuildProject = async (
-  context: AppContext,
+const loadBuildPatchState = async (context: AppContext, buildId: string) => {
+  const build = await context.postgrest.client
+    .from("Build")
+    .select(
+      "projectId, version, instances, props, styleSources, styleSourceSelections, styles, breakpoints"
+    )
+    .eq("id", buildId)
+    .single();
+
+  if (build.error) {
+    throw build.error;
+  }
+
+  return {
+    projectId: String(build.data.projectId),
+    version: Number(build.data.version),
+    contentModeCapabilities: createContentModeCapabilities({
+      instances: build.data.instances,
+      props: build.data.props,
+      styleSources: build.data.styleSources,
+      styleSourceSelections: build.data.styleSourceSelections,
+      styles: build.data.styles,
+      breakpoints: build.data.breakpoints,
+    }),
+  };
+};
+
+const assertBuildProject = (
+  state: { projectId: string },
   patch: Pick<NormalizedPatchRequest, "buildId" | "projectId">
 ) => {
-  const state = await loadBuildState(context, patch.buildId);
   if (state.projectId !== patch.projectId) {
     throw new Error("Build does not belong to project");
   }
-  return state;
 };
 
 const acceptedResult = (entry: PatchEntry): PatchEntryResult => ({
@@ -195,8 +221,13 @@ export const applyPatchRequest = async (
   context: AppContext,
   patch: NormalizedPatchRequest
 ): Promise<PatchResult> => {
-  await assertBuildProject(context, patch);
-  const { authorized, rejected } = await authorizePatchEntries(context, patch);
+  const state = await loadBuildPatchState(context, patch.buildId);
+  assertBuildProject(state, patch);
+  const { authorized, rejected } = await authorizePatchEntries(
+    context,
+    patch,
+    state.contentModeCapabilities
+  );
   const applied = await applyAuthorizedEntries({
     authorized,
     patch,

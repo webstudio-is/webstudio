@@ -27,6 +27,9 @@ import type {
 } from "@webstudio-is/sdk";
 import {
   coreMetas,
+  getStyleDeclKey,
+  blockComponent,
+  blockTemplateComponent,
   portalComponent,
   elementComponent,
   ROOT_INSTANCE_ID,
@@ -54,6 +57,8 @@ import {
   convertInstance,
   deleteSelectedInstance,
   detectPageTokenConflicts,
+  canDeleteInstanceInContentMode,
+  __testing__,
 } from "./instance-utils";
 import type { InstancePath } from "./nano-states";
 import { $registeredComponentMetas } from "./nano-states";
@@ -198,6 +203,178 @@ const createFontAsset = (id: string, family: string): Asset => {
     meta: { style: "normal", family, variationAxes: {} },
   };
 };
+
+describe("fragment copy helpers", () => {
+  test("builds fragment instance maps and portal content roots", () => {
+    const fragment = createFragment({
+      instances: [
+        createInstance("portal", portalComponent, [
+          { type: "id", value: "portal-root" },
+        ]),
+        createInstance("portal-root", "Box", []),
+      ],
+    });
+
+    const { fragmentInstances, portalContentRootIds } =
+      __testing__.getFragmentInstancesData(fragment);
+
+    expect(Array.from(fragmentInstances.keys())).toEqual([
+      "portal",
+      "portal-root",
+    ]);
+    expect(portalContentRootIds).toEqual(new Set(["portal-root"]));
+  });
+
+  test("inserts fragment assets without overwriting existing assets", () => {
+    const existingAsset = createImageAsset(
+      "existing-asset",
+      "Existing",
+      "target-project"
+    );
+    const assets = new Map<Asset["id"], Asset>([
+      [existingAsset.id, existingAsset],
+    ]);
+
+    __testing__.insertFragmentAssetsMutable({
+      fragment: createFragment({
+        assets: [
+          createImageAsset("existing-asset", "Source Existing", "source"),
+          createImageAsset("new-asset", "New", "source"),
+        ],
+      }),
+      projectId: "target-project",
+      assets,
+    });
+
+    expect(assets.get("existing-asset")).toBe(existingAsset);
+    expect(assets.get("new-asset")).toEqual({
+      ...createImageAsset("new-asset", "New", "source"),
+      projectId: "target-project",
+    });
+  });
+
+  test("inserts fragment breakpoints and reports limit merges", () => {
+    const baseBreakpoint: Breakpoint = { id: "base", label: "Base" };
+    const breakpoints = new Map<Breakpoint["id"], Breakpoint>([
+      [baseBreakpoint.id, baseBreakpoint],
+    ]);
+    let didMergeDueToLimit = false;
+
+    const mergedBreakpointIds = __testing__.insertFragmentBreakpointsMutable({
+      fragment: createFragment({
+        breakpoints: [
+          baseBreakpoint,
+          { id: "desktop", label: "Desktop", minWidth: 1024 },
+        ],
+      }),
+      breakpoints,
+      onBreakpointLimitMerge: () => {
+        didMergeDueToLimit = true;
+      },
+    });
+
+    expect(mergedBreakpointIds.get("base")).toBe("base");
+    expect(breakpoints.get("desktop")).toEqual({
+      id: "desktop",
+      label: "Desktop",
+      minWidth: 1024,
+    });
+    expect(didMergeDueToLimit).toBe(false);
+  });
+
+  test("builds content-mode capabilities for fragment roots", () => {
+    const registeredComponentMetas = $registeredComponentMetas.get();
+    $registeredComponentMetas.set(
+      createFakeComponentMetas({
+        props: {
+          href: {
+            type: "string",
+            control: "url",
+            required: false,
+            contentMode: true,
+          },
+        },
+      })
+    );
+    try {
+      const fragment = createFragment({
+        children: [{ type: "id", value: "link" }],
+        instances: [createInstance("link", "Item", [])],
+        props: [
+          {
+            id: "href-prop",
+            instanceId: "link",
+            name: "href",
+            type: "string",
+            value: "/",
+          },
+        ],
+      });
+      const { fragmentInstances } =
+        __testing__.getFragmentInstancesData(fragment);
+
+      const capabilities = __testing__.getFragmentContentModeCapabilities({
+        fragment,
+        fragmentInstances,
+        styleSources: new Map(),
+      });
+
+      expect(capabilities.contentRootIds).toEqual(new Set(["link"]));
+      expect(capabilities.editablePropIds.has("href-prop")).toBe(true);
+    } finally {
+      $registeredComponentMetas.set(registeredComponentMetas);
+    }
+  });
+});
+
+describe("canDeleteInstanceInContentMode", () => {
+  const instances = new Map([
+    ["body", createInstance("body", "Body", [{ type: "id", value: "block" }])],
+    [
+      "block",
+      createInstance("block", blockComponent, [
+        { type: "id", value: "child" },
+        { type: "id", value: "template" },
+      ]),
+    ],
+    [
+      "child",
+      createInstance("child", "Box", [{ type: "id", value: "nested" }]),
+    ],
+    ["nested", createInstance("nested", "Box", [])],
+    ["template", createInstance("template", blockTemplateComponent, [])],
+  ]);
+
+  test("allows deleting direct content block children", () => {
+    expect(
+      canDeleteInstanceInContentMode({
+        instanceSelector: ["child", "block", "body"],
+        instances,
+      })
+    ).toBe(true);
+  });
+
+  test("protects content block roots, nested descendants, and templates", () => {
+    expect(
+      canDeleteInstanceInContentMode({
+        instanceSelector: ["block", "body"],
+        instances,
+      })
+    ).toBe(false);
+    expect(
+      canDeleteInstanceInContentMode({
+        instanceSelector: ["nested", "child", "block", "body"],
+        instances,
+      })
+    ).toBe(false);
+    expect(
+      canDeleteInstanceInContentMode({
+        instanceSelector: ["template", "block", "body"],
+        instances,
+      })
+    ).toBe(false);
+  });
+});
 
 describe("insert instance children", () => {
   test("insert instance children into empty target", () => {
@@ -1504,6 +1681,237 @@ describe("insert webstudio fragment copy", () => {
       createImageAsset("asset1", "changed_name", "current_project"),
       // add new assets while preserving old ones
       createImageAsset("asset2", "another_name", "current_project"),
+    ]);
+  });
+
+  test("copies local styles with new ids and reuses existing token styles in content mode", () => {
+    const localStyleSource: StyleSource = { type: "local", id: "localBox" };
+    const unsupportedLocalStyleSource: StyleSource = {
+      type: "local",
+      id: "unsupportedLocal",
+    };
+    const tokenStyleSource: StyleSource = {
+      type: "token",
+      id: "token",
+      name: "Token",
+    };
+    const style = createStyleDecl("localBox", "base", "color", "red");
+    const unsupportedBreakpointStyle = createStyleDecl(
+      "localBox",
+      "desktop",
+      "backgroundColor",
+      "blue"
+    );
+    const unsupportedLocalStyle = createStyleDecl(
+      "unsupportedLocal",
+      "desktop",
+      "color",
+      "green"
+    );
+    const data = getWebstudioDataStub({
+      breakpoints: toMap<Breakpoint>([{ id: "base", label: "Base" }]),
+      instances: toMap([
+        createInstance("body", "Body", []),
+        createInstance("templateBox", "Box", []),
+      ]),
+      styleSources: toMap([
+        localStyleSource,
+        unsupportedLocalStyleSource,
+        tokenStyleSource,
+      ]),
+      styleSourceSelections: new Map([
+        [
+          "templateBox",
+          {
+            instanceId: "templateBox",
+            values: ["localBox", "unsupportedLocal", "token"],
+          },
+        ],
+      ]),
+      styles: new Map([
+        [getStyleDeclKey(style), style],
+        [
+          getStyleDeclKey(unsupportedBreakpointStyle),
+          unsupportedBreakpointStyle,
+        ],
+        [getStyleDeclKey(unsupportedLocalStyle), unsupportedLocalStyle],
+      ]),
+    });
+    const fragment = createFragment({
+      children: [{ type: "id", value: "templateBox" }],
+      instances: [createInstance("templateBox", "Box", [])],
+      styleSources: [
+        localStyleSource,
+        unsupportedLocalStyleSource,
+        tokenStyleSource,
+      ],
+      styleSourceSelections: [
+        {
+          instanceId: "templateBox",
+          values: ["localBox", "unsupportedLocal", "token"],
+        },
+      ],
+      styles: [style, unsupportedBreakpointStyle, unsupportedLocalStyle],
+    });
+
+    const { newInstanceIds } = insertWebstudioFragmentCopy({
+      data,
+      fragment,
+      availableVariables: [],
+      projectId: "current_project",
+      contentMode: true,
+    });
+    const newInstanceId = newInstanceIds.get("templateBox");
+
+    expect(newInstanceId).toBeDefined();
+    const selection = data.styleSourceSelections.get(newInstanceId ?? "");
+    expect(selection).toEqual({
+      instanceId: newInstanceId,
+      values: [expect.any(String), "token"],
+    });
+    const newLocalStyleSourceId = selection?.values[0];
+    expect(newLocalStyleSourceId).not.toBe("localBox");
+    expect(data.styleSources.get(newLocalStyleSourceId ?? "")).toEqual({
+      type: "local",
+      id: newLocalStyleSourceId,
+    });
+    expect(data.styles.get(getStyleDeclKey(style))).toEqual(style);
+    expect(
+      data.styles.get(
+        getStyleDeclKey({
+          ...style,
+          styleSourceId: newLocalStyleSourceId ?? "",
+        })
+      )
+    ).toEqual({ ...style, styleSourceId: newLocalStyleSourceId });
+    expect(
+      data.styles.has(
+        getStyleDeclKey({
+          ...unsupportedBreakpointStyle,
+          styleSourceId: newLocalStyleSourceId ?? "",
+        })
+      )
+    ).toBe(false);
+    expect(
+      Array.from(data.styleSources.values()).some(
+        (styleSource) =>
+          styleSource.type === "local" &&
+          styleSource.id !== "localBox" &&
+          styleSource.id !== "unsupportedLocal" &&
+          styleSource.id !== newLocalStyleSourceId
+      )
+    ).toBe(false);
+  });
+
+  test("copies assets and asset props in content mode", () => {
+    const asset = createImageAsset("asset", "Template image", "source_project");
+    const data = getWebstudioDataStub();
+    $registeredComponentMetas.set(
+      new Map([
+        ...defaultMetasMap,
+        [
+          "Item",
+          {
+            label: "Item",
+            icon: "",
+            props: {
+              image: {
+                type: "string",
+                control: "text",
+                required: false,
+                contentMode: true,
+              },
+            },
+          } satisfies WsComponentMeta,
+        ],
+      ])
+    );
+    const fragment = createFragment({
+      children: [{ type: "id", value: "item" }],
+      instances: [createInstance("item", "Item", [])],
+      props: [
+        {
+          id: "image",
+          instanceId: "item",
+          name: "image",
+          type: "asset",
+          value: "asset",
+        },
+      ],
+      assets: [asset],
+    });
+
+    const { newInstanceIds } = insertWebstudioFragmentCopy({
+      data,
+      fragment,
+      availableVariables: [],
+      projectId: "current_project",
+      contentMode: true,
+    });
+    const newInstanceId = newInstanceIds.get("item");
+
+    expect(data.assets.get("asset")).toEqual({
+      ...asset,
+      projectId: "current_project",
+    });
+    expect(Array.from(data.props.values())).toEqual([
+      expect.objectContaining({
+        instanceId: newInstanceId,
+        name: "image",
+        type: "asset",
+        value: "asset",
+      }),
+    ]);
+  });
+
+  test("copies tag-derived content mode props for generic elements", () => {
+    const data = getWebstudioDataStub();
+    const fragment = createFragment({
+      children: [{ type: "id", value: "image" }],
+      instances: [
+        {
+          type: "instance",
+          id: "image",
+          component: elementComponent,
+          tag: "img",
+          children: [],
+        },
+      ],
+      props: [
+        {
+          id: "alt",
+          instanceId: "image",
+          name: "alt",
+          type: "string",
+          value: "Description",
+        },
+        {
+          id: "class",
+          instanceId: "image",
+          name: "class",
+          type: "string",
+          value: "card",
+        },
+      ],
+    });
+
+    const { newInstanceIds } = insertWebstudioFragmentCopy({
+      data,
+      fragment,
+      availableVariables: [],
+      projectId: "current_project",
+      contentMode: true,
+    });
+    const newInstanceId = newInstanceIds.get("image");
+
+    expect(newInstanceId).toBeDefined();
+    expect(Array.from(data.props.values())).toEqual([
+      expect.objectContaining({
+        instanceId: newInstanceId,
+        name: "alt",
+        type: "string",
+        value: "Description",
+      }),
     ]);
   });
 

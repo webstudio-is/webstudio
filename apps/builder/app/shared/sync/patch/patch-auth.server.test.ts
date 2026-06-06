@@ -2,6 +2,50 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const hasProjectPermit = vi.hoisted(() => vi.fn());
 const readAccessToken = vi.hoisted(() => vi.fn());
+const getContentModeCapabilities = vi.hoisted(() =>
+  vi.fn(
+    (input: {
+      instances: Map<string, unknown>;
+      metas: Map<string, unknown>;
+      props: Map<string, unknown>;
+      styleSources: Map<string, unknown>;
+      styleSourceSelections: Map<string, unknown>;
+      styles: Map<string, unknown>;
+      breakpoints: Map<string, unknown>;
+    }) => ({
+      editablePropIds: new Set(),
+      editableInstanceIds: new Set(),
+      instances: input.instances,
+      metas: input.metas,
+      props: input.props,
+      htmlTagsByInstanceId: new Map(),
+      styleSources: input.styleSources,
+      styleSourceSelections: input.styleSourceSelections,
+      styles: input.styles,
+      breakpoints: input.breakpoints,
+      contentRootIds: new Set(),
+    })
+  )
+);
+const applyContentModeTransaction = vi.hoisted(() =>
+  vi.fn(
+    ({
+      capabilities,
+      transaction,
+    }: {
+      capabilities: Record<string, unknown>;
+      transaction: { id: string; payload: Array<{ namespace: string }> };
+    }) => {
+      if (transaction.payload.some((change) => change.namespace === "styles")) {
+        return { success: false, error: "build-only" };
+      }
+      return {
+        success: true,
+        capabilities: { ...capabilities, appliedTransactionId: transaction.id },
+      };
+    }
+  )
+);
 
 vi.mock("@webstudio-is/trpc-interface/index.server", () => {
   class AuthorizationError extends Error {}
@@ -11,13 +55,9 @@ vi.mock("@webstudio-is/trpc-interface/index.server", () => {
   };
 });
 
-vi.mock("@webstudio-is/project/index.server", () => ({
-  getRequiredPermitForBuildPatchTransaction: (transaction: {
-    payload: Array<{ namespace: string }>;
-  }) =>
-    transaction.payload.some((change) => change.namespace === "styles")
-      ? "build"
-      : "edit",
+vi.mock("@webstudio-is/project/content-mode-permissions", () => ({
+  applyContentModeTransaction,
+  getContentModeCapabilities,
 }));
 
 vi.mock("~/env/env.server", () => ({
@@ -32,30 +72,23 @@ vi.mock("~/services/token.server", () => ({
 
 import {
   authorizePatchEntries,
+  createContentModeCapabilities,
   createWriterContext,
 } from "./patch-auth.server";
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
 
+const buildRow = {
+  instances: JSON.stringify([
+    { id: "body-1", type: "instance", component: "Body", children: [] },
+  ]),
+  props: JSON.stringify([]),
+  styleSources: JSON.stringify([]),
+  styleSourceSelections: JSON.stringify([]),
+  styles: JSON.stringify([]),
+  breakpoints: JSON.stringify([]),
+};
+
 const createContext = () => {
-  const buildRow = {
-    pages: JSON.stringify({
-      meta: {},
-      homePage: {
-        id: "page-1",
-        name: "Home",
-        path: "",
-        title: "Home",
-        meta: {},
-        rootInstanceId: "body-1",
-      },
-      pages: [],
-      folders: [{ id: "root", name: "Root", slug: "", children: [] }],
-    }),
-    instances: JSON.stringify([
-      { id: "body-1", type: "instance", component: "Body", children: [] },
-    ]),
-    props: JSON.stringify([]),
-  };
   const context = {
     authorization: { type: "anonymous" },
     createTokenContext: vi.fn(async (authToken: string) => ({
@@ -145,6 +178,8 @@ describe("authorizePatchEntries", () => {
   beforeEach(() => {
     hasProjectPermit.mockReset();
     readAccessToken.mockReset();
+    getContentModeCapabilities.mockClear();
+    applyContentModeTransaction.mockClear();
   });
 
   test("checks every transaction with its own writer and required permit", async () => {
@@ -169,13 +204,56 @@ describe("authorizePatchEntries", () => {
       ],
     };
 
-    const result = await authorizePatchEntries(context as never, patch);
+    const contentModeCapabilities = createContentModeCapabilities(buildRow);
+
+    const result = await authorizePatchEntries(
+      context as never,
+      patch,
+      contentModeCapabilities
+    );
 
     expect(result.rejected).toEqual([]);
     expect(result.authorized[0].context.authorization).toMatchObject({
       type: "user",
       userId: "user-1",
     });
+    expect(getContentModeCapabilities).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instances: expect.any(Map),
+        metas: expect.any(Map),
+        props: expect.any(Map),
+        styleSources: expect.any(Map),
+        styleSourceSelections: expect.any(Map),
+        styles: expect.any(Map),
+        breakpoints: expect.any(Map),
+      })
+    );
+    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        transaction: patch.entries[0].transaction,
+        capabilities: expect.objectContaining({
+          editablePropIds: expect.any(Set),
+          instances: expect.any(Map),
+          metas: expect.any(Map),
+          props: expect.any(Map),
+          styleSources: expect.any(Map),
+          styleSourceSelections: expect.any(Map),
+          styles: expect.any(Map),
+          breakpoints: expect.any(Map),
+          contentRootIds: expect.any(Set),
+        }),
+      })
+    );
+    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        transaction: patch.entries[1].transaction,
+        capabilities: expect.objectContaining({
+          appliedTransactionId: patch.entries[0].transaction.id,
+        }),
+      })
+    );
     expect(hasProjectPermit).toHaveBeenCalledTimes(2);
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
       1,
@@ -193,6 +271,112 @@ describe("authorizePatchEntries", () => {
     );
   });
 
+  test("requires build permit after an authorized build-only transaction", async () => {
+    readAccessToken
+      .mockResolvedValueOnce({ userId: "user-1", projectId: "project-1" })
+      .mockResolvedValueOnce({ userId: "user-2", projectId: "project-1" });
+    hasProjectPermit.mockResolvedValue(true);
+
+    const patch: NormalizedPatchRequest = {
+      buildId: "build-1",
+      projectId: "project-1",
+      clientVersion: 1,
+      entries: [
+        {
+          transaction: transaction("styles", "tx-build") as never,
+          writer: { type: "token", authToken: "token-1" },
+        },
+        {
+          transaction: transaction("props", "tx-edit") as never,
+          writer: { type: "token", authToken: "token-2" },
+        },
+      ],
+    };
+
+    const result = await authorizePatchEntries(
+      createContext() as never,
+      patch,
+      createContentModeCapabilities(buildRow)
+    );
+
+    expect(result.rejected).toEqual([]);
+    expect(result.authorized).toHaveLength(2);
+    expect(applyContentModeTransaction).toHaveBeenCalledTimes(1);
+    expect(applyContentModeTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transaction: patch.entries[0].transaction,
+      })
+    );
+    expect(hasProjectPermit).toHaveBeenNthCalledWith(
+      1,
+      { projectId: "project-1", permit: "build" },
+      expect.anything()
+    );
+    expect(hasProjectPermit).toHaveBeenNthCalledWith(
+      2,
+      { projectId: "project-1", permit: "build" },
+      expect.anything()
+    );
+  });
+
+  test("does not require build permit after a rejected build-only transaction", async () => {
+    readAccessToken
+      .mockResolvedValueOnce({ userId: "user-1", projectId: "project-1" })
+      .mockResolvedValueOnce({ userId: "user-2", projectId: "project-1" });
+    hasProjectPermit.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+
+    const patch: NormalizedPatchRequest = {
+      buildId: "build-1",
+      projectId: "project-1",
+      clientVersion: 1,
+      entries: [
+        {
+          transaction: transaction("styles", "tx-build") as never,
+          writer: { type: "token", authToken: "token-1" },
+        },
+        {
+          transaction: transaction("props", "tx-edit") as never,
+          writer: { type: "token", authToken: "token-2" },
+        },
+      ],
+    };
+
+    const result = await authorizePatchEntries(
+      createContext() as never,
+      patch,
+      createContentModeCapabilities(buildRow)
+    );
+
+    expect(result.rejected).toEqual([
+      expect.objectContaining({
+        entry: patch.entries[0],
+        errors: "You don't have permission to build this project.",
+      }),
+    ]);
+    expect(result.authorized).toEqual([
+      expect.objectContaining({
+        entry: patch.entries[1],
+      }),
+    ]);
+    expect(applyContentModeTransaction).toHaveBeenCalledTimes(2);
+    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        transaction: patch.entries[1].transaction,
+      })
+    );
+    expect(hasProjectPermit).toHaveBeenNthCalledWith(
+      1,
+      { projectId: "project-1", permit: "build" },
+      expect.anything()
+    );
+    expect(hasProjectPermit).toHaveBeenNthCalledWith(
+      2,
+      { projectId: "project-1", permit: "edit" },
+      expect.anything()
+    );
+  });
+
   test("returns rejected entries when a writer does not have the required permit", async () => {
     readAccessToken.mockResolvedValue({
       userId: "user-1",
@@ -200,17 +384,21 @@ describe("authorizePatchEntries", () => {
     });
     hasProjectPermit.mockResolvedValue(false);
 
-    const result = await authorizePatchEntries(createContext() as never, {
-      buildId: "build-1",
-      projectId: "project-1",
-      clientVersion: 1,
-      entries: [
-        {
-          transaction: transaction("styles") as never,
-          writer: { type: "token", authToken: "token-1" },
-        },
-      ],
-    });
+    const result = await authorizePatchEntries(
+      createContext() as never,
+      {
+        buildId: "build-1",
+        projectId: "project-1",
+        clientVersion: 1,
+        entries: [
+          {
+            transaction: transaction("styles") as never,
+            writer: { type: "token", authToken: "token-1" },
+          },
+        ],
+      },
+      createContentModeCapabilities(buildRow)
+    );
 
     expect(result.authorized).toEqual([]);
     expect(result.rejected).toEqual([

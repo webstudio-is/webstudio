@@ -28,6 +28,7 @@ import {
   deleteVariableMutable,
   findAvailableVariables,
   findVariableUsagesByInstance,
+  replaceDataSourcesInExpression,
 } from "./data-variables";
 
 test("encode data variable name when necessary", () => {
@@ -157,6 +158,15 @@ test("restore expression variables", () => {
       maskedIdByName: new Map([["My Variable", "myId"]]),
     })
   ).toEqual("$ws$dataSource$myId + missingVariable");
+});
+
+test("replace data source ids in expression", () => {
+  expect(
+    replaceDataSourcesInExpression(
+      `$ws$dataSource$oldId + missingVariable`,
+      new Map([["oldId", "newId"]])
+    )
+  ).toEqual("$ws$dataSource$newId + missingVariable");
 });
 
 test("compute expression with decoded ids", () => {

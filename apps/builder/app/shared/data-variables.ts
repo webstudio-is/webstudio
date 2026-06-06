@@ -12,7 +12,9 @@ import {
   SYSTEM_VARIABLE_ID,
   collectionComponent,
   decodeDataVariableId,
+  decodeDataSourceVariable,
   encodeDataVariableId,
+  encodeDataSourceVariable,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
   getAllPages,
@@ -112,6 +114,24 @@ export const restoreExpressionVariables = ({
   } catch {
     return expression;
   }
+};
+
+export const replaceDataSourcesInExpression = (
+  expression: string,
+  replacements: Map<DataSource["id"], DataSource["id"]>
+) => {
+  return transpileExpression({
+    expression,
+    replaceVariable: (identifier) => {
+      const dataSourceId = decodeDataSourceVariable(identifier);
+      if (dataSourceId === undefined) {
+        return;
+      }
+      return encodeDataSourceVariable(
+        replacements.get(dataSourceId) ?? dataSourceId
+      );
+    },
+  });
 };
 
 export const computeExpression = (
