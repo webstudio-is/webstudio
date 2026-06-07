@@ -2130,6 +2130,176 @@ describe("content mode permissions", () => {
     });
   });
 
+  test("allows whole-instance replacement when only children change", () => {
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id", value: "list-item" }],
+          },
+        ],
+        [
+          "list-item",
+          {
+            type: "instance",
+            id: "list-item",
+            component: "ws:element",
+            tag: "li",
+            label: "List Item",
+            children: [{ type: "text", value: "Old text" }],
+          },
+        ],
+      ]),
+      metas,
+      props,
+      styleSources,
+    });
+
+    const result = applyContentModeTransaction({
+      capabilities,
+      transaction: transaction("instances", [
+        {
+          op: "replace",
+          path: ["list-item"],
+          value: {
+            type: "instance",
+            id: "list-item",
+            component: "ws:element",
+            tag: "li",
+            label: "List Item",
+            children: [{ type: "text", value: "New text" }],
+          },
+        },
+      ]),
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.capabilities.instances.get("list-item")?.children).toEqual([
+        { type: "text", value: "New text" },
+      ]);
+    }
+  });
+
+  test("rejects whole-instance replacement when metadata changes", () => {
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id", value: "list-item" }],
+          },
+        ],
+        [
+          "list-item",
+          {
+            type: "instance",
+            id: "list-item",
+            component: "ws:element",
+            tag: "li",
+            label: "List Item",
+            children: [{ type: "text", value: "Old text" }],
+          },
+        ],
+      ]),
+      metas,
+      props,
+      styleSources,
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("instances", [
+          {
+            op: "replace",
+            path: ["list-item"],
+            value: {
+              type: "instance",
+              id: "list-item",
+              component: "ws:element",
+              tag: "div",
+              label: "List Item",
+              children: [{ type: "text", value: "New text" }],
+            },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Instance patch is not editable in content mode.",
+    });
+  });
+
+  test("rejects whole-instance replacement with outside child reference", () => {
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id", value: "list-item" }],
+          },
+        ],
+        [
+          "list-item",
+          {
+            type: "instance",
+            id: "list-item",
+            component: "ws:element",
+            tag: "li",
+            label: "List Item",
+            children: [{ type: "text", value: "Old text" }],
+          },
+        ],
+        [
+          "outside",
+          {
+            type: "instance",
+            id: "outside",
+            component: "Box",
+            children: [],
+          },
+        ],
+      ]),
+      metas,
+      props,
+      styleSources,
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("instances", [
+          {
+            op: "replace",
+            path: ["list-item"],
+            value: {
+              type: "instance",
+              id: "list-item",
+              component: "ws:element",
+              tag: "li",
+              label: "List Item",
+              children: [{ type: "id", value: "outside" }],
+            },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Instance patch is not editable in content mode.",
+    });
+  });
+
   test("allows limited page field patches", () => {
     const capabilities = getContentModeCapabilities({
       instances,

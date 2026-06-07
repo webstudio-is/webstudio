@@ -467,6 +467,9 @@ importers:
       msw:
         specifier: ^2.13.2
         version: 2.13.2(@types/node@22.13.10)(typescript@5.8.2)
+      playwright:
+        specifier: ^1.50.1
+        version: 1.50.1
       react-router-dom:
         specifier: ^6.30.0
         version: 6.30.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)

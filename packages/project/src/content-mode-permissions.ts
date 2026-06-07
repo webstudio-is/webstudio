@@ -531,6 +531,13 @@ const hasOnlyAllowedContentModeChildReferences = (
     isAllowedContentModeChildReference(context, child)
   );
 
+const hasSameInstanceMetadata = (left: Instance, right: Instance) =>
+  left.type === right.type &&
+  left.id === right.id &&
+  left.component === right.component &&
+  left.tag === right.tag &&
+  left.label === right.label;
+
 const hasOnlyKeys = (value: Record<string, unknown>, keys: Set<string>) => {
   for (const key of Object.keys(value)) {
     if (keys.has(key) === false) {
@@ -706,6 +713,22 @@ const validateInstancePatch = (
         };
   }
 
+  if (patch.path.length === 1 && patch.op === "replace") {
+    const instance = InstanceSchema.safeParse(patch.value);
+    if (
+      instance.success &&
+      instance.data.id === instanceId &&
+      hasOnlyAllowedContentModeChildReferences(context, instance.data)
+    ) {
+      return context.editableInstanceIds.has(instanceId)
+        ? { success: true }
+        : {
+            success: false,
+            error: "Instance patch is outside content roots.",
+          };
+    }
+  }
+
   if (
     patch.path.length === 1 &&
     patch.op === "add" &&
@@ -752,6 +775,19 @@ const validateInstancePatchShape = (
 
   if (field === "children" && isEditableChildrenPatch(patch)) {
     return { success: true };
+  }
+
+  if (patch.path.length === 1 && patch.op === "replace") {
+    const instance = InstanceSchema.safeParse(patch.value);
+    const currentInstance = capabilities.instances.get(instanceId);
+    if (
+      instance.success &&
+      instance.data.id === instanceId &&
+      currentInstance !== undefined &&
+      hasSameInstanceMetadata(currentInstance, instance.data)
+    ) {
+      return { success: true };
+    }
   }
 
   if (
@@ -1284,6 +1320,14 @@ const applyValidatedInstancePatch = (
         instance.children.splice(index, 0, patch.value);
       }
     }
+    return;
+  }
+  if (
+    patch.op === "replace" &&
+    patch.path.length === 1 &&
+    typeof instanceId === "string"
+  ) {
+    capabilities.instances.set(instanceId, patch.value as Instance);
     return;
   }
   if (
