@@ -360,6 +360,7 @@ export const BlockChildHoveredInstanceOutline = () => {
           preventFocusOnHover={false}
         >
           <IconButton
+            aria-label={isAddMode ? "Insert block" : "Delete block"}
             variant={isAddMode ? "local" : "overwritten"}
             onClick={() => {
               if (isAddMode) {

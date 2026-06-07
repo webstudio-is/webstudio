@@ -1,4 +1,10 @@
-import { insertAuthorizationToken, loadDevBuild, updateBuild } from "../db";
+import {
+  insertAsset,
+  insertAuthorizationToken,
+  insertFile,
+  loadDevBuild,
+  updateBuild,
+} from "../db";
 
 export type SeededContentModeProject = {
   projectId: string;
@@ -9,7 +15,17 @@ export type SeededContentModeProject = {
   linkInstanceId: string;
   imageInstanceId: string;
   videoInstanceId: string;
+  assetTemplateName: string;
+  assetTemplateImageAlt: string;
+  assetTemplateVideoName: string;
 };
+
+const assetTemplateName = "Asset Template";
+const assetTemplateImageAlt = "Template asset image";
+const assetTemplateImageName = "template-image.svg";
+const assetTemplateVideoName = "template-video.mp4";
+const assetTemplateImageAssetId = "asset-template-image-asset";
+const assetTemplateVideoAssetId = "asset-template-video-asset";
 
 const createContentModeBuildData = ({
   listItemInstanceId,
@@ -29,6 +45,9 @@ const createContentModeBuildData = ({
   const rootInstanceId = "body";
   const contentBlockId = "content-block";
   const contentBlockTemplateId = "content-block-template";
+  const assetTemplateId = "asset-template";
+  const assetTemplateImageInstanceId = "asset-template-image";
+  const assetTemplateVideoInstanceId = "asset-template-video";
   const instances = [
     {
       type: "instance",
@@ -53,7 +72,18 @@ const createContentModeBuildData = ({
       type: "instance",
       id: contentBlockTemplateId,
       component: "ws:block-template",
-      children: [],
+      children: [{ type: "id", value: assetTemplateId }],
+    },
+    {
+      type: "instance",
+      id: assetTemplateId,
+      component: "ws:element",
+      tag: "section",
+      label: assetTemplateName,
+      children: [
+        { type: "id", value: assetTemplateImageInstanceId },
+        { type: "id", value: assetTemplateVideoInstanceId },
+      ],
     },
     {
       type: "instance",
@@ -82,6 +112,20 @@ const createContentModeBuildData = ({
       id: videoInstanceId,
       component: "Video",
       label: "Video",
+      children: [],
+    },
+    {
+      type: "instance",
+      id: assetTemplateImageInstanceId,
+      component: "Image",
+      label: "Template Image",
+      children: [],
+    },
+    {
+      type: "instance",
+      id: assetTemplateVideoInstanceId,
+      component: "Video",
+      label: "Template Video",
       children: [],
     },
   ];
@@ -144,6 +188,41 @@ const createContentModeBuildData = ({
       type: "number",
       value: 80,
     },
+    {
+      id: "asset-template-image-src-prop",
+      instanceId: assetTemplateImageInstanceId,
+      name: "src",
+      type: "asset",
+      value: assetTemplateImageAssetId,
+    },
+    {
+      id: "asset-template-image-width-prop",
+      instanceId: assetTemplateImageInstanceId,
+      name: "width",
+      type: "asset",
+      value: assetTemplateImageAssetId,
+    },
+    {
+      id: "asset-template-image-height-prop",
+      instanceId: assetTemplateImageInstanceId,
+      name: "height",
+      type: "asset",
+      value: assetTemplateImageAssetId,
+    },
+    {
+      id: "asset-template-image-alt-prop",
+      instanceId: assetTemplateImageInstanceId,
+      name: "alt",
+      type: "asset",
+      value: assetTemplateImageAssetId,
+    },
+    {
+      id: "asset-template-video-src-prop",
+      instanceId: assetTemplateVideoInstanceId,
+      name: "src",
+      type: "asset",
+      value: assetTemplateVideoAssetId,
+    },
   ];
 
   const nextPages = JSON.parse(pages) as {
@@ -189,6 +268,39 @@ export const prepareExistingContentModeProject = async ({
 }): Promise<SeededContentModeProject> => {
   const build = await loadDevBuild({ projectId });
 
+  await Promise.all([
+    insertFile({
+      name: assetTemplateImageName,
+      format: "svg",
+      size: 120,
+      status: "UPLOADED",
+      meta: JSON.stringify({ width: 120, height: 80 }),
+    }),
+    insertFile({
+      name: assetTemplateVideoName,
+      format: "mp4",
+      size: 120,
+      status: "UPLOADED",
+      meta: JSON.stringify({}),
+    }),
+  ]);
+  await Promise.all([
+    insertAsset({
+      id: assetTemplateImageAssetId,
+      projectId,
+      name: assetTemplateImageName,
+      filename: assetTemplateImageName,
+      description: assetTemplateImageAlt,
+    }),
+    insertAsset({
+      id: assetTemplateVideoAssetId,
+      projectId,
+      name: assetTemplateVideoName,
+      filename: assetTemplateVideoName,
+      description: "Template asset video",
+    }),
+  ]);
+
   await updateBuild(build.id, {
     version: 0,
     ...createContentModeBuildData({
@@ -217,5 +329,8 @@ export const prepareExistingContentModeProject = async ({
     linkInstanceId,
     imageInstanceId,
     videoInstanceId,
+    assetTemplateName,
+    assetTemplateImageAlt,
+    assetTemplateVideoName,
   };
 };

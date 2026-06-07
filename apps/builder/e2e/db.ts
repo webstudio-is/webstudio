@@ -92,6 +92,18 @@ export const insertAuthorizationToken = async (
   );
 };
 
+export const insertFile = async (row: Tables["File"]["Insert"]) => {
+  return throwIfError(
+    await postgrest.from("File").insert(row).select().single()
+  );
+};
+
+export const insertAsset = async (row: Tables["Asset"]["Insert"]) => {
+  return throwIfError(
+    await postgrest.from("Asset").insert(row).select().single()
+  );
+};
+
 export const loadDevBuild = async ({
   projectId,
 }: {

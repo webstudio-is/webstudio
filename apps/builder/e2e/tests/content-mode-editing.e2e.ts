@@ -4,12 +4,17 @@ import {
   selectCanvasInstance,
   selectCanvasTextInstanceForProps,
 } from "../flows/canvas-selection";
+import {
+  waitForCanvasImage,
+  waitForCanvasVideoSource,
+} from "../flows/canvas-media";
 import { replaceCanvasText } from "../flows/content-editing";
 import {
   fillSelectedStringProperty,
   waitForSelectedStringPropertyValue,
 } from "../flows/props-panel";
 import { waitForSyncStatus } from "../flows/sync-status";
+import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import {
   getSharedContentModeProject,
   setupSharedContentModeProject,
@@ -24,6 +29,68 @@ export const contentModeEditing: Suite = {
     await setupSharedContentModeProject();
   },
   tests: [
+    {
+      name: "Editor can insert template with asset props",
+      run: async () => {
+        const fixture = getSharedContentModeProject();
+        const { page, close } = await newIsolatedPage();
+
+        try {
+          await measure(
+            "content mode open editor for asset template",
+            async () => {
+              await openProjectBuilder({
+                page,
+                projectId: fixture.projectId,
+                authToken: fixture.editorToken,
+                mode: "content",
+              });
+            }
+          );
+          await waitForCanvasText({ page, text: "Initial content" });
+          await waitForSyncStatus({ page, status: "idle" });
+
+          await measure("content mode insert asset template", async () => {
+            await insertTemplateAfterCanvasText({
+              page,
+              anchorText: "Initial content",
+              templateName: fixture.assetTemplateName,
+            });
+          });
+          await waitForCanvasImage({
+            page,
+            alt: fixture.assetTemplateImageAlt,
+          });
+          await waitForCanvasVideoSource({
+            page,
+            sourceName: fixture.assetTemplateVideoName,
+          });
+
+          await measure(
+            "content mode reload editor for asset template",
+            async () => {
+              await openProjectBuilder({
+                page,
+                projectId: fixture.projectId,
+                authToken: fixture.editorToken,
+                mode: "content",
+              });
+            }
+          );
+          await waitForCanvasImage({
+            page,
+            alt: fixture.assetTemplateImageAlt,
+          });
+          await waitForCanvasVideoSource({
+            page,
+            sourceName: fixture.assetTemplateVideoName,
+          });
+          await waitForSyncStatus({ page, status: "idle" });
+        } finally {
+          await close();
+        }
+      },
+    },
     {
       name: "Editor can edit existing content props",
       run: async () => {

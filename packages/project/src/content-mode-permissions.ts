@@ -45,6 +45,10 @@ type ContentModeTransactionContext = {
   initialContentRootIds: Set<Instance["id"]>;
   initialEditableInstanceIds: Set<Instance["id"]>;
   initialEditableInstanceRootIds: Map<Instance["id"], Instance["id"]>;
+  initialBlockTemplateChildIdsByInstanceId: Map<
+    Instance["id"],
+    Set<Instance["id"]>
+  >;
   addedInstanceIds: Set<Instance["id"]>;
   removedEditableInstanceIds: Set<Instance["id"]>;
   addedPageIds: Set<string>;
@@ -193,6 +197,27 @@ const getContentModeEditableInstanceRootIds = ({
     visit(rootId, rootId);
   }
   return rootIdsByInstanceId;
+};
+
+const getBlockTemplateChildIdsByInstanceId = (
+  instances: Map<Instance["id"], Instance>
+) => {
+  const childIdsByInstanceId = new Map<Instance["id"], Set<Instance["id"]>>();
+  for (const instance of instances.values()) {
+    const blockTemplateChildIds = new Set<Instance["id"]>();
+    for (const child of instance.children) {
+      if (child.type !== "id") {
+        continue;
+      }
+      if (instances.get(child.value)?.component === blockTemplateComponent) {
+        blockTemplateChildIds.add(child.value);
+      }
+    }
+    if (blockTemplateChildIds.size > 0) {
+      childIdsByInstanceId.set(instance.id, blockTemplateChildIds);
+    }
+  }
+  return childIdsByInstanceId;
 };
 
 const getContentModePropMeta = ({
@@ -495,16 +520,24 @@ const isEditableChildrenPatch = (patch: Patch) => {
 
 const isAllowedContentModeChildReference = (
   context: ContentModeTransactionContext,
+  instanceId: Instance["id"],
   child: Instance["children"][number]
 ) =>
   child.type !== "id" ||
   context.initialEditableInstanceIds.has(child.value) ||
-  context.addedInstanceIds.has(child.value);
+  context.addedInstanceIds.has(child.value) ||
+  context.initialBlockTemplateChildIdsByInstanceId
+    .get(instanceId)
+    ?.has(child.value) === true;
 
 const isAllowedContentModeChildrenPatch = (
   context: ContentModeTransactionContext,
   patch: Patch
 ) => {
+  const [instanceId] = patch.path;
+  if (typeof instanceId !== "string") {
+    return false;
+  }
   if (patch.op === "remove") {
     return true;
   }
@@ -514,12 +547,12 @@ const isAllowedContentModeChildrenPatch = (
     }
     const children = patch.value as Instance["children"];
     return children.every((child) =>
-      isAllowedContentModeChildReference(context, child)
+      isAllowedContentModeChildReference(context, instanceId, child)
     );
   }
   return (
     isInstanceChild(patch.value) &&
-    isAllowedContentModeChildReference(context, patch.value)
+    isAllowedContentModeChildReference(context, instanceId, patch.value)
   );
 };
 
@@ -528,7 +561,7 @@ const hasOnlyAllowedContentModeChildReferences = (
   instance: Instance
 ) =>
   instance.children.every((child) =>
-    isAllowedContentModeChildReference(context, child)
+    isAllowedContentModeChildReference(context, instance.id, child)
   );
 
 const hasSameInstanceMetadata = (left: Instance, right: Instance) =>
@@ -1394,6 +1427,8 @@ export const applyContentModeTransaction = ({
     initialContentRootIds: new Set(transactionCapabilities.contentRootIds),
     initialEditableInstanceIds,
     initialEditableInstanceRootIds,
+    initialBlockTemplateChildIdsByInstanceId:
+      getBlockTemplateChildIdsByInstanceId(transactionCapabilities.instances),
     addedInstanceIds: new Set(),
     removedEditableInstanceIds: new Set(),
     addedPageIds: new Set(),

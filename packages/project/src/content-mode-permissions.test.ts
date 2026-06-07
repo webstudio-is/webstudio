@@ -1590,6 +1590,107 @@ describe("content mode permissions", () => {
     });
   });
 
+  test("allows content insertion patches that preserve block template children", () => {
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [
+              { type: "id", value: "instance-1" },
+              { type: "id", value: "template-container" },
+            ],
+          },
+        ],
+        [
+          "instance-1",
+          {
+            type: "instance",
+            id: "instance-1",
+            component: "Box",
+            children: [],
+          },
+        ],
+        [
+          "template-container",
+          {
+            type: "instance",
+            id: "template-container",
+            component: blockTemplateComponent,
+            children: [],
+          },
+        ],
+        [
+          "other-template-container",
+          {
+            type: "instance",
+            id: "other-template-container",
+            component: blockTemplateComponent,
+            children: [],
+          },
+        ],
+      ]),
+      metas,
+      props: new Map(),
+      styleSources,
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: {
+          id: "tx-1",
+          payload: [
+            {
+              namespace: "instances",
+              patches: [
+                {
+                  op: "replace",
+                  path: ["block", "children", 1],
+                  value: { type: "id", value: "new-instance" },
+                },
+                {
+                  op: "add",
+                  path: ["block", "children", 2],
+                  value: { type: "id", value: "template-container" },
+                },
+                {
+                  op: "add",
+                  path: ["new-instance"],
+                  value: {
+                    type: "instance",
+                    id: "new-instance",
+                    component: "Box",
+                    children: [],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      })
+    ).toEqual({ success: true });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("instances", [
+          {
+            op: "add",
+            path: ["block", "children", 1],
+            value: { type: "id", value: "other-template-container" },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Instance patch is not editable in content mode.",
+    });
+  });
+
   test("allows cleaning up any props from removed editable instances", () => {
     const capabilities = getContentModeCapabilities({
       instances,
