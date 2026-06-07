@@ -21,6 +21,9 @@ export type SeededContentModeProject = {
   styledHeadingTemplateName: string;
   styledHeadingTemplateText: string;
   styledHeadingTemplateFontSize: string;
+  isolatedLocalTemplateName: string;
+  isolatedLocalTemplateText: string;
+  isolatedLocalTemplateFontSize: string;
   tokenTemplateName: string;
   tokenTemplateText: string;
   tokenTemplateFontSize: string;
@@ -35,6 +38,9 @@ const assetTemplateVideoAssetId = "asset-template-video-asset";
 const styledHeadingTemplateName = "Styled Heading Template";
 const styledHeadingTemplateText = "Styled template heading";
 const styledHeadingTemplateFontSize = "32px";
+const isolatedLocalTemplateName = "Isolated Local Style Template";
+const isolatedLocalTemplateText = "Isolated local heading";
+const isolatedLocalTemplateFontSize = "34px";
 const tokenTemplateName = "Token Template";
 const tokenTemplateText = "Token styled heading";
 const tokenTemplateFontSize = "36px";
@@ -79,6 +85,9 @@ const createContentModeBuildData = ({
   const styledHeadingTemplateId = "styled-heading-template";
   const styledHeadingTemplateLocalStyleSourceId =
     "styled-heading-template-local-style-source";
+  const isolatedLocalTemplateId = "isolated-local-template";
+  const isolatedLocalTemplateStyleSourceId =
+    "isolated-local-template-style-source";
   const tokenTemplateId = "token-template";
   const tokenTemplateStyleSourceId = "content-mode-token-style-source";
   const baseBreakpointId = getBaseBreakpointId(breakpoints);
@@ -109,6 +118,7 @@ const createContentModeBuildData = ({
       children: [
         { type: "id", value: assetTemplateId },
         { type: "id", value: styledHeadingTemplateId },
+        { type: "id", value: isolatedLocalTemplateId },
         { type: "id", value: tokenTemplateId },
       ],
     },
@@ -173,6 +183,14 @@ const createContentModeBuildData = ({
       tag: "h2",
       label: styledHeadingTemplateName,
       children: [{ type: "text", value: styledHeadingTemplateText }],
+    },
+    {
+      type: "instance",
+      id: isolatedLocalTemplateId,
+      component: "ws:element",
+      tag: "h2",
+      label: isolatedLocalTemplateName,
+      children: [{ type: "text", value: isolatedLocalTemplateText }],
     },
     {
       type: "instance",
@@ -301,6 +319,10 @@ const createContentModeBuildData = ({
         id: styledHeadingTemplateLocalStyleSourceId,
       },
       {
+        type: "local",
+        id: isolatedLocalTemplateStyleSourceId,
+      },
+      {
         type: "token",
         id: tokenTemplateStyleSourceId,
         name: "Content Mode Token",
@@ -310,6 +332,10 @@ const createContentModeBuildData = ({
       {
         instanceId: styledHeadingTemplateId,
         values: [styledHeadingTemplateLocalStyleSourceId],
+      },
+      {
+        instanceId: isolatedLocalTemplateId,
+        values: [isolatedLocalTemplateStyleSourceId],
       },
       {
         instanceId: tokenTemplateId,
@@ -325,6 +351,16 @@ const createContentModeBuildData = ({
           type: "unit",
           unit: "px",
           value: Number.parseFloat(styledHeadingTemplateFontSize),
+        },
+      },
+      {
+        styleSourceId: isolatedLocalTemplateStyleSourceId,
+        breakpointId: baseBreakpointId,
+        property: "fontSize",
+        value: {
+          type: "unit",
+          unit: "px",
+          value: Number.parseFloat(isolatedLocalTemplateFontSize),
         },
       },
       {
@@ -429,6 +465,9 @@ export const prepareExistingContentModeProject = async ({
     styledHeadingTemplateName,
     styledHeadingTemplateText,
     styledHeadingTemplateFontSize,
+    isolatedLocalTemplateName,
+    isolatedLocalTemplateText,
+    isolatedLocalTemplateFontSize,
     tokenTemplateName,
     tokenTemplateText,
     tokenTemplateFontSize,
