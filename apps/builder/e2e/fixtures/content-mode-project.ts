@@ -27,6 +27,8 @@ export type SeededContentModeProject = {
   tokenTemplateName: string;
   tokenTemplateText: string;
   tokenTemplateFontSize: string;
+  deletableTemplateName: string;
+  deletableTemplateText: string;
 };
 
 const assetTemplateName = "Asset Template";
@@ -44,6 +46,8 @@ const isolatedLocalTemplateFontSize = "34px";
 const tokenTemplateName = "Token Template";
 const tokenTemplateText = "Token styled heading";
 const tokenTemplateFontSize = "36px";
+const deletableTemplateName = "Deletable Template";
+const deletableTemplateText = "Content block child to delete";
 
 const getBaseBreakpointId = (breakpoints: string) => {
   const parsedBreakpoints = JSON.parse(breakpoints) as Array<{
@@ -90,6 +94,7 @@ const createContentModeBuildData = ({
     "isolated-local-template-style-source";
   const tokenTemplateId = "token-template";
   const tokenTemplateStyleSourceId = "content-mode-token-style-source";
+  const deletableTemplateId = "deletable-template";
   const baseBreakpointId = getBaseBreakpointId(breakpoints);
   const instances = [
     {
@@ -120,6 +125,7 @@ const createContentModeBuildData = ({
         { type: "id", value: styledHeadingTemplateId },
         { type: "id", value: isolatedLocalTemplateId },
         { type: "id", value: tokenTemplateId },
+        { type: "id", value: deletableTemplateId },
       ],
     },
     {
@@ -199,6 +205,14 @@ const createContentModeBuildData = ({
       tag: "h2",
       label: tokenTemplateName,
       children: [{ type: "text", value: tokenTemplateText }],
+    },
+    {
+      type: "instance",
+      id: deletableTemplateId,
+      component: "ws:element",
+      tag: "p",
+      label: deletableTemplateName,
+      children: [{ type: "text", value: deletableTemplateText }],
     },
   ];
 
@@ -471,5 +485,7 @@ export const prepareExistingContentModeProject = async ({
     tokenTemplateName,
     tokenTemplateText,
     tokenTemplateFontSize,
+    deletableTemplateName,
+    deletableTemplateText,
   };
 };

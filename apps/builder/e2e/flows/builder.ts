@@ -85,6 +85,20 @@ export const waitForCanvasText = async ({
   );
 };
 
+export const waitForCanvasTextHidden = async ({
+  page,
+  text,
+}: {
+  page: Page;
+  text: string;
+}) => {
+  const canvas = await waitForCanvasFrame({ page });
+  await canvas.getByText(text, { exact: true }).first().waitFor({
+    state: "hidden",
+    timeout: 30_000,
+  });
+};
+
 export const dismissBlockingAlerts = async ({ page }: { page: Page }) => {
   const startedAt = Date.now();
   while (Date.now() - startedAt < 3_000) {

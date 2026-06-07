@@ -33,6 +33,7 @@ import { $instances } from "~/shared/sync/data-stores";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import {
+  canDeleteInstanceInContentMode,
   deleteInstanceMutable,
   updateWebstudioData,
 } from "~/shared/instance-utils";
@@ -364,6 +365,15 @@ export const BlockChildHoveredInstanceOutline = () => {
             variant={isAddMode ? "local" : "overwritten"}
             onClick={() => {
               if (isAddMode) {
+                return;
+              }
+
+              if (
+                canDeleteInstanceInContentMode({
+                  instanceSelector: outline.selector,
+                  instances,
+                }) === false
+              ) {
                 return;
               }
 

@@ -6,7 +6,12 @@ import {
   replaceSelectedAsset,
   uploadAsset,
 } from "../flows/assets-panel";
-import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
+import { deleteContentBlockChildAfterCanvasText } from "../flows/block-outline";
+import {
+  openProjectBuilder,
+  waitForCanvasText,
+  waitForCanvasTextHidden,
+} from "../flows/builder";
 import {
   selectCanvasInstance,
   selectCanvasTextInstanceForProps,
@@ -307,6 +312,71 @@ export const contentModeEditing: Suite = {
           await page
             .getByTitle(replacementAssetTitle)
             .waitFor({ state: "hidden" });
+          await waitForSyncStatus({ page, status: "idle" });
+        } finally {
+          await close();
+        }
+      },
+    },
+    {
+      name: "Editor can delete direct child of content block",
+      run: async () => {
+        const fixture = getSharedContentModeProject();
+        const { page, close } = await newIsolatedPage();
+
+        try {
+          await measure(
+            "content mode open editor for direct child delete",
+            async () => {
+              await openProjectBuilder({
+                page,
+                projectId: fixture.projectId,
+                authToken: fixture.editorToken,
+                mode: "content",
+              });
+            }
+          );
+          await waitForCanvasText({ page, text: "Initial content" });
+          await waitForSyncStatus({ page, status: "idle" });
+
+          await measure("content mode insert deletable template", async () => {
+            await insertTemplateAfterCanvasText({
+              page,
+              anchorText: "Initial content",
+              templateName: fixture.deletableTemplateName,
+            });
+          });
+          await waitForCanvasText({
+            page,
+            text: fixture.deletableTemplateText,
+          });
+
+          await measure("content mode delete direct child", async () => {
+            await deleteContentBlockChildAfterCanvasText({
+              page,
+              text: fixture.deletableTemplateText,
+            });
+          });
+          await waitForCanvasTextHidden({
+            page,
+            text: fixture.deletableTemplateText,
+          });
+
+          await measure(
+            "content mode reload editor for direct child delete",
+            async () => {
+              await openProjectBuilder({
+                page,
+                projectId: fixture.projectId,
+                authToken: fixture.editorToken,
+                mode: "content",
+              });
+            }
+          );
+          await waitForCanvasTextHidden({
+            page,
+            text: fixture.deletableTemplateText,
+          });
           await waitForSyncStatus({ page, status: "idle" });
         } finally {
           await close();
