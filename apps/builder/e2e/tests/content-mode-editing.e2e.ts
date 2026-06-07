@@ -4,6 +4,7 @@ import {
   selectCanvasInstance,
   selectCanvasTextInstanceForProps,
 } from "../flows/canvas-selection";
+import { expectLocatorHidden, expectTextHidden } from "../flows/assertions";
 import {
   waitForCanvasImage,
   waitForCanvasVideoSource,
@@ -85,6 +86,45 @@ export const contentModeEditing: Suite = {
             page,
             sourceName: fixture.assetTemplateVideoName,
           });
+          await waitForSyncStatus({ page, status: "idle" });
+        } finally {
+          await close();
+        }
+      },
+    },
+    {
+      name: "Editor cannot edit design props",
+      run: async () => {
+        const fixture = getSharedContentModeProject();
+        const { page, close } = await newIsolatedPage();
+
+        try {
+          await measure(
+            "content mode open editor for design prop guard",
+            async () => {
+              await openProjectBuilder({
+                page,
+                projectId: fixture.projectId,
+                authToken: fixture.editorToken,
+                mode: "content",
+              });
+            }
+          );
+          await waitForCanvasText({ page, text: "Initial link" });
+          await waitForSyncStatus({ page, status: "idle" });
+
+          await selectCanvasTextInstanceForProps({
+            page,
+            text: "Initial link",
+            propertyLabel: "Href",
+          });
+
+          await expectLocatorHidden({
+            locator: page.getByRole("tab", { name: "Style" }),
+            message: "Expected Style tab to be unavailable in content mode",
+          });
+          await expectTextHidden({ page, text: "Style sources" });
+          await expectTextHidden({ page, text: "Target" });
           await waitForSyncStatus({ page, status: "idle" });
         } finally {
           await close();

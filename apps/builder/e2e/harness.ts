@@ -2,7 +2,7 @@ import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { chromium, type Browser, type BrowserContext } from "playwright";
 
 const builderPort =
-  process.env.E2E_BUILDER_PORT ?? String(55_000 + (process.pid % 1_000));
+  process.env.E2E_BUILDER_PORT ?? String(56_000 + (process.pid % 1_000));
 
 export const builderUrl =
   process.env.E2E_BUILDER_URL ?? `https://127.0.0.1:${builderPort}`;
