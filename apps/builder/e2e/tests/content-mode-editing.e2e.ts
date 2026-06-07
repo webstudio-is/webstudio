@@ -138,6 +138,50 @@ export const contentModeEditing: Suite = {
       },
     },
     {
+      name: "Editor can insert styled template with tokens",
+      run: async () => {
+        const fixture = getSharedContentModeProject();
+        const { page, close } = await newIsolatedPage();
+
+        try {
+          await measure(
+            "content mode open editor for token template",
+            async () => {
+              await openProjectBuilder({
+                page,
+                projectId: fixture.projectId,
+                authToken: fixture.editorToken,
+                mode: "content",
+              });
+            }
+          );
+          await waitForCanvasText({ page, text: "Initial content" });
+          await waitForSyncStatus({ page, status: "idle" });
+
+          await measure("content mode insert token template", async () => {
+            await insertTemplateAfterCanvasText({
+              page,
+              anchorText: "Initial content",
+              templateName: fixture.tokenTemplateName,
+            });
+          });
+          await waitForCanvasText({
+            page,
+            text: fixture.tokenTemplateText,
+          });
+          await waitForCanvasTextStyle({
+            page,
+            text: fixture.tokenTemplateText,
+            property: "font-size",
+            value: fixture.tokenTemplateFontSize,
+          });
+          await waitForSyncStatus({ page, status: "idle" });
+        } finally {
+          await close();
+        }
+      },
+    },
+    {
       name: "Editor cannot edit design props",
       run: async () => {
         const fixture = getSharedContentModeProject();

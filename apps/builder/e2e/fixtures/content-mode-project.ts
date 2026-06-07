@@ -21,6 +21,9 @@ export type SeededContentModeProject = {
   styledHeadingTemplateName: string;
   styledHeadingTemplateText: string;
   styledHeadingTemplateFontSize: string;
+  tokenTemplateName: string;
+  tokenTemplateText: string;
+  tokenTemplateFontSize: string;
 };
 
 const assetTemplateName = "Asset Template";
@@ -32,6 +35,9 @@ const assetTemplateVideoAssetId = "asset-template-video-asset";
 const styledHeadingTemplateName = "Styled Heading Template";
 const styledHeadingTemplateText = "Styled template heading";
 const styledHeadingTemplateFontSize = "32px";
+const tokenTemplateName = "Token Template";
+const tokenTemplateText = "Token styled heading";
+const tokenTemplateFontSize = "36px";
 
 const getBaseBreakpointId = (breakpoints: string) => {
   const parsedBreakpoints = JSON.parse(breakpoints) as Array<{
@@ -73,6 +79,8 @@ const createContentModeBuildData = ({
   const styledHeadingTemplateId = "styled-heading-template";
   const styledHeadingTemplateLocalStyleSourceId =
     "styled-heading-template-local-style-source";
+  const tokenTemplateId = "token-template";
+  const tokenTemplateStyleSourceId = "content-mode-token-style-source";
   const baseBreakpointId = getBaseBreakpointId(breakpoints);
   const instances = [
     {
@@ -101,6 +109,7 @@ const createContentModeBuildData = ({
       children: [
         { type: "id", value: assetTemplateId },
         { type: "id", value: styledHeadingTemplateId },
+        { type: "id", value: tokenTemplateId },
       ],
     },
     {
@@ -164,6 +173,14 @@ const createContentModeBuildData = ({
       tag: "h2",
       label: styledHeadingTemplateName,
       children: [{ type: "text", value: styledHeadingTemplateText }],
+    },
+    {
+      type: "instance",
+      id: tokenTemplateId,
+      component: "ws:element",
+      tag: "h2",
+      label: tokenTemplateName,
+      children: [{ type: "text", value: tokenTemplateText }],
     },
   ];
 
@@ -283,11 +300,20 @@ const createContentModeBuildData = ({
         type: "local",
         id: styledHeadingTemplateLocalStyleSourceId,
       },
+      {
+        type: "token",
+        id: tokenTemplateStyleSourceId,
+        name: "Content Mode Token",
+      },
     ]),
     styleSourceSelections: JSON.stringify([
       {
         instanceId: styledHeadingTemplateId,
         values: [styledHeadingTemplateLocalStyleSourceId],
+      },
+      {
+        instanceId: tokenTemplateId,
+        values: [tokenTemplateStyleSourceId],
       },
     ]),
     styles: JSON.stringify([
@@ -299,6 +325,16 @@ const createContentModeBuildData = ({
           type: "unit",
           unit: "px",
           value: Number.parseFloat(styledHeadingTemplateFontSize),
+        },
+      },
+      {
+        styleSourceId: tokenTemplateStyleSourceId,
+        breakpointId: baseBreakpointId,
+        property: "fontSize",
+        value: {
+          type: "unit",
+          unit: "px",
+          value: Number.parseFloat(tokenTemplateFontSize),
         },
       },
     ]),
@@ -393,5 +429,8 @@ export const prepareExistingContentModeProject = async ({
     styledHeadingTemplateName,
     styledHeadingTemplateText,
     styledHeadingTemplateFontSize,
+    tokenTemplateName,
+    tokenTemplateText,
+    tokenTemplateFontSize,
   };
 };
