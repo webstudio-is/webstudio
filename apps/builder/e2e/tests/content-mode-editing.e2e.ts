@@ -9,6 +9,7 @@ import {
   waitForCanvasImage,
   waitForCanvasVideoSource,
 } from "../flows/canvas-media";
+import { waitForCanvasTextStyle } from "../flows/canvas-style";
 import { replaceCanvasText } from "../flows/content-editing";
 import {
   fillSelectedStringProperty,
@@ -85,6 +86,50 @@ export const contentModeEditing: Suite = {
           await waitForCanvasVideoSource({
             page,
             sourceName: fixture.assetTemplateVideoName,
+          });
+          await waitForSyncStatus({ page, status: "idle" });
+        } finally {
+          await close();
+        }
+      },
+    },
+    {
+      name: "Editor can insert heading template in content block",
+      run: async () => {
+        const fixture = getSharedContentModeProject();
+        const { page, close } = await newIsolatedPage();
+
+        try {
+          await measure(
+            "content mode open editor for heading template",
+            async () => {
+              await openProjectBuilder({
+                page,
+                projectId: fixture.projectId,
+                authToken: fixture.editorToken,
+                mode: "content",
+              });
+            }
+          );
+          await waitForCanvasText({ page, text: "Initial content" });
+          await waitForSyncStatus({ page, status: "idle" });
+
+          await measure("content mode insert heading template", async () => {
+            await insertTemplateAfterCanvasText({
+              page,
+              anchorText: "Initial content",
+              templateName: fixture.styledHeadingTemplateName,
+            });
+          });
+          await waitForCanvasText({
+            page,
+            text: fixture.styledHeadingTemplateText,
+          });
+          await waitForCanvasTextStyle({
+            page,
+            text: fixture.styledHeadingTemplateText,
+            property: "font-size",
+            value: fixture.styledHeadingTemplateFontSize,
           });
           await waitForSyncStatus({ page, status: "idle" });
         } finally {

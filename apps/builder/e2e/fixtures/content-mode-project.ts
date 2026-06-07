@@ -18,6 +18,9 @@ export type SeededContentModeProject = {
   assetTemplateName: string;
   assetTemplateImageAlt: string;
   assetTemplateVideoName: string;
+  styledHeadingTemplateName: string;
+  styledHeadingTemplateText: string;
+  styledHeadingTemplateFontSize: string;
 };
 
 const assetTemplateName = "Asset Template";
@@ -26,6 +29,25 @@ const assetTemplateImageName = "template-image.svg";
 const assetTemplateVideoName = "template-video.mp4";
 const assetTemplateImageAssetId = "asset-template-image-asset";
 const assetTemplateVideoAssetId = "asset-template-video-asset";
+const styledHeadingTemplateName = "Styled Heading Template";
+const styledHeadingTemplateText = "Styled template heading";
+const styledHeadingTemplateFontSize = "32px";
+
+const getBaseBreakpointId = (breakpoints: string) => {
+  const parsedBreakpoints = JSON.parse(breakpoints) as Array<{
+    id: string;
+    minWidth?: number;
+    maxWidth?: number;
+  }>;
+  return (
+    parsedBreakpoints.find(
+      (breakpoint) =>
+        breakpoint.minWidth === undefined && breakpoint.maxWidth === undefined
+    )?.id ??
+    parsedBreakpoints.at(0)?.id ??
+    "base"
+  );
+};
 
 const createContentModeBuildData = ({
   listItemInstanceId,
@@ -48,6 +70,10 @@ const createContentModeBuildData = ({
   const assetTemplateId = "asset-template";
   const assetTemplateImageInstanceId = "asset-template-image";
   const assetTemplateVideoInstanceId = "asset-template-video";
+  const styledHeadingTemplateId = "styled-heading-template";
+  const styledHeadingTemplateLocalStyleSourceId =
+    "styled-heading-template-local-style-source";
+  const baseBreakpointId = getBaseBreakpointId(breakpoints);
   const instances = [
     {
       type: "instance",
@@ -72,7 +98,10 @@ const createContentModeBuildData = ({
       type: "instance",
       id: contentBlockTemplateId,
       component: "ws:block-template",
-      children: [{ type: "id", value: assetTemplateId }],
+      children: [
+        { type: "id", value: assetTemplateId },
+        { type: "id", value: styledHeadingTemplateId },
+      ],
     },
     {
       type: "instance",
@@ -127,6 +156,14 @@ const createContentModeBuildData = ({
       component: "Video",
       label: "Template Video",
       children: [],
+    },
+    {
+      type: "instance",
+      id: styledHeadingTemplateId,
+      component: "ws:element",
+      tag: "h2",
+      label: styledHeadingTemplateName,
+      children: [{ type: "text", value: styledHeadingTemplateText }],
     },
   ];
 
@@ -241,9 +278,30 @@ const createContentModeBuildData = ({
     pages: JSON.stringify(nextPages),
     instances: JSON.stringify(instances),
     props: JSON.stringify(props),
-    styleSources: JSON.stringify([]),
-    styleSourceSelections: JSON.stringify([]),
-    styles: JSON.stringify([]),
+    styleSources: JSON.stringify([
+      {
+        type: "local",
+        id: styledHeadingTemplateLocalStyleSourceId,
+      },
+    ]),
+    styleSourceSelections: JSON.stringify([
+      {
+        instanceId: styledHeadingTemplateId,
+        values: [styledHeadingTemplateLocalStyleSourceId],
+      },
+    ]),
+    styles: JSON.stringify([
+      {
+        styleSourceId: styledHeadingTemplateLocalStyleSourceId,
+        breakpointId: baseBreakpointId,
+        property: "fontSize",
+        value: {
+          type: "unit",
+          unit: "px",
+          value: Number.parseFloat(styledHeadingTemplateFontSize),
+        },
+      },
+    ]),
     breakpoints,
     dataSources: JSON.stringify([]),
     resources: JSON.stringify([]),
@@ -332,5 +390,8 @@ export const prepareExistingContentModeProject = async ({
     assetTemplateName,
     assetTemplateImageAlt,
     assetTemplateVideoName,
+    styledHeadingTemplateName,
+    styledHeadingTemplateText,
+    styledHeadingTemplateFontSize,
   };
 };
