@@ -98,8 +98,23 @@ const ItemSuffix = ({
   type: "folder" | "page";
   canEdit: boolean;
 }) => {
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const prevEditingItemId = useRef(editingItemId);
+
+  useEffect(() => {
+    // when settings panel close, move focus back to the menu button
+    if (
+      editingItemId === undefined &&
+      prevEditingItemId.current === itemId &&
+      buttonRef.current
+    ) {
+      buttonRef.current.focus();
+    }
+    prevEditingItemId.current = editingItemId;
+  }, [editingItemId, itemId]);
+
   if (canEdit === false) {
-    return null;
+    return;
   }
 
   const isEditing = editingItemId === itemId;
@@ -112,21 +127,6 @@ const ItemSuffix = ({
       : isEditing
         ? "Close folder settings"
         : "Open folder settings";
-
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-
-  const prevEditingItemId = useRef(editingItemId);
-  useEffect(() => {
-    // when settings panel close, move focus back to the menu button
-    if (
-      editingItemId === undefined &&
-      prevEditingItemId.current === itemId &&
-      buttonRef.current
-    ) {
-      buttonRef.current.focus();
-    }
-    prevEditingItemId.current = editingItemId;
-  }, [editingItemId, itemId]);
 
   return (
     <Tooltip content={menuLabel} disableHoverableContent>

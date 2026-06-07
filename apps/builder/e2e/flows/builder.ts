@@ -86,9 +86,14 @@ export const waitForCanvasText = async ({
 };
 
 export const dismissBlockingAlerts = async ({ page }: { page: Page }) => {
-  const dismissButton = page.getByRole("button", { name: "Dismiss" });
-  if (await dismissButton.isVisible({ timeout: 500 }).catch(() => false)) {
-    await dismissButton.click();
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < 3_000) {
+    const dismissButton = page.getByRole("button", { name: "Dismiss" });
+    if (await dismissButton.isVisible({ timeout: 500 }).catch(() => false)) {
+      await dismissButton.click();
+      return;
+    }
+    await delay(100);
   }
 };
 

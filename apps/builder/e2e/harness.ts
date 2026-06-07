@@ -96,8 +96,11 @@ export const getProjectIdFromBuilderUrl = (url: string) => {
   return parseBuilderUrl(url).projectId;
 };
 
-export function assert(condition: unknown, message: string): asserts condition {
+export const assert = (
+  condition: unknown,
+  message: string
+): asserts condition => {
   if (condition === false || condition === undefined || condition === null) {
     throw new Error(message);
   }
-}
+};

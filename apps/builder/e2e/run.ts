@@ -9,7 +9,7 @@ import {
   type Suite,
 } from "./harness";
 import { logPerf, measure } from "./perf";
-import { contentModeEditExistingText } from "./tests/content-mode-edit-existing-text.e2e";
+import { contentModeEditing } from "./tests/content-mode-editing.e2e";
 
 const testTimeoutMs =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 60_000;
@@ -128,7 +128,7 @@ const stopBuilder = async (child: ChildProcess | undefined) => {
   ]);
 };
 
-const suites: Suite[] = [contentModeEditExistingText];
+const suites: Suite[] = [contentModeEditing];
 
 const run = async () => {
   const totalStartedAt = Date.now();
