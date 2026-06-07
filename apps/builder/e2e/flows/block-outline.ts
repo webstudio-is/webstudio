@@ -17,10 +17,10 @@ export const deleteContentBlockChildAfterCanvasText = async ({
     await canvas.getByText(text, { exact: true }).hover();
     const deleteButton = page
       .getByRole("button", { name: "Delete block" })
-      .first();
+      .last();
     await deleteButton.waitFor({ state: "visible" });
     const save = waitForChangeToBeSaved({ page });
-    await deleteButton.click({ force: true });
+    await deleteButton.click();
     await save;
   } finally {
     await page.keyboard.up("Alt");

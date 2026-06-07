@@ -14,10 +14,7 @@ export const insertTemplateAfterCanvasText = async ({
   const canvas = await waitForCanvasFrame({ page });
   await canvas.getByText(anchorText).hover();
 
-  await page
-    .getByRole("button", { name: "Insert block" })
-    .first()
-    .click({ force: true });
+  await page.getByRole("button", { name: "Insert block" }).last().click();
 
   const save = waitForChangeToBeSaved({ page });
   await page.getByRole("menuitemradio", { name: templateName }).click();

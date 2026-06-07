@@ -396,6 +396,9 @@ export const BlockChildHoveredInstanceOutline = () => {
               $hoveredInstanceOutline.set(undefined);
             }}
             css={{
+              "& svg, & svg *": {
+                pointerEvents: "none",
+              },
               borderStyle: "solid",
               borderColor: isAddMode
                 ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`

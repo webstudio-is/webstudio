@@ -15,6 +15,17 @@ export const waitForCanvasImage = async ({
   });
 };
 
+export const selectCanvasImage = async ({
+  page,
+  alt,
+}: {
+  page: Page;
+  alt: string;
+}) => {
+  const canvas = await waitForCanvasFrame({ page });
+  await canvas.getByRole("img", { name: alt }).click();
+};
+
 export const waitForCanvasVideoSource = async ({
   page,
   sourceName,
@@ -27,4 +38,15 @@ export const waitForCanvasVideoSource = async ({
     state: "visible",
     timeout: 10_000,
   });
+};
+
+export const selectCanvasVideoSource = async ({
+  page,
+  sourceName,
+}: {
+  page: Page;
+  sourceName: string;
+}) => {
+  const canvas = await waitForCanvasFrame({ page });
+  await canvas.locator(`video[src*="${sourceName}"]`).click();
 };

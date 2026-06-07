@@ -13,12 +13,11 @@ import {
   waitForCanvasText,
   waitForCanvasTextHidden,
 } from "../flows/builder";
-import {
-  selectCanvasInstance,
-  selectCanvasTextInstanceForProps,
-} from "../flows/canvas-selection";
+import { selectCanvasTextInstanceForProps } from "../flows/canvas-selection";
 import { expectLocatorHidden, expectTextHidden } from "../flows/assertions";
 import {
+  selectCanvasImage,
+  selectCanvasVideoSource,
   waitForCanvasImage,
   waitForCanvasVideoSource,
 } from "../flows/canvas-media";
@@ -514,9 +513,9 @@ export const contentModeEditing: Suite = {
             value: editedHref,
           });
 
-          await selectCanvasInstance({
+          await selectCanvasImage({
             page,
-            instanceId: fixture.imageInstanceId,
+            alt: "Initial image alt",
           });
           await fillSelectedStringProperty({
             page,
@@ -531,9 +530,9 @@ export const contentModeEditing: Suite = {
             value: editedImageAlt,
           });
 
-          await selectCanvasInstance({
+          await selectCanvasVideoSource({
             page,
-            instanceId: fixture.videoInstanceId,
+            sourceName: "initial-video.mp4",
           });
           await fillSelectedStringProperty({
             page,
@@ -565,9 +564,9 @@ export const contentModeEditing: Suite = {
             value: editedHref,
           });
 
-          await selectCanvasInstance({
+          await selectCanvasImage({
             page,
-            instanceId: fixture.imageInstanceId,
+            alt: editedImageAlt,
           });
           await waitForSelectedStringPropertyValue({
             page,
@@ -582,9 +581,9 @@ export const contentModeEditing: Suite = {
             value: editedImageAlt,
           });
 
-          await selectCanvasInstance({
+          await selectCanvasVideoSource({
             page,
-            instanceId: fixture.videoInstanceId,
+            sourceName: "edited-video.mp4",
           });
           await waitForSelectedStringPropertyValue({
             page,

@@ -4,17 +4,6 @@ import { waitForCanvasFrame } from "./builder";
 const delay = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-export const selectCanvasInstance = async ({
-  page,
-  instanceId,
-}: {
-  page: Page;
-  instanceId: string;
-}) => {
-  const canvas = await waitForCanvasFrame({ page });
-  await canvas.locator(`[data-ws-id="${instanceId}"]`).click({ force: true });
-};
-
 export const selectCanvasTextInstanceForProps = async ({
   page,
   text,
