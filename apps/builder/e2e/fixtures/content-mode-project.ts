@@ -29,6 +29,8 @@ export type SeededContentModeProject = {
   tokenTemplateFontSize: string;
   deletableTemplateName: string;
   deletableTemplateText: string;
+  nestedTemplateName: string;
+  nestedTemplateText: string;
 };
 
 const assetTemplateName = "Asset Template";
@@ -48,6 +50,8 @@ const tokenTemplateText = "Token styled heading";
 const tokenTemplateFontSize = "36px";
 const deletableTemplateName = "Deletable Template";
 const deletableTemplateText = "Content block child to delete";
+const nestedTemplateName = "Nested Template";
+const nestedTemplateText = "Nested content descendant";
 
 const getBaseBreakpointId = (breakpoints: string) => {
   const parsedBreakpoints = JSON.parse(breakpoints) as Array<{
@@ -95,6 +99,8 @@ const createContentModeBuildData = ({
   const tokenTemplateId = "token-template";
   const tokenTemplateStyleSourceId = "content-mode-token-style-source";
   const deletableTemplateId = "deletable-template";
+  const nestedTemplateId = "nested-template";
+  const nestedTemplateTextId = "nested-template-text";
   const baseBreakpointId = getBaseBreakpointId(breakpoints);
   const instances = [
     {
@@ -126,6 +132,7 @@ const createContentModeBuildData = ({
         { type: "id", value: isolatedLocalTemplateId },
         { type: "id", value: tokenTemplateId },
         { type: "id", value: deletableTemplateId },
+        { type: "id", value: nestedTemplateId },
       ],
     },
     {
@@ -213,6 +220,22 @@ const createContentModeBuildData = ({
       tag: "p",
       label: deletableTemplateName,
       children: [{ type: "text", value: deletableTemplateText }],
+    },
+    {
+      type: "instance",
+      id: nestedTemplateId,
+      component: "ws:element",
+      tag: "section",
+      label: nestedTemplateName,
+      children: [{ type: "id", value: nestedTemplateTextId }],
+    },
+    {
+      type: "instance",
+      id: nestedTemplateTextId,
+      component: "ws:element",
+      tag: "p",
+      label: "Nested Text",
+      children: [{ type: "text", value: nestedTemplateText }],
     },
   ];
 
@@ -487,5 +510,7 @@ export const prepareExistingContentModeProject = async ({
     tokenTemplateFontSize,
     deletableTemplateName,
     deletableTemplateText,
+    nestedTemplateName,
+    nestedTemplateText,
   };
 };

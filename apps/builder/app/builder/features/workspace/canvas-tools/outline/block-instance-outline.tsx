@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
+import { shallowEqual } from "shallow-equal";
 import {
   Box,
   DropdownMenu,
@@ -282,7 +283,17 @@ export const BlockChildHoveredInstanceOutline = () => {
   // Check if the top edge of the component is hidden (clipped by viewport/clamping)
   const isTopEdgeHidden = rect.top < clampingRect.top;
 
-  const isAddMode = isMenuOpen || !modifierKeys.altKey || !hasChildren;
+  const canDeleteHoveredInstance =
+    shallowEqual(outline.selector, outline.hoveredSelector) &&
+    canDeleteInstanceInContentMode({
+      instanceSelector: outline.selector,
+      instances,
+    });
+  const isAddMode =
+    isMenuOpen ||
+    !modifierKeys.altKey ||
+    !hasChildren ||
+    canDeleteHoveredInstance === false;
 
   const tooltipContent = (
     <Grid>
@@ -368,12 +379,7 @@ export const BlockChildHoveredInstanceOutline = () => {
                 return;
               }
 
-              if (
-                canDeleteInstanceInContentMode({
-                  instanceSelector: outline.selector,
-                  instances,
-                }) === false
-              ) {
+              if (canDeleteHoveredInstance === false) {
                 return;
               }
 

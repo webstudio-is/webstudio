@@ -9,6 +9,7 @@ import {
 import { deleteContentBlockChildAfterCanvasText } from "../flows/block-outline";
 import {
   openProjectBuilder,
+  waitForCanvasFrame,
   waitForCanvasText,
   waitForCanvasTextHidden,
 } from "../flows/builder";
@@ -376,6 +377,62 @@ export const contentModeEditing: Suite = {
           await waitForCanvasTextHidden({
             page,
             text: fixture.deletableTemplateText,
+          });
+          await waitForSyncStatus({ page, status: "idle" });
+        } finally {
+          await close();
+        }
+      },
+    },
+    {
+      name: "Editor cannot delete nested content instance",
+      run: async () => {
+        const fixture = getSharedContentModeProject();
+        const { page, close } = await newIsolatedPage();
+
+        try {
+          await measure(
+            "content mode open editor for nested delete guard",
+            async () => {
+              await openProjectBuilder({
+                page,
+                projectId: fixture.projectId,
+                authToken: fixture.editorToken,
+                mode: "content",
+              });
+            }
+          );
+          await waitForCanvasText({ page, text: "Initial content" });
+          await waitForSyncStatus({ page, status: "idle" });
+
+          await measure("content mode insert nested template", async () => {
+            await insertTemplateAfterCanvasText({
+              page,
+              anchorText: "Initial content",
+              templateName: fixture.nestedTemplateName,
+            });
+          });
+          await waitForCanvasText({
+            page,
+            text: fixture.nestedTemplateText,
+          });
+          await waitForSyncStatus({ page, status: "idle" });
+
+          await measure("content mode try nested delete", async () => {
+            const canvas = await waitForCanvasFrame({ page });
+            await page.keyboard.down("Alt");
+            try {
+              await canvas.getByText(fixture.nestedTemplateText).hover();
+              await page
+                .getByRole("button", { name: "Delete block" })
+                .waitFor({ state: "hidden", timeout: 1_000 });
+            } finally {
+              await page.keyboard.up("Alt");
+            }
+          });
+          await waitForCanvasText({
+            page,
+            text: fixture.nestedTemplateText,
           });
           await waitForSyncStatus({ page, status: "idle" });
         } finally {

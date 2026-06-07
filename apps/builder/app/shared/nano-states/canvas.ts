@@ -24,6 +24,7 @@ type InstanceOutline = {
 
 export type BlockChildOutline = {
   selector: InstanceSelector;
+  hoveredSelector: InstanceSelector;
   rect: DOMRect;
 };
 
