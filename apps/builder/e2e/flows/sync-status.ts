@@ -1,15 +1,15 @@
 import type { Page } from "playwright";
 
-type SyncIndicatorStatus = "idle" | "pending" | "saved" | "error";
+type SyncStatusDotStatus = "idle" | "pending" | "saved" | "error";
 
 const delay = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-const getSyncStatusIndicator = (page: Page) => page.getByRole("status");
+const getSyncStatusDot = (page: Page) =>
+  page.getByRole("status", { name: /^Sync status:/ });
 
-const getSyncIndicatorStatus = async (page: Page) => {
-  const status =
-    await getSyncStatusIndicator(page).getAttribute("data-sync-status");
+const getSyncStatusDotStatus = async (page: Page) => {
+  const status = await getSyncStatusDot(page).getAttribute("data-sync-status");
 
   if (
     status === "idle" ||
@@ -20,7 +20,7 @@ const getSyncIndicatorStatus = async (page: Page) => {
     return status;
   }
 
-  throw new Error(`Unexpected sync status indicator value: ${status}`);
+  throw new Error(`Unexpected sync status dot value: ${status}`);
 };
 
 export const waitForSyncStatus = async ({
@@ -29,18 +29,18 @@ export const waitForSyncStatus = async ({
   timeout = 10_000,
 }: {
   page: Page;
-  status: SyncIndicatorStatus;
+  status: SyncStatusDotStatus;
   timeout?: number;
 }) => {
   const startedAt = Date.now();
 
-  await getSyncStatusIndicator(page).waitFor({
+  await getSyncStatusDot(page).waitFor({
     state: "attached",
     timeout,
   });
 
   while (Date.now() - startedAt < timeout) {
-    if ((await getSyncIndicatorStatus(page)) === status) {
+    if ((await getSyncStatusDotStatus(page)) === status) {
       return;
     }
     await delay(100);
@@ -58,17 +58,17 @@ export const waitForChangeToBeSaved = async ({
 }) => {
   const startedAt = Date.now();
 
-  await getSyncStatusIndicator(page).waitFor({
+  await getSyncStatusDot(page).waitFor({
     state: "attached",
     timeout,
   });
 
   while (Date.now() - startedAt < timeout) {
-    const status = await getSyncIndicatorStatus(page);
+    const status = await getSyncStatusDotStatus(page);
 
     if (status === "error") {
       const label =
-        (await getSyncStatusIndicator(page).getAttribute("aria-label")) ??
+        (await getSyncStatusDot(page).getAttribute("aria-label")) ??
         "Sync status: error";
       throw new Error(`Expected change to save, received ${label}`);
     }

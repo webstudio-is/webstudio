@@ -20,6 +20,7 @@ export E2E_MIGRATIONS_TIMEOUT_SECONDS="${E2E_MIGRATIONS_TIMEOUT_SECONDS:-300}"
 export E2E_INSTALL_PLAYWRIGHT="${E2E_INSTALL_PLAYWRIGHT:-auto}"
 export E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS="${E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS:-300}"
 export E2E_RUN_TESTS="${E2E_RUN_TESTS:-true}"
+export E2E_PACKAGE_BUILD_TIMEOUT_SECONDS="${E2E_PACKAGE_BUILD_TIMEOUT_SECONDS:-120}"
 export E2E_TEST_COMMAND_TIMEOUT_SECONDS="${E2E_TEST_COMMAND_TIMEOUT_SECONDS:-120}"
 export E2E_WRITE_SCHEMA_SNAPSHOT="${E2E_WRITE_SCHEMA_SNAPSHOT:-false}"
 
@@ -195,6 +196,10 @@ install_playwright_chromium() {
   esac
 }
 
+build_builder_package_entries() {
+  pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/http-client build
+}
+
 wait_for_database() {
   local timeout_at
   timeout_at="$(($(now_ms) + E2E_DOCKER_TIMEOUT_SECONDS * 1000))"
@@ -221,6 +226,10 @@ if [ "$E2E_RUN_TESTS" = "true" ]; then
   run_step "install playwright chromium" "$E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS" \
     install_playwright_chromium &
   install_playwright_chromium_pid="$!"
+
+  run_step "build builder package entries" "$E2E_PACKAGE_BUILD_TIMEOUT_SECONDS" \
+    build_builder_package_entries &
+  build_builder_package_entries_pid="$!"
 fi
 
 run_step "wait for e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
@@ -233,6 +242,7 @@ wait_for_step "generate prisma client" "$generate_prisma_client_pid"
 
 if [ "$E2E_RUN_TESTS" = "true" ]; then
   wait_for_step "install playwright chromium" "$install_playwright_chromium_pid"
+  wait_for_step "build builder package entries" "$build_builder_package_entries_pid"
 
   run_step "start e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
     docker compose -f "$COMPOSE_FILE" up -d postgrest
