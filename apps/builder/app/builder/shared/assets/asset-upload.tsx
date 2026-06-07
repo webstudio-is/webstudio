@@ -121,6 +121,7 @@ const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
         style={{ display: "none" }}
       />
       <Button
+        aria-label="Upload asset"
         color="ghost"
         type="button"
         onClick={() => inputRef?.current?.click()}

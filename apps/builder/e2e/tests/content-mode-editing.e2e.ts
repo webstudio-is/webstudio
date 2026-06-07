@@ -1,4 +1,11 @@
 import { resetDatabase } from "../db";
+import {
+  deleteSelectedAsset,
+  openAssetDetails,
+  openAssetsPanel,
+  replaceSelectedAsset,
+  uploadAsset,
+} from "../flows/assets-panel";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import {
   selectCanvasInstance,
@@ -227,6 +234,79 @@ export const contentModeEditing: Suite = {
             value: fixture.isolatedLocalTemplateFontSize,
             count: 2,
           });
+          await waitForSyncStatus({ page, status: "idle" });
+        } finally {
+          await close();
+        }
+      },
+    },
+    {
+      name: "Editor can upload, replace, and delete asset in content mode",
+      run: async () => {
+        const fixture = getSharedContentModeProject();
+        const { page, close } = await newIsolatedPage();
+        const uploadFilename = "upload-image.svg";
+        const replacementFilename = "replacement-image.svg";
+
+        try {
+          await measure(
+            "content mode open editor for asset workflows",
+            async () => {
+              await openProjectBuilder({
+                page,
+                projectId: fixture.projectId,
+                authToken: fixture.editorToken,
+                mode: "content",
+              });
+            }
+          );
+          await waitForCanvasText({ page, text: "Initial content" });
+          await waitForSyncStatus({ page, status: "idle" });
+
+          let uploadedAssetTitle = "";
+          await measure("content mode upload asset", async () => {
+            await openAssetsPanel({ page });
+            uploadedAssetTitle = await uploadAsset({
+              page,
+              filename: uploadFilename,
+            });
+          });
+
+          let replacementAssetTitle = "";
+          await measure("content mode replace asset", async () => {
+            await openAssetDetails({ page, filename: uploadedAssetTitle });
+            replacementAssetTitle = await replaceSelectedAsset({
+              page,
+              filename: replacementFilename,
+            });
+          });
+
+          await measure("content mode delete asset", async () => {
+            await openAssetDetails({ page, filename: replacementAssetTitle });
+            await deleteSelectedAsset({
+              page,
+              filename: replacementAssetTitle,
+            });
+          });
+
+          await measure(
+            "content mode reload editor for asset workflows",
+            async () => {
+              await openProjectBuilder({
+                page,
+                projectId: fixture.projectId,
+                authToken: fixture.editorToken,
+                mode: "content",
+              });
+            }
+          );
+          await openAssetsPanel({ page });
+          await page
+            .getByTitle(uploadedAssetTitle)
+            .waitFor({ state: "hidden" });
+          await page
+            .getByTitle(replacementAssetTitle)
+            .waitFor({ state: "hidden" });
           await waitForSyncStatus({ page, status: "idle" });
         } finally {
           await close();
