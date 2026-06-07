@@ -98,6 +98,8 @@ describe("SyncStatusDot", () => {
     });
 
     expect(getDot().getAttribute("data-sync-status")).toBe("error");
-    expect(getDot().getAttribute("aria-label")).toBe("Sync status: error");
+    expect(getDot().getAttribute("aria-label")).toBe(
+      "Sync status: error: broken"
+    );
   });
 });

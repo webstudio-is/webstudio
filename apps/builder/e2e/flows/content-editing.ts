@@ -39,7 +39,7 @@ export const replaceCanvasText = async ({
   const startedAt = Date.now();
   let lastError: unknown;
   let frameHtml = "";
-  let edited = false;
+  let activated = false;
 
   while (Date.now() - startedAt < 10_000) {
     const canvas = await getCanvasFrame(page);
@@ -57,23 +57,11 @@ export const replaceCanvasText = async ({
       await startCanvasTextEditing({ target, editable });
       await editable.click();
       await page.keyboard.press("ControlOrMeta+A");
-
-      const save = waitForChangeToBeSaved({ page });
-      try {
-        await page.keyboard.type(text);
-        await canvas.locator("body").click({ position: { x: 1, y: 1 } });
-        await editable.waitFor({ state: "hidden", timeout: 1_000 });
-        await waitForCanvasText({ page, text });
-        await save;
-      } catch (error) {
-        await save.catch(() => undefined);
-        throw error;
-      }
       frameHtml = await canvas
         .locator("body")
         .innerHTML()
         .catch(() => "");
-      edited = true;
+      activated = true;
       break;
     } catch (error) {
       lastError = error;
@@ -90,12 +78,27 @@ export const replaceCanvasText = async ({
         .catch(() => "")) ?? "";
   }
 
-  if (edited) {
-    return;
+  if (activated === false) {
+    throw new Error(
+      `Expected to edit canvas text "${currentText}". Frame HTML: ${frameHtml}`,
+      { cause: lastError }
+    );
   }
 
-  throw new Error(
-    `Expected to edit canvas text "${currentText}". Frame HTML: ${frameHtml}`,
-    { cause: lastError }
-  );
+  const canvas = await getCanvasFrame(page);
+  if (canvas === undefined) {
+    throw new Error("Expected canvas frame after text editing started");
+  }
+  const editable = canvas.locator("[contenteditable]");
+  const save = waitForChangeToBeSaved({ page });
+  try {
+    await page.keyboard.type(text);
+    await canvas.locator("body").click({ position: { x: 1, y: 1 } });
+    await editable.waitFor({ state: "hidden", timeout: 1_000 });
+    await waitForCanvasText({ page, text });
+    await save;
+  } catch (error) {
+    await save.catch(() => undefined);
+    throw error;
+  }
 };

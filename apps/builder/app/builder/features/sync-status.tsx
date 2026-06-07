@@ -67,6 +67,10 @@ export const SyncStatusDot = () => {
     visibleStatus = "saved";
   }
   const statusConfig = syncStatusDotConfig[visibleStatus];
+  const syncStatusDotLabel =
+    visibleStatus === "error" && statusObject.status === "fatal"
+      ? `${statusConfig.label}: ${statusObject.error}`
+      : statusConfig.label;
 
   useEffect(() => {
     if (hasUnsavedSyncChanges) {
@@ -94,10 +98,10 @@ export const SyncStatusDot = () => {
   return (
     <Box
       role="status"
-      aria-label={statusConfig.label}
+      aria-label={syncStatusDotLabel}
       aria-live="polite"
       data-sync-status={visibleStatus}
-      title={statusConfig.label}
+      title={syncStatusDotLabel}
       style={{
         animation:
           visibleStatus === "pending"
