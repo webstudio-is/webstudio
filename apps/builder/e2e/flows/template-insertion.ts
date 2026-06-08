@@ -9,6 +9,7 @@ const getVisibleInsertBlockButton = async ({
   page: Page;
   anchorText: string;
 }) => {
+  await page.keyboard.press("Escape");
   const canvas = await waitForCanvasFrame({ page });
   const target = canvas.getByText(anchorText, { exact: true }).first();
   const button = page.getByRole("button", { name: "Insert block" }).last();

@@ -10,6 +10,7 @@ import {
   startBrowser,
   stopBrowser,
 } from "./harness";
+import { resetDatabase } from "./db";
 import { logPerf, measure, printPerfSummary } from "./perf";
 import { e2ePlans } from "./plans";
 import "./tests/content-mode-editing.e2e";
@@ -122,6 +123,36 @@ const pipeBuilderOutput = (child: ChildProcess) => {
   });
 };
 
+const runSuiteTests = async ({
+  suite,
+  tests,
+}: {
+  suite: ReturnType<typeof getSuites>[number];
+  tests: ReturnType<typeof getSuites>[number]["tests"];
+}) => {
+  try {
+    for (const test of tests) {
+      const startedAt = Date.now();
+      await withTimeout(
+        `${suite.name} › ${test.name}`,
+        testTimeoutMs,
+        async () => {
+          await suite.beforeEach?.();
+          await test.run();
+        }
+      );
+      const duration = Date.now() - startedAt;
+      console.info(`✓ ${suite.name} › ${test.name} (${duration}ms)`);
+    }
+  } finally {
+    const afterAllStartedAt = Date.now();
+    await withTimeout(`${suite.name} afterAll`, testTimeoutMs, async () => {
+      await suite.afterAll?.();
+    });
+    logPerf(`${suite.name} afterAll`, afterAllStartedAt);
+  }
+};
+
 const getBuilderEnv = () => ({
   ...process.env,
   AUTH_SECRET: process.env.AUTH_SECRET ?? "test",
@@ -162,7 +193,12 @@ const startBuilder = async (): Promise<ChildProcess | undefined> => {
   }
 
   const server = await startBuiltBuilder();
-  await waitForBuilder(server);
+  try {
+    await waitForBuilder(server);
+  } catch (error) {
+    await stopBuilder(server);
+    throw error;
+  }
   return server;
 };
 
@@ -197,43 +233,37 @@ const run = async () => {
     await measure("warm login route", warmLoginRoute);
     logPerf("boot builder/browser", bootStartedAt);
     const testsStartedAt = Date.now();
-    for (const suite of getSuites()) {
-      const tests = suite.tests.filter(
-        (test) => testFilter === undefined || test.name.includes(testFilter)
-      );
-      if (tests.length === 0) {
-        continue;
-      }
+    const runnableSuites = getSuites()
+      .map((suite) => ({
+        suite,
+        tests: suite.tests.filter(
+          (test) => testFilter === undefined || test.name.includes(testFilter)
+        ),
+      }))
+      .filter(({ tests }) => tests.length > 0);
 
-      const suiteStartedAt = Date.now();
+    await measure("reset database", resetDatabase);
+
+    for (const { suite } of runnableSuites) {
       const beforeAllStartedAt = Date.now();
       await withTimeout(`${suite.name} beforeAll`, testTimeoutMs, async () => {
         await suite.beforeAll?.();
       });
       logPerf(`${suite.name} beforeAll`, beforeAllStartedAt);
-      try {
-        for (const test of tests) {
-          const startedAt = Date.now();
-          await withTimeout(
-            `${suite.name} › ${test.name}`,
-            testTimeoutMs,
-            async () => {
-              await suite.beforeEach?.();
-              await test.run();
-            }
-          );
-          const duration = Date.now() - startedAt;
-          console.info(`✓ ${suite.name} › ${test.name} (${duration}ms)`);
-        }
-      } finally {
-        const afterAllStartedAt = Date.now();
-        await withTimeout(`${suite.name} afterAll`, testTimeoutMs, async () => {
-          await suite.afterAll?.();
-        });
-        logPerf(`${suite.name} afterAll`, afterAllStartedAt);
-      }
-      const suiteDuration = Date.now() - suiteStartedAt;
-      console.info(`✓ ${suite.name} completed (${suiteDuration}ms)`);
+    }
+
+    const results = await Promise.allSettled(
+      runnableSuites.map(async ({ suite, tests }) => {
+        const suiteStartedAt = Date.now();
+        await runSuiteTests({ suite, tests });
+        const suiteDuration = Date.now() - suiteStartedAt;
+        console.info(`✓ ${suite.name} completed (${suiteDuration}ms)`);
+      })
+    );
+
+    const failedSuite = results.find((result) => result.status === "rejected");
+    if (failedSuite?.status === "rejected") {
+      throw failedSuite.reason;
     }
     logPerf("tests", testsStartedAt);
   } finally {

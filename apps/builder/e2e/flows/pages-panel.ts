@@ -19,23 +19,64 @@ const getPageSettingsControl = ({
 export const getPageSettingsPathInput = ({ page }: { page: Page }) =>
   page.getByRole("textbox", { name: "Path", exact: true });
 
-const fillPageSettingsControl = async ({
+export const fillAllowedPageSettings = async ({
   page,
-  label,
-  value,
+  name,
+  path,
+  title,
+  description,
+  language,
+  socialImage,
+  metadata,
 }: {
   page: Page;
-  label: string | RegExp;
-  value: string;
+  name: string;
+  path: string;
+  title: string;
+  description: string;
+  language: string;
+  socialImage: string;
+  metadata: {
+    property: string;
+    content: string;
+  };
 }) => {
   await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
     () => undefined
   );
-  const control = getPageSettingsControl({ page, label });
+
+  const metadataGroup = getCustomMetadataGroup(page);
   const save = waitForChangeToBeSaved({ page });
-  await control.fill(value);
-  await control.blur();
+  for (const field of [
+    { label: "Page name", value: name },
+    { label: "Path", value: path },
+    { label: "Title", value: title },
+    { label: "Description", value: description },
+    { label: "Language", value: language },
+  ]) {
+    const control = getPageSettingsControl({
+      page,
+      label: field.label,
+    });
+    await control.fill(field.value);
+    await control.blur();
+  }
+  await page.getByLabel("Exclude this page from search results").click();
+  const socialImageInput = page.getByPlaceholder("https://www.url.com").first();
+  await socialImageInput.fill(socialImage);
+  await socialImageInput.blur();
+  await metadataGroup
+    .getByLabel("Property", { exact: true })
+    .first()
+    .fill(metadata.property);
+  await metadataGroup.getByLabel("Property", { exact: true }).first().blur();
+  await metadataGroup
+    .getByLabel("Content", { exact: true })
+    .first()
+    .fill(metadata.content);
+  await metadataGroup.getByLabel("Content", { exact: true }).first().blur();
   await save;
+  await waitForSyncStatus({ page, status: "idle" });
 };
 
 export const openPagesPanel = async ({ page }: { page: Page }) => {
@@ -105,35 +146,6 @@ export const createPageFromTemplate = async ({
   await waitForSyncStatus({ page, status: "idle" });
 };
 
-export const fillPageSettingsTextField = async ({
-  page,
-  label,
-  value,
-}: {
-  page: Page;
-  label: string | RegExp;
-  value: string;
-}) => {
-  await fillPageSettingsControl({ page, label, value });
-};
-
-export const fillPageSettingsUrlField = async ({
-  page,
-  value,
-}: {
-  page: Page;
-  value: string;
-}) => {
-  const input = page.getByPlaceholder("https://www.url.com").first();
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
-  const save = waitForChangeToBeSaved({ page });
-  await input.fill(value);
-  await input.blur();
-  await save;
-};
-
 export const choosePageSettingsSocialImageAsset = async ({
   page,
   filename,
@@ -153,48 +165,8 @@ export const choosePageSettingsSocialImageAsset = async ({
   await page.getByText(filename, { exact: true }).waitFor();
 };
 
-export const fillPageSettingsTextarea = async ({
-  page,
-  label,
-  value,
-}: {
-  page: Page;
-  label: string | RegExp;
-  value: string;
-}) => {
-  await fillPageSettingsControl({ page, label, value });
-};
-
 const getCustomMetadataGroup = (page: Page) =>
   page.getByRole("group", { name: "Custom metadata" });
-
-export const fillCustomMetadata = async ({
-  page,
-  property,
-  content,
-}: {
-  page: Page;
-  property: string;
-  content: string;
-}) => {
-  const metadata = getCustomMetadataGroup(page);
-
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
-  const propertySave = waitForChangeToBeSaved({ page });
-  await metadata.getByLabel("Property", { exact: true }).first().fill(property);
-  await metadata.getByLabel("Property", { exact: true }).first().blur();
-  await propertySave;
-
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
-  const contentSave = waitForChangeToBeSaved({ page });
-  await metadata.getByLabel("Content", { exact: true }).first().fill(content);
-  await metadata.getByLabel("Content", { exact: true }).first().blur();
-  await contentSave;
-};
 
 export const expectCustomMetadataValue = async ({
   page,
@@ -222,15 +194,6 @@ export const expectCustomMetadataValue = async ({
   ) {
     throw new Error("Expected edited custom metadata content to persist");
   }
-};
-
-export const toggleSearchVisibility = async ({ page }: { page: Page }) => {
-  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
-    () => undefined
-  );
-  const save = waitForChangeToBeSaved({ page });
-  await page.getByLabel("Exclude this page from search results").click();
-  await save;
 };
 
 export const expectContentModePageSettingsRestrictions = async ({

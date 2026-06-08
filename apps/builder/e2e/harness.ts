@@ -8,7 +8,8 @@ import {
 } from "playwright";
 
 const builderPort =
-  process.env.E2E_BUILDER_PORT ?? String(56_000 + (process.pid % 1_000));
+  process.env.E2E_BUILDER_PORT ??
+  String(20_000 + ((process.pid + Date.now()) % 40_000));
 
 export const builderUrl =
   process.env.E2E_BUILDER_URL ?? `https://127.0.0.1:${builderPort}`;

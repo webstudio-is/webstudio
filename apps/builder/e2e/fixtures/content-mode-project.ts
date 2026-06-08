@@ -104,6 +104,8 @@ const createContentModeBuildData = ({
   linkInstanceId,
   imageInstanceId,
   videoInstanceId,
+  seededAssetTemplateImageAssetId,
+  seededAssetTemplateVideoAssetId,
   pages,
   breakpoints = JSON.stringify([]),
 }: {
@@ -111,6 +113,8 @@ const createContentModeBuildData = ({
   linkInstanceId: string;
   imageInstanceId: string;
   videoInstanceId: string;
+  seededAssetTemplateImageAssetId: string;
+  seededAssetTemplateVideoAssetId: string;
   pages: string;
   breakpoints?: string;
 }) => {
@@ -441,35 +445,35 @@ const createContentModeBuildData = ({
       instanceId: assetTemplateImageInstanceId,
       name: "src",
       type: "asset",
-      value: assetTemplateImageAssetId,
+      value: seededAssetTemplateImageAssetId,
     },
     {
       id: "asset-template-image-width-prop",
       instanceId: assetTemplateImageInstanceId,
       name: "width",
       type: "asset",
-      value: assetTemplateImageAssetId,
+      value: seededAssetTemplateImageAssetId,
     },
     {
       id: "asset-template-image-height-prop",
       instanceId: assetTemplateImageInstanceId,
       name: "height",
       type: "asset",
-      value: assetTemplateImageAssetId,
+      value: seededAssetTemplateImageAssetId,
     },
     {
       id: "asset-template-image-alt-prop",
       instanceId: assetTemplateImageInstanceId,
       name: "alt",
       type: "asset",
-      value: assetTemplateImageAssetId,
+      value: seededAssetTemplateImageAssetId,
     },
     {
       id: "asset-template-video-src-prop",
       instanceId: assetTemplateVideoInstanceId,
       name: "src",
       type: "asset",
-      value: assetTemplateVideoAssetId,
+      value: seededAssetTemplateVideoAssetId,
     },
     {
       id: "image-replacement-template-image-src-prop",
@@ -691,6 +695,7 @@ export const prepareExistingContentModeProject = async ({
   linkInstanceId = "content-link",
   imageInstanceId = "content-image",
   videoInstanceId = "content-video",
+  assetNamePrefix = "",
 }: {
   projectId: string;
   editorToken?: string;
@@ -699,19 +704,24 @@ export const prepareExistingContentModeProject = async ({
   linkInstanceId?: string;
   imageInstanceId?: string;
   videoInstanceId?: string;
+  assetNamePrefix?: string;
 }): Promise<SeededContentModeProject> => {
   const build = await loadDevBuild({ projectId });
+  const seededAssetTemplateImageName = `${assetNamePrefix}${assetTemplateImageName}`;
+  const seededAssetTemplateVideoName = `${assetNamePrefix}${assetTemplateVideoName}`;
+  const seededAssetTemplateImageAssetId = `${assetNamePrefix}${assetTemplateImageAssetId}`;
+  const seededAssetTemplateVideoAssetId = `${assetNamePrefix}${assetTemplateVideoAssetId}`;
 
   await Promise.all([
     insertFile({
-      name: assetTemplateImageName,
+      name: seededAssetTemplateImageName,
       format: "svg",
       size: 120,
       status: "UPLOADED",
       meta: JSON.stringify({ width: 120, height: 80 }),
     }),
     insertFile({
-      name: assetTemplateVideoName,
+      name: seededAssetTemplateVideoName,
       format: "mp4",
       size: 120,
       status: "UPLOADED",
@@ -720,17 +730,17 @@ export const prepareExistingContentModeProject = async ({
   ]);
   await Promise.all([
     insertAsset({
-      id: assetTemplateImageAssetId,
+      id: seededAssetTemplateImageAssetId,
       projectId,
-      name: assetTemplateImageName,
-      filename: assetTemplateImageName,
+      name: seededAssetTemplateImageName,
+      filename: seededAssetTemplateImageName,
       description: assetTemplateImageAlt,
     }),
     insertAsset({
-      id: assetTemplateVideoAssetId,
+      id: seededAssetTemplateVideoAssetId,
       projectId,
-      name: assetTemplateVideoName,
-      filename: assetTemplateVideoName,
+      name: seededAssetTemplateVideoName,
+      filename: seededAssetTemplateVideoName,
       description: "Template asset video",
     }),
   ]);
@@ -742,6 +752,8 @@ export const prepareExistingContentModeProject = async ({
       linkInstanceId,
       imageInstanceId,
       videoInstanceId,
+      seededAssetTemplateImageAssetId,
+      seededAssetTemplateVideoAssetId,
       pages: build.pages,
       breakpoints: build.breakpoints,
     }),
@@ -772,10 +784,10 @@ export const prepareExistingContentModeProject = async ({
     linkInstanceId,
     imageInstanceId,
     videoInstanceId,
-    assetTemplateImageName,
+    assetTemplateImageName: seededAssetTemplateImageName,
     assetTemplateName,
     assetTemplateImageAlt,
-    assetTemplateVideoName,
+    assetTemplateVideoName: seededAssetTemplateVideoName,
     imageReplacementTemplateName,
     imageReplacementTemplateImageAlt,
     contentPropsTemplateName,

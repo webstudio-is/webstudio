@@ -10,6 +10,9 @@ type ContentModeProjectOptions = {
   email?: string;
   title?: string;
   devPlan?: string;
+  assetNamePrefix?: string;
+  editorToken?: string;
+  builderToken?: string;
 };
 
 let sharedProject: SeededContentModeProject | undefined;
@@ -18,6 +21,9 @@ export const createContentModeProject = async ({
   email = "content-mode-e2e@webstudio.test",
   title = "Content Mode E2E",
   devPlan,
+  assetNamePrefix,
+  editorToken,
+  builderToken,
 }: ContentModeProjectOptions = {}) => {
   const ownerPage = await newPage();
 
@@ -34,7 +40,12 @@ export const createContentModeProject = async ({
     );
 
     return await measure("content mode fixture prepare project", async () => {
-      return await prepareExistingContentModeProject({ projectId });
+      return await prepareExistingContentModeProject({
+        projectId,
+        assetNamePrefix,
+        editorToken,
+        builderToken,
+      });
     });
   } finally {
     await ownerPage.close();
