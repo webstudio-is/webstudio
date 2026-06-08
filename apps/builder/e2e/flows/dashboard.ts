@@ -1,6 +1,8 @@
 import { dashboardUrl, getProjectIdFromBuilderUrl } from "../harness";
 import type { Page } from "playwright";
 
+const loginReadyTimeout = 30_000;
+
 export const loginWithSecret = async ({
   page,
   email,
@@ -19,14 +21,28 @@ export const loginWithSecret = async ({
   const loginWithSecretButton = page.getByRole("button", {
     name: "Login with Secret",
   });
-  const loginState = await Promise.race([
-    loginWithSecretButton
-      .waitFor({ state: "visible", timeout: 10_000 })
-      .then(() => "login" as const),
-    page
-      .waitForURL(`${dashboardUrl}/dashboard`, { timeout: 10_000 })
-      .then(() => "dashboard" as const),
-  ]);
+  let loginState: "login" | "dashboard";
+  try {
+    loginState = await Promise.any([
+      loginWithSecretButton
+        .waitFor({ state: "visible", timeout: loginReadyTimeout })
+        .then(() => "login" as const),
+      page
+        .waitForURL(`${dashboardUrl}/dashboard`, {
+          timeout: loginReadyTimeout,
+        })
+        .then(() => "dashboard" as const),
+    ]);
+  } catch (error) {
+    const bodyText = await page
+      .locator("body")
+      .innerText()
+      .catch(() => "");
+    throw new Error(
+      `Expected login page or dashboard at ${page.url()}. Body: ${bodyText}`,
+      { cause: error }
+    );
+  }
   if (loginState === "dashboard") {
     console.info("e2e: dashboard loaded");
     return;

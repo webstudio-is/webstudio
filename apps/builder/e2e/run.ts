@@ -2,13 +2,15 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   builderUrl,
+  dashboardUrl,
   getSuites,
+  newPage,
   postgrestUrl,
   serviceToken,
   startBrowser,
   stopBrowser,
 } from "./harness";
-import { logPerf, measure } from "./perf";
+import { logPerf, measure, printPerfSummary } from "./perf";
 import { e2ePlans } from "./plans";
 import "./tests/content-mode-editing.e2e";
 import "./tests/share-link-permissions.e2e";
@@ -49,6 +51,18 @@ const waitForBuilder = async (child: ChildProcess) => {
       });
     }),
   ]);
+};
+
+const warmLoginRoute = async () => {
+  const page = await newPage();
+  try {
+    await page.goto(`${dashboardUrl}/login`);
+    await page
+      .getByRole("button", { name: "Login with Secret" })
+      .waitFor({ state: "visible", timeout: 60_000 });
+  } finally {
+    await page.close();
+  }
 };
 
 const withTimeout = async <Result>(
@@ -146,6 +160,7 @@ const run = async () => {
     builder = await builderReady;
     await postgrestReady;
     await browserReady;
+    await measure("warm login route", warmLoginRoute);
     logPerf("boot builder/browser", bootStartedAt);
     const testsStartedAt = Date.now();
     for (const suite of getSuites()) {
@@ -191,6 +206,7 @@ const run = async () => {
     await stopBrowser();
     await stopBuilder(builder);
     logPerf("runner total", totalStartedAt);
+    printPerfSummary();
   }
 };
 
