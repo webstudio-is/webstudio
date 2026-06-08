@@ -16,6 +16,7 @@ export type SeededContentModeProject = {
   linkInstanceId: string;
   imageInstanceId: string;
   videoInstanceId: string;
+  assetTemplateImageName: string;
   assetTemplateName: string;
   assetTemplateImageAlt: string;
   assetTemplateVideoName: string;
@@ -574,6 +575,7 @@ export const prepareExistingContentModeProject = async ({
     linkInstanceId,
     imageInstanceId,
     videoInstanceId,
+    assetTemplateImageName,
     assetTemplateName,
     assetTemplateImageAlt,
     assetTemplateVideoName,

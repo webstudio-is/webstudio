@@ -93,3 +93,15 @@ export const waitForAsset = async ({
   }
   return title;
 };
+
+export const chooseAssetByFilename = async ({
+  page,
+  filename,
+}: {
+  page: Page;
+  filename: string;
+}) => {
+  const title = await waitForAsset({ page, filename });
+  await page.getByAltText(title, { exact: true }).last().click();
+  return title;
+};

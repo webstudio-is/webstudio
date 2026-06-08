@@ -2169,6 +2169,58 @@ describe("content mode permissions", () => {
     ).toEqual({ success: true });
   });
 
+  test("allows removing content page meta fields", () => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      metas,
+      props,
+      styleSources,
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("pages", [
+          {
+            op: "remove",
+            path: ["pages", "page-1", "meta", "socialImageUrl"],
+          },
+          {
+            op: "remove",
+            path: ["pages", "page-1", "meta", "socialImageAssetId"],
+          },
+        ]),
+      })
+    ).toEqual({ success: true });
+  });
+
+  test("allows choosing social image asset while clearing social image url", () => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      metas,
+      props,
+      styleSources,
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("pages", [
+          {
+            op: "replace",
+            path: ["pages", "page-1", "meta", "socialImageAssetId"],
+            value: "asset-1",
+          },
+          {
+            op: "replace",
+            path: ["pages", "page-1", "meta", "socialImageUrl"],
+            value: undefined,
+          },
+        ]),
+      })
+    ).toEqual({ success: true });
+  });
+
   test("rejects content prop metadata changes", () => {
     const capabilities = getContentModeCapabilities({
       instances,

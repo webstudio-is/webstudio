@@ -101,7 +101,7 @@ const contentModePageMetaValidators: Record<
   excludePageFromSearch: isString,
   language: isString,
   socialImageAssetId: isOptionalString,
-  socialImageUrl: isString,
+  socialImageUrl: isOptionalString,
   custom: isContentModeCustomMeta,
 };
 
@@ -507,15 +507,15 @@ const isContentModePagePatch = (patch: Patch) => {
     return isContentModeCustomMetaPatch(patch);
   }
 
-  if (patch.op === "remove") {
-    return false;
-  }
-
   if (
     patch.path.length !== 4 ||
     contentModePageMetaFields.has(metaField) === false
   ) {
     return false;
+  }
+
+  if (patch.op === "remove") {
+    return true;
   }
 
   return isContentModePageMetaValue(metaField, patch.value);

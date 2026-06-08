@@ -22,6 +22,7 @@ import {
   selectCanvasImage,
   selectCanvasVideoSource,
   waitForCanvasImage,
+  waitForCanvasImageSourceName,
   waitForCanvasVideoSource,
 } from "../flows/canvas-media";
 import {
@@ -30,10 +31,12 @@ import {
 } from "../flows/canvas-style";
 import { replaceCanvasText } from "../flows/content-editing";
 import {
+  chooseSelectedAssetProperty,
   fillSelectedStringProperty,
   waitForSelectedStringPropertyValue,
 } from "../flows/props-panel";
 import {
+  choosePageSettingsSocialImageAsset,
   createPageFromTemplate,
   expectContentModePagePathError,
   expectContentModePageSettingsRestrictions,
@@ -301,6 +304,91 @@ test.describe("content mode editing", () => {
       await openAssetsPanel({ page });
       await page.getByTitle(uploadedAssetTitle).waitFor({ state: "hidden" });
       await page.getByTitle(replacementAssetTitle).waitFor({ state: "hidden" });
+      await waitForSyncStatus({ page, status: "idle" });
+    } finally {
+      await close();
+    }
+  });
+  test("Editor can replace image source with asset in content mode", async () => {
+    const fixture = getSharedContentModeProject();
+    const { page, close } = await newIsolatedPage();
+    const uploadFilename = "upload-image.svg";
+    const replacementFilename = "replacement-image.svg";
+
+    try {
+      await measure(
+        "content mode open editor for image source asset replacement",
+        async () => {
+          await openProjectBuilder({
+            page,
+            projectId: fixture.projectId,
+            authToken: fixture.editorToken,
+            mode: "content",
+          });
+        }
+      );
+      await waitForCanvasText({ page, text: "Initial content" });
+      await waitForSyncStatus({ page, status: "idle" });
+
+      let uploadedAssetTitle = "";
+      await measure("content mode upload image source asset", async () => {
+        await openAssetsPanel({ page });
+        uploadedAssetTitle = await uploadAsset({
+          page,
+          filename: uploadFilename,
+        });
+      });
+
+      await selectCanvasImage({
+        page,
+        alt: "Initial image alt",
+      });
+      await measure("content mode choose image source asset", async () => {
+        await chooseSelectedAssetProperty({
+          page,
+          label: "Source",
+          assetFilename: uploadFilename,
+        });
+      });
+      await waitForCanvasImageSourceName({ page, sourceName: "upload-image_" });
+
+      let replacementAssetTitle = "";
+      await measure(
+        "content mode replace used image source asset",
+        async () => {
+          await openAssetsPanel({ page });
+          await openAssetDetails({
+            page,
+            filename: uploadedAssetTitle,
+          });
+          replacementAssetTitle = await replaceSelectedAsset({
+            page,
+            filename: replacementFilename,
+          });
+        }
+      );
+      await waitForCanvasImageSourceName({
+        page,
+        sourceName: "replacement-image_",
+      });
+
+      await measure(
+        "content mode reload editor for image source asset replacement",
+        async () => {
+          await openProjectBuilder({
+            page,
+            projectId: fixture.projectId,
+            authToken: fixture.editorToken,
+            mode: "content",
+          });
+        }
+      );
+      await waitForCanvasImageSourceName({
+        page,
+        sourceName: "replacement-image_",
+      });
+      await openAssetsPanel({ page });
+      await page.getByTitle(replacementAssetTitle).waitFor();
       await waitForSyncStatus({ page, status: "idle" });
     } finally {
       await close();
@@ -850,6 +938,73 @@ test.describe("content mode editing", () => {
         property: "content-mode",
         content: "edited metadata",
       });
+      await waitForSyncStatus({ page, status: "idle" });
+    } finally {
+      await close();
+    }
+  });
+  test("Editor can choose social image asset in content mode", async () => {
+    const fixture = getSharedContentModeProject();
+    const { page, close } = await newIsolatedPage();
+    const pageName = "Social image asset content page";
+
+    try {
+      await measure(
+        "content mode open editor for social image asset",
+        async () => {
+          await openProjectBuilder({
+            page,
+            projectId: fixture.projectId,
+            authToken: fixture.editorToken,
+            mode: "content",
+          });
+        }
+      );
+      await waitForCanvasText({ page, text: "Initial link" });
+      await waitForSyncStatus({ page, status: "idle" });
+
+      await createPageFromTemplate({
+        page,
+        templateName: fixture.pageTemplateName,
+        pageName,
+        canvasText: fixture.pageTemplateText,
+      });
+      await openPageSettings({ page, pageName });
+      await fillPageSettingsUrlField({
+        page,
+        value: "https://example.com/social-before-asset.png",
+      });
+      await choosePageSettingsSocialImageAsset({
+        page,
+        filename: fixture.assetTemplateImageName,
+        label: fixture.assetTemplateImageAlt,
+      });
+
+      await measure(
+        "content mode reload editor for social image asset",
+        async () => {
+          await openProjectBuilder({
+            page,
+            projectId: fixture.projectId,
+            authToken: fixture.editorToken,
+            mode: "content",
+          });
+        }
+      );
+      await openPageSettings({ page, pageName });
+      const socialPreviewImage = page.getByRole("img", {
+        name: "Social sharing preview image",
+      });
+      await socialPreviewImage.waitFor();
+      const socialPreviewImageSrc =
+        await socialPreviewImage.getAttribute("src");
+      if (
+        socialPreviewImageSrc?.includes(fixture.assetTemplateImageName) !== true
+      ) {
+        throw new Error(
+          `Expected social image preview to render ${fixture.assetTemplateImageName}, received ${socialPreviewImageSrc}`
+        );
+      }
       await waitForSyncStatus({ page, status: "idle" });
     } finally {
       await close();

@@ -117,6 +117,25 @@ export const fillPageSettingsUrlField = async ({
   await save;
 };
 
+export const choosePageSettingsSocialImageAsset = async ({
+  page,
+  filename,
+  label = filename,
+}: {
+  page: Page;
+  filename: string;
+  label?: string;
+}) => {
+  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
+    () => undefined
+  );
+  await page.getByRole("button", { name: "Choose image from assets" }).click();
+  const save = waitForChangeToBeSaved({ page });
+  await page.getByAltText(label, { exact: true }).click();
+  await save;
+  await page.getByText(filename, { exact: true }).waitFor();
+};
+
 export const fillPageSettingsTextarea = async ({
   page,
   label,

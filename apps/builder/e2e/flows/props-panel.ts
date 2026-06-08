@@ -1,4 +1,5 @@
 import type { Page } from "playwright";
+import { chooseAssetByFilename } from "./assets-panel";
 import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
 
 const getPropertyLabel = ({ page, label }: { page: Page; label: string }) =>
@@ -29,6 +30,39 @@ export const fillSelectedStringProperty = async ({
   const save = waitForChangeToBeSaved({ page });
   await input.fill(value);
   await input.blur();
+  await save;
+};
+
+export const chooseSelectedAssetProperty = async ({
+  page,
+  label,
+  assetLabel,
+  assetFilename,
+  triggerName = "Choose source",
+}: {
+  page: Page;
+  label: string;
+  assetLabel?: string;
+  assetFilename?: string;
+  triggerName?: string | RegExp;
+}) => {
+  await getPropertyLabel({ page, label }).waitFor({
+    state: "visible",
+    timeout: 10_000,
+  });
+
+  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
+    () => undefined
+  );
+  await page.getByRole("button", { name: triggerName }).click();
+  const save = waitForChangeToBeSaved({ page });
+  if (assetFilename !== undefined) {
+    await chooseAssetByFilename({ page, filename: assetFilename });
+  } else if (assetLabel !== undefined) {
+    await page.getByAltText(assetLabel, { exact: true }).click();
+  } else {
+    throw new Error("Expected assetLabel or assetFilename");
+  }
   await save;
 };
 

@@ -201,7 +201,7 @@ jobs:
         run: pnpm install
 
       - name: Run builder e2e
-        run: E2E_SKIP_CLEANUP=true pnpm e2e:builder
+        run: E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=900 pnpm e2e:builder
 
       - name: Print e2e service logs
         if: failure()

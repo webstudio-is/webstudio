@@ -15,6 +15,20 @@ export const waitForCanvasImage = async ({
   });
 };
 
+export const waitForCanvasImageSourceName = async ({
+  page,
+  sourceName,
+}: {
+  page: Page;
+  sourceName: string;
+}) => {
+  const canvas = await waitForCanvasFrame({ page });
+  await canvas.locator(`img[src*="${sourceName}"]`).waitFor({
+    state: "visible",
+    timeout: 10_000,
+  });
+};
+
 export const selectCanvasImage = async ({
   page,
   alt,
