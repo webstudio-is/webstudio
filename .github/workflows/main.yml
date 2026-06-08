@@ -23,7 +23,7 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'pull_request' ||
       (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
-    
+
     timeout-minutes: 20
 
     strategy:
@@ -156,3 +156,76 @@ jobs:
               console.error('Some fixtures exceeded limits')
               process.exit(1)
             }
+
+  builder-e2e:
+    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+
+    timeout-minutes: 40
+
+    runs-on: ubuntu-24.04
+
+    environment:
+      name: development
+
+    env:
+      AUTH_SECRET: test
+      DATABASE_URL: postgresql://user:pass@localhost:55432/webstudio
+      DIRECT_URL: postgresql://user:pass@localhost:55432/webstudio
+      E2E_PGPORT: 55432
+      E2E_POSTGREST_PORT: 55433
+      POSTGREST_API_KEY: ""
+      POSTGREST_URL: http://127.0.0.1:55433
+      TRPC_SERVER_API_TOKEN: e2e-service-token
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Pnpm install
+        run: pnpm install
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: builder-e2e-playwright-${{ runner.os }}-${{ hashFiles('apps/builder/package.json', 'pnpm-lock.yaml') }}
+
+      - name: Run builder e2e
+        run: |
+          set +e
+          E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=900 pnpm e2e:builder
+          status="$?"
+          set -e
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+
+          echo "::warning::Builder e2e failed on the first attempt. Restarting services and retrying once."
+          docker compose -f apps/builder/docker-compose.e2e.yaml logs || true
+          docker compose -f apps/builder/docker-compose.e2e.yaml down --volumes --remove-orphans || true
+
+          E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=900 pnpm e2e:builder
+
+      - name: Print e2e service logs
+        if: failure()
+        run: docker compose -f apps/builder/docker-compose.e2e.yaml logs
+
+      - name: Stop e2e services
+        if: always()
+        run: docker compose -f apps/builder/docker-compose.e2e.yaml down --volumes --remove-orphans

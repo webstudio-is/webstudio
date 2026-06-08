@@ -5,6 +5,7 @@ import {
   ROOT_INSTANCE_ID,
   encodeDataVariableId,
   getHomePage,
+  type Page,
   type Instance,
   type WebstudioData,
 } from "@webstudio-is/sdk";
@@ -15,8 +16,10 @@ import {
 } from "@webstudio-is/project-build";
 import { $project } from "./sync/data-stores";
 import {
+  __testing__,
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
+  copyAndTransformPageMeta,
 } from "./page-utils";
 import {
   $,
@@ -50,6 +53,119 @@ const getWebstudioDataStub = (
   styleSources: new Map(),
   styles: new Map(),
   ...data,
+});
+
+const getPagesWithSiblings = () =>
+  migratePages({
+    meta: {},
+    homePage: {
+      id: "home",
+      name: "Home",
+      path: "",
+      title: `"Home"`,
+      meta: {},
+      rootInstanceId: "homeBody",
+    },
+    pages: [
+      {
+        id: "about",
+        name: "About",
+        path: "/about",
+        title: `"About"`,
+        meta: {},
+        rootInstanceId: "aboutBody",
+      },
+      {
+        id: "about-copy",
+        name: "About (1)",
+        path: "/copy-1/about",
+        title: `"About"`,
+        meta: {},
+        rootInstanceId: "aboutCopyBody",
+      },
+    ],
+    folders: [createRootFolder(["home", "about", "about-copy"])],
+  });
+
+describe("page utility helpers", () => {
+  test("deduplicates names within the target folder", () => {
+    const pages = getPagesWithSiblings();
+
+    expect(
+      __testing__.deduplicateName(pages, ROOT_FOLDER_ID, "Contact")
+    ).toEqual("Contact");
+    expect(__testing__.deduplicateName(pages, ROOT_FOLDER_ID, "About")).toEqual(
+      "About (2)"
+    );
+    expect(
+      __testing__.deduplicateName(pages, ROOT_FOLDER_ID, "About (1)")
+    ).toEqual("About (2)");
+  });
+
+  test("deduplicates paths within the target folder", () => {
+    const pages = getPagesWithSiblings();
+
+    expect(
+      __testing__.deduplicatePath(pages, ROOT_FOLDER_ID, "/contact")
+    ).toEqual("/contact");
+    expect(
+      __testing__.deduplicatePath(pages, ROOT_FOLDER_ID, "/about")
+    ).toEqual("/copy-2/about");
+    expect(__testing__.deduplicatePath(pages, ROOT_FOLDER_ID, "/")).toEqual(
+      "/copy-1"
+    );
+  });
+
+  test("joins path parts without duplicate slashes", () => {
+    expect(__testing__.joinPath("/", "/blog", "/post")).toEqual("/blog/post");
+    expect(__testing__.joinPath("/docs/", "/guide")).toEqual("/docs/guide");
+  });
+});
+
+describe("page meta copy helpers", () => {
+  test("copies and transforms selected page meta fields", () => {
+    const target: Page["meta"] = {};
+
+    copyAndTransformPageMeta(
+      {
+        title: "old",
+        description: "old",
+        documentType: "text",
+        auth: { method: "basic", login: "u", password: "p" },
+      },
+      target,
+      (value) => value.replace("old", "new"),
+      { fields: new Set(["title", "documentType"]) }
+    );
+
+    expect(target).toEqual({
+      title: "new",
+      documentType: "text",
+    });
+  });
+
+  test("copies only caller-selected page meta fields", () => {
+    const target: Page["meta"] = {};
+
+    copyAndTransformPageMeta(
+      {
+        title: "old",
+        description: "old",
+        documentType: "text",
+        auth: { method: "basic", login: "u", password: "p" },
+        custom: [{ property: "og:type", content: "old" }],
+      },
+      target,
+      (value) => value.replace("old", "new"),
+      { fields: new Set(["title", "description", "custom"]) }
+    );
+
+    expect(target).toEqual({
+      title: "new",
+      description: "new",
+      custom: [{ property: "og:type", content: "new" }],
+    });
+  });
 });
 
 describe("insert page copy", () => {

@@ -4,13 +4,41 @@ import {
   type AppContext,
   type AuthPermit,
 } from "@webstudio-is/trpc-interface/index.server";
-import { getRequiredPermitForBuildPatchTransaction } from "@webstudio-is/project/index.server";
+import {
+  applyContentModeTransaction,
+  getContentModeCapabilities,
+} from "@webstudio-is/project/content-mode-permissions";
+import {
+  coreMetas,
+  type Breakpoint,
+  type Prop,
+  type StyleSource,
+  type WsComponentMeta,
+} from "@webstudio-is/sdk";
+import {
+  parseData,
+  parseInstanceData,
+} from "@webstudio-is/project-build/build-parser.server";
+import { parseStyleSourceSelections } from "@webstudio-is/project-build/style-source-selections.server";
+import { parseStyles } from "@webstudio-is/project-build/styles.server";
+import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
+import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
+import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import env from "~/env/env.server";
 import { readAccessToken } from "~/services/token.server";
 import type {
   NormalizedPatchRequest,
   PatchEntry,
 } from "./patch-normalize.server";
+
+const componentMetas = new Map<string, WsComponentMeta>(
+  Object.entries({
+    ...coreMetas,
+    ...baseComponentMetas,
+    ...animationComponentMetas,
+    ...radixComponentMetas,
+  })
+);
 
 export type AuthorizedPatchEntry = {
   entry: PatchEntry;
@@ -82,21 +110,51 @@ export const assertProjectPermit = async ({
   }
 };
 
+export const createContentModeCapabilities = (build: {
+  instances: string;
+  props: string;
+  styleSources: string;
+  styleSourceSelections: string;
+  styles: string;
+  breakpoints: string;
+}) => {
+  return getContentModeCapabilities({
+    instances: parseInstanceData(build.instances),
+    metas: componentMetas,
+    props: parseData<Prop>(build.props),
+    styleSources: parseData<StyleSource>(build.styleSources),
+    styleSourceSelections: parseStyleSourceSelections(
+      build.styleSourceSelections
+    ),
+    styles: parseStyles(build.styles),
+    breakpoints: parseData<Breakpoint>(build.breakpoints),
+  });
+};
+
 export const authorizePatchEntries = async (
   context: AppContext,
-  patch: NormalizedPatchRequest
+  patch: NormalizedPatchRequest,
+  contentModeCapabilities: ReturnType<typeof createContentModeCapabilities>
 ) => {
+  let capabilities = contentModeCapabilities;
   const authorized: AuthorizedPatchEntry[] = [];
   const rejected: RejectedPatchEntry[] = [];
 
   for (const entry of patch.entries) {
     try {
       const writerContext = await resolveEntryWriterContext(context, entry);
+      const contentModeResult = applyContentModeTransaction({
+        capabilities,
+        transaction: entry.transaction,
+      });
       await assertProjectPermit({
         context: writerContext,
-        permit: getRequiredPermitForBuildPatchTransaction(entry.transaction),
+        permit: contentModeResult?.success ? "edit" : "build",
         projectId: patch.projectId,
       });
+      if (contentModeResult?.success) {
+        capabilities = contentModeResult.capabilities;
+      }
       authorized.push({ entry, context: writerContext });
     } catch (error) {
       if (error instanceof AuthorizationError) {

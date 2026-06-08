@@ -1,33 +1,59 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const patchBuild = vi.hoisted(() => vi.fn());
+const patchLoadedBuild = vi.hoisted(() => vi.fn());
 const authorizePatchEntries = vi.hoisted(() => vi.fn());
+const createContentModeCapabilities = vi.hoisted(() =>
+  vi.fn(() => ({ capabilities: true }))
+);
 
 vi.mock("@webstudio-is/project/index.server", () => ({
-  patchBuild,
+  patchLoadedBuild,
 }));
 
 vi.mock("./patch-auth.server", () => ({
   assertProjectPermit: vi.fn(),
   authorizePatchEntries,
+  createContentModeCapabilities,
   createWriterContext: vi.fn(),
 }));
 
-import { applyPatchRequest } from "./patch-service.server";
+import {
+  applyPatchRequest,
+  loadAuthorizedPatchState,
+} from "./patch-service.server";
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
+
+const buildRow = {
+  projectId: "project-1",
+  version: 3,
+  instances: JSON.stringify([]),
+  props: JSON.stringify([]),
+  styleSources: JSON.stringify([]),
+  styleSourceSelections: JSON.stringify([]),
+  styles: JSON.stringify([]),
+  breakpoints: JSON.stringify([]),
+};
 
 const createContext = () =>
   ({
     postgrest: {
       client: {
         from: () => ({
-          select: () => ({
-            eq: () => ({
-              single: async () => ({
-                data: { projectId: "project-1", version: 3 },
-                error: undefined,
-              }),
-            }),
+          select: (columns: string) => ({
+            eq: () => {
+              if (columns === "*") {
+                return Promise.resolve({
+                  data: [buildRow],
+                  error: undefined,
+                });
+              }
+              return {
+                single: async () => ({
+                  data: buildRow,
+                  error: undefined,
+                }),
+              };
+            },
           }),
         }),
       },
@@ -59,8 +85,9 @@ const patch: NormalizedPatchRequest = {
 
 describe("applyPatchRequest", () => {
   beforeEach(() => {
-    patchBuild.mockReset();
+    patchLoadedBuild.mockReset();
     authorizePatchEntries.mockReset();
+    createContentModeCapabilities.mockClear();
   });
 
   test("returns per-entry partial results while applying authorized entries", async () => {
@@ -73,12 +100,30 @@ describe("applyPatchRequest", () => {
         },
       ],
     });
-    patchBuild.mockResolvedValue({ status: "ok", version: 4 });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
 
     const result = await applyPatchRequest(createContext(), patch);
 
-    expect(patchBuild).toHaveBeenCalledWith(
+    expect(createContentModeCapabilities).toHaveBeenCalledWith({
+      breakpoints: JSON.stringify([]),
+      instances: JSON.stringify([]),
+      props: JSON.stringify([]),
+      styleSourceSelections: JSON.stringify([]),
+      styleSources: JSON.stringify([]),
+      styles: JSON.stringify([]),
+    });
+    expect(authorizePatchEntries).toHaveBeenCalledWith(
+      expect.anything(),
+      patch,
+      { capabilities: true }
+    );
+    expect(patchLoadedBuild).toHaveBeenCalledWith(
       expect.objectContaining({
+        build: expect.objectContaining({ version: 3 }),
         transactions: [patch.entries[1].transaction],
       }),
       { writer: 2 }
@@ -107,9 +152,13 @@ describe("applyPatchRequest", () => {
       ],
       rejected: [],
     });
-    patchBuild
+    patchLoadedBuild
       .mockResolvedValueOnce({ status: "error", errors: "batch failed" })
-      .mockResolvedValueOnce({ status: "ok", version: 4 })
+      .mockImplementationOnce(async ({ build }) => ({
+        status: "ok",
+        version: 4,
+        build: { ...build, version: 4 },
+      }))
       .mockResolvedValueOnce({ status: "error", errors: "entry failed" });
 
     const result = await applyPatchRequest(createContext(), patch);
@@ -137,24 +186,34 @@ describe("applyPatchRequest", () => {
       ],
       rejected: [],
     });
-    patchBuild
-      .mockResolvedValueOnce({ status: "ok", version: 4 })
-      .mockResolvedValueOnce({ status: "ok", version: 5 });
+    patchLoadedBuild
+      .mockImplementationOnce(async ({ build }) => ({
+        status: "ok",
+        version: 4,
+        build: { ...build, version: 4 },
+      }))
+      .mockImplementationOnce(async ({ build }) => ({
+        status: "ok",
+        version: 5,
+        build: { ...build, version: 5 },
+      }));
 
     const result = await applyPatchRequest(createContext(), patch);
 
-    expect(patchBuild).toHaveBeenCalledTimes(2);
-    expect(patchBuild).toHaveBeenNthCalledWith(
+    expect(patchLoadedBuild).toHaveBeenCalledTimes(2);
+    expect(patchLoadedBuild).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
+        build: expect.objectContaining({ version: 3 }),
         clientVersion: 3,
         transactions: [patch.entries[0].transaction],
       }),
       { writer: 1 }
     );
-    expect(patchBuild).toHaveBeenNthCalledWith(
+    expect(patchLoadedBuild).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
+        build: expect.objectContaining({ version: 4 }),
         clientVersion: 4,
         transactions: [patch.entries[1].transaction],
       }),
@@ -197,7 +256,11 @@ describe("applyPatchRequest", () => {
         },
       ],
     });
-    patchBuild.mockResolvedValue({ status: "ok", version: 4 });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
 
     const result = await applyPatchRequest(createContext(), duplicatePatch);
 
@@ -225,13 +288,38 @@ describe("applyPatchRequest", () => {
       ],
       rejected: [],
     });
-    patchBuild
+    patchLoadedBuild
       .mockResolvedValueOnce({ status: "error", errors: "batch failed" })
-      .mockResolvedValueOnce({ status: "ok", version: 4 })
+      .mockImplementationOnce(async ({ build }) => ({
+        status: "ok",
+        version: 4,
+        build: { ...build, version: 4 },
+      }))
       .mockRejectedValueOnce(new Error("PostgREST unavailable"));
 
     await expect(applyPatchRequest(createContext(), patch)).rejects.toThrow(
       "PostgREST unavailable"
     );
+  });
+});
+
+describe("loadAuthorizedPatchState", () => {
+  beforeEach(() => {
+    createContentModeCapabilities.mockClear();
+  });
+
+  test("does not load content-mode capabilities for initial patch state", async () => {
+    await expect(
+      loadAuthorizedPatchState({
+        authToken: "token",
+        buildId: "build-1",
+        context: createContext(),
+      })
+    ).resolves.toEqual({
+      projectId: "project-1",
+      version: 3,
+    });
+
+    expect(createContentModeCapabilities).not.toHaveBeenCalled();
   });
 });

@@ -19,7 +19,7 @@ import { $editingPageId, $editingTemplateId } from "~/shared/nano-states";
 
 import { ShareButton } from "~/builder/features/share";
 import { PublishButton } from "~/builder/features/publish";
-import { SyncStatus } from "~/builder/features/sync-status";
+import { SyncStatusDot, SyncStatus } from "~/builder/features/sync-status";
 import { Menu } from "~/builder/features/menu";
 import { BreakpointsContainer } from "~/builder/features/breakpoints";
 import { ViewMode } from "~/builder/features/view-mode";
@@ -238,6 +238,7 @@ export const Topbar = ({ project, css, loading, isUiHidden }: TopbarProps) => {
             )}
             <SafeModeButton />
             <ViewMode />
+            <SyncStatusDot />
             <SyncStatus />
             <BuilderModeDropDown />
             <ShareButton projectId={project.id} />

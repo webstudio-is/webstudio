@@ -2,10 +2,12 @@ import {
   AuthorizationError,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
-import { patchBuild } from "@webstudio-is/project/index.server";
+import { patchLoadedBuild } from "@webstudio-is/project/index.server";
+import { loadRawBuildById } from "@webstudio-is/project-build/index.server";
 import {
   assertProjectPermit,
   authorizePatchEntries,
+  createContentModeCapabilities,
   createWriterContext,
   type AuthorizedPatchEntry,
 } from "./patch-auth.server";
@@ -76,15 +78,31 @@ const loadBuildState = async (context: AppContext, buildId: string) => {
   };
 };
 
-const assertBuildProject = async (
-  context: AppContext,
+const loadBuildPatchState = async (context: AppContext, buildId: string) => {
+  const build = await loadRawBuildById(context, buildId);
+
+  return {
+    build,
+    projectId: String(build.projectId),
+    version: Number(build.version),
+    contentModeCapabilities: createContentModeCapabilities({
+      instances: build.instances,
+      props: build.props,
+      styleSources: build.styleSources,
+      styleSourceSelections: build.styleSourceSelections,
+      styles: build.styles,
+      breakpoints: build.breakpoints,
+    }),
+  };
+};
+
+const assertBuildProject = (
+  state: { projectId: string },
   patch: Pick<NormalizedPatchRequest, "buildId" | "projectId">
 ) => {
-  const state = await loadBuildState(context, patch.buildId);
   if (state.projectId !== patch.projectId) {
     throw new Error("Build does not belong to project");
   }
-  return state;
 };
 
 const acceptedResult = (entry: PatchEntry): PatchEntryResult => ({
@@ -115,13 +133,16 @@ const rejectedResult = ({
 
 const applyAuthorizedEntries = async ({
   authorized,
+  build,
   patch,
   version,
 }: {
   authorized: AuthorizedPatchEntry[];
+  build: Awaited<ReturnType<typeof loadBuildPatchState>>["build"];
   patch: NormalizedPatchRequest;
   version: number;
 }) => {
+  let currentBuild = build;
   if (authorized.length === 0) {
     return {
       version,
@@ -136,8 +157,9 @@ const applyAuthorizedEntries = async ({
   );
 
   if (hasSharedContext) {
-    const batchResult = await patchBuild(
+    const batchResult = await patchLoadedBuild(
       {
+        build: currentBuild,
         buildId: patch.buildId,
         projectId: patch.projectId,
         clientVersion: version,
@@ -147,6 +169,7 @@ const applyAuthorizedEntries = async ({
     );
 
     if (batchResult.status === "ok") {
+      currentBuild = batchResult.build;
       return {
         status: "ok" as const,
         version: batchResult.version,
@@ -163,8 +186,9 @@ const applyAuthorizedEntries = async ({
   let currentVersion = version;
 
   for (const { entry, context: entryContext } of authorized) {
-    const entryResult = await patchBuild(
+    const entryResult = await patchLoadedBuild(
       {
+        build: currentBuild,
         buildId: patch.buildId,
         projectId: patch.projectId,
         clientVersion: currentVersion,
@@ -175,6 +199,7 @@ const applyAuthorizedEntries = async ({
 
     if (entryResult.status === "ok") {
       currentVersion = entryResult.version;
+      currentBuild = entryResult.build;
       entries.push(acceptedResult(entry));
       continue;
     }
@@ -195,10 +220,16 @@ export const applyPatchRequest = async (
   context: AppContext,
   patch: NormalizedPatchRequest
 ): Promise<PatchResult> => {
-  await assertBuildProject(context, patch);
-  const { authorized, rejected } = await authorizePatchEntries(context, patch);
+  const state = await loadBuildPatchState(context, patch.buildId);
+  assertBuildProject(state, patch);
+  const { authorized, rejected } = await authorizePatchEntries(
+    context,
+    patch,
+    state.contentModeCapabilities
+  );
   const applied = await applyAuthorizedEntries({
     authorized,
+    build: state.build,
     patch,
     version: patch.clientVersion,
   });

@@ -14,17 +14,23 @@ import { selectPage } from "~/shared/nano-states";
 
 type PageContextMenuProps = {
   children: ReactNode;
+  canManagePages: boolean;
   onRequestDeletePage: (pageId: string) => void;
   onRequestDeleteFolder: (folderId: string) => void;
 };
 
 export const PageContextMenu = ({
   children,
+  canManagePages,
   onRequestDeletePage,
   onRequestDeleteFolder,
 }: PageContextMenuProps) => {
   const [pageId, setPageId] = useState<string | undefined>();
   const [folderId, setFolderId] = useState<string | undefined>();
+
+  if (canManagePages === false) {
+    return <>{children}</>;
+  }
 
   const handleDuplicate = () => {
     if (pageId) {
@@ -93,14 +99,20 @@ export const PageContextMenu = ({
 
 type TemplateContextMenuProps = {
   children: ReactNode;
+  canManageTemplates: boolean;
   onRequestDeleteTemplate: (templateId: string) => void;
 };
 
 export const TemplateContextMenu = ({
   children,
+  canManageTemplates,
   onRequestDeleteTemplate,
 }: TemplateContextMenuProps) => {
   const [templateId, setTemplateId] = useState<string | undefined>();
+
+  if (canManageTemplates === false) {
+    return <>{children}</>;
+  }
 
   const handleDuplicate = () => {
     if (templateId) {

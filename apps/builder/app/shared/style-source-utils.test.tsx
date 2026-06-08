@@ -13,6 +13,7 @@ import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   getStyleSourceStylesSignature,
   insertStyleSources,
+  insertTokenStyleSources,
   insertPortalLocalStyleSources,
   insertLocalStyleSourcesWithNewIds,
   deleteStyleSourceMutable,
@@ -1286,6 +1287,265 @@ describe("insertLocalStyleSourcesWithNewIds", () => {
     // Style should use merged breakpoint ID
     const style = Array.from(styles.values())[0];
     expect(style.breakpointId).toBe("merged-bp");
+  });
+});
+
+describe("insertLocalStyleSourcesWithNewIds in content mode", () => {
+  test("copies local styles for existing breakpoints and reuses token ids", () => {
+    const fragmentStyleSources: StyleSource[] = [
+      { type: "local", id: "fragment-local" },
+      { type: "token", id: "existing-token", name: "Existing" },
+    ];
+    const fragmentStyleSourceSelections: StyleSourceSelection[] = [
+      { instanceId: "fragment-instance", values: ["fragment-local"] },
+      {
+        instanceId: "fragment-instance-with-token",
+        values: ["fragment-local", "existing-token"],
+      },
+    ];
+    const fragmentStyles: StyleDecl[] = [
+      createStyleDecl("fragment-local", "base", "color", {
+        type: "keyword",
+        value: "red",
+      }),
+      createStyleDecl("fragment-local", "missing", "fontSize", {
+        type: "unit",
+        value: 16,
+        unit: "px",
+      }),
+    ];
+    const fragmentInstanceIds = new Set([
+      "fragment-instance",
+      "fragment-instance-with-token",
+    ]);
+    const newInstanceIds = new Map([
+      ["fragment-instance", "new-instance"],
+      ["fragment-instance-with-token", "new-instance-with-token"],
+    ]);
+    const styleSources: StyleSources = new Map([
+      [
+        "existing-token",
+        { type: "token", id: "existing-token", name: "Existing" },
+      ],
+    ]);
+    const styleSourceSelections: StyleSourceSelections = new Map();
+    const styles: Styles = new Map();
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "Base" }]);
+
+    insertLocalStyleSourcesWithNewIds({
+      fragmentStyleSources,
+      fragmentStyleSourceSelections,
+      fragmentStyles,
+      fragmentInstanceIds,
+      newInstanceIds,
+      styleSources,
+      styleSourceSelections,
+      styles,
+      breakpoints,
+      contentMode: true,
+    });
+
+    const copiedLocalIds = Array.from(styleSources.keys()).filter(
+      (styleSourceId) => styleSourceId !== "existing-token"
+    );
+    expect(copiedLocalIds).toHaveLength(1);
+    const [copiedLocalId] = copiedLocalIds;
+    expect(styleSources.get(copiedLocalId)).toMatchObject({ type: "local" });
+    expect(styleSourceSelections.get("new-instance")).toEqual({
+      instanceId: "new-instance",
+      values: [copiedLocalId],
+    });
+    expect(styleSourceSelections.get("new-instance-with-token")).toEqual({
+      instanceId: "new-instance-with-token",
+      values: [copiedLocalId, "existing-token"],
+    });
+    expect(Array.from(styles.values())).toEqual([
+      {
+        ...fragmentStyles[0],
+        styleSourceId: copiedLocalId,
+      },
+    ]);
+  });
+
+  test("skips selections with no copyable content-mode style sources", () => {
+    const fragmentStyleSources: StyleSource[] = [
+      { type: "local", id: "fragment-local" },
+      { type: "token", id: "missing-token", name: "Missing" },
+    ];
+    const fragmentStyleSourceSelections: StyleSourceSelection[] = [
+      { instanceId: "fragment-instance", values: ["fragment-local"] },
+      { instanceId: "fragment-instance-with-token", values: ["missing-token"] },
+    ];
+    const fragmentStyles: StyleDecl[] = [
+      createStyleDecl("fragment-local", "missing", "color", {
+        type: "keyword",
+        value: "red",
+      }),
+    ];
+    const styleSources: StyleSources = new Map();
+    const styleSourceSelections: StyleSourceSelections = new Map();
+    const styles: Styles = new Map();
+
+    insertLocalStyleSourcesWithNewIds({
+      fragmentStyleSources,
+      fragmentStyleSourceSelections,
+      fragmentStyles,
+      fragmentInstanceIds: new Set([
+        "fragment-instance",
+        "fragment-instance-with-token",
+      ]),
+      newInstanceIds: new Map([
+        ["fragment-instance", "new-instance"],
+        ["fragment-instance-with-token", "new-instance-with-token"],
+      ]),
+      styleSources,
+      styleSourceSelections,
+      styles,
+      breakpoints: toMap<Breakpoint>([{ id: "base", label: "Base" }]),
+      contentMode: true,
+    });
+
+    expect(styleSources).toEqual(new Map());
+    expect(styleSourceSelections).toEqual(new Map());
+    expect(styles).toEqual(new Map());
+  });
+
+  test("does not reuse target local style source ids", () => {
+    const fragmentStyleSourceSelections: StyleSourceSelection[] = [
+      { instanceId: "fragment-instance", values: ["existing-local"] },
+      {
+        instanceId: "fragment-instance-with-token",
+        values: ["existing-token"],
+      },
+    ];
+    const styleSources: StyleSources = new Map([
+      ["existing-local", { type: "local", id: "existing-local" }],
+      [
+        "existing-token",
+        { type: "token", id: "existing-token", name: "Existing" },
+      ],
+    ]);
+    const styleSourceSelections: StyleSourceSelections = new Map();
+    const styles: Styles = new Map();
+
+    insertLocalStyleSourcesWithNewIds({
+      fragmentStyleSources: [],
+      fragmentStyleSourceSelections,
+      fragmentStyles: [],
+      fragmentInstanceIds: new Set([
+        "fragment-instance",
+        "fragment-instance-with-token",
+      ]),
+      newInstanceIds: new Map([
+        ["fragment-instance", "new-instance"],
+        ["fragment-instance-with-token", "new-instance-with-token"],
+      ]),
+      styleSources,
+      styleSourceSelections,
+      styles,
+      breakpoints: toMap<Breakpoint>([{ id: "base", label: "Base" }]),
+      contentMode: true,
+    });
+
+    expect(styleSourceSelections.get("new-instance")).toBeUndefined();
+    expect(styleSourceSelections.get("new-instance-with-token")).toEqual({
+      instanceId: "new-instance-with-token",
+      values: ["existing-token"],
+    });
+  });
+
+  test("copies fragment local style sources even when ids already exist in target", () => {
+    const fragmentStyleSources: StyleSource[] = [
+      { type: "local", id: "local" },
+    ];
+    const fragmentStyleSourceSelections: StyleSourceSelection[] = [
+      { instanceId: "fragment-instance", values: ["local"] },
+    ];
+    const fragmentStyles: StyleDecl[] = [
+      createStyleDecl("local", "base", "color", {
+        type: "keyword",
+        value: "red",
+      }),
+    ];
+    const styleSources: StyleSources = new Map([
+      ["local", { type: "local", id: "local" }],
+    ]);
+    const styleSourceSelections: StyleSourceSelections = new Map();
+    const styles: Styles = new Map();
+
+    insertLocalStyleSourcesWithNewIds({
+      fragmentStyleSources,
+      fragmentStyleSourceSelections,
+      fragmentStyles,
+      fragmentInstanceIds: new Set(["fragment-instance"]),
+      newInstanceIds: new Map([["fragment-instance", "new-instance"]]),
+      styleSources,
+      styleSourceSelections,
+      styles,
+      breakpoints: toMap<Breakpoint>([{ id: "base", label: "Base" }]),
+      contentMode: true,
+    });
+
+    const copiedLocalId = styleSourceSelections.get("new-instance")?.values[0];
+
+    expect(copiedLocalId).toBeDefined();
+    expect(copiedLocalId).not.toBe("local");
+    expect(styleSources.get("local")).toEqual({ type: "local", id: "local" });
+    expect(styleSources.get(copiedLocalId ?? "")).toMatchObject({
+      type: "local",
+    });
+    expect(Array.from(styles.values())).toEqual([
+      {
+        ...fragmentStyles[0],
+        styleSourceId: copiedLocalId,
+      },
+    ]);
+  });
+});
+
+describe("insertTokenStyleSources", () => {
+  test("inserts token sources and remaps their styles", () => {
+    const breakpoints = toMap<Breakpoint>([
+      { id: "base", label: "base" },
+      { id: "desktop", label: "Desktop", minWidth: 1280 },
+    ]);
+    const styleSources: StyleSources = new Map([
+      ["existing-token", { id: "existing-token", type: "token", name: "Old" }],
+    ]);
+    const styles: Styles = new Map();
+    const fragmentStyleSources: StyleSource[] = [
+      { id: "token", type: "token", name: "Primary" },
+    ];
+    const fragmentStyles: StyleDecl[] = [
+      createStyleDecl("token", "old-desktop", "color", {
+        type: "keyword",
+        value: "red",
+      }),
+    ];
+
+    const styleSourceIdMap = insertTokenStyleSources({
+      fragmentStyleSources,
+      fragmentStyles,
+      styleSources,
+      styles,
+      breakpoints,
+      mergedBreakpointIds: new Map([["old-desktop", "desktop"]]),
+    });
+
+    const newTokenId = styleSourceIdMap.get("token");
+    expect(newTokenId).toBeDefined();
+    expect(newTokenId).not.toBe("token");
+    expect(styleSources.get(newTokenId ?? "")).toMatchObject({
+      type: "token",
+      name: "Primary",
+    });
+    expect(Array.from(styles.values())).toEqual([
+      {
+        ...fragmentStyles[0],
+        breakpointId: "desktop",
+        styleSourceId: newTokenId,
+      },
+    ]);
   });
 });
 

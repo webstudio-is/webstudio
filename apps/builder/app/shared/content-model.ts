@@ -1,6 +1,8 @@
 import { elementsByTag } from "@webstudio-is/html-data";
 import {
   elementComponent,
+  getHtmlTagFromInstance,
+  getHtmlTagsFromProps,
   parseComponentName,
   type ContentModel,
   type Instance,
@@ -13,20 +15,18 @@ import { setIsSubsetOf } from "./shim";
 
 type Metas = Map<Instance["component"], WsComponentMeta>;
 
-const tagByInstanceIdCache = new WeakMap<Props, Map<Instance["id"], string>>();
+const htmlTagsByInstanceIdCache = new WeakMap<
+  Props,
+  Map<Instance["id"], string>
+>();
 
-const getTagByInstanceId = (props: Props) => {
-  let tagByInstanceId = tagByInstanceIdCache.get(props);
-  if (tagByInstanceId === undefined) {
-    tagByInstanceId = new Map<Instance["id"], string>();
-    for (const prop of props.values()) {
-      if (prop.type === "string" && prop.name === "tag") {
-        tagByInstanceId.set(prop.instanceId, prop.value);
-      }
-    }
-    tagByInstanceIdCache.set(props, tagByInstanceId);
+const getHtmlTagsByInstanceId = (props: Props) => {
+  let tags = htmlTagsByInstanceIdCache.get(props);
+  if (tags === undefined) {
+    tags = getHtmlTagsFromProps(props);
+    htmlTagsByInstanceIdCache.set(props, tags);
   }
-  return tagByInstanceId;
+  return tags;
 };
 
 const getTag = ({
@@ -38,13 +38,12 @@ const getTag = ({
   metas: Metas;
   props: Props;
 }) => {
-  // ignore tag property on xml nodes
-  if (instance.component === "XmlNode") {
-    return;
-  }
-  const meta = metas.get(instance.component);
-  const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
-  return instance.tag ?? getTagByInstanceId(props).get(instance.id) ?? metaTag;
+  return getHtmlTagFromInstance({
+    instance,
+    metas,
+    props,
+    htmlTagsByInstanceId: getHtmlTagsByInstanceId(props),
+  });
 };
 
 const isIntersected = (arrayA: string[], arrayB: string[]) => {
