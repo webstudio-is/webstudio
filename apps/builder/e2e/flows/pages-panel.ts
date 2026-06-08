@@ -40,10 +40,7 @@ export const openPageSettings = async ({
   pageName: string;
 }) => {
   await openPagesPanel({ page });
-  const pageRow = page
-    .getByText(pageName, { exact: true })
-    .first()
-    .locator("xpath=ancestor::*[@data-selection-state][1]");
+  const pageRow = page.getByRole("group", { name: `Page ${pageName}` });
   await pageRow.hover();
   await pageRow.getByRole("button", { name: "Open page settings" }).click();
   await page.getByText("Page settings", { exact: true }).waitFor();
@@ -130,6 +127,65 @@ export const fillPageSettingsTextarea = async ({
   value: string;
 }) => {
   await fillPageSettingsControl({ page, label, value });
+};
+
+const getCustomMetadataGroup = (page: Page) =>
+  page.getByRole("group", { name: "Custom metadata" });
+
+export const fillCustomMetadata = async ({
+  page,
+  property,
+  content,
+}: {
+  page: Page;
+  property: string;
+  content: string;
+}) => {
+  const metadata = getCustomMetadataGroup(page);
+
+  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
+    () => undefined
+  );
+  const propertySave = waitForChangeToBeSaved({ page });
+  await metadata.getByLabel("Property", { exact: true }).first().fill(property);
+  await metadata.getByLabel("Property", { exact: true }).first().blur();
+  await propertySave;
+
+  await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
+    () => undefined
+  );
+  const contentSave = waitForChangeToBeSaved({ page });
+  await metadata.getByLabel("Content", { exact: true }).first().fill(content);
+  await metadata.getByLabel("Content", { exact: true }).first().blur();
+  await contentSave;
+};
+
+export const expectCustomMetadataValue = async ({
+  page,
+  property,
+  content,
+}: {
+  page: Page;
+  property: string;
+  content: string;
+}) => {
+  const metadata = getCustomMetadataGroup(page);
+  if (
+    (await metadata
+      .getByLabel("Property", { exact: true })
+      .first()
+      .inputValue()) !== property
+  ) {
+    throw new Error("Expected edited custom metadata property to persist");
+  }
+  if (
+    (await metadata
+      .getByLabel("Content", { exact: true })
+      .first()
+      .inputValue()) !== content
+  ) {
+    throw new Error("Expected edited custom metadata content to persist");
+  }
 };
 
 export const toggleSearchVisibility = async ({ page }: { page: Page }) => {

@@ -383,6 +383,13 @@ const PagesTree = ({
                 isHighlighted={dropTarget?.parentId === item.id}
                 isExpanded={item.isExpanded}
                 onExpand={handleExpand}
+                nodeProps={{
+                  role: "group",
+                  "aria-label":
+                    item.type === "page"
+                      ? `Page ${item.page.name}`
+                      : `Folder ${item.folder.name}`,
+                }}
                 buttonProps={{
                   onClick: (event) => {
                     if (item.type === "folder") {

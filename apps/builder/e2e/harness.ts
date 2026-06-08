@@ -35,6 +35,53 @@ export type Suite = {
   tests: Test[];
 };
 
+type TestApi = ((name: string, run: () => Promise<void>) => void) & {
+  describe: (name: string, define: () => void) => void;
+  beforeAll: (run: () => Promise<void>) => void;
+  beforeEach: (run: () => Promise<void>) => void;
+  afterAll: (run: () => Promise<void>) => void;
+};
+
+const suites: Suite[] = [];
+let currentSuite: Suite | undefined;
+
+const getCurrentSuite = () => {
+  if (currentSuite === undefined) {
+    throw new Error("Expected e2e test to be registered inside test.describe");
+  }
+  return currentSuite;
+};
+
+export const test: TestApi = Object.assign(
+  (name: string, run: () => Promise<void>) => {
+    getCurrentSuite().tests.push({ name, run });
+  },
+  {
+    describe: (name: string, define: () => void) => {
+      const parentSuite = currentSuite;
+      const suite: Suite = { name, tests: [] };
+      suites.push(suite);
+      currentSuite = suite;
+      try {
+        define();
+      } finally {
+        currentSuite = parentSuite;
+      }
+    },
+    beforeAll: (run: () => Promise<void>) => {
+      getCurrentSuite().beforeAll = run;
+    },
+    beforeEach: (run: () => Promise<void>) => {
+      getCurrentSuite().beforeEach = run;
+    },
+    afterAll: (run: () => Promise<void>) => {
+      getCurrentSuite().afterAll = run;
+    },
+  }
+);
+
+export const getSuites = () => suites;
+
 let browser: Browser | undefined;
 let context: BrowserContext | undefined;
 

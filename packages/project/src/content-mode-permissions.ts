@@ -113,6 +113,33 @@ const isContentModePageMetaValue = (field: string, value: unknown) => {
   return contentModePageMetaValidators[field]?.(value) ?? false;
 };
 
+const isContentModeCustomMetaPatch = (patch: Patch) => {
+  const [, , , , index, field] = patch.path;
+  if (typeof index !== "number") {
+    return false;
+  }
+
+  if (patch.path.length === 5) {
+    if (patch.op === "remove") {
+      return true;
+    }
+    return (
+      (patch.op === "add" || patch.op === "replace") &&
+      isRecord(patch.value) &&
+      typeof patch.value.property === "string" &&
+      typeof patch.value.content === "string"
+    );
+  }
+
+  if (patch.path.length !== 6) {
+    return false;
+  }
+  if (field !== "property" && field !== "content") {
+    return false;
+  }
+  return patch.op === "replace" && typeof patch.value === "string";
+};
+
 export const getContentModePropNamesByTag = (
   metas: Map<Instance["component"], WsComponentMeta>
 ) => {
@@ -450,9 +477,6 @@ const validatePropPatch = (
 
 const isContentModePagePatch = (patch: Patch) => {
   const [collection, pageId, field, metaField] = patch.path;
-  if (patch.op === "remove") {
-    return false;
-  }
   if (
     collection !== "pages" ||
     typeof pageId !== "string" ||
@@ -475,14 +499,25 @@ const isContentModePagePatch = (patch: Patch) => {
   // Meta field patches are scoped as ["pages", pageId, "meta", metaField].
   // Keep this list explicit: page meta also contains auth, redirects, status,
   // document type, and raw content settings that are not content editing.
+  if (field !== "meta" || typeof metaField !== "string") {
+    return false;
+  }
+
+  if (metaField === "custom" && patch.path.length > 4) {
+    return isContentModeCustomMetaPatch(patch);
+  }
+
+  if (patch.op === "remove") {
+    return false;
+  }
+
   if (
     patch.path.length !== 4 ||
-    field !== "meta" ||
-    typeof metaField !== "string" ||
     contentModePageMetaFields.has(metaField) === false
   ) {
     return false;
   }
+
   return isContentModePageMetaValue(metaField, patch.value);
 };
 

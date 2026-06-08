@@ -12,7 +12,22 @@ export const loginWithSecret = async ({
 }) => {
   console.info("e2e: opening login");
   await page.goto(`${dashboardUrl}/login`);
-  await page.getByRole("button", { name: "Login with Secret" }).click();
+  const loginWithSecretButton = page.getByRole("button", {
+    name: "Login with Secret",
+  });
+  const loginState = await Promise.race([
+    loginWithSecretButton
+      .waitFor({ state: "visible", timeout: 10_000 })
+      .then(() => "login" as const),
+    page
+      .waitForURL(`${dashboardUrl}/dashboard`, { timeout: 10_000 })
+      .then(() => "dashboard" as const),
+  ]);
+  if (loginState === "dashboard") {
+    console.info("e2e: dashboard loaded");
+    return;
+  }
+  await loginWithSecretButton.click();
   await page.getByPlaceholder("Auth secret").fill("test");
   await page.getByPlaceholder("Email (optional)").fill(email);
   if (devPlan !== undefined) {

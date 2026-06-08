@@ -2461,6 +2461,25 @@ describe("content mode permissions", () => {
             path: ["pages", "page-1", "meta", "custom"],
             value: [{ property: "og:type", content: "website" }],
           },
+          {
+            op: "add",
+            path: ["pages", "page-1", "meta", "custom", 0],
+            value: { property: "", content: '""' },
+          },
+          {
+            op: "replace",
+            path: ["pages", "page-1", "meta", "custom", 0, "property"],
+            value: "og:title",
+          },
+          {
+            op: "replace",
+            path: ["pages", "page-1", "meta", "custom", 0, "content"],
+            value: '"About"',
+          },
+          {
+            op: "remove",
+            path: ["pages", "page-1", "meta", "custom", 0],
+          },
         ]),
       })
     ).toEqual({ success: true });
@@ -2469,6 +2488,36 @@ describe("content mode permissions", () => {
         capabilities,
         transaction: transaction("pages", [
           { op: "remove", path: ["pages", "page-1", "name"] },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Page patch is not editable in content mode.",
+    });
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("pages", [
+          {
+            op: "replace",
+            path: ["pages", "page-1", "meta", "custom", 0, "content"],
+            value: 1,
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Page patch is not editable in content mode.",
+    });
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("pages", [
+          {
+            op: "replace",
+            path: ["pages", "page-1", "meta", "custom", 0, "name"],
+            value: "og:type",
+          },
         ]),
       })
     ).toEqual({

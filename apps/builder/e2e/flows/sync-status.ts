@@ -2,26 +2,19 @@ import type { Page } from "playwright";
 
 type SyncStatusDotStatus = "idle" | "pending" | "saved" | "error";
 
-const delay = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms));
-
 const getSyncStatusDot = (page: Page) =>
   page.getByRole("status", { name: /^Sync status:/ });
 
-const getSyncStatusDotStatus = async (page: Page) => {
-  const status = await getSyncStatusDot(page).getAttribute("data-sync-status");
-
-  if (
-    status === "idle" ||
-    status === "pending" ||
-    status === "saved" ||
-    status === "error"
-  ) {
-    return status;
-  }
-
-  throw new Error(`Unexpected sync status dot value: ${status}`);
-};
+const getSyncStatusDotByStatus = ({
+  page,
+  status,
+}: {
+  page: Page;
+  status: SyncStatusDotStatus;
+}) =>
+  page.locator(
+    `[role="status"][aria-label^="Sync status:"][data-sync-status="${status}"]`
+  );
 
 export const waitForSyncStatus = async ({
   page,
@@ -32,21 +25,11 @@ export const waitForSyncStatus = async ({
   status: SyncStatusDotStatus;
   timeout?: number;
 }) => {
-  const startedAt = Date.now();
-
   await getSyncStatusDot(page).waitFor({
     state: "attached",
     timeout,
   });
-
-  while (Date.now() - startedAt < timeout) {
-    if ((await getSyncStatusDotStatus(page)) === status) {
-      return;
-    }
-    await delay(100);
-  }
-
-  throw new Error(`Timed out waiting for sync status to become ${status}`);
+  await getSyncStatusDotByStatus({ page, status }).waitFor({ timeout });
 };
 
 export const waitForChangeToBeSaved = async ({
@@ -56,29 +39,20 @@ export const waitForChangeToBeSaved = async ({
   page: Page;
   timeout?: number;
 }) => {
-  const startedAt = Date.now();
-
   await getSyncStatusDot(page).waitFor({
     state: "attached",
     timeout,
   });
 
-  while (Date.now() - startedAt < timeout) {
-    const status = await getSyncStatusDotStatus(page);
-
-    if (status === "error") {
-      const label =
-        (await getSyncStatusDot(page).getAttribute("aria-label")) ??
-        "Sync status: error";
-      throw new Error(`Expected change to save, received ${label}`);
-    }
-
-    if (status === "saved") {
-      return;
-    }
-
-    await delay(100);
-  }
-
-  throw new Error("Timed out waiting for sync status to become saved");
+  await Promise.race([
+    getSyncStatusDotByStatus({ page, status: "saved" }).waitFor({ timeout }),
+    getSyncStatusDotByStatus({ page, status: "error" })
+      .waitFor({ timeout })
+      .then(async () => {
+        const label =
+          (await getSyncStatusDot(page).getAttribute("aria-label")) ??
+          "Sync status: error";
+        throw new Error(`Expected change to save, received ${label}`);
+      }),
+  ]);
 };

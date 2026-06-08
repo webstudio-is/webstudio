@@ -46,7 +46,7 @@ export const openAssetDetails = async ({
 }) => {
   const asset = page.getByTitle(filename);
   await asset.hover();
-  await asset.locator("button[title='Options']").click();
+  await asset.getByRole("button", { name: "Options" }).click();
   await page.getByText("Asset details").waitFor();
 };
 

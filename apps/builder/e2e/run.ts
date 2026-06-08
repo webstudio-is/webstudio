@@ -2,16 +2,16 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   builderUrl,
+  getSuites,
   postgrestUrl,
   serviceToken,
   startBrowser,
   stopBrowser,
-  type Suite,
 } from "./harness";
 import { logPerf, measure } from "./perf";
 import { e2ePlans } from "./plans";
-import { contentModeEditing } from "./tests/content-mode-editing.e2e";
-import { shareLinkPermissions } from "./tests/share-link-permissions.e2e";
+import "./tests/content-mode-editing.e2e";
+import "./tests/share-link-permissions.e2e";
 
 const testTimeoutMs =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 60_000;
@@ -132,8 +132,6 @@ const stopBuilder = async (child: ChildProcess | undefined) => {
   ]);
 };
 
-const suites: Suite[] = [contentModeEditing, shareLinkPermissions];
-
 const run = async () => {
   const totalStartedAt = Date.now();
   const bootStartedAt = Date.now();
@@ -150,7 +148,7 @@ const run = async () => {
     await browserReady;
     logPerf("boot builder/browser", bootStartedAt);
     const testsStartedAt = Date.now();
-    for (const suite of suites) {
+    for (const suite of getSuites()) {
       const tests = suite.tests.filter(
         (test) => testFilter === undefined || test.name.includes(testFilter)
       );
