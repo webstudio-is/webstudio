@@ -650,6 +650,49 @@ describe("project-queue", () => {
       vi.unstubAllGlobals();
     });
 
+    test("partial response sets fatal status", async () => {
+      vi.stubGlobal(
+        "confirm",
+        vi.fn(() => false)
+      );
+
+      mockBuildPatch.mockResolvedValue({
+        status: "partial",
+        version: 1,
+        entries: [
+          {
+            seq: 0,
+            transactionId: "tx-1",
+            status: "failed",
+            errors: "Patch failed",
+          },
+        ],
+      });
+
+      enqueueProjectDetails({
+        projectId: "p1",
+        buildId: "b1",
+        version: 1,
+        authPermit: "edit",
+        authToken: "tok",
+      });
+      commandQueue.enqueue({
+        type: "transactions",
+        projectId: "p1",
+        transactions: [makeTx("tx-1")],
+      });
+
+      await vi.advanceTimersByTimeAsync(NEW_ENTRIES_INTERVAL * 3);
+      await flush();
+
+      expect($syncStatus.get()).toEqual({
+        status: "fatal",
+        error: "Patch failed",
+      });
+
+      vi.unstubAllGlobals();
+    });
+
     test("fatal after MAX_ALLOWED_API_ERRORS unknown API errors", async () => {
       mockBuildPatch.mockResolvedValue({
         status: "unknown_error",

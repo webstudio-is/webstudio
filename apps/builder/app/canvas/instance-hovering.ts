@@ -137,6 +137,7 @@ export const subscribeInstanceHovering = ({
 
     $blockChildOutline.set({
       selector: blockChildSelector,
+      hoveredSelector: instanceSelector,
       rect: blockChildRect,
     });
   };

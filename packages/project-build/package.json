@@ -14,6 +14,15 @@
     },
     "./index.server": {
       "webstudio": "./src/index.server.ts"
+    },
+    "./build-parser.server": {
+      "webstudio": "./src/db/build-parser.ts"
+    },
+    "./style-source-selections.server": {
+      "webstudio": "./src/db/style-source-selections.ts"
+    },
+    "./styles.server": {
+      "webstudio": "./src/db/styles.ts"
     }
   },
   "sideEffects": false,

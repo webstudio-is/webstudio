@@ -637,7 +637,10 @@ const AssetInfoContent = ({
                 </Tooltip>
               ) : (
                 <Tooltip side="bottom" content="Replace asset">
-                  <IconButton onClick={() => replaceInputRef.current?.click()}>
+                  <IconButton
+                    aria-label="Replace asset"
+                    onClick={() => replaceInputRef.current?.click()}
+                  >
                     <RefreshCcwIcon />
                   </IconButton>
                 </Tooltip>

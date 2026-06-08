@@ -13,6 +13,7 @@ import {
   type VarValue,
 } from "@webstudio-is/css-engine";
 import {
+  getHtmlTagFromInstance,
   ROOT_INSTANCE_ID,
   type Styles,
   type StyleSourceSelections,
@@ -63,30 +64,16 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
   return presetStyles;
 });
 
-const $tagByInstanceId = computed($props, (props) => {
-  const tagByInstanceId = new Map<Instance["id"], string>();
-  for (const prop of props.values()) {
-    if (prop.type === "string" && prop.name === "tag") {
-      tagByInstanceId.set(prop.instanceId, prop.value);
-    }
-  }
-  return tagByInstanceId;
-});
-
 export const $instanceTags = computed(
-  [$registeredComponentMetas, $selectedInstancePathWithRoot, $tagByInstanceId],
-  (metas, instancePath, tagByInstanceId) => {
+  [$registeredComponentMetas, $props, $selectedInstancePathWithRoot],
+  (metas, props, instancePath) => {
     const instanceTags = new Map<Instance["id"], HtmlTags>();
     if (instancePath === undefined) {
       return instanceTags;
     }
     for (const { instance } of instancePath) {
-      const meta = metas.get(instance.component);
-      const tags = Object.keys(meta?.presetStyle ?? {});
-      if (tags.length > 0) {
-        const metaTag = tags[0];
-        const propTag = tagByInstanceId.get(instance.id);
-        const tag = instance.tag ?? propTag ?? metaTag;
+      const tag = getHtmlTagFromInstance({ instance, metas, props });
+      if (tag !== undefined) {
         instanceTags.set(instance.id, tag as HtmlTags);
       }
     }

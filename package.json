@@ -11,6 +11,8 @@
     "lint": "oxlint --deny-warnings",
     "fixtures": "pnpm -r fixtures:link && pnpm -r fixtures:sync && pnpm -r fixtures:build",
     "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint && pnpm fixtures",
+    "e2e:builder": "bash ./apps/builder/e2e/run-local.sh",
+    "e2e:builder:update-schema": "E2E_DB_BOOTSTRAP=migrations E2E_WRITE_SCHEMA_SNAPSHOT=true E2E_RUN_TESTS=false bash ./apps/builder/e2e/run-local.sh",
     "playwright": "pnpm -r playwright-init",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "storybook:dev": "storybook dev -p 6006",

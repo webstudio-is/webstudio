@@ -44,6 +44,7 @@ export const SocialPreview = ({
         }}
       >
         <Image
+          alt="Social sharing preview image"
           src={ogImageUrl}
           loader={wsImageLoader}
           className={imgStyle({

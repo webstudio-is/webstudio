@@ -88,6 +88,30 @@ const exitPreviewModeFromNonCanvasSource = (source: string) => {
   toggleBuilderMode("preview");
 };
 
+const canRunDesignModeCommand = ({ isDesignMode }: { isDesignMode: boolean }) =>
+  isDesignMode;
+
+const guardDesignModeCommand = ({
+  isDesignMode,
+  message,
+  toastInfo = builderApi.toast.info,
+}: {
+  isDesignMode: boolean;
+  message: string;
+  toastInfo?: (message: string) => void;
+}) => {
+  if (canRunDesignModeCommand({ isDesignMode })) {
+    return true;
+  }
+  toastInfo(message);
+  return false;
+};
+
+export const __testing__ = {
+  canRunDesignModeCommand,
+  guardDesignModeCommand,
+};
+
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
   externalCommands: [
@@ -325,19 +349,45 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "paste",
       description: "Paste copied instance",
       category: "Navigator",
-      handler: emitPaste,
+      handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Pasting is only allowed in design mode.",
+          })
+        ) {
+          emitPaste();
+        }
+      },
     },
     {
       name: "cut",
       description: "Cut selected instance",
       category: "Navigator",
-      handler: cutInstance,
+      handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Cutting is only allowed in design mode.",
+          })
+        ) {
+          cutInstance();
+        }
+      },
     },
     {
       name: "toggleShow",
       description: "Toggle instance visibility",
       category: "Navigator",
       handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Toggling visibility is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
         const instancePath = $selectedInstancePath.get();
         if (instancePath?.[0]) {
           toggleInstanceShow(instancePath[0].instance.id);
@@ -365,8 +415,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         if (project === undefined) {
           return;
         }
-        if ($isDesignMode.get() === false) {
-          builderApi.toast.info("Duplicating is only allowed in design mode.");
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Duplicating is only allowed in design mode.",
+          }) === false
+        ) {
           return;
         }
         const instancePath = $selectedInstancePath.get();
@@ -448,6 +502,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       category: "Navigator",
       defaultHotkeys: ["meta+e", "ctrl+e"],
       handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Renaming is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
         const instancePath = $selectedInstancePath.get();
         if (instancePath === undefined) {
           return;
@@ -464,6 +526,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["meta+alt+g", "ctrl+alt+g"],
       keepCommandPanelOpen: true,
       handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Wrapping is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
         showWrapComponentsList();
       },
     },
@@ -472,7 +542,16 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       description: "Remove parent wrapper",
       category: "Navigator",
       defaultHotkeys: ["meta+shift+g", "ctrl+shift+g"],
-      handler: () => unwrapInstance(),
+      handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Unwrapping is only allowed in design mode.",
+          })
+        ) {
+          unwrapInstance();
+        }
+      },
     },
     {
       name: "convert",
@@ -481,6 +560,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       category: "Navigator",
       keepCommandPanelOpen: true,
       handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Converting is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
         showConvertComponentsList();
       },
     },
@@ -490,6 +577,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       label: "Paste HTML with Tailwind classes",
       description: "Convert Tailwind to CSS",
       handler: async () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Pasting HTML is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
         const html = await navigator.clipboard.readText();
         const parseResult = generateFragmentFromHtml(html);
         const { skippedSelectors } = parseResult;

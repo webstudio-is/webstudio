@@ -20,6 +20,7 @@ import {
 import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
 import { $isContentMode, $isDesignMode } from "~/shared/nano-states";
 import { $instances, $pages } from "~/shared/sync/data-stores";
+import { isContentModePagePath } from "@webstudio-is/project/content-mode-permissions";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { selectInstance } from "~/shared/nano-states";
 import {
@@ -30,7 +31,8 @@ import {
 } from "./page-utils";
 import {
   fieldDefaultValues,
-  isEditorEditablePagePath,
+  canEditPagePathInMode,
+  addContentModePathError,
   validateValues,
   updatePage,
   FormFields,
@@ -388,7 +390,7 @@ const getEditorCreatePageValues = (
     name: values.name,
   };
 
-  if (isEditorEditablePagePath(initialValues.path)) {
+  if (isContentModePagePath(initialValues.path)) {
     allowedValues.path = values.path;
   }
   if (isLiteralExpression(initialValues.title)) {
@@ -425,6 +427,7 @@ export const CreatePageFromTemplateSettings = ({
 }) => {
   const pages = useStore($pages);
   const isContentMode = useStore($isContentMode);
+  const isDesignMode = useStore($isDesignMode);
   const template = pages?.pageTemplates?.get(templateId);
   const { variableValues } = useStore($pageRootScope);
 
@@ -439,6 +442,7 @@ export const CreatePageFromTemplateSettings = ({
   const [values, setValues] = useState<Values>(initialValues);
 
   const errors = validateValues(pages, undefined, values, variableValues);
+  addContentModePathError({ errors, isContentMode, path: values.path });
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
@@ -446,6 +450,7 @@ export const CreatePageFromTemplateSettings = ({
         templateId,
         overrides: { name: values.name, path: values.path },
         folderId: values.parentFolderId,
+        contentMode: isContentMode,
       });
       if (newPageId) {
         updatePage(
@@ -483,10 +488,11 @@ export const CreatePageFromTemplateSettings = ({
         values={values}
         isEditorContext={isContentMode}
         canEditName
-        canEditPath={
-          isContentMode === false ||
-          isEditorEditablePagePath(initialValues.path)
-        }
+        canEditPath={canEditPagePathInMode({
+          isDesignMode,
+          isContentMode,
+          path: initialValues.path,
+        })}
         onChange={(change) => {
           setValues((prev) => {
             const next = { ...prev, [change.field]: change.value };
