@@ -107,7 +107,7 @@ test("find global variables", () => {
   ]);
 });
 
-test("find global variables in slots", () => {
+test("find parent variables in slots", () => {
   const globalVariable = new Variable("globalVariable", "");
   const bodyVariable = new Variable("bodyVariable", "");
   const boxVariable = new Variable("boxVariable", "");
@@ -128,6 +128,7 @@ test("find global variables in slots", () => {
   ).toEqual([
     expect.objectContaining({ name: "system", id: SYSTEM_VARIABLE_ID }),
     expect.objectContaining({ name: "globalVariable" }),
+    expect.objectContaining({ name: "bodyVariable" }),
     expect.objectContaining({ name: "boxVariable" }),
   ]);
 });
@@ -569,7 +570,7 @@ test("preserve other variables when rebind", () => {
   ]);
 });
 
-test("prevent rebinding tree variables from slots", () => {
+test("rebind tree variables from slot ancestors", () => {
   const bodyVariable = new Variable("myVariable", "one value of body");
   const data = renderData(
     <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
@@ -585,8 +586,9 @@ test("prevent rebinding tree variables from slots", () => {
     pages: createDefaultPages({ rootInstanceId: "bodyId" }),
     ...data,
   });
+  const [bodyVariableId] = data.dataSources.keys();
   expect(data.instances.get("boxId")?.children).toEqual([
-    { type: "expression", value: "myVariable" },
+    { type: "expression", value: encodeDataVariableId(bodyVariableId) },
   ]);
 });
 
@@ -744,7 +746,7 @@ test("rebind expressions with parent variable when delete variable on child", ()
   ]);
 });
 
-test("prevent rebinding with variables outside of slot content scope", () => {
+test("rebind with variables outside of slot content scope", () => {
   const bodyVariable = new Variable("myVariable", "one value of body");
   const boxVariable = new Variable("myVariable", "one value of body");
   const data = renderData(
@@ -762,10 +764,10 @@ test("prevent rebinding with variables outside of slot content scope", () => {
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
     expect.objectContaining({ scopeInstanceId: "boxId" }),
   ]);
-  const [_bodyVariableId, boxVariableId] = data.dataSources.keys();
+  const [bodyVariableId, boxVariableId] = data.dataSources.keys();
   deleteVariableMutable(data, boxVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
-    { type: "expression", value: "myVariable" },
+    { type: "expression", value: encodeDataVariableId(bodyVariableId) },
   ]);
 });
 

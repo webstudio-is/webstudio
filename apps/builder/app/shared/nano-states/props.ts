@@ -11,7 +11,6 @@ import {
   encodeDataSourceVariable,
   transpileExpression,
   collectionComponent,
-  portalComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
   findTreeInstanceIds,
@@ -547,12 +546,6 @@ export const $variableValuesByInstanceSelector = computed(
           }
         }
         return;
-      }
-      // reset values for slot children to let slots behave as isolated components
-      if (instance.component === portalComponent) {
-        // allow accessing global variables in slots
-        variableValues = globalVariableValues;
-        variableNames = globalVariableNames;
       }
       for (const child of instance.children) {
         if (child.type === "id") {
