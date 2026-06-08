@@ -167,6 +167,7 @@ const Menu = ({
         ></Button>
       </PopoverTrigger>
       <PopoverContent
+        aria-label={`Share link options ${name}`}
         css={{
           //padding: 0,
           width: theme.spacing[24],
@@ -523,7 +524,13 @@ export const ShareProject = ({
   );
 
   return (
-    <Flex direction="column" css={{ width: theme.spacing[33] }}>
+    <Flex
+      direction="column"
+      role="region"
+      aria-label="Share links"
+      aria-busy={isPending}
+      css={{ width: theme.spacing[33] }}
+    >
       {isFreePlan && (
         <>
           <ShareLinkSecurityNotice />

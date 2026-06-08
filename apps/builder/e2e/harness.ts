@@ -1,4 +1,5 @@
 import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { basename } from "node:path";
 import {
   chromium,
   type Browser,
@@ -36,46 +37,61 @@ export type Suite = {
 };
 
 type TestApi = ((name: string, run: () => Promise<void>) => void) & {
-  describe: (name: string, define: () => void) => void;
   beforeAll: (run: () => Promise<void>) => void;
   beforeEach: (run: () => Promise<void>) => void;
   afterAll: (run: () => Promise<void>) => void;
 };
 
 const suites: Suite[] = [];
-let currentSuite: Suite | undefined;
+const suitesByFile = new Map<string, Suite>();
 
-const getCurrentSuite = () => {
-  if (currentSuite === undefined) {
-    throw new Error("Expected e2e test to be registered inside test.describe");
+const formatSuiteName = (filePath: string) => {
+  return basename(filePath, ".e2e.ts").replaceAll("-", " ");
+};
+
+const getCallerFile = () => {
+  const stack = new Error().stack ?? "";
+  const callerLine = stack
+    .split("\n")
+    .find(
+      (line) =>
+        line.includes("/e2e/tests/") &&
+        line.includes(".e2e.ts") &&
+        line.includes("/harness.ts") === false
+    );
+  const filePath = callerLine?.match(/(\/[^():]+\.e2e\.ts)/)?.[1];
+  if (filePath === undefined) {
+    throw new Error("Expected e2e test to be registered from an .e2e.ts file");
   }
-  return currentSuite;
+  return filePath;
+};
+
+const getFileSuite = () => {
+  const filePath = getCallerFile();
+  let suite = suitesByFile.get(filePath);
+  if (suite !== undefined) {
+    return suite;
+  }
+
+  suite = { name: formatSuiteName(filePath), tests: [] };
+  suitesByFile.set(filePath, suite);
+  suites.push(suite);
+  return suite;
 };
 
 export const test: TestApi = Object.assign(
   (name: string, run: () => Promise<void>) => {
-    getCurrentSuite().tests.push({ name, run });
+    getFileSuite().tests.push({ name, run });
   },
   {
-    describe: (name: string, define: () => void) => {
-      const parentSuite = currentSuite;
-      const suite: Suite = { name, tests: [] };
-      suites.push(suite);
-      currentSuite = suite;
-      try {
-        define();
-      } finally {
-        currentSuite = parentSuite;
-      }
-    },
     beforeAll: (run: () => Promise<void>) => {
-      getCurrentSuite().beforeAll = run;
+      getFileSuite().beforeAll = run;
     },
     beforeEach: (run: () => Promise<void>) => {
-      getCurrentSuite().beforeEach = run;
+      getFileSuite().beforeEach = run;
     },
     afterAll: (run: () => Promise<void>) => {
-      getCurrentSuite().afterAll = run;
+      getFileSuite().afterAll = run;
     },
   }
 );

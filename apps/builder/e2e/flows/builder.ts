@@ -130,3 +130,19 @@ export const openProjectBuilder = async ({
   await dismissBlockingAlerts({ page });
   return canvas;
 };
+
+export const openBuilderUrl = async ({
+  page,
+  url,
+}: {
+  page: Page;
+  url: string;
+}): Promise<Frame> => {
+  await page.goto(url);
+  await page
+    .waitForLoadState("networkidle", { timeout: builderNetworkIdleTimeout })
+    .catch(() => undefined);
+  const canvas = await waitForCanvasFrame({ page });
+  await dismissBlockingAlerts({ page });
+  return canvas;
+};

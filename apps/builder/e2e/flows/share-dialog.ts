@@ -1,28 +1,77 @@
-import type { Page } from "playwright";
+import type { Locator, Page } from "playwright";
 
 type ShareRole = "Viewer" | "Editor" | "Builder" | "Admin";
 
 const getShareLinkGroup = ({ page, name }: { page: Page; name: string }) =>
   page.getByRole("group", { name: `Share link ${name}` });
 
+const getShareLinkOptions = ({ page, name }: { page: Page; name: string }) =>
+  page.getByRole("dialog", { name: `Share link options ${name}` }).last();
+
 const getCreateShareLinkButton = (page: Page) =>
   page.getByRole("button", {
     name: /Share a custom link|Add another link/,
   });
 
+const getShareLinksRegion = (page: Page) =>
+  page.getByRole("region", { name: "Share links" });
+
+const waitForShareLinksIdle = async ({ page }: { page: Page }) => {
+  await getShareLinksRegion(page).waitFor({
+    state: "visible",
+    timeout: 10_000,
+  });
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[role="region"][aria-label="Share links"]')
+        ?.getAttribute("aria-busy") === "false",
+    undefined,
+    { timeout: 10_000 }
+  );
+};
+
+const waitForShareLinkMutation = async ({ page }: { page: Page }) => {
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[role="region"][aria-label="Share links"]')
+        ?.getAttribute("aria-busy") === "true",
+    undefined,
+    { timeout: 2_000 }
+  );
+  await waitForShareLinksIdle({ page });
+};
+
 const waitForShareLinksReady = async ({ page }: { page: Page }) => {
+  await waitForShareLinksIdle({ page });
   await getCreateShareLinkButton(page).click({
     trial: true,
     timeout: 10_000,
   });
 };
 
-const selectRole = async ({ page, role }: { page: Page; role: ShareRole }) => {
-  const roleSwitch = page.getByRole("switch", { name: role });
+const selectRole = async ({
+  options,
+  role,
+}: {
+  options: Locator;
+  role: ShareRole;
+}) => {
+  const checkedRoleSwitch = options.getByRole("switch", {
+    name: role,
+    checked: true,
+  });
+  if (await checkedRoleSwitch.isVisible({ timeout: 500 }).catch(() => false)) {
+    return false;
+  }
+
+  const roleSwitch = options.getByRole("switch", { name: role });
+  if (await roleSwitch.isDisabled()) {
+    throw new Error(`Expected share-link role "${role}" to be enabled`);
+  }
   await roleSwitch.click();
-  await page
-    .getByRole("switch", { name: role, checked: true })
-    .waitFor({ timeout: 2_000 });
+  return true;
 };
 
 export const openShareDialog = async ({ page }: { page: Page }) => {
@@ -54,23 +103,33 @@ export const createShareLink = async ({
   await waitForShareLinksReady({ page });
   const createButton = getCreateShareLinkButton(page);
   await createButton.click();
+  await waitForShareLinksIdle({ page });
 
   const customLink = getShareLinkGroup({ page, name: "Custom link" });
   await customLink.waitFor({ state: "visible", timeout: 10_000 });
   await customLink
     .getByRole("button", { name: "Menu Button for options" })
     .click();
-  await selectRole({ page, role });
-  await page.keyboard.press("Escape");
-
-  await customLink
-    .getByRole("button", { name: "Menu Button for options" })
-    .click();
-  await page.getByLabel("Name").fill(name);
+  const customLinkOptions = getShareLinkOptions({
+    page,
+    name: "Custom link",
+  });
+  await customLinkOptions.getByLabel("Name").fill(name);
   await page.keyboard.press("Enter");
+  await waitForShareLinkMutation({ page });
 
   const renamedLink = getShareLinkGroup({ page, name });
   await renamedLink.waitFor({ state: "visible", timeout: 10_000 });
+  await renamedLink
+    .getByRole("button", { name: "Menu Button for options" })
+    .click();
+  const renamedLinkOptions = getShareLinkOptions({ page, name });
+  if (await selectRole({ options: renamedLinkOptions, role })) {
+    await waitForShareLinkMutation({ page });
+  }
+  await renamedLink
+    .getByRole("button", { name: "Menu Button for options" })
+    .click();
   await waitForShareLinksReady({ page });
 };
 
@@ -100,7 +159,10 @@ export const updateShareLinkRole = async ({
 }) => {
   const group = getShareLinkGroup({ page, name });
   await group.getByRole("button", { name: "Menu Button for options" }).click();
-  await selectRole({ page, role });
-  await page.keyboard.press("Escape");
+  const options = getShareLinkOptions({ page, name });
+  if (await selectRole({ options, role })) {
+    await waitForShareLinkMutation({ page });
+  }
+  await group.getByRole("button", { name: "Menu Button for options" }).click();
   await waitForShareLinksReady({ page });
 };

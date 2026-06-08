@@ -1,5 +1,9 @@
 import type { Locator, Page } from "playwright";
-import { getCanvasFrame, waitForCanvasText } from "./builder";
+import {
+  getCanvasFrame,
+  waitForCanvasFrame,
+  waitForCanvasText,
+} from "./builder";
 import { waitForChangeToBeSaved } from "./sync-status";
 
 const delay = (ms: number) =>
@@ -27,6 +31,13 @@ const startCanvasTextEditing = async ({
   await editable.waitFor({ state: "visible", timeout: 2_000 });
 };
 
+export const waitForContentEditMode = async ({ page }: { page: Page }) => {
+  const canvas = await waitForCanvasFrame({ page });
+  await canvas
+    .locator("body[data-ws-content-edit-mode='ready']")
+    .waitFor({ state: "visible", timeout: 10_000 });
+};
+
 export const replaceCanvasText = async ({
   page,
   currentText,
@@ -36,6 +47,8 @@ export const replaceCanvasText = async ({
   currentText: string;
   text: string;
 }) => {
+  await waitForContentEditMode({ page });
+
   const startedAt = Date.now();
   let lastError: unknown;
   let frameHtml = "";

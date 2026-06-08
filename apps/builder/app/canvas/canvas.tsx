@@ -1,4 +1,11 @@
-import { useMemo, useEffect, useState, useLayoutEffect, useRef } from "react";
+import {
+  useMemo,
+  useEffect,
+  useState,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+} from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
 import { type Instances, coreMetas } from "@webstudio-is/sdk";
@@ -208,7 +215,7 @@ const DesignMode = () => {
   return null;
 };
 
-const ContentEditMode = () => {
+const ContentEditMode = (): ReactNode => {
   const debounceEffect = useDebounceEffect();
   const ref = useRef<undefined | Instances>(undefined);
 
@@ -238,11 +245,14 @@ const ContentEditMode = () => {
     subscribeFontLoadingDone(options);
     initCopyPasteForContentEditMode(options);
     subscribeModifierKeys(options);
+    // E2E tests wait for this after opening content mode before editing canvas text.
+    document.body.dataset.wsContentEditMode = "ready";
     return () => {
+      delete document.body.dataset.wsContentEditMode;
       abortController.abort();
     };
   }, []);
-  return null;
+  return;
 };
 
 export const Canvas = () => {

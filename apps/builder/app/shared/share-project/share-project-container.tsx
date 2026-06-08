@@ -19,6 +19,7 @@ const useShareProjectContainer = (projectId: string) => {
   const { send: updateToken, state: updateState } =
     trpcClient.authorizationToken.update.useMutation();
   const [links, setLinks] = useState(data ?? []);
+  const [isChangingLink, setIsChangingLink] = useState(false);
   const deletingLinks = useRef(new Set<string>());
 
   useEffect(() => {
@@ -30,22 +31,33 @@ const useShareProjectContainer = (projectId: string) => {
   const handleChangeDebounced = useDebouncedCallback((link: LinkOptions) => {
     // Link is about to get deleted, no need to update.
     if (deletingLinks.current.has(link.token)) {
+      setIsChangingLink(false);
       return;
     }
     const updatedLink = {
       projectId: projectId,
       ...link,
     };
-    const updatedLinks = links.map((currentLink) => {
-      if (currentLink.token === updatedLink.token) {
-        return { ...currentLink, ...updatedLink };
-      }
-      return currentLink;
+    setLinks((links) => {
+      return links.map((currentLink) => {
+        if (currentLink.token === updatedLink.token) {
+          return { ...currentLink, ...updatedLink };
+        }
+        return currentLink;
+      });
     });
-    // Optimistically set the links, otherwise checkbox will not move until we fetch an updated list.
-    setLinks(updatedLinks);
-    updateToken(updatedLink);
+    updateToken(updatedLink, () => {
+      load({ projectId }, (data) => {
+        setLinks(data ?? []);
+        setIsChangingLink(false);
+      });
+    });
   }, 100);
+
+  const handleChange = (link: LinkOptions) => {
+    setIsChangingLink(true);
+    handleChangeDebounced(link);
+  };
 
   const handleDelete = (link: LinkOptions) => {
     deletingLinks.current.add(link.token);
@@ -78,11 +90,12 @@ const useShareProjectContainer = (projectId: string) => {
     loadState !== "idle" ||
     createState !== "idle" ||
     removeState !== "idle" ||
-    updateState !== "idle";
+    updateState !== "idle" ||
+    isChangingLink;
 
   return {
     links,
-    handleChangeDebounced,
+    handleChange,
     handleDelete,
     handleCreate,
     isPending,
@@ -100,20 +113,15 @@ type ShareButtonProps = {
 export const ShareProjectContainer = ({ projectId }: ShareButtonProps) => {
   const { allowAdditionalPermissions } = useStore($permissions);
   const purchases = useStore($purchases);
-  const {
-    links,
-    handleChangeDebounced,
-    handleDelete,
-    handleCreate,
-    isPending,
-  } = useShareProjectContainer(projectId);
+  const { links, handleChange, handleDelete, handleCreate, isPending } =
+    useShareProjectContainer(projectId);
 
   return (
     <ShareProject
       allowAdditionalPermissions={allowAdditionalPermissions}
       isFreePlan={purchases.length === 0}
       links={links}
-      onChange={handleChangeDebounced}
+      onChange={handleChange}
       onDelete={handleDelete}
       onCreate={handleCreate}
       isPending={isPending}

@@ -10,6 +10,10 @@ export const loginWithSecret = async ({
   email: string;
   devPlan?: string;
 }) => {
+  if (devPlan !== undefined) {
+    await page.context().clearCookies();
+  }
+
   console.info("e2e: opening login");
   await page.goto(`${dashboardUrl}/login`);
   const loginWithSecretButton = page.getByRole("button", {

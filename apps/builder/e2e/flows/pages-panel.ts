@@ -1,7 +1,23 @@
-import type { Page } from "playwright";
+import type { Locator, Page } from "playwright";
 import { expectLocatorHidden, expectTextHidden } from "./assertions";
 import { waitForCanvasText } from "./builder";
 import { waitForChangeToBeSaved, waitForSyncStatus } from "./sync-status";
+
+const getPageSettingsControl = ({
+  page,
+  label,
+}: {
+  page: Page;
+  label: string | RegExp;
+}): Locator => {
+  if (typeof label === "string") {
+    return page.getByLabel(label, { exact: true });
+  }
+  return page.getByLabel(label);
+};
+
+export const getPageSettingsPathInput = ({ page }: { page: Page }) =>
+  page.getByRole("textbox", { name: "Path", exact: true });
 
 const fillPageSettingsControl = async ({
   page,
@@ -15,9 +31,10 @@ const fillPageSettingsControl = async ({
   await waitForSyncStatus({ page, status: "idle", timeout: 3_000 }).catch(
     () => undefined
   );
+  const control = getPageSettingsControl({ page, label });
   const save = waitForChangeToBeSaved({ page });
-  await page.getByLabel(label).fill(value);
-  await page.getByLabel(label).blur();
+  await control.fill(value);
+  await control.blur();
   await save;
 };
 
@@ -249,7 +266,7 @@ export const expectContentModePagePathError = async ({
 }: {
   page: Page;
 }) => {
-  await page.getByLabel("Path").hover();
+  await getPageSettingsPathInput({ page }).hover();
   await page
     .getByRole("tooltip")
     .getByText("Editors can only set static page paths")
