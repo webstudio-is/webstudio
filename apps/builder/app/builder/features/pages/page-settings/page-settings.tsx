@@ -1,8 +1,6 @@
 import { nanoid } from "nanoid";
-import { useState, useCallback, useEffect, type JSX, useRef } from "react";
+import { useState, useEffect, type JSX } from "react";
 import { useStore } from "@nanostores/react";
-import { useDebouncedCallback } from "use-debounce";
-import slugify from "slugify";
 import {
   ROOT_FOLDER_ID,
   documentTypes,
@@ -13,6 +11,7 @@ import {
   getPagePath,
   getHomePage,
   elementComponent,
+  isLiteralExpression,
 } from "@webstudio-is/sdk";
 import { validateBasicAuth } from "@webstudio-is/wsauth";
 import {
@@ -22,7 +21,7 @@ import {
   Tooltip,
   Grid,
   Text,
-  ScrollArea,
+  ScrollAreaNative,
   Link,
   PanelBanner,
   TitleSuffixSpacer,
@@ -31,23 +30,28 @@ import {
   DialogTitleActions,
 } from "@webstudio-is/design-system";
 import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
-import { $isDesignMode, $permissions } from "~/shared/nano-states";
+import {
+  $authPermit,
+  $isContentMode,
+  $isDesignMode,
+  $permissions,
+} from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { selectInstance } from "~/shared/nano-states";
 import {
   registerFolderChildMutable,
   cleanupChildRefsMutable,
   $pageRootScope,
   duplicatePage,
+  nameToPath,
 } from "../page-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { Form } from "../form";
 import { findMatchingRedirect } from "~/shared/project-settings/utils";
+import { isPathnamePattern } from "~/builder/shared/url-pattern";
 import { AuthSection, validateAuthSection } from "./section-auth";
 import {
   CustomMetadataSection,
@@ -70,8 +74,11 @@ import {
   type OnChange,
   type Values,
 } from "./shared";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 
-const fieldDefaultValues: Values = {
+export type { Values } from "./shared";
+
+export const fieldDefaultValues: Values = {
   name: "Untitled",
   parentFolderId: ROOT_FOLDER_ID,
   path: "/untitled",
@@ -98,6 +105,8 @@ const fieldDefaultValues: Values = {
   },
 };
 
+const emptyUnsavedValues: Partial<Values> = {};
+
 const computePagePath = (values: Values, pages: Pages): string => {
   if (values.isHomePage) {
     return "/";
@@ -113,7 +122,7 @@ const nonAuthFieldNames = Object.keys(fieldDefaultValues).filter(
   (fieldName): fieldName is Exclude<FieldName, "auth"> => fieldName !== "auth"
 );
 
-const validateValues = (
+export const validateValues = (
   pages: undefined | Pages,
   // undefined page id means new page
   pageId: undefined | Page["id"],
@@ -218,36 +227,73 @@ export const __testing__ = {
   validateValues,
 };
 
-const FormFields = ({
+export const isEditorEditablePagePath = (path: string) => {
+  return (
+    isPathnamePattern(path) === false &&
+    path.includes(":") === false &&
+    path.includes("*") === false
+  );
+};
+
+export const FormFields = ({
   autoSelect,
   errors,
   values,
   onChange,
   showAuthErrors,
+  isEditorContext = false,
+  nameLabel = "Page name",
+  canEditName = true,
+  canEditPath = true,
+  showHomePageControl = true,
+  showPathField = true,
+  showStatusField = true,
+  showRedirectField = true,
+  showDocumentTypeField = true,
+  showRedirectWarning = showPathField,
+  showAuthSection = isEditorContext === false,
+  showTextContentSection = true,
+  showMarketplaceSection = isEditorContext === false,
 }: {
   autoSelect?: boolean;
   errors: Errors;
   values: Values;
   onChange: OnChange;
   showAuthErrors?: boolean;
+  isEditorContext?: boolean;
+  nameLabel?: string;
+  canEditName?: boolean;
+  canEditPath?: boolean;
+  showHomePageControl?: boolean;
+  showPathField?: boolean;
+  showStatusField?: boolean;
+  showRedirectField?: boolean;
+  showDocumentTypeField?: boolean;
+  showRedirectWarning?: boolean;
+  showAuthSection?: boolean;
+  showTextContentSection?: boolean;
+  showMarketplaceSection?: boolean;
 }) => {
   const project = useStore($project);
   const pages = useStore($pages);
   const { allowAuth } = useStore($permissions);
+  const isDesignMode = useStore($isDesignMode);
 
   if (pages === undefined) {
     return;
   }
 
-  const fullPagePath = computePagePath(values, pages);
-  const matchingRedirect = findMatchingRedirect(
-    fullPagePath,
-    pages.redirects ?? []
-  );
+  const matchingRedirect = showRedirectWarning
+    ? findMatchingRedirect(
+        computePagePath(values, pages),
+        pages.redirects ?? []
+      )
+    : undefined;
+  const showBindingControls = isDesignMode && isEditorContext === false;
 
   return (
     <Grid css={{ height: "100%" }}>
-      <ScrollArea>
+      <ScrollAreaNative>
         {matchingRedirect && (
           <PanelBanner variant="warning">
             <Text>
@@ -271,21 +317,33 @@ const FormFields = ({
             errors={errors}
             values={values}
             pages={pages}
+            isEditorContext={isEditorContext}
+            nameLabel={nameLabel}
+            canEditName={canEditName}
+            canEditPath={canEditPath}
+            showHomePageControl={showHomePageControl}
+            showPathField={showPathField}
+            showStatusField={showStatusField}
+            showRedirectField={showRedirectField}
+            showDocumentTypeField={showDocumentTypeField}
+            showBindingControls={showBindingControls}
             onChange={onChange}
           />
         </CollapsibleSection>
 
-        <CollapsibleSection label="Authentication">
-          <AuthSection
-            values={values}
-            errors={errors}
-            onChange={onChange}
-            showUpgrade={allowAuth === false}
-            showErrors={showAuthErrors}
-          />
-        </CollapsibleSection>
+        {showAuthSection && (
+          <CollapsibleSection label="Authentication">
+            <AuthSection
+              values={values}
+              errors={errors}
+              onChange={onChange}
+              showUpgrade={allowAuth === false}
+              showErrors={showAuthErrors}
+            />
+          </CollapsibleSection>
+        )}
 
-        {values.documentType === "text" && (
+        {showTextContentSection && values.documentType === "text" && (
           <CollapsibleSection label="Content">
             <TextContentSection
               values={values}
@@ -300,32 +358,55 @@ const FormFields = ({
             <SearchSection
               values={values}
               errors={errors}
+              canEditTitle={
+                isEditorContext === false || isLiteralExpression(values.title)
+              }
+              canEditDescription={
+                isEditorContext === false ||
+                isLiteralExpression(values.description)
+              }
+              canEditExcludePageFromSearch={
+                isEditorContext === false ||
+                isLiteralExpression(values.excludePageFromSearch)
+              }
+              canEditLanguage={
+                isEditorContext === false ||
+                isLiteralExpression(values.language)
+              }
+              showBindingControls={showBindingControls}
               onChange={onChange}
             />
           </CollapsibleSection>
         )}
 
         {values.documentType === "html" && (
-          <CollapsibleSection label="Social Image">
+          <CollapsibleSection label="Social image">
             <SocialImageSection
               values={values}
               errors={errors}
+              disabled={
+                isEditorContext &&
+                isLiteralExpression(values.socialImageUrl) === false
+              }
+              showBindingControls={showBindingControls}
               onChange={onChange}
             />
           </CollapsibleSection>
         )}
 
         {values.documentType === "html" && (
-          <CollapsibleSection label="Custom Metadata">
+          <CollapsibleSection label="Custom metadata">
             <CustomMetadataSection
               values={values}
               errors={errors}
+              showBindingControls={showBindingControls}
               onChange={onChange}
             />
           </CollapsibleSection>
         )}
 
         {values.documentType === "html" &&
+          showMarketplaceSection &&
           (project?.marketplaceApprovalStatus === "PENDING" ||
             project?.marketplaceApprovalStatus === "APPROVED" ||
             project?.marketplaceApprovalStatus === "REJECTED") && (
@@ -335,35 +416,9 @@ const FormFields = ({
           )}
 
         <Box css={{ height: theme.spacing[10] }} />
-      </ScrollArea>
+      </ScrollAreaNative>
     </Grid>
   );
-};
-
-const nameToPath = (pages: Pages | undefined, name: string) => {
-  if (name === "") {
-    return "";
-  }
-
-  const slug = slugify(name, { lower: true, strict: true });
-  const path = `/${slug}`;
-
-  // for TypeScript
-  if (pages === undefined) {
-    return path;
-  }
-
-  if (findPageByIdOrPath(path, pages) === undefined) {
-    return path;
-  }
-
-  let suffix = 1;
-
-  while (findPageByIdOrPath(`${path}${suffix}`, pages) !== undefined) {
-    suffix++;
-  }
-
-  return `${path}${suffix}`;
 };
 
 export const NewPageSettings = ({
@@ -429,26 +484,25 @@ const NewPageSettingsView = ({
   children: JSX.Element;
 }) => {
   return (
-    <>
-      <DialogTitle
-        suffix={
-          <DialogTitleActions>
-            <TitleSuffixSpacer />
-            <Button
-              state={isSubmitting ? "pending" : "auto"}
-              onClick={onSubmit}
-              tabIndex={2}
-            >
-              {isSubmitting ? "Creating" : "Create page"}
-            </Button>
-            <DialogClose />
-          </DialogTitleActions>
-        }
-      >
-        New Page Settings
-      </DialogTitle>
-      <Form onSubmit={onSubmit}>{children}</Form>
-    </>
+    <PageSettingsPanel
+      title="New page settings"
+      onSubmit={onSubmit}
+      suffix={
+        <DialogTitleActions>
+          <TitleSuffixSpacer />
+          <Button
+            state={isSubmitting ? "pending" : "auto"}
+            onClick={onSubmit}
+            tabIndex={2}
+          >
+            {isSubmitting ? "Creating" : "Create page"}
+          </Button>
+          <DialogClose />
+        </DialogTitleActions>
+      }
+    >
+      {children}
+    </PageSettingsPanel>
   );
 };
 
@@ -483,7 +537,7 @@ const createPage = (pageId: Page["id"], values: Values) => {
   );
 };
 
-const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
+export const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
   const updatePageMutable = (
     page: Page,
     values: Partial<Values>,
@@ -621,10 +675,36 @@ export const PageSettings = ({
 }) => {
   const pages = useStore($pages);
   const page = pages && findPageByIdOrPath(pageId, pages);
+  const isDesignMode = useStore($isDesignMode);
 
   const isHomePage = page?.id === pages?.homePageId;
 
-  const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
+  const [refreshDebounce, setRefreshDebounce] = useState(0);
+  let errors: Errors = {};
+  const {
+    value: unsavedValues,
+    set: setUnsavedValues,
+    flush: flushSave,
+  } = useDraftValue<Partial<Values>>(
+    emptyUnsavedValues,
+    (values) => {
+      updatePage(pageId, values);
+    },
+    {
+      resetOnSave: true,
+      shouldSave: () => Object.keys(errors).length === 0,
+    }
+  );
+
+  const handleChange: OnChange = (event) => {
+    setUnsavedValues((values) => ({
+      ...values,
+      [event.field]: event.value,
+    }));
+    if (event.field === "isHomePage") {
+      setRefreshDebounce((prev) => prev + 1);
+    }
+  };
 
   const values: Values = {
     ...(page ? toFormValues(page, pages, isHomePage) : fieldDefaultValues),
@@ -632,54 +712,12 @@ export const PageSettings = ({
   };
 
   const { variableValues } = useStore($pageRootScope);
-  const errors = validateValues(pages, pageId, values, variableValues);
-
-  const debouncedFn = useEffectEvent(() => {
-    if (
-      Object.keys(unsavedValues).length === 0 ||
-      Object.keys(errors).length !== 0
-    ) {
-      return;
-    }
-
-    updatePage(pageId, unsavedValues);
-
-    setUnsavedValues({});
-  });
-
-  const handleSubmitDebounced = useDebouncedCallback(debouncedFn, 1000);
-
-  const [refreshDebounce, setRefreshDebounce] = useState(0);
+  errors = validateValues(pages, pageId, values, variableValues);
 
   useEffect(() => {
     // we can't flush immediately as setState haven't propagated at that time
-    handleSubmitDebounced.flush();
-  }, [refreshDebounce, handleSubmitDebounced]);
-
-  const handleChange = useCallback(
-    <Name extends FieldName>(event: { field: Name; value: Values[Name] }) => {
-      setUnsavedValues((values) => ({
-        ...values,
-        [event.field]: event.value,
-      }));
-      handleSubmitDebounced();
-
-      if (event.field === "isHomePage") {
-        setRefreshDebounce((prev) => prev + 1);
-      }
-    },
-    [handleSubmitDebounced]
-  );
-
-  useUnmount(() => {
-    if (
-      Object.keys(unsavedValues).length === 0 ||
-      Object.keys(errors).length !== 0
-    ) {
-      return;
-    }
-    updatePage(pageId, unsavedValues);
-  });
+    flushSave();
+  }, [refreshDebounce, flushSave]);
 
   const handleRequestDelete = () => {
     if (onDelete) {
@@ -712,9 +750,44 @@ export const PageSettings = ({
           }
         }}
       >
-        <FormFields errors={errors} values={values} onChange={handleChange} />
+        <FormFields
+          errors={errors}
+          values={values}
+          isEditorContext={isDesignMode === false}
+          canEditName={isDesignMode}
+          canEditPath={isDesignMode}
+          onChange={handleChange}
+        />
       </PageSettingsView>
     </>
+  );
+};
+
+export const PageSettingsPanel = ({
+  title,
+  suffix,
+  disabled = false,
+  onSubmit,
+  children,
+}: {
+  title: string;
+  suffix: JSX.Element;
+  disabled?: boolean;
+  onSubmit: () => void;
+  children: JSX.Element;
+}) => {
+  return (
+    <div
+      data-floating-panel-container
+      style={{ display: "flex", flexDirection: "column", height: "100%" }}
+    >
+      <DialogTitle suffix={suffix}>{title}</DialogTitle>
+      <Form onSubmit={onSubmit}>
+        <fieldset style={{ display: "contents" }} disabled={disabled}>
+          {children}
+        </fieldset>
+      </Form>
+    </div>
   );
 };
 
@@ -730,45 +803,44 @@ const PageSettingsView = ({
   children: JSX.Element;
 }) => {
   const isDesignMode = useStore($isDesignMode);
-  const containerRef = useRef<HTMLFormElement>(null);
+  const isContentMode = useStore($isContentMode);
+  const authPermit = useStore($authPermit);
+  const canEditPageSettings =
+    isDesignMode || (isContentMode && authPermit !== "view");
   return (
-    <>
-      <DialogTitle
-        suffix={
-          <DialogTitleActions>
-            {isDesignMode && onDelete && (
-              <Tooltip content="Delete page" side="bottom">
-                <Button
-                  color="ghost"
-                  prefix={<TrashIcon />}
-                  onClick={onDelete}
-                  aria-label="Delete page"
-                  tabIndex={2}
-                />
-              </Tooltip>
-            )}
-            {isDesignMode && (
-              <Tooltip content="Duplicate page" side="bottom">
-                <Button
-                  color="ghost"
-                  prefix={<CopyIcon />}
-                  onClick={onDuplicate}
-                  aria-label="Duplicate page"
-                  tabIndex={2}
-                />
-              </Tooltip>
-            )}
-            <DialogClose />
-          </DialogTitleActions>
-        }
-      >
-        Page Settings
-      </DialogTitle>
-      <Form onSubmit={onClose} ref={containerRef} data-floating-panel-container>
-        <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
-          {children}
-        </fieldset>
-      </Form>
-    </>
+    <PageSettingsPanel
+      title="Page settings"
+      onSubmit={onClose}
+      disabled={canEditPageSettings === false}
+      suffix={
+        <DialogTitleActions>
+          {isDesignMode && onDelete && (
+            <Tooltip content="Delete page" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<TrashIcon />}
+                onClick={onDelete}
+                aria-label="Delete page"
+                tabIndex={2}
+              />
+            </Tooltip>
+          )}
+          {isDesignMode && (
+            <Tooltip content="Duplicate page" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<CopyIcon />}
+                onClick={onDuplicate}
+                aria-label="Duplicate page"
+                tabIndex={2}
+              />
+            </Tooltip>
+          )}
+          <DialogClose />
+        </DialogTitleActions>
+      }
+    >
+      {children}
+    </PageSettingsPanel>
   );
 };

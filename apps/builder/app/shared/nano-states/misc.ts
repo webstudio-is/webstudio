@@ -329,6 +329,19 @@ export const $isDesignMode = computed(
 );
 
 export const $authPermit = atom<AuthPermit>("view");
+
+export const $canOpenPageTemplates = computed(
+  [$builderMode, $authPermit],
+  (builderMode, authPermit) => {
+    if (builderMode !== "design") {
+      return false;
+    }
+    return (
+      authPermit === "build" || authPermit === "admin" || authPermit === "own"
+    );
+  }
+);
+
 export const $authTokenPermissions = atom<TokenPermissions>({
   canClone: true,
   canCopy: true,

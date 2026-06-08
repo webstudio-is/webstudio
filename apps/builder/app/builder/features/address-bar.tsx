@@ -43,9 +43,10 @@ import { $currentSystem, updateCurrentSystem } from "~/shared/system";
 import { $project, $publisherHost } from "~/shared/sync/data-stores";
 import { getPublishUrl } from "./publish/publish-url";
 
-const $selectedPageHistory = computed(
-  $selectedPage,
-  (page) => page?.history ?? []
+const $selectedPageHistory = computed($selectedPage, (page): string[] =>
+  page !== undefined && "history" in page && Array.isArray(page.history)
+    ? page.history
+    : []
 );
 
 const useCopyUrl = (pageUrl: string) => {

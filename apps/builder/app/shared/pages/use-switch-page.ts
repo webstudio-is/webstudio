@@ -4,6 +4,7 @@ import { useNavigate } from "@remix-run/react";
 import { $pages, $project } from "~/shared/sync/data-stores";
 import {
   $authToken,
+  $canOpenPageTemplates,
   $selectedPageHash,
   $builderMode,
   isBuilderMode,
@@ -12,7 +13,7 @@ import {
 import { builderPath } from "~/shared/router-utils";
 import { $selectedPage } from "../nano-states";
 import { selectPage } from "../nano-states";
-import { findPageByIdOrPath } from "@webstudio-is/sdk";
+import { findPageByIdOrPath, isPageTemplate } from "@webstudio-is/sdk";
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -32,9 +33,12 @@ const setPageStateFromUrl = () => {
 
   // check the page actually exists
   // to avoid confusing the user with broken state
+  const requestedPageId = searchParams.get("pageId") ?? "";
   const pageId =
-    findPageByIdOrPath(searchParams.get("pageId") ?? "", pages)?.id ??
-    pages.homePageId;
+    ($canOpenPageTemplates.get()
+      ? findPageByIdOrPath(requestedPageId, pages, { includeTemplates: true })
+      : findPageByIdOrPath(requestedPageId, pages)
+    )?.id ?? pages.homePageId;
 
   $selectedPageHash.set({ hash: searchParams.get("pageHash") ?? "" });
   selectPage(pageId);
@@ -54,6 +58,7 @@ export const useSyncPageUrl = () => {
   const page = useStore($selectedPage);
   const pageHash = useStore($selectedPageHash);
   const builderMode = useStore($builderMode);
+  const canOpenPageTemplate = useStore($canOpenPageTemplates);
 
   // Get pageId and pageHash from URL
   // once pages are loaded
@@ -113,14 +118,29 @@ export const useSyncPageUrl = () => {
   }, [builderMode, navigate, page, pageHash]);
 
   useEffect(() => {
+    const pages = $pages.get();
+    if (pages === undefined || page === undefined) {
+      return;
+    }
+    if (isPageTemplate(page) && canOpenPageTemplate === false) {
+      selectPage(pages.homePageId);
+    }
+  }, [canOpenPageTemplate, page]);
+
+  useEffect(() => {
     return $selectedPage.subscribe((page) => {
       // switch to home page when current one does not exist
       // possible when undo creating page
+      const pages = $pages.get();
+      if (pages === undefined) {
+        return;
+      }
       if (page === undefined) {
-        const pages = $pages.get();
-        if (pages) {
-          selectPage(pages.homePageId);
-        }
+        selectPage(pages.homePageId);
+        return;
+      }
+      if (isPageTemplate(page) && $canOpenPageTemplates.get() === false) {
+        selectPage(pages.homePageId);
       }
     });
   });

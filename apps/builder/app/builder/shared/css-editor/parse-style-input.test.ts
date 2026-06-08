@@ -169,6 +169,11 @@ describe("parseStyleInput", () => {
     );
   });
 
+  test("does not parse malformed custom property values", () => {
+    const { styleMap: result } = parseStyleInput("--test: #sd'", new Map());
+    expect(result).toEqual(new Map());
+  });
+
   test("handles malformed style block", () => {
     const { styleMap: result } = parseStyleInput(
       "color: red; invalid;",

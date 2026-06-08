@@ -13,8 +13,9 @@ import {
   Kbd,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
+import { isPage, isPageTemplate } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
-import { $editingPageId } from "~/shared/nano-states";
+import { $editingPageId, $editingTemplateId } from "~/shared/nano-states";
 
 import { ShareButton } from "~/builder/features/share";
 import { PublishButton } from "~/builder/features/publish";
@@ -126,7 +127,12 @@ const PagesButton = () => {
         css={{ paddingInline: theme.panel.paddingInline }}
         aria-label="Toggle Pages"
         onClick={(event) => {
-          $editingPageId.set(event.altKey ? page.id : undefined);
+          $editingPageId.set(
+            event.altKey && isPage(page) ? page.id : undefined
+          );
+          $editingTemplateId.set(
+            event.altKey && isPageTemplate(page) ? page.id : undefined
+          );
           toggleActiveSidebarPanel("pages");
         }}
         tabIndex={0}

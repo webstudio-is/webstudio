@@ -847,6 +847,18 @@ test("parse css variables as unparsed", () => {
   });
 });
 
+test("does not coerce invalid css variable values", () => {
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "#sd'",
+    })
+  ).toEqual({
+    type: "invalid",
+    value: "#sd'",
+  });
+});
+
 test("parse z-index", () => {
   expect(
     parseIntermediateOrInvalidValue("z-index", {

@@ -16,6 +16,7 @@ import {
   Resource,
   type DataSource,
   type Page,
+  type PageTemplate,
 } from "@webstudio-is/sdk";
 import {
   encodeDataVariableId,
@@ -524,7 +525,7 @@ export const getResourceScopeForInstance = ({
   dataSources,
   variableValuesByInstanceSelector,
 }: {
-  page: undefined | Page;
+  page: undefined | Page | PageTemplate;
   instanceKey: undefined | string;
   dataSources: DataSources;
   variableValuesByInstanceSelector: Map<string, Map<string, unknown>>;

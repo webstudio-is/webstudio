@@ -5,6 +5,8 @@ import {
   findParentFolderByChildId,
   getPagePath,
   getStaticSiteMapXml,
+  isPage,
+  isPageTemplate,
 } from "./page-utils";
 
 const pages = {
@@ -75,6 +77,29 @@ const pages = {
   ]),
 } satisfies Pages;
 
+describe("page type guards", () => {
+  const page = pages.pages.get("page-1");
+  const template = {
+    id: "template-1",
+    name: "Template",
+    title: "Template",
+    rootInstanceId: "rootInstanceId",
+    meta: {},
+  };
+
+  test("detects pages", () => {
+    expect(isPage(page)).toBe(true);
+    expect(isPage(template)).toBe(false);
+    expect(isPage(undefined)).toBe(false);
+  });
+
+  test("detects page templates", () => {
+    expect(isPageTemplate(page)).toBe(false);
+    expect(isPageTemplate(template)).toBe(true);
+    expect(isPageTemplate(undefined)).toBe(false);
+  });
+});
+
 describe("getPagePath", () => {
   test("home page path", () => {
     expect(getPagePath("home", pages)).toEqual("");
@@ -128,6 +153,42 @@ describe("findPageByIdOrPath", () => {
       pages
     );
     expect(page).toEqual(pages.pages.get("page-1"));
+  });
+  test("does not find templates by default", () => {
+    const pagesWithTemplate: Pages = {
+      ...pages,
+      pageTemplates: new Map([
+        [
+          "template-1",
+          {
+            id: "template-1",
+            name: "Template",
+            title: "Template",
+            rootInstanceId: "rootInstanceId",
+            meta: {},
+          },
+        ],
+      ]),
+    };
+    expect(findPageByIdOrPath("template-1", pagesWithTemplate)).toBeUndefined();
+  });
+  test("finds templates when requested", () => {
+    const template = {
+      id: "template-1",
+      name: "Template",
+      title: "Template",
+      rootInstanceId: "rootInstanceId",
+      meta: {},
+    };
+    const pagesWithTemplate: Pages = {
+      ...pages,
+      pageTemplates: new Map([["template-1", template]]),
+    };
+    expect(
+      findPageByIdOrPath("template-1", pagesWithTemplate, {
+        includeTemplates: true,
+      })
+    ).toEqual(template);
   });
 });
 

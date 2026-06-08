@@ -3,7 +3,8 @@ import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
 import { InputField } from "@webstudio-is/design-system";
 import { $instances } from "~/shared/sync/data-stores";
-import { HorizontalLayout, Label, Row, useLocalValue } from "./shared";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
+import { HorizontalLayout, Label, Row } from "./shared";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $selectedInstance } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
@@ -20,7 +21,7 @@ const saveLabel = (label: string, selectedInstance: Instance) => {
 export const SettingsSection = () => {
   const selectedInstance = useStore($selectedInstance);
   const id = useId();
-  const localValue = useLocalValue(selectedInstance?.label ?? "", (value) => {
+  const localValue = useDraftValue(selectedInstance?.label ?? "", (value) => {
     if (selectedInstance) {
       saveLabel(value, selectedInstance);
     }

@@ -104,6 +104,13 @@ export const parseIntermediateOrInvalidValue = (
     return styleInput;
   }
 
+  if (property.startsWith("--")) {
+    return {
+      type: "invalid",
+      value: originalValue ?? value,
+    };
+  }
+
   if ("unit" in styleValue && styleValue.unit === "number") {
     // when unit is number some properties supports only integer
     // for example z-index

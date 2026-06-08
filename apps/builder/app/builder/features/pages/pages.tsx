@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react";
 import {
   Tooltip,
   Button,
+  Flex,
   SmallIconButton,
   TreeNode,
   TreeRoot,
@@ -12,28 +13,41 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
   toast,
-  ScrollArea,
+  ScrollAreaNative,
   FloatingPanel,
   rawTheme,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
 } from "@webstudio-is/design-system";
 import {
   ChevronRightIcon,
   FolderIcon,
   HomeIcon,
   EllipsesIcon,
-  NewFolderIcon,
-  NewPageIcon,
   PageIcon,
   DynamicPageIcon,
+  PlusIcon,
 } from "@webstudio-is/icons";
 import { NewPageSettings, PageSettings } from "./page-settings/page-settings";
-import { PageContextMenu } from "./page-context-menu";
+import { PageContextMenu, TemplateContextMenu } from "./page-context-menu";
+import {
+  NewTemplateSettings,
+  TemplateSettings,
+  CreatePageFromTemplateSettings,
+} from "./template-settings";
 import {
   DeletePageConfirmationDialog,
   DeleteFolderConfirmationDialog,
+  DeleteTemplateConfirmationDialog,
 } from "./confirmation-dialogs";
 import {
   $editingPageId,
+  $editingTemplateId,
+  $creatingPageFromTemplateId,
+  $authPermit,
+  $canOpenPageTemplates,
   $isContentMode,
   $isDesignMode,
 } from "~/shared/nano-states";
@@ -48,6 +62,8 @@ import {
   isFolder,
   getStoredDropTarget,
   canDrop,
+  deleteTemplateMutable,
+  reorderTemplatesMutable,
 } from "./page-utils";
 import {
   FolderSettings,
@@ -59,6 +75,7 @@ import { useMount } from "~/shared/hook-utils/use-mount";
 import {
   type Folder,
   type Page,
+  type PageTemplate,
   findPageByIdOrPath,
   getFolderById,
 } from "@webstudio-is/sdk";
@@ -69,13 +86,11 @@ import { $selectedPage } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
 
 const ItemSuffix = ({
-  isParentSelected,
   itemId,
   editingItemId,
   onEdit,
   type,
 }: {
-  isParentSelected: boolean;
   itemId: string;
   editingItemId: string | undefined;
   onEdit: (itemId: string | undefined) => void;
@@ -112,7 +127,7 @@ const ItemSuffix = ({
       <SmallIconButton
         tabIndex={-1}
         aria-label={menuLabel}
-        state={isParentSelected ? "open" : undefined}
+        state={isEditing ? "open" : undefined}
         onClick={() => onEdit(isEditing ? undefined : itemId)}
         ref={buttonRef}
         // forces to highlight tree node and show action
@@ -172,6 +187,12 @@ type DropTarget = {
 };
 
 const $dropTarget = atom<undefined | DropTarget>();
+
+type TemplateDropInfo = {
+  targetId: string;
+  treeDropTarget: TreeDropTarget;
+};
+const $templateDropInfo = atom<TemplateDropInfo | undefined>(undefined);
 
 const $flatPagesTree = computed(
   [$pages, $expandedItems, $dropTarget],
@@ -272,11 +293,9 @@ const PagesTree = ({
   }
 
   return (
-    <ScrollArea
-      direction="both"
+    <ScrollAreaNative
       css={{
         width: "100%",
-        overflow: "hidden",
         flexBasis: 0,
         flexGrow: 1,
       }}
@@ -375,7 +394,6 @@ const PagesTree = ({
                 action={
                   <ItemSuffix
                     type={item.type}
-                    isParentSelected={item.id === selectedPageId}
                     itemId={item.id}
                     editingItemId={editingItemId}
                     onEdit={onEdit}
@@ -407,11 +425,81 @@ const PagesTree = ({
           );
         })}
       </TreeRoot>
-    </ScrollArea>
+    </ScrollAreaNative>
   );
 };
 
 const newPageId = "new-page";
+const newTemplateId = "new-template";
+
+const CreateItemMenu = ({
+  editingItemId,
+  editingTemplateItemId,
+}: {
+  editingItemId: string | undefined;
+  editingTemplateItemId: string | undefined;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const selectMenuItem = (callback: () => void) => {
+    setIsOpen(false);
+    requestAnimationFrame(callback);
+  };
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <Tooltip content="Create" side="bottom">
+        <DropdownMenuTrigger asChild>
+          <Button aria-label="Create" prefix={<PlusIcon />} color="ghost" />
+        </DropdownMenuTrigger>
+      </Tooltip>
+      <DropdownMenuContent
+        side="bottom"
+        align="end"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            selectMenuItem(() => {
+              $editingPageId.set(
+                editingItemId === newPageId ? undefined : newPageId
+              );
+            });
+          }}
+        >
+          New page
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            selectMenuItem(() => {
+              $editingPageId.set(
+                editingItemId === newFolderId ? undefined : newFolderId
+              );
+            });
+          }}
+        >
+          New folder
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            selectMenuItem(() => {
+              $editingTemplateId.set(
+                editingTemplateItemId === newTemplateId
+                  ? undefined
+                  : newTemplateId
+              );
+            });
+          }}
+        >
+          New page template
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 const PageEditor = ({
   editingPageId,
@@ -559,16 +647,260 @@ const FolderEditor = ({
   );
 };
 
+const TemplateItem = ({
+  template,
+  isSelected,
+  isEditing,
+  onSelect,
+  onEdit,
+  onCreatePage,
+  canSelectTemplate,
+  canEditTemplate,
+  canCreatePage,
+}: {
+  template: PageTemplate;
+  isSelected: boolean;
+  isEditing: boolean;
+  onSelect: (id: string) => void;
+  onEdit: (id: string | undefined) => void;
+  onCreatePage: (id: string) => void;
+  canSelectTemplate: boolean;
+  canEditTemplate: boolean;
+  canCreatePage: boolean;
+}) => {
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const prevIsEditing = useRef(isEditing);
+  useEffect(() => {
+    if (!isEditing && prevIsEditing.current && buttonRef.current) {
+      buttonRef.current.focus();
+    }
+    prevIsEditing.current = isEditing;
+  }, [isEditing]);
+
+  return (
+    <TreeNode
+      level={1}
+      isSelected={isSelected}
+      buttonProps={Object.assign(
+        canSelectTemplate ? { onClick: () => onSelect(template.id) } : {},
+        { "data-template-id": template.id }
+      )}
+      actionCount={(canCreatePage ? 1 : 0) + (canEditTemplate ? 1 : 0)}
+      action={
+        <Flex align="center" gap={2}>
+          {canCreatePage && (
+            <Tooltip
+              content="Create page from template"
+              disableHoverableContent
+            >
+              <SmallIconButton
+                tabIndex={-1}
+                aria-label="Create page from template"
+                onClick={() => onCreatePage(template.id)}
+                icon={<PlusIcon />}
+              />
+            </Tooltip>
+          )}
+          {canEditTemplate && (
+            <Tooltip
+              content={
+                isEditing ? "Close template settings" : "Open template settings"
+              }
+              disableHoverableContent
+            >
+              <SmallIconButton
+                tabIndex={-1}
+                aria-label={
+                  isEditing
+                    ? "Close template settings"
+                    : "Open template settings"
+                }
+                state={isEditing ? "open" : undefined}
+                onClick={() => onEdit(isEditing ? undefined : template.id)}
+                ref={buttonRef}
+                aria-current={isEditing}
+                icon={isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
+              />
+            </Tooltip>
+          )}
+        </Flex>
+      }
+    >
+      <TreeNodeLabel prefix={<PageIcon />}>{template.name}</TreeNodeLabel>
+    </TreeNode>
+  );
+};
+
+const TemplatesSection = ({
+  selectedPageId,
+  onSelectTemplate,
+  editingTemplateId,
+  onEditTemplate,
+  onCreatePageFromTemplate,
+  canManageTemplates,
+  canSelectTemplate,
+  canCreatePageFromTemplate,
+}: {
+  selectedPageId: string;
+  onSelectTemplate: (id: string) => void;
+  editingTemplateId: string | undefined;
+  onEditTemplate: (id: string | undefined) => void;
+  onCreatePageFromTemplate: (id: string) => void;
+  canManageTemplates: boolean;
+  canSelectTemplate: boolean;
+  canCreatePageFromTemplate: boolean;
+}) => {
+  const pages = useStore($pages);
+  const dropInfo = useStore($templateDropInfo);
+  const templates = Array.from(pages?.pageTemplates?.values() ?? []);
+
+  if (templates.length === 0) {
+    return null;
+  }
+
+  return (
+    <TreeRoot>
+      {templates.map((template, index) => (
+        <TreeSortableItem
+          key={template.id}
+          level={1}
+          isExpanded={undefined}
+          isLastChild={index === templates.length - 1}
+          data={template}
+          canDrag={() => canManageTemplates}
+          dropTarget={
+            canManageTemplates && dropInfo?.targetId === template.id
+              ? dropInfo.treeDropTarget
+              : undefined
+          }
+          onDropTargetChange={(treeDropTarget) => {
+            if (canManageTemplates === false) {
+              return;
+            }
+            if (treeDropTarget) {
+              $templateDropInfo.set({
+                targetId: template.id,
+                treeDropTarget,
+              });
+            } else if ($templateDropInfo.get()?.targetId === template.id) {
+              $templateDropInfo.set(undefined);
+            }
+          }}
+          onDrop={(draggedTemplate) => {
+            if (canManageTemplates === false) {
+              return;
+            }
+            const info = $templateDropInfo.get();
+            if (info === undefined) {
+              return;
+            }
+            updateWebstudioData((data) => {
+              reorderTemplatesMutable(
+                draggedTemplate.id,
+                template.id,
+                info.treeDropTarget.beforeLevel !== undefined
+                  ? "before"
+                  : "after",
+                data
+              );
+            });
+            $templateDropInfo.set(undefined);
+          }}
+          onExpand={() => {}}
+        >
+          <TemplateItem
+            template={template}
+            isSelected={template.id === selectedPageId}
+            isEditing={editingTemplateId === template.id}
+            onSelect={onSelectTemplate}
+            onEdit={onEditTemplate}
+            onCreatePage={onCreatePageFromTemplate}
+            canSelectTemplate={canSelectTemplate}
+            canEditTemplate={canManageTemplates}
+            canCreatePage={canCreatePageFromTemplate}
+          />
+        </TreeSortableItem>
+      ))}
+    </TreeRoot>
+  );
+};
+
+const TemplateEditor = ({
+  editingTemplateId,
+  onClose,
+}: {
+  editingTemplateId: string;
+  onClose: () => void;
+}) => {
+  const currentPage = useStore($selectedPage);
+  const pages = useStore($pages);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  if (editingTemplateId === newTemplateId) {
+    return (
+      <NewTemplateSettings
+        onSuccess={(templateId) => {
+          onClose();
+          selectPage(templateId);
+        }}
+      />
+    );
+  }
+
+  const template = pages?.pageTemplates?.get(editingTemplateId);
+
+  return (
+    <>
+      <TemplateSettings
+        onClose={onClose}
+        onDelete={() => setConfirmingDelete(true)}
+        onDuplicate={(newId) => {
+          onClose();
+          selectPage(newId);
+        }}
+        templateId={editingTemplateId}
+        key={editingTemplateId}
+      />
+      {confirmingDelete && template && (
+        <DeleteTemplateConfirmationDialog
+          template={template}
+          onClose={() => setConfirmingDelete(false)}
+          onConfirm={() => {
+            updateWebstudioData((data) => {
+              deleteTemplateMutable(editingTemplateId, data);
+            });
+            if (currentPage?.id === editingTemplateId && pages) {
+              selectPage(pages.homePageId);
+            }
+            setConfirmingDelete(false);
+            onClose();
+          }}
+        />
+      )}
+    </>
+  );
+};
+
 export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const currentPage = useStore($selectedPage);
   const editingItemId = useStore($editingPageId);
+  const editingTemplateItemId = useStore($editingTemplateId);
+  const creatingFromTemplateId = useStore($creatingPageFromTemplateId);
   const pages = useStore($pages);
   const isDesignMode = useStore($isDesignMode);
+  const isContentMode = useStore($isContentMode);
+  const authPermit = useStore($authPermit);
+  const canOpenPageTemplates = useStore($canOpenPageTemplates);
+  const canCreatePageFromTemplate =
+    isDesignMode || (isContentMode && authPermit !== "view");
   const [containerElement, setContainerElement] =
     useState<HTMLDivElement | null>(null);
   const [settingsPanelHeight, setSettingsPanelHeight] = useState<number>();
   const [pageIdToDelete, setPageIdToDelete] = useState<string | undefined>();
   const [folderIdToDelete, setFolderIdToDelete] = useState<
+    string | undefined
+  >();
+  const [templateIdToDelete, setTemplateIdToDelete] = useState<
     string | undefined
   >();
 
@@ -596,7 +928,6 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       updateWebstudioData((data) => {
         deletePageMutable(pageIdToDelete, data);
       });
-      // Close settings if this page was being edited
       if (editingItemId === pageIdToDelete) {
         $editingPageId.set(undefined);
       }
@@ -615,13 +946,33 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           deletePageMutable(pageId, data);
         });
       });
-      // Close settings if this folder was being edited
       if (editingItemId === folderIdToDelete) {
         $editingPageId.set(undefined);
       }
     }
     setFolderIdToDelete(undefined);
   };
+
+  const handleTemplateDeleteConfirm = () => {
+    if (templateIdToDelete) {
+      updateWebstudioData((data) => {
+        deleteTemplateMutable(templateIdToDelete, data);
+      });
+      if (editingTemplateItemId === templateIdToDelete) {
+        $editingTemplateId.set(undefined);
+      }
+      if (currentPage?.id === templateIdToDelete) {
+        selectPage(pages.homePageId);
+      }
+    }
+    setTemplateIdToDelete(undefined);
+  };
+
+  const templateToDelete =
+    templateIdToDelete === undefined
+      ? undefined
+      : pages.pageTemplates?.get(templateIdToDelete);
+  const hasPageTemplates = (pages.pageTemplates?.size ?? 0) > 0;
 
   return (
     <div
@@ -636,36 +987,12 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
     >
       <PanelTitle
         suffix={
-          <>
-            {isDesignMode && (
-              <>
-                <Tooltip content="New folder" side="bottom">
-                  <Button
-                    onClick={() => {
-                      $editingPageId.set(
-                        editingItemId === newFolderId ? undefined : newFolderId
-                      );
-                    }}
-                    aria-label="New folder"
-                    prefix={<NewFolderIcon />}
-                    color="ghost"
-                  />
-                </Tooltip>
-                <Tooltip content="New page" side="bottom">
-                  <Button
-                    onClick={() => {
-                      $editingPageId.set(
-                        editingItemId === newPageId ? undefined : newPageId
-                      );
-                    }}
-                    aria-label="New page"
-                    prefix={<NewPageIcon />}
-                    color="ghost"
-                  />
-                </Tooltip>
-              </>
-            )}
-          </>
+          isDesignMode ? (
+            <CreateItemMenu
+              editingItemId={editingItemId}
+              editingTemplateItemId={editingTemplateItemId}
+            />
+          ) : undefined
         }
       >
         Pages
@@ -694,6 +1021,68 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           />
         </div>
       </PageContextMenu>
+
+      {(isDesignMode || isContentMode) && hasPageTemplates && (
+        <>
+          <Separator />
+          <PanelTitle>Page templates</PanelTitle>
+          {canOpenPageTemplates ? (
+            <TemplateContextMenu
+              onRequestDeleteTemplate={setTemplateIdToDelete}
+            >
+              <ScrollAreaNative
+                css={{
+                  width: "100%",
+                  flexBasis: 0,
+                  flexGrow: 1,
+                }}
+              >
+                <TemplatesSection
+                  selectedPageId={currentPage.id}
+                  onSelectTemplate={(id) => {
+                    selectPage(id);
+                  }}
+                  editingTemplateId={editingTemplateItemId}
+                  onEditTemplate={(id) => {
+                    if (id) {
+                      selectPage(id);
+                    }
+                    $editingTemplateId.set(id);
+                  }}
+                  onCreatePageFromTemplate={(id) => {
+                    $creatingPageFromTemplateId.set(id);
+                  }}
+                  canManageTemplates={true}
+                  canSelectTemplate={true}
+                  canCreatePageFromTemplate={canCreatePageFromTemplate}
+                />
+              </ScrollAreaNative>
+            </TemplateContextMenu>
+          ) : (
+            <ScrollAreaNative
+              css={{
+                width: "100%",
+                flexBasis: 0,
+                flexGrow: 1,
+              }}
+            >
+              <TemplatesSection
+                selectedPageId={currentPage.id}
+                onSelectTemplate={() => {}}
+                editingTemplateId={editingTemplateItemId}
+                onEditTemplate={() => {}}
+                onCreatePageFromTemplate={(id) => {
+                  $creatingPageFromTemplateId.set(id);
+                }}
+                canManageTemplates={false}
+                canSelectTemplate={false}
+                canCreatePageFromTemplate={canCreatePageFromTemplate}
+              />
+            </ScrollAreaNative>
+          )}
+        </>
+      )}
+
       {editingItemId !== undefined && (
         <FloatingPanel
           content={
@@ -733,6 +1122,52 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           />
         </FloatingPanel>
       )}
+
+      {canOpenPageTemplates && editingTemplateItemId !== undefined && (
+        <FloatingPanel
+          content={
+            <TemplateEditor
+              editingTemplateId={editingTemplateItemId}
+              onClose={() => $editingTemplateId.set(undefined)}
+            />
+          }
+          placement="right-start"
+          width={Number.parseFloat(rawTheme.spacing[35])}
+          open={true}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              $editingTemplateId.set(undefined);
+            }
+          }}
+        >
+          <span style={{ display: "none" }} />
+        </FloatingPanel>
+      )}
+
+      {canCreatePageFromTemplate && creatingFromTemplateId !== undefined && (
+        <FloatingPanel
+          content={
+            <CreatePageFromTemplateSettings
+              templateId={creatingFromTemplateId}
+              onSuccess={(newPageId) => {
+                $creatingPageFromTemplateId.set(undefined);
+                selectPage(newPageId);
+              }}
+            />
+          }
+          placement="right-start"
+          width={Number.parseFloat(rawTheme.spacing[35])}
+          open={true}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              $creatingPageFromTemplateId.set(undefined);
+            }
+          }}
+        >
+          <span style={{ display: "none" }} />
+        </FloatingPanel>
+      )}
+
       {pageIdToDelete && (
         <DeletePageConfirmationDialog
           page={findPageByIdOrPath(pageIdToDelete, pages)!}
@@ -745,6 +1180,13 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           folder={getFolderById(pages, folderIdToDelete)!}
           onClose={() => setFolderIdToDelete(undefined)}
           onConfirm={handleDeleteFolderConfirm}
+        />
+      )}
+      {templateToDelete && (
+        <DeleteTemplateConfirmationDialog
+          template={templateToDelete}
+          onClose={() => setTemplateIdToDelete(undefined)}
+          onConfirm={handleTemplateDeleteConfirm}
         />
       )}
     </div>

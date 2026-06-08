@@ -14,7 +14,10 @@ import {
   createRootFolder,
 } from "@webstudio-is/project-build";
 import { $project } from "./sync/data-stores";
-import { insertPageCopyMutable } from "./page-utils";
+import {
+  insertPageCopyMutable,
+  insertPageFromTemplateMutable,
+} from "./page-utils";
 import {
   $,
   expression,
@@ -239,6 +242,53 @@ describe("insert page copy", () => {
     expect(rootPage.path).toEqual("/my-path");
   });
 
+  test("deduplicate path when duplicating inside a folder with empty slug", () => {
+    const data = getWebstudioDataStub({
+      instances: toMap<Instance>([
+        { type: "instance", id: "bodyId", component: "Body", children: [] },
+      ]),
+      pages: migratePages({
+        meta: {},
+        homePage: {
+          id: "homePageId",
+          name: "Home",
+          path: "",
+          title: `"Home"`,
+          meta: {},
+          rootInstanceId: "bodyId",
+        },
+        pages: [
+          {
+            id: "pageId",
+            name: "My Name",
+            path: "/my-path",
+            title: `"My Title"`,
+            meta: {},
+            rootInstanceId: "bodyId",
+          },
+        ],
+        folders: [
+          createRootFolder(["folderId"]),
+          {
+            id: "folderId",
+            name: "Folder",
+            slug: "",
+            children: ["pageId"],
+          },
+        ],
+      }),
+    });
+    insertPageCopyMutable({
+      source: { data, pageId: "pageId" },
+      target: { data, folderId: "folderId" },
+    });
+    const copiedPages = getCopiedPages(data);
+    expect(copiedPages.length).toEqual(2);
+    const newPage = copiedPages.find((page) => page.id !== "pageId")!;
+    expect(newPage).toBeDefined();
+    expect(newPage.path).toEqual("/copy-1/my-path");
+  });
+
   test("replace variables in page copy meta", () => {
     const bodyVariable = new Variable("bodyVariable", "");
     const dataWithoutPage = renderData(
@@ -257,6 +307,7 @@ describe("insert page copy", () => {
           path: "",
           title: `"Title: " + ${variableIdentifier}`,
           meta: {
+            title: `"Meta title: " + ${variableIdentifier}`,
             description: `"Description: " + ${variableIdentifier}`,
             excludePageFromSearch: `"Exclude: " + ${variableIdentifier}`,
             socialImageUrl: `"Image: " + ${variableIdentifier}`,
@@ -290,6 +341,7 @@ describe("insert page copy", () => {
       path: "/copy-1",
       title: `"Title: " + ${newVariableIdentifier}`,
       meta: {
+        title: `"Meta title: " + ${newVariableIdentifier}`,
         description: `"Description: " + ${newVariableIdentifier}`,
         excludePageFromSearch: `"Exclude: " + ${newVariableIdentifier}`,
         socialImageUrl: `"Image: " + ${newVariableIdentifier}`,
@@ -517,5 +569,82 @@ describe("insert page copy", () => {
     const copiedPage = getCopiedPages(data)[0];
     expect(copiedPage.title).toEqual(`$ws$system`);
     expect(copiedPage.meta.description).toEqual(`$ws$system`);
+  });
+
+  test("insert page from template with transformed metadata", () => {
+    const templateVariable = new Variable("templateVariable", "");
+    const dataWithoutPages = renderData(
+      <$.Body ws:id="templateBodyId" vars={expression`${templateVariable}`}>
+        <$.Box ws:id="boxId">{expression`${templateVariable}`}</$.Box>
+      </$.Body>
+    );
+    const [templateVariableId] = dataWithoutPages.dataSources.keys();
+    const templateVariableIdentifier = encodeDataVariableId(templateVariableId);
+    const data = getWebstudioDataStub({
+      ...dataWithoutPages,
+      pages: migratePages({
+        homePageId: "homePageId",
+        rootFolderId: ROOT_FOLDER_ID,
+        pages: [
+          {
+            id: "homePageId",
+            name: "Home",
+            path: "",
+            title: `"Home"`,
+            meta: {},
+            rootInstanceId: "homeBodyId",
+          },
+        ],
+        pageTemplates: [
+          {
+            id: "templateId",
+            name: "Template",
+            title: `"Title: " + ${templateVariableIdentifier}`,
+            rootInstanceId: "templateBodyId",
+            meta: {
+              title: `"Meta title: " + ${templateVariableIdentifier}`,
+              description: `"Description: " + ${templateVariableIdentifier}`,
+              custom: [
+                {
+                  property: "Property",
+                  content: `"Value: " + ${templateVariableIdentifier}`,
+                },
+              ],
+            },
+          },
+        ],
+        folders: [createRootFolder(["homePageId"])],
+      }),
+    });
+
+    const pageId = insertPageFromTemplateMutable({
+      templateId: "templateId",
+      source: { data },
+      target: { data, folderId: ROOT_FOLDER_ID },
+      overrides: { name: "Template", path: "/template" },
+    });
+
+    expect(pageId).toBeDefined();
+    const newPage = data.pages.pages.get(pageId ?? "");
+    const [_oldVariableId, newVariableId] = data.dataSources.keys();
+    const newVariableIdentifier = encodeDataVariableId(newVariableId);
+    expect(newPage).toEqual({
+      id: pageId,
+      name: "Template",
+      path: "/template",
+      title: `"Title: " + ${newVariableIdentifier}`,
+      rootInstanceId: expect.not.stringMatching("templateBodyId"),
+      meta: {
+        title: `"Meta title: " + ${newVariableIdentifier}`,
+        description: `"Description: " + ${newVariableIdentifier}`,
+        custom: [
+          {
+            property: "Property",
+            content: `"Value: " + ${newVariableIdentifier}`,
+          },
+        ],
+      },
+    });
+    expect(data.pages.folders.get(ROOT_FOLDER_ID)?.children).toContain(pageId);
   });
 });

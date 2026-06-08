@@ -1,7 +1,9 @@
 import { computed } from "nanostores";
 import { nanoid } from "nanoid";
+import slugify from "slugify";
 import {
   type Page,
+  type PageTemplate,
   type Folder,
   type WebstudioData,
   Pages,
@@ -18,18 +20,43 @@ import {
 } from "@webstudio-is/sdk";
 import {
   deleteInstanceMutable,
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
-import { $dataSources } from "~/shared/sync/data-stores";
-import { $pages } from "~/shared/sync/data-stores";
-import { insertPageCopyMutable } from "~/shared/page-utils";
+import { $dataSources, $pages, $project } from "~/shared/sync/data-stores";
+import {
+  copyAndTransformPageMeta,
+  insertPageCopyMutable,
+  insertPageFromTemplateMutable,
+  replaceDataSourcesInExpression,
+} from "~/shared/page-utils";
 import {
   $selectedPage,
   getInstanceKey,
   getInstancePath,
 } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
+
+export const nameToPath = (pages: Pages | undefined, name: string) => {
+  if (name === "") {
+    return "";
+  }
+  const slug = slugify(name, { lower: true, strict: true });
+  const path = `/${slug}`;
+  if (pages === undefined) {
+    return path;
+  }
+  if (findPageByIdOrPath(path, pages) === undefined) {
+    return path;
+  }
+  let suffix = 1;
+  while (findPageByIdOrPath(`${path}${suffix}`, pages) !== undefined) {
+    suffix++;
+  }
+  return `${path}${suffix}`;
+};
 
 /**
  * When page or folder needs to be deleted or moved to a different parent,
@@ -515,4 +542,158 @@ export const canDrop = (dropTarget: DropTarget, pages: Pages) => {
     return false;
   }
   return true;
+};
+
+export const deleteTemplateMutable = (
+  templateId: PageTemplate["id"],
+  data: WebstudioData
+) => {
+  const template = data.pages.pageTemplates?.get(templateId);
+  if (template === undefined) {
+    return;
+  }
+  deleteInstanceMutable(
+    data,
+    getInstancePath([template.rootInstanceId], data.instances)
+  );
+  data.pages.pageTemplates?.delete(templateId);
+};
+
+export const duplicateTemplate = (templateId: PageTemplate["id"]) => {
+  const pages = $pages.get();
+  const project = $project.get();
+  const template = pages?.pageTemplates?.get(templateId);
+  if (template === undefined || project === undefined) {
+    return;
+  }
+  let newTemplateId: undefined | string;
+  updateWebstudioData((data) => {
+    data.pages.pageTemplates ??= new Map();
+    const usedNames = new Set(
+      Array.from(data.pages.pageTemplates.values()).map((t) => t.name)
+    );
+    const { name: baseName = template.name, copyNumber } =
+      template.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
+    let nameNumber = Number(copyNumber ?? "0");
+    let newName = baseName;
+    while (usedNames.has(newName)) {
+      nameNumber += 1;
+      newName = `${baseName} (${nameNumber})`;
+    }
+    newTemplateId = nanoid();
+    const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
+      data,
+      fragment: extractWebstudioFragment(data, template.rootInstanceId),
+      availableVariables: [],
+      projectId: project.id,
+    });
+    const transformExpression = (expression: string) =>
+      replaceDataSourcesInExpression(expression, newDataSourceIds);
+    const newTemplate: PageTemplate = {
+      id: newTemplateId,
+      name: newName,
+      title: transformExpression(template.title),
+      rootInstanceId:
+        newInstanceIds.get(template.rootInstanceId) ?? template.rootInstanceId,
+      systemDataSourceId:
+        template.systemDataSourceId === undefined
+          ? undefined
+          : (newDataSourceIds.get(template.systemDataSourceId) ??
+            template.systemDataSourceId),
+      meta: {},
+    };
+    copyAndTransformPageMeta(
+      template.meta,
+      newTemplate.meta,
+      transformExpression
+    );
+    data.pages.pageTemplates.set(newTemplate.id, newTemplate);
+  });
+  return newTemplateId;
+};
+
+export const instantiateTemplate = ({
+  templateId,
+  overrides,
+  folderId,
+}: {
+  templateId: PageTemplate["id"];
+  overrides: { name: string; path: string };
+  folderId: Folder["id"];
+}) => {
+  let newPageId: undefined | string;
+  updateWebstudioData((data) => {
+    newPageId = insertPageFromTemplateMutable({
+      templateId,
+      source: { data },
+      target: { data, folderId },
+      overrides,
+    });
+  });
+  return newPageId;
+};
+
+export const instantiateTemplateAsNewPage = (
+  templateId: PageTemplate["id"]
+) => {
+  const pages = $pages.get();
+  const template = pages?.pageTemplates?.get(templateId);
+  if (!pages || !template) {
+    return;
+  }
+
+  // Deduplicate name against existing pages in the root folder
+  const rootFolder = getFolderById(pages, pages.rootFolderId);
+  const usedNames = new Set<string>();
+  for (const childId of rootFolder?.children ?? []) {
+    const page = findPageByIdOrPath(childId, pages);
+    if (page) {
+      usedNames.add(page.name);
+    }
+  }
+  let name = template.name;
+  let nameNum = 1;
+  while (usedNames.has(name)) {
+    name = `${template.name} (${nameNum})`;
+    nameNum += 1;
+  }
+
+  return instantiateTemplate({
+    templateId,
+    overrides: { name, path: nameToPath(pages, name) },
+    folderId: pages.rootFolderId,
+  });
+};
+
+export const reorderTemplatesMutable = (
+  sourceId: string,
+  targetId: string,
+  position: "before" | "after",
+  data: WebstudioData
+) => {
+  const templates = data.pages.pageTemplates;
+  if (templates === undefined || sourceId === targetId) {
+    return;
+  }
+
+  const orderedTemplates = Array.from(templates.values());
+  const sourceIndex = orderedTemplates.findIndex((t) => t.id === sourceId);
+  if (sourceIndex === -1) {
+    return;
+  }
+
+  const [sourceTemplate] = orderedTemplates.splice(sourceIndex, 1);
+
+  const targetIndex = orderedTemplates.findIndex((t) => t.id === targetId);
+  if (targetIndex === -1) {
+    orderedTemplates.push(sourceTemplate);
+  } else {
+    const insertIndex = position === "before" ? targetIndex : targetIndex + 1;
+    orderedTemplates.splice(insertIndex, 0, sourceTemplate);
+  }
+
+  templates.clear();
+  for (const template of orderedTemplates) {
+    templates.set(template.id, template);
+  }
 };
