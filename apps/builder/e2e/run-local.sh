@@ -21,6 +21,7 @@ export E2E_INSTALL_PLAYWRIGHT="${E2E_INSTALL_PLAYWRIGHT:-auto}"
 export E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS="${E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS:-300}"
 export E2E_RUN_TESTS="${E2E_RUN_TESTS:-true}"
 export E2E_PACKAGE_BUILD_TIMEOUT_SECONDS="${E2E_PACKAGE_BUILD_TIMEOUT_SECONDS:-120}"
+export E2E_BUILDER_BUILD_TIMEOUT_SECONDS="${E2E_BUILDER_BUILD_TIMEOUT_SECONDS:-600}"
 export E2E_TEST_COMMAND_TIMEOUT_SECONDS="${E2E_TEST_COMMAND_TIMEOUT_SECONDS:-900}"
 export E2E_WRITE_SCHEMA_SNAPSHOT="${E2E_WRITE_SCHEMA_SNAPSHOT:-false}"
 
@@ -200,6 +201,10 @@ build_builder_package_entries() {
   pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/http-client build
 }
 
+build_builder_app() {
+  pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder build
+}
+
 wait_for_database() {
   local timeout_at
   timeout_at="$(($(now_ms) + E2E_DOCKER_TIMEOUT_SECONDS * 1000))"
@@ -246,6 +251,11 @@ if [ "$E2E_RUN_TESTS" = "true" ]; then
 
   run_step "start e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
     docker compose -f "$COMPOSE_FILE" up -d postgrest
+
+  if [ "${E2E_BUILDER_URL:-}" = "" ]; then
+    run_step "build builder app" "$E2E_BUILDER_BUILD_TIMEOUT_SECONDS" \
+      build_builder_app
+  fi
 
   run_step "run builder e2e tests" "$E2E_TEST_COMMAND_TIMEOUT_SECONDS" \
     pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder e2e:ci

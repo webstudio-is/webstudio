@@ -200,6 +200,12 @@ jobs:
       - name: Pnpm install
         run: pnpm install
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: builder-e2e-playwright-${{ runner.os }}-${{ hashFiles('apps/builder/package.json', 'pnpm-lock.yaml') }}
+
       - name: Run builder e2e
         run: |
           set +e

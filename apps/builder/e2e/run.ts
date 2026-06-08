@@ -27,20 +27,47 @@ const waitForHttp = async (url: string, timeoutMs: number) => {
 
   while (Date.now() - startedAt < timeoutMs) {
     try {
-      await fetch(url);
-      return;
+      const response = await fetch(url);
+      await response.arrayBuffer();
+      if (response.status < 500) {
+        return;
+      }
     } catch (error) {
       lastError = error;
-      await delay(250);
     }
+    await delay(250);
   }
 
   throw new Error(`Timed out waiting for ${url}: ${String(lastError)}`);
 };
 
+const waitForPostgrest = async () => {
+  const url = new URL("/User?select=*", postgrestUrl);
+  const startedAt = Date.now();
+  let successfulResponses = 0;
+
+  while (Date.now() - startedAt < 30_000) {
+    try {
+      const response = await fetch(url.href);
+      await response.arrayBuffer();
+      if (response.status < 500) {
+        successfulResponses += 1;
+        if (successfulResponses === 3) {
+          return;
+        }
+      }
+    } catch {
+      successfulResponses = 0;
+    }
+    await delay(250);
+  }
+
+  throw new Error(`Timed out waiting for ${url.href}`);
+};
+
 const waitForBuilder = async (child: ChildProcess) => {
   await Promise.race([
-    waitForHttp(builderUrl, 60_000),
+    waitForHttp(dashboardUrl, 60_000),
     new Promise<never>((_, reject) => {
       child.once("exit", (code, signal) => {
         reject(
@@ -86,50 +113,57 @@ const withTimeout = async <Result>(
   }
 };
 
-const startBuilder = async () => {
-  if (process.env.E2E_BUILDER_URL !== undefined) {
-    return undefined;
-  }
-
-  const child = spawn(
-    "./node_modules/.bin/remix",
-    [
-      "vite:dev",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      new URL(builderUrl).port,
-      "--strictPort",
-    ],
-    {
-      cwd: new URL("..", import.meta.url),
-      env: {
-        ...process.env,
-        AUTH_SECRET: process.env.AUTH_SECRET ?? "test",
-        DATABASE_URL:
-          process.env.DATABASE_URL ??
-          "postgresql://user:pass@localhost:55432/webstudio",
-        DEV_LOGIN: "true",
-        GITHUB_SHA: process.env.GITHUB_SHA ?? "local",
-        POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
-        POSTGREST_URL: postgrestUrl,
-        PORT: new URL(builderUrl).port,
-        PLANS: process.env.PLANS ?? JSON.stringify(e2ePlans),
-        TRPC_SERVER_API_TOKEN: serviceToken,
-      },
-      stdio: ["ignore", "pipe", "pipe"],
-    }
-  );
-
+const pipeBuilderOutput = (child: ChildProcess) => {
   child.stdout?.on("data", (chunk) => {
     process.stdout.write(`[builder] ${chunk}`);
   });
   child.stderr?.on("data", (chunk) => {
     process.stderr.write(`[builder] ${chunk}`);
   });
+};
 
-  await waitForBuilder(child);
+const getBuilderEnv = () => ({
+  ...process.env,
+  AUTH_SECRET: process.env.AUTH_SECRET ?? "test",
+  DATABASE_URL:
+    process.env.DATABASE_URL ??
+    "postgresql://user:pass@localhost:55432/webstudio",
+  DEV_LOGIN: "true",
+  GITHUB_SHA: process.env.GITHUB_SHA ?? "local",
+  POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
+  POSTGREST_URL: postgrestUrl,
+  PORT: new URL(builderUrl).port,
+  PLANS: process.env.PLANS ?? JSON.stringify(e2ePlans),
+  TRPC_SERVER_API_TOKEN: serviceToken,
+});
+
+const startBuiltBuilder = async () => {
+  const child = spawn(
+    "pnpm",
+    ["exec", "tsx", "--conditions=webstudio", "./e2e/serve-built-remix.ts"],
+    {
+      cwd: new URL("..", import.meta.url),
+      env: {
+        ...getBuilderEnv(),
+        HOST: "127.0.0.1",
+        NODE_ENV: "production",
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    }
+  );
+
+  pipeBuilderOutput(child);
   return child;
+};
+
+const startBuilder = async (): Promise<ChildProcess | undefined> => {
+  if (process.env.E2E_BUILDER_URL !== undefined) {
+    return undefined;
+  }
+
+  const server = await startBuiltBuilder();
+  await waitForBuilder(server);
+  return server;
 };
 
 const stopBuilder = async (child: ChildProcess | undefined) => {
@@ -153,7 +187,7 @@ const run = async () => {
 
   try {
     const postgrestReady = measure("wait for postgrest", async () => {
-      await waitForHttp(postgrestUrl, 30_000);
+      await waitForPostgrest();
     });
     const builderReady = measure("start builder", startBuilder);
     const browserReady = measure("start browser", startBrowser);
