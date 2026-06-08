@@ -379,10 +379,6 @@ export const BlockChildHoveredInstanceOutline = () => {
                 return;
               }
 
-              if (canDeleteHoveredInstance === false) {
-                return;
-              }
-
               updateWebstudioData((data) => {
                 deleteInstanceMutable(
                   data,

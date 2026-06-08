@@ -1,4 +1,4 @@
-import { assert, dashboardUrl, getProjectIdFromBuilderUrl } from "../harness";
+import { dashboardUrl, getProjectIdFromBuilderUrl } from "../harness";
 import type { Page } from "playwright";
 
 export const loginWithSecret = async ({
@@ -51,10 +51,9 @@ export const createBlankProject = async ({
   console.info(`e2e: created project at ${page.url()}`);
 
   const projectId = getProjectIdFromBuilderUrl(page.url());
-  assert(
-    projectId !== undefined,
-    `Expected builder URL, received ${page.url()}`
-  );
+  if (projectId === undefined) {
+    throw new Error(`Expected builder URL, received ${page.url()}`);
+  }
   return projectId;
 };
 

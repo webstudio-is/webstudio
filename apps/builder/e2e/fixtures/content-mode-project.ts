@@ -10,6 +10,7 @@ export type SeededContentModeProject = {
   projectId: string;
   buildId: string;
   editorToken: string;
+  builderToken: string;
   initialVersion: number;
   listItemInstanceId: string;
   linkInstanceId: string;
@@ -31,6 +32,9 @@ export type SeededContentModeProject = {
   deletableTemplateText: string;
   nestedTemplateName: string;
   nestedTemplateText: string;
+  pageTemplateName: string;
+  pageTemplateText: string;
+  pageTemplateFontSize: string;
 };
 
 const assetTemplateName = "Asset Template";
@@ -52,6 +56,9 @@ const deletableTemplateName = "Deletable Template";
 const deletableTemplateText = "Content block child to delete";
 const nestedTemplateName = "Nested Template";
 const nestedTemplateText = "Nested content descendant";
+const pageTemplateName = "Content Page Template";
+const pageTemplateText = "Content page template heading";
+const pageTemplateFontSize = "38px";
 
 const getBaseBreakpointId = (breakpoints: string) => {
   const parsedBreakpoints = JSON.parse(breakpoints) as Array<{
@@ -101,6 +108,11 @@ const createContentModeBuildData = ({
   const deletableTemplateId = "deletable-template";
   const nestedTemplateId = "nested-template";
   const nestedTemplateTextId = "nested-template-text";
+  const pageTemplateId = "content-page-template";
+  const pageTemplateRootId = "content-page-template-root";
+  const pageTemplateHeadingId = "content-page-template-heading";
+  const pageTemplateLocalStyleSourceId =
+    "content-page-template-local-style-source";
   const baseBreakpointId = getBaseBreakpointId(breakpoints);
   const instances = [
     {
@@ -237,6 +249,21 @@ const createContentModeBuildData = ({
       label: "Nested Text",
       children: [{ type: "text", value: nestedTemplateText }],
     },
+    {
+      type: "instance",
+      id: pageTemplateRootId,
+      component: "ws:element",
+      tag: "body",
+      children: [{ type: "id", value: pageTemplateHeadingId }],
+    },
+    {
+      type: "instance",
+      id: pageTemplateHeadingId,
+      component: "ws:element",
+      tag: "h1",
+      label: "Page Template Heading",
+      children: [{ type: "text", value: pageTemplateText }],
+    },
   ];
 
   const props = [
@@ -337,6 +364,13 @@ const createContentModeBuildData = ({
   const nextPages = JSON.parse(pages) as {
     homePageId: string;
     pages: Array<{ id: string; rootInstanceId: string }>;
+    pageTemplates?: Array<{
+      id: string;
+      name: string;
+      title: string;
+      rootInstanceId: string;
+      meta: Record<string, unknown>;
+    }>;
   };
   const homePage = nextPages.pages.find(
     (page) => page.id === nextPages.homePageId
@@ -345,6 +379,21 @@ const createContentModeBuildData = ({
     throw new Error("Expected existing build to have a home page");
   }
   homePage.rootInstanceId = rootInstanceId;
+  nextPages.pageTemplates = [
+    ...(nextPages.pageTemplates ?? []),
+    {
+      id: pageTemplateId,
+      name: pageTemplateName,
+      title: JSON.stringify(pageTemplateName),
+      rootInstanceId: pageTemplateRootId,
+      meta: {
+        description: JSON.stringify("Page template description"),
+        excludePageFromSearch: "false",
+        language: JSON.stringify("en"),
+        custom: [{ property: "template", content: JSON.stringify("content") }],
+      },
+    },
+  ];
 
   return {
     pages: JSON.stringify(nextPages),
@@ -364,6 +413,10 @@ const createContentModeBuildData = ({
         id: tokenTemplateStyleSourceId,
         name: "Content Mode Token",
       },
+      {
+        type: "local",
+        id: pageTemplateLocalStyleSourceId,
+      },
     ]),
     styleSourceSelections: JSON.stringify([
       {
@@ -377,6 +430,10 @@ const createContentModeBuildData = ({
       {
         instanceId: tokenTemplateId,
         values: [tokenTemplateStyleSourceId],
+      },
+      {
+        instanceId: pageTemplateHeadingId,
+        values: [pageTemplateLocalStyleSourceId],
       },
     ]),
     styles: JSON.stringify([
@@ -410,6 +467,16 @@ const createContentModeBuildData = ({
           value: Number.parseFloat(tokenTemplateFontSize),
         },
       },
+      {
+        styleSourceId: pageTemplateLocalStyleSourceId,
+        breakpointId: baseBreakpointId,
+        property: "fontSize",
+        value: {
+          type: "unit",
+          unit: "px",
+          value: Number.parseFloat(pageTemplateFontSize),
+        },
+      },
     ]),
     breakpoints,
     dataSources: JSON.stringify([]),
@@ -421,6 +488,7 @@ const createContentModeBuildData = ({
 export const prepareExistingContentModeProject = async ({
   projectId,
   editorToken = "e2e-editor-token",
+  builderToken = "e2e-builder-token",
   listItemInstanceId = "list-item",
   linkInstanceId = "content-link",
   imageInstanceId = "content-image",
@@ -428,6 +496,7 @@ export const prepareExistingContentModeProject = async ({
 }: {
   projectId: string;
   editorToken?: string;
+  builderToken?: string;
   listItemInstanceId?: string;
   linkInstanceId?: string;
   imageInstanceId?: string;
@@ -480,17 +549,26 @@ export const prepareExistingContentModeProject = async ({
     }),
   });
 
-  await insertAuthorizationToken({
-    token: editorToken,
-    projectId,
-    name: "E2E editor token",
-    relation: "editors",
-  });
+  await Promise.all([
+    insertAuthorizationToken({
+      token: editorToken,
+      projectId,
+      name: "E2E editor token",
+      relation: "editors",
+    }),
+    insertAuthorizationToken({
+      token: builderToken,
+      projectId,
+      name: "E2E builder token",
+      relation: "builders",
+    }),
+  ]);
 
   return {
     projectId,
     buildId: build.id,
     editorToken,
+    builderToken,
     initialVersion: 0,
     listItemInstanceId,
     linkInstanceId,
@@ -512,5 +590,8 @@ export const prepareExistingContentModeProject = async ({
     deletableTemplateText,
     nestedTemplateName,
     nestedTemplateText,
+    pageTemplateName,
+    pageTemplateText,
+    pageTemplateFontSize,
   };
 };

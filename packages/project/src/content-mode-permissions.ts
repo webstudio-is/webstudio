@@ -80,6 +80,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
 const isString = (value: unknown) => typeof value === "string";
+const isOptionalString = (value: unknown) =>
+  value === undefined || typeof value === "string";
 
 const isContentModeCustomMeta = (value: unknown) =>
   Array.isArray(value) &&
@@ -98,7 +100,7 @@ const contentModePageMetaValidators: Record<
   title: isString,
   excludePageFromSearch: isString,
   language: isString,
-  socialImageAssetId: isString,
+  socialImageAssetId: isOptionalString,
   socialImageUrl: isString,
   custom: isContentModeCustomMeta,
 };

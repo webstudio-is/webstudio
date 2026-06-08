@@ -81,13 +81,16 @@ export const SidebarTabsTrigger = forwardRef<
   HTMLButtonElement,
   ComponentProps<typeof TabsTrigger> & { label: ReactNode | string }
 >(({ label, children, ...props }, ref) => {
+  const ariaLabel =
+    props["aria-label"] ?? (typeof label === "string" ? label : undefined);
+
   return (
     <Tooltip side="right" content={label}>
       <Box>
         <TabsTrigger
           {...props}
           ref={ref}
-          aria-label={typeof label === "string" ? label : undefined}
+          aria-label={ariaLabel}
           className={buttonStyle()}
         >
           {children}

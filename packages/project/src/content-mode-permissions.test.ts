@@ -485,6 +485,7 @@ describe("content mode permissions", () => {
       initialContentRootIds: new Set<string>(),
       initialEditableInstanceIds: new Set<string>(),
       initialEditableInstanceRootIds: new Map<string, string>(),
+      initialBlockTemplateChildIdsByInstanceId: new Map(),
       addedInstanceIds: new Set(["new-root", "new-child"]),
       removedEditableInstanceIds: new Set<string>(),
       addedPageIds: new Set<string>(),
@@ -545,6 +546,7 @@ describe("content mode permissions", () => {
         initialContentRootIds: new Set(["block"]),
         initialEditableInstanceIds: new Set(["block", "item"]),
         initialEditableInstanceRootIds: new Map([["item", "block"]]),
+        initialBlockTemplateChildIdsByInstanceId: new Map(),
         addedInstanceIds: new Set(),
         removedEditableInstanceIds: new Set(),
         addedPageIds: new Set<string>(),
@@ -2443,6 +2445,11 @@ describe("content mode permissions", () => {
             op: "replace",
             path: ["pages", "page-1", "meta", "socialImageAssetId"],
             value: "asset-1",
+          },
+          {
+            op: "add",
+            path: ["pages", "page-1", "meta", "socialImageAssetId"],
+            value: undefined,
           },
           {
             op: "replace",

@@ -13,6 +13,7 @@ import { contentModeEditing } from "./tests/content-mode-editing.e2e";
 
 const testTimeoutMs =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 60_000;
+const testFilter = process.env.E2E_TEST_FILTER;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED ??= "0";
 
@@ -154,7 +155,9 @@ const run = async () => {
       });
       logPerf(`${suite.name} beforeAll`, beforeAllStartedAt);
       try {
-        for (const test of suite.tests) {
+        for (const test of suite.tests.filter(
+          (test) => testFilter === undefined || test.name.includes(testFilter)
+        )) {
           const startedAt = Date.now();
           await withTimeout(
             `${suite.name} › ${test.name}`,
