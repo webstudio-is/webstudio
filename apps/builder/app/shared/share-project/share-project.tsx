@@ -1,6 +1,8 @@
 import {
+  useEffect,
   Fragment,
   useId,
+  useRef,
   useState,
   type ComponentProps,
   type ReactNode,
@@ -128,7 +130,7 @@ type MenuProps = {
   name: string;
   value: LinkOptions;
   allowAdditionalPermissions: boolean;
-  onChange: (value: LinkOptions) => void;
+  onChange: (value: LinkOptionsUpdate) => void;
   onDelete: () => void;
 };
 
@@ -145,7 +147,7 @@ const Menu = ({
 
   const handleCheckedChange = (role: Role) => (checked: boolean) => {
     if (checked) {
-      onChange({ ...value, relation: role });
+      onChange({ relation: role });
     }
   };
 
@@ -154,7 +156,7 @@ const Menu = ({
       return;
     }
 
-    onChange({ ...value, name: customLinkName.trim() });
+    onChange({ name: customLinkName.trim() });
   };
 
   return (
@@ -236,7 +238,7 @@ const Menu = ({
                 }
                 checked={value.canClone}
                 onCheckedChange={(canClone) => {
-                  onChange({ ...value, canClone: Boolean(canClone) });
+                  onChange({ canClone: Boolean(canClone) });
                 }}
                 id={ids.canClone}
               />
@@ -263,7 +265,7 @@ const Menu = ({
                 }
                 checked={value.canCopy}
                 onCheckedChange={(canCopy) => {
-                  onChange({ ...value, canCopy: Boolean(canCopy) });
+                  onChange({ canCopy: Boolean(canCopy) });
                 }}
                 id={ids.canCopy}
               />
@@ -318,7 +320,7 @@ const Menu = ({
                 }
                 checked={value.canPublish}
                 onCheckedChange={(canPublish) => {
-                  onChange({ ...value, canPublish: Boolean(canPublish) });
+                  onChange({ canPublish: Boolean(canPublish) });
                 }}
                 id={ids.canPublish}
               />
@@ -395,6 +397,8 @@ export type LinkOptions = {
   canPublish: boolean;
 };
 
+type LinkOptionsUpdate = Partial<Omit<LinkOptions, "token">>;
+
 type SharedLinkItemType = {
   value: LinkOptions;
   onChange: (value: LinkOptions) => void;
@@ -417,19 +421,32 @@ const SharedLinkItem = ({
   builderUrl,
   allowAdditionalPermissions,
 }: SharedLinkItemType) => {
-  const [currentName, setCurrentName] = useState(value.name);
+  const [currentLink, setCurrentLink] = useState(value);
+  const currentLinkRef = useRef(value);
+
+  useEffect(() => {
+    currentLinkRef.current = value;
+    setCurrentLink(value);
+  }, [value]);
+
+  const updateCurrentLink = (update: LinkOptionsUpdate) => {
+    const nextLink = { ...currentLinkRef.current, ...update };
+    currentLinkRef.current = nextLink;
+    setCurrentLink(nextLink);
+    onChange(nextLink);
+  };
 
   return (
     <Box
       className={itemStyle()}
       role="group"
-      aria-label={`Share link ${currentName}`}
+      aria-label={`Share link ${currentLink.name}`}
     >
-      <Label css={{ flexGrow: 1 }}>{currentName}</Label>
+      <Label css={{ flexGrow: 1 }}>{currentLink.name}</Label>
       <CopyToClipboard
         text={builderUrl({
-          authToken: value.token,
-          mode: relationToMode[value.relation],
+          authToken: currentLink.token,
+          mode: relationToMode[currentLink.relation],
         })}
         copyText="Copy link"
       >
@@ -438,12 +455,9 @@ const SharedLinkItem = ({
         </IconButton>
       </CopyToClipboard>
       <Menu
-        name={currentName}
-        value={value}
-        onChange={(value) => {
-          setCurrentName(value.name);
-          onChange(value);
-        }}
+        name={currentLink.name}
+        value={currentLink}
+        onChange={updateCurrentLink}
         onDelete={onDelete}
         allowAdditionalPermissions={allowAdditionalPermissions}
       />

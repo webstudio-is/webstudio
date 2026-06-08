@@ -271,7 +271,7 @@ describe("authorizePatchEntries", () => {
     );
   });
 
-  test("requires build permit after an authorized build-only transaction", async () => {
+  test("does not require build permit after an authorized build-only transaction", async () => {
     readAccessToken
       .mockResolvedValueOnce({ userId: "user-1", projectId: "project-1" })
       .mockResolvedValueOnce({ userId: "user-2", projectId: "project-1" });
@@ -301,10 +301,17 @@ describe("authorizePatchEntries", () => {
 
     expect(result.rejected).toEqual([]);
     expect(result.authorized).toHaveLength(2);
-    expect(applyContentModeTransaction).toHaveBeenCalledTimes(1);
-    expect(applyContentModeTransaction).toHaveBeenCalledWith(
+    expect(applyContentModeTransaction).toHaveBeenCalledTimes(2);
+    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({
         transaction: patch.entries[0].transaction,
+      })
+    );
+    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        transaction: patch.entries[1].transaction,
       })
     );
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
@@ -314,7 +321,7 @@ describe("authorizePatchEntries", () => {
     );
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
       2,
-      { projectId: "project-1", permit: "build" },
+      { projectId: "project-1", permit: "edit" },
       expect.anything()
     );
   });

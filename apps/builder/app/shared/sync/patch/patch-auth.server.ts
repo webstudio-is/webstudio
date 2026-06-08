@@ -137,20 +137,16 @@ export const authorizePatchEntries = async (
   contentModeCapabilities: ReturnType<typeof createContentModeCapabilities>
 ) => {
   let capabilities = contentModeCapabilities;
-  let requiresBuildPermit = false;
   const authorized: AuthorizedPatchEntry[] = [];
   const rejected: RejectedPatchEntry[] = [];
 
   for (const entry of patch.entries) {
     try {
       const writerContext = await resolveEntryWriterContext(context, entry);
-      const contentModeResult =
-        requiresBuildPermit === false
-          ? applyContentModeTransaction({
-              capabilities,
-              transaction: entry.transaction,
-            })
-          : undefined;
+      const contentModeResult = applyContentModeTransaction({
+        capabilities,
+        transaction: entry.transaction,
+      });
       await assertProjectPermit({
         context: writerContext,
         permit: contentModeResult?.success ? "edit" : "build",
@@ -158,8 +154,6 @@ export const authorizePatchEntries = async (
       });
       if (contentModeResult?.success) {
         capabilities = contentModeResult.capabilities;
-      } else {
-        requiresBuildPermit = true;
       }
       authorized.push({ entry, context: writerContext });
     } catch (error) {
