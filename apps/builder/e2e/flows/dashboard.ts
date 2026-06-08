@@ -4,15 +4,20 @@ import type { Page } from "playwright";
 export const loginWithSecret = async ({
   page,
   email,
+  devPlan,
 }: {
   page: Page;
   email: string;
+  devPlan?: string;
 }) => {
   console.info("e2e: opening login");
   await page.goto(`${dashboardUrl}/login`);
   await page.getByRole("button", { name: "Login with Secret" }).click();
   await page.getByPlaceholder("Auth secret").fill("test");
   await page.getByPlaceholder("Email (optional)").fill(email);
+  if (devPlan !== undefined) {
+    await page.locator('select[name="devPlan"]').selectOption(devPlan);
+  }
   console.info("e2e: submitting dev login");
   await page.getByRole("button", { name: "Login" }).click();
   await page.waitForURL(`${dashboardUrl}/dashboard`);
@@ -61,11 +66,13 @@ export const loginAndCreateBlankProject = async ({
   page,
   email,
   title,
+  devPlan,
 }: {
   page: Page;
   email: string;
   title: string;
+  devPlan?: string;
 }) => {
-  await loginWithSecret({ page, email });
+  await loginWithSecret({ page, email, devPlan });
   return await createBlankProject({ page, title });
 };

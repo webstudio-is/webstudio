@@ -1,5 +1,10 @@
 import { parseBuilderUrl } from "@webstudio-is/http-client";
-import { chromium, type Browser, type BrowserContext } from "playwright";
+import {
+  chromium,
+  type Browser,
+  type BrowserContext,
+  type BrowserContextOptions,
+} from "playwright";
 
 const builderPort =
   process.env.E2E_BUILDER_PORT ?? String(56_000 + (process.pid % 1_000));
@@ -33,11 +38,14 @@ export type Suite = {
 let browser: Browser | undefined;
 let context: BrowserContext | undefined;
 
+const browserContextOptions: BrowserContextOptions = {
+  ignoreHTTPSErrors: true,
+  permissions: ["clipboard-read", "clipboard-write"],
+};
+
 export const startBrowser = async () => {
   browser = await chromium.launch();
-  context = await browser.newContext({
-    ignoreHTTPSErrors: true,
-  });
+  context = await browser.newContext(browserContextOptions);
 };
 
 export const stopBrowser = async () => {
@@ -60,9 +68,7 @@ export const newIsolatedPage = async () => {
     throw new Error("Browser is not initialized");
   }
 
-  const isolatedContext = await browser.newContext({
-    ignoreHTTPSErrors: true,
-  });
+  const isolatedContext = await browser.newContext(browserContextOptions);
 
   return {
     page: await isolatedContext.newPage(),

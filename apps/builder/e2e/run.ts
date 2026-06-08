@@ -9,7 +9,9 @@ import {
   type Suite,
 } from "./harness";
 import { logPerf, measure } from "./perf";
+import { e2ePlans } from "./plans";
 import { contentModeEditing } from "./tests/content-mode-editing.e2e";
+import { shareLinkPermissions } from "./tests/share-link-permissions.e2e";
 
 const testTimeoutMs =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 60_000;
@@ -98,6 +100,7 @@ const startBuilder = async () => {
         POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
         POSTGREST_URL: postgrestUrl,
         PORT: new URL(builderUrl).port,
+        PLANS: process.env.PLANS ?? JSON.stringify(e2ePlans),
         TRPC_SERVER_API_TOKEN: serviceToken,
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -129,7 +132,7 @@ const stopBuilder = async (child: ChildProcess | undefined) => {
   ]);
 };
 
-const suites: Suite[] = [contentModeEditing];
+const suites: Suite[] = [contentModeEditing, shareLinkPermissions];
 
 const run = async () => {
   const totalStartedAt = Date.now();
@@ -148,6 +151,13 @@ const run = async () => {
     logPerf("boot builder/browser", bootStartedAt);
     const testsStartedAt = Date.now();
     for (const suite of suites) {
+      const tests = suite.tests.filter(
+        (test) => testFilter === undefined || test.name.includes(testFilter)
+      );
+      if (tests.length === 0) {
+        continue;
+      }
+
       const suiteStartedAt = Date.now();
       const beforeAllStartedAt = Date.now();
       await withTimeout(`${suite.name} beforeAll`, testTimeoutMs, async () => {
@@ -155,9 +165,7 @@ const run = async () => {
       });
       logPerf(`${suite.name} beforeAll`, beforeAllStartedAt);
       try {
-        for (const test of suite.tests.filter(
-          (test) => testFilter === undefined || test.name.includes(testFilter)
-        )) {
+        for (const test of tests) {
           const startedAt = Date.now();
           await withTimeout(
             `${suite.name} › ${test.name}`,

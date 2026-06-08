@@ -419,7 +419,11 @@ const SharedLinkItem = ({
   const [currentName, setCurrentName] = useState(value.name);
 
   return (
-    <Box className={itemStyle()}>
+    <Box
+      className={itemStyle()}
+      role="group"
+      aria-label={`Share link ${currentName}`}
+    >
       <Label css={{ flexGrow: 1 }}>{currentName}</Label>
       <CopyToClipboard
         text={builderUrl({

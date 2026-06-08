@@ -9,6 +9,7 @@ import {
 type ContentModeProjectOptions = {
   email?: string;
   title?: string;
+  devPlan?: string;
 };
 
 let sharedProject: SeededContentModeProject | undefined;
@@ -16,6 +17,7 @@ let sharedProject: SeededContentModeProject | undefined;
 export const createContentModeProject = async ({
   email = "content-mode-e2e@webstudio.test",
   title = "Content Mode E2E",
+  devPlan,
 }: ContentModeProjectOptions = {}) => {
   const ownerPage = await newPage();
 
@@ -27,6 +29,7 @@ export const createContentModeProject = async ({
           page: ownerPage,
           email,
           title,
+          devPlan,
         })
     );
 
