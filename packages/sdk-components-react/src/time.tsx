@@ -1,4 +1,10 @@
-import { forwardRef, type ComponentProps, type ElementRef } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ElementRef,
+} from "react";
 
 const languages = [
   "af",
@@ -289,6 +295,7 @@ const DEFAULT_COUNTRY = "GB";
 const DEFAULT_DATE_STYLE = "medium";
 const DEFAULT_TIME_STYLE = "none";
 const DEFAULT_TIME_ZONE = "UTC";
+const VISITOR_TIME_ZONE = "visitor";
 
 const languageOrDefault = (language: unknown): Language => {
   return languages.includes(language as Language)
@@ -318,6 +325,22 @@ const timeStyleOrUndefined = (
     return value as Intl.DateTimeFormatOptions["timeStyle"];
   }
   return;
+};
+
+const timeZoneOrDefault = (timeZone: unknown): string => {
+  if (typeof timeZone !== "string") {
+    return DEFAULT_TIME_ZONE;
+  }
+  const normalizedTimeZone = timeZone.trim();
+  if (normalizedTimeZone === "" || normalizedTimeZone === VISITOR_TIME_ZONE) {
+    return DEFAULT_TIME_ZONE;
+  }
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone: normalizedTimeZone });
+    return normalizedTimeZone;
+  } catch {
+    return DEFAULT_TIME_ZONE;
+  }
 };
 
 const parseDate = (datetimeString: string) => {
@@ -352,44 +375,68 @@ const parseDate = (datetimeString: string) => {
  * Example: formatDate(new Date(), "YYYY-MM-DD HH:mm:ss", "en-US") => "2025-11-03 18:47:25"
  * Example: formatDate(new Date(), "DDDD, MMMM D, YYYY", "en-US") => "Monday, November 3, 2025"
  */
-const formatDate = (date: Date, template: string, locale = "en-US"): string => {
+const formatDate = (
+  date: Date,
+  template: string,
+  locale = "en-US",
+  timeZone = DEFAULT_TIME_ZONE
+): string => {
   const pad = (n: number, length = 2) => String(n).padStart(length, "0");
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => {
+    return parts.find((part) => part.type === type)?.value ?? "";
+  };
+  const year = part("year");
+  const month = Number(part("month"));
+  const day = Number(part("day"));
+  const hour = Number(part("hour"));
+  const minute = Number(part("minute"));
+  const second = Number(part("second"));
 
   // Get localized day and month names
   const longDayName = new Intl.DateTimeFormat(locale, {
-    timeZone: DEFAULT_TIME_ZONE,
+    timeZone,
     weekday: "long",
   }).format(date);
   const shortDayName = new Intl.DateTimeFormat(locale, {
-    timeZone: DEFAULT_TIME_ZONE,
+    timeZone,
     weekday: "short",
   }).format(date);
   const longMonthName = new Intl.DateTimeFormat(locale, {
-    timeZone: DEFAULT_TIME_ZONE,
+    timeZone,
     month: "long",
   }).format(date);
   const shortMonthName = new Intl.DateTimeFormat(locale, {
-    timeZone: DEFAULT_TIME_ZONE,
+    timeZone,
     month: "short",
   }).format(date);
 
   const tokens: Record<string, string | number> = {
-    YYYY: date.getUTCFullYear(),
-    YY: String(date.getUTCFullYear()).slice(-2),
+    YYYY: year,
+    YY: year.slice(-2),
     MMMM: longMonthName,
     MMM: shortMonthName,
-    MM: pad(date.getUTCMonth() + 1),
-    M: date.getUTCMonth() + 1,
+    MM: pad(month),
+    M: month,
     DDDD: longDayName,
     DDD: shortDayName,
-    DD: pad(date.getUTCDate()),
-    D: date.getUTCDate(),
-    HH: pad(date.getUTCHours()),
-    H: date.getUTCHours(),
-    mm: pad(date.getUTCMinutes()),
-    m: date.getUTCMinutes(),
-    ss: pad(date.getUTCSeconds()),
-    s: date.getUTCSeconds(),
+    DD: pad(day),
+    D: day,
+    HH: pad(hour),
+    H: hour,
+    mm: pad(minute),
+    m: minute,
+    ss: pad(second),
+    s: second,
   };
 
   // Sort tokens by length (longest first) to avoid partial replacements
@@ -408,6 +455,13 @@ type TimeProps = {
   country?: Country;
   dateStyle?: DateStyle;
   timeStyle?: TimeStyle;
+  /**
+   * Time zone used to format the date.
+   *
+   * Use "UTC" for deterministic UTC output, "visitor" to use the browser time
+   * zone after hydration, or an IANA time zone like "Europe/Berlin".
+   */
+  timeZone?: string;
   /**
    * Custom format template. Overrides Date Style and Time Style.
    *
@@ -430,21 +484,34 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
       country = DEFAULT_COUNTRY,
       dateStyle = DEFAULT_DATE_STYLE,
       timeStyle = DEFAULT_TIME_STYLE,
+      timeZone = DEFAULT_TIME_ZONE,
       format,
       datetime = INITIAL_DATE_STRING,
       ...props
     },
     ref
   ) => {
+    const [visitorTimeZone, setVisitorTimeZone] = useState<string>();
     const locale = `${languageOrDefault(language)}-${countryOrDefault(
       country
     )}`;
+    const useVisitorTimeZone =
+      typeof timeZone === "string" && timeZone.trim() === VISITOR_TIME_ZONE;
+    const resolvedTimeZone = useVisitorTimeZone
+      ? timeZoneOrDefault(visitorTimeZone)
+      : timeZoneOrDefault(timeZone);
 
     const options: Intl.DateTimeFormatOptions = {
       dateStyle: dateStyleOrUndefined(dateStyle),
       timeStyle: timeStyleOrUndefined(timeStyle),
-      timeZone: DEFAULT_TIME_ZONE,
+      timeZone: resolvedTimeZone,
     };
+
+    useEffect(() => {
+      if (useVisitorTimeZone) {
+        setVisitorTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+      }
+    }, [useVisitorTimeZone]);
 
     const datetimeString =
       datetime === null ? INVALID_DATE_STRING : datetime.toString();
@@ -456,7 +523,7 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
       // Use custom format template if provided
       if (format) {
         try {
-          formattedDate = formatDate(date, format, locale);
+          formattedDate = formatDate(date, format, locale, resolvedTimeZone);
         } catch {
           /* Do Nothing */
         }
@@ -481,4 +548,5 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
 export const __testing__ = {
   parseDate,
   formatDate,
+  timeZoneOrDefault,
 };
