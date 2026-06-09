@@ -19,6 +19,9 @@ let fixture: SeededContentModeProject;
 
 const copiedPageClipboardMarker = "@webstudio/page/v0.1";
 
+const getPageRow = ({ page, pageName }: { page: Page; pageName: string }) =>
+  page.getByRole("group", { name: `Page ${pageName}`, exact: true });
+
 const waitForPageRow = async ({
   page,
   pageName,
@@ -26,9 +29,29 @@ const waitForPageRow = async ({
   page: Page;
   pageName: string;
 }) => {
-  await page
-    .getByRole("group", { name: `Page ${pageName}`, exact: true })
-    .waitFor();
+  await getPageRow({ page, pageName }).waitFor();
+};
+
+const expectPageRowHidden = async ({
+  page,
+  pageName,
+}: {
+  page: Page;
+  pageName: string;
+}) => {
+  await getPageRow({ page, pageName }).waitFor({ state: "hidden" });
+};
+
+const selectPageRow = async ({
+  page,
+  pageName,
+}: {
+  page: Page;
+  pageName: string;
+}) => {
+  await getPageRow({ page, pageName })
+    .getByRole("button", { name: pageName, exact: true })
+    .click();
 };
 
 const waitForFolderRow = async ({
@@ -96,6 +119,25 @@ const pasteFromClipboardShortcut = async ({ page }: { page: Page }) => {
   await waitForSyncStatus({ page, status: "idle" });
 };
 
+const confirmFocusedDialogAction = async ({
+  page,
+  action,
+}: {
+  page: Page;
+  action: string;
+}) => {
+  const button = page.getByRole("button", { name: action });
+  await button.waitFor();
+  await page.waitForFunction((action) => {
+    return (
+      document.activeElement instanceof HTMLButtonElement &&
+      document.activeElement.textContent?.trim() === action
+    );
+  }, action);
+  await page.keyboard.press("Enter");
+  await button.waitFor({ state: "hidden" });
+};
+
 test.beforeAll(async () => {
   fixture = await createContentModeProject({
     email: "pages-actions-e2e@webstudio.test",
@@ -143,11 +185,10 @@ test("Builder can copy and duplicate a page from the header menu and delete it w
       pageName: copiedPageName,
       canvasText: fixture.pageTemplateText,
     });
-    await page.getByText(copiedPageName, { exact: true }).first().click();
+    await selectPageRow({ page, pageName: copiedPageName });
     await page.keyboard.press("Backspace");
-    await page.getByRole("button", { name: "Delete Page" }).waitFor();
-    await page.keyboard.press("Enter");
-    await expectTextHidden({ page, text: copiedPageName });
+    await confirmFocusedDialogAction({ page, action: "Delete Page" });
+    await expectPageRowHidden({ page, pageName: copiedPageName });
 
     await openPageSettings({ page, pageName });
     await selectHeaderAction({
@@ -159,9 +200,8 @@ test("Builder can copy and duplicate a page from the header menu and delete it w
 
     await openPageSettings({ page, pageName: duplicatedPageName });
     await page.keyboard.press("Backspace");
-    await page.getByRole("button", { name: "Delete Page" }).waitFor();
-    await page.keyboard.press("Enter");
-    await expectTextHidden({ page, text: duplicatedPageName });
+    await confirmFocusedDialogAction({ page, action: "Delete Page" });
+    await expectPageRowHidden({ page, pageName: duplicatedPageName });
   } finally {
     await close();
   }

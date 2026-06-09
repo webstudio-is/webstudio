@@ -7,6 +7,7 @@ import {
   isRootFolder,
   type Folder,
   ROOT_FOLDER_ID,
+  ROOT_INSTANCE_ID,
   type DataSource,
   type Page,
   SYSTEM_VARIABLE_ID,
@@ -1190,6 +1191,24 @@ describe("duplicateTemplate", () => {
     $instances.set(
       new Map([
         [
+          ROOT_INSTANCE_ID,
+          {
+            type: "instance",
+            id: ROOT_INSTANCE_ID,
+            component: "Body",
+            children: [{ type: "id", value: "rootBoxId" }],
+          },
+        ],
+        [
+          "rootBoxId",
+          {
+            type: "instance",
+            id: "rootBoxId",
+            component: "Box",
+            children: [],
+          },
+        ],
+        [
           "templateRootId",
           {
             type: "instance",
@@ -1213,6 +1232,7 @@ describe("duplicateTemplate", () => {
     const newTemplateId = duplicateTemplate("templateId");
 
     expect(newTemplateId).toBeDefined();
+    expect($instances.get().size).toEqual(4);
     const newTemplate = $pages.get()?.pageTemplates?.get(newTemplateId ?? "");
     const newVariable = Array.from($dataSources.get().values()).find(
       (item) => item.name === "templateVariable" && item.id !== variableId

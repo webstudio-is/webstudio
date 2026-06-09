@@ -209,6 +209,62 @@ test("copies page data across projects", async () => {
   expect($dataSources.get().has("source-variable")).toBe(false);
 });
 
+test("reports page paste failure when insertion cannot complete", async () => {
+  $project.set({ id: "source-project" } as Project);
+  resetBuildStores();
+
+  const sourcePages = createDefaultPages({
+    homePageId: "source-page",
+    rootInstanceId: "source-root",
+  });
+  $pages.set(sourcePages);
+  $selectedPageId.set(sourcePages.homePageId);
+  $instances.set(
+    new Map<Instance["id"], Instance>([
+      [
+        "source-root",
+        {
+          type: "instance",
+          id: "source-root",
+          component: "Body",
+          children: [],
+        },
+      ],
+    ])
+  );
+
+  const clipboardData = copyPageData("source-page");
+  expect(clipboardData).toBeDefined();
+
+  resetBuildStores();
+  $project.set(undefined);
+  const targetPages = createDefaultPages({
+    homePageId: "target-page",
+    rootInstanceId: "target-root",
+  });
+  const initialPageCount = targetPages.pages.size;
+  $pages.set(targetPages);
+  $selectedPageId.set(targetPages.homePageId);
+  $instances.set(
+    new Map<Instance["id"], Instance>([
+      [
+        "target-root",
+        {
+          type: "instance",
+          id: "target-root",
+          component: "Body",
+          children: [],
+        },
+      ],
+    ])
+  );
+
+  await expect(
+    handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID)
+  ).resolves.toBe(false);
+  expect($pages.get()?.pages.size).toBe(initialPageCount);
+});
+
 test("copies folder data with nested pages across projects", async () => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();

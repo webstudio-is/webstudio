@@ -183,6 +183,8 @@ export const TemplateContextMenu = ({
             const templateId = button?.getAttribute("data-template-id");
             if (templateId) {
               setTemplateId(templateId);
+            } else {
+              setTemplateId(undefined);
             }
           }}
         >

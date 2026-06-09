@@ -259,12 +259,13 @@ export const handlePastePage = async (
             ? "Template pasted"
             : "Folder pasted"
       );
+      return true;
     }
   } catch {
     return false;
   }
 
-  return true;
+  return false;
 };
 
 export const pageText: Plugin = {

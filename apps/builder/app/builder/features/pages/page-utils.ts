@@ -1,5 +1,4 @@
 import { computed } from "nanostores";
-import { nanoid } from "nanoid";
 import slugify from "slugify";
 import {
   type Page,
@@ -20,20 +19,18 @@ import {
 } from "@webstudio-is/sdk";
 import {
   deleteInstanceMutable,
-  extractWebstudioFragment,
-  insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
-import { $dataSources, $pages, $project } from "~/shared/sync/data-stores";
+import { $dataSources, $pages } from "~/shared/sync/data-stores";
 import {
-  copyAndTransformPageMeta,
   createFolderCopyData,
+  createTemplateCopyData,
   insertFolderCopyFromDataMutable,
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
+  insertTemplateCopyFromFragmentsMutable,
 } from "~/shared/page-utils";
-import { replaceDataSourcesInExpression } from "~/shared/data-variables";
 import {
   $selectedPage,
   getInstanceKey,
@@ -472,53 +469,24 @@ export const deleteTemplateMutable = (
 
 export const duplicateTemplate = (templateId: PageTemplate["id"]) => {
   const pages = $pages.get();
-  const project = $project.get();
   const template = pages?.pageTemplates?.get(templateId);
-  if (template === undefined || project === undefined) {
+  if (template === undefined) {
     return;
   }
   let newTemplateId: undefined | string;
   updateWebstudioData((data) => {
     data.pages.pageTemplates ??= new Map();
-    const usedNames = new Set(
-      Array.from(data.pages.pageTemplates.values()).map((t) => t.name)
-    );
-    const { name: baseName = template.name, copyNumber } =
-      template.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
-    let nameNumber = Number(copyNumber ?? "0");
-    let newName = baseName;
-    while (usedNames.has(newName)) {
-      nameNumber += 1;
-      newName = `${baseName} (${nameNumber})`;
-    }
-    newTemplateId = nanoid();
-    const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
+    const copyData = createTemplateCopyData({
       data,
-      fragment: extractWebstudioFragment(data, template.rootInstanceId),
-      availableVariables: [],
-      projectId: project.id,
+      template,
     });
-    const transformExpression = (expression: string) =>
-      replaceDataSourcesInExpression(expression, newDataSourceIds);
-    const newTemplate: PageTemplate = {
-      id: newTemplateId,
-      name: newName,
-      title: transformExpression(template.title),
-      rootInstanceId:
-        newInstanceIds.get(template.rootInstanceId) ?? template.rootInstanceId,
-      systemDataSourceId:
-        template.systemDataSourceId === undefined
-          ? undefined
-          : (newDataSourceIds.get(template.systemDataSourceId) ??
-            template.systemDataSourceId),
-      meta: {},
-    };
-    copyAndTransformPageMeta(
-      template.meta,
-      newTemplate.meta,
-      transformExpression
-    );
-    data.pages.pageTemplates.set(newTemplate.id, newTemplate);
+    newTemplateId = insertTemplateCopyFromFragmentsMutable({
+      source: {
+        template: copyData.template,
+        bodyFragment: copyData.bodyFragment,
+      },
+      target: { data },
+    });
   });
   return newTemplateId;
 };
