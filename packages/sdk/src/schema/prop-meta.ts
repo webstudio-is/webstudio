@@ -111,6 +111,14 @@ const Select = z.object({
   options: z.array(z.string()),
 });
 
+const TimeZone = z.object({
+  ...common,
+  control: z.literal("timeZone"),
+  type: z.literal("string"),
+  defaultValue: z.string().optional(),
+  options: z.array(z.string()),
+});
+
 const Check = z.object({
   ...common,
   control: z.literal("check"),
@@ -203,6 +211,7 @@ export const PropMeta = z.union([
   Radio,
   InlineRadio,
   Select,
+  TimeZone,
   MultiSelect,
   Check,
   InlineCheck,
