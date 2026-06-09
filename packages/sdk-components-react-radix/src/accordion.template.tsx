@@ -78,7 +78,7 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
           transition: ${transition.all};
           padding-bottom: ${spacing[4]};
           &[data-state="closed"] {
-            display: none;
+            height: 0;
           }
           &[data-state="open"] {
             height: var(--radix-accordion-content-height);
