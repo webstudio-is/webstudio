@@ -9,7 +9,6 @@ export { Heading } from "./heading";
 export { Paragraph } from "./paragraph";
 export { Link } from "./link";
 export { createLocalLink, type LocalLinkProps } from "./local-link";
-export { isLocalLinkActive, resolveLocalLinkUrl } from "./link-utils";
 export { RichTextLink } from "./rich-text-link";
 export { Span } from "./span";
 export { Bold } from "./bold";
