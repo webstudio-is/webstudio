@@ -535,6 +535,7 @@ const CreateItemMenu = ({
           onSelect={(event) => {
             event.preventDefault();
             selectMenuItem(() => {
+              $editingTemplateId.set(undefined);
               $editingPageId.set(
                 editingItemId === newPageId ? undefined : newPageId
               );
@@ -547,6 +548,7 @@ const CreateItemMenu = ({
           onSelect={(event) => {
             event.preventDefault();
             selectMenuItem(() => {
+              $editingTemplateId.set(undefined);
               $editingPageId.set(
                 editingItemId === newFolderId ? undefined : newFolderId
               );
@@ -559,6 +561,7 @@ const CreateItemMenu = ({
           onSelect={(event) => {
             event.preventDefault();
             selectMenuItem(() => {
+              $editingPageId.set(undefined);
               $editingTemplateId.set(
                 editingTemplateItemId === newTemplateId
                   ? undefined
@@ -1112,6 +1115,9 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
               if (itemId && isFolder(itemId, pages.folders) === false) {
                 selectPage(itemId);
               }
+              if (itemId) {
+                $editingTemplateId.set(undefined);
+              }
               $editingPageId.set(itemId);
             }}
           />
@@ -1143,6 +1149,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                   onEditTemplate={(id) => {
                     if (id) {
                       selectPage(id);
+                      $editingPageId.set(undefined);
                     }
                     $editingTemplateId.set(id);
                   }}

@@ -1,18 +1,20 @@
 import { describe, expect, test } from "vitest";
 import { __testing__ } from "./url";
 
+const { emailToProp, propToEmail } = __testing__;
+
 describe("email url control value", () => {
   test("preserves subject without email", () => {
-    expect(__testing__.emailToProp({ email: "", subject: "Hello" })).toEqual(
+    expect(emailToProp({ email: "", subject: "Hello" })).toEqual(
       "mailto:?subject=Hello"
     );
-    expect(__testing__.propToEmail("mailto:?subject=Hello")).toEqual({
+    expect(propToEmail("mailto:?subject=Hello")).toEqual({
       email: "",
       subject: "Hello",
     });
   });
 
   test("clears value when email and subject are empty", () => {
-    expect(__testing__.emailToProp({ email: "", subject: "" })).toEqual("");
+    expect(emailToProp({ email: "", subject: "" })).toEqual("");
   });
 });

@@ -22,6 +22,14 @@ import {
 } from "./content-mode-permissions";
 import type { BuildPatchTransaction } from "./db/build-patch-core";
 
+const {
+  hasOnlyAddedInstancesInSubtree,
+  hasOnlyContentModePageMeta,
+  isContentModePageMetaValue,
+  isContentModePropPatchValue,
+  validateEditableInstanceReferences,
+} = __testing__;
+
 const metas = new Map<string, WsComponentMeta>([
   [
     "Link",
@@ -379,31 +387,29 @@ describe("content mode permissions", () => {
   });
 
   test("validates content-mode page meta values", () => {
-    expect(__testing__.isContentModePageMetaValue("title", "Title")).toBe(true);
-    expect(__testing__.isContentModePageMetaValue("title", 1)).toBe(false);
+    expect(isContentModePageMetaValue("title", "Title")).toBe(true);
+    expect(isContentModePageMetaValue("title", 1)).toBe(false);
     expect(
-      __testing__.isContentModePageMetaValue("custom", [
+      isContentModePageMetaValue("custom", [
         { property: "og:type", content: "website" },
       ])
     ).toBe(true);
     expect(
-      __testing__.isContentModePageMetaValue("custom", [
+      isContentModePageMetaValue("custom", [
         { property: "og:type", content: 1 },
       ])
     ).toBe(false);
-    expect(__testing__.isContentModePageMetaValue("auth", "value")).toBe(false);
+    expect(isContentModePageMetaValue("auth", "value")).toBe(false);
   });
 
   test("validates content-mode page meta objects", () => {
     expect(
-      __testing__.hasOnlyContentModePageMeta({
+      hasOnlyContentModePageMeta({
         title: "Title",
         custom: [{ property: "og:type", content: "website" }],
       })
     ).toBe(true);
-    expect(__testing__.hasOnlyContentModePageMeta({ auth: "value" })).toBe(
-      false
-    );
+    expect(hasOnlyContentModePageMeta({ auth: "value" })).toBe(false);
   });
 
   test("validates content-mode prop patch values", () => {
@@ -415,7 +421,7 @@ describe("content mode permissions", () => {
     });
 
     expect(
-      __testing__.isContentModePropPatchValue({
+      isContentModePropPatchValue({
         capabilities,
         editableInstanceIds: new Set(["link"]),
         expectedPropId: "new-href-prop",
@@ -429,7 +435,7 @@ describe("content mode permissions", () => {
       })
     ).toBe(true);
     expect(
-      __testing__.isContentModePropPatchValue({
+      isContentModePropPatchValue({
         capabilities,
         editableInstanceIds: new Set(["link"]),
         expectedPropId: "new-href-prop",
@@ -496,18 +502,14 @@ describe("content mode permissions", () => {
       editableInstanceIds: new Set<string>(),
     };
 
-    expect(
-      __testing__.hasOnlyAddedInstancesInSubtree(context, "new-root")
-    ).toBe(true);
+    expect(hasOnlyAddedInstancesInSubtree(context, "new-root")).toBe(true);
     capabilities.instances.set("new-root", {
       type: "instance",
       id: "new-root",
       component: "Body",
       children: [{ type: "id", value: "existing" }],
     });
-    expect(
-      __testing__.hasOnlyAddedInstancesInSubtree(context, "new-root")
-    ).toBe(false);
+    expect(hasOnlyAddedInstancesInSubtree(context, "new-root")).toBe(false);
   });
 
   test("validates duplicate content instance references", () => {
@@ -541,7 +543,7 @@ describe("content mode permissions", () => {
     });
 
     expect(
-      __testing__.validateEditableInstanceReferences({
+      validateEditableInstanceReferences({
         capabilities,
         initialContentRootIds: new Set(["block"]),
         initialEditableInstanceIds: new Set(["block", "item"]),

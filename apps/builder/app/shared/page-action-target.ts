@@ -18,11 +18,6 @@ export const getPageActionTarget = (): PageActionTarget | undefined => {
     return;
   }
 
-  const editingTemplateId = $editingTemplateId.get();
-  if (editingTemplateId && pages.pageTemplates?.has(editingTemplateId)) {
-    return { type: "template", id: editingTemplateId };
-  }
-
   const editingPageId = $editingPageId.get();
   if (editingPageId) {
     if (pages.pages.has(editingPageId)) {
@@ -31,6 +26,11 @@ export const getPageActionTarget = (): PageActionTarget | undefined => {
     if (pages.folders.has(editingPageId)) {
       return { type: "folder", id: editingPageId };
     }
+  }
+
+  const editingTemplateId = $editingTemplateId.get();
+  if (editingTemplateId && pages.pageTemplates?.has(editingTemplateId)) {
+    return { type: "template", id: editingTemplateId };
   }
 
   const selectedPageId = $selectedPageId.get();

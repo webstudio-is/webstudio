@@ -46,16 +46,19 @@ const ActionContextMenuItem = ({
   item,
   actions,
 }: { item: ActionItem } & PageItemActionsMenuItemsProps) => {
+  const action = actions[item.name];
   return (
     <ContextMenuItem
-      onSelect={actions[item.name]}
+      onSelect={action}
       destructive={isDestructive(item.name)}
-      disabled={actions[item.name] == null}
+      disabled={action == null}
     >
       {item.label}
-      <ContextMenuItemRightSlot>
-        <Kbd value={item.shortcut} />
-      </ContextMenuItemRightSlot>
+      {action && (
+        <ContextMenuItemRightSlot>
+          <Kbd value={item.shortcut} />
+        </ContextMenuItemRightSlot>
+      )}
     </ContextMenuItem>
   );
 };
@@ -97,19 +100,24 @@ export const PageItemActionsDropdown = ({
       <DropdownMenuContent align="end">
         {items
           .filter((item) => item.name !== "paste")
-          .map((item) => (
-            <DropdownMenuItem
-              key={item.name}
-              onSelect={actions[item.name]}
-              destructive={isDestructive(item.name)}
-              disabled={actions[item.name] == null}
-            >
-              {item.label}
-              <DropdownMenuItemRightSlot>
-                <Kbd value={item.shortcut} />
-              </DropdownMenuItemRightSlot>
-            </DropdownMenuItem>
-          ))}
+          .map((item) => {
+            const action = actions[item.name];
+            return (
+              <DropdownMenuItem
+                key={item.name}
+                onSelect={action}
+                destructive={isDestructive(item.name)}
+                disabled={action == null}
+              >
+                {item.label}
+                {action && (
+                  <DropdownMenuItemRightSlot>
+                    <Kbd value={item.shortcut} />
+                  </DropdownMenuItemRightSlot>
+                )}
+              </DropdownMenuItem>
+            );
+          })}
       </DropdownMenuContent>
     </DropdownMenu>
   );

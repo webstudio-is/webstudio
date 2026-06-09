@@ -209,7 +209,7 @@ test("copies page data across projects", async () => {
   expect($dataSources.get().has("source-variable")).toBe(false);
 });
 
-test("reports page paste failure when insertion cannot complete", async () => {
+test("handles page paste data without falling through when insertion cannot complete", async () => {
   $project.set({ id: "source-project" } as Project);
   resetBuildStores();
 
@@ -261,8 +261,14 @@ test("reports page paste failure when insertion cannot complete", async () => {
 
   await expect(
     handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID)
-  ).resolves.toBe(false);
+  ).resolves.toBe(true);
   expect($pages.get()?.pages.size).toBe(initialPageCount);
+});
+
+test("ignores non-page paste data", async () => {
+  await expect(handlePastePage("plain text", ROOT_FOLDER_ID)).resolves.toBe(
+    false
+  );
 });
 
 test("copies folder data with nested pages across projects", async () => {

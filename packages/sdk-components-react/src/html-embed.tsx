@@ -13,8 +13,10 @@ import { mergeRefs } from "@react-aria/utils";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { executeDomEvents, patchDomEvents } from "./html-embed-patchers";
 
+const scriptTestIdPrefix = "client-";
+
 export const __testing__ = {
-  scriptTestIdPrefix: "client-",
+  scriptTestIdPrefix,
 };
 
 const insertScript = (sourceScript: HTMLScriptElement): Promise<void> => {
@@ -32,7 +34,7 @@ const insertScript = (sourceScript: HTMLScriptElement): Promise<void> => {
 
     // For testing purposes, we add a prefix to the testid to differentiate between server and client rendered scripts.
     if (script.dataset.testid !== undefined) {
-      script.dataset.testid = `${__testing__.scriptTestIdPrefix}${script.dataset.testid}`;
+      script.dataset.testid = `${scriptTestIdPrefix}${script.dataset.testid}`;
     }
 
     if (hasSrc) {

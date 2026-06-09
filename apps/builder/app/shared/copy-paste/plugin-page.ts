@@ -200,14 +200,18 @@ export const handlePastePage = async (
   targetFolderId?: Folder["id"]
 ) => {
   const item = parse(clipboardData);
-  const pages = $pages.get();
-  if (item === undefined || pages === undefined) {
+  if (item === undefined) {
     return false;
   }
 
+  const pages = $pages.get();
   const folderId = targetFolderId ?? getDefaultTargetFolderId();
-  if (folderId === undefined || pages.folders.has(folderId) === false) {
-    return false;
+  if (
+    pages === undefined ||
+    folderId === undefined ||
+    pages.folders.has(folderId) === false
+  ) {
+    return true;
   }
 
   try {
@@ -262,10 +266,10 @@ export const handlePastePage = async (
       return true;
     }
   } catch {
-    return false;
+    return true;
   }
 
-  return false;
+  return true;
 };
 
 export const pageText: Plugin = {

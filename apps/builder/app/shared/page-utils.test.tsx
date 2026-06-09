@@ -34,6 +34,8 @@ import {
 } from "@webstudio-is/template";
 import { nanoid } from "nanoid";
 
+const { deduplicateName, deduplicatePath, joinPath } = __testing__;
+
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));
 
@@ -94,34 +96,32 @@ describe("page utility helpers", () => {
   test("deduplicates names within the target folder", () => {
     const pages = getPagesWithSiblings();
 
-    expect(
-      __testing__.deduplicateName(pages, ROOT_FOLDER_ID, "Contact")
-    ).toEqual("Contact");
-    expect(__testing__.deduplicateName(pages, ROOT_FOLDER_ID, "About")).toEqual(
+    expect(deduplicateName(pages, ROOT_FOLDER_ID, "Contact")).toEqual(
+      "Contact"
+    );
+    expect(deduplicateName(pages, ROOT_FOLDER_ID, "About")).toEqual(
       "About (2)"
     );
-    expect(
-      __testing__.deduplicateName(pages, ROOT_FOLDER_ID, "About (1)")
-    ).toEqual("About (2)");
+    expect(deduplicateName(pages, ROOT_FOLDER_ID, "About (1)")).toEqual(
+      "About (2)"
+    );
   });
 
   test("deduplicates paths within the target folder", () => {
     const pages = getPagesWithSiblings();
 
-    expect(
-      __testing__.deduplicatePath(pages, ROOT_FOLDER_ID, "/contact")
-    ).toEqual("/contact");
-    expect(
-      __testing__.deduplicatePath(pages, ROOT_FOLDER_ID, "/about")
-    ).toEqual("/copy-2/about");
-    expect(__testing__.deduplicatePath(pages, ROOT_FOLDER_ID, "/")).toEqual(
-      "/copy-1"
+    expect(deduplicatePath(pages, ROOT_FOLDER_ID, "/contact")).toEqual(
+      "/contact"
     );
+    expect(deduplicatePath(pages, ROOT_FOLDER_ID, "/about")).toEqual(
+      "/copy-2/about"
+    );
+    expect(deduplicatePath(pages, ROOT_FOLDER_ID, "/")).toEqual("/copy-1");
   });
 
   test("joins path parts without duplicate slashes", () => {
-    expect(__testing__.joinPath("/", "/blog", "/post")).toEqual("/blog/post");
-    expect(__testing__.joinPath("/docs/", "/guide")).toEqual("/docs/guide");
+    expect(joinPath("/", "/blog", "/post")).toEqual("/blog/post");
+    expect(joinPath("/docs/", "/guide")).toEqual("/docs/guide");
   });
 });
 

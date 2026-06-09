@@ -16,6 +16,8 @@ export default {
   title: "CSS Value List Item",
 };
 
+const { listItemAttributes } = __testing__;
+
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
   height: theme.spacing[10],
@@ -69,7 +71,7 @@ const ListItem = (props: {
           />
         </>
       }
-      {...__testing__.listItemAttributes}
+      {...listItemAttributes}
     />
   );
 };
@@ -194,7 +196,7 @@ export const CSSValueListItem = () => {
                 icon={<MinusIcon />}
               />
             }
-            {...__testing__.listItemAttributes}
+            {...listItemAttributes}
           />
           <CssValueListItem
             id="no-thumb-1"
@@ -208,7 +210,7 @@ export const CSSValueListItem = () => {
                 icon={<MinusIcon />}
               />
             }
-            {...__testing__.listItemAttributes}
+            {...listItemAttributes}
           />
         </CssValueListArrowFocus>
       </StorySection>
@@ -222,7 +224,7 @@ export const CSSValueListItem = () => {
             thumbnail={<Thumbnail />}
             hidden={false}
             disabled
-            {...__testing__.listItemAttributes}
+            {...listItemAttributes}
           />
           <CssValueListItem
             id="disabled-1"
@@ -230,7 +232,7 @@ export const CSSValueListItem = () => {
             label={<Label>Enabled item</Label>}
             thumbnail={<Thumbnail />}
             hidden={false}
-            {...__testing__.listItemAttributes}
+            {...listItemAttributes}
           />
         </CssValueListArrowFocus>
       </StorySection>

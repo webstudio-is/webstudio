@@ -8,11 +8,13 @@ import {
   selectPage,
 } from "~/shared/nano-states";
 import { $instances, $pages } from "~/shared/sync/data-stores";
-import { getDeletablePageActionTarget } from "~/shared/page-action-target";
+import {
+  getDeletablePageActionTarget,
+  getPageActionTarget,
+} from "~/shared/page-action-target";
 import { __testing__ } from "./commands";
 
-const { canRunDesignModeCommand, guardDesignModeCommand, getPageActionTarget } =
-  __testing__;
+const { canRunDesignModeCommand, guardDesignModeCommand } = __testing__;
 
 const resetPageActionStores = () => {
   $editingPageId.set(undefined);
@@ -112,6 +114,27 @@ describe("getPageActionTarget", () => {
       type: "template",
       id: "template-id",
     });
+  });
+
+  test("uses open page settings over stale template settings", () => {
+    resetPageActionStores();
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body-id",
+    });
+    const template: PageTemplate = {
+      id: "template-id",
+      name: "Template",
+      title: `"Template"`,
+      rootInstanceId: "template-root",
+      meta: {},
+    };
+    pages.pageTemplates = new Map([[template.id, template]]);
+    $pages.set(pages);
+    $editingTemplateId.set("template-id");
+    $editingPageId.set("page-id");
+
+    expect(getPageActionTarget()).toEqual({ type: "page", id: "page-id" });
   });
 
   test("uses the selected page root target", () => {

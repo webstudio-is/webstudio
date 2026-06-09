@@ -170,7 +170,6 @@ const duplicatePageActionTarget = () => {
 export const __testing__ = {
   canRunDesignModeCommand,
   guardDesignModeCommand,
-  getPageActionTarget,
 };
 
 const requestSelectedPageDelete = () => {
