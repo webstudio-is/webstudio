@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { findParentFolderByChildId } from "@webstudio-is/sdk";
 import {
   ContextMenu,
@@ -95,13 +96,15 @@ export const PageContextMenu = ({
               event.target.closest<HTMLElement>("[data-tree-button]");
             const pageId = button?.getAttribute("data-page-id");
             const folderId = button?.getAttribute("data-folder-id");
-            if (pageId) {
-              setTarget({ type: "page", id: pageId });
-            } else if (folderId) {
-              setTarget({ type: "folder", id: folderId });
-            } else {
-              setTarget(undefined);
-            }
+            flushSync(() => {
+              if (pageId) {
+                setTarget({ type: "page", id: pageId });
+              } else if (folderId) {
+                setTarget({ type: "folder", id: folderId });
+              } else {
+                setTarget(undefined);
+              }
+            });
           }}
         >
           {children}
@@ -181,11 +184,13 @@ export const TemplateContextMenu = ({
             const button =
               event.target.closest<HTMLElement>("[data-tree-button]");
             const templateId = button?.getAttribute("data-template-id");
-            if (templateId) {
-              setTemplateId(templateId);
-            } else {
-              setTemplateId(undefined);
-            }
+            flushSync(() => {
+              if (templateId) {
+                setTemplateId(templateId);
+              } else {
+                setTemplateId(undefined);
+              }
+            });
           }}
         >
           {children}
