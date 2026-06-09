@@ -1,3 +1,4 @@
+import { type ComponentProps, memo, useMemo } from "react";
 import {
   type ServerRuntimeMetaFunction as MetaFunction,
   type LinksFunction,
@@ -328,20 +329,33 @@ export const action = async ({
   }
 };
 
+const PageBoundary = memo(
+  ({ url, system }: ComponentProps<typeof Page> & { url: string }) => {
+    // Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages
+    return <Page key={url} system={system} />;
+  },
+  // React Router can rerender the current route while the next route loaders are
+  // still pending. Keep the generated page out of that pending-navigation render
+  // path, but let URL changes remount it.
+  (prevProps, nextProps) => prevProps.url === nextProps.url
+);
+
 const Outlet = () => {
   const { system, resources, url, pageMeta, host } =
     useLoaderData<typeof loader>();
+  const sdkContext = useMemo(
+    () => ({
+      ...constants,
+      resources,
+      breakpoints,
+      onError: console.error,
+    }),
+    [resources]
+  );
+
   return (
-    <ReactSdkContext.Provider
-      value={{
-        ...constants,
-        resources,
-        breakpoints,
-        onError: console.error,
-      }}
-    >
-      {/* Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages */}
-      <Page key={url} system={system} />
+    <ReactSdkContext.Provider value={sdkContext}>
+      <PageBoundary url={url} system={system} />
       <PageSettingsMeta
         url={url}
         pageMeta={pageMeta}
