@@ -81,6 +81,13 @@ import { selectPage } from "./nano-states";
 import { selectInstance } from "./nano-states";
 import { $selectedPageId } from "./nano-states/pages";
 
+const {
+  getFragmentContentModeCapabilities,
+  getFragmentInstancesData,
+  insertFragmentAssetsMutable,
+  insertFragmentBreakpointsMutable,
+} = __testing__;
+
 enableMapSet();
 registerContainers();
 
@@ -216,7 +223,7 @@ describe("fragment copy helpers", () => {
     });
 
     const { fragmentInstances, portalContentRootIds } =
-      __testing__.getFragmentInstancesData(fragment);
+      getFragmentInstancesData(fragment);
 
     expect(Array.from(fragmentInstances.keys())).toEqual([
       "portal",
@@ -235,7 +242,7 @@ describe("fragment copy helpers", () => {
       [existingAsset.id, existingAsset],
     ]);
 
-    __testing__.insertFragmentAssetsMutable({
+    insertFragmentAssetsMutable({
       fragment: createFragment({
         assets: [
           createImageAsset("existing-asset", "Source Existing", "source"),
@@ -260,7 +267,7 @@ describe("fragment copy helpers", () => {
     ]);
     let didMergeDueToLimit = false;
 
-    const mergedBreakpointIds = __testing__.insertFragmentBreakpointsMutable({
+    const mergedBreakpointIds = insertFragmentBreakpointsMutable({
       fragment: createFragment({
         breakpoints: [
           baseBreakpoint,
@@ -310,10 +317,9 @@ describe("fragment copy helpers", () => {
           },
         ],
       });
-      const { fragmentInstances } =
-        __testing__.getFragmentInstancesData(fragment);
+      const { fragmentInstances } = getFragmentInstancesData(fragment);
 
-      const capabilities = __testing__.getFragmentContentModeCapabilities({
+      const capabilities = getFragmentContentModeCapabilities({
         fragment,
         fragmentInstances,
         styleSources: new Map(),

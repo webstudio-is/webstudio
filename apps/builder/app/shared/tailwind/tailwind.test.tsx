@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import { css, renderTemplate, ws } from "@webstudio-is/template";
 import { __testing__, generateFragmentFromTailwind } from "./tailwind";
 
+const { normalizeUnoCssForWebstudio } = __testing__;
+
 const getBaseStyleValue = (
   fragment: Awaited<ReturnType<typeof generateFragmentFromTailwind>>,
   property: string
@@ -42,7 +44,7 @@ const getStyleValue = (
 };
 
 test("normalize unocss output for webstudio parser", () => {
-  const { css: normalizedCss } = __testing__.normalizeUnoCssForWebstudio(`
+  const { css: normalizedCss } = normalizeUnoCssForWebstudio(`
     @property --un-shadow { syntax: "*"; inherits: false; initial-value: 0 0 #0000; }
     @property --un-from-opacity { syntax: "<percentage>"; inherits: false; initial-value: 100%; }
     .rounded-full { border-radius: calc(infinity * 1px); }

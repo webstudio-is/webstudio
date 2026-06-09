@@ -505,6 +505,7 @@ export const DeleteCssVariableDialog = ({
         </Flex>
         <DialogActions>
           <Button
+            autoFocus
             color="destructive"
             onClick={() => {
               onConfirm(cssVariable!.property);

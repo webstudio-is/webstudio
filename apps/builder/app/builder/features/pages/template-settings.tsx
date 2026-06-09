@@ -17,7 +17,6 @@ import {
   DialogTitleActions,
   TitleSuffixSpacer,
 } from "@webstudio-is/design-system";
-import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
 import { $isContentMode, $isDesignMode } from "~/shared/nano-states";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { isContentModePagePath } from "@webstudio-is/project/content-mode-permissions";
@@ -41,6 +40,8 @@ import {
 } from "./page-settings/page-settings";
 import type { Errors, OnChange } from "./page-settings/shared";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
+import { copyTemplate } from "~/shared/copy-paste/copy-paste";
+import { PageItemActionsDropdown } from "./page-item-actions";
 
 const TemplateValues = z.object({
   name: PageName,
@@ -270,6 +271,9 @@ export const TemplateSettings = ({
   return (
     <TemplateSettingsView
       onClose={onClose}
+      onCopy={() => {
+        void copyTemplate(templateId);
+      }}
       onDelete={onDelete}
       onDuplicate={() => {
         const newId = duplicateTemplate(templateId);
@@ -288,11 +292,13 @@ export const TemplateSettings = ({
 };
 
 const TemplateSettingsView = ({
+  onCopy,
   onDelete,
   onDuplicate,
   onClose,
   children,
 }: {
+  onCopy: () => void;
   onDelete?: () => void;
   onDuplicate: () => void;
   onClose: () => void;
@@ -306,22 +312,14 @@ const TemplateSettingsView = ({
       disabled={!isDesignMode}
       suffix={
         <DialogTitleActions>
-          {isDesignMode && onDelete && (
-            <Button
-              color="ghost"
-              prefix={<TrashIcon />}
-              onClick={onDelete}
-              aria-label="Delete template"
-              tabIndex={2}
-            />
-          )}
           {isDesignMode && (
-            <Button
-              color="ghost"
-              prefix={<CopyIcon />}
-              onClick={onDuplicate}
-              aria-label="Duplicate template"
-              tabIndex={2}
+            <PageItemActionsDropdown
+              label="Template actions"
+              actions={{
+                copy: onCopy,
+                duplicate: onDuplicate,
+                delete: onDelete,
+              }}
             />
           )}
           <DialogClose />

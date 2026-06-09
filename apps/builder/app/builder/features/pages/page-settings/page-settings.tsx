@@ -18,7 +18,6 @@ import {
   theme,
   Button,
   Box,
-  Tooltip,
   Grid,
   Text,
   ScrollAreaNative,
@@ -29,7 +28,6 @@ import {
   DialogTitle,
   DialogTitleActions,
 } from "@webstudio-is/design-system";
-import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   $authPermit,
   $isContentMode,
@@ -75,6 +73,8 @@ import {
   type Values,
 } from "./shared";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
+import { copyPage } from "~/shared/copy-paste/copy-paste";
+import { PageItemActionsDropdown } from "../page-item-actions";
 
 export type { Values } from "./shared";
 
@@ -770,6 +770,9 @@ export const PageSettings = ({
     <>
       <PageSettingsView
         onClose={onClose}
+        onCopy={() => {
+          void copyPage(pageId);
+        }}
         onDelete={values.isHomePage === false ? handleRequestDelete : undefined}
         onDuplicate={() => {
           const newPageId = duplicatePage(pageId);
@@ -833,11 +836,13 @@ export const PageSettingsPanel = ({
 };
 
 const PageSettingsView = ({
+  onCopy,
   onDelete,
   onDuplicate,
   onClose,
   children,
 }: {
+  onCopy: () => void;
   onDelete?: () => void;
   onDuplicate: () => void;
   onClose: () => void;
@@ -855,27 +860,15 @@ const PageSettingsView = ({
       disabled={canEditPageSettings === false}
       suffix={
         <DialogTitleActions>
-          {isDesignMode && onDelete && (
-            <Tooltip content="Delete page" side="bottom">
-              <Button
-                color="ghost"
-                prefix={<TrashIcon />}
-                onClick={onDelete}
-                aria-label="Delete page"
-                tabIndex={2}
-              />
-            </Tooltip>
-          )}
           {isDesignMode && (
-            <Tooltip content="Duplicate page" side="bottom">
-              <Button
-                color="ghost"
-                prefix={<CopyIcon />}
-                onClick={onDuplicate}
-                aria-label="Duplicate page"
-                tabIndex={2}
-              />
-            </Tooltip>
+            <PageItemActionsDropdown
+              label="Page actions"
+              actions={{
+                copy: onCopy,
+                duplicate: onDuplicate,
+                delete: onDelete,
+              }}
+            />
           )}
           <DialogClose />
         </DialogTitleActions>

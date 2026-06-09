@@ -3,6 +3,8 @@ import { fieldDefaultValues } from "./page-settings/page-settings";
 import { __testing__ } from "./template-settings";
 import type { Values } from "./page-settings/shared";
 
+const { getEditorCreatePageValues } = __testing__;
+
 const createValues = (values: Partial<Values>): Values => ({
   ...fieldDefaultValues,
   ...values,
@@ -32,9 +34,7 @@ describe("template settings", () => {
       customMetas: [{ property: "og:type", content: `"article"` }],
     });
 
-    expect(
-      __testing__.getEditorCreatePageValues(initialValues, values)
-    ).toEqual({
+    expect(getEditorCreatePageValues(initialValues, values)).toEqual({
       name: "Edited",
       path: "/edited",
       description: `"Edited description"`,
@@ -44,7 +44,7 @@ describe("template settings", () => {
   });
 
   test("does not allow editor page path override when initial path is invalid", () => {
-    const editorValues = __testing__.getEditorCreatePageValues(
+    const editorValues = getEditorCreatePageValues(
       createValues({ path: "template" }),
       createValues({ path: "/edited" })
     );

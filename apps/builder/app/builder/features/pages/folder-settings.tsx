@@ -15,7 +15,7 @@ import {
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, TrashIcon, CopyIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   Folder,
   Pages,
@@ -34,6 +34,8 @@ import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { Form } from "./form";
 import { isSlugAvailable, registerFolderChildMutable } from "./page-utils";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
+import { copyFolder } from "~/shared/copy-paste/copy-paste";
+import { PageItemActionsDropdown } from "./page-item-actions";
 
 const Values = Folder.pick({ name: true, slug: true }).extend({
   parentFolderId: z.string(),
@@ -389,32 +391,24 @@ export const FolderSettings = ({
     }
   };
 
+  const handleCopy = () => {
+    void copyFolder(folderId);
+  };
+
   return (
     <>
       <DialogTitle
         suffix={
           <DialogTitleActions>
-            {isDesignMode && onRequestDelete && (
-              <Tooltip content="Delete folder" side="bottom">
-                <Button
-                  color="ghost"
-                  prefix={<TrashIcon />}
-                  onClick={handleRequestDelete}
-                  aria-label="Delete folder"
-                  tabIndex={2}
-                />
-              </Tooltip>
-            )}
-            {isDesignMode && onDuplicate && (
-              <Tooltip content="Duplicate folder" side="bottom">
-                <Button
-                  color="ghost"
-                  prefix={<CopyIcon />}
-                  onClick={handleDuplicate}
-                  aria-label="Duplicate folder"
-                  tabIndex={2}
-                />
-              </Tooltip>
+            {isDesignMode && (
+              <PageItemActionsDropdown
+                label="Folder actions"
+                actions={{
+                  copy: handleCopy,
+                  duplicate: onDuplicate ? handleDuplicate : undefined,
+                  delete: onRequestDelete ? handleRequestDelete : undefined,
+                }}
+              />
             )}
             <DialogClose />
           </DialogTitleActions>

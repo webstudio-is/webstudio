@@ -21,10 +21,20 @@ import { selectInstance } from "~/shared/nano-states";
 import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { findClosestRichText } from "~/shared/content-model";
+import { getDeletablePageActionTarget } from "~/shared/page-action-target";
+
+const deleteSelectedPageOrInstance = () => {
+  if (getDeletablePageActionTarget() !== undefined) {
+    emitCommand("deleteInstanceBuilder");
+    return;
+  }
+
+  deleteSelectedInstance();
+};
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "canvas",
-  externalCommands: ["clickCanvas"],
+  externalCommands: ["clickCanvas", "deleteInstanceBuilder"],
   commands: [
     {
       name: "deleteInstanceCanvas",
@@ -34,7 +44,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       disableHotkeyOutsideApp: true,
       // We are not disabling "Backspace" or "Delete" on the canvas. This is the main reason we have separate functions: deleteInstanceCanvas and deleteInstanceBuilder.
       disableOnInputLikeControls: false,
-      handler: deleteSelectedInstance,
+      handler: deleteSelectedPageOrInstance,
     },
 
     {

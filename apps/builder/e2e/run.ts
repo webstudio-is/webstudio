@@ -14,6 +14,7 @@ import { resetDatabase } from "./db";
 import { logPerf, measure, printPerfSummary } from "./perf";
 import { e2ePlans } from "./plans";
 import "./tests/content-mode-editing.e2e";
+import "./tests/pages-actions.e2e";
 import "./tests/share-link-permissions.e2e";
 
 const testTimeoutMs =
