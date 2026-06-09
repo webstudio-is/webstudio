@@ -28,6 +28,11 @@
       "types": "./lib/types/hooks.d.ts",
       "import": "./lib/hooks.js"
     },
+    "./local-link": {
+      "webstudio": "./src/local-link.tsx",
+      "types": "./lib/types/local-link.d.ts",
+      "import": "./lib/local-link.js"
+    },
     "./templates": {
       "webstudio": "./src/templates.ts",
       "types": "./lib/types/templates.d.ts",

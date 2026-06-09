@@ -1,6 +1,11 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/components.ts", "src/metas.ts", "src/hooks.ts"],
+  "include": [
+    "src/components.ts",
+    "src/metas.ts",
+    "src/hooks.ts",
+    "src/local-link.tsx"
+  ],
   "compilerOptions": {
     "declarationDir": "lib/types"
   }
