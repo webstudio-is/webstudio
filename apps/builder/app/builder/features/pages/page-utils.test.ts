@@ -1111,6 +1111,26 @@ describe("duplicateFolder", () => {
     expect(newFolder?.slug).toBe("folder1-2");
   });
 
+  test("should preserve empty folder slugs when duplicating", async () => {
+    const { pages: pagesData, register, f } = createPages();
+    register([f("folder1", "", []), f("folder2", "", [])]);
+
+    $pages.set(pagesData);
+    updateCurrentSystem(initialSystem);
+
+    const { duplicateFolder } = await import("./page-utils");
+    const newFolderId = duplicateFolder("folder1");
+
+    expect(newFolderId).toBeDefined();
+    const updatedPages = $pages.get()!;
+    const newFolder =
+      newFolderId === undefined
+        ? undefined
+        : updatedPages.folders.get(newFolderId);
+    expect(newFolder?.name).toBe("folder1 (1)");
+    expect(newFolder?.slug).toBe("");
+  });
+
   test("should register duplicated folder in parent folder", async () => {
     const { pages: pagesData, register, f } = createPages();
     register([f("folder1", [])]);

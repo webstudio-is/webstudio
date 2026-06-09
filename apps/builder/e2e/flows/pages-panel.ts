@@ -98,10 +98,72 @@ export const openPageSettings = async ({
   pageName: string;
 }) => {
   await openPagesPanel({ page });
-  const pageRow = page.getByRole("group", { name: `Page ${pageName}` });
+  const pageRow = page.getByRole("group", {
+    name: `Page ${pageName}`,
+    exact: true,
+  });
   await pageRow.hover();
+  if (
+    await pageRow
+      .getByRole("button", { name: "Close page settings" })
+      .isVisible({ timeout: 1_000 })
+      .catch(() => false)
+  ) {
+    await page.getByText("Page settings", { exact: true }).waitFor();
+    return;
+  }
   await pageRow.getByRole("button", { name: "Open page settings" }).click();
   await page.getByText("Page settings", { exact: true }).waitFor();
+};
+
+export const openFolderSettings = async ({
+  page,
+  folderName,
+}: {
+  page: Page;
+  folderName: string;
+}) => {
+  await openPagesPanel({ page });
+  const folderRow = page.getByRole("group", {
+    name: `Folder ${folderName}`,
+    exact: true,
+  });
+  await folderRow.hover();
+  if (
+    await folderRow
+      .getByRole("button", { name: "Close folder settings" })
+      .isVisible({ timeout: 1_000 })
+      .catch(() => false)
+  ) {
+    await page.getByText("Folder settings", { exact: true }).waitFor();
+    return;
+  }
+  await folderRow.getByRole("button", { name: "Open folder settings" }).click();
+  await page.getByText("Folder settings", { exact: true }).waitFor();
+};
+
+export const openTemplateSettings = async ({
+  page,
+  templateName,
+}: {
+  page: Page;
+  templateName: string;
+}) => {
+  await openPagesPanel({ page });
+  const template = page.getByText(templateName, { exact: true }).first();
+  await template.scrollIntoViewIfNeeded();
+  await template.hover();
+  if (
+    await page
+      .getByRole("button", { name: "Close template settings" })
+      .isVisible({ timeout: 1_000 })
+      .catch(() => false)
+  ) {
+    await page.getByText("Template settings", { exact: true }).waitFor();
+    return;
+  }
+  await page.getByRole("button", { name: "Open template settings" }).click();
+  await page.getByText("Template settings", { exact: true }).waitFor();
 };
 
 export const openPage = async ({
@@ -116,6 +178,29 @@ export const openPage = async ({
   await openPagesPanel({ page });
   await page.getByText(pageName, { exact: true }).first().click();
   await waitForCanvasText({ page, text: canvasText });
+  await waitForSyncStatus({ page, status: "idle" });
+};
+
+export const createFolder = async ({
+  page,
+  folderName,
+}: {
+  page: Page;
+  folderName: string;
+}) => {
+  await openPagesPanel({ page });
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await page.getByRole("menuitem", { name: "New folder" }).click();
+  await page.getByText("New folder settings", { exact: true }).waitFor();
+
+  await page.getByLabel("Folder name").fill(folderName);
+  const save = waitForChangeToBeSaved({ page });
+  await page.getByRole("button", { name: "Create folder" }).click();
+  await save;
+
+  await page
+    .getByRole("group", { name: `Folder ${folderName}`, exact: true })
+    .waitFor();
   await waitForSyncStatus({ page, status: "idle" });
 };
 

@@ -50,6 +50,7 @@ import {
   $canOpenPageTemplates,
   $isContentMode,
   $isDesignMode,
+  $pageIdToDelete,
 } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import {
@@ -280,6 +281,7 @@ const $flatPagesTree = computed(
 
 const PagesTree = ({
   onSelect,
+  onRequestDeletePage,
   selectedPageId,
   onEdit,
   editingItemId,
@@ -287,6 +289,7 @@ const PagesTree = ({
   canEditPageSettings,
 }: {
   onSelect: (pageId: string) => void;
+  onRequestDeletePage: (pageId: string) => void;
   selectedPageId: string;
   onEdit: (pageId: string | undefined) => void;
   editingItemId?: string;
@@ -398,6 +401,18 @@ const PagesTree = ({
                     if (item.type === "page") {
                       onSelect(item.id);
                     }
+                  },
+                  onKeyDown: (event) => {
+                    if (
+                      canManagePages === false ||
+                      item.type !== "page" ||
+                      item.id === pages.homePageId ||
+                      (event.key !== "Backspace" && event.key !== "Delete")
+                    ) {
+                      return;
+                    }
+                    event.preventDefault();
+                    onRequestDeletePage(item.id);
                   },
                   ...(item.type === "page" &&
                     item.id !== pages?.homePageId && {
@@ -954,7 +969,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const [containerElement, setContainerElement] =
     useState<HTMLDivElement | null>(null);
   const [settingsPanelHeight, setSettingsPanelHeight] = useState<number>();
-  const [pageIdToDelete, setPageIdToDelete] = useState<string | undefined>();
+  const pageIdToDelete = useStore($pageIdToDelete);
   const [folderIdToDelete, setFolderIdToDelete] = useState<
     string | undefined
   >();
@@ -990,7 +1005,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         $editingPageId.set(undefined);
       }
     }
-    setPageIdToDelete(undefined);
+    $pageIdToDelete.set(undefined);
   };
 
   const handleDeleteFolderConfirm = () => {
@@ -1067,12 +1082,13 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
 
       <PageContextMenu
         canManagePages={isDesignMode}
-        onRequestDeletePage={setPageIdToDelete}
+        onRequestDeletePage={(pageId) => $pageIdToDelete.set(pageId)}
         onRequestDeleteFolder={setFolderIdToDelete}
       >
         <div>
           <PagesTree
             selectedPageId={currentPage.id}
+            onRequestDeletePage={(pageId) => $pageIdToDelete.set(pageId)}
             onSelect={(itemId) => {
               selectPage(itemId);
               onClose();
@@ -1254,7 +1270,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       {pageIdToDelete && (
         <DeletePageConfirmationDialog
           page={findPageByIdOrPath(pageIdToDelete, pages)!}
-          onClose={() => setPageIdToDelete(undefined)}
+          onClose={() => $pageIdToDelete.set(undefined)}
           onConfirm={handlePageDeleteConfirm}
         />
       )}

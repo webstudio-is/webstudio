@@ -5,6 +5,7 @@ import {
   ROOT_INSTANCE_ID,
   encodeDataVariableId,
   getHomePage,
+  type DataSource,
   type Page,
   type Instance,
   type WebstudioData,
@@ -19,6 +20,8 @@ import {
   __testing__,
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
+  createTemplateCopyData,
+  insertTemplateCopyFromFragmentsMutable,
   copyAndTransformPageMeta,
 } from "./page-utils";
 import {
@@ -762,5 +765,76 @@ describe("insert page copy", () => {
       },
     });
     expect(data.pages.folders.get(ROOT_FOLDER_ID)?.children).toContain(pageId);
+  });
+
+  test("insert template copy preserves and remaps system data source", () => {
+    const systemDataSource: DataSource = {
+      id: "templateSystemId",
+      scopeInstanceId: "templateBodyId",
+      name: "system",
+      type: "parameter",
+    };
+    const systemIdentifier = encodeDataVariableId(systemDataSource.id);
+    const data = getWebstudioDataStub({
+      instances: toMap<Instance>([
+        {
+          type: "instance",
+          id: "templateBodyId",
+          component: "Body",
+          children: [],
+        },
+      ]),
+      dataSources: toMap([systemDataSource]),
+      pages: migratePages({
+        homePageId: "homePageId",
+        rootFolderId: ROOT_FOLDER_ID,
+        pages: [
+          {
+            id: "homePageId",
+            name: "Home",
+            path: "",
+            title: `"Home"`,
+            meta: {},
+            rootInstanceId: "homeBodyId",
+          },
+        ],
+        pageTemplates: [
+          {
+            id: "templateId",
+            name: "Template",
+            title: `"Title: " + ${systemIdentifier}`,
+            rootInstanceId: "templateBodyId",
+            systemDataSourceId: systemDataSource.id,
+            meta: {
+              description: `"Description: " + ${systemIdentifier}`,
+            },
+          },
+        ],
+        folders: [createRootFolder(["homePageId"])],
+      }),
+    });
+    const template = data.pages.pageTemplates?.get("templateId");
+    expect(template).toBeDefined();
+
+    const templateId = insertTemplateCopyFromFragmentsMutable({
+      source: createTemplateCopyData({ data, template: template! }),
+      target: { data },
+    });
+
+    const copiedTemplate = data.pages.pageTemplates?.get(templateId ?? "");
+    expect(copiedTemplate?.systemDataSourceId).toBeDefined();
+    expect(copiedTemplate?.systemDataSourceId).not.toEqual(systemDataSource.id);
+    expect(
+      data.dataSources.has(copiedTemplate?.systemDataSourceId ?? "")
+    ).toEqual(true);
+    const copiedSystemIdentifier = encodeDataVariableId(
+      copiedTemplate?.systemDataSourceId ?? ""
+    );
+    expect(copiedTemplate?.title).toEqual(
+      `"Title: " + ${copiedSystemIdentifier}`
+    );
+    expect(copiedTemplate?.meta.description).toEqual(
+      `"Description: " + ${copiedSystemIdentifier}`
+    );
   });
 });

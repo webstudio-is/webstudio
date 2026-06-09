@@ -59,7 +59,7 @@ import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
   initCopyPaste,
   initCopyPasteForContentEditMode,
-} from "~/shared/copy-paste/init-copy-paste";
+} from "~/shared/copy-paste/copy-paste";
 import { inflateInstance, subscribeInflator } from "./inflator";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
