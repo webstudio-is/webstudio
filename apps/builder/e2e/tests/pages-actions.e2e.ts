@@ -42,7 +42,7 @@ const expectPageRowHidden = async ({
   await getPageRow({ page, pageName }).waitFor({ state: "hidden" });
 };
 
-const selectPageRow = async ({
+const deletePageRowWithShortcut = async ({
   page,
   pageName,
 }: {
@@ -52,7 +52,7 @@ const selectPageRow = async ({
   await openPagesPanel({ page });
   await getPageRow({ page, pageName })
     .getByRole("button", { name: pageName, exact: true })
-    .click();
+    .press("Backspace");
 };
 
 const waitForFolderRow = async ({
@@ -179,8 +179,7 @@ test("Builder can copy and duplicate a page from the header menu and delete it w
       pageName: copiedPageName,
       canvasText: fixture.pageTemplateText,
     });
-    await selectPageRow({ page, pageName: copiedPageName });
-    await page.keyboard.press("Backspace");
+    await deletePageRowWithShortcut({ page, pageName: copiedPageName });
     await confirmDialogAction({ page, action: "Delete Page" });
     await expectPageRowHidden({ page, pageName: copiedPageName });
 
