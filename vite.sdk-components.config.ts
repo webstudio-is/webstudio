@@ -16,6 +16,7 @@ export default defineConfig({
         hasPrivateFolders ? "private-src/components.ts" : "src/components.ts",
         "src/metas.ts",
         "src/hooks.ts",
+        "src/local-link.tsx",
         "src/templates.ts",
       ],
       formats: ["es"],
