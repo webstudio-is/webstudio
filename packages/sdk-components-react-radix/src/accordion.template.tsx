@@ -77,11 +77,9 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
           line-height: ${fontSizeLineHeight.sm};
           transition: ${transition.all};
           padding-bottom: ${spacing[4]};
+          height: var(--radix-collapsible-content-height);
           &[data-state="closed"] {
-            height: 0;
-          }
-          &[data-state="open"] {
-            height: var(--radix-accordion-content-height);
+            --radix-collapsible-content-height: 0;
           }
         `}
       >
