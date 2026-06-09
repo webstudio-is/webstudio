@@ -38,6 +38,356 @@ const render = async (children: React.ReactNode) => {
   });
 };
 
+const sdkContext = {
+  assetBaseUrl: "/assets/",
+  imageLoader: ({ src }: { src: string }) => src,
+  videoLoader: ({ src }: { src: string }) => src,
+  resources: {},
+  breakpoints: [],
+  onError: vi.fn(),
+};
+
+test("local link is current only when pathname, search, and hash match", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/path",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="/path?tag=bla#section">Exact</Link>
+            <Link href="/path">Path only</Link>
+            <Link href="/path?tag=bla">Missing hash</Link>
+            <Link href="/path?tag=other#section">Different query</Link>
+            <Link href="/path#section">Missing query</Link>
+            <Link href="#section">Hash only</Link>
+            <Link href="?tag=bla#section">Search only</Link>
+            <Link href="">Empty</Link>
+            <Link href="/path?tag=bla#section" className="custom">
+              Active class
+            </Link>
+            <Link href="/path" className="custom">
+              Inactive class
+            </Link>
+            <Link href="/path?tag=bla#section" aria-current="location">
+              Aria override
+            </Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/path?tag=bla#section"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const links = Array.from(document.querySelectorAll("a"));
+
+  expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+    "page",
+    null,
+    null,
+    null,
+    null,
+    "page",
+    "page",
+    "page",
+    "page",
+    null,
+    "location",
+  ]);
+
+  expect(links[0]?.getAttribute("class")).toBe("active");
+  expect(links[1]?.hasAttribute("class")).toBe(false);
+  expect(links[8]?.getAttribute("class")).toBe("custom active");
+  expect(links[9]?.getAttribute("class")).toBe("custom");
+});
+
+test("local link preserves exact pathname behavior", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/path/*",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="/path">Parent</Link>
+            <Link href="/path/child">Child</Link>
+            <Link href="/path/">Trailing slash</Link>
+            <Link href="/Path/child">Different case</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/path/child"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const links = Array.from(document.querySelectorAll("a"));
+
+  expect(links.map((link) => link.getAttribute("aria-current"))).toEqual([
+    null,
+    "page",
+    null,
+    null,
+  ]);
+});
+
+test("external link renders as plain anchor without router context", async () => {
+  await render(
+    <Link
+      href="https://example.com/page"
+      prefetch="intent"
+      preventScrollReset
+      reloadDocument
+      replace
+      target="_blank"
+    >
+      External
+    </Link>
+  );
+
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("https://example.com/page");
+  expect(link?.getAttribute("target")).toBe("_blank");
+  expect(link?.hasAttribute("prefetch")).toBe(false);
+  expect(link?.hasAttribute("preventscrollreset")).toBe(false);
+  expect(link?.hasAttribute("reloaddocument")).toBe(false);
+  expect(link?.hasAttribute("replace")).toBe(false);
+});
+
+test("protocol-relative link renders as plain anchor without router context", async () => {
+  await render(<Link href="//example.com/page">Protocol relative</Link>);
+
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("//example.com/page");
+});
+
+test("protocol links render as plain anchors without router context", async () => {
+  await render(
+    <>
+      <Link href="mailto:hello@example.com">Email</Link>
+      <Link href="tel:+15555555555">Phone</Link>
+    </>
+  );
+
+  const links = Array.from(document.querySelectorAll("a"));
+
+  expect(links[0]?.getAttribute("href")).toBe("mailto:hello@example.com");
+  expect(links[1]?.getAttribute("href")).toBe("tel:+15555555555");
+});
+
+test("asset link renders as plain anchor without router context", async () => {
+  await render(
+    <ReactSdkContext.Provider value={sdkContext}>
+      <Link href="/assets/file.pdf">Asset</Link>
+    </ReactSdkContext.Provider>
+  );
+
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("/assets/file.pdf");
+  expect(link?.getAttribute("aria-current")).toBeNull();
+});
+
+test("asset base url only excludes matching root-relative asset paths", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/path",
+        element: (
+          <ReactSdkContext.Provider
+            value={{ ...sdkContext, assetBaseUrl: "/assets/" }}
+          >
+            <Link href="/assets">Asset-looking page</Link>
+            <Link href="/assets2/file.pdf">Similar prefix page</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/path"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const links = Array.from(document.querySelectorAll("a"));
+
+  expect(links[0]?.getAttribute("data-discover")).toBe("true");
+  expect(links[1]?.getAttribute("data-discover")).toBe("true");
+});
+
+test("hash-only link does not start router navigation", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/path",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="#section">Hash</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+      {
+        path: "/other",
+        element: <div>Other page</div>,
+      },
+    ],
+    { initialEntries: ["/path?tag=bla#section"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("#section");
+  expect(link?.getAttribute("aria-current")).toBe("page");
+
+  await act(async () => {
+    link?.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+      })
+    );
+    await Promise.resolve();
+  });
+
+  expect(router.state.location.pathname).toBe("/path");
+  expect(router.state.location.search).toBe("?tag=bla");
+  expect(router.state.location.hash).toBe("#section");
+});
+
+test("empty local link preserves the current search and hash", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/path",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="">Empty</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+      {
+        path: "/other",
+        element: <div>Other page</div>,
+      },
+    ],
+    { initialEntries: ["/path?tag=bla#section"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("/path?tag=bla#section");
+  expect(link?.getAttribute("aria-current")).toBe("page");
+
+  await act(async () => {
+    link?.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+      })
+    );
+    await Promise.resolve();
+  });
+
+  expect(router.state.location.pathname).toBe("/path");
+  expect(router.state.location.search).toBe("?tag=bla");
+  expect(router.state.location.hash).toBe("#section");
+});
+
+test("router link forwards navigation props and resolves relative href", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/parent/child",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="../next?tab=1#section" preventScrollReset replace>
+              Relative
+            </Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+      {
+        path: "/next",
+        element: <div>Next route</div>,
+      },
+    ],
+    { initialEntries: ["/parent/child"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("/next?tab=1#section");
+  expect(link?.getAttribute("data-discover")).toBe("true");
+
+  await act(async () => {
+    link?.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+      })
+    );
+    await Promise.resolve();
+  });
+
+  expect(router.state.location.pathname).toBe("/next");
+  expect(router.state.location.search).toBe("?tab=1");
+  expect(router.state.location.hash).toBe("#section");
+});
+
+test("router link calls onClick and respects preventDefault", async () => {
+  const onClick = vi.fn((event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+  });
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="/next" onClick={onClick}>
+              Next
+            </Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+      {
+        path: "/next",
+        element: <div>Next page</div>,
+      },
+    ],
+    { initialEntries: ["/"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const link = document.querySelector("a");
+
+  await act(async () => {
+    link?.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+      })
+    );
+    await Promise.resolve();
+  });
+
+  expect(onClick).toHaveBeenCalledTimes(1);
+  expect(router.state.location.pathname).toBe("/");
+});
+
 test("internal link click does not rerender current generated page while destination is pending", async () => {
   let pageRenderCount = 0;
   let linkContentRenderCount = 0;

@@ -1,0 +1,44 @@
+export type UrlParts = {
+  pathname: string;
+  search: string;
+  hash: string;
+};
+
+/**
+ * React Router resolves href="" and href="#section" without preserving the full
+ * browser URL shape Webstudio uses for :local-link-like matching. Normalize those
+ * cases before comparing so aria-current follows browser-local-link semantics
+ * instead of route-only semantics.
+ */
+export const resolveLocalLinkUrl = (
+  href: string,
+  location: UrlParts,
+  resolvedPath: UrlParts
+): UrlParts => {
+  if (href === "") {
+    return location;
+  }
+
+  if (href.startsWith("#")) {
+    return {
+      pathname: location.pathname,
+      search: location.search,
+      hash: href,
+    };
+  }
+
+  return resolvedPath;
+};
+
+/**
+ * Webstudio's local link styles target the concrete URL, not just the matched
+ * route. This intentionally preserves the old NavLink end/exact behavior while
+ * also requiring query string and fragment equality.
+ */
+export const isLocalLinkActive = (current: UrlParts, target: UrlParts) => {
+  return (
+    current.pathname === target.pathname &&
+    current.search === target.search &&
+    current.hash === target.hash
+  );
+};
