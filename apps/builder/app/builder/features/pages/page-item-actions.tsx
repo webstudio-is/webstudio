@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
   Kbd,
   Tooltip,
+  theme,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
 
@@ -42,6 +43,8 @@ type ActionItem = (typeof items)[number];
 
 const isDestructive = (name: ActionItem["name"]) => name === "delete";
 
+const shortcutSlotStyle = { paddingLeft: theme.spacing[5] };
+
 const ActionContextMenuItem = ({
   item,
   actions,
@@ -55,7 +58,7 @@ const ActionContextMenuItem = ({
     >
       {item.label}
       {action && (
-        <ContextMenuItemRightSlot>
+        <ContextMenuItemRightSlot css={shortcutSlotStyle}>
           <Kbd value={item.shortcut} />
         </ContextMenuItemRightSlot>
       )}
@@ -111,7 +114,7 @@ export const PageItemActionsDropdown = ({
               >
                 {item.label}
                 {action && (
-                  <DropdownMenuItemRightSlot>
+                  <DropdownMenuItemRightSlot css={shortcutSlotStyle}>
                     <Kbd value={item.shortcut} />
                   </DropdownMenuItemRightSlot>
                 )}
