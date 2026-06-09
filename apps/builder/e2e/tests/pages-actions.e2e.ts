@@ -49,6 +49,7 @@ const selectPageRow = async ({
   page: Page;
   pageName: string;
 }) => {
+  await openPagesPanel({ page });
   await getPageRow({ page, pageName })
     .getByRole("button", { name: pageName, exact: true })
     .click();
@@ -119,7 +120,7 @@ const pasteFromClipboardShortcut = async ({ page }: { page: Page }) => {
   await waitForSyncStatus({ page, status: "idle" });
 };
 
-const confirmFocusedDialogAction = async ({
+const confirmDialogAction = async ({
   page,
   action,
 }: {
@@ -127,14 +128,7 @@ const confirmFocusedDialogAction = async ({
   action: string;
 }) => {
   const button = page.getByRole("button", { name: action });
-  await button.waitFor();
-  await page.waitForFunction((action) => {
-    return (
-      document.activeElement instanceof HTMLButtonElement &&
-      document.activeElement.textContent?.trim() === action
-    );
-  }, action);
-  await page.keyboard.press("Enter");
+  await button.click();
   await button.waitFor({ state: "hidden" });
 };
 
@@ -187,7 +181,7 @@ test("Builder can copy and duplicate a page from the header menu and delete it w
     });
     await selectPageRow({ page, pageName: copiedPageName });
     await page.keyboard.press("Backspace");
-    await confirmFocusedDialogAction({ page, action: "Delete Page" });
+    await confirmDialogAction({ page, action: "Delete Page" });
     await expectPageRowHidden({ page, pageName: copiedPageName });
 
     await openPageSettings({ page, pageName });
@@ -200,7 +194,7 @@ test("Builder can copy and duplicate a page from the header menu and delete it w
 
     await openPageSettings({ page, pageName: duplicatedPageName });
     await page.keyboard.press("Backspace");
-    await confirmFocusedDialogAction({ page, action: "Delete Page" });
+    await confirmDialogAction({ page, action: "Delete Page" });
     await expectPageRowHidden({ page, pageName: duplicatedPageName });
   } finally {
     await close();
@@ -242,8 +236,7 @@ test("Builder can copy, duplicate, and delete a folder from the context menu", a
       itemName: duplicatedFolderName,
       action: "Delete",
     });
-    await page.getByRole("button", { name: "Delete" }).waitFor();
-    await page.keyboard.press("Enter");
+    await confirmDialogAction({ page, action: "Delete" });
     await expectTextHidden({ page, text: duplicatedFolderName });
   } finally {
     await close();
@@ -292,8 +285,7 @@ test("Builder can copy, duplicate, and delete a page template from actions menus
       itemName: duplicatedTemplateName,
       action: "Delete",
     });
-    await page.getByRole("button", { name: "Delete Template" }).waitFor();
-    await page.keyboard.press("Enter");
+    await confirmDialogAction({ page, action: "Delete Template" });
     await expectTextHidden({ page, text: duplicatedTemplateName });
   } finally {
     await close();
