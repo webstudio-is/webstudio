@@ -59,9 +59,12 @@ export const AccordionTrigger: ForwardRefExoticComponent<
 
 export const AccordionContent = forwardRef<
   HTMLDivElement,
-  Omit<ComponentPropsWithoutRef<typeof Content>, "asChild">
+  Omit<ComponentPropsWithoutRef<typeof Content>, "asChild" | "forceMount"> & {
+    forceMount?: boolean;
+  }
 >(({ forceMount = true, ...props }, ref) => {
-  return <Content ref={ref} forceMount={forceMount} {...props} />;
+  const contentProps = forceMount ? { forceMount: true as const } : {};
+  return <Content ref={ref} {...contentProps} {...props} />;
 });
 
 /* BUILDER HOOKS */
