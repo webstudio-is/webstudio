@@ -2,6 +2,7 @@ import {
   type ComponentPropsWithoutRef,
   type ComponentType,
   type ForwardRefExoticComponent,
+  type LegacyRef,
   type RefAttributes,
   forwardRef,
   useContext,
@@ -31,6 +32,14 @@ export type LocalLinkProps = Omit<
 type LocalLinkComponent = ForwardRefExoticComponent<
   LocalLinkProps & RefAttributes<HTMLAnchorElement>
 >;
+
+type RouterTo = string | Partial<UrlParts>;
+
+type RouterLinkComponentProps = Omit<LocalLinkProps, "href" | "target"> & {
+  target?: ComponentPropsWithoutRef<"a">["target"];
+  to: RouterTo;
+  ref?: LegacyRef<HTMLAnchorElement>;
+};
 
 const absoluteUrlPattern = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
 
@@ -70,11 +79,24 @@ const getLocalLinkProps = (
 
 const getRouterHref = (href: string, location: UrlParts) => {
   if (href === "") {
-    return `${location.pathname}${location.search}${location.hash}`;
+    return `${location.pathname}${location.search}`;
   }
 
   return href;
 };
+
+const stripRouterOnlyProps = <
+  Props extends Pick<
+    LocalLinkProps,
+    "prefetch" | "reloadDocument" | "replace" | "preventScrollReset"
+  >,
+>({
+  prefetch,
+  reloadDocument,
+  replace,
+  preventScrollReset,
+  ...props
+}: Props) => props;
 
 /**
  * Remix and React Router expose compatible navigation hooks but from different
@@ -87,9 +109,9 @@ export const createLocalLink = ({
   useResolvedPath,
 }: {
   // Remix v2 and React Router v7 expose compatible Link behavior but different
-  // public prop types. Keep the injected component loose while the returned
-  // Webstudio component stays typed through LocalLinkProps.
-  Link: ComponentType<any>;
+  // public prop types. This adapter boundary captures only the props Webstudio
+  // actually forwards.
+  Link: ComponentType<RouterLinkComponentProps>;
   useLocation: () => UrlParts;
   useResolvedPath: (href: string) => UrlParts;
 }): LocalLinkComponent => {
@@ -126,7 +148,7 @@ export const createLocalLink = ({
     );
     return (
       <BaseLink
-        {...linkProps}
+        {...stripRouterOnlyProps(linkProps)}
         {...localLinkProps}
         href={props.href}
         ref={ref}
@@ -153,10 +175,7 @@ export const createLocalLink = ({
         return <HashLink {...props} href={href} ref={ref} />;
       }
 
-      const { prefetch, reloadDocument, replace, preventScrollReset, ...rest } =
-        props;
-
-      return <BaseLink {...rest} ref={ref} />;
+      return <BaseLink {...stripRouterOnlyProps(props)} ref={ref} />;
     }
   );
 

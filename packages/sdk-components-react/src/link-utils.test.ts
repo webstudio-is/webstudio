@@ -54,7 +54,7 @@ test("local link matching preserves trailing slash exactness", () => {
   ).toBe(false);
 });
 
-test("empty local link resolves to full current location", () => {
+test("empty local link resolves to current pathname and search without hash", () => {
   const current = { pathname: "/path", search: "?tag=bla", hash: "#section" };
 
   expect(
@@ -63,7 +63,11 @@ test("empty local link resolves to full current location", () => {
       search: "",
       hash: "",
     })
-  ).toEqual(current);
+  ).toEqual({
+    pathname: "/path",
+    search: "?tag=bla",
+    hash: "",
+  });
 });
 
 test("hash local link resolves against current pathname and search", () => {
@@ -79,6 +83,22 @@ test("hash local link resolves against current pathname and search", () => {
     pathname: "/path",
     search: "?tag=bla",
     hash: "#section",
+  });
+});
+
+test("bare hash local link resolves to current pathname and search without hash", () => {
+  const current = { pathname: "/path", search: "?tag=bla", hash: "#section" };
+
+  expect(
+    resolveLocalLinkUrl("#", current, {
+      pathname: "/other",
+      search: "?tag=other",
+      hash: "#section",
+    })
+  ).toEqual({
+    pathname: "/path",
+    search: "?tag=bla",
+    hash: "",
   });
 });
 

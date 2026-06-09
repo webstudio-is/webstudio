@@ -60,6 +60,7 @@ test("local link is current only when pathname, search, and hash match", async (
             <Link href="/path?tag=other#section">Different query</Link>
             <Link href="/path#section">Missing query</Link>
             <Link href="#section">Hash only</Link>
+            <Link href="#">Bare hash</Link>
             <Link href="?tag=bla#section">Search only</Link>
             <Link href="">Empty</Link>
             <Link href="/path?tag=bla#section" className="custom">
@@ -89,8 +90,9 @@ test("local link is current only when pathname, search, and hash match", async (
     null,
     null,
     "page",
+    null,
     "page",
-    "page",
+    null,
     "page",
     null,
     "location",
@@ -98,8 +100,8 @@ test("local link is current only when pathname, search, and hash match", async (
 
   expect(links[0]?.getAttribute("class")).toBe("active");
   expect(links[1]?.hasAttribute("class")).toBe(false);
-  expect(links[8]?.getAttribute("class")).toBe("custom active");
-  expect(links[9]?.getAttribute("class")).toBe("custom");
+  expect(links[9]?.getAttribute("class")).toBe("custom active");
+  expect(links[10]?.getAttribute("class")).toBe("custom");
 });
 
 test("local link preserves exact pathname behavior", async () => {
@@ -224,7 +226,15 @@ test("hash-only link does not start router navigation", async () => {
         path: "/path",
         element: (
           <ReactSdkContext.Provider value={sdkContext}>
-            <Link href="#section">Hash</Link>
+            <Link
+              href="#section"
+              prefetch="intent"
+              preventScrollReset
+              reloadDocument
+              replace
+            >
+              Hash
+            </Link>
           </ReactSdkContext.Provider>
         ),
       },
@@ -242,6 +252,10 @@ test("hash-only link does not start router navigation", async () => {
 
   expect(link?.getAttribute("href")).toBe("#section");
   expect(link?.getAttribute("aria-current")).toBe("page");
+  expect(link?.hasAttribute("prefetch")).toBe(false);
+  expect(link?.hasAttribute("preventscrollreset")).toBe(false);
+  expect(link?.hasAttribute("reloaddocument")).toBe(false);
+  expect(link?.hasAttribute("replace")).toBe(false);
 
   await act(async () => {
     link?.dispatchEvent(
@@ -259,7 +273,30 @@ test("hash-only link does not start router navigation", async () => {
   expect(router.state.location.hash).toBe("#section");
 });
 
-test("empty local link preserves the current search and hash", async () => {
+test("bare hash link targets the current page without the current hash", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/path",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="#">Hash</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/path?tag=bla#section"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("#");
+  expect(link?.getAttribute("aria-current")).toBeNull();
+});
+
+test("empty local link preserves the current search and clears the hash", async () => {
   const router = createMemoryRouter(
     [
       {
@@ -282,8 +319,8 @@ test("empty local link preserves the current search and hash", async () => {
 
   const link = document.querySelector("a");
 
-  expect(link?.getAttribute("href")).toBe("/path?tag=bla#section");
-  expect(link?.getAttribute("aria-current")).toBe("page");
+  expect(link?.getAttribute("href")).toBe("/path?tag=bla");
+  expect(link?.getAttribute("aria-current")).toBeNull();
 
   await act(async () => {
     link?.dispatchEvent(
@@ -298,7 +335,7 @@ test("empty local link preserves the current search and hash", async () => {
 
   expect(router.state.location.pathname).toBe("/path");
   expect(router.state.location.search).toBe("?tag=bla");
-  expect(router.state.location.hash).toBe("#section");
+  expect(router.state.location.hash).toBe("");
 });
 
 test("router link forwards navigation props and resolves relative href", async () => {

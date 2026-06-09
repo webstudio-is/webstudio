@@ -5,10 +5,10 @@ export type UrlParts = {
 };
 
 /**
- * React Router resolves href="" and href="#section" without preserving the full
- * browser URL shape Webstudio uses for :local-link-like matching. Normalize those
- * cases before comparing so aria-current follows browser-local-link semantics
- * instead of route-only semantics.
+ * React Router resolves href="" and hash-only hrefs without preserving the
+ * concrete browser URL shape Webstudio uses for :local-link-like matching.
+ * Normalize those cases before comparing so aria-current follows anchor URL
+ * semantics instead of route-only semantics.
  */
 export const resolveLocalLinkUrl = (
   href: string,
@@ -16,14 +16,18 @@ export const resolveLocalLinkUrl = (
   resolvedPath: UrlParts
 ): UrlParts => {
   if (href === "") {
-    return location;
+    return {
+      pathname: location.pathname,
+      search: location.search,
+      hash: "",
+    };
   }
 
   if (href.startsWith("#")) {
     return {
       pathname: location.pathname,
       search: location.search,
-      hash: href,
+      hash: href === "#" ? "" : href,
     };
   }
 
