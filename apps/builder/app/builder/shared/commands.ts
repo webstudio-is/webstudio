@@ -13,9 +13,11 @@ import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
   $editingPageId,
+  $folderIdToDelete,
   $isDesignMode,
   $isPreviewMode,
   $pageIdToDelete,
+  $templateIdToDelete,
   toggleBuilderMode,
 } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
@@ -172,15 +174,26 @@ export const __testing__ = {
   guardDesignModeCommand,
 };
 
-const requestSelectedPageDelete = () => {
+const requestSelectedPageItemDelete = () => {
   if ($isDesignMode.get() === false) {
     return false;
   }
-  const pageId = getDeletablePageActionTarget();
-  if (pageId === undefined) {
+  const target = getDeletablePageActionTarget();
+  if (target === undefined) {
     return false;
   }
-  $pageIdToDelete.set(pageId);
+  $pageIdToDelete.set(undefined);
+  $folderIdToDelete.set(undefined);
+  $templateIdToDelete.set(undefined);
+  if (target.type === "page") {
+    $pageIdToDelete.set(target.id);
+  }
+  if (target.type === "folder") {
+    $folderIdToDelete.set(target.id);
+  }
+  if (target.type === "template") {
+    $templateIdToDelete.set(target.id);
+  }
   return true;
 };
 
@@ -481,7 +494,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       disableHotkeyOutsideApp: true,
       disableOnInputLikeControls: true,
       handler: () => {
-        if (requestSelectedPageDelete()) {
+        if (requestSelectedPageItemDelete()) {
           return;
         }
         deleteSelectedInstance();

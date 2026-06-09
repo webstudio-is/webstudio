@@ -4,7 +4,10 @@ import type { Instance, PageTemplate } from "@webstudio-is/sdk";
 import {
   $editingPageId,
   $editingTemplateId,
+  $folderIdToDelete,
+  $pageIdToDelete,
   $selectedPageId,
+  $templateIdToDelete,
   selectPage,
 } from "~/shared/nano-states";
 import { $instances, $pages } from "~/shared/sync/data-stores";
@@ -19,7 +22,10 @@ const { canRunDesignModeCommand, guardDesignModeCommand } = __testing__;
 const resetPageActionStores = () => {
   $editingPageId.set(undefined);
   $editingTemplateId.set(undefined);
+  $folderIdToDelete.set(undefined);
+  $pageIdToDelete.set(undefined);
   $selectedPageId.set(undefined);
+  $templateIdToDelete.set(undefined);
   $instances.set(new Map());
   $pages.set(undefined);
 };
@@ -182,7 +188,54 @@ describe("getDeletablePageActionTarget", () => {
     $instances.set(new Map([[body.id, body]]));
     selectPage("page-id");
 
-    expect(getDeletablePageActionTarget()).toBe("page-id");
+    expect(getDeletablePageActionTarget()).toEqual({
+      type: "page",
+      id: "page-id",
+    });
+  });
+
+  test("returns open folder settings target", () => {
+    resetPageActionStores();
+    const pages = createDefaultPages({
+      homePageId: "home-page",
+      rootInstanceId: "home-root",
+    });
+    pages.folders.set("folder-id", {
+      id: "folder-id",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    });
+    $pages.set(pages);
+    $editingPageId.set("folder-id");
+
+    expect(getDeletablePageActionTarget()).toEqual({
+      type: "folder",
+      id: "folder-id",
+    });
+  });
+
+  test("returns open template settings target", () => {
+    resetPageActionStores();
+    const pages = createDefaultPages({
+      homePageId: "home-page",
+      rootInstanceId: "home-root",
+    });
+    const template: PageTemplate = {
+      id: "template-id",
+      name: "Template",
+      title: `"Template"`,
+      rootInstanceId: "template-root",
+      meta: {},
+    };
+    pages.pageTemplates = new Map([[template.id, template]]);
+    $pages.set(pages);
+    $editingTemplateId.set("template-id");
+
+    expect(getDeletablePageActionTarget()).toEqual({
+      type: "template",
+      id: "template-id",
+    });
   });
 
   test("does not return the home page", () => {

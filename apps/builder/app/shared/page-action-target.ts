@@ -62,12 +62,11 @@ export const getPageActionTarget = (): PageActionTarget | undefined => {
 export const getDeletablePageActionTarget = () => {
   const pages = $pages.get();
   const target = getPageActionTarget();
-  if (
-    pages === undefined ||
-    target?.type !== "page" ||
-    target.id === pages.homePageId
-  ) {
+  if (pages === undefined || target === undefined) {
     return;
   }
-  return target.id;
+  if (target.type === "page" && target.id === pages.homePageId) {
+    return;
+  }
+  return target;
 };

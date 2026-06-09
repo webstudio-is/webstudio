@@ -1,5 +1,6 @@
 import { atom, computed } from "nanostores";
 import {
+  type Folder,
   type Page,
   type PageTemplate,
   findPageByIdOrPath,
@@ -19,6 +20,8 @@ export const $selectedPageHash = atom<{ hash: string }>({ hash: "" });
 export const $editingPageId = atom<undefined | Page["id"]>();
 
 export const $pageIdToDelete = atom<undefined | Page["id"]>();
+export const $folderIdToDelete = atom<undefined | Folder["id"]>();
+export const $templateIdToDelete = atom<undefined | PageTemplate["id"]>();
 
 export const $editingTemplateId = atom<undefined | string>();
 
