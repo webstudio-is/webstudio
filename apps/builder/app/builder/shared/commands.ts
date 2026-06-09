@@ -1,14 +1,23 @@
 import { toast } from "@webstudio-is/design-system";
-import type { WebstudioFragment } from "@webstudio-is/sdk";
+import { type WebstudioFragment } from "@webstudio-is/sdk";
 import {
   isAutoGridPlacement,
   resetGridChildPlacement,
 } from "~/builder/features/style-panel/sections/layout/shared/grid-utils";
+import {
+  duplicateFolder,
+  duplicatePage,
+  duplicateTemplate,
+} from "~/builder/features/pages/page-utils";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
+  $editingPageId,
+  $folderIdToDelete,
   $isDesignMode,
   $isPreviewMode,
+  $pageIdToDelete,
+  $templateIdToDelete,
   toggleBuilderMode,
 } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
@@ -43,7 +52,7 @@ import {
   toggleActiveSidebarPanel,
 } from "./nano-states";
 import { $selectedInstancePath } from "~/shared/nano-states";
-import { selectInstance } from "~/shared/nano-states";
+import { selectInstance, selectPage } from "~/shared/nano-states";
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
 import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";
@@ -60,11 +69,18 @@ import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variabl
 import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { openKeyboardShortcutsDialog } from "~/builder/features/keyboard-shortcuts-dialog";
 import {
+  copyFolder,
   copyInstance,
+  copyPage,
+  copyTemplate,
   emitPaste,
   cutInstance,
-} from "~/shared/copy-paste/init-copy-paste";
+} from "~/shared/copy-paste/copy-paste";
 import { toggleInstanceShow } from "~/shared/instance-utils";
+import {
+  getDeletablePageActionTarget,
+  getPageActionTarget,
+} from "~/shared/page-action-target";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -107,9 +123,78 @@ const guardDesignModeCommand = ({
   return false;
 };
 
+const copyPageActionTarget = () => {
+  if ($isDesignMode.get() === false) {
+    return false;
+  }
+  const target = getPageActionTarget();
+  if (target?.type === "page") {
+    void copyPage(target.id);
+    return true;
+  }
+  if (target?.type === "folder") {
+    void copyFolder(target.id);
+    return true;
+  }
+  if (target?.type === "template") {
+    void copyTemplate(target.id);
+    return true;
+  }
+  return false;
+};
+
+const duplicatePageActionTarget = () => {
+  const target = getPageActionTarget();
+  if (target?.type === "page") {
+    const newPageId = duplicatePage(target.id);
+    if (newPageId) {
+      selectPage(newPageId);
+    }
+    return true;
+  }
+  if (target?.type === "folder") {
+    const newFolderId = duplicateFolder(target.id);
+    if (newFolderId) {
+      $editingPageId.set(newFolderId);
+    }
+    return true;
+  }
+  if (target?.type === "template") {
+    const newTemplateId = duplicateTemplate(target.id);
+    if (newTemplateId) {
+      selectPage(newTemplateId);
+    }
+    return true;
+  }
+  return false;
+};
+
 export const __testing__ = {
   canRunDesignModeCommand,
   guardDesignModeCommand,
+};
+
+const requestSelectedPageItemDelete = () => {
+  if ($isDesignMode.get() === false) {
+    return false;
+  }
+  const target = getDeletablePageActionTarget();
+  if (target === undefined) {
+    return false;
+  }
+  $pageIdToDelete.set(undefined);
+  $folderIdToDelete.set(undefined);
+  $templateIdToDelete.set(undefined);
+  if (target.type === "page") {
+    $pageIdToDelete.set(target.id);
+  }
+  if (target.type === "folder") {
+    $folderIdToDelete.set(target.id);
+  }
+  if (target.type === "template") {
+    $templateIdToDelete.set(target.id);
+  }
+  return true;
 };
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
@@ -341,9 +426,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     makeBreakpointCommand("selectBreakpoint9", 9),
     {
       name: "copy",
-      description: "Copy selected instance",
+      description: "Copy selected page or instance",
       category: "Navigator",
-      handler: copyInstance,
+      handler: () => {
+        if (copyPageActionTarget()) {
+          return;
+        }
+        void copyInstance();
+      },
     },
     {
       name: "paste",
@@ -356,7 +446,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             message: "Pasting is only allowed in design mode.",
           })
         ) {
-          emitPaste();
+          void emitPaste();
         }
       },
     },
@@ -371,7 +461,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             message: "Cutting is only allowed in design mode.",
           })
         ) {
-          cutInstance();
+          void cutInstance();
         }
       },
     },
@@ -396,18 +486,23 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "deleteInstanceBuilder",
-      label: "Delete Instance",
-      description: "Delete selected instance",
+      label: "Delete",
+      description: "Delete selected page or instance",
       category: "Navigator",
       defaultHotkeys: ["backspace", "delete"],
       // See "deleteInstanceCanvas" for details on why the command is separated for the canvas and builder.
       disableHotkeyOutsideApp: true,
       disableOnInputLikeControls: true,
-      handler: deleteSelectedInstance,
+      handler: () => {
+        if (requestSelectedPageItemDelete()) {
+          return;
+        }
+        deleteSelectedInstance();
+      },
     },
     {
       name: "duplicateInstance",
-      description: "Duplicate selected instance",
+      description: "Duplicate selected page or instance",
       category: "Navigator",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
@@ -421,6 +516,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             message: "Duplicating is only allowed in design mode.",
           }) === false
         ) {
+          return;
+        }
+        if (duplicatePageActionTarget()) {
           return;
         }
         const instancePath = $selectedInstancePath.get();

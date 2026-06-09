@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Tooltip,
@@ -50,6 +50,9 @@ import {
   $canOpenPageTemplates,
   $isContentMode,
   $isDesignMode,
+  $folderIdToDelete,
+  $pageIdToDelete,
+  $templateIdToDelete,
 } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import {
@@ -280,6 +283,8 @@ const $flatPagesTree = computed(
 
 const PagesTree = ({
   onSelect,
+  onRequestDeletePage,
+  onRequestDeleteFolder,
   selectedPageId,
   onEdit,
   editingItemId,
@@ -287,6 +292,8 @@ const PagesTree = ({
   canEditPageSettings,
 }: {
   onSelect: (pageId: string) => void;
+  onRequestDeletePage: (pageId: string) => void;
+  onRequestDeleteFolder: (folderId: string) => void;
   selectedPageId: string;
   onEdit: (pageId: string | undefined) => void;
   editingItemId?: string;
@@ -397,6 +404,23 @@ const PagesTree = ({
                     }
                     if (item.type === "page") {
                       onSelect(item.id);
+                    }
+                  },
+                  onKeyDown: (event) => {
+                    if (
+                      canManagePages === false ||
+                      (event.key !== "Backspace" && event.key !== "Delete")
+                    ) {
+                      return;
+                    }
+                    if (item.type === "page" && item.id === pages.homePageId) {
+                      return;
+                    }
+                    event.preventDefault();
+                    if (item.type === "page") {
+                      onRequestDeletePage(item.id);
+                    } else {
+                      onRequestDeleteFolder(item.id);
                     }
                   },
                   ...(item.type === "page" &&
@@ -520,6 +544,7 @@ const CreateItemMenu = ({
           onSelect={(event) => {
             event.preventDefault();
             selectMenuItem(() => {
+              $editingTemplateId.set(undefined);
               $editingPageId.set(
                 editingItemId === newPageId ? undefined : newPageId
               );
@@ -532,6 +557,7 @@ const CreateItemMenu = ({
           onSelect={(event) => {
             event.preventDefault();
             selectMenuItem(() => {
+              $editingTemplateId.set(undefined);
               $editingPageId.set(
                 editingItemId === newFolderId ? undefined : newFolderId
               );
@@ -544,6 +570,7 @@ const CreateItemMenu = ({
           onSelect={(event) => {
             event.preventDefault();
             selectMenuItem(() => {
+              $editingPageId.set(undefined);
               $editingTemplateId.set(
                 editingTemplateItemId === newTemplateId
                   ? undefined
@@ -712,6 +739,7 @@ const TemplateItem = ({
   onSelect,
   onEdit,
   onCreatePage,
+  onRequestDelete,
   canSelectTemplate,
   canEditTemplate,
   canCreatePage,
@@ -722,6 +750,7 @@ const TemplateItem = ({
   onSelect: (id: string) => void;
   onEdit: (id: string | undefined) => void;
   onCreatePage: (id: string) => void;
+  onRequestDelete: (id: string) => void;
   canSelectTemplate: boolean;
   canEditTemplate: boolean;
   canCreatePage: boolean;
@@ -740,7 +769,21 @@ const TemplateItem = ({
       level={1}
       isSelected={isSelected}
       buttonProps={Object.assign(
-        canSelectTemplate ? { onClick: () => onSelect(template.id) } : {},
+        canSelectTemplate
+          ? {
+              onClick: () => onSelect(template.id),
+              onKeyDown: (event: KeyboardEvent) => {
+                if (
+                  canEditTemplate === false ||
+                  (event.key !== "Backspace" && event.key !== "Delete")
+                ) {
+                  return;
+                }
+                event.preventDefault();
+                onRequestDelete(template.id);
+              },
+            }
+          : {},
         { "data-template-id": template.id }
       )}
       actionCount={(canCreatePage ? 1 : 0) + (canEditTemplate ? 1 : 0)}
@@ -795,6 +838,7 @@ const TemplatesSection = ({
   editingTemplateId,
   onEditTemplate,
   onCreatePageFromTemplate,
+  onRequestDeleteTemplate,
   canManageTemplates,
   canSelectTemplate,
   canCreatePageFromTemplate,
@@ -804,6 +848,7 @@ const TemplatesSection = ({
   editingTemplateId: string | undefined;
   onEditTemplate: (id: string | undefined) => void;
   onCreatePageFromTemplate: (id: string) => void;
+  onRequestDeleteTemplate: (id: string) => void;
   canManageTemplates: boolean;
   canSelectTemplate: boolean;
   canCreatePageFromTemplate: boolean;
@@ -873,6 +918,7 @@ const TemplatesSection = ({
             onSelect={onSelectTemplate}
             onEdit={onEditTemplate}
             onCreatePage={onCreatePageFromTemplate}
+            onRequestDelete={onRequestDeleteTemplate}
             canSelectTemplate={canSelectTemplate}
             canEditTemplate={canManageTemplates}
             canCreatePage={canCreatePageFromTemplate}
@@ -954,13 +1000,9 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const [containerElement, setContainerElement] =
     useState<HTMLDivElement | null>(null);
   const [settingsPanelHeight, setSettingsPanelHeight] = useState<number>();
-  const [pageIdToDelete, setPageIdToDelete] = useState<string | undefined>();
-  const [folderIdToDelete, setFolderIdToDelete] = useState<
-    string | undefined
-  >();
-  const [templateIdToDelete, setTemplateIdToDelete] = useState<
-    string | undefined
-  >();
+  const pageIdToDelete = useStore($pageIdToDelete);
+  const folderIdToDelete = useStore($folderIdToDelete);
+  const templateIdToDelete = useStore($templateIdToDelete);
 
   useEffect(() => {
     if (containerElement === null) {
@@ -990,7 +1032,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         $editingPageId.set(undefined);
       }
     }
-    setPageIdToDelete(undefined);
+    $pageIdToDelete.set(undefined);
   };
 
   const handleDeleteFolderConfirm = () => {
@@ -1008,7 +1050,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         $editingPageId.set(undefined);
       }
     }
-    setFolderIdToDelete(undefined);
+    $folderIdToDelete.set(undefined);
   };
 
   const handleTemplateDeleteConfirm = () => {
@@ -1023,7 +1065,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         selectPage(pages.homePageId);
       }
     }
-    setTemplateIdToDelete(undefined);
+    $templateIdToDelete.set(undefined);
   };
 
   const templateToDelete =
@@ -1067,12 +1109,16 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
 
       <PageContextMenu
         canManagePages={isDesignMode}
-        onRequestDeletePage={setPageIdToDelete}
-        onRequestDeleteFolder={setFolderIdToDelete}
+        onRequestDeletePage={(pageId) => $pageIdToDelete.set(pageId)}
+        onRequestDeleteFolder={(folderId) => $folderIdToDelete.set(folderId)}
       >
         <div>
           <PagesTree
             selectedPageId={currentPage.id}
+            onRequestDeletePage={(pageId) => $pageIdToDelete.set(pageId)}
+            onRequestDeleteFolder={(folderId) =>
+              $folderIdToDelete.set(folderId)
+            }
             onSelect={(itemId) => {
               selectPage(itemId);
               onClose();
@@ -1096,6 +1142,9 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
               if (itemId && isFolder(itemId, pages.folders) === false) {
                 selectPage(itemId);
               }
+              if (itemId) {
+                $editingTemplateId.set(undefined);
+              }
               $editingPageId.set(itemId);
             }}
           />
@@ -1109,7 +1158,9 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
           {canOpenPageTemplates ? (
             <TemplateContextMenu
               canManageTemplates={isDesignMode}
-              onRequestDeleteTemplate={setTemplateIdToDelete}
+              onRequestDeleteTemplate={(templateId) =>
+                $templateIdToDelete.set(templateId)
+              }
             >
               <ScrollAreaNative
                 css={{
@@ -1127,12 +1178,16 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                   onEditTemplate={(id) => {
                     if (id) {
                       selectPage(id);
+                      $editingPageId.set(undefined);
                     }
                     $editingTemplateId.set(id);
                   }}
                   onCreatePageFromTemplate={(id) => {
                     $creatingPageFromTemplateId.set(id);
                   }}
+                  onRequestDeleteTemplate={(templateId) =>
+                    $templateIdToDelete.set(templateId)
+                  }
                   canManageTemplates={isDesignMode}
                   canSelectTemplate={true}
                   canCreatePageFromTemplate={canEditPageContent}
@@ -1155,6 +1210,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                 onCreatePageFromTemplate={(id) => {
                   $creatingPageFromTemplateId.set(id);
                 }}
+                onRequestDeleteTemplate={() => {}}
                 canManageTemplates={false}
                 canSelectTemplate={false}
                 canCreatePageFromTemplate={canEditPageContent}
@@ -1254,21 +1310,21 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       {pageIdToDelete && (
         <DeletePageConfirmationDialog
           page={findPageByIdOrPath(pageIdToDelete, pages)!}
-          onClose={() => setPageIdToDelete(undefined)}
+          onClose={() => $pageIdToDelete.set(undefined)}
           onConfirm={handlePageDeleteConfirm}
         />
       )}
       {folderIdToDelete && (
         <DeleteFolderConfirmationDialog
           folder={getFolderById(pages, folderIdToDelete)!}
-          onClose={() => setFolderIdToDelete(undefined)}
+          onClose={() => $folderIdToDelete.set(undefined)}
           onConfirm={handleDeleteFolderConfirm}
         />
       )}
       {templateToDelete && (
         <DeleteTemplateConfirmationDialog
           template={templateToDelete}
-          onClose={() => setTemplateIdToDelete(undefined)}
+          onClose={() => $templateIdToDelete.set(undefined)}
           onConfirm={handleTemplateDeleteConfirm}
         />
       )}

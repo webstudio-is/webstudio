@@ -4,6 +4,13 @@ import {
   $textEditingInstanceSelector,
 } from "../nano-states";
 import { instanceText, instanceJson } from "./plugin-instance";
+import {
+  pageText,
+  copyFolderData,
+  copyPageData,
+  copyTemplateData,
+  handlePastePage,
+} from "./plugin-page";
 import { html } from "./plugin-html";
 import { markdown } from "./plugin-markdown";
 import { webflow } from "./plugin-webflow/plugin-webflow";
@@ -56,6 +63,10 @@ const validateClipboardEvent = (event: ClipboardEvent) => {
     }
   }
 
+  return validateCopyPermission();
+};
+
+const validateCopyPermission = () => {
   if ($authTokenPermissions.get().canCopy === false) {
     toastError("Copying has been disabled by the project owner");
     return false;
@@ -134,7 +145,7 @@ const initPlugins = ({
 
 export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
-    plugins: [instanceJson, instanceText, html, markdown, webflow],
+    plugins: [pageText, instanceJson, instanceText, html, markdown, webflow],
     signal,
   });
 };
@@ -164,12 +175,33 @@ export const initCopyPasteForContentEditMode = ({
   });
 };
 
+const writeClipboardText = (data: string | undefined) => {
+  if (data && validateCopyPermission()) {
+    return navigator.clipboard.writeText(data);
+  }
+  return Promise.resolve();
+};
+
 // Public API for programmatic copy/paste/cut operations
 export const copyInstance = () => {
-  const data = instanceText.onCopy?.();
-  if (data) {
-    navigator.clipboard.writeText(data);
-  }
+  return writeClipboardText(instanceText.onCopy?.());
+};
+
+export const copyPage = (pageId: string) => {
+  return writeClipboardText(copyPageData(pageId));
+};
+
+export const copyFolder = (folderId: string) => {
+  return writeClipboardText(copyFolderData(folderId));
+};
+
+export const copyTemplate = (templateId: string) => {
+  return writeClipboardText(copyTemplateData(templateId));
+};
+
+export const pastePage = async (targetFolderId?: string) => {
+  const text = await navigator.clipboard.readText();
+  return handlePastePage(text, targetFolderId);
 };
 
 export const emitPaste = async () => {
@@ -189,8 +221,5 @@ export const emitPaste = async () => {
 };
 
 export const cutInstance = () => {
-  const data = instanceText.onCut?.();
-  if (data) {
-    navigator.clipboard.writeText(data);
-  }
+  return writeClipboardText(instanceText.onCut?.());
 };

@@ -1,16 +1,24 @@
 import { useState, type ReactNode } from "react";
+import { findParentFolderByChildId } from "@webstudio-is/sdk";
 import {
   ContextMenu,
   ContextMenuContent,
-  ContextMenuItem,
   ContextMenuTrigger,
 } from "@webstudio-is/design-system";
 import {
-  duplicatePage,
   duplicateFolder,
+  duplicatePage,
   duplicateTemplate,
 } from "./page-utils";
 import { selectPage } from "~/shared/nano-states";
+import {
+  copyFolder,
+  copyPage,
+  copyTemplate,
+  pastePage,
+} from "~/shared/copy-paste/copy-paste";
+import { $pages } from "~/shared/sync/data-stores";
+import { PageItemContextMenuActions } from "./page-item-actions";
 
 type PageContextMenuProps = {
   children: ReactNode;
@@ -19,25 +27,53 @@ type PageContextMenuProps = {
   onRequestDeleteFolder: (folderId: string) => void;
 };
 
+type PageMenuTarget =
+  | { type: "page"; id: string }
+  | { type: "folder"; id: string };
+
 export const PageContextMenu = ({
   children,
   canManagePages,
   onRequestDeletePage,
   onRequestDeleteFolder,
 }: PageContextMenuProps) => {
-  const [pageId, setPageId] = useState<string | undefined>();
-  const [folderId, setFolderId] = useState<string | undefined>();
+  const [target, setTarget] = useState<PageMenuTarget>();
 
   if (canManagePages === false) {
     return <>{children}</>;
   }
 
   const handleDuplicate = () => {
-    if (pageId) {
-      duplicatePage(pageId);
-    } else if (folderId) {
-      duplicateFolder(folderId);
+    if (target?.type === "page") {
+      duplicatePage(target.id);
+    } else if (target?.type === "folder") {
+      duplicateFolder(target.id);
     }
+  };
+
+  const handleCopy = () => {
+    if (target?.type === "page") {
+      void copyPage(target.id);
+    } else if (target?.type === "folder") {
+      void copyFolder(target.id);
+    }
+  };
+
+  const getPasteTargetFolderId = () => {
+    const pages = $pages.get();
+    if (pages === undefined) {
+      return;
+    }
+    if (target?.type === "folder") {
+      return target.id;
+    }
+    if (target?.type === "page") {
+      return (
+        findParentFolderByChildId(target.id, pages.folders)?.id ??
+        pages.rootFolderId
+      );
+    }
+    return pages.rootFolderId;
   };
 
   return (
@@ -45,8 +81,7 @@ export const PageContextMenu = ({
       <ContextMenu
         onOpenChange={(open) => {
           if (!open) {
-            setPageId(undefined);
-            setFolderId(undefined);
+            setTarget(undefined);
           }
         }}
       >
@@ -61,36 +96,35 @@ export const PageContextMenu = ({
             const pageId = button?.getAttribute("data-page-id");
             const folderId = button?.getAttribute("data-folder-id");
             if (pageId) {
-              setPageId(pageId);
-              setFolderId(undefined);
+              setTarget({ type: "page", id: pageId });
             } else if (folderId) {
-              setFolderId(folderId);
-              setPageId(undefined);
+              setTarget({ type: "folder", id: folderId });
+            } else {
+              setTarget(undefined);
             }
           }}
         >
           {children}
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem
-            onSelect={handleDuplicate}
-            disabled={!pageId && !folderId}
-          >
-            Duplicate
-          </ContextMenuItem>
-          <ContextMenuItem
-            onSelect={() => {
-              if (pageId) {
-                onRequestDeletePage(pageId);
-              } else if (folderId) {
-                onRequestDeleteFolder(folderId);
-              }
+          <PageItemContextMenuActions
+            actions={{
+              paste: () => {
+                void pastePage(getPasteTargetFolderId());
+              },
+              copy: target ? handleCopy : undefined,
+              duplicate: target ? handleDuplicate : undefined,
+              delete: target
+                ? () => {
+                    if (target.type === "page") {
+                      onRequestDeletePage(target.id);
+                    } else {
+                      onRequestDeleteFolder(target.id);
+                    }
+                  }
+                : undefined,
             }}
-            destructive
-            disabled={!pageId && !folderId}
-          >
-            Delete
-          </ContextMenuItem>
+          />
         </ContextMenuContent>
       </ContextMenu>
     </>
@@ -123,6 +157,12 @@ export const TemplateContextMenu = ({
     }
   };
 
+  const handleCopy = () => {
+    if (templateId) {
+      void copyTemplate(templateId);
+    }
+  };
+
   return (
     <>
       <ContextMenu
@@ -143,26 +183,25 @@ export const TemplateContextMenu = ({
             const templateId = button?.getAttribute("data-template-id");
             if (templateId) {
               setTemplateId(templateId);
+            } else {
+              setTemplateId(undefined);
             }
           }}
         >
           {children}
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem onSelect={handleDuplicate} disabled={!templateId}>
-            Duplicate
-          </ContextMenuItem>
-          <ContextMenuItem
-            onSelect={() => {
-              if (templateId) {
-                onRequestDeleteTemplate(templateId);
-              }
+          <PageItemContextMenuActions
+            actions={{
+              copy: templateId ? handleCopy : undefined,
+              duplicate: templateId ? handleDuplicate : undefined,
+              delete: templateId
+                ? () => {
+                    onRequestDeleteTemplate(templateId);
+                  }
+                : undefined,
             }}
-            destructive
-            disabled={!templateId}
-          >
-            Delete
-          </ContextMenuItem>
+          />
         </ContextMenuContent>
       </ContextMenu>
     </>

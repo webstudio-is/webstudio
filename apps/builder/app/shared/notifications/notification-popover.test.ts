@@ -2,7 +2,8 @@ import { describe, test, expect } from "vitest";
 import { notification } from "@webstudio-is/project/index.server";
 import type { WorkspaceInvitePayload } from "@webstudio-is/project";
 
-const { describeNotification } = notification.__testing__;
+const { __testing__ } = notification;
+const { describeNotification } = __testing__;
 
 describe("describeNotification", () => {
   test("workspace invite with all info", () => {
