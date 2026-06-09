@@ -22,6 +22,7 @@
   "scripts": {
     "build": "rm -rf lib && esbuild src/components.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
+    "test": "vitest run",
     "typecheck": "tsgo --noEmit"
   },
   "peerDependencies": {
@@ -39,6 +40,7 @@
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318"
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "vitest": "^3.1.2"
   }
 }
