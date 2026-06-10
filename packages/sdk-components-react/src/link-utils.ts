@@ -12,12 +12,6 @@ export const isLocalHref = (href: string, assetBaseUrl: string) =>
   /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href) === false &&
   (href.startsWith("/") && href.startsWith(assetBaseUrl)) === false;
 
-export const getUrlParts = (url: URL): UrlParts => ({
-  pathname: url.pathname,
-  search: url.search,
-  hash: url.hash,
-});
-
 /**
  * React Router resolves href="" and hash-only hrefs without preserving the
  * concrete browser URL shape Webstudio uses for :local-link-like matching.
