@@ -1,5 +1,26 @@
 import { expect, test } from "vitest";
-import { isLocalLinkActive, resolveLocalLinkUrl } from "./link-utils";
+import {
+  isLocalHref,
+  isLocalLinkActive,
+  resolveLocalLinkUrl,
+} from "./link-utils";
+
+test("href is local unless it is absolute, protocol-relative, or an asset", () => {
+  expect(isLocalHref("/path", "/assets/")).toBe(true);
+  expect(isLocalHref("?tag=bla", "/assets/")).toBe(true);
+  expect(isLocalHref("#section", "/assets/")).toBe(true);
+  expect(isLocalHref("", "/assets/")).toBe(true);
+
+  expect(isLocalHref("https://example.com/path", "/assets/")).toBe(false);
+  expect(isLocalHref("//example.com/path", "/assets/")).toBe(false);
+  expect(isLocalHref("mailto:hello@example.com", "/assets/")).toBe(false);
+  expect(isLocalHref("/assets/file.pdf", "/assets/")).toBe(false);
+});
+
+test("asset base url only excludes matching root-relative asset paths", () => {
+  expect(isLocalHref("/assets", "/assets/")).toBe(true);
+  expect(isLocalHref("/assets2/file.pdf", "/assets/")).toBe(true);
+});
 
 test("local link matches exact pathname, search, and hash", () => {
   expect(

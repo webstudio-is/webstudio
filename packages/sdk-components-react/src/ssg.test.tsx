@@ -123,3 +123,18 @@ test("external and asset links render as plain anchors", () => {
   expect(links[1]?.getAttribute("href")).toBe("/assets/file.pdf");
   expect(links[1]?.getAttribute("aria-current")).toBeNull();
 });
+
+test("invalid absolute href renders as plain anchor", () => {
+  const markup = renderToStaticMarkup(
+    <ReactSdkContext.Provider value={sdkContext}>
+      <SsgCurrentUrlContext.Provider value="https://example.com/path">
+        <Link href="http://">Invalid external</Link>
+      </SsgCurrentUrlContext.Provider>
+    </ReactSdkContext.Provider>
+  );
+  document.body.innerHTML = markup;
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("http://");
+  expect(link?.getAttribute("aria-current")).toBeNull();
+});

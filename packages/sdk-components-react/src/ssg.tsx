@@ -17,35 +17,29 @@ export const SsgCurrentUrlContext = createContext<string | undefined>(
   undefined
 );
 
-type LinkProps = Omit<ComponentPropsWithoutRef<typeof BaseLink>, "target"> & {
-  target?: "_self" | "_blank" | "_parent" | "_top";
-};
-
-const getCurrentUrl = (currentUrl: string | undefined) => {
-  if (currentUrl) {
-    return new URL(currentUrl);
-  }
-  if (typeof window !== "undefined") {
-    return new URL(window.location.href);
-  }
-};
-
-export const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
+export const Link = forwardRef<
+  HTMLAnchorElement,
+  ComponentPropsWithoutRef<typeof BaseLink>
+>((props, ref) => {
   const currentUrlValue = useContext(SsgCurrentUrlContext);
   const { assetBaseUrl } = useContext(ReactSdkContext);
   const href = String(props.href ?? "");
-  const currentUrl = getCurrentUrl(currentUrlValue);
+  const currentHref =
+    currentUrlValue ??
+    (typeof window === "undefined" ? undefined : window.location.href);
+  const currentUrl = currentHref ? new URL(currentHref) : undefined;
   const currentPath = currentUrl && getUrlParts(currentUrl);
-  const localLink =
-    currentUrl && currentPath && isLocalHref(href, assetBaseUrl)
-      ? getLocalLinkProps(
-          { ...props, href },
-          currentPath,
-          href.startsWith("#")
-            ? currentPath
-            : getUrlParts(new URL(href, currentUrl))
-        )
-      : { linkProps: props, localLinkProps: {} };
+  const shouldResolveLocalLink =
+    currentPath && currentUrl && isLocalHref(href, assetBaseUrl);
+  const localLink = shouldResolveLocalLink
+    ? getLocalLinkProps(
+        { ...props, href },
+        currentPath,
+        href.startsWith("#")
+          ? currentPath
+          : getUrlParts(new URL(href, currentUrl))
+      )
+    : { linkProps: props, localLinkProps: {} };
 
   return (
     <BaseLink
