@@ -635,7 +635,7 @@ export const prebuild = async (options: {
       /* This is a auto generated file for building the project */ \n
 
       import { Fragment, useState } from "react";
-      import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+      import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
       ${importsString}
 
       export const projectId = "${siteData.build.projectId}";

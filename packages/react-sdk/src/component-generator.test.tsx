@@ -381,7 +381,7 @@ test("generate jsx children with expression", () => {
   ).toEqual(
     validateJSX(
       clear(`
-      {'Hello ' + myvar}
+      {renderText('Hello ' + myvar)}
     `)
     )
   );
@@ -515,7 +515,7 @@ test("generate collection component with itemKey", () => {
       return (
     <Fragment key={key}>
     <Label>
-    {key}
+    {renderText(key)}
     </Label>
     <Button
     aria-label={element} />
@@ -1148,13 +1148,13 @@ test("generate unset variables as undefined", () => {
   ).toEqual(
     validateJSX(
       clear(`
-      const Page = () => {
-      return <Body>
-      <Box>
-      {undefined + undefined}
-      </Box>
-      </Body>
-      }
+    const Page = () => {
+    return <Body>
+    <Box>
+    {renderText(undefined + undefined)}
+    </Box>
+    </Body>
+    }
     `)
     )
   );
@@ -1187,7 +1187,7 @@ test("generate global variables", () => {
       let [rootVariable, set$rootVariable] = useVariableState<any>("root")
       return <Body>
       <Box>
-      {rootVariable}
+      {renderText(rootVariable)}
       </Box>
       </Body>
       }
