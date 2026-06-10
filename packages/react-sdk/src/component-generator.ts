@@ -400,7 +400,7 @@ export const generateJsxChildren = ({
         usedDataSources,
         scope,
       });
-      generatedChildren = `{${expression}}\n`;
+      generatedChildren = `{renderText(${expression})}\n`;
       continue;
     }
     if (child.type === "id") {
