@@ -1,8 +1,22 @@
+import type { ComponentPropsWithoutRef } from "react";
+
 export type UrlParts = {
   pathname: string;
   search: string;
   hash: string;
 };
+
+type AnchorProps = ComponentPropsWithoutRef<"a">;
+
+export const isLocalHref = (href: string, assetBaseUrl: string) =>
+  /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href) === false &&
+  (href.startsWith("/") && href.startsWith(assetBaseUrl)) === false;
+
+export const getUrlParts = (url: URL): UrlParts => ({
+  pathname: url.pathname,
+  search: url.search,
+  hash: url.hash,
+});
 
 /**
  * React Router resolves href="" and hash-only hrefs without preserving the
@@ -46,3 +60,46 @@ export const isLocalLinkActive = (current: UrlParts, target: UrlParts) => {
     current.hash === target.hash
   );
 };
+
+export const getLocalLinkProps = <
+  Props extends {
+    href: string;
+    "aria-current"?: AnchorProps["aria-current"];
+    className?: string;
+  },
+>(
+  props: Props,
+  location: UrlParts,
+  resolvedPath: UrlParts
+) => {
+  const { href, "aria-current": ariaCurrent, className, ...linkProps } = props;
+  const target = resolveLocalLinkUrl(href, location, resolvedPath);
+  const isActive = isLocalLinkActive(location, target);
+  const classNameValue = [className, isActive ? "active" : undefined]
+    .filter(Boolean)
+    .join(" ");
+
+  return {
+    href,
+    linkProps,
+    localLinkProps: {
+      ...(isActive ? { "aria-current": ariaCurrent ?? "page" } : {}),
+      ...(classNameValue === "" ? {} : { className: classNameValue }),
+    },
+  };
+};
+
+export const stripRouterOnlyProps = <
+  Props extends {
+    prefetch?: unknown;
+    reloadDocument?: unknown;
+    replace?: unknown;
+    preventScrollReset?: unknown;
+  },
+>({
+  prefetch,
+  reloadDocument,
+  replace,
+  preventScrollReset,
+  ...props
+}: Props) => props;

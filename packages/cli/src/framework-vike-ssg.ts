@@ -33,6 +33,7 @@ export const createFramework = async (): Promise<Framework> => {
   await rm(routeTemplatesDir, { recursive: true, force: true });
 
   const base = "@webstudio-is/sdk-components-react";
+  const ssg = "@webstudio-is/sdk-components-react/ssg";
   const reactRadix = "@webstudio-is/sdk-components-react-radix";
   const animation = "@webstudio-is/sdk-components-animation";
   const components: Record<string, string> = {};
@@ -41,6 +42,8 @@ export const createFramework = async (): Promise<Framework> => {
     components[name] = `${base}:${name}`;
     metas[name] = meta;
   }
+  components.Link = `${ssg}:Link`;
+  components.RichTextLink = `${ssg}:RichTextLink`;
   for (const [name, meta] of Object.entries(radixComponentMetas)) {
     components[`${reactRadix}:${name}`] = `${reactRadix}:${name}`;
     metas[`${reactRadix}:${name}`] = meta;
@@ -57,6 +60,7 @@ export const createFramework = async (): Promise<Framework> => {
       textarea: `${base}:Textarea`,
       input: `${base}:Input`,
       select: `${base}:Select`,
+      a: `${ssg}:Link`,
     },
     html: ({ pagePath }: { pagePath: string }) => {
       // ignore dynamic pages in static export

@@ -20,6 +20,7 @@ export default defineConfig({
         "src/metas.ts",
         "src/hooks.ts",
         maybeEntry("src/local-link.tsx"),
+        maybeEntry("src/ssg.tsx"),
         "src/templates.ts",
       ].filter((entry) => entry !== undefined),
       formats: ["es"],
