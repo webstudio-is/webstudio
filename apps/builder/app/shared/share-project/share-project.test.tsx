@@ -48,6 +48,25 @@ const click = (element: Element) => {
   });
 };
 
+const input = (element: HTMLInputElement, value: string) => {
+  act(() => {
+    const valueSetter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value"
+    )?.set;
+    valueSetter?.call(element, value);
+    element.dispatchEvent(new InputEvent("input", { bubbles: true }));
+  });
+};
+
+const focusOut = (element: Element, relatedTarget: EventTarget) => {
+  act(() => {
+    element.dispatchEvent(
+      new FocusEvent("focusout", { bubbles: true, relatedTarget })
+    );
+  });
+};
+
 const renderShareProject = ({
   onChange,
 }: {
@@ -85,11 +104,12 @@ afterEach(() => {
 });
 
 describe("ShareProject", () => {
-  test("keeps share link permission changes in local state before parent rerender", () => {
+  test("saves share link permission changes when link options close", () => {
     const onChange = vi.fn();
     renderShareProject({ onChange });
 
-    click(getElement('[aria-label="Menu Button for options"]'));
+    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    click(optionsButton);
     click(getControlByLabel("Editor"));
 
     const publishCheckbox = getControlByLabel<HTMLButtonElement>("Can publish");
@@ -97,14 +117,45 @@ describe("ShareProject", () => {
 
     click(publishCheckbox);
 
-    expect(onChange).toHaveBeenNthCalledWith(1, {
-      ...link,
-      relation: "editors",
-    });
-    expect(onChange).toHaveBeenNthCalledWith(2, {
+    expect(onChange).not.toHaveBeenCalled();
+
+    click(optionsButton);
+
+    expect(onChange).toHaveBeenCalledWith({
       ...link,
       relation: "editors",
       canPublish: true,
+    });
+  });
+
+  test("does not save link name while link options remain open", () => {
+    const onChange = vi.fn();
+    renderShareProject({ onChange });
+
+    click(getElement('[aria-label="Menu Button for options"]'));
+
+    const nameInput = getElement<HTMLInputElement>('input[name="Name"]');
+    const editorSwitch = getControlByLabel("Editor");
+    input(nameInput, "Renamed link");
+    focusOut(nameInput, editorSwitch);
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  test("saves link name when link options close", () => {
+    const onChange = vi.fn();
+    renderShareProject({ onChange });
+
+    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    click(optionsButton);
+
+    const nameInput = getElement<HTMLInputElement>('input[name="Name"]');
+    input(nameInput, "Renamed link");
+    click(optionsButton);
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...link,
+      name: "Renamed link",
     });
   });
 });
