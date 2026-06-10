@@ -10,8 +10,9 @@ import {
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { Link as BaseLink } from "./link";
 import {
-  isLocalLinkActive,
-  resolveLocalLinkUrl,
+  getLocalLinkProps,
+  isLocalHref,
+  stripRouterOnlyProps,
   type UrlParts,
 } from "./link-utils";
 
@@ -41,42 +42,6 @@ type RouterLinkComponentProps = Omit<LocalLinkProps, "href" | "target"> & {
   ref?: LegacyRef<HTMLAnchorElement>;
 };
 
-const absoluteUrlPattern = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
-
-const shouldUseRouterLink = (href: string, assetBaseUrl: string) => {
-  if (href.startsWith("#") || absoluteUrlPattern.test(href)) {
-    return false;
-  }
-
-  if (href.startsWith("/") && href.startsWith(assetBaseUrl)) {
-    return false;
-  }
-
-  return true;
-};
-
-const getLocalLinkProps = (
-  props: LocalLinkProps & { href: string },
-  location: UrlParts,
-  resolvedPath: UrlParts
-) => {
-  const { href, "aria-current": ariaCurrent, className, ...linkProps } = props;
-  const target = resolveLocalLinkUrl(href, location, resolvedPath);
-  const isActive = isLocalLinkActive(location, target);
-  const classNameValue = [className, isActive ? "active" : undefined]
-    .filter(Boolean)
-    .join(" ");
-
-  return {
-    href,
-    linkProps,
-    localLinkProps: {
-      ...(isActive ? { "aria-current": ariaCurrent ?? "page" } : {}),
-      ...(classNameValue === "" ? {} : { className: classNameValue }),
-    },
-  };
-};
-
 const getRouterHref = (href: string, location: UrlParts) => {
   if (href === "") {
     return `${location.pathname}${location.search}`;
@@ -84,19 +49,6 @@ const getRouterHref = (href: string, location: UrlParts) => {
 
   return href;
 };
-
-const stripRouterOnlyProps = <
-  Props extends Pick<
-    LocalLinkProps,
-    "prefetch" | "reloadDocument" | "replace" | "preventScrollReset"
-  >,
->({
-  prefetch,
-  reloadDocument,
-  replace,
-  preventScrollReset,
-  ...props
-}: Props) => props;
 
 /**
  * Remix and React Router expose compatible navigation hooks but from different
@@ -162,7 +114,7 @@ export const createLocalLink = ({
       // cast to string when invalid value type is provided with binding
       const href = String(props.href ?? "");
 
-      if (shouldUseRouterLink(href, assetBaseUrl)) {
+      if (href.startsWith("#") === false && isLocalHref(href, assetBaseUrl)) {
         // Route through the framework only for navigations it should own. Asset
         // paths can also be root-relative, so they must stay plain anchors.
         return <RouterLink {...props} href={href} ref={ref} />;

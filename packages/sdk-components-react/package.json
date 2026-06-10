@@ -33,6 +33,11 @@
       "types": "./lib/types/local-link.d.ts",
       "import": "./lib/local-link.js"
     },
+    "./ssg": {
+      "webstudio": "./src/ssg.tsx",
+      "types": "./lib/types/ssg.d.ts",
+      "import": "./lib/ssg.js"
+    },
     "./templates": {
       "webstudio": "./src/templates.ts",
       "types": "./lib/types/templates.d.ts",
