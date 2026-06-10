@@ -13,7 +13,7 @@ const saveLabel = (label: string, selectedInstance: Instance) => {
   serverSyncStore.createTransaction([$instances], (instances) => {
     const instance = instances.get(selectedInstance.id);
     if (instance !== undefined) {
-      instance.label = label;
+      instance.label = label.trim();
     }
   });
 };
@@ -21,11 +21,11 @@ const saveLabel = (label: string, selectedInstance: Instance) => {
 export const SettingsSection = () => {
   const selectedInstance = useStore($selectedInstance);
   const id = useId();
-  const localValue = useDraftValue(selectedInstance?.label ?? "", (value) => {
-    if (selectedInstance) {
-      saveLabel(value, selectedInstance);
-    }
-  });
+  const localValue = useDraftValue(
+    selectedInstance?.label ?? "",
+    (value) => selectedInstance && saveLabel(value, selectedInstance),
+    { autoSave: false }
+  );
 
   if (selectedInstance === undefined) {
     return;
@@ -42,7 +42,7 @@ export const SettingsSection = () => {
           key={selectedInstance.id}
           placeholder={placeholder}
           value={localValue.value}
-          onChange={(event) => localValue.set(event.target.value.trim())}
+          onChange={(event) => localValue.set(event.target.value)}
           onBlur={localValue.save}
         />
       </HorizontalLayout>
