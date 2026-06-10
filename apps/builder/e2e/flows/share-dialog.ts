@@ -124,12 +124,13 @@ export const createShareLink = async ({
     .getByRole("button", { name: "Menu Button for options" })
     .click();
   const renamedLinkOptions = getShareLinkOptions({ page, name });
-  if (await selectRole({ options: renamedLinkOptions, role })) {
-    await waitForShareLinkMutation({ page });
-  }
+  const roleChanged = await selectRole({ options: renamedLinkOptions, role });
   await renamedLink
     .getByRole("button", { name: "Menu Button for options" })
     .click();
+  if (roleChanged) {
+    await waitForShareLinkMutation({ page });
+  }
   await waitForShareLinksReady({ page });
 };
 
@@ -160,9 +161,10 @@ export const updateShareLinkRole = async ({
   const group = getShareLinkGroup({ page, name });
   await group.getByRole("button", { name: "Menu Button for options" }).click();
   const options = getShareLinkOptions({ page, name });
-  if (await selectRole({ options, role })) {
+  const roleChanged = await selectRole({ options, role });
+  await group.getByRole("button", { name: "Menu Button for options" }).click();
+  if (roleChanged) {
     await waitForShareLinkMutation({ page });
   }
-  await group.getByRole("button", { name: "Menu Button for options" }).click();
   await waitForShareLinksReady({ page });
 };
