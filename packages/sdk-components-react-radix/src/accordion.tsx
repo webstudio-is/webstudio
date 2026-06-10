@@ -57,10 +57,15 @@ export const AccordionTrigger: ForwardRefExoticComponent<
     RefAttributes<HTMLButtonElement>
 > = Trigger;
 
-export const AccordionContent: ForwardRefExoticComponent<
-  Omit<ComponentProps<typeof Content>, "asChild"> &
-    RefAttributes<HTMLDivElement>
-> = Content;
+export const AccordionContent = forwardRef<
+  HTMLDivElement,
+  Omit<ComponentPropsWithoutRef<typeof Content>, "asChild" | "forceMount"> & {
+    forceMount?: boolean;
+  }
+>(({ forceMount = true, ...props }, ref) => {
+  const contentProps = forceMount ? { forceMount: true as const } : {};
+  return <Content ref={ref} {...contentProps} {...props} />;
+});
 
 /* BUILDER HOOKS */
 
