@@ -128,7 +128,9 @@ test("invalid absolute href renders as plain anchor", () => {
   const markup = renderToStaticMarkup(
     <ReactSdkContext.Provider value={sdkContext}>
       <SsgCurrentUrlContext.Provider value="https://example.com/path">
-        <Link href="http://">Invalid external</Link>
+        <Link href="http://" $webstudio$canvasOnly$assetId="asset-id">
+          Invalid external
+        </Link>
       </SsgCurrentUrlContext.Provider>
     </ReactSdkContext.Provider>
   );
@@ -137,4 +139,5 @@ test("invalid absolute href renders as plain anchor", () => {
 
   expect(link?.getAttribute("href")).toBe("http://");
   expect(link?.getAttribute("aria-current")).toBeNull();
+  expect(link?.hasAttribute("$webstudio$canvasOnly$assetId")).toBe(false);
 });

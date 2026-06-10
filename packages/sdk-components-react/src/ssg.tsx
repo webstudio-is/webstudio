@@ -5,7 +5,7 @@ import {
   useContext,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { Link as BaseLink } from "./link";
+import type { Link as BaseLink } from "./link";
 import {
   getLocalLinkProps,
   getUrlParts,
@@ -23,7 +23,13 @@ export const Link = forwardRef<
 >((props, ref) => {
   const currentUrlValue = useContext(SsgCurrentUrlContext);
   const { assetBaseUrl } = useContext(ReactSdkContext);
-  const href = String(props.href ?? "");
+  const {
+    children,
+    // @todo: it's a hack made for Image component for the builder and should't be in the runtime at all.
+    $webstudio$canvasOnly$assetId,
+    ...rest
+  } = props;
+  const href = String(rest.href ?? "");
   const currentHref =
     currentUrlValue ??
     (typeof window === "undefined" ? undefined : window.location.href);
@@ -33,16 +39,16 @@ export const Link = forwardRef<
     currentPath && currentUrl && isLocalHref(href, assetBaseUrl);
   const localLink = shouldResolveLocalLink
     ? getLocalLinkProps(
-        { ...props, href },
+        { ...rest, href },
         currentPath,
         href.startsWith("#")
           ? currentPath
           : getUrlParts(new URL(href, currentUrl))
       )
-    : { linkProps: props, localLinkProps: {} };
+    : { linkProps: rest, localLinkProps: {} };
 
   return (
-    <BaseLink
+    <a
       {...stripRouterOnlyProps(localLink.linkProps)}
       {...localLink.localLinkProps}
       href={
@@ -51,10 +57,12 @@ export const Link = forwardRef<
           : href
       }
       ref={ref}
-    />
+    >
+      {children}
+    </a>
   );
 });
 
-Link.displayName = BaseLink.displayName;
+Link.displayName = "Link";
 
 export { Link as RichTextLink };
