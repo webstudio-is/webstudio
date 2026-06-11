@@ -4,7 +4,7 @@ import {
   isLocalLinkActive,
   resolveLocalLinkUrl,
   type UrlParts,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/sdk/link-utils";
 
 type AnchorProps = ComponentPropsWithoutRef<"a">;
 
