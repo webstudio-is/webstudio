@@ -2,7 +2,7 @@ import {
   Box as Box,
   Button as Button,
   Text as Text,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 import {
   Tooltip as Tooltip,
   TooltipTrigger as TooltipTrigger,

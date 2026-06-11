@@ -11,9 +11,9 @@ import {
   Body as Body,
   Heading as Heading,
   Text as Text,
+  Link as Link,
   Image as Image,
-} from "@webstudio-is/sdk-components-react";
-import { Link as Link } from "@webstudio-is/sdk-components-react/ssg";
+} from "@webstudio-is/sdk-components-react/components";
 
 export const projectId = "d845c167-ea07-4875-b08d-83e97c09dcce";
 

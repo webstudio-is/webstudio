@@ -4,7 +4,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test, vi } from "vitest";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { Link, SsgCurrentUrlContext } from "./ssg";
+import { Link } from "./link";
+import { LinkCurrentUrlContext } from "./link-current-url";
 
 const sdkContext = {
   assetBaseUrl: "/assets/",
@@ -18,7 +19,7 @@ const sdkContext = {
 const renderLinks = (currentUrl: string) => {
   const markup = renderToStaticMarkup(
     <ReactSdkContext.Provider value={sdkContext}>
-      <SsgCurrentUrlContext.Provider value={currentUrl}>
+      <LinkCurrentUrlContext.Provider value={currentUrl}>
         <Link href="/path?tag=bla#section">Exact</Link>
         <Link href="/path">Path only</Link>
         <Link href="/path?tag=bla">Missing hash</Link>
@@ -37,7 +38,7 @@ const renderLinks = (currentUrl: string) => {
         <Link href="/path?tag=bla#section" aria-current="location">
           Aria override
         </Link>
-      </SsgCurrentUrlContext.Provider>
+      </LinkCurrentUrlContext.Provider>
     </ReactSdkContext.Provider>
   );
   document.body.innerHTML = markup;
@@ -71,12 +72,12 @@ test("local link is current only when pathname, search, and hash match", () => {
 test("local link preserves exact pathname behavior", () => {
   const markup = renderToStaticMarkup(
     <ReactSdkContext.Provider value={sdkContext}>
-      <SsgCurrentUrlContext.Provider value="https://example.com/path/child">
+      <LinkCurrentUrlContext.Provider value="https://example.com/path/child">
         <Link href="/path">Parent</Link>
         <Link href="/path/child">Child</Link>
         <Link href="/path/">Trailing slash</Link>
         <Link href="/Path/child">Different case</Link>
-      </SsgCurrentUrlContext.Provider>
+      </LinkCurrentUrlContext.Provider>
     </ReactSdkContext.Provider>
   );
   document.body.innerHTML = markup;
@@ -93,20 +94,24 @@ test("local link preserves exact pathname behavior", () => {
 test("external and asset links render as plain anchors", () => {
   const markup = renderToStaticMarkup(
     <ReactSdkContext.Provider value={sdkContext}>
-      <SsgCurrentUrlContext.Provider value="https://example.com/path">
+      <LinkCurrentUrlContext.Provider value="https://example.com/path">
         <Link
           href="https://example.com/path"
           prefetch="intent"
+          discover="none"
           preventScrollReset
           reloadDocument
           replace
+          relative="path"
+          state={{ from: "test" }}
           target="_blank"
+          viewTransition
           aria-current="location"
         >
           External
         </Link>
         <Link href="/assets/file.pdf">Asset</Link>
-      </SsgCurrentUrlContext.Provider>
+      </LinkCurrentUrlContext.Provider>
     </ReactSdkContext.Provider>
   );
   document.body.innerHTML = markup;
@@ -116,9 +121,13 @@ test("external and asset links render as plain anchors", () => {
   expect(links[0]?.getAttribute("target")).toBe("_blank");
   expect(links[0]?.getAttribute("aria-current")).toBe("location");
   expect(links[0]?.hasAttribute("prefetch")).toBe(false);
+  expect(links[0]?.hasAttribute("discover")).toBe(false);
   expect(links[0]?.hasAttribute("preventscrollreset")).toBe(false);
   expect(links[0]?.hasAttribute("reloaddocument")).toBe(false);
   expect(links[0]?.hasAttribute("replace")).toBe(false);
+  expect(links[0]?.hasAttribute("relative")).toBe(false);
+  expect(links[0]?.hasAttribute("state")).toBe(false);
+  expect(links[0]?.hasAttribute("viewtransition")).toBe(false);
 
   expect(links[1]?.getAttribute("href")).toBe("/assets/file.pdf");
   expect(links[1]?.getAttribute("aria-current")).toBeNull();
@@ -127,11 +136,11 @@ test("external and asset links render as plain anchors", () => {
 test("invalid absolute href renders as plain anchor", () => {
   const markup = renderToStaticMarkup(
     <ReactSdkContext.Provider value={sdkContext}>
-      <SsgCurrentUrlContext.Provider value="https://example.com/path">
+      <LinkCurrentUrlContext.Provider value="https://example.com/path">
         <Link href="http://" $webstudio$canvasOnly$assetId="asset-id">
           Invalid external
         </Link>
-      </SsgCurrentUrlContext.Provider>
+      </LinkCurrentUrlContext.Provider>
     </ReactSdkContext.Provider>
   );
   document.body.innerHTML = markup;
@@ -140,4 +149,34 @@ test("invalid absolute href renders as plain anchor", () => {
   expect(link?.getAttribute("href")).toBe("http://");
   expect(link?.getAttribute("aria-current")).toBeNull();
   expect(link?.hasAttribute("$webstudio$canvasOnly$assetId")).toBe(false);
+});
+
+test("omitted href preserves plain anchor fallback", () => {
+  const markup = renderToStaticMarkup(
+    <ReactSdkContext.Provider value={sdkContext}>
+      <LinkCurrentUrlContext.Provider value="https://example.com/path">
+        <Link>Missing href</Link>
+      </LinkCurrentUrlContext.Provider>
+    </ReactSdkContext.Provider>
+  );
+  document.body.innerHTML = markup;
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("#");
+  expect(link?.getAttribute("aria-current")).toBeNull();
+});
+
+test("current url context accepts relative paths", () => {
+  const markup = renderToStaticMarkup(
+    <ReactSdkContext.Provider value={sdkContext}>
+      <LinkCurrentUrlContext.Provider value="/path?tag=bla#section">
+        <Link href="/path?tag=bla#section">Exact</Link>
+      </LinkCurrentUrlContext.Provider>
+    </ReactSdkContext.Provider>
+  );
+  document.body.innerHTML = markup;
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("aria-current")).toBe("page");
+  expect(link?.getAttribute("class")).toBe("active");
 });

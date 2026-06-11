@@ -41,28 +41,20 @@ import {
   getCollectionEntries,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
-import { Input, Select, Textarea } from "@webstudio-is/sdk-components-react";
-
-const computeComponentKey = (props: Record<string, unknown>) => {
-  const assetId = props.$webstudio$canvasOnly$assetId;
-  const src = props.src;
-  const defaultValue = props.defaultValue;
-
-  return (
-    (typeof assetId === "string" ? assetId : undefined) ??
-    (defaultValue != null ? String(defaultValue) : undefined) ??
-    (src != null ? String(src) : undefined)
-  );
-};
-
-export const __testing__ = { computeComponentKey };
-
+import {
+  Input,
+  Link,
+  Select,
+  Textarea,
+} from "@webstudio-is/sdk-components-react/components";
+import { LinkCurrentUrlContext } from "@webstudio-is/sdk-components-react";
 import {
   $propValuesByInstanceSelectorWithMemoryProps,
   getIndexedInstanceId,
   $registeredComponentMetas,
   $selectedInstanceRenderState,
   findBlockSelector,
+  $selectedPageHash,
 } from "~/shared/nano-states";
 import { $props } from "~/shared/sync/data-stores";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
@@ -77,6 +69,7 @@ import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { TextEditor } from "../text-editor";
 import { $selectedPage, getInstanceKey } from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
+import { $currentSystem } from "~/shared/system";
 import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
@@ -88,6 +81,57 @@ import {
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
 import { richTextPlaceholders } from "~/shared/content-model";
+
+const computeComponentKey = (props: Record<string, unknown>) => {
+  const assetId = props.$webstudio$canvasOnly$assetId;
+  const src = props.src;
+  const defaultValue = props.defaultValue;
+
+  return (
+    (typeof assetId === "string" ? assetId : undefined) ??
+    (defaultValue != null ? String(defaultValue) : undefined) ??
+    (src != null ? String(src) : undefined)
+  );
+};
+
+const getPreviewCurrentUrl = (
+  currentSystem: {
+    pathname: string;
+    search: Record<string, string | undefined>;
+  },
+  hash: string
+) => {
+  // Preview renders inside the builder canvas route, so window.location points
+  // at the builder shell, not the page being previewed. Recreate the page URL
+  // from the selected page system data so :local-link state matches preview
+  // navigation, including query params and hash-only links.
+  const currentUrl = new URL(currentSystem.pathname, "https://webstudio.local");
+  currentUrl.search = new URLSearchParams(
+    Object.entries(currentSystem.search).filter(
+      (entry): entry is [string, string] => entry[1] !== undefined
+    )
+  ).toString();
+  currentUrl.hash = hash;
+  return currentUrl;
+};
+
+export const __testing__ = { computeComponentKey, getPreviewCurrentUrl };
+
+const PreviewLinkCurrentUrlProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
+  const currentSystem = useStore($currentSystem);
+  const selectedPageHash = useStore($selectedPageHash);
+  const currentUrl = getPreviewCurrentUrl(currentSystem, selectedPageHash.hash);
+
+  return (
+    <LinkCurrentUrlContext.Provider value={currentUrl}>
+      {children}
+    </LinkCurrentUrlContext.Provider>
+  );
+};
 
 const ContentEditable = ({
   placeholder,
@@ -639,7 +683,11 @@ export const WebstudioComponentPreview = forwardRef<
   const instances = useStore($instances);
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
-  const props = {
+  const props: {
+    [componentAttribute]: string;
+    [idAttribute]: string;
+    [selectorIdAttribute]: string;
+  } & Record<string, unknown> = {
     ...mergeProps(restProps, instanceProps, "merge"),
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
@@ -692,6 +740,9 @@ export const WebstudioComponentPreview = forwardRef<
     if (Component === "select") {
       Component = Select as AnyComponent;
     }
+    if (Component === "a") {
+      Component = Link as AnyComponent;
+    }
   }
 
   if (instance.component === blockComponent) {
@@ -705,7 +756,8 @@ export const WebstudioComponentPreview = forwardRef<
   if (Component === undefined) {
     return <></>;
   }
-  return (
+
+  const element = (
     <Component {...props} ref={ref}>
       {getTextContent(instanceProps) ??
         createInstanceChildrenElements({
@@ -717,4 +769,16 @@ export const WebstudioComponentPreview = forwardRef<
         })}
     </Component>
   );
+
+  if (
+    instance.component === "Link" ||
+    instance.component === "RichTextLink" ||
+    (instance.component === elementComponent && instance.tag === "a")
+  ) {
+    return (
+      <PreviewLinkCurrentUrlProvider>{element}</PreviewLinkCurrentUrlProvider>
+    );
+  }
+
+  return element;
 });

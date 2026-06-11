@@ -3,9 +3,9 @@ import {
   useLocation,
   useResolvedPath,
 } from "@remix-run/react";
-import { createLocalLink } from "@webstudio-is/sdk-components-react/local-link";
+import { createLink } from "@webstudio-is/sdk-components-react";
 
-export const Link = createLocalLink({
+export const Link = createLink({
   Link: RemixLink,
   useLocation,
   useResolvedPath,

@@ -18,7 +18,7 @@ import {
   Paragraph as Paragraph,
   Image as Image,
   Text as Text,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 

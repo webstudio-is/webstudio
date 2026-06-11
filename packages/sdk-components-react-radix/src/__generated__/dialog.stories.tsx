@@ -3,7 +3,7 @@ import {
   Button as Button,
   Text as Text,
   HtmlEmbed as HtmlEmbed,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 import {
   Dialog as Dialog,
   DialogTrigger as DialogTrigger,

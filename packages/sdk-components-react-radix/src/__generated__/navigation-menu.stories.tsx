@@ -5,7 +5,7 @@ import {
   HtmlEmbed as HtmlEmbed,
   Link as Link,
   Paragraph as Paragraph,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 import {
   NavigationMenu as NavigationMenu,
   NavigationMenuList as NavigationMenuList,

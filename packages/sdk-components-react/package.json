@@ -14,6 +14,11 @@
   ],
   "exports": {
     ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./components": {
       "webstudio": "./src/components.ts",
       "types": "./lib/types/components.d.ts",
       "import": "./lib/components.js"
@@ -27,16 +32,6 @@
       "webstudio": "./src/hooks.ts",
       "types": "./lib/types/hooks.d.ts",
       "import": "./lib/hooks.js"
-    },
-    "./local-link": {
-      "webstudio": "./src/local-link.tsx",
-      "types": "./lib/types/local-link.d.ts",
-      "import": "./lib/local-link.js"
-    },
-    "./ssg": {
-      "webstudio": "./src/ssg.tsx",
-      "types": "./lib/types/ssg.d.ts",
-      "import": "./lib/ssg.js"
     },
     "./templates": {
       "webstudio": "./src/templates.ts",

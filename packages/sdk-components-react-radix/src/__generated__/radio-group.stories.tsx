@@ -2,7 +2,7 @@ import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
   Text as Text,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 import {
   RadioGroup as RadioGroup,
   Label as Label,
