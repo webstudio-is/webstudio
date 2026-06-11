@@ -1,6 +1,8 @@
 import {
   type Expression,
   type Identifier,
+  type MemberExpression,
+  type Pattern,
   parse,
   parseExpressionAt,
 } from "acorn";
@@ -27,6 +29,35 @@ export type Diagnostic = {
 
 type ExpressionVisitor = {
   [K in Expression["type"]]: (node: Extract<Expression, { type: K }>) => void;
+};
+
+type AssignmentTargetKind = "binding" | "memberObject";
+
+const walkAssignmentTarget = (
+  node: Pattern,
+  visitor: {
+    Identifier?: (node: Identifier, kind: AssignmentTargetKind) => void;
+    MemberExpression?: (node: MemberExpression) => void;
+    UnsupportedPattern?: (node: Pattern) => void;
+  }
+) => {
+  if (node.type === "Identifier") {
+    visitor.Identifier?.(node, "binding");
+    return;
+  }
+
+  if (node.type === "MemberExpression") {
+    visitor.MemberExpression?.(node);
+    const { object } = node;
+    if (object.type === "Identifier") {
+      visitor.Identifier?.(object, "memberObject");
+    } else if (object.type === "MemberExpression") {
+      walkAssignmentTarget(object, visitor);
+    }
+    return;
+  }
+
+  visitor.UnsupportedPattern?.(node);
 };
 
 export type VariableValues =
@@ -245,7 +276,7 @@ export const lintExpression = ({
     message: string,
     severity: "error" | "warning" = "error"
   ) => {
-    return (node: Expression) => {
+    return (node: { start: number; end: number }) => {
       diagnostics.push({
         // tune error position after wrapping expression with parentheses
         from: node.start - 1,
@@ -299,8 +330,11 @@ export const lintExpression = ({
           addMessage("Assignment is supported only inside actions")(node);
           return;
         }
-        simple(node.left, {
-          Identifier(node) {
+        walkAssignmentTarget(node.left, {
+          Identifier(node, kind) {
+            if (kind !== "binding") {
+              return;
+            }
             if (availableVariables.has(node.name) === false) {
               addMessage(
                 `"${node.name}" is not defined in the scope`,
@@ -308,6 +342,9 @@ export const lintExpression = ({
               )(node);
             }
           },
+          UnsupportedPattern: addMessage(
+            "Destructuring assignment is not supported"
+          ),
         });
       },
       // parser forbids to yield inside module
@@ -417,7 +454,7 @@ export const getExpressionIdentifiers = (expression: string) => {
     simple(root, {
       Identifier: (node) => identifiers.add(node.name),
       AssignmentExpression(node) {
-        simple(node.left, {
+        walkAssignmentTarget(node.left, {
           Identifier: (node) => identifiers.add(node.name),
         });
       },
@@ -456,17 +493,49 @@ export const transpileExpression = ({
     // throw new error to trace error in our code instead of acorn
     throw Error(`${message} in ${JSON.stringify(expression)}`);
   }
+  const assignmentTargetMemberRanges: [start: number, end: number][] = [];
+  if (executable) {
+    simple(root, {
+      AssignmentExpression(node) {
+        walkAssignmentTarget(node.left, {
+          MemberExpression(node) {
+            assignmentTargetMemberRanges.push([node.start, node.end]);
+          },
+        });
+      },
+    });
+  }
   const replacements: [start: number, end: number, fragment: string][] = [];
+  const replacementIndexByRange = new Map<string, number>();
+  const addReplacement = (
+    start: number,
+    end: number,
+    fragment: string,
+    { replaceExisting = false }: { replaceExisting?: boolean } = {}
+  ) => {
+    const range = `${start}:${end}`;
+    const existingIndex = replacementIndexByRange.get(range);
+    if (existingIndex !== undefined) {
+      if (replaceExisting) {
+        replacements[existingIndex] = [start, end, fragment];
+      }
+      return;
+    }
+    replacementIndexByRange.set(range, replacements.length);
+    replacements.push([start, end, fragment]);
+  };
   const replaceIdentifier = (node: Identifier, assignee: boolean) => {
     const newName = replaceVariable?.(node.name, assignee);
     if (newName) {
-      replacements.push([node.start, node.end, newName]);
+      addReplacement(node.start, node.end, newName, {
+        replaceExisting: assignee,
+      });
     }
   };
   simple(root, {
     Identifier: (node) => replaceIdentifier(node, false),
     AssignmentExpression(node) {
-      simple(node.left, {
+      walkAssignmentTarget(node.left, {
         Identifier: (node) => replaceIdentifier(node, true),
       });
     },
@@ -474,15 +543,22 @@ export const transpileExpression = ({
       if (executable === false || node.optional) {
         return;
       }
+      if (
+        assignmentTargetMemberRanges.some(
+          ([start, end]) => start === node.start && end === node.end
+        )
+      ) {
+        return;
+      }
       // a . b -> a ?. b
       if (node.computed === false) {
         const dotIndex = expression.indexOf(".", node.object.end);
-        replacements.push([dotIndex, dotIndex, "?"]);
+        addReplacement(dotIndex, dotIndex, "?");
       }
       // a [b] -> a ?.[b]
       if (node.computed === true) {
         const dotIndex = expression.indexOf("[", node.object.end);
-        replacements.push([dotIndex, dotIndex, "?."]);
+        addReplacement(dotIndex, dotIndex, "?.");
       }
     },
     CallExpression(node) {
@@ -494,7 +570,7 @@ export const transpileExpression = ({
         // Find the opening parenthesis after the method name
         const openParenIndex = expression.indexOf("(", node.callee.end);
         if (openParenIndex !== -1) {
-          replacements.push([openParenIndex, openParenIndex, "?."]);
+          addReplacement(openParenIndex, openParenIndex, "?.");
         }
       }
     },

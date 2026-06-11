@@ -160,6 +160,24 @@ test("restore expression variables", () => {
   ).toEqual("$ws$dataSource$myId + missingVariable");
 });
 
+test("roundtrip system variable in assignment expression", () => {
+  const expression = `system.origin = 123 ? 'test' : "bla"`;
+  const restoredExpression = restoreExpressionVariables({
+    expression,
+    maskedIdByName: new Map([["system", SYSTEM_VARIABLE_ID]]),
+  });
+
+  expect(restoredExpression).toEqual(
+    `$ws$system.origin = 123 ? 'test' : "bla"`
+  );
+  expect(
+    unsetExpressionVariables({
+      expression: restoredExpression,
+      unsetNameById: new Map([[SYSTEM_VARIABLE_ID, "system"]]),
+    })
+  ).toEqual(expression);
+});
+
 test("replace data source ids in expression", () => {
   expect(
     replaceDataSourcesInExpression(

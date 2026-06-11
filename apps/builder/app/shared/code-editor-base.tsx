@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   Annotation,
+  EditorSelection,
   EditorState,
   StateEffect,
   type Extension,
@@ -54,6 +55,21 @@ const ExternalChange = Annotation.define<boolean>();
 const minHeightVar = "--ws-code-editor-min-height";
 const maxHeightVar = "--ws-code-editor-max-height";
 const maximizeIconVisibilityVar = "--ws-code-editor-maximize-icon-visibility";
+
+export const clampEditorSelection = (
+  selection: EditorSelection,
+  length: number
+) => {
+  return EditorSelection.create(
+    selection.ranges.map((range) =>
+      EditorSelection.range(
+        Math.min(range.anchor, length),
+        Math.min(range.head, length)
+      )
+    ),
+    selection.mainIndex
+  );
+};
 
 export const getCodeEditorCssVars = ({
   minHeight,
@@ -377,6 +393,7 @@ export const EditorContent = ({
 
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: value },
+      selection: clampEditorSelection(view.state.selection, value.length),
       annotations: [ExternalChange.of(true)],
     });
   }, [value]);
