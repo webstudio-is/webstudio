@@ -4,11 +4,8 @@
  */
 import { forwardRef, useContext, type ComponentProps } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import {
-  getCurrentLinkProps,
-  isInternalHref,
-  stripRouterOnlyProps,
-} from "./link-utils";
+import { isInternalHref } from "@webstudio-is/sdk/link-utils";
+import { getCurrentLinkProps, stripRouterOnlyProps } from "./link-utils";
 import { LinkCurrentUrlContext } from "./link-current-url";
 
 export const defaultTag = "a";

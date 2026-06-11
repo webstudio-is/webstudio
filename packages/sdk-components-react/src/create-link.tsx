@@ -11,12 +11,8 @@ import {
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { BaseLink } from "./link";
 import { LinkCurrentUrlContext } from "./link-current-url";
-import {
-  getCurrentLinkProps,
-  isInternalHref,
-  stripRouterOnlyProps,
-  type UrlParts,
-} from "./link-utils";
+import { isInternalHref, type UrlParts } from "@webstudio-is/sdk/link-utils";
+import { getCurrentLinkProps, stripRouterOnlyProps } from "./link-utils";
 
 export type LinkProps = Omit<
   ComponentPropsWithoutRef<typeof BaseLink>,

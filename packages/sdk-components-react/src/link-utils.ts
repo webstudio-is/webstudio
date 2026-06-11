@@ -1,19 +1,11 @@
 import type { ComponentPropsWithoutRef } from "react";
 import {
-  isInternalHref,
   isLocalLinkActive,
   resolveLocalLinkUrl,
   type UrlParts,
 } from "@webstudio-is/sdk/link-utils";
 
 type AnchorProps = ComponentPropsWithoutRef<"a">;
-
-export {
-  isInternalHref,
-  isLocalLinkActive,
-  resolveLocalLinkUrl,
-  type UrlParts,
-};
 
 export const getCurrentLinkProps = <
   Props extends {
