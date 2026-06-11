@@ -44,10 +44,37 @@ const previewLinkText = {
   homeLink: "Preview home link",
   pageLink: "Preview page link",
   pageAnchor: "Preview page anchor",
+  pageQueryLink: "Preview page query link",
   hashLink: "Preview hash link",
 } as const;
 const previewPageId = "preview-links-page";
 const viewerToken = "preview-links-e2e-viewer-token";
+
+type PreviewLink = {
+  key: string;
+  text: string;
+  href: string;
+  component?: string;
+  tag?: string;
+};
+
+const previewLinks: PreviewLink[] = [
+  { key: "home-link", text: previewLinkText.homeLink, href: "/" },
+  { key: "page-link", text: previewLinkText.pageLink, href: "/my-page" },
+  {
+    key: "page-anchor",
+    text: previewLinkText.pageAnchor,
+    href: "/my-page",
+    component: "ws:element",
+    tag: "a",
+  },
+  {
+    key: "page-query-link",
+    text: previewLinkText.pageQueryLink,
+    href: "/my-page?tab=details",
+  },
+  { key: "hash-link", text: previewLinkText.hashLink, href: "#section" },
+] as const;
 
 const getPreviewUrl = ({
   pageId,
@@ -155,6 +182,32 @@ const addTextLink = ({
   });
 };
 
+const addPreviewLinks = ({
+  instances,
+  props,
+  parentId,
+  prefix,
+}: {
+  instances: InstanceData[];
+  props: PropData[];
+  parentId: string;
+  prefix: string;
+}) => {
+  for (const link of previewLinks) {
+    const id = `${prefix}-${link.key}`;
+    addTextLink({
+      instances,
+      props,
+      id,
+      text: link.text,
+      href: link.href,
+      component: link.component,
+      tag: link.tag,
+    });
+    appendChild(instances, parentId, id);
+  }
+};
+
 const preparePreviewLinksProject = async () => {
   const build = await loadDevBuild({ projectId: fixture.projectId });
   const pages = JSON.parse(build.pages) as PagesData;
@@ -208,77 +261,18 @@ const preparePreviewLinksProject = async () => {
     }
   );
 
-  addTextLink({
+  addPreviewLinks({
     instances,
     props,
-    id: "preview-home-link",
-    text: previewLinkText.homeLink,
-    href: "/",
+    parentId: homeContentId,
+    prefix: "preview-home",
   });
-  addTextLink({
+  addPreviewLinks({
     instances,
     props,
-    id: "preview-page-link",
-    text: previewLinkText.pageLink,
-    href: "/my-page",
+    parentId: pageContentId,
+    prefix: "preview-page",
   });
-  addTextLink({
-    instances,
-    props,
-    id: "preview-page-anchor",
-    component: "ws:element",
-    tag: "a",
-    text: previewLinkText.pageAnchor,
-    href: "/my-page",
-  });
-  addTextLink({
-    instances,
-    props,
-    id: "preview-hash-link",
-    text: previewLinkText.hashLink,
-    href: "#section",
-  });
-
-  appendChild(instances, homeContentId, "preview-home-link");
-  appendChild(instances, homeContentId, "preview-page-link");
-  appendChild(instances, homeContentId, "preview-page-anchor");
-  appendChild(instances, homeContentId, "preview-hash-link");
-
-  addTextLink({
-    instances,
-    props,
-    id: "preview-page-back-link",
-    text: previewLinkText.homeLink,
-    href: "/",
-  });
-  addTextLink({
-    instances,
-    props,
-    id: "preview-page-self-link",
-    text: previewLinkText.pageLink,
-    href: "/my-page",
-  });
-  addTextLink({
-    instances,
-    props,
-    id: "preview-page-self-anchor",
-    component: "ws:element",
-    tag: "a",
-    text: previewLinkText.pageAnchor,
-    href: "/my-page",
-  });
-  addTextLink({
-    instances,
-    props,
-    id: "preview-page-hash-link",
-    text: previewLinkText.hashLink,
-    href: "#section",
-  });
-
-  appendChild(instances, pageContentId, "preview-page-back-link");
-  appendChild(instances, pageContentId, "preview-page-self-link");
-  appendChild(instances, pageContentId, "preview-page-self-anchor");
-  appendChild(instances, pageContentId, "preview-page-hash-link");
 
   await updateBuild(build.id, {
     pages: JSON.stringify(pages),
@@ -325,6 +319,11 @@ test("Preview links expose current page state for component and element anchors"
       text: previewLinkText.pageAnchor,
       active: false,
     });
+    await expectActiveLink({
+      canvas,
+      text: previewLinkText.pageQueryLink,
+      active: false,
+    });
 
     await canvas.getByRole("link", { name: previewLinkText.pageLink }).click();
     canvas = await waitForCanvasFrame({ page });
@@ -341,6 +340,31 @@ test("Preview links expose current page state for component and element anchors"
     await expectActiveLink({
       canvas,
       text: previewLinkText.pageAnchor,
+      active: true,
+    });
+    await expectActiveLink({
+      canvas,
+      text: previewLinkText.pageQueryLink,
+      active: false,
+    });
+
+    await canvas
+      .getByRole("link", { name: previewLinkText.pageQueryLink })
+      .click();
+    canvas = await waitForCanvasFrame({ page });
+    await expectActiveLink({
+      canvas,
+      text: previewLinkText.pageLink,
+      active: false,
+    });
+    await expectActiveLink({
+      canvas,
+      text: previewLinkText.pageAnchor,
+      active: false,
+    });
+    await expectActiveLink({
+      canvas,
+      text: previewLinkText.pageQueryLink,
       active: true,
     });
 
