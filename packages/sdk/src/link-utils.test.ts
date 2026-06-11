@@ -1,25 +1,25 @@
 import { expect, test } from "vitest";
 import {
-  isLocalHref,
+  isInternalHref,
   isLocalLinkActive,
   resolveLocalLinkUrl,
-} from "./link-utils";
+} from "./index";
 
 test("href is local unless it is absolute, protocol-relative, or an asset", () => {
-  expect(isLocalHref("/path", "/assets/")).toBe(true);
-  expect(isLocalHref("?tag=bla", "/assets/")).toBe(true);
-  expect(isLocalHref("#section", "/assets/")).toBe(true);
-  expect(isLocalHref("", "/assets/")).toBe(true);
+  expect(isInternalHref("/path", "/assets/")).toBe(true);
+  expect(isInternalHref("?tag=bla", "/assets/")).toBe(true);
+  expect(isInternalHref("#section", "/assets/")).toBe(true);
+  expect(isInternalHref("", "/assets/")).toBe(true);
 
-  expect(isLocalHref("https://example.com/path", "/assets/")).toBe(false);
-  expect(isLocalHref("//example.com/path", "/assets/")).toBe(false);
-  expect(isLocalHref("mailto:hello@example.com", "/assets/")).toBe(false);
-  expect(isLocalHref("/assets/file.pdf", "/assets/")).toBe(false);
+  expect(isInternalHref("https://example.com/path", "/assets/")).toBe(false);
+  expect(isInternalHref("//example.com/path", "/assets/")).toBe(false);
+  expect(isInternalHref("mailto:hello@example.com", "/assets/")).toBe(false);
+  expect(isInternalHref("/assets/file.pdf", "/assets/")).toBe(false);
 });
 
 test("asset base url only excludes matching root-relative asset paths", () => {
-  expect(isLocalHref("/assets", "/assets/")).toBe(true);
-  expect(isLocalHref("/assets2/file.pdf", "/assets/")).toBe(true);
+  expect(isInternalHref("/assets", "/assets/")).toBe(true);
+  expect(isInternalHref("/assets2/file.pdf", "/assets/")).toBe(true);
 });
 
 test("local link matches exact pathname, search, and hash", () => {

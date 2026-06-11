@@ -11,7 +11,7 @@ import {
 } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
 import { ReactSdkContext, useResource } from "@webstudio-is/react-sdk/runtime";
-import { HtmlEmbed } from "@webstudio-is/sdk-components-react";
+import { HtmlEmbed } from "@webstudio-is/sdk-components-react/components";
 import { Link } from "./link";
 
 (
@@ -215,6 +215,8 @@ test("asset base url only excludes matching root-relative asset paths", async ()
 
   const links = Array.from(document.querySelectorAll("a"));
 
+  expect(links[0]?.getAttribute("href")).toBe("/assets");
+  expect(links[1]?.getAttribute("href")).toBe("/assets2/file.pdf");
   expect(links[0]?.getAttribute("data-discover")).toBe("true");
   expect(links[1]?.getAttribute("data-discover")).toBe("true");
 });
@@ -338,6 +340,30 @@ test("empty local link preserves the current search and clears the hash", async 
   expect(router.state.location.hash).toBe("");
 });
 
+test("omitted href renders plain anchor fallback", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/path",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link>Missing href</Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+    ],
+    { initialEntries: ["/path"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("#");
+  expect(link?.getAttribute("aria-current")).toBeNull();
+  expect(link?.hasAttribute("data-discover")).toBe(false);
+});
+
 test("router link forwards navigation props and resolves relative href", async () => {
   const router = createMemoryRouter(
     [
@@ -382,6 +408,36 @@ test("router link forwards navigation props and resolves relative href", async (
   expect(router.state.location.hash).toBe("#section");
 });
 
+test("router link forwards discovery props", async () => {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="/next" discover="none">
+              Next
+            </Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+      {
+        path: "/next",
+        element: <div>Next route</div>,
+      },
+    ],
+    { initialEntries: ["/"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("/next");
+  expect(link?.hasAttribute("data-discover")).toBe(false);
+  expect(link?.hasAttribute("discover")).toBe(false);
+});
+
 test("router link calls onClick and respects preventDefault", async () => {
   const onClick = vi.fn((event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
@@ -409,6 +465,52 @@ test("router link calls onClick and respects preventDefault", async () => {
   await render(<RouterProvider router={router} />);
 
   const link = document.querySelector("a");
+
+  await act(async () => {
+    link?.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+      })
+    );
+    await Promise.resolve();
+  });
+
+  expect(onClick).toHaveBeenCalledTimes(1);
+  expect(router.state.location.pathname).toBe("/");
+});
+
+test("reloadDocument router link still calls onClick", async () => {
+  const onClick = vi.fn((event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+  });
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/",
+        element: (
+          <ReactSdkContext.Provider value={sdkContext}>
+            <Link href="/next" reloadDocument onClick={onClick}>
+              Next
+            </Link>
+          </ReactSdkContext.Provider>
+        ),
+      },
+      {
+        path: "/next",
+        element: <div>Next page</div>,
+      },
+    ],
+    { initialEntries: ["/"] }
+  );
+
+  await render(<RouterProvider router={router} />);
+
+  const link = document.querySelector("a");
+
+  expect(link?.getAttribute("href")).toBe("/next");
+  expect(link?.getAttribute("data-discover")).toBe("true");
 
   await act(async () => {
     link?.dispatchEvent(

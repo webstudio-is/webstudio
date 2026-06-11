@@ -16,11 +16,11 @@ export default defineConfig({
   build: {
     lib: {
       entry: [
+        maybeEntry("src/index.ts"),
         hasPrivateFolders ? "private-src/components.ts" : "src/components.ts",
         "src/metas.ts",
         "src/hooks.ts",
-        maybeEntry("src/local-link.tsx"),
-        maybeEntry("src/ssg.tsx"),
+        maybeEntry("src/create-link.tsx"),
         "src/templates.ts",
       ].filter((entry) => entry !== undefined),
       formats: ["es"],

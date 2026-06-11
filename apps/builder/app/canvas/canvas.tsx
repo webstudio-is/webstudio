@@ -13,7 +13,7 @@ import { coreTemplates } from "@webstudio-is/sdk/core-templates";
 import type { Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader, wsVideoLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import * as baseComponents from "@webstudio-is/sdk-components-react";
+import * as baseComponents from "@webstudio-is/sdk-components-react/components";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { hooks as baseComponentHooks } from "@webstudio-is/sdk-components-react/hooks";
 import * as baseComponentTemplates from "@webstudio-is/sdk-components-react/templates";

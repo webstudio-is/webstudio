@@ -4,7 +4,7 @@ import {
   PageSettingsTitle,
   ReactSdkContext,
 } from "@webstudio-is/react-sdk/runtime";
-import { SsgCurrentUrlContext } from "@webstudio-is/sdk-components-react/ssg";
+import { LinkCurrentUrlContext } from "@webstudio-is/sdk-components-react";
 import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
 import { Page, breakpoints, siteName } from "__CLIENT__";
 
@@ -20,10 +20,10 @@ const PageComponent = ({ data }: { data: PageContext["data"] }) => {
         onError: console.error,
       }}
     >
-      <SsgCurrentUrlContext.Provider value={url}>
+      <LinkCurrentUrlContext.Provider value={url}>
         {/* Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages */}
         <Page key={url} system={system} />
-      </SsgCurrentUrlContext.Provider>
+      </LinkCurrentUrlContext.Provider>
       <PageSettingsMeta
         url={url}
         pageMeta={pageMeta}

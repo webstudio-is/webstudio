@@ -22,6 +22,7 @@ export * from "./expression";
 export * from "./resources-generator";
 export * from "./page-meta-generator";
 export * from "./url-pattern";
+export * from "./link-utils";
 export * from "./css";
 export * from "./__generated__/tags";
 

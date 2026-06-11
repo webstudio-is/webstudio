@@ -1,8 +1,8 @@
-import { Link as RemixLink, useLocation, useResolvedPath } from "react-router";
-import { createLocalLink } from "@webstudio-is/sdk-components-react/local-link";
+import { Link as RouterLink, useLocation, useResolvedPath } from "react-router";
+import { createLink } from "@webstudio-is/sdk-components-react";
 
-export const Link = createLocalLink({
-  Link: RemixLink,
+export const Link = createLink({
+  Link: RouterLink,
   useLocation,
   useResolvedPath,
 });

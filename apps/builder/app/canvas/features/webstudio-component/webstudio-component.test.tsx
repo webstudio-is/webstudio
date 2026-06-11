@@ -4,7 +4,7 @@
 import { describe, test, expect } from "vitest";
 import { __testing__ } from "./webstudio-component";
 
-const { computeComponentKey } = __testing__;
+const { computeComponentKey, getPreviewCurrentUrl } = __testing__;
 
 describe("computeComponentKey - key generation logic", () => {
   test("prioritizes assetId over other props", () => {
@@ -77,5 +77,25 @@ describe("computeComponentKey - key generation logic", () => {
     const key2 = computeComponentKey({ src: "/assets/video2.mp4" });
 
     expect(key1).not.toBe(key2);
+  });
+});
+
+describe("getPreviewCurrentUrl", () => {
+  test("builds current preview url from pathname, search, and selected hash", () => {
+    const url = getPreviewCurrentUrl(
+      {
+        pathname: "/my-page",
+        search: {
+          tag: "blue",
+          empty: "",
+          missing: undefined,
+        },
+      },
+      "#section"
+    );
+
+    expect(url.pathname).toBe("/my-page");
+    expect(url.search).toBe("?tag=blue&empty=");
+    expect(url.hash).toBe("#section");
   });
 });

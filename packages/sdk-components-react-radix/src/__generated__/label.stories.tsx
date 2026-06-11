@@ -1,4 +1,4 @@
-import { Box as Box } from "@webstudio-is/sdk-components-react";
+import { Box as Box } from "@webstudio-is/sdk-components-react/components";
 import { Label as Label } from "../components";
 
 const Component = () => {

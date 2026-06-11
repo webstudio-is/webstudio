@@ -11,7 +11,7 @@ import { Body as Body } from "@webstudio-is/sdk-components-react-router";
 import {
   Box as Box,
   Heading as Heading,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 import {
   AnimateChildren as AnimateChildren,
   AnimateText as AnimateText,
