@@ -43,6 +43,7 @@ let fixture: SeededContentModeProject;
 const previewLinkText = {
   homeLink: "Preview home link",
   pageLink: "Preview page link",
+  richTextLink: "Preview rich text link",
   pageAnchor: "Preview page anchor",
   pageQueryLink: "Preview page query link",
   hashLink: "Preview hash link",
@@ -61,6 +62,12 @@ type PreviewLink = {
 const previewLinks: PreviewLink[] = [
   { key: "home-link", text: previewLinkText.homeLink, href: "/" },
   { key: "page-link", text: previewLinkText.pageLink, href: "/my-page" },
+  {
+    key: "rich-text-link",
+    text: previewLinkText.richTextLink,
+    href: "/my-page",
+    component: "RichTextLink",
+  },
   {
     key: "page-anchor",
     text: previewLinkText.pageAnchor,
@@ -298,7 +305,7 @@ test.beforeAll(async () => {
   await preparePreviewLinksProject();
 });
 
-test("Preview links expose current page state for component and element anchors", async () => {
+test("Preview links expose current page state for components and element anchors", async () => {
   const { page, close } = await newIsolatedPage();
 
   try {
@@ -312,6 +319,11 @@ test("Preview links expose current page state for component and element anchors"
     await expectActiveLink({
       canvas,
       text: previewLinkText.pageLink,
+      active: false,
+    });
+    await expectActiveLink({
+      canvas,
+      text: previewLinkText.richTextLink,
       active: false,
     });
     await expectActiveLink({
@@ -339,6 +351,11 @@ test("Preview links expose current page state for component and element anchors"
     });
     await expectActiveLink({
       canvas,
+      text: previewLinkText.richTextLink,
+      active: true,
+    });
+    await expectActiveLink({
+      canvas,
       text: previewLinkText.pageAnchor,
       active: true,
     });
@@ -355,6 +372,11 @@ test("Preview links expose current page state for component and element anchors"
     await expectActiveLink({
       canvas,
       text: previewLinkText.pageLink,
+      active: false,
+    });
+    await expectActiveLink({
+      canvas,
+      text: previewLinkText.richTextLink,
       active: false,
     });
     await expectActiveLink({

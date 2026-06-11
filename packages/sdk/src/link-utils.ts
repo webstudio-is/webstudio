@@ -6,7 +6,9 @@ export type UrlParts = {
 
 export const isInternalHref = (href: string, assetBaseUrl: string) =>
   /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href) === false &&
-  (href.startsWith("/") && href.startsWith(assetBaseUrl)) === false;
+  (assetBaseUrl !== "" &&
+    href.startsWith("/") &&
+    href.startsWith(assetBaseUrl)) === false;
 
 /**
  * React Router resolves href="" and hash-only hrefs without preserving the

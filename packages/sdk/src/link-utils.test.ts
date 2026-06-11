@@ -22,6 +22,11 @@ test("asset base url only excludes matching root-relative asset paths", () => {
   expect(isInternalHref("/assets2/file.pdf", "/assets/")).toBe(true);
 });
 
+test("empty asset base url does not exclude every root-relative href", () => {
+  expect(isInternalHref("/path", "")).toBe(true);
+  expect(isInternalHref("/assets/file.pdf", "")).toBe(true);
+});
+
 test("local link matches exact pathname, search, and hash", () => {
   expect(
     isLocalLinkActive(
