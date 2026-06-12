@@ -16,10 +16,10 @@ export const StyleSourceBadge = styled(Text, {
   variants: {
     source: {
       local: {
-        backgroundColor: theme.colors.backgroundStyleSourceLocal,
+        backgroundColor: theme.colors.backgroundStyleSourceSelected,
       },
       token: {
-        backgroundColor: theme.colors.backgroundStyleSourceToken,
+        backgroundColor: theme.colors.backgroundStyleSourceSelected,
       },
       tag: {
         backgroundColor: theme.colors.backgroundStyleSourceTag,

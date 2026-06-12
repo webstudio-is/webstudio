@@ -96,14 +96,14 @@ const StyleSourceContainer = styled(Box, {
     source: {
       local: {
         order: 1,
-        backgroundColor: theme.colors.backgroundStyleSourceLocal,
+        backgroundColor: theme.colors.backgroundStyleSourceSelected,
         [menuTriggerGradientVar]:
-          theme.colors.backgroundStyleSourceGradientLocal,
+          theme.colors.backgroundStyleSourceGradientSelected,
       },
       token: {
-        backgroundColor: theme.colors.backgroundStyleSourceToken,
+        backgroundColor: theme.colors.backgroundStyleSourceSelected,
         [menuTriggerGradientVar]:
-          theme.colors.backgroundStyleSourceGradientToken,
+          theme.colors.backgroundStyleSourceGradientSelected,
       },
       tag: {
         backgroundColor: theme.colors.backgroundStyleSourceTag,
@@ -161,10 +161,10 @@ const StyleSourceState = styled(Text, {
   variants: {
     source: {
       local: {
-        backgroundColor: theme.colors.backgroundStyleSourceLocal,
+        backgroundColor: theme.colors.backgroundStyleSourceSelected,
       },
       token: {
-        backgroundColor: theme.colors.backgroundStyleSourceToken,
+        backgroundColor: theme.colors.backgroundStyleSourceSelected,
       },
       tag: {
         backgroundColor: theme.colors.backgroundStyleSourceTag,
