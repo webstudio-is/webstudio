@@ -6,7 +6,6 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
     "typecheck": "tsgo --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run"
   },
@@ -68,7 +67,6 @@
     "match-sorter": "^8.0.0",
     "react-colorful": "^5.6.1",
     "react-hot-toast": "^2.5.1",
-    "token-transformer": "^0.0.28",
     "type-fest": "^4.37.0",
     "use-debounce": "^10.0.4",
     "warn-once": "^0.1.1"

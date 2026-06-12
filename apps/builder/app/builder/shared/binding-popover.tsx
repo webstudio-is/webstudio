@@ -327,12 +327,12 @@ const BindingButton = forwardRef<
               width: 12,
               height: 12,
               borderRadius: "50%",
-              backgroundColor: theme.colors.backgroundStyleSourceToken,
+              backgroundColor: theme.colors.backgroundStyleSourceSelected,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               "&[data-variant=bound]": {
-                backgroundColor: theme.colors.backgroundStyleSourceLocal,
+                backgroundColor: theme.colors.backgroundStyleSourceSelected,
               },
               "&[data-variant=overwritten]": {
                 backgroundColor: theme.colors.borderOverwrittenMain,

@@ -1,7 +1,7 @@
 import { createStitches } from "@stitches/react";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
-import * as figma from "./__generated__/figma-design-tokens";
+import * as tokens from "./design-tokens";
 
 const spacing = {
   0: "0px",
@@ -45,11 +45,11 @@ const spacing = {
 const { styled, css, getCssText, globalCss, keyframes, config, reset } =
   createStitches({
     theme: {
-      colors: figma.color,
+      colors: tokens.color,
       fonts: {
-        ...figma.fontFamilies,
-        sans: figma.fontFamilies.inter,
-        mono: figma.fontFamilies.robotoMono,
+        ...tokens.fontFamilies,
+        sans: tokens.fontFamilies.inter,
+        mono: tokens.fontFamilies.robotoMono,
       },
 
       opacity: {
@@ -94,7 +94,7 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         easeOutQuart: "cubic-bezier(0.25, 1, 0.5, 1)",
         easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
       },
-      shadows: figma.boxShadow,
+      shadows: tokens.boxShadow,
 
       // Semantic values
       panel: {
