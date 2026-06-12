@@ -249,6 +249,55 @@ describe("patchBuild", () => {
     ).toBe("/company");
   });
 
+  test("applies data source variable additions", async () => {
+    const result = await createBuildPatchUpdate({
+      build: buildRow,
+      clientVersion: 3,
+      transactions: [
+        transaction({
+          payload: [
+            {
+              namespace: "dataSources",
+              patches: [
+                {
+                  op: "add",
+                  path: ["variable-1"],
+                  value: {
+                    id: "variable-1",
+                    scopeInstanceId: "body-1",
+                    name: "title",
+                    type: "variable",
+                    value: { type: "string", value: "" },
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(result).toMatchObject({
+      status: "ok",
+      nextVersion: 4,
+      update: {
+        lastTransactionId: "tx-1",
+        version: 4,
+      },
+    });
+    if (result.status === "ok") {
+      expect(JSON.parse(result.update?.dataSources ?? "")).toEqual([
+        {
+          id: "variable-1",
+          scopeInstanceId: "body-1",
+          name: "title",
+          type: "variable",
+          value: { type: "string", value: "" },
+        },
+      ]);
+    }
+  });
+
   test("returns ok when retrying a transaction already saved by the server", async () => {
     let didPatch = false;
     server.use(

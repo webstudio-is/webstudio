@@ -303,7 +303,16 @@ const ParameterForm = forwardRef<
 });
 ParameterForm.displayName = "ParameterForm";
 
-const saveVariable = (variable: undefined | DataSource, formData: FormData) => {
+type ValueVariableType = Extract<
+  VariableType,
+  "string" | "number" | "boolean" | "json"
+>;
+
+const saveVariable = (
+  variable: undefined | DataSource,
+  type: ValueVariableType,
+  formData: FormData
+) => {
   const dataSourceId = variable?.id ?? nanoid();
   // preserve existing instance scope when edit
   const scopeInstanceId =
@@ -311,7 +320,6 @@ const saveVariable = (variable: undefined | DataSource, formData: FormData) => {
   if (scopeInstanceId === undefined) {
     return;
   }
-  const type = z.string().parse(formData.get("type"));
   const name = z.string().parse(formData.get("name"));
   const value = z.string().nullable().parse(formData.get("value"));
   let variableValue: Extract<DataSource, { type: "variable" }>["value"];
@@ -349,13 +357,15 @@ const saveVariable = (variable: undefined | DataSource, formData: FormData) => {
 const useValuePanelRef = ({
   ref,
   variable,
+  type,
 }: {
   ref: Ref<undefined | PanelApi>;
   variable?: DataSource;
+  type: ValueVariableType;
 }) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      saveVariable(variable, formData);
+      saveVariable(variable, type, formData);
     },
   }));
 };
@@ -369,7 +379,7 @@ const StringForm = forwardRef<
   }
 >(({ variable, value: unknownValue, onChange }, ref) => {
   const value = typeof unknownValue === "string" ? unknownValue : "";
-  useValuePanelRef({ ref, variable });
+  useValuePanelRef({ ref, variable, type: "string" });
   const valueId = useId();
   return (
     <Flex direction="column" css={{ gap: theme.spacing[3] }}>
@@ -429,7 +439,7 @@ const NumberForm = forwardRef<
     valueRef.current?.setCustomValidity(validateNumberValue(value));
     setValueError("");
   }, [value]);
-  useValuePanelRef({ ref, variable });
+  useValuePanelRef({ ref, variable, type: "number" });
   const valueId = useId();
   return (
     <>
@@ -465,7 +475,7 @@ const BooleanForm = forwardRef<
   }
 >(({ variable, value: unknownValue, onChange }, ref) => {
   const value = typeof unknownValue === "boolean" ? unknownValue : false;
-  useValuePanelRef({ ref, variable });
+  useValuePanelRef({ ref, variable, type: "boolean" });
   const valueId = useId();
   return (
     <>
@@ -515,7 +525,7 @@ const JsonForm = forwardRef<
     valueRef.current?.setCustomValidity(validateJsonValue(value));
     setValueError("");
   }, [value]);
-  useValuePanelRef({ ref, variable });
+  useValuePanelRef({ ref, variable, type: "json" });
   return (
     <>
       <input
@@ -728,6 +738,7 @@ const VariablePreview = ({
           css={{ position: "absolute", inset: 0 }}
         >
           <Button
+            type="button"
             color="neutral"
             disabled={hasPendingResources}
             onClick={onLoadData}
@@ -908,6 +919,7 @@ const VariablePopoverContent = ({
               variableType === "graphql-resource") && (
               <Tooltip content="Copy resource as cURL command" side="bottom">
                 <Button
+                  type="button"
                   aria-label="Copy resource as cURL command"
                   prefix={<CopyIcon />}
                   color="ghost"
@@ -920,6 +932,7 @@ const VariablePopoverContent = ({
               variableType === "system-resource") && (
               <Tooltip content="Refresh resource data" side="bottom">
                 <Button
+                  type="button"
                   aria-label="Refresh resource data"
                   prefix={<RefreshIcon />}
                   color="ghost"
