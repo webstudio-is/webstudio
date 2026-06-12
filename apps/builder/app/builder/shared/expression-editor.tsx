@@ -50,8 +50,11 @@ import {
 
 export type { EditorApi };
 
-export const formatValue = (value: unknown) => {
+export const formatValue = (value: unknown): string => {
   try {
+    if (value === undefined) {
+      return "";
+    }
     if (Array.isArray(value)) {
       // format arrays as multiline
       return JSON.stringify(value, null, 2);
@@ -61,7 +64,7 @@ export const formatValue = (value: unknown) => {
       // syntax highlighting as expression instead of block
       return `(${JSON.stringify(value, null, 2)})`;
     }
-    return JSON.stringify(value);
+    return JSON.stringify(value) ?? "";
   } catch {
     // show nothing when value is invalid
     return "";
