@@ -1,4 +1,4 @@
-import { type Root, createRoot } from "react-dom/client";
+import { type Root, hydrateRoot } from "react-dom/client";
 import type { OnRenderClientSync } from "vike/types";
 
 let root: Root;
@@ -19,7 +19,8 @@ export const onRenderClient: OnRenderClientSync = (pageContext) => {
     </>
   );
   if (root === undefined) {
-    root = createRoot(document.documentElement);
+    root = hydrateRoot(document.documentElement, htmlContent);
+    return;
   }
   document.documentElement.lang = lang;
   root.render(htmlContent);
