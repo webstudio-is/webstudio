@@ -70,6 +70,5 @@ export const propsAccordionContent: Record<string, PropMeta> = {
     required: false,
     control: "boolean",
     type: "boolean",
-    defaultValue: true,
   },
 };
