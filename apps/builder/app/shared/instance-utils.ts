@@ -505,18 +505,14 @@ export const reparentInstanceMutable = (
       ? initialSourceInstancePath[1].instance.id
       : undefined;
   const targetSlot = data.instances.get(dropTarget.parentSelector[0]);
-  if (
+  const isSameSharedSlotFragment =
     sourceFragmentId !== undefined &&
     targetSlot?.component === "Slot" &&
     targetSlot.children[0]?.type === "id" &&
-    targetSlot.children[0].value === sourceFragmentId
-  ) {
-    return sourceInstanceSelector;
-  }
-  const sourceInstancePath = detachSharedSlotContentMutable(
-    data,
-    initialSourceInstancePath ?? []
-  );
+    targetSlot.children[0].value === sourceFragmentId;
+  const sourceInstancePath = isSameSharedSlotFragment
+    ? (initialSourceInstancePath ?? [])
+    : detachSharedSlotContentMutable(data, initialSourceInstancePath ?? []);
   sourceInstanceSelector = sourceInstancePath[0]?.instanceSelector;
   if (sourceInstanceSelector === undefined) {
     return;
@@ -621,6 +617,21 @@ export const reparentInstance = (
   });
 };
 
+const countInstanceChildReferences = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  let count = 0;
+  for (const instance of instances.values()) {
+    for (const child of instance.children) {
+      if (child.type === "id" && child.value === instanceId) {
+        count += 1;
+      }
+    }
+  }
+  return count;
+};
+
 export const deleteInstanceMutable = (
   data: Omit<WebstudioData, "pages">,
   instancePath: undefined | InstancePath
@@ -628,7 +639,6 @@ export const deleteInstanceMutable = (
   if (instancePath === undefined) {
     return false;
   }
-  instancePath = detachSharedSlotContentMutable(data, instancePath);
   const {
     instances,
     props,
@@ -650,7 +660,8 @@ export const deleteInstanceMutable = (
   if (
     parentInstance?.component === "Fragment" &&
     parentInstance.children.length === 1 &&
-    grandparentInstance
+    grandparentInstance &&
+    countInstanceChildReferences(instances, parentInstance.id) < 2
   ) {
     targetInstance = parentInstance;
     parentInstance = grandparentInstance;
@@ -705,21 +716,6 @@ export const deleteInstanceMutable = (
     styles,
   });
   return true;
-};
-
-const countInstanceChildReferences = (
-  instances: Instances,
-  instanceId: Instance["id"]
-) => {
-  let count = 0;
-  for (const instance of instances.values()) {
-    for (const child of instance.children) {
-      if (child.type === "id" && child.value === instanceId) {
-        count += 1;
-      }
-    }
-  }
-  return count;
 };
 
 const cloneSharedSlotFragmentMutable = (

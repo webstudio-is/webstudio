@@ -217,6 +217,59 @@ describe("insert page copy", () => {
     });
   });
 
+  test("preserves slot content ids when duplicating page", () => {
+    const dataWithoutPages = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Slot ws:id="slotId">
+          <$.Fragment ws:id="fragmentId">
+            <$.Box ws:id="boxId"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    const data = getWebstudioDataStub({
+      ...dataWithoutPages,
+      pages: migratePages({
+        meta: {},
+        homePage: {
+          id: "pageId",
+          name: "Name",
+          path: "",
+          title: `"Title"`,
+          meta: {},
+          rootInstanceId: "bodyId",
+        },
+        pages: [],
+        folders: [createRootFolder(["pageId"])],
+      }),
+    });
+
+    insertPageCopyMutable({
+      source: { data, pageId: "pageId" },
+      target: { data, folderId: ROOT_FOLDER_ID },
+    });
+
+    const copiedPage = getCopiedPages(data)[0];
+    expect(copiedPage.rootInstanceId).not.toBe("bodyId");
+    const copiedBody = data.instances.get(copiedPage.rootInstanceId);
+    const copiedSlotId = copiedBody?.children[0]?.value;
+    if (copiedSlotId === undefined) {
+      throw Error("Expected copied slot id");
+    }
+    expect(copiedSlotId).not.toBe("slotId");
+    expect(data.instances.get(copiedSlotId)?.children).toEqual([
+      { type: "id", value: "fragmentId" },
+    ]);
+    expect(
+      Array.from(data.instances.values()).filter(
+        (instance) => instance.id === "fragmentId"
+      )
+    ).toHaveLength(1);
+    expect(data.instances.get("fragmentId")?.children).toEqual([
+      { type: "id", value: "boxId" },
+    ]);
+  });
+
   test("deduplicate path for non-home page copy", () => {
     const data = getWebstudioDataStub({
       instances: toMap<Instance>([

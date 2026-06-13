@@ -982,6 +982,46 @@ describe("reparent instance", () => {
     );
   });
 
+  test("sort shared slot content through visible slot drop target", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box1"></$.Box>
+            <$.Box ws:id="box2"></$.Box>
+            <$.Box ws:id="box3"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box1"></$.Box>
+            <$.Box ws:id="box2"></$.Box>
+            <$.Box ws:id="box3"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+
+    reparentInstanceMutable(data, ["box1", "fragment", "slot1", "body"], {
+      parentSelector: ["slot2", "body"],
+      position: 3,
+    });
+
+    expect(data.instances.get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(data.instances.get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(data.instances.get("fragment")?.children).toEqual([
+      { type: "id", value: "box2" },
+      { type: "id", value: "box3" },
+      { type: "id", value: "box1" },
+    ]);
+  });
+
   test("reparent only selected slot occurrence", () => {
     const data = renderData(
       <$.Body ws:id="body">
@@ -1259,7 +1299,7 @@ describe("delete instance", () => {
     expect(data.instances.get("slotId")?.children.length).toEqual(0);
   });
 
-  test("delete only selected slot occurrence", () => {
+  test("delete shared slot content from all slot occurrences", () => {
     const data = renderData(
       <$.Body ws:id="bodyId">
         <$.Slot ws:id="slot1">
@@ -1281,13 +1321,14 @@ describe("delete instance", () => {
       getInstancePath(["div", "fragment", "slot1", "bodyId"], data.instances)
     );
 
-    expect(data.instances.get("slot1")?.children).toEqual([]);
+    expect(data.instances.get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
     expect(data.instances.get("slot2")?.children).toEqual([
       { type: "id", value: "fragment" },
     ]);
-    expect(data.instances.get("fragment")?.children).toEqual([
-      { type: "id", value: "div" },
-    ]);
+    expect(data.instances.get("fragment")?.children).toEqual([]);
+    expect(data.instances.has("div")).toEqual(false);
   });
 });
 
