@@ -40,6 +40,7 @@ import {
   EditorDialogButton,
   EditorDialogControl,
   type EditorApi,
+  normalizeEditorValue,
 } from "~/shared/code-editor-base";
 import {
   decodeDataVariableName,
@@ -574,10 +575,11 @@ export const ExpressionEditor = ({
   color?: "error";
   autoFocus?: boolean;
   readOnly?: boolean;
-  value: string;
+  value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
 }) => {
+  const normalizedValue = normalizeEditorValue(value);
   const { nameById, idByName } = useMemo(() => {
     const nameById = new Map();
     const idByName = new Map();
@@ -592,10 +594,10 @@ export const ExpressionEditor = ({
   }, [aliases]);
   const expressionWithUnsetVariables = useMemo(() => {
     return unsetExpressionVariables({
-      expression: value,
+      expression: normalizedValue,
       unsetNameById: nameById,
     });
-  }, [value, nameById]);
+  }, [normalizedValue, nameById]);
   const scopeWithUnsetVariables = useMemo(() => {
     const newScope: typeof scope = {};
     for (const [identifier, value] of Object.entries(scope)) {
