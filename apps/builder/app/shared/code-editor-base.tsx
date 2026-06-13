@@ -71,6 +71,8 @@ export const clampEditorSelection = (
   );
 };
 
+export const normalizeEditorValue = (value: undefined | string) => value ?? "";
+
 export const getCodeEditorCssVars = ({
   minHeight,
   maxHeight,
@@ -239,7 +241,7 @@ type EditorContentProps = {
   autoFocus?: boolean;
   invalid?: boolean;
   showShortcuts?: boolean;
-  value: string;
+  value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
 };
@@ -385,15 +387,16 @@ export const EditorContent = ({
     if (view === undefined) {
       return;
     }
+    const nextValue = normalizeEditorValue(value);
     // prevent updating when editor has the same state
     // and can be the source of new value
-    if (value === view.state.doc.toString()) {
+    if (nextValue === view.state.doc.toString()) {
       return;
     }
 
     view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: value },
-      selection: clampEditorSelection(view.state.selection, value.length),
+      changes: { from: 0, to: view.state.doc.length, insert: nextValue },
+      selection: clampEditorSelection(view.state.selection, nextValue.length),
       annotations: [ExternalChange.of(true)],
     });
   }, [value]);

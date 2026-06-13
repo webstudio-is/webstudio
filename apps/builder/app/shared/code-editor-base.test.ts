@@ -1,6 +1,6 @@
 import { EditorSelection } from "@codemirror/state";
 import { expect, test } from "vitest";
-import { clampEditorSelection } from "./code-editor-base";
+import { clampEditorSelection, normalizeEditorValue } from "./code-editor-base";
 
 test("clampEditorSelection preserves selection within document length", () => {
   const selection = EditorSelection.create([
@@ -34,4 +34,9 @@ test("clampEditorSelection clamps selection to document length", () => {
     [5, 5],
   ]);
   expect(clampedSelection.mainIndex).toBe(selection.mainIndex);
+});
+
+test("normalizeEditorValue defaults undefined to empty string", () => {
+  expect(normalizeEditorValue(undefined)).toBe("");
+  expect(normalizeEditorValue("value")).toBe("value");
 });
