@@ -54,6 +54,7 @@ import { $selectedInstanceSelector, getInstancePath } from "../nano-states";
 import { selectInstance } from "../nano-states";
 import { $selectedPageId } from "../nano-states/pages";
 import {
+  expectSlotTreeIntegrity,
   expectSlotsDoNotShareFragment,
   expectSlotsShareFragment,
   getSlotFragmentId,
@@ -1215,7 +1216,78 @@ describe("reparent instance", () => {
         operation.dropTarget
       );
       operation.assert(operation.data);
+      expectSlotTreeIntegrity(operation.data.instances);
     }
+  });
+
+  test("slot operation sequence preserves integrity after normalize, detach, and delete", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+            <$.Heading ws:id="heading"></$.Heading>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same visible content in legacy direct-child shape */}
+          <$.Box ws:id="box"></$.Box>
+          <$.Heading ws:id="heading"></$.Heading>
+        </$.Slot>
+        <$.Box ws:id="outside"></$.Box>
+      </$.Body>
+    );
+    $project.set({ id: "projectId" } as Project);
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+
+    reparentInstanceMutable(data, ["heading", "slot2", "body"], {
+      parentSelector: ["slot2", "body"],
+      position: 0,
+    });
+
+    const sharedFragmentId = expectSlotsShareFragment(data.instances, [
+      "slot1",
+      "slot2",
+    ]);
+    expect(data.instances.get(sharedFragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "heading" },
+      { type: "id", value: "box" },
+    ]);
+    expectSlotTreeIntegrity(data.instances);
+
+    const movedSelector = reparentInstanceMutable(
+      data,
+      ["box", "fragment", "slot2", "body"],
+      {
+        parentSelector: ["outside", "body"],
+        position: "end",
+      }
+    );
+
+    expect(movedSelector).toEqual(expect.any(Array));
+    expectSlotTreeIntegrity(data.instances, {
+      selectedInstanceSelector: movedSelector,
+    });
+    expectSlotsDoNotShareFragment(data.instances, "slot1", "slot2");
+    const slot1FragmentId = getSlotFragmentId(data.instances, "slot1");
+    const slot2FragmentId = getSlotFragmentId(data.instances, "slot2");
+    expect(data.instances.get(slot1FragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "heading" },
+      { type: "id", value: "box" },
+    ]);
+    expect(data.instances.get(slot2FragmentId ?? "")?.children).toEqual([
+      { type: "id", value: expect.any(String) },
+    ]);
+
+    const movedId = data.instances.get("outside")?.children[0]?.value;
+    expect(movedId).toBe(movedSelector?.[0]);
+    deleteInstanceMutable(
+      data,
+      getInstancePath([movedId ?? "", "outside", "body"], data.instances)
+    );
+
+    expectSlotTreeIntegrity(data.instances);
+    expect(data.instances.get("outside")?.children).toEqual([]);
   });
 
   test("reparent nested shared slot child outside detaches only selected occurrence", () => {

@@ -35,7 +35,10 @@ import { selectInstance } from "~/shared/nano-states";
 import { $selectedPageId } from "../nano-states/pages";
 import * as instanceFragmentUtils from "../instance-utils/fragment";
 import * as instanceMutationUtils from "../instance-utils/mutation";
-import { expectSlotsShareFragment } from "../slot-test-utils";
+import {
+  expectSlotTreeIntegrity,
+  expectSlotsShareFragment,
+} from "../slot-test-utils";
 
 const expectString = expect.any(String) as unknown as string;
 
@@ -276,6 +279,7 @@ describe("paste target", () => {
       { type: "id", value: expect.any(String) },
       { type: "id", value: "heading" },
     ]);
+    expectSlotTreeIntegrity($instances.get());
   });
 
   test("pastes after selected nested shared slot child in shared slot content", async () => {

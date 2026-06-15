@@ -48,6 +48,7 @@ import { registerContainers } from "~/shared/sync/sync-stores";
 import { $selectedPageId } from "~/shared/nano-states";
 import { updateCurrentSystem } from "~/shared/system";
 import { $resourcesCache, getResourceKey } from "~/shared/resources";
+import { expectSlotTreeIntegrity } from "~/shared/slot-test-utils";
 
 setEnv("*");
 registerContainers();
@@ -934,6 +935,7 @@ describe("deletePageMutable", () => {
     expect(data.instances.get("sharedBox")).toMatchObject({
       component: "Box",
     });
+    expectSlotTreeIntegrity(data.instances);
   });
 
   test("should remove page from folder children", async () => {
@@ -1459,6 +1461,7 @@ describe("deleteTemplateMutable", () => {
     expect(data.instances.get("sharedBox")).toMatchObject({
       component: "Box",
     });
+    expectSlotTreeIntegrity(data.instances);
   });
 });
 

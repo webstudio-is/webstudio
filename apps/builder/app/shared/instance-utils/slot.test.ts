@@ -11,6 +11,10 @@ import {
   normalizeLegacySlotParentInSelectorMutable,
   prepareSlotReparentMutable,
 } from "./slot";
+import {
+  expectSlotTreeIntegrity,
+  expectSlotsShareFragment,
+} from "../slot-test-utils";
 
 const instance = (
   id: string,
@@ -433,5 +437,91 @@ describe("slot utils", () => {
     expect(instances.get("slot2")?.children).toEqual([
       { type: "id", value: "box" },
     ]);
+  });
+
+  test("normalizes generated mixed slot shapes to canonical shared fragments", () => {
+    const childSets = [
+      ["box"],
+      ["box", "heading"],
+      ["box", "heading", "paragraph"],
+      [],
+    ];
+
+    for (const [childSetIndex, childIds] of childSets.entries()) {
+      for (let shapeMask = 0; shapeMask < 16; shapeMask += 1) {
+        const fragmentId = `fragment${childSetIndex}-${shapeMask}`;
+        const instances = new Map<Instance["id"], Instance>();
+        instances.set("body", instance("body", "Body"));
+        for (const childId of childIds) {
+          instances.set(childId, instance(childId, "Box"));
+        }
+        instances.set(
+          fragmentId,
+          instance(
+            fragmentId,
+            "Fragment",
+            childIds.map((childId) => ({ type: "id" as const, value: childId }))
+          )
+        );
+
+        const canonicalSlotIds: string[] = [];
+        const legacySlotIds: string[] = [];
+        for (let slotIndex = 0; slotIndex < 4; slotIndex += 1) {
+          const slotId = `slot${childSetIndex}-${shapeMask}-${slotIndex}`;
+          const isCanonical = (shapeMask & (1 << slotIndex)) !== 0;
+          if (isCanonical) {
+            canonicalSlotIds.push(slotId);
+            instances.set(
+              slotId,
+              instance(slotId, "Slot", [{ type: "id", value: fragmentId }])
+            );
+          } else {
+            legacySlotIds.push(slotId);
+            instances.set(
+              slotId,
+              instance(
+                slotId,
+                "Slot",
+                childIds.map((childId) => ({
+                  type: "id" as const,
+                  value: childId,
+                }))
+              )
+            );
+          }
+        }
+        if (legacySlotIds.length === 0) {
+          continue;
+        }
+
+        const targetSlotId = legacySlotIds[0];
+        const dropTarget = getSlotFragmentDropTargetMutable(instances, {
+          parentSelector: [targetSlotId, "body"],
+          position: "end",
+        });
+        expect(dropTarget).toBeDefined();
+        if (dropTarget === undefined) {
+          throw new Error("Expected slot drop target");
+        }
+        const normalizedFragmentId =
+          canonicalSlotIds.length === 0
+            ? dropTarget.parentSelector[0]
+            : fragmentId;
+
+        expect(dropTarget).toEqual({
+          parentSelector: [normalizedFragmentId, targetSlotId, "body"],
+          position: "end",
+        });
+        if (canonicalSlotIds.length === 0) {
+          expect(normalizedFragmentId).not.toBe(fragmentId);
+        }
+        expectSlotTreeIntegrity(instances);
+        const slotIds = [...canonicalSlotIds, ...legacySlotIds];
+        expectSlotsShareFragment(
+          instances,
+          slotIds as [string, string, ...string[]]
+        );
+      }
+    }
   });
 });
