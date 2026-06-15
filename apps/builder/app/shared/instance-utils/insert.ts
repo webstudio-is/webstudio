@@ -40,6 +40,18 @@ import {
 import { updateWebstudioData } from "./data";
 import { insertWebstudioFragmentCopy } from "./fragment";
 
+const getExistingInsertTargetPath = (insertable: Insertable) => {
+  const instancePath = getInstancePath(
+    insertable.parentSelector,
+    $instances.get()
+  );
+  if (instancePath === undefined) {
+    toast.error("Cannot insert: the target no longer exists.");
+    return;
+  }
+  return instancePath;
+};
+
 export const insertInstanceChildrenMutable = (
   data: Omit<WebstudioData, "pages">,
   children: Instance["children"],
@@ -113,6 +125,9 @@ export const insertWebstudioElementAt = (insertable?: Insertable) => {
       };
     }
   }
+  if (getExistingInsertTargetPath(insertable) === undefined) {
+    return false;
+  }
   // create element and find matching tag
   const element: Instance = {
     type: "instance",
@@ -183,15 +198,15 @@ export const insertWebstudioFragmentAt = (
   if (project === undefined || insertable === undefined) {
     return false;
   }
+  const initialInstancePath = getExistingInsertTargetPath(insertable);
+  if (initialInstancePath === undefined) {
+    return false;
+  }
   let newInstanceSelector: undefined | InstanceSelector;
   updateWebstudioData((data) => {
-    const instancePath = getInstancePath(
-      insertable.parentSelector,
-      data.instances
-    );
-    if (instancePath === undefined) {
-      return;
-    }
+    const instancePath =
+      getInstancePath(insertable.parentSelector, data.instances) ??
+      initialInstancePath;
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,

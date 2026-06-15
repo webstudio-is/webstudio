@@ -8,7 +8,8 @@ import {
   insertWebstudioElementAt,
 } from "./insert";
 import { enableMapSet } from "immer";
-import { describe, test, expect, beforeEach } from "vitest";
+import { describe, test, expect, beforeEach, vi } from "vitest";
+import { toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
@@ -606,6 +607,26 @@ describe("insert webstudio element at", () => {
       ).instances
     );
   });
+
+  test("reports unresolved explicit element insert target", () => {
+    const toastError = vi.spyOn(toast, "error").mockImplementation(() => "");
+    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+
+    expect(
+      insertWebstudioElementAt({
+        parentSelector: ["missingId"],
+        position: "end",
+      })
+    ).toBe(false);
+
+    expect(toastError).toHaveBeenCalledWith(
+      "Cannot insert: the target no longer exists."
+    );
+    expect($instances.get()).toEqual(
+      renderData(<$.Body ws:id="bodyId"></$.Body>).instances
+    );
+    toastError.mockRestore();
+  });
 });
 
 describe("insert webstudio fragment at", () => {
@@ -643,6 +664,22 @@ describe("insert webstudio fragment at", () => {
         </$.Body>
       ).instances
     );
+  });
+
+  test("returns false for empty fragments", () => {
+    expect(insertWebstudioFragmentAt(createFragment({}))).toBe(false);
+  });
+
+  test("returns false for tokens-only fragments without a project", () => {
+    $project.set(undefined);
+
+    expect(
+      insertWebstudioFragmentAt(
+        createFragment({
+          styleSources: [{ type: "token", id: "token", name: "Token" }],
+        })
+      )
+    ).toBe(false);
   });
 
   test("insert fragment after insertable", () => {
@@ -686,6 +723,29 @@ describe("insert webstudio fragment at", () => {
         </$.Body>
       ).instances
     );
+  });
+
+  test("reports unresolved explicit insert target", () => {
+    const toastError = vi.spyOn(toast, "error").mockImplementation(() => "");
+    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+
+    expect(
+      insertWebstudioFragmentAt(
+        renderTemplate(<$.Heading ws:id="headingId"></$.Heading>),
+        {
+          parentSelector: ["missingId"],
+          position: "end",
+        }
+      )
+    ).toBe(false);
+
+    expect(toastError).toHaveBeenCalledWith(
+      "Cannot insert: the target no longer exists."
+    );
+    expect($instances.get()).toEqual(
+      renderData(<$.Body ws:id="bodyId"></$.Body>).instances
+    );
+    toastError.mockRestore();
   });
 
   test("insert fragment into shared slot content", () => {
@@ -878,6 +938,12 @@ describe("find closest insertable", () => {
       "bodyId",
     ]);
     $registeredComponentMetas.set(defaultMetasMap);
+  });
+
+  test("returns undefined without a selected page", () => {
+    $selectedPageId.set(undefined);
+
+    expect(findClosestInsertable(newBoxFragment)).toBeUndefined();
   });
 
   test("puts in the end if closest instance is container", () => {

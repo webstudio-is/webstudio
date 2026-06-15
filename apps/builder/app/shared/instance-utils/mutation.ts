@@ -43,11 +43,10 @@ import {
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $instanceTags } from "~/builder/features/style-panel/shared/model";
 import {
+  getDirectSharedSlotChildBoundary,
   getSharedSlotBoundary,
   getSlotFragmentDropTargetMutable,
   getSlotFragmentId,
-  isDirectSharedSlotChild,
-  isSharedSlotFragmentPair,
   normalizeLegacySlotInstancePathMutable,
   normalizeLegacySlotParentInSelectorMutable,
   prepareSlotReparentMutable,
@@ -428,10 +427,7 @@ const unwrapDirectSharedSlotChildWithSiblingsMutable = ({
   fragmentItem: InstancePath[number];
   slotItem: InstancePath[number];
 }) => {
-  if (
-    isSharedSlotFragmentPair(fragmentItem, slotItem) === false ||
-    fragmentItem.instance.children.length <= 1
-  ) {
+  if (fragmentItem.instance.children.length <= 1) {
     return;
   }
   const slotParentId = slotItem.instanceSelector[1];
@@ -906,27 +902,29 @@ export const unwrapInstance = () => {
         data.instances,
         instancePath
       );
-      const unwrapsDirectSlotChild =
-        isDirectSharedSlotChild(initialInstancePath);
-      const nextInstancePath = unwrapsDirectSlotChild
+      const directSlotBoundary =
+        getDirectSharedSlotChildBoundary(initialInstancePath);
+      const nextInstancePath = directSlotBoundary
         ? detachSharedSlotContentMutable(data, initialInstancePath)
         : initialInstancePath;
+      const nextDirectSlotBoundary =
+        directSlotBoundary === undefined
+          ? undefined
+          : getDirectSharedSlotChildBoundary(nextInstancePath);
       const [selectedItem, defaultParentItem] = nextInstancePath;
       // Unwrapping a direct Slot child places that child outside the Slot, so it
       // intentionally leaves shared Slot content and must use the Slot item as
       // the parent to replace.
-      const parentItem = unwrapsDirectSlotChild
-        ? nextInstancePath[2]
-        : defaultParentItem;
+      const parentItem = nextDirectSlotBoundary?.slotItem ?? defaultParentItem;
       if (parentItem === undefined) {
         return;
       }
 
-      const directSlotUnwrapSelector = unwrapsDirectSlotChild
+      const directSlotUnwrapSelector = nextDirectSlotBoundary
         ? unwrapDirectSharedSlotChildWithSiblingsMutable({
             data,
             selectedItem,
-            fragmentItem: defaultParentItem,
+            fragmentItem: nextDirectSlotBoundary.fragmentItem,
             slotItem: parentItem,
           })
         : undefined;
@@ -1020,11 +1018,10 @@ export const deleteSelectedInstance = () => {
       const grandparentItem = normalizedInstancePath[2];
       // The Slot Fragment is an implementation detail and should never become
       // the visible selection when deleting the last Slot child.
-      newSelectedInstanceSelector = isSharedSlotFragmentPair(
-        parentItem,
-        grandparentItem
+      newSelectedInstanceSelector = getDirectSharedSlotChildBoundary(
+        normalizedInstancePath
       )
-        ? grandparentItem.instanceSelector
+        ? grandparentItem?.instanceSelector
         : parentInstanceSelector;
     }
 

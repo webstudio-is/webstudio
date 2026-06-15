@@ -17,6 +17,7 @@ export type SharedSlotBoundary = {
   slotIndex: number;
   fragmentItem: InstancePath[number];
   slotItem: InstancePath[number];
+  slotParentItem?: InstancePath[number];
   fragmentId: Instance["id"];
   slotId: Instance["id"];
   isDirectChild: boolean;
@@ -54,18 +55,21 @@ export const getSharedSlotBoundary = (
     slotIndex,
     fragmentItem,
     slotItem,
+    slotParentItem: instancePath[slotIndex + 1],
     fragmentId: fragmentItem.instance.id,
     slotId: slotItem.instance.id,
     isDirectChild: slotIndex === 2,
   };
 };
 
-export const getSharedSlotFragmentId = (instancePath: InstancePath) => {
-  return getSharedSlotBoundary(instancePath)?.fragmentId;
-};
-
-export const isDirectSharedSlotChild = (instancePath: InstancePath) => {
-  return getSharedSlotBoundary(instancePath)?.isDirectChild === true;
+export const getDirectSharedSlotChildBoundary = (
+  instancePath: InstancePath
+) => {
+  const boundary = getSharedSlotBoundary(instancePath);
+  if (boundary?.isDirectChild !== true) {
+    return;
+  }
+  return boundary;
 };
 
 export const findClosestSlot = (
@@ -78,16 +82,6 @@ export const findClosestSlot = (
       return instance;
     }
   }
-};
-
-export const isSharedSlotFragmentPair = (
-  fragmentItem: undefined | InstancePath[number],
-  slotItem: undefined | InstancePath[number]
-) => {
-  return (
-    fragmentItem?.instance.component === "Fragment" &&
-    slotItem?.instance.component === "Slot"
-  );
 };
 
 const areInstanceChildrenEqual = (
@@ -229,16 +223,16 @@ export const isSharedSlotBoundaryCrossing = (
   instancePath: InstancePath,
   dropTarget: DroppableTarget
 ) => {
-  const fragmentId = getSharedSlotFragmentId(instancePath);
-  if (fragmentId === undefined) {
+  const boundary = getSharedSlotBoundary(instancePath);
+  if (boundary === undefined) {
     return false;
   }
-  if (dropTarget.parentSelector.includes(fragmentId)) {
+  if (dropTarget.parentSelector.includes(boundary.fragmentId)) {
     return false;
   }
   return (
     getSlotFragmentId(instances.get(dropTarget.parentSelector[0])) !==
-    fragmentId
+    boundary.fragmentId
   );
 };
 

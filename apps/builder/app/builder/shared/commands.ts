@@ -84,7 +84,7 @@ import {
   getPageActionTarget,
 } from "~/shared/page-action-target";
 import {
-  isSharedSlotFragmentPair,
+  getDirectSharedSlotChildBoundary,
   normalizeLegacySlotInstancePathMutable,
 } from "~/shared/instance-utils/slot";
 
@@ -220,26 +220,27 @@ const getOutdentMoveTarget = (
     return;
   }
 
-  const parent = parentItem.instance;
-  if (isSharedSlotFragmentPair(parentItem, grandparentItem)) {
-    const greatGrandparentItem = instancePath[3];
-    if (greatGrandparentItem === undefined) {
+  const directSlotBoundary = getDirectSharedSlotChildBoundary(instancePath);
+  if (directSlotBoundary !== undefined) {
+    const slotParentItem = directSlotBoundary.slotParentItem;
+    if (slotParentItem === undefined) {
       return;
     }
-    const slotIndex = getIdChildIndex(
-      greatGrandparentItem.instance.children,
-      grandparentItem.instance.id
+    const slotPosition = getIdChildIndex(
+      slotParentItem.instance.children,
+      directSlotBoundary.slotId
     );
-    if (slotIndex === -1) {
+    if (slotPosition === -1) {
       return;
     }
     return {
-      parentSelector: greatGrandparentItem.instanceSelector,
+      parentSelector: slotParentItem.instanceSelector,
       position:
-        positionRelativeToParent === "before" ? slotIndex : slotIndex + 1,
+        positionRelativeToParent === "before" ? slotPosition : slotPosition + 1,
     };
   }
 
+  const parent = parentItem.instance;
   const parentIndex = getIdChildIndex(
     grandparentItem.instance.children,
     parent.id

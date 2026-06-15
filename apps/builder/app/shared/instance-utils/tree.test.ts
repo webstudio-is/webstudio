@@ -102,6 +102,7 @@ test("compares instance selectors", () => {
   );
   expect(areInstanceSelectorsEqual(["child"], ["other"])).toBe(false);
   expect(areInstanceSelectorsEqual(undefined, ["child"])).toBe(false);
+  expect(areInstanceSelectorsEqual(undefined, undefined)).toBe(false);
 });
 
 test("clone styles with appled new style source ids", () => {
@@ -150,6 +151,7 @@ test("find local style sources within instances", () => {
 });
 
 test("is descendant or self", () => {
+  expect(isDescendantOrSelf(["1", "2", "3"], [])).toBe(true);
   expect(isDescendantOrSelf(["1", "2", "3"], ["1", "2", "3"])).toBe(true);
   expect(isDescendantOrSelf(["0", "1", "2", "3"], ["1", "2", "3"])).toBe(true);
   expect(isDescendantOrSelf(["1", "2", "3"], ["0", "1", "2", "3"])).toBe(false);
@@ -203,6 +205,86 @@ test("wrap editable children around drop target", () => {
     component: elementComponent,
     tag: "span",
     children: [{ type: "text", value: "right" }],
+  });
+});
+
+test("wrap editable children around drop target skips missing and non-rich parents", () => {
+  expect(
+    wrapEditableChildrenAroundDropTargetMutable(new Map(), props, metas, {
+      parentSelector: ["missing"],
+      position: 0,
+    })
+  ).toBeUndefined();
+
+  const instances = new Map([
+    ["box", createInstance("box", "Box", [{ type: "id", value: "child" }])],
+    ["child", createInstance("child", "Box")],
+  ]);
+
+  expect(
+    wrapEditableChildrenAroundDropTargetMutable(instances, props, metas, {
+      parentSelector: ["box"],
+      position: 0,
+    })
+  ).toBeUndefined();
+  expect(instances.get("box")?.children).toEqual([
+    { type: "id", value: "child" },
+  ]);
+});
+
+test("wrap editable children around start and end drop targets", () => {
+  const startInstances = new Map([
+    [
+      "paragraph",
+      createInstance("paragraph", "Paragraph", [
+        { type: "text", value: "left" },
+        { type: "id", value: "bold" },
+      ]),
+    ],
+    ["bold", createInstance("bold", "Bold")],
+  ]);
+
+  expect(
+    wrapEditableChildrenAroundDropTargetMutable(startInstances, props, metas, {
+      parentSelector: ["paragraph"],
+      position: 0,
+    })
+  ).toEqual({ parentSelector: ["paragraph"], position: 0 });
+  const [rightSpanChild] = startInstances.get("paragraph")?.children ?? [];
+  expect(startInstances.get(rightSpanChild?.value ?? "")).toMatchObject({
+    component: elementComponent,
+    tag: "span",
+    children: [
+      { type: "text", value: "left" },
+      { type: "id", value: "bold" },
+    ],
+  });
+
+  const endInstances = new Map([
+    [
+      "paragraph",
+      createInstance("paragraph", "Paragraph", [
+        { type: "text", value: "left" },
+        { type: "id", value: "bold" },
+      ]),
+    ],
+    ["bold", createInstance("bold", "Bold")],
+  ]);
+
+  expect(
+    wrapEditableChildrenAroundDropTargetMutable(endInstances, props, metas, {
+      parentSelector: ["paragraph"],
+      position: "end",
+    })
+  ).toEqual({ parentSelector: ["paragraph"], position: 1 });
+  const [leftSpanChild] = endInstances.get("paragraph")?.children ?? [];
+  expect(endInstances.get(leftSpanChild?.value ?? "")).toMatchObject({
+    component: elementComponent,
+    tag: "span",
+    children: [
+      { type: "text", value: "left" },
+      { type: "id", value: "bold" },
+    ],
   });
 });
 

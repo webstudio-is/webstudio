@@ -149,6 +149,56 @@ describe("findPageAndSelectorByInstanceId", () => {
       instanceSelector: ["nestedChild", "nestedRoot"],
     });
   });
+
+  test("falls back to home page when selector root is not a page root", () => {
+    const pages = createDefaultPages({
+      homePageId: "homePageId",
+      rootInstanceId: "homeRoot",
+    });
+    const instances = new Map([
+      ["orphanRoot", instance("orphanRoot", "Body")],
+      [
+        "orphanChild",
+        instance("orphanChild", "Box", [{ type: "id", value: "target" }]),
+      ],
+      ["target", instance("target", "Box")],
+    ]);
+
+    expect(findPageAndSelectorByInstanceId(pages, instances, "target")).toEqual(
+      {
+        pageId: "homePageId",
+        instanceSelector: ["target", "orphanChild"],
+      }
+    );
+  });
+
+  test("uses the last matching parent for shared slot content paths", () => {
+    const pages = createDefaultPages({
+      homePageId: "homePageId",
+      rootInstanceId: "body",
+    });
+    const instances = new Map([
+      [
+        "body",
+        instance("body", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+      ],
+      ["slot1", instance("slot1", "Slot", [{ type: "id", value: "fragment" }])],
+      ["slot2", instance("slot2", "Slot", [{ type: "id", value: "fragment" }])],
+      [
+        "fragment",
+        instance("fragment", "Fragment", [{ type: "id", value: "box" }]),
+      ],
+      ["box", instance("box", "Box")],
+    ]);
+
+    expect(findPageAndSelectorByInstanceId(pages, instances, "box")).toEqual({
+      pageId: "homePageId",
+      instanceSelector: ["box", "fragment", "slot2", "body"],
+    });
+  });
 });
 
 describe("findAllEditableInstanceSelector", () => {

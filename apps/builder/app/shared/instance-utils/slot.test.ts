@@ -3,12 +3,10 @@ import type { Instance } from "@webstudio-is/sdk";
 import type { InstancePath } from "../nano-states";
 import {
   findClosestSlot,
+  getDirectSharedSlotChildBoundary,
   getSharedSlotBoundary,
-  getSharedSlotFragmentId,
   getSlotFragmentId,
   getSlotFragmentDropTargetMutable,
-  isDirectSharedSlotChild,
-  isSharedSlotFragmentPair,
   isSharedSlotBoundaryCrossing,
   normalizeLegacySlotParentInSelectorMutable,
   prepareSlotReparentMutable,
@@ -55,13 +53,15 @@ describe("slot utils", () => {
 
     expect(getSharedSlotBoundary(path)).toMatchObject({
       slotIndex: 2,
+      slotParentItem: path[3],
       fragmentId: "fragment",
       slotId: "slot",
       isDirectChild: true,
     });
-    expect(getSharedSlotFragmentId(path)).toBe("fragment");
-    expect(isDirectSharedSlotChild(path)).toBe(true);
-    expect(isSharedSlotFragmentPair(path[1], path[2])).toBe(true);
+    expect(getDirectSharedSlotChildBoundary(path)).toMatchObject({
+      fragmentId: "fragment",
+      slotId: "slot",
+    });
     expect(
       getSlotFragmentId(
         instance("slot", "Slot", [{ type: "id", value: "fragment" }])
@@ -73,6 +73,21 @@ describe("slot utils", () => {
         item(["body"], "Body"),
       ])
     ).toBeUndefined();
+
+    const nestedPath = [
+      item(["text", "box", "fragment", "slot", "body"], "Text"),
+      item(["box", "fragment", "slot", "body"], "Box"),
+      item(["fragment", "slot", "body"], "Fragment"),
+      item(["slot", "body"], "Slot"),
+      item(["body"], "Body"),
+    ] satisfies InstancePath;
+    expect(getSharedSlotBoundary(nestedPath)).toMatchObject({
+      slotIndex: 3,
+      fragmentId: "fragment",
+      slotId: "slot",
+      isDirectChild: false,
+    });
+    expect(getDirectSharedSlotChildBoundary(nestedPath)).toBeUndefined();
   });
 
   test("keeps same-slot reparent shared without detaching", () => {

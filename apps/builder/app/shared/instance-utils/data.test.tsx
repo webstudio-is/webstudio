@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { produce } from "immer";
-import type { Instance } from "@webstudio-is/sdk";
+import type { Instance, PageTemplate } from "@webstudio-is/sdk";
 import { blockComponent, blockTemplateComponent } from "@webstudio-is/sdk";
-import { createDefaultPages } from "@webstudio-is/project-build";
+import { createDefaultPages, findCycles } from "@webstudio-is/project-build";
 import {
   canDeleteInstanceInContentMode,
   getWebstudioData,
@@ -22,6 +22,8 @@ import {
   $styleSources,
   $styles,
 } from "../sync/data-stores";
+import { $selectedPageId } from "../nano-states/pages";
+import { $authPermit, $builderMode } from "../nano-states/misc";
 
 const createInstance = (
   id: Instance["id"],
@@ -132,5 +134,60 @@ describe("data store helpers", () => {
     expect($instances.get().get("body")).toEqual(
       createInstance("body", "Body", [])
     );
+  });
+
+  test("updateWebstudioData skips page templates without build access", () => {
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    const template: PageTemplate = {
+      id: "template",
+      name: "Template",
+      title: "Template",
+      rootInstanceId: "template-root",
+      meta: {},
+    };
+    pages.pageTemplates = new Map([[template.id, template]]);
+    $pages.set(pages);
+    $selectedPageId.set(template.id);
+    $builderMode.set("design");
+    $authPermit.set("view");
+    $instances.set(new Map());
+
+    updateWebstudioData((data) => {
+      data.instances.set(
+        "template-root",
+        createInstance("template-root", "Body", [])
+      );
+    });
+
+    expect($instances.get().has("template-root")).toBe(false);
+  });
+
+  test("updateWebstudioData repairs cycles created during transaction", () => {
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    const instances = new Map([
+      [
+        "body",
+        createInstance("body", "Body", [{ type: "id", value: "parent" }]),
+      ],
+      [
+        "parent",
+        createInstance("parent", "Box", [{ type: "id", value: "child" }]),
+      ],
+      ["child", createInstance("child", "Box", [])],
+    ]);
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $builderMode.set("design");
+    $authPermit.set("build");
+    $instances.set(instances);
+
+    updateWebstudioData((data) => {
+      data.instances.get("child")?.children.push({
+        type: "id",
+        value: "parent",
+      });
+    });
+
+    expect(findCycles($instances.get().values())).toEqual([]);
   });
 });
