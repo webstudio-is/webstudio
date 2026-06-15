@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { Instance } from "@webstudio-is/sdk";
 import type { InstancePath } from "../nano-states";
 import {
+  findClosestSlot,
   findSharedSlotIndex,
   getSharedSlotFragmentId,
   getSlotFragmentId,
@@ -30,6 +31,20 @@ const item = (selector: string[], component: string, children = []) => ({
 });
 
 describe("slot utils", () => {
+  test("finds closest slot in an instance selector", () => {
+    const slot = instance("slot", "Slot");
+    expect(
+      findClosestSlot(
+        new Map([
+          ["body", instance("body", "Body")],
+          ["slot", slot],
+          ["box", instance("box", "Box")],
+        ]),
+        ["box", "slot", "body"]
+      )
+    ).toBe(slot);
+  });
+
   test("finds shared slot fragment in an instance path", () => {
     const path = [
       item(["box", "fragment", "slot", "body"], "Box"),

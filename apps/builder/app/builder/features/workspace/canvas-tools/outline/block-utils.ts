@@ -1,9 +1,9 @@
 import type { Instance, Instances, WebstudioFragment } from "@webstudio-is/sdk";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
 import {
-  findAllEditableInstanceSelector,
   getWebstudioData,
+  updateWebstudioData,
 } from "~/shared/instance-utils/data";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { insertInstanceChildrenMutable } from "~/shared/instance-utils/insert";
 import {
   insertWebstudioFragmentCopy,

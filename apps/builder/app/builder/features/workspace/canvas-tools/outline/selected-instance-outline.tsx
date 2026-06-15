@@ -7,7 +7,7 @@ import { isDescendantOrSelf } from "~/shared/instance-utils/tree";
 import { Outline } from "./outline";
 import { applyScale } from "../apply-scale";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
-import { findClosestSlot } from "~/shared/instance-utils/lookup";
+import { findClosestSlot } from "~/shared/instance-utils/slot";
 import { $ephemeralStyles } from "~/canvas/stores";
 
 export const SelectedInstanceOutline = () => {

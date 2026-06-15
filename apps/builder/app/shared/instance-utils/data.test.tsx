@@ -1,7 +1,27 @@
 import { describe, expect, test } from "vitest";
+import { produce } from "immer";
 import type { Instance } from "@webstudio-is/sdk";
 import { blockComponent, blockTemplateComponent } from "@webstudio-is/sdk";
-import { canDeleteInstanceInContentMode } from "./data";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import {
+  canDeleteInstanceInContentMode,
+  getWebstudioData,
+  unwrap,
+  updateWebstudioData,
+} from "./data";
+import { registerContainers } from "../sync/sync-stores";
+import {
+  $assets,
+  $breakpoints,
+  $dataSources,
+  $instances,
+  $pages,
+  $props,
+  $resources,
+  $styleSourceSelections,
+  $styleSources,
+  $styles,
+} from "../sync/data-stores";
 
 const createInstance = (
   id: Instance["id"],
@@ -10,6 +30,8 @@ const createInstance = (
 ): Instance => {
   return { type: "instance", id, component, children };
 };
+
+registerContainers();
 
 describe("canDeleteInstanceInContentMode", () => {
   const instances = new Map([
@@ -57,5 +79,58 @@ describe("canDeleteInstanceInContentMode", () => {
         instances,
       })
     ).toBe(false);
+  });
+});
+
+describe("data store helpers", () => {
+  test("unwrap returns current value for immer drafts and original value otherwise", () => {
+    const source = { count: 1 };
+    expect(unwrap(source)).toBe(source);
+
+    produce(source, (draft) => {
+      draft.count = 2;
+      expect(unwrap(draft)).toEqual({ count: 2 });
+    });
+  });
+
+  test("getWebstudioData reads all instance-related stores", () => {
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    const instances = new Map([["body", createInstance("body", "Body", [])]]);
+    $pages.set(pages);
+    $instances.set(instances);
+    $props.set(new Map());
+    $breakpoints.set(new Map());
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $styles.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+    $assets.set(new Map());
+
+    expect(getWebstudioData()).toMatchObject({
+      pages,
+      instances,
+    });
+  });
+
+  test("updateWebstudioData mutates stores through a transaction", () => {
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+    $instances.set(new Map());
+    $props.set(new Map());
+    $breakpoints.set(new Map());
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $styles.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+    $assets.set(new Map());
+
+    updateWebstudioData((data) => {
+      data.instances.set("body", createInstance("body", "Body", []));
+    });
+
+    expect($instances.get().get("body")).toEqual(
+      createInstance("body", "Body", [])
+    );
   });
 });

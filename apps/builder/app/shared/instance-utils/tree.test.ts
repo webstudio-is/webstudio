@@ -1,16 +1,25 @@
 import { test, expect } from "vitest";
 import type {
   Instance,
+  Props,
   StyleDecl,
   Styles,
   StyleSource,
   StyleSourceSelection,
+  WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { getStyleDeclKey } from "@webstudio-is/sdk";
 import {
+  collectionComponent,
+  elementComponent,
+  getStyleDeclKey,
+} from "@webstudio-is/sdk";
+import {
+  areInstanceSelectorsEqual,
   cloneStyles,
   findLocalStyleSourcesWithinInstances,
+  getReparentDropTargetMutable,
   isDescendantOrSelf,
+  wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree";
 
 const createStyleSource = (
@@ -73,6 +82,28 @@ const createStyleDeclPair = (
   ] as const;
 };
 
+const createInstance = (
+  id: Instance["id"],
+  component: string,
+  children: Instance["children"] = []
+): Instance => ({
+  type: "instance",
+  id,
+  component,
+  children,
+});
+
+const metas = new Map<string, WsComponentMeta>();
+const props = new Map<string, never>() as Props;
+
+test("compares instance selectors", () => {
+  expect(areInstanceSelectorsEqual(["child", "body"], ["child", "body"])).toBe(
+    true
+  );
+  expect(areInstanceSelectorsEqual(["child"], ["other"])).toBe(false);
+  expect(areInstanceSelectorsEqual(undefined, ["child"])).toBe(false);
+});
+
 test("clone styles with appled new style source ids", () => {
   const styles: Styles = new Map([
     createStyleDeclPair("styleSource1", "bp1"),
@@ -128,4 +159,85 @@ test("is descendant or self", () => {
       ["collection", "body", "page-root"]
     )
   ).toBe(true);
+});
+
+test("wrap editable children around drop target", () => {
+  const instances = new Map([
+    [
+      "paragraph",
+      createInstance("paragraph", "Paragraph", [
+        { type: "text", value: "left" },
+        { type: "id", value: "bold" },
+        { type: "text", value: "right" },
+      ]),
+    ],
+    ["bold", createInstance("bold", "Bold")],
+  ]);
+
+  const dropTarget = wrapEditableChildrenAroundDropTargetMutable(
+    instances,
+    props,
+    metas,
+    { parentSelector: ["paragraph", "body"], position: 1 }
+  );
+
+  expect(dropTarget).toEqual({
+    parentSelector: ["paragraph", "body"],
+    position: 1,
+  });
+  const paragraphChildren = instances.get("paragraph")?.children;
+  expect(paragraphChildren).toEqual([
+    { type: "id", value: expect.any(String) },
+    { type: "id", value: expect.any(String) },
+  ]);
+  const [leftSpanChild, rightSpanChild] = paragraphChildren ?? [];
+  expect(instances.get(leftSpanChild?.value ?? "")).toMatchObject({
+    component: elementComponent,
+    tag: "span",
+    children: [
+      { type: "text", value: "left" },
+      { type: "id", value: "bold" },
+    ],
+  });
+  expect(instances.get(rightSpanChild?.value ?? "")).toMatchObject({
+    component: elementComponent,
+    tag: "span",
+    children: [{ type: "text", value: "right" }],
+  });
+});
+
+test("get reparent drop target resolves collection item and slot targets", () => {
+  const instances = new Map([
+    [
+      "collection",
+      createInstance("collection", collectionComponent, [
+        { type: "id", value: "slot" },
+      ]),
+    ],
+    [
+      "slot",
+      createInstance("slot", "Slot", [{ type: "id", value: "fragment" }]),
+    ],
+    ["fragment", createInstance("fragment", "Fragment")],
+  ]);
+
+  expect(
+    getReparentDropTargetMutable(instances, props, metas, {
+      parentSelector: ["missing-item", "collection", "body"],
+      position: "end",
+    })
+  ).toEqual({
+    parentSelector: ["collection", "body"],
+    position: "end",
+  });
+
+  expect(
+    getReparentDropTargetMutable(instances, props, metas, {
+      parentSelector: ["slot", "collection", "body"],
+      position: "end",
+    })
+  ).toEqual({
+    parentSelector: ["fragment", "slot", "collection", "body"],
+    position: "end",
+  });
 });

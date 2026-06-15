@@ -1,23 +1,18 @@
 // Lookup utilities answer read-only questions about instance ancestry and
 // selection paths. Put path building and cross-page instance discovery here,
 // not mutations or store transactions.
-import type { Instance, Instances, Pages } from "@webstudio-is/sdk";
+import type {
+  Instance,
+  Instances,
+  Pages,
+  Props,
+  WsComponentMeta,
+} from "@webstudio-is/sdk";
 import { getAllPages } from "@webstudio-is/sdk";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { isRichTextTree } from "../content-model";
 import { getInstancePath } from "../nano-states";
 import type { InstanceSelector } from "./tree";
-
-export const findClosestSlot = (
-  instances: Instances,
-  instanceSelector: InstanceSelector
-) => {
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (instance?.component === "Slot") {
-      return instance;
-    }
-  }
-};
 
 /**
  * Build the ancestor path array for an instance.
@@ -95,4 +90,44 @@ export const findPageAndSelectorByInstanceId = (
     }
   }
   return { pageId: pages.homePageId, instanceSelector };
+};
+
+export const findAllEditableInstanceSelector = ({
+  instanceSelector,
+  instances,
+  props,
+  metas,
+  results,
+}: {
+  instanceSelector: InstanceSelector;
+  instances: Instances;
+  props: Props;
+  metas: Map<string, WsComponentMeta>;
+  results: InstanceSelector[];
+}) => {
+  const [instanceId] = instanceSelector;
+
+  if (instanceId === undefined) {
+    return;
+  }
+
+  if (isRichTextTree({ instanceId, instances, props, metas })) {
+    results.push(instanceSelector);
+    return;
+  }
+
+  const instance = instances.get(instanceId);
+  if (instance) {
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        findAllEditableInstanceSelector({
+          instanceSelector: [child.value, ...instanceSelector],
+          instances,
+          props,
+          metas,
+          results,
+        });
+      }
+    }
+  }
 };

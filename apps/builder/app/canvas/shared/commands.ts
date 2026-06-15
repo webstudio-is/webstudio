@@ -2,7 +2,7 @@ import { FORMAT_TEXT_COMMAND } from "lexical";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { createCommandsEmitter } from "~/shared/commands-emitter";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
-import { findAllEditableInstanceSelector } from "~/shared/instance-utils/data";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
 import {
   $registeredComponentMetas,
   $textEditingInstanceSelector,

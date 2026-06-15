@@ -1,4 +1,8 @@
-import { findClosestInsertable, insertWebstudioFragmentAt } from "./insert";
+import {
+  findClosestInsertable,
+  getComponentTemplateData,
+  insertWebstudioFragmentAt,
+} from "./insert";
 import {
   insertInstanceChildrenMutable,
   insertWebstudioElementAt,
@@ -19,7 +23,10 @@ import {
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type { WebstudioData, WebstudioFragment } from "@webstudio-is/sdk";
 import { coreMetas, elementComponent } from "@webstudio-is/sdk";
-import { $registeredComponentMetas } from "../nano-states";
+import {
+  $registeredComponentMetas,
+  $registeredTemplates,
+} from "../nano-states";
 import { $assets } from "~/shared/sync/data-stores";
 import {
   $breakpoints,
@@ -1013,6 +1020,54 @@ describe("find closest insertable", () => {
       parentSelector: ["bodyId"],
       position: "end",
     });
+  });
+});
+
+describe("getComponentTemplateData", () => {
+  test("returns registered template data when available", () => {
+    const template = createFragment({
+      children: [{ type: "id", value: "template-root" }],
+      instances: [
+        {
+          type: "instance",
+          id: "template-root",
+          component: "Box",
+          children: [],
+        },
+      ],
+    });
+    $registeredTemplates.set(
+      new Map([
+        [
+          "Template",
+          {
+            category: "general",
+            order: 0,
+            template,
+          },
+        ],
+      ])
+    );
+
+    expect(getComponentTemplateData("Template")).toBe(template);
+  });
+
+  test("builds fallback fragment for component names", () => {
+    $registeredTemplates.set(new Map());
+
+    const fragment = getComponentTemplateData("Box");
+
+    expect(fragment.children).toEqual([
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect(fragment.instances).toEqual([
+      {
+        type: "instance",
+        id: fragment.children[0].value,
+        component: "Box",
+        children: [],
+      },
+    ]);
   });
 });
 

@@ -1,4 +1,4 @@
-import { findAllEditableInstanceSelector } from "~/shared/instance-utils/data";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
 import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { color } from "@webstudio-is/css-engine";
 import {

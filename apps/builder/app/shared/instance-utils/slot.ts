@@ -40,6 +40,18 @@ export const isDirectSharedSlotChild = (instancePath: InstancePath) => {
   return findSharedSlotIndex(instancePath) === 2;
 };
 
+export const findClosestSlot = (
+  instances: Instances,
+  instanceSelector: InstanceSelector
+) => {
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance?.component === "Slot") {
+      return instance;
+    }
+  }
+};
+
 export const isSharedSlotFragmentPair = (
   fragmentItem: undefined | InstancePath[number],
   slotItem: undefined | InstancePath[number]

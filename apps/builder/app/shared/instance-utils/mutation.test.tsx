@@ -1,4 +1,7 @@
 import {
+  detachSharedSlotChildrenMutable,
+  detachSharedSlotContentMutable,
+  reparentInstance,
   wrapInstance,
   toggleInstanceShow,
   unwrapInstance,
@@ -161,6 +164,36 @@ describe("reparent instance", () => {
         </$.Body>
       ).instances
     );
+  });
+
+  test("reparentInstance wrapper updates stores and selection", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="source"></$.Box>
+        <$.Box ws:id="target"></$.Box>
+      </$.Body>
+    );
+    $project.set({ id: "projectId" } as Project);
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+    $instances.set(data.instances);
+    $props.set(data.props);
+
+    reparentInstance(["source", "body"], {
+      parentSelector: ["target", "body"],
+      position: "end",
+    });
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "target" },
+    ]);
+    expect($instances.get().get("target")?.children).toEqual([
+      { type: "id", value: "source" },
+    ]);
+    expect($selectedInstanceSelector.get()).toEqual([
+      "source",
+      "target",
+      "body",
+    ]);
   });
 
   test("before itself", () => {
@@ -2120,6 +2153,68 @@ describe("delete instance", () => {
       { type: "id", value: "box" },
     ]);
     expect(data.instances.has("heading")).toEqual(false);
+  });
+});
+
+describe("detach shared slot content", () => {
+  test("detachSharedSlotChildrenMutable clones shared fragment for selected slot", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $project.set({ id: "projectId" } as Project);
+
+    detachSharedSlotChildrenMutable(data, "slot1");
+
+    const slot1FragmentId = data.instances.get("slot1")?.children[0]?.value;
+    expect(slot1FragmentId).toBeDefined();
+    expect(slot1FragmentId).not.toBe("fragment");
+    expect(data.instances.get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(data.instances.get(slot1FragmentId ?? "")?.children).toEqual([
+      { type: "id", value: expect.any(String) },
+    ]);
+  });
+
+  test("detachSharedSlotContentMutable returns remapped selected path", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $project.set({ id: "projectId" } as Project);
+    const instancePath =
+      getInstancePath(["box", "fragment", "slot1", "body"], data.instances) ??
+      [];
+
+    const detachedPath = detachSharedSlotContentMutable(data, instancePath);
+
+    expect(detachedPath[0].instance.id).not.toBe("box");
+    expect(detachedPath[1].instance.id).not.toBe("fragment");
+    expect(detachedPath[2].instance.id).toBe("slot1");
+    expect(data.instances.get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
   });
 });
 

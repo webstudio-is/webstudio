@@ -1,4 +1,5 @@
 import {
+  detectFragmentTokenConflicts,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   detectPageTokenConflicts,
@@ -2218,6 +2219,50 @@ describe("insert webstudio fragment copy", () => {
 describe("detectPageTokenConflicts", () => {
   beforeEach(() => {
     $project.set({ id: "project-id" } as Project);
+  });
+
+  test("detectFragmentTokenConflicts returns token style conflicts", () => {
+    const targetData = renderData(
+      <$.Body ws:id="body">
+        <$.Box
+          ws:id="existing-box"
+          ws:tokens={[
+            token(
+              "primary",
+              css`
+                color: blue;
+              `
+            ),
+          ]}
+        ></$.Box>
+      </$.Body>
+    );
+    setDataStores(targetData);
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+
+    const sourceData = renderData(
+      <$.Body ws:id="source-body">
+        <$.Box
+          ws:id="source-box"
+          ws:tokens={[
+            token(
+              "primary",
+              css`
+                color: red;
+              `
+            ),
+          ]}
+        ></$.Box>
+      </$.Body>
+    );
+
+    const conflicts = detectFragmentTokenConflicts({
+      fragment: extractWebstudioFragment(sourceData, "source-box"),
+    });
+
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0]?.existingToken.name).toBe("primary");
+    expect(conflicts[0]?.fragmentToken.name).toBe("primary");
   });
 
   test("returns empty array when no conflicts exist", () => {

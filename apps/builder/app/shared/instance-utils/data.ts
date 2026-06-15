@@ -5,14 +5,11 @@ import { current, isDraft } from "immer";
 import { toast } from "@webstudio-is/design-system";
 import {
   type Instances,
-  type Props,
   type WebstudioData,
-  type WsComponentMeta,
   blockTemplateComponent,
   isPageTemplate,
 } from "@webstudio-is/sdk";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
-import { isRichTextTree } from "../content-model";
 import { findBlockSelector } from "../nano-states";
 import { $canOpenPageTemplates, $selectedPage } from "../nano-states";
 import { serverSyncStore } from "../sync/sync-stores";
@@ -139,45 +136,4 @@ export const getWebstudioData = (): WebstudioData => {
     styles: $styles.get(),
     assets: $assets.get(),
   };
-};
-
-export const findAllEditableInstanceSelector = ({
-  instanceSelector,
-  instances,
-  props,
-  metas,
-  results,
-}: {
-  instanceSelector: InstanceSelector;
-  instances: Instances;
-  props: Props;
-  metas: Map<string, WsComponentMeta>;
-  results: InstanceSelector[];
-}) => {
-  const [instanceId] = instanceSelector;
-
-  if (instanceId === undefined) {
-    return;
-  }
-
-  // Check if current instance is text editing instance
-  if (isRichTextTree({ instanceId, instances, props, metas })) {
-    results.push(instanceSelector);
-    return;
-  }
-
-  const instance = instances.get(instanceId);
-  if (instance) {
-    for (const child of instance.children) {
-      if (child.type === "id") {
-        findAllEditableInstanceSelector({
-          instanceSelector: [child.value, ...instanceSelector],
-          instances,
-          props,
-          metas,
-          results,
-        });
-      }
-    }
-  }
 };
