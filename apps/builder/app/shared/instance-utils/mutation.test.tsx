@@ -55,7 +55,6 @@ import { selectInstance } from "../nano-states";
 import { $selectedPageId } from "../nano-states/pages";
 import {
   expectSlotTreeIntegrity,
-  expectSlotsDoNotShareFragment,
   expectSlotsShareFragment,
   getSlotFragmentId,
 } from "../slot-test-utils";
@@ -2810,7 +2809,7 @@ describe("unwrap instance", () => {
     expect(parentInstance.children).toEqual([{ type: "id", value: "link" }]);
   });
 
-  test("unwraps selected slot occurrence instead of hidden slot fragment", () => {
+  test("unwraps direct slot child out of shared slot content", () => {
     const { instances, props } = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -2850,9 +2849,7 @@ describe("unwrap instance", () => {
     expect(instances.get("slot2")?.children).toEqual([
       { type: "id", value: "fragment" },
     ]);
-    expect(instances.get("fragment")?.children).toEqual([
-      { type: "id", value: "div" },
-    ]);
+    expect(instances.get("fragment")?.children).toEqual([]);
   });
 
   test("unwrap command skips hidden slot fragment", () => {
@@ -2882,7 +2879,7 @@ describe("unwrap instance", () => {
     expect($instances.get().has("fragment")).toBe(false);
   });
 
-  test("unwrap command detaches selected duplicated slot occurrence", () => {
+  test("unwrap command moves only shared slot child out of all slot occurrences", () => {
     const { instances, props } = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -2912,18 +2909,15 @@ describe("unwrap instance", () => {
       bodyChildren?.[0]?.type === "id" ? bodyChildren[0].value : undefined;
 
     expect(unwrappedDivId).toBeDefined();
-    expect(unwrappedDivId).not.toBe("div");
+    expect(unwrappedDivId).toBe("div");
     expect($selectedInstanceSelector.get()).toEqual([unwrappedDivId, "body"]);
     expect($instances.get().get("slot1")).toBeUndefined();
-    expect($instances.get().get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect($instances.get().get("fragment")?.children).toEqual([
-      { type: "id", value: "div" },
-    ]);
+    const fragmentId = getSlotFragmentId($instances.get(), "slot2");
+    expect(fragmentId).toBe("fragment");
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([]);
   });
 
-  test("unwrap command detaches direct shared slot child and preserves siblings", () => {
+  test("unwrap command moves direct shared slot child out of all slots and preserves siblings", () => {
     const { instances, props } = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -2966,24 +2960,20 @@ describe("unwrap instance", () => {
         : $instances.get().get(slot1Id)?.children[0]?.value;
 
     expect(slot1Id).toBe("slot1");
-    expect(slot1FragmentId).toBeDefined();
-    expect(slot1FragmentId).not.toBe("fragment");
+    const sharedFragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
+    expect(slot1FragmentId).toBe(sharedFragmentId);
     expect(unwrappedBoxId).toBeDefined();
-    expect(unwrappedBoxId).not.toBe("box");
+    expect(unwrappedBoxId).toBe("box");
     expect($selectedInstanceSelector.get()).toEqual([unwrappedBoxId, "body"]);
-    expect($instances.get().get(slot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
-    ]);
-    expect($instances.get().get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect($instances.get().get("fragment")?.children).toEqual([
-      { type: "id", value: "box" },
+    expect($instances.get().get(sharedFragmentId ?? "")?.children).toEqual([
       { type: "id", value: "heading" },
     ]);
   });
 
-  test("unwrap command detaches direct legacy shared slot child and preserves siblings", () => {
+  test("unwrap command moves direct legacy shared slot child out of all slots and preserves siblings", () => {
     const { instances, props } = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -3011,25 +3001,21 @@ describe("unwrap instance", () => {
       bodyChildren?.[0]?.type === "id" ? bodyChildren[0].value : undefined;
     const unwrappedBoxId =
       bodyChildren?.[1]?.type === "id" ? bodyChildren[1].value : undefined;
-    expectSlotsDoNotShareFragment($instances.get(), "slot1", "slot2");
+    const sharedFragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
     const slot1FragmentId =
       slot1Id === undefined
         ? undefined
         : getSlotFragmentId($instances.get(), slot1Id);
-    const slot2FragmentId = getSlotFragmentId($instances.get(), "slot2");
 
     expect(slot1Id).toBe("slot1");
-    expect(slot1FragmentId).toBeDefined();
-    expect(slot2FragmentId).toBeDefined();
-    expect(slot1FragmentId).not.toBe(slot2FragmentId);
+    expect(slot1FragmentId).toBe(sharedFragmentId);
     expect(unwrappedBoxId).toBeDefined();
-    expect(unwrappedBoxId).not.toBe("box");
+    expect(unwrappedBoxId).toBe("box");
     expect($selectedInstanceSelector.get()).toEqual([unwrappedBoxId, "body"]);
-    expect($instances.get().get(slot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
-    ]);
-    expect($instances.get().get(slot2FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: "box" },
+    expect($instances.get().get(sharedFragmentId ?? "")?.children).toEqual([
       { type: "id", value: "heading" },
     ]);
   });
@@ -3048,7 +3034,7 @@ describe("unwrap instance", () => {
       remainingIds: ["box1", "box2"],
     },
   ])(
-    "unwrap command detaches direct shared slot child in $selectedId position",
+    "unwrap command moves direct shared slot child in $selectedId position out of all slots",
     ({ selectedId, remainingIds }) => {
       const { instances, props } = renderData(
         <$.Body ws:id="body">
@@ -3085,20 +3071,15 @@ describe("unwrap instance", () => {
           child.value !== "slot1" &&
           child.value !== "slot2"
       )?.value;
-      expectSlotsDoNotShareFragment($instances.get(), "slot1", "slot2");
-      const slot1FragmentId = getSlotFragmentId($instances.get(), "slot1");
-      const slot2FragmentId = getSlotFragmentId($instances.get(), "slot2");
-      expect(unwrappedId).toEqual(expect.any(String));
-      expect(unwrappedId).not.toBe(selectedId);
-      expect($selectedInstanceSelector.get()).toEqual([unwrappedId, "body"]);
-      expect($instances.get().get(slot1FragmentId ?? "")?.children).toEqual(
-        remainingIds.map(() => ({ type: "id", value: expect.any(String) }))
-      );
-      expect($instances.get().get(slot2FragmentId ?? "")?.children).toEqual([
-        { type: "id", value: "box1" },
-        { type: "id", value: "box2" },
-        { type: "id", value: "box3" },
+      const sharedFragmentId = expectSlotsShareFragment($instances.get(), [
+        "slot1",
+        "slot2",
       ]);
+      expect(unwrappedId).toBe(selectedId);
+      expect($selectedInstanceSelector.get()).toEqual([unwrappedId, "body"]);
+      expect($instances.get().get(sharedFragmentId ?? "")?.children).toEqual(
+        remainingIds.map((id) => ({ type: "id", value: id }))
+      );
     }
   );
 

@@ -536,13 +536,11 @@ const prepareUnwrapInstancePathMutable = (
   if (getDirectSharedSlotChildBoundary(normalizedInstancePath) === undefined) {
     return { instancePath: normalizedInstancePath };
   }
-  const detachedInstancePath = detachSharedSlotContentMutable(
-    data,
-    normalizedInstancePath
-  );
   return {
-    instancePath: detachedInstancePath,
-    directSlotBoundary: getDirectSharedSlotChildBoundary(detachedInstancePath),
+    instancePath: normalizedInstancePath,
+    directSlotBoundary: getDirectSharedSlotChildBoundary(
+      normalizedInstancePath
+    ),
   };
 };
 
@@ -632,6 +630,10 @@ export const unwrapInstanceMutable = ({
     selectedParentInstance.children[0]?.type === "id" &&
     selectedParentInstance.children[0].value === selectedItem.instance.id
   ) {
+    removeChildReferenceMutable(
+      selectedParentInstance.children,
+      selectedItem.instance.id
+    );
     replaceChildReferenceMutable(
       grandparentInstance,
       parentItem.instance.id,
@@ -662,8 +664,8 @@ export const unwrapInstanceMutable = ({
   }
 
   // Slot children may be rendered through multiple slot instances with the same
-  // ids. In that case use the selected path to unwrap only the selected slot
-  // occurrence and preserve the shared parent tree for other slot occurrences.
+  // ids. Unwrapping a direct Slot child moves the child out of shared Slot
+  // content, so the child is removed from all occurrences of that Slot.
   if (instances.get(parentItem.instanceSelector[1])?.component === "Slot") {
     replaceChildReferenceMutable(
       grandparentInstance,
