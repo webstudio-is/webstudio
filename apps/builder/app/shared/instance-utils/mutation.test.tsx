@@ -3783,6 +3783,76 @@ describe("convertInstance", () => {
     expect($instances.get().get("box")?.tag).toBe("section");
   });
 
+  test("command sequence preserves shared slot content through wrap, convert, and unwrap", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+            <$.Heading ws:id="heading"></$.Heading>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+            <$.Heading ws:id="heading"></$.Heading>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    selectInstance(["box", "fragment", "slot1", "body"]);
+
+    wrapInstance(elementComponent, "div");
+
+    const wrapperId = $selectedInstanceSelector.get()?.[0];
+    expect(wrapperId).toEqual(expect.any(String));
+    if (wrapperId === undefined) {
+      throw new Error("Expected wrapper to be selected");
+    }
+    expectSlotTreeIntegrity($instances.get(), {
+      selectedInstanceSelector: $selectedInstanceSelector.get(),
+    });
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: wrapperId },
+      { type: "id", value: "heading" },
+    ]);
+
+    convertInstance(elementComponent, "section");
+
+    expect($instances.get().get(wrapperId)?.component).toBe(elementComponent);
+    expect($instances.get().get(wrapperId)?.tag).toBe("section");
+    expectSlotTreeIntegrity($instances.get(), {
+      selectedInstanceSelector: $selectedInstanceSelector.get(),
+    });
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
+
+    selectInstance(["box", wrapperId, "fragment", "slot1", "body"]);
+    unwrapInstance();
+
+    expect($selectedInstanceSelector.get()).toEqual([
+      "box",
+      "fragment",
+      "slot1",
+      "body",
+    ]);
+    expectSlotTreeIntegrity($instances.get(), {
+      selectedInstanceSelector: $selectedInstanceSelector.get(),
+    });
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "heading" },
+    ]);
+    expect($instances.get().has(wrapperId)).toBe(false);
+  });
+
   test("converts legacy tag to element", () => {
     const { instances, props } = renderData(
       <ws.element ws:tag="body" ws:id="bodyId">
