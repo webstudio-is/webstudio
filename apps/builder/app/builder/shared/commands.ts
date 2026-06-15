@@ -40,7 +40,6 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentAt,
   insertWebstudioFragmentCopy,
-  normalizeLegacySlotInstancePathMutable,
   reparentInstance,
   toggleInstanceShow,
 } from "~/shared/instance-utils";
@@ -82,6 +81,7 @@ import {
   getDeletablePageActionTarget,
   getPageActionTarget,
 } from "~/shared/page-action-target";
+import { normalizeLegacySlotInstancePathMutable } from "~/shared/slot-utils";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -702,7 +702,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
         updateWebstudioData((data) => {
           const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
-            data,
+            data.instances,
             instancePath
           );
           const [selectedItem, parentItem] = normalizedInstancePath;

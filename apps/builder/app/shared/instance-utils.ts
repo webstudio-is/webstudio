@@ -112,6 +112,7 @@ import {
   findSharedSlotIndex,
   getSlotFragmentId,
   isDirectSharedSlotChild,
+  normalizeLegacySlotInstancePathMutable,
   prepareSlotReparentMutable,
   type SharedSlotDetachResult,
 } from "./slot-utils";
@@ -669,7 +670,10 @@ export const deleteInstanceMutable = (
   if (instancePath === undefined) {
     return false;
   }
-  instancePath = normalizeLegacySlotInstancePathMutable(data, instancePath);
+  instancePath = normalizeLegacySlotInstancePathMutable(
+    data.instances,
+    instancePath
+  );
   const {
     instances,
     props,
@@ -858,19 +862,6 @@ export const detachSharedSlotContentMutable = (
   return detachSharedSlotContentMutableWithMap(data, instancePath).instancePath;
 };
 
-export const normalizeLegacySlotInstancePathMutable = (
-  data: Omit<WebstudioData, "pages">,
-  instancePath: InstancePath
-) => {
-  const normalizedInstanceSelector = normalizeLegacySlotParentInSelectorMutable(
-    data.instances,
-    instancePath[0].instanceSelector
-  );
-  return (
-    getInstancePath(normalizedInstanceSelector, data.instances) ?? instancePath
-  );
-};
-
 const unwrapDirectSharedSlotChildWithSiblingsMutable = ({
   data,
   selectedItem,
@@ -989,22 +980,12 @@ export const unwrapInstanceMutable = ({
       };
     }
 
-    const isInstanceReferenced = (instanceId: Instance["id"]) => {
-      for (const instance of instances.values()) {
-        if (
-          instance.children.some(
-            (child) => child.type === "id" && child.value === instanceId
-          )
-        ) {
-          return true;
-        }
-      }
-      return false;
-    };
-    if (isInstanceReferenced(parentItem.instance.id) === false) {
+    if (countInstanceChildReferences(instances, parentItem.instance.id) === 0) {
       instances.delete(parentItem.instance.id);
     }
-    if (isInstanceReferenced(selectedParentInstance.id) === false) {
+    if (
+      countInstanceChildReferences(instances, selectedParentInstance.id) === 0
+    ) {
       instances.delete(selectedParentInstance.id);
     }
 
@@ -1181,7 +1162,7 @@ export const wrapInstance = (component: string, tag?: string) => {
   try {
     updateWebstudioData((data) => {
       const nextInstancePath = normalizeLegacySlotInstancePathMutable(
-        data,
+        data.instances,
         instancePath
       );
       const [selectedItem, parentItem] = nextInstancePath;
@@ -1308,7 +1289,7 @@ export const convertInstance = (component: string, tag?: string) => {
         });
       }
       const nextInstancePath = normalizeLegacySlotInstancePathMutable(
-        data,
+        data.instances,
         instancePath
       );
       const [selectedItem] = nextInstancePath;
@@ -1368,7 +1349,7 @@ export const unwrapInstance = () => {
   try {
     updateWebstudioData((data) => {
       const initialInstancePath = normalizeLegacySlotInstancePathMutable(
-        data,
+        data.instances,
         instancePath
       );
       const unwrapsDirectSlotChild =
@@ -1461,7 +1442,7 @@ export const deleteSelectedInstance = () => {
 
   updateWebstudioData((data) => {
     const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
-      data,
+      data.instances,
       instancePath
     );
     const [normalizedSelectedItem, parentItem] = normalizedInstancePath;

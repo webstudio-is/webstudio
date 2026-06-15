@@ -1,6 +1,9 @@
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import type { DroppableTarget } from "./tree-utils";
-import type { InstancePath } from "./nano-states";
+import {
+  normalizeLegacySlotParentInSelectorMutable,
+  type DroppableTarget,
+} from "./tree-utils";
+import { getInstancePath, type InstancePath } from "./nano-states";
 
 export type SharedSlotDetachResult = {
   instancePath: InstancePath;
@@ -26,6 +29,17 @@ export const getSharedSlotFragmentId = (instancePath: InstancePath) => {
 
 export const isDirectSharedSlotChild = (instancePath: InstancePath) => {
   return findSharedSlotIndex(instancePath) === 2;
+};
+
+export const normalizeLegacySlotInstancePathMutable = (
+  instances: Instances,
+  instancePath: InstancePath
+) => {
+  const normalizedInstanceSelector = normalizeLegacySlotParentInSelectorMutable(
+    instances,
+    instancePath[0].instanceSelector
+  );
+  return getInstancePath(normalizedInstanceSelector, instances) ?? instancePath;
 };
 
 export const getSlotFragmentId = (slot: undefined | Instance) => {

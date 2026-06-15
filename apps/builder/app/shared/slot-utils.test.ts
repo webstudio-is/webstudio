@@ -102,6 +102,35 @@ describe("slot utils", () => {
     });
   });
 
+  test("keeps reparent shared when target is the visible slot occurrence", () => {
+    const path = [
+      item(["box", "fragment", "slot", "body"], "Box"),
+      item(["fragment", "slot", "body"], "Fragment"),
+      item(["slot", "body"], "Slot"),
+      item(["body"], "Body"),
+    ] satisfies InstancePath;
+    const detachSharedSlotContentMutable = vi.fn();
+
+    const result = prepareSlotReparentMutable({
+      instances: new Map([
+        ["slot", instance("slot", "Slot", [{ type: "id", value: "fragment" }])],
+      ]),
+      instancePath: path,
+      dropTarget: {
+        parentSelector: ["slot", "body"],
+        position: "end",
+      },
+      detachSharedSlotContentMutable,
+    });
+
+    expect(detachSharedSlotContentMutable).not.toHaveBeenCalled();
+    expect(result.instancePath).toBe(path);
+    expect(result.dropTarget).toEqual({
+      parentSelector: ["slot", "body"],
+      position: "end",
+    });
+  });
+
   test("detaches when reparent leaves shared slot content", () => {
     const path = [
       item(["box", "fragment", "slot", "body"], "Box"),
