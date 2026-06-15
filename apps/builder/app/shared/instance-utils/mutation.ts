@@ -112,57 +112,16 @@ export const reparentInstanceMutable = (
     getSlotFragmentDropTargetMutable(data.instances, dropTarget) ?? dropTarget;
   // move within same parent
   if (sourceInstanceSelector[1] === dropTarget.parentSelector[0]) {
-    const [parentId] = dropTarget.parentSelector;
-    const parent = data.instances.get(parentId);
-    if (parent === undefined) {
-      return;
-    }
-    const prevPosition = parent.children.findIndex(
-      (child) => child.type === "id" && child.value === rootInstanceId
-    );
-    const child = parent.children[prevPosition];
-    parent?.children.splice(prevPosition, 1);
-    if (dropTarget.position === "end") {
-      parent?.children.push(child);
-    } else {
-      // when parent is the same, we need to adjust the position
-      // to account for the removal of the instance.
-      let nextPosition = dropTarget.position;
-      if (prevPosition < nextPosition) {
-        nextPosition -= 1;
-      }
-      parent?.children.splice(nextPosition, 0, child);
-    }
+    reorderInstanceWithinParentMutable(data, rootInstanceId, dropTarget);
     return sourceInstanceSelector;
   }
   // move into another parent
-  // Prepare drop target before removing the instance so empty Slot fragments can
-  // be created or reused while the current tree is still intact.
-  dropTarget =
-    getReparentDropTargetMutable(
-      data.instances,
-      data.props,
-      $registeredComponentMetas.get(),
-      dropTarget
-    ) ?? dropTarget;
-  removeMovedInstanceFromParentMutable(data, sourceInstancePath);
-  const [newParentId] = dropTarget.parentSelector;
-  const newParent = data.instances.get(newParentId);
-  const newChild = { type: "id" as const, value: rootInstanceId };
-  if (dropTarget.position === "end") {
-    newParent?.children.push(newChild);
-  } else {
-    newParent?.children.splice(dropTarget.position, 0, newChild);
-  }
-  rebindTreeVariablesMutable({
-    startingInstanceId: rootInstanceId,
-    pages: undefined,
-    instances: data.instances,
-    props: data.props,
-    dataSources: data.dataSources,
-    resources: data.resources,
-  });
-  return [rootInstanceId, ...dropTarget.parentSelector];
+  return moveInstanceToParentMutable(
+    data,
+    rootInstanceId,
+    sourceInstancePath,
+    dropTarget
+  );
 };
 
 export const reparentInstance = (
@@ -194,6 +153,41 @@ const countInstanceChildReferences = (
   return count;
 };
 
+const createInstanceChild = (instanceId: Instance["id"]) =>
+  ({ type: "id", value: instanceId }) as const;
+
+const findChildReferenceIndex = (
+  children: Instance["children"],
+  instanceId: Instance["id"]
+) =>
+  children.findIndex(
+    (child) => child.type === "id" && child.value === instanceId
+  );
+
+const removeChildReferenceMutable = (
+  children: Instance["children"],
+  instanceId: Instance["id"]
+) => {
+  removeByMutable(
+    children,
+    (child) => child.type === "id" && child.value === instanceId
+  );
+};
+
+const replaceChildReferenceMutable = (
+  parentInstance: Instance,
+  previousChildId: Instance["id"],
+  nextChildId: Instance["id"]
+) => {
+  const childIndex = findChildReferenceIndex(
+    parentInstance.children,
+    previousChildId
+  );
+  if (childIndex !== -1) {
+    parentInstance.children[childIndex] = createInstanceChild(nextChildId);
+  }
+};
+
 const removeMovedInstanceFromParentMutable = (
   data: Omit<WebstudioData, "pages">,
   instancePath: InstancePath
@@ -208,10 +202,7 @@ const removeMovedInstanceFromParentMutable = (
   if (parentInstance === undefined) {
     return;
   }
-  removeByMutable(
-    parentInstance.children,
-    (child) => child.type === "id" && child.value === targetInstance.id
-  );
+  removeChildReferenceMutable(parentInstance.children, targetInstance.id);
   if (
     parentInstance.component === "Fragment" &&
     parentInstance.children.length === 0 &&
@@ -219,12 +210,101 @@ const removeMovedInstanceFromParentMutable = (
     countInstanceChildReferences(data.instances, parentInstance.id) < 2
   ) {
     const grandparentInstance = data.instances.get(grandparentItem.instance.id);
-    removeByMutable(
+    removeChildReferenceMutable(
       grandparentInstance?.children ?? [],
-      (child) => child.type === "id" && child.value === parentInstance.id
+      parentInstance.id
     );
     data.instances.delete(parentInstance.id);
   }
+};
+
+const reorderInstanceWithinParentMutable = (
+  data: Omit<WebstudioData, "pages">,
+  rootInstanceId: Instance["id"],
+  dropTarget: DroppableTarget
+) => {
+  const [parentId] = dropTarget.parentSelector;
+  const parent = data.instances.get(parentId);
+  if (parent === undefined) {
+    return;
+  }
+  const prevPosition = findChildReferenceIndex(parent.children, rootInstanceId);
+  const child = parent.children[prevPosition];
+  if (child === undefined) {
+    return;
+  }
+  parent.children.splice(prevPosition, 1);
+  if (dropTarget.position === "end") {
+    parent.children.push(child);
+    return;
+  }
+  // When parent is the same, account for removal before reinserting.
+  let nextPosition = dropTarget.position;
+  if (prevPosition < nextPosition) {
+    nextPosition -= 1;
+  }
+  parent.children.splice(nextPosition, 0, child);
+};
+
+const moveInstanceToParentMutable = (
+  data: Omit<WebstudioData, "pages">,
+  rootInstanceId: Instance["id"],
+  sourceInstancePath: InstancePath,
+  dropTarget: DroppableTarget
+) => {
+  // Prepare drop target before removing the instance so empty Slot fragments can
+  // be created or reused while the current tree is still intact.
+  dropTarget =
+    getReparentDropTargetMutable(
+      data.instances,
+      data.props,
+      $registeredComponentMetas.get(),
+      dropTarget
+    ) ?? dropTarget;
+  removeMovedInstanceFromParentMutable(data, sourceInstancePath);
+  const [newParentId] = dropTarget.parentSelector;
+  const newParent = data.instances.get(newParentId);
+  const newChild = createInstanceChild(rootInstanceId);
+  if (dropTarget.position === "end") {
+    newParent?.children.push(newChild);
+  } else {
+    newParent?.children.splice(dropTarget.position, 0, newChild);
+  }
+  rebindTreeVariablesMutable({
+    startingInstanceId: rootInstanceId,
+    pages: undefined,
+    instances: data.instances,
+    props: data.props,
+    dataSources: data.dataSources,
+    resources: data.resources,
+  });
+  return [rootInstanceId, ...dropTarget.parentSelector];
+};
+
+const getDeleteTarget = (
+  instances: Instances,
+  instancePath: InstancePath
+): {
+  targetInstance: Instance;
+  parentInstance?: Instance;
+} => {
+  let targetInstance = instancePath[0].instance;
+  let parentInstance = instancePath[1]?.instance;
+  const grandparentInstance = instancePath[2]?.instance;
+
+  // Delete the wrapper Fragment too when deleting its last child. Empty Slot
+  // Fragments use display: contents and do not render correctly on canvas.
+  if (
+    parentInstance?.component === "Fragment" &&
+    parentInstance.children.length === 1 &&
+    grandparentInstance &&
+    countInstanceChildReferences(instances, parentInstance.id) < 2
+  ) {
+    targetInstance = parentInstance;
+    parentInstance = grandparentInstance;
+  }
+
+  return { targetInstance, parentInstance };
 };
 
 export const deleteInstanceMutable = (
@@ -247,24 +327,10 @@ export const deleteInstanceMutable = (
     dataSources,
     resources,
   } = data;
-  let targetInstance = instancePath[0].instance;
-  let parentInstance =
-    instancePath.length > 1 ? instancePath[1]?.instance : undefined;
-  const grandparentInstance =
-    instancePath.length > 2 ? instancePath[2]?.instance : undefined;
-
-  // delete parent fragment too if its last child is going to be deleted
-  // use case for slots: slot became empty and remove display: contents
-  // to be displayed properly on canvas
-  if (
-    parentInstance?.component === "Fragment" &&
-    parentInstance.children.length === 1 &&
-    grandparentInstance &&
-    countInstanceChildReferences(instances, parentInstance.id) < 2
-  ) {
-    targetInstance = parentInstance;
-    parentInstance = grandparentInstance;
-  }
+  const { targetInstance, parentInstance } = getDeleteTarget(
+    instances,
+    instancePath
+  );
 
   const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
     instances,
@@ -277,13 +343,10 @@ export const deleteInstanceMutable = (
   );
 
   // mutate instances from data instead of instance path
-  parentInstance = data.instances.get(parentInstance?.id as string);
+  const parentToMutate = data.instances.get(parentInstance?.id as string);
   // may not exist when delete root
-  if (parentInstance) {
-    removeByMutable(
-      parentInstance.children,
-      (child) => child.type === "id" && child.value === targetInstance.id
-    );
+  if (parentToMutate) {
+    removeChildReferenceMutable(parentToMutate.children, targetInstance.id);
   }
 
   for (const instanceId of instanceIds) {
@@ -341,11 +404,7 @@ const cloneSharedSlotFragmentMutable = (
   if (slot === undefined || newFragmentId === undefined) {
     return;
   }
-  for (const child of slot.children) {
-    if (child.type === "id" && child.value === fragmentId) {
-      child.value = newFragmentId;
-    }
-  }
+  replaceChildReferenceMutable(slot, fragmentId, newFragmentId);
   return newInstanceIds;
 };
 
@@ -435,20 +494,22 @@ const unwrapDirectSharedSlotChildWithSiblingsMutable = ({
   if (slotParent === undefined) {
     return;
   }
-  removeByMutable(
+  removeChildReferenceMutable(
     fragmentItem.instance.children,
-    (child) => child.type === "id" && child.value === selectedItem.instance.id
+    selectedItem.instance.id
   );
-  const slotPosition = slotParent.children.findIndex(
-    (child) => child.type === "id" && child.value === slotItem.instance.id
+  const slotPosition = findChildReferenceIndex(
+    slotParent.children,
+    slotItem.instance.id
   );
   if (slotPosition === -1) {
     return;
   }
-  slotParent.children.splice(slotPosition + 1, 0, {
-    type: "id",
-    value: selectedItem.instance.id,
-  });
+  slotParent.children.splice(
+    slotPosition + 1,
+    0,
+    createInstanceChild(selectedItem.instance.id)
+  );
   const nextSelectedInstanceSelector = [
     selectedItem.instance.id,
     ...slotItem.instanceSelector.slice(1),
@@ -464,6 +525,62 @@ const unwrapDirectSharedSlotChildWithSiblingsMutable = ({
     throw Error("Abort transaction");
   }
   return nextSelectedInstanceSelector;
+};
+
+const prepareUnwrapInstancePathMutable = (
+  data: WebstudioData,
+  instancePath: InstancePath
+): {
+  instancePath: InstancePath;
+  directSlotBoundary?: ReturnType<typeof getDirectSharedSlotChildBoundary>;
+} => {
+  const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
+    data.instances,
+    instancePath
+  );
+  if (getDirectSharedSlotChildBoundary(normalizedInstancePath) === undefined) {
+    return { instancePath: normalizedInstancePath };
+  }
+  const detachedInstancePath = detachSharedSlotContentMutable(
+    data,
+    normalizedInstancePath
+  );
+  return {
+    instancePath: detachedInstancePath,
+    directSlotBoundary: getDirectSharedSlotChildBoundary(detachedInstancePath),
+  };
+};
+
+const getUnwrappedInstanceSelector = ({
+  selectedItem,
+  parentItem,
+}: {
+  selectedItem: { instance: { id: Instance["id"] } };
+  parentItem: { instanceSelector: InstanceSelector };
+}) => [selectedItem.instance.id, ...parentItem.instanceSelector.slice(1)];
+
+const validateUnwrappedInstance = ({
+  instances,
+  props,
+  metas,
+  selectedItem,
+  parentItem,
+}: {
+  instances: Map<string, Instance>;
+  props: Props;
+  metas: Map<string, WsComponentMeta>;
+  selectedItem: { instance: { id: Instance["id"] } };
+  parentItem: { instanceSelector: InstanceSelector };
+}) => {
+  return isTreeSatisfyingContentModel({
+    instances,
+    props,
+    metas,
+    instanceSelector: getUnwrappedInstanceSelector({
+      selectedItem,
+      parentItem,
+    }),
+  });
 };
 
 export const unwrapInstanceMutable = ({
@@ -520,15 +637,11 @@ export const unwrapInstanceMutable = ({
     selectedParentInstance.children[0]?.type === "id" &&
     selectedParentInstance.children[0].value === selectedItem.instance.id
   ) {
-    const parentIndex = grandparentInstance.children.findIndex(
-      (child) => child.type === "id" && child.value === parentItem.instance.id
+    replaceChildReferenceMutable(
+      grandparentInstance,
+      parentItem.instance.id,
+      selectedItem.instance.id
     );
-    if (parentIndex !== -1) {
-      grandparentInstance.children[parentIndex] = {
-        type: "id",
-        value: selectedItem.instance.id,
-      };
-    }
 
     if (countInstanceChildReferences(instances, parentItem.instance.id) === 0) {
       instances.delete(parentItem.instance.id);
@@ -539,14 +652,12 @@ export const unwrapInstanceMutable = ({
       instances.delete(selectedParentInstance.id);
     }
 
-    const matches = isTreeSatisfyingContentModel({
+    const matches = validateUnwrappedInstance({
       instances,
       props,
       metas,
-      instanceSelector: [
-        selectedItem.instance.id,
-        ...parentItem.instanceSelector.slice(1),
-      ],
+      selectedItem,
+      parentItem,
     });
     if (matches === false) {
       return { success: false, error: "Cannot unwrap instance" };
@@ -559,24 +670,18 @@ export const unwrapInstanceMutable = ({
   // ids. In that case use the selected path to unwrap only the selected slot
   // occurrence and preserve the shared parent tree for other slot occurrences.
   if (instances.get(parentItem.instanceSelector[1])?.component === "Slot") {
-    const parentIndex = grandparentInstance.children.findIndex(
-      (child) => child.type === "id" && child.value === parentItem.instance.id
+    replaceChildReferenceMutable(
+      grandparentInstance,
+      parentItem.instance.id,
+      selectedItem.instance.id
     );
-    if (parentIndex !== -1) {
-      grandparentInstance.children[parentIndex] = {
-        type: "id",
-        value: selectedItem.instance.id,
-      };
-    }
 
-    const matches = isTreeSatisfyingContentModel({
+    const matches = validateUnwrappedInstance({
       instances,
       props,
       metas,
-      instanceSelector: [
-        selectedItem.instance.id,
-        ...parentItem.instanceSelector.slice(1),
-      ],
+      selectedItem,
+      parentItem,
     });
     if (matches === false) {
       return { success: false, error: "Cannot unwrap instance" };
@@ -586,8 +691,9 @@ export const unwrapInstanceMutable = ({
   }
 
   // Remove selected instance from parent's children
-  const selectedIndexInParent = parentInstance.children.findIndex(
-    (child) => child.type === "id" && child.value === selectedItem.instance.id
+  const selectedIndexInParent = findChildReferenceIndex(
+    parentInstance.children,
+    selectedItem.instance.id
   );
   if (selectedIndexInParent !== -1) {
     parentInstance.children.splice(selectedIndexInParent, 1);
@@ -599,33 +705,34 @@ export const unwrapInstanceMutable = ({
   }
 
   // Add selected instance to grandparent at parent's position
-  const parentIndex = grandparentInstance.children.findIndex(
-    (child) => child.type === "id" && child.value === parentItem.instance.id
+  const parentIndex = findChildReferenceIndex(
+    grandparentInstance.children,
+    parentItem.instance.id
   );
   if (parentIndex !== -1) {
     if (parentInstance.children.length === 0) {
       // Replace parent with selected if parent is now empty
-      grandparentInstance.children[parentIndex] = {
-        type: "id",
-        value: selectedItem.instance.id,
-      };
+      replaceChildReferenceMutable(
+        grandparentInstance,
+        parentItem.instance.id,
+        selectedItem.instance.id
+      );
     } else {
       // Insert selected after parent if parent still has children
-      grandparentInstance.children.splice(parentIndex + 1, 0, {
-        type: "id",
-        value: selectedItem.instance.id,
-      });
+      grandparentInstance.children.splice(
+        parentIndex + 1,
+        0,
+        createInstanceChild(selectedItem.instance.id)
+      );
     }
   }
 
-  const matches = isTreeSatisfyingContentModel({
+  const matches = validateUnwrappedInstance({
     instances,
     props,
     metas,
-    instanceSelector: [
-      selectedItem.instance.id,
-      ...parentItem.instanceSelector.slice(1),
-    ],
+    selectedItem,
+    parentItem,
   });
   if (matches === false) {
     return { success: false, error: "Cannot unwrap instance" };
@@ -739,7 +846,7 @@ export const wrapInstance = (component: string, tag?: string) => {
         type: "instance",
         id: newInstanceId,
         component,
-        children: [{ type: "id", value: selectedInstance.id }],
+        children: [createInstanceChild(selectedInstance.id)],
       };
 
       if (tag || component === elementComponent) {
@@ -748,11 +855,11 @@ export const wrapInstance = (component: string, tag?: string) => {
       const parentInstance = data.instances.get(parentItem.instance.id);
       data.instances.set(newInstanceId, newInstance);
       if (parentInstance) {
-        for (const child of parentInstance.children) {
-          if (child.type === "id" && child.value === selectedInstance.id) {
-            child.value = newInstanceId;
-          }
-        }
+        replaceChildReferenceMutable(
+          parentInstance,
+          selectedInstance.id,
+          newInstanceId
+        );
       }
 
       const isSatisfying = isTreeSatisfyingContentModel({
@@ -898,33 +1005,22 @@ export const unwrapInstance = () => {
 
   try {
     updateWebstudioData((data) => {
-      const initialInstancePath = normalizeLegacySlotInstancePathMutable(
-        data.instances,
-        instancePath
-      );
-      const directSlotBoundary =
-        getDirectSharedSlotChildBoundary(initialInstancePath);
-      const nextInstancePath = directSlotBoundary
-        ? detachSharedSlotContentMutable(data, initialInstancePath)
-        : initialInstancePath;
-      const nextDirectSlotBoundary =
-        directSlotBoundary === undefined
-          ? undefined
-          : getDirectSharedSlotChildBoundary(nextInstancePath);
+      const { instancePath: nextInstancePath, directSlotBoundary } =
+        prepareUnwrapInstancePathMutable(data, instancePath);
       const [selectedItem, defaultParentItem] = nextInstancePath;
       // Unwrapping a direct Slot child places that child outside the Slot, so it
       // intentionally leaves shared Slot content and must use the Slot item as
       // the parent to replace.
-      const parentItem = nextDirectSlotBoundary?.slotItem ?? defaultParentItem;
+      const parentItem = directSlotBoundary?.slotItem ?? defaultParentItem;
       if (parentItem === undefined) {
         return;
       }
 
-      const directSlotUnwrapSelector = nextDirectSlotBoundary
+      const directSlotUnwrapSelector = directSlotBoundary
         ? unwrapDirectSharedSlotChildWithSiblingsMutable({
             data,
             selectedItem,
-            fragmentItem: nextDirectSlotBoundary.fragmentItem,
+            fragmentItem: directSlotBoundary.fragmentItem,
             slotItem: parentItem,
           })
         : undefined;
@@ -947,10 +1043,9 @@ export const unwrapInstance = () => {
       }
 
       // After unwrap, select the child that replaced the parent.
-      selectInstance([
-        selectedItem.instance.id,
-        ...parentItem.instanceSelector.slice(1),
-      ]);
+      selectInstance(
+        getUnwrappedInstanceSelector({ selectedItem, parentItem })
+      );
     });
   } catch {
     // do nothing
