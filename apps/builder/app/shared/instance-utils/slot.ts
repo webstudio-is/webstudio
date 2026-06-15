@@ -239,75 +239,15 @@ export const getSlotFragmentId = (slot: undefined | Instance) => {
   return slot.children[0].value;
 };
 
-export const isSharedSlotBoundaryCrossing = (
-  instances: Instances,
-  instancePath: InstancePath,
-  dropTarget: DroppableTarget
-) => {
-  const boundary = getSharedSlotBoundary(instancePath);
-  if (boundary === undefined) {
-    return false;
-  }
-  if (dropTarget.parentSelector.includes(boundary.fragmentId)) {
-    return false;
-  }
-  return (
-    getSlotFragmentId(instances.get(dropTarget.parentSelector[0])) !==
-    boundary.fragmentId
-  );
-};
-
-const remapDropTargetAfterSharedSlotDetach = (
-  dropTarget: DroppableTarget,
-  detachResult: SharedSlotDetachResult
-): DroppableTarget => {
-  if (
-    detachResult.newInstanceIds === undefined ||
-    detachResult.fragmentId === undefined ||
-    detachResult.slotId === undefined
-  ) {
-    return dropTarget;
-  }
-  const dropTargetSlotIndex = dropTarget.parentSelector.findIndex(
-    (instanceId, index) =>
-      instanceId === detachResult.slotId &&
-      dropTarget.parentSelector[index - 1] === detachResult.fragmentId
-  );
-  if (dropTargetSlotIndex === -1) {
-    return dropTarget;
-  }
-  return {
-    parentSelector: dropTarget.parentSelector.map((instanceId, index) =>
-      index < dropTargetSlotIndex
-        ? (detachResult.newInstanceIds?.get(instanceId) ?? instanceId)
-        : instanceId
-    ),
-    position: dropTarget.position,
-  };
-};
-
 export const prepareSlotReparentMutable = ({
-  instances,
   instancePath,
   dropTarget,
-  detachSharedSlotContentMutable,
 }: {
-  instances: Instances;
   instancePath: InstancePath;
   dropTarget: DroppableTarget;
-  detachSharedSlotContentMutable: (
-    instancePath: InstancePath
-  ) => SharedSlotDetachResult;
 }): { instancePath: InstancePath; dropTarget: DroppableTarget } => {
-  const detachResult = isSharedSlotBoundaryCrossing(
-    instances,
-    instancePath,
-    dropTarget
-  )
-    ? detachSharedSlotContentMutable(instancePath)
-    : { instancePath };
   return {
-    instancePath: detachResult.instancePath,
-    dropTarget: remapDropTargetAfterSharedSlotDetach(dropTarget, detachResult),
+    instancePath,
+    dropTarget,
   };
 };

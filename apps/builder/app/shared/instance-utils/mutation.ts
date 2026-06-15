@@ -83,7 +83,6 @@ export const reparentInstanceMutable = (
     data.instances
   );
   const reparentSource = prepareSharedSlotReparentMutable(
-    data,
     initialSourceInstancePath ?? [],
     dropTarget
   );
@@ -452,19 +451,15 @@ const detachSharedSlotContentMutableWithMap = (
 };
 
 const prepareSharedSlotReparentMutable = (
-  data: Omit<WebstudioData, "pages">,
   instancePath: InstancePath,
   dropTarget: DroppableTarget
 ): { instancePath: InstancePath; dropTarget: DroppableTarget } => {
-  // Reparenting within the same Slot content should mutate the shared
-  // Fragment. Reparenting out of a Slot should detach, making the moved
-  // instance independent from future Slot content changes.
+  // Reparenting a Slot child mutates the shared Fragment. When the target is
+  // outside the Slot, the moved instance becomes independent at its new
+  // location and is removed from every occurrence of that Slot.
   return prepareSlotReparentMutable({
-    instances: data.instances,
     instancePath,
     dropTarget,
-    detachSharedSlotContentMutable: (instancePath) =>
-      detachSharedSlotContentMutableWithMap(data, instancePath),
   });
 };
 

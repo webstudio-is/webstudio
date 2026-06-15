@@ -32,11 +32,7 @@ import {
   getDeletablePageActionTarget,
   getPageActionTarget,
 } from "~/shared/page-action-target";
-import {
-  expectSlotsDoNotShareFragment,
-  expectSlotsShareFragment,
-  getSlotFragmentId,
-} from "~/shared/slot-test-utils";
+import { expectSlotsShareFragment } from "~/shared/slot-test-utils";
 import { __testing__, emitCommand } from "./commands";
 
 const { canRunDesignModeCommand, guardDesignModeCommand } = __testing__;
@@ -916,7 +912,7 @@ describe("move instance commands", () => {
     ]);
   });
 
-  test("moves a direct shared slot child out of the selected slot occurrence", () => {
+  test("moves a direct shared slot child out of all slot occurrences", () => {
     resetDataStores();
     const instances = new Map<Instance["id"], Instance>([
       [
@@ -992,33 +988,24 @@ describe("move instance commands", () => {
 
     emitCommand("moveInstanceOut");
 
-    expectSlotsDoNotShareFragment($instances.get(), "slot1", "slot2");
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
     const bodyChildren = $instances.get().get("body")?.children;
     const movedHeadingId = bodyChildren?.[1]?.value;
     expect(bodyChildren).toEqual([
       { type: "id", value: "slot1" },
-      { type: "id", value: expect.any(String) },
+      { type: "id", value: "heading" },
       { type: "id", value: "slot2" },
     ]);
-    expect(movedHeadingId).not.toBe("heading");
-    expect($instances.get().get(movedHeadingId ?? "")?.component).toBe(
-      "Heading"
-    );
-    const slot1FragmentId = getSlotFragmentId($instances.get(), "slot1");
-    const slot2FragmentId = getSlotFragmentId($instances.get(), "slot2");
-    const slot1Children =
-      $instances.get().get(slot1FragmentId ?? "")?.children ?? [];
-    expect(slot1Children).toEqual([{ type: "id", value: expect.any(String) }]);
-    expect($instances.get().get(slot1Children[0]?.value ?? "")?.component).toBe(
-      "Box"
-    );
-    expect($instances.get().get(slot2FragmentId ?? "")?.children).toEqual([
+    expect(movedHeadingId).toBe("heading");
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([
       { type: "id", value: "box" },
-      { type: "id", value: "heading" },
     ]);
   });
 
-  test("moves the first direct shared slot child out above the selected slot occurrence", () => {
+  test("moves the first direct shared slot child out of all slot occurrences above the slot", () => {
     resetDataStores();
     const instances = new Map<Instance["id"], Instance>([
       [
@@ -1094,28 +1081,25 @@ describe("move instance commands", () => {
 
     emitCommand("moveInstanceOut");
 
-    expectSlotsDoNotShareFragment($instances.get(), "slot1", "slot2");
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
     const bodyChildren = $instances.get().get("body")?.children;
     const movedBoxId = bodyChildren?.[0]?.value;
     expect(bodyChildren).toEqual([
-      { type: "id", value: expect.any(String) },
+      { type: "id", value: "box" },
       { type: "id", value: "slot1" },
       { type: "id", value: "slot2" },
     ]);
-    expect(movedBoxId).not.toBe("box");
+    expect(movedBoxId).toBe("box");
     expect($instances.get().get(movedBoxId ?? "")?.component).toBe("Box");
-    const slot1FragmentId = getSlotFragmentId($instances.get(), "slot1");
-    const slot2FragmentId = getSlotFragmentId($instances.get(), "slot2");
-    expect($instances.get().get(slot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
-    ]);
-    expect($instances.get().get(slot2FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: "box" },
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([
       { type: "id", value: "heading" },
     ]);
   });
 
-  test("moves the first direct shared slot child above the selected slot occurrence", () => {
+  test("moves the first direct shared slot child above all slot occurrences", () => {
     resetDataStores();
     const instances = new Map<Instance["id"], Instance>([
       [
@@ -1191,28 +1175,25 @@ describe("move instance commands", () => {
 
     emitCommand("moveInstanceUp");
 
-    expectSlotsDoNotShareFragment($instances.get(), "slot1", "slot2");
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
     const bodyChildren = $instances.get().get("body")?.children;
     const movedBoxId = bodyChildren?.[0]?.value;
     expect(bodyChildren).toEqual([
-      { type: "id", value: expect.any(String) },
+      { type: "id", value: "box" },
       { type: "id", value: "slot1" },
       { type: "id", value: "slot2" },
     ]);
-    expect(movedBoxId).not.toBe("box");
+    expect(movedBoxId).toBe("box");
     expect($instances.get().get(movedBoxId ?? "")?.component).toBe("Box");
-    const slot1FragmentId = getSlotFragmentId($instances.get(), "slot1");
-    const slot2FragmentId = getSlotFragmentId($instances.get(), "slot2");
-    expect($instances.get().get(slot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
-    ]);
-    expect($instances.get().get(slot2FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: "box" },
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([
       { type: "id", value: "heading" },
     ]);
   });
 
-  test("moves the last direct shared slot child below the selected slot occurrence", () => {
+  test("moves the last direct shared slot child below all slot occurrences", () => {
     resetDataStores();
     const instances = new Map<Instance["id"], Instance>([
       [
@@ -1288,26 +1269,23 @@ describe("move instance commands", () => {
 
     emitCommand("moveInstanceDown");
 
-    expectSlotsDoNotShareFragment($instances.get(), "slot1", "slot2");
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
     const bodyChildren = $instances.get().get("body")?.children;
     const movedHeadingId = bodyChildren?.[1]?.value;
     expect(bodyChildren).toEqual([
       { type: "id", value: "slot1" },
-      { type: "id", value: expect.any(String) },
+      { type: "id", value: "heading" },
       { type: "id", value: "slot2" },
     ]);
-    expect(movedHeadingId).not.toBe("heading");
+    expect(movedHeadingId).toBe("heading");
     expect($instances.get().get(movedHeadingId ?? "")?.component).toBe(
       "Heading"
     );
-    const slot1FragmentId = getSlotFragmentId($instances.get(), "slot1");
-    const slot2FragmentId = getSlotFragmentId($instances.get(), "slot2");
-    expect($instances.get().get(slot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
-    ]);
-    expect($instances.get().get(slot2FragmentId ?? "")?.children).toEqual([
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([
       { type: "id", value: "box" },
-      { type: "id", value: "heading" },
     ]);
   });
 });

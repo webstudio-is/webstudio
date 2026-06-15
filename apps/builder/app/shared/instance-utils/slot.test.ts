@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Instance } from "@webstudio-is/sdk";
 import type { InstancePath } from "../nano-states";
 import {
@@ -7,7 +7,6 @@ import {
   getSharedSlotBoundary,
   getSlotFragmentId,
   getSlotFragmentDropTargetMutable,
-  isSharedSlotBoundaryCrossing,
   normalizeLegacySlotParentInSelectorMutable,
   prepareSlotReparentMutable,
 } from "./slot";
@@ -101,59 +100,19 @@ describe("slot utils", () => {
       item(["slot1", "body"], "Slot"),
       item(["body"], "Body"),
     ] satisfies InstancePath;
-    const detachSharedSlotContentMutable = vi.fn();
     const result = prepareSlotReparentMutable({
-      instances: new Map([
-        [
-          "slot1",
-          instance("slot1", "Slot", [{ type: "id", value: "fragment" }]),
-        ],
-      ]),
       instancePath: path,
       dropTarget: {
         parentSelector: ["fragment", "slot1", "body"],
         position: "end",
       },
-      detachSharedSlotContentMutable,
     });
 
-    expect(detachSharedSlotContentMutable).not.toHaveBeenCalled();
     expect(result.instancePath).toBe(path);
     expect(result.dropTarget).toEqual({
       parentSelector: ["fragment", "slot1", "body"],
       position: "end",
     });
-  });
-
-  test("detects when a move crosses out of shared slot content", () => {
-    const path = [
-      item(["box", "fragment", "slot", "body"], "Box"),
-      item(["fragment", "slot", "body"], "Fragment"),
-      item(["slot", "body"], "Slot"),
-      item(["body"], "Body"),
-    ] satisfies InstancePath;
-    const instances = new Map([
-      ["slot", instance("slot", "Slot", [{ type: "id", value: "fragment" }])],
-    ]);
-
-    expect(
-      isSharedSlotBoundaryCrossing(instances, path, {
-        parentSelector: ["fragment", "slot", "body"],
-        position: "end",
-      })
-    ).toBe(false);
-    expect(
-      isSharedSlotBoundaryCrossing(instances, path, {
-        parentSelector: ["slot", "body"],
-        position: "end",
-      })
-    ).toBe(false);
-    expect(
-      isSharedSlotBoundaryCrossing(instances, path, {
-        parentSelector: ["body"],
-        position: "end",
-      })
-    ).toBe(true);
   });
 
   test("keeps reparent shared when target path is inside the same slot fragment", () => {
@@ -163,19 +122,14 @@ describe("slot utils", () => {
       item(["slot", "body"], "Slot"),
       item(["body"], "Body"),
     ] satisfies InstancePath;
-    const detachSharedSlotContentMutable = vi.fn();
-
     const result = prepareSlotReparentMutable({
-      instances: new Map(),
       instancePath: path,
       dropTarget: {
         parentSelector: ["box", "fragment", "slot", "body"],
         position: "end",
       },
-      detachSharedSlotContentMutable,
     });
 
-    expect(detachSharedSlotContentMutable).not.toHaveBeenCalled();
     expect(result.instancePath).toBe(path);
     expect(result.dropTarget).toEqual({
       parentSelector: ["box", "fragment", "slot", "body"],
@@ -190,21 +144,14 @@ describe("slot utils", () => {
       item(["slot", "body"], "Slot"),
       item(["body"], "Body"),
     ] satisfies InstancePath;
-    const detachSharedSlotContentMutable = vi.fn();
-
     const result = prepareSlotReparentMutable({
-      instances: new Map([
-        ["slot", instance("slot", "Slot", [{ type: "id", value: "fragment" }])],
-      ]),
       instancePath: path,
       dropTarget: {
         parentSelector: ["slot", "body"],
         position: "end",
       },
-      detachSharedSlotContentMutable,
     });
 
-    expect(detachSharedSlotContentMutable).not.toHaveBeenCalled();
     expect(result.instancePath).toBe(path);
     expect(result.dropTarget).toEqual({
       parentSelector: ["slot", "body"],
@@ -212,39 +159,22 @@ describe("slot utils", () => {
     });
   });
 
-  test("detaches when reparent leaves shared slot content", () => {
+  test("keeps reparent shared when target leaves shared slot content", () => {
     const path = [
       item(["box", "fragment", "slot", "body"], "Box"),
       item(["fragment", "slot", "body"], "Fragment"),
       item(["slot", "body"], "Slot"),
       item(["body"], "Body"),
     ] satisfies InstancePath;
-    const detachedPath = [
-      item(["newBox", "newFragment", "slot", "body"], "Box"),
-      item(["newFragment", "slot", "body"], "Fragment"),
-      item(["slot", "body"], "Slot"),
-      item(["body"], "Body"),
-    ] satisfies InstancePath;
-
     const result = prepareSlotReparentMutable({
-      instances: new Map(),
       instancePath: path,
       dropTarget: {
         parentSelector: ["body"],
         position: "end",
       },
-      detachSharedSlotContentMutable: () => ({
-        instancePath: detachedPath,
-        fragmentId: "fragment",
-        slotId: "slot",
-        newInstanceIds: new Map([
-          ["box", "newBox"],
-          ["fragment", "newFragment"],
-        ]),
-      }),
     });
 
-    expect(result.instancePath).toBe(detachedPath);
+    expect(result.instancePath).toBe(path);
     expect(result.dropTarget).toEqual({
       parentSelector: ["body"],
       position: "end",

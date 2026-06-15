@@ -246,7 +246,7 @@ test("Keyboard shortcut keeps Navigator arrows working after outdenting a row", 
   }
 });
 
-test("Keyboard shortcut moves a direct shared slot child out of the selected slot occurrence", async () => {
+test("Keyboard shortcut moves a direct shared slot child out of all slot occurrences", async () => {
   const { page, close } = await newIsolatedPage();
 
   try {
@@ -284,7 +284,7 @@ test("Keyboard shortcut moves a direct shared slot child out of the selected slo
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).waitFor({ state: "hidden", timeout: 30_000 });
-    await expectCanvasInstanceVisible({
+    await canvasInstance({
       canvas,
       instanceSelector: [
         "slot-keyboard-heading",
@@ -293,7 +293,7 @@ test("Keyboard shortcut moves a direct shared slot child out of the selected slo
         "slot-keyboard-wrapper",
         "slot-keyboard-body",
       ],
-    });
+    }).waitFor({ state: "hidden", timeout: 30_000 });
 
     const movedHeadingSelectors = await canvas
       .locator(
@@ -321,7 +321,7 @@ test("Keyboard shortcut moves a direct shared slot child out of the selected slo
   }
 });
 
-test("Keyboard shortcut moves the first shared slot child above the selected slot occurrence", async () => {
+test("Keyboard shortcut moves the first shared slot child above all slot occurrences", async () => {
   const { page, close } = await newIsolatedPage();
 
   try {
@@ -359,7 +359,7 @@ test("Keyboard shortcut moves the first shared slot child above the selected slo
       canvas,
       instanceSelector: slotADivSelector,
     }).waitFor({ state: "hidden", timeout: 30_000 });
-    await expectCanvasInstanceVisible({
+    await canvasInstance({
       canvas,
       instanceSelector: [
         "slot-keyboard-div",
@@ -368,7 +368,7 @@ test("Keyboard shortcut moves the first shared slot child above the selected slo
         "slot-keyboard-wrapper",
         "slot-keyboard-body",
       ],
-    });
+    }).waitFor({ state: "hidden", timeout: 30_000 });
 
     const movedDivSelectors = await canvas
       .locator(
@@ -414,7 +414,7 @@ test("Keyboard shortcut moves the first shared slot child above the selected slo
   }
 });
 
-test("Keyboard shortcut moves the last shared slot child below the selected slot occurrence", async () => {
+test("Keyboard shortcut moves the last shared slot child below all slot occurrences", async () => {
   const { page, close } = await newIsolatedPage();
 
   try {
@@ -452,7 +452,7 @@ test("Keyboard shortcut moves the last shared slot child below the selected slot
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).waitFor({ state: "hidden", timeout: 30_000 });
-    await expectCanvasInstanceVisible({
+    await canvasInstance({
       canvas,
       instanceSelector: [
         "slot-keyboard-heading",
@@ -461,7 +461,7 @@ test("Keyboard shortcut moves the last shared slot child below the selected slot
         "slot-keyboard-wrapper",
         "slot-keyboard-body",
       ],
-    });
+    }).waitFor({ state: "hidden", timeout: 30_000 });
 
     const movedHeadingSelectors = await canvas
       .locator(
@@ -577,7 +577,7 @@ test("Keyboard shortcut reorders a shared slot child from navigator focus", asyn
   }
 });
 
-test("Keyboard shortcut moves the first shared slot child above the selected slot occurrence from navigator focus", async () => {
+test("Keyboard shortcut moves the first shared slot child above all slot occurrences from navigator focus", async () => {
   const { page, close } = await newIsolatedPage();
 
   try {
@@ -613,7 +613,7 @@ test("Keyboard shortcut moves the first shared slot child above the selected slo
       canvas,
       instanceSelector: slotADivSelector,
     }).waitFor({ state: "hidden", timeout: 30_000 });
-    await expectCanvasInstanceVisible({
+    await canvasInstance({
       canvas,
       instanceSelector: [
         "slot-keyboard-div",
@@ -622,7 +622,7 @@ test("Keyboard shortcut moves the first shared slot child above the selected slo
         "slot-keyboard-wrapper",
         "slot-keyboard-body",
       ],
-    });
+    }).waitFor({ state: "hidden", timeout: 30_000 });
 
     const movedDivSelectors = await canvas
       .locator(
@@ -668,7 +668,7 @@ test("Keyboard shortcut moves the first shared slot child above the selected slo
   }
 });
 
-test("Keyboard shortcut moves the last shared slot child below the selected slot occurrence from navigator focus", async () => {
+test("Keyboard shortcut moves the last shared slot child below all slot occurrences from navigator focus", async () => {
   const { page, close } = await newIsolatedPage();
 
   try {
@@ -704,7 +704,7 @@ test("Keyboard shortcut moves the last shared slot child below the selected slot
       canvas,
       instanceSelector: slotAHeadingSelector,
     }).waitFor({ state: "hidden", timeout: 30_000 });
-    await expectCanvasInstanceVisible({
+    await canvasInstance({
       canvas,
       instanceSelector: [
         "slot-keyboard-heading",
@@ -713,7 +713,7 @@ test("Keyboard shortcut moves the last shared slot child below the selected slot
         "slot-keyboard-wrapper",
         "slot-keyboard-body",
       ],
-    });
+    }).waitFor({ state: "hidden", timeout: 30_000 });
 
     const movedHeadingSelectors = await canvas
       .locator(

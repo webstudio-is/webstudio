@@ -514,7 +514,7 @@ describe("reparent instance", () => {
     ]);
   });
 
-  test("reparent legacy shared slot child outside detaches selected occurrence", () => {
+  test("reparent legacy shared slot child outside removes it from all slot occurrences", () => {
     const data = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -536,25 +536,18 @@ describe("reparent instance", () => {
       position: "end",
     });
 
-    expectSlotsDoNotShareFragment(data.instances, "slot1", "slot2");
-    const slot1FragmentId = getSlotFragmentId(data.instances, "slot1");
-    const slot2FragmentId = getSlotFragmentId(data.instances, "slot2");
-    const bodyChildId = data.instances.get("body")?.children.at(-1)?.value;
-    expect(slot1FragmentId).toEqual(expect.any(String));
-    expect(slot2FragmentId).toEqual(expect.any(String));
-    expect(slot1FragmentId).not.toBe(slot2FragmentId);
-    expect(data.instances.get(slot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
+    const fragmentId = expectSlotsShareFragment(data.instances, [
+      "slot1",
+      "slot2",
     ]);
-    expect(data.instances.get(slot2FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: "box" },
+    const bodyChildId = data.instances.get("body")?.children.at(-1)?.value;
+    expect(data.instances.get(fragmentId ?? "")?.children).toEqual([
       { type: "id", value: "heading" },
     ]);
-    expect(bodyChildId).toEqual(expect.any(String));
-    expect(bodyChildId).not.toBe("box");
+    expect(bodyChildId).toBe("box");
   });
 
-  test("reparent legacy shared slot child into another slot detaches source and shares target", () => {
+  test("reparent legacy shared slot child into another slot updates both shared slots", () => {
     const data = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="sourceSlot1">
@@ -591,14 +584,8 @@ describe("reparent instance", () => {
       data.instances.get("targetSlot1")?.children[0]?.value;
     const movedBoxId = data.instances.get(targetFragmentId ?? "")?.children[1]
       ?.value;
-    expect(sourceSlot1FragmentId).toEqual(expect.any(String));
-    expect(sourceSlot2FragmentId).toEqual(expect.any(String));
-    expect(sourceSlot1FragmentId).not.toBe(sourceSlot2FragmentId);
+    expect(sourceSlot1FragmentId).toBe(sourceSlot2FragmentId);
     expect(data.instances.get(sourceSlot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
-    ]);
-    expect(data.instances.get(sourceSlot2FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: "box" },
       { type: "id", value: "text" },
     ]);
     expect(data.instances.get("targetSlot1")?.children).toEqual([
@@ -609,10 +596,9 @@ describe("reparent instance", () => {
     ]);
     expect(data.instances.get(targetFragmentId ?? "")?.children).toEqual([
       { type: "id", value: "heading" },
-      { type: "id", value: movedBoxId },
+      { type: "id", value: "box" },
     ]);
-    expect(movedBoxId).toEqual(expect.any(String));
-    expect(movedBoxId).not.toBe("box");
+    expect(movedBoxId).toBe("box");
   });
 
   test("reparent slot child from one instance of this slot into another", () => {
@@ -903,15 +889,13 @@ describe("reparent instance", () => {
       }
     );
 
-    expect(data.instances.get("sourceSlot1")?.children).not.toEqual([
+    expect(data.instances.get("sourceSlot1")?.children).toEqual([
       { type: "id", value: "sourceFragment" },
     ]);
     expect(data.instances.get("sourceSlot2")?.children).toEqual([
       { type: "id", value: "sourceFragment" },
     ]);
-    expect(data.instances.get("sourceFragment")?.children).toEqual([
-      { type: "id", value: "box" },
-    ]);
+    expect(data.instances.get("sourceFragment")?.children).toEqual([]);
     expect(data.instances.get("targetSlot1")?.children).toEqual([
       { type: "id", value: "targetFragment" },
     ]);
@@ -920,7 +904,7 @@ describe("reparent instance", () => {
     ]);
     expect(data.instances.get("targetFragment")?.children).toEqual([
       { type: "id", value: "heading" },
-      { type: "id", value: expect.any(String) },
+      { type: "id", value: "box" },
     ]);
   });
 
@@ -964,21 +948,20 @@ describe("reparent instance", () => {
     );
 
     const movedBoxId = data.instances.get("div")?.children[0]?.value;
-    expect(data.instances.get("sourceSlot1")?.children).toEqual([]);
+    expect(data.instances.get("sourceSlot1")?.children).toEqual([
+      { type: "id", value: "sourceFragment" },
+    ]);
     expect(data.instances.get("sourceSlot2")?.children).toEqual([
       { type: "id", value: "sourceFragment" },
     ]);
-    expect(data.instances.get("sourceFragment")?.children).toEqual([
-      { type: "id", value: "box" },
-    ]);
+    expect(data.instances.get("sourceFragment")?.children).toEqual([]);
     expect(data.instances.get("targetSlot1")?.children).toEqual([
       { type: "id", value: "targetFragment" },
     ]);
     expect(data.instances.get("targetSlot2")?.children).toEqual([
       { type: "id", value: "targetFragment" },
     ]);
-    expect(movedBoxId).toEqual(expect.any(String));
-    expect(movedBoxId).not.toBe("box");
+    expect(movedBoxId).toBe("box");
     expect(data.instances.get("div")?.children).toEqual([
       { type: "id", value: movedBoxId },
     ]);
@@ -1027,16 +1010,14 @@ describe("reparent instance", () => {
 
     const sourceSlot1FragmentId =
       data.instances.get("sourceSlot1")?.children[0]?.value;
-    expect(sourceSlot1FragmentId).toBeDefined();
-    expect(sourceSlot1FragmentId).not.toBe("sourceFragment");
+    expect(sourceSlot1FragmentId).toBe("sourceFragment");
     expect(data.instances.get(sourceSlot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
+      { type: "id", value: "text" },
     ]);
     expect(data.instances.get("sourceSlot2")?.children).toEqual([
       { type: "id", value: "sourceFragment" },
     ]);
     expect(data.instances.get("sourceFragment")?.children).toEqual([
-      { type: "id", value: "box" },
       { type: "id", value: "text" },
     ]);
     expect(data.instances.get("targetSlot1")?.children).toEqual([
@@ -1047,7 +1028,7 @@ describe("reparent instance", () => {
     ]);
     expect(data.instances.get("targetFragment")?.children).toEqual([
       { type: "id", value: "heading" },
-      { type: "id", value: expect.any(String) },
+      { type: "id", value: "box" },
     ]);
   });
 
@@ -1190,18 +1171,15 @@ describe("reparent instance", () => {
           position: "end",
         },
         assert: (data) => {
-          expectSlotsDoNotShareFragment(data.instances, "slot1", "slot2");
-          const slot1FragmentId = getSlotFragmentId(data.instances, "slot1");
-          const movedBoxId = data.instances.get("body")?.children.at(-1)?.value;
-          expect(data.instances.get(slot1FragmentId ?? "")?.children).toEqual([
-            { type: "id", value: expect.any(String) },
+          const fragmentId = expectSlotsShareFragment(data.instances, [
+            "slot1",
+            "slot2",
           ]);
-          expect(data.instances.get("fragment")?.children).toEqual([
-            { type: "id", value: "box" },
+          const movedBoxId = data.instances.get("body")?.children.at(-1)?.value;
+          expect(data.instances.get(fragmentId ?? "")?.children).toEqual([
             { type: "id", value: "heading" },
           ]);
-          expect(movedBoxId).toEqual(expect.any(String));
-          expect(movedBoxId).not.toBe("box");
+          expect(movedBoxId).toBe("box");
         },
       }),
     ];
@@ -1220,7 +1198,7 @@ describe("reparent instance", () => {
     }
   });
 
-  test("slot operation sequence preserves integrity after normalize, detach, and delete", () => {
+  test("slot operation sequence preserves integrity after normalize, reparent out, and delete", () => {
     const data = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -1268,15 +1246,12 @@ describe("reparent instance", () => {
     expectSlotTreeIntegrity(data.instances, {
       selectedInstanceSelector: movedSelector,
     });
-    expectSlotsDoNotShareFragment(data.instances, "slot1", "slot2");
-    const slot1FragmentId = getSlotFragmentId(data.instances, "slot1");
-    const slot2FragmentId = getSlotFragmentId(data.instances, "slot2");
-    expect(data.instances.get(slot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: "heading" },
-      { type: "id", value: "box" },
+    const fragmentId = expectSlotsShareFragment(data.instances, [
+      "slot1",
+      "slot2",
     ]);
-    expect(data.instances.get(slot2FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
+    expect(data.instances.get(fragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "heading" },
     ]);
 
     const movedId = data.instances.get("outside")?.children[0]?.value;
@@ -1290,7 +1265,7 @@ describe("reparent instance", () => {
     expect(data.instances.get("outside")?.children).toEqual([]);
   });
 
-  test("reparent nested shared slot child outside detaches only selected occurrence", () => {
+  test("reparent nested shared slot child outside removes it from all slot occurrences", () => {
     const data = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -1318,27 +1293,23 @@ describe("reparent instance", () => {
       position: "end",
     });
 
-    const slot1FragmentId = data.instances.get("slot1")?.children[0]?.value;
-    const slot1DivId = data.instances.get(slot1FragmentId ?? "")?.children[0]
-      ?.value;
+    const fragmentId = expectSlotsShareFragment(data.instances, [
+      "slot1",
+      "slot2",
+    ]);
+    const slot1DivId = data.instances.get(fragmentId ?? "")?.children[0]?.value;
     const bodyChildId = data.instances.get("body")?.children.at(-1)?.value;
 
-    expect(slot1FragmentId).not.toBe("fragment");
+    expect(fragmentId).toBe("fragment");
     expect(data.instances.get(slot1DivId ?? "")?.children).toEqual([]);
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
     expect(data.instances.get("fragment")?.children).toEqual([
       { type: "id", value: "div" },
     ]);
-    expect(data.instances.get("div")?.children).toEqual([
-      { type: "id", value: "box" },
-    ]);
-    expect(bodyChildId).toEqual(expect.any(String));
-    expect(bodyChildId).not.toBe("box");
+    expect(data.instances.get("div")?.children).toEqual([]);
+    expect(bodyChildId).toBe("box");
   });
 
-  test("reparent shared slot child outside rebinds moved scoped data and resources", () => {
+  test("reparent shared slot child outside preserves moved scoped data and resources", () => {
     const data = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -1415,7 +1386,10 @@ describe("reparent instance", () => {
       position: "end",
     });
 
-    const slot1FragmentId = data.instances.get("slot1")?.children[0]?.value;
+    const slotFragmentId = expectSlotsShareFragment(data.instances, [
+      "slot1",
+      "slot2",
+    ]);
     const movedCardId = data.instances.get("body")?.children.at(-1)?.value;
     const movedLabelId =
       movedCardId === undefined
@@ -1432,29 +1406,20 @@ describe("reparent instance", () => {
         ? undefined
         : data.resources.get(movedCardResourceId);
     expect(movedCardVariable).toBeDefined();
-    const movedCardVariableExpression = `$ws$dataSource$${(
-      movedCardVariable?.id ?? ""
-    ).replaceAll("-", "__DASH__")}`;
-    expect(slot1FragmentId).not.toBe("fragment");
-    expect(data.instances.get(slot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
+    const movedCardVariableExpression = "$ws$dataSource$cardVariable";
+    expect(slotFragmentId).toBe("fragment");
+    expect(data.instances.get(slotFragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "heading" },
     ]);
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(movedCardId).toEqual(expect.any(String));
-    expect(movedCardId).not.toBe("card");
-    expect(movedLabelId).toEqual(expect.any(String));
-    expect(movedLabelId).not.toBe("label");
-    expect(movedCardVariable?.id).toEqual(expect.any(String));
-    expect(movedCardVariable?.id).not.toBe("cardVariable");
+    expect(movedCardId).toBe("card");
+    expect(movedLabelId).toBe("label");
+    expect(movedCardVariable?.id).toBe("cardVariable");
     expect(
       Array.from(data.props.values()).find(
         (prop) => prop.instanceId === movedLabelId && prop.type === "expression"
       )?.value
     ).toBe(movedCardVariableExpression);
-    expect(movedCardResourceId).toEqual(expect.any(String));
-    expect(movedCardResourceId).not.toBe("cardResource");
+    expect(movedCardResourceId).toBe("cardResource");
     expect(movedCardResource?.url).toBe(movedCardVariableExpression);
     expect(movedCardResource?.headers).toEqual([
       {
@@ -1469,12 +1434,12 @@ describe("reparent instance", () => {
       },
     ]);
     expect(data.styleSourceSelections.get(movedCardId ?? "")?.values).toEqual([
-      expect.any(String),
+      "cardStyle",
     ]);
-    expect(data.styles.size).toBeGreaterThan(1);
+    expect(data.styles.size).toBe(1);
   });
 
-  test("reparent shared slot child outside preserves siblings in selected occurrence", () => {
+  test("reparent shared slot child outside removes it from all slots and preserves siblings", () => {
     const data = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -1500,25 +1465,20 @@ describe("reparent instance", () => {
       position: "end",
     });
 
-    const slot1FragmentId = data.instances.get("slot1")?.children[0]?.value;
+    const slotFragmentId = expectSlotsShareFragment(data.instances, [
+      "slot1",
+      "slot2",
+    ]);
     const bodyChildId = data.instances.get("body")?.children.at(-1)?.value;
 
-    expect(slot1FragmentId).not.toBe("fragment");
-    expect(data.instances.get(slot1FragmentId ?? "")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
-    ]);
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
-    ]);
-    expect(data.instances.get("fragment")?.children).toEqual([
-      { type: "id", value: "box" },
+    expect(slotFragmentId).toBe("fragment");
+    expect(data.instances.get(slotFragmentId ?? "")?.children).toEqual([
       { type: "id", value: "heading" },
     ]);
-    expect(bodyChildId).toEqual(expect.any(String));
-    expect(bodyChildId).not.toBe("box");
+    expect(bodyChildId).toBe("box");
   });
 
-  test("reparent only selected slot occurrence", () => {
+  test("reparent direct slot child outside updates all linked slot occurrences", () => {
     const data = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -1542,17 +1502,13 @@ describe("reparent instance", () => {
       position: "end",
     });
 
-    expect(data.instances.get("slot1")?.children).toEqual([]);
-    expect(data.instances.get("slot2")?.children).toEqual([
-      { type: "id", value: "fragment" },
+    const fragmentId = expectSlotsShareFragment(data.instances, [
+      "slot1",
+      "slot2",
     ]);
-    expect(data.instances.get("fragment")?.children).toEqual([
-      { type: "id", value: "div" },
-    ]);
+    expect(data.instances.get(fragmentId ?? "")?.children).toEqual([]);
     expect(data.instances.get("body")?.children.at(-1)?.type).toBe("id");
-    expect(data.instances.get("body")?.children.at(-1)?.value).not.toBe(
-      "slot2"
-    );
+    expect(data.instances.get("body")?.children.at(-1)?.value).toBe("div");
   });
 
   test("prevent slot reparenting into own children to avoid infinite loop", () => {
