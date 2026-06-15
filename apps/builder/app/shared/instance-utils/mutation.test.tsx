@@ -9,6 +9,7 @@ import {
   canUnwrapInstance,
   canConvertInstance,
   convertInstance,
+  setInstanceLabelMutable,
 } from "./mutation";
 import { reparentInstanceMutable, deleteSelectedInstance } from "./mutation";
 import { enableMapSet } from "immer";
@@ -1850,6 +1851,70 @@ const parentScopedVariable: DataSource = {
   name: "Parent Variable",
   value: { type: "string", value: "value" },
 };
+
+describe("set instance label", () => {
+  test("renames all linked canonical slot occurrences", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1" ws:label="Old Slot">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot3">
+          <$.Fragment ws:id="otherFragment">
+            <$.Box ws:id="otherBox"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+
+    setInstanceLabelMutable(instances, "slot1", "Navigation");
+
+    expect(instances.get("slot1")?.label).toBe("Navigation");
+    expect(instances.get("slot2")?.label).toBe("Navigation");
+    expect(instances.get("slot3")?.label).toBeUndefined();
+  });
+
+  test("renames all linked legacy slot occurrences", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Box ws:id="box"></$.Box>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Box ws:id="box"></$.Box>
+        </$.Slot>
+      </$.Body>
+    );
+
+    setInstanceLabelMutable(instances, "slot1", "Navigation");
+
+    expect(instances.get("slot1")?.label).toBe("Navigation");
+    expect(instances.get("slot2")?.label).toBe("Navigation");
+  });
+
+  test("renames only selected non-slot instance", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box1"></$.Box>
+        <$.Box ws:id="box2"></$.Box>
+      </$.Body>
+    );
+
+    setInstanceLabelMutable(instances, "box1", "Card");
+
+    expect(instances.get("box1")?.label).toBe("Card");
+    expect(instances.get("box2")?.label).toBeUndefined();
+  });
+});
 
 describe("delete instance", () => {
   test("delete instance with its children", () => {

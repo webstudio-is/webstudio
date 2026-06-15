@@ -65,6 +65,34 @@ import {
 } from "./fragment";
 import { deleteLocalStyleSourcesMutable } from "../style-source-utils";
 
+const getSlotChildrenSignature = (instance: Instance) => {
+  return JSON.stringify(instance.children);
+};
+
+export const setInstanceLabelMutable = (
+  instances: Instances,
+  instanceId: Instance["id"],
+  label: undefined | string
+) => {
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return;
+  }
+  if (instance.component !== "Slot") {
+    instance.label = label;
+    return;
+  }
+  const slotChildrenSignature = getSlotChildrenSignature(instance);
+  for (const currentInstance of instances.values()) {
+    if (
+      currentInstance.component === "Slot" &&
+      getSlotChildrenSignature(currentInstance) === slotChildrenSignature
+    ) {
+      currentInstance.label = label;
+    }
+  }
+};
+
 export const reparentInstanceMutable = (
   data: Omit<WebstudioData, "pages">,
   sourceInstanceSelector: InstanceSelector,
