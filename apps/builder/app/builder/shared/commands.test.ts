@@ -6,6 +6,7 @@ import {
   $editingPageId,
   $editingTemplateId,
   $folderIdToDelete,
+  $builderMode,
   $pageIdToDelete,
   $selectedPageId,
   $templateIdToDelete,
@@ -30,6 +31,11 @@ import {
   getDeletablePageActionTarget,
   getPageActionTarget,
 } from "~/shared/page-action-target";
+import {
+  expectSlotsDoNotShareFragment,
+  expectSlotsShareFragment,
+  getSlotFragmentId,
+} from "~/shared/slot-test-utils";
 import { __testing__, emitCommand } from "./commands";
 
 const { canRunDesignModeCommand, guardDesignModeCommand } = __testing__;
@@ -59,6 +65,70 @@ const resetDataStores = () => {
   $styles.set(new Map());
   $styleSources.set(new Map());
   $styleSourceSelections.set(new Map());
+  $builderMode.set("design");
+};
+
+const setupMoveInstanceProject = () => {
+  resetDataStores();
+  const instances = new Map<Instance["id"], Instance>([
+    [
+      "body",
+      {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [
+          { type: "id", value: "box" },
+          { type: "id", value: "heading" },
+          { type: "id", value: "paragraph" },
+        ],
+      },
+    ],
+    [
+      "box",
+      {
+        type: "instance",
+        id: "box",
+        component: "Box",
+        children: [{ type: "id", value: "nested" }],
+      },
+    ],
+    [
+      "nested",
+      {
+        type: "instance",
+        id: "nested",
+        component: "Box",
+        children: [],
+      },
+    ],
+    [
+      "heading",
+      {
+        type: "instance",
+        id: "heading",
+        component: "Heading",
+        children: [],
+      },
+    ],
+    [
+      "paragraph",
+      {
+        type: "instance",
+        id: "paragraph",
+        component: "Paragraph",
+        children: [],
+      },
+    ],
+  ]);
+  const pages = createDefaultPages({
+    homePageId: "page-id",
+    rootInstanceId: "body",
+  });
+  $pages.set(pages);
+  $selectedPageId.set(pages.homePageId);
+  $project.set({ id: "project-id" } as Project);
+  $instances.set(instances);
 };
 
 describe("canRunDesignModeCommand", () => {
@@ -161,6 +231,7 @@ describe("duplicateInstance", () => {
 
     emitCommand("duplicateInstance");
 
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
     expect($instances.get().get("slot1")?.children).toEqual([
       { type: "id", value: "fragment" },
     ]);
@@ -246,6 +317,7 @@ describe("duplicateInstance", () => {
 
     emitCommand("duplicateInstance");
 
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
     expect($instances.get().get("slot1")?.children).toEqual([
       { type: "id", value: "fragment" },
     ]);
@@ -337,6 +409,7 @@ describe("duplicateInstance", () => {
 
     emitCommand("duplicateInstance");
 
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
     expect($instances.get().get("slot1")?.children).toEqual([
       { type: "id", value: "fragment" },
     ]);
@@ -346,6 +419,802 @@ describe("duplicateInstance", () => {
     expect($instances.get().get("fragment")?.children).toEqual([
       { type: "id", value: "box" },
       { type: "id", value: expect.any(String) },
+      { type: "id", value: "heading" },
+    ]);
+  });
+});
+
+describe("move instance commands", () => {
+  test("moves the selected instance above the previous sibling", () => {
+    setupMoveInstanceProject();
+    selectInstance(["heading", "body"]);
+
+    emitCommand("moveInstanceUp");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "heading" },
+      { type: "id", value: "box" },
+      { type: "id", value: "paragraph" },
+    ]);
+  });
+
+  test("moves the first child above its parent", () => {
+    setupMoveInstanceProject();
+    selectInstance(["nested", "box", "body"]);
+
+    emitCommand("moveInstanceUp");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "nested" },
+      { type: "id", value: "box" },
+      { type: "id", value: "heading" },
+      { type: "id", value: "paragraph" },
+    ]);
+    expect($instances.get().get("box")?.children).toEqual([]);
+  });
+
+  test("moves the selected instance below the next sibling", () => {
+    setupMoveInstanceProject();
+    selectInstance(["heading", "body"]);
+
+    emitCommand("moveInstanceDown");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "paragraph" },
+      { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("moves the last child below its parent", () => {
+    setupMoveInstanceProject();
+    selectInstance(["nested", "box", "body"]);
+
+    emitCommand("moveInstanceDown");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "nested" },
+      { type: "id", value: "heading" },
+      { type: "id", value: "paragraph" },
+    ]);
+    expect($instances.get().get("box")?.children).toEqual([]);
+  });
+
+  test("moves the selected instance into the previous sibling", () => {
+    setupMoveInstanceProject();
+    selectInstance(["heading", "body"]);
+
+    emitCommand("moveInstanceIntoPreviousSibling");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "paragraph" },
+    ]);
+    expect($instances.get().get("box")?.children).toEqual([
+      { type: "id", value: "nested" },
+      { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("moves a middle child out after its parent", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "paragraph" },
+          ],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [
+            { type: "id", value: "nested" },
+            { type: "id", value: "middle" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "nested",
+        {
+          type: "instance",
+          id: "nested",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "middle",
+        {
+          type: "instance",
+          id: "middle",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: "Heading",
+          children: [],
+        },
+      ],
+      [
+        "paragraph",
+        {
+          type: "instance",
+          id: "paragraph",
+          component: "Paragraph",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["middle", "box", "body"]);
+
+    emitCommand("moveInstanceOut");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "middle" },
+      { type: "id", value: "paragraph" },
+    ]);
+    expect($instances.get().get("box")?.children).toEqual([
+      { type: "id", value: "nested" },
+      { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("moves the first child out above its parent", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "paragraph" },
+          ],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [
+            { type: "id", value: "nested" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "nested",
+        {
+          type: "instance",
+          id: "nested",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: "Heading",
+          children: [],
+        },
+      ],
+      [
+        "paragraph",
+        {
+          type: "instance",
+          id: "paragraph",
+          component: "Paragraph",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["nested", "box", "body"]);
+
+    emitCommand("moveInstanceOut");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "nested" },
+      { type: "id", value: "box" },
+      { type: "id", value: "paragraph" },
+    ]);
+    expect($instances.get().get("box")?.children).toEqual([
+      { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("moves the last child out below its parent", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "paragraph" },
+          ],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [
+            { type: "id", value: "nested" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "nested",
+        {
+          type: "instance",
+          id: "nested",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: "Heading",
+          children: [],
+        },
+      ],
+      [
+        "paragraph",
+        {
+          type: "instance",
+          id: "paragraph",
+          component: "Paragraph",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["heading", "box", "body"]);
+
+    emitCommand("moveInstanceOut");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "heading" },
+      { type: "id", value: "paragraph" },
+    ]);
+    expect($instances.get().get("box")?.children).toEqual([
+      { type: "id", value: "nested" },
+    ]);
+  });
+
+  test("moves a shared slot child into the previous sibling in every slot occurrence", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "slot1" },
+            { type: "id", value: "slot2" },
+          ],
+        },
+      ],
+      [
+        "slot1",
+        {
+          type: "instance",
+          id: "slot1",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "slot2",
+        {
+          type: "instance",
+          id: "slot2",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "fragment",
+        {
+          type: "instance",
+          id: "fragment",
+          component: "Fragment",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: "Heading",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["heading", "fragment", "slot1", "body"]);
+
+    emitCommand("moveInstanceIntoPreviousSibling");
+
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "box" },
+    ]);
+    expect($instances.get().get("box")?.children).toEqual([
+      { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("moves a direct shared slot child out of the selected slot occurrence", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "slot1" },
+            { type: "id", value: "slot2" },
+          ],
+        },
+      ],
+      [
+        "slot1",
+        {
+          type: "instance",
+          id: "slot1",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "slot2",
+        {
+          type: "instance",
+          id: "slot2",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "fragment",
+        {
+          type: "instance",
+          id: "fragment",
+          component: "Fragment",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: "Heading",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["heading", "fragment", "slot1", "body"]);
+
+    emitCommand("moveInstanceOut");
+
+    expectSlotsDoNotShareFragment($instances.get(), "slot1", "slot2");
+    const bodyChildren = $instances.get().get("body")?.children;
+    const movedHeadingId = bodyChildren?.[1]?.value;
+    expect(bodyChildren).toEqual([
+      { type: "id", value: "slot1" },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "slot2" },
+    ]);
+    expect(movedHeadingId).not.toBe("heading");
+    expect($instances.get().get(movedHeadingId ?? "")?.component).toBe(
+      "Heading"
+    );
+    const slot1FragmentId = getSlotFragmentId($instances.get(), "slot1");
+    const slot2FragmentId = getSlotFragmentId($instances.get(), "slot2");
+    const slot1Children =
+      $instances.get().get(slot1FragmentId ?? "")?.children ?? [];
+    expect(slot1Children).toEqual([{ type: "id", value: expect.any(String) }]);
+    expect($instances.get().get(slot1Children[0]?.value ?? "")?.component).toBe(
+      "Box"
+    );
+    expect($instances.get().get(slot2FragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("moves the first direct shared slot child out above the selected slot occurrence", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "slot1" },
+            { type: "id", value: "slot2" },
+          ],
+        },
+      ],
+      [
+        "slot1",
+        {
+          type: "instance",
+          id: "slot1",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "slot2",
+        {
+          type: "instance",
+          id: "slot2",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "fragment",
+        {
+          type: "instance",
+          id: "fragment",
+          component: "Fragment",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: "Heading",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["box", "fragment", "slot1", "body"]);
+
+    emitCommand("moveInstanceOut");
+
+    expectSlotsDoNotShareFragment($instances.get(), "slot1", "slot2");
+    const bodyChildren = $instances.get().get("body")?.children;
+    const movedBoxId = bodyChildren?.[0]?.value;
+    expect(bodyChildren).toEqual([
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "slot1" },
+      { type: "id", value: "slot2" },
+    ]);
+    expect(movedBoxId).not.toBe("box");
+    expect($instances.get().get(movedBoxId ?? "")?.component).toBe("Box");
+    const slot1FragmentId = getSlotFragmentId($instances.get(), "slot1");
+    const slot2FragmentId = getSlotFragmentId($instances.get(), "slot2");
+    expect($instances.get().get(slot1FragmentId ?? "")?.children).toEqual([
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect($instances.get().get(slot2FragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("moves the first direct shared slot child above the selected slot occurrence", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "slot1" },
+            { type: "id", value: "slot2" },
+          ],
+        },
+      ],
+      [
+        "slot1",
+        {
+          type: "instance",
+          id: "slot1",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "slot2",
+        {
+          type: "instance",
+          id: "slot2",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "fragment",
+        {
+          type: "instance",
+          id: "fragment",
+          component: "Fragment",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: "Heading",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["box", "fragment", "slot1", "body"]);
+
+    emitCommand("moveInstanceUp");
+
+    expectSlotsDoNotShareFragment($instances.get(), "slot1", "slot2");
+    const bodyChildren = $instances.get().get("body")?.children;
+    const movedBoxId = bodyChildren?.[0]?.value;
+    expect(bodyChildren).toEqual([
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "slot1" },
+      { type: "id", value: "slot2" },
+    ]);
+    expect(movedBoxId).not.toBe("box");
+    expect($instances.get().get(movedBoxId ?? "")?.component).toBe("Box");
+    const slot1FragmentId = getSlotFragmentId($instances.get(), "slot1");
+    const slot2FragmentId = getSlotFragmentId($instances.get(), "slot2");
+    expect($instances.get().get(slot1FragmentId ?? "")?.children).toEqual([
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect($instances.get().get(slot2FragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("moves the last direct shared slot child below the selected slot occurrence", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "slot1" },
+            { type: "id", value: "slot2" },
+          ],
+        },
+      ],
+      [
+        "slot1",
+        {
+          type: "instance",
+          id: "slot1",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "slot2",
+        {
+          type: "instance",
+          id: "slot2",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "fragment",
+        {
+          type: "instance",
+          id: "fragment",
+          component: "Fragment",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: "Heading",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["heading", "fragment", "slot1", "body"]);
+
+    emitCommand("moveInstanceDown");
+
+    expectSlotsDoNotShareFragment($instances.get(), "slot1", "slot2");
+    const bodyChildren = $instances.get().get("body")?.children;
+    const movedHeadingId = bodyChildren?.[1]?.value;
+    expect(bodyChildren).toEqual([
+      { type: "id", value: "slot1" },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "slot2" },
+    ]);
+    expect(movedHeadingId).not.toBe("heading");
+    expect($instances.get().get(movedHeadingId ?? "")?.component).toBe(
+      "Heading"
+    );
+    const slot1FragmentId = getSlotFragmentId($instances.get(), "slot1");
+    const slot2FragmentId = getSlotFragmentId($instances.get(), "slot2");
+    expect($instances.get().get(slot1FragmentId ?? "")?.children).toEqual([
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect($instances.get().get(slot2FragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "box" },
       { type: "id", value: "heading" },
     ]);
   });

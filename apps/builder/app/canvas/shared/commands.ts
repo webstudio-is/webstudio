@@ -34,7 +34,14 @@ const deleteSelectedPageOrInstance = () => {
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "canvas",
-  externalCommands: ["clickCanvas", "deleteInstanceBuilder"],
+  externalCommands: [
+    "clickCanvas",
+    "deleteInstanceBuilder",
+    "moveInstanceUp",
+    "moveInstanceDown",
+    "moveInstanceOut",
+    "moveInstanceIntoPreviousSibling",
+  ],
   commands: [
     {
       name: "deleteInstanceCanvas",

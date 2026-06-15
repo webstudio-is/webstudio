@@ -64,6 +64,7 @@ import {
   findLocalStyleSourcesWithinInstances,
   getReparentDropTargetMutable,
   getInstanceOrCreateFragmentIfNecessary,
+  normalizeLegacySlotParentInSelectorMutable,
   wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree-utils";
 import {
@@ -277,25 +278,29 @@ export const insertInstanceChildrenMutable = (
     position: insertTarget.position === "after" ? "end" : insertTarget.position,
   };
   const metas = $registeredComponentMetas.get();
-  insertTarget =
+  let normalizedDropTarget =
     getInstanceOrCreateFragmentIfNecessary(data.instances, dropTarget) ??
-    insertTarget;
-  insertTarget =
+    dropTarget;
+  normalizedDropTarget =
     wrapEditableChildrenAroundDropTargetMutable(
       data.instances,
       data.props,
       metas,
-      dropTarget
-    ) ?? insertTarget;
-  const [parentInstanceId] = insertTarget.parentSelector;
+      normalizedDropTarget
+    ) ?? normalizedDropTarget;
+  const [parentInstanceId] = normalizedDropTarget.parentSelector;
   const parentInstance = data.instances.get(parentInstanceId);
   if (parentInstance === undefined) {
     return;
   }
-  if (dropTarget.position === "end") {
+  if (normalizedDropTarget.position === "end") {
     parentInstance.children.push(...children);
   } else {
-    parentInstance.children.splice(dropTarget.position, 0, ...children);
+    parentInstance.children.splice(
+      normalizedDropTarget.position,
+      0,
+      ...children
+    );
   }
 };
 
@@ -503,6 +508,10 @@ export const reparentInstanceMutable = (
   if (project === undefined) {
     return;
   }
+  sourceInstanceSelector = normalizeLegacySlotParentInSelectorMutable(
+    data.instances,
+    sourceInstanceSelector
+  );
   const initialSourceInstancePath = getInstancePath(
     sourceInstanceSelector,
     data.instances
@@ -530,19 +539,12 @@ export const reparentInstanceMutable = (
       return;
     }
   }
-  // try to use slot fragment as target instead of slot itself
-  const parentInstance = data.instances.get(dropTarget.parentSelector[0]);
-  if (
-    parentInstance?.component === portalComponent &&
-    parentInstance.children.length > 0 &&
-    parentInstance.children[0].type === "id"
-  ) {
-    const fragmentId = parentInstance.children[0].value;
-    dropTarget = {
-      parentSelector: [fragmentId, ...dropTarget.parentSelector],
-      position: dropTarget.position,
-    };
-  }
+  // Slot drops must target the shared Fragment before same-parent detection.
+  // Legacy slots may still store content directly under Slot, and delaying this
+  // normalization lets the first child look like the parent drop container.
+  dropTarget =
+    getInstanceOrCreateFragmentIfNecessary(data.instances, dropTarget) ??
+    dropTarget;
   // move within same parent
   if (sourceInstanceSelector[1] === dropTarget.parentSelector[0]) {
     const [parentId] = dropTarget.parentSelector;
@@ -667,6 +669,7 @@ export const deleteInstanceMutable = (
   if (instancePath === undefined) {
     return false;
   }
+  instancePath = normalizeLegacySlotInstancePathMutable(data, instancePath);
   const {
     instances,
     props,
@@ -853,6 +856,19 @@ export const detachSharedSlotContentMutable = (
   instancePath: InstancePath
 ) => {
   return detachSharedSlotContentMutableWithMap(data, instancePath).instancePath;
+};
+
+const normalizeLegacySlotInstancePathMutable = (
+  data: Omit<WebstudioData, "pages">,
+  instancePath: InstancePath
+) => {
+  const normalizedInstanceSelector = normalizeLegacySlotParentInSelectorMutable(
+    data.instances,
+    instancePath[0].instanceSelector
+  );
+  return (
+    getInstancePath(normalizedInstanceSelector, data.instances) ?? instancePath
+  );
 };
 
 const unwrapDirectSharedSlotChildWithSiblingsMutable = ({
@@ -1103,6 +1119,9 @@ export const canUnwrapInstance = (instancePath: InstancePath) => {
   ) {
     return false;
   }
+  if (parentItem.instance.component === "Slot") {
+    return true;
+  }
 
   // Check if the selected instance is rich text content (like Bold, Italic in Paragraph)
   const instances = $instances.get();
@@ -1161,7 +1180,11 @@ export const wrapInstance = (component: string, tag?: string) => {
 
   try {
     updateWebstudioData((data) => {
-      const [selectedItem, parentItem] = instancePath;
+      const nextInstancePath = normalizeLegacySlotInstancePathMutable(
+        data,
+        instancePath
+      );
+      const [selectedItem, parentItem] = nextInstancePath;
       if (parentItem === undefined) {
         return;
       }
@@ -1273,13 +1296,24 @@ export const convertInstance = (component: string, tag?: string) => {
   if (instancePath === undefined || instancePath.length === 1) {
     return;
   }
-  const [selectedItem] = instancePath;
-  const selectedInstance = selectedItem.instance;
-  const selectedInstanceSelector = selectedItem.instanceSelector;
   const metas = $registeredComponentMetas.get();
   const instanceTags = $instanceTags.get();
   try {
     updateWebstudioData((data) => {
+      const [initialSelectedItem] = instancePath;
+      if (initialSelectedItem.instance.component === "Slot") {
+        getInstanceOrCreateFragmentIfNecessary(data.instances, {
+          parentSelector: initialSelectedItem.instanceSelector,
+          position: "end",
+        });
+      }
+      const nextInstancePath = normalizeLegacySlotInstancePathMutable(
+        data,
+        instancePath
+      );
+      const [selectedItem] = nextInstancePath;
+      const selectedInstance = selectedItem.instance;
+      const selectedInstanceSelector = selectedItem.instanceSelector;
       if (selectedInstance.component === "Slot" && component !== "Slot") {
         detachSharedSlotChildrenMutable(data, selectedInstance.id);
       }
@@ -1333,10 +1367,15 @@ export const unwrapInstance = () => {
 
   try {
     updateWebstudioData((data) => {
-      const unwrapsDirectSlotChild = isDirectSharedSlotChild(instancePath);
+      const initialInstancePath = normalizeLegacySlotInstancePathMutable(
+        data,
+        instancePath
+      );
+      const unwrapsDirectSlotChild =
+        isDirectSharedSlotChild(initialInstancePath);
       const nextInstancePath = unwrapsDirectSlotChild
-        ? detachSharedSlotContentMutable(data, instancePath)
-        : instancePath;
+        ? detachSharedSlotContentMutable(data, initialInstancePath)
+        : initialInstancePath;
       const [selectedItem, defaultParentItem] = nextInstancePath;
       // Unwrapping a direct Slot child places that child outside the Slot, so it
       // intentionally leaves shared Slot content and must use the Slot item as

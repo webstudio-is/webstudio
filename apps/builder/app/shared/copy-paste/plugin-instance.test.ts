@@ -7,6 +7,8 @@ import type {
   Props,
   DataSource,
   DataSources,
+  Resource,
+  Resources,
 } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
@@ -24,12 +26,14 @@ import {
   $pages,
   $project,
   $props,
+  $resources,
 } from "~/shared/sync/data-stores";
 import { instanceText } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { selectInstance } from "~/shared/nano-states";
 import { $selectedPageId } from "../nano-states/pages";
 import * as instanceUtils from "../instance-utils";
+import { expectSlotsShareFragment } from "../slot-test-utils";
 
 const expectString = expect.any(String) as unknown as string;
 
@@ -157,6 +161,7 @@ describe("paste target", () => {
 
     await instanceText.onPaste?.(clipboardData);
 
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
     expect($instances.get().get("slot1")?.children).toEqual([
       { type: "id", value: "fragment" },
     ]);
@@ -164,6 +169,42 @@ describe("paste target", () => {
       { type: "id", value: "fragment" },
     ]);
     expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: expect.any(String) },
+    ]);
+  });
+
+  test("pastes into legacy shared slot content", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "source" },
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+        createInstance("source", "Box", []),
+        createInstance("slot1", "Slot", [{ type: "id", value: "box" }]),
+        createInstance("slot2", "Slot", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["source", "body0"]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstance(["slot1", "body0"]);
+
+    await instanceText.onPaste?.(clipboardData);
+
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: fragmentId },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: fragmentId },
+    ]);
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([
       { type: "id", value: "box" },
       { type: "id", value: expect.any(String) },
     ]);
@@ -287,6 +328,7 @@ describe("paste target", () => {
 
     await instanceText.onPaste?.(clipboardData);
 
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
     const pastedBoxId = $instances.get().get("target")?.children[0]?.value;
     expect(pastedBoxId).toEqual(expect.any(String));
     expect(pastedBoxId).not.toBe("box");
@@ -300,6 +342,144 @@ describe("paste target", () => {
       { type: "id", value: "box" },
     ]);
     expect($instances.get().get(pastedBoxId ?? "")?.children).toEqual([]);
+  });
+
+  test("copies nested shared slot child with scoped data and pastes independent copy outside", async () => {
+    const dataSources: DataSources = toMap([
+      {
+        id: "boxVariable",
+        scopeInstanceId: "box",
+        type: "variable",
+        name: "Box Variable",
+        value: { type: "string", value: "value" },
+      },
+    ] satisfies DataSource[]);
+    const props: Props = toMap([
+      {
+        id: "boxExpressionProp",
+        instanceId: "box",
+        name: "children",
+        type: "expression",
+        value: "$ws$dataSource$boxVariable",
+      },
+      {
+        id: "boxResourceProp",
+        instanceId: "box",
+        name: "resource",
+        type: "resource",
+        value: "boxResource",
+      },
+    ] satisfies Prop[]);
+    const resources: Resources = toMap([
+      {
+        id: "boxResource",
+        name: "Box Resource",
+        method: "get",
+        url: "$ws$dataSource$boxVariable",
+        headers: [
+          {
+            name: "authorization",
+            value: "$ws$dataSource$boxVariable",
+          },
+        ],
+        searchParams: [
+          {
+            name: "query",
+            value: "$ws$dataSource$boxVariable",
+          },
+        ],
+      },
+    ] satisfies Resource[]);
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+          { type: "id", value: "target" },
+        ]),
+        createInstance("slot1", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("slot2", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("fragment", "Fragment", [{ type: "id", value: "div" }]),
+        createInstance("div", "Box", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+        createInstance("target", "Box", []),
+      ] satisfies Instance[])
+    );
+    $dataSources.set(dataSources);
+    $props.set(props);
+    $resources.set(resources);
+    selectInstance(["box", "div", "fragment", "slot1", "body0"]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstance(["target", "body0"]);
+
+    await instanceText.onPaste?.(clipboardData);
+
+    const pastedBoxId = $instances.get().get("target")?.children[0]?.value;
+    const dataSourcesDifference = getMapDifference(
+      dataSources,
+      $dataSources.get()
+    );
+    const [newDataSourceId] = dataSourcesDifference.keys();
+    const propsDifference = getMapDifference(props, $props.get());
+    const resourcesDifference = getMapDifference(resources, $resources.get());
+    const [newResourceId] = resourcesDifference.keys();
+    expect(pastedBoxId).toEqual(expect.any(String));
+    expect(pastedBoxId).not.toBe("box");
+    expect(dataSourcesDifference).toEqual(
+      toMap([
+        {
+          ...dataSources.get("boxVariable"),
+          id: newDataSourceId,
+          scopeInstanceId: pastedBoxId,
+        },
+      ])
+    );
+    expect(Array.from(propsDifference.values())).toEqual(
+      expect.arrayContaining([
+        {
+          id: expectString,
+          instanceId: pastedBoxId,
+          name: "children",
+          type: "expression",
+          value: encodeDataSourceVariable(newDataSourceId),
+        },
+        {
+          id: expectString,
+          instanceId: pastedBoxId,
+          name: "resource",
+          type: "resource",
+          value: newResourceId,
+        },
+      ])
+    );
+    expect(resourcesDifference).toEqual(
+      toMap([
+        {
+          id: newResourceId,
+          name: "Box Resource",
+          method: "get",
+          url: encodeDataSourceVariable(newDataSourceId),
+          headers: [
+            {
+              name: "authorization",
+              value: encodeDataSourceVariable(newDataSourceId),
+            },
+          ],
+          searchParams: [
+            {
+              name: "query",
+              value: encodeDataSourceVariable(newDataSourceId),
+            },
+          ],
+        },
+      ])
+    );
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "div" },
+    ]);
+    expect($instances.get().get("div")?.children).toEqual([
+      { type: "id", value: "box" },
+    ]);
   });
 
   test("cuts shared slot child from all slot occurrences", () => {
@@ -319,6 +499,7 @@ describe("paste target", () => {
 
     expect(instanceText.onCut?.()).toBeDefined();
 
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
     expect($instances.get().get("slot1")?.children).toEqual([
       { type: "id", value: "fragment" },
     ]);
@@ -326,6 +507,45 @@ describe("paste target", () => {
       { type: "id", value: "fragment" },
     ]);
     expect($instances.get().get("fragment")?.children).toEqual([]);
+    expect($instances.get().has("box")).toBe(false);
+  });
+
+  test("cuts legacy shared slot child from all slot occurrences", () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+        createInstance("slot1", "Slot", [
+          { type: "id", value: "box" },
+          { type: "id", value: "heading" },
+        ]),
+        createInstance("slot2", "Slot", [
+          { type: "id", value: "box" },
+          { type: "id", value: "heading" },
+        ]),
+        createInstance("box", "Box", []),
+        createInstance("heading", "Heading", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["box", "slot1", "body0"]);
+
+    expect(instanceText.onCut?.()).toBeDefined();
+
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: fragmentId },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: fragmentId },
+    ]);
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "heading" },
+    ]);
     expect($instances.get().has("box")).toBe(false);
   });
 

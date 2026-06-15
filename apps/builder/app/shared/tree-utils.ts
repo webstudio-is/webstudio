@@ -66,6 +66,25 @@ const getCollectionDropTarget = (
   }
 };
 
+const areInstanceChildrenEqual = (
+  left: Instance["children"],
+  right: Instance["children"]
+) => {
+  if (left.length !== right.length) {
+    return false;
+  }
+  return left.every((leftChild, index) => {
+    const rightChild = right[index];
+    if (rightChild === undefined || leftChild.type !== rightChild.type) {
+      return false;
+    }
+    if (leftChild.type === "id") {
+      return rightChild.type === "id" && leftChild.value === rightChild.value;
+    }
+    return leftChild.value === rightChild.value;
+  });
+};
+
 export const getInstanceOrCreateFragmentIfNecessary = (
   instances: Instances,
   dropTarget: DroppableTarget
@@ -81,13 +100,21 @@ export const getInstanceOrCreateFragmentIfNecessary = (
   if (instance.component === "Slot") {
     const wrapSlotChildrenWithFragment = () => {
       const id = nanoid();
+      const legacyChildren = instance.children.map((child) => ({ ...child }));
       instances.set(id, {
         type: "instance",
         id,
         component: "Fragment",
-        children: instance.children,
+        children: legacyChildren,
       });
-      instance.children = [{ type: "id", value: id }];
+      for (const candidate of instances.values()) {
+        if (
+          candidate.component === "Slot" &&
+          areInstanceChildrenEqual(candidate.children, legacyChildren)
+        ) {
+          candidate.children = [{ type: "id", value: id }];
+        }
+      }
       return {
         parentSelector: [id, ...dropTarget.parentSelector],
         position: dropTarget.position,
@@ -95,19 +122,7 @@ export const getInstanceOrCreateFragmentIfNecessary = (
     };
 
     if (instance.children.length === 0) {
-      const id = nanoid();
-      const fragment: Instance = {
-        type: "instance",
-        id,
-        component: "Fragment",
-        children: [],
-      };
-      instances.set(id, fragment);
-      instance.children.push({ type: "id", value: id });
-      return {
-        parentSelector: [fragment.id, ...dropTarget.parentSelector],
-        position: dropTarget.position,
-      };
+      return wrapSlotChildrenWithFragment();
     }
     if (instance.children[0].type === "id") {
       const fragmentId = instance.children[0].value;
@@ -125,6 +140,21 @@ export const getInstanceOrCreateFragmentIfNecessary = (
     return wrapSlotChildrenWithFragment();
   }
   return;
+};
+
+export const normalizeLegacySlotParentInSelectorMutable = (
+  instances: Instances,
+  instanceSelector: InstanceSelector
+) => {
+  const parentSelector = instanceSelector.slice(1);
+  const dropTarget = getInstanceOrCreateFragmentIfNecessary(instances, {
+    parentSelector,
+    position: "end",
+  });
+  if (dropTarget === undefined) {
+    return instanceSelector;
+  }
+  return [instanceSelector[0], ...dropTarget.parentSelector];
 };
 
 /**

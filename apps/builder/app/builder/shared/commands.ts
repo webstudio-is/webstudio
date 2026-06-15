@@ -1,5 +1,5 @@
 import { toast } from "@webstudio-is/design-system";
-import { type WebstudioFragment } from "@webstudio-is/sdk";
+import { type Instance, type WebstudioFragment } from "@webstudio-is/sdk";
 import {
   isAutoGridPlacement,
   resetGridChildPlacement,
@@ -40,6 +40,8 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentAt,
   insertWebstudioFragmentCopy,
+  reparentInstance,
+  toggleInstanceShow,
 } from "~/shared/instance-utils";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $publisher } from "~/shared/pubsub";
@@ -75,7 +77,6 @@ import {
   emitPaste,
   cutInstance,
 } from "~/shared/copy-paste/copy-paste";
-import { toggleInstanceShow } from "~/shared/instance-utils";
 import {
   getDeletablePageActionTarget,
   getPageActionTarget,
@@ -194,6 +195,142 @@ const requestSelectedPageItemDelete = () => {
     $templateIdToDelete.set(target.id);
   }
   return true;
+};
+
+type InstanceMoveDirection = "up" | "down" | "intoPreviousSibling" | "out";
+
+const getIdChildIndex = (children: Instance["children"], instanceId: string) =>
+  children.findIndex(
+    (child) => child.type === "id" && child.value === instanceId
+  );
+
+const getOutdentMoveTarget = (
+  instancePath: NonNullable<ReturnType<typeof $selectedInstancePath.get>>,
+  positionRelativeToParent: "before" | "after"
+) => {
+  const parentItem = instancePath[1];
+  const grandparentItem = instancePath[2];
+  if (parentItem === undefined || grandparentItem === undefined) {
+    return;
+  }
+
+  const parent = parentItem.instance;
+  if (
+    parent.component === "Fragment" &&
+    grandparentItem.instance.component === "Slot"
+  ) {
+    const greatGrandparentItem = instancePath[3];
+    if (greatGrandparentItem === undefined) {
+      return;
+    }
+    const slotIndex = getIdChildIndex(
+      greatGrandparentItem.instance.children,
+      grandparentItem.instance.id
+    );
+    if (slotIndex === -1) {
+      return;
+    }
+    return {
+      parentSelector: greatGrandparentItem.instanceSelector,
+      position:
+        positionRelativeToParent === "before" ? slotIndex : slotIndex + 1,
+    };
+  }
+
+  const parentIndex = getIdChildIndex(
+    grandparentItem.instance.children,
+    parent.id
+  );
+  if (parentIndex === -1) {
+    return;
+  }
+  return {
+    parentSelector: grandparentItem.instanceSelector,
+    position:
+      positionRelativeToParent === "before" ? parentIndex : parentIndex + 1,
+  };
+};
+
+const getInstanceMoveTarget = (direction: InstanceMoveDirection) => {
+  const instancePath = $selectedInstancePath.get();
+  const selectedItem = instancePath?.[0];
+  const parentItem = instancePath?.[1];
+  if (
+    instancePath === undefined ||
+    selectedItem === undefined ||
+    parentItem === undefined
+  ) {
+    return;
+  }
+
+  const parent = parentItem.instance;
+  const selectedIndex = getIdChildIndex(
+    parent.children,
+    selectedItem.instance.id
+  );
+  if (selectedIndex === -1) {
+    return;
+  }
+
+  if (direction === "up") {
+    if (selectedIndex === 0) {
+      return getOutdentMoveTarget(instancePath, "before");
+    }
+    return {
+      parentSelector: parentItem.instanceSelector,
+      position: selectedIndex - 1,
+    };
+  }
+
+  if (direction === "down") {
+    if (selectedIndex >= parent.children.length - 1) {
+      return getOutdentMoveTarget(instancePath, "after");
+    }
+    return {
+      parentSelector: parentItem.instanceSelector,
+      position: selectedIndex + 2,
+    };
+  }
+
+  if (direction === "intoPreviousSibling") {
+    if (selectedIndex === 0) {
+      return;
+    }
+    const previousChild = parent.children[selectedIndex - 1];
+    if (previousChild?.type !== "id") {
+      return;
+    }
+    return {
+      parentSelector: [previousChild.value, ...parentItem.instanceSelector],
+      position: "end" as const,
+    };
+  }
+
+  return getOutdentMoveTarget(
+    instancePath,
+    selectedIndex === 0 ? "before" : "after"
+  );
+};
+
+const moveSelectedInstance = (direction: InstanceMoveDirection) => {
+  if (
+    guardDesignModeCommand({
+      isDesignMode: $isDesignMode.get(),
+      message: "Moving is only allowed in design mode.",
+    }) === false
+  ) {
+    return;
+  }
+  const instancePath = $selectedInstancePath.get();
+  const selectedItem = instancePath?.[0];
+  if (selectedItem === undefined) {
+    return;
+  }
+  const target = getInstanceMoveTarget(direction);
+  if (target === undefined) {
+    return;
+  }
+  reparentInstance(selectedItem.instanceSelector, target);
 };
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
@@ -482,6 +619,42 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           toggleInstanceShow(instancePath[0].instance.id);
         }
       },
+    },
+    {
+      name: "moveInstanceUp",
+      label: "Move up",
+      description: "Move selected instance above the previous sibling",
+      category: "Navigator",
+      defaultHotkeys: ["meta+arrowup", "ctrl+arrowup"],
+      disableOnInputLikeControls: true,
+      handler: () => moveSelectedInstance("up"),
+    },
+    {
+      name: "moveInstanceDown",
+      label: "Move down",
+      description: "Move selected instance below the next sibling",
+      category: "Navigator",
+      defaultHotkeys: ["meta+arrowdown", "ctrl+arrowdown"],
+      disableOnInputLikeControls: true,
+      handler: () => moveSelectedInstance("down"),
+    },
+    {
+      name: "moveInstanceOut",
+      label: "Move out",
+      description: "Move selected instance out of its parent",
+      category: "Navigator",
+      defaultHotkeys: ["meta+arrowleft", "ctrl+arrowleft"],
+      disableOnInputLikeControls: true,
+      handler: () => moveSelectedInstance("out"),
+    },
+    {
+      name: "moveInstanceIntoPreviousSibling",
+      label: "Move in",
+      description: "Move selected instance into the previous sibling",
+      category: "Navigator",
+      defaultHotkeys: ["meta+arrowright", "ctrl+arrowright"],
+      disableOnInputLikeControls: true,
+      handler: () => moveSelectedInstance("intoPreviousSibling"),
     },
     {
       name: "deleteInstanceBuilder",

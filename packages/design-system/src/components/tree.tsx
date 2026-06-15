@@ -1,10 +1,13 @@
 import {
+  createContext,
   useEffect,
   useInsertionEffect,
+  useContext,
   useRef,
   useState,
   type ComponentPropsWithoutRef,
   type KeyboardEvent,
+  type MutableRefObject,
   type ReactNode,
 } from "react";
 import { FocusScope, useFocusManager } from "@react-aria/focus";
@@ -31,6 +34,13 @@ const treeNodeLevel = "--tree-node-level";
 const treeNodeOutline = "--tree-node-outline";
 const treeNodeBackgroundColor = "--tree-node-background-color";
 const treeActionOpacity = "--tree-action-opacity";
+
+const TreeFocusRestoreContext = createContext<
+  | undefined
+  | {
+      shouldRestoreFocusRef: MutableRefObject<boolean>;
+    }
+>(undefined);
 
 type TreeSelectionState = "none" | "selected" | "selected-descendant";
 
@@ -60,40 +70,52 @@ const EXPAND_WIDTH = 24;
 
 const TreeContainer = ({ children }: { children: ReactNode }) => {
   const focusManager = useFocusManager();
+  const shouldRestoreFocusRef = useRef(false);
   return (
-    <Box
-      onKeyDown={(event) => {
-        if (event.defaultPrevented) {
-          return;
-        }
-        if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
-          focusManager?.focusPrevious({
-            accept: (node) => node.hasAttribute("data-tree-button"),
-          });
-          // prevent scrolling
-          event.preventDefault();
-        }
-        if (event.key === "ArrowDown") {
-          focusManager?.focusNext({
-            accept: (node) => node.hasAttribute("data-tree-button"),
-          });
-          // prevent scrolling
-          event.preventDefault();
-        }
-        if (event.key === "ArrowRight") {
-          focusManager?.focusNext({
-            accept: (node) =>
-              node.hasAttribute("data-tree-button") ||
-              // try to focus button inside action
-              node.closest("[data-tree-action]") !== null,
-          });
-          // prevent scrolling
-          event.preventDefault();
-        }
-      }}
-    >
-      {children}
-    </Box>
+    <TreeFocusRestoreContext.Provider value={{ shouldRestoreFocusRef }}>
+      <Box
+        onKeyDown={(event) => {
+          if (event.defaultPrevented) {
+            return;
+          }
+          if (event.metaKey || event.ctrlKey) {
+            if (event.key.startsWith("Arrow")) {
+              shouldRestoreFocusRef.current = true;
+              window.setTimeout(() => {
+                shouldRestoreFocusRef.current = false;
+              }, 1000);
+            }
+            return;
+          }
+          if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+            focusManager?.focusPrevious({
+              accept: (node) => node.hasAttribute("data-tree-button"),
+            });
+            // prevent scrolling
+            event.preventDefault();
+          }
+          if (event.key === "ArrowDown") {
+            focusManager?.focusNext({
+              accept: (node) => node.hasAttribute("data-tree-button"),
+            });
+            // prevent scrolling
+            event.preventDefault();
+          }
+          if (event.key === "ArrowRight") {
+            focusManager?.focusNext({
+              accept: (node) =>
+                node.hasAttribute("data-tree-button") ||
+                // try to focus button inside action
+                node.closest("[data-tree-action]") !== null,
+            });
+            // prevent scrolling
+            event.preventDefault();
+          }
+        }}
+      >
+        {children}
+      </Box>
+    </TreeFocusRestoreContext.Provider>
   );
 };
 
@@ -430,6 +452,7 @@ export const TreeNode = ({
   children: ReactNode;
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const focusRestoreContext = useContext(TreeFocusRestoreContext);
   const selectionState = getTreeSelectionState({
     isSelected,
     isSelectedDescendant,
@@ -444,11 +467,21 @@ export const TreeNode = ({
       });
     }
   }, [isSelected]);
+  useEffect(() => {
+    const shouldRestoreFocusRef = focusRestoreContext?.shouldRestoreFocusRef;
+    if (isSelected && shouldRestoreFocusRef?.current === true) {
+      buttonRef.current?.focus({ preventScroll: true });
+      shouldRestoreFocusRef.current = false;
+    }
+  }, [focusRestoreContext, isSelected]);
 
   const handleKeydown = (event: KeyboardEvent<HTMLDivElement>) => {
     nodeProps?.onKeyDown?.(event);
 
     if (event.defaultPrevented) {
+      return;
+    }
+    if (event.metaKey || event.ctrlKey) {
       return;
     }
     if (event.key === "ArrowLeft" && isExpanded === true) {
