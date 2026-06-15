@@ -510,9 +510,34 @@ export const reparentInstanceMutable = (
     targetSlot?.component === "Slot" &&
     targetSlot.children[0]?.type === "id" &&
     targetSlot.children[0].value === sourceFragmentId;
-  const sourceInstancePath = isSameSharedSlotFragment
-    ? (initialSourceInstancePath ?? [])
-    : detachSharedSlotContentMutable(data, initialSourceInstancePath ?? []);
+  const detachResult = isSameSharedSlotFragment
+    ? { instancePath: initialSourceInstancePath ?? [] }
+    : detachSharedSlotContentMutableWithMap(
+        data,
+        initialSourceInstancePath ?? []
+      );
+  const sourceInstancePath = detachResult.instancePath;
+  if (
+    detachResult.newInstanceIds !== undefined &&
+    detachResult.fragmentId !== undefined &&
+    detachResult.slotId !== undefined
+  ) {
+    const dropTargetSlotIndex = dropTarget.parentSelector.findIndex(
+      (instanceId, index) =>
+        instanceId === detachResult.slotId &&
+        dropTarget.parentSelector[index - 1] === detachResult.fragmentId
+    );
+    if (dropTargetSlotIndex !== -1) {
+      dropTarget = {
+        parentSelector: dropTarget.parentSelector.map((instanceId, index) =>
+          index < dropTargetSlotIndex
+            ? (detachResult.newInstanceIds?.get(instanceId) ?? instanceId)
+            : instanceId
+        ),
+        position: dropTarget.position,
+      };
+    }
+  }
   sourceInstanceSelector = sourceInstancePath[0]?.instanceSelector;
   if (sourceInstanceSelector === undefined) {
     return;
@@ -763,7 +788,7 @@ export const detachSharedSlotChildrenMutable = (
   cloneSharedSlotFragmentMutable(data, slotId, fragmentId);
 };
 
-export const detachSharedSlotContentMutable = (
+const detachSharedSlotContentMutableWithMap = (
   data: Omit<WebstudioData, "pages">,
   instancePath: InstancePath
 ) => {
@@ -773,7 +798,7 @@ export const detachSharedSlotContentMutable = (
       instancePath[index - 1]?.instance.component === "Fragment"
   );
   if (slotIndex === -1) {
-    return instancePath;
+    return { instancePath };
   }
   const fragmentItem = instancePath[slotIndex - 1];
   const slotItem = instancePath[slotIndex];
@@ -783,7 +808,7 @@ export const detachSharedSlotContentMutable = (
     fragmentItem.instance.id
   );
   if (newInstanceIds === undefined) {
-    return instancePath;
+    return { instancePath };
   }
   const newInstanceSelector = instancePath[0].instanceSelector.map(
     (instanceId, index) =>
@@ -791,7 +816,20 @@ export const detachSharedSlotContentMutable = (
         ? (newInstanceIds.get(instanceId) ?? instanceId)
         : instanceId
   );
-  return getInstancePath(newInstanceSelector, data.instances) ?? instancePath;
+  return {
+    instancePath:
+      getInstancePath(newInstanceSelector, data.instances) ?? instancePath,
+    newInstanceIds,
+    fragmentId: fragmentItem.instance.id,
+    slotId: slotItem.instance.id,
+  };
+};
+
+export const detachSharedSlotContentMutable = (
+  data: Omit<WebstudioData, "pages">,
+  instancePath: InstancePath
+) => {
+  return detachSharedSlotContentMutableWithMap(data, instancePath).instancePath;
 };
 
 export const unwrapInstanceMutable = ({

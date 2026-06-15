@@ -1096,6 +1096,58 @@ describe("reparent instance", () => {
     ]);
   });
 
+  test("reparent shared slot child into sibling in selected slot occurrence", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div"></ws.element>
+            <$.Heading ws:id="heading"></$.Heading>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div"></ws.element>
+            <$.Heading ws:id="heading"></$.Heading>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $project.set({ id: "projectId" } as Project);
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+
+    reparentInstanceMutable(data, ["heading", "fragment", "slot1", "body"], {
+      parentSelector: ["div", "fragment", "slot1", "body"],
+      position: "end",
+    });
+
+    expect(data.instances.get("slot1")?.children).not.toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(data.instances.get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+
+    const slot1FragmentId = data.instances.get("slot1")?.children[0]?.value;
+    const slot1Fragment = data.instances.get(slot1FragmentId ?? "");
+    const slot1DivId = slot1Fragment?.children[0]?.value;
+    const slot1Div = data.instances.get(slot1DivId ?? "");
+
+    expect(slot1Fragment?.children).toEqual([
+      { type: "id", value: slot1DivId },
+    ]);
+    expect(slot1Div?.children).toEqual([
+      { type: "id", value: expect.any(String) },
+    ]);
+
+    const slot2Fragment = data.instances.get("fragment");
+    expect(slot2Fragment?.children).toEqual([
+      { type: "id", value: "div" },
+      { type: "id", value: "heading" },
+    ]);
+  });
+
   test("reparent only selected slot occurrence", () => {
     const data = renderData(
       <$.Body ws:id="body">
