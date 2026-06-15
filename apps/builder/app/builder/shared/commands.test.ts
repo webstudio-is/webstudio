@@ -172,6 +172,183 @@ describe("duplicateInstance", () => {
       { type: "id", value: expect.any(String) },
     ]);
   });
+
+  test("duplicates nested shared slot child in shared slot content", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "slot1" },
+            { type: "id", value: "slot2" },
+          ],
+        },
+      ],
+      [
+        "slot1",
+        {
+          type: "instance",
+          id: "slot1",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "slot2",
+        {
+          type: "instance",
+          id: "slot2",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "fragment",
+        {
+          type: "instance",
+          id: "fragment",
+          component: "Fragment",
+          children: [{ type: "id", value: "div" }],
+        },
+      ],
+      [
+        "div",
+        {
+          type: "instance",
+          id: "div",
+          component: "Box",
+          children: [{ type: "id", value: "box" }],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["box", "div", "fragment", "slot1", "body"]);
+
+    emitCommand("duplicateInstance");
+
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "div" },
+    ]);
+    expect($instances.get().get("div")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: expect.any(String) },
+    ]);
+  });
+
+  test("duplicates shared slot child and preserves shared siblings", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "slot1" },
+            { type: "id", value: "slot2" },
+          ],
+        },
+      ],
+      [
+        "slot1",
+        {
+          type: "instance",
+          id: "slot1",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "slot2",
+        {
+          type: "instance",
+          id: "slot2",
+          component: "Slot",
+          children: [{ type: "id", value: "fragment" }],
+        },
+      ],
+      [
+        "fragment",
+        {
+          type: "instance",
+          id: "fragment",
+          component: "Fragment",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: "Heading",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["box", "fragment", "slot1", "body"]);
+
+    emitCommand("duplicateInstance");
+
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "heading" },
+    ]);
+  });
 });
 
 describe("getPageActionTarget", () => {

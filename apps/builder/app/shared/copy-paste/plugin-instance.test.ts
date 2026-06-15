@@ -135,6 +135,263 @@ describe("paste target", () => {
       toMap([createInstance(newBox1, "Box", [])])
     );
   });
+
+  test("pastes into shared slot content", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "source" },
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+        createInstance("source", "Box", []),
+        createInstance("slot1", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("slot2", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("fragment", "Fragment", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["source", "body0"]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstance(["slot1", "body0"]);
+
+    await instanceText.onPaste?.(clipboardData);
+
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: expect.any(String) },
+    ]);
+  });
+
+  test("pastes after selected shared slot child in shared slot content", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+        createInstance("slot1", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("slot2", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("fragment", "Fragment", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["box", "fragment", "slot1", "body0"]);
+
+    await instanceText.onPaste?.(instanceText.onCopy?.() ?? "");
+
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: expect.any(String) },
+    ]);
+  });
+
+  test("pastes after selected nested shared slot child in shared slot content", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+        createInstance("slot1", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("slot2", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("fragment", "Fragment", [{ type: "id", value: "div" }]),
+        createInstance("div", "Box", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["box", "div", "fragment", "slot1", "body0"]);
+
+    await instanceText.onPaste?.(instanceText.onCopy?.() ?? "");
+
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "div" },
+    ]);
+    expect($instances.get().get("div")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: expect.any(String) },
+    ]);
+  });
+
+  test("pastes into nested shared slot container", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "source" },
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+        createInstance("source", "Box", []),
+        createInstance("slot1", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("slot2", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("fragment", "Fragment", [{ type: "id", value: "div" }]),
+        createInstance("div", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["source", "body0"]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstance(["div", "fragment", "slot1", "body0"]);
+
+    await instanceText.onPaste?.(clipboardData);
+
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "div" },
+    ]);
+    expect($instances.get().get("div")?.children).toEqual([
+      { type: "id", value: expect.any(String) },
+    ]);
+  });
+
+  test("copies shared slot child and pastes independent copy outside", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+          { type: "id", value: "target" },
+        ]),
+        createInstance("slot1", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("slot2", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("fragment", "Fragment", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+        createInstance("target", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["box", "fragment", "slot1", "body0"]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstance(["target", "body0"]);
+
+    await instanceText.onPaste?.(clipboardData);
+
+    const pastedBoxId = $instances.get().get("target")?.children[0]?.value;
+    expect(pastedBoxId).toEqual(expect.any(String));
+    expect(pastedBoxId).not.toBe("box");
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "box" },
+    ]);
+    expect($instances.get().get(pastedBoxId ?? "")?.children).toEqual([]);
+  });
+
+  test("cuts shared slot child from all slot occurrences", () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+        createInstance("slot1", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("slot2", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("fragment", "Fragment", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["box", "fragment", "slot1", "body0"]);
+
+    expect(instanceText.onCut?.()).toBeDefined();
+
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([]);
+    expect($instances.get().has("box")).toBe(false);
+  });
+
+  test("cuts nested shared slot child from all slot occurrences", () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+        createInstance("slot1", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("slot2", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("fragment", "Fragment", [{ type: "id", value: "div" }]),
+        createInstance("div", "Box", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["box", "div", "fragment", "slot1", "body0"]);
+
+    expect(instanceText.onCut?.()).toBeDefined();
+
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "div" },
+    ]);
+    expect($instances.get().get("div")?.children).toEqual([]);
+    expect($instances.get().has("box")).toBe(false);
+  });
+
+  test("cuts shared slot child and preserves shared siblings", () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+        createInstance("slot1", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("slot2", "Slot", [{ type: "id", value: "fragment" }]),
+        createInstance("fragment", "Fragment", [
+          { type: "id", value: "box" },
+          { type: "id", value: "heading" },
+        ]),
+        createInstance("box", "Box", []),
+        createInstance("heading", "Heading", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["box", "fragment", "slot1", "body0"]);
+
+    expect(instanceText.onCut?.()).toBeDefined();
+
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "heading" },
+    ]);
+    expect($instances.get().has("box")).toBe(false);
+  });
 });
 
 describe("data sources", () => {
