@@ -1075,17 +1075,14 @@ describe("find closest insertable", () => {
     });
   });
 
-  test("allow inserting list item in body even though validation fails", () => {
+  test("prevents inserting list item in body when validation fails", () => {
     const { instances } = renderData(<$.Body ws:id="bodyId"></$.Body>);
     $instances.set(instances);
     selectInstance(["bodyId"]);
     const newListItemFragment = renderTemplate(
       <$.ListItem ws:id="newListItemId"></$.ListItem>
     );
-    expect(findClosestInsertable(newListItemFragment)).toEqual({
-      parentSelector: ["bodyId"],
-      position: "end",
-    });
+    expect(findClosestInsertable(newListItemFragment)).toBeUndefined();
   });
 });
 

@@ -332,9 +332,7 @@ export const findClosestInsertable = (
     },
   });
   if (insertableIndex === -1) {
-    // fallback to closest container to always insert something
-    // even when validation fails
-    insertableIndex = 0;
+    return;
   }
 
   // adjust with container lookup
