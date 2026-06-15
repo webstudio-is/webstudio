@@ -116,19 +116,40 @@ export const getSlotFragmentDropTargetMutable = (
   // The Slot stores a single Fragment child as the shared content root; editing
   // inside that Fragment should update all occurrences of the Slot.
   if (instance.component === "Slot") {
+    const findReusableFragmentId = (legacyChildren: Instance["children"]) => {
+      for (const candidate of instances.values()) {
+        if (
+          candidate.component !== "Slot" ||
+          candidate.children[0]?.type !== "id"
+        ) {
+          continue;
+        }
+        const fragment = instances.get(candidate.children[0].value);
+        if (
+          fragment?.component === "Fragment" &&
+          areInstanceChildrenEqual(fragment.children, legacyChildren)
+        ) {
+          return fragment.id;
+        }
+      }
+    };
+
     const wrapSlotChildrenWithFragment = () => {
-      const id = nanoid();
       const legacyChildren = instance.children.map((child) => ({ ...child }));
-      instances.set(id, {
-        type: "instance",
-        id,
-        component: "Fragment",
-        children: legacyChildren,
-      });
+      const id = findReusableFragmentId(legacyChildren) ?? nanoid();
+      if (instances.has(id) === false) {
+        instances.set(id, {
+          type: "instance",
+          id,
+          component: "Fragment",
+          children: legacyChildren,
+        });
+      }
       for (const candidate of instances.values()) {
         if (
           candidate.component === "Slot" &&
-          areInstanceChildrenEqual(candidate.children, legacyChildren)
+          (areInstanceChildrenEqual(candidate.children, legacyChildren) ||
+            getSlotFragmentId(candidate) === id)
         ) {
           candidate.children = [{ type: "id", value: id }];
         }

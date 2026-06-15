@@ -316,6 +316,37 @@ describe("slot utils", () => {
     ]);
   });
 
+  test("normalizes legacy slot occurrence to existing canonical shared fragment", () => {
+    const instances = new Map([
+      ["slot1", instance("slot1", "Slot", [{ type: "id", value: "fragment" }])],
+      [
+        "fragment",
+        instance("fragment", "Fragment", [{ type: "id", value: "box" }]),
+      ],
+      ["slot2", instance("slot2", "Slot", [{ type: "id", value: "box" }])],
+      ["box", instance("box", "Box")],
+    ]);
+
+    const dropTarget = getSlotFragmentDropTargetMutable(instances, {
+      parentSelector: ["slot2", "body"],
+      position: "end",
+    });
+
+    expect(dropTarget).toEqual({
+      parentSelector: ["fragment", "slot2", "body"],
+      position: "end",
+    });
+    expect(instances.get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(instances.get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(instances.get("fragment")?.children).toEqual([
+      { type: "id", value: "box" },
+    ]);
+  });
+
   test("normalizes matching empty legacy slot occurrences to one shared fragment", () => {
     const instances = new Map([
       ["slot1", instance("slot1", "Slot")],
@@ -339,6 +370,31 @@ describe("slot utils", () => {
       { type: "id", value: fragmentId },
     ]);
     expect(instances.get(fragmentId ?? "")?.children).toEqual([]);
+  });
+
+  test("normalizes empty legacy slot occurrence to existing empty canonical fragment", () => {
+    const instances = new Map([
+      ["slot1", instance("slot1", "Slot", [{ type: "id", value: "fragment" }])],
+      ["fragment", instance("fragment", "Fragment")],
+      ["slot2", instance("slot2", "Slot")],
+    ]);
+
+    const dropTarget = getSlotFragmentDropTargetMutable(instances, {
+      parentSelector: ["slot2", "body"],
+      position: "end",
+    });
+
+    expect(dropTarget).toEqual({
+      parentSelector: ["fragment", "slot2", "body"],
+      position: "end",
+    });
+    expect(instances.get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(instances.get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(instances.get("fragment")?.children).toEqual([]);
   });
 
   test("normalizes only legacy slots with the same children", () => {

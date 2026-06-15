@@ -244,6 +244,40 @@ describe("paste target", () => {
     ]);
   });
 
+  test("pastes after selected legacy shared slot child in shared slot content", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+        ]),
+        createInstance("slot1", "Slot", [
+          { type: "id", value: "box" },
+          { type: "id", value: "heading" },
+        ]),
+        createInstance("slot2", "Slot", [
+          { type: "id", value: "box" },
+          { type: "id", value: "heading" },
+        ]),
+        createInstance("box", "Box", []),
+        createInstance("heading", "Heading", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["box", "slot1", "body0"]);
+
+    await instanceText.onPaste?.(instanceText.onCopy?.() ?? "");
+
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "heading" },
+    ]);
+  });
+
   test("pastes after selected nested shared slot child in shared slot content", async () => {
     $instances.set(
       toMap([
