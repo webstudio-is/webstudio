@@ -499,17 +499,25 @@ export const reparentInstanceMutable = (
     sourceInstanceSelector,
     data.instances
   );
+  const sourceSlotIndex = initialSourceInstancePath?.findIndex(
+    (item, index) =>
+      item.instance.component === "Slot" &&
+      initialSourceInstancePath[index - 1]?.instance.component === "Fragment"
+  );
   const sourceFragmentId =
-    initialSourceInstancePath?.[1]?.instance.component === "Fragment" &&
-    initialSourceInstancePath[2]?.instance.component === "Slot"
-      ? initialSourceInstancePath[1].instance.id
-      : undefined;
+    sourceSlotIndex === undefined || sourceSlotIndex === -1
+      ? undefined
+      : initialSourceInstancePath?.[sourceSlotIndex - 1]?.instance.id;
   const targetSlot = data.instances.get(dropTarget.parentSelector[0]);
   const isSameSharedSlotFragment =
     sourceFragmentId !== undefined &&
-    targetSlot?.component === "Slot" &&
-    targetSlot.children[0]?.type === "id" &&
-    targetSlot.children[0].value === sourceFragmentId;
+    (dropTarget.parentSelector.includes(sourceFragmentId) ||
+      (targetSlot?.component === "Slot" &&
+        targetSlot.children[0]?.type === "id" &&
+        targetSlot.children[0].value === sourceFragmentId));
+  // Reparenting within the same Slot content should mutate the shared
+  // Fragment. Reparenting out of a Slot should detach, making the moved
+  // instance independent from future Slot content changes.
   const detachResult = isSameSharedSlotFragment
     ? { instancePath: initialSourceInstancePath ?? [] }
     : detachSharedSlotContentMutableWithMap(
@@ -775,6 +783,14 @@ const cloneSharedSlotFragmentMutable = (
   return newInstanceIds;
 };
 
+// Slot content contract:
+// - Slot children are shared content, stored under the Slot's Fragment child.
+// - Any edit that stays inside that Fragment must update all occurrences of
+//   the same Slot: insert, delete, reorder, wrap, duplicate, and reparent.
+// - Moving or copying content into a Slot makes it part of that shared content.
+// - Content becomes independent only when it crosses out of the Slot boundary.
+// - Unwrapping a direct Slot child crosses that boundary; unwrapping nested
+//   descendants inside the Fragment does not.
 export const detachSharedSlotChildrenMutable = (
   data: Omit<WebstudioData, "pages">,
   slotId: Instance["id"]
@@ -1084,11 +1100,7 @@ export const wrapInstance = (component: string, tag?: string) => {
 
   try {
     updateWebstudioData((data) => {
-      const detachedInstancePath = detachSharedSlotContentMutable(
-        data,
-        instancePath
-      );
-      const [selectedItem, parentItem] = detachedInstancePath;
+      const [selectedItem, parentItem] = instancePath;
       if (parentItem === undefined) {
         return;
       }
@@ -1260,15 +1272,20 @@ export const unwrapInstance = () => {
 
   try {
     updateWebstudioData((data) => {
-      const detachedInstancePath = detachSharedSlotContentMutable(
-        data,
-        instancePath
-      );
-      const [selectedItem, defaultParentItem] = detachedInstancePath;
+      const unwrapsDirectSlotChild =
+        instancePath[1]?.instance.component === "Fragment" &&
+        instancePath[2]?.instance.component === "Slot";
+      const nextInstancePath = unwrapsDirectSlotChild
+        ? detachSharedSlotContentMutable(data, instancePath)
+        : instancePath;
+      const [selectedItem, defaultParentItem] = nextInstancePath;
+      // Unwrapping a direct Slot child places that child outside the Slot, so it
+      // intentionally leaves shared Slot content and must use the Slot item as
+      // the parent to replace.
       const parentItem =
         defaultParentItem?.instance.component === "Fragment" &&
-        detachedInstancePath[2]?.instance.component === "Slot"
-          ? detachedInstancePath[2]
+        nextInstancePath[2]?.instance.component === "Slot"
+          ? nextInstancePath[2]
           : defaultParentItem;
       if (parentItem === undefined) {
         return;

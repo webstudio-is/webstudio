@@ -75,9 +75,9 @@ export const getInstanceOrCreateFragmentIfNecessary = (
   if (instance === undefined) {
     return;
   }
-  // slot should accept only single child
-  // otherwise multiple slots will have to maintain own children
-  // here all slot children are wrapped with fragment instance
+  // Slot content is shared by every rendered occurrence of the same Slot.
+  // The Slot stores a single Fragment child as the shared content root; editing
+  // inside that Fragment should update all occurrences of the Slot.
   if (instance.component === "Slot") {
     const wrapSlotChildrenWithFragment = () => {
       const id = nanoid();

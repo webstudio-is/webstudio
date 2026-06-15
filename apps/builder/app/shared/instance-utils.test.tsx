@@ -49,7 +49,6 @@ import {
   buildInstancePath,
   wrapInstance,
   toggleInstanceShow,
-  detachSharedSlotContentMutable,
   unwrapInstance,
   unwrapInstanceMutable,
   canUnwrapInstance,
@@ -1096,7 +1095,7 @@ describe("reparent instance", () => {
     ]);
   });
 
-  test("reparent shared slot child into sibling in selected slot occurrence", () => {
+  test("reparent shared slot child into sibling in shared slot content", () => {
     const data = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -1122,30 +1121,63 @@ describe("reparent instance", () => {
       position: "end",
     });
 
-    expect(data.instances.get("slot1")?.children).not.toEqual([
+    expect(data.instances.get("slot1")?.children).toEqual([
       { type: "id", value: "fragment" },
     ]);
     expect(data.instances.get("slot2")?.children).toEqual([
       { type: "id", value: "fragment" },
     ]);
-
-    const slot1FragmentId = data.instances.get("slot1")?.children[0]?.value;
-    const slot1Fragment = data.instances.get(slot1FragmentId ?? "");
-    const slot1DivId = slot1Fragment?.children[0]?.value;
-    const slot1Div = data.instances.get(slot1DivId ?? "");
-
-    expect(slot1Fragment?.children).toEqual([
-      { type: "id", value: slot1DivId },
+    expect(data.instances.get("fragment")?.children).toEqual([
+      { type: "id", value: "div" },
     ]);
-    expect(slot1Div?.children).toEqual([
+    expect(data.instances.get("div")?.children).toEqual([
       { type: "id", value: expect.any(String) },
     ]);
+  });
 
-    const slot2Fragment = data.instances.get("fragment");
-    expect(slot2Fragment?.children).toEqual([
-      { type: "id", value: "div" },
-      { type: "id", value: "heading" },
+  test("reparent nested shared slot child within shared slot content", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div">
+              <$.Heading ws:id="heading"></$.Heading>
+            </ws.element>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div">
+              <$.Heading ws:id="heading"></$.Heading>
+            </ws.element>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $project.set({ id: "projectId" } as Project);
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+
+    reparentInstanceMutable(
+      data,
+      ["heading", "div", "fragment", "slot1", "body"],
+      {
+        parentSelector: ["fragment", "slot1", "body"],
+        position: "end",
+      }
+    );
+
+    expect(data.instances.get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
     ]);
+    expect(data.instances.get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(data.instances.get("fragment")?.children).toEqual([
+      { type: "id", value: "div" },
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect(data.instances.get("div")?.children).toEqual([]);
   });
 
   test("reparent only selected slot occurrence", () => {
@@ -1501,7 +1533,7 @@ describe("wrap in", () => {
     );
   });
 
-  test("wrap only selected slot occurrence", () => {
+  test("wrap shared slot child in shared slot content", () => {
     $registeredComponentMetas.set(defaultMetasMap);
     $instances.set(
       renderData(
@@ -1524,13 +1556,17 @@ describe("wrap in", () => {
 
     wrapInstance(elementComponent, "div");
 
-    expect($instances.get().get("slot1")?.children).not.toEqual(
-      $instances.get().get("slot2")?.children
-    );
+    const wrapperId = $instances.get().get("fragment")?.children[0]?.value;
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
     expect($instances.get().get("slot2")?.children).toEqual([
       { type: "id", value: "fragment" },
     ]);
     expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: wrapperId },
+    ]);
+    expect($instances.get().get(wrapperId ?? "")?.children).toEqual([
       { type: "id", value: "div" },
     ]);
   });
@@ -1767,7 +1803,7 @@ describe("insert webstudio fragment copy", () => {
     $dataSources.set(new Map());
   });
 
-  test("duplicate only selected slot occurrence", () => {
+  test("duplicate shared slot child in shared slot content", () => {
     const data = renderData(
       <$.Body ws:id="body">
         <$.Slot ws:id="slot1">
@@ -1784,11 +1820,9 @@ describe("insert webstudio fragment copy", () => {
       </$.Body>
     );
 
-    const instancePath = detachSharedSlotContentMutable(
-      data,
+    const instancePath =
       getInstancePath(["div", "fragment", "slot1", "body"], data.instances) ??
-        []
-    );
+      [];
     const selectedItem = instancePath[0];
     const parentItem = instancePath[1];
     if (selectedItem === undefined || parentItem === undefined) {
@@ -1816,6 +1850,7 @@ describe("insert webstudio fragment copy", () => {
     ]);
     expect(data.instances.get("fragment")?.children).toEqual([
       { type: "id", value: "div" },
+      { type: "id", value: expect.any(String) },
     ]);
   });
 
@@ -3972,6 +4007,53 @@ describe("unwrap instance", () => {
     expect($instances.get().get("fragment")?.children).toEqual([
       { type: "id", value: "div" },
     ]);
+  });
+
+  test("unwrap command keeps nested shared slot child in shared slot content", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div">
+              <$.Box ws:id="box"></$.Box>
+            </ws.element>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <ws.element ws:tag="div" ws:id="div">
+              <$.Box ws:id="box"></$.Box>
+            </ws.element>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    selectInstance(["box", "div", "fragment", "slot1", "body"]);
+
+    unwrapInstance();
+
+    expect($selectedInstanceSelector.get()).toEqual([
+      "box",
+      "fragment",
+      "slot1",
+      "body",
+    ]);
+    expect($instances.get().get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect($instances.get().get("fragment")?.children).toEqual([
+      { type: "id", value: "box" },
+    ]);
+    expect($instances.get().has("div")).toBe(false);
   });
 });
 
