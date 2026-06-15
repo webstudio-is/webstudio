@@ -79,6 +79,21 @@ export const getInstanceOrCreateFragmentIfNecessary = (
   // otherwise multiple slots will have to maintain own children
   // here all slot children are wrapped with fragment instance
   if (instance.component === "Slot") {
+    const wrapSlotChildrenWithFragment = () => {
+      const id = nanoid();
+      instances.set(id, {
+        type: "instance",
+        id,
+        component: "Fragment",
+        children: instance.children,
+      });
+      instance.children = [{ type: "id", value: id }];
+      return {
+        parentSelector: [id, ...dropTarget.parentSelector],
+        position: dropTarget.position,
+      };
+    };
+
     if (instance.children.length === 0) {
       const id = nanoid();
       const fragment: Instance = {
@@ -94,14 +109,20 @@ export const getInstanceOrCreateFragmentIfNecessary = (
         position: dropTarget.position,
       };
     }
-    // first slot child is always fragment
     if (instance.children[0].type === "id") {
       const fragmentId = instance.children[0].value;
+      const fragment = instances.get(fragmentId);
+      if (fragment?.component !== "Fragment") {
+        // Legacy slots stored content directly under Slot. Normalize before
+        // inserting so the first content child is not mistaken for Fragment.
+        return wrapSlotChildrenWithFragment();
+      }
       return {
         parentSelector: [fragmentId, ...dropTarget.parentSelector],
         position: dropTarget.position,
       };
     }
+    return wrapSlotChildrenWithFragment();
   }
   return;
 };

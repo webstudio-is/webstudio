@@ -428,6 +428,39 @@ describe("insert instance children", () => {
     );
   });
 
+  test("insert instance children into legacy slot with direct children", () => {
+    const data = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Slot ws:id="slotId">
+          <$.Box ws:id="boxId"></$.Box>
+        </$.Slot>
+      </$.Body>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["slotId", "bodyId"],
+      position: "end",
+    });
+
+    const fragmentId = data.instances.get("slotId")?.children[0]?.value;
+    expect(data).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <$.Slot ws:id="slotId">
+            <$.Fragment ws:id={fragmentId}>
+              <$.Box ws:id="boxId"></$.Box>
+              <ws.element ws:tag="div" ws:id="divId"></ws.element>
+            </$.Fragment>
+          </$.Slot>
+        </$.Body>
+      )
+    );
+  });
+
   test("insert instance children into the start of target", () => {
     const data = renderData(
       <ws.element ws:tag="body" ws:id="bodyId">
@@ -641,6 +674,47 @@ describe("insert webstudio element at", () => {
           <ws.element ws:id="divId" ws:tag="div">
             <ws.element ws:id={newInstanceId} ws:tag="div" />
           </ws.element>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("insert element into selected legacy slot with direct children", () => {
+    $pages.set(
+      createDefaultPages({ homePageId: "homePageId", rootInstanceId: "bodyId" })
+    );
+    $instances.set(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <$.Slot ws:id="slotId">
+            <$.Box ws:id="boxId"></$.Box>
+          </$.Slot>
+        </$.Body>
+      ).instances
+    );
+    selectPage("homePageId");
+    selectInstance(["slotId", "bodyId"]);
+
+    insertWebstudioElementAt();
+
+    const instances = $instances.get();
+    const fragmentId = instances.get("slotId")?.children[0]?.value;
+    const newInstanceId = Array.from(instances.keys()).find(
+      (id) =>
+        id !== "bodyId" &&
+        id !== "slotId" &&
+        id !== "boxId" &&
+        id !== fragmentId
+    );
+    expect(instances).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <$.Slot ws:id="slotId">
+            <$.Fragment ws:id={fragmentId}>
+              <$.Box ws:id="boxId"></$.Box>
+              <ws.element ws:id={newInstanceId} ws:tag="div" />
+            </$.Fragment>
+          </$.Slot>
         </$.Body>
       ).instances
     );
