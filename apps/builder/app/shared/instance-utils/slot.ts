@@ -13,6 +13,15 @@ export type SharedSlotDetachResult = {
   slotId?: Instance["id"];
 };
 
+export type SharedSlotBoundary = {
+  slotIndex: number;
+  fragmentItem: InstancePath[number];
+  slotItem: InstancePath[number];
+  fragmentId: Instance["id"];
+  slotId: Instance["id"];
+  isDirectChild: boolean;
+};
+
 // Slot content contract:
 // - Slot children are shared content, stored under the Slot's Fragment child.
 // - Any edit that stays inside that Fragment must update all occurrences of
@@ -21,7 +30,7 @@ export type SharedSlotDetachResult = {
 // - Content becomes independent only when it crosses out of the Slot boundary.
 // - Unwrapping a direct Slot child crosses that boundary; unwrapping nested
 //   descendants inside the Fragment does not.
-export const findSharedSlotIndex = (instancePath: InstancePath) => {
+const findSharedSlotIndex = (instancePath: InstancePath) => {
   return instancePath.findIndex(
     (item, index) =>
       item.instance.component === "Slot" &&
@@ -29,15 +38,34 @@ export const findSharedSlotIndex = (instancePath: InstancePath) => {
   );
 };
 
-export const getSharedSlotFragmentId = (instancePath: InstancePath) => {
+export const getSharedSlotBoundary = (
+  instancePath: InstancePath
+): undefined | SharedSlotBoundary => {
   const slotIndex = findSharedSlotIndex(instancePath);
-  return slotIndex === -1
-    ? undefined
-    : instancePath[slotIndex - 1]?.instance.id;
+  if (slotIndex === -1) {
+    return;
+  }
+  const fragmentItem = instancePath[slotIndex - 1];
+  const slotItem = instancePath[slotIndex];
+  if (fragmentItem === undefined || slotItem === undefined) {
+    return;
+  }
+  return {
+    slotIndex,
+    fragmentItem,
+    slotItem,
+    fragmentId: fragmentItem.instance.id,
+    slotId: slotItem.instance.id,
+    isDirectChild: slotIndex === 2,
+  };
+};
+
+export const getSharedSlotFragmentId = (instancePath: InstancePath) => {
+  return getSharedSlotBoundary(instancePath)?.fragmentId;
 };
 
 export const isDirectSharedSlotChild = (instancePath: InstancePath) => {
-  return findSharedSlotIndex(instancePath) === 2;
+  return getSharedSlotBoundary(instancePath)?.isDirectChild === true;
 };
 
 export const findClosestSlot = (

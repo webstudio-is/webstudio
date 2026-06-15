@@ -3,7 +3,7 @@ import type { Instance } from "@webstudio-is/sdk";
 import type { InstancePath } from "../nano-states";
 import {
   findClosestSlot,
-  findSharedSlotIndex,
+  getSharedSlotBoundary,
   getSharedSlotFragmentId,
   getSlotFragmentId,
   getSlotFragmentDropTargetMutable,
@@ -53,7 +53,12 @@ describe("slot utils", () => {
       item(["body"], "Body"),
     ] satisfies InstancePath;
 
-    expect(findSharedSlotIndex(path)).toBe(2);
+    expect(getSharedSlotBoundary(path)).toMatchObject({
+      slotIndex: 2,
+      fragmentId: "fragment",
+      slotId: "slot",
+      isDirectChild: true,
+    });
     expect(getSharedSlotFragmentId(path)).toBe("fragment");
     expect(isDirectSharedSlotChild(path)).toBe(true);
     expect(isSharedSlotFragmentPair(path[1], path[2])).toBe(true);
@@ -62,6 +67,12 @@ describe("slot utils", () => {
         instance("slot", "Slot", [{ type: "id", value: "fragment" }])
       )
     ).toBe("fragment");
+    expect(
+      getSharedSlotBoundary([
+        item(["box", "body"], "Box"),
+        item(["body"], "Body"),
+      ])
+    ).toBeUndefined();
   });
 
   test("keeps same-slot reparent shared without detaching", () => {

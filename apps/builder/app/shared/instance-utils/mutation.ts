@@ -43,7 +43,7 @@ import {
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $instanceTags } from "~/builder/features/style-panel/shared/model";
 import {
-  findSharedSlotIndex,
+  getSharedSlotBoundary,
   getSlotFragmentDropTargetMutable,
   getSlotFragmentId,
   isDirectSharedSlotChild,
@@ -366,23 +366,21 @@ const detachSharedSlotContentMutableWithMap = (
   data: Omit<WebstudioData, "pages">,
   instancePath: InstancePath
 ): SharedSlotDetachResult => {
-  const slotIndex = findSharedSlotIndex(instancePath);
-  if (slotIndex === -1) {
+  const boundary = getSharedSlotBoundary(instancePath);
+  if (boundary === undefined) {
     return { instancePath };
   }
-  const fragmentItem = instancePath[slotIndex - 1];
-  const slotItem = instancePath[slotIndex];
   const newInstanceIds = cloneSharedSlotFragmentMutable(
     data,
-    slotItem.instance.id,
-    fragmentItem.instance.id
+    boundary.slotId,
+    boundary.fragmentId
   );
   if (newInstanceIds === undefined) {
     return { instancePath };
   }
   const newInstanceSelector = instancePath[0].instanceSelector.map(
     (instanceId, index) =>
-      index < slotIndex
+      index < boundary.slotIndex
         ? (newInstanceIds.get(instanceId) ?? instanceId)
         : instanceId
   );
@@ -390,8 +388,8 @@ const detachSharedSlotContentMutableWithMap = (
     instancePath:
       getInstancePath(newInstanceSelector, data.instances) ?? instancePath,
     newInstanceIds,
-    fragmentId: fragmentItem.instance.id,
-    slotId: slotItem.instance.id,
+    fragmentId: boundary.fragmentId,
+    slotId: boundary.slotId,
   };
 };
 
