@@ -17,7 +17,10 @@ import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type {
   Asset,
   Breakpoint,
+  DataSource,
   Instance,
+  Prop,
+  Resource,
   StyleDecl,
   StyleDeclKey,
   StyleSource,
@@ -1224,14 +1227,12 @@ describe("reparent instance", () => {
     });
     const newFragmentId = data.instances.get("slot")?.children[0]
       .value as string;
-    const newBoxId = data.instances.get(newFragmentId)?.children[0]
-      .value as string;
     expect(data.instances).toEqual(
       renderData(
         <$.Body ws:id="body">
           <$.Slot ws:id="slot">
             <$.Fragment ws:id={newFragmentId}>
-              <$.Box ws:id={newBoxId}></$.Box>
+              <$.Box ws:id="box"></$.Box>
             </$.Fragment>
           </$.Slot>
         </$.Body>
@@ -1253,14 +1254,12 @@ describe("reparent instance", () => {
       parentSelector: ["slot", "body"],
       position: "end",
     });
-    const newBoxId = data.instances.get("fragment")?.children[0]
-      .value as string;
     expect(data.instances).toEqual(
       renderData(
         <$.Body ws:id="body">
           <$.Slot ws:id="slot">
             <$.Fragment ws:id="fragment">
-              <$.Box ws:id={newBoxId}></$.Box>
+              <$.Box ws:id="box"></$.Box>
             </$.Fragment>
           </$.Slot>
         </$.Body>
@@ -1384,7 +1383,7 @@ describe("reparent instance", () => {
       { type: "id", value: "div" },
     ]);
     expect(data.instances.get("div")?.children).toEqual([
-      { type: "id", value: expect.any(String) },
+      { type: "id", value: "heading" },
     ]);
   });
 
@@ -1428,7 +1427,7 @@ describe("reparent instance", () => {
     ]);
     expect(data.instances.get("fragment")?.children).toEqual([
       { type: "id", value: "div" },
-      { type: "id", value: expect.any(String) },
+      { type: "id", value: "heading" },
     ]);
     expect(data.instances.get("div")?.children).toEqual([]);
   });
@@ -1470,7 +1469,7 @@ describe("reparent instance", () => {
     ]);
     expect(data.instances.get("fragment")?.children).toEqual([
       { type: "id", value: "heading" },
-      { type: "id", value: expect.any(String) },
+      { type: "id", value: "box" },
     ]);
   });
 
@@ -1768,15 +1767,223 @@ describe("reparent instance", () => {
       ["box", "collection[0]", "collection", "body"],
       { parentSelector: ["body"], position: "end" }
     );
-    const newBoxId = data.instances.get("body")?.children[1].value as string;
     expect(data.instances).toEqual(
       renderData(
         <$.Body ws:id="body">
           <ws.collection ws:id="collection"></ws.collection>
-          <$.Box ws:id={newBoxId}></$.Box>
+          <$.Box ws:id="box"></$.Box>
         </$.Body>
       ).instances
     );
+  });
+
+  test("unsets variables scoped outside of moved subtree", () => {
+    const data = getWebstudioDataStub({
+      instances: createParentChildInstances([
+        { type: "expression", value: "$ws$dataSource$parentVariable" },
+      ]),
+      dataSources: new Map([["parentVariable", parentScopedVariable]]),
+    });
+    $project.set({ id: "projectId" } as Project);
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+
+    reparentInstanceMutable(data, ["child", "parent", "body"], {
+      parentSelector: ["body"],
+      position: "end",
+    });
+
+    expect(data.instances.get("child")?.children).toEqual([
+      { type: "expression", value: "Parent$32$Variable" },
+    ]);
+  });
+
+  test("remaps moved expression props, action props, and resource expressions", () => {
+    const data = getWebstudioDataStub({
+      instances: createParentChildInstances(),
+      dataSources: new Map([
+        ["parentVariable", parentScopedVariable],
+      ] satisfies [DataSource["id"], DataSource][]),
+      props: new Map([
+        [
+          "expressionProp",
+          {
+            id: "expressionProp",
+            instanceId: "child",
+            name: "state",
+            type: "expression",
+            value: "$ws$dataSource$parentVariable",
+          },
+        ],
+        [
+          "actionProp",
+          {
+            id: "actionProp",
+            instanceId: "child",
+            name: "onClick",
+            type: "action",
+            value: [
+              {
+                type: "execute",
+                args: [],
+                code: "$ws$dataSource$parentVariable = 'next'",
+              },
+            ],
+          },
+        ],
+        [
+          "resourceProp",
+          {
+            id: "resourceProp",
+            instanceId: "child",
+            name: "resource",
+            type: "resource",
+            value: "resource",
+          },
+        ],
+      ] satisfies [Prop["id"], Prop][]),
+      resources: new Map([
+        [
+          "resource",
+          {
+            id: "resource",
+            name: "Resource",
+            method: "post",
+            url: "$ws$dataSource$parentVariable",
+            headers: [
+              {
+                name: "authorization",
+                value: "$ws$dataSource$parentVariable",
+              },
+            ],
+            searchParams: [
+              {
+                name: "query",
+                value: "$ws$dataSource$parentVariable",
+              },
+            ],
+            body: "$ws$dataSource$parentVariable",
+          },
+        ],
+      ] satisfies [Resource["id"], Resource][]),
+    });
+    $project.set({ id: "projectId" } as Project);
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+
+    reparentInstanceMutable(data, ["child", "parent", "body"], {
+      parentSelector: ["body"],
+      position: "end",
+    });
+
+    expect(data.props.get("expressionProp")).toEqual({
+      id: "expressionProp",
+      instanceId: "child",
+      name: "state",
+      type: "expression",
+      value: "Parent$32$Variable",
+    });
+    expect(data.props.get("actionProp")).toEqual({
+      id: "actionProp",
+      instanceId: "child",
+      name: "onClick",
+      type: "action",
+      value: [
+        {
+          type: "execute",
+          args: [],
+          code: "Parent$32$Variable = 'next'",
+        },
+      ],
+    });
+    expect(data.resources.get("resource")).toEqual({
+      id: "resource",
+      name: "Resource",
+      method: "post",
+      url: "Parent$32$Variable",
+      headers: [{ name: "authorization", value: "Parent$32$Variable" }],
+      searchParams: [{ name: "query", value: "Parent$32$Variable" }],
+      body: "Parent$32$Variable",
+    });
+  });
+
+  test("restores moved expressions to same-name variables in new scope", () => {
+    const data = getWebstudioDataStub({
+      instances: new Map([
+        [
+          "body",
+          {
+            type: "instance",
+            id: "body",
+            component: "Body",
+            children: [
+              { type: "id", value: "source" },
+              { type: "id", value: "target" },
+            ],
+          },
+        ],
+        [
+          "source",
+          {
+            type: "instance",
+            id: "source",
+            component: "Box",
+            children: [{ type: "id", value: "child" }],
+          },
+        ],
+        [
+          "target",
+          {
+            type: "instance",
+            id: "target",
+            component: "Box",
+            children: [],
+          },
+        ],
+        [
+          "child",
+          {
+            type: "instance",
+            id: "child",
+            component: "Box",
+            children: [
+              { type: "expression", value: "$ws$dataSource$sourceVariable" },
+            ],
+          },
+        ],
+      ]),
+      dataSources: new Map([
+        [
+          "sourceVariable",
+          {
+            id: "sourceVariable",
+            scopeInstanceId: "source",
+            type: "variable",
+            name: "Shared Name",
+            value: { type: "string", value: "source" },
+          },
+        ],
+        [
+          "targetVariable",
+          {
+            id: "targetVariable",
+            scopeInstanceId: "target",
+            type: "variable",
+            name: "Shared Name",
+            value: { type: "string", value: "target" },
+          },
+        ],
+      ] satisfies [DataSource["id"], DataSource][]),
+    });
+    $project.set({ id: "projectId" } as Project);
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+
+    reparentInstanceMutable(data, ["child", "source", "body"], {
+      parentSelector: ["target", "body"],
+      position: "end",
+    });
+
+    expect(data.instances.get("child")?.children).toEqual([
+      { type: "expression", value: "$ws$dataSource$targetVariable" },
+    ]);
   });
 
   test("move required child within same instance", () => {
@@ -1823,6 +2030,45 @@ const getWebstudioDataStub = (
   styles: new Map(),
   ...data,
 });
+
+const createParentChildInstances = (childChildren: Instance["children"] = []) =>
+  new Map<Instance["id"], Instance>([
+    [
+      "body",
+      {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [{ type: "id", value: "parent" }],
+      },
+    ],
+    [
+      "parent",
+      {
+        type: "instance",
+        id: "parent",
+        component: "Box",
+        children: [{ type: "id", value: "child" }],
+      },
+    ],
+    [
+      "child",
+      {
+        type: "instance",
+        id: "child",
+        component: "Box",
+        children: childChildren,
+      },
+    ],
+  ]);
+
+const parentScopedVariable: DataSource = {
+  id: "parentVariable",
+  scopeInstanceId: "parent",
+  type: "variable",
+  name: "Parent Variable",
+  value: { type: "string", value: "value" },
+};
 
 describe("delete instance", () => {
   test("delete instance with its children", () => {

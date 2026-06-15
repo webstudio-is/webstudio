@@ -89,6 +89,7 @@ import { findClosestInstanceMatchingFragment } from "./matcher";
 import {
   findAvailableVariables,
   replaceDataSourcesInExpression,
+  rebindTreeVariablesMutable,
   restoreExpressionVariables,
   unsetExpressionVariables,
 } from "./data-variables";
@@ -106,6 +107,13 @@ import {
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $instanceTags } from "~/builder/features/style-panel/shared/model";
 import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
+import {
+  findSharedSlotIndex,
+  getSlotFragmentId,
+  isDirectSharedSlotChild,
+  prepareSlotReparentMutable,
+  type SharedSlotDetachResult,
+} from "./slot-utils";
 
 /**
  * structuredClone can be invoked on draft and throw error
@@ -511,7 +519,7 @@ export const reparentInstanceMutable = (
     return;
   }
   const [rootInstanceId] = sourceInstanceSelector;
-  // delect is target is one of own descendants
+  // detect if target is one of own descendants
   // prevent reparenting to avoid infinite loop
   const instanceDescendants = findTreeInstanceIds(
     data.instances,
@@ -561,12 +569,8 @@ export const reparentInstanceMutable = (
     return sourceInstanceSelector;
   }
   // move into another parent
-  const fragment = extractWebstudioFragment(data, rootInstanceId);
-  deleteInstanceMutable(
-    data,
-    getInstancePath(sourceInstanceSelector, data.instances)
-  );
-  // prepare drop target after deleting instance to recreate new slot fragment
+  // Prepare drop target before removing the instance so empty Slot fragments can
+  // be created or reused while the current tree is still intact.
   dropTarget =
     getReparentDropTargetMutable(
       data.instances,
@@ -574,26 +578,24 @@ export const reparentInstanceMutable = (
       $registeredComponentMetas.get(),
       dropTarget
     ) ?? dropTarget;
-  const { newInstanceIds } = insertWebstudioFragmentCopy({
-    data,
-    fragment,
-    availableVariables: findAvailableVariables({
-      ...data,
-      startingInstanceId: dropTarget.parentSelector[0],
-    }),
-    projectId: project.id,
-  });
+  removeMovedInstanceFromParentMutable(data, sourceInstancePath);
   const [newParentId] = dropTarget.parentSelector;
-  const newRootInstanceId =
-    newInstanceIds.get(rootInstanceId) ?? rootInstanceId;
   const newParent = data.instances.get(newParentId);
-  const newChild = { type: "id" as const, value: newRootInstanceId };
+  const newChild = { type: "id" as const, value: rootInstanceId };
   if (dropTarget.position === "end") {
     newParent?.children.push(newChild);
   } else {
     newParent?.children.splice(dropTarget.position, 0, newChild);
   }
-  return [newRootInstanceId, ...dropTarget.parentSelector];
+  rebindTreeVariablesMutable({
+    startingInstanceId: rootInstanceId,
+    pages: undefined,
+    instances: data.instances,
+    props: data.props,
+    dataSources: data.dataSources,
+    resources: data.resources,
+  });
+  return [rootInstanceId, ...dropTarget.parentSelector];
 };
 
 export const reparentInstance = (
@@ -623,6 +625,39 @@ const countInstanceChildReferences = (
     }
   }
   return count;
+};
+
+const removeMovedInstanceFromParentMutable = (
+  data: Omit<WebstudioData, "pages">,
+  instancePath: InstancePath
+) => {
+  const targetInstance = instancePath[0]?.instance;
+  const parentItem = instancePath[1];
+  const grandparentItem = instancePath[2];
+  if (targetInstance === undefined || parentItem === undefined) {
+    return;
+  }
+  const parentInstance = data.instances.get(parentItem.instance.id);
+  if (parentInstance === undefined) {
+    return;
+  }
+  removeByMutable(
+    parentInstance.children,
+    (child) => child.type === "id" && child.value === targetInstance.id
+  );
+  if (
+    parentInstance.component === "Fragment" &&
+    parentInstance.children.length === 0 &&
+    grandparentItem !== undefined &&
+    countInstanceChildReferences(data.instances, parentInstance.id) < 2
+  ) {
+    const grandparentInstance = data.instances.get(grandparentItem.instance.id);
+    removeByMutable(
+      grandparentInstance?.children ?? [],
+      (child) => child.type === "id" && child.value === parentInstance.id
+    );
+    data.instances.delete(parentInstance.id);
+  }
 };
 
 export const deleteInstanceMutable = (
@@ -756,9 +791,8 @@ export const detachSharedSlotChildrenMutable = (
   slotId: Instance["id"]
 ) => {
   const slot = data.instances.get(slotId);
-  const fragmentId =
-    slot?.children[0]?.type === "id" ? slot.children[0].value : undefined;
-  if (slot?.component !== "Slot" || fragmentId === undefined) {
+  const fragmentId = getSlotFragmentId(slot);
+  if (fragmentId === undefined) {
     return;
   }
   cloneSharedSlotFragmentMutable(data, slotId, fragmentId);
@@ -767,12 +801,8 @@ export const detachSharedSlotChildrenMutable = (
 const detachSharedSlotContentMutableWithMap = (
   data: Omit<WebstudioData, "pages">,
   instancePath: InstancePath
-) => {
-  const slotIndex = instancePath.findIndex(
-    (item, index) =>
-      item.instance.component === "Slot" &&
-      instancePath[index - 1]?.instance.component === "Fragment"
-  );
+): SharedSlotDetachResult => {
+  const slotIndex = findSharedSlotIndex(instancePath);
   if (slotIndex === -1) {
     return { instancePath };
   }
@@ -801,89 +831,21 @@ const detachSharedSlotContentMutableWithMap = (
   };
 };
 
-const findSharedSlotIndex = (instancePath: InstancePath) => {
-  return instancePath.findIndex(
-    (item, index) =>
-      item.instance.component === "Slot" &&
-      instancePath[index - 1]?.instance.component === "Fragment"
-  );
-};
-
-const getSharedSlotFragmentId = (instancePath: InstancePath) => {
-  const slotIndex = findSharedSlotIndex(instancePath);
-  return slotIndex === -1
-    ? undefined
-    : instancePath[slotIndex - 1]?.instance.id;
-};
-
-const isSameSharedSlotDropTarget = (
-  instances: Instances,
-  fragmentId: undefined | Instance["id"],
-  dropTarget: DroppableTarget
-) => {
-  if (fragmentId === undefined) {
-    return false;
-  }
-  if (dropTarget.parentSelector.includes(fragmentId)) {
-    return true;
-  }
-  const targetSlot = instances.get(dropTarget.parentSelector[0]);
-  return (
-    targetSlot?.component === "Slot" &&
-    targetSlot.children[0]?.type === "id" &&
-    targetSlot.children[0].value === fragmentId
-  );
-};
-
-const remapDropTargetAfterSharedSlotDetach = (
-  dropTarget: DroppableTarget,
-  detachResult: ReturnType<typeof detachSharedSlotContentMutableWithMap>
-): DroppableTarget => {
-  if (
-    detachResult.newInstanceIds === undefined ||
-    detachResult.fragmentId === undefined ||
-    detachResult.slotId === undefined
-  ) {
-    return dropTarget;
-  }
-  const dropTargetSlotIndex = dropTarget.parentSelector.findIndex(
-    (instanceId, index) =>
-      instanceId === detachResult.slotId &&
-      dropTarget.parentSelector[index - 1] === detachResult.fragmentId
-  );
-  if (dropTargetSlotIndex === -1) {
-    return dropTarget;
-  }
-  return {
-    parentSelector: dropTarget.parentSelector.map((instanceId, index) =>
-      index < dropTargetSlotIndex
-        ? (detachResult.newInstanceIds?.get(instanceId) ?? instanceId)
-        : instanceId
-    ),
-    position: dropTarget.position,
-  };
-};
-
 const prepareSharedSlotReparentMutable = (
   data: Omit<WebstudioData, "pages">,
   instancePath: InstancePath,
   dropTarget: DroppableTarget
 ): { instancePath: InstancePath; dropTarget: DroppableTarget } => {
-  const sourceFragmentId = getSharedSlotFragmentId(instancePath);
   // Reparenting within the same Slot content should mutate the shared
   // Fragment. Reparenting out of a Slot should detach, making the moved
   // instance independent from future Slot content changes.
-  const detachResult = isSameSharedSlotDropTarget(
-    data.instances,
-    sourceFragmentId,
-    dropTarget
-  )
-    ? { instancePath }
-    : detachSharedSlotContentMutableWithMap(data, instancePath);
-  return {
-    instancePath: detachResult.instancePath,
-    dropTarget: remapDropTargetAfterSharedSlotDetach(dropTarget, detachResult),
-  };
+  return prepareSlotReparentMutable({
+    instances: data.instances,
+    instancePath,
+    dropTarget,
+    detachSharedSlotContentMutable: (instancePath) =>
+      detachSharedSlotContentMutableWithMap(data, instancePath),
+  });
 };
 
 export const detachSharedSlotContentMutable = (
@@ -891,13 +853,6 @@ export const detachSharedSlotContentMutable = (
   instancePath: InstancePath
 ) => {
   return detachSharedSlotContentMutableWithMap(data, instancePath).instancePath;
-};
-
-const isDirectSharedSlotChild = (instancePath: InstancePath) => {
-  return (
-    instancePath[1]?.instance.component === "Fragment" &&
-    instancePath[2]?.instance.component === "Slot"
-  );
 };
 
 const unwrapDirectSharedSlotChildWithSiblingsMutable = ({
@@ -1386,11 +1341,9 @@ export const unwrapInstance = () => {
       // Unwrapping a direct Slot child places that child outside the Slot, so it
       // intentionally leaves shared Slot content and must use the Slot item as
       // the parent to replace.
-      const parentItem =
-        defaultParentItem?.instance.component === "Fragment" &&
-        nextInstancePath[2]?.instance.component === "Slot"
-          ? nextInstancePath[2]
-          : defaultParentItem;
+      const parentItem = unwrapsDirectSlotChild
+        ? nextInstancePath[2]
+        : defaultParentItem;
       if (parentItem === undefined) {
         return;
       }
