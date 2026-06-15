@@ -1437,7 +1437,7 @@ export const deleteSelectedInstance = () => {
   if (instancePath === undefined || instancePath.length === 1) {
     return;
   }
-  const [selectedItem, parentItem] = instancePath;
+  const [selectedItem] = instancePath;
   const selectedInstanceSelector = selectedItem.instanceSelector;
   const instances = $instances.get();
   if (!isComponentDetachable(selectedItem.instance.component)) {
@@ -1459,23 +1459,40 @@ export const deleteSelectedInstance = () => {
     }
   }
 
-  // find next selected instance
-  let newSelectedInstanceSelector: undefined | InstanceSelector;
-  const parentInstanceSelector = parentItem.instanceSelector;
-  const siblingIds = parentItem.instance.children
-    .filter((child) => child.type === "id")
-    .map((child) => child.value);
-  const position = siblingIds.indexOf(selectedItem.instance.id);
-  const siblingId = siblingIds[position + 1] ?? siblingIds[position - 1];
-  if (siblingId) {
-    // select next or previous sibling if possible
-    newSelectedInstanceSelector = [siblingId, ...parentInstanceSelector];
-  } else {
-    // fallback to parent
-    newSelectedInstanceSelector = parentInstanceSelector;
-  }
   updateWebstudioData((data) => {
-    if (deleteInstanceMutable(data, instancePath)) {
+    const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
+      data,
+      instancePath
+    );
+    const [normalizedSelectedItem, parentItem] = normalizedInstancePath;
+    if (parentItem === undefined) {
+      return;
+    }
+
+    // Find next selection after any legacy Slot normalization, otherwise the
+    // command can select a direct Slot child path that no longer exists.
+    let newSelectedInstanceSelector: undefined | InstanceSelector;
+    const parentInstanceSelector = parentItem.instanceSelector;
+    const siblingIds = parentItem.instance.children
+      .filter((child) => child.type === "id")
+      .map((child) => child.value);
+    const position = siblingIds.indexOf(normalizedSelectedItem.instance.id);
+    const siblingId = siblingIds[position + 1] ?? siblingIds[position - 1];
+    if (siblingId) {
+      // select next or previous sibling if possible
+      newSelectedInstanceSelector = [siblingId, ...parentInstanceSelector];
+    } else {
+      const grandparentItem = normalizedInstancePath[2];
+      // The Slot Fragment is an implementation detail and should never become
+      // the visible selection when deleting the last Slot child.
+      newSelectedInstanceSelector =
+        parentItem.instance.component === "Fragment" &&
+        grandparentItem?.instance.component === "Slot"
+          ? grandparentItem.instanceSelector
+          : parentInstanceSelector;
+    }
+
+    if (deleteInstanceMutable(data, normalizedInstancePath)) {
       selectInstance(newSelectedInstanceSelector);
     }
   });

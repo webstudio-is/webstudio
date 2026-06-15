@@ -14,6 +14,7 @@ import {
   encodeDataSourceVariable,
   collectionComponent,
   coreMetas,
+  elementComponent,
   portalComponent,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
@@ -342,6 +343,47 @@ describe("paste target", () => {
       { type: "id", value: "box" },
     ]);
     expect($instances.get().get(pastedBoxId ?? "")?.children).toEqual([]);
+  });
+
+  test("copies legacy shared slot child and pastes independent copy outside", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "slot1" },
+          { type: "id", value: "slot2" },
+          { type: "id", value: "target" },
+        ]),
+        createInstance("slot1", "Slot", [
+          { type: "id", value: "box" },
+          { type: "id", value: "heading" },
+        ]),
+        createInstance("slot2", "Slot", [
+          { type: "id", value: "box" },
+          { type: "id", value: "heading" },
+        ]),
+        createInstance("box", "Box", []),
+        createInstance("heading", "Heading", []),
+        createInstance("target", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["box", "slot1", "body0"]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstance(["target", "body0"]);
+
+    await instanceText.onPaste?.(clipboardData);
+
+    const pastedBoxId = $instances.get().get("target")?.children[0]?.value;
+    expect(pastedBoxId).toEqual(expect.any(String));
+    expect(pastedBoxId).not.toBe("box");
+    expect($instances.get().get(pastedBoxId ?? "")?.component).toBe("Box");
+
+    selectInstance(["box", "slot1", "body0"]);
+    instanceUtils.convertInstance(elementComponent, "section");
+
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
+    expect($instances.get().get("box")?.component).toBe(elementComponent);
+    expect($instances.get().get("box")?.tag).toBe("section");
+    expect($instances.get().get(pastedBoxId ?? "")?.component).toBe("Box");
   });
 
   test("copies nested shared slot child with scoped data and pastes independent copy outside", async () => {

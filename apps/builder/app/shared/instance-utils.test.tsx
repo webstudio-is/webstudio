@@ -6963,6 +6963,100 @@ describe("deleteSelectedInstance", () => {
     deleteSelectedInstance();
     expect($selectedInstanceSelector.get()).toEqual(["parent", "body"]);
   });
+
+  test("delete selected legacy shared slot child and select next normalized sibling", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Box ws:id="box"></$.Box>
+          <$.Heading ws:id="heading"></$.Heading>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Box ws:id="box"></$.Box>
+          <$.Heading ws:id="heading"></$.Heading>
+        </$.Slot>
+      </$.Body>
+    );
+    $instances.set(instances);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    selectInstance(["box", "slot1", "body"]);
+
+    deleteSelectedInstance();
+
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
+    expect($selectedInstanceSelector.get()).toEqual([
+      "heading",
+      fragmentId,
+      "slot1",
+      "body",
+    ]);
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("delete last selected shared slot child and select visible slot occurrence", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $instances.set(instances);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    selectInstance(["box", "fragment", "slot1", "body"]);
+
+    deleteSelectedInstance();
+
+    expect($selectedInstanceSelector.get()).toEqual(["slot1", "body"]);
+    expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
+    expect($instances.get().get("fragment")?.children).toEqual([]);
+  });
+
+  test("delete last selected legacy shared slot child and select visible slot occurrence", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Box ws:id="box"></$.Box>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Box ws:id="box"></$.Box>
+        </$.Slot>
+      </$.Body>
+    );
+    $instances.set(instances);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    selectInstance(["box", "slot1", "body"]);
+
+    deleteSelectedInstance();
+
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
+    expect($selectedInstanceSelector.get()).toEqual(["slot1", "body"]);
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([]);
+  });
 });
 
 describe("insertWebstudioFragmentAt with conflictResolution", () => {

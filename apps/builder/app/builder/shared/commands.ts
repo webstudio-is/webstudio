@@ -52,7 +52,7 @@ import {
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
-import { $selectedInstancePath } from "~/shared/nano-states";
+import { $selectedInstancePath, getInstancePath } from "~/shared/nano-states";
 import { selectInstance, selectPage } from "~/shared/nano-states";
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
@@ -81,6 +81,7 @@ import {
   getDeletablePageActionTarget,
   getPageActionTarget,
 } from "~/shared/page-action-target";
+import { normalizeLegacySlotParentInSelectorMutable } from "~/shared/tree-utils";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -700,7 +701,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         }
 
         updateWebstudioData((data) => {
-          const [selectedItem, parentItem] = instancePath;
+          const normalizedSelectedSelector =
+            normalizeLegacySlotParentInSelectorMutable(
+              data.instances,
+              instancePath[0].instanceSelector
+            );
+          const normalizedInstancePath =
+            getInstancePath(normalizedSelectedSelector, data.instances) ??
+            instancePath;
+          const [selectedItem, parentItem] = normalizedInstancePath;
           if (parentItem === undefined) {
             return;
           }

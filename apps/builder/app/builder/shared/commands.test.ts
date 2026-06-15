@@ -9,6 +9,7 @@ import {
   $builderMode,
   $pageIdToDelete,
   $selectedPageId,
+  $selectedInstanceSelector,
   $templateIdToDelete,
   selectInstance,
   selectPage,
@@ -420,6 +421,97 @@ describe("duplicateInstance", () => {
       { type: "id", value: "box" },
       { type: "id", value: expect.any(String) },
       { type: "id", value: "heading" },
+    ]);
+  });
+
+  test("duplicates legacy shared slot child in shared slot content", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "slot1" },
+            { type: "id", value: "slot2" },
+          ],
+        },
+      ],
+      [
+        "slot1",
+        {
+          type: "instance",
+          id: "slot1",
+          component: "Slot",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "slot2",
+        {
+          type: "instance",
+          id: "slot2",
+          component: "Slot",
+          children: [
+            { type: "id", value: "box" },
+            { type: "id", value: "heading" },
+          ],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "heading",
+        {
+          type: "instance",
+          id: "heading",
+          component: "Heading",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstance(["box", "slot1", "body"]);
+
+    emitCommand("duplicateInstance");
+
+    const fragmentId = expectSlotsShareFragment($instances.get(), [
+      "slot1",
+      "slot2",
+    ]);
+    const duplicateId = $instances.get().get(fragmentId ?? "")
+      ?.children[1]?.value;
+    expect($instances.get().get(fragmentId ?? "")?.children).toEqual([
+      { type: "id", value: "box" },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "heading" },
+    ]);
+    expect(duplicateId).toEqual(expect.any(String));
+    expect(duplicateId).not.toBe("box");
+    expect($selectedInstanceSelector.get()).toEqual([
+      duplicateId,
+      fragmentId,
+      "slot1",
+      "body",
     ]);
   });
 });
