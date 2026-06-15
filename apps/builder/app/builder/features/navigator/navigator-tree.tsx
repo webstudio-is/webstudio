@@ -1,3 +1,4 @@
+import { toggleInstanceShow } from "~/shared/instance-utils/mutation";
 import { useEffect, useRef } from "react";
 import { atom, computed } from "nanostores";
 import { mergeRefs } from "@react-aria/utils";
@@ -49,9 +50,12 @@ import {
   $propValuesByInstanceSelectorWithMemoryProps,
 } from "~/shared/nano-states";
 import { $instances, $props } from "~/shared/sync/data-stores";
-import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
+import {
+  isDescendantOrSelf,
+  type InstanceSelector,
+} from "~/shared/instance-utils/tree";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { reparentInstance, toggleInstanceShow } from "~/shared/instance-utils";
+import { reparentInstance } from "~/shared/instance-utils/mutation";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
 import {

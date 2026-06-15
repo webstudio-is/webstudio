@@ -1,3 +1,14 @@
+import {
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
+} from "../instance-utils/fragment";
+import { findClosestInsertable } from "../instance-utils/insert";
+import { detectFragmentTokenConflicts } from "../instance-utils/fragment";
+import { updateWebstudioData, getWebstudioData } from "../instance-utils/data";
+import {
+  insertInstanceChildrenMutable,
+  type Insertable,
+} from "../instance-utils/insert";
 import { shallowEqual } from "shallow-equal";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
@@ -10,18 +21,8 @@ import {
   portalComponent,
 } from "@webstudio-is/sdk";
 import { $instances, $project } from "~/shared/sync/data-stores";
-import type { InstanceSelector } from "../tree-utils";
-import {
-  deleteInstanceMutable,
-  extractWebstudioFragment,
-  insertWebstudioFragmentCopy,
-  updateWebstudioData,
-  getWebstudioData,
-  insertInstanceChildrenMutable,
-  findClosestInsertable,
-  detectFragmentTokenConflicts,
-  type Insertable,
-} from "../instance-utils";
+import type { InstanceSelector } from "../instance-utils/tree";
+import { deleteInstanceMutable } from "../instance-utils/mutation";
 import {
   $selectedInstancePath,
   $selectedInstanceSelector,

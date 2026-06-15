@@ -1,3 +1,35 @@
+import {
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
+  detectPageTokenConflicts,
+} from "./instance-utils/fragment";
+import {
+  wrapInstance,
+  toggleInstanceShow,
+  unwrapInstance,
+  unwrapInstanceMutable,
+  canUnwrapInstance,
+  canConvertInstance,
+  convertInstance,
+} from "./instance-utils/mutation";
+import {
+  findClosestInsertable,
+  insertWebstudioFragmentAt,
+} from "./instance-utils/insert";
+import { __testing__ } from "./instance-utils/fragment";
+import {
+  reparentInstanceMutable,
+  deleteSelectedInstance,
+} from "./instance-utils/mutation";
+import {
+  getWebstudioData,
+  canDeleteInstanceInContentMode,
+} from "./instance-utils/data";
+import {
+  insertInstanceChildrenMutable,
+  insertWebstudioElementAt,
+} from "./instance-utils/insert";
+import { buildInstancePath } from "./instance-utils/lookup";
 import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach } from "vitest";
 import type { Project } from "@webstudio-is/project";
@@ -39,29 +71,7 @@ import {
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import {
-  deleteInstanceMutable,
-  extractWebstudioFragment,
-  insertWebstudioFragmentCopy,
-  reparentInstanceMutable,
-  getWebstudioData,
-  insertInstanceChildrenMutable,
-  findClosestInsertable,
-  insertWebstudioFragmentAt,
-  insertWebstudioElementAt,
-  buildInstancePath,
-  wrapInstance,
-  toggleInstanceShow,
-  unwrapInstance,
-  unwrapInstanceMutable,
-  canUnwrapInstance,
-  canConvertInstance,
-  convertInstance,
-  deleteSelectedInstance,
-  detectPageTokenConflicts,
-  canDeleteInstanceInContentMode,
-  __testing__,
-} from "./instance-utils";
+import { deleteInstanceMutable } from "./instance-utils/mutation";
 import type { InstancePath } from "./nano-states";
 import { $registeredComponentMetas } from "./nano-states";
 import { $assets } from "~/shared/sync/data-stores";
@@ -87,7 +97,7 @@ import {
   expectSlotsShareFragment,
   getSlotFragmentId,
 } from "./slot-test-utils";
-import type { DroppableTarget, InstanceSelector } from "./tree-utils";
+import type { DroppableTarget, InstanceSelector } from "./instance-utils/tree";
 
 const {
   getFragmentContentModeCapabilities,

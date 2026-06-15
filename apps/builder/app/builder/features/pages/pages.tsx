@@ -84,7 +84,7 @@ import {
 } from "@webstudio-is/sdk";
 import { atom, computed } from "nanostores";
 import { isPathnamePattern } from "~/builder/shared/url-pattern";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { $selectedPage } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
 

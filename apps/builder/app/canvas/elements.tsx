@@ -7,7 +7,7 @@ import {
 } from "react";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import type { InstanceSelector } from "~/shared/instance-utils/tree";
 
 export type WebstudioComponentProps = {
   instance: Instance;

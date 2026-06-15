@@ -27,7 +27,7 @@ import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
 import { $instances, $styles } from "~/shared/sync/data-stores";
 import { inflateInstance } from "~/canvas/inflator";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import type { InstanceSelector } from "~/shared/instance-utils/tree";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 
 const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {

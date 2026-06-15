@@ -1,5 +1,5 @@
 import { atom } from "nanostores";
-import type { InstanceSelector } from "../tree-utils";
+import type { InstanceSelector } from "../instance-utils/tree";
 
 export const $selectedInstanceSelector = atom<undefined | InstanceSelector>(
   undefined

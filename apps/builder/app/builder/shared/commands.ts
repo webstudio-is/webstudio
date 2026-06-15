@@ -1,3 +1,14 @@
+import {
+  unwrapInstance,
+  deleteSelectedInstance,
+  reparentInstance,
+} from "~/shared/instance-utils/mutation";
+import { toggleInstanceShow } from "~/shared/instance-utils/mutation";
+import {
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
+} from "~/shared/instance-utils/fragment";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { toast } from "@webstudio-is/design-system";
 import { type Instance, type WebstudioFragment } from "@webstudio-is/sdk";
 import {
@@ -33,16 +44,7 @@ import {
   $breakpointsMenuView,
   selectBreakpointByOrder,
 } from "~/shared/breakpoints";
-import {
-  updateWebstudioData,
-  unwrapInstance,
-  deleteSelectedInstance,
-  extractWebstudioFragment,
-  insertWebstudioFragmentAt,
-  insertWebstudioFragmentCopy,
-  reparentInstance,
-  toggleInstanceShow,
-} from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $publisher } from "~/shared/pubsub";
 import {
@@ -81,7 +83,10 @@ import {
   getDeletablePageActionTarget,
   getPageActionTarget,
 } from "~/shared/page-action-target";
-import { normalizeLegacySlotInstancePathMutable } from "~/shared/slot-utils";
+import {
+  isSharedSlotFragmentPair,
+  normalizeLegacySlotInstancePathMutable,
+} from "~/shared/instance-utils/slot";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -216,10 +221,7 @@ const getOutdentMoveTarget = (
   }
 
   const parent = parentItem.instance;
-  if (
-    parent.component === "Fragment" &&
-    grandparentItem.instance.component === "Slot"
-  ) {
+  if (isSharedSlotFragmentPair(parentItem, grandparentItem)) {
     const greatGrandparentItem = instancePath[3];
     if (greatGrandparentItem === undefined) {
       return;

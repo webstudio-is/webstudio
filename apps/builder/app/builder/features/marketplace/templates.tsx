@@ -1,3 +1,10 @@
+import { findClosestInsertable } from "~/shared/instance-utils/insert";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
+import {
+  detectFragmentTokenConflicts,
+  detectPageTokenConflicts,
+} from "~/shared/instance-utils/fragment";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { useMemo } from "react";
 import {
   Button,
@@ -24,14 +31,7 @@ import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import { mapGroupBy } from "~/shared/shim";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { builderUrl } from "~/shared/router-utils";
-import {
-  extractWebstudioFragment,
-  findClosestInsertable,
-  detectFragmentTokenConflicts,
-  detectPageTokenConflicts,
-  insertWebstudioFragmentAt,
-  updateWebstudioData,
-} from "~/shared/instance-utils";
+import { extractWebstudioFragment } from "~/shared/instance-utils/fragment";
 import { builderApi } from "~/shared/builder-api";
 import { insertPageCopyMutable } from "~/shared/page-utils";
 import { Card } from "./card";

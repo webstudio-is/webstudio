@@ -1,3 +1,6 @@
+import { insertWebstudioElementAt } from "~/shared/instance-utils/insert";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
+import { reparentInstance } from "~/shared/instance-utils/mutation";
 import { useLayoutEffect, useRef } from "react";
 import { elementComponent, type Instance } from "@webstudio-is/sdk";
 import {
@@ -14,12 +17,7 @@ import {
 } from "~/shared/nano-states";
 import { $instances, $props } from "~/shared/sync/data-stores";
 import { publish, useSubscribe } from "~/shared/pubsub";
-import {
-  getComponentTemplateData,
-  insertWebstudioElementAt,
-  insertWebstudioFragmentAt,
-  reparentInstance,
-} from "~/shared/instance-utils";
+import { getComponentTemplateData } from "~/shared/instance-utils/insert";
 import {
   getElementByInstanceSelector,
   getInstanceIdFromElement,
@@ -28,7 +26,7 @@ import {
 import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
-} from "~/shared/tree-utils";
+} from "~/shared/instance-utils/tree";
 import { findClosestInstanceMatchingFragment } from "~/shared/matcher";
 import {
   findClosestContainer,

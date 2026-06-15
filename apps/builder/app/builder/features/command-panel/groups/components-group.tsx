@@ -1,3 +1,5 @@
+import { insertWebstudioElementAt } from "~/shared/instance-utils/insert";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import {
   CommandGroup,
   CommandGroupHeading,
@@ -13,11 +15,7 @@ import {
   $registeredComponentMetas,
   $registeredTemplates,
 } from "~/shared/nano-states";
-import {
-  getComponentTemplateData,
-  insertWebstudioElementAt,
-  insertWebstudioFragmentAt,
-} from "~/shared/instance-utils";
+import { getComponentTemplateData } from "~/shared/instance-utils/insert";
 import { humanizeString } from "~/shared/string-utils";
 import { $selectedPage } from "~/shared/nano-states";
 import {

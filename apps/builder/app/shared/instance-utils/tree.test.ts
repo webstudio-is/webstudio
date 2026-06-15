@@ -10,10 +10,8 @@ import { getStyleDeclKey } from "@webstudio-is/sdk";
 import {
   cloneStyles,
   findLocalStyleSourcesWithinInstances,
-  getInstanceOrCreateFragmentIfNecessary,
   isDescendantOrSelf,
-  normalizeLegacySlotParentInSelectorMutable,
-} from "./tree-utils";
+} from "./tree";
 
 const createStyleSource = (
   type: StyleSource["type"],
@@ -75,17 +73,6 @@ const createStyleDeclPair = (
   ] as const;
 };
 
-const createInstance = (
-  id: string,
-  component: string,
-  children: Instance["children"] = []
-): Instance => ({
-  type: "instance",
-  id,
-  component,
-  children,
-});
-
 test("clone styles with appled new style source ids", () => {
   const styles: Styles = new Map([
     createStyleDeclPair("styleSource1", "bp1"),
@@ -141,104 +128,4 @@ test("is descendant or self", () => {
       ["collection", "body", "page-root"]
     )
   ).toBe(true);
-});
-
-test("normalizes matching legacy slot occurrences to one shared fragment", () => {
-  const instances = new Map([
-    [
-      "slot1",
-      createInstance("slot1", "Slot", [
-        { type: "id", value: "box" },
-        { type: "id", value: "heading" },
-      ]),
-    ],
-    [
-      "slot2",
-      createInstance("slot2", "Slot", [
-        { type: "id", value: "box" },
-        { type: "id", value: "heading" },
-      ]),
-    ],
-    ["box", createInstance("box", "Box")],
-    ["heading", createInstance("heading", "Heading")],
-  ]);
-
-  const dropTarget = getInstanceOrCreateFragmentIfNecessary(instances, {
-    parentSelector: ["slot1", "body"],
-    position: "end",
-  });
-
-  const fragmentId = instances.get("slot1")?.children[0]?.value;
-  expect(dropTarget).toEqual({
-    parentSelector: [fragmentId, "slot1", "body"],
-    position: "end",
-  });
-  expect(instances.get("slot1")?.children).toEqual([
-    { type: "id", value: fragmentId },
-  ]);
-  expect(instances.get("slot2")?.children).toEqual([
-    { type: "id", value: fragmentId },
-  ]);
-  expect(instances.get(fragmentId ?? "")?.children).toEqual([
-    { type: "id", value: "box" },
-    { type: "id", value: "heading" },
-  ]);
-});
-
-test("normalizes matching empty legacy slot occurrences to one shared fragment", () => {
-  const instances = new Map([
-    ["slot1", createInstance("slot1", "Slot")],
-    ["slot2", createInstance("slot2", "Slot")],
-  ]);
-
-  const dropTarget = getInstanceOrCreateFragmentIfNecessary(instances, {
-    parentSelector: ["slot1", "body"],
-    position: "end",
-  });
-
-  const fragmentId = instances.get("slot1")?.children[0]?.value;
-  expect(dropTarget).toEqual({
-    parentSelector: [fragmentId, "slot1", "body"],
-    position: "end",
-  });
-  expect(instances.get("slot1")?.children).toEqual([
-    { type: "id", value: fragmentId },
-  ]);
-  expect(instances.get("slot2")?.children).toEqual([
-    { type: "id", value: fragmentId },
-  ]);
-  expect(instances.get(fragmentId ?? "")?.children).toEqual([]);
-});
-
-test("normalizes only legacy slots with the same children", () => {
-  const instances = new Map([
-    [
-      "slot1",
-      createInstance("slot1", "Slot", [
-        { type: "id", value: "box" },
-        { type: "id", value: "heading" },
-      ]),
-    ],
-    ["slot2", createInstance("slot2", "Slot", [{ type: "id", value: "box" }])],
-    ["box", createInstance("box", "Box")],
-    ["heading", createInstance("heading", "Heading")],
-  ]);
-
-  const normalizedSelector = normalizeLegacySlotParentInSelectorMutable(
-    instances,
-    ["box", "slot1", "body"]
-  );
-
-  const slot1FragmentId = instances.get("slot1")?.children[0]?.value;
-  expect(normalizedSelector).toEqual(["box", slot1FragmentId, "slot1", "body"]);
-  expect(instances.get("slot1")?.children).toEqual([
-    { type: "id", value: slot1FragmentId },
-  ]);
-  expect(instances.get(slot1FragmentId ?? "")?.children).toEqual([
-    { type: "id", value: "box" },
-    { type: "id", value: "heading" },
-  ]);
-  expect(instances.get("slot2")?.children).toEqual([
-    { type: "id", value: "box" },
-  ]);
 });

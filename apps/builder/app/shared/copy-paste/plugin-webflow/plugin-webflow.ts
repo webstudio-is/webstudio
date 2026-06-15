@@ -2,9 +2,9 @@ import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
 import {
   findClosestInsertable,
   insertInstanceChildrenMutable,
-  insertWebstudioFragmentCopy,
-  updateWebstudioData,
-} from "../../instance-utils";
+} from "../../instance-utils/insert";
+import { insertWebstudioFragmentCopy } from "../../instance-utils/fragment";
+import { updateWebstudioData } from "../../instance-utils/data";
 import { $project } from "~/shared/sync/data-stores";
 import {
   WfData,

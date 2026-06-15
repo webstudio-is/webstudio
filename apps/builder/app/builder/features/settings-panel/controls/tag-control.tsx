@@ -5,7 +5,7 @@ import { Box, Combobox, Select, theme } from "@webstudio-is/design-system";
 import { elementsByTag } from "@webstudio-is/html-data";
 import { tags } from "@webstudio-is/sdk";
 import { $selectedInstance, $selectedInstancePath } from "~/shared/nano-states";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";

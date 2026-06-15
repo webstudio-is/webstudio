@@ -35,7 +35,7 @@ import {
   $styles,
 } from "~/shared/sync/data-stores";
 import { removeByMutable } from "~/shared/array-utils";
-import { cloneStyles } from "~/shared/tree-utils";
+import { cloneStyles } from "~/shared/instance-utils/tree";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/nano-states";

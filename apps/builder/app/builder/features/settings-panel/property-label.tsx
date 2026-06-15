@@ -15,7 +15,7 @@ import {
 import { AlertIcon } from "@webstudio-is/icons";
 import type { Prop } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
   $authPermit,
   $isContentMode,

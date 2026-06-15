@@ -69,7 +69,7 @@ import {
   getInstanceKey,
   type InstancePath,
 } from "~/shared/nano-states";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { rebindTreeVariablesMutable } from "~/shared/data-variables";
 import { parseCurl, type CurlRequest } from "./curl";
 

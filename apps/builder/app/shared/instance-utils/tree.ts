@@ -1,3 +1,6 @@
+// Tree utilities own generic instance-tree mechanics that are not tied to a
+// specific command: selector comparison, ancestry checks, drop target shaping,
+// and style-source traversal within instance trees.
 import { nanoid } from "nanoid";
 import { shallowEqual } from "shallow-equal";
 import type {
@@ -11,7 +14,8 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { collectionComponent, elementComponent } from "@webstudio-is/sdk";
-import { isRichTextTree } from "./content-model";
+import { isRichTextTree } from "../content-model";
+import { getSlotFragmentDropTargetMutable } from "./slot";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots
@@ -64,97 +68,6 @@ const getCollectionDropTarget = (
       position: dropTarget.position,
     };
   }
-};
-
-const areInstanceChildrenEqual = (
-  left: Instance["children"],
-  right: Instance["children"]
-) => {
-  if (left.length !== right.length) {
-    return false;
-  }
-  return left.every((leftChild, index) => {
-    const rightChild = right[index];
-    if (rightChild === undefined || leftChild.type !== rightChild.type) {
-      return false;
-    }
-    if (leftChild.type === "id") {
-      return rightChild.type === "id" && leftChild.value === rightChild.value;
-    }
-    return leftChild.value === rightChild.value;
-  });
-};
-
-export const getInstanceOrCreateFragmentIfNecessary = (
-  instances: Instances,
-  dropTarget: DroppableTarget
-) => {
-  const [parentId] = dropTarget.parentSelector;
-  const instance = instances.get(parentId);
-  if (instance === undefined) {
-    return;
-  }
-  // Slot content is shared by every rendered occurrence of the same Slot.
-  // The Slot stores a single Fragment child as the shared content root; editing
-  // inside that Fragment should update all occurrences of the Slot.
-  if (instance.component === "Slot") {
-    const wrapSlotChildrenWithFragment = () => {
-      const id = nanoid();
-      const legacyChildren = instance.children.map((child) => ({ ...child }));
-      instances.set(id, {
-        type: "instance",
-        id,
-        component: "Fragment",
-        children: legacyChildren,
-      });
-      for (const candidate of instances.values()) {
-        if (
-          candidate.component === "Slot" &&
-          areInstanceChildrenEqual(candidate.children, legacyChildren)
-        ) {
-          candidate.children = [{ type: "id", value: id }];
-        }
-      }
-      return {
-        parentSelector: [id, ...dropTarget.parentSelector],
-        position: dropTarget.position,
-      };
-    };
-
-    if (instance.children.length === 0) {
-      return wrapSlotChildrenWithFragment();
-    }
-    if (instance.children[0].type === "id") {
-      const fragmentId = instance.children[0].value;
-      const fragment = instances.get(fragmentId);
-      if (fragment?.component !== "Fragment") {
-        // Legacy slots stored content directly under Slot. Normalize before
-        // inserting so the first content child is not mistaken for Fragment.
-        return wrapSlotChildrenWithFragment();
-      }
-      return {
-        parentSelector: [fragmentId, ...dropTarget.parentSelector],
-        position: dropTarget.position,
-      };
-    }
-    return wrapSlotChildrenWithFragment();
-  }
-  return;
-};
-
-export const normalizeLegacySlotParentInSelectorMutable = (
-  instances: Instances,
-  instanceSelector: InstanceSelector
-) => {
-  const parentSelector = instanceSelector.slice(1);
-  const dropTarget = getInstanceOrCreateFragmentIfNecessary(instances, {
-    parentSelector,
-    position: "end",
-  });
-  if (dropTarget === undefined) {
-    return instanceSelector;
-  }
-  return [instanceSelector[0], ...dropTarget.parentSelector];
 };
 
 /**
@@ -255,7 +168,7 @@ export const getReparentDropTargetMutable = (
 ): undefined | DroppableTarget => {
   dropTarget = getCollectionDropTarget(instances, dropTarget) ?? dropTarget;
   dropTarget =
-    getInstanceOrCreateFragmentIfNecessary(instances, dropTarget) ?? dropTarget;
+    getSlotFragmentDropTargetMutable(instances, dropTarget) ?? dropTarget;
   dropTarget =
     wrapEditableChildrenAroundDropTargetMutable(
       instances,

@@ -30,7 +30,7 @@ import { $gridCellData } from "~/shared/nano-states";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $instances } from "~/shared/sync/data-stores";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { DEFAULT_GRID_TRACK_COUNT } from "./constants";
 
 /**

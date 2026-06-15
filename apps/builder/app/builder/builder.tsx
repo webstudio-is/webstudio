@@ -58,7 +58,7 @@ import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
 import { initBuilderApi } from "~/shared/builder-api";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { migrateWebstudioDataMutable } from "@webstudio-is/project-migrations";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";

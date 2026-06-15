@@ -6,7 +6,7 @@ import {
   rootComponent,
 } from "@webstudio-is/sdk";
 import { $instances } from "../sync/data-stores";
-import type { InstanceSelector } from "../tree-utils";
+import type { InstanceSelector } from "../instance-utils/tree";
 import { $selectedPage } from "./pages";
 import { $selectedInstanceSelector } from "./instance-selection";
 export {

@@ -33,7 +33,8 @@ import { instanceText } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { selectInstance } from "~/shared/nano-states";
 import { $selectedPageId } from "../nano-states/pages";
-import * as instanceUtils from "../instance-utils";
+import * as instanceFragmentUtils from "../instance-utils/fragment";
+import * as instanceMutationUtils from "../instance-utils/mutation";
 import { expectSlotsShareFragment } from "../slot-test-utils";
 
 const expectString = expect.any(String) as unknown as string;
@@ -43,7 +44,10 @@ registerContainers();
 
 // Mock detectFragmentTokenConflicts to always return no conflicts
 beforeAll(() => {
-  vi.spyOn(instanceUtils, "detectFragmentTokenConflicts").mockReturnValue([]);
+  vi.spyOn(
+    instanceFragmentUtils,
+    "detectFragmentTokenConflicts"
+  ).mockReturnValue([]);
 });
 
 $registeredComponentMetas.set(
@@ -378,7 +382,7 @@ describe("paste target", () => {
     expect($instances.get().get(pastedBoxId ?? "")?.component).toBe("Box");
 
     selectInstance(["box", "slot1", "body0"]);
-    instanceUtils.convertInstance(elementComponent, "section");
+    instanceMutationUtils.convertInstance(elementComponent, "section");
 
     expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
     expect($instances.get().get("box")?.component).toBe(elementComponent);

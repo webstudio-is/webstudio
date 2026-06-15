@@ -10,7 +10,7 @@ import {
   type Props,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
-import type { InstanceSelector } from "./tree-utils";
+import type { InstanceSelector } from "./instance-utils/tree";
 import { setIsSubsetOf } from "./shim";
 
 type Metas = Map<Instance["component"], WsComponentMeta>;

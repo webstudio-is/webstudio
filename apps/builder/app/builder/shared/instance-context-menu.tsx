@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { canUnwrapInstance } from "~/shared/instance-utils/mutation";
 import { useStore } from "@nanostores/react";
 import {
   ContextMenu,
@@ -20,10 +21,7 @@ import {
   $isDesignMode,
   getInstanceKey,
 } from "~/shared/nano-states";
-import {
-  canDeleteInstanceInContentMode,
-  canUnwrapInstance,
-} from "~/shared/instance-utils";
+import { canDeleteInstanceInContentMode } from "~/shared/instance-utils/data";
 import { $propValuesByInstanceSelector } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { ROOT_INSTANCE_ID, type Instances } from "@webstudio-is/sdk";

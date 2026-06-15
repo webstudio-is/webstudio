@@ -70,7 +70,7 @@ import { $selectedInstanceSelector } from "../nano-states/instances";
 import { $selectedPageId } from "../nano-states/pages";
 import { $systemDataByPage } from "../system";
 import { $resourcesCache } from "../resources";
-import type { InstanceSelector } from "../tree-utils";
+import type { InstanceSelector } from "../instance-utils/tree";
 
 enableMapSet();
 // safari structuredClone fix

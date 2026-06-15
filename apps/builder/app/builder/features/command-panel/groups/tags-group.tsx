@@ -12,7 +12,7 @@ import type { Instance } from "@webstudio-is/sdk";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
-import { insertWebstudioFragmentAt } from "~/shared/instance-utils";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { $selectedInstancePath, $selectedPage } from "~/shared/nano-states";
 import { InstanceIcon } from "~/builder/shared/instance-label";
 import { isTreeSatisfyingContentModel } from "~/shared/content-model";

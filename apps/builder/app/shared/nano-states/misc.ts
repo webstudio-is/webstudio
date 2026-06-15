@@ -25,7 +25,7 @@ import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
-import { type InstanceSelector } from "../tree-utils";
+import { type InstanceSelector } from "../instance-utils/tree";
 import type { ChildrenOrientation } from "@webstudio-is/design-system";
 import { $selectedInstance, $selectedInstanceSelector } from "./instances";
 import { getPermissions } from "../permissions";
