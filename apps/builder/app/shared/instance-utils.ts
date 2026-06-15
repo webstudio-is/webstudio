@@ -858,7 +858,7 @@ export const detachSharedSlotContentMutable = (
   return detachSharedSlotContentMutableWithMap(data, instancePath).instancePath;
 };
 
-const normalizeLegacySlotInstancePathMutable = (
+export const normalizeLegacySlotInstancePathMutable = (
   data: Omit<WebstudioData, "pages">,
   instancePath: InstancePath
 ) => {
