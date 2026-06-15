@@ -14,6 +14,8 @@ let navigatorFixture: SeededSlotKeyboardProject;
 let navigatorOutdentFixture: SeededSlotKeyboardProject;
 let topChildFixture: SeededSlotKeyboardProject;
 let bottomChildFixture: SeededSlotKeyboardProject;
+let navigatorTopChildFixture: SeededSlotKeyboardProject;
+let navigatorBottomChildFixture: SeededSlotKeyboardProject;
 
 const selector = (instanceSelector: string[]) =>
   `[data-ws-selector="${instanceSelector.join(",")}"]`;
@@ -76,6 +78,16 @@ test.beforeAll(async () => {
     email: "slot-keyboard-bottom-child-e2e@webstudio.test",
     title: "Slot Keyboard Bottom Child E2E",
     builderToken: "slot-keyboard-bottom-child-e2e-builder-token",
+  });
+  navigatorTopChildFixture = await createSlotKeyboardProject({
+    email: "slot-keyboard-navigator-top-child-e2e@webstudio.test",
+    title: "Slot Keyboard Navigator Top Child E2E",
+    builderToken: "slot-keyboard-navigator-top-child-e2e-builder-token",
+  });
+  navigatorBottomChildFixture = await createSlotKeyboardProject({
+    email: "slot-keyboard-navigator-bottom-child-e2e@webstudio.test",
+    title: "Slot Keyboard Navigator Bottom Child E2E",
+    builderToken: "slot-keyboard-navigator-bottom-child-e2e-builder-token",
   });
 });
 
@@ -318,8 +330,8 @@ test("Keyboard shortcut moves the first shared slot child above the selected slo
       async () => {
         return await openProjectBuilder({
           page,
-          projectId: topChildFixture.projectId,
-          authToken: topChildFixture.builderToken,
+          projectId: navigatorTopChildFixture.projectId,
+          authToken: navigatorTopChildFixture.builderToken,
         });
       }
     );
@@ -411,8 +423,8 @@ test("Keyboard shortcut moves the last shared slot child below the selected slot
       async () => {
         return await openProjectBuilder({
           page,
-          projectId: bottomChildFixture.projectId,
-          authToken: bottomChildFixture.builderToken,
+          projectId: navigatorBottomChildFixture.projectId,
+          authToken: navigatorBottomChildFixture.builderToken,
         });
       }
     );
@@ -560,6 +572,190 @@ test("Keyboard shortcut reorders a shared slot child from navigator focus", asyn
       beforeSelector: slotBHeadingSelector,
       afterSelector: slotBDivSelector,
     });
+  } finally {
+    await close();
+  }
+});
+
+test("Keyboard shortcut moves the first shared slot child above the selected slot occurrence from navigator focus", async () => {
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    const canvas = await measure(
+      "slot keyboard navigator top child open builder",
+      async () => {
+        return await openProjectBuilder({
+          page,
+          projectId: topChildFixture.projectId,
+          authToken: topChildFixture.builderToken,
+        });
+      }
+    );
+
+    const slotADivSelector = [
+      "slot-keyboard-div",
+      "slot-keyboard-fragment",
+      "slot-keyboard-slot-a",
+      "slot-keyboard-wrapper",
+      "slot-keyboard-body",
+    ];
+    await canvasInstance({
+      canvas,
+      instanceSelector: slotADivSelector,
+    }).click();
+    await openNavigatorPanel({ page });
+    await page.getByRole("button", { name: "Drop Div" }).first().click();
+
+    await page.keyboard.press("Control+ArrowUp");
+    await waitForSyncStatus({ page, status: "idle" });
+
+    await canvasInstance({
+      canvas,
+      instanceSelector: slotADivSelector,
+    }).waitFor({ state: "hidden", timeout: 30_000 });
+    await expectCanvasInstanceVisible({
+      canvas,
+      instanceSelector: [
+        "slot-keyboard-div",
+        "slot-keyboard-fragment",
+        "slot-keyboard-slot-b",
+        "slot-keyboard-wrapper",
+        "slot-keyboard-body",
+      ],
+    });
+
+    const movedDivSelectors = await canvas
+      .locator(
+        '[data-ws-selector$=",slot-keyboard-wrapper,slot-keyboard-body"]'
+      )
+      .evaluateAll((elements) =>
+        elements
+          .map((element) => ({
+            selector: element.getAttribute("data-ws-selector"),
+            text: element.textContent?.trim(),
+          }))
+          .filter(
+            ({ selector, text }) =>
+              selector?.startsWith("slot-keyboard-") === false &&
+              text === "Drop zone"
+          )
+      );
+    if (movedDivSelectors.length !== 1) {
+      throw new Error(
+        `Expected one detached div under wrapper, received ${JSON.stringify(movedDivSelectors)}`
+      );
+    }
+
+    const movedDivPrecedesSlotA = await canvas
+      .locator(`[data-ws-selector="${movedDivSelectors[0]?.selector}"]`)
+      .evaluate((movedElement) => {
+        const slotA = document.querySelector(
+          '[data-ws-selector="slot-keyboard-slot-a,slot-keyboard-wrapper,slot-keyboard-body"]'
+        );
+        if (slotA === null) {
+          return false;
+        }
+        return Boolean(
+          movedElement.compareDocumentPosition(slotA) &
+            Node.DOCUMENT_POSITION_FOLLOWING
+        );
+      });
+    if (movedDivPrecedesSlotA === false) {
+      throw new Error("Expected detached div to be positioned before Slot A");
+    }
+  } finally {
+    await close();
+  }
+});
+
+test("Keyboard shortcut moves the last shared slot child below the selected slot occurrence from navigator focus", async () => {
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    const canvas = await measure(
+      "slot keyboard navigator bottom child open builder",
+      async () => {
+        return await openProjectBuilder({
+          page,
+          projectId: bottomChildFixture.projectId,
+          authToken: bottomChildFixture.builderToken,
+        });
+      }
+    );
+
+    const slotAHeadingSelector = [
+      "slot-keyboard-heading",
+      "slot-keyboard-fragment",
+      "slot-keyboard-slot-a",
+      "slot-keyboard-wrapper",
+      "slot-keyboard-body",
+    ];
+    await canvasInstance({
+      canvas,
+      instanceSelector: slotAHeadingSelector,
+    }).click();
+    await openNavigatorPanel({ page });
+    await page.getByRole("button", { name: "Slot Heading" }).first().click();
+
+    await page.keyboard.press("Control+ArrowDown");
+    await waitForSyncStatus({ page, status: "idle" });
+
+    await canvasInstance({
+      canvas,
+      instanceSelector: slotAHeadingSelector,
+    }).waitFor({ state: "hidden", timeout: 30_000 });
+    await expectCanvasInstanceVisible({
+      canvas,
+      instanceSelector: [
+        "slot-keyboard-heading",
+        "slot-keyboard-fragment",
+        "slot-keyboard-slot-b",
+        "slot-keyboard-wrapper",
+        "slot-keyboard-body",
+      ],
+    });
+
+    const movedHeadingSelectors = await canvas
+      .locator(
+        '[data-ws-selector$=",slot-keyboard-wrapper,slot-keyboard-body"]'
+      )
+      .evaluateAll((elements) =>
+        elements
+          .map((element) => ({
+            selector: element.getAttribute("data-ws-selector"),
+            text: element.textContent?.trim(),
+          }))
+          .filter(
+            ({ selector, text }) =>
+              selector?.startsWith("slot-keyboard-") === false &&
+              text === "Slot heading"
+          )
+      );
+    if (movedHeadingSelectors.length !== 1) {
+      throw new Error(
+        `Expected one detached heading under wrapper, received ${JSON.stringify(movedHeadingSelectors)}`
+      );
+    }
+
+    const slotAPrecedesMovedHeading = await canvas
+      .locator(
+        '[data-ws-selector="slot-keyboard-slot-a,slot-keyboard-wrapper,slot-keyboard-body"]'
+      )
+      .evaluate((slotA, movedSelector) => {
+        const movedElement = document.querySelector(movedSelector);
+        if (movedElement === null) {
+          return false;
+        }
+        return Boolean(
+          slotA.compareDocumentPosition(movedElement) &
+            Node.DOCUMENT_POSITION_FOLLOWING
+        );
+      }, `[data-ws-selector="${movedHeadingSelectors[0]?.selector}"]`);
+    if (slotAPrecedesMovedHeading === false) {
+      throw new Error(
+        "Expected detached heading to be positioned after Slot A"
+      );
+    }
   } finally {
     await close();
   }

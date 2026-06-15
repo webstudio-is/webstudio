@@ -3130,6 +3130,45 @@ describe("delete instance", () => {
     ]);
     expect(data.instances.has("box")).toEqual(false);
   });
+
+  test("delete last direct shared slot child preserves shared siblings", () => {
+    const data = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+            <$.Heading ws:id="heading"></$.Heading>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+            <$.Heading ws:id="heading"></$.Heading>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+
+    deleteInstanceMutable(
+      data,
+      getInstancePath(
+        ["heading", "fragment", "slot1", "bodyId"],
+        data.instances
+      )
+    );
+
+    expect(data.instances.get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(data.instances.get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(data.instances.get("fragment")?.children).toEqual([
+      { type: "id", value: "box" },
+    ]);
+    expect(data.instances.has("heading")).toEqual(false);
+  });
 });
 
 describe("wrap in", () => {
@@ -3295,6 +3334,67 @@ describe("wrap in", () => {
       { type: "id", value: "div" },
     ]);
   });
+
+  test.each([
+    {
+      selectedId: "box",
+      expectedSiblingIds: [expect.any(String), "heading"],
+    },
+    {
+      selectedId: "heading",
+      expectedSiblingIds: ["box", expect.any(String)],
+    },
+  ])(
+    "wrap direct shared slot child in $selectedId position preserves sibling order",
+    ({ selectedId, expectedSiblingIds }) => {
+      $registeredComponentMetas.set(defaultMetasMap);
+      $instances.set(
+        renderData(
+          <$.Body ws:id="bodyId">
+            <$.Slot ws:id="slot1">
+              <$.Fragment ws:id="fragment">
+                <$.Box ws:id="box"></$.Box>
+                <$.Heading ws:id="heading"></$.Heading>
+              </$.Fragment>
+            </$.Slot>
+            <$.Slot ws:id="slot2">
+              {/* same ids */}
+              <$.Fragment ws:id="fragment">
+                <$.Box ws:id="box"></$.Box>
+                <$.Heading ws:id="heading"></$.Heading>
+              </$.Fragment>
+            </$.Slot>
+          </$.Body>
+        ).instances
+      );
+      selectInstance([selectedId, "fragment", "slot1", "bodyId"]);
+
+      wrapInstance(elementComponent, "div");
+
+      const wrapperId = $instances
+        .get()
+        .get("fragment")
+        ?.children.find(
+          (child) =>
+            child.type === "id" &&
+            child.value !== "box" &&
+            child.value !== "heading"
+        )?.value;
+      expect($instances.get().get("slot1")?.children).toEqual([
+        { type: "id", value: "fragment" },
+      ]);
+      expect($instances.get().get("slot2")?.children).toEqual([
+        { type: "id", value: "fragment" },
+      ]);
+      expect($instances.get().get("fragment")?.children).toEqual(
+        expectedSiblingIds.map((value) => ({ type: "id", value }))
+      );
+      expect(wrapperId).toEqual(expect.any(String));
+      expect($instances.get().get(wrapperId ?? "")?.children).toEqual([
+        { type: "id", value: selectedId },
+      ]);
+    }
+  );
 
   test("wrap nested shared slot child in shared slot content", () => {
     $registeredComponentMetas.set(defaultMetasMap);
