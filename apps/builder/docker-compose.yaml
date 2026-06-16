@@ -1,20 +1,39 @@
-version: "3.1"
-
 volumes:
   db:
 
 services:
   db:
-    image: postgres
+    image: ghcr.io/supabase/postgres:15.1.1.55
     # Uncomment to log all queries
-    command: ["postgres", "-c", "log_statement=all"]
-    restart: always
+    # command: ["postgres", "-c", "log_statement=all", "-c", "listen_addresses=*"]
+    restart: unless-stopped
     environment:
-      # postgresql://user:pass@localhost:5432/webstudio
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: webstudio
-      POSTGRES_USER: user
     volumes:
       - db:/var/lib/postgresql/data
     ports:
       - ${PGPORT:-5432}:5432
+      - 3000:3000
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d webstudio"]
+      interval: 10s
+      timeout: 5s
+      retries: 25
+
+  rest:
+    image: postgrest/postgrest:v12.2.0
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgresql://postgres:pass@localhost/webstudio
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET:-jwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecret}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET:-jwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecretjwtsecret}
+      PGRST_APP_SETTINGS_JWT_EXP: "9999999"
+    command: "postgrest"
+    network_mode: service:db

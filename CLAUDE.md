@@ -48,6 +48,103 @@ pnpm typecheck    # Uses tsgo (TypeScript native preview) for speed
 pnpm test         # vitest run
 ```
 
+## Local Development (Docker)
+
+The builder requires PostgreSQL + PostgREST running locally. The `apps/builder/docker-compose.yaml` provides both.
+
+**Windows setup**: Docker runs in WSL; all pnpm commands run in PowerShell. Do not mix — `node_modules` installed from Windows contains Windows binaries and will break if used from WSL, and vice versa.
+
+### First-time setup (Windows + WSL Docker)
+
+**1. Configure pnpm to use Git Bash** — create `webstudio-fork/.npmrc` (gitignored, not committed):
+
+```
+script-shell=C:\Program Files\Git\bin\bash.exe
+```
+
+This lets pnpm run build scripts that use `rm -rf` on Windows. Requires [Git for Windows](https://git-scm.com/download/win).
+
+**2. Install dependencies** (PowerShell, repo root):
+
+```powershell
+pnpm install
+```
+
+**3. Build internal packages** (PowerShell, repo root — first time only, or after pulling upstream changes):
+
+```powershell
+pnpm -r --filter='./packages/**' build
+```
+
+> `pnpm build` (without filter) will fail on `packages/cli` due to a known issue with the proprietary animation package banner. This does not affect the dev server.
+
+**4. Start the containers** (WSL):
+
+```bash
+cd /path/to/webstudio-fork/apps/builder
+docker compose up -d
+```
+
+This starts:
+
+- **PostgreSQL 15** (Supabase image) on port `5432`
+- **PostgREST v12** on port `3000` (shares db network via `network_mode: service:db`)
+
+> If you have a local PostgreSQL service on Windows, stop it first: `Stop-Service postgresql-x64-17`
+
+**5. Run migrations** (PowerShell, repo root — first time only, or after schema changes):
+
+```powershell
+pnpm migrations migrate
+```
+
+**6. Start the builder** (PowerShell, from `apps/builder`):
+
+```powershell
+$env:DOCKER_DEV="true"; pnpm dev
+```
+
+> `DOCKER_DEV=true` makes Vite bind on `0.0.0.0` instead of `wstd.dev`. Must be set as a shell variable — `.env.development` is not read by `vite.config.ts` at startup.
+
+**7. Open the builder**: `https://localhost:5173`
+
+- Bypass the certificate warning (cert is for `wstd.dev`, not `localhost`)
+- Login with the secret from `AUTH_SECRET` in `.env.development` (default: `1234`)
+- First load is slow — Vite pre-bundles dependencies. Wait, then refresh the page.
+
+### Daily startup
+
+```bash
+# WSL
+docker compose up -d   # from apps/builder
+```
+
+```powershell
+# PowerShell, from apps/builder
+$env:DOCKER_DEV="true"; pnpm dev
+```
+
+### Resetting node_modules
+
+Always delete from PowerShell (fast), then reinstall from PowerShell:
+
+```powershell
+Remove-Item -Recurse -Force node_modules
+pnpm install
+pnpm -r --filter='./packages/**' build
+```
+
+### Environment files
+
+| File                            | Purpose                                                  |
+| ------------------------------- | -------------------------------------------------------- |
+| `apps/builder/.env`             | Default config (DB URL, PostgREST URL, `DEV_LOGIN=true`) |
+| `apps/builder/.env.development` | Local overrides (`AUTH_SECRET=1234`, `DOCKER_DEV=true`)  |
+
+Both files are committed. Edit `.env.development` for machine-specific overrides.
+
+---
+
 ## Architecture
 
 ### Monorepo Structure

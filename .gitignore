@@ -67,3 +67,6 @@ packages/prisma-client/src/__generated__
 
 # copilot instructions
 .github/instructions
+
+# local pnpm config (Windows: script-shell=C:\Program Files\Git\bin\bash.exe)
+/.npmrc
