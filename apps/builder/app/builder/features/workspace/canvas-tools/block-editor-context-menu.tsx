@@ -15,7 +15,7 @@ import { TemplatesMenu } from "./outline/block-instance-outline";
 import { insertTemplateAt } from "./outline/block-utils";
 import { useCallback, useEffect, useState } from "react";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import type { InstanceSelector } from "~/shared/instance-utils/tree";
 import type { Instance } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
 

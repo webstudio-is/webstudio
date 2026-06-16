@@ -1,3 +1,5 @@
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { color } from "@webstudio-is/css-engine";
 import {
   useState,
@@ -29,8 +31,7 @@ import {
   KEY_ARROW_LEFT_COMMAND,
   $createRangeSelection,
   COMMAND_PRIORITY_CRITICAL,
-  $getNearestNodeFromDOMNode,
-  // eslint-disable-next-line camelcase
+  $getNearestNodeFromDOMNode, // eslint-disable-next-line camelcase
   $normalizeSelection__EXPERIMENTAL,
   type LexicalEditor,
   type SerializedEditorState,
@@ -58,15 +59,14 @@ import {
   idAttribute,
   selectorIdAttribute,
 } from "@webstudio-is/react-sdk";
-import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
+import {
+  isDescendantOrSelf,
+  type InstanceSelector,
+} from "~/shared/instance-utils/tree";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import {
-  deleteInstanceMutable,
-  findAllEditableInstanceSelector,
-  updateWebstudioData,
-} from "~/shared/instance-utils";
+import { deleteInstanceMutable } from "~/shared/instance-utils/mutation";
 import {
   $blockChildOutline,
   $hoveredInstanceOutline,

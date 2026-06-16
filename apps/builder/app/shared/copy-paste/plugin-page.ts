@@ -1,3 +1,5 @@
+import { getWebstudioData } from "../instance-utils/data";
+import { updateWebstudioData } from "../instance-utils/data";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
 import {
@@ -9,11 +11,7 @@ import {
   type PageTemplate,
 } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
-import {
-  detectFragmentTokenConflicts,
-  getWebstudioData,
-  updateWebstudioData,
-} from "../instance-utils";
+import { detectFragmentTokenConflicts } from "../instance-utils/fragment";
 import { builderApi } from "../builder-api";
 import {
   createFolderCopyData,

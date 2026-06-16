@@ -16,9 +16,9 @@ import {
 import { getPageById, type Instance } from "@webstudio-is/sdk";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { buildInstancePath } from "~/shared/instance-utils";
+import { buildInstancePath } from "~/shared/instance-utils/lookup";
 import { $commandContent } from "~/builder/features/command-panel/command-state";
-import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils";
+import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import {
   $selectedPageId,

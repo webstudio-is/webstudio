@@ -9,6 +9,7 @@ import {
   ROOT_FOLDER_ID,
   ROOT_INSTANCE_ID,
   type DataSource,
+  type Instance,
   type Page,
   SYSTEM_VARIABLE_ID,
   Resource,
@@ -26,6 +27,7 @@ import {
   isPathAvailable,
   reparentPageOrFolderMutable,
   deletePageMutable,
+  deleteTemplateMutable,
   instantiateTemplate,
 } from "./page-utils";
 import { $dataSourceVariables } from "~/shared/nano-states";
@@ -46,6 +48,7 @@ import { registerContainers } from "~/shared/sync/sync-stores";
 import { $selectedPageId } from "~/shared/nano-states";
 import { updateCurrentSystem } from "~/shared/system";
 import { $resourcesCache, getResourceKey } from "~/shared/resources";
+import { expectSlotTreeIntegrity } from "~/shared/slot-test-utils";
 
 setEnv("*");
 registerContainers();
@@ -120,6 +123,26 @@ const createPages = () => {
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));
+
+const createWebstudioData = ({
+  pages,
+  instances = new Map(),
+}: {
+  pages: Pages;
+  instances?: Map<Instance["id"], Instance>;
+}) =>
+  ({
+    pages,
+    instances,
+    styleSources: new Map(),
+    styleSourceSelections: new Map(),
+    breakpoints: new Map(),
+    styles: new Map(),
+    props: new Map(),
+    dataSources: new Map(),
+    resources: new Map(),
+    assets: new Map(),
+  }) as unknown as WebstudioData;
 
 describe("reparentOrphansMutable", () => {
   // We must deal with the fact there can be an orphaned folder or page in a collaborative mode,
@@ -827,6 +850,94 @@ describe("deletePageMutable", () => {
     expect(data.instances.has(rootInstanceId!)).toBe(false);
   });
 
+  test("deletes page slot occurrence without deleting shared slot content used by another page", async () => {
+    const { pages: pagesData, register, p } = createPages();
+    const page1 = p("page1", "/page1");
+    const page2 = {
+      ...p("page2", "/page2"),
+      rootInstanceId: "page2RootId",
+    };
+    register([page1, page2]);
+
+    const data = createWebstudioData({
+      pages: pagesData,
+      instances: new Map([
+        [
+          "rootInstanceId",
+          {
+            id: "rootInstanceId",
+            type: "instance",
+            component: "Body",
+            children: [{ type: "id", value: "slot1" }],
+          },
+        ],
+        [
+          "page2RootId",
+          {
+            id: "page2RootId",
+            type: "instance",
+            component: "Body",
+            children: [{ type: "id", value: "slot2" }],
+          },
+        ],
+        [
+          "slot1",
+          {
+            id: "slot1",
+            type: "instance",
+            component: "Slot",
+            children: [{ type: "id", value: "fragment" }],
+          },
+        ],
+        [
+          "slot2",
+          {
+            id: "slot2",
+            type: "instance",
+            component: "Slot",
+            children: [{ type: "id", value: "fragment" }],
+          },
+        ],
+        [
+          "fragment",
+          {
+            id: "fragment",
+            type: "instance",
+            component: "Fragment",
+            children: [{ type: "id", value: "sharedBox" }],
+          },
+        ],
+        [
+          "sharedBox",
+          {
+            id: "sharedBox",
+            type: "instance",
+            component: "Box",
+            children: [],
+          },
+        ],
+      ]),
+    });
+
+    deletePageMutable("page1", data);
+
+    expect(data.instances.has("rootInstanceId")).toBe(false);
+    expect(data.instances.has("slot1")).toBe(false);
+    expect(data.instances.get("page2RootId")?.children).toEqual([
+      { type: "id", value: "slot2" },
+    ]);
+    expect(data.instances.get("slot2")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(data.instances.get("fragment")?.children).toEqual([
+      { type: "id", value: "sharedBox" },
+    ]);
+    expect(data.instances.get("sharedBox")).toMatchObject({
+      component: "Box",
+    });
+    expectSlotTreeIntegrity(data.instances);
+  });
+
   test("should remove page from folder children", async () => {
     const { pages: pagesData, register, p, f } = createPages();
     register([f("folder1", [p("page1", "/page1")])]);
@@ -1254,6 +1365,103 @@ describe("duplicateTemplate", () => {
         ],
       },
     });
+  });
+});
+
+describe("deleteTemplateMutable", () => {
+  test("deletes template slot occurrence without deleting shared slot content used by a page", () => {
+    const { pages: pagesData } = createPages();
+    pagesData.pageTemplates = new Map([
+      [
+        "templateId",
+        {
+          id: "templateId",
+          name: "Template",
+          title: `"Template"`,
+          rootInstanceId: "templateRootId",
+          meta: {},
+        },
+      ],
+    ]);
+
+    const data = createWebstudioData({
+      pages: pagesData,
+      instances: new Map([
+        [
+          "rootInstanceId",
+          {
+            id: "rootInstanceId",
+            type: "instance",
+            component: "Body",
+            children: [{ type: "id", value: "slot1" }],
+          },
+        ],
+        [
+          "templateRootId",
+          {
+            id: "templateRootId",
+            type: "instance",
+            component: "Body",
+            children: [{ type: "id", value: "slot2" }],
+          },
+        ],
+        [
+          "slot1",
+          {
+            id: "slot1",
+            type: "instance",
+            component: "Slot",
+            children: [{ type: "id", value: "fragment" }],
+          },
+        ],
+        [
+          "slot2",
+          {
+            id: "slot2",
+            type: "instance",
+            component: "Slot",
+            children: [{ type: "id", value: "fragment" }],
+          },
+        ],
+        [
+          "fragment",
+          {
+            id: "fragment",
+            type: "instance",
+            component: "Fragment",
+            children: [{ type: "id", value: "sharedBox" }],
+          },
+        ],
+        [
+          "sharedBox",
+          {
+            id: "sharedBox",
+            type: "instance",
+            component: "Box",
+            children: [],
+          },
+        ],
+      ]),
+    });
+
+    deleteTemplateMutable("templateId", data);
+
+    expect(pagesData.pageTemplates?.has("templateId")).toBe(false);
+    expect(data.instances.has("templateRootId")).toBe(false);
+    expect(data.instances.has("slot2")).toBe(false);
+    expect(data.instances.get("rootInstanceId")?.children).toEqual([
+      { type: "id", value: "slot1" },
+    ]);
+    expect(data.instances.get("slot1")?.children).toEqual([
+      { type: "id", value: "fragment" },
+    ]);
+    expect(data.instances.get("fragment")?.children).toEqual([
+      { type: "id", value: "sharedBox" },
+    ]);
+    expect(data.instances.get("sharedBox")).toMatchObject({
+      component: "Box",
+    });
+    expectSlotTreeIntegrity(data.instances);
   });
 });
 

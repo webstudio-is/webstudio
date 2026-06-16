@@ -18,7 +18,7 @@ import {
 } from "../command-state";
 import { InstanceList, showInstance } from "../shared/instance-list";
 import { deleteVariableMutable } from "~/shared/data-variables";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
   DeleteDataVariableDialog,
   RenameDataVariableDialog,

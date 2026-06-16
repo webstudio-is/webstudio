@@ -8,13 +8,11 @@ import { HorizontalLayout, Label, Row } from "./shared";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $selectedInstance } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { setInstanceLabelMutable } from "~/shared/instance-utils/mutation";
 
 const saveLabel = (label: string, selectedInstance: Instance) => {
   serverSyncStore.createTransaction([$instances], (instances) => {
-    const instance = instances.get(selectedInstance.id);
-    if (instance !== undefined) {
-      instance.label = label.trim();
-    }
+    setInstanceLabelMutable(instances, selectedInstance.id, label.trim());
   });
 };
 

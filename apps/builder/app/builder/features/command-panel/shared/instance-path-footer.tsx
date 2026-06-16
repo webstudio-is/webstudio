@@ -3,7 +3,7 @@ import { useStore } from "@nanostores/react";
 import { Flex, Text } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { $instances, $pages } from "~/shared/sync/data-stores";
-import { buildInstancePath } from "~/shared/instance-utils";
+import { buildInstancePath } from "~/shared/instance-utils/lookup";
 
 type InstancePathFooterProps = {
   instanceId: Instance["id"];

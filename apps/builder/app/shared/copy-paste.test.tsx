@@ -1,3 +1,4 @@
+import { insertWebstudioFragmentCopy } from "./instance-utils/fragment";
 import { describe, expect, test } from "vitest";
 import stripIndent from "strip-indent";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
@@ -22,10 +23,7 @@ import {
   Parameter,
 } from "@webstudio-is/template";
 import type { Project } from "@webstudio-is/project";
-import {
-  extractWebstudioFragment,
-  insertWebstudioFragmentCopy,
-} from "./instance-utils";
+import { extractWebstudioFragment } from "./instance-utils/fragment";
 import { $project } from "~/shared/sync/data-stores";
 import { findAvailableVariables } from "./data-variables";
 import { camelCaseProperty } from "@webstudio-is/css-data";

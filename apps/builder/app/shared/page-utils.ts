@@ -1,3 +1,5 @@
+import { insertWebstudioFragmentCopy } from "./instance-utils/fragment";
+import { unwrap } from "./instance-utils/data";
 import { nanoid } from "nanoid";
 import {
   findPageByIdOrPath,
@@ -13,11 +15,7 @@ import {
   ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import { contentModePageMetaFields } from "@webstudio-is/project/content-mode-permissions";
-import {
-  extractWebstudioFragment,
-  insertWebstudioFragmentCopy,
-  unwrap,
-} from "./instance-utils";
+import { extractWebstudioFragment } from "./instance-utils/fragment";
 import {
   findAvailableVariables,
   replaceDataSourcesInExpression,
