@@ -6,7 +6,7 @@ import {
   type Instance,
   type Pages,
 } from "@webstudio-is/sdk";
-import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils";
+import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
 
 export type RestrictedFeature =
   | undefined

@@ -44,7 +44,7 @@ import {
   $selectedInstancePathWithRoot,
   type InstancePath,
 } from "~/shared/nano-states";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import type { InstanceSelector } from "~/shared/instance-utils/tree";
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();

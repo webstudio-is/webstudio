@@ -4,7 +4,7 @@ import type {
   WebstudioFragment,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import type { InstanceSelector } from "./tree-utils";
+import type { InstanceSelector } from "./instance-utils/tree";
 import { isTreeSatisfyingContentModel } from "./content-model";
 
 export const findClosestInstanceMatchingFragment = ({

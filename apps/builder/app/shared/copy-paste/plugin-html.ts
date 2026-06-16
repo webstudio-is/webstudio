@@ -1,6 +1,6 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { generateFragmentFromHtml } from "../html";
-import { insertWebstudioFragmentAt } from "../instance-utils";
+import { insertWebstudioFragmentAt } from "../instance-utils/insert";
 import { generateFragmentFromTailwind } from "../tailwind/tailwind";
 import { denormalizeSrcProps } from "./asset-upload";
 import type { Plugin } from "./copy-paste";

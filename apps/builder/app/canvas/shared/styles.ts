@@ -49,8 +49,8 @@ import {
   $selectedInstanceSelector,
   $selectedPage,
 } from "~/shared/nano-states";
-import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
+import type { InstanceSelector } from "~/shared/instance-utils/tree";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
 import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
 

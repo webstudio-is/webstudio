@@ -35,7 +35,7 @@ import {
   openCommandPanel,
 } from "../command-state";
 import { useState } from "react";
-import { wrapInstance } from "~/shared/instance-utils";
+import { wrapInstance } from "~/shared/instance-utils/mutation";
 import { allowsHtmlMutations } from "../shared/document-utils";
 
 type WrapOption = {

@@ -15,7 +15,7 @@ import {
   $selectedPageId,
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
-import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils";
+import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";

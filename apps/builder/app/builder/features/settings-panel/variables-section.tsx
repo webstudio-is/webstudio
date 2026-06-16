@@ -41,7 +41,7 @@ import {
   $selectedInstanceKeyWithRoot,
   $selectedPage,
 } from "~/shared/nano-states";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
   deleteVariableMutable,
   findAvailableVariables,

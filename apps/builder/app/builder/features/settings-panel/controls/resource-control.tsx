@@ -30,7 +30,7 @@ import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
 import { $props, $resources } from "~/shared/sync/data-stores";
 import { computeExpression } from "~/shared/data-variables";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,

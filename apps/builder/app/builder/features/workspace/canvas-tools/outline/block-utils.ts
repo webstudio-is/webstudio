@@ -1,18 +1,20 @@
 import type { Instance, Instances, WebstudioFragment } from "@webstudio-is/sdk";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
+import {
+  getWebstudioData,
+  updateWebstudioData,
+} from "~/shared/instance-utils/data";
+import { insertInstanceChildrenMutable } from "~/shared/instance-utils/insert";
+import {
+  insertWebstudioFragmentCopy,
+  detectFragmentTokenConflicts,
+} from "~/shared/instance-utils/fragment";
 import { blockTemplateComponent } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
 import { selectInstance } from "~/shared/nano-states";
 import { builderApi } from "~/shared/builder-api";
 import { findAvailableVariables } from "~/shared/data-variables";
-import {
-  extractWebstudioFragment,
-  findAllEditableInstanceSelector,
-  getWebstudioData,
-  insertInstanceChildrenMutable,
-  insertWebstudioFragmentCopy,
-  updateWebstudioData,
-  detectFragmentTokenConflicts,
-} from "~/shared/instance-utils";
+import { extractWebstudioFragment } from "~/shared/instance-utils/fragment";
 import {
   $registeredComponentMetas,
   $isContentMode,
@@ -22,7 +24,10 @@ import {
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $project } from "~/shared/sync/data-stores";
-import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
+import type {
+  DroppableTarget,
+  InstanceSelector,
+} from "~/shared/instance-utils/tree";
 
 const getInsertionIndex = (
   anchor: InstanceSelector,

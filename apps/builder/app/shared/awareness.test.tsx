@@ -1,8 +1,8 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { $awareness, __testing__, startPointerTracking } from "./awareness";
+import { $awareness, startPointerTracking, __testing__ } from "./awareness";
 
 const { $pointerPosition, getUserAwareness } = __testing__;
-import { findPageAndSelectorByInstanceId } from "./instance-utils";
+import { findPageAndSelectorByInstanceId } from "./instance-utils/lookup";
 import { $selectedPageId } from "./nano-states/pages";
 import { $user } from "./nano-states/misc";
 import { createDefaultPages } from "@webstudio-is/project-build";
