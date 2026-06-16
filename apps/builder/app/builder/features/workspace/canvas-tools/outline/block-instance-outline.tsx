@@ -1,3 +1,5 @@
+import { deleteInstanceMutable } from "~/shared/instance-utils/mutation";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
@@ -32,12 +34,8 @@ import {
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
-import type { InstanceSelector } from "~/shared/tree-utils";
-import {
-  canDeleteInstanceInContentMode,
-  deleteInstanceMutable,
-  updateWebstudioData,
-} from "~/shared/instance-utils";
+import type { InstanceSelector } from "~/shared/instance-utils/tree";
+import { canDeleteInstanceInContentMode } from "~/shared/instance-utils/data";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { getInstancePath } from "~/shared/nano-states";

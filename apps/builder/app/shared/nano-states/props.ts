@@ -26,7 +26,7 @@ import { $instances } from "../sync/data-stores";
 import { $dataSources, $props, $assets, $resources } from "../sync/data-stores";
 import { $uploadingFilesDataStore, $memoryProps, $isPreviewMode } from "./misc";
 import { $pages } from "../sync/data-stores";
-import type { InstanceSelector } from "../tree-utils";
+import type { InstanceSelector } from "../instance-utils/tree";
 import { $dataSourceVariables } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 import { $selectedPage } from "./pages";

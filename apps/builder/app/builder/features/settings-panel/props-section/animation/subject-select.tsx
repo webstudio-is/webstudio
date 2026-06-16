@@ -8,7 +8,7 @@ import {
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { getInstanceStyleDecl } from "~/builder/features/style-panel/shared/model";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { toValue } from "@webstudio-is/css-engine";
 import type { AnimationAction } from "@webstudio-is/sdk";
 import { setListedCssProperty } from "./set-css-property";

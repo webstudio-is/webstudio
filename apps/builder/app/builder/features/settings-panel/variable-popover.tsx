@@ -70,7 +70,7 @@ import {
   EditorDialogControl,
   foldGutterExtension,
 } from "~/shared/code-editor-base";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
   findUnsetVariableNames,
   rebindTreeVariablesMutable,

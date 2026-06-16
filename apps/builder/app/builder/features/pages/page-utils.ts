@@ -1,3 +1,4 @@
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { computed } from "nanostores";
 import slugify from "slugify";
 import {
@@ -17,10 +18,7 @@ import {
   systemParameter,
   SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
-import {
-  deleteInstanceMutable,
-  updateWebstudioData,
-} from "~/shared/instance-utils";
+import { deleteInstanceMutable } from "~/shared/instance-utils/mutation";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources, $pages } from "~/shared/sync/data-stores";
 import {

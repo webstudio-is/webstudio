@@ -2,7 +2,7 @@ import { FORMAT_TEXT_COMMAND } from "lexical";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { createCommandsEmitter } from "~/shared/commands-emitter";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
-import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
 import {
   $registeredComponentMetas,
   $textEditingInstanceSelector,
@@ -18,8 +18,11 @@ import {
 } from "../features/text-editor/toolbar-connector";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
-import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
-import { deleteSelectedInstance } from "~/shared/instance-utils";
+import {
+  isDescendantOrSelf,
+  type InstanceSelector,
+} from "~/shared/instance-utils/tree";
+import { deleteSelectedInstance } from "~/shared/instance-utils/mutation";
 import { findClosestRichText } from "~/shared/content-model";
 import { getDeletablePageActionTarget } from "~/shared/page-action-target";
 
@@ -34,7 +37,14 @@ const deleteSelectedPageOrInstance = () => {
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "canvas",
-  externalCommands: ["clickCanvas", "deleteInstanceBuilder"],
+  externalCommands: [
+    "clickCanvas",
+    "deleteInstanceBuilder",
+    "moveInstanceUp",
+    "moveInstanceDown",
+    "moveInstanceOut",
+    "moveInstanceIntoPreviousSibling",
+  ],
   commands: [
     {
       name: "deleteInstanceCanvas",

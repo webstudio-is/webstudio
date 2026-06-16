@@ -13,7 +13,10 @@ import {
   getInstanceSelectorFromElement,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "./shared/scroll-state";
-import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
+import {
+  isDescendantOrSelf,
+  type InstanceSelector,
+} from "~/shared/instance-utils/tree";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;

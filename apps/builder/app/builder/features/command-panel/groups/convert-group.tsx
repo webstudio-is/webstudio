@@ -21,7 +21,7 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
-import { canConvertInstance } from "~/shared/instance-utils";
+import { canConvertInstance } from "~/shared/instance-utils/mutation";
 import {
   $commandContent,
   $isCommandPanelOpen,
@@ -30,7 +30,7 @@ import {
 } from "../command-state";
 import { allowsHtmlMutations } from "../shared/document-utils";
 import { useState } from "react";
-import { convertInstance } from "~/shared/instance-utils";
+import { convertInstance } from "~/shared/instance-utils/mutation";
 
 type ConvertOption = {
   component: string;

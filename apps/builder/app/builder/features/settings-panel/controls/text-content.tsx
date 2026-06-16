@@ -19,7 +19,7 @@ import {
   validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { CodeEditor } from "~/shared/code-editor";
 import {
   type ControlProps,

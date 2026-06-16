@@ -1,3 +1,5 @@
+import { insertWebstudioElementAt } from "~/shared/instance-utils/insert";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { useState } from "react";
 import { matchSorter } from "match-sorter";
 import { computed } from "nanostores";
@@ -31,11 +33,7 @@ import {
   $registeredComponentMetas,
   $registeredTemplates,
 } from "~/shared/nano-states";
-import {
-  getComponentTemplateData,
-  insertWebstudioElementAt,
-  insertWebstudioFragmentAt,
-} from "~/shared/instance-utils";
+import { getComponentTemplateData } from "~/shared/instance-utils/insert";
 import type { Publish } from "~/shared/pubsub";
 import { $selectedPage } from "~/shared/nano-states";
 import { mapGroupBy } from "~/shared/shim";

@@ -9,8 +9,8 @@ import {
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
-import { findClosestSlot } from "~/shared/instance-utils";
-import { isDescendantOrSelf } from "~/shared/tree-utils";
+import { findClosestSlot } from "~/shared/instance-utils/slot";
+import { isDescendantOrSelf } from "~/shared/instance-utils/tree";
 import { Outline } from "./outline";
 import { Label } from "./label";
 import { applyScale } from "../apply-scale";

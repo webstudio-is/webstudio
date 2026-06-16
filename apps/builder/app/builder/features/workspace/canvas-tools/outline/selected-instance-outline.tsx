@@ -3,11 +3,11 @@ import { $selectedInstanceOutlineAndInstance } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
-import { isDescendantOrSelf } from "~/shared/tree-utils";
+import { isDescendantOrSelf } from "~/shared/instance-utils/tree";
 import { Outline } from "./outline";
 import { applyScale } from "../apply-scale";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
-import { findClosestSlot } from "~/shared/instance-utils";
+import { findClosestSlot } from "~/shared/instance-utils/slot";
 import { $ephemeralStyles } from "~/canvas/stores";
 
 export const SelectedInstanceOutline = () => {

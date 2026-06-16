@@ -65,9 +65,9 @@ import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $styles } from "~/shared/sync/data-stores";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
-import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils";
+import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
 import { $selectedPageId } from "~/shared/nano-states";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { deleteAssets, replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import {
