@@ -17,6 +17,7 @@ import {
   Styles,
   getHomePage,
 } from "@webstudio-is/sdk";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
   findCycles,
   MarketplaceProduct,
@@ -121,7 +122,7 @@ export const createBuildPatchUpdate = async ({
         const pages = buildData.pages ?? parsePages(build.pages);
         const currentSocialImageAssetId =
           getHomePage(pages).meta.socialImageAssetId;
-        buildData.pages = applyPatches(pages, patches);
+        buildData.pages = migratePages(applyPatches(pages, patches));
         const newSocialImageAssetId = getHomePage(buildData.pages).meta
           .socialImageAssetId;
         if (currentSocialImageAssetId !== newSocialImageAssetId) {

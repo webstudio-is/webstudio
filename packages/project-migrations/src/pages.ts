@@ -121,7 +121,13 @@ export const migratePages = (pages: unknown): Pages => {
     }
     return {
       ...currentPages,
-      pageTemplates: currentPages.pageTemplates ?? new Map(),
+      // Initialize pageTemplates as Map if missing or deserialized as plain object
+      pageTemplates:
+        currentPages.pageTemplates instanceof Map
+          ? currentPages.pageTemplates
+          : currentPages.pageTemplates !== undefined
+            ? toMap<PageTemplate>(currentPages.pageTemplates)
+            : new Map(),
       folders: removeOrphanFolderChildren(
         currentPages.pages,
         currentPages.folders
