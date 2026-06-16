@@ -295,27 +295,14 @@ test("Keyboard shortcut moves a direct shared slot child out of all slot occurre
       ],
     }).waitFor({ state: "hidden", timeout: 30_000 });
 
-    const movedHeadingSelectors = await canvas
-      .locator(
-        '[data-ws-selector$=",slot-keyboard-wrapper,slot-keyboard-body"]'
-      )
-      .evaluateAll((elements) =>
-        elements
-          .map((element) => ({
-            selector: element.getAttribute("data-ws-selector"),
-            text: element.textContent?.trim(),
-          }))
-          .filter(
-            ({ selector, text }) =>
-              selector?.startsWith("slot-keyboard-") === false &&
-              text === "Slot heading"
-          )
-      );
-    if (movedHeadingSelectors.length !== 1) {
-      throw new Error(
-        `Expected one detached heading under wrapper, received ${JSON.stringify(movedHeadingSelectors)}`
-      );
-    }
+    await expectCanvasInstanceVisible({
+      canvas,
+      instanceSelector: [
+        "slot-keyboard-heading",
+        "slot-keyboard-wrapper",
+        "slot-keyboard-body",
+      ],
+    });
   } finally {
     await close();
   }
@@ -370,30 +357,18 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
       ],
     }).waitFor({ state: "hidden", timeout: 30_000 });
 
-    const movedDivSelectors = await canvas
-      .locator(
-        '[data-ws-selector$=",slot-keyboard-wrapper,slot-keyboard-body"]'
-      )
-      .evaluateAll((elements) =>
-        elements
-          .map((element) => ({
-            selector: element.getAttribute("data-ws-selector"),
-            text: element.textContent?.trim(),
-          }))
-          .filter(
-            ({ selector, text }) =>
-              selector?.startsWith("slot-keyboard-") === false &&
-              text === "Drop zone"
-          )
-      );
-    if (movedDivSelectors.length !== 1) {
-      throw new Error(
-        `Expected one detached div under wrapper, received ${JSON.stringify(movedDivSelectors)}`
-      );
-    }
+    const movedDivSelector = [
+      "slot-keyboard-div",
+      "slot-keyboard-wrapper",
+      "slot-keyboard-body",
+    ];
+    await expectCanvasInstanceVisible({
+      canvas,
+      instanceSelector: movedDivSelector,
+    });
 
     const movedDivPrecedesSlotA = await canvas
-      .locator(`[data-ws-selector="${movedDivSelectors[0]?.selector}"]`)
+      .locator(selector(movedDivSelector))
       .evaluate((movedElement) => {
         const slotA = document.querySelector(
           '[data-ws-selector="slot-keyboard-slot-a,slot-keyboard-wrapper,slot-keyboard-body"]'
@@ -407,7 +382,7 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
         );
       });
     if (movedDivPrecedesSlotA === false) {
-      throw new Error("Expected detached div to be positioned before Slot A");
+      throw new Error("Expected moved div to be positioned before Slot A");
     }
   } finally {
     await close();
@@ -463,27 +438,15 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
       ],
     }).waitFor({ state: "hidden", timeout: 30_000 });
 
-    const movedHeadingSelectors = await canvas
-      .locator(
-        '[data-ws-selector$=",slot-keyboard-wrapper,slot-keyboard-body"]'
-      )
-      .evaluateAll((elements) =>
-        elements
-          .map((element) => ({
-            selector: element.getAttribute("data-ws-selector"),
-            text: element.textContent?.trim(),
-          }))
-          .filter(
-            ({ selector, text }) =>
-              selector?.startsWith("slot-keyboard-") === false &&
-              text === "Slot heading"
-          )
-      );
-    if (movedHeadingSelectors.length !== 1) {
-      throw new Error(
-        `Expected one detached heading under wrapper, received ${JSON.stringify(movedHeadingSelectors)}`
-      );
-    }
+    const movedHeadingSelector = [
+      "slot-keyboard-heading",
+      "slot-keyboard-wrapper",
+      "slot-keyboard-body",
+    ];
+    await expectCanvasInstanceVisible({
+      canvas,
+      instanceSelector: movedHeadingSelector,
+    });
 
     const slotAPrecedesMovedHeading = await canvas
       .locator(
@@ -498,11 +461,9 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
           slotA.compareDocumentPosition(movedElement) &
             Node.DOCUMENT_POSITION_FOLLOWING
         );
-      }, `[data-ws-selector="${movedHeadingSelectors[0]?.selector}"]`);
+      }, selector(movedHeadingSelector));
     if (slotAPrecedesMovedHeading === false) {
-      throw new Error(
-        "Expected detached heading to be positioned after Slot A"
-      );
+      throw new Error("Expected moved heading to be positioned after Slot A");
     }
   } finally {
     await close();
@@ -624,30 +585,18 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
       ],
     }).waitFor({ state: "hidden", timeout: 30_000 });
 
-    const movedDivSelectors = await canvas
-      .locator(
-        '[data-ws-selector$=",slot-keyboard-wrapper,slot-keyboard-body"]'
-      )
-      .evaluateAll((elements) =>
-        elements
-          .map((element) => ({
-            selector: element.getAttribute("data-ws-selector"),
-            text: element.textContent?.trim(),
-          }))
-          .filter(
-            ({ selector, text }) =>
-              selector?.startsWith("slot-keyboard-") === false &&
-              text === "Drop zone"
-          )
-      );
-    if (movedDivSelectors.length !== 1) {
-      throw new Error(
-        `Expected one detached div under wrapper, received ${JSON.stringify(movedDivSelectors)}`
-      );
-    }
+    const movedDivSelector = [
+      "slot-keyboard-div",
+      "slot-keyboard-wrapper",
+      "slot-keyboard-body",
+    ];
+    await expectCanvasInstanceVisible({
+      canvas,
+      instanceSelector: movedDivSelector,
+    });
 
     const movedDivPrecedesSlotA = await canvas
-      .locator(`[data-ws-selector="${movedDivSelectors[0]?.selector}"]`)
+      .locator(selector(movedDivSelector))
       .evaluate((movedElement) => {
         const slotA = document.querySelector(
           '[data-ws-selector="slot-keyboard-slot-a,slot-keyboard-wrapper,slot-keyboard-body"]'
@@ -661,7 +610,7 @@ test("Keyboard shortcut moves the first shared slot child above all slot occurre
         );
       });
     if (movedDivPrecedesSlotA === false) {
-      throw new Error("Expected detached div to be positioned before Slot A");
+      throw new Error("Expected moved div to be positioned before Slot A");
     }
   } finally {
     await close();
@@ -715,27 +664,15 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
       ],
     }).waitFor({ state: "hidden", timeout: 30_000 });
 
-    const movedHeadingSelectors = await canvas
-      .locator(
-        '[data-ws-selector$=",slot-keyboard-wrapper,slot-keyboard-body"]'
-      )
-      .evaluateAll((elements) =>
-        elements
-          .map((element) => ({
-            selector: element.getAttribute("data-ws-selector"),
-            text: element.textContent?.trim(),
-          }))
-          .filter(
-            ({ selector, text }) =>
-              selector?.startsWith("slot-keyboard-") === false &&
-              text === "Slot heading"
-          )
-      );
-    if (movedHeadingSelectors.length !== 1) {
-      throw new Error(
-        `Expected one detached heading under wrapper, received ${JSON.stringify(movedHeadingSelectors)}`
-      );
-    }
+    const movedHeadingSelector = [
+      "slot-keyboard-heading",
+      "slot-keyboard-wrapper",
+      "slot-keyboard-body",
+    ];
+    await expectCanvasInstanceVisible({
+      canvas,
+      instanceSelector: movedHeadingSelector,
+    });
 
     const slotAPrecedesMovedHeading = await canvas
       .locator(
@@ -750,11 +687,9 @@ test("Keyboard shortcut moves the last shared slot child below all slot occurren
           slotA.compareDocumentPosition(movedElement) &
             Node.DOCUMENT_POSITION_FOLLOWING
         );
-      }, `[data-ws-selector="${movedHeadingSelectors[0]?.selector}"]`);
+      }, selector(movedHeadingSelector));
     if (slotAPrecedesMovedHeading === false) {
-      throw new Error(
-        "Expected detached heading to be positioned after Slot A"
-      );
+      throw new Error("Expected moved heading to be positioned after Slot A");
     }
   } finally {
     await close();
