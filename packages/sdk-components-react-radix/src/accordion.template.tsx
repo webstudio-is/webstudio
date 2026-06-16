@@ -68,6 +68,7 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
         </radix.AccordionTrigger>
       </radix.AccordionHeader>
       <radix.AccordionContent
+        forceMount={true}
         // overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down
         // pb-4 pt-0
         ws:style={css`
@@ -75,7 +76,6 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
           font-size: ${fontSize.sm};
           line-height: ${fontSizeLineHeight.sm};
           transition: ${transition.all};
-          padding-bottom: ${spacing[4]};
           &[data-state="closed"] {
             height: 0;
           }

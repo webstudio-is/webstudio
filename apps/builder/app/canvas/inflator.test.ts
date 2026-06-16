@@ -264,6 +264,20 @@ describe("getInflationState", () => {
     expect(call({ offsetHeight: 0 })).toBe("h");
   });
 
+  test("skip height inflation", () => {
+    expect(call({ offsetHeight: 0, skipHeightInflation: true })).toBe("");
+  });
+
+  test("skip height inflation keeps width inflation", () => {
+    expect(
+      call({
+        offsetWidth: 0,
+        offsetHeight: 0,
+        skipHeightInflation: true,
+      })
+    ).toBe("w");
+  });
+
   test("inflate both dimensions", () => {
     expect(call({ offsetWidth: 0, offsetHeight: 0 })).toBe("wh");
   });

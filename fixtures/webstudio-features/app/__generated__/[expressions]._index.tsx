@@ -2,13 +2,17 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+import {
+  renderText,
+  useResource,
+  useVariableState,
+} from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-router";
 import {
   Heading as Heading,
   HtmlEmbed as HtmlEmbed,
   Box as Box,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
@@ -40,7 +44,7 @@ const Page = (_props: { system: any }) => {
   return (
     <Body className={`w-body`}>
       <Heading className={`w-heading`}>
-        {`${jsonResourceVariable?.data?.args}`}
+        {renderText(`${jsonResourceVariable?.data?.args}`)}
       </Heading>
       <HtmlEmbed
         code={`<script>
@@ -52,7 +56,7 @@ console.log(a, b);
 </script>`}
         className={`w-html-embed`}
       />
-      <Box className={`w-box`}>{globalVariable}</Box>
+      <Box className={`w-box`}>{renderText(globalVariable)}</Box>
     </Body>
   );
 };

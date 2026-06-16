@@ -43,7 +43,7 @@ export const CustomMetadataSection = ({
 }) => {
   return (
     <InputErrorsTooltip errors={errors.customMetas}>
-      <div>
+      <div role="group" aria-label="Custom metadata">
         <CustomMetadata
           customMetas={values.customMetas}
           disabled={disabled}

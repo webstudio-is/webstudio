@@ -17,9 +17,9 @@ import {
   DialogTitleActions,
   TitleSuffixSpacer,
 } from "@webstudio-is/design-system";
-import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
 import { $isContentMode, $isDesignMode } from "~/shared/nano-states";
 import { $instances, $pages } from "~/shared/sync/data-stores";
+import { isContentModePagePath } from "@webstudio-is/project/content-mode-permissions";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { selectInstance } from "~/shared/nano-states";
 import {
@@ -30,7 +30,8 @@ import {
 } from "./page-utils";
 import {
   fieldDefaultValues,
-  isEditorEditablePagePath,
+  canEditPagePathInMode,
+  addContentModePathError,
   validateValues,
   updatePage,
   FormFields,
@@ -39,6 +40,8 @@ import {
 } from "./page-settings/page-settings";
 import type { Errors, OnChange } from "./page-settings/shared";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
+import { copyTemplate } from "~/shared/copy-paste/copy-paste";
+import { PageItemActionsDropdown } from "./page-item-actions";
 
 const TemplateValues = z.object({
   name: PageName,
@@ -268,6 +271,9 @@ export const TemplateSettings = ({
   return (
     <TemplateSettingsView
       onClose={onClose}
+      onCopy={() => {
+        void copyTemplate(templateId);
+      }}
       onDelete={onDelete}
       onDuplicate={() => {
         const newId = duplicateTemplate(templateId);
@@ -286,11 +292,13 @@ export const TemplateSettings = ({
 };
 
 const TemplateSettingsView = ({
+  onCopy,
   onDelete,
   onDuplicate,
   onClose,
   children,
 }: {
+  onCopy: () => void;
   onDelete?: () => void;
   onDuplicate: () => void;
   onClose: () => void;
@@ -304,22 +312,14 @@ const TemplateSettingsView = ({
       disabled={!isDesignMode}
       suffix={
         <DialogTitleActions>
-          {isDesignMode && onDelete && (
-            <Button
-              color="ghost"
-              prefix={<TrashIcon />}
-              onClick={onDelete}
-              aria-label="Delete template"
-              tabIndex={2}
-            />
-          )}
           {isDesignMode && (
-            <Button
-              color="ghost"
-              prefix={<CopyIcon />}
-              onClick={onDuplicate}
-              aria-label="Duplicate template"
-              tabIndex={2}
+            <PageItemActionsDropdown
+              label="Template actions"
+              actions={{
+                copy: onCopy,
+                duplicate: onDuplicate,
+                delete: onDelete,
+              }}
             />
           )}
           <DialogClose />
@@ -388,7 +388,7 @@ const getEditorCreatePageValues = (
     name: values.name,
   };
 
-  if (isEditorEditablePagePath(initialValues.path)) {
+  if (isContentModePagePath(initialValues.path)) {
     allowedValues.path = values.path;
   }
   if (isLiteralExpression(initialValues.title)) {
@@ -425,6 +425,7 @@ export const CreatePageFromTemplateSettings = ({
 }) => {
   const pages = useStore($pages);
   const isContentMode = useStore($isContentMode);
+  const isDesignMode = useStore($isDesignMode);
   const template = pages?.pageTemplates?.get(templateId);
   const { variableValues } = useStore($pageRootScope);
 
@@ -439,6 +440,7 @@ export const CreatePageFromTemplateSettings = ({
   const [values, setValues] = useState<Values>(initialValues);
 
   const errors = validateValues(pages, undefined, values, variableValues);
+  addContentModePathError({ errors, isContentMode, path: values.path });
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
@@ -446,6 +448,7 @@ export const CreatePageFromTemplateSettings = ({
         templateId,
         overrides: { name: values.name, path: values.path },
         folderId: values.parentFolderId,
+        contentMode: isContentMode,
       });
       if (newPageId) {
         updatePage(
@@ -483,10 +486,11 @@ export const CreatePageFromTemplateSettings = ({
         values={values}
         isEditorContext={isContentMode}
         canEditName
-        canEditPath={
-          isContentMode === false ||
-          isEditorEditablePagePath(initialValues.path)
-        }
+        canEditPath={canEditPagePathInMode({
+          isDesignMode,
+          isContentMode,
+          path: initialValues.path,
+        })}
         onChange={(change) => {
           setValues((prev) => {
             const next = { ...prev, [change.field]: change.value };

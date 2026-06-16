@@ -339,6 +339,57 @@ export const insertStyleSources = ({
   };
 };
 
+export const insertTokenStyleSources = ({
+  fragmentStyleSources,
+  fragmentStyles,
+  styleSources,
+  styles,
+  breakpoints,
+  mergedBreakpointIds,
+  conflictResolution = "theirs",
+}: {
+  fragmentStyleSources: StyleSource[];
+  fragmentStyles: StyleDecl[];
+  styleSources: StyleSources;
+  styles: Styles;
+  breakpoints: Map<Breakpoint["id"], Breakpoint>;
+  mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
+  conflictResolution?: ConflictResolution;
+}) => {
+  const { styleSourceIds, styleSourceIdMap, updatedStyleSources } =
+    insertStyleSources({
+      fragmentStyleSources,
+      fragmentStyles,
+      existingStyleSources: styleSources,
+      existingStyles: styles,
+      breakpoints,
+      mergedBreakpointIds,
+      conflictResolution,
+    });
+
+  for (const [id, styleSource] of updatedStyleSources) {
+    styleSources.set(id, styleSource);
+  }
+
+  for (const styleDecl of fragmentStyles) {
+    if (styleSourceIds.has(styleDecl.styleSourceId) === false) {
+      continue;
+    }
+    const newStyleDecl: StyleDecl = {
+      ...styleDecl,
+      breakpointId:
+        mergedBreakpointIds.get(styleDecl.breakpointId) ??
+        styleDecl.breakpointId,
+      styleSourceId:
+        styleSourceIdMap.get(styleDecl.styleSourceId) ??
+        styleDecl.styleSourceId,
+    };
+    styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
+  }
+
+  return styleSourceIdMap;
+};
+
 /**
  * Insert local style sources for portal content without changing IDs.
  * Portal content IDs are preserved to avoid data bloat.
@@ -395,9 +446,35 @@ export const insertPortalLocalStyleSources = ({
   }
 };
 
+type InsertLocalStyleSourcesWithNewIdsOptions = {
+  fragmentStyleSources: StyleSource[];
+  fragmentStyleSourceSelections: StyleSourceSelection[];
+  fragmentStyles: StyleDecl[];
+  fragmentInstanceIds: Set<Instance["id"]>;
+  newInstanceIds: Map<Instance["id"], Instance["id"]>;
+  styleSources: StyleSources;
+  styleSourceSelections: StyleSourceSelections;
+  styles: Styles;
+} & (
+  | {
+      contentMode: true;
+      breakpoints: Map<Breakpoint["id"], Breakpoint>;
+      styleSourceIdMap?: Map<StyleSource["id"], StyleSource["id"]>;
+      mergedBreakpointIds?: Map<Breakpoint["id"], Breakpoint["id"]>;
+    }
+  | {
+      contentMode?: false;
+      breakpoints?: Map<Breakpoint["id"], Breakpoint>;
+      styleSourceIdMap: Map<StyleSource["id"], StyleSource["id"]>;
+      mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
+    }
+);
+
 /**
- * Insert local style sources with new IDs for regular (non-portal) content.
- * Handles merging :root styles and token remapping.
+ * Insert local style sources for copied fragment instances.
+ * Regular mode duplicates local style sources, remaps token ids, and merges
+ * :root local styles. Content mode keeps only local styles that can render with
+ * existing breakpoints and reuses existing token ids.
  */
 export const insertLocalStyleSourcesWithNewIds = ({
   fragmentStyleSources,
@@ -405,24 +482,15 @@ export const insertLocalStyleSourcesWithNewIds = ({
   fragmentStyles,
   fragmentInstanceIds,
   newInstanceIds,
-  styleSourceIdMap,
   styleSources,
   styleSourceSelections,
   styles,
-  mergedBreakpointIds,
-}: {
-  fragmentStyleSources: StyleSource[];
-  fragmentStyleSourceSelections: StyleSourceSelection[];
-  fragmentStyles: StyleDecl[];
-  fragmentInstanceIds: Set<Instance["id"]>;
-  newInstanceIds: Map<Instance["id"], Instance["id"]>;
-  styleSourceIdMap: Map<StyleSource["id"], StyleSource["id"]>;
-  styleSources: StyleSources;
-  styleSourceSelections: StyleSourceSelections;
-  styles: Styles;
-  mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
-}): void => {
-  const newLocalStyleSources = new Map();
+  contentMode = false,
+  breakpoints,
+  styleSourceIdMap = new Map(),
+  mergedBreakpointIds = new Map(),
+}: InsertLocalStyleSourcesWithNewIdsOptions): void => {
+  const newLocalStyleSources = new Map<StyleSource["id"], StyleSource>();
   for (const styleSource of fragmentStyleSources) {
     if (styleSource.type === "local") {
       newLocalStyleSources.set(styleSource.id, styleSource);
@@ -433,13 +501,29 @@ export const insertLocalStyleSourcesWithNewIds = ({
     StyleSource["id"],
     StyleSource["id"]
   >();
+  const copyableContentModeLocalStyleSourceIds = new Set<StyleSource["id"]>();
+  if (contentMode) {
+    for (const styleDecl of fragmentStyles) {
+      if (
+        newLocalStyleSources.has(styleDecl.styleSourceId) &&
+        breakpoints?.has(styleDecl.breakpointId)
+      ) {
+        copyableContentModeLocalStyleSourceIds.add(styleDecl.styleSourceId);
+      }
+    }
+  }
   for (const { instanceId, values } of fragmentStyleSourceSelections) {
     if (fragmentInstanceIds.has(instanceId) === false) {
       continue;
     }
+    const newInstanceId = newInstanceIds.get(instanceId);
+    if (contentMode && newInstanceId === undefined) {
+      continue;
+    }
 
+    const targetInstanceId = newInstanceId ?? instanceId;
     const existingStyleSourceIds =
-      styleSourceSelections.get(instanceId)?.values ?? [];
+      styleSourceSelections.get(targetInstanceId)?.values ?? [];
     let existingLocalStyleSource;
     for (const styleSourceId of existingStyleSourceIds) {
       const styleSource = styleSources.get(styleSourceId);
@@ -451,8 +535,27 @@ export const insertLocalStyleSourcesWithNewIds = ({
     for (let styleSourceId of values) {
       const newLocalStyleSource = newLocalStyleSources.get(styleSourceId);
       if (newLocalStyleSource) {
+        if (
+          contentMode &&
+          copyableContentModeLocalStyleSourceIds.has(styleSourceId) === false
+        ) {
+          continue;
+        }
+        if (contentMode) {
+          const existingNewLocalStyleSourceId = newLocalStyleSourceIds.get(
+            newLocalStyleSource.id
+          );
+          if (existingNewLocalStyleSourceId) {
+            newStyleSourceIds.push(existingNewLocalStyleSourceId);
+            continue;
+          }
+        }
         // merge only :root styles and duplicate others
-        if (instanceId === ROOT_INSTANCE_ID && existingLocalStyleSource) {
+        if (
+          contentMode === false &&
+          instanceId === ROOT_INSTANCE_ID &&
+          existingLocalStyleSource
+        ) {
           // write local styles into existing local style source
           styleSourceId = existingLocalStyleSource.id;
         } else {
@@ -468,12 +571,20 @@ export const insertLocalStyleSourcesWithNewIds = ({
         if (mappedTokenId) {
           styleSourceId = mappedTokenId;
         }
+        if (contentMode) {
+          const styleSource = styleSources.get(styleSourceId);
+          if (styleSource?.type !== "token") {
+            continue;
+          }
+        }
       }
       newStyleSourceIds.push(styleSourceId);
     }
-    const newInstanceId = newInstanceIds.get(instanceId) ?? instanceId;
-    styleSourceSelections.set(newInstanceId, {
-      instanceId: newInstanceId,
+    if (contentMode && newStyleSourceIds.length === 0) {
+      continue;
+    }
+    styleSourceSelections.set(targetInstanceId, {
+      instanceId: targetInstanceId,
       values: newStyleSourceIds,
     });
   }
@@ -485,8 +596,16 @@ export const insertLocalStyleSourcesWithNewIds = ({
         ...styleDecl,
         styleSourceId:
           newLocalStyleSourceIds.get(styleSourceId) ?? styleSourceId,
-        breakpointId: mergedBreakpointIds.get(breakpointId) ?? breakpointId,
+        breakpointId: contentMode
+          ? breakpointId
+          : (mergedBreakpointIds.get(breakpointId) ?? breakpointId),
       };
+      if (
+        contentMode &&
+        breakpoints?.has(newStyleDecl.breakpointId) === false
+      ) {
+        continue;
+      }
       styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
     }
   }

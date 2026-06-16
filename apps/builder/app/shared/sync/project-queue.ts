@@ -345,6 +345,7 @@ export class ServerSyncStorage implements SyncStorage {
   sendTransaction(transaction: Transaction<Change[]>) {
     if (transaction.object === "server") {
       $lastTransactionId.set(transaction.id);
+      $syncStatus.set({ status: "syncing" });
       commandQueue.enqueue({
         type: "transactions",
         transactions: [transaction],

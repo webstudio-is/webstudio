@@ -215,9 +215,16 @@ export const props: Record<string, PropMeta> = {
     defaultValue: "medium",
     options: ["full", "long", "medium", "short", "none"],
   },
+  datetime: {
+    required: false,
+    control: "text",
+    type: "string",
+    defaultValue: "dateTime attribute is not set",
+    description: "Machine-readable value",
+  },
   format: {
     description:
-      'Custom format template. Overrides Date Style and Time Style.\n\nTokens: YYYY/YY (year), MMMM/MMM/MM/M (month), DDDD/DDD/DD/D (day), HH/H (hours), mm/m (minutes), ss/s (seconds)\n\nExamples:\n"YYYY-MM-DD" → 2025-11-03\n"DDDD, MMMM D" → Monday, November 3\n"DDD, D. MMM YYYY" → Mon, 3. Nov 2025\n\nDay and month names use the selected language.',
+      'Custom format template. Overrides Date Style and Time Style.\n\nTokens: YYYY/YY (year), MMMM/MMM/MM/M (month), DDDD/DDD/DD/D (day), HH/H (hours), mm/m (minutes), ss/s (seconds)\n\nExamples:\n- "YYYY-MM-DD" → 2025-11-03\n- "DDDD, MMMM D" → Monday, November 3\n- "DDD, D. MMM YYYY" → Mon, 3. Nov 2025\n\nDay and month names use the selected language.',
     required: false,
     control: "text",
     type: "string",
@@ -307,5 +314,13 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     defaultValue: "none",
     options: ["full", "long", "medium", "short", "none"],
+  },
+  timeZone: {
+    description:
+      'Time zone used to format the date.\n\nUse "UTC" for deterministic UTC output, "visitor" to use the browser time\nzone after hydration, or an IANA time zone like "Europe/Berlin".',
+    required: false,
+    control: "text",
+    type: "string",
+    defaultValue: "UTC",
   },
 };

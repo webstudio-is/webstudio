@@ -65,26 +65,51 @@ const useProp = (name: string) => {
   return useStore(store);
 };
 
+const getPropIdsToDelete = ({
+  instanceComponent,
+  instanceProps,
+  propName,
+}: {
+  instanceComponent: string | undefined;
+  instanceProps: Map<Prop["name"], Prop>;
+  propName: Prop["name"];
+}) => {
+  const propIds = new Set<Prop["id"]>();
+  const prop = instanceProps.get(propName);
+  if (prop) {
+    propIds.add(prop.id);
+  }
+  if (instanceComponent === "Image" && propName === "src") {
+    const widthProp = instanceProps.get("width");
+    if (widthProp) {
+      propIds.add(widthProp.id);
+    }
+    const heightProp = instanceProps.get("height");
+    if (heightProp) {
+      propIds.add(heightProp.id);
+    }
+  }
+  return propIds;
+};
+
+export const __testing__ = {
+  getPropIdsToDelete,
+};
+
 const deleteProp = (name: string) => {
   const instance = $selectedInstance.get();
   const instanceProps = $selectedInstanceProps.get();
   updateWebstudioData((data) => {
     const prop = instanceProps.get(name);
-    if (prop) {
-      data.props.delete(prop.id);
+    for (const propId of getPropIdsToDelete({
+      instanceComponent: instance?.component,
+      instanceProps,
+      propName: name,
+    })) {
+      data.props.delete(propId);
     }
     if (prop?.type === "resource") {
       data.resources.delete(prop.value);
-    }
-    if (instance?.component === "Image" && name === "src") {
-      const widthProp = instanceProps.get("width");
-      if (widthProp) {
-        data.props.delete(widthProp.id);
-      }
-      const heightProp = instanceProps.get("height");
-      if (heightProp) {
-        data.props.delete(heightProp.id);
-      }
     }
   });
 };

@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   Annotation,
+  EditorSelection,
   EditorState,
   StateEffect,
   type Extension,
@@ -54,6 +55,23 @@ const ExternalChange = Annotation.define<boolean>();
 const minHeightVar = "--ws-code-editor-min-height";
 const maxHeightVar = "--ws-code-editor-max-height";
 const maximizeIconVisibilityVar = "--ws-code-editor-maximize-icon-visibility";
+
+export const clampEditorSelection = (
+  selection: EditorSelection,
+  length: number
+) => {
+  return EditorSelection.create(
+    selection.ranges.map((range) =>
+      EditorSelection.range(
+        Math.min(range.anchor, length),
+        Math.min(range.head, length)
+      )
+    ),
+    selection.mainIndex
+  );
+};
+
+export const normalizeEditorValue = (value: undefined | string) => value ?? "";
 
 export const getCodeEditorCssVars = ({
   minHeight,
@@ -223,7 +241,7 @@ type EditorContentProps = {
   autoFocus?: boolean;
   invalid?: boolean;
   showShortcuts?: boolean;
-  value: string;
+  value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
 };
@@ -369,14 +387,16 @@ export const EditorContent = ({
     if (view === undefined) {
       return;
     }
+    const nextValue = normalizeEditorValue(value);
     // prevent updating when editor has the same state
     // and can be the source of new value
-    if (value === view.state.doc.toString()) {
+    if (nextValue === view.state.doc.toString()) {
       return;
     }
 
     view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: value },
+      changes: { from: 0, to: view.state.doc.length, insert: nextValue },
+      selection: clampEditorSelection(view.state.selection, nextValue.length),
       annotations: [ExternalChange.of(true)],
     });
   }, [value]);

@@ -40,6 +40,7 @@ import {
   EditorDialogButton,
   EditorDialogControl,
   type EditorApi,
+  normalizeEditorValue,
 } from "~/shared/code-editor-base";
 import {
   decodeDataVariableName,
@@ -50,8 +51,11 @@ import {
 
 export type { EditorApi };
 
-export const formatValue = (value: unknown) => {
+export const formatValue = (value: unknown): string => {
   try {
+    if (value === undefined) {
+      return "";
+    }
     if (Array.isArray(value)) {
       // format arrays as multiline
       return JSON.stringify(value, null, 2);
@@ -61,7 +65,7 @@ export const formatValue = (value: unknown) => {
       // syntax highlighting as expression instead of block
       return `(${JSON.stringify(value, null, 2)})`;
     }
-    return JSON.stringify(value);
+    return JSON.stringify(value) ?? "";
   } catch {
     // show nothing when value is invalid
     return "";
@@ -574,10 +578,11 @@ export const ExpressionEditor = ({
   color?: "error";
   autoFocus?: boolean;
   readOnly?: boolean;
-  value: string;
+  value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
 }) => {
+  const normalizedValue = normalizeEditorValue(value);
   const { nameById, idByName } = useMemo(() => {
     const nameById = new Map();
     const idByName = new Map();
@@ -592,10 +597,10 @@ export const ExpressionEditor = ({
   }, [aliases]);
   const expressionWithUnsetVariables = useMemo(() => {
     return unsetExpressionVariables({
-      expression: value,
+      expression: normalizedValue,
       unsetNameById: nameById,
     });
-  }, [value, nameById]);
+  }, [normalizedValue, nameById]);
   const scopeWithUnsetVariables = useMemo(() => {
     const newScope: typeof scope = {};
     for (const [identifier, value] of Object.entries(scope)) {

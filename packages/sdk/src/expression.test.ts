@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { parseExpressionAt } from "acorn";
 import {
   type Diagnostic,
   decodeDataVariableId,
@@ -126,6 +127,76 @@ describe("lint expression", () => {
         availableVariables: new Set(["a"]),
       })
     ).toEqual([]);
+  });
+
+  test("lint member assignment targets", () => {
+    expect(
+      lintExpression({
+        expression: ` a[b].c = d`,
+        allowAssignment: true,
+        availableVariables: new Set(["a", "b", "d"]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: ` a.b = c`,
+        allowAssignment: true,
+        availableVariables: new Set(["c"]),
+      })
+    ).toEqual([warn(1, 2, `"a" is not defined in the scope`)]);
+  });
+
+  test("lint assignment operators and targets", () => {
+    const assignmentExpressions = [
+      ` a = b`,
+      ` a += b`,
+      ` a -= b`,
+      ` a *= b`,
+      ` a /= b`,
+      ` a %= b`,
+      ` a **= b`,
+      ` a ||= b`,
+      ` a &&= b`,
+      ` a ??= b`,
+      ` a.b = c`,
+      ` a[b] = c`,
+      ` a[b].c = d`,
+      ` a.b[c.d].e ??= f.g`,
+    ];
+
+    for (const expression of assignmentExpressions) {
+      expect(
+        lintExpression({
+          expression,
+          allowAssignment: true,
+          availableVariables: new Set(["a", "b", "c", "d", "f"]),
+        })
+      ).toEqual([]);
+    }
+  });
+
+  test("forbid destructuring assignment", () => {
+    expect(
+      lintExpression({
+        expression: ` ({ a } = b)`,
+        allowAssignment: true,
+        availableVariables: new Set(["b"]),
+      })
+    ).toEqual([error(2, 7, "Destructuring assignment is not supported")]);
+    expect(
+      lintExpression({
+        expression: ` [a] = b`,
+        allowAssignment: true,
+        availableVariables: new Set(["b"]),
+      })
+    ).toEqual([error(1, 4, "Destructuring assignment is not supported")]);
+    expect(
+      lintExpression({
+        expression: ` ({ nested: a } = b)`,
+        allowAssignment: true,
+        availableVariables: new Set(["b"]),
+      })
+    ).toEqual([error(2, 15, "Destructuring assignment is not supported")]);
   });
 
   test("forbid unavailable variables", () => {
@@ -411,6 +482,15 @@ describe("get expression identifiers", () => {
     );
   });
 
+  test("find identifiers in assignment targets", () => {
+    expect(getExpressionIdentifiers("a[b].c = d.e")).toEqual(
+      new Set(["a", "b", "d"])
+    );
+    expect(getExpressionIdentifiers("a.b[c.d].e ??= f.g")).toEqual(
+      new Set(["a", "c", "f"])
+    );
+  });
+
   test("deduplicate identifiers", () => {
     expect(getExpressionIdentifiers("a = a + b")).toEqual(new Set(["a", "b"]));
   });
@@ -454,6 +534,57 @@ describe("transpile expression", () => {
     ).toEqual("a?.['b']?.c");
   });
 
+  test("skip optional chaining in assignment targets", () => {
+    expect(
+      transpileExpression({ expression: "a.b = c.d", executable: true })
+    ).toEqual("a.b = c?.d");
+    expect(
+      transpileExpression({ expression: "a[b.c].d = e.f", executable: true })
+    ).toEqual("a[b?.c].d = e?.f");
+  });
+
+  test("skip optional chaining in assignment targets for all assignment operators", () => {
+    const operators = [
+      "=",
+      "+=",
+      "-=",
+      "*=",
+      "/=",
+      "%=",
+      "**=",
+      "||=",
+      "&&=",
+      "??=",
+    ];
+
+    for (const operator of operators) {
+      const expression = `a.b ${operator} c.d`;
+      const transpiled = transpileExpression({ expression, executable: true });
+      expect(transpiled).toEqual(`a.b ${operator} c?.d`);
+      expect(() =>
+        parseExpressionAt(transpiled, 0, { ecmaVersion: "latest" })
+      ).not.toThrow();
+    }
+  });
+
+  test("transpile executable assignment expressions", () => {
+    const cases = [
+      ["a.b = c.d", "a.b = c?.d"],
+      ["a[b] = c.d", "a[b] = c?.d"],
+      ["a[b.c] = d.e", "a[b?.c] = d?.e"],
+      ["a[b.c].d = e.f", "a[b?.c].d = e?.f"],
+      ["a.b[c.d].e ??= f.g", "a.b[c?.d].e ??= f?.g"],
+    ] as const;
+
+    for (const [expression, expected] of cases) {
+      const transpiled = transpileExpression({ expression, executable: true });
+      expect(transpiled).toEqual(expected);
+      expect(() =>
+        parseExpressionAt(transpiled, 0, { ecmaVersion: "latest" })
+      ).not.toThrow();
+    }
+  });
+
   test("replace variable", () => {
     expect(
       transpileExpression({
@@ -483,15 +614,27 @@ describe("transpile expression", () => {
   });
 
   test("inform identifier is an assignee", () => {
-    expect(
-      transpileExpression({
-        expression: "a = b",
-        replaceVariable: (identifier, assignee) => {
-          const suffix = assignee ? "_assignee" : "_assigner";
-          return identifier + suffix;
-        },
-      })
-    ).toEqual("a_assignee = b_assigner");
+    const replaceVariable = (identifier: string, assignee: boolean) => {
+      const suffix = assignee ? "_assignee" : "_assigner";
+      return identifier + suffix;
+    };
+
+    const cases = [
+      ["a = b", "a_assignee = b_assigner"],
+      ["a += b", "a_assignee += b_assigner"],
+      ["a ||= b", "a_assignee ||= b_assigner"],
+      ["a ??= b", "a_assignee ??= b_assigner"],
+      ["a.b = c", "a_assignee.b = c_assigner"],
+      ["a[b] = c", "a_assignee[b_assigner] = c_assigner"],
+      ["a[b].c = d", "a_assignee[b_assigner].c = d_assigner"],
+      ["a.b[c.d].e ??= f.g", "a_assignee.b[c_assigner.d].e ??= f_assigner.g"],
+    ] as const;
+
+    for (const [expression, expected] of cases) {
+      expect(transpileExpression({ expression, replaceVariable })).toEqual(
+        expected
+      );
+    }
   });
 
   test("transpile object literal without changes", () => {

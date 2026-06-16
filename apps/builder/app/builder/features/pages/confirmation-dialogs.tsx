@@ -41,17 +41,15 @@ export const DeletePageConfirmationDialog = ({
           </Text>
         </Flex>
         <DialogActions>
-          <DialogClose>
-            <Button
-              autoFocus
-              color="destructive"
-              onClick={() => {
-                onConfirm();
-              }}
-            >
-              Delete Page
-            </Button>
-          </DialogClose>
+          <Button
+            autoFocus
+            color="destructive"
+            onClick={() => {
+              onConfirm();
+            }}
+          >
+            Delete Page
+          </Button>
           <DialogClose>
             <Button color="ghost">Cancel</Button>
           </DialogClose>
@@ -87,17 +85,15 @@ export const DeleteFolderConfirmationDialog = ({
           <Text>{`Delete folder "${folder.name}" including all of its pages?`}</Text>
         </Flex>
         <DialogActions>
-          <DialogClose>
-            <Button
-              autoFocus
-              color="destructive"
-              onClick={() => {
-                onConfirm();
-              }}
-            >
-              Delete
-            </Button>
-          </DialogClose>
+          <Button
+            autoFocus
+            color="destructive"
+            onClick={() => {
+              onConfirm();
+            }}
+          >
+            Delete
+          </Button>
           <DialogClose>
             <Button color="ghost">Cancel</Button>
           </DialogClose>
@@ -137,17 +133,15 @@ export const DeleteTemplateConfirmationDialog = ({
           </Text>
         </Flex>
         <DialogActions>
-          <DialogClose>
-            <Button
-              autoFocus
-              color="destructive"
-              onClick={() => {
-                onConfirm();
-              }}
-            >
-              Delete Template
-            </Button>
-          </DialogClose>
+          <Button
+            autoFocus
+            color="destructive"
+            onClick={() => {
+              onConfirm();
+            }}
+          >
+            Delete Template
+          </Button>
           <DialogClose>
             <Button color="ghost">Cancel</Button>
           </DialogClose>

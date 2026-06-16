@@ -46,6 +46,7 @@ import {
   formatValuePreview,
   type EditorApi,
 } from "./expression-editor";
+import { normalizeEditorValue } from "~/shared/code-editor-base";
 
 /**
  * Check if a value is a primitive that can be safely stringified.
@@ -78,6 +79,10 @@ export const evaluateExpressionWithinScope = (
   expression: string,
   scope: Record<string, unknown>
 ) => {
+  if (expression.trim() === "") {
+    return;
+  }
+
   const variables = new Map<string, unknown>();
   for (const [name, value] of Object.entries(scope)) {
     const decodedName = decodeDataSourceVariable(name);
@@ -100,15 +105,16 @@ const BindingPanel = ({
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
   valueError?: string;
-  value: string;
+  value?: string;
   onChange: () => void;
   onSave: (value: string, invalid: boolean) => void;
 }) => {
   const editorApiRef = useRef<undefined | EditorApi>(undefined);
-  const [expression, setExpression] = useState(value);
+  const normalizedValue = normalizeEditorValue(value);
+  const [expression, setExpression] = useState(normalizedValue);
   const usedIdentifiers = useMemo(
-    () => getExpressionIdentifiers(value),
-    [value]
+    () => getExpressionIdentifiers(normalizedValue),
+    [normalizedValue]
   );
   const [errorsCount, setErrorsCount] = useState<number>(0);
   const [touched, setTouched] = useState(false);
@@ -327,12 +333,12 @@ const BindingButton = forwardRef<
               width: 12,
               height: 12,
               borderRadius: "50%",
-              backgroundColor: theme.colors.backgroundStyleSourceToken,
+              backgroundColor: theme.colors.backgroundStyleSourceSelected,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               "&[data-variant=bound]": {
-                backgroundColor: theme.colors.backgroundStyleSourceLocal,
+                backgroundColor: theme.colors.backgroundStyleSourceSelected,
               },
               "&[data-variant=overwritten]": {
                 backgroundColor: theme.colors.borderOverwrittenMain,
@@ -372,7 +378,7 @@ export const BindingPopover = ({
   aliases: Map<string, string>;
   variant: BindingVariant;
   validate?: (value: unknown) => undefined | string;
-  value: string;
+  value?: string;
   onChange: (newValue: string) => void;
   onRemove: (evaluatedValue: unknown) => void;
 }) => {
@@ -385,7 +391,10 @@ export const BindingPopover = ({
     return;
   }
 
-  const valueError = validate?.(evaluateExpressionWithinScope(value, scope));
+  const normalizedValue = normalizeEditorValue(value);
+  const valueError = validate?.(
+    evaluateExpressionWithinScope(normalizedValue, scope)
+  );
   return (
     <FloatingPanel
       placement="left-start"
@@ -419,7 +428,7 @@ export const BindingPopover = ({
                       event.preventDefault();
                       // inline variables and close dialog
                       const evaluatedValue = evaluateExpressionWithinScope(
-                        value,
+                        normalizedValue,
                         scope
                       );
 
@@ -443,7 +452,7 @@ export const BindingPopover = ({
           scope={scope}
           aliases={aliases}
           valueError={valueError}
-          value={value}
+          value={normalizedValue}
           onChange={() => {
             hasUnsavedChange.current = true;
           }}
@@ -467,7 +476,11 @@ export const BindingPopover = ({
         />
       }
     >
-      <BindingButton variant={variant} error={valueError} value={value} />
+      <BindingButton
+        variant={variant}
+        error={valueError}
+        value={normalizedValue}
+      />
     </FloatingPanel>
   );
 };

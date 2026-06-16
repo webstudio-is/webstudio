@@ -65,3 +65,7 @@ export const useResource = (name: string) => {
 
   return resourceMemozied;
 };
+
+export const renderText = (value: unknown) => {
+  return typeof value === "string" || typeof value === "number" ? value : "";
+};

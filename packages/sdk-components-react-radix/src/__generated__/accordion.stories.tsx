@@ -2,7 +2,7 @@ import {
   Box as Box,
   Text as Text,
   HtmlEmbed as HtmlEmbed,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 import {
   Accordion as Accordion,
   AccordionItem as AccordionItem,

@@ -1,14 +1,23 @@
 import { toast } from "@webstudio-is/design-system";
-import type { WebstudioFragment } from "@webstudio-is/sdk";
+import { type WebstudioFragment } from "@webstudio-is/sdk";
 import {
   isAutoGridPlacement,
   resetGridChildPlacement,
 } from "~/builder/features/style-panel/sections/layout/shared/grid-utils";
+import {
+  duplicateFolder,
+  duplicatePage,
+  duplicateTemplate,
+} from "~/builder/features/pages/page-utils";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
+  $editingPageId,
+  $folderIdToDelete,
   $isDesignMode,
   $isPreviewMode,
+  $pageIdToDelete,
+  $templateIdToDelete,
   toggleBuilderMode,
 } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
@@ -43,7 +52,7 @@ import {
   toggleActiveSidebarPanel,
 } from "./nano-states";
 import { $selectedInstancePath } from "~/shared/nano-states";
-import { selectInstance } from "~/shared/nano-states";
+import { selectInstance, selectPage } from "~/shared/nano-states";
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
 import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";
@@ -60,11 +69,18 @@ import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variabl
 import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { openKeyboardShortcutsDialog } from "~/builder/features/keyboard-shortcuts-dialog";
 import {
+  copyFolder,
   copyInstance,
+  copyPage,
+  copyTemplate,
   emitPaste,
   cutInstance,
-} from "~/shared/copy-paste/init-copy-paste";
+} from "~/shared/copy-paste/copy-paste";
 import { toggleInstanceShow } from "~/shared/instance-utils";
+import {
+  getDeletablePageActionTarget,
+  getPageActionTarget,
+} from "~/shared/page-action-target";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -86,6 +102,99 @@ const exitPreviewModeFromNonCanvasSource = (source: string) => {
 
   setActiveSidebarPanel("auto");
   toggleBuilderMode("preview");
+};
+
+const canRunDesignModeCommand = ({ isDesignMode }: { isDesignMode: boolean }) =>
+  isDesignMode;
+
+const guardDesignModeCommand = ({
+  isDesignMode,
+  message,
+  toastInfo = builderApi.toast.info,
+}: {
+  isDesignMode: boolean;
+  message: string;
+  toastInfo?: (message: string) => void;
+}) => {
+  if (canRunDesignModeCommand({ isDesignMode })) {
+    return true;
+  }
+  toastInfo(message);
+  return false;
+};
+
+const copyPageActionTarget = () => {
+  if ($isDesignMode.get() === false) {
+    return false;
+  }
+  const target = getPageActionTarget();
+  if (target?.type === "page") {
+    void copyPage(target.id);
+    return true;
+  }
+  if (target?.type === "folder") {
+    void copyFolder(target.id);
+    return true;
+  }
+  if (target?.type === "template") {
+    void copyTemplate(target.id);
+    return true;
+  }
+  return false;
+};
+
+const duplicatePageActionTarget = () => {
+  const target = getPageActionTarget();
+  if (target?.type === "page") {
+    const newPageId = duplicatePage(target.id);
+    if (newPageId) {
+      selectPage(newPageId);
+    }
+    return true;
+  }
+  if (target?.type === "folder") {
+    const newFolderId = duplicateFolder(target.id);
+    if (newFolderId) {
+      $editingPageId.set(newFolderId);
+    }
+    return true;
+  }
+  if (target?.type === "template") {
+    const newTemplateId = duplicateTemplate(target.id);
+    if (newTemplateId) {
+      selectPage(newTemplateId);
+    }
+    return true;
+  }
+  return false;
+};
+
+export const __testing__ = {
+  canRunDesignModeCommand,
+  guardDesignModeCommand,
+};
+
+const requestSelectedPageItemDelete = () => {
+  if ($isDesignMode.get() === false) {
+    return false;
+  }
+  const target = getDeletablePageActionTarget();
+  if (target === undefined) {
+    return false;
+  }
+  $pageIdToDelete.set(undefined);
+  $folderIdToDelete.set(undefined);
+  $templateIdToDelete.set(undefined);
+  if (target.type === "page") {
+    $pageIdToDelete.set(target.id);
+  }
+  if (target.type === "folder") {
+    $folderIdToDelete.set(target.id);
+  }
+  if (target.type === "template") {
+    $templateIdToDelete.set(target.id);
+  }
+  return true;
 };
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
@@ -317,27 +426,58 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     makeBreakpointCommand("selectBreakpoint9", 9),
     {
       name: "copy",
-      description: "Copy selected instance",
+      description: "Copy selected page or instance",
       category: "Navigator",
-      handler: copyInstance,
+      handler: () => {
+        if (copyPageActionTarget()) {
+          return;
+        }
+        void copyInstance();
+      },
     },
     {
       name: "paste",
       description: "Paste copied instance",
       category: "Navigator",
-      handler: emitPaste,
+      handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Pasting is only allowed in design mode.",
+          })
+        ) {
+          void emitPaste();
+        }
+      },
     },
     {
       name: "cut",
       description: "Cut selected instance",
       category: "Navigator",
-      handler: cutInstance,
+      handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Cutting is only allowed in design mode.",
+          })
+        ) {
+          void cutInstance();
+        }
+      },
     },
     {
       name: "toggleShow",
       description: "Toggle instance visibility",
       category: "Navigator",
       handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Toggling visibility is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
         const instancePath = $selectedInstancePath.get();
         if (instancePath?.[0]) {
           toggleInstanceShow(instancePath[0].instance.id);
@@ -346,18 +486,23 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "deleteInstanceBuilder",
-      label: "Delete Instance",
-      description: "Delete selected instance",
+      label: "Delete",
+      description: "Delete selected page or instance",
       category: "Navigator",
       defaultHotkeys: ["backspace", "delete"],
       // See "deleteInstanceCanvas" for details on why the command is separated for the canvas and builder.
       disableHotkeyOutsideApp: true,
       disableOnInputLikeControls: true,
-      handler: deleteSelectedInstance,
+      handler: () => {
+        if (requestSelectedPageItemDelete()) {
+          return;
+        }
+        deleteSelectedInstance();
+      },
     },
     {
       name: "duplicateInstance",
-      description: "Duplicate selected instance",
+      description: "Duplicate selected page or instance",
       category: "Navigator",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
@@ -365,8 +510,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         if (project === undefined) {
           return;
         }
-        if ($isDesignMode.get() === false) {
-          builderApi.toast.info("Duplicating is only allowed in design mode.");
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Duplicating is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
+        if (duplicatePageActionTarget()) {
           return;
         }
         const instancePath = $selectedInstancePath.get();
@@ -448,6 +600,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       category: "Navigator",
       defaultHotkeys: ["meta+e", "ctrl+e"],
       handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Renaming is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
         const instancePath = $selectedInstancePath.get();
         if (instancePath === undefined) {
           return;
@@ -464,6 +624,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       defaultHotkeys: ["meta+alt+g", "ctrl+alt+g"],
       keepCommandPanelOpen: true,
       handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Wrapping is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
         showWrapComponentsList();
       },
     },
@@ -472,7 +640,16 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       description: "Remove parent wrapper",
       category: "Navigator",
       defaultHotkeys: ["meta+shift+g", "ctrl+shift+g"],
-      handler: () => unwrapInstance(),
+      handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Unwrapping is only allowed in design mode.",
+          })
+        ) {
+          unwrapInstance();
+        }
+      },
     },
     {
       name: "convert",
@@ -481,6 +658,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       category: "Navigator",
       keepCommandPanelOpen: true,
       handler: () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Converting is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
         showConvertComponentsList();
       },
     },
@@ -490,6 +675,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       label: "Paste HTML with Tailwind classes",
       description: "Convert Tailwind to CSS",
       handler: async () => {
+        if (
+          guardDesignModeCommand({
+            isDesignMode: $isDesignMode.get(),
+            message: "Pasting HTML is only allowed in design mode.",
+          }) === false
+        ) {
+          return;
+        }
         const html = await navigator.clipboard.readText();
         const parseResult = generateFragmentFromHtml(html);
         const { skippedSelectors } = parseResult;

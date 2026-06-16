@@ -3,6 +3,8 @@ import { fieldDefaultValues } from "./page-settings/page-settings";
 import { __testing__ } from "./template-settings";
 import type { Values } from "./page-settings/shared";
 
+const { getEditorCreatePageValues } = __testing__;
+
 const createValues = (values: Partial<Values>): Values => ({
   ...fieldDefaultValues,
   ...values,
@@ -11,7 +13,7 @@ const createValues = (values: Partial<Values>): Values => ({
 describe("template settings", () => {
   test("filters content mode page creation values without dropping custom metadata", () => {
     const initialValues = createValues({
-      path: "template",
+      path: "/template",
       title: "boundTitle",
       description: `"Template description"`,
       excludePageFromSearch: "boundExclude",
@@ -21,7 +23,7 @@ describe("template settings", () => {
       customMetas: [{ property: "og:type", content: "boundType" }],
     });
     const values = createValues({
-      path: "edited",
+      path: "/edited",
       name: "Edited",
       title: `"Edited title"`,
       description: `"Edited description"`,
@@ -32,14 +34,24 @@ describe("template settings", () => {
       customMetas: [{ property: "og:type", content: `"article"` }],
     });
 
-    expect(
-      __testing__.getEditorCreatePageValues(initialValues, values)
-    ).toEqual({
+    expect(getEditorCreatePageValues(initialValues, values)).toEqual({
       name: "Edited",
-      path: "edited",
+      path: "/edited",
       description: `"Edited description"`,
       language: `"fr-FR"`,
       customMetas: [{ property: "og:type", content: `"article"` }],
+    });
+  });
+
+  test("does not allow editor page path override when initial path is invalid", () => {
+    const editorValues = getEditorCreatePageValues(
+      createValues({ path: "template" }),
+      createValues({ path: "/edited" })
+    );
+    expect(editorValues.path).toBeUndefined();
+    expect(editorValues).toMatchObject({
+      name: "Untitled",
+      customMetas: [{ property: "", content: `""` }],
     });
   });
 });

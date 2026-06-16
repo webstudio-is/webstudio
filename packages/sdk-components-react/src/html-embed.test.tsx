@@ -9,7 +9,7 @@ import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { __testing__, HtmlEmbed } from "./html-embed";
 import { cartesian } from "./test-utils/cartesian";
 
-const scriptTestIdPrefix = __testing__.scriptTestIdPrefix;
+const { scriptTestIdPrefix } = __testing__;
 const SCRIPT_TEST_ID = "script-a";
 const SCRIPT_PROCESSED_TEST_ID = `${scriptTestIdPrefix}${SCRIPT_TEST_ID}`;
 

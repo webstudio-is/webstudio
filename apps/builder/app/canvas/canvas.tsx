@@ -1,4 +1,11 @@
-import { useMemo, useEffect, useState, useLayoutEffect, useRef } from "react";
+import {
+  useMemo,
+  useEffect,
+  useState,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+} from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
 import { type Instances, coreMetas } from "@webstudio-is/sdk";
@@ -6,7 +13,7 @@ import { coreTemplates } from "@webstudio-is/sdk/core-templates";
 import type { Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader, wsVideoLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import * as baseComponents from "@webstudio-is/sdk-components-react";
+import * as baseComponents from "@webstudio-is/sdk-components-react/components";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { hooks as baseComponentHooks } from "@webstudio-is/sdk-components-react/hooks";
 import * as baseComponentTemplates from "@webstudio-is/sdk-components-react/templates";
@@ -52,7 +59,7 @@ import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
   initCopyPaste,
   initCopyPasteForContentEditMode,
-} from "~/shared/copy-paste/init-copy-paste";
+} from "~/shared/copy-paste/copy-paste";
 import { inflateInstance, subscribeInflator } from "./inflator";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
@@ -208,7 +215,7 @@ const DesignMode = () => {
   return null;
 };
 
-const ContentEditMode = () => {
+const ContentEditMode = (): ReactNode => {
   const debounceEffect = useDebounceEffect();
   const ref = useRef<undefined | Instances>(undefined);
 
@@ -238,11 +245,14 @@ const ContentEditMode = () => {
     subscribeFontLoadingDone(options);
     initCopyPasteForContentEditMode(options);
     subscribeModifierKeys(options);
+    // E2E tests wait for this after opening content mode before editing canvas text.
+    document.body.dataset.wsContentEditMode = "ready";
     return () => {
+      delete document.body.dataset.wsContentEditMode;
       abortController.abort();
     };
   }, []);
-  return null;
+  return;
 };
 
 export const Canvas = () => {

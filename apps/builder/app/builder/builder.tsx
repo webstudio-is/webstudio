@@ -75,7 +75,7 @@ import type { User } from "~/shared/db/user.server";
 import {
   initCopyPaste,
   initCopyPasteForContentEditMode,
-} from "~/shared/copy-paste/init-copy-paste";
+} from "~/shared/copy-paste/copy-paste";
 import { useInertHandlers } from "./shared/inert-handlers";
 import { TextToolbar } from "./features/workspace/canvas-tools/text-toolbar";
 import { RemoteDialog } from "./features/help/remote-dialog";

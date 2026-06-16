@@ -17,20 +17,16 @@ import {
   type Resource,
   type WsComponentMeta,
   type Pages,
-  getStyleDeclKey,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
-  decodeDataSourceVariable,
-  encodeDataSourceVariable,
-  transpileExpression,
   getAllPages,
   getHomePage,
   findPageByIdOrPath,
   ROOT_INSTANCE_ID,
   portalComponent,
   collectionComponent,
-  Prop,
-  Props,
+  type Prop,
+  type Props,
   elementComponent,
   tags,
   blockTemplateComponent,
@@ -71,7 +67,7 @@ import {
   wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree-utils";
 import {
-  insertStyleSources,
+  insertTokenStyleSources,
   insertPortalLocalStyleSources,
   insertLocalStyleSourcesWithNewIds,
   deleteLocalStyleSourcesMutable,
@@ -92,6 +88,7 @@ import { selectInstance } from "./nano-states";
 import { findClosestInstanceMatchingFragment } from "./matcher";
 import {
   findAvailableVariables,
+  replaceDataSourcesInExpression,
   restoreExpressionVariables,
   unsetExpressionVariables,
 } from "./data-variables";
@@ -102,6 +99,10 @@ import {
   isRichTextContent,
 } from "./content-model";
 import type { Project } from "@webstudio-is/project";
+import {
+  getContentModeCapabilities,
+  isContentModeCopyableProp,
+} from "@webstudio-is/project/content-mode-permissions";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $instanceTags } from "~/builder/features/style-panel/shared/model";
 import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
@@ -112,6 +113,29 @@ import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
  */
 export const unwrap = <Value>(value: Value) =>
   isDraft(value) ? current(value) : value;
+
+export const canDeleteInstanceInContentMode = ({
+  instanceSelector,
+  instances,
+}: {
+  instanceSelector: InstanceSelector;
+  instances: Instances;
+}) => {
+  const blockSelector = findBlockSelector(instanceSelector, instances);
+  if (blockSelector === undefined) {
+    return false;
+  }
+
+  const isDirectBlockChild =
+    instanceSelector.length - blockSelector.length === 1;
+  if (isDirectBlockChild === false) {
+    return false;
+  }
+
+  return (
+    instances.get(instanceSelector[0])?.component !== blockTemplateComponent
+  );
+};
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
   const selectedPage = $selectedPage.get();
@@ -481,18 +505,14 @@ export const reparentInstanceMutable = (
       ? initialSourceInstancePath[1].instance.id
       : undefined;
   const targetSlot = data.instances.get(dropTarget.parentSelector[0]);
-  if (
+  const isSameSharedSlotFragment =
     sourceFragmentId !== undefined &&
     targetSlot?.component === "Slot" &&
     targetSlot.children[0]?.type === "id" &&
-    targetSlot.children[0].value === sourceFragmentId
-  ) {
-    return sourceInstanceSelector;
-  }
-  const sourceInstancePath = detachSharedSlotContentMutable(
-    data,
-    initialSourceInstancePath ?? []
-  );
+    targetSlot.children[0].value === sourceFragmentId;
+  const sourceInstancePath = isSameSharedSlotFragment
+    ? (initialSourceInstancePath ?? [])
+    : detachSharedSlotContentMutable(data, initialSourceInstancePath ?? []);
   sourceInstanceSelector = sourceInstancePath[0]?.instanceSelector;
   if (sourceInstanceSelector === undefined) {
     return;
@@ -597,6 +617,21 @@ export const reparentInstance = (
   });
 };
 
+const countInstanceChildReferences = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  let count = 0;
+  for (const instance of instances.values()) {
+    for (const child of instance.children) {
+      if (child.type === "id" && child.value === instanceId) {
+        count += 1;
+      }
+    }
+  }
+  return count;
+};
+
 export const deleteInstanceMutable = (
   data: Omit<WebstudioData, "pages">,
   instancePath: undefined | InstancePath
@@ -604,7 +639,6 @@ export const deleteInstanceMutable = (
   if (instancePath === undefined) {
     return false;
   }
-  instancePath = detachSharedSlotContentMutable(data, instancePath);
   const {
     instances,
     props,
@@ -626,7 +660,8 @@ export const deleteInstanceMutable = (
   if (
     parentInstance?.component === "Fragment" &&
     parentInstance.children.length === 1 &&
-    grandparentInstance
+    grandparentInstance &&
+    countInstanceChildReferences(instances, parentInstance.id) < 2
   ) {
     targetInstance = parentInstance;
     parentInstance = grandparentInstance;
@@ -681,21 +716,6 @@ export const deleteInstanceMutable = (
     styles,
   });
   return true;
-};
-
-const countInstanceChildReferences = (
-  instances: Instances,
-  instanceId: Instance["id"]
-) => {
-  let count = 0;
-  for (const instance of instances.values()) {
-    for (const child of instance.children) {
-      if (child.type === "id" && child.value === instanceId) {
-        count += 1;
-      }
-    }
-  }
-  return count;
 };
 
 const cloneSharedSlotFragmentMutable = (
@@ -1264,29 +1284,12 @@ export const deleteSelectedInstance = () => {
   }
 
   if ($isContentMode.get()) {
-    // In content mode we are allowing to delete childen of the editable block
-    const editableInstanceSelector = findBlockSelector(
-      selectedInstanceSelector,
-      instances
-    );
-    if (editableInstanceSelector === undefined) {
-      builderApi.toast.info("You can't delete this instance in conent mode.");
-      return;
-    }
-
-    const isChildOfBlock =
-      selectedInstanceSelector.length - editableInstanceSelector.length === 1;
-
-    const isTemplateInstance =
-      instances.get(selectedInstanceSelector[0])?.component ===
-      blockTemplateComponent;
-
-    if (isTemplateInstance) {
-      builderApi.toast.info("You can't delete this instance in content mode.");
-      return;
-    }
-
-    if (!isChildOfBlock) {
+    if (
+      canDeleteInstanceInContentMode({
+        instanceSelector: selectedInstanceSelector,
+        instances,
+      }) === false
+    ) {
       builderApi.toast.info("You can't delete this instance in content mode.");
       return;
     }
@@ -1564,46 +1567,7 @@ export const extractWebstudioFragment = (
   };
 };
 
-const replaceDataSources = (
-  code: string,
-  replacements: Map<DataSource["id"], DataSource["id"]>
-) => {
-  return transpileExpression({
-    expression: code,
-    replaceVariable: (identifier) => {
-      const dataSourceId = decodeDataSourceVariable(identifier);
-      if (dataSourceId === undefined) {
-        return;
-      }
-      return encodeDataSourceVariable(
-        replacements.get(dataSourceId) ?? dataSourceId
-      );
-    },
-  });
-};
-
-export const insertWebstudioFragmentCopy = ({
-  data,
-  fragment,
-  availableVariables,
-  projectId,
-  conflictResolution = "theirs",
-  onBreakpointLimitMerge,
-}: {
-  data: Omit<WebstudioData, "pages">;
-  fragment: WebstudioFragment;
-  availableVariables: DataSource[];
-  projectId: Project["id"];
-  conflictResolution?: ConflictResolution;
-  onBreakpointLimitMerge?: () => void;
-}) => {
-  const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
-  const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
-  const newDataIds = {
-    newInstanceIds,
-    newDataSourceIds,
-  };
-
+const getFragmentInstancesData = (fragment: WebstudioFragment) => {
   const fragmentInstances: Instances = new Map();
   const portalContentRootIds = new Set<Instance["id"]>();
   for (const instance of fragment.instances) {
@@ -1616,6 +1580,114 @@ export const insertWebstudioFragmentCopy = ({
       }
     }
   }
+  return { fragmentInstances, portalContentRootIds };
+};
+
+const insertFragmentAssetsMutable = ({
+  fragment,
+  projectId,
+  assets,
+}: {
+  fragment: WebstudioFragment;
+  projectId: Project["id"];
+  assets: WebstudioData["assets"];
+}) => {
+  for (const asset of fragment.assets) {
+    // asset can be already present if pasting to the same project
+    if (assets.has(asset.id) === false) {
+      // we use the same asset.id so the references are preserved
+      assets.set(asset.id, { ...asset, projectId });
+    }
+  }
+};
+
+const insertFragmentBreakpointsMutable = ({
+  fragment,
+  breakpoints,
+  onBreakpointLimitMerge,
+}: {
+  fragment: WebstudioFragment;
+  breakpoints: Breakpoints;
+  onBreakpointLimitMerge?: () => void;
+}) => {
+  let didMergeBreakpointsDueToLimit = false;
+  const mergedBreakpointIds = buildMergedBreakpointIds(
+    fragment.breakpoints,
+    breakpoints,
+    {
+      maxBreakpointCount: maxBreakpoints,
+      onBreakpointMergedDueToLimit: () => {
+        didMergeBreakpointsDueToLimit = true;
+      },
+    }
+  );
+  if (didMergeBreakpointsDueToLimit) {
+    onBreakpointLimitMerge?.();
+  }
+  for (const newBreakpoint of fragment.breakpoints) {
+    if (mergedBreakpointIds.has(newBreakpoint.id) === false) {
+      breakpoints.set(newBreakpoint.id, newBreakpoint);
+    }
+  }
+  return mergedBreakpointIds;
+};
+
+const getFragmentContentModeCapabilities = ({
+  fragment,
+  fragmentInstances,
+  styleSources,
+}: {
+  fragment: WebstudioFragment;
+  fragmentInstances: Instances;
+  styleSources: WebstudioData["styleSources"];
+}) =>
+  getContentModeCapabilities({
+    instances: fragmentInstances,
+    metas: $registeredComponentMetas.get(),
+    props: new Map(fragment.props.map((prop) => [prop.id, prop])),
+    styleSources,
+    contentRootIds: new Set(
+      fragment.children
+        .filter((child) => child.type === "id")
+        .map((child) => child.value)
+    ),
+  });
+
+export const __testing__ = {
+  getFragmentInstancesData,
+  insertFragmentAssetsMutable,
+  insertFragmentBreakpointsMutable,
+  getFragmentContentModeCapabilities,
+};
+
+export const insertWebstudioFragmentCopy = ({
+  data,
+  fragment,
+  availableVariables,
+  projectId,
+  conflictResolution = "theirs",
+  onBreakpointLimitMerge,
+  // In content mode, insertion keeps content-editable instance data, creates
+  // local styles for inserted instances, and avoids data/resource records.
+  contentMode = false,
+}: {
+  data: Omit<WebstudioData, "pages">;
+  fragment: WebstudioFragment;
+  availableVariables: DataSource[];
+  projectId: Project["id"];
+  conflictResolution?: ConflictResolution;
+  onBreakpointLimitMerge?: () => void;
+  contentMode?: boolean;
+}) => {
+  const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
+  const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
+  const newDataIds = {
+    newInstanceIds,
+    newDataSourceIds,
+  };
+
+  const { fragmentInstances, portalContentRootIds } =
+    getFragmentInstancesData(fragment);
 
   const {
     assets,
@@ -1641,69 +1713,34 @@ export const insertWebstudioFragmentCopy = ({
    * and those ids are used instead
    */
 
-  // insert assets
+  const mergedBreakpointIds =
+    contentMode === false
+      ? insertFragmentBreakpointsMutable({
+          fragment,
+          breakpoints,
+          onBreakpointLimitMerge,
+        })
+      : new Map<StyleDecl["breakpointId"], StyleDecl["breakpointId"]>();
 
-  for (const asset of fragment.assets) {
-    // asset can be already present if pasting to the same project
-    if (assets.has(asset.id) === false) {
-      // we use the same asset.id so the references are preserved
-      assets.set(asset.id, { ...asset, projectId });
-    }
-  }
+  insertFragmentAssetsMutable({ fragment, projectId, assets });
 
-  // merge breakpoints
+  let styleSourceIdMap = new Map<
+    StyleDecl["styleSourceId"],
+    StyleDecl["styleSourceId"]
+  >();
 
-  let didMergeBreakpointsDueToLimit = false;
-  const mergedBreakpointIds = buildMergedBreakpointIds(
-    fragment.breakpoints,
-    breakpoints,
-    {
-      maxBreakpointCount: maxBreakpoints,
-      onBreakpointMergedDueToLimit: () => {
-        didMergeBreakpointsDueToLimit = true;
-      },
-    }
-  );
-  if (didMergeBreakpointsDueToLimit) {
-    onBreakpointLimitMerge?.();
-  }
-  for (const newBreakpoint of fragment.breakpoints) {
-    if (mergedBreakpointIds.has(newBreakpoint.id) === false) {
-      breakpoints.set(newBreakpoint.id, newBreakpoint);
-    }
-  }
+  if (contentMode === false) {
+    // insert tokens with their styles
 
-  // insert tokens with their styles
-
-  const { styleSourceIds, styleSourceIdMap, updatedStyleSources } =
-    insertStyleSources({
+    styleSourceIdMap = insertTokenStyleSources({
       fragmentStyleSources: fragment.styleSources,
       fragmentStyles: fragment.styles,
-      existingStyleSources: styleSources,
-      existingStyles: styles,
+      styleSources,
+      styles,
       breakpoints,
       mergedBreakpointIds,
       conflictResolution,
     });
-
-  // Update styleSources map with the new tokens
-  for (const [id, styleSource] of updatedStyleSources) {
-    styleSources.set(id, styleSource);
-  }
-
-  for (const styleDecl of fragment.styles) {
-    if (styleSourceIds.has(styleDecl.styleSourceId)) {
-      const { breakpointId } = styleDecl;
-      const newStyleDecl: StyleDecl = {
-        ...styleDecl,
-        breakpointId: mergedBreakpointIds.get(breakpointId) ?? breakpointId,
-        // Remap the styleSourceId to the new token ID
-        styleSourceId:
-          styleSourceIdMap.get(styleDecl.styleSourceId) ??
-          styleDecl.styleSourceId,
-      };
-      styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
-    }
   }
 
   let portalContentIds = new Set<Instance["id"]>();
@@ -1725,29 +1762,31 @@ export const insertWebstudioFragmentCopy = ({
       continue;
     }
 
-    const usedResourceIds = new Set<Resource["id"]>();
-    for (const dataSource of fragment.dataSources) {
-      // insert only data sources within portal content
-      if (instanceIds.has(dataSource.scopeInstanceId ?? "")) {
-        dataSources.set(dataSource.id, dataSource);
-        if (dataSource.type === "resource") {
-          usedResourceIds.add(dataSource.resourceId);
+    if (contentMode === false) {
+      const usedResourceIds = new Set<Resource["id"]>();
+      for (const dataSource of fragment.dataSources) {
+        // insert only data sources within portal content
+        if (instanceIds.has(dataSource.scopeInstanceId ?? "")) {
+          dataSources.set(dataSource.id, dataSource);
+          if (dataSource.type === "resource") {
+            usedResourceIds.add(dataSource.resourceId);
+          }
         }
       }
-    }
 
-    for (const prop of fragment.props) {
-      if (instanceIds.has(prop.instanceId)) {
-        props.set(prop.id, prop);
-        if (prop.type === "resource") {
-          usedResourceIds.add(prop.value);
+      for (const prop of fragment.props) {
+        if (instanceIds.has(prop.instanceId)) {
+          props.set(prop.id, prop);
+          if (prop.type === "resource") {
+            usedResourceIds.add(prop.value);
+          }
         }
       }
-    }
 
-    for (const resource of fragment.resources) {
-      if (usedResourceIds.has(resource.id)) {
-        resources.set(resource.id, resource);
+      for (const resource of fragment.resources) {
+        if (usedResourceIds.has(resource.id)) {
+          resources.set(resource.id, resource);
+        }
       }
     }
 
@@ -1757,18 +1796,20 @@ export const insertWebstudioFragmentCopy = ({
       }
     }
 
-    // insert local style sources with their styles
+    if (contentMode === false) {
+      // insert local style sources with their styles
 
-    insertPortalLocalStyleSources({
-      fragmentStyleSources: fragment.styleSources,
-      fragmentStyleSourceSelections: fragment.styleSourceSelections,
-      fragmentStyles: fragment.styles,
-      instanceIds,
-      styleSources,
-      styleSourceSelections,
-      styles,
-      mergedBreakpointIds,
-    });
+      insertPortalLocalStyleSources({
+        fragmentStyleSources: fragment.styleSources,
+        fragmentStyleSourceSelections: fragment.styleSourceSelections,
+        fragmentStyles: fragment.styles,
+        instanceIds,
+        styleSources,
+        styleSourceSelections,
+        styles,
+        mergedBreakpointIds,
+      });
+    }
   }
 
   /**
@@ -1796,37 +1837,57 @@ export const insertWebstudioFragmentCopy = ({
     maskedIdByName.set(dataSource.name, dataSource.id);
   }
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
-  for (let dataSource of fragment.dataSources) {
-    const scopeInstanceId = dataSource.scopeInstanceId ?? "";
-    if (scopeInstanceId === ROOT_INSTANCE_ID) {
-      // add global variable only if not exist already
-      if (
-        dataSources.has(dataSource.id) === false &&
-        maskedIdByName.has(dataSource.name) === false
-      ) {
+  if (contentMode === false) {
+    for (let dataSource of fragment.dataSources) {
+      const scopeInstanceId = dataSource.scopeInstanceId ?? "";
+      if (scopeInstanceId === ROOT_INSTANCE_ID) {
+        // add global variable only if not exist already
+        if (
+          dataSources.has(dataSource.id) === false &&
+          maskedIdByName.has(dataSource.name) === false
+        ) {
+          dataSources.set(dataSource.id, dataSource);
+        }
+        continue;
+      }
+      // insert only data sources within portal content
+      if (fragmentInstanceIds.has(scopeInstanceId)) {
+        const newDataSourceId = nanoid();
+        newDataSourceIds.set(dataSource.id, newDataSourceId);
+        dataSource = structuredClone(unwrap(dataSource));
+        dataSource.id = newDataSourceId;
+        dataSource.scopeInstanceId =
+          newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId;
+        if (dataSource.type === "resource") {
+          const newResourceId = nanoid();
+          newResourceIds.set(dataSource.resourceId, newResourceId);
+          dataSource.resourceId = newResourceId;
+        }
         dataSources.set(dataSource.id, dataSource);
       }
-      continue;
-    }
-    // insert only data sources within portal content
-    if (fragmentInstanceIds.has(scopeInstanceId)) {
-      const newDataSourceId = nanoid();
-      newDataSourceIds.set(dataSource.id, newDataSourceId);
-      dataSource = structuredClone(unwrap(dataSource));
-      dataSource.id = newDataSourceId;
-      dataSource.scopeInstanceId =
-        newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId;
-      if (dataSource.type === "resource") {
-        const newResourceId = nanoid();
-        newResourceIds.set(dataSource.resourceId, newResourceId);
-        dataSource.resourceId = newResourceId;
-      }
-      dataSources.set(dataSource.id, dataSource);
     }
   }
 
+  const fragmentContentModeCapabilities =
+    contentMode === false
+      ? undefined
+      : getFragmentContentModeCapabilities({
+          fragment,
+          fragmentInstances,
+          styleSources,
+        });
   for (let prop of fragment.props) {
     if (fragmentInstanceIds.has(prop.instanceId) === false) {
+      continue;
+    }
+    if (
+      contentMode &&
+      (fragmentContentModeCapabilities === undefined ||
+        isContentModeCopyableProp({
+          capabilities: fragmentContentModeCapabilities,
+          prop,
+        }) === false)
+    ) {
       continue;
     }
     prop = structuredClone(unwrap(prop));
@@ -1837,7 +1898,7 @@ export const insertWebstudioFragmentCopy = ({
         expression: prop.value,
         maskedIdByName,
       });
-      prop.value = replaceDataSources(prop.value, newDataSourceIds);
+      prop.value = replaceDataSourcesInExpression(prop.value, newDataSourceIds);
     }
     if (prop.type === "action") {
       for (const value of prop.value) {
@@ -1845,7 +1906,10 @@ export const insertWebstudioFragmentCopy = ({
           expression: value.code,
           maskedIdByName,
         });
-        value.code = replaceDataSources(value.code, newDataSourceIds);
+        value.code = replaceDataSourcesInExpression(
+          value.code,
+          newDataSourceIds
+        );
       }
     }
     if (prop.type === "parameter") {
@@ -1859,44 +1923,55 @@ export const insertWebstudioFragmentCopy = ({
     props.set(prop.id, prop);
   }
 
-  for (let resource of fragment.resources) {
-    if (newResourceIds.has(resource.id) === false) {
-      continue;
-    }
-    resource = structuredClone(unwrap(resource));
-    resource.id = newResourceIds.get(resource.id) ?? resource.id;
-    resource.url = restoreExpressionVariables({
-      expression: resource.url,
-      maskedIdByName,
-    });
-    resource.url = replaceDataSources(resource.url, newDataSourceIds);
-    for (const header of resource.headers) {
-      header.value = restoreExpressionVariables({
-        expression: header.value,
+  if (contentMode === false) {
+    for (let resource of fragment.resources) {
+      if (newResourceIds.has(resource.id) === false) {
+        continue;
+      }
+      resource = structuredClone(unwrap(resource));
+      resource.id = newResourceIds.get(resource.id) ?? resource.id;
+      resource.url = restoreExpressionVariables({
+        expression: resource.url,
         maskedIdByName,
       });
-      header.value = replaceDataSources(header.value, newDataSourceIds);
-    }
-    if (resource.searchParams) {
-      for (const searchParam of resource.searchParams) {
-        searchParam.value = restoreExpressionVariables({
-          expression: searchParam.value,
+      resource.url = replaceDataSourcesInExpression(
+        resource.url,
+        newDataSourceIds
+      );
+      for (const header of resource.headers) {
+        header.value = restoreExpressionVariables({
+          expression: header.value,
           maskedIdByName,
         });
-        searchParam.value = replaceDataSources(
-          searchParam.value,
+        header.value = replaceDataSourcesInExpression(
+          header.value,
           newDataSourceIds
         );
       }
+      if (resource.searchParams) {
+        for (const searchParam of resource.searchParams) {
+          searchParam.value = restoreExpressionVariables({
+            expression: searchParam.value,
+            maskedIdByName,
+          });
+          searchParam.value = replaceDataSourcesInExpression(
+            searchParam.value,
+            newDataSourceIds
+          );
+        }
+      }
+      if (resource.body) {
+        resource.body = restoreExpressionVariables({
+          expression: resource.body,
+          maskedIdByName,
+        });
+        resource.body = replaceDataSourcesInExpression(
+          resource.body,
+          newDataSourceIds
+        );
+      }
+      resources.set(resource.id, resource);
     }
-    if (resource.body) {
-      resource.body = restoreExpressionVariables({
-        expression: resource.body,
-        maskedIdByName,
-      });
-      resource.body = replaceDataSources(resource.body, newDataSourceIds);
-    }
-    resources.set(resource.id, resource);
   }
 
   for (let instance of fragment.instances) {
@@ -1912,27 +1987,41 @@ export const insertWebstudioFragmentCopy = ({
             expression: child.value,
             maskedIdByName,
           });
-          child.value = replaceDataSources(child.value, newDataSourceIds);
+          child.value = replaceDataSourcesInExpression(
+            child.value,
+            newDataSourceIds
+          );
         }
       }
       instances.set(instance.id, instance);
     }
   }
 
-  // insert local styles with new ids
-
-  insertLocalStyleSourcesWithNewIds({
+  const localStyleSourceInput = {
     fragmentStyleSources: fragment.styleSources,
     fragmentStyleSourceSelections: fragment.styleSourceSelections,
     fragmentStyles: fragment.styles,
     fragmentInstanceIds,
     newInstanceIds,
-    styleSourceIdMap,
     styleSources,
     styleSourceSelections,
     styles,
-    mergedBreakpointIds,
-  });
+  };
+  if (contentMode) {
+    insertLocalStyleSourcesWithNewIds({
+      ...localStyleSourceInput,
+      contentMode: true,
+      breakpoints,
+    });
+  } else {
+    insertLocalStyleSourcesWithNewIds({
+      ...localStyleSourceInput,
+      contentMode: false,
+      styleSourceIdMap,
+      mergedBreakpointIds,
+      breakpoints,
+    });
+  }
 
   return newDataIds;
 };

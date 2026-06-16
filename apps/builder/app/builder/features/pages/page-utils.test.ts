@@ -7,6 +7,7 @@ import {
   isRootFolder,
   type Folder,
   ROOT_FOLDER_ID,
+  ROOT_INSTANCE_ID,
   type DataSource,
   type Page,
   SYSTEM_VARIABLE_ID,
@@ -25,6 +26,7 @@ import {
   isPathAvailable,
   reparentPageOrFolderMutable,
   deletePageMutable,
+  instantiateTemplate,
 } from "./page-utils";
 import { $dataSourceVariables } from "~/shared/nano-states";
 import {
@@ -1110,6 +1112,26 @@ describe("duplicateFolder", () => {
     expect(newFolder?.slug).toBe("folder1-2");
   });
 
+  test("should preserve empty folder slugs when duplicating", async () => {
+    const { pages: pagesData, register, f } = createPages();
+    register([f("folder1", "", []), f("folder2", "", [])]);
+
+    $pages.set(pagesData);
+    updateCurrentSystem(initialSystem);
+
+    const { duplicateFolder } = await import("./page-utils");
+    const newFolderId = duplicateFolder("folder1");
+
+    expect(newFolderId).toBeDefined();
+    const updatedPages = $pages.get()!;
+    const newFolder =
+      newFolderId === undefined
+        ? undefined
+        : updatedPages.folders.get(newFolderId);
+    expect(newFolder?.name).toBe("folder1 (1)");
+    expect(newFolder?.slug).toBe("");
+  });
+
   test("should register duplicated folder in parent folder", async () => {
     const { pages: pagesData, register, f } = createPages();
     register([f("folder1", [])]);
@@ -1169,6 +1191,24 @@ describe("duplicateTemplate", () => {
     $instances.set(
       new Map([
         [
+          ROOT_INSTANCE_ID,
+          {
+            type: "instance",
+            id: ROOT_INSTANCE_ID,
+            component: "Body",
+            children: [{ type: "id", value: "rootBoxId" }],
+          },
+        ],
+        [
+          "rootBoxId",
+          {
+            type: "instance",
+            id: "rootBoxId",
+            component: "Box",
+            children: [],
+          },
+        ],
+        [
           "templateRootId",
           {
             type: "instance",
@@ -1192,6 +1232,7 @@ describe("duplicateTemplate", () => {
     const newTemplateId = duplicateTemplate("templateId");
 
     expect(newTemplateId).toBeDefined();
+    expect($instances.get().size).toEqual(4);
     const newTemplate = $pages.get()?.pageTemplates?.get(newTemplateId ?? "");
     const newVariable = Array.from($dataSources.get().values()).find(
       (item) => item.name === "templateVariable" && item.id !== variableId
@@ -1211,6 +1252,94 @@ describe("duplicateTemplate", () => {
             content: `"Value: " + ${newVariableIdentifier}`,
           },
         ],
+      },
+    });
+  });
+});
+
+describe("instantiateTemplate", () => {
+  $project.set({ id: "projectId" } as Project);
+
+  test("uses content-safe copy when creating page from template in content mode", () => {
+    const { pages: pagesData } = createPages();
+    pagesData.pageTemplates = new Map([
+      [
+        "templateId",
+        {
+          id: "templateId",
+          name: "Template",
+          title: `"Template title"`,
+          rootInstanceId: "templateRootId",
+          meta: {
+            description: `"Description"`,
+            excludePageFromSearch: "false",
+            language: `"en-US"`,
+            socialImageAssetId: "assetId",
+            socialImageUrl: `"https://example.com/image.png"`,
+            custom: [{ property: "og:type", content: `"website"` }],
+            auth: { method: "basic", login: "user", password: "password" },
+            content: `"text"`,
+            documentType: "text",
+            redirect: `"/redirect"`,
+            status: "404",
+          },
+        },
+      ],
+    ]);
+
+    $pages.set(pagesData);
+    $instances.set(
+      new Map([
+        [
+          "rootInstanceId",
+          {
+            type: "instance",
+            id: "rootInstanceId",
+            component: "Body",
+            children: [],
+          },
+        ],
+        [
+          "templateRootId",
+          {
+            type: "instance",
+            id: "templateRootId",
+            component: "Body",
+            children: [],
+          },
+        ],
+      ])
+    );
+    $props.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+    $breakpoints.set(new Map());
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $styles.set(new Map());
+    $assets.set(new Map());
+
+    const pageId = instantiateTemplate({
+      templateId: "templateId",
+      overrides: { name: "New page", path: "/new-page" },
+      folderId: pagesData.rootFolderId,
+      contentMode: true,
+    });
+
+    const page = $pages.get()?.pages.get(pageId ?? "");
+    expect(page).toEqual({
+      id: pageId,
+      name: "New page",
+      path: "/new-page",
+      title: `"Template title"`,
+      rootInstanceId: expect.not.stringMatching("templateRootId"),
+      meta: {
+        description: `"Description"`,
+        excludePageFromSearch: "false",
+        language: `"en-US"`,
+        socialImageAssetId: "assetId",
+        socialImageUrl: `"https://example.com/image.png"`,
+        custom: [{ property: "og:type", content: `"website"` }],
       },
     });
   });

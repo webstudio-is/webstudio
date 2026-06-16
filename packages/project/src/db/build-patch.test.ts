@@ -8,7 +8,11 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { Patch } from "immer";
-import { patchBuild, type BuildPatchTransaction } from "./build-patch";
+import {
+  patchBuild,
+  patchLoadedBuild,
+  type BuildPatchTransaction,
+} from "./build-patch";
 import {
   createBuildPatchUpdate,
   singlePlayerVersionMismatchResult,
@@ -91,6 +95,44 @@ const transaction = (
 });
 
 describe("patchBuild", () => {
+  test("patches an already loaded build and returns the updated build row", async () => {
+    let didLoadBuild = false;
+    server.use(
+      db.get("Build", () => {
+        didLoadBuild = true;
+        return json([buildRow]);
+      }),
+      db.patch("Build", () => empty({ headers: { "Content-Range": "*/1" } }))
+    );
+
+    const result = await patchLoadedBuild(
+      {
+        build: buildRow,
+        buildId: "build-1",
+        projectId: "project-1",
+        clientVersion: 3,
+        transactions: [transaction()],
+      },
+      createContext()
+    );
+
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") {
+      expect(result.version).toBe(4);
+      expect(result.build.version).toBe(4);
+      expect(JSON.parse(result.build.props)).toEqual([
+        {
+          id: "prop-1",
+          instanceId: "body-1",
+          name: "title",
+          type: "string",
+          value: "New title",
+        },
+      ]);
+    }
+    expect(didLoadBuild).toBe(false);
+  });
+
   test("applies transactions, validates data, and updates build with optimistic version guard", async () => {
     let updatedBuild: unknown;
     server.use(
@@ -205,6 +247,55 @@ describe("patchBuild", () => {
         (page: { id: string }) => page.id === "page-2"
       )?.path
     ).toBe("/company");
+  });
+
+  test("applies data source variable additions", async () => {
+    const result = await createBuildPatchUpdate({
+      build: buildRow,
+      clientVersion: 3,
+      transactions: [
+        transaction({
+          payload: [
+            {
+              namespace: "dataSources",
+              patches: [
+                {
+                  op: "add",
+                  path: ["variable-1"],
+                  value: {
+                    id: "variable-1",
+                    scopeInstanceId: "body-1",
+                    name: "title",
+                    type: "variable",
+                    value: { type: "string", value: "" },
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(result).toMatchObject({
+      status: "ok",
+      nextVersion: 4,
+      update: {
+        lastTransactionId: "tx-1",
+        version: 4,
+      },
+    });
+    if (result.status === "ok") {
+      expect(JSON.parse(result.update?.dataSources ?? "")).toEqual([
+        {
+          id: "variable-1",
+          scopeInstanceId: "body-1",
+          name: "title",
+          type: "variable",
+          value: { type: "string", value: "" },
+        },
+      ]);
+    }
   });
 
   test("returns ok when retrying a transaction already saved by the server", async () => {

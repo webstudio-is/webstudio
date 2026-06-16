@@ -67,6 +67,7 @@ const HelpTabTrigger = () => {
 
 type PanelConfig = {
   name: SidebarPanelName;
+  ariaLabel?: string;
   label: ReactNode;
   Icon: IconComponent;
   Panel: (props: { publish: Publish; onClose: () => void }) => ReactNode;
@@ -116,6 +117,7 @@ const isPanelDisabled = (
 const panels: PanelConfig[] = [
   {
     name: "components",
+    ariaLabel: "Components",
     label: (
       <Text>
         Components&nbsp;&nbsp;
@@ -137,6 +139,7 @@ const panels: PanelConfig[] = [
   },
   {
     name: "navigator",
+    ariaLabel: "Navigator",
     label: (
       <Text>
         Navigator&nbsp;&nbsp;
@@ -259,12 +262,13 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             <SidebarTabsList>
               {panels
                 .filter((panel) => isPanelVisible(panel, modes))
-                .map(({ name, Icon, label, visibility }) => {
+                .map(({ name, Icon, label, visibility, ariaLabel }) => {
                   const disabled = isPanelDisabled({ visibility }, modes);
                   return (
                     <SidebarTabsTrigger
                       key={name}
                       label={label}
+                      aria-label={ariaLabel}
                       value={name}
                       disabled={disabled}
                       onClick={() => {

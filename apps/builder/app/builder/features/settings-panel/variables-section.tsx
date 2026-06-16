@@ -107,7 +107,9 @@ const EmptyVariables = () => {
       </Flex>
       <Flex justify="center" align="center">
         <VariablePopoverTrigger>
-          <Button prefix={<PlusIcon />}>Create data variable</Button>
+          <Button type="button" prefix={<PlusIcon />}>
+            Create data variable
+          </Button>
         </VariablePopoverTrigger>
       </Flex>
     </Flex>
@@ -279,6 +281,7 @@ export const VariablesSection = () => {
           suffix={
             <VariablePopoverTrigger>
               <SectionTitleButton
+                type="button"
                 prefix={<PlusIcon />}
                 // open panel when add new varable
                 onClick={() => {

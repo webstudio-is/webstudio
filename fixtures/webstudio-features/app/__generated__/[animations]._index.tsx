@@ -2,12 +2,16 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+import {
+  renderText,
+  useResource,
+  useVariableState,
+} from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-router";
 import {
   Box as Box,
   Heading as Heading,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 import {
   AnimateChildren as AnimateChildren,
   AnimateText as AnimateText,

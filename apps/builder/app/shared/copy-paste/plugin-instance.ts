@@ -28,7 +28,7 @@ import {
 } from "~/shared/nano-states";
 import { findAvailableVariables } from "../data-variables";
 import { builderApi } from "../builder-api";
-import type { Plugin } from "./init-copy-paste";
+import type { Plugin } from "./copy-paste";
 import { breakpointPasteLimitWarning } from "../breakpoints";
 
 const version = "@webstudio/instance/v0.1";
@@ -161,7 +161,7 @@ const findPasteTarget = (data: InstanceData): undefined | Insertable => {
   return insertable;
 };
 
-const onPaste = async (clipboardData: string) => {
+const handlePasteInstance = async (clipboardData: string) => {
   const project = $project.get();
   const fragment = parse(clipboardData);
   if (fragment === undefined || project === undefined) {
@@ -210,7 +210,7 @@ const onPaste = async (clipboardData: string) => {
   return true;
 };
 
-const onCopy = () => {
+const handleCopyInstance = () => {
   const selectedInstanceSelector = $selectedInstanceSelector.get();
   if (selectedInstanceSelector === undefined) {
     return;
@@ -222,7 +222,7 @@ const onCopy = () => {
   return stringify(data);
 };
 
-const onCut = () => {
+const handleCutInstance = () => {
   const instancePath = $selectedInstancePath.get();
   if (instancePath === undefined) {
     return;
@@ -247,13 +247,13 @@ const onCut = () => {
 export const instanceText: Plugin = {
   name: "instance-text",
   mimeType: "text/plain",
-  onCopy,
-  onCut,
-  onPaste,
+  onCopy: handleCopyInstance,
+  onCut: handleCutInstance,
+  onPaste: handlePasteInstance,
 };
 
 export const instanceJson: Plugin = {
   name: "instance-json",
   mimeType: "application/json",
-  onPaste,
+  onPaste: handlePasteInstance,
 };

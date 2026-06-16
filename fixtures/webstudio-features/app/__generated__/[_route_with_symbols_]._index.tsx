@@ -2,9 +2,13 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+import {
+  renderText,
+  useResource,
+  useVariableState,
+} from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-router";
-import { Image as Image } from "@webstudio-is/sdk-components-react";
+import { Image as Image } from "@webstudio-is/sdk-components-react/components";
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 

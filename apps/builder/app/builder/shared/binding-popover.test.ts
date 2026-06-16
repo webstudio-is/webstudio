@@ -13,3 +13,8 @@ test("evaluateExpressionWithinScope works", () => {
     })
   ).toEqual(2);
 });
+
+test("evaluateExpressionWithinScope treats empty expression as undefined", () => {
+  expect(evaluateExpressionWithinScope("", {})).toBeUndefined();
+  expect(evaluateExpressionWithinScope("  ", {})).toBeUndefined();
+});

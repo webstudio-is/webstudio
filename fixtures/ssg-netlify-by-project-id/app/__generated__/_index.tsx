@@ -2,11 +2,15 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+import {
+  renderText,
+  useResource,
+  useVariableState,
+} from "@webstudio-is/react-sdk/runtime";
 import {
   Body as Body,
   Heading as Heading,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 
 export const projectId = "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e";
 

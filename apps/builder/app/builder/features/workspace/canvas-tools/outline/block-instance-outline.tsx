@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
+import { shallowEqual } from "shallow-equal";
 import {
   Box,
   DropdownMenu,
@@ -33,6 +34,7 @@ import { $instances } from "~/shared/sync/data-stores";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import {
+  canDeleteInstanceInContentMode,
   deleteInstanceMutable,
   updateWebstudioData,
 } from "~/shared/instance-utils";
@@ -281,7 +283,17 @@ export const BlockChildHoveredInstanceOutline = () => {
   // Check if the top edge of the component is hidden (clipped by viewport/clamping)
   const isTopEdgeHidden = rect.top < clampingRect.top;
 
-  const isAddMode = isMenuOpen || !modifierKeys.altKey || !hasChildren;
+  const canDeleteHoveredInstance =
+    shallowEqual(outline.selector, outline.hoveredSelector) &&
+    canDeleteInstanceInContentMode({
+      instanceSelector: outline.selector,
+      instances,
+    });
+  const isAddMode =
+    isMenuOpen ||
+    !modifierKeys.altKey ||
+    !hasChildren ||
+    canDeleteHoveredInstance === false;
 
   const tooltipContent = (
     <Grid>
@@ -360,6 +372,7 @@ export const BlockChildHoveredInstanceOutline = () => {
           preventFocusOnHover={false}
         >
           <IconButton
+            aria-label={isAddMode ? "Insert block" : "Delete block"}
             variant={isAddMode ? "local" : "overwritten"}
             onClick={() => {
               if (isAddMode) {
@@ -379,6 +392,9 @@ export const BlockChildHoveredInstanceOutline = () => {
               $hoveredInstanceOutline.set(undefined);
             }}
             css={{
+              "& svg, & svg *": {
+                pointerEvents: "none",
+              },
               borderStyle: "solid",
               borderColor: isAddMode
                 ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`

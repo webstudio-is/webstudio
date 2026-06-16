@@ -1,10 +1,13 @@
 import {
+  useEffect,
   Fragment,
   useId,
+  useRef,
   useState,
   type ComponentProps,
   type ReactNode,
 } from "react";
+import { shallowEqual } from "shallow-equal";
 import { type Role, roleLabels } from "@webstudio-is/project";
 import { roleDescriptions } from "~/shared/permissions";
 import {
@@ -128,7 +131,7 @@ type MenuProps = {
   name: string;
   value: LinkOptions;
   allowAdditionalPermissions: boolean;
-  onChange: (value: LinkOptions) => void;
+  onChange: (value: LinkOptionsUpdate) => void;
   onDelete: () => void;
 };
 
@@ -141,24 +144,53 @@ const Menu = ({
 }: MenuProps) => {
   const ids = useIds(["name", "canClone", "canCopy", "canPublish"]);
   const [isOpen, setIsOpen] = useState(false);
-  const [customLinkName, setCustomLinkName] = useState<string>(name);
+  const [draftLink, setDraftLink] = useState(value);
+  const draftLinkRef = useRef(value);
+
+  const updateDraftLink = (update: LinkOptionsUpdate) => {
+    const nextLink = { ...draftLinkRef.current, ...update };
+    draftLinkRef.current = nextLink;
+    setDraftLink(nextLink);
+  };
 
   const handleCheckedChange = (role: Role) => (checked: boolean) => {
     if (checked) {
-      onChange({ ...value, relation: role });
+      updateDraftLink({ relation: role });
     }
   };
 
-  const saveCustomLinkName = () => {
-    if (customLinkName.length === 0) {
+  const saveDraftLink = () => {
+    const draft = draftLinkRef.current;
+    const nextName = draft.name.trim();
+    const nextLink = {
+      ...draft,
+      name: nextName.length === 0 ? value.name : nextName,
+    };
+    if (
+      shallowEqual(
+        getComparableLinkOptions(nextLink),
+        getComparableLinkOptions(value)
+      )
+    ) {
       return;
     }
 
-    onChange({ ...value, name: customLinkName.trim() });
+    onChange(nextLink);
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (open === false) {
+          saveDraftLink();
+        } else {
+          draftLinkRef.current = value;
+          setDraftLink(value);
+        }
+        setIsOpen(open);
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           prefix={<EllipsesIcon />}
@@ -167,27 +199,26 @@ const Menu = ({
         ></Button>
       </PopoverTrigger>
       <PopoverContent
+        aria-label={`Share link options ${name}`}
         css={{
           //padding: 0,
           width: theme.spacing[24],
         }}
         sideOffset={0}
-        onInteractOutside={saveCustomLinkName}
       >
         <Item>
           <Label htmlFor={ids.name}>Name</Label>
           <InputField
             id={ids.name}
-            color={customLinkName.length === 0 ? "error" : undefined}
-            value={customLinkName}
-            onChange={(event) => setCustomLinkName(event.target.value)}
+            color={draftLink.name.length === 0 ? "error" : undefined}
+            value={draftLink.name}
+            onChange={(event) => updateDraftLink({ name: event.target.value })}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                saveCustomLinkName();
+                saveDraftLink();
                 setIsOpen(false);
               }
             }}
-            onBlur={saveCustomLinkName}
             placeholder="Share Project"
             name="Name"
             autoFocus
@@ -197,7 +228,7 @@ const Menu = ({
         <Item>
           <Label>Permissions</Label>
           <Permission
-            checked={value.relation === "viewers"}
+            checked={draftLink.relation === "viewers"}
             onCheckedChange={handleCheckedChange("viewers")}
             title={roleLabels.viewers}
             info={
@@ -231,18 +262,20 @@ const Menu = ({
             >
               <Checkbox
                 disabled={
-                  !allowAdditionalPermissions || value.relation !== "viewers"
+                  !allowAdditionalPermissions ||
+                  draftLink.relation !== "viewers"
                 }
-                checked={value.canClone}
+                checked={draftLink.canClone}
                 onCheckedChange={(canClone) => {
-                  onChange({ ...value, canClone: Boolean(canClone) });
+                  updateDraftLink({ canClone: Boolean(canClone) });
                 }}
                 id={ids.canClone}
               />
               <Label
                 htmlFor={ids.canClone}
                 disabled={
-                  !allowAdditionalPermissions || value.relation !== "viewers"
+                  !allowAdditionalPermissions ||
+                  draftLink.relation !== "viewers"
                 }
               >
                 Can clone
@@ -258,18 +291,20 @@ const Menu = ({
             >
               <Checkbox
                 disabled={
-                  !allowAdditionalPermissions || value.relation !== "viewers"
+                  !allowAdditionalPermissions ||
+                  draftLink.relation !== "viewers"
                 }
-                checked={value.canCopy}
+                checked={draftLink.canCopy}
                 onCheckedChange={(canCopy) => {
-                  onChange({ ...value, canCopy: Boolean(canCopy) });
+                  updateDraftLink({ canCopy: Boolean(canCopy) });
                 }}
                 id={ids.canCopy}
               />
               <Label
                 htmlFor={ids.canCopy}
                 disabled={
-                  !allowAdditionalPermissions || value.relation !== "viewers"
+                  !allowAdditionalPermissions ||
+                  draftLink.relation !== "viewers"
                 }
               >
                 Can copy
@@ -280,7 +315,7 @@ const Menu = ({
           <Permission
             disabled={!allowAdditionalPermissions}
             onCheckedChange={handleCheckedChange("editors")}
-            checked={value.relation === "editors"}
+            checked={draftLink.relation === "editors"}
             title={roleLabels.editors}
             info={
               <Flex direction="column">
@@ -313,18 +348,20 @@ const Menu = ({
             >
               <Checkbox
                 disabled={
-                  !allowAdditionalPermissions || value.relation !== "editors"
+                  !allowAdditionalPermissions ||
+                  draftLink.relation !== "editors"
                 }
-                checked={value.canPublish}
+                checked={draftLink.canPublish}
                 onCheckedChange={(canPublish) => {
-                  onChange({ ...value, canPublish: Boolean(canPublish) });
+                  updateDraftLink({ canPublish: Boolean(canPublish) });
                 }}
                 id={ids.canPublish}
               />
               <Label
                 htmlFor={ids.canPublish}
                 disabled={
-                  !allowAdditionalPermissions || value.relation !== "editors"
+                  !allowAdditionalPermissions ||
+                  draftLink.relation !== "editors"
                 }
               >
                 Can publish
@@ -334,7 +371,7 @@ const Menu = ({
 
           <Permission
             onCheckedChange={handleCheckedChange("builders")}
-            checked={value.relation === "builders"}
+            checked={draftLink.relation === "builders"}
             title={roleLabels.builders}
             info={roleDescriptions.builders}
           />
@@ -342,7 +379,7 @@ const Menu = ({
           <Permission
             disabled={!allowAdditionalPermissions}
             onCheckedChange={handleCheckedChange("administrators")}
-            checked={value.relation === "administrators"}
+            checked={draftLink.relation === "administrators"}
             title={roleLabels.administrators}
             info={
               <Flex direction="column">
@@ -394,6 +431,14 @@ export type LinkOptions = {
   canPublish: boolean;
 };
 
+type LinkOptionsUpdate = Partial<Omit<LinkOptions, "token">>;
+
+const getComparableLinkOptions = (link: LinkOptions): LinkOptionsUpdate => {
+  const { token, ...options } = link;
+  void token;
+  return options;
+};
+
 type SharedLinkItemType = {
   value: LinkOptions;
   onChange: (value: LinkOptions) => void;
@@ -416,15 +461,32 @@ const SharedLinkItem = ({
   builderUrl,
   allowAdditionalPermissions,
 }: SharedLinkItemType) => {
-  const [currentName, setCurrentName] = useState(value.name);
+  const [currentLink, setCurrentLink] = useState(value);
+  const currentLinkRef = useRef(value);
+
+  useEffect(() => {
+    currentLinkRef.current = value;
+    setCurrentLink(value);
+  }, [value]);
+
+  const updateCurrentLink = (update: LinkOptionsUpdate) => {
+    const nextLink = { ...currentLinkRef.current, ...update };
+    currentLinkRef.current = nextLink;
+    setCurrentLink(nextLink);
+    onChange(nextLink);
+  };
 
   return (
-    <Box className={itemStyle()}>
-      <Label css={{ flexGrow: 1 }}>{currentName}</Label>
+    <Box
+      className={itemStyle()}
+      role="group"
+      aria-label={`Share link ${currentLink.name}`}
+    >
+      <Label css={{ flexGrow: 1 }}>{currentLink.name}</Label>
       <CopyToClipboard
         text={builderUrl({
-          authToken: value.token,
-          mode: relationToMode[value.relation],
+          authToken: currentLink.token,
+          mode: relationToMode[currentLink.relation],
         })}
         copyText="Copy link"
       >
@@ -433,12 +495,9 @@ const SharedLinkItem = ({
         </IconButton>
       </CopyToClipboard>
       <Menu
-        name={currentName}
-        value={value}
-        onChange={(value) => {
-          setCurrentName(value.name);
-          onChange(value);
-        }}
+        name={currentLink.name}
+        value={currentLink}
+        onChange={updateCurrentLink}
         onDelete={onDelete}
         allowAdditionalPermissions={allowAdditionalPermissions}
       />
@@ -519,7 +578,13 @@ export const ShareProject = ({
   );
 
   return (
-    <Flex direction="column" css={{ width: theme.spacing[33] }}>
+    <Flex
+      direction="column"
+      role="region"
+      aria-label="Share links"
+      aria-busy={isPending}
+      css={{ width: theme.spacing[33] }}
+    >
       {isFreePlan && (
         <>
           <ShareLinkSecurityNotice />

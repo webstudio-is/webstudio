@@ -5,6 +5,8 @@ import {
   ROOT_INSTANCE_ID,
   encodeDataVariableId,
   getHomePage,
+  type DataSource,
+  type Page,
   type Instance,
   type WebstudioData,
 } from "@webstudio-is/sdk";
@@ -15,8 +17,12 @@ import {
 } from "@webstudio-is/project-build";
 import { $project } from "./sync/data-stores";
 import {
+  __testing__,
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
+  createTemplateCopyData,
+  insertTemplateCopyFromFragmentsMutable,
+  copyAndTransformPageMeta,
 } from "./page-utils";
 import {
   $,
@@ -27,6 +33,8 @@ import {
   ws,
 } from "@webstudio-is/template";
 import { nanoid } from "nanoid";
+
+const { deduplicateName, deduplicatePath, joinPath } = __testing__;
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));
@@ -50,6 +58,117 @@ const getWebstudioDataStub = (
   styleSources: new Map(),
   styles: new Map(),
   ...data,
+});
+
+const getPagesWithSiblings = () =>
+  migratePages({
+    meta: {},
+    homePage: {
+      id: "home",
+      name: "Home",
+      path: "",
+      title: `"Home"`,
+      meta: {},
+      rootInstanceId: "homeBody",
+    },
+    pages: [
+      {
+        id: "about",
+        name: "About",
+        path: "/about",
+        title: `"About"`,
+        meta: {},
+        rootInstanceId: "aboutBody",
+      },
+      {
+        id: "about-copy",
+        name: "About (1)",
+        path: "/copy-1/about",
+        title: `"About"`,
+        meta: {},
+        rootInstanceId: "aboutCopyBody",
+      },
+    ],
+    folders: [createRootFolder(["home", "about", "about-copy"])],
+  });
+
+describe("page utility helpers", () => {
+  test("deduplicates names within the target folder", () => {
+    const pages = getPagesWithSiblings();
+
+    expect(deduplicateName(pages, ROOT_FOLDER_ID, "Contact")).toEqual(
+      "Contact"
+    );
+    expect(deduplicateName(pages, ROOT_FOLDER_ID, "About")).toEqual(
+      "About (2)"
+    );
+    expect(deduplicateName(pages, ROOT_FOLDER_ID, "About (1)")).toEqual(
+      "About (2)"
+    );
+  });
+
+  test("deduplicates paths within the target folder", () => {
+    const pages = getPagesWithSiblings();
+
+    expect(deduplicatePath(pages, ROOT_FOLDER_ID, "/contact")).toEqual(
+      "/contact"
+    );
+    expect(deduplicatePath(pages, ROOT_FOLDER_ID, "/about")).toEqual(
+      "/copy-2/about"
+    );
+    expect(deduplicatePath(pages, ROOT_FOLDER_ID, "/")).toEqual("/copy-1");
+  });
+
+  test("joins path parts without duplicate slashes", () => {
+    expect(joinPath("/", "/blog", "/post")).toEqual("/blog/post");
+    expect(joinPath("/docs/", "/guide")).toEqual("/docs/guide");
+  });
+});
+
+describe("page meta copy helpers", () => {
+  test("copies and transforms selected page meta fields", () => {
+    const target: Page["meta"] = {};
+
+    copyAndTransformPageMeta(
+      {
+        title: "old",
+        description: "old",
+        documentType: "text",
+        auth: { method: "basic", login: "u", password: "p" },
+      },
+      target,
+      (value) => value.replace("old", "new"),
+      { fields: new Set(["title", "documentType"]) }
+    );
+
+    expect(target).toEqual({
+      title: "new",
+      documentType: "text",
+    });
+  });
+
+  test("copies only caller-selected page meta fields", () => {
+    const target: Page["meta"] = {};
+
+    copyAndTransformPageMeta(
+      {
+        title: "old",
+        description: "old",
+        documentType: "text",
+        auth: { method: "basic", login: "u", password: "p" },
+        custom: [{ property: "og:type", content: "old" }],
+      },
+      target,
+      (value) => value.replace("old", "new"),
+      { fields: new Set(["title", "description", "custom"]) }
+    );
+
+    expect(target).toEqual({
+      title: "new",
+      description: "new",
+      custom: [{ property: "og:type", content: "new" }],
+    });
+  });
 });
 
 describe("insert page copy", () => {
@@ -96,6 +215,59 @@ describe("insert page copy", () => {
       component: "Body",
       children: [],
     });
+  });
+
+  test("preserves slot content ids when duplicating page", () => {
+    const dataWithoutPages = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Slot ws:id="slotId">
+          <$.Fragment ws:id="fragmentId">
+            <$.Box ws:id="boxId"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    const data = getWebstudioDataStub({
+      ...dataWithoutPages,
+      pages: migratePages({
+        meta: {},
+        homePage: {
+          id: "pageId",
+          name: "Name",
+          path: "",
+          title: `"Title"`,
+          meta: {},
+          rootInstanceId: "bodyId",
+        },
+        pages: [],
+        folders: [createRootFolder(["pageId"])],
+      }),
+    });
+
+    insertPageCopyMutable({
+      source: { data, pageId: "pageId" },
+      target: { data, folderId: ROOT_FOLDER_ID },
+    });
+
+    const copiedPage = getCopiedPages(data)[0];
+    expect(copiedPage.rootInstanceId).not.toBe("bodyId");
+    const copiedBody = data.instances.get(copiedPage.rootInstanceId);
+    const copiedSlotId = copiedBody?.children[0]?.value;
+    if (copiedSlotId === undefined) {
+      throw Error("Expected copied slot id");
+    }
+    expect(copiedSlotId).not.toBe("slotId");
+    expect(data.instances.get(copiedSlotId)?.children).toEqual([
+      { type: "id", value: "fragmentId" },
+    ]);
+    expect(
+      Array.from(data.instances.values()).filter(
+        (instance) => instance.id === "fragmentId"
+      )
+    ).toHaveLength(1);
+    expect(data.instances.get("fragmentId")?.children).toEqual([
+      { type: "id", value: "boxId" },
+    ]);
   });
 
   test("deduplicate path for non-home page copy", () => {
@@ -646,5 +818,76 @@ describe("insert page copy", () => {
       },
     });
     expect(data.pages.folders.get(ROOT_FOLDER_ID)?.children).toContain(pageId);
+  });
+
+  test("insert template copy preserves and remaps system data source", () => {
+    const systemDataSource: DataSource = {
+      id: "templateSystemId",
+      scopeInstanceId: "templateBodyId",
+      name: "system",
+      type: "parameter",
+    };
+    const systemIdentifier = encodeDataVariableId(systemDataSource.id);
+    const data = getWebstudioDataStub({
+      instances: toMap<Instance>([
+        {
+          type: "instance",
+          id: "templateBodyId",
+          component: "Body",
+          children: [],
+        },
+      ]),
+      dataSources: toMap([systemDataSource]),
+      pages: migratePages({
+        homePageId: "homePageId",
+        rootFolderId: ROOT_FOLDER_ID,
+        pages: [
+          {
+            id: "homePageId",
+            name: "Home",
+            path: "",
+            title: `"Home"`,
+            meta: {},
+            rootInstanceId: "homeBodyId",
+          },
+        ],
+        pageTemplates: [
+          {
+            id: "templateId",
+            name: "Template",
+            title: `"Title: " + ${systemIdentifier}`,
+            rootInstanceId: "templateBodyId",
+            systemDataSourceId: systemDataSource.id,
+            meta: {
+              description: `"Description: " + ${systemIdentifier}`,
+            },
+          },
+        ],
+        folders: [createRootFolder(["homePageId"])],
+      }),
+    });
+    const template = data.pages.pageTemplates?.get("templateId");
+    expect(template).toBeDefined();
+
+    const templateId = insertTemplateCopyFromFragmentsMutable({
+      source: createTemplateCopyData({ data, template: template! }),
+      target: { data },
+    });
+
+    const copiedTemplate = data.pages.pageTemplates?.get(templateId ?? "");
+    expect(copiedTemplate?.systemDataSourceId).toBeDefined();
+    expect(copiedTemplate?.systemDataSourceId).not.toEqual(systemDataSource.id);
+    expect(
+      data.dataSources.has(copiedTemplate?.systemDataSourceId ?? "")
+    ).toEqual(true);
+    const copiedSystemIdentifier = encodeDataVariableId(
+      copiedTemplate?.systemDataSourceId ?? ""
+    );
+    expect(copiedTemplate?.title).toEqual(
+      `"Title: " + ${copiedSystemIdentifier}`
+    );
+    expect(copiedTemplate?.meta.description).toEqual(
+      `"Description: " + ${copiedSystemIdentifier}`
+    );
   });
 });

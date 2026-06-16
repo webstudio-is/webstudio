@@ -1,7 +1,7 @@
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 import {
   Select as Select,
   SelectTrigger as SelectTrigger,

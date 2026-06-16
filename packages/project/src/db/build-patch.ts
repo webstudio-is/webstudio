@@ -1,6 +1,7 @@
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Build } from "@webstudio-is/project-build";
 import { loadRawBuildById } from "@webstudio-is/project-build/index.server";
+import type { Database } from "@webstudio-is/postgrest/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { Project } from "./project";
 import { updatePreviewImage } from "./project";
@@ -18,21 +19,31 @@ export type PatchBuildResult =
   | { status: "version_mismatched"; errors: string }
   | { status: "error"; errors: string };
 
-export const patchBuild = async (
+type PatchLoadedBuildResult =
+  | {
+      status: "ok";
+      version: number;
+      build: Database["public"]["Tables"]["Build"]["Row"];
+    }
+  | { status: "version_mismatched"; errors: string }
+  | { status: "error"; errors: string };
+
+export const patchLoadedBuild = async (
   {
+    build,
     buildId,
     projectId,
     transactions,
     clientVersion,
   }: {
+    build: Database["public"]["Tables"]["Build"]["Row"];
     buildId: Build["id"];
     projectId: Project["id"];
     transactions: BuildPatchTransaction[];
     clientVersion: number;
   },
   context: AppContext
-): Promise<PatchBuildResult> => {
-  const build = await loadRawBuildById(context, buildId);
+): Promise<PatchLoadedBuildResult> => {
   const result = await createBuildPatchUpdate({
     build,
     clientVersion,
@@ -44,7 +55,7 @@ export const patchBuild = async (
   }
 
   if (result.update === undefined) {
-    return { status: "ok", version: result.nextVersion };
+    return { status: "ok", version: result.nextVersion, build };
   }
 
   // build.patch does not have the worker's atomic Build+asset commit path.
@@ -84,5 +95,36 @@ export const patchBuild = async (
     );
   }
 
-  return { status: "ok", version: result.nextVersion };
+  return {
+    status: "ok",
+    version: result.nextVersion,
+    build: { ...build, ...result.update, version: result.nextVersion },
+  };
+};
+
+export const patchBuild = async (
+  {
+    buildId,
+    projectId,
+    transactions,
+    clientVersion,
+  }: {
+    buildId: Build["id"];
+    projectId: Project["id"];
+    transactions: BuildPatchTransaction[];
+    clientVersion: number;
+  },
+  context: AppContext
+): Promise<PatchBuildResult> => {
+  const build = await loadRawBuildById(context, buildId);
+  const result = await patchLoadedBuild(
+    { build, buildId, projectId, transactions, clientVersion },
+    context
+  );
+
+  if (result.status !== "ok") {
+    return result;
+  }
+
+  return { status: "ok", version: result.version };
 };

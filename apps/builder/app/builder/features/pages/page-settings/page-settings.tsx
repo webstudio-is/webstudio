@@ -18,7 +18,6 @@ import {
   theme,
   Button,
   Box,
-  Tooltip,
   Grid,
   Text,
   ScrollAreaNative,
@@ -29,7 +28,6 @@ import {
   DialogTitle,
   DialogTitleActions,
 } from "@webstudio-is/design-system";
-import { CopyIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   $authPermit,
   $isContentMode,
@@ -51,7 +49,7 @@ import {
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { Form } from "../form";
 import { findMatchingRedirect } from "~/shared/project-settings/utils";
-import { isPathnamePattern } from "~/builder/shared/url-pattern";
+import { isContentModePagePath } from "@webstudio-is/project/content-mode-permissions";
 import { AuthSection, validateAuthSection } from "./section-auth";
 import {
   CustomMetadataSection,
@@ -75,6 +73,8 @@ import {
   type Values,
 } from "./shared";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
+import { copyPage } from "~/shared/copy-paste/copy-paste";
+import { PageItemActionsDropdown } from "../page-item-actions";
 
 export type { Values } from "./shared";
 
@@ -219,20 +219,51 @@ const getAuthFromValues = (values: Values): Page["meta"]["auth"] => {
   };
 };
 
-export const __testing__ = {
-  computePagePath,
-  fieldDefaultValues,
-  getAuthFromValues,
-  toFormValues,
-  validateValues,
+const getInitialPageMeta = (values: Values): Page["meta"] => {
+  const meta: Page["meta"] = {};
+  const auth = getAuthFromValues(values);
+  if (auth !== undefined) {
+    meta.auth = auth;
+  }
+  return meta;
 };
 
-export const isEditorEditablePagePath = (path: string) => {
-  return (
-    isPathnamePattern(path) === false &&
-    path.includes(":") === false &&
-    path.includes("*") === false
-  );
+export const canEditPagePathInMode = ({
+  isDesignMode,
+  isContentMode,
+  path,
+}: {
+  isDesignMode: boolean;
+  isContentMode: boolean;
+  path: string;
+}) => {
+  return isDesignMode || (isContentMode && isContentModePagePath(path));
+};
+
+export const addContentModePathError = ({
+  errors,
+  isContentMode,
+  path,
+}: {
+  errors: Errors;
+  isContentMode: boolean;
+  path: string;
+}) => {
+  if (isContentMode && isContentModePagePath(path) === false) {
+    errors.path = errors.path ?? [];
+    errors.path.push("Editors can only set static page paths");
+  }
+};
+
+export const __testing__ = {
+  addContentModePathError,
+  computePagePath,
+  canEditPagePathInMode,
+  fieldDefaultValues,
+  getAuthFromValues,
+  getInitialPageMeta,
+  toFormValues,
+  validateValues,
 };
 
 export const FormFields = ({
@@ -247,12 +278,12 @@ export const FormFields = ({
   canEditPath = true,
   showHomePageControl = true,
   showPathField = true,
-  showStatusField = true,
-  showRedirectField = true,
-  showDocumentTypeField = true,
+  showStatusField = isEditorContext === false,
+  showRedirectField = isEditorContext === false,
+  showDocumentTypeField = isEditorContext === false,
   showRedirectWarning = showPathField,
   showAuthSection = isEditorContext === false,
-  showTextContentSection = true,
+  showTextContentSection = isEditorContext === false,
   showMarketplaceSection = isEditorContext === false,
 }: {
   autoSelect?: boolean;
@@ -520,9 +551,7 @@ const createPage = (pageId: Page["id"], values: Values) => {
         path: values.path,
         title: values.title,
         rootInstanceId,
-        meta: {
-          auth: getAuthFromValues(values),
-        },
+        meta: getInitialPageMeta(values),
       });
       instances.set(rootInstanceId, {
         type: "instance",
@@ -676,6 +705,7 @@ export const PageSettings = ({
   const pages = useStore($pages);
   const page = pages && findPageByIdOrPath(pageId, pages);
   const isDesignMode = useStore($isDesignMode);
+  const isContentMode = useStore($isContentMode);
 
   const isHomePage = page?.id === pages?.homePageId;
 
@@ -713,6 +743,13 @@ export const PageSettings = ({
 
   const { variableValues } = useStore($pageRootScope);
   errors = validateValues(pages, pageId, values, variableValues);
+  if (unsavedValues.path !== undefined) {
+    addContentModePathError({
+      errors,
+      isContentMode,
+      path: unsavedValues.path,
+    });
+  }
 
   useEffect(() => {
     // we can't flush immediately as setState haven't propagated at that time
@@ -733,6 +770,9 @@ export const PageSettings = ({
     <>
       <PageSettingsView
         onClose={onClose}
+        onCopy={() => {
+          void copyPage(pageId);
+        }}
         onDelete={values.isHomePage === false ? handleRequestDelete : undefined}
         onDuplicate={() => {
           const newPageId = duplicatePage(pageId);
@@ -754,8 +794,12 @@ export const PageSettings = ({
           errors={errors}
           values={values}
           isEditorContext={isDesignMode === false}
-          canEditName={isDesignMode}
-          canEditPath={isDesignMode}
+          canEditName={isDesignMode || isContentMode}
+          canEditPath={canEditPagePathInMode({
+            isDesignMode,
+            isContentMode,
+            path: page.path,
+          })}
           onChange={handleChange}
         />
       </PageSettingsView>
@@ -792,11 +836,13 @@ export const PageSettingsPanel = ({
 };
 
 const PageSettingsView = ({
+  onCopy,
   onDelete,
   onDuplicate,
   onClose,
   children,
 }: {
+  onCopy: () => void;
   onDelete?: () => void;
   onDuplicate: () => void;
   onClose: () => void;
@@ -814,27 +860,15 @@ const PageSettingsView = ({
       disabled={canEditPageSettings === false}
       suffix={
         <DialogTitleActions>
-          {isDesignMode && onDelete && (
-            <Tooltip content="Delete page" side="bottom">
-              <Button
-                color="ghost"
-                prefix={<TrashIcon />}
-                onClick={onDelete}
-                aria-label="Delete page"
-                tabIndex={2}
-              />
-            </Tooltip>
-          )}
           {isDesignMode && (
-            <Tooltip content="Duplicate page" side="bottom">
-              <Button
-                color="ghost"
-                prefix={<CopyIcon />}
-                onClick={onDuplicate}
-                aria-label="Duplicate page"
-                tabIndex={2}
-              />
-            </Tooltip>
+            <PageItemActionsDropdown
+              label="Page actions"
+              actions={{
+                copy: onCopy,
+                duplicate: onDuplicate,
+                delete: onDelete,
+              }}
+            />
           )}
           <DialogClose />
         </DialogTitleActions>

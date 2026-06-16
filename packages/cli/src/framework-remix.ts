@@ -34,7 +34,7 @@ export const createFramework = async (): Promise<Framework> => {
   // cleanup route templates after reading to not bloat generated code
   await rm(routeTemplatesDir, { recursive: true, force: true });
 
-  const base = "@webstudio-is/sdk-components-react";
+  const base = "@webstudio-is/sdk-components-react/components";
   const remix = "@webstudio-is/sdk-components-react-remix";
   const reactRadix = "@webstudio-is/sdk-components-react-radix";
   const animation = "@webstudio-is/sdk-components-animation";

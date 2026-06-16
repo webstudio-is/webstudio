@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import type { WebSocketEmitterOptions } from "@webstudio-is/sync-client/websocket";
 import { $collaborators, $syncStatus } from "@webstudio-is/sync-client";
-import { __testing__ as awarenessTesting } from "~/shared/awareness";
+import { __testing__ } from "~/shared/awareness";
 import {
   createMultiplayerSyncEmitter,
   startMultiplayerPresenceSync,
 } from "./multiplayer-sync";
+
+const { $pointerPosition } = __testing__;
 
 const createTransportFactory = () => {
   let callbacks: WebSocketEmitterOptions | undefined;
@@ -244,7 +246,7 @@ describe("createMultiplayerSyncEmitter", () => {
 
 describe("startMultiplayerPresenceSync", () => {
   afterEach(() => {
-    awarenessTesting.$pointerPosition.set(undefined);
+    $pointerPosition.set(undefined);
   });
 
   test("sends only the latest awareness update in one microtask", async () => {
@@ -254,13 +256,13 @@ describe("startMultiplayerPresenceSync", () => {
     await Promise.resolve();
     emitter.sendPresence.mockClear();
 
-    awarenessTesting.$pointerPosition.set({
+    $pointerPosition.set({
       x: 1,
       y: 2,
       xRatio: 0.1,
       yRatio: 0.2,
     });
-    awarenessTesting.$pointerPosition.set({
+    $pointerPosition.set({
       x: 3,
       y: 4,
       xRatio: 0.3,
@@ -286,7 +288,7 @@ describe("startMultiplayerPresenceSync", () => {
     await Promise.resolve();
     emitter.sendPresence.mockClear();
 
-    awarenessTesting.$pointerPosition.set({
+    $pointerPosition.set({
       x: 1,
       y: 2,
       xRatio: 0.1,

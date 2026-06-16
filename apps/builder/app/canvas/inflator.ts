@@ -135,16 +135,22 @@ const getInflationState = ({
   offsetHeight,
   explicitWidth,
   explicitHeight,
+  skipHeightInflation,
 }: {
   offsetWidth: number;
   offsetHeight: number;
   explicitWidth: number | undefined;
   explicitHeight: number | undefined;
+  skipHeightInflation?: boolean;
 }): string => {
   const inflateWidth =
     offsetWidth === 0 && explicitWidth === undefined ? "w" : "";
   const inflateHeight =
-    offsetHeight === 0 && explicitHeight === undefined ? "h" : "";
+    offsetHeight === 0 &&
+    explicitHeight === undefined &&
+    skipHeightInflation !== true
+      ? "h"
+      : "";
   return inflateWidth + inflateHeight;
 };
 
@@ -431,6 +437,9 @@ const applyInflation = () => {
       offsetHeight,
       explicitWidth: elementSize.width,
       explicitHeight: elementSize.height,
+      // Closed Radix-style states intentionally collapse content height
+      // while keeping it mounted for animation/SEO, so avoid inflating it.
+      skipHeightInflation: element.getAttribute("data-state") === "closed",
     });
 
     if (state) {

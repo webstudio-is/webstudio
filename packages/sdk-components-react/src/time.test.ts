@@ -8,7 +8,7 @@ import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
 import { Time, __testing__ } from "./time";
 
-const { parseDate, formatDate } = __testing__;
+const { parseDate, formatDate, timeZoneOrDefault } = __testing__;
 
 const originalTimeZone = process.env.TZ;
 let root: Root | undefined;
@@ -75,6 +75,142 @@ test("hydrates ISO date string without timezone mismatch warnings", async () => 
 
   expect(container.textContent).toBe("6 May 2026");
   expect(consoleError).not.toHaveBeenCalled();
+});
+
+test("formats ISO date string in explicit timezone", () => {
+  expect(
+    renderToStaticMarkup(
+      createElement(Time, {
+        datetime: "2026-06-08T17:45:00.000+00:00",
+        language: "de",
+        country: "DE",
+        timeStyle: "short",
+        dateStyle: "none",
+        timeZone: "Europe/Berlin",
+      })
+    )
+  ).toBe('<time dateTime="2026-06-08T17:45:00.000+00:00">19:45</time>');
+});
+
+test("formats custom template in explicit timezone", () => {
+  expect(
+    formatDate(
+      new Date("2026-06-08T17:45:00.000+00:00"),
+      "YYYY-MM-DD HH:mm",
+      "de-DE",
+      "Europe/Berlin"
+    )
+  ).toBe("2026-06-08 19:45");
+});
+
+test("formats custom template with date rollover in explicit timezone", () => {
+  expect(
+    formatDate(
+      new Date("2026-06-08T23:45:00.000+00:00"),
+      "YYYY-MM-DD HH:mm",
+      "de-DE",
+      "Europe/Berlin"
+    )
+  ).toBe("2026-06-09 01:45");
+});
+
+test("falls back to UTC for invalid timezone", () => {
+  expect(timeZoneOrDefault("Not/A_Timezone")).toBe("UTC");
+});
+
+test("trims timezone before validation", () => {
+  expect(timeZoneOrDefault(" Europe/Berlin ")).toBe("Europe/Berlin");
+});
+
+test("renders UTC fallback for invalid timezone", () => {
+  expect(
+    renderToStaticMarkup(
+      createElement(Time, {
+        datetime: "2026-06-08T17:45:00.000+00:00",
+        language: "de",
+        country: "DE",
+        timeStyle: "short",
+        dateStyle: "none",
+        timeZone: "Not/A_Timezone",
+      })
+    )
+  ).toBe('<time dateTime="2026-06-08T17:45:00.000+00:00">17:45</time>');
+});
+
+test("hydrates visitor timezone without mismatch and updates after hydration", async () => {
+  const datetime = "2026-06-08T17:45:00.000+00:00";
+  const ui = createElement(Time, {
+    datetime,
+    language: "de",
+    country: "DE",
+    timeStyle: "short",
+    dateStyle: "none",
+    timeZone: "visitor",
+  });
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+
+  process.env.TZ = "UTC";
+  container.innerHTML = renderToStaticMarkup(ui);
+  expect(container.textContent).toBe("17:45");
+
+  const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+  process.env.TZ = "Europe/Berlin";
+  await act(async () => {
+    root = hydrateRoot(container, ui);
+    await Promise.resolve();
+  });
+
+  expect(container.textContent).toBe("19:45");
+  expect(
+    consoleError.mock.calls.some((call) =>
+      call.some(
+        (message) =>
+          typeof message === "string" &&
+          (message.includes("Text content did not match") ||
+            message.includes("Hydration failed"))
+      )
+    )
+  ).toBe(false);
+});
+
+test("trims visitor timezone mode before hydration update", async () => {
+  const datetime = "2026-06-08T17:45:00.000+00:00";
+  const ui = createElement(Time, {
+    datetime,
+    language: "de",
+    country: "DE",
+    timeStyle: "short",
+    dateStyle: "none",
+    timeZone: " visitor ",
+  });
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+
+  process.env.TZ = "UTC";
+  container.innerHTML = renderToStaticMarkup(ui);
+  expect(container.textContent).toBe("17:45");
+
+  const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+  process.env.TZ = "Europe/Berlin";
+  await act(async () => {
+    root = hydrateRoot(container, ui);
+    await Promise.resolve();
+  });
+
+  expect(container.textContent).toBe("19:45");
+  expect(
+    consoleError.mock.calls.some((call) =>
+      call.some(
+        (message) =>
+          typeof message === "string" &&
+          (message.includes("Text content did not match") ||
+            message.includes("Hydration failed"))
+      )
+    )
+  ).toBe(false);
 });
 
 test.skip("parse short date", () => {

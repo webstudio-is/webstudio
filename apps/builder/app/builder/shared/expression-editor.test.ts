@@ -5,6 +5,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { allowedArrayMethods, allowedStringMethods } from "@webstudio-is/sdk";
 import {
   completionPath,
+  formatValue,
   generateCompletionOptions,
   getCompletionTarget,
   getCompletionReplacement,
@@ -74,6 +75,19 @@ const getCompletionPath = (value: string) => {
   });
   return completionPath(new CompletionContext(state, value.length, true));
 };
+
+describe("formatValue", () => {
+  test("formats missing preview values as an empty editor string", () => {
+    expect(formatValue(undefined)).toEqual("");
+    expect(typeof formatValue(undefined)).toEqual("string");
+  });
+
+  test("always returns a string for editor values", () => {
+    expect(formatValue(() => {})).toEqual("");
+    expect(formatValue("text")).toEqual('"text"');
+    expect(formatValue(0)).toEqual("0");
+  });
+});
 
 describe("generateCompletionOptions", () => {
   describe("object properties", () => {

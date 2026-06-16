@@ -1,5 +1,4 @@
 import { computed } from "nanostores";
-import { nanoid } from "nanoid";
 import slugify from "slugify";
 import {
   type Page,
@@ -20,17 +19,17 @@ import {
 } from "@webstudio-is/sdk";
 import {
   deleteInstanceMutable,
-  extractWebstudioFragment,
-  insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
-import { $dataSources, $pages, $project } from "~/shared/sync/data-stores";
+import { $dataSources, $pages } from "~/shared/sync/data-stores";
 import {
-  copyAndTransformPageMeta,
+  createFolderCopyData,
+  createTemplateCopyData,
+  insertFolderCopyFromDataMutable,
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
-  replaceDataSourcesInExpression,
+  insertTemplateCopyFromFragmentsMutable,
 } from "~/shared/page-utils";
 import {
   $selectedPage,
@@ -365,101 +364,6 @@ export const duplicatePage = (pageId: Page["id"]) => {
   return newPageId;
 };
 
-const deduplicateName = (usedNames: Set<string>, name: string) => {
-  const { name: baseName = name, copyNumber } =
-    // extract a number from "name (copyNumber)"
-    name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
-  let nameNumber = Number(copyNumber ?? "0");
-  let newName: string;
-  do {
-    nameNumber += 1;
-    newName = `${baseName} (${nameNumber})`;
-  } while (usedNames.has(newName));
-  return newName;
-};
-
-const deduplicateSlug = (usedSlugs: Set<string>, slug: string) => {
-  // extract a number from "slug-N"
-  const { slug: baseSlug = slug, copyNumber } =
-    slug.match(/^(?<slug>.+)-(?<copyNumber>\d+)$/)?.groups ?? {};
-  let counter = Number(copyNumber ?? "0");
-  let newSlug: string;
-  do {
-    counter += 1;
-    newSlug = baseSlug ? `${baseSlug}-${counter}` : `copy-${counter}`;
-  } while (usedSlugs.has(newSlug));
-  return newSlug;
-};
-
-const insertFolderCopyMutable = ({
-  source,
-  target,
-}: {
-  source: { data: WebstudioData; folderId: Folder["id"] };
-  target: { data: WebstudioData; parentFolderId: Folder["id"] };
-}): Folder["id"] | undefined => {
-  const sourceFolder = source.data.pages.folders.get(source.folderId);
-  if (sourceFolder === undefined) {
-    return;
-  }
-
-  const parentFolder = target.data.pages.folders.get(target.parentFolderId);
-  const usedNames = new Set<string>();
-  const usedSlugs = new Set<string>();
-  for (const childId of parentFolder?.children ?? []) {
-    const childFolder = target.data.pages.folders.get(childId);
-    if (childFolder) {
-      usedNames.add(childFolder.name);
-      usedSlugs.add(childFolder.slug);
-      continue;
-    }
-    const childPage = target.data.pages.pages.get(childId);
-    if (childPage) {
-      usedNames.add(childPage.name);
-    }
-  }
-
-  // Create new folder with deduplicated name and slug
-  const newFolderId = nanoid();
-  const newFolder: Folder = {
-    id: newFolderId,
-    name: deduplicateName(usedNames, sourceFolder.name),
-    slug: deduplicateSlug(usedSlugs, sourceFolder.slug),
-    children: [],
-  };
-
-  // Add new folder to the folders array
-  target.data.pages.folders.set(newFolder.id, newFolder);
-
-  // Register new folder in parent
-  for (const folder of getAllFolders(target.data.pages)) {
-    if (folder.id === target.parentFolderId) {
-      folder.children.push(newFolderId);
-    }
-  }
-
-  // Duplicate all children (pages and nested folders)
-  for (const childId of sourceFolder.children) {
-    const childFolder = source.data.pages.folders.get(childId);
-
-    if (childFolder) {
-      // It's a nested folder - duplicate it recursively
-      insertFolderCopyMutable({
-        source: { data: source.data, folderId: childId },
-        target: { data: target.data, parentFolderId: newFolderId },
-      });
-    } else {
-      // It's a page - duplicate it
-      insertPageCopyMutable({
-        source: { data: source.data, pageId: childId },
-        target: { data: target.data, folderId: newFolderId },
-      });
-    }
-  }
-
-  return newFolderId;
-};
-
 export const duplicateFolder = (folderId: Folder["id"]) => {
   const pages = $pages.get();
   const currentFolder =
@@ -471,10 +375,14 @@ export const duplicateFolder = (folderId: Folder["id"]) => {
   }
   let newFolderId: undefined | string;
   updateWebstudioData((data) => {
-    newFolderId = insertFolderCopyMutable({
-      source: { data, folderId },
-      target: { data, parentFolderId: currentFolder.id },
-    });
+    const copyData = createFolderCopyData({ data, folderId });
+    if (copyData) {
+      newFolderId = insertFolderCopyFromDataMutable({
+        source: copyData,
+        target: { data, parentFolderId: currentFolder.id },
+        forceFolderCopySuffix: true,
+      });
+    }
   });
   return newFolderId;
 };
@@ -561,53 +469,24 @@ export const deleteTemplateMutable = (
 
 export const duplicateTemplate = (templateId: PageTemplate["id"]) => {
   const pages = $pages.get();
-  const project = $project.get();
   const template = pages?.pageTemplates?.get(templateId);
-  if (template === undefined || project === undefined) {
+  if (template === undefined) {
     return;
   }
   let newTemplateId: undefined | string;
   updateWebstudioData((data) => {
     data.pages.pageTemplates ??= new Map();
-    const usedNames = new Set(
-      Array.from(data.pages.pageTemplates.values()).map((t) => t.name)
-    );
-    const { name: baseName = template.name, copyNumber } =
-      template.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
-    let nameNumber = Number(copyNumber ?? "0");
-    let newName = baseName;
-    while (usedNames.has(newName)) {
-      nameNumber += 1;
-      newName = `${baseName} (${nameNumber})`;
-    }
-    newTemplateId = nanoid();
-    const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
+    const copyData = createTemplateCopyData({
       data,
-      fragment: extractWebstudioFragment(data, template.rootInstanceId),
-      availableVariables: [],
-      projectId: project.id,
+      template,
     });
-    const transformExpression = (expression: string) =>
-      replaceDataSourcesInExpression(expression, newDataSourceIds);
-    const newTemplate: PageTemplate = {
-      id: newTemplateId,
-      name: newName,
-      title: transformExpression(template.title),
-      rootInstanceId:
-        newInstanceIds.get(template.rootInstanceId) ?? template.rootInstanceId,
-      systemDataSourceId:
-        template.systemDataSourceId === undefined
-          ? undefined
-          : (newDataSourceIds.get(template.systemDataSourceId) ??
-            template.systemDataSourceId),
-      meta: {},
-    };
-    copyAndTransformPageMeta(
-      template.meta,
-      newTemplate.meta,
-      transformExpression
-    );
-    data.pages.pageTemplates.set(newTemplate.id, newTemplate);
+    newTemplateId = insertTemplateCopyFromFragmentsMutable({
+      source: {
+        template: copyData.template,
+        bodyFragment: copyData.bodyFragment,
+      },
+      target: { data },
+    });
   });
   return newTemplateId;
 };
@@ -616,10 +495,12 @@ export const instantiateTemplate = ({
   templateId,
   overrides,
   folderId,
+  contentMode,
 }: {
   templateId: PageTemplate["id"];
   overrides: { name: string; path: string };
   folderId: Folder["id"];
+  contentMode?: boolean;
 }) => {
   let newPageId: undefined | string;
   updateWebstudioData((data) => {
@@ -628,6 +509,7 @@ export const instantiateTemplate = ({
       source: { data },
       target: { data, folderId },
       overrides,
+      contentMode,
     });
   });
   return newPageId;

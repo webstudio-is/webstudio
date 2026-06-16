@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Tooltip,
@@ -50,6 +50,9 @@ import {
   $canOpenPageTemplates,
   $isContentMode,
   $isDesignMode,
+  $folderIdToDelete,
+  $pageIdToDelete,
+  $templateIdToDelete,
 } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import {
@@ -90,26 +93,17 @@ const ItemSuffix = ({
   editingItemId,
   onEdit,
   type,
+  canEdit,
 }: {
   itemId: string;
   editingItemId: string | undefined;
   onEdit: (itemId: string | undefined) => void;
   type: "folder" | "page";
+  canEdit: boolean;
 }) => {
-  const isEditing = editingItemId === itemId;
-
-  const menuLabel =
-    type === "page"
-      ? isEditing
-        ? "Close page settings"
-        : "Open page settings"
-      : isEditing
-        ? "Close folder settings"
-        : "Open folder settings";
-
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-
   const prevEditingItemId = useRef(editingItemId);
+
   useEffect(() => {
     // when settings panel close, move focus back to the menu button
     if (
@@ -121,6 +115,21 @@ const ItemSuffix = ({
     }
     prevEditingItemId.current = editingItemId;
   }, [editingItemId, itemId]);
+
+  if (canEdit === false) {
+    return;
+  }
+
+  const isEditing = editingItemId === itemId;
+
+  const menuLabel =
+    type === "page"
+      ? isEditing
+        ? "Close page settings"
+        : "Open page settings"
+      : isEditing
+        ? "Close folder settings"
+        : "Open folder settings";
 
   return (
     <Tooltip content={menuLabel} disableHoverableContent>
@@ -274,14 +283,22 @@ const $flatPagesTree = computed(
 
 const PagesTree = ({
   onSelect,
+  onRequestDeletePage,
+  onRequestDeleteFolder,
   selectedPageId,
   onEdit,
   editingItemId,
+  canManagePages,
+  canEditPageSettings,
 }: {
   onSelect: (pageId: string) => void;
+  onRequestDeletePage: (pageId: string) => void;
+  onRequestDeleteFolder: (folderId: string) => void;
   selectedPageId: string;
   onEdit: (pageId: string | undefined) => void;
   editingItemId?: string;
+  canManagePages: boolean;
+  canEditPageSettings: boolean;
 }) => {
   const pages = useStore($pages);
   const flatPagesTree = useStore($flatPagesTree);
@@ -373,6 +390,13 @@ const PagesTree = ({
                 isHighlighted={dropTarget?.parentId === item.id}
                 isExpanded={item.isExpanded}
                 onExpand={handleExpand}
+                nodeProps={{
+                  role: "group",
+                  "aria-label":
+                    item.type === "page"
+                      ? `Page ${item.page.name}`
+                      : `Folder ${item.folder.name}`,
+                }}
                 buttonProps={{
                   onClick: (event) => {
                     if (item.type === "folder") {
@@ -380,6 +404,23 @@ const PagesTree = ({
                     }
                     if (item.type === "page") {
                       onSelect(item.id);
+                    }
+                  },
+                  onKeyDown: (event) => {
+                    if (
+                      canManagePages === false ||
+                      (event.key !== "Backspace" && event.key !== "Delete")
+                    ) {
+                      return;
+                    }
+                    if (item.type === "page" && item.id === pages.homePageId) {
+                      return;
+                    }
+                    event.preventDefault();
+                    if (item.type === "page") {
+                      onRequestDeletePage(item.id);
+                    } else {
+                      onRequestDeleteFolder(item.id);
                     }
                   },
                   ...(item.type === "page" &&
@@ -397,6 +438,11 @@ const PagesTree = ({
                     itemId={item.id}
                     editingItemId={editingItemId}
                     onEdit={onEdit}
+                    canEdit={canEditPagesTreeItemSettings({
+                      itemType: item.type,
+                      canManagePages,
+                      canEditPageSettings,
+                    })}
                   />
                 }
               >
@@ -432,6 +478,42 @@ const PagesTree = ({
 const newPageId = "new-page";
 const newTemplateId = "new-template";
 
+const canEditPagesTreeItemSettings = ({
+  itemType,
+  canManagePages,
+  canEditPageSettings,
+}: {
+  itemType: PagesTreeItem["type"];
+  canManagePages: boolean;
+  canEditPageSettings: boolean;
+}) => {
+  return itemType === "page" ? canEditPageSettings : canManagePages;
+};
+
+const canEditPagesPanelItemSettings = ({
+  itemId,
+  folders,
+  canManagePages,
+  canEditPageSettings,
+}: {
+  itemId: string;
+  folders: Map<Folder["id"], Folder>;
+  canManagePages: boolean;
+  canEditPageSettings: boolean;
+}) => {
+  return canEditPagesTreeItemSettings({
+    itemType:
+      itemId === newFolderId || isFolder(itemId, folders) ? "folder" : "page",
+    canManagePages,
+    canEditPageSettings,
+  });
+};
+
+export const __testing__ = {
+  canEditPagesPanelItemSettings,
+  canEditPagesTreeItemSettings,
+};
+
 const CreateItemMenu = ({
   editingItemId,
   editingTemplateItemId,
@@ -462,6 +544,7 @@ const CreateItemMenu = ({
           onSelect={(event) => {
             event.preventDefault();
             selectMenuItem(() => {
+              $editingTemplateId.set(undefined);
               $editingPageId.set(
                 editingItemId === newPageId ? undefined : newPageId
               );
@@ -474,6 +557,7 @@ const CreateItemMenu = ({
           onSelect={(event) => {
             event.preventDefault();
             selectMenuItem(() => {
+              $editingTemplateId.set(undefined);
               $editingPageId.set(
                 editingItemId === newFolderId ? undefined : newFolderId
               );
@@ -486,6 +570,7 @@ const CreateItemMenu = ({
           onSelect={(event) => {
             event.preventDefault();
             selectMenuItem(() => {
+              $editingPageId.set(undefined);
               $editingTemplateId.set(
                 editingTemplateItemId === newTemplateId
                   ? undefined
@@ -654,6 +739,7 @@ const TemplateItem = ({
   onSelect,
   onEdit,
   onCreatePage,
+  onRequestDelete,
   canSelectTemplate,
   canEditTemplate,
   canCreatePage,
@@ -664,6 +750,7 @@ const TemplateItem = ({
   onSelect: (id: string) => void;
   onEdit: (id: string | undefined) => void;
   onCreatePage: (id: string) => void;
+  onRequestDelete: (id: string) => void;
   canSelectTemplate: boolean;
   canEditTemplate: boolean;
   canCreatePage: boolean;
@@ -682,7 +769,21 @@ const TemplateItem = ({
       level={1}
       isSelected={isSelected}
       buttonProps={Object.assign(
-        canSelectTemplate ? { onClick: () => onSelect(template.id) } : {},
+        canSelectTemplate
+          ? {
+              onClick: () => onSelect(template.id),
+              onKeyDown: (event: KeyboardEvent) => {
+                if (
+                  canEditTemplate === false ||
+                  (event.key !== "Backspace" && event.key !== "Delete")
+                ) {
+                  return;
+                }
+                event.preventDefault();
+                onRequestDelete(template.id);
+              },
+            }
+          : {},
         { "data-template-id": template.id }
       )}
       actionCount={(canCreatePage ? 1 : 0) + (canEditTemplate ? 1 : 0)}
@@ -737,6 +838,7 @@ const TemplatesSection = ({
   editingTemplateId,
   onEditTemplate,
   onCreatePageFromTemplate,
+  onRequestDeleteTemplate,
   canManageTemplates,
   canSelectTemplate,
   canCreatePageFromTemplate,
@@ -746,6 +848,7 @@ const TemplatesSection = ({
   editingTemplateId: string | undefined;
   onEditTemplate: (id: string | undefined) => void;
   onCreatePageFromTemplate: (id: string) => void;
+  onRequestDeleteTemplate: (id: string) => void;
   canManageTemplates: boolean;
   canSelectTemplate: boolean;
   canCreatePageFromTemplate: boolean;
@@ -815,6 +918,7 @@ const TemplatesSection = ({
             onSelect={onSelectTemplate}
             onEdit={onEditTemplate}
             onCreatePage={onCreatePageFromTemplate}
+            onRequestDelete={onRequestDeleteTemplate}
             canSelectTemplate={canSelectTemplate}
             canEditTemplate={canManageTemplates}
             canCreatePage={canCreatePageFromTemplate}
@@ -891,18 +995,14 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const isContentMode = useStore($isContentMode);
   const authPermit = useStore($authPermit);
   const canOpenPageTemplates = useStore($canOpenPageTemplates);
-  const canCreatePageFromTemplate =
+  const canEditPageContent =
     isDesignMode || (isContentMode && authPermit !== "view");
   const [containerElement, setContainerElement] =
     useState<HTMLDivElement | null>(null);
   const [settingsPanelHeight, setSettingsPanelHeight] = useState<number>();
-  const [pageIdToDelete, setPageIdToDelete] = useState<string | undefined>();
-  const [folderIdToDelete, setFolderIdToDelete] = useState<
-    string | undefined
-  >();
-  const [templateIdToDelete, setTemplateIdToDelete] = useState<
-    string | undefined
-  >();
+  const pageIdToDelete = useStore($pageIdToDelete);
+  const folderIdToDelete = useStore($folderIdToDelete);
+  const templateIdToDelete = useStore($templateIdToDelete);
 
   useEffect(() => {
     if (containerElement === null) {
@@ -932,7 +1032,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         $editingPageId.set(undefined);
       }
     }
-    setPageIdToDelete(undefined);
+    $pageIdToDelete.set(undefined);
   };
 
   const handleDeleteFolderConfirm = () => {
@@ -950,7 +1050,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         $editingPageId.set(undefined);
       }
     }
-    setFolderIdToDelete(undefined);
+    $folderIdToDelete.set(undefined);
   };
 
   const handleTemplateDeleteConfirm = () => {
@@ -965,7 +1065,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         selectPage(pages.homePageId);
       }
     }
-    setTemplateIdToDelete(undefined);
+    $templateIdToDelete.set(undefined);
   };
 
   const templateToDelete =
@@ -973,6 +1073,14 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       ? undefined
       : pages.pageTemplates?.get(templateIdToDelete);
   const hasPageTemplates = (pages.pageTemplates?.size ?? 0) > 0;
+  const canEditSettingsPanel =
+    editingItemId !== undefined &&
+    canEditPagesPanelItemSettings({
+      itemId: editingItemId,
+      folders: pages.folders,
+      canManagePages: isDesignMode,
+      canEditPageSettings: canEditPageContent,
+    });
 
   return (
     <div
@@ -1000,21 +1108,42 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       <Separator />
 
       <PageContextMenu
-        onRequestDeletePage={setPageIdToDelete}
-        onRequestDeleteFolder={setFolderIdToDelete}
+        canManagePages={isDesignMode}
+        onRequestDeletePage={(pageId) => $pageIdToDelete.set(pageId)}
+        onRequestDeleteFolder={(folderId) => $folderIdToDelete.set(folderId)}
       >
         <div>
           <PagesTree
             selectedPageId={currentPage.id}
+            onRequestDeletePage={(pageId) => $pageIdToDelete.set(pageId)}
+            onRequestDeleteFolder={(folderId) =>
+              $folderIdToDelete.set(folderId)
+            }
             onSelect={(itemId) => {
               selectPage(itemId);
               onClose();
             }}
             editingItemId={editingItemId}
+            canManagePages={isDesignMode}
+            canEditPageSettings={canEditPageContent}
             onEdit={(itemId) => {
+              if (
+                itemId &&
+                canEditPagesPanelItemSettings({
+                  itemId,
+                  folders: pages.folders,
+                  canManagePages: isDesignMode,
+                  canEditPageSettings: canEditPageContent,
+                }) === false
+              ) {
+                return;
+              }
               // always select page when edit its settings
               if (itemId && isFolder(itemId, pages.folders) === false) {
                 selectPage(itemId);
+              }
+              if (itemId) {
+                $editingTemplateId.set(undefined);
               }
               $editingPageId.set(itemId);
             }}
@@ -1022,13 +1151,16 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         </div>
       </PageContextMenu>
 
-      {(isDesignMode || isContentMode) && hasPageTemplates && (
+      {canEditPageContent && hasPageTemplates && (
         <>
           <Separator />
           <PanelTitle>Page templates</PanelTitle>
           {canOpenPageTemplates ? (
             <TemplateContextMenu
-              onRequestDeleteTemplate={setTemplateIdToDelete}
+              canManageTemplates={isDesignMode}
+              onRequestDeleteTemplate={(templateId) =>
+                $templateIdToDelete.set(templateId)
+              }
             >
               <ScrollAreaNative
                 css={{
@@ -1046,15 +1178,19 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                   onEditTemplate={(id) => {
                     if (id) {
                       selectPage(id);
+                      $editingPageId.set(undefined);
                     }
                     $editingTemplateId.set(id);
                   }}
                   onCreatePageFromTemplate={(id) => {
                     $creatingPageFromTemplateId.set(id);
                   }}
-                  canManageTemplates={true}
+                  onRequestDeleteTemplate={(templateId) =>
+                    $templateIdToDelete.set(templateId)
+                  }
+                  canManageTemplates={isDesignMode}
                   canSelectTemplate={true}
-                  canCreatePageFromTemplate={canCreatePageFromTemplate}
+                  canCreatePageFromTemplate={canEditPageContent}
                 />
               </ScrollAreaNative>
             </TemplateContextMenu>
@@ -1074,16 +1210,17 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                 onCreatePageFromTemplate={(id) => {
                   $creatingPageFromTemplateId.set(id);
                 }}
+                onRequestDeleteTemplate={() => {}}
                 canManageTemplates={false}
                 canSelectTemplate={false}
-                canCreatePageFromTemplate={canCreatePageFromTemplate}
+                canCreatePageFromTemplate={canEditPageContent}
               />
             </ScrollAreaNative>
           )}
         </>
       )}
 
-      {editingItemId !== undefined && (
+      {canEditSettingsPanel && (
         <FloatingPanel
           content={
             editingItemId === newFolderId ||
@@ -1123,28 +1260,30 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         </FloatingPanel>
       )}
 
-      {canOpenPageTemplates && editingTemplateItemId !== undefined && (
-        <FloatingPanel
-          content={
-            <TemplateEditor
-              editingTemplateId={editingTemplateItemId}
-              onClose={() => $editingTemplateId.set(undefined)}
-            />
-          }
-          placement="right-start"
-          width={Number.parseFloat(rawTheme.spacing[35])}
-          open={true}
-          onOpenChange={(isOpen) => {
-            if (!isOpen) {
-              $editingTemplateId.set(undefined);
+      {isDesignMode &&
+        canOpenPageTemplates &&
+        editingTemplateItemId !== undefined && (
+          <FloatingPanel
+            content={
+              <TemplateEditor
+                editingTemplateId={editingTemplateItemId}
+                onClose={() => $editingTemplateId.set(undefined)}
+              />
             }
-          }}
-        >
-          <span style={{ display: "none" }} />
-        </FloatingPanel>
-      )}
+            placement="right-start"
+            width={Number.parseFloat(rawTheme.spacing[35])}
+            open={true}
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                $editingTemplateId.set(undefined);
+              }
+            }}
+          >
+            <span style={{ display: "none" }} />
+          </FloatingPanel>
+        )}
 
-      {canCreatePageFromTemplate && creatingFromTemplateId !== undefined && (
+      {canEditPageContent && creatingFromTemplateId !== undefined && (
         <FloatingPanel
           content={
             <CreatePageFromTemplateSettings
@@ -1171,21 +1310,21 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       {pageIdToDelete && (
         <DeletePageConfirmationDialog
           page={findPageByIdOrPath(pageIdToDelete, pages)!}
-          onClose={() => setPageIdToDelete(undefined)}
+          onClose={() => $pageIdToDelete.set(undefined)}
           onConfirm={handlePageDeleteConfirm}
         />
       )}
       {folderIdToDelete && (
         <DeleteFolderConfirmationDialog
           folder={getFolderById(pages, folderIdToDelete)!}
-          onClose={() => setFolderIdToDelete(undefined)}
+          onClose={() => $folderIdToDelete.set(undefined)}
           onConfirm={handleDeleteFolderConfirm}
         />
       )}
       {templateToDelete && (
         <DeleteTemplateConfirmationDialog
           template={templateToDelete}
-          onClose={() => setTemplateIdToDelete(undefined)}
+          onClose={() => $templateIdToDelete.set(undefined)}
           onConfirm={handleTemplateDeleteConfirm}
         />
       )}
