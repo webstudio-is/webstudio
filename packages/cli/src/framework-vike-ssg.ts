@@ -81,7 +81,6 @@ export const createFramework = async (): Promise<Framework> => {
     },
     xml: () => [],
     text: () => [],
-    redirect: () => [],
     defaultSitemap: () => [],
   };
 };

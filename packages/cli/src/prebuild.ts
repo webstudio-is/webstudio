@@ -151,6 +151,13 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
   await writeFile(destinationPath, content, "utf8");
 };
 
+const normalizeRedirectSource = (source: string) => {
+  const url = new URL(source, "https://placeholder.local");
+  // Browsers never send fragments to the server, so source fragments are
+  // intentionally ignored for published redirect matching.
+  return `${url.pathname}${url.search}`;
+};
+
 const writeWsAuthResources = async (generatedDir: string, pages: Pages) => {
   console.info("[wsauth] prebuild create auth config", {
     file: wsAuthFile,
@@ -795,29 +802,19 @@ export const prebuild = async (options: {
     `
   );
 
-  const redirects = pages.redirects;
-  if (redirects !== undefined && redirects.length > 0) {
-    for (const redirect of redirects) {
-      const generatedBasename = generateRemixRoute(redirect.old);
-      await createFileIfNotExists(
-        join(generatedDir, `${generatedBasename}.ts`),
-        `
-        export const url = "${redirect.new}";
-        export const status = ${redirect.status ?? 301};
-        `
-      );
+  const redirects =
+    pages.redirects?.map((redirect) => ({
+      old: normalizeRedirectSource(redirect.old),
+      new: redirect.new,
+      status: redirect.status ?? 301,
+    })) ?? [];
 
-      for (const { file, template } of framework.redirect({
-        pagePath: redirect.old,
-      })) {
-        const content = template.replaceAll(
-          "__REDIRECT__",
-          importFrom(`./app/__generated__/${generatedBasename}`, file)
-        );
-        await createFileIfNotExists(file, content);
-      }
-    }
-  }
+  await createFileIfNotExists(
+    join(generatedDir, "$resources.redirects.ts"),
+    `
+    export const redirects = ${JSON.stringify(redirects, null, 2)};
+    `
+  );
 
   if (assetsToDownload.length > 0) {
     const downloading = spinner();
