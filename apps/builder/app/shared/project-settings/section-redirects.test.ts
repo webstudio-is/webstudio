@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { PageRedirect } from "@webstudio-is/sdk";
 import { __testing__ } from "./section-redirects";
 
-const { validateFromPath, validateToPath } = __testing__;
+const { deleteRedirect, validateFromPath, validateToPath } = __testing__;
 
 describe("validateFromPath", () => {
   describe("format validation", () => {
@@ -130,9 +130,11 @@ describe("validateFromPath", () => {
       expect(result.warnings).toEqual([]);
     });
 
-    test("accepts path with named splat", () => {
+    test("rejects path with named splat", () => {
       const result = validateFromPath("/docs/:path*", [], new Set());
-      expect(result.errors).toEqual([]);
+      expect(result.errors).toContain(
+        "Named splats are not supported; use * instead"
+      );
       expect(result.warnings).toEqual([]);
     });
 
@@ -142,25 +144,9 @@ describe("validateFromPath", () => {
       expect(result.warnings).toEqual([]);
     });
 
-    test("skips duplicate/warning checks for paths not starting with /", () => {
-      // External URLs or other formats that pass schema validation
-      // but don't start with / should skip the duplicate redirect
-      // and existing page checks (since those only apply to local paths)
-      const existingRedirects: Array<PageRedirect> = [
-        { old: "https://old.com/page", new: "/new", status: "301" },
-      ];
-      const existingPaths = new Set(["https://old.com/page"]);
-
-      // Even though this path "exists" in redirects and pages,
-      // no error/warning because it doesn't start with /
-      // Note: This tests the current behavior - external URLs bypass checks
-      const result = validateFromPath(
-        "https://old.com/page",
-        existingRedirects,
-        existingPaths
-      );
-      // The schema may reject this, but if it passes, no duplicate check
-      // If schema rejects, we get format errors instead
+    test("rejects external source URLs", () => {
+      const result = validateFromPath("https://old.com/page", [], new Set());
+      expect(result.errors).toContain("Must start with a /");
       expect(result.warnings).toEqual([]);
     });
   });
@@ -205,6 +191,26 @@ describe("validateFromPath", () => {
       expect(result.warnings).toContain(
         "Source fragments are ignored because browsers do not send them"
       );
+    });
+
+    test("returns error when encoded and decoded sources would match the same request", () => {
+      const result = validateFromPath(
+        "/%C3%BCber",
+        [{ old: "/über", new: "/new-page", status: "301" }],
+        new Set()
+      );
+      expect(result.errors).toContain("This path is already being redirected");
+      expect(result.warnings).toEqual([]);
+    });
+
+    test("does not treat different exact query strings as duplicates", () => {
+      const result = validateFromPath(
+        "/old-page?x=2",
+        [{ old: "/old-page?x=1", new: "/new-page", status: "301" }],
+        new Set()
+      );
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toEqual([]);
     });
 
     test("returns error when wildcard redirect already exists", () => {
@@ -263,6 +269,40 @@ describe("validateFromPath", () => {
         "Source fragments are ignored because browsers do not send them",
         "This redirect will override an existing page",
       ]);
+    });
+
+    test("checks existing page warning with encoded source path", () => {
+      const result = validateFromPath("/%C3%BCber", [], new Set(["/über"]));
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toContain(
+        "This redirect will override an existing page"
+      );
+    });
+
+    test("returns warning when concrete redirect source overrides dynamic page path", () => {
+      const result = validateFromPath("/blog/post", [], new Set(["/blog/:id"]));
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toContain(
+        "This redirect will override an existing page"
+      );
+    });
+
+    test("returns warning when redirect pattern overrides concrete page path", () => {
+      const result = validateFromPath(
+        "/blog/:slug",
+        [],
+        new Set(["/blog/post"])
+      );
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toContain(
+        "This redirect will override an existing page"
+      );
+    });
+
+    test("does not warn that query-specific source fully overrides an existing page", () => {
+      const result = validateFromPath("/about?x=1", [], existingPaths);
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toEqual([]);
     });
 
     test("returns warning for dynamic route path", () => {
@@ -329,6 +369,45 @@ describe("validateToPath", () => {
     const errors = validateToPath("//example.com/page");
     expect(errors).toEqual([]);
   });
+
+  test("accepts target params provided by source pattern", () => {
+    expect(validateToPath("/posts/:slug", "/blog/:slug")).toEqual([]);
+    expect(validateToPath("/reference/*", "/docs/*")).toEqual([]);
+  });
+
+  test("rejects target params that source cannot provide", () => {
+    expect(validateToPath("/posts/:slug", "/old")).toContain(
+      "Target route params must match params from the source path"
+    );
+    expect(validateToPath("/posts/:slug", "/old?preview=1")).toContain(
+      "Target route params must match params from the source path"
+    );
+    expect(validateToPath("/reference/*", "/docs")).toContain(
+      "Target route params must match params from the source path"
+    );
+  });
+
+  test("rejects unsupported target param syntax", () => {
+    expect(validateToPath("/posts/:year-:slug", "/blog/:year/:slug")).toContain(
+      "Target route params must match params from the source path"
+    );
+    expect(validateToPath("/posts?slug=:slug", "/blog/:slug")).toContain(
+      "Target route params must match params from the source path"
+    );
+  });
+});
+
+describe("deleteRedirect", () => {
+  test("deletes the selected redirect object instead of relying on filtered index", () => {
+    const first = { old: "/first", new: "/one", status: "301" } as const;
+    const second = { old: "/second", new: "/two", status: "301" } as const;
+    const third = { old: "/third", new: "/three", status: "301" } as const;
+
+    expect(deleteRedirect([first, second, third], third)).toEqual([
+      first,
+      second,
+    ]);
+  });
 });
 
 describe("redirect patterns (integration tests)", () => {
@@ -349,11 +428,9 @@ describe("redirect patterns (integration tests)", () => {
     expect(toErrors).toEqual([]);
   });
 
-  test("parameterized from path: /old/:slug → /new (param captured but not substituted)", () => {
-    // Note: The :slug is captured by the router but cannot be substituted
-    // into the "to" path - all matching URLs redirect to the same destination
+  test("parameterized redirect: /old/:slug → /new/:slug", () => {
     const fromResult = validateFromPath("/old/:slug", [], new Set());
-    const toErrors = validateToPath("/new");
+    const toErrors = validateToPath("/new/:slug", "/old/:slug");
     expect(fromResult.errors).toEqual([]);
     expect(toErrors).toEqual([]);
   });

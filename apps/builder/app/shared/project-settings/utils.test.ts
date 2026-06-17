@@ -1,7 +1,11 @@
 import { describe, expect, test } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { PageRedirect } from "@webstudio-is/sdk";
-import { getExistingRoutePaths, findMatchingRedirect } from "./utils";
+import {
+  doesRedirectSourceOverridePagePath,
+  findMatchingRedirect,
+  getExistingRoutePaths,
+} from "./utils";
 
 describe("getExistingRoutePaths", () => {
   test("gets all the route paths that exists in the project", () => {
@@ -48,6 +52,24 @@ describe("findMatchingRedirect", () => {
       const redirects = [createRedirect("/about")];
       const result = findMatchingRedirect("/about", redirects);
       expect(result?.old).toBe("/about");
+    });
+
+    test("finds redirect after removing source fragment", () => {
+      const redirects = [createRedirect("/about#section")];
+      const result = findMatchingRedirect("/about", redirects);
+      expect(result?.old).toBe("/about#section");
+    });
+
+    test("finds redirect with encoded source path for decoded page path", () => {
+      const redirects = [createRedirect("/%C3%BCber")];
+      const result = findMatchingRedirect("/über", redirects);
+      expect(result?.old).toBe("/%C3%BCber");
+    });
+
+    test("does not report query-specific redirect as fully overriding a page", () => {
+      const redirects = [createRedirect("/about?x=1")];
+      const result = findMatchingRedirect("/about", redirects);
+      expect(result).toBeUndefined();
     });
 
     test("returns undefined when no match found", () => {
@@ -127,6 +149,12 @@ describe("findMatchingRedirect", () => {
       const result = findMatchingRedirect("/blog", redirects);
       expect(result?.old).toBe("/blog/:id?");
     });
+
+    test("matches optional static segment", () => {
+      const redirects = [createRedirect("/en?/about")];
+      const result = findMatchingRedirect("/en/about", redirects);
+      expect(result?.old).toBe("/en?/about");
+    });
   });
 
   describe("priority and order", () => {
@@ -169,5 +197,41 @@ describe("findMatchingRedirect", () => {
       const result = findMatchingRedirect("/a/b/c/d/e", redirects);
       expect(result?.old).toBe("/a/b/c/d/e");
     });
+  });
+});
+
+describe("doesRedirectSourceOverridePagePath", () => {
+  test("returns true when exact redirect source matches exact page path", () => {
+    expect(doesRedirectSourceOverridePagePath("/about", "/about")).toBe(true);
+  });
+
+  test("returns true when exact redirect source matches dynamic page path", () => {
+    expect(doesRedirectSourceOverridePagePath("/blog/post", "/blog/:id")).toBe(
+      true
+    );
+  });
+
+  test("returns true when redirect pattern matches exact page path", () => {
+    expect(
+      doesRedirectSourceOverridePagePath("/blog/:slug", "/blog/post")
+    ).toBe(true);
+  });
+
+  test("returns true when redirect splat overlaps page path", () => {
+    expect(doesRedirectSourceOverridePagePath("/docs/*", "/docs/:id")).toBe(
+      true
+    );
+  });
+
+  test("returns false for exact-query redirect source", () => {
+    expect(doesRedirectSourceOverridePagePath("/about?x=1", "/about")).toBe(
+      false
+    );
+  });
+
+  test("returns false when paths do not overlap", () => {
+    expect(doesRedirectSourceOverridePagePath("/about", "/contact")).toBe(
+      false
+    );
   });
 });

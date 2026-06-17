@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import {
   generateRedirectUrl as generateRemixRedirectUrl,
   matchRedirect as matchRemixRedirect,
@@ -40,6 +42,51 @@ type MatchedRedirect = {
 
 const url = (path: string) => `${defaultOrigin}${path}`;
 
+const cliRoot = process.cwd();
+const repoRoot = join(cliRoot, "../..");
+
+describe("redirect-url fixture copies", () => {
+  test.each([
+    "react-router-cloudflare",
+    "react-router-docker",
+    "react-router-netlify",
+    "react-router-vercel",
+    "webstudio-features",
+  ])(
+    "keeps %s redirect helper synced with react-router template",
+    async (fixture) => {
+      await expect(
+        readFile(
+          join(repoRoot, "fixtures", fixture, "app/redirect-url.ts"),
+          "utf8"
+        )
+      ).resolves.toEqual(
+        await readFile(
+          join(cliRoot, "templates/react-router/app/redirect-url.ts"),
+          "utf8"
+        )
+      );
+    }
+  );
+
+  test("keeps webstudio-cloudflare-template redirect helper synced with defaults template", async () => {
+    await expect(
+      readFile(
+        join(
+          repoRoot,
+          "fixtures/webstudio-cloudflare-template/app/redirect-url.ts"
+        ),
+        "utf8"
+      )
+    ).resolves.toEqual(
+      await readFile(
+        join(cliRoot, "templates/defaults/app/redirect-url.ts"),
+        "utf8"
+      )
+    );
+  });
+});
+
 for (const {
   name,
   generateRedirectUrl,
@@ -72,6 +119,12 @@ for (const {
         expected: "/articles/post",
       },
       {
+        name: "expands named params in relative targets",
+        target: "articles/:slug",
+        params: { slug: "post" },
+        expected: "articles/post",
+      },
+      {
         name: "preserves encoded slashes in named params",
         target: "/articles/:slug",
         params: { slug: "a/b" },
@@ -96,6 +149,12 @@ for (const {
         expected: "/target#section",
       },
       {
+        name: "returns original local target when params cannot be expanded",
+        target: "/articles/:missing",
+        params: {},
+        expected: "/articles/:missing",
+      },
+      {
         name: "preserves absolute urls",
         target: "https://other.example/*",
         params: { "*": "foo" },
@@ -112,6 +171,18 @@ for (const {
         target: "mailto:test@example.com",
         params: {},
         expected: "mailto:test@example.com",
+      },
+      {
+        name: "preserves query-only targets",
+        target: "?preview=1",
+        params: { slug: "post" },
+        expected: "?preview=1",
+      },
+      {
+        name: "preserves hash-only targets",
+        target: "#section",
+        params: { slug: "post" },
+        expected: "#section",
       },
     ];
 
@@ -304,10 +375,48 @@ for (const {
         expected: { url: "/articles/post", status: 302 },
       },
       {
+        name: "matches dynamic source and expands relative target params",
+        requestPath: "/blog/post",
+        redirects: [{ old: "/blog/:slug", new: "articles/:slug" }],
+        expected: { url: "articles/post", status: 301 },
+      },
+      {
+        name: "matches optional dynamic source when param is present",
+        requestPath: "/blog/post",
+        redirects: [{ old: "/blog/:slug?", new: "/articles/:slug" }],
+        expected: { url: "/articles/post", status: 301 },
+      },
+      {
+        name: "matches optional dynamic source when param is absent",
+        requestPath: "/blog",
+        redirects: [{ old: "/blog/:slug?", new: "/articles" }],
+        expected: { url: "/articles", status: 301 },
+      },
+      {
+        name: "matches optional static source segment",
+        requestPath: "/en/about",
+        redirects: [{ old: "/en?/about", new: "/about" }],
+        expected: { url: "/about", status: 301 },
+      },
+      {
+        name: "matches mixed optional static and dynamic source",
+        requestPath: "/one/two/three/four/rest",
+        redirects: [
+          { old: "/one?/:two?/three/:four/*", new: "/target/:four/*" },
+        ],
+        expected: { url: "/target/four/rest", status: 301 },
+      },
+      {
         name: "matches encoded dynamic params and keeps encoded target params",
         requestPath: "/blog/%C3%BCber",
         redirects: [{ old: "/blog/:slug", new: "/articles/:slug" }],
         expected: { url: "/articles/%C3%BCber", status: 301 },
+      },
+      {
+        name: "does not throw when matched target has missing params",
+        requestPath: "/blog/post",
+        redirects: [{ old: "/blog/:slug", new: "/articles/:missing" }],
+        expected: { url: "/articles/:missing", status: 301 },
       },
       {
         name: "matches encoded slashes in dynamic params without turning them into path separators",
@@ -484,6 +593,16 @@ for (const {
         name: "query-specific redirects do not extract route params",
         requestPath: "/blog/post?preview=1",
         redirects: [{ old: "/blog/:slug?preview=1", new: "/articles/:slug" }],
+      },
+      {
+        name: "optional dynamic sources do not match extra nested segments",
+        requestPath: "/blog/post/extra",
+        redirects: [{ old: "/blog/:slug?", new: "/articles/:slug" }],
+      },
+      {
+        name: "optional static source does not behave like a query-specific source",
+        requestPath: "/en?/about",
+        redirects: [{ old: "/en?/about", new: "/about" }],
       },
       {
         name: "query-specific redirects do not decode query values",

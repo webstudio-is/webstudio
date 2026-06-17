@@ -26,7 +26,12 @@ export const generateRedirectUrl = (
   url: string,
   params: Record<string, string | undefined>
 ) => {
-  if (url.startsWith("/") === false || url.startsWith("//")) {
+  if (
+    /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(url) ||
+    url.startsWith("//") ||
+    url.startsWith("?") ||
+    url.startsWith("#")
+  ) {
     return url;
   }
 
@@ -37,10 +42,14 @@ export const generateRedirectUrl = (
     ])
   );
   const path = parsePath(url);
-  return createPath({
-    ...path,
-    pathname: generatePath(path.pathname ?? "/", targetParams),
-  });
+  try {
+    return createPath({
+      ...path,
+      pathname: generatePath(path.pathname ?? "/", targetParams),
+    });
+  } catch {
+    return url;
+  }
 };
 
 const stripHash = (source: string) => {
@@ -64,8 +73,35 @@ const getPathnameVariants = (pathname: string) => {
   return Array.from(new Set([pathname, decodePathname(pathname)]));
 };
 
+const isOptionalSegmentMarker = (source: string, index: number) => {
+  const nextChar = source[index + 1];
+  if (nextChar !== undefined && nextChar !== "/") {
+    return false;
+  }
+
+  const segmentStart = source.lastIndexOf("/", index - 1);
+  const segment = source.slice(segmentStart + 1, index);
+  return segment !== "";
+};
+
+const getSourceSearchIndex = (source: string) => {
+  for (let index = 0; index < source.length; index += 1) {
+    if (
+      source[index] === "?" &&
+      isOptionalSegmentMarker(source, index) === false
+    ) {
+      return index;
+    }
+  }
+  return -1;
+};
+
 const isRedirectPattern = (source: string) => {
-  return /(^|\/):[^/]+/.test(source) || /(^|\/)\*(?=\/|$)/.test(source);
+  return (
+    /(^|\/):[^/]+/.test(source) ||
+    /(^|\/)\*(?=\/|$)/.test(source) ||
+    /(^|\/)[^/]+\?(?=\/|$)/.test(source)
+  );
 };
 
 export const matchRedirect = (
@@ -77,7 +113,7 @@ export const matchRedirect = (
 
   for (const redirect of redirects) {
     const source = stripHash(redirect.old);
-    if (source.includes("?")) {
+    if (getSourceSearchIndex(source) !== -1) {
       const exactMatch = requestPathnames.some(
         (requestPathname) => source === `${requestPathname}${url.search}`
       );
