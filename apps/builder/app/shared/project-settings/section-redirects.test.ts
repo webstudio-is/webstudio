@@ -26,23 +26,37 @@ describe("validateFromPath", () => {
       expect(result.warnings).toEqual([]);
     });
 
-    test("returns error for path ending with /", () => {
+    test("accepts path ending with /", () => {
       const result = validateFromPath("/page/", [], new Set());
-      expect(result.errors).toContain("Can't end with a /");
+      expect(result.errors).toEqual([]);
       expect(result.warnings).toEqual([]);
     });
 
-    test("returns error for path with double slashes", () => {
+    test("accepts path with double slashes", () => {
       const result = validateFromPath("/page//subpage", [], new Set());
-      expect(result.errors).toContain("Can't contain repeating /");
+      expect(result.errors).toEqual([]);
       expect(result.warnings).toEqual([]);
     });
 
-    test("returns error for path with invalid characters", () => {
+    test("accepts browser-encodable characters", () => {
       const result = validateFromPath("/page name", [], new Set());
-      expect(result.errors).toContain(
-        "Path contains invalid characters (spaces or URL-unsafe characters are not allowed)"
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toEqual([]);
+    });
+
+    test("accepts query values containing unencoded urls", () => {
+      const result = validateFromPath(
+        "/path?url=https://example.com/a?b=c",
+        [],
+        new Set()
       );
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toEqual([]);
+    });
+
+    test("returns error for path with backslash", () => {
+      const result = validateFromPath("/page\\name", [], new Set());
+      expect(result.errors).toContain("Must be a valid URL path");
       expect(result.warnings).toEqual([]);
     });
 

@@ -151,13 +151,6 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
   await writeFile(destinationPath, content, "utf8");
 };
 
-const normalizeRedirectSource = (source: string) => {
-  const url = new URL(source, "https://placeholder.local");
-  // Browsers never send fragments to the server, so source fragments are
-  // intentionally ignored for published redirect matching.
-  return `${url.pathname}${url.search}`;
-};
-
 const writeWsAuthResources = async (generatedDir: string, pages: Pages) => {
   console.info("[wsauth] prebuild create auth config", {
     file: wsAuthFile,
@@ -259,6 +252,19 @@ loglevel=error
 audit=false
 fund=false
 `;
+
+export const generateRedirectsModule = (pageRedirects: Pages["redirects"]) => {
+  const redirects =
+    pageRedirects?.map((redirect) => ({
+      old: redirect.old,
+      new: redirect.new,
+      status: redirect.status ?? 301,
+    })) ?? [];
+
+  return `
+    export const redirects = ${JSON.stringify(redirects, null, 2)};
+    `;
+};
 
 export const prebuild = async (options: {
   /**
@@ -802,18 +808,9 @@ export const prebuild = async (options: {
     `
   );
 
-  const redirects =
-    pages.redirects?.map((redirect) => ({
-      old: normalizeRedirectSource(redirect.old),
-      new: redirect.new,
-      status: redirect.status ?? 301,
-    })) ?? [];
-
   await createFileIfNotExists(
     join(generatedDir, "$resources.redirects.ts"),
-    `
-    export const redirects = ${JSON.stringify(redirects, null, 2)};
-    `
+    generateRedirectsModule(pages.redirects)
   );
 
   if (assetsToDownload.length > 0) {

@@ -31,7 +31,7 @@ import {
   UploadIcon,
 } from "@webstudio-is/icons";
 import { ImportRedirectsDialog } from "./import-redirects-dialog";
-import { OldPagePath, ProjectNewRedirectPath } from "@webstudio-is/sdk";
+import { RedirectSourcePath, ProjectNewRedirectPath } from "@webstudio-is/sdk";
 import type { PageRedirect } from "@webstudio-is/sdk";
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
@@ -61,7 +61,7 @@ const validateFromPath = (
   redirects: Array<PageRedirect>,
   existingPaths: Set<string>
 ): ValidationResult => {
-  const fromPathValidationResult = OldPagePath.safeParse(fromPath);
+  const fromPathValidationResult = RedirectSourcePath.safeParse(fromPath);
 
   if (fromPathValidationResult.success) {
     if (fromPath.startsWith("/")) {

@@ -1129,8 +1129,8 @@ Redirect 301 /old /new`;
 
       const result = parseRedirects(input);
 
-      // Double slash still starts with /, so it passes basic validation
-      // Webstudio's OldPagePath schema will reject it later
+      // The parser only checks basic shape; RedirectSourcePath validation
+      // rejects protocol-relative sources later.
       expect(result.redirects).toHaveLength(1);
     });
 

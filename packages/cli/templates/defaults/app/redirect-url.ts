@@ -36,9 +36,18 @@ export const generateRedirectUrl = (
   });
 };
 
+const stripHash = (source: string) => {
+  const hashIndex = source.indexOf("#");
+  return hashIndex === -1 ? source : source.slice(0, hashIndex);
+};
+
+const getRedirectStatus = (status: RedirectItem["status"]) => {
+  return Number(status) === 302 ? 302 : 301;
+};
+
 const decodePathname = (pathname: string) => {
   try {
-    return decodeURIComponent(pathname);
+    return decodeURI(pathname);
   } catch {
     return pathname;
   }
@@ -48,12 +57,8 @@ const getPathnameVariants = (pathname: string) => {
   return Array.from(new Set([pathname, decodePathname(pathname)]));
 };
 
-const getRedirectSource = (source: string, origin: string) => {
-  const url = new URL(source, origin);
-  return {
-    pathname: url.pathname,
-    search: url.search,
-  };
+const isRedirectPattern = (source: string) => {
+  return /(^|\/):[^/]+/.test(source) || source.includes("*");
 };
 
 export const matchRedirect = (
@@ -64,21 +69,45 @@ export const matchRedirect = (
   const requestPathnames = getPathnameVariants(url.pathname);
 
   for (const redirect of redirects) {
-    const source = getRedirectSource(redirect.old, url.origin);
-    if (source.search !== "" && source.search !== url.search) {
+    const source = stripHash(redirect.old);
+    if (source.includes("?")) {
+      const exactMatch = requestPathnames.some(
+        (requestPathname) => source === `${requestPathname}${url.search}`
+      );
+      if (exactMatch) {
+        return {
+          url: generateRedirectUrl(redirect.new, {}),
+          status: getRedirectStatus(redirect.status),
+        };
+      }
       continue;
     }
 
-    for (const sourcePathname of getPathnameVariants(source.pathname)) {
-      for (const requestPathname of requestPathnames) {
-        const match = matchPath(sourcePathname, requestPathname);
-        if (match !== null) {
-          return {
-            url: generateRedirectUrl(redirect.new, match.params),
-            status: Number(redirect.status ?? 301),
-          };
-        }
+    if (isRedirectPattern(source) === false) {
+      if (requestPathnames.includes(source)) {
+        return {
+          url: generateRedirectUrl(redirect.new, {}),
+          status: getRedirectStatus(redirect.status),
+        };
       }
+      continue;
     }
+
+    const match = requestPathnames
+      .map((requestPathname) =>
+        matchPath(
+          { path: source, caseSensitive: true, end: true },
+          requestPathname
+        )
+      )
+      .find((match) => match !== null);
+    if (match === undefined) {
+      continue;
+    }
+
+    return {
+      url: generateRedirectUrl(redirect.new, match.params),
+      status: getRedirectStatus(redirect.status),
+    };
   }
 };

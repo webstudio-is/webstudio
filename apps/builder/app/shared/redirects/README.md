@@ -530,5 +530,5 @@ From `@webstudio-is/design-system`:
 6. **Skipped Feedback**: Show why lines were skipped with line numbers
 7. **Merge Options**: Let user choose add vs replace
 8. **Duplicate Handling**: Detect and handle conflicts with existing redirects
-9. **Validation**: Run Webstudio's `OldPagePath` validation on import
+9. **Validation**: Run Webstudio's `RedirectSourcePath` validation on import
 10. **Toast Feedback**: Show success/error toast after import
