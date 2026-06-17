@@ -1,4 +1,10 @@
-import { createPath, generatePath, matchPath, parsePath } from "react-router";
+import {
+  createPath,
+  generatePath,
+  matchPath,
+  parsePath,
+  redirect,
+} from "react-router";
 
 type RedirectItem = {
   old: string;
@@ -105,4 +111,15 @@ export const matchRedirect = (
       status: getRedirectStatus(redirect.status),
     };
   }
+};
+
+export const redirectRequest = (
+  request: Request,
+  redirects: RedirectItem[]
+): Response | undefined => {
+  const matchedRedirect = matchRedirect(request.url, redirects);
+  if (matchedRedirect === undefined) {
+    return;
+  }
+  return redirect(matchedRedirect.url, matchedRedirect.status);
 };

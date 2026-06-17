@@ -2,10 +2,12 @@ import { describe, expect, test } from "vitest";
 import {
   generateRedirectUrl as generateRemixRedirectUrl,
   matchRedirect as matchRemixRedirect,
+  redirectRequest as redirectRemixRequest,
 } from "../templates/defaults/app/redirect-url";
 import {
   generateRedirectUrl as generateReactRouterRedirectUrl,
   matchRedirect as matchReactRouterRedirect,
+  redirectRequest as redirectReactRouterRequest,
 } from "../templates/react-router/app/redirect-url";
 
 const implementations = [
@@ -13,11 +15,13 @@ const implementations = [
     name: "Remix",
     generateRedirectUrl: generateRemixRedirectUrl,
     matchRedirect: matchRemixRedirect,
+    redirectRequest: redirectRemixRequest,
   },
   {
     name: "React Router",
     generateRedirectUrl: generateReactRouterRedirectUrl,
     matchRedirect: matchReactRouterRedirect,
+    redirectRequest: redirectReactRouterRequest,
   },
 ] as const;
 
@@ -36,7 +40,12 @@ type MatchedRedirect = {
 
 const url = (path: string) => `${defaultOrigin}${path}`;
 
-for (const { name, generateRedirectUrl, matchRedirect } of implementations) {
+for (const {
+  name,
+  generateRedirectUrl,
+  matchRedirect,
+  redirectRequest,
+} of implementations) {
   describe(`${name}: generateRedirectUrl`, () => {
     const cases: Array<{
       name: string;
@@ -191,6 +200,24 @@ for (const { name, generateRedirectUrl, matchRedirect } of implementations) {
         expected: { url: "/target", status: 301 },
       },
       {
+        name: "matches decoded query-specific source path against encoded request path",
+        requestPath: "/%C3%BCber?x=1",
+        redirects: [{ old: "/über?x=1", new: "/ueber" }],
+        expected: { url: "/ueber", status: 301 },
+      },
+      {
+        name: "matches encoded query-specific source path against decoded request path",
+        requestPath: "/über?x=1",
+        redirects: [{ old: "/%C3%BCber?x=1", new: "/ueber" }],
+        expected: { url: "/ueber", status: 301 },
+      },
+      {
+        name: "matches decoded spaces in query-specific source paths",
+        requestPath: "/path%20with%20spaces?x=1",
+        redirects: [{ old: "/path with spaces?x=1", new: "/spaces" }],
+        expected: { url: "/spaces", status: 301 },
+      },
+      {
         name: "matches encoded source pathname",
         requestPath: "/%E6%B8%AF%E8%81%9E",
         redirects: [{ old: "/%E6%B8%AF%E8%81%9E", new: "/news" }],
@@ -283,6 +310,18 @@ for (const { name, generateRedirectUrl, matchRedirect } of implementations) {
         expected: { url: "/reference/api/reference", status: 301 },
       },
       {
+        name: "preserves absolute redirect targets",
+        requestPath: "/external",
+        redirects: [{ old: "/external", new: "https://other.example/path" }],
+        expected: { url: "https://other.example/path", status: 301 },
+      },
+      {
+        name: "preserves protocol-relative redirect targets",
+        requestPath: "/protocol-relative",
+        redirects: [{ old: "/protocol-relative", new: "//other.example/path" }],
+        expected: { url: "//other.example/path", status: 301 },
+      },
+      {
         name: "ignores source fragments and preserves target fragments",
         requestPath: "/old",
         redirects: [{ old: "/old#section", new: "/new#target" }],
@@ -333,6 +372,19 @@ for (const { name, generateRedirectUrl, matchRedirect } of implementations) {
       "$name",
       ({ requestPath, redirects, expected }) => {
         expect(matchRedirect(url(requestPath), redirects)).toEqual(expected);
+      }
+    );
+
+    test.each(matchingCases)(
+      "returns router redirect response: $name",
+      ({ requestPath, redirects, expected }) => {
+        const response = redirectRequest(
+          new Request(url(requestPath)),
+          redirects
+        );
+        expect(response).toBeInstanceOf(Response);
+        expect(response?.status).toEqual(expected.status);
+        expect(response?.headers.get("Location")).toEqual(expected.url);
       }
     );
 
@@ -421,10 +473,24 @@ for (const { name, generateRedirectUrl, matchRedirect } of implementations) {
         requestPath: "/blog/post?preview=1",
         redirects: [{ old: "/blog/:slug?preview=1", new: "/articles/:slug" }],
       },
+      {
+        name: "query-specific redirects do not decode query values",
+        requestPath: "/über?x=a+b",
+        redirects: [{ old: "/%C3%BCber?x=a%20b", new: "/new" }],
+      },
     ];
 
     test.each(nonMatchingCases)("$name", ({ requestPath, redirects }) => {
       expect(matchRedirect(url(requestPath), redirects)).toBeUndefined();
     });
+
+    test.each(nonMatchingCases)(
+      "does not return router redirect response: $name",
+      ({ requestPath, redirects }) => {
+        expect(
+          redirectRequest(new Request(url(requestPath)), redirects)
+        ).toBeUndefined();
+      }
+    );
   });
 }

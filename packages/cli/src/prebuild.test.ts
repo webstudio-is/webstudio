@@ -9,14 +9,15 @@ import {
 } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import type { Pages } from "@webstudio-is/sdk";
-import { ROOT_FOLDER_ID, elementComponent } from "@webstudio-is/sdk";
 import { downloadAsset, generateRedirectsModule, prebuild } from "./prebuild";
 
 const originalCwd = process.cwd();
 const originalFetch = globalThis.fetch;
 let tempDir: string;
 let consoleInfo: ReturnType<typeof vi.spyOn>;
+const rootFolderId = "root";
+const elementComponent = "ws:element";
+type Redirects = Array<{ old: string; new: string; status?: "301" | "302" }>;
 
 const getFilePaths = async (dir: string): Promise<string[]> => {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -54,7 +55,7 @@ const createSiteData = (
       ]
     >;
     pageMeta?: Record<string, unknown>;
-    redirects?: NonNullable<Pages["redirects"]>;
+    redirects?: Redirects;
   } = {}
 ) => {
   const pages = overrides.pages ?? [
@@ -114,11 +115,11 @@ const createSiteData = (
           },
         ],
         homePageId: pages[0].id,
-        rootFolderId: ROOT_FOLDER_ID,
+        rootFolderId,
         pages,
         folders: [
           {
-            id: ROOT_FOLDER_ID,
+            id: rootFolderId,
             name: "Root",
             slug: "",
             children: pages.map((page) => page.id),
@@ -201,7 +202,7 @@ describe("generateRedirectsModule", () => {
         old: "/old#section",
         new: "/new#target",
       },
-    ] satisfies NonNullable<Pages["redirects"]>;
+    ] satisfies Redirects;
 
     expect(generateRedirectsModule(redirects)).toEqual(`
     export const redirects = [

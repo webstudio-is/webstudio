@@ -4,6 +4,7 @@ import {
   matchPath,
   parsePath,
 } from "@remix-run/react";
+import { redirect } from "@remix-run/server-runtime";
 
 type RedirectItem = {
   old: string;
@@ -110,4 +111,15 @@ export const matchRedirect = (
       status: getRedirectStatus(redirect.status),
     };
   }
+};
+
+export const redirectRequest = (
+  request: Request,
+  redirects: RedirectItem[]
+): Response | undefined => {
+  const matchedRedirect = matchRedirect(request.url, redirects);
+  if (matchedRedirect === undefined) {
+    return;
+  }
+  return redirect(matchedRedirect.url, matchedRedirect.status);
 };
