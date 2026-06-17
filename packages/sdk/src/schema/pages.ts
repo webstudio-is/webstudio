@@ -162,7 +162,7 @@ export const RedirectSourcePath = z
   .refine((path) => path !== "/", "Can't be just a /")
   .refine(
     (path) => path.startsWith("/") && path.startsWith("//") === false,
-    "Must start with a / or a full URL e.g. https://website.org"
+    "Must start with a /"
   )
   .refine((path) => {
     // Redirect sources may contain any browser-requestable URL characters.

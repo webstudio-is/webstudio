@@ -53,7 +53,7 @@ const getPathnameVariants = (pathname: string) => {
 };
 
 const isRedirectPattern = (source: string) => {
-  return /(^|\/):[^/]+/.test(source) || source.includes("*");
+  return /(^|\/):[^/]+/.test(source) || /(^|\/)\*(?=\/|$)/.test(source);
 };
 
 export const matchRedirect = (

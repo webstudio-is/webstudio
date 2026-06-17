@@ -20,9 +20,7 @@ describe("validateFromPath", () => {
 
     test("returns error for path not starting with /", () => {
       const result = validateFromPath("page", [], new Set());
-      expect(result.errors).toContain(
-        "Must start with a / or a full URL e.g. https://website.org"
-      );
+      expect(result.errors).toContain("Must start with a /");
       expect(result.warnings).toEqual([]);
     });
 

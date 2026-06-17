@@ -1,10 +1,26 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import { Links, Meta, Outlet, useMatches } from "@remix-run/react";
-import type { HeadersFunction } from "@remix-run/server-runtime";
+import {
+  redirect,
+  type HeadersFunction,
+  type LoaderFunctionArgs,
+} from "@remix-run/server-runtime";
+import { matchRedirect } from "./redirect-url";
 // @todo think about how to make __generated__ typeable
 // @ts-ignore
 import { CustomCode, projectId, lastPublished } from "./__generated__/_index";
+// @ts-ignore
+import { redirects } from "./__generated__/$resources.redirects";
+
+export const loader = ({ request }: LoaderFunctionArgs) => {
+  const matchedRedirect = matchRedirect(request.url, redirects);
+  if (matchedRedirect !== undefined) {
+    return redirect(matchedRedirect.url, matchedRedirect.status);
+  }
+
+  return null;
+};
 
 export const headers: HeadersFunction = ({ errorHeaders }) => {
   if (errorHeaders) {

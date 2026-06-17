@@ -245,6 +245,12 @@ for (const { name, generateRedirectUrl, matchRedirect } of implementations) {
         expected: { url: "/time", status: 301 },
       },
       {
+        name: "matches literal asterisk in exact paths",
+        requestPath: "/file*name",
+        redirects: [{ old: "/file*name", new: "/asterisk" }],
+        expected: { url: "/asterisk", status: 301 },
+      },
+      {
         name: "matches malformed percent escapes as exact encoded paths",
         requestPath: "/%E0%A4%A",
         redirects: [{ old: "/%E0%A4%A", new: "/malformed-percent" }],
@@ -394,6 +400,11 @@ for (const { name, generateRedirectUrl, matchRedirect } of implementations) {
         name: "literal colon does not behave like a route param",
         requestPath: "/time/12:45",
         redirects: [{ old: "/time/12:30", new: "/time" }],
+      },
+      {
+        name: "literal asterisk does not behave like a splat param",
+        requestPath: "/file-anything",
+        redirects: [{ old: "/file*name", new: "/asterisk" }],
       },
       {
         name: "encoded slash does not match real slash",
