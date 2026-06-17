@@ -2,7 +2,7 @@ import { installGlobals } from "@remix-run/node";
 import { createRequestHandler as createExpressRequestHandler } from "@remix-run/express";
 import type { ServerBuild } from "@remix-run/server-runtime";
 import express from "express";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import https from "node:https";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -11,6 +11,14 @@ installGlobals({ nativeFetch: true });
 
 const resolveServerBuildPath = () => {
   const serverDirectory = path.resolve("build/server");
+
+  // Standard Vite build (no vercelPreset): index.js is at the root of build/server/
+  const directEntry = path.join(serverDirectory, "index.js");
+  if (existsSync(directEntry)) {
+    return directEntry;
+  }
+
+  // Vercel preset build: index.js lives inside a hash-named subdirectory
   const serverBuild = readdirSync(serverDirectory, {
     withFileTypes: true,
   }).find((entry) => entry.isDirectory());
