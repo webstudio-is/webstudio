@@ -136,12 +136,13 @@ pnpm -r --filter='./packages/**' build
 
 ### Environment files
 
-| File                            | Purpose                                                  |
-| ------------------------------- | -------------------------------------------------------- |
-| `apps/builder/.env`             | Default config (DB URL, PostgREST URL, `DEV_LOGIN=true`) |
-| `apps/builder/.env.development` | Local overrides (`AUTH_SECRET=1234`, `DOCKER_DEV=true`)  |
+| File                            | Purpose                                                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `apps/builder/.env`             | Default config (DB URL, PostgREST URL, `DEV_LOGIN=true`)                                                      |
+| `apps/builder/.env.development` | Local overrides (`AUTH_SECRET=1234`, `DOCKER_DEV=true`)                                                       |
+| `apps/builder/.npmrc`           | pnpm hoisting config — forces `react-router-dom` top-level symlink in `pnpm deploy --prod` (Docker image fix) |
 
-Both files are committed. Edit `.env.development` for machine-specific overrides.
+Both env files are committed. Edit `.env.development` for machine-specific overrides.
 
 ---
 
