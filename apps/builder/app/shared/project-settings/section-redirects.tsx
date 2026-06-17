@@ -56,6 +56,8 @@ type ValidationResult = {
   warnings: string[];
 };
 
+const stripSourceFragment = (source: string) => source.split("#")[0];
+
 const validateFromPath = (
   fromPath: string,
   redirects: Array<PageRedirect>,
@@ -64,25 +66,38 @@ const validateFromPath = (
   const fromPathValidationResult = RedirectSourcePath.safeParse(fromPath);
 
   if (fromPathValidationResult.success) {
+    const sourcePath = stripSourceFragment(fromPath);
+    const warnings =
+      sourcePath === fromPath
+        ? []
+        : ["Source fragments are ignored because browsers do not send them"];
+
     if (fromPath.startsWith("/")) {
       // Check for duplicate redirect first (error takes precedence)
-      if (redirects.some((redirect) => redirect.old === fromPath)) {
+      if (
+        redirects.some(
+          (redirect) => stripSourceFragment(redirect.old) === sourcePath
+        )
+      ) {
         return {
           errors: ["This path is already being redirected"],
-          warnings: [],
+          warnings,
         };
       }
 
       // Show warning if redirecting from an existing page path
       // The redirect will take precedence over the page when published
-      if (existingPaths.has(fromPath)) {
+      if (existingPaths.has(sourcePath)) {
         return {
           errors: [],
-          warnings: ["This redirect will override an existing page"],
+          warnings: [
+            ...warnings,
+            "This redirect will override an existing page",
+          ],
         };
       }
     }
-    return { errors: [], warnings: [] };
+    return { errors: [], warnings };
   }
 
   return {

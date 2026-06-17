@@ -287,6 +287,21 @@ describe("validateValues", () => {
     expect(xmlErrors.language).toBeUndefined();
     expect(xmlErrors.content).toBeUndefined();
   });
+
+  test("allows redirect on the home page", () => {
+    const errors = validateValues(
+      createPages(),
+      homePage.id,
+      createValues({
+        isHomePage: true,
+        path: "/",
+        redirect: `"/test"`,
+      }),
+      new Map()
+    );
+
+    expect(errors.redirect).toBeUndefined();
+  });
 });
 
 describe("auth form values", () => {

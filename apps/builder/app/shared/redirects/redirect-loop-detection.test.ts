@@ -14,6 +14,14 @@ describe("wouldCreateLoop", () => {
       ];
       expect(wouldCreateLoop("/about", "/about", existing)).toBe(true);
     });
+
+    test("returns true for self-redirect with target fragment", () => {
+      expect(wouldCreateLoop("/about", "/about#section", [])).toBe(true);
+    });
+
+    test("returns true for self-redirect with source fragment", () => {
+      expect(wouldCreateLoop("/about#section", "/about", [])).toBe(true);
+    });
   });
 
   describe("direct loop detection (A → B → A)", () => {
@@ -29,6 +37,13 @@ describe("wouldCreateLoop", () => {
         { old: "/b", new: "/c", status: "301" },
       ];
       expect(wouldCreateLoop("/a", "/b", existing)).toBe(false);
+    });
+
+    test("returns true when target redirects back to source without fragments", () => {
+      const existing: PageRedirect[] = [
+        { old: "/b#section", new: "/a#target", status: "301" },
+      ];
+      expect(wouldCreateLoop("/a#source", "/b#target", existing)).toBe(true);
     });
   });
 

@@ -72,6 +72,12 @@ for (const {
         expected: "/articles/post",
       },
       {
+        name: "preserves encoded slashes in named params",
+        target: "/articles/:slug",
+        params: { slug: "a/b" },
+        expected: "/articles/a%2Fb",
+      },
+      {
         name: "preserves search and hash",
         target: "/*?next=*#section",
         params: { "*": "foo" },
@@ -302,6 +308,12 @@ for (const {
         requestPath: "/blog/%C3%BCber",
         redirects: [{ old: "/blog/:slug", new: "/articles/:slug" }],
         expected: { url: "/articles/%C3%BCber", status: 301 },
+      },
+      {
+        name: "matches encoded slashes in dynamic params without turning them into path separators",
+        requestPath: "/blog/a%2Fb",
+        redirects: [{ old: "/blog/:slug", new: "/articles/:slug" }],
+        expected: { url: "/articles/a%2Fb", status: 301 },
       },
       {
         name: "matches splat source and expands target splat",

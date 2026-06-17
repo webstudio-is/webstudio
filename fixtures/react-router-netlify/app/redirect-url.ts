@@ -30,10 +30,16 @@ export const generateRedirectUrl = (
     return url;
   }
 
+  const targetParams = Object.fromEntries(
+    Object.entries(params).map(([name, value]) => [
+      name,
+      name === "*" ? value : value?.replaceAll("/", "%2F"),
+    ])
+  );
   const path = parsePath(url);
   return createPath({
     ...path,
-    pathname: generatePath(path.pathname ?? "/", params),
+    pathname: generatePath(path.pathname ?? "/", targetParams),
   });
 };
 

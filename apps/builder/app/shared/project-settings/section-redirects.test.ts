@@ -88,6 +88,14 @@ describe("validateFromPath", () => {
       expect(result.warnings).toEqual([]);
     });
 
+    test("warns that source fragments are ignored", () => {
+      const result = validateFromPath("/page#section", [], new Set());
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toContain(
+        "Source fragments are ignored because browsers do not send them"
+      );
+    });
+
     test("accepts path with uppercase letters", () => {
       const result = validateFromPath("/Path/SubPage", [], new Set());
       expect(result.errors).toEqual([]);
@@ -175,6 +183,30 @@ describe("validateFromPath", () => {
       expect(result.warnings).toEqual([]);
     });
 
+    test("returns error when redirect already exists without source fragment", () => {
+      const result = validateFromPath(
+        "/old-page#section",
+        existingRedirects,
+        new Set()
+      );
+      expect(result.errors).toContain("This path is already being redirected");
+      expect(result.warnings).toContain(
+        "Source fragments are ignored because browsers do not send them"
+      );
+    });
+
+    test("returns error when fragment-only sources would match the same request", () => {
+      const result = validateFromPath(
+        "/old-page#two",
+        [{ old: "/old-page#one", new: "/new-page", status: "301" }],
+        new Set()
+      );
+      expect(result.errors).toContain("This path is already being redirected");
+      expect(result.warnings).toContain(
+        "Source fragments are ignored because browsers do not send them"
+      );
+    });
+
     test("returns error when wildcard redirect already exists", () => {
       const result = validateFromPath("/blog/*", existingRedirects, new Set());
       expect(result.errors).toContain("This path is already being redirected");
@@ -222,6 +254,15 @@ describe("validateFromPath", () => {
       expect(result.warnings).toContain(
         "This redirect will override an existing page"
       );
+    });
+
+    test("checks existing page warning without source fragment", () => {
+      const result = validateFromPath("/about#section", [], existingPaths);
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toEqual([
+        "Source fragments are ignored because browsers do not send them",
+        "This redirect will override an existing page",
+      ]);
     });
 
     test("returns warning for dynamic route path", () => {

@@ -2,6 +2,23 @@ import type { PageRedirect } from "@webstudio-is/sdk";
 
 export const LOOP_ERROR = "This redirect would create a loop";
 
+const isExternalTarget = (path: string) => {
+  return (
+    path.startsWith("http://") ||
+    path.startsWith("https://") ||
+    path.startsWith("//")
+  );
+};
+
+const stripFragment = (path: string) => {
+  const hashIndex = path.indexOf("#");
+  return hashIndex === -1 ? path : path.slice(0, hashIndex);
+};
+
+const normalizeLocalPath = (path: string) => {
+  return isExternalTarget(path) ? path : stripFragment(path);
+};
+
 /**
  * Checks if adding a redirect from `fromPath` to `toPath` would create a loop
  * given the existing redirects.
@@ -13,33 +30,35 @@ export const wouldCreateLoop = (
   toPath: string,
   existingRedirects: PageRedirect[]
 ): boolean => {
+  const source = stripFragment(fromPath);
+  const target = normalizeLocalPath(toPath);
+
   // Self-redirect is always a loop
-  if (fromPath === toPath) {
+  if (source === target) {
     return true;
   }
 
   // External URLs can't create loops (they leave the site)
-  if (
-    toPath.startsWith("http://") ||
-    toPath.startsWith("https://") ||
-    toPath.startsWith("//")
-  ) {
+  if (isExternalTarget(target)) {
     return false;
   }
 
   // Build a map for O(1) lookup
   const redirectMap = new Map<string, string>();
   for (const redirect of existingRedirects) {
-    redirectMap.set(redirect.old, redirect.new);
+    redirectMap.set(
+      stripFragment(redirect.old),
+      normalizeLocalPath(redirect.new)
+    );
   }
 
   // Follow the chain from toPath and check if we reach fromPath
-  const visited = new Set<string>([fromPath]);
-  let current = toPath;
+  const visited = new Set<string>([source]);
+  let current = target;
 
   while (current) {
     // Found a loop back to the source
-    if (current === fromPath) {
+    if (current === source) {
       return true;
     }
 
@@ -58,11 +77,7 @@ export const wouldCreateLoop = (
     }
 
     // External URL ends the chain
-    if (
-      next.startsWith("http://") ||
-      next.startsWith("https://") ||
-      next.startsWith("//")
-    ) {
+    if (isExternalTarget(next)) {
       return false;
     }
 
