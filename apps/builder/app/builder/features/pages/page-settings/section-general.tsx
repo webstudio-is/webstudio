@@ -23,6 +23,7 @@ import {
   PagePath,
   ProjectNewRedirectPath,
   documentTypes,
+  getPagePath,
   isLiteralExpression,
   type Page,
   type Pages,
@@ -62,6 +63,17 @@ const GeneralValues = z.object({
 const HomePageGeneralValues = GeneralValues.extend({
   path: HomePagePath,
 });
+
+const computePageRoute = (values: Values, pages: Pages) => {
+  if (values.isHomePage) {
+    return "/";
+  }
+  const foldersPath = getPagePath(values.parentFolderId, pages);
+  return [foldersPath, values.path]
+    .filter(Boolean)
+    .join("/")
+    .replace(/\/+/g, "/");
+};
 
 export const validateGeneralSection = ({
   pages,
@@ -117,7 +129,11 @@ export const validateGeneralSection = ({
   ) {
     const existingRedirects = pages.redirects ?? [];
     if (
-      wouldCreateLoop(values.path, computedValues.redirect, existingRedirects)
+      wouldCreateLoop(
+        computePageRoute(values, pages),
+        computedValues.redirect,
+        existingRedirects
+      )
     ) {
       errors.redirect = errors.redirect ?? [];
       errors.redirect.push(LOOP_ERROR);

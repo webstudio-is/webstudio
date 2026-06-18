@@ -1,6 +1,59 @@
 import type { PageRedirect } from "@webstudio-is/sdk";
+import {
+  doesRedirectSourceMatchUrl,
+  getRedirectSourcePathname,
+  getRedirectSourceSearchIndex,
+  isRedirectSourcePattern,
+  normalizeRedirectSource,
+} from "./redirect-source";
+import { matchPath } from "@remix-run/react";
 
 export const LOOP_ERROR = "This redirect would create a loop";
+
+const isExternalTarget = (path: string) => {
+  return /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(path) || path.startsWith("//");
+};
+
+const resolveLocalTarget = (source: string, target: string) => {
+  if (isExternalTarget(target) || target.startsWith("#")) {
+    return;
+  }
+
+  if (target.startsWith("/")) {
+    return normalizeRedirectSource(target);
+  }
+
+  try {
+    const resolved = new URL(
+      target,
+      `https://example.com${getRedirectSourcePathname(source)}`
+    );
+    return normalizeRedirectSource(`${resolved.pathname}${resolved.search}`);
+  } catch {
+    return;
+  }
+};
+
+const doesRedirectSourceMatchLocalUrl = (source: string, url: string) => {
+  const normalizedSource = normalizeRedirectSource(source);
+  const normalizedUrl = normalizeRedirectSource(url);
+  if (getRedirectSourceSearchIndex(normalizedSource) !== -1) {
+    return normalizedSource === normalizedUrl;
+  }
+  if (isRedirectSourcePattern(normalizedSource) === false) {
+    return doesRedirectSourceMatchUrl(normalizedSource, normalizedUrl);
+  }
+  return (
+    matchPath(
+      {
+        path: normalizedSource,
+        caseSensitive: true,
+        end: true,
+      },
+      getRedirectSourcePathname(normalizedUrl)
+    ) !== null
+  );
+};
 
 /**
  * Checks if adding a redirect from `fromPath` to `toPath` would create a loop
@@ -13,33 +66,36 @@ export const wouldCreateLoop = (
   toPath: string,
   existingRedirects: PageRedirect[]
 ): boolean => {
-  // Self-redirect is always a loop
-  if (fromPath === toPath) {
-    return true;
-  }
+  const source = normalizeRedirectSource(fromPath);
+  const target = resolveLocalTarget(source, toPath);
 
   // External URLs can't create loops (they leave the site)
-  if (
-    toPath.startsWith("http://") ||
-    toPath.startsWith("https://") ||
-    toPath.startsWith("//")
-  ) {
+  if (target === undefined) {
     return false;
   }
 
-  // Build a map for O(1) lookup
-  const redirectMap = new Map<string, string>();
-  for (const redirect of existingRedirects) {
-    redirectMap.set(redirect.old, redirect.new);
+  // Self-redirect is always a loop
+  if (doesRedirectSourceMatchLocalUrl(source, target)) {
+    return true;
   }
 
+  // Keep normalized sources so exact-query and path-only matching can follow
+  // the same semantics as the published runtime.
+  const redirectEntries = existingRedirects.map((redirect) => {
+    const redirectSource = normalizeRedirectSource(redirect.old);
+    return {
+      source: redirectSource,
+      target: resolveLocalTarget(redirectSource, redirect.new),
+    };
+  });
+
   // Follow the chain from toPath and check if we reach fromPath
-  const visited = new Set<string>([fromPath]);
-  let current = toPath;
+  const visited = new Set<string>([source]);
+  let current = target;
 
   while (current) {
     // Found a loop back to the source
-    if (current === fromPath) {
+    if (doesRedirectSourceMatchLocalUrl(source, current)) {
       return true;
     }
 
@@ -51,18 +107,15 @@ export const wouldCreateLoop = (
     visited.add(current);
 
     // Get next hop
-    const next = redirectMap.get(current);
+    let next: string | undefined;
+    for (const redirect of redirectEntries) {
+      if (doesRedirectSourceMatchLocalUrl(redirect.source, current)) {
+        next = redirect.target;
+        break;
+      }
+    }
     if (!next) {
       // Chain ends without looping back
-      return false;
-    }
-
-    // External URL ends the chain
-    if (
-      next.startsWith("http://") ||
-      next.startsWith("https://") ||
-      next.startsWith("//")
-    ) {
       return false;
     }
 

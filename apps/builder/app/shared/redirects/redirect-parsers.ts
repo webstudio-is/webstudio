@@ -1,4 +1,10 @@
 import Papa from "papaparse";
+import { ProjectNewRedirectPath, RedirectSourcePath } from "@webstudio-is/sdk";
+import {
+  getRedirectSourceSearchIndex,
+  hasInvalidLocalTargetParams,
+  hasNamedSplat,
+} from "./redirect-source";
 
 export type ParsedRedirect = {
   old: string;
@@ -136,22 +142,33 @@ const detectFormat = (
   return "csv"; // fallback
 };
 
-/**
- * Check if a path contains unsupported patterns
- */
-const hasPlaceholder = (path: string): boolean => {
-  // :param placeholders like /blog/:slug
-  return /:[a-zA-Z_][a-zA-Z0-9_]*\*?/.test(path);
-};
-
-const hasWildcard = (path: string): boolean => {
-  // * wildcards but not in query string
-  const pathPart = path.split("?")[0];
-  return pathPart.includes("*");
-};
-
 const hasConditions = (record: RawRecord): boolean => {
   return "has" in record || "missing" in record;
+};
+
+const normalizeNetlifyTarget = (from: string, to: string) => {
+  if (
+    getRedirectSourceSearchIndex(from) !== -1 ||
+    from.split("/").includes("*") === false ||
+    /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(to) ||
+    to.startsWith("//")
+  ) {
+    return to;
+  }
+
+  const searchOrHashIndex = to.search(/[?#]/);
+  if (searchOrHashIndex === -1) {
+    return to.replaceAll(":splat", "*");
+  }
+  const pathname = to.slice(0, searchOrHashIndex);
+  const searchAndHash = to.slice(searchOrHashIndex);
+  return `${pathname.replaceAll(":splat", "*")}${searchAndHash}`;
+};
+
+const formatSchemaError = (result: {
+  error: { issues: { message: string }[] };
+}) => {
+  return result.error.issues.map((issue) => issue.message).join(", ");
 };
 
 /**
@@ -230,16 +247,7 @@ const findValue = (record: RawRecord, keys: readonly string[]): unknown => {
   return undefined;
 };
 
-/**
- * Normalize a path - strip trailing slashes from source paths
- */
-const normalizePath = (path: string, isSource: boolean): string => {
-  let normalized = path.trim();
-  if (isSource && normalized.length > 1 && normalized.endsWith("/")) {
-    normalized = normalized.slice(0, -1);
-  }
-  return normalized;
-};
+const normalizePath = (path: string): string => path.trim();
 
 /**
  * Validate and normalize a single record into a redirect
@@ -286,48 +294,49 @@ const normalizeRecord = (
   }
   const to = String(toValue);
 
-  // Check for wildcards in source
-  if (hasWildcard(from)) {
-    return {
-      skipped: {
-        line: lineNumber,
-        content: originalContent,
-        reason: "contains wildcard (*) - not supported",
-      },
-    };
-  }
-
-  // Check for placeholders in source or target
-  if (hasPlaceholder(from) || hasPlaceholder(to)) {
-    return {
-      skipped: {
-        line: lineNumber,
-        content: originalContent,
-        reason: "contains placeholder (:param) - not supported",
-      },
-    };
-  }
+  const normalizedFrom = normalizePath(from);
+  const normalizedTo = normalizePath(to);
 
   // Validate source path
-  const normalizedFrom = normalizePath(from, true);
-  if (!normalizedFrom.startsWith("/")) {
+  const sourceValidationResult = RedirectSourcePath.safeParse(normalizedFrom);
+  if (sourceValidationResult.success === false) {
     return {
       skipped: {
         line: lineNumber,
         content: originalContent,
-        reason: "source path must start with /",
+        reason: formatSchemaError(sourceValidationResult),
+      },
+    };
+  }
+
+  if (hasNamedSplat(normalizedFrom)) {
+    return {
+      skipped: {
+        line: lineNumber,
+        content: originalContent,
+        reason: "contains named splat (:name*) - use * instead",
+      },
+    };
+  }
+
+  if (hasInvalidLocalTargetParams(normalizedTo, normalizedFrom)) {
+    return {
+      skipped: {
+        line: lineNumber,
+        content: originalContent,
+        reason: "contains unsupported target route parameter syntax",
       },
     };
   }
 
   // Validate target path
-  const normalizedTo = normalizePath(to, false);
-  if (!normalizedTo.startsWith("/") && !normalizedTo.startsWith("http")) {
+  const targetValidationResult = ProjectNewRedirectPath.safeParse(normalizedTo);
+  if (targetValidationResult.success === false) {
     return {
       skipped: {
         line: lineNumber,
         content: originalContent,
-        reason: "target path must start with / or http",
+        reason: formatSchemaError(targetValidationResult),
       },
     };
   }
@@ -550,7 +559,7 @@ const parseNetlify = (content: string): ParseResult => {
     }
 
     const from = parts[0];
-    const to = parts[1];
+    const to = normalizeNetlifyTarget(from, parts[1]);
     const statusPart = parts[2];
     const rest = parts.slice(3).join(" ");
 
@@ -564,8 +573,15 @@ const parseNetlify = (content: string): ParseResult => {
       continue;
     }
 
-    // Check for query parameter matching (e.g., /store id=:id)
-    if (to.includes("=") && !to.startsWith("http")) {
+    // Check for query parameter matching (e.g., /store id=:id /products/:id).
+    // A normal target may also contain "=" in its query string.
+    if (
+      to.includes("=") &&
+      to.startsWith("/") === false &&
+      to.startsWith("?") === false &&
+      /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(to) === false &&
+      to.startsWith("//") === false
+    ) {
       // This might be query matching like "/store id=:id /products/:id"
       // Re-parse: /source query=value /target
       skipped.push({

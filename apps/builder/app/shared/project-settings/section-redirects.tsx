@@ -31,18 +31,28 @@ import {
   UploadIcon,
 } from "@webstudio-is/icons";
 import { ImportRedirectsDialog } from "./import-redirects-dialog";
-import { OldPagePath, ProjectNewRedirectPath } from "@webstudio-is/sdk";
+import { RedirectSourcePath, ProjectNewRedirectPath } from "@webstudio-is/sdk";
 import type { PageRedirect } from "@webstudio-is/sdk";
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { $pages } from "~/shared/sync/data-stores";
 import { $publishedOrigin } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { getExistingRoutePaths, sectionSpacing } from "./utils";
+import {
+  doesRedirectSourceOverridePagePath,
+  getExistingRoutePaths,
+  sectionSpacing,
+} from "./utils";
 import {
   LOOP_ERROR,
   wouldCreateLoop,
 } from "~/shared/redirects/redirect-loop-detection";
+import {
+  hasInvalidLocalTargetParams,
+  hasNamedSplat,
+  normalizeRedirectSource,
+  stripRedirectSourceFragment,
+} from "~/shared/redirects/redirect-source";
 
 const statusCodeOptions = ["301", "302"] as const;
 
@@ -61,28 +71,48 @@ const validateFromPath = (
   redirects: Array<PageRedirect>,
   existingPaths: Set<string>
 ): ValidationResult => {
-  const fromPathValidationResult = OldPagePath.safeParse(fromPath);
+  const fromPathValidationResult = RedirectSourcePath.safeParse(fromPath);
 
   if (fromPathValidationResult.success) {
-    if (fromPath.startsWith("/")) {
-      // Check for duplicate redirect first (error takes precedence)
-      if (redirects.some((redirect) => redirect.old === fromPath)) {
-        return {
-          errors: ["This path is already being redirected"],
-          warnings: [],
-        };
-      }
-
-      // Show warning if redirecting from an existing page path
-      // The redirect will take precedence over the page when published
-      if (existingPaths.has(fromPath)) {
-        return {
-          errors: [],
-          warnings: ["This redirect will override an existing page"],
-        };
-      }
+    if (hasNamedSplat(fromPath)) {
+      return {
+        errors: ["Named splats are not supported; use * instead"],
+        warnings: [],
+      };
     }
-    return { errors: [], warnings: [] };
+
+    const sourceWithoutFragment = stripRedirectSourceFragment(fromPath);
+    const sourcePath = normalizeRedirectSource(fromPath);
+    const warnings =
+      sourceWithoutFragment === fromPath
+        ? []
+        : ["Source fragments are ignored because browsers do not send them"];
+
+    // Check for duplicate redirect first (error takes precedence)
+    if (
+      redirects.some(
+        (redirect) => normalizeRedirectSource(redirect.old) === sourcePath
+      )
+    ) {
+      return {
+        errors: ["This path is already being redirected"],
+        warnings,
+      };
+    }
+
+    // Show warning if redirecting from an existing page path.
+    // The redirect will take precedence over the page when published.
+    if (
+      Array.from(existingPaths).some((pagePath) =>
+        doesRedirectSourceOverridePagePath(sourcePath, pagePath)
+      )
+    ) {
+      return {
+        errors: [],
+        warnings: [...warnings, "This redirect will override an existing page"],
+      };
+    }
+    return { errors: [], warnings };
   }
 
   return {
@@ -91,16 +121,32 @@ const validateFromPath = (
   };
 };
 
-const validateToPath = (toPath: string): string[] => {
+const unsupportedTargetParamMessage =
+  "Target route params must match params from the source path";
+
+const validateToPath = (toPath: string, fromPath?: string): string[] => {
   const toPathValidationResult = ProjectNewRedirectPath.safeParse(toPath);
-  if (toPathValidationResult.success) {
-    return [];
+  if (toPathValidationResult.success === false) {
+    return toPathValidationResult.error.format()._errors;
   }
-  return toPathValidationResult.error.format()._errors;
+
+  if (hasInvalidLocalTargetParams(toPath, fromPath)) {
+    return [unsupportedTargetParamMessage];
+  }
+
+  return [];
+};
+
+const deleteRedirect = (
+  redirects: Array<PageRedirect>,
+  redirectToDelete: PageRedirect
+) => {
+  return redirects.filter((redirect) => redirect !== redirectToDelete);
 };
 
 // Exported for testing
 export const __testing__ = {
+  deleteRedirect,
   validateFromPath,
   validateToPath,
 };
@@ -149,11 +195,14 @@ export const SectionRedirects = () => {
     );
     setFromPathErrors(errors);
     setFromPathWarnings(warnings);
+    if (toPath !== "") {
+      setToPathErrors(validateToPath(toPath, value));
+    }
   };
 
   const handleToPathChange = (value: string) => {
     setToPath(value);
-    setToPathErrors(validateToPath(value));
+    setToPathErrors(validateToPath(value, fromPath));
   };
 
   const handleSave = (redirects: Array<PageRedirect>) => {
@@ -172,7 +221,7 @@ export const SectionRedirects = () => {
       redirects,
       existingPaths
     );
-    const toPathValidationErrors = validateToPath(toPath);
+    const toPathValidationErrors = validateToPath(toPath, fromPath);
     const hasLoop = wouldCreateLoop(fromPath, toPath, redirects);
 
     // Update error state so user sees what went wrong
@@ -207,10 +256,8 @@ export const SectionRedirects = () => {
     fromPathRef.current?.focus();
   };
 
-  const handleDeleteRedirect = (index: number) => {
-    const newRedirects = [...redirects];
-    newRedirects.splice(index, 1);
-    handleSave(newRedirects);
+  const handleDeleteRedirect = (redirect: PageRedirect) => {
+    handleSave(deleteRedirect(redirects, redirect));
   };
 
   const handleImportRedirects = (
@@ -400,7 +447,7 @@ export const SectionRedirects = () => {
           <Grid css={sectionSpacing}>
             <List asChild>
               <Flex direction="column" gap="1" align="stretch">
-                {filteredRedirects.map((redirect, index) => {
+                {filteredRedirects.map((redirect) => {
                   return (
                     <ListItem asChild key={redirect.old}>
                       <Grid
@@ -466,7 +513,7 @@ export const SectionRedirects = () => {
                           variant="destructive"
                           icon={<TrashIcon />}
                           aria-label={`Delete redirect from ${redirect.old}`}
-                          onClick={() => handleDeleteRedirect(index)}
+                          onClick={() => handleDeleteRedirect(redirect)}
                         />
                       </Grid>
                     </ListItem>

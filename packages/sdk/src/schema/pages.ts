@@ -156,28 +156,30 @@ const DefaultPagePage = z
   )
   .refine((path) => path.length <= 255, "Path can't exceed 255 characters");
 
-export const OldPagePath = z
+export const RedirectSourcePath = z
   .string()
   .refine((path) => path !== "", "Can't be empty")
   .refine((path) => path !== "/", "Can't be just a /")
   .refine(
-    (path) => path === "" || path.startsWith("/"),
-    "Must start with a / or a full URL e.g. https://website.org"
+    (path) => path.startsWith("/") && path.startsWith("//") === false,
+    "Must start with a /"
   )
-  .refine((path) => path.endsWith("/") === false, "Can't end with a /")
-  .refine((path) => path.includes("//") === false, "Can't contain repeating /")
   .refine((path) => {
-    // Disallow specific problematic characters that should never appear in paths:
-    // - Spaces and whitespace
-    // - URL-unsafe characters: < > " { } | \ ^ ` [ ]
-    // - Control characters
-    // All other characters (including non-Latin Unicode like Chinese, Japanese,
-    // Korean, Cyrillic, Arabic, etc.) are allowed as they are valid in modern URLs
-    // when properly encoded by the browser
+    // Redirect sources may contain any browser-requestable URL characters.
+    // Backslashes and control characters are rejected because URL parsers
+    // normalize or strip them, making matching ambiguous.
     // eslint-disable-next-line no-control-regex
-    const disallowedChars = /[\s<>"{}|\\^`[\]\u0000-\u001f\u007f]/;
-    return !disallowedChars.test(path);
-  }, "Path contains invalid characters (spaces or URL-unsafe characters are not allowed)")
+    if (/[\\\u0000-\u001f\u007f]/.test(path)) {
+      return false;
+    }
+
+    try {
+      new URL(path, "https://example.com");
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Must be a valid URL path")
   .refine(
     (path) => path !== "/s" && path.startsWith("/s/") === false,
     "/s prefix is reserved for the system"
@@ -233,7 +235,7 @@ export const ProjectNewRedirectPath = z
   }, "Must be a valid URL");
 
 export const PageRedirect = z.object({
-  old: OldPagePath,
+  old: RedirectSourcePath,
   new: ProjectNewRedirectPath,
   status: z.enum(["301", "302"]).optional(),
 });

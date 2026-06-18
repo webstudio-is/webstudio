@@ -8,7 +8,7 @@ Webstudio stores redirects with this schema:
 
 ```typescript
 type PageRedirect = {
-  old: string; // Source path (must start with /, cannot end with /)
+  old: string; // Source path, pattern, or exact path + query
   new: string; // Target path or URL
   status?: "301" | "302"; // Optional, defaults to 301
 };
@@ -16,24 +16,21 @@ type PageRedirect = {
 
 ### Path Requirements
 
-| Requirement         | Valid              | Invalid                |
-| ------------------- | ------------------ | ---------------------- |
-| Must start with `/` | `/about`           | `about`                |
-| Cannot end with `/` | `/about`           | `/about/`              |
-| No double slashes   | `/a/b/c`           | `/a//b`                |
-| Allowed chars       | `a-zA-Z0-9-_/:?.*` | `<>{}`                 |
-| Reserved paths      | `/home`            | `/s/...`, `/build/...` |
+| Requirement                | Valid                 | Invalid                |
+| -------------------------- | --------------------- | ---------------------- |
+| Must start with `/`        | `/about`              | `about`                |
+| Root is not a source       | `/about`              | `/`                    |
+| Protocol-relative rejected | `/about`              | `//example.com/path`   |
+| Exact query allowed        | `/old?x=1`            |                        |
+| Simple splat allowed       | `/docs/*`             | `/docs/:path*`         |
+| Browser URL chars allowed  | `/über`, `/path name` | backslashes, controls  |
+| Reserved paths             | `/home`               | `/s/...`, `/build/...` |
 
-### Slash Normalization
+### Path Exactness
 
-The parser **strips trailing slashes** from source paths to match Webstudio's requirements:
-
-```
-Input:  /old-path/  →  Output: /old-path
-Input:  /old-path   →  Output: /old-path
-```
-
-Target paths preserve their original form (Webstudio allows trailing slashes in targets).
+The parser preserves source paths exactly after trimming surrounding whitespace.
+`/old` and `/old/` remain different redirects because the published runtime does
+not normalize trailing slashes.
 
 ---
 
@@ -231,19 +228,27 @@ REDIRECT 301 /uppercase /target
 
 These patterns are **skipped with a warning** (not imported):
 
-### Dynamic Placeholders
+### Platform-Specific Dynamic Syntax
 
 ```
-/blog/:slug → /posts/:slug
+/docs/:path* → /documentation/*
 /news/:year/:month/:slug → /archive/:year-:month-:slug
 ```
 
-### Splat Wildcards
+Webstudio supports simple route params like `/blog/:slug` and splats like
+`/docs/*`. Named splats and composite local target params are skipped because
+they do not expand with Webstudio's published redirect runtime.
+
+### Splat Target Syntax
 
 ```
 /docs/* → /documentation/:splat
-/old/* → /new/*
 ```
+
+Netlify `:splat` targets are converted to Webstudio `*` targets during import.
+Only target pathnames are converted. Query or hash substitutions like
+`/files?name=:splat` are skipped because the published runtime does not expand
+params outside the target pathname. Other named splat styles are skipped.
 
 ### Conditions
 
@@ -307,13 +312,17 @@ Webstudio supports these path patterns in redirects:
 | Segment    | `/:slug`  | `/anything` (single segment)          |
 | Optional   | `/:id?`   | `/` or `/123`                         |
 
-**Important:** Captured values (like `:slug`) cannot be inserted into the destination path. The destination is always a fixed path or URL.
+Captured values can be inserted into local destination paths with the same
+parameter names. External and protocol-relative targets are returned unchanged.
 
 ### What Gets Imported
 
 ✅ **Imported:**
 
 - Simple path-to-path redirects (`/old` → `/new`)
+- Exact query redirects (`/old?x=1` → `/new`)
+- Simple dynamic redirects (`/blog/:slug` → `/posts/:slug`)
+- Splat redirects (`/old/*` → `/new/*`)
 - Redirects to external URLs (`/github` → `https://github.com/...`)
 - 301 (permanent) and 302 (temporary) status codes
 - 307 and 308 status codes (converted to 302 and 301)
@@ -322,10 +331,12 @@ Webstudio supports these path patterns in redirects:
 
 ⚠️ **Skipped (with explanation):**
 
-- Dynamic placeholders like `/blog/:slug` → `/posts/:slug`
-- Wildcard substitutions like `/old/*` → `/new/*`
+- Named splats like `/docs/:path*`
+- Composite local target params like `/archive/:year-:slug`
+- Param-expanded targets for exact query sources like
+  `/old?x=1 → /posts/:slug`
 - Conditional redirects (country, header, cookie-based)
-- Query parameter matching
+- Platform-specific query parameter matching
 - Regex-based rules (Apache RewriteRule, RedirectMatch)
 - Rewrites (status 200) and "not found" rules (status 404)
 
@@ -338,11 +349,11 @@ Webstudio redirects are designed for simplicity and performance. Some advanced f
 | Simple redirects         | ✅      | ✅     | ✅     | ✅        |
 | External URLs            | ✅      | ✅     | ✅     | ✅        |
 | Wildcard source          | ✅      | ✅     | ✅     | ✅        |
-| Wildcard substitution    | ✅      | ✅     | ✅     | ❌        |
+| Wildcard substitution    | ✅      | ✅     | ✅     | ✅        |
 | Regex patterns           | ❌      | ❌     | ✅     | ❌        |
 | Header/cookie conditions | ✅      | ✅     | ✅     | ❌        |
 | Geo/country conditions   | ✅      | ✅     | ❌     | ❌        |
-| Query string matching    | ✅      | ✅     | ✅     | ❌        |
+| Exact query redirects    | ✅      | ✅     | ✅     | ✅        |
 | Rewrites (proxy)         | ✅      | ✅     | ✅     | ❌        |
 
 ### Status Codes Explained
@@ -430,8 +441,8 @@ After parsing, show a preview before importing:
 │                                                             │
 │  Skipped:                                                   │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │  Line 5: /docs/* → wildcard patterns not supported  │    │
-│  │  Line 8: /:slug → placeholders not supported        │    │
+│  │  Line 5: /store id=:id → query matching not supported│   │
+│  │  Line 8: RewriteRule → advanced rewrites unsupported│    │
 │  │  Line 12: missing target path                       │    │
 │  └─────────────────────────────────────────────────────┘    │
 │                                                             │
@@ -530,5 +541,5 @@ From `@webstudio-is/design-system`:
 6. **Skipped Feedback**: Show why lines were skipped with line numbers
 7. **Merge Options**: Let user choose add vs replace
 8. **Duplicate Handling**: Detect and handle conflicts with existing redirects
-9. **Validation**: Run Webstudio's `OldPagePath` validation on import
+9. **Validation**: Run Webstudio's `RedirectSourcePath` validation on import
 10. **Toast Feedback**: Show success/error toast after import

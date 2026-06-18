@@ -158,7 +158,7 @@ invalid-no-slash,/new,301
       expect(result.skipped).toHaveLength(1);
       expect(result.skipped[0]).toMatchObject({
         line: 3,
-        reason: expect.stringContaining("source"),
+        reason: expect.stringContaining("Must start with a /"),
       });
     });
 
@@ -329,18 +329,21 @@ invalid-no-slash,/new,301
       expect(result.skipped[0].reason).toContain("condition");
     });
 
-    test("skips JSON redirects with placeholders in source (unsupported)", () => {
+    test("parses Webstudio dynamic route patterns", () => {
       const input = `[
         { "source": "/simple", "target": "/target", "status": 301 },
         { "source": "/blog/:slug", "target": "/posts/:slug", "status": 301 },
-        { "source": "/docs/:path*", "target": "/documentation/:path*", "status": 301 }
+        { "source": "/docs/*", "target": "/documentation/*", "status": 301 }
       ]`;
 
       const result = parseRedirects(input);
 
-      expect(result.redirects).toHaveLength(1);
-      expect(result.skipped).toHaveLength(2);
-      expect(result.skipped[0].reason).toContain("placeholder");
+      expect(result.redirects).toEqual([
+        { old: "/simple", new: "/target", status: 301 },
+        { old: "/blog/:slug", new: "/posts/:slug", status: 301 },
+        { old: "/docs/*", new: "/documentation/*", status: 301 },
+      ]);
+      expect(result.skipped).toEqual([]);
     });
   });
 
@@ -367,16 +370,70 @@ invalid-no-slash,/new,301
       ]);
     });
 
-    test("skips splat redirects (unsupported)", () => {
+    test("parses splat redirects", () => {
       const input = `/simple /target 301
 /blog/* /articles/:splat 301
 /other /other-target`;
 
       const result = parseRedirects(input);
 
-      expect(result.redirects).toHaveLength(2);
+      expect(result.redirects).toEqual([
+        { old: "/simple", new: "/target", status: 301 },
+        { old: "/blog/*", new: "/articles/*", status: 301 },
+        { old: "/other", new: "/other-target", status: 301 },
+      ]);
+      expect(result.skipped).toEqual([]);
+    });
+
+    test("rewrites Netlify splat params only in local target pathnames", () => {
+      const input = `/blog/* /articles/:splat?from=:splat 301
+/docs/* /documentation/:splat#section-:splat 301
+/files/* /downloads/:splat 301`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([
+        { old: "/files/*", new: "/downloads/*", status: 301 },
+      ]);
+      expect(result.skipped).toHaveLength(2);
+      expect(result.skipped[0].reason).toContain(
+        "unsupported target route parameter syntax"
+      );
+      expect(result.skipped[1].reason).toContain(
+        "unsupported target route parameter syntax"
+      );
+    });
+
+    test("does not rewrite splat params in external targets", () => {
+      const input = `/blog/* https://cdn.example.com/:splat 301
+/assets/* //cdn.example.com/:splat 301`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([
+        {
+          old: "/blog/*",
+          new: "https://cdn.example.com/:splat",
+          status: 301,
+        },
+        { old: "/assets/*", new: "//cdn.example.com/:splat", status: 301 },
+      ]);
+      expect(result.skipped).toEqual([]);
+    });
+
+    test("skips named splat sources that do not match Webstudio syntax", () => {
+      const input = `/simple /target 301
+/docs/:path* /documentation/* 301
+/other /other-target`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([
+        { old: "/simple", new: "/target", status: 301 },
+        { old: "/other", new: "/other-target", status: 301 },
+      ]);
       expect(result.skipped).toHaveLength(1);
-      expect(result.skipped[0].reason).toContain("wildcard");
+      expect(result.skipped[0].reason).toContain("named splat");
     });
 
     test("ignores comment lines", () => {
@@ -461,16 +518,119 @@ invalid-no-slash,/new,301
       ]);
     });
 
-    test("skips redirects with placeholders (unsupported)", () => {
+    test("parses dynamic segment redirects", () => {
+      const input = `/simple /target 301
+/blog/:year/:slug /posts/:year/:slug 301
+/other /other-target`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([
+        { old: "/simple", new: "/target", status: 301 },
+        { old: "/blog/:year/:slug", new: "/posts/:year/:slug", status: 301 },
+        { old: "/other", new: "/other-target", status: 301 },
+      ]);
+      expect(result.skipped).toEqual([]);
+    });
+
+    test("skips local targets with unsupported composite route params", () => {
       const input = `/simple /target 301
 /blog/:year/:slug /posts/:year-:slug 301
 /other /other-target`;
 
       const result = parseRedirects(input);
 
-      expect(result.redirects).toHaveLength(2);
+      expect(result.redirects).toEqual([
+        { old: "/simple", new: "/target", status: 301 },
+        { old: "/other", new: "/other-target", status: 301 },
+      ]);
       expect(result.skipped).toHaveLength(1);
-      expect(result.skipped[0].reason).toContain("placeholder");
+      expect(result.skipped[0].reason).toContain(
+        "unsupported target route parameter syntax"
+      );
+    });
+
+    test("skips relative targets with unsupported composite route params", () => {
+      const input = `/blog/:year/:slug posts/:year-:slug 301`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([]);
+      expect(result.skipped).toHaveLength(1);
+      expect(result.skipped[0].reason).toContain(
+        "unsupported target route parameter syntax"
+      );
+    });
+
+    test("skips target params embedded inside otherwise static segments", () => {
+      const input = `/blog/:slug /posts/post-:slug 301`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([]);
+      expect(result.skipped).toHaveLength(1);
+      expect(result.skipped[0].reason).toContain(
+        "unsupported target route parameter syntax"
+      );
+    });
+
+    test("skips target params in search strings because runtime does not expand them", () => {
+      const input = `/blog/:slug /posts?slug=:slug 301
+/query ?slug=:slug 301`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([]);
+      expect(result.skipped).toHaveLength(2);
+      expect(result.skipped[0].reason).toContain(
+        "unsupported target route parameter syntax"
+      );
+      expect(result.skipped[1].reason).toContain(
+        "unsupported target route parameter syntax"
+      );
+    });
+
+    test("skips target params when source has an exact query string", () => {
+      const input = `/blog/:slug?preview=1 /posts/:slug 301
+/docs/*?preview=1 /reference/* 301`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([]);
+      expect(result.skipped).toHaveLength(2);
+      expect(result.skipped[0].reason).toContain(
+        "unsupported target route parameter syntax"
+      );
+      expect(result.skipped[1].reason).toContain(
+        "unsupported target route parameter syntax"
+      );
+    });
+
+    test("skips target params not provided by source patterns", () => {
+      const input = `/old /posts/:slug 301
+/blog/:slug /posts/:missing 301
+/docs /reference/* 301`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([]);
+      expect(result.skipped).toHaveLength(3);
+      for (const skipped of result.skipped) {
+        expect(skipped.reason).toContain(
+          "unsupported target route parameter syntax"
+        );
+      }
+    });
+
+    test("allows literal colon targets that are not route params", () => {
+      const input = `/old /time/12:30?at=12:30 301`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([
+        { old: "/old", new: "/time/12:30?at=12:30", status: 301 },
+      ]);
+      expect(result.skipped).toEqual([]);
     });
 
     test("skips redirects with query parameter matching (unsupported)", () => {
@@ -787,19 +947,18 @@ REDIRECT 301 /about /about-us`;
       ]);
     });
 
-    test("handles root path redirect", () => {
+    test("skips root path redirect sources", () => {
       const input = `source,target,status
 /,/home,301`;
 
       const result = parseRedirects(input);
 
-      expect(result.redirects).toEqual([
-        { old: "/", new: "/home", status: 301 },
-      ]);
+      expect(result.redirects).toEqual([]);
+      expect(result.skipped).toHaveLength(1);
+      expect(result.skipped[0].reason).toContain("Can't be just a /");
     });
 
-    test("strips trailing slashes from source paths", () => {
-      // Webstudio requires: paths cannot end with /
+    test("preserves trailing slashes in source paths", () => {
       const input = `source,target,status
 /old/,/new/,301
 /about,/about-us/,301`;
@@ -807,7 +966,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { old: "/old", new: "/new/", status: 301 },
+        { old: "/old/", new: "/new/", status: 301 },
         { old: "/about", new: "/about-us/", status: 301 },
       ]);
     });
@@ -851,9 +1010,8 @@ REDIRECT 301 /about /about-us`;
 
       const result = parseRedirects(content);
 
-      // Should parse simple redirects and skip ones with placeholders/conditions
+      // Should parse supported redirects and skip conditional/advanced rules.
       expect(result.redirects.length).toBeGreaterThan(0);
-      // Some should be skipped due to placeholders and conditions
       expect(result.skipped.length).toBeGreaterThan(0);
     });
 
@@ -865,9 +1023,9 @@ REDIRECT 301 /about /about-us`;
 
       const result = parseRedirects(content);
 
-      // Should parse simple redirects
+      // Should parse supported redirects.
       expect(result.redirects.length).toBeGreaterThan(0);
-      // Many should be skipped: conditions, placeholders, rewrites
+      // Some rules are skipped: conditions, rewrites, and query matching.
       expect(result.skipped.length).toBeGreaterThan(0);
     });
 
@@ -1123,15 +1281,15 @@ Redirect 301 /old /new`;
     });
 
     // Path validation edge cases
-    test("skips paths with double slashes", () => {
+    test("skips protocol-relative sources with double leading slashes", () => {
       const input = `source,target,status
 //double-slash,/new,301`;
 
       const result = parseRedirects(input);
 
-      // Double slash still starts with /, so it passes basic validation
-      // Webstudio's OldPagePath schema will reject it later
-      expect(result.redirects).toHaveLength(1);
+      expect(result.redirects).toHaveLength(0);
+      expect(result.skipped).toHaveLength(1);
+      expect(result.skipped[0].reason).toContain("Must start with a /");
     });
 
     test("handles http URLs as source (invalid)", () => {
@@ -1142,9 +1300,7 @@ https://example.com/old,/new,301`;
 
       expect(result.redirects).toHaveLength(0);
       expect(result.skipped).toHaveLength(1);
-      expect(result.skipped[0].reason).toContain(
-        "source path must start with /"
-      );
+      expect(result.skipped[0].reason).toContain("Must start with a /");
     });
 
     test("handles protocol-relative URLs as target", () => {
@@ -1237,15 +1393,58 @@ ${longPath},/new,301`;
       expect(result.redirects).toHaveLength(1);
     });
 
-    test("skips asterisk in path segment", () => {
+    test("allows literal asterisk in path segment", () => {
       const input = `source,target,status
 /files/*.txt,/all-files,301`;
 
       const result = parseRedirects(input);
 
-      expect(result.redirects).toHaveLength(0);
+      expect(result.redirects).toEqual([
+        { old: "/files/*.txt", new: "/all-files", status: 301 },
+      ]);
+      expect(result.skipped).toEqual([]);
+    });
+
+    test("skips sources reserved for system routes", () => {
+      const input = `source,target,status
+/s/image,/new,301
+/build/main.js,/new,301`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([]);
+      expect(result.skipped).toHaveLength(2);
+      expect(result.skipped[0].reason).toContain(
+        "/s prefix is reserved for the system"
+      );
+      expect(result.skipped[1].reason).toContain(
+        "/build prefix is reserved for the system"
+      );
+    });
+
+    test("accepts relative targets allowed by ProjectNewRedirectPath", () => {
+      const input = `source,target,status
+/old,new,301
+/query,?preview=1,302`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([
+        { old: "/old", new: "new", status: 301 },
+        { old: "/query", new: "?preview=1", status: 302 },
+      ]);
+      expect(result.skipped).toEqual([]);
+    });
+
+    test("skips invalid targets with ProjectNewRedirectPath validation", () => {
+      const input = `source,target,status
+/old,http://[invalid,301`;
+
+      const result = parseRedirects(input);
+
+      expect(result.redirects).toEqual([]);
       expect(result.skipped).toHaveLength(1);
-      expect(result.skipped[0].reason).toContain("wildcard");
+      expect(result.skipped[0].reason).toContain("Must be a valid URL");
     });
   });
 });

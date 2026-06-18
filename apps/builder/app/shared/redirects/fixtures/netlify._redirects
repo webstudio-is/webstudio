@@ -47,7 +47,7 @@
 /perm-redirect /perm 308
 
 # -----------------------------------------------------------------
-# PATH PATTERNS (skipped - unsupported)
+# PATH PATTERNS
 # -----------------------------------------------------------------
 
 # Splat wildcards
@@ -101,7 +101,7 @@
 # TRAILING SLASH HANDLING
 # -----------------------------------------------------------------
 
-# Will be normalized (trailing slash stripped from source)
+# Trailing slash is preserved in the source
 /old-path/ /new-path 301
 
 # -----------------------------------------------------------------
