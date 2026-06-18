@@ -4,16 +4,11 @@ import { join } from "node:path";
 import pc from "picocolors";
 import { spinner } from "@clack/prompts";
 import {
-  apiClientHeader,
-  apiClientVersionHeader,
-  getApiCompatibilityPayload,
-} from "@webstudio-is/trpc-interface/api-compatibility";
-import {
   type Data,
   loadProjectDataByBuildId,
   loadProjectDataByProjectId,
+  syncDataVersion,
 } from "@webstudio-is/http-client";
-import packageJson from "../../package.json";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import {
   GLOBAL_CONFIG_FILE,
@@ -27,41 +22,7 @@ import type {
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
 import { HandledCliError } from "../errors";
-
-const apiCompatibilityHeaders = {
-  [apiClientHeader]: "cli",
-  [apiClientVersionHeader]: packageJson.version,
-};
-
-const updateCliCommand = "npm install -g webstudio@latest";
-
-const getCliCompatibilityMessage = (error: unknown) => {
-  const payload = getApiCompatibilityPayload(error);
-  if (payload?.action.type !== "updateCli") {
-    return;
-  }
-
-  return `${payload.message}
-
-Update the CLI with:
-  ${updateCliCommand}
-
-Or run the latest version once with:
-  npx webstudio@latest sync`;
-};
-
-const stopSyncingWithError = (
-  syncing: ReturnType<typeof spinner>,
-  error: unknown
-) => {
-  const compatibilityMessage = getCliCompatibilityMessage(error);
-  const message =
-    error instanceof Error
-      ? error.message
-      : "Unable to synchronize project data";
-  syncing.stop(compatibilityMessage ?? message, 2);
-  return compatibilityMessage;
-};
+import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 
 export const syncOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -101,7 +62,11 @@ export const sync = async (
       });
       project.origin = options.origin;
     } catch (error) {
-      const compatibilityMessage = stopSyncingWithError(syncing, error);
+      const compatibilityMessage = stopSpinnerWithError(
+        syncing,
+        error,
+        "Unable to synchronize project data"
+      );
       if (compatibilityMessage !== undefined) {
         throw new HandledCliError();
       }
@@ -157,7 +122,11 @@ export const sync = async (
       project.origin = origin;
     } catch (error) {
       // catch errors about unpublished project
-      const compatibilityMessage = stopSyncingWithError(syncing, error);
+      const compatibilityMessage = stopSpinnerWithError(
+        syncing,
+        error,
+        "Unable to synchronize project data"
+      );
       if (compatibilityMessage !== undefined) {
         throw new HandledCliError();
       }
@@ -168,6 +137,7 @@ export const sync = async (
 
   // Check that project defined
   project satisfies Data;
+  project.syncDataVersion = syncDataVersion;
 
   const localBuildFilePath = join(cwd(), LOCAL_DATA_FILE);
   await createFileIfNotExists(localBuildFilePath);

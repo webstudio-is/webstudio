@@ -15,7 +15,10 @@ import type {
 import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 
+export const syncDataVersion = 1;
+
 export type Data = {
+  syncDataVersion: typeof syncDataVersion;
   page: Page;
   pages: Array<Page>;
   build: {
@@ -94,6 +97,22 @@ export const loadProjectDataByProjectId = async (params: {
   }).query("build.loadProjectDataByProjectId", {
     projectId: params.projectId,
   })) as Data;
+};
+
+export const importProjectData = async (params: {
+  projectId: string;
+  origin: string;
+  authToken: string;
+  data: Data;
+  headers?: Record<string, string | undefined>;
+}): Promise<{ version: number }> => {
+  return (await createTrpcClient(params.origin, {
+    ...params.headers,
+    "x-auth-token": params.authToken,
+  }).mutation("build.importProjectData", {
+    projectId: params.projectId,
+    data: params.data,
+  })) as { version: number };
 };
 
 // For easier detecting the builder URL

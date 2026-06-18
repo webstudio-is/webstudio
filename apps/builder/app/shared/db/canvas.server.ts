@@ -1,4 +1,4 @@
-import type { Data } from "@webstudio-is/http-client";
+import { syncDataVersion, type Data } from "@webstudio-is/http-client";
 import { loadBuildById } from "@webstudio-is/project-build/index.server";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
@@ -91,6 +91,7 @@ const loadProductionCanvasDataAndProject = async (
 
   return {
     data: {
+      syncDataVersion,
       build: {
         id: build.id,
         projectId: build.projectId,

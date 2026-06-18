@@ -4,6 +4,7 @@ import { GLOBAL_CONFIG_FILE } from "./config";
 import { createFileIfNotExists } from "./fs-utils";
 import { link, linkOptions } from "./commands/link";
 import { sync, syncOptions } from "./commands/sync";
+import { importOptions, importProject } from "./commands/import";
 import { build, buildOptions } from "./commands/build";
 import { initFlow } from "./commands/init-flow";
 import makeCLI from "yargs";
@@ -58,6 +59,12 @@ export const main = async () => {
     );
     cmd.command(["link"], "Link the project with the cloud", linkOptions, link);
     cmd.command(["sync"], "Sync your project", syncOptions, sync);
+    cmd.command(
+      ["import"],
+      "Import synchronized project data into another project",
+      importOptions,
+      importProject
+    );
     cmd.command(["$0", "init"], "Setup the project", buildOptions, initFlow);
 
     await cmd.parse();
