@@ -49,6 +49,7 @@ vi.mock("~/shared/builder-data", () => ({
 import type { Change } from "immerhin";
 import { $hasUnsavedSyncChanges, $syncStatus } from "@webstudio-is/sync-client";
 import { toast } from "@webstudio-is/design-system";
+import type { ServerSyncState } from "./sync-stores";
 import {
   $lastTransactionId,
   commandQueue,
@@ -80,6 +81,8 @@ const makeTx = (id: string) => ({
   object: "server" as const,
   payload: [{ namespace: "ns", patches: [], revisePatches: [] }] as Change[],
 });
+
+const initialState: ServerSyncState = new Map();
 
 const createMockBackoff = (overrides: Partial<Backoff> = {}): Backoff => {
   let failures = 0;
@@ -485,8 +488,31 @@ describe("project-queue", () => {
   //  ServerSyncStorage
 
   describe("ServerSyncStorage", () => {
+    test("subscribe seeds initial data without loading builder data again", () => {
+      const serverState: ServerSyncState = new Map([["pages", undefined]]);
+      const storage = new ServerSyncStorage("p1", serverState);
+      const setState = vi.fn();
+      mockLoadBuilderData.mockClear();
+
+      storage.subscribe(setState, new AbortController().signal);
+
+      expect(mockLoadBuilderData).not.toHaveBeenCalled();
+      expect(setState).toHaveBeenCalledWith(new Map([["server", serverState]]));
+    });
+
+    test("subscribe does nothing when aborted", () => {
+      const storage = new ServerSyncStorage("p1", initialState);
+      const controller = new AbortController();
+      const setState = vi.fn();
+      controller.abort();
+
+      storage.subscribe(setState, controller.signal);
+
+      expect(setState).not.toHaveBeenCalled();
+    });
+
     test("sendTransaction enqueues only for 'server' object", () => {
-      const storage = new ServerSyncStorage("p1");
+      const storage = new ServerSyncStorage("p1", initialState);
 
       storage.sendTransaction({
         id: "tx-1",
@@ -502,7 +528,7 @@ describe("project-queue", () => {
     });
 
     test("sendTransaction ignores non-server objects", () => {
-      const storage = new ServerSyncStorage("p1");
+      const storage = new ServerSyncStorage("p1", initialState);
 
       storage.sendTransaction({
         id: "tx-1",
@@ -515,7 +541,7 @@ describe("project-queue", () => {
     });
 
     test("sendTransaction sets $lastTransactionId", () => {
-      const storage = new ServerSyncStorage("p1");
+      const storage = new ServerSyncStorage("p1", initialState);
 
       storage.sendTransaction({
         id: "tx-42",
