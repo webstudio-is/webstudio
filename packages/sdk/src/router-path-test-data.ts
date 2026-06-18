@@ -2,7 +2,7 @@
  * Shared test data for router path validation.
  *
  * This file exports test cases that should be used consistently across:
- * 1. Path schema validation (SDK) - OldPagePath, page paths, etc.
+ * 1. Path schema validation (SDK) - page paths, redirect source paths, etc.
  * 2. URLPattern matching (builder) - used for all page routing
  * 3. Route generation for published sites (react-sdk)
  *
@@ -141,7 +141,7 @@ export const INVALID_ROUTER_PATHS = {
   // Empty or root only (for redirects, root is not a valid source)
   empty: ["", "/"],
 
-  // Spaces (must be URL-encoded)
+  // Spaces (must be URL-encoded for generic page/router paths)
   spaces: ["/hello world", "/path with spaces"],
 
   // URL-unsafe characters (RFC 3986)
@@ -174,6 +174,37 @@ export const INVALID_ROUTER_PATHS = {
 // Flattened arrays for convenience
 export const ALL_VALID_PATHS = Object.values(VALID_ROUTER_PATHS).flat();
 export const ALL_INVALID_PATHS = Object.values(INVALID_ROUTER_PATHS).flat();
+
+export const REDIRECT_SOURCE_EXTRA_VALID_PATHS = [
+  "/hello world",
+  "/path with spaces",
+  "/path<script>",
+  "/path>other",
+  '/path"quote',
+  "/path{test}",
+  "/path|other",
+  "/path[0]",
+  "/path`backtick",
+  "/about/",
+  "/about//page",
+  "/path?url=https://example.com/a?b=c",
+] as const;
+
+export const REDIRECT_SOURCE_VALID_PATHS = [
+  ...ALL_VALID_PATHS,
+  ...REDIRECT_SOURCE_EXTRA_VALID_PATHS,
+] as const;
+
+export const REDIRECT_SOURCE_INVALID_PATHS = [
+  ...INVALID_ROUTER_PATHS.empty,
+  "/path\\other",
+  "/line\nfeed",
+  "/tab\tfeed",
+  ...INVALID_ROUTER_PATHS.reserved,
+  "no-leading-slash",
+  "//leading-double",
+  ...INVALID_ROUTER_PATHS.controlChars,
+] as const;
 
 // Paths that are specifically for testing URLPattern matching (no query/fragment)
 // These are paths that work with URLPattern API

@@ -1,4 +1,8 @@
-import { defineConfig } from "vite";
+import {
+  defaultClientConditions,
+  defaultServerConditions,
+  defineConfig,
+} from "vite";
 import pkg from "./package.json";
 
 const isExternal = (id: string, importer: string | undefined) => {
@@ -30,7 +34,15 @@ const isExternal = (id: string, importer: string | undefined) => {
 };
 
 export default defineConfig({
-  // resolve only webstudio condition in tests
+  // resolve webstudio condition in tests
+  resolve: {
+    conditions: ["webstudio", ...defaultClientConditions],
+  },
+  ssr: {
+    resolve: {
+      conditions: ["webstudio", ...defaultServerConditions],
+    },
+  },
   build: {
     minify: false,
     lib: {
