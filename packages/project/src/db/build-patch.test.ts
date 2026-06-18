@@ -298,6 +298,259 @@ describe("patchBuild", () => {
     }
   });
 
+  test("validates only touched props while preserving untouched props", async () => {
+    const buildWithInvalidUntouchedProp = {
+      ...buildRow,
+      props: JSON.stringify([
+        {
+          id: "prop-1",
+          instanceId: "body-1",
+          name: "title",
+          type: "string",
+          value: "Old title",
+        },
+        {
+          id: "prop-invalid",
+          instanceId: "body-1",
+          name: "count",
+          type: "number",
+          value: "invalid number",
+        },
+      ]),
+    };
+
+    const result = await createBuildPatchUpdate({
+      build: buildWithInvalidUntouchedProp,
+      clientVersion: 3,
+      transactions: [transaction()],
+    });
+
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") {
+      expect(JSON.parse(result.update?.props ?? "")).toEqual([
+        {
+          id: "prop-1",
+          instanceId: "body-1",
+          name: "title",
+          type: "string",
+          value: "New title",
+        },
+        {
+          id: "prop-invalid",
+          instanceId: "body-1",
+          name: "count",
+          type: "number",
+          value: "invalid number",
+        },
+      ]);
+    }
+  });
+
+  test("rejects invalid touched props", async () => {
+    await expect(
+      createBuildPatchUpdate({
+        build: buildRow,
+        clientVersion: 3,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "props",
+                patches: [
+                  {
+                    op: "replace",
+                    path: ["prop-1", "value"],
+                    value: 123,
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      })
+    ).rejects.toThrow();
+  });
+
+  test("rejects touched props set to undefined", async () => {
+    await expect(
+      createBuildPatchUpdate({
+        build: buildRow,
+        clientVersion: 3,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "props",
+                patches: [
+                  {
+                    op: "replace",
+                    path: ["prop-1"],
+                    value: undefined,
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      })
+    ).rejects.toThrow();
+  });
+
+  test("validates all props when patch replaces the props map", async () => {
+    await expect(
+      createBuildPatchUpdate({
+        build: buildRow,
+        clientVersion: 3,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "props",
+                patches: [
+                  {
+                    op: "replace",
+                    path: [],
+                    value: new Map([
+                      [
+                        "prop-invalid",
+                        {
+                          id: "prop-invalid",
+                          instanceId: "body-1",
+                          name: "count",
+                          type: "number",
+                          value: "invalid number",
+                        },
+                      ],
+                    ]),
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      })
+    ).rejects.toThrow();
+  });
+
+  test("rejects touched styles set to undefined", async () => {
+    const style = {
+      styleSourceId: "style-source-1",
+      breakpointId: "breakpoint-1",
+      property: "width",
+      value: { type: "unit", value: 10, unit: "px" },
+    };
+    const buildWithStyle = {
+      ...buildRow,
+      styles: JSON.stringify([style]),
+    };
+    const styleKey = "style-source-1:breakpoint-1:width:";
+
+    await expect(
+      createBuildPatchUpdate({
+        build: buildWithStyle,
+        clientVersion: 3,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "styles",
+                patches: [
+                  {
+                    op: "replace",
+                    path: [styleKey],
+                    value: undefined,
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      })
+    ).rejects.toThrow();
+  });
+
+  test("validates only touched instances while preserving untouched instances", async () => {
+    const buildWithInvalidUntouchedInstance = {
+      ...buildRow,
+      instances: JSON.stringify([
+        {
+          id: "body-1",
+          type: "instance",
+          component: "Body",
+          children: [],
+        },
+        {
+          id: "instance-invalid",
+          type: "instance",
+          children: [],
+        },
+      ]),
+    };
+
+    const result = await createBuildPatchUpdate({
+      build: buildWithInvalidUntouchedInstance,
+      clientVersion: 3,
+      transactions: [
+        transaction({
+          payload: [
+            {
+              namespace: "instances",
+              patches: [
+                {
+                  op: "replace",
+                  path: ["body-1", "label"],
+                  value: "Body label",
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") {
+      expect(JSON.parse(result.update?.instances ?? "")).toEqual([
+        {
+          id: "body-1",
+          type: "instance",
+          component: "Body",
+          label: "Body label",
+          children: [],
+        },
+        {
+          id: "instance-invalid",
+          type: "instance",
+          children: [],
+        },
+      ]);
+    }
+  });
+
+  test("rejects invalid touched instances", async () => {
+    await expect(
+      createBuildPatchUpdate({
+        build: buildRow,
+        clientVersion: 3,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "instances",
+                patches: [
+                  {
+                    op: "remove",
+                    path: ["body-1", "component"],
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      })
+    ).rejects.toThrow();
+  });
+
   test("returns ok when retrying a transaction already saved by the server", async () => {
     let didPatch = false;
     server.use(

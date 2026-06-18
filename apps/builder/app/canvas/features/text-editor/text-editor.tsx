@@ -1,5 +1,5 @@
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import { updateInstanceData } from "~/shared/instance-utils/data";
 import { color } from "@webstudio-is/css-engine";
 import {
   useState,
@@ -1101,7 +1101,7 @@ const RichTextContentPluginInternal = ({
             findBlockChildSelector(rootInstanceSelector);
 
           if (blockChildSelector) {
-            updateWebstudioData((data) => {
+            updateInstanceData((data) => {
               deleteInstanceMutable(
                 data,
                 getInstancePath(rootInstanceSelector, data.instances)
@@ -1165,7 +1165,7 @@ const RichTextContentPluginInternal = ({
                 .get()
                 .get(parentInstanceSelector[0]);
               const isLastChild = parentInstance?.children.length === 1;
-              updateWebstudioData((data) => {
+              updateInstanceData((data) => {
                 deleteInstanceMutable(
                   data,
                   getInstancePath(
@@ -1184,7 +1184,7 @@ const RichTextContentPluginInternal = ({
             if (blockChildSelector) {
               onNext(editor.getEditorState(), { reason: "left" });
 
-              updateWebstudioData((data) => {
+              updateInstanceData((data) => {
                 deleteInstanceMutable(
                   data,
                   getInstancePath(blockChildSelector, data.instances)
@@ -1266,7 +1266,7 @@ const RichTextContentPluginInternal = ({
                 const isLastChild = parentInstance?.children.length === 1;
 
                 // Pressing Enter within an empty list item deletes the empty item
-                updateWebstudioData((data) => {
+                updateInstanceData((data) => {
                   deleteInstanceMutable(
                     data,
                     getInstancePath(

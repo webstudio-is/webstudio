@@ -80,10 +80,10 @@ const applyBuilderData = (data: LoadedBuilderData) => {
   $marketplaceProduct.set(data.marketplaceProduct);
 };
 
-function applyBuilderMetadata(data: LoadedBuilderData) {
+const applyBuilderMetadata = (data: LoadedBuilderData) => {
   $publisherHost.set(data.publisherHost);
   $project.set(data.project);
-}
+};
 
 const getServerSyncState = (data: LoadedBuilderData): ServerSyncState =>
   new Map(serverSyncStoreNames.map((name) => [name, data[name]]));

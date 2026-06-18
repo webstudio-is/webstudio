@@ -4,7 +4,11 @@ import {
 } from "../instance-utils/fragment";
 import { findClosestInsertable } from "../instance-utils/insert";
 import { detectFragmentTokenConflicts } from "../instance-utils/fragment";
-import { updateWebstudioData, getWebstudioData } from "../instance-utils/data";
+import {
+  updateInstanceData,
+  updateWebstudioData,
+  getWebstudioData,
+} from "../instance-utils/data";
 import {
   insertInstanceChildrenMutable,
   type Insertable,
@@ -236,7 +240,7 @@ const handleCutInstance = () => {
   if (data === undefined) {
     return;
   }
-  updateWebstudioData((data) => {
+  updateInstanceData((data) => {
     deleteInstanceMutable(data, instancePath);
   });
   if (data === undefined) {

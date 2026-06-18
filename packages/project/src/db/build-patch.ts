@@ -57,6 +57,7 @@ export const patchLoadedBuild = async (
   if (result.update === undefined) {
     return { status: "ok", version: result.nextVersion, build };
   }
+  const buildUpdate = result.update;
 
   // build.patch does not have the worker's atomic Build+asset commit path.
   // Apply app-side asset mutations before marking the Build with
@@ -68,7 +69,7 @@ export const patchLoadedBuild = async (
 
   const update = await context.postgrest.client
     .from("Build")
-    .update(result.update, { count: "exact" })
+    .update(buildUpdate, { count: "exact" })
     .match({
       id: buildId,
       projectId,
@@ -98,7 +99,7 @@ export const patchLoadedBuild = async (
   return {
     status: "ok",
     version: result.nextVersion,
-    build: { ...build, ...result.update, version: result.nextVersion },
+    build: { ...build, ...buildUpdate, version: result.nextVersion },
   };
 };
 

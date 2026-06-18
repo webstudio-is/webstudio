@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { computed } from "nanostores";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import {
   CommandGroup,
   CommandGroupHeading,
@@ -9,7 +10,13 @@ import {
   useSelectedAction,
   useResetActionIndex,
 } from "@webstudio-is/design-system";
-import { $dataSources } from "~/shared/sync/data-stores";
+import {
+  $dataSources,
+  $instances,
+  $pages,
+  $props,
+  $resources,
+} from "~/shared/sync/data-stores";
 import {
   $commandContent,
   $isCommandPanelOpen,
@@ -22,11 +29,11 @@ import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
   DeleteDataVariableDialog,
   RenameDataVariableDialog,
-  $usedVariablesInInstances,
 } from "~/builder/shared/data-variable-utils";
 import type { BaseOption } from "../shared/types";
 import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { findVariableUsagesByInstance } from "~/shared/data-variables";
 
 export type DataVariableOption = BaseOption & {
   type: "dataVariable";
@@ -35,6 +42,23 @@ export type DataVariableOption = BaseOption & {
   instanceId: string;
   usages: number;
 };
+
+const $usedVariablesInInstances = computed(
+  [$isCommandPanelOpen, $pages, $instances, $props, $dataSources, $resources],
+  (isOpen, pages, instances, props, dataSources, resources) => {
+    if (isOpen === false) {
+      return new Map();
+    }
+    return findVariableUsagesByInstance({
+      startingInstanceId: ROOT_INSTANCE_ID,
+      pages,
+      instances,
+      props,
+      dataSources,
+      resources,
+    });
+  }
+);
 
 export const $dataVariableOptions = computed(
   [$isCommandPanelOpen, $dataSources, $usedVariablesInInstances],

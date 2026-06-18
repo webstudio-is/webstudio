@@ -45,10 +45,20 @@ export type AuthorizedPatchEntry = {
   context: AppContext;
 };
 
-export type RejectedPatchEntry = {
+type RejectedPatchEntry = {
   entry: PatchEntry;
   errors: string;
 };
+
+type PatchEntryWithContext = {
+  entry: PatchEntry;
+  context: AppContext;
+  hasBuildPermit: boolean;
+};
+
+type GetInitialContentModeCapabilities = () =>
+  | ReturnType<typeof createContentModeCapabilities>
+  | Promise<ReturnType<typeof createContentModeCapabilities>>;
 
 export const createWriterContext = async (
   context: AppContext,
@@ -110,6 +120,18 @@ export const assertProjectPermit = async ({
   }
 };
 
+const hasProjectPermit = async ({
+  context,
+  permit,
+  projectId,
+}: {
+  context: AppContext;
+  permit: AuthPermit;
+  projectId: string;
+}) => {
+  return authorizeProject.hasProjectPermit({ projectId, permit }, context);
+};
+
 export const createContentModeCapabilities = (build: {
   instances: string;
   props: string;
@@ -134,22 +156,70 @@ export const createContentModeCapabilities = (build: {
 export const authorizePatchEntries = async (
   context: AppContext,
   patch: NormalizedPatchRequest,
-  contentModeCapabilities: ReturnType<typeof createContentModeCapabilities>
+  getInitialContentModeCapabilities: GetInitialContentModeCapabilities
 ) => {
-  let capabilities = contentModeCapabilities;
+  const entriesWithContext: PatchEntryWithContext[] = [];
   const authorized: AuthorizedPatchEntry[] = [];
   const rejected: RejectedPatchEntry[] = [];
 
   for (const entry of patch.entries) {
     try {
       const writerContext = await resolveEntryWriterContext(context, entry);
+      const hasBuildPermit = await hasProjectPermit({
+        context: writerContext,
+        permit: "build",
+        projectId: patch.projectId,
+      });
+      entriesWithContext.push({
+        entry,
+        context: writerContext,
+        hasBuildPermit,
+      });
+    } catch (error) {
+      if (error instanceof AuthorizationError) {
+        rejected.push({ entry, errors: error.message });
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  if (entriesWithContext.every(({ hasBuildPermit }) => hasBuildPermit)) {
+    authorized.push(
+      ...entriesWithContext.map(({ entry, context }) => ({ entry, context }))
+    );
+    if (authorized.length === 0 && rejected.length === 0) {
+      throw new Error("Transaction entries required");
+    }
+    return { authorized, rejected };
+  }
+
+  let capabilities = await getInitialContentModeCapabilities();
+  for (const {
+    entry,
+    context: writerContext,
+    hasBuildPermit,
+  } of entriesWithContext) {
+    try {
       const contentModeResult = applyContentModeTransaction({
         capabilities,
         transaction: entry.transaction,
       });
+      if (hasBuildPermit) {
+        if (contentModeResult?.success) {
+          capabilities = contentModeResult.capabilities;
+        }
+        authorized.push({ entry, context: writerContext });
+        continue;
+      }
+      if (contentModeResult?.success !== true) {
+        throw new AuthorizationError(
+          "You don't have permission to build this project."
+        );
+      }
       await assertProjectPermit({
         context: writerContext,
-        permit: contentModeResult?.success ? "edit" : "build",
+        permit: "edit",
         projectId: patch.projectId,
       });
       if (contentModeResult?.success) {

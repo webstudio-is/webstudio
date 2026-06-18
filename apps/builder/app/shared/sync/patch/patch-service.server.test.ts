@@ -21,11 +21,13 @@ import {
   applyPatchRequest,
   loadAuthorizedPatchState,
 } from "./patch-service.server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
 
 const buildRow = {
   projectId: "project-1",
   version: 3,
+  lastTransactionId: null,
   instances: JSON.stringify([]),
   props: JSON.stringify([]),
   styleSources: JSON.stringify([]),
@@ -34,35 +36,40 @@ const buildRow = {
   breakpoints: JSON.stringify([]),
 };
 
-const createContext = () =>
-  ({
+const createContext = () => {
+  const selectedColumns: string[] = [];
+  const context = {
     postgrest: {
       client: {
         from: () => ({
           select: (columns: string) => ({
+            selectedColumns,
             eq: () => {
-              if (columns === "*") {
-                return Promise.resolve({
-                  data: [buildRow],
-                  error: undefined,
-                });
-              }
-              return {
+              selectedColumns.push(columns);
+              const result = Promise.resolve({
+                data: [buildRow],
+                error: undefined,
+              });
+              return Object.assign(result, {
                 single: async () => ({
                   data: buildRow,
                   error: undefined,
                 }),
-              };
+              });
             },
           }),
         }),
       },
     },
-  }) as never;
+  };
+  return Object.assign(context, {
+    selectedColumns,
+  }) as unknown as AppContext & { selectedColumns: string[] };
+};
 
-const transaction = (id: string) => ({
+const transaction = (id: string, namespace = "props") => ({
   id,
-  payload: [{ namespace: "props", patches: [] }],
+  payload: [{ namespace, patches: [] }],
 });
 
 const patch: NormalizedPatchRequest = {
@@ -106,20 +113,19 @@ describe("applyPatchRequest", () => {
       build: { ...build, version: 4 },
     }));
 
-    const result = await applyPatchRequest(createContext(), patch);
+    const context = createContext();
 
-    expect(createContentModeCapabilities).toHaveBeenCalledWith({
-      breakpoints: JSON.stringify([]),
-      instances: JSON.stringify([]),
-      props: JSON.stringify([]),
-      styleSourceSelections: JSON.stringify([]),
-      styleSources: JSON.stringify([]),
-      styles: JSON.stringify([]),
-    });
+    const result = await applyPatchRequest(context, patch);
+
+    expect(createContentModeCapabilities).not.toHaveBeenCalled();
+    expect(context.selectedColumns).toEqual([
+      "projectId, version",
+      "projectId, version, lastTransactionId, props",
+    ]);
     expect(authorizePatchEntries).toHaveBeenCalledWith(
       expect.anything(),
       patch,
-      { capabilities: true }
+      expect.any(Function)
     );
     expect(patchLoadedBuild).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -140,6 +146,121 @@ describe("applyPatchRequest", () => {
         },
         { seq: 2, transactionId: "tx-2", status: "accepted" },
       ],
+    });
+  });
+
+  test("loads content-mode capability columns only when authorization requests them", async () => {
+    authorizePatchEntries.mockImplementation(
+      async (_context, _patch, getInitialContentModeCapabilities) => {
+        await getInitialContentModeCapabilities();
+        return {
+          authorized: [{ entry: patch.entries[0], context: { writer: 1 } }],
+          rejected: [],
+        };
+      }
+    );
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+    const context = createContext();
+
+    const result = await applyPatchRequest(context, patch);
+
+    expect(createContentModeCapabilities).toHaveBeenCalledWith({
+      breakpoints: JSON.stringify([]),
+      instances: JSON.stringify([]),
+      props: JSON.stringify([]),
+      styleSourceSelections: JSON.stringify([]),
+      styleSources: JSON.stringify([]),
+      styles: JSON.stringify([]),
+    });
+    expect(context.selectedColumns).toEqual([
+      "projectId, version",
+      "instances, props, styleSources, styleSourceSelections, styles, breakpoints",
+      "projectId, version, lastTransactionId, props",
+    ]);
+    expect(result).toEqual({
+      status: "ok",
+      version: 4,
+      entries: [{ seq: 1, transactionId: "tx-1", status: "accepted" }],
+    });
+  });
+
+  test("does not load patch columns or persist when every entry is rejected", async () => {
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [],
+      rejected: [
+        {
+          entry: patch.entries[0],
+          errors: "You don't have permission to edit this project.",
+        },
+      ],
+    });
+    const context = createContext();
+
+    const result = await applyPatchRequest(context, patch);
+
+    expect(context.selectedColumns).toEqual(["projectId, version"]);
+    expect(patchLoadedBuild).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      status: "partial",
+      version: 3,
+      entries: [
+        {
+          seq: 1,
+          transactionId: "tx-1",
+          status: "rejected",
+          errors: "You don't have permission to edit this project.",
+        },
+      ],
+    });
+  });
+
+  test("loads only base patch columns for asset-only patches", async () => {
+    const assetsPatch: NormalizedPatchRequest = {
+      ...patch,
+      entries: [
+        {
+          seq: 1,
+          transaction: transaction("tx-assets", "assets") as never,
+          writer: { type: "token", authToken: "token-1" },
+        },
+      ],
+    };
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [{ entry: assetsPatch.entries[0], context: { writer: 1 } }],
+      rejected: [],
+    });
+    patchLoadedBuild.mockImplementation(async ({ build }) => ({
+      status: "ok",
+      version: 4,
+      build: { ...build, version: 4 },
+    }));
+    const context = createContext();
+
+    const result = await applyPatchRequest(context, assetsPatch);
+
+    expect(context.selectedColumns).toEqual([
+      "projectId, version",
+      "projectId, version, lastTransactionId",
+    ]);
+    expect(patchLoadedBuild).toHaveBeenCalledWith(
+      expect.objectContaining({
+        build: expect.objectContaining({
+          projectId: "project-1",
+          version: 3,
+          lastTransactionId: null,
+        }),
+        transactions: [assetsPatch.entries[0].transaction],
+      }),
+      { writer: 1 }
+    );
+    expect(result).toEqual({
+      status: "ok",
+      version: 4,
+      entries: [{ seq: 1, transactionId: "tx-assets", status: "accepted" }],
     });
   });
 

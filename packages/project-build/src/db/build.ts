@@ -1,5 +1,3 @@
-/* eslint no-console: ["error", { allow: ["time", "timeEnd"] }] */
-
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   AuthorizationError,
@@ -45,10 +43,7 @@ const parseCompactData = <Item>(serialized: string) =>
 const parseCompactInstanceData = (serialized: string) => {
   const instances = JSON.parse(serialized) as Instance[];
 
-  // @todo: Remove after measurements on real data
-  console.time("breakCyclesMutable");
   breakCyclesMutable(instances, (node) => node.component === "Slot");
-  console.timeEnd("breakCyclesMutable");
 
   return instances;
 };
@@ -56,32 +51,28 @@ const parseCompactInstanceData = (serialized: string) => {
 const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
-  try {
-    return {
-      id: build.id,
-      projectId: build.projectId,
-      version: build.version,
-      createdAt: build.createdAt,
-      updatedAt: build.updatedAt,
-      pages: migratePages(parseConfig<unknown>(build.pages)),
-      breakpoints: parseCompactData<Breakpoint>(build.breakpoints),
-      styles: parseCompactData<StyleDecl>(build.styles),
-      styleSources: parseCompactData<StyleSource>(build.styleSources),
-      styleSourceSelections: parseCompactData<StyleSourceSelection>(
-        build.styleSourceSelections
-      ),
-      props: parseCompactData<Prop>(build.props),
-      dataSources: parseCompactData<DataSource>(build.dataSources),
-      resources: parseCompactData<Resource>(build.resources),
-      instances: parseCompactInstanceData(build.instances),
-      deployment: parseDeployment(build.deployment),
-      marketplaceProduct: parseConfig<MarketplaceProduct>(
-        build.marketplaceProduct
-      ),
-    } satisfies CompactBuild;
-  } finally {
-    // empty block
-  }
+  return {
+    id: build.id,
+    projectId: build.projectId,
+    version: build.version,
+    createdAt: build.createdAt,
+    updatedAt: build.updatedAt,
+    pages: migratePages(parseConfig<unknown>(build.pages)),
+    breakpoints: parseCompactData<Breakpoint>(build.breakpoints),
+    styles: parseCompactData<StyleDecl>(build.styles),
+    styleSources: parseCompactData<StyleSource>(build.styleSources),
+    styleSourceSelections: parseCompactData<StyleSourceSelection>(
+      build.styleSourceSelections
+    ),
+    props: parseCompactData<Prop>(build.props),
+    dataSources: parseCompactData<DataSource>(build.dataSources),
+    resources: parseCompactData<Resource>(build.resources),
+    instances: parseCompactInstanceData(build.instances),
+    deployment: parseDeployment(build.deployment),
+    marketplaceProduct: parseConfig<MarketplaceProduct>(
+      build.marketplaceProduct
+    ),
+  } satisfies CompactBuild;
 };
 
 type AuthorizationToken = Awaited<ReturnType<typeof authDb.getTokenInfo>>;

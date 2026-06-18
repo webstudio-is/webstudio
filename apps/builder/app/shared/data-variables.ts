@@ -29,6 +29,57 @@ import {
 import { setUnion } from "./shim";
 
 const allowedJsChars = /[A-Za-z_]/;
+const compiledExpressionCacheLimit = 10_000;
+type CompiledExpression = (variables: {
+  get: (key: DataSource["name"]) => unknown;
+  // Dynamic expressions intentionally preserve the historical `any` result.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+}) => any;
+
+const compiledExpressionCache = new Map<string, CompiledExpression>();
+
+const getCompiledExpression = (expression: string) => {
+  const cached = compiledExpressionCache.get(expression);
+  if (cached) {
+    return cached;
+  }
+
+  const usedVariables = new Map<string, DataSource["name"]>();
+  const transpiled = transpileExpression({
+    expression,
+    executable: true,
+    replaceVariable: (identifier) => {
+      const id = decodeDataVariableId(identifier);
+      if (id) {
+        usedVariables.set(identifier, id);
+      } else {
+        // access all variable values from specified map
+        const name = decodeDataVariableName(identifier);
+        usedVariables.set(identifier, name);
+      }
+    },
+  });
+  let code = "";
+  // add only used variables in expression and get values
+  // from variables map without additional serializing of these values
+  for (const [identifier, name] of usedVariables) {
+    code += `let ${identifier} = _variables.get(${JSON.stringify(name)});\n`;
+  }
+  code += `return (${transpiled})`;
+
+  const compiledExpression = new Function(
+    "_variables",
+    code
+  ) as CompiledExpression;
+  compiledExpressionCache.set(expression, compiledExpression);
+  if (compiledExpressionCache.size > compiledExpressionCacheLimit) {
+    const oldestExpression = compiledExpressionCache.keys().next().value;
+    if (oldestExpression !== undefined) {
+      compiledExpressionCache.delete(oldestExpression);
+    }
+  }
+  return compiledExpression;
+};
 
 /**
  * variable names can contain any characters and
@@ -139,29 +190,6 @@ export const computeExpression = (
   variables: Map<DataSource["name"], unknown>
 ) => {
   try {
-    const usedVariables = new Map();
-    const transpiled = transpileExpression({
-      expression,
-      executable: true,
-      replaceVariable: (identifier) => {
-        const id = decodeDataVariableId(identifier);
-        if (id) {
-          usedVariables.set(identifier, id);
-        } else {
-          // access all variable values from specified map
-          const name = decodeDataVariableName(identifier);
-          usedVariables.set(identifier, name);
-        }
-      },
-    });
-    let code = "";
-    // add only used variables in expression and get values
-    // from variables map without additional serializing of these values
-    for (const [identifier, name] of usedVariables) {
-      code += `let ${identifier} = _variables.get(${JSON.stringify(name)});\n`;
-    }
-    code += `return (${transpiled})`;
-
     /**
      *
      * We are using structuredClone on frozen values because, for some reason,
@@ -193,18 +221,22 @@ export const computeExpression = (
      *
      * ```
      */
-    const proxiedVariables = new Map(
-      [...variables.entries()].map(([key, value]) => [
-        key,
-        isPlainObject(value)
-          ? createJsonStringifyProxy(
-              Object.isFrozen(value) ? structuredClone(value) : value
-            )
-          : value,
-      ])
-    );
+    const proxiedVariables = new Map<DataSource["name"], unknown>();
+    const getVariable = (key: DataSource["name"]) => {
+      if (proxiedVariables.has(key)) {
+        return proxiedVariables.get(key);
+      }
+      const value = variables.get(key);
+      const proxiedValue = isPlainObject(value)
+        ? createJsonStringifyProxy(
+            Object.isFrozen(value) ? structuredClone(value) : value
+          )
+        : value;
+      proxiedVariables.set(key, proxiedValue);
+      return proxiedValue;
+    };
 
-    const result = new Function("_variables", code)(proxiedVariables);
+    const result = getCompiledExpression(expression)({ get: getVariable });
     return result;
   } catch (error) {
     console.error(error);
@@ -227,16 +259,33 @@ const getParentInstanceById = (instances: Instances) => {
   return parentInstanceById;
 };
 
+const getDataSourcesByScopeInstanceId = (dataSources: DataSources) => {
+  const dataSourcesByScopeInstanceId = new Map<
+    Instance["id"],
+    Array<DataSource>
+  >();
+  for (const dataSource of dataSources.values()) {
+    const instanceId = dataSource.scopeInstanceId ?? ROOT_INSTANCE_ID;
+    const dataSourcesByScope =
+      dataSourcesByScopeInstanceId.get(instanceId) ?? [];
+    dataSourcesByScope.push(dataSource);
+    dataSourcesByScopeInstanceId.set(instanceId, dataSourcesByScope);
+  }
+  return dataSourcesByScopeInstanceId;
+};
+
 const findMaskedVariablesByInstanceId = ({
   startingInstanceId,
   parentInstanceById,
   instances,
   dataSources,
+  dataSourcesByScopeInstanceId = getDataSourcesByScopeInstanceId(dataSources),
 }: {
   startingInstanceId: Instance["id"];
   parentInstanceById: Map<Instance["id"], Instance["id"]>;
   instances: Instances;
   dataSources: DataSources;
+  dataSourcesByScopeInstanceId?: Map<Instance["id"], Array<DataSource>>;
 }) => {
   let currentId: undefined | string = startingInstanceId;
   const instanceIdsPath: Instance["id"][] = [];
@@ -253,20 +302,22 @@ const findMaskedVariablesByInstanceId = ({
   // so child variables override parent variables
   for (const instanceId of instanceIdsPath.reverse()) {
     const instance = instances.get(instanceId);
-    for (const dataSource of dataSources.values()) {
-      if (dataSource.scopeInstanceId === instanceId) {
-        // when current instance is collection
-        // ignore its collection item parameter
-        // when rebind variables
-        if (
-          instanceId === startingInstanceId &&
-          instance?.component === collectionComponent &&
-          dataSource.type === "parameter"
-        ) {
-          continue;
-        }
-        maskedVariables.set(dataSource.name, dataSource.id);
+    const scopedDataSources = dataSourcesByScopeInstanceId.get(instanceId);
+    if (scopedDataSources === undefined) {
+      continue;
+    }
+    for (const dataSource of scopedDataSources) {
+      // when current instance is collection
+      // ignore its collection item parameter
+      // when rebind variables
+      if (
+        instanceId === startingInstanceId &&
+        instance?.component === collectionComponent &&
+        dataSource.type === "parameter"
+      ) {
+        continue;
       }
+      maskedVariables.set(dataSource.name, dataSource.id);
     }
   }
   return maskedVariables;
@@ -286,6 +337,7 @@ export const findAvailableVariables = ({
     parentInstanceById: getParentInstanceById(instances),
     instances,
     dataSources,
+    dataSourcesByScopeInstanceId: getDataSourcesByScopeInstanceId(dataSources),
   });
   const availableVariables: DataSource[] = [];
   for (const dataSourceId of maskedVariables.values()) {
@@ -412,7 +464,7 @@ const traverseExpressions = ({
   }
 
   for (const dataSource of dataSources.values()) {
-    const instanceId = dataSource.scopeInstanceId ?? "";
+    const instanceId = dataSource.scopeInstanceId ?? ROOT_INSTANCE_ID;
     if (instanceIds.has(instanceId) && dataSource.type === "resource") {
       instanceIdByResourceId.set(dataSource.resourceId, instanceId);
     }
@@ -573,6 +625,8 @@ export const rebindTreeVariablesMutable = ({
   }
   // precompute parent instances outside of traverse
   const parentInstanceById = getParentInstanceById(instances);
+  const dataSourcesByScopeInstanceId =
+    getDataSourcesByScopeInstanceId(dataSources);
   traverseExpressions({
     startingInstanceId,
     pages,
@@ -587,10 +641,10 @@ export const rebindTreeVariablesMutable = ({
         parentInstanceById,
         instances,
         dataSources,
+        dataSourcesByScopeInstanceId,
       });
-      let maskedIdByName = new Map(maskedVariables);
+      const maskedIdByName = new Map(maskedVariables);
       if (args) {
-        maskedIdByName = new Map(maskedIdByName);
         for (const arg of args) {
           maskedIdByName.delete(arg);
         }
@@ -622,12 +676,15 @@ export const deleteVariableMutable = (
   }
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
   unsetNameById.set(dataSource.id, dataSource.name);
-  const startingInstanceId = dataSource.scopeInstanceId ?? "";
+  const startingInstanceId = dataSource.scopeInstanceId ?? ROOT_INSTANCE_ID;
   const maskedIdByName = findMaskedVariablesByInstanceId({
     startingInstanceId,
     parentInstanceById: getParentInstanceById(data.instances),
     instances: data.instances,
     dataSources: data.dataSources,
+    dataSourcesByScopeInstanceId: getDataSourcesByScopeInstanceId(
+      data.dataSources
+    ),
   });
   // unset deleted variable in expressions
   traverseExpressions({

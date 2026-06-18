@@ -10,6 +10,7 @@ import {
 } from "./instances-utils";
 import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance } from "./schema/instances";
+import type { Prop, Props } from "./schema/props";
 
 test("find all tree instances", () => {
   const { instances } = renderData(
@@ -154,6 +155,56 @@ test("get html tag from instance reads mutable props maps", () => {
   });
 
   expect(getHtmlTagFromInstance({ instance, metas, props })).toEqual("aside");
+});
+
+test("get html tag from instance skips props when instance tag is set", () => {
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    ["Box", { presetStyle: { section: [] } }],
+  ]);
+  const props = new (class extends Map<string, Prop> {
+    values(): MapIterator<Prop> {
+      throw new Error("props should not be scanned");
+    }
+  })() as Props;
+
+  expect(
+    getHtmlTagFromInstance({
+      instance: {
+        id: "box",
+        type: "instance",
+        component: "Box",
+        tag: "nav",
+        children: [],
+      },
+      metas,
+      props,
+    })
+  ).toEqual("nav");
+});
+
+test("get html tag from instance skips props when provided tag map has no tag", () => {
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    ["Box", { presetStyle: { section: [] } }],
+  ]);
+  const props = new (class extends Map<string, Prop> {
+    values(): MapIterator<Prop> {
+      throw new Error("props should not be scanned");
+    }
+  })() as Props;
+
+  expect(
+    getHtmlTagFromInstance({
+      instance: {
+        id: "box",
+        type: "instance",
+        component: "Box",
+        children: [],
+      },
+      metas,
+      props,
+      htmlTagsByInstanceId: new Map(),
+    })
+  ).toEqual("section");
 });
 
 test("get indexes within ancestors", () => {
