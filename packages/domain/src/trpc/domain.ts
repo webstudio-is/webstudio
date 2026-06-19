@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import * as projectApi from "@webstudio-is/project/index.server";
 import {
   createProductionBuild,
+  loadDevBuildByProjectId,
   unpublishBuild,
 } from "@webstudio-is/project-build/index.server";
 import {
@@ -16,6 +17,75 @@ import {
 import { Templates } from "@webstudio-is/sdk";
 import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
+
+const dispatchPublisherEndpoint = async ({
+  endpoint,
+  token,
+  buildId,
+  builderOrigin,
+  publisherCallbackUrl,
+  githubSha,
+  branchName,
+  destination,
+  logProjectName,
+}: {
+  endpoint: string;
+  token?: string;
+  buildId: string;
+  builderOrigin: string;
+  publisherCallbackUrl: string;
+  githubSha?: string;
+  branchName: string;
+  destination: "saas" | "static";
+  logProjectName: string;
+}) => {
+  let publisherEndpoint: URL;
+  try {
+    publisherEndpoint = new URL(endpoint);
+  } catch {
+    return {
+      success: false as const,
+      error: "Publisher endpoint is invalid",
+    };
+  }
+  publisherEndpoint.searchParams.set(
+    "publisherCallbackUrl",
+    publisherCallbackUrl
+  );
+
+  const response = await fetch(publisherEndpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      ref: branchName,
+      inputs: {
+        buildId,
+        builderOrigin,
+        publisherCallbackUrl,
+        githubSha: githubSha ?? "",
+        destination,
+        logProjectName,
+      },
+    }),
+  });
+
+  if (response.ok) {
+    return {
+      success: true as const,
+    };
+  }
+
+  return {
+    success: false as const,
+    error: `Publisher endpoint failed with ${response.status} ${response.statusText}`,
+  };
+};
+
+const getPublisherCallbackUrl = (builderOrigin: string) =>
+  `${builderOrigin}/trpc/build.publishStatus`;
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -134,9 +204,29 @@ export const domainRouter = router({
           throw new Error("Missing env.BUILDER_ORIGIN");
         }
 
+        const devBuild = await loadDevBuildByProjectId(ctx, input.projectId);
+        const publisherEndpoint =
+          devBuild.pages.compiler?.publisherEndpoint?.trim();
+        const publisherToken = devBuild.pages.compiler?.publisherToken?.trim();
+
+        if (publisherEndpoint) {
+          return await dispatchPublisherEndpoint({
+            endpoint: publisherEndpoint,
+            token: publisherToken,
+            builderOrigin: env.BUILDER_ORIGIN,
+            publisherCallbackUrl: getPublisherCallbackUrl(env.BUILDER_ORIGIN),
+            githubSha: env.GITHUB_SHA,
+            buildId: build.id,
+            branchName: env.GITHUB_REF_NAME,
+            destination: input.destination,
+            logProjectName: `${project.title} - ${project.id}`,
+          });
+        }
+
         const result = await deploymentTrpc.publish.mutate({
           // used to load build data from the builder with build.loadProjectDataByBuildId
           builderOrigin: env.BUILDER_ORIGIN,
+          publisherCallbackUrl: getPublisherCallbackUrl(env.BUILDER_ORIGIN),
           githubSha: env.GITHUB_SHA,
           buildId: build.id,
           // preview support

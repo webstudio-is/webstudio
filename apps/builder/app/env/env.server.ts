@@ -20,6 +20,8 @@ const envSchema = z.object({
   // Trpc on SaaS
   TRPC_SERVER_URL: z.string().url().optional(),
   TRPC_SERVER_API_TOKEN: z.string().optional(),
+  PUBLISHER_ENDPOINT: z.string().url().optional(),
+  PUBLISHER_TOKEN: z.string().optional(),
 
   PORT: z
     .string()
@@ -92,6 +94,8 @@ const rawEnv = {
   DEPLOYMENT_URL: process.env.DEPLOYMENT_URL,
   TRPC_SERVER_URL: process.env.TRPC_SERVER_URL,
   TRPC_SERVER_API_TOKEN: process.env.TRPC_SERVER_API_TOKEN,
+  PUBLISHER_ENDPOINT: process.env.PUBLISHER_ENDPOINT,
+  PUBLISHER_TOKEN: process.env.PUBLISHER_TOKEN,
   PORT: process.env.PORT,
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
   S3_ENDPOINT: process.env.S3_ENDPOINT,
