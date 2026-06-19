@@ -9,7 +9,7 @@ import {
 } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { downloadAsset, generateRedirectsModule, prebuild } from "./prebuild";
+import { generateRedirectsModule, prebuild } from "./prebuild";
 
 const originalCwd = process.cwd();
 const originalFetch = globalThis.fetch;
@@ -238,47 +238,6 @@ describe("generateRedirectsModule", () => {
   }
 ];
     `);
-  });
-});
-
-describe("downloadAsset", () => {
-  test("does not fetch assets that already exist", async () => {
-    await mkdir("public/assets", { recursive: true });
-    await writeFile("public/assets/image.png", "existing", "utf8");
-    const fetch = vi.fn();
-    globalThis.fetch = fetch;
-
-    await downloadAsset(
-      "https://assets.example/image.png",
-      "image.png",
-      "assets"
-    );
-
-    expect(fetch).not.toHaveBeenCalled();
-  });
-
-  test("logs fetch failures without throwing", async () => {
-    const fetch = vi.fn(async () => ({
-      ok: false,
-      statusText: "Not Found",
-    }));
-    globalThis.fetch = fetch as unknown as typeof globalThis.fetch;
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-
-    await expect(
-      downloadAsset(
-        "https://assets.example/missing.png",
-        "missing.png",
-        "assets"
-      )
-    ).resolves.toBeUndefined();
-
-    expect(fetch).toHaveBeenCalledWith("https://assets.example/missing.png");
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("Error in downloading file missing.png")
-    );
   });
 });
 
@@ -556,8 +515,25 @@ describe("prebuild", () => {
     );
     expect(consoleWarn).not.toHaveBeenCalled();
     expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("Error in downloading file image.png")
+      expect.stringContaining("Error materializing file image.png")
     );
+  });
+
+  test("uses synced asset files before downloading during prebuild", async () => {
+    await mkdir(".webstudio/assets", { recursive: true });
+    await writeFile(".webstudio/assets/image.png", "synced", "utf8");
+    const fetch = vi.fn();
+    globalThis.fetch = fetch;
+
+    await prebuild({
+      assets: true,
+      template: ["defaults"],
+    });
+
+    await expect(readFile("public/assets/image.png", "utf8")).resolves.toBe(
+      "synced"
+    );
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   test("merges package and tsconfig from every template", async () => {

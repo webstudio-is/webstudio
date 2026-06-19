@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
   AuthorizationError,
   authorizeProject,
@@ -10,7 +11,13 @@ import {
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { serializeStyles } from "@webstudio-is/project-build/styles.server";
 import { serializeStyleSourceSelections } from "@webstudio-is/project-build/style-source-selections.server";
-import { syncDataVersion, type Data } from "@webstudio-is/http-client";
+import {
+  isAssetFileDataString,
+  syncDataVersion,
+  type AssetFileData,
+  type SyncedProjectData,
+} from "@webstudio-is/api-contract";
+import { createAssetClient } from "~/shared/asset-client";
 import {
   getHomePage,
   type Asset,
@@ -19,18 +26,18 @@ import {
   type Instance,
   type Prop,
   type Resource,
-  type StyleDecl,
-  type StyleDeclKey,
   type StyleSource,
 } from "@webstudio-is/sdk";
 
 const toMap = <Key extends string, Value>(entries: [Key, Value][]) =>
   new Map<Key, Value>(entries);
 
-const assertSyncDataVersion = (data: Pick<Data, "syncDataVersion">) => {
+const assertSyncDataVersion = (
+  data: Pick<SyncedProjectData, "syncDataVersion">
+) => {
   if (data.syncDataVersion !== syncDataVersion) {
     throw new Error(
-      `Synced project data format is incompatible. Expected version ${syncDataVersion}, received ${data.syncDataVersion ?? "missing"}. Please run webstudio sync again and retry the import.`
+      `Synced project data format is incompatible. Expected version ${syncDataVersion}, received ${data.syncDataVersion ?? "missing"}. Sync with a compatible API/CLI version and retry, or explicitly ignore the version check if you know the source and target data formats are compatible.`
     );
   }
 };
@@ -41,7 +48,7 @@ const createBuildImportUpdate = ({
   updatedAt,
   version,
 }: {
-  data: Data;
+  data: SyncedProjectData;
   lastTransactionId: string;
   updatedAt: string;
   version: number;
@@ -51,11 +58,7 @@ const createBuildImportUpdate = ({
   updatedAt,
   pages: JSON.stringify(data.build.pages),
   breakpoints: serializeData<Breakpoint>(toMap(data.build.breakpoints)),
-  styles: serializeStyles(
-    new Map<StyleDeclKey, StyleDecl>(
-      data.build.styles.map(([styleDeclKey, style]) => [styleDeclKey, style])
-    )
-  ),
+  styles: serializeStyles(toMap(data.build.styles)),
   styleSources: serializeData<StyleSource>(toMap(data.build.styleSources)),
   styleSourceSelections: serializeStyleSourceSelections(
     toMap(data.build.styleSourceSelections)
@@ -66,7 +69,7 @@ const createBuildImportUpdate = ({
   instances: serializeData<Instance>(toMap(data.build.instances)),
 });
 
-const getImportedPreviewImageAssetId = (data: Data) => {
+const getImportedPreviewImageAssetId = (data: SyncedProjectData) => {
   const socialImageAssetId = getHomePage(migratePages(data.build.pages)).meta
     .socialImageAssetId;
   if (socialImageAssetId === undefined) {
@@ -94,13 +97,150 @@ const createImportedFileRows = ({
     isDeleted: false,
   }));
 
+async function* toByteStream(data: Uint8Array) {
+  yield data;
+}
+
+const getAssetInfoFallback = (asset: Asset) => {
+  if (asset.type !== "image") {
+    return;
+  }
+  return {
+    width: asset.meta.width,
+    height: asset.meta.height,
+    format: asset.format,
+  };
+};
+
+const assertImportedAssetNames = (assets: Asset[]) => {
+  const assetIds = new Set<string>();
+  const assetNames = new Set<string>();
+
+  for (const asset of assets) {
+    if (asset.id === "") {
+      throw new Error("Imported asset id is invalid.");
+    }
+    if (assetIds.has(asset.id)) {
+      throw new Error(`Imported asset id is duplicated: ${asset.id}`);
+    }
+    if (
+      asset.name === "" ||
+      asset.name === "." ||
+      asset.name === ".." ||
+      asset.name.includes("/") ||
+      asset.name.includes("\\")
+    ) {
+      throw new Error(`Imported asset name is invalid: ${asset.name}`);
+    }
+    if (assetNames.has(asset.name)) {
+      throw new Error(`Imported asset name is duplicated: ${asset.name}`);
+    }
+    assetIds.add(asset.id);
+    assetNames.add(asset.name);
+  }
+};
+
+const assertAssetFilesMatchAssets = ({
+  assetFiles,
+  assets,
+}: {
+  assetFiles: AssetFileData[] | undefined;
+  assets: Asset[];
+}) => {
+  assertImportedAssetNames(assets);
+
+  if (assetFiles === undefined) {
+    if (assets.length > 0) {
+      throw new Error("Imported asset files are required.");
+    }
+    return;
+  }
+
+  const assetNames = new Set(assets.map((asset) => asset.name));
+  const assetFileNames = new Set<string>();
+
+  for (const assetFile of assetFiles) {
+    if (isAssetFileDataString(assetFile.data) === false) {
+      throw new Error(`Imported asset file data is invalid: ${assetFile.name}`);
+    }
+    if (assetFileNames.has(assetFile.name)) {
+      throw new Error(`Imported asset file is duplicated: ${assetFile.name}`);
+    }
+    assetFileNames.add(assetFile.name);
+  }
+
+  for (const assetFileName of assetFileNames) {
+    if (assetNames.has(assetFileName) === false) {
+      throw new Error(
+        `Imported asset file does not exist in data assets: ${assetFileName}`
+      );
+    }
+  }
+
+  for (const assetName of assetNames) {
+    if (assetFileNames.has(assetName) === false) {
+      throw new Error(`Imported asset file is missing: ${assetName}`);
+    }
+  }
+};
+
+const uploadImportedAssetFiles = async ({
+  assetClient,
+  assetFiles,
+  assets,
+}: {
+  assetClient: ReturnType<typeof createAssetClient>;
+  assetFiles: AssetFileData[];
+  assets: Asset[];
+}) => {
+  const assetsByName = new Map(assets.map((asset) => [asset.name, asset]));
+
+  for (const assetFile of assetFiles) {
+    const asset = assetsByName.get(assetFile.name)!;
+    await assetClient.uploadFile(
+      asset.name,
+      asset.type,
+      toByteStream(Buffer.from(assetFile.data, "base64")),
+      getAssetInfoFallback(asset)
+    );
+  }
+};
+
+const loadExistingImportedAssetFileNames = async ({
+  assets,
+  ctx,
+}: {
+  assets: Asset[];
+  ctx: AppContext;
+}) => {
+  if (assets.length === 0) {
+    return new Set<string>();
+  }
+
+  const files = await ctx.postgrest.client
+    .from("File")
+    .select("name")
+    .in(
+      "name",
+      assets.map((asset) => asset.name)
+    );
+
+  if (files.error) {
+    throw files.error;
+  }
+
+  return new Set((files.data ?? []).map((file) => file.name));
+};
+
 const ensureImportedAssetFiles = async ({
   assets,
   ctx,
+  existingFileNames,
   projectId,
 }: {
   assets: Asset[];
   ctx: AppContext;
+  existingFileNames: Set<string>;
   projectId: string;
 }) => {
   const assetsByFileName = new Map(assets.map((asset) => [asset.name, asset]));
@@ -108,17 +248,8 @@ const ensureImportedAssetFiles = async ({
     return;
   }
 
-  const files = await ctx.postgrest.client
-    .from("File")
-    .select("name")
-    .in("name", Array.from(assetsByFileName.keys()));
-
-  if (files.error) {
-    throw files.error;
-  }
-
-  for (const file of files.data ?? []) {
-    assetsByFileName.delete(file.name);
+  for (const fileName of existingFileNames) {
+    assetsByFileName.delete(fileName);
   }
 
   const restoreFiles = await ctx.postgrest.client
@@ -147,7 +278,7 @@ const ensureImportedAssetFiles = async ({
   }
 };
 
-const replaceProjectAssets = async ({
+const replaceProjectAssetRows = async ({
   assets,
   ctx,
   projectId,
@@ -156,8 +287,6 @@ const replaceProjectAssets = async ({
   ctx: AppContext;
   projectId: string;
 }) => {
-  await ensureImportedAssetFiles({ assets, ctx, projectId });
-
   const resetPreviewImage = await ctx.postgrest.client
     .from("Project")
     .update({ previewImageAssetId: null })
@@ -219,18 +348,32 @@ const updateProjectPreviewImage = async ({
   }
 };
 
-export const importSyncedProjectData = async ({
-  ctx,
-  data,
-  projectId,
-}: {
-  ctx: AppContext;
-  data: Data;
-  projectId: string;
-}) => {
-  assertSyncDataVersion(data);
+export const importSyncedProjectData = async (
+  {
+    assetFiles,
+    ctx,
+    data,
+    ignoreVersionCheck = false,
+    projectId,
+  }: {
+    assetFiles?: AssetFileData[];
+    ctx: AppContext;
+    data: SyncedProjectData;
+    ignoreVersionCheck?: boolean;
+    projectId: string;
+  },
+  dependencies = {
+    createAssetClient,
+    hasProjectPermit: authorizeProject.hasProjectPermit,
+    loadDevBuildByProjectId,
+    uploadImportedAssetFiles,
+  }
+) => {
+  if (ignoreVersionCheck === false) {
+    assertSyncDataVersion(data);
+  }
 
-  const canBuild = await authorizeProject.hasProjectPermit(
+  const canBuild = await dependencies.hasProjectPermit(
     { projectId, permit: "build" },
     ctx
   );
@@ -240,10 +383,30 @@ export const importSyncedProjectData = async ({
     );
   }
 
-  const build = await loadDevBuildByProjectId(ctx, projectId);
+  const build = await dependencies.loadDevBuildByProjectId(ctx, projectId);
   const nextVersion = build.version + 1;
 
-  await replaceProjectAssets({ assets: data.assets, ctx, projectId });
+  assertAssetFilesMatchAssets({ assetFiles, assets: data.assets });
+
+  const existingFileNames = await loadExistingImportedAssetFileNames({
+    assets: data.assets,
+    ctx,
+  });
+
+  if (assetFiles !== undefined && assetFiles.length > 0) {
+    await dependencies.uploadImportedAssetFiles({
+      assetClient: dependencies.createAssetClient(),
+      assetFiles,
+      assets: data.assets,
+    });
+  }
+
+  await ensureImportedAssetFiles({
+    assets: data.assets,
+    ctx,
+    existingFileNames,
+    projectId,
+  });
 
   const update = await ctx.postgrest.client
     .from("Build")
@@ -269,6 +432,8 @@ export const importSyncedProjectData = async ({
     throw new Error("Unable to import project data because build changed.");
   }
 
+  await replaceProjectAssetRows({ assets: data.assets, ctx, projectId });
+
   await updateProjectPreviewImage({
     assetId: getImportedPreviewImageAssetId(data),
     ctx,
@@ -284,4 +449,8 @@ export const __testing__ = {
   createImportedAssetRows,
   createBuildImportUpdate,
   getImportedPreviewImageAssetId,
+  assertImportedAssetNames,
+  assertAssetFilesMatchAssets,
+  loadExistingImportedAssetFileNames,
+  uploadImportedAssetFiles,
 };

@@ -1,18 +1,8 @@
 import { basename, dirname, join, normalize, relative } from "node:path";
-import { createWriteStream, existsSync } from "node:fs";
-import {
-  rm,
-  access,
-  rename,
-  cp,
-  readFile,
-  writeFile,
-  readdir,
-} from "node:fs/promises";
-import { pipeline } from "node:stream/promises";
+import { existsSync } from "node:fs";
+import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import pLimit from "p-limit";
 import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import {
@@ -48,27 +38,31 @@ import {
   generateCss,
   ROOT_INSTANCE_ID,
   elementComponent,
-  getAssetUrl,
   toRuntimeAsset,
 } from "@webstudio-is/sdk";
 import { createWsAuthResources } from "@webstudio-is/wsauth";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
-import type { Data } from "@webstudio-is/http-client";
+import type { SyncedProjectData } from "@webstudio-is/api-contract";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
   createFolderIfNotExists,
   loadJSONFile,
 } from "./fs-utils";
-import type * as sharedConstants from "../templates/defaults/app/constants.mjs";
 import { htmlToJsx } from "./html-to-jsx";
-import { createFramework as createRemixFramework } from "./framework-remix";
-import { createFramework as createReactRouterFramework } from "./framework-react-router";
-import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
 import { compareMedia } from "@webstudio-is/css-engine";
+import { materializeAssetFiles } from "./asset-files";
 
-const limit = pLimit(10);
 const wsAuthFile = ".webstudio/auth.json";
+
+const createRemixFramework = async () =>
+  (await import("./framework-remix")).createFramework();
+
+const createReactRouterFramework = async () =>
+  (await import("./framework-react-router")).createFramework();
+
+const createVikeSsgFramework = async () =>
+  (await import("./framework-vike-ssg")).createFramework();
 
 type SiteDataByPage = {
   [id: Page["id"]]: {
@@ -84,45 +78,6 @@ type SiteDataByPage = {
     params?: Params;
     pages: Array<Page>;
   };
-};
-
-export const downloadAsset = async (
-  url: string,
-  name: string,
-  assetBaseUrl: string
-) => {
-  const assetPath = join("public", assetBaseUrl, name);
-  // fs.rename cannot be used to move a file to a different mount point or drive
-  // Error: EXDEV: cross-device link not permitted
-  const tempAssetPath = `${assetPath}.tmp`;
-
-  try {
-    await access(assetPath);
-  } catch {
-    await createFolderIfNotExists(dirname(assetPath));
-
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
-      }
-
-      const writableStream = createWriteStream(tempAssetPath);
-      /*
-        We need to cast the response body to a NodeJS.ReadableStream.
-        Since the node typings for `@types/node` doesn't add typings for fetch.
-        And it inherits types from lib.dom.d.ts
-      */
-      await pipeline(
-        response.body as unknown as NodeJS.ReadableStream,
-        writableStream
-      );
-
-      await rename(tempAssetPath, assetPath);
-    } catch (error) {
-      console.error(`Error in downloading file ${name} \n ${error}`);
-    }
-  }
 };
 
 const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
@@ -323,14 +278,13 @@ export const prebuild = async (options: {
     framework = await createRemixFramework();
   }
 
-  const constants: typeof sharedConstants = await import(
-    pathToFileURL(join(cwd(), "app/constants.mjs")).href
-  );
+  const constants: typeof import("../templates/defaults/app/constants.mjs") =
+    await import(pathToFileURL(join(cwd(), "app/constants.mjs")).href);
 
   const { assetBaseUrl } = constants;
 
   const siteData = await loadJSONFile<
-    Data & { user?: { email: string | null } }
+    SyncedProjectData & { user?: { email: string | null } }
   >(LOCAL_DATA_FILE);
 
   if (siteData === null) {
@@ -479,26 +433,11 @@ export const prebuild = async (options: {
     backgroundImageAssetsByPage[page.id] = backgroundImageAssets;
   }
 
-  const assetsToDownload: Promise<void>[] = [];
-
   if (options.assets === true) {
     const assetOrigin = siteData.origin;
 
     if (!assetOrigin) {
       console.warn("Warning: Asset origin is not defined in project data.");
-    }
-
-    for (const asset of siteData.assets) {
-      // Download all assets (images, fonts, videos, audio, documents, etc.)
-      assetsToDownload.push(
-        limit(() =>
-          downloadAsset(
-            getAssetUrl(asset, assetOrigin || "").href,
-            asset.name,
-            assetBaseUrl
-          )
-        )
-      );
     }
   }
 
@@ -813,10 +752,15 @@ export const prebuild = async (options: {
     generateRedirectsModule(pages.redirects)
   );
 
-  if (assetsToDownload.length > 0) {
+  if (options.assets === true && siteData.assets.length > 0) {
     const downloading = spinner();
     downloading.start("Downloading fonts and images");
-    await Promise.all(assetsToDownload);
+    await materializeAssetFiles({
+      assets: siteData.assets,
+      continueOnError: true,
+      origin: siteData.origin || "",
+      targetAssetsDirectory: join("public", assetBaseUrl),
+    });
     downloading.stop("Downloaded fonts and images");
   }
 

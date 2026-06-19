@@ -1,47 +1,16 @@
-import type {
-  Asset,
-  Breakpoint,
-  DataSource,
-  Deployment,
-  Instance,
-  Page,
-  Prop,
-  Resource,
-  StyleDecl,
-  StyleDeclKey,
-  StyleSource,
-  StyleSourceSelection,
-} from "@webstudio-is/sdk";
-import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
+import type {
+  AssetFileData,
+  ImportProjectDataResult,
+  SyncedProjectData,
+} from "@webstudio-is/api-contract";
 
-export const syncDataVersion = 1;
-
-export type Data = {
-  syncDataVersion: typeof syncDataVersion;
-  page: Page;
-  pages: Array<Page>;
-  build: {
-    id: string;
-    projectId: string;
-    version: number;
-    createdAt: string;
-    updatedAt: string;
-    pages: SerializedPages;
-    breakpoints: [Breakpoint["id"], Breakpoint][];
-    styles: [StyleDeclKey, StyleDecl][];
-    styleSources: [StyleSource["id"], StyleSource][];
-    styleSourceSelections: [Instance["id"], StyleSourceSelection][];
-    props: [Prop["id"], Prop][];
-    instances: [Instance["id"], Instance][];
-    dataSources: [DataSource["id"], DataSource][];
-    resources: [Resource["id"], Resource][];
-    deployment?: Deployment | undefined;
-  };
-  assets: Array<Asset>;
-  projectDomain?: string;
-  origin?: string;
-};
+export {
+  getSyncDataVersion,
+  isAssetFileDataString,
+  syncDataVersion,
+} from "@webstudio-is/api-contract";
+export type { AssetFileData, SyncedProjectData };
 
 const createTrpcClient = (
   origin: string,
@@ -71,7 +40,7 @@ export const loadProjectDataByBuildId = async (
       }
     | { authToken: string }
   )
-): Promise<Data> => {
+): Promise<SyncedProjectData> => {
   const headers: Record<string, string | undefined> =
     "seviceToken" in params
       ? { Authorization: params.seviceToken }
@@ -82,7 +51,7 @@ export const loadProjectDataByBuildId = async (
     ...headers,
   }).query("build.loadProjectDataByBuildId", {
     buildId: params.buildId,
-  })) as Data;
+  })) as SyncedProjectData;
 };
 
 export const loadProjectDataByProjectId = async (params: {
@@ -90,28 +59,32 @@ export const loadProjectDataByProjectId = async (params: {
   origin: string;
   authToken: string;
   headers?: Record<string, string | undefined>;
-}): Promise<Data> => {
+}): Promise<SyncedProjectData> => {
   return (await createTrpcClient(params.origin, {
     ...params.headers,
     "x-auth-token": params.authToken,
   }).query("build.loadProjectDataByProjectId", {
     projectId: params.projectId,
-  })) as Data;
+  })) as SyncedProjectData;
 };
 
 export const importProjectData = async (params: {
   projectId: string;
   origin: string;
   authToken: string;
-  data: Data;
+  data: SyncedProjectData;
+  assetFiles?: AssetFileData[];
+  ignoreVersionCheck?: boolean;
   headers?: Record<string, string | undefined>;
-}): Promise<{ version: number }> => {
+}): Promise<ImportProjectDataResult> => {
   return (await createTrpcClient(params.origin, {
     ...params.headers,
     "x-auth-token": params.authToken,
   }).mutation("build.importProjectData", {
     projectId: params.projectId,
     data: params.data,
+    assetFiles: params.assetFiles,
+    ignoreVersionCheck: params.ignoreVersionCheck,
   })) as { version: number };
 };
 

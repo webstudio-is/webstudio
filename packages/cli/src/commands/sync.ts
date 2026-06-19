@@ -3,11 +3,10 @@ import { cwd } from "node:process";
 import { join } from "node:path";
 import pc from "picocolors";
 import { spinner } from "@clack/prompts";
+import type { SyncedProjectData } from "@webstudio-is/api-contract";
 import {
-  type Data,
   loadProjectDataByBuildId,
   loadProjectDataByProjectId,
-  syncDataVersion,
 } from "@webstudio-is/http-client";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import {
@@ -23,6 +22,29 @@ import type {
 } from "./yargs-types";
 import { HandledCliError } from "../errors";
 import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
+import { downloadAssetFiles } from "../asset-files";
+
+type SyncDependencies = {
+  createFileIfNotExists: typeof createFileIfNotExists;
+  downloadAssetFiles: typeof downloadAssetFiles;
+  isFileExists: typeof isFileExists;
+  loadProjectDataByBuildId: typeof loadProjectDataByBuildId;
+  loadProjectDataByProjectId: typeof loadProjectDataByProjectId;
+  readFile: typeof readFile;
+  spinner: typeof spinner;
+  writeFile: typeof writeFile;
+};
+
+const defaultDependencies: SyncDependencies = {
+  createFileIfNotExists,
+  downloadAssetFiles,
+  isFileExists,
+  loadProjectDataByBuildId,
+  loadProjectDataByProjectId,
+  readFile,
+  spinner,
+  writeFile,
+};
 
 export const syncOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -39,12 +61,15 @@ export const syncOptions = (yargs: CommonYargsArgv) =>
       describe: "[Experimental] Service token",
     });
 
-export const sync = async (
-  options: StrictYargsOptionsToInterface<typeof syncOptions>
-) => {
-  const syncing = spinner();
+type SyncOptions = Partial<StrictYargsOptionsToInterface<typeof syncOptions>>;
 
-  let project: Data | undefined;
+export const sync = async (
+  options: SyncOptions,
+  dependencies = defaultDependencies
+) => {
+  const syncing = dependencies.spinner();
+
+  let project: SyncedProjectData | undefined;
   syncing.start(`Synchronizing project data`);
 
   if (
@@ -54,7 +79,7 @@ export const sync = async (
   ) {
     syncing.message(`Synchronizing project data from ${options.origin}`);
     try {
-      project = await loadProjectDataByBuildId({
+      project = await dependencies.loadProjectDataByBuildId({
         buildId: options.buildId,
         seviceToken: options.authToken,
         origin: options.origin,
@@ -65,7 +90,8 @@ export const sync = async (
       const compatibilityMessage = stopSpinnerWithError(
         syncing,
         error,
-        "Unable to synchronize project data"
+        "Unable to synchronize project data",
+        "sync"
       );
       if (compatibilityMessage !== undefined) {
         throw new HandledCliError();
@@ -73,18 +99,21 @@ export const sync = async (
       throw error;
     }
   } else {
-    const globalConfigText = await readFile(GLOBAL_CONFIG_FILE, "utf-8");
+    const globalConfigText = await dependencies.readFile(
+      GLOBAL_CONFIG_FILE,
+      "utf-8"
+    );
     const globalConfig = jsonToGlobalConfig(JSON.parse(globalConfigText));
 
-    if ((await isFileExists(LOCAL_CONFIG_FILE)) === false) {
+    if ((await dependencies.isFileExists(LOCAL_CONFIG_FILE)) === false) {
       syncing.stop(
         `Local config file is not found. Please make sure current directory is a webstudio project`,
         2
       );
-      return;
+      throw new HandledCliError();
     }
 
-    const localConfigText = await readFile(
+    const localConfigText = await dependencies.readFile(
       join(cwd(), LOCAL_CONFIG_FILE),
       "utf-8"
     );
@@ -98,7 +127,7 @@ export const sync = async (
         `Project config is not found, please run ${pc.dim("webstudio link")}`,
         2
       );
-      return;
+      throw new HandledCliError();
     }
 
     const { origin, token } = projectConfig;
@@ -107,13 +136,13 @@ export const sync = async (
     try {
       project =
         options.buildId !== undefined
-          ? await loadProjectDataByBuildId({
+          ? await dependencies.loadProjectDataByBuildId({
               buildId: options.buildId,
               authToken: token,
               origin,
               headers: apiCompatibilityHeaders,
             })
-          : await loadProjectDataByProjectId({
+          : await dependencies.loadProjectDataByProjectId({
               projectId: localConfig.projectId,
               authToken: token,
               origin,
@@ -125,7 +154,8 @@ export const sync = async (
       const compatibilityMessage = stopSpinnerWithError(
         syncing,
         error,
-        "Unable to synchronize project data"
+        "Unable to synchronize project data",
+        "sync"
       );
       if (compatibilityMessage !== undefined) {
         throw new HandledCliError();
@@ -136,12 +166,37 @@ export const sync = async (
   }
 
   // Check that project defined
-  project satisfies Data;
-  project.syncDataVersion = syncDataVersion;
+  project satisfies SyncedProjectData;
+
+  if (project.assets.length > 0) {
+    syncing.message(`Downloading ${project.assets.length} asset files`);
+    if (project.origin === undefined) {
+      syncing.stop("Asset origin is missing from synchronized project data", 2);
+      throw new HandledCliError();
+    }
+    try {
+      await dependencies.downloadAssetFiles({
+        assets: project.assets,
+        origin: project.origin,
+      });
+    } catch (error) {
+      stopSpinnerWithError(
+        syncing,
+        error,
+        "Unable to synchronize project asset files",
+        "sync"
+      );
+      throw new HandledCliError();
+    }
+  }
 
   const localBuildFilePath = join(cwd(), LOCAL_DATA_FILE);
-  await createFileIfNotExists(localBuildFilePath);
-  await writeFile(localBuildFilePath, JSON.stringify(project, null, 2), "utf8");
+  await dependencies.createFileIfNotExists(localBuildFilePath);
+  await dependencies.writeFile(
+    localBuildFilePath,
+    JSON.stringify(project, null, 2),
+    "utf8"
+  );
 
   syncing.stop("Project data synchronized successfully");
 };

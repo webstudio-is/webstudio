@@ -220,6 +220,9 @@ importers:
       '@vercel/remix':
         specifier: 2.15.3
         version: 2.15.3(@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.5(typescript@5.8.2))(@types/node@22.13.10)(jiti@2.4.2)(tsx@4.19.3)(typescript@5.8.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(tsx@4.19.3))(wrangler@3.63.2(@cloudflare/workers-types@4.20240718.0)))(@remix-run/node@2.16.5(typescript@5.8.2))(@remix-run/server-runtime@2.16.5(typescript@5.8.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@webstudio-is/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@webstudio-is/asset-uploader':
         specifier: workspace:*
         version: link:../../packages/asset-uploader
@@ -1043,6 +1046,28 @@ importers:
         specifier: 5.8.2
         version: 5.8.2
 
+  packages/api-contract:
+    dependencies:
+      '@webstudio-is/project-build':
+        specifier: workspace:*
+        version: link:../project-build
+      '@webstudio-is/project-migrations':
+        specifier: workspace:*
+        version: link:../project-migrations
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+    devDependencies:
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)
+
   packages/asset-uploader:
     dependencies:
       '@aws-crypto/sha256-js':
@@ -1131,6 +1156,9 @@ importers:
       '@trpc/client':
         specifier: ^10.45.2
         version: 10.45.2(@trpc/server@10.45.2)
+      '@webstudio-is/api-contract':
+        specifier: workspace:*
+        version: link:../api-contract
       '@webstudio-is/project-migrations':
         specifier: workspace:*
         version: link:../project-migrations
@@ -1687,12 +1715,9 @@ importers:
       '@trpc/client':
         specifier: ^10.45.2
         version: 10.45.2(@trpc/server@10.45.2)
-      '@webstudio-is/project-migrations':
+      '@webstudio-is/api-contract':
         specifier: workspace:*
-        version: link:../project-migrations
-      '@webstudio-is/sdk':
-        specifier: workspace:*
-        version: link:../sdk
+        version: link:../api-contract
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*

@@ -1,8 +1,17 @@
-import { describe, expect, test } from "vitest";
-import { syncDataVersion, type Data } from "@webstudio-is/http-client";
-import { __testing__ } from "./project-data-import.server";
+import { Buffer } from "node:buffer";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  syncDataVersion,
+  type SyncedProjectData,
+} from "@webstudio-is/api-contract";
+import {
+  __testing__,
+  importSyncedProjectData,
+} from "./project-data-import.server";
 
-const createData = (overrides: Partial<Data> = {}): Data => ({
+const createData = (
+  overrides: Partial<SyncedProjectData> = {}
+): SyncedProjectData => ({
   syncDataVersion,
   origin: "https://example.com",
   projectDomain: "example",
@@ -93,11 +102,106 @@ const createData = (overrides: Partial<Data> = {}): Data => ({
   ...overrides,
 });
 
+const createPostgrestClient = (
+  calls: string[],
+  options: { existingFileNames?: string[] } = {}
+) => ({
+  from: (table: string) => {
+    if (table === "File") {
+      return {
+        select: () => ({
+          in: async () => {
+            calls.push("files-select");
+            return {
+              data: (options.existingFileNames ?? []).map((name) => ({
+                name,
+              })),
+              error: undefined,
+            };
+          },
+        }),
+        update: () => ({
+          in: async () => {
+            calls.push("files-restore");
+            return { error: undefined };
+          },
+        }),
+        insert: async () => {
+          calls.push("files-insert");
+          return { error: undefined };
+        },
+      };
+    }
+
+    if (table === "Build") {
+      return {
+        update: () => ({
+          match: async () => {
+            calls.push("build-update");
+            return { count: 1, error: undefined };
+          },
+        }),
+      };
+    }
+
+    if (table === "Project") {
+      return {
+        update: (data: { previewImageAssetId: string | null }) => ({
+          eq: async () => {
+            calls.push(
+              data.previewImageAssetId === null
+                ? "project-preview-reset"
+                : "project-preview-update"
+            );
+            return { error: undefined };
+          },
+        }),
+      };
+    }
+
+    if (table === "Asset") {
+      return {
+        delete: () => ({
+          eq: async () => {
+            calls.push("assets-delete");
+            return { error: undefined };
+          },
+        }),
+        insert: async () => {
+          calls.push("assets-insert");
+          return { error: undefined };
+        },
+      };
+    }
+
+    throw new Error(`Unexpected table ${table}`);
+  },
+});
+
 describe("build import helpers", () => {
-  test("rejects missing synced data version with sync-again message", () => {
+  const createAssetClient = vi.fn();
+  const hasProjectPermit = vi.fn();
+  const loadDevBuildByProjectId = vi.fn();
+  const uploadImportedAssetFiles = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    createAssetClient.mockReturnValue({ uploadFile: vi.fn() });
+    hasProjectPermit.mockResolvedValue(true);
+    loadDevBuildByProjectId.mockResolvedValue({
+      id: "target-build",
+      projectId: "target-project",
+      version: 3,
+    });
+    uploadImportedAssetFiles.mockResolvedValue(undefined);
+  });
+
+  test("rejects missing synced data version with compatibility message", () => {
     expect(() =>
-      __testing__.assertSyncDataVersion({} as Pick<Data, "syncDataVersion">)
-    ).toThrow("Please run webstudio sync again");
+      __testing__.assertSyncDataVersion(
+        {} as Pick<SyncedProjectData, "syncDataVersion">
+      )
+    ).toThrow("Sync with a compatible API/CLI version");
   });
 
   test("serializes imported build data into compact build columns", () => {
@@ -193,5 +297,276 @@ describe("build import helpers", () => {
         isDeleted: false,
       },
     ]);
+  });
+
+  test("updates the build before replacing existing asset rows", async () => {
+    const calls: string[] = [];
+    uploadImportedAssetFiles.mockImplementation(async () => {
+      calls.push("asset-files-upload");
+    });
+
+    await importSyncedProjectData(
+      {
+        assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
+        ctx: {
+          postgrest: {
+            client: createPostgrestClient(calls),
+          },
+        } as never,
+        data: createData(),
+        projectId: "target-project",
+      },
+      {
+        createAssetClient,
+        hasProjectPermit,
+        loadDevBuildByProjectId,
+        uploadImportedAssetFiles,
+      }
+    );
+
+    expect(calls).toEqual([
+      "files-select",
+      "asset-files-upload",
+      "files-restore",
+      "files-insert",
+      "build-update",
+      "project-preview-reset",
+      "assets-delete",
+      "assets-insert",
+      "project-preview-update",
+    ]);
+  });
+
+  test("allows importing data without version when check is explicitly ignored", async () => {
+    const calls: string[] = [];
+
+    await importSyncedProjectData(
+      {
+        ctx: {
+          postgrest: {
+            client: createPostgrestClient(calls),
+          },
+        } as never,
+        data: createData({ assets: [], syncDataVersion: undefined }),
+        ignoreVersionCheck: true,
+        projectId: "target-project",
+      },
+      {
+        createAssetClient,
+        hasProjectPermit,
+        loadDevBuildByProjectId,
+        uploadImportedAssetFiles,
+      }
+    );
+
+    expect(calls).toContain("build-update");
+  });
+
+  test("rejects import with assets when asset files are missing", async () => {
+    await expect(
+      importSyncedProjectData(
+        {
+          ctx: {
+            postgrest: {
+              client: createPostgrestClient([]),
+            },
+          } as never,
+          data: createData(),
+          projectId: "target-project",
+        },
+        {
+          createAssetClient,
+          hasProjectPermit,
+          loadDevBuildByProjectId,
+          uploadImportedAssetFiles,
+        }
+      )
+    ).rejects.toThrow("Imported asset files are required.");
+  });
+
+  test("uploads missing imported asset files before creating file rows", async () => {
+    const calls: string[] = [];
+    uploadImportedAssetFiles.mockImplementation(async () => {
+      calls.push("asset-files-upload");
+    });
+
+    await importSyncedProjectData(
+      {
+        assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
+        ctx: {
+          postgrest: {
+            client: createPostgrestClient(calls),
+          },
+        } as never,
+        data: createData(),
+        projectId: "target-project",
+      },
+      {
+        createAssetClient,
+        hasProjectPermit,
+        loadDevBuildByProjectId,
+        uploadImportedAssetFiles,
+      }
+    );
+
+    expect(uploadImportedAssetFiles).toHaveBeenCalledWith({
+      assetClient: expect.objectContaining({
+        uploadFile: expect.any(Function),
+      }),
+      assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
+      assets: createData().assets,
+    });
+    expect(calls.indexOf("files-select")).toBeLessThan(
+      calls.indexOf("asset-files-upload")
+    );
+    expect(calls.indexOf("asset-files-upload")).toBeLessThan(
+      calls.indexOf("files-restore")
+    );
+  });
+
+  test("uploads imported asset files even when file rows already exist", async () => {
+    const calls: string[] = [];
+
+    await importSyncedProjectData(
+      {
+        assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
+        ctx: {
+          postgrest: {
+            client: createPostgrestClient(calls, {
+              existingFileNames: ["image.png"],
+            }),
+          },
+        } as never,
+        data: createData(),
+        projectId: "target-project",
+      },
+      {
+        createAssetClient,
+        hasProjectPermit,
+        loadDevBuildByProjectId,
+        uploadImportedAssetFiles,
+      }
+    );
+
+    expect(uploadImportedAssetFiles).toHaveBeenCalledWith({
+      assetClient: expect.objectContaining({
+        uploadFile: expect.any(Function),
+      }),
+      assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
+      assets: createData().assets,
+    });
+    expect(calls).not.toContain("files-insert");
+  });
+
+  test("uploads imported asset file bytes through asset client", async () => {
+    type AssetClient = ReturnType<
+      typeof import("~/shared/asset-client").createAssetClient
+    >;
+    const uploadFile = vi.fn<AssetClient["uploadFile"]>(async () => ({
+      format: "png",
+      meta: { width: 100, height: 100 },
+      size: 5,
+    }));
+
+    await __testing__.uploadImportedAssetFiles({
+      assetClient: { uploadFile },
+      assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
+      assets: createData().assets,
+    });
+
+    expect(uploadFile).toHaveBeenCalledWith(
+      "image.png",
+      "image",
+      expect.anything(),
+      { width: 100, height: 100, format: "png" }
+    );
+    const stream = uploadFile.mock.calls[0][2] as AsyncIterable<Uint8Array>;
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    expect(Buffer.concat(chunks).toString("utf8")).toBe("hello");
+  });
+
+  test("rejects partial imported asset file payloads", () => {
+    expect(() =>
+      __testing__.assertAssetFilesMatchAssets({
+        assetFiles: [],
+        assets: createData().assets,
+      })
+    ).toThrow("Imported asset file is missing: image.png");
+  });
+
+  test("rejects missing imported asset file payload", () => {
+    expect(() =>
+      __testing__.assertAssetFilesMatchAssets({
+        assetFiles: undefined,
+        assets: createData().assets,
+      })
+    ).toThrow("Imported asset files are required.");
+  });
+
+  test("rejects imported asset files not present in data assets", () => {
+    expect(() =>
+      __testing__.assertAssetFilesMatchAssets({
+        assetFiles: [{ name: "other.png", data: "aGVsbG8=" }],
+        assets: createData().assets,
+      })
+    ).toThrow("Imported asset file does not exist in data assets: other.png");
+  });
+
+  test("rejects imported asset names with path separators", () => {
+    expect(() =>
+      __testing__.assertImportedAssetNames([
+        { ...createData().assets[0], name: "../image.png" },
+      ])
+    ).toThrow("Imported asset name is invalid: ../image.png");
+  });
+
+  test("rejects duplicated imported asset names", () => {
+    expect(() =>
+      __testing__.assertImportedAssetNames([
+        createData().assets[0],
+        { ...createData().assets[0], id: "asset-2" },
+      ])
+    ).toThrow("Imported asset name is duplicated: image.png");
+  });
+
+  test("rejects duplicated imported asset ids", () => {
+    expect(() =>
+      __testing__.assertImportedAssetNames([
+        createData().assets[0],
+        { ...createData().assets[0], name: "other.png" },
+      ])
+    ).toThrow("Imported asset id is duplicated: asset-1");
+  });
+
+  test("rejects empty imported asset ids", () => {
+    expect(() =>
+      __testing__.assertImportedAssetNames([
+        { ...createData().assets[0], id: "" },
+      ])
+    ).toThrow("Imported asset id is invalid.");
+  });
+
+  test("rejects duplicated imported asset file payloads", () => {
+    expect(() =>
+      __testing__.assertAssetFilesMatchAssets({
+        assetFiles: [
+          { name: "image.png", data: "aGVsbG8=" },
+          { name: "image.png", data: "aGVsbG8=" },
+        ],
+        assets: createData().assets,
+      })
+    ).toThrow("Imported asset file is duplicated: image.png");
+  });
+
+  test("rejects invalid imported asset file data", () => {
+    expect(() =>
+      __testing__.assertAssetFilesMatchAssets({
+        assetFiles: [{ name: "image.png", data: "not base64" }],
+        assets: createData().assets,
+      })
+    ).toThrow("Imported asset file data is invalid: image.png");
   });
 });

@@ -1,4 +1,7 @@
-import { syncDataVersion, type Data } from "@webstudio-is/http-client";
+import {
+  syncDataVersion,
+  type SyncedProjectData,
+} from "@webstudio-is/api-contract";
 import { loadBuildById } from "@webstudio-is/project-build/index.server";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
@@ -8,10 +11,10 @@ import {
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
-import * as projectApi from "@webstudio-is/project/index.server";
+import { loadById } from "@webstudio-is/project/index.server";
 import { getUserById, type User } from "./user.server";
 
-export type PublishedProjectData = Data & {
+export type PublishedProjectData = SyncedProjectData & {
   user: { email: User["email"] } | undefined;
   projectDomain: string;
   projectTitle: string;
@@ -22,13 +25,13 @@ const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
   item,
 ];
 
-type Project = NonNullable<Awaited<ReturnType<typeof projectApi.loadById>>>;
+type Project = NonNullable<Awaited<ReturnType<typeof loadById>>>;
 
 const loadProductionCanvasDataAndProject = async (
   buildId: string,
   context: AppContext,
   project?: Project
-): Promise<{ data: Data; project: Project }> => {
+): Promise<{ data: SyncedProjectData; project: Project }> => {
   const build = await loadBuildById(context, buildId);
 
   if (build === undefined) {
@@ -41,7 +44,7 @@ const loadProductionCanvasDataAndProject = async (
     throw new Error("The project is not published");
   }
 
-  project = project ?? (await projectApi.loadById(build.projectId, context));
+  project = project ?? (await loadById(build.projectId, context));
   if (project === null) {
     throw new Error(`Project "${build.projectId}" not found`);
   }
@@ -121,7 +124,7 @@ const loadProductionCanvasDataAndProject = async (
 };
 
 const addProjectMetadata = async (
-  data: Data,
+  data: SyncedProjectData,
   project: Project,
   context: AppContext
 ): Promise<PublishedProjectData> => {
@@ -141,7 +144,7 @@ const addProjectMetadata = async (
 export const loadProductionCanvasData = async (
   buildId: string,
   context: AppContext
-): Promise<Data> => {
+): Promise<SyncedProjectData> => {
   const { data } = await loadProductionCanvasDataAndProject(buildId, context);
   return data;
 };
@@ -161,7 +164,7 @@ export const loadPublishedProjectDataByProjectId = async (
   projectId: string,
   context: AppContext
 ): Promise<PublishedProjectData> => {
-  const project = await projectApi.loadById(projectId, context);
+  const project = await loadById(projectId, context);
   if (project === null) {
     throw new Error(`Project "${projectId}" not found`);
   }

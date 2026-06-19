@@ -60,6 +60,7 @@
     "@tsndr/cloudflare-worker-jwt": "^2.5.3",
     "@unocss/core": "66.6.8",
     "@vercel/remix": "2.15.3",
+    "@webstudio-is/api-contract": "workspace:*",
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
     "@webstudio-is/css-data": "workspace:*",

@@ -17,12 +17,12 @@ import {
   toPatchResult,
 } from "~/shared/sync/patch/patch-service.server";
 import { normalizePatchRequest } from "~/shared/sync/patch/patch-normalize.server";
-import * as projectApi from "@webstudio-is/project/index.server";
+import { loadById } from "@webstudio-is/project/index.server";
 import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
-import type { Data } from "@webstudio-is/http-client";
+import { importProjectDataInputSchema } from "@webstudio-is/api-contract";
 import {
   loadPublishedProjectDataByBuildId,
   loadPublishedProjectDataByProjectId,
@@ -55,13 +55,6 @@ const relayPatchInput = z.object({
     })
   ),
 });
-
-const syncedProjectDataInput = z
-  .object({
-    syncDataVersion: z.unknown().optional(),
-  })
-  .passthrough()
-  .transform((data) => data as Data);
 
 const loadBuildProjectId = async (ctx: AppContext, buildId: string) => {
   const build = await ctx.postgrest.client
@@ -113,7 +106,7 @@ export const loadBuilderDataByProjectId = async (
   projectId: string,
   ctx: AppContext
 ) => {
-  const project = await projectApi.loadById(projectId, ctx);
+  const project = await loadById(projectId, ctx);
   if (project === null) {
     throw new Error(`Project "${projectId}" not found`);
   }
@@ -153,16 +146,13 @@ export const buildRouter = router({
     }),
 
   importProjectData: procedure
-    .input(
-      z.object({
-        projectId: z.string(),
-        data: syncedProjectDataInput,
-      })
-    )
+    .input(importProjectDataInputSchema)
     .mutation(async ({ ctx, input }) => {
       return await importSyncedProjectData({
         ctx,
+        assetFiles: input.assetFiles,
         data: input.data,
+        ignoreVersionCheck: input.ignoreVersionCheck,
         projectId: input.projectId,
       });
     }),
