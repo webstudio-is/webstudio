@@ -79,19 +79,40 @@ setAutoFreeze(false);
 export const clientSyncStore = new Store();
 export const serverSyncStore = new Store();
 
+const serverSyncStores = {
+  pages: $pages,
+  breakpoints: $breakpoints,
+  instances: $instances,
+  styles: $styles,
+  styleSources: $styleSources,
+  styleSourceSelections: $styleSourceSelections,
+  props: $props,
+  dataSources: $dataSources,
+  resources: $resources,
+  assets: $assets,
+  marketplaceProduct: $marketplaceProduct,
+} as const;
+
+type ServerSyncStoreName = keyof typeof serverSyncStores;
+type ServerSyncStoreValue = {
+  [Name in ServerSyncStoreName]: ReturnType<
+    (typeof serverSyncStores)[Name]["get"]
+  >;
+}[ServerSyncStoreName];
+export type ServerSyncState = Map<ServerSyncStoreName, ServerSyncStoreValue>;
+
+export const serverSyncStoreNames = Object.keys(
+  serverSyncStores
+) as ReadonlyArray<ServerSyncStoreName>;
+
 export const registerContainers = () => {
   // synchronize patches
-  serverSyncStore.register("pages", $pages);
-  serverSyncStore.register("breakpoints", $breakpoints);
-  serverSyncStore.register("instances", $instances);
-  serverSyncStore.register("styles", $styles);
-  serverSyncStore.register("styleSources", $styleSources);
-  serverSyncStore.register("styleSourceSelections", $styleSourceSelections);
-  serverSyncStore.register("props", $props);
-  serverSyncStore.register("dataSources", $dataSources);
-  serverSyncStore.register("resources", $resources);
-  serverSyncStore.register("assets", $assets);
-  serverSyncStore.register("marketplaceProduct", $marketplaceProduct);
+  for (const name of serverSyncStoreNames) {
+    serverSyncStore.register<ServerSyncStoreValue>(
+      name,
+      serverSyncStores[name]
+    );
+  }
 };
 
 type SelectedPageAndInstance = {

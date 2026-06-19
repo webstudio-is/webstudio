@@ -7,6 +7,7 @@ import {
   canDeleteInstanceInContentMode,
   getWebstudioData,
   unwrap,
+  updateInstanceData,
   updateWebstudioData,
 } from "./data";
 import { registerContainers } from "../sync/sync-stores";
@@ -136,6 +137,42 @@ describe("data store helpers", () => {
     );
   });
 
+  test("updateInstanceData mutates only instance-related stores", () => {
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    const assets = new Map();
+    $pages.set(pages);
+    $instances.set(new Map());
+    $props.set(new Map());
+    $breakpoints.set(new Map());
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $styles.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+    $assets.set(assets);
+
+    updateInstanceData((data) => {
+      data.instances.set("body", createInstance("body", "Body", []));
+      data.props.set("prop", {
+        id: "prop",
+        instanceId: "body",
+        name: "id",
+        type: "string",
+        value: "main",
+      });
+    });
+
+    expect($instances.get().get("body")).toEqual(
+      createInstance("body", "Body", [])
+    );
+    expect($props.get().get("prop")).toMatchObject({
+      instanceId: "body",
+      value: "main",
+    });
+    expect($pages.get()).toBe(pages);
+    expect($assets.get()).toBe(assets);
+  });
+
   test("updateWebstudioData skips page templates without build access", () => {
     const pages = createDefaultPages({ rootInstanceId: "body" });
     const template: PageTemplate = {
@@ -153,6 +190,38 @@ describe("data store helpers", () => {
     $instances.set(new Map());
 
     updateWebstudioData((data) => {
+      data.instances.set(
+        "template-root",
+        createInstance("template-root", "Body", [])
+      );
+    });
+
+    expect($instances.get().has("template-root")).toBe(false);
+  });
+
+  test("updateInstanceData skips page templates without build access", () => {
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    const template: PageTemplate = {
+      id: "template",
+      name: "Template",
+      title: "Template",
+      rootInstanceId: "template-root",
+      meta: {},
+    };
+    pages.pageTemplates = new Map([[template.id, template]]);
+    $pages.set(pages);
+    $selectedPageId.set(template.id);
+    $builderMode.set("design");
+    $authPermit.set("view");
+    $instances.set(new Map());
+    $props.set(new Map());
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $styles.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+
+    updateInstanceData((data) => {
       data.instances.set(
         "template-root",
         createInstance("template-root", "Body", [])

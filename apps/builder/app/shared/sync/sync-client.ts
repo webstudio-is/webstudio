@@ -2,7 +2,12 @@ import type { Project } from "@webstudio-is/project";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { SyncEmitter } from "@webstudio-is/sync-client";
 import { SyncClient, type SyncStorage } from "~/shared/sync-client";
-import { registerContainers, createObjectPool } from "./sync-stores";
+import {
+  createObjectPool,
+  registerContainers,
+  serverSyncStoreNames,
+  type ServerSyncState,
+} from "./sync-stores";
 import { loadBuilderData, type LoadedBuilderData } from "~/shared/builder-data";
 import { publicStaticEnv } from "~/env/env.static";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -28,6 +33,7 @@ import {
 let client: SyncClient | undefined;
 let currentProjectId: string | undefined;
 let modeClient: SyncModeClient | undefined;
+let initializationVersion = 0;
 
 type SyncModeClient = {
   clientId?: string;
@@ -60,8 +66,7 @@ const resolveMultiplayerRelayUrl = (
 };
 
 const applyBuilderData = (data: LoadedBuilderData) => {
-  $publisherHost.set(data.publisherHost);
-  $project.set(data.project);
+  applyBuilderMetadata(data);
   $pages.set(data.pages);
   $assets.set(data.assets);
   $instances.set(data.instances);
@@ -74,6 +79,14 @@ const applyBuilderData = (data: LoadedBuilderData) => {
   $styles.set(data.styles);
   $marketplaceProduct.set(data.marketplaceProduct);
 };
+
+const applyBuilderMetadata = (data: LoadedBuilderData) => {
+  $publisherHost.set(data.publisherHost);
+  $project.set(data.project);
+};
+
+const getServerSyncState = (data: LoadedBuilderData): ServerSyncState =>
+  new Map(serverSyncStoreNames.map((name) => [name, data[name]]));
 
 /**
  * Initialize the sync infrastructure and load project data.
@@ -106,6 +119,8 @@ export const initializeClientSync = ({
       relayUrl: resolvedMultiplayerRelayUrl,
     });
   }
+  const shouldPreloadStorage =
+    useMultiplayer === false && authPermit !== "view";
 
   // Note: "view" permit will skip transaction synchronization
 
@@ -114,8 +129,36 @@ export const initializeClientSync = ({
     destroyClientSync();
   }
 
-  // Only register containers once and create sync client
-  if (!client) {
+  const currentInitializationVersion = ++initializationVersion;
+
+  const loadData = (onSuccess: (data: LoadedBuilderData) => void) => {
+    loadBuilderData({ projectId, signal })
+      .then((data) => {
+        if (
+          signal.aborted ||
+          currentInitializationVersion !== initializationVersion
+        ) {
+          return;
+        }
+        onSuccess(data);
+      })
+      .catch((error) => {
+        if (
+          signal.aborted === false &&
+          currentInitializationVersion === initializationVersion
+        ) {
+          console.error("[builder-sync] failed to load project data:", error);
+        }
+      });
+  };
+
+  const completeDataLoad = (data: LoadedBuilderData) => {
+    applyBuilderData(data);
+    modeClient?.onDataLoaded(data);
+    onReady?.();
+  };
+
+  const connectClient = (initialData?: LoadedBuilderData) => {
     registerContainers();
     const object = createObjectPool();
     const nextModeClient: SyncModeClient =
@@ -131,6 +174,10 @@ export const initializeClientSync = ({
         : createSingleplayerSyncClient({
             authPermit,
             authToken,
+            initialServerState:
+              initialData === undefined
+                ? undefined
+                : getServerSyncState(initialData),
             projectId,
           });
     modeClient = nextModeClient;
@@ -144,22 +191,37 @@ export const initializeClientSync = ({
       client.clientId = nextModeClient.clientId;
     }
     currentProjectId = projectId;
+
+    client.connect({
+      signal,
+      onReady() {
+        if (initialData !== undefined) {
+          applyBuilderMetadata(initialData);
+          modeClient?.onDataLoaded(initialData);
+          onReady?.();
+          return;
+        }
+
+        loadData(completeDataLoad);
+      },
+    });
+  };
+
+  // Only register containers once and create sync client
+  if (!client) {
+    if (shouldPreloadStorage) {
+      loadData(connectClient);
+      return;
+    }
+
+    connectClient();
+    return;
   }
 
   client.connect({
     signal,
     onReady() {
-      loadBuilderData({ projectId, signal })
-        .then((data) => {
-          applyBuilderData(data);
-          modeClient?.onDataLoaded(data);
-          onReady?.();
-        })
-        .catch((error) => {
-          if (!signal.aborted) {
-            console.error("[builder-sync] failed to load project data:", error);
-          }
-        });
+      loadData(completeDataLoad);
     },
   });
 };
@@ -169,6 +231,7 @@ export const initializeClientSync = ({
  * Call this when closing the builder or switching between projects.
  */
 export const destroyClientSync = () => {
+  initializationVersion += 1;
   modeClient?.destroy();
   modeClient = undefined;
   client = undefined;
@@ -179,5 +242,6 @@ export const destroyClientSync = () => {
 export const getSyncClient = () => client;
 
 export const __testing__ = {
+  getServerSyncState,
   resolveMultiplayerRelayUrl,
 };

@@ -97,12 +97,14 @@ export const findAllEditableInstanceSelector = ({
   instances,
   props,
   metas,
+  htmlTagsByInstanceId,
   results,
 }: {
   instanceSelector: InstanceSelector;
   instances: Instances;
   props: Props;
   metas: Map<string, WsComponentMeta>;
+  htmlTagsByInstanceId?: Map<Instance["id"], string>;
   results: InstanceSelector[];
 }) => {
   const [instanceId] = instanceSelector;
@@ -111,7 +113,15 @@ export const findAllEditableInstanceSelector = ({
     return;
   }
 
-  if (isRichTextTree({ instanceId, instances, props, metas })) {
+  if (
+    isRichTextTree({
+      instanceId,
+      instances,
+      props,
+      metas,
+      htmlTagsByInstanceId,
+    })
+  ) {
     results.push(instanceSelector);
     return;
   }
@@ -125,6 +135,7 @@ export const findAllEditableInstanceSelector = ({
           instances,
           props,
           metas,
+          htmlTagsByInstanceId,
           results,
         });
       }

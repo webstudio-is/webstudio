@@ -12,6 +12,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   $dragAndDropState,
+  $propsIndex,
   $registeredComponentMetas,
   type ItemDropTarget,
 } from "~/shared/nano-states";
@@ -67,6 +68,7 @@ const findClosestDroppableInstanceSelector = (
   const instances = $instances.get();
   const props = $props.get();
   const metas = $registeredComponentMetas.get();
+  const { htmlTagsByInstanceId } = $propsIndex.get();
 
   // prevent dropping anything into non containers like image
   instanceSelector = findClosestContainer({
@@ -74,6 +76,7 @@ const findClosestDroppableInstanceSelector = (
     props,
     instances,
     instanceSelector,
+    htmlTagsByInstanceId,
   });
   let droppableIndex = -1;
   if (dragPayload?.type === "insert") {
@@ -103,6 +106,7 @@ const findClosestDroppableInstanceSelector = (
       props,
       metas,
       instanceSelector: dropInstanceSelector,
+      htmlTagsByInstanceId,
     });
     droppableIndex = matches ? 0 : -1;
   }
@@ -228,6 +232,7 @@ export const useDragAndDrop = () => {
           instances: $instances.get(),
           props: $props.get(),
           metas: $registeredComponentMetas.get(),
+          htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
         }) ?? instanceSelector
       );
     },

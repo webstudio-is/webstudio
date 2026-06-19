@@ -511,6 +511,7 @@ const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
     instances: $instances.get(),
     props: $props.get(),
     metas: $registeredComponentMetas.get(),
+    htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
   });
   if (isContent) {
     toast.error(
@@ -528,6 +529,7 @@ const canDrop = (
   const instances = $instances.get();
   const props = $props.get();
   const metas = $registeredComponentMetas.get();
+  const { htmlTagsByInstanceId } = $propsIndex.get();
   // in content mode allow drop only within same block
   if ($isContentMode.get()) {
     const parentInstance = instances.get(dropSelector[0]);
@@ -545,6 +547,7 @@ const canDrop = (
     props,
     instances,
     instanceSelector: dropSelector,
+    htmlTagsByInstanceId,
   });
   if (dropSelector.length !== containerSelector.length) {
     return false;
@@ -556,6 +559,7 @@ const canDrop = (
     metas,
     props,
     instanceSelector: containerInstanceSelector,
+    htmlTagsByInstanceId,
   });
   return matches;
 };

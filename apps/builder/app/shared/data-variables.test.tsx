@@ -133,6 +133,27 @@ test("find global variables in slots", () => {
   ]);
 });
 
+test("find legacy global variables with missing scope", () => {
+  const data = renderData(
+    <$.Body ws:id="bodyId">
+      <$.Box ws:id="boxId"></$.Box>
+    </$.Body>
+  );
+  data.dataSources.set("legacyGlobalVariableId", {
+    id: "legacyGlobalVariableId",
+    name: "legacyGlobalVariable",
+    type: "variable",
+    value: { type: "string", value: "" },
+  });
+
+  expect(
+    findAvailableVariables({ ...data, startingInstanceId: "boxId" })
+  ).toEqual([
+    expect.objectContaining({ name: "system", id: SYSTEM_VARIABLE_ID }),
+    expect.objectContaining({ name: "legacyGlobalVariable" }),
+  ]);
+});
+
 test("unset expression variables", () => {
   expect(
     unsetExpressionVariables({
@@ -236,6 +257,23 @@ test("compute literal expression when object is frozen", () => {
   expect(computeExpression("`${jsonVariable.subObject}`", variables)).toEqual(
     `{"world":"hello"}`
   );
+});
+
+test("compute expression does not clone unused variables", () => {
+  const variables = new Map<string, unknown>([
+    ["usedVariable", 1],
+    ["unusedVariable", Object.freeze({ callback: () => undefined })],
+  ]);
+  expect(computeExpression("usedVariable + 1", variables)).toEqual(2);
+});
+
+test("compute expression cache reads current variables", () => {
+  expect(
+    computeExpression("cachedVariable", new Map([["cachedVariable", "first"]]))
+  ).toEqual("first");
+  expect(
+    computeExpression("cachedVariable", new Map([["cachedVariable", "second"]]))
+  ).toEqual("second");
 });
 
 test("compute unset variables as undefined", () => {
@@ -830,6 +868,59 @@ test("unset global variables on all pages when delete", () => {
   ]);
   expect(data.instances.get("aboutTextId")?.children).toEqual([
     { type: "expression", value: "globalVariable" },
+  ]);
+});
+
+test("unset legacy global variables with missing scope when delete", () => {
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "homeBodyId" }),
+    ...renderData(
+      <$.Body ws:id="homeBodyId">
+        <$.Text ws:id="homeTextId"></$.Text>
+      </$.Body>
+    ),
+  };
+  data.pages.pages.set("aboutPage", {
+    id: "",
+    name: "",
+    path: "",
+    title: "",
+    meta: {},
+    rootInstanceId: "aboutBodyId",
+  });
+  data.instances.set("aboutBodyId", {
+    id: "aboutBodyId",
+    type: "instance",
+    component: "Body",
+    children: [{ type: "id", value: "aboutTextId" }],
+  });
+  data.instances.set("aboutTextId", {
+    id: "aboutTextId",
+    type: "instance",
+    component: "Text",
+    children: [],
+  });
+  data.dataSources.set("legacyGlobalVariableId", {
+    id: "legacyGlobalVariableId",
+    name: "legacyGlobalVariable",
+    type: "variable",
+    value: { type: "string", value: "" },
+  });
+  const legacyGlobalIdentifier = encodeDataVariableId("legacyGlobalVariableId");
+  data.instances.get("homeTextId")!.children = [
+    { type: "expression", value: legacyGlobalIdentifier },
+  ];
+  data.instances.get("aboutTextId")!.children = [
+    { type: "expression", value: legacyGlobalIdentifier },
+  ];
+
+  deleteVariableMutable(data, "legacyGlobalVariableId");
+
+  expect(data.instances.get("homeTextId")?.children).toEqual([
+    { type: "expression", value: "legacyGlobalVariable" },
+  ]);
+  expect(data.instances.get("aboutTextId")?.children).toEqual([
+    { type: "expression", value: "legacyGlobalVariable" },
   ]);
 });
 
