@@ -40,9 +40,9 @@ export type CssVariableOption = BaseOption & {
 
 export const $cssVariableOptions = computed(
   [$isCommandPanelOpen, $cssVariableDefinitionsByVariable, $unusedCssVariables],
-  (isOpen, definitionsByVariable, unusedVariables) => {
+  (isCommandPanelOpen, definitionsByVariable, unusedVariables) => {
     const cssVariableOptions: CssVariableOption[] = [];
-    if (!isOpen) {
+    if (!isCommandPanelOpen) {
       return cssVariableOptions;
     }
 

@@ -53,23 +53,43 @@ const createVarNameRegex = (varName: string): RegExp => {
   return new RegExp(`${escapeRegex(varName)}(?![\\w-])`, "g");
 };
 
-// Traverse a StyleValue to find all var() references
-const findVarReferences = (value: StyleValue, varName: string): boolean => {
-  const valueStr = toValue(value);
-  return createVarNameRegex(varName).test(valueStr);
+const createVarNamesRegex = (definedVariables: Set<string>): RegExp => {
+  const alternatives = Array.from(definedVariables)
+    .sort((left, right) => right.length - left.length)
+    .map(escapeRegex)
+    .join("|");
+  return new RegExp(`(?:${alternatives})(?![\\w-])`, "g");
 };
 
-// Find all CSS variable references in HTML Embed code props
-const findVarReferencesInProps = (props: Props, varName: string): boolean => {
-  const regex = createVarNameRegex(varName);
-  for (const prop of props.values()) {
-    if (prop.type === "string" && prop.name === "code" && prop.value) {
-      if (regex.test(prop.value)) {
-        return true;
-      }
+const collectVariableReferencesFromString = (value: string, regex: RegExp) => {
+  const varReferences = new Set<string>();
+  regex.lastIndex = 0;
+  for (const match of value.matchAll(regex)) {
+    varReferences.add(match[0]);
+  }
+  return varReferences;
+};
+
+const getDefinedVariables = (styles: Map<string, StyleDecl>) => {
+  const definedVariables = new Set<string>();
+  for (const styleDecl of styles.values()) {
+    if (styleDecl.property.startsWith("--")) {
+      definedVariables.add(styleDecl.property);
     }
   }
-  return false;
+  return definedVariables;
+};
+
+const getInstancesByStyleSource = (
+  styleSourceSelections: StyleSourceSelections
+) => {
+  const instancesByStyleSource = new Map<string, Instance["id"]>();
+  for (const { instanceId, values } of styleSourceSelections.values()) {
+    for (const styleSourceId of values) {
+      instancesByStyleSource.set(styleSourceId, instanceId);
+    }
+  }
+  return instancesByStyleSource;
 };
 
 // Find CSS variable usage counts (how many times each variable is referenced via var())
@@ -88,15 +108,16 @@ export const findCssVariableUsagesByInstance = ({
   const usageCounts = new Map<string, number>();
   const usageInstances = new Map<string, Set<Instance["id"]>>();
 
-  // Track which style sources belong to which instances
-  const instancesByStyleSource = new Map<string, Instance["id"]>();
-  for (const { instanceId, values } of styleSourceSelections.values()) {
-    for (const styleSourceId of values) {
-      instancesByStyleSource.set(styleSourceId, instanceId);
-    }
+  const definedVariables = getDefinedVariables(styles);
+  if (definedVariables.size === 0) {
+    return { counts: usageCounts, instances: usageInstances };
   }
+  const definedVariablesRegex = createVarNamesRegex(definedVariables);
 
-  // Helper to add a var reference
+  const instancesByStyleSource = getInstancesByStyleSource(
+    styleSourceSelections
+  );
+
   const addVarReference = (varName: string, instanceId: Instance["id"]) => {
     const count = usageCounts.get(varName) ?? 0;
     usageCounts.set(varName, count + 1);
@@ -109,17 +130,6 @@ export const findCssVariableUsagesByInstance = ({
     instances.add(instanceId);
   };
 
-  // Collect all defined variables
-  // Performance optimization: Only check variables that are defined
-  // instead of searching for all possible var() patterns.
-  // This is O(defined_vars × styles) instead of O(all_patterns × styles).
-  const definedVariables = new Set<string>();
-  for (const styleDecl of styles.values()) {
-    if (styleDecl.property.startsWith("--")) {
-      definedVariables.add(styleDecl.property);
-    }
-  }
-
   // Track CSS variable references in StyleDecl values
   for (const styleDecl of styles.values()) {
     const instanceId = instancesByStyleSource.get(styleDecl.styleSourceId);
@@ -127,25 +137,22 @@ export const findCssVariableUsagesByInstance = ({
       continue;
     }
 
-    // Check each defined variable if it's used in this style
-    for (const varName of definedVariables) {
-      if (findVarReferences(styleDecl.value, varName)) {
-        addVarReference(varName, instanceId);
-      }
+    for (const varName of collectVariableReferencesFromString(
+      toValue(styleDecl.value),
+      definedVariablesRegex
+    )) {
+      addVarReference(varName, instanceId);
     }
   }
 
   // Track CSS variable references in HTML Embed code props
-  for (const varName of definedVariables) {
-    if (findVarReferencesInProps(props, varName)) {
-      // Find which instance this belongs to
-      for (const prop of props.values()) {
-        if (prop.type === "string" && prop.name === "code" && prop.value) {
-          const regex = createVarNameRegex(varName);
-          if (regex.test(prop.value)) {
-            addVarReference(varName, prop.instanceId);
-          }
-        }
+  for (const prop of props.values()) {
+    if (prop.type === "string" && prop.name === "code" && prop.value) {
+      for (const varName of collectVariableReferencesFromString(
+        prop.value,
+        definedVariablesRegex
+      )) {
+        addVarReference(varName, prop.instanceId);
       }
     }
   }
@@ -176,13 +183,7 @@ export const $cssVariableInstancesByVariable = computed(
 
 // Get all defined CSS variables (unique properties that start with --)
 export const $definedCssVariables = computed($styles, (styles) => {
-  const definedVariables = new Set<CustomProperty>();
-  for (const styleDecl of styles.values()) {
-    if (styleDecl.property.startsWith("--")) {
-      definedVariables.add(styleDecl.property as CustomProperty);
-    }
-  }
-  return definedVariables;
+  return getDefinedVariables(styles) as Set<CustomProperty>;
 });
 
 // Map CSS variables to the instances where they are defined
@@ -191,13 +192,9 @@ export const $cssVariableDefinitionsByVariable = computed(
   (styleSourceSelections, styles) => {
     const definitionsByVariable = new Map<string, Set<Instance["id"]>>();
 
-    // Build map of styleSourceId to instanceId
-    const instancesByStyleSource = new Map<string, Instance["id"]>();
-    for (const { instanceId, values } of styleSourceSelections.values()) {
-      for (const styleSourceId of values) {
-        instancesByStyleSource.set(styleSourceId, instanceId);
-      }
-    }
+    const instancesByStyleSource = getInstancesByStyleSource(
+      styleSourceSelections
+    );
 
     // Find all CSS variable definitions
     for (const styleDecl of styles.values()) {
@@ -224,32 +221,28 @@ export const $referencedCssVariables = computed(
   (styles, props) => {
     const referencedVariables = new Set<string>();
 
-    // Collect all defined variables first
-    const definedVariables = new Set<string>();
-    for (const styleDecl of styles.values()) {
-      if (styleDecl.property.startsWith("--")) {
-        definedVariables.add(styleDecl.property);
-      }
+    const definedVariables = getDefinedVariables(styles);
+    if (definedVariables.size === 0) {
+      return referencedVariables;
     }
 
-    // Check which defined variables are referenced
-    for (const varName of definedVariables) {
-      // Check in styles
-      // Performance optimization: We only need to know IF a variable is used (boolean),
-      // not HOW MANY times, so we break on first match.
-      for (const styleDecl of styles.values()) {
-        if (findVarReferences(styleDecl.value, varName)) {
-          referencedVariables.add(varName);
-          break;
-        }
-      }
-
-      // Check in props if not already found
-      if (
-        !referencedVariables.has(varName) &&
-        findVarReferencesInProps(props, varName)
-      ) {
+    const definedVariablesRegex = createVarNamesRegex(definedVariables);
+    for (const styleDecl of styles.values()) {
+      for (const varName of collectVariableReferencesFromString(
+        toValue(styleDecl.value),
+        definedVariablesRegex
+      )) {
         referencedVariables.add(varName);
+      }
+    }
+    for (const prop of props.values()) {
+      if (prop.type === "string" && prop.name === "code" && prop.value) {
+        for (const varName of collectVariableReferencesFromString(
+          prop.value,
+          definedVariablesRegex
+        )) {
+          referencedVariables.add(varName);
+        }
       }
     }
 
