@@ -45,8 +45,8 @@ export type DataVariableOption = BaseOption & {
 
 const $usedVariablesInInstances = computed(
   [$isCommandPanelOpen, $pages, $instances, $props, $dataSources, $resources],
-  (isOpen, pages, instances, props, dataSources, resources) => {
-    if (isOpen === false) {
+  (isCommandPanelOpen, pages, instances, props, dataSources, resources) => {
+    if (isCommandPanelOpen === false) {
       return new Map();
     }
     return findVariableUsagesByInstance({
@@ -62,9 +62,9 @@ const $usedVariablesInInstances = computed(
 
 export const $dataVariableOptions = computed(
   [$isCommandPanelOpen, $dataSources, $usedVariablesInInstances],
-  (isOpen, dataSources, usedInInstances) => {
+  (isCommandPanelOpen, dataSources, usedInInstances) => {
     const dataVariableOptions: DataVariableOption[] = [];
-    if (!isOpen) {
+    if (!isCommandPanelOpen) {
       return dataVariableOptions;
     }
 
