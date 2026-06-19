@@ -2,6 +2,7 @@ import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { SyncStorage } from "~/shared/sync-client";
+import type { ServerSyncState } from "./sync-stores";
 import {
   ServerSyncStorage,
   enqueueProjectDetails,
@@ -17,14 +18,19 @@ export type SingleplayerSyncClient = {
 export const createSingleplayerSyncClient = ({
   authPermit,
   authToken,
+  initialServerState,
   projectId,
 }: {
   authPermit: AuthPermit;
   authToken: string | undefined;
+  initialServerState?: ServerSyncState;
   projectId: Project["id"];
 }): SingleplayerSyncClient => {
   return {
-    storages: authPermit === "view" ? [] : [new ServerSyncStorage(projectId)],
+    storages:
+      authPermit === "view" || initialServerState === undefined
+        ? []
+        : [new ServerSyncStorage(projectId, initialServerState)],
     destroy() {
       stopPolling();
     },

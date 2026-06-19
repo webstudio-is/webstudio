@@ -405,4 +405,44 @@ describe("canWrapInstance edge cases", () => {
     );
     expect(result).toBe(true);
   });
+
+  test("should use provided html tag index when validating wrapper in parent", () => {
+    $instances.set(
+      new Map([
+        [
+          "list",
+          {
+            type: "instance",
+            id: "list",
+            component: elementComponent,
+            children: [{ type: "id", value: "box" }],
+          },
+        ],
+        [
+          "box",
+          {
+            type: "instance",
+            id: "box",
+            component: elementComponent,
+            tag: "div",
+            children: [],
+          },
+        ],
+      ])
+    );
+
+    const result = canWrapInstance(
+      "box",
+      ["box", "list"],
+      "list",
+      elementComponent,
+      "li",
+      $instances.get(),
+      new Map(),
+      $registeredComponentMetas.get(),
+      new Map([["list", "ul"]])
+    );
+
+    expect(result).toBe(true);
+  });
 });

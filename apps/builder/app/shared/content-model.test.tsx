@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { coreMetas } from "@webstudio-is/sdk";
+import { coreMetas, type Prop, type Props } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { $, expression, renderData, ws } from "@webstudio-is/template";
 import {
@@ -647,6 +647,63 @@ describe("component content model", () => {
 });
 
 describe("rich text tree", () => {
+  test("uses provided html tags index without scanning props", () => {
+    const { instances } = renderData(
+      <$.Paragraph ws:id="instanceId"></$.Paragraph>
+    );
+    const props = new (class extends Map<string, Prop> {
+      values(): MapIterator<Prop> {
+        throw new Error("props should not be scanned");
+      }
+    })() as Props;
+
+    expect(
+      isRichTextTree({
+        instances,
+        props,
+        metas: defaultMetas,
+        instanceId: "instanceId",
+        htmlTagsByInstanceId: new Map(),
+      })
+    ).toBeTruthy();
+  });
+
+  test("reads updated tag props from mutable props maps", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Box ws:id="boxId">
+          <ws.element ws:tag="article"></ws.element>
+        </$.Box>
+      </$.Body>
+    );
+
+    expect(
+      isTreeSatisfyingContentModel({
+        instances,
+        props,
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toBeTruthy();
+
+    props.set("tagPropId", {
+      id: "tagPropId",
+      instanceId: "boxId",
+      name: "tag",
+      type: "string",
+      value: "span",
+    });
+
+    expect(
+      isTreeSatisfyingContentModel({
+        instances,
+        props,
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toBeFalsy();
+  });
+
   test("check empty instance is rich text", () => {
     expect(
       isRichTextTree({

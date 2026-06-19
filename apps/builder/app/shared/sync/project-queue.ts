@@ -12,12 +12,12 @@ import {
   createTransactionCompletionStore,
   type SyncStatus,
 } from "@webstudio-is/sync-client";
-import { loadBuilderData } from "~/shared/builder-data";
 import { publicStaticEnv } from "~/env/env.static";
 import { createNativeClient, nativeClient } from "~/shared/trpc/trpc-client";
 import * as commandQueue from "./command-queue";
 import type { SyncStorage } from "~/shared/sync-client";
 import type { Transaction } from "@webstudio-is/sync-client";
+import type { ServerSyncState } from "./sync-stores";
 
 export { commandQueue };
 
@@ -337,9 +337,11 @@ const pollQueue = async (signal: AbortSignal) => {
 export class ServerSyncStorage implements SyncStorage {
   name = "server";
   private projectId: string;
+  private initialState: ServerSyncState;
 
-  constructor(projectId: string) {
+  constructor(projectId: string, initialState: ServerSyncState) {
     this.projectId = projectId;
+    this.initialState = initialState;
   }
 
   sendTransaction(transaction: Transaction<Change[]>) {
@@ -354,20 +356,10 @@ export class ServerSyncStorage implements SyncStorage {
     }
   }
   subscribe(setState: (state: unknown) => void, signal: AbortSignal) {
-    const projectId = this.projectId;
-    loadBuilderData({ projectId, signal })
-      .then((data: Record<string, unknown>) => {
-        const serverData = new Map(Object.entries(data));
-        setState(new Map([["server", serverData]]));
-      })
-      .catch((err: unknown) => {
-        if (err instanceof Error) {
-          console.error(err);
-          return;
-        }
-
-        // Abort error do nothing
-      });
+    if (signal.aborted) {
+      return;
+    }
+    setState(new Map([["server", this.initialState]]));
   }
 }
 

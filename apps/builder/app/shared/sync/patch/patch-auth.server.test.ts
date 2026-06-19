@@ -182,7 +182,7 @@ describe("authorizePatchEntries", () => {
     applyContentModeTransaction.mockClear();
   });
 
-  test("checks every transaction with its own writer and required permit", async () => {
+  test("skips content-mode capabilities for writers with build permit", async () => {
     readAccessToken
       .mockResolvedValueOnce({ userId: "user-1", projectId: "project-1" })
       .mockResolvedValueOnce({ userId: "user-2", projectId: "project-1" });
@@ -204,12 +204,8 @@ describe("authorizePatchEntries", () => {
       ],
     };
 
-    const contentModeCapabilities = createContentModeCapabilities(buildRow);
-
-    const result = await authorizePatchEntries(
-      context as never,
-      patch,
-      contentModeCapabilities
+    const result = await authorizePatchEntries(context as never, patch, () =>
+      createContentModeCapabilities(buildRow)
     );
 
     expect(result.rejected).toEqual([]);
@@ -217,17 +213,64 @@ describe("authorizePatchEntries", () => {
       type: "user",
       userId: "user-1",
     });
-    expect(getContentModeCapabilities).toHaveBeenCalledWith(
+    expect(result.authorized[1].context.authorization).toMatchObject({
+      type: "user",
+      userId: "user-2",
+    });
+    expect(getContentModeCapabilities).not.toHaveBeenCalled();
+    expect(applyContentModeTransaction).not.toHaveBeenCalled();
+    expect(hasProjectPermit).toHaveBeenCalledTimes(2);
+    expect(hasProjectPermit).toHaveBeenNthCalledWith(
+      1,
+      { projectId: "project-1", permit: "build" },
       expect.objectContaining({
-        instances: expect.any(Map),
-        metas: expect.any(Map),
-        props: expect.any(Map),
-        styleSources: expect.any(Map),
-        styleSourceSelections: expect.any(Map),
-        styles: expect.any(Map),
-        breakpoints: expect.any(Map),
+        authorization: expect.objectContaining({ userId: "user-1" }),
       })
     );
+    expect(hasProjectPermit).toHaveBeenNthCalledWith(
+      2,
+      { projectId: "project-1", permit: "build" },
+      expect.objectContaining({
+        authorization: expect.objectContaining({ userId: "user-2" }),
+      })
+    );
+  });
+
+  test("falls back to content-mode permissions without build permit", async () => {
+    readAccessToken
+      .mockResolvedValueOnce({ userId: "user-1", projectId: "project-1" })
+      .mockResolvedValueOnce({ userId: "user-2", projectId: "project-1" });
+    hasProjectPermit
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true);
+
+    const patch: NormalizedPatchRequest = {
+      buildId: "build-1",
+      projectId: "project-1",
+      clientVersion: 1,
+      entries: [
+        {
+          transaction: transaction("props", "tx-edit") as never,
+          writer: { type: "token", authToken: "token-1" },
+        },
+        {
+          transaction: transaction("styles", "tx-build") as never,
+          writer: { type: "token", authToken: "token-2" },
+        },
+      ],
+    };
+
+    const result = await authorizePatchEntries(
+      createContext() as never,
+      patch,
+      () => createContentModeCapabilities(buildRow)
+    );
+
+    expect(result.rejected).toEqual([]);
+    expect(result.authorized).toHaveLength(2);
+    expect(getContentModeCapabilities).toHaveBeenCalledTimes(1);
+    expect(applyContentModeTransaction).toHaveBeenCalledTimes(2);
     expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
@@ -254,28 +297,31 @@ describe("authorizePatchEntries", () => {
         }),
       })
     );
-    expect(hasProjectPermit).toHaveBeenCalledTimes(2);
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
       1,
-      { projectId: "project-1", permit: "edit" },
-      expect.objectContaining({
-        authorization: expect.objectContaining({ userId: "user-1" }),
-      })
+      { projectId: "project-1", permit: "build" },
+      expect.anything()
     );
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
       2,
       { projectId: "project-1", permit: "build" },
-      expect.objectContaining({
-        authorization: expect.objectContaining({ userId: "user-2" }),
-      })
+      expect.anything()
+    );
+    expect(hasProjectPermit).toHaveBeenNthCalledWith(
+      3,
+      { projectId: "project-1", permit: "edit" },
+      expect.anything()
     );
   });
 
-  test("does not require build permit after an authorized build-only transaction", async () => {
+  test("advances capabilities for build-permit entries in mixed batches", async () => {
     readAccessToken
       .mockResolvedValueOnce({ userId: "user-1", projectId: "project-1" })
       .mockResolvedValueOnce({ userId: "user-2", projectId: "project-1" });
-    hasProjectPermit.mockResolvedValue(true);
+    hasProjectPermit
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
 
     const patch: NormalizedPatchRequest = {
       buildId: "build-1",
@@ -283,7 +329,7 @@ describe("authorizePatchEntries", () => {
       clientVersion: 1,
       entries: [
         {
-          transaction: transaction("styles", "tx-build") as never,
+          transaction: transaction("props", "tx-build") as never,
           writer: { type: "token", authToken: "token-1" },
         },
         {
@@ -296,22 +342,20 @@ describe("authorizePatchEntries", () => {
     const result = await authorizePatchEntries(
       createContext() as never,
       patch,
-      createContentModeCapabilities(buildRow)
+      () => createContentModeCapabilities(buildRow)
     );
 
     expect(result.rejected).toEqual([]);
     expect(result.authorized).toHaveLength(2);
+    expect(getContentModeCapabilities).toHaveBeenCalledTimes(1);
     expect(applyContentModeTransaction).toHaveBeenCalledTimes(2);
-    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        transaction: patch.entries[0].transaction,
-      })
-    );
     expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
         transaction: patch.entries[1].transaction,
+        capabilities: expect.objectContaining({
+          appliedTransactionId: patch.entries[0].transaction.id,
+        }),
       })
     );
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
@@ -321,12 +365,85 @@ describe("authorizePatchEntries", () => {
     );
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
       2,
+      { projectId: "project-1", permit: "build" },
+      expect.anything()
+    );
+    expect(hasProjectPermit).toHaveBeenNthCalledWith(
+      3,
       { projectId: "project-1", permit: "edit" },
       expect.anything()
     );
   });
 
-  test("does not require build permit after a rejected build-only transaction", async () => {
+  test("creates content-mode capabilities once for multiple content-mode entries", async () => {
+    readAccessToken
+      .mockResolvedValueOnce({ userId: "user-1", projectId: "project-1" })
+      .mockResolvedValueOnce({ userId: "user-2", projectId: "project-1" });
+    hasProjectPermit
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true);
+    const getInitialContentModeCapabilities = vi.fn(() =>
+      createContentModeCapabilities(buildRow)
+    );
+
+    const patch: NormalizedPatchRequest = {
+      buildId: "build-1",
+      projectId: "project-1",
+      clientVersion: 1,
+      entries: [
+        {
+          transaction: transaction("props", "tx-edit-1") as never,
+          writer: { type: "token", authToken: "token-1" },
+        },
+        {
+          transaction: transaction("props", "tx-edit-2") as never,
+          writer: { type: "token", authToken: "token-2" },
+        },
+      ],
+    };
+
+    const result = await authorizePatchEntries(
+      createContext() as never,
+      patch,
+      getInitialContentModeCapabilities
+    );
+
+    expect(result.rejected).toEqual([]);
+    expect(result.authorized).toHaveLength(2);
+    expect(getInitialContentModeCapabilities).toHaveBeenCalledTimes(1);
+    expect(getContentModeCapabilities).toHaveBeenCalledTimes(1);
+    expect(applyContentModeTransaction).toHaveBeenCalledTimes(2);
+    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        transaction: patch.entries[0].transaction,
+        capabilities: expect.objectContaining({
+          editablePropIds: expect.any(Set),
+          instances: expect.any(Map),
+          metas: expect.any(Map),
+          props: expect.any(Map),
+          styleSources: expect.any(Map),
+          styleSourceSelections: expect.any(Map),
+          styles: expect.any(Map),
+          breakpoints: expect.any(Map),
+          contentRootIds: expect.any(Set),
+        }),
+      })
+    );
+    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        transaction: patch.entries[1].transaction,
+        capabilities: expect.objectContaining({
+          appliedTransactionId: patch.entries[0].transaction.id,
+        }),
+      })
+    );
+  });
+
+  test("continues authorizing later build-permit entries after a rejected entry", async () => {
     readAccessToken
       .mockResolvedValueOnce({ userId: "user-1", projectId: "project-1" })
       .mockResolvedValueOnce({ userId: "user-2", projectId: "project-1" });
@@ -351,7 +468,7 @@ describe("authorizePatchEntries", () => {
     const result = await authorizePatchEntries(
       createContext() as never,
       patch,
-      createContentModeCapabilities(buildRow)
+      () => createContentModeCapabilities(buildRow)
     );
 
     expect(result.rejected).toEqual([
@@ -367,6 +484,12 @@ describe("authorizePatchEntries", () => {
     ]);
     expect(applyContentModeTransaction).toHaveBeenCalledTimes(2);
     expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        transaction: patch.entries[0].transaction,
+      })
+    );
+    expect(applyContentModeTransaction).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
         transaction: patch.entries[1].transaction,
@@ -379,7 +502,7 @@ describe("authorizePatchEntries", () => {
     );
     expect(hasProjectPermit).toHaveBeenNthCalledWith(
       2,
-      { projectId: "project-1", permit: "edit" },
+      { projectId: "project-1", permit: "build" },
       expect.anything()
     );
   });
@@ -404,7 +527,7 @@ describe("authorizePatchEntries", () => {
           },
         ],
       },
-      createContentModeCapabilities(buildRow)
+      () => createContentModeCapabilities(buildRow)
     );
 
     expect(result.authorized).toEqual([]);

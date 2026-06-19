@@ -3,6 +3,7 @@ import {
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
   $isContentMode,
+  $propsIndex,
   $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { $props } from "~/shared/sync/data-stores";
@@ -74,6 +75,7 @@ const handleEdit = (event: MouseEvent) => {
     instances,
     props: $props.get(),
     metas: $registeredComponentMetas.get(),
+    htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
   });
 
   // Do not allow edit bindable text instances with expression children in Content Mode

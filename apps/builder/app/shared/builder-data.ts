@@ -58,6 +58,12 @@ export const getBuilderData = (): BuilderData => {
 const getPair = <Item extends { id: string }>(item: Item) =>
   [item.id, item] as const;
 
+const hydrateIdMap = <Item extends { id: string }>(items: Item[]) =>
+  new Map(items.map(getPair));
+
+const hydrateMap = <Item, Key>(items: Item[], getKey: (item: Item) => Key) =>
+  new Map(items.map((item) => [getKey(item), item] as const));
+
 export const loadBuilderData = async ({
   projectId,
   signal,
@@ -76,18 +82,19 @@ export const loadBuilderData = async ({
       projectId: data.projectId,
       project: data.project,
       publisherHost: data.publisherHost,
-      assets: new Map(data.assets.map(getPair)),
-      instances: new Map(data.instances.map(getPair)),
-      dataSources: new Map(data.dataSources.map(getPair)),
-      resources: new Map(data.resources.map(getPair)),
-      props: new Map(data.props.map(getPair)),
+      assets: hydrateIdMap(data.assets),
+      instances: hydrateIdMap(data.instances),
+      dataSources: hydrateIdMap(data.dataSources),
+      resources: hydrateIdMap(data.resources),
+      props: hydrateIdMap(data.props),
       pages: migratePages(data.pages),
-      breakpoints: new Map(data.breakpoints.map(getPair)),
-      styleSources: new Map(data.styleSources.map(getPair)),
-      styleSourceSelections: new Map(
-        data.styleSourceSelections.map((item) => [item.instanceId, item])
+      breakpoints: hydrateIdMap(data.breakpoints),
+      styleSources: hydrateIdMap(data.styleSources),
+      styleSourceSelections: hydrateMap(
+        data.styleSourceSelections,
+        (item) => item.instanceId
       ),
-      styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
+      styles: hydrateMap(data.styles, (item) => getStyleDeclKey(item)),
       marketplaceProduct: data.marketplaceProduct,
     };
   } catch (error) {
