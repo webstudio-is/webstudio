@@ -1,5 +1,5 @@
 import type { Asset, Page } from "@webstudio-is/sdk/schema";
-import { projectBundleVersion, type PublishedProjectBundle } from "./schema";
+import { bundleVersion, type PublishedProjectBundle } from "./schema";
 
 type SerializedBuild = PublishedProjectBundle["build"];
 type SerializedPages = SerializedBuild["pages"];
@@ -92,7 +92,7 @@ export const createPublishedProjectBundleFixture = (
   } = options;
   const page = createPageFixture(pageOverrides);
   return {
-    projectBundleVersion,
+    bundleVersion,
     origin: "https://example.com",
     projectDomain: "example",
     projectTitle: "Example",

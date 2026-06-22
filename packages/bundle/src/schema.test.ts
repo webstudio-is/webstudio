@@ -3,13 +3,37 @@ import { z } from "zod";
 import {
   isAssetFileName,
   isAssetFileDataString,
-  getProjectBundleVersionMismatchMessage,
+  getBundleVersionMismatchMessage,
   importProjectBundleInputSchema,
   publishedProjectBundleSchema,
-  projectBundleVersion,
+  bundleVersion,
 } from "./schema";
 import { createContractVersion } from "./contract-version";
 import { createPublishedProjectBundleFixture } from "./fixtures";
+
+type StringRefinement = z.RefinementEffect<string>["refinement"];
+
+const createLengthRefinement = ({
+  contractLength,
+  validateLength = contractLength,
+}: {
+  contractLength: number;
+  validateLength?: number;
+}) =>
+  Object.assign(
+    (value: string, context: z.RefinementCtx) => {
+      if (value.length < validateLength) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Must be at least ${validateLength} characters`,
+        });
+      }
+    },
+    { contract: { minLength: contractLength } }
+  );
+
+const versionForRefinement = (refinement: StringRefinement) =>
+  createContractVersion(z.string().superRefine(refinement), "1");
 
 describe("project bundle contract", () => {
   test("validates base64 asset file data", () => {
@@ -35,31 +59,50 @@ describe("project bundle contract", () => {
     expect(first).not.toBe(second);
   });
 
-  test("changes version when refinement implementation changes", () => {
-    const first = createContractVersion(
-      z.string().superRefine((value, context) => {
-        if (value.length < 2) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Must be at least 2 characters",
-          });
-        }
-      }),
-      "1"
+  test("changes version when explicit refinement contract changes", () => {
+    expect(
+      versionForRefinement(createLengthRefinement({ contractLength: 2 }))
+    ).not.toBe(
+      versionForRefinement(createLengthRefinement({ contractLength: 3 }))
     );
-    const second = createContractVersion(
-      z.string().superRefine((value, context) => {
-        if (value.length < 3) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Must be at least 3 characters",
-          });
-        }
-      }),
-      "1"
+  });
+
+  test("ignores refinement function source", () => {
+    expect(
+      versionForRefinement(
+        createLengthRefinement({ contractLength: 2, validateLength: 2 })
+      )
+    ).toBe(
+      versionForRefinement(
+        createLengthRefinement({ contractLength: 2, validateLength: 3 })
+      )
     );
 
-    expect(first).not.toBe(second);
+    expect(
+      createContractVersion(
+        z.string().superRefine((value, context) => {
+          if (value.length < 2) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Must be at least 2 characters",
+            });
+          }
+        }),
+        "1"
+      )
+    ).toBe(
+      createContractVersion(
+        z.string().superRefine((value, context) => {
+          if (value.length < 3) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Must be at least 3 characters",
+            });
+          }
+        }),
+        "1"
+      )
+    );
   });
 
   test("changes version when package version changes", () => {
@@ -103,20 +146,18 @@ describe("project bundle contract", () => {
     ).toThrow();
   });
 
-  test("generates the current project bundle version", () => {
-    expect(projectBundleVersion).toMatch(
-      /^project-bundle-0\.0\.0-webstudio-version-[0-9a-f]{8}$/
-    );
+  test("generates the current bundle version", () => {
+    expect(bundleVersion).toMatch(/^bundle-0\.0\.0-[0-9a-f]{8}$/);
   });
 
   test("formats project bundle version mismatch messages", () => {
     expect(
-      getProjectBundleVersionMismatchMessage({
+      getBundleVersionMismatchMessage({
         ignoreVersionCheckHint: "override the check",
         receivedVersion: undefined,
       })
     ).toBe(
-      `Project bundle format is incompatible. Expected version ${projectBundleVersion}, received missing. Sync with a compatible API/CLI version and retry, or override the check.`
+      `Project bundle format is incompatible. Expected version ${bundleVersion}, received missing. Sync with a compatible API/CLI version and retry, or override the check.`
     );
   });
 });

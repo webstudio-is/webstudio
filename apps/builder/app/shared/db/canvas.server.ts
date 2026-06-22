@@ -1,5 +1,5 @@
 import {
-  projectBundleVersion,
+  bundleVersion,
   type PublishedProjectBundle,
   type ProjectBundle,
 } from "@webstudio-is/bundle";
@@ -129,7 +129,7 @@ const addProjectMetadata = async (
 
   return {
     ...data,
-    projectBundleVersion,
+    bundleVersion,
     user: user ? { email: user.email } : undefined,
     projectDomain: project.domain,
     projectTitle: project.title,

@@ -9,7 +9,7 @@ import {
 } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { projectBundleVersion } from "@webstudio-is/bundle";
+import { bundleVersion } from "@webstudio-is/bundle";
 import { generateRedirectsModule, prebuild } from "./prebuild";
 
 const originalCwd = process.cwd();
@@ -72,7 +72,7 @@ const createSiteData = (
   ];
 
   return {
-    projectBundleVersion,
+    bundleVersion,
     origin: "https://assets.example",
     projectDomain: "example.com",
     projectTitle: "Example",

@@ -167,8 +167,8 @@ describe("build import helpers", () => {
 
   test("rejects missing synced data version with compatibility message", () => {
     expect(() =>
-      __testing__.assertProjectBundleVersion(
-        {} as Pick<PublishedProjectBundle, "projectBundleVersion">
+      __testing__.assertBundleVersion(
+        {} as Pick<PublishedProjectBundle, "bundleVersion">
       )
     ).toThrow("Sync with a compatible API/CLI version");
   });
@@ -331,7 +331,7 @@ describe("build import helpers", () => {
             client: createPostgrestClient(calls),
           },
         } as never,
-        data: createData({ assets: [], projectBundleVersion: undefined }),
+        data: createData({ assets: [], bundleVersion: undefined }),
         ignoreVersionCheck: true,
         projectId: "target-project",
       },

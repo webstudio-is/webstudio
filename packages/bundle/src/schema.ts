@@ -67,7 +67,7 @@ export const projectBundleSchema = z.object({
 export type ProjectBundle = z.infer<typeof projectBundleSchema>;
 
 export const publishedProjectBundleSchema = projectBundleSchema.extend({
-  projectBundleVersion: z.union([z.string(), z.number()]).optional(),
+  bundleVersion: z.union([z.string(), z.number()]).optional(),
   user: z.object({ email: z.string().nullable() }).optional(),
   projectDomain: z.string(),
   projectTitle: z.string(),
@@ -97,27 +97,26 @@ export const checkProjectBuildPermissionInputSchema = z.object({
   projectId: z.string(),
 });
 
-export const projectBundleVersion = createContractVersion(
+export const bundleVersion = createContractVersion(
   publishedProjectBundleSchema,
   packageJson.version
 );
 
-export const getProjectBundleVersion = (data: unknown) => {
+export const getBundleVersion = (data: unknown) => {
   if (typeof data !== "object" || data === null) {
     return;
   }
-  const version = (data as { projectBundleVersion?: unknown })
-    .projectBundleVersion;
+  const version = (data as { bundleVersion?: unknown }).bundleVersion;
   return typeof version === "number" || typeof version === "string"
     ? version
     : undefined;
 };
 
-export const getProjectBundleVersionMismatchMessage = ({
+export const getBundleVersionMismatchMessage = ({
   ignoreVersionCheckHint,
   receivedVersion,
 }: {
   ignoreVersionCheckHint: string;
   receivedVersion: number | string | undefined;
 }) =>
-  `Project bundle format is incompatible. Expected version ${projectBundleVersion}, received ${receivedVersion ?? "missing"}. Sync with a compatible API/CLI version and retry, or ${ignoreVersionCheckHint}.`;
+  `Project bundle format is incompatible. Expected version ${bundleVersion}, received ${receivedVersion ?? "missing"}. Sync with a compatible API/CLI version and retry, or ${ignoreVersionCheckHint}.`;

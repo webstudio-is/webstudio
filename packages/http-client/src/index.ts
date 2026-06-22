@@ -7,9 +7,9 @@ import {
   type PublishedProjectBundle,
 } from "@webstudio-is/bundle";
 export {
-  getProjectBundleVersion,
+  getBundleVersion,
   isAssetFileDataString,
-  projectBundleVersion,
+  bundleVersion,
 } from "@webstudio-is/bundle";
 export type {
   AssetFileData,

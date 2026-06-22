@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import makeCLI from "yargs";
 import { createApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
-import { projectBundleVersion } from "@webstudio-is/bundle";
+import { bundleVersion } from "@webstudio-is/bundle";
 import {
   createImageAssetFixture,
   createPublishedProjectBundleFixture,
@@ -246,7 +246,7 @@ test("does not prompt for destination when local data is missing", async () => {
 });
 
 test("stops before API request when local data is from old format", async () => {
-  await writeSyncedData({ projectBundleVersion: undefined });
+  await writeSyncedData({ bundleVersion: undefined });
 
   await expect(
     importProject(
@@ -260,13 +260,13 @@ test("stops before API request when local data is from old format", async () => 
   expect(importProjectBundle).not.toHaveBeenCalled();
   expect(checkProjectBuildPermission).not.toHaveBeenCalled();
   expect(indicator.stop).toHaveBeenCalledWith(
-    `Project bundle format is incompatible. Expected version ${projectBundleVersion}, received missing. Sync with a compatible API/CLI version and retry, or pass --ignore-version-check if you know the source and target data formats are compatible.`,
+    `Project bundle format is incompatible. Expected version ${bundleVersion}, received missing. Sync with a compatible API/CLI version and retry, or pass --ignore-version-check if you know the source and target data formats are compatible.`,
     2
   );
 });
 
 test("imports old local data when version check is explicitly ignored", async () => {
-  await writeSyncedData({ projectBundleVersion: undefined });
+  await writeSyncedData({ bundleVersion: undefined });
 
   await importProject(
     {
@@ -279,7 +279,7 @@ test("imports old local data when version check is explicitly ignored", async ()
   expect(importProjectBundle).toHaveBeenCalledWith(
     expect.objectContaining({
       ignoreVersionCheck: true,
-      data: createSyncedData({ projectBundleVersion: undefined }),
+      data: createSyncedData({ bundleVersion: undefined }),
       assetFiles: [],
     })
   );
@@ -291,7 +291,7 @@ test("imports old local data when version check is explicitly ignored", async ()
 test("stops before API request when ignored-version data is missing assets", async () => {
   await writeSyncedData({
     assets: undefined,
-    projectBundleVersion: undefined,
+    bundleVersion: undefined,
   });
 
   await expect(
@@ -315,7 +315,7 @@ test("stops before API request when ignored-version data is missing assets", asy
 test("stops before API request when ignored-version data is missing published metadata", async () => {
   await writeSyncedData({
     projectTitle: undefined,
-    projectBundleVersion: undefined,
+    bundleVersion: undefined,
   });
 
   await expect(

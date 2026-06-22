@@ -2,10 +2,10 @@ import { cwd, stdin, stdout } from "node:process";
 import { join } from "node:path";
 import { cancel, isCancel, log, spinner, text } from "@clack/prompts";
 import {
-  getProjectBundleVersion,
-  getProjectBundleVersionMismatchMessage,
+  getBundleVersion,
+  getBundleVersionMismatchMessage,
   publishedProjectBundleSchema,
-  projectBundleVersion,
+  bundleVersion,
 } from "@webstudio-is/bundle";
 import {
   checkProjectBuildPermission,
@@ -108,16 +108,16 @@ export const importProject = async (
     importing.stop(missingProjectBundleMessage, 2);
     throw new HandledCliError();
   }
-  const localProjectBundleVersion = getProjectBundleVersion(data);
+  const localBundleVersion = getBundleVersion(data);
   if (
-    localProjectBundleVersion !== projectBundleVersion &&
+    localBundleVersion !== bundleVersion &&
     options.ignoreVersionCheck !== true
   ) {
     importing.stop(
-      getProjectBundleVersionMismatchMessage({
+      getBundleVersionMismatchMessage({
         ignoreVersionCheckHint:
           "pass --ignore-version-check if you know the source and target data formats are compatible",
-        receivedVersion: localProjectBundleVersion,
+        receivedVersion: localBundleVersion,
       }),
       2
     );

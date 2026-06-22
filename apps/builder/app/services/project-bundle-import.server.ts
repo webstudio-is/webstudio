@@ -14,8 +14,8 @@ import { serializeStyleSourceSelections } from "@webstudio-is/project-build/styl
 import {
   isAssetFileName,
   isAssetFileDataString,
-  getProjectBundleVersionMismatchMessage,
-  projectBundleVersion,
+  getBundleVersionMismatchMessage,
+  bundleVersion,
   type AssetFileData,
   type PublishedProjectBundle,
   type ProjectBundle,
@@ -35,15 +35,15 @@ import {
 const toMap = <Key extends string, Value>(entries: [Key, Value][]) =>
   new Map<Key, Value>(entries);
 
-const assertProjectBundleVersion = (
-  data: Pick<PublishedProjectBundle, "projectBundleVersion">
+const assertBundleVersion = (
+  data: Pick<PublishedProjectBundle, "bundleVersion">
 ) => {
-  if (data.projectBundleVersion !== projectBundleVersion) {
+  if (data.bundleVersion !== bundleVersion) {
     throw new Error(
-      getProjectBundleVersionMismatchMessage({
+      getBundleVersionMismatchMessage({
         ignoreVersionCheckHint:
           "explicitly ignore the version check if you know the source and target data formats are compatible",
-        receivedVersion: data.projectBundleVersion,
+        receivedVersion: data.bundleVersion,
       })
     );
   }
@@ -383,7 +383,7 @@ export const importPublishedProjectBundle = async (
   }
 ) => {
   if (ignoreVersionCheck === false) {
-    assertProjectBundleVersion(data);
+    assertBundleVersion(data);
   }
 
   await assertProjectBuildPermit({
@@ -454,7 +454,7 @@ export const importPublishedProjectBundle = async (
 
 export const __testing__ = {
   assertProjectBuildPermit,
-  assertProjectBundleVersion,
+  assertBundleVersion,
   createImportedFileRows,
   createImportedAssetRows,
   createBuildImportUpdate,

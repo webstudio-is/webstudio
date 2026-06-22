@@ -3,7 +3,7 @@ import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
-  projectBundleVersion,
+  bundleVersion,
   type PublishedProjectBundle,
 } from "@webstudio-is/bundle";
 import {
@@ -69,7 +69,7 @@ test("preserves synchronized data version from the API", async () => {
   expect(data).toMatchObject({
     build: { id: "build-1" },
     origin: "https://example.com",
-    projectBundleVersion,
+    bundleVersion,
   });
   expect(indicator.stop).toHaveBeenCalledWith(
     "Project bundle synchronized successfully"

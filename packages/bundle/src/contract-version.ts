@@ -9,10 +9,13 @@ const getFunctionContract = (value: unknown) => {
     return;
   }
   const contractFunction = value as ContractFunction;
-  return {
-    contract: contractFunction.contract,
-    source: contractFunction.toString(),
-  };
+  if (contractFunction.contract !== undefined) {
+    return { contract: contractFunction.contract };
+  }
+  // Function source is transformed differently by test, build, and runtime
+  // loaders. Refinements must attach explicit contract metadata to affect the
+  // bundle version.
+  return { contract: "unversioned-function" };
 };
 
 const getSchemaContract = (
@@ -196,10 +199,11 @@ export const createContractVersion = (
   schema: z.ZodTypeAny,
   version: string
 ) => {
+  const bundlePackageVersion = version.replace(/-webstudio-version$/, "");
   let hash = 0x811c9dc5;
   for (const char of stableStringify(getSchemaContract(schema))) {
     hash ^= char.charCodeAt(0);
     hash = Math.imul(hash, 0x01000193);
   }
-  return `project-bundle-${version}-${(hash >>> 0).toString(16).padStart(8, "0")}` as const;
+  return `bundle-${bundlePackageVersion}-${(hash >>> 0).toString(16).padStart(8, "0")}` as const;
 };
