@@ -50,10 +50,27 @@ const defaultDependencies: SyncDependencies = {
 };
 
 const toLocalProjectBundle = (project: PublishedProjectBundle) => {
-  const { bundleVersion: synchronizedBundleVersion, ...projectData } = project;
+  const {
+    assets,
+    build,
+    bundleVersion: synchronizedBundleVersion,
+    origin,
+    page,
+    pages,
+    projectDomain,
+    projectTitle,
+    user,
+  } = project;
   return {
     bundleVersion: synchronizedBundleVersion ?? bundleVersion,
-    ...projectData,
+    build,
+    page,
+    pages,
+    assets,
+    user,
+    projectDomain,
+    projectTitle,
+    origin,
   };
 };
 

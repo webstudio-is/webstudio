@@ -94,6 +94,7 @@ test("adds current bundle version when synchronizing data from old API", async (
 
   expect(JSON.parse(data)).toMatchObject({ bundleVersion });
   expect(data.startsWith(`{\n  "bundleVersion":`)).toBe(true);
+  expect(data.indexOf(`"build"`)).toBeLessThan(data.indexOf(`"page"`));
 });
 
 test("downloads project bundle asset files into local project bundle", async () => {
