@@ -22,12 +22,18 @@ import type { BuildPatchTransaction } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
-import { importProjectDataInputSchema } from "@webstudio-is/api-contract";
 import {
-  loadPublishedProjectDataByBuildId,
-  loadPublishedProjectDataByProjectId,
+  checkProjectBuildPermissionInputSchema,
+  importProjectBundleInputSchema,
+} from "@webstudio-is/bundle";
+import {
+  loadPublishedProjectBundleByBuildId,
+  loadPublishedProjectBundleByProjectId,
 } from "~/shared/db";
-import { importSyncedProjectData } from "./project-data-import.server";
+import {
+  assertProjectBuildPermit,
+  importPublishedProjectBundle,
+} from "./project-bundle-import.server";
 
 const patchEntryInput = z.object({
   seq: z.number().optional(),
@@ -133,22 +139,28 @@ export const buildRouter = router({
       return await loadBuilderDataByProjectId(input.projectId, ctx);
     }),
 
-  loadProjectDataByBuildId: procedure
+  loadProjectBundleByBuildId: procedure
     .input(z.object({ buildId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return await loadPublishedProjectDataByBuildId(input.buildId, ctx);
+      return await loadPublishedProjectBundleByBuildId(input.buildId, ctx);
     }),
 
-  loadProjectDataByProjectId: procedure
+  loadProjectBundleByProjectId: procedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return await loadPublishedProjectDataByProjectId(input.projectId, ctx);
+      return await loadPublishedProjectBundleByProjectId(input.projectId, ctx);
     }),
 
-  importProjectData: procedure
-    .input(importProjectDataInputSchema)
+  checkProjectBuildPermission: procedure
+    .input(checkProjectBuildPermissionInputSchema)
+    .query(async ({ ctx, input }) => {
+      await assertProjectBuildPermit({ ctx, projectId: input.projectId });
+    }),
+
+  importProjectBundle: procedure
+    .input(importProjectBundleInputSchema)
     .mutation(async ({ ctx, input }) => {
-      return await importSyncedProjectData({
+      return await importPublishedProjectBundle({
         ctx,
         assetFiles: input.assetFiles,
         data: input.data,

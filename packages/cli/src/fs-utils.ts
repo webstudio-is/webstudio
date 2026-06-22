@@ -27,7 +27,7 @@ export const createFileIfNotExists = async (
   try {
     await access(filePath, constants.F_OK);
   } catch {
-    await writeFile(filePath, content || "", "utf8");
+    await writeFile(filePath, content ?? "", "utf8");
   }
 };
 
@@ -44,6 +44,9 @@ export const loadJSONFile = async <T>(filePath: string): Promise<T | null> => {
     const content = await readFile(filePath, "utf8");
     return JSON.parse(content) as T;
   } catch (error) {
-    return null;
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
   }
 };

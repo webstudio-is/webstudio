@@ -1,20 +1,21 @@
 import { Buffer } from "node:buffer";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
-  syncDataVersion,
-  type SyncedProjectData,
-} from "@webstudio-is/api-contract";
+  projectBundleVersion,
+  type PublishedProjectBundle,
+} from "@webstudio-is/bundle";
 import {
   __testing__,
-  importSyncedProjectData,
-} from "./project-data-import.server";
+  importPublishedProjectBundle,
+} from "./project-bundle-import.server";
 
 const createData = (
-  overrides: Partial<SyncedProjectData> = {}
-): SyncedProjectData => ({
-  syncDataVersion,
+  overrides: Partial<PublishedProjectBundle> = {}
+): PublishedProjectBundle => ({
+  projectBundleVersion,
   origin: "https://example.com",
   projectDomain: "example",
+  projectTitle: "Example",
   page: {
     id: "home",
     name: "Home",
@@ -198,10 +199,26 @@ describe("build import helpers", () => {
 
   test("rejects missing synced data version with compatibility message", () => {
     expect(() =>
-      __testing__.assertSyncDataVersion(
-        {} as Pick<SyncedProjectData, "syncDataVersion">
+      __testing__.assertProjectBundleVersion(
+        {} as Pick<PublishedProjectBundle, "projectBundleVersion">
       )
     ).toThrow("Sync with a compatible API/CLI version");
+  });
+
+  test("rejects missing build permission", async () => {
+    hasProjectPermit.mockResolvedValue(false);
+
+    await expect(
+      __testing__.assertProjectBuildPermit({
+        ctx: {} as never,
+        hasProjectPermit,
+        projectId: "target-project",
+      })
+    ).rejects.toThrow("You don't have permission to build this project.");
+    expect(hasProjectPermit).toHaveBeenCalledWith(
+      { projectId: "target-project", permit: "build" },
+      {}
+    );
   });
 
   test("serializes imported build data into compact build columns", () => {
@@ -305,7 +322,7 @@ describe("build import helpers", () => {
       calls.push("asset-files-upload");
     });
 
-    await importSyncedProjectData(
+    await importPublishedProjectBundle(
       {
         assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
         ctx: {
@@ -327,7 +344,6 @@ describe("build import helpers", () => {
     expect(calls).toEqual([
       "files-select",
       "asset-files-upload",
-      "files-restore",
       "files-insert",
       "build-update",
       "project-preview-reset",
@@ -340,14 +356,14 @@ describe("build import helpers", () => {
   test("allows importing data without version when check is explicitly ignored", async () => {
     const calls: string[] = [];
 
-    await importSyncedProjectData(
+    await importPublishedProjectBundle(
       {
         ctx: {
           postgrest: {
             client: createPostgrestClient(calls),
           },
         } as never,
-        data: createData({ assets: [], syncDataVersion: undefined }),
+        data: createData({ assets: [], projectBundleVersion: undefined }),
         ignoreVersionCheck: true,
         projectId: "target-project",
       },
@@ -364,7 +380,7 @@ describe("build import helpers", () => {
 
   test("rejects import with assets when asset files are missing", async () => {
     await expect(
-      importSyncedProjectData(
+      importPublishedProjectBundle(
         {
           ctx: {
             postgrest: {
@@ -390,7 +406,7 @@ describe("build import helpers", () => {
       calls.push("asset-files-upload");
     });
 
-    await importSyncedProjectData(
+    await importPublishedProjectBundle(
       {
         assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
         ctx: {
@@ -420,14 +436,63 @@ describe("build import helpers", () => {
       calls.indexOf("asset-files-upload")
     );
     expect(calls.indexOf("asset-files-upload")).toBeLessThan(
-      calls.indexOf("files-restore")
+      calls.indexOf("files-insert")
     );
+  });
+
+  test("loads existing imported file rows by global file name", async () => {
+    const calls: string[] = [];
+
+    await expect(
+      __testing__.loadExistingImportedAssetFileNames({
+        assets: createData().assets,
+        ctx: {
+          postgrest: {
+            client: createPostgrestClient(calls, {
+              existingFileNames: ["image.png"],
+            }),
+          },
+        } as never,
+      })
+    ).resolves.toEqual(new Set(["image.png"]));
+
+    expect(calls).toEqual(["files-select"]);
+  });
+
+  test("restores imported file rows by global file name", async () => {
+    const calls: string[] = [];
+    uploadImportedAssetFiles.mockImplementation(async () => {
+      calls.push("asset-files-upload");
+    });
+
+    await importPublishedProjectBundle(
+      {
+        assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
+        ctx: {
+          postgrest: {
+            client: createPostgrestClient(calls, {
+              existingFileNames: ["image.png"],
+            }),
+          },
+        } as never,
+        data: createData(),
+        projectId: "target-project",
+      },
+      {
+        createAssetClient,
+        hasProjectPermit,
+        loadDevBuildByProjectId,
+        uploadImportedAssetFiles,
+      }
+    );
+
+    expect(calls).toContain("files-restore");
   });
 
   test("uploads imported asset files even when file rows already exist", async () => {
     const calls: string[] = [];
 
-    await importSyncedProjectData(
+    await importPublishedProjectBundle(
       {
         assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
         ctx: {

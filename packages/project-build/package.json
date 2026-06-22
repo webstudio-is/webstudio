@@ -12,6 +12,11 @@
       "webstudio": "./src/index.ts",
       "partykit": "./src/index.ts"
     },
+    "./schema": {
+      "webstudio": "./src/schema.ts",
+      "import": "./src/schema.ts",
+      "default": "./src/schema.ts"
+    },
     "./index.server": {
       "webstudio": "./src/index.server.ts"
     },

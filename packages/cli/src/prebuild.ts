@@ -42,7 +42,7 @@ import {
 } from "@webstudio-is/sdk";
 import { createWsAuthResources } from "@webstudio-is/wsauth";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
-import type { SyncedProjectData } from "@webstudio-is/api-contract";
+import { publishedProjectBundleSchema } from "@webstudio-is/bundle";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
@@ -283,15 +283,23 @@ export const prebuild = async (options: {
 
   const { assetBaseUrl } = constants;
 
-  const siteData = await loadJSONFile<
-    SyncedProjectData & { user?: { email: string | null } }
-  >(LOCAL_DATA_FILE);
+  const loadedSiteData = await loadJSONFile<unknown>(LOCAL_DATA_FILE);
 
-  if (siteData === null) {
+  if (loadedSiteData === null) {
     throw new Error(
-      `Project data is missing, please make sure you the project is synced.`
+      `Project bundle is missing, please make sure the project is synced.`
     );
   }
+  const parsedSiteData = publishedProjectBundleSchema.safeParse(loadedSiteData);
+  if (parsedSiteData.success === false) {
+    const issues = parsedSiteData.error.issues
+      .map((issue) => issue.path.join(".") || issue.message)
+      .join(", ");
+    throw new Error(
+      `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${issues}`
+    );
+  }
+  const siteData = parsedSiteData.data;
 
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
@@ -437,7 +445,7 @@ export const prebuild = async (options: {
     const assetOrigin = siteData.origin;
 
     if (!assetOrigin) {
-      console.warn("Warning: Asset origin is not defined in project data.");
+      console.warn("Warning: Asset origin is not defined in project bundle.");
     }
   }
 

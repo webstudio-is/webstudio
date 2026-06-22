@@ -12,11 +12,14 @@ import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { serializeStyles } from "@webstudio-is/project-build/styles.server";
 import { serializeStyleSourceSelections } from "@webstudio-is/project-build/style-source-selections.server";
 import {
+  isAssetFileName,
   isAssetFileDataString,
-  syncDataVersion,
+  getProjectBundleVersionMismatchMessage,
+  projectBundleVersion,
   type AssetFileData,
-  type SyncedProjectData,
-} from "@webstudio-is/api-contract";
+  type PublishedProjectBundle,
+  type ProjectBundle,
+} from "@webstudio-is/bundle";
 import { createAssetClient } from "~/shared/asset-client";
 import {
   getHomePage,
@@ -32,12 +35,33 @@ import {
 const toMap = <Key extends string, Value>(entries: [Key, Value][]) =>
   new Map<Key, Value>(entries);
 
-const assertSyncDataVersion = (
-  data: Pick<SyncedProjectData, "syncDataVersion">
+const assertProjectBundleVersion = (
+  data: Pick<PublishedProjectBundle, "projectBundleVersion">
 ) => {
-  if (data.syncDataVersion !== syncDataVersion) {
+  if (data.projectBundleVersion !== projectBundleVersion) {
     throw new Error(
-      `Synced project data format is incompatible. Expected version ${syncDataVersion}, received ${data.syncDataVersion ?? "missing"}. Sync with a compatible API/CLI version and retry, or explicitly ignore the version check if you know the source and target data formats are compatible.`
+      getProjectBundleVersionMismatchMessage({
+        ignoreVersionCheckHint:
+          "explicitly ignore the version check if you know the source and target data formats are compatible",
+        receivedVersion: data.projectBundleVersion,
+      })
+    );
+  }
+};
+
+export const assertProjectBuildPermit = async ({
+  ctx,
+  hasProjectPermit = authorizeProject.hasProjectPermit,
+  projectId,
+}: {
+  ctx: AppContext;
+  hasProjectPermit?: typeof authorizeProject.hasProjectPermit;
+  projectId: string;
+}) => {
+  const canBuild = await hasProjectPermit({ projectId, permit: "build" }, ctx);
+  if (canBuild === false) {
+    throw new AuthorizationError(
+      "You don't have permission to build this project."
     );
   }
 };
@@ -48,7 +72,7 @@ const createBuildImportUpdate = ({
   updatedAt,
   version,
 }: {
-  data: SyncedProjectData;
+  data: ProjectBundle;
   lastTransactionId: string;
   updatedAt: string;
   version: number;
@@ -69,7 +93,7 @@ const createBuildImportUpdate = ({
   instances: serializeData<Instance>(toMap(data.build.instances)),
 });
 
-const getImportedPreviewImageAssetId = (data: SyncedProjectData) => {
+const getImportedPreviewImageAssetId = (data: ProjectBundle) => {
   const socialImageAssetId = getHomePage(migratePages(data.build.pages)).meta
     .socialImageAssetId;
   if (socialImageAssetId === undefined) {
@@ -123,13 +147,7 @@ const assertImportedAssetNames = (assets: Asset[]) => {
     if (assetIds.has(asset.id)) {
       throw new Error(`Imported asset id is duplicated: ${asset.id}`);
     }
-    if (
-      asset.name === "" ||
-      asset.name === "." ||
-      asset.name === ".." ||
-      asset.name.includes("/") ||
-      asset.name.includes("\\")
-    ) {
+    if (isAssetFileName(asset.name) === false) {
       throw new Error(`Imported asset name is invalid: ${asset.name}`);
     }
     if (assetNames.has(asset.name)) {
@@ -243,33 +261,31 @@ const ensureImportedAssetFiles = async ({
   existingFileNames: Set<string>;
   projectId: string;
 }) => {
-  const assetsByFileName = new Map(assets.map((asset) => [asset.name, asset]));
-  if (assetsByFileName.size === 0) {
+  if (assets.length === 0) {
     return;
   }
 
-  for (const fileName of existingFileNames) {
-    assetsByFileName.delete(fileName);
+  const missingAssets = assets.filter(
+    (asset) => existingFileNames.has(asset.name) === false
+  );
+
+  if (existingFileNames.size > 0) {
+    const restoreFiles = await ctx.postgrest.client
+      .from("File")
+      .update({ isDeleted: false })
+      .in("name", Array.from(existingFileNames));
+    if (restoreFiles.error) {
+      throw restoreFiles.error;
+    }
   }
 
-  const restoreFiles = await ctx.postgrest.client
-    .from("File")
-    .update({ isDeleted: false })
-    .in(
-      "name",
-      assets.map((asset) => asset.name)
-    );
-  if (restoreFiles.error) {
-    throw restoreFiles.error;
-  }
-
-  if (assetsByFileName.size === 0) {
+  if (missingAssets.length === 0) {
     return;
   }
 
   const insertedFiles = await ctx.postgrest.client.from("File").insert(
     createImportedFileRows({
-      assets: Array.from(assetsByFileName.values()),
+      assets: missingAssets,
       projectId,
     })
   );
@@ -348,7 +364,7 @@ const updateProjectPreviewImage = async ({
   }
 };
 
-export const importSyncedProjectData = async (
+export const importPublishedProjectBundle = async (
   {
     assetFiles,
     ctx,
@@ -358,7 +374,7 @@ export const importSyncedProjectData = async (
   }: {
     assetFiles?: AssetFileData[];
     ctx: AppContext;
-    data: SyncedProjectData;
+    data: PublishedProjectBundle;
     ignoreVersionCheck?: boolean;
     projectId: string;
   },
@@ -370,18 +386,14 @@ export const importSyncedProjectData = async (
   }
 ) => {
   if (ignoreVersionCheck === false) {
-    assertSyncDataVersion(data);
+    assertProjectBundleVersion(data);
   }
 
-  const canBuild = await dependencies.hasProjectPermit(
-    { projectId, permit: "build" },
-    ctx
-  );
-  if (canBuild === false) {
-    throw new AuthorizationError(
-      "You don't have permission to build this project."
-    );
-  }
+  await assertProjectBuildPermit({
+    ctx,
+    hasProjectPermit: dependencies.hasProjectPermit,
+    projectId,
+  });
 
   const build = await dependencies.loadDevBuildByProjectId(ctx, projectId);
   const nextVersion = build.version + 1;
@@ -429,7 +441,7 @@ export const importSyncedProjectData = async (
     throw update.error;
   }
   if (update.count !== 1) {
-    throw new Error("Unable to import project data because build changed.");
+    throw new Error("Unable to import project bundle because build changed.");
   }
 
   await replaceProjectAssetRows({ assets: data.assets, ctx, projectId });
@@ -444,7 +456,8 @@ export const importSyncedProjectData = async (
 };
 
 export const __testing__ = {
-  assertSyncDataVersion,
+  assertProjectBuildPermit,
+  assertProjectBundleVersion,
   createImportedFileRows,
   createImportedAssetRows,
   createBuildImportUpdate,

@@ -1,8 +1,13 @@
 import { executeExpression } from "./expression";
-import type { Folder, Page, PageTemplate, Pages } from "./schema/pages";
+import {
+  ROOT_FOLDER_ID,
+  isRootFolder,
+  type Folder,
+  type Page,
+  type PageTemplate,
+  type Pages,
+} from "./schema/pages";
 import { isPathnamePattern } from "./url-pattern";
-
-export const ROOT_FOLDER_ID = "root";
 
 /**
  * Narrows Page | PageTemplate to Page.
@@ -19,11 +24,7 @@ export const isPageTemplate = (
 ): page is PageTemplate & { path?: never } =>
   page !== undefined && !("path" in page);
 
-/**
- * Returns true if folder is the root folder.
- */
-export const isRootFolder = ({ id }: { id: Folder["id"] }) =>
-  id === ROOT_FOLDER_ID;
+export { ROOT_FOLDER_ID, isRootFolder };
 
 export const getPageById = (
   pages: Pages,

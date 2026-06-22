@@ -3,10 +3,10 @@ import { cwd } from "node:process";
 import { join } from "node:path";
 import pc from "picocolors";
 import { spinner } from "@clack/prompts";
-import type { SyncedProjectData } from "@webstudio-is/api-contract";
+import type { PublishedProjectBundle } from "@webstudio-is/bundle";
 import {
-  loadProjectDataByBuildId,
-  loadProjectDataByProjectId,
+  loadProjectBundleByBuildId,
+  loadProjectBundleByProjectId,
 } from "@webstudio-is/http-client";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import {
@@ -28,8 +28,8 @@ type SyncDependencies = {
   createFileIfNotExists: typeof createFileIfNotExists;
   downloadAssetFiles: typeof downloadAssetFiles;
   isFileExists: typeof isFileExists;
-  loadProjectDataByBuildId: typeof loadProjectDataByBuildId;
-  loadProjectDataByProjectId: typeof loadProjectDataByProjectId;
+  loadProjectBundleByBuildId: typeof loadProjectBundleByBuildId;
+  loadProjectBundleByProjectId: typeof loadProjectBundleByProjectId;
   readFile: typeof readFile;
   spinner: typeof spinner;
   writeFile: typeof writeFile;
@@ -39,8 +39,8 @@ const defaultDependencies: SyncDependencies = {
   createFileIfNotExists,
   downloadAssetFiles,
   isFileExists,
-  loadProjectDataByBuildId,
-  loadProjectDataByProjectId,
+  loadProjectBundleByBuildId,
+  loadProjectBundleByProjectId,
   readFile,
   spinner,
   writeFile,
@@ -69,19 +69,19 @@ export const sync = async (
 ) => {
   const syncing = dependencies.spinner();
 
-  let project: SyncedProjectData | undefined;
-  syncing.start(`Synchronizing project data`);
+  let project: PublishedProjectBundle | undefined;
+  syncing.start(`Synchronizing project bundle`);
 
   if (
     options.buildId !== undefined &&
     options.origin !== undefined &&
     options.authToken !== undefined
   ) {
-    syncing.message(`Synchronizing project data from ${options.origin}`);
+    syncing.message(`Synchronizing project bundle from ${options.origin}`);
     try {
-      project = await dependencies.loadProjectDataByBuildId({
+      project = await dependencies.loadProjectBundleByBuildId({
         buildId: options.buildId,
-        seviceToken: options.authToken,
+        serviceToken: options.authToken,
         origin: options.origin,
         headers: apiCompatibilityHeaders,
       });
@@ -90,7 +90,7 @@ export const sync = async (
       const compatibilityMessage = stopSpinnerWithError(
         syncing,
         error,
-        "Unable to synchronize project data",
+        "Unable to synchronize project bundle",
         "sync"
       );
       if (compatibilityMessage !== undefined) {
@@ -131,18 +131,18 @@ export const sync = async (
     }
 
     const { origin, token } = projectConfig;
-    syncing.message(`Synchronizing project data from ${origin}`);
+    syncing.message(`Synchronizing project bundle from ${origin}`);
 
     try {
       project =
         options.buildId !== undefined
-          ? await dependencies.loadProjectDataByBuildId({
+          ? await dependencies.loadProjectBundleByBuildId({
               buildId: options.buildId,
               authToken: token,
               origin,
               headers: apiCompatibilityHeaders,
             })
-          : await dependencies.loadProjectDataByProjectId({
+          : await dependencies.loadProjectBundleByProjectId({
               projectId: localConfig.projectId,
               authToken: token,
               origin,
@@ -154,7 +154,7 @@ export const sync = async (
       const compatibilityMessage = stopSpinnerWithError(
         syncing,
         error,
-        "Unable to synchronize project data",
+        "Unable to synchronize project bundle",
         "sync"
       );
       if (compatibilityMessage !== undefined) {
@@ -166,12 +166,12 @@ export const sync = async (
   }
 
   // Check that project defined
-  project satisfies SyncedProjectData;
+  project satisfies PublishedProjectBundle;
 
   if (project.assets.length > 0) {
     syncing.message(`Downloading ${project.assets.length} asset files`);
     if (project.origin === undefined) {
-      syncing.stop("Asset origin is missing from synchronized project data", 2);
+      syncing.stop("Asset origin is missing from project bundle", 2);
       throw new HandledCliError();
     }
     try {
@@ -198,5 +198,5 @@ export const sync = async (
     "utf8"
   );
 
-  syncing.stop("Project data synchronized successfully");
+  syncing.stop("Project bundle synchronized successfully");
 };

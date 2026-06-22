@@ -12,6 +12,7 @@ const MIN_TITLE_LENGTH = 2;
 
 export const PageId = z.string();
 export const FolderId = z.string();
+export const ROOT_FOLDER_ID = "root";
 
 export const FolderName = z
   .string()
@@ -32,6 +33,8 @@ export const Folder = z.object({
 });
 
 export type Folder = z.infer<typeof Folder>;
+export const isRootFolder = ({ id }: { id: Folder["id"] }) =>
+  id === ROOT_FOLDER_ID;
 
 export const PageName = z
   .string()
@@ -194,7 +197,7 @@ export const PagePath = DefaultPagePage.refine(
   "Must start with a / or a full URL e.g. https://website.org"
 );
 
-const Page = z.object({
+export const Page = z.object({
   ...commonPageFields,
   path: z.union([HomePagePath, PagePath]),
 });
@@ -210,7 +213,7 @@ export const PageTemplate = z.object({
 
 export type PageTemplate = z.infer<typeof PageTemplate>;
 
-const ProjectMeta = z.object({
+export const ProjectMeta = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   siteName: z.string().optional(),
   contactEmail: z.string().optional(),

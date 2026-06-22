@@ -9,6 +9,7 @@ import {
 } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { projectBundleVersion } from "@webstudio-is/bundle";
 import { generateRedirectsModule, prebuild } from "./prebuild";
 
 const originalCwd = process.cwd();
@@ -47,6 +48,7 @@ const createSiteData = (
       [
         string,
         {
+          type?: "instance";
           id: string;
           component: string;
           tag?: string;
@@ -70,14 +72,19 @@ const createSiteData = (
   ];
 
   return {
+    projectBundleVersion,
     origin: "https://assets.example",
     projectDomain: "example.com",
+    projectTitle: "Example",
     user: {
       email: "owner@example.com",
     },
+    page: pages[0],
+    pages,
     assets: [
       {
         id: "asset-image",
+        projectId: "project-id",
         name: "image.png",
         type: "image",
         format: "png",
@@ -91,7 +98,9 @@ const createSiteData = (
       },
     ],
     build: {
+      id: "build-id",
       projectId: "project-id",
+      version: 1,
       createdAt: "2024-01-01T00:00:00.000Z",
       updatedAt: "2024-01-02T00:00:00.000Z",
       pages: {
@@ -127,18 +136,21 @@ const createSiteData = (
         ],
       },
       props: [],
-      instances: overrides.instances ?? [
-        [
-          "root",
-          {
-            id: "root",
-            component: "Box",
-            children: [],
-          },
-        ],
-      ],
+      instances: (
+        overrides.instances ?? [
+          [
+            "root",
+            {
+              id: "root",
+              component: "Box",
+              children: [],
+            },
+          ],
+        ]
+      ).map(([id, instance]) => [id, { type: "instance", ...instance }]),
       dataSources: [],
       resources: [],
+      styleSources: [],
       styleSourceSelections: [],
       styles: [],
       breakpoints: [],
@@ -607,7 +619,7 @@ describe("prebuild", () => {
     });
   });
 
-  test("throws when project data is missing", async () => {
+  test("throws when project bundle is missing", async () => {
     await rm(".webstudio/data.json", { force: true });
 
     await expect(
@@ -615,6 +627,17 @@ describe("prebuild", () => {
         assets: false,
         template: ["defaults"],
       })
-    ).rejects.toThrow("Project data is missing");
+    ).rejects.toThrow("Project bundle is missing");
+  });
+
+  test("throws when project bundle is invalid", async () => {
+    await writeFile(".webstudio/data.json", JSON.stringify({ assets: [] }));
+
+    await expect(
+      prebuild({
+        assets: false,
+        template: ["defaults"],
+      })
+    ).rejects.toThrow("Project bundle is invalid");
   });
 });

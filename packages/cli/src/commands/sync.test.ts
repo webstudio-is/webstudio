@@ -2,7 +2,10 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import type { SyncedProjectData } from "@webstudio-is/api-contract";
+import {
+  projectBundleVersion,
+  type PublishedProjectBundle,
+} from "@webstudio-is/bundle";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import { sync } from "./sync";
 
@@ -13,32 +16,71 @@ const indicator = {
   message: vi.fn(),
   stop: vi.fn(),
 };
-const loadProjectDataByBuildId = vi.fn();
-const loadProjectDataByProjectId = vi.fn();
+const loadProjectBundleByBuildId = vi.fn();
+const loadProjectBundleByProjectId = vi.fn();
 const downloadAssetFiles = vi.fn();
 const dependencies = {
   createFileIfNotExists,
   downloadAssetFiles,
   isFileExists,
-  loadProjectDataByBuildId,
-  loadProjectDataByProjectId,
+  loadProjectBundleByBuildId,
+  loadProjectBundleByProjectId,
   readFile,
   spinner: () => indicator,
   writeFile,
 };
 
-const createProjectData = (data: Partial<SyncedProjectData> = {}) =>
+const createProjectBundle = (data: Partial<PublishedProjectBundle> = {}) =>
   ({
-    build: { id: "build-1" },
+    projectBundleVersion,
+    build: {
+      id: "build-1",
+      projectId: "project-1",
+      version: 1,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      pages: {
+        homePageId: "home",
+        rootFolderId: "root-folder",
+        pages: [],
+        folders: [
+          {
+            id: "root-folder",
+            name: "Root",
+            slug: "",
+            children: [],
+          },
+        ],
+      },
+      breakpoints: [],
+      styles: [],
+      styleSources: [],
+      styleSourceSelections: [],
+      props: [],
+      instances: [],
+      dataSources: [],
+      resources: [],
+    },
+    page: {
+      id: "home",
+      name: "Home",
+      path: "",
+      title: "Home",
+      meta: {},
+      rootInstanceId: "root",
+    },
+    pages: [],
     assets: [],
+    projectDomain: "example",
+    projectTitle: "Example",
     ...data,
-  }) as SyncedProjectData;
+  }) satisfies PublishedProjectBundle;
 
 beforeEach(async () => {
   tempDir = await mkdtemp(join(tmpdir(), "webstudio-sync-"));
   process.chdir(tempDir);
-  loadProjectDataByBuildId.mockResolvedValue(createProjectData());
-  loadProjectDataByProjectId.mockResolvedValue(createProjectData());
+  loadProjectBundleByBuildId.mockResolvedValue(createProjectBundle());
+  loadProjectBundleByProjectId.mockResolvedValue(createProjectBundle());
   downloadAssetFiles.mockResolvedValue(undefined);
   indicator.start.mockClear();
   indicator.message.mockClear();
@@ -51,7 +93,7 @@ afterEach(async () => {
   vi.clearAllMocks();
 });
 
-test("preserves synced data without stamping a missing version", async () => {
+test("preserves synchronized data version from the API", async () => {
   await sync(
     {
       authToken: "token-1",
@@ -66,14 +108,14 @@ test("preserves synced data without stamping a missing version", async () => {
   expect(data).toMatchObject({
     build: { id: "build-1" },
     origin: "https://example.com",
+    projectBundleVersion,
   });
-  expect(data.syncDataVersion).toBeUndefined();
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Project data synchronized successfully"
+    "Project bundle synchronized successfully"
   );
 });
 
-test("downloads synchronized asset files into local project data", async () => {
+test("downloads project bundle asset files into local project bundle", async () => {
   const assets = [
     {
       id: "asset-1",
@@ -85,8 +127,8 @@ test("downloads synchronized asset files into local project data", async () => {
       size: 100,
       meta: { width: 100, height: 100 },
     },
-  ] as SyncedProjectData["assets"];
-  loadProjectDataByBuildId.mockResolvedValue(createProjectData({ assets }));
+  ] satisfies PublishedProjectBundle["assets"];
+  loadProjectBundleByBuildId.mockResolvedValue(createProjectBundle({ assets }));
 
   await sync(
     {
@@ -116,8 +158,8 @@ test("does not write local data when synchronized asset download fails", async (
       size: 100,
       meta: { width: 100, height: 100 },
     },
-  ] as SyncedProjectData["assets"];
-  loadProjectDataByBuildId.mockResolvedValue(createProjectData({ assets }));
+  ] satisfies PublishedProjectBundle["assets"];
+  loadProjectBundleByBuildId.mockResolvedValue(createProjectBundle({ assets }));
   downloadAssetFiles.mockRejectedValue(new Error("download failed"));
 
   await expect(

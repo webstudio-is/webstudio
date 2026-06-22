@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import type { Asset } from "@webstudio-is/sdk";
@@ -32,6 +39,9 @@ afterEach(async () => {
 
 test("rejects asset paths outside the asset directory", () => {
   expect(() => getLocalAssetPath("../image.png")).toThrow(
+    "Asset path escapes .webstudio/assets"
+  );
+  expect(() => getLocalAssetPath("folder\\image.png")).toThrow(
     "Asset path escapes .webstudio/assets"
   );
 });
@@ -70,4 +80,45 @@ test("downloads asset files when they are missing from the synced asset cache", 
   expect(fetch).toHaveBeenCalledWith(
     "https://example.com/cgi/image/image.png?format=raw"
   );
+});
+
+test("removes temporary files when asset download fails", async () => {
+  const fetch = vi.fn(
+    async () =>
+      new Response(
+        new ReadableStream({
+          pull(controller) {
+            controller.error(new Error("download failed"));
+          },
+        })
+      )
+  );
+  globalThis.fetch = fetch;
+
+  await expect(
+    materializeAssetFile({
+      asset,
+      origin: "https://example.com",
+      targetAssetsDirectory: "public/assets",
+    })
+  ).rejects.toThrow("download failed");
+
+  await expect(access("public/assets/image.png")).rejects.toThrow();
+  await expect(access("public/assets/image.png.tmp")).rejects.toThrow();
+});
+
+test("fails clearly when asset download response has no body", async () => {
+  const fetch = vi.fn(async () => new Response(null));
+  globalThis.fetch = fetch;
+
+  await expect(
+    materializeAssetFile({
+      asset,
+      origin: "https://example.com",
+      targetAssetsDirectory: "public/assets",
+    })
+  ).rejects.toThrow("response body is empty");
+
+  await expect(access("public/assets/image.png")).rejects.toThrow();
+  await expect(access("public/assets/image.png.tmp")).rejects.toThrow();
 });

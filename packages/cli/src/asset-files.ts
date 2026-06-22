@@ -1,11 +1,11 @@
 import { constants, createWriteStream } from "node:fs";
-import { access, copyFile, readFile, rename, rm } from "node:fs/promises";
+import { copyFile, readFile, rename, rm } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import { pipeline } from "node:stream/promises";
 import pLimit from "p-limit";
 import { getAssetUrl, type Asset } from "@webstudio-is/sdk";
-import { createFolderIfNotExists } from "./fs-utils";
-import type { AssetFileData } from "@webstudio-is/api-contract";
+import { createFolderIfNotExists, isFileExists } from "./fs-utils";
+import { isAssetFileName, type AssetFileData } from "@webstudio-is/bundle";
 
 export const LOCAL_ASSETS_DIR = ".webstudio/assets";
 
@@ -39,19 +39,13 @@ const runAssetTasks = async ({
   );
 };
 
-const fileExists = async (filePath: string) => {
-  try {
-    await access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 export const getLocalAssetPath = (
   assetName: string,
   assetsDirectory = LOCAL_ASSETS_DIR
 ) => {
+  if (isAssetFileName(assetName) === false) {
+    throw new Error(`Asset path escapes ${assetsDirectory}: ${assetName}`);
+  }
   const basePath = resolve(assetsDirectory);
   const assetPath = resolve(basePath, assetName);
   if (assetPath !== basePath && assetPath.startsWith(`${basePath}${sep}`)) {
@@ -63,19 +57,22 @@ export const getLocalAssetPath = (
 const downloadUrlToFile = async (url: string, filePath: string) => {
   const tempFilePath = `${filePath}.tmp`;
 
-  if (await fileExists(filePath)) {
+  if (await isFileExists(filePath)) {
     return;
   }
 
   await createFolderIfNotExists(dirname(filePath));
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
-  }
-
-  const writableStream = createWriteStream(tempFilePath);
   try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+    }
+    if (response.body === null) {
+      throw new Error(`Failed to fetch ${url}: response body is empty`);
+    }
+
+    const writableStream = createWriteStream(tempFilePath);
     await pipeline(
       response.body as unknown as NodeJS.ReadableStream,
       writableStream
@@ -135,14 +132,14 @@ export const materializeAssetFile = async ({
 }) => {
   const targetPath = getLocalAssetPath(asset.name, targetAssetsDirectory);
 
-  if (await fileExists(targetPath)) {
+  if (await isFileExists(targetPath)) {
     return;
   }
 
   await createFolderIfNotExists(dirname(targetPath));
 
   const sourcePath = getLocalAssetPath(asset.name, sourceAssetsDirectory);
-  if (await fileExists(sourcePath)) {
+  if (await isFileExists(sourcePath)) {
     try {
       await copyFile(sourcePath, targetPath, constants.COPYFILE_FICLONE);
     } catch {

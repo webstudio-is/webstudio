@@ -61,7 +61,7 @@ export const main = async () => {
     cmd.command(["sync"], "Sync your project", syncOptions, sync);
     cmd.command(
       ["import"],
-      "Import synchronized project data into another project",
+      "Import project bundle into another project",
       importOptions,
       importProject
     );

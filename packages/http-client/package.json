@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@trpc/client": "^10.45.2",
-    "@webstudio-is/api-contract": "workspace:*"
+    "@webstudio-is/bundle": "workspace:*"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
