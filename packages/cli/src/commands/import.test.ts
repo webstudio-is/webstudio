@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import makeCLI from "yargs";
 import { createApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
-import { bundleVersion } from "@webstudio-is/bundle";
+import { bundleVersion } from "@webstudio-is/protocol";
 import {
   createImageAssetFixture,
   createPublishedProjectBundleFixture,
-} from "@webstudio-is/bundle/fixtures";
+} from "@webstudio-is/protocol/fixtures";
 import { loadJSONFile } from "../fs-utils";
 import { loadAssetFiles } from "../asset-files";
 import {

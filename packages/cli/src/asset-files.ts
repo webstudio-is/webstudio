@@ -5,7 +5,7 @@ import { pipeline } from "node:stream/promises";
 import pLimit from "p-limit";
 import { getAssetUrl, type Asset } from "@webstudio-is/sdk";
 import { createFolderIfNotExists, isFileExists } from "./fs-utils";
-import { isAssetFileName, type AssetFileData } from "@webstudio-is/bundle";
+import { isAssetFileName, type AssetFileData } from "@webstudio-is/protocol";
 
 export const LOCAL_ASSETS_DIR = ".webstudio/assets";
 

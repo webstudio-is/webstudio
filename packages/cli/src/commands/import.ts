@@ -6,7 +6,7 @@ import {
   getBundleVersionMismatchMessage,
   publishedProjectBundleSchema,
   bundleVersion,
-} from "@webstudio-is/bundle";
+} from "@webstudio-is/protocol";
 import {
   checkProjectBuildPermission,
   importProjectBundle,

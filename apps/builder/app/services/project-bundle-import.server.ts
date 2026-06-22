@@ -19,7 +19,7 @@ import {
   type AssetFileData,
   type PublishedProjectBundle,
   type ProjectBundle,
-} from "@webstudio-is/bundle";
+} from "@webstudio-is/protocol";
 import { createAssetClient } from "~/shared/asset-client";
 import {
   getHomePage,

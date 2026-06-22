@@ -3,7 +3,7 @@ import { isDeepStrictEqual } from "node:util";
 import { getAllPages, getPagePath, type Pages } from "@webstudio-is/sdk";
 import { createWsAuthResources } from "@webstudio-is/wsauth";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
-import type { PublishedProjectBundle } from "@webstudio-is/bundle";
+import type { PublishedProjectBundle } from "@webstudio-is/protocol";
 
 export const LOCAL_AUTH_FILE = ".webstudio/auth.json";
 

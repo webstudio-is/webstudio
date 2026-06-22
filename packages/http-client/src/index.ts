@@ -5,17 +5,17 @@ import {
   type AssetFileData,
   type ImportProjectBundleResult,
   type PublishedProjectBundle,
-} from "@webstudio-is/bundle";
+} from "@webstudio-is/protocol";
 export {
   getBundleVersion,
   isAssetFileDataString,
   bundleVersion,
-} from "@webstudio-is/bundle";
+} from "@webstudio-is/protocol";
 export type {
   AssetFileData,
   PublishedProjectBundle,
   ProjectBundle,
-} from "@webstudio-is/bundle";
+} from "@webstudio-is/protocol";
 
 const createTrpcClient = (
   origin: string,

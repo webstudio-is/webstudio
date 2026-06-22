@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
-import { createPublishedProjectBundleFixture } from "@webstudio-is/bundle/fixtures";
+import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
   assertAuthConfigMatchesBundle,

@@ -25,7 +25,7 @@ import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import {
   checkProjectBuildPermissionInputSchema,
   importProjectBundleInputSchema,
-} from "@webstudio-is/bundle";
+} from "@webstudio-is/protocol";
 import {
   loadPublishedProjectBundleByBuildId,
   loadPublishedProjectBundleByProjectId,

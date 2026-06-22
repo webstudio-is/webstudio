@@ -5,11 +5,11 @@ import { tmpdir } from "node:os";
 import {
   bundleVersion,
   type PublishedProjectBundle,
-} from "@webstudio-is/bundle";
+} from "@webstudio-is/protocol";
 import {
   createImageAssetFixture,
   createPublishedProjectBundleFixture,
-} from "@webstudio-is/bundle/fixtures";
+} from "@webstudio-is/protocol/fixtures";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import { sync } from "./sync";
 

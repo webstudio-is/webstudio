@@ -9,7 +9,7 @@ import {
 } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { bundleVersion } from "@webstudio-is/bundle";
+import { bundleVersion } from "@webstudio-is/protocol";
 import { generateRedirectsModule, prebuild } from "./prebuild";
 
 const originalCwd = process.cwd();

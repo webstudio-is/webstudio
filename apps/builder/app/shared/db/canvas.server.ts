@@ -2,7 +2,7 @@ import {
   bundleVersion,
   type PublishedProjectBundle,
   type ProjectBundle,
-} from "@webstudio-is/bundle";
+} from "@webstudio-is/protocol";
 import { loadBuildById } from "@webstudio-is/project-build/index.server";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";

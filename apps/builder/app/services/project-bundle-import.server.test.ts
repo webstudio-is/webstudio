@@ -4,8 +4,8 @@ import {
   createImageAssetFixture,
   createPageFixture,
   createPublishedProjectBundleFixture,
-} from "@webstudio-is/bundle/fixtures";
-import { type PublishedProjectBundle } from "@webstudio-is/bundle";
+} from "@webstudio-is/protocol/fixtures";
+import { type PublishedProjectBundle } from "@webstudio-is/protocol";
 import {
   __testing__,
   importPublishedProjectBundle,

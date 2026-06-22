@@ -1,7 +1,7 @@
 {
-  "name": "@webstudio-is/bundle",
+  "name": "@webstudio-is/protocol",
   "version": "0.0.0-webstudio-version",
-  "description": "Webstudio project bundle format and transfer contracts",
+  "description": "Webstudio data exchange protocol contracts",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",

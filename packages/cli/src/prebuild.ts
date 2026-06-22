@@ -41,7 +41,7 @@ import {
   toRuntimeAsset,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
-import { publishedProjectBundleSchema } from "@webstudio-is/bundle";
+import { publishedProjectBundleSchema } from "@webstudio-is/protocol";
 import { createAuthConfigResources, LOCAL_AUTH_FILE } from "./auth-config";
 import { LOCAL_DATA_FILE } from "./config";
 import {

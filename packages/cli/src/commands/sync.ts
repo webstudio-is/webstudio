@@ -3,7 +3,7 @@ import { cwd } from "node:process";
 import { join } from "node:path";
 import pc from "picocolors";
 import { spinner } from "@clack/prompts";
-import type { PublishedProjectBundle } from "@webstudio-is/bundle";
+import type { PublishedProjectBundle } from "@webstudio-is/protocol";
 import {
   loadProjectBundleByBuildId,
   loadProjectBundleByProjectId,

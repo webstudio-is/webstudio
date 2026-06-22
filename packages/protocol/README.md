@@ -1,8 +1,8 @@
-# Bundle
+# Protocol
 
-`@webstudio-is/bundle` owns the Webstudio project bundle format.
+`@webstudio-is/protocol` owns Webstudio data exchange protocols.
 
-The bundle is the external export/import artifact used by sync, local
+The project bundle is the external export/import artifact used by sync, local
 `.webstudio/data.json`, project import, transferred asset files, and prebuild.
 This package owns the assembled bundle schemas, transfer RPC payloads, and
 bundle compatibility/version helpers.
