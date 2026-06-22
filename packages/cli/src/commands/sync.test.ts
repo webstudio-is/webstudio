@@ -6,6 +6,10 @@ import {
   projectBundleVersion,
   type PublishedProjectBundle,
 } from "@webstudio-is/bundle";
+import {
+  createImageAssetFixture,
+  createPublishedProjectBundleFixture,
+} from "@webstudio-is/bundle/fixtures";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import { sync } from "./sync";
 
@@ -31,50 +35,7 @@ const dependencies = {
 };
 
 const createProjectBundle = (data: Partial<PublishedProjectBundle> = {}) =>
-  ({
-    projectBundleVersion,
-    build: {
-      id: "build-1",
-      projectId: "project-1",
-      version: 1,
-      createdAt: "2024-01-01T00:00:00.000Z",
-      updatedAt: "2024-01-01T00:00:00.000Z",
-      pages: {
-        homePageId: "home",
-        rootFolderId: "root-folder",
-        pages: [],
-        folders: [
-          {
-            id: "root-folder",
-            name: "Root",
-            slug: "",
-            children: [],
-          },
-        ],
-      },
-      breakpoints: [],
-      styles: [],
-      styleSources: [],
-      styleSourceSelections: [],
-      props: [],
-      instances: [],
-      dataSources: [],
-      resources: [],
-    },
-    page: {
-      id: "home",
-      name: "Home",
-      path: "",
-      title: "Home",
-      meta: {},
-      rootInstanceId: "root",
-    },
-    pages: [],
-    assets: [],
-    projectDomain: "example",
-    projectTitle: "Example",
-    ...data,
-  }) satisfies PublishedProjectBundle;
+  createPublishedProjectBundleFixture(data);
 
 beforeEach(async () => {
   tempDir = await mkdtemp(join(tmpdir(), "webstudio-sync-"));
@@ -116,18 +77,7 @@ test("preserves synchronized data version from the API", async () => {
 });
 
 test("downloads project bundle asset files into local project bundle", async () => {
-  const assets = [
-    {
-      id: "asset-1",
-      name: "image.png",
-      type: "image",
-      projectId: "source-project",
-      createdAt: "2024-01-01T00:00:00.000Z",
-      format: "png",
-      size: 100,
-      meta: { width: 100, height: 100 },
-    },
-  ] satisfies PublishedProjectBundle["assets"];
+  const assets = [createImageAssetFixture()];
   loadProjectBundleByBuildId.mockResolvedValue(createProjectBundle({ assets }));
 
   await sync(
@@ -147,18 +97,7 @@ test("downloads project bundle asset files into local project bundle", async () 
 });
 
 test("does not write local data when synchronized asset download fails", async () => {
-  const assets = [
-    {
-      id: "asset-1",
-      name: "image.png",
-      type: "image",
-      projectId: "source-project",
-      createdAt: "2024-01-01T00:00:00.000Z",
-      format: "png",
-      size: 100,
-      meta: { width: 100, height: 100 },
-    },
-  ] satisfies PublishedProjectBundle["assets"];
+  const assets = [createImageAssetFixture()];
   loadProjectBundleByBuildId.mockResolvedValue(createProjectBundle({ assets }));
   downloadAssetFiles.mockRejectedValue(new Error("download failed"));
 

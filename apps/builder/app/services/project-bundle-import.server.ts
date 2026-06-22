@@ -175,28 +175,25 @@ const assertAssetFilesMatchAssets = ({
   }
 
   const assetNames = new Set(assets.map((asset) => asset.name));
-  const assetFileNames = new Set<string>();
+  const assetFilesByName = new Map<string, AssetFileData>();
 
   for (const assetFile of assetFiles) {
     if (isAssetFileDataString(assetFile.data) === false) {
       throw new Error(`Imported asset file data is invalid: ${assetFile.name}`);
     }
-    if (assetFileNames.has(assetFile.name)) {
+    if (assetFilesByName.has(assetFile.name)) {
       throw new Error(`Imported asset file is duplicated: ${assetFile.name}`);
     }
-    assetFileNames.add(assetFile.name);
-  }
-
-  for (const assetFileName of assetFileNames) {
-    if (assetNames.has(assetFileName) === false) {
+    if (assetNames.has(assetFile.name) === false) {
       throw new Error(
-        `Imported asset file does not exist in data assets: ${assetFileName}`
+        `Imported asset file does not exist in data assets: ${assetFile.name}`
       );
     }
+    assetFilesByName.set(assetFile.name, assetFile);
   }
 
   for (const assetName of assetNames) {
-    if (assetFileNames.has(assetName) === false) {
+    if (assetFilesByName.has(assetName) === false) {
       throw new Error(`Imported asset file is missing: ${assetName}`);
     }
   }

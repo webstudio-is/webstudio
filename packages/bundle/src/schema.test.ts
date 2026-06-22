@@ -9,51 +9,7 @@ import {
   projectBundleVersion,
 } from "./schema";
 import { createContractVersion } from "./contract-version";
-
-const createPublishedProjectBundle = () => ({
-  projectBundleVersion,
-  page: {
-    id: "home",
-    name: "Home",
-    path: "",
-    title: "Home",
-    meta: {},
-    rootInstanceId: "root",
-  },
-  pages: [],
-  assets: [],
-  build: {
-    id: "build",
-    projectId: "project",
-    version: 1,
-    createdAt: "2024-01-01T00:00:00.000Z",
-    updatedAt: "2024-01-01T00:00:00.000Z",
-    pages: {
-      homePageId: "home",
-      rootFolderId: "root-folder",
-      pages: [],
-      folders: [
-        {
-          id: "root-folder",
-          name: "Root",
-          slug: "",
-          children: [],
-        },
-      ],
-    },
-    breakpoints: [],
-    styles: [],
-    styleSources: [],
-    styleSourceSelections: [],
-    props: [],
-    instances: [],
-    dataSources: [],
-    resources: [],
-  },
-  projectDomain: "example",
-  projectTitle: "Example",
-  user: { email: "user@example.com" },
-});
+import { createPublishedProjectBundleFixture } from "./fixtures";
 
 describe("project bundle contract", () => {
   test("validates base64 asset file data", () => {
@@ -116,7 +72,11 @@ describe("project bundle contract", () => {
 
   test("preserves published project metadata", () => {
     expect(
-      publishedProjectBundleSchema.parse(createPublishedProjectBundle())
+      publishedProjectBundleSchema.parse(
+        createPublishedProjectBundleFixture({
+          user: { email: "user@example.com" },
+        })
+      )
     ).toMatchObject({
       projectDomain: "example",
       projectTitle: "Example",
@@ -125,14 +85,14 @@ describe("project bundle contract", () => {
   });
 
   test("requires published project metadata", () => {
-    const data = createPublishedProjectBundle();
+    const data = createPublishedProjectBundleFixture();
     delete (data as Partial<typeof data>).projectTitle;
 
     expect(() => publishedProjectBundleSchema.parse(data)).toThrow();
   });
 
   test("requires published project bundle when importing", () => {
-    const data = createPublishedProjectBundle();
+    const data = createPublishedProjectBundleFixture();
     delete (data as Partial<typeof data>).projectTitle;
 
     expect(() =>

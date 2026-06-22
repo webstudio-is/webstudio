@@ -17,6 +17,7 @@ import { HandledCliError } from "../errors";
 import { loadAssetFiles } from "../asset-files";
 import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { parseShareLink, validateShareLink } from "./link";
+import { formatZodIssues } from "../zod-utils";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -124,7 +125,12 @@ export const importProject = async (
   }
   const parsedData = publishedProjectBundleSchema.safeParse(data);
   if (parsedData.success === false) {
-    importing.stop(invalidProjectBundleMessage, 2);
+    importing.stop(
+      `${invalidProjectBundleMessage} Invalid fields: ${formatZodIssues(
+        parsedData.error.issues
+      )}`,
+      2
+    );
     throw new HandledCliError();
   }
   const importData = parsedData.data;

@@ -5,6 +5,10 @@ import { tmpdir } from "node:os";
 import makeCLI from "yargs";
 import { createApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
 import { projectBundleVersion } from "@webstudio-is/bundle";
+import {
+  createImageAssetFixture,
+  createPublishedProjectBundleFixture,
+} from "@webstudio-is/bundle/fixtures";
 import { loadJSONFile } from "../fs-utils";
 import { loadAssetFiles } from "../asset-files";
 import { importOptions, importProject } from "./import";
@@ -22,16 +26,10 @@ const destinationRequest = {
     "x-webstudio-client": "cli",
   }),
 };
-const imageAsset = {
-  id: "asset-1",
-  projectId: "source-project",
-  name: "image.png",
-  type: "image",
-  createdAt: "2024-01-01T00:00:00.000Z",
-  format: "png",
+const imageAsset = createImageAssetFixture({
   size: 5,
   meta: { width: 1, height: 1 },
-};
+});
 const log = {
   info: vi.fn(),
 };
@@ -54,50 +52,12 @@ const dependencies = {
   spinner: () => indicator,
 };
 
-const createSyncedData = (data = {}) => ({
-  projectBundleVersion,
-  page: {
-    id: "home",
-    name: "Home",
-    path: "",
-    title: "Home",
-    meta: {},
-    rootInstanceId: "root",
-  },
-  pages: [],
-  build: {
-    id: "build-1",
-    projectId: "source-project",
-    version: 1,
-    createdAt: "2024-01-01T00:00:00.000Z",
-    updatedAt: "2024-01-01T00:00:00.000Z",
-    pages: {
-      homePageId: "home",
-      rootFolderId: "root-folder",
-      pages: [],
-      folders: [
-        {
-          id: "root-folder",
-          name: "Root",
-          slug: "",
-          children: [],
-        },
-      ],
-    },
-    breakpoints: [],
-    styles: [],
-    styleSources: [],
-    styleSourceSelections: [],
-    props: [],
-    instances: [],
-    dataSources: [],
-    resources: [],
-  },
-  assets: [],
-  projectDomain: "example.com",
-  projectTitle: "Example",
-  ...data,
-});
+const createSyncedData = (data = {}) =>
+  createPublishedProjectBundleFixture({
+    assets: [],
+    projectDomain: "example.com",
+    ...data,
+  });
 
 const writeSyncedData = async (data = {}) => {
   await writeFile(
@@ -347,7 +307,7 @@ test("stops before API request when ignored-version data is missing assets", asy
   expect(checkProjectBuildPermission).not.toHaveBeenCalled();
   expect(importProjectBundle).not.toHaveBeenCalled();
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle is invalid. Please run webstudio sync before importing.",
+    "Project bundle is invalid. Please run webstudio sync before importing. Invalid fields: assets: Required",
     2
   );
 });
@@ -371,7 +331,7 @@ test("stops before API request when ignored-version data is missing published me
   expect(checkProjectBuildPermission).not.toHaveBeenCalled();
   expect(importProjectBundle).not.toHaveBeenCalled();
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle is invalid. Please run webstudio sync before importing.",
+    "Project bundle is invalid. Please run webstudio sync before importing. Invalid fields: projectTitle: Required",
     2
   );
 });
@@ -445,7 +405,7 @@ test("stops before API request when current local data is malformed", async () =
   expect(checkProjectBuildPermission).not.toHaveBeenCalled();
   expect(importProjectBundle).not.toHaveBeenCalled();
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle is invalid. Please run webstudio sync before importing.",
+    "Project bundle is invalid. Please run webstudio sync before importing. Invalid fields: assets: Required",
     2
   );
 });
@@ -465,7 +425,7 @@ test("stops before API request when current local data is missing published meta
   expect(checkProjectBuildPermission).not.toHaveBeenCalled();
   expect(importProjectBundle).not.toHaveBeenCalled();
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle is invalid. Please run webstudio sync before importing.",
+    "Project bundle is invalid. Please run webstudio sync before importing. Invalid fields: projectTitle: Required",
     2
   );
 });

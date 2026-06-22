@@ -1,9 +1,11 @@
 import { Buffer } from "node:buffer";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
-  projectBundleVersion,
-  type PublishedProjectBundle,
-} from "@webstudio-is/bundle";
+  createImageAssetFixture,
+  createPageFixture,
+  createPublishedProjectBundleFixture,
+} from "@webstudio-is/bundle/fixtures";
+import { type PublishedProjectBundle } from "@webstudio-is/bundle";
 import {
   __testing__,
   importPublishedProjectBundle,
@@ -11,54 +13,50 @@ import {
 
 const createData = (
   overrides: Partial<PublishedProjectBundle> = {}
-): PublishedProjectBundle => ({
-  projectBundleVersion,
-  origin: "https://example.com",
-  projectDomain: "example",
-  projectTitle: "Example",
-  page: {
-    id: "home",
-    name: "Home",
-    path: "",
-    title: "Home",
-    meta: {},
-    rootInstanceId: "root",
-  },
-  pages: [],
-  assets: [
-    {
-      id: "asset-1",
-      projectId: "source-project",
-      name: "image.png",
-      filename: "Image",
-      description: "Hero image",
-      size: 100,
-      type: "image",
-      createdAt: "2024-01-01T00:00:00.000Z",
-      format: "png",
-      meta: { width: 100, height: 100 },
-    },
-  ],
-  build: {
-    id: "build-1",
-    projectId: "source-project",
-    version: 3,
-    createdAt: "2024-01-01T00:00:00.000Z",
-    updatedAt: "2024-01-01T00:00:00.000Z",
-    pages: {
-      meta: {},
-      homePageId: "home",
-      rootFolderId: "root-folder",
-      pages: [
-        {
-          id: "home",
-          name: "Home",
-          path: "",
-          title: "Home",
-          meta: { socialImageAssetId: "asset-1" },
-          rootInstanceId: "root",
-        },
+): PublishedProjectBundle => {
+  const page = createPageFixture({ meta: { socialImageAssetId: "asset-1" } });
+  return createPublishedProjectBundleFixture({
+    assets: [
+      createImageAssetFixture({
+        id: "asset-1",
+        filename: "Image",
+        description: "Hero image",
+      }),
+    ],
+    build: {
+      version: 3,
+      breakpoints: [["base", { id: "base", label: "Base" }]],
+      styleSources: [["source-1", { id: "source-1", type: "local" }]],
+      styleSourceSelections: [
+        ["root", { instanceId: "root", values: ["source-1"] }],
       ],
+      props: [
+        [
+          "prop-1",
+          {
+            id: "prop-1",
+            instanceId: "root",
+            name: "id",
+            type: "string",
+            value: "hero",
+          },
+        ],
+      ],
+      instances: [
+        [
+          "root",
+          {
+            type: "instance",
+            id: "root",
+            component: "Body",
+            children: [],
+          },
+        ],
+      ],
+    },
+    buildPages: {
+      meta: {},
+      pages: [page],
       folders: [
         {
           id: "root-folder",
@@ -68,40 +66,10 @@ const createData = (
         },
       ],
     },
-    breakpoints: [["base", { id: "base", label: "Base" }]],
-    styles: [],
-    styleSources: [["source-1", { id: "source-1", type: "local" }]],
-    styleSourceSelections: [
-      ["root", { instanceId: "root", values: ["source-1"] }],
-    ],
-    props: [
-      [
-        "prop-1",
-        {
-          id: "prop-1",
-          instanceId: "root",
-          name: "id",
-          type: "string",
-          value: "hero",
-        },
-      ],
-    ],
-    instances: [
-      [
-        "root",
-        {
-          type: "instance",
-          id: "root",
-          component: "Body",
-          children: [],
-        },
-      ],
-    ],
-    dataSources: [],
-    resources: [],
-  },
-  ...overrides,
-});
+    page,
+    ...overrides,
+  });
+};
 
 const createPostgrestClient = (
   calls: string[],

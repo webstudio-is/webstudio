@@ -52,6 +52,7 @@ import {
 import { htmlToJsx } from "./html-to-jsx";
 import { compareMedia } from "@webstudio-is/css-engine";
 import { materializeAssetFiles } from "./asset-files";
+import { formatZodIssues } from "./zod-utils";
 
 const wsAuthFile = ".webstudio/auth.json";
 
@@ -292,11 +293,8 @@ export const prebuild = async (options: {
   }
   const parsedSiteData = publishedProjectBundleSchema.safeParse(loadedSiteData);
   if (parsedSiteData.success === false) {
-    const issues = parsedSiteData.error.issues
-      .map((issue) => issue.path.join(".") || issue.message)
-      .join(", ");
     throw new Error(
-      `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${issues}`
+      `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(parsedSiteData.error.issues)}`
     );
   }
   const siteData = parsedSiteData.data;

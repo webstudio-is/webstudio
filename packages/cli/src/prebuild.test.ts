@@ -638,6 +638,8 @@ describe("prebuild", () => {
         assets: false,
         template: ["defaults"],
       })
-    ).rejects.toThrow("Project bundle is invalid");
+    ).rejects.toThrow(
+      "Project bundle is invalid, please make sure the project is synced. Invalid fields: page: Required"
+    );
   });
 });
