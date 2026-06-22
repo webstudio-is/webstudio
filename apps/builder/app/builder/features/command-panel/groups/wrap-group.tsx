@@ -12,17 +12,25 @@ import {
 } from "@webstudio-is/design-system";
 import { matchSorter } from "match-sorter";
 import { computed } from "nanostores";
-import { elementComponent, tags } from "@webstudio-is/sdk";
+import {
+  elementComponent,
+  getHtmlTagsFromProps,
+  tags,
+} from "@webstudio-is/sdk";
 import type {
   Instance,
   Instances,
   Props,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { $registeredComponentMetas } from "~/shared/nano-states";
+import {
+  $propsIndex,
+  $registeredComponentMetas,
+  $selectedInstancePath,
+  $selectedPage,
+} from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
-import { $selectedInstancePath, $selectedPage } from "~/shared/nano-states";
 import {
   getInstanceLabel,
   InstanceIcon,
@@ -68,7 +76,10 @@ const canWrapInstance = (
   tag: string | undefined,
   instances: Instances,
   props: Props,
-  metas: Map<Instance["component"], WsComponentMeta>
+  metas: Map<Instance["component"], WsComponentMeta>,
+  htmlTagsByInstanceId: Map<Instance["id"], string> = getHtmlTagsFromProps(
+    props
+  )
 ): boolean => {
   const selectedInstance = instances.get(selectedInstanceId);
   const parentInstance = instances.get(parentInstanceId);
@@ -115,6 +126,7 @@ const canWrapInstance = (
     instances: newInstances,
     props,
     metas,
+    htmlTagsByInstanceId,
     instanceSelector: [
       wrapperInstance.id,
       ...selectedInstanceSelector.slice(1),
@@ -130,6 +142,7 @@ const canWrapInstance = (
     instances: newInstances,
     props,
     metas,
+    htmlTagsByInstanceId,
     instanceSelector: [
       selectedInstanceId,
       wrapperInstance.id,
@@ -146,12 +159,21 @@ const $wrapOptions = computed(
     $selectedInstancePath,
     $instances,
     $props,
+    $propsIndex,
     $registeredComponentMetas,
     $selectedPage,
   ],
-  (isOpen, instancePath, instances, props, metas, selectedPage) => {
+  (
+    isCommandPanelOpen,
+    instancePath,
+    instances,
+    props,
+    propsIndex,
+    metas,
+    selectedPage
+  ) => {
     const wrapOptions: WrapOption[] = [];
-    if (!isOpen) {
+    if (isCommandPanelOpen === false) {
       return wrapOptions;
     }
     if (instancePath === undefined || instancePath.length === 1) {
@@ -192,7 +214,8 @@ const $wrapOptions = computed(
           undefined,
           instances,
           props,
-          metas
+          metas,
+          propsIndex.htmlTagsByInstanceId
         )
       ) {
         const meta = metas.get(component);
@@ -217,7 +240,8 @@ const $wrapOptions = computed(
           tag,
           instances,
           props,
-          metas
+          metas,
+          propsIndex.htmlTagsByInstanceId
         )
       ) {
         const label = getInstanceLabel({ component: elementComponent, tag });

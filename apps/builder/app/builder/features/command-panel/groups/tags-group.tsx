@@ -9,11 +9,15 @@ import {
 import { computed } from "nanostores";
 import { elementComponent, tags } from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
-import { $registeredComponentMetas } from "~/shared/nano-states";
+import {
+  $propsIndex,
+  $registeredComponentMetas,
+  $selectedInstancePath,
+  $selectedPage,
+} from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
-import { $selectedInstancePath, $selectedPage } from "~/shared/nano-states";
 import { InstanceIcon } from "~/builder/shared/instance-label";
 import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
@@ -31,12 +35,21 @@ export const $tagOptions = computed(
     $selectedInstancePath,
     $instances,
     $props,
+    $propsIndex,
     $registeredComponentMetas,
     $selectedPage,
   ],
-  (isOpen, instancePath, instances, props, metas, selectedPage) => {
+  (
+    isCommandPanelOpen,
+    instancePath,
+    instances,
+    props,
+    propsIndex,
+    metas,
+    selectedPage
+  ) => {
     const tagOptions: TagOption[] = [];
-    if (!isOpen) {
+    if (isCommandPanelOpen === false) {
       return tagOptions;
     }
     if (instancePath === undefined) {
@@ -66,6 +79,7 @@ export const $tagOptions = computed(
         instances: newInstances,
         props,
         metas,
+        htmlTagsByInstanceId: propsIndex.htmlTagsByInstanceId,
         instanceSelector,
       });
       if (isSatisfying) {

@@ -16,7 +16,11 @@ import {
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
-import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
+import {
+  closeCommandPanel,
+  $commandSearch,
+  $isCommandPanelOpen,
+} from "../command-state";
 import type { BaseOption } from "../shared/types";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { humanizeString } from "~/shared/string-utils";
@@ -29,9 +33,13 @@ export type InstanceOption = BaseOption & {
 };
 
 export const $instanceOptions = computed(
-  [$isCommandPanelOpen, $instances, $pages],
-  (isOpen, instances, pages) => {
-    if (!isOpen || !pages) {
+  [$isCommandPanelOpen, $commandSearch, $instances, $pages],
+  (isCommandPanelOpen, commandSearch, instances, pages) => {
+    if (
+      isCommandPanelOpen === false ||
+      commandSearch.trim().length === 0 ||
+      pages === undefined
+    ) {
       return [];
     }
     const instanceOptions: InstanceOption[] = [];

@@ -305,16 +305,15 @@ export const Canvas = () => {
   }, []);
 
   const selectedPage = useStore($selectedPage);
+  const rootInstanceId = selectedPage?.rootInstanceId;
 
   useEffect(() => {
-    const rootInstanceId = selectedPage?.rootInstanceId;
     if (rootInstanceId !== undefined) {
       inflateInstance(rootInstanceId);
     }
-  });
+  }, [rootInstanceId]);
 
   useWindowResizeDebounced(() => {
-    const rootInstanceId = selectedPage?.rootInstanceId;
     if (rootInstanceId !== undefined) {
       inflateInstance(rootInstanceId);
     }

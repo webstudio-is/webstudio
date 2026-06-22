@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { atom, computed } from "nanostores";
+import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { toast } from "@webstudio-is/design-system";
 import {
@@ -37,23 +37,16 @@ export type DataVariableError = {
   message: string;
 };
 
-/**
- * Computed store that tracks which instances use each variable
- * Returns a Map of variable ID to Set of instance IDs
- */
-export const $usedVariablesInInstances = computed(
-  [$pages, $instances, $props, $dataSources, $resources],
-  (pages, instances, props, dataSources, resources) => {
-    return findVariableUsagesByInstance({
-      startingInstanceId: ROOT_INSTANCE_ID,
-      pages,
-      instances,
-      props,
-      dataSources,
-      resources,
-    });
-  }
-);
+const getUsedVariablesInInstances = () => {
+  return findVariableUsagesByInstance({
+    startingInstanceId: ROOT_INSTANCE_ID,
+    pages: $pages.get(),
+    instances: $instances.get(),
+    props: $props.get(),
+    dataSources: $dataSources.get(),
+    resources: $resources.get(),
+  });
+};
 
 type DeleteDataVariableDialogProps = {
   variable?: { id: DataSource["id"]; name: string; usages: number };
@@ -112,7 +105,7 @@ export const DeleteDataVariableDialog = ({
 
 export const deleteUnusedDataVariables = () => {
   const dataSources = $dataSources.get();
-  const usedVariablesInInstances = $usedVariablesInInstances.get();
+  const usedVariablesInInstances = getUsedVariablesInInstances();
   const unusedVariableIds: DataSource["id"][] = [];
 
   for (const dataSource of dataSources.values()) {
@@ -280,7 +273,6 @@ export const RenameDataVariableDialog = ({
 
 export const DeleteUnusedDataVariablesDialog = () => {
   const open = useStore($isDeleteUnusedDataVariablesDialogOpen);
-  const usedVariablesInInstances = useStore($usedVariablesInInstances);
   const dataSources = useStore($dataSources);
 
   const handleClose = () => {
@@ -288,11 +280,14 @@ export const DeleteUnusedDataVariablesDialog = () => {
   };
 
   const unusedVariables: Array<{ id: string; name: string }> = [];
-  for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "variable") {
-      const usages = usedVariablesInInstances.get(dataSource.id);
-      if (usages === undefined || usages.size === 0) {
-        unusedVariables.push({ id: dataSource.id, name: dataSource.name });
+  if (open) {
+    const usedVariablesInInstances = getUsedVariablesInInstances();
+    for (const dataSource of dataSources.values()) {
+      if (dataSource.type === "variable") {
+        const usages = usedVariablesInInstances.get(dataSource.id);
+        if (usages === undefined || usages.size === 0) {
+          unusedVariables.push({ id: dataSource.id, name: dataSource.name });
+        }
       }
     }
   }

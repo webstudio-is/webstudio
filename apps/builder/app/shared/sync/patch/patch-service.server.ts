@@ -3,7 +3,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { patchLoadedBuild } from "@webstudio-is/project/index.server";
-import { loadRawBuildById } from "@webstudio-is/project-build/index.server";
+import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   assertProjectPermit,
   authorizePatchEntries,
@@ -16,7 +16,90 @@ import type {
   PatchEntry,
 } from "./patch-normalize.server";
 
-export type PatchEntryResult =
+type BuildRow = Database["public"]["Tables"]["Build"]["Row"];
+type BuildColumn = keyof BuildRow;
+
+const baseBuildPatchColumns = [
+  "projectId",
+  "version",
+  "lastTransactionId",
+] as const satisfies BuildColumn[];
+
+const contentModeBuildColumns = [
+  "instances",
+  "props",
+  "styleSources",
+  "styleSourceSelections",
+  "styles",
+  "breakpoints",
+] as const satisfies BuildColumn[];
+
+const namespaceBuildColumns = {
+  pages: ["pages"],
+  breakpoints: ["breakpoints"],
+  instances: ["instances"],
+  props: ["props"],
+  assets: [],
+  styleSourceSelections: ["styleSourceSelections"],
+  styleSources: ["styleSources"],
+  styles: ["styles"],
+  dataSources: ["dataSources"],
+  resources: ["resources"],
+  marketplaceProduct: ["marketplaceProduct"],
+} as const satisfies Record<string, readonly BuildColumn[]>;
+
+type BuildPatchNamespace = keyof typeof namespaceBuildColumns;
+
+const isBuildPatchNamespace = (
+  namespace: string
+): namespace is BuildPatchNamespace => {
+  return Object.hasOwn(namespaceBuildColumns, namespace);
+};
+
+const getNamespaceBuildColumns = (namespace: string) => {
+  if (isBuildPatchNamespace(namespace)) {
+    return namespaceBuildColumns[namespace];
+  }
+  return [];
+};
+
+const getBuildPatchColumns = (authorized: AuthorizedPatchEntry[]) => {
+  const columns = new Set<BuildColumn>(baseBuildPatchColumns);
+  for (const { entry } of authorized) {
+    for (const change of entry.transaction.payload) {
+      for (const column of getNamespaceBuildColumns(change.namespace)) {
+        columns.add(column);
+      }
+    }
+  }
+  return Array.from(columns);
+};
+
+const selectBuildColumns = async (
+  context: AppContext,
+  buildId: string,
+  columns: readonly BuildColumn[]
+) => {
+  const build = await context.postgrest.client
+    .from("Build")
+    .select(columns.join(", "))
+    .eq("id", buildId);
+
+  if (build.error) {
+    throw build.error;
+  }
+
+  if (build.data.length !== 1) {
+    throw new Error(
+      `Results contain ${build.data.length} row(s) requires 1 row`
+    );
+  }
+
+  return build.data[0] as unknown as Partial<BuildRow> &
+    Pick<BuildRow, (typeof columns)[number]>;
+};
+
+type PatchEntryResult =
   | { seq?: number; transactionId: string; status: "accepted" }
   | {
       seq?: number;
@@ -25,7 +108,7 @@ export type PatchEntryResult =
       errors: string;
     };
 
-export type PatchResult =
+type PatchResult =
   | { status: "ok"; version?: number; entries?: PatchEntryResult[] }
   | { status: "partial"; version: number; entries: PatchEntryResult[] }
   | { status: "version_mismatched"; errors: string }
@@ -78,22 +161,35 @@ const loadBuildState = async (context: AppContext, buildId: string) => {
   };
 };
 
-const loadBuildPatchState = async (context: AppContext, buildId: string) => {
-  const build = await loadRawBuildById(context, buildId);
+const loadBuildForContentMode = async (
+  context: AppContext,
+  buildId: string
+) => {
+  return selectBuildColumns(context, buildId, contentModeBuildColumns);
+};
+
+const loadBuildForPatch = async ({
+  authorized,
+  context,
+  state,
+  buildId,
+}: {
+  authorized: AuthorizedPatchEntry[];
+  context: AppContext;
+  state: Awaited<ReturnType<typeof loadBuildState>>;
+  buildId: string;
+}) => {
+  const build = await selectBuildColumns(
+    context,
+    buildId,
+    getBuildPatchColumns(authorized)
+  );
 
   return {
-    build,
-    projectId: String(build.projectId),
-    version: Number(build.version),
-    contentModeCapabilities: createContentModeCapabilities({
-      instances: build.instances,
-      props: build.props,
-      styleSources: build.styleSources,
-      styleSourceSelections: build.styleSourceSelections,
-      styles: build.styles,
-      breakpoints: build.breakpoints,
-    }),
-  };
+    ...build,
+    projectId: state.projectId,
+    version: state.version,
+  } as BuildRow;
 };
 
 const assertBuildProject = (
@@ -138,11 +234,10 @@ const applyAuthorizedEntries = async ({
   version,
 }: {
   authorized: AuthorizedPatchEntry[];
-  build: Awaited<ReturnType<typeof loadBuildPatchState>>["build"];
+  build?: BuildRow;
   patch: NormalizedPatchRequest;
   version: number;
 }) => {
-  let currentBuild = build;
   if (authorized.length === 0) {
     return {
       version,
@@ -150,6 +245,10 @@ const applyAuthorizedEntries = async ({
       status: "ok" as const,
     };
   }
+  if (build === undefined) {
+    throw new Error("Build data is required to apply patch entries.");
+  }
+  let currentBuild = build;
 
   const applyContext = authorized[0].context;
   const hasSharedContext = authorized.every(
@@ -220,18 +319,36 @@ export const applyPatchRequest = async (
   context: AppContext,
   patch: NormalizedPatchRequest
 ): Promise<PatchResult> => {
-  const state = await loadBuildPatchState(context, patch.buildId);
+  const state = await loadBuildState(context, patch.buildId);
   assertBuildProject(state, patch);
   const { authorized, rejected } = await authorizePatchEntries(
     context,
     patch,
-    state.contentModeCapabilities
+    async () => {
+      const build = await loadBuildForContentMode(context, patch.buildId);
+      return createContentModeCapabilities({
+        instances: build.instances,
+        props: build.props,
+        styleSources: build.styleSources,
+        styleSourceSelections: build.styleSourceSelections,
+        styles: build.styles,
+        breakpoints: build.breakpoints,
+      });
+    }
   );
   const applied = await applyAuthorizedEntries({
     authorized,
-    build: state.build,
+    build:
+      authorized.length === 0
+        ? undefined
+        : await loadBuildForPatch({
+            authorized,
+            context,
+            state,
+            buildId: patch.buildId,
+          }),
     patch,
-    version: patch.clientVersion,
+    version: authorized.length === 0 ? state.version : patch.clientVersion,
   });
 
   if (applied.status === "version_mismatched") {

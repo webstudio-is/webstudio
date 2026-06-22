@@ -253,6 +253,19 @@ audit=false
 fund=false
 `;
 
+export const generateRedirectsModule = (pageRedirects: Pages["redirects"]) => {
+  const redirects =
+    pageRedirects?.map((redirect) => ({
+      old: redirect.old,
+      new: redirect.new,
+      status: redirect.status ?? 301,
+    })) ?? [];
+
+  return `
+    export const redirects = ${JSON.stringify(redirects, null, 2)};
+    `;
+};
+
 export const prebuild = async (options: {
   /**
    * Do we need download assets
@@ -795,29 +808,10 @@ export const prebuild = async (options: {
     `
   );
 
-  const redirects = pages.redirects;
-  if (redirects !== undefined && redirects.length > 0) {
-    for (const redirect of redirects) {
-      const generatedBasename = generateRemixRoute(redirect.old);
-      await createFileIfNotExists(
-        join(generatedDir, `${generatedBasename}.ts`),
-        `
-        export const url = "${redirect.new}";
-        export const status = ${redirect.status ?? 301};
-        `
-      );
-
-      for (const { file, template } of framework.redirect({
-        pagePath: redirect.old,
-      })) {
-        const content = template.replaceAll(
-          "__REDIRECT__",
-          importFrom(`./app/__generated__/${generatedBasename}`, file)
-        );
-        await createFileIfNotExists(file, content);
-      }
-    }
-  }
+  await createFileIfNotExists(
+    join(generatedDir, "$resources.redirects.ts"),
+    generateRedirectsModule(pages.redirects)
+  );
 
   if (assetsToDownload.length > 0) {
     const downloading = spinner();

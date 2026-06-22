@@ -5,6 +5,7 @@ import { getElementByInstanceSelector } from "~/shared/dom-utils";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
 import {
   $registeredComponentMetas,
+  $propsIndex,
   $textEditingInstanceSelector,
   $textToolbar,
 } from "~/shared/nano-states";
@@ -85,6 +86,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           instances: $instances.get(),
           props: $props.get(),
           metas: $registeredComponentMetas.get(),
+          htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
         });
 
         if (editableInstanceSelector === undefined) {
@@ -95,6 +97,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             instances: $instances.get(),
             props: $props.get(),
             metas: $registeredComponentMetas.get(),
+            htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
             results: selectors,
           });
 

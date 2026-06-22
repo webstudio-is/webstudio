@@ -27,6 +27,17 @@ import {
 } from "../sync/data-stores";
 import type { InstanceSelector } from "./tree";
 
+export type WebstudioInstanceData = Pick<
+  WebstudioData,
+  | "instances"
+  | "props"
+  | "styleSourceSelections"
+  | "styleSources"
+  | "styles"
+  | "dataSources"
+  | "resources"
+>;
+
 /**
  * structuredClone can be invoked on draft and throw error
  * extract current snapshot before cloning
@@ -57,7 +68,10 @@ export const canDeleteInstanceInContentMode = ({
   );
 };
 
-export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
+export const updateWebstudioData = (
+  mutate: (data: WebstudioData) => void,
+  { validateInstances = true }: { validateInstances?: boolean } = {}
+) => {
   const selectedPage = $selectedPage.get();
   if (isPageTemplate(selectedPage) && $canOpenPageTemplates.get() === false) {
     return;
@@ -104,6 +118,10 @@ export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
         assets,
       });
 
+      if (validateInstances === false) {
+        return;
+      }
+
       const cycles = findCycles(instances.values());
 
       // Detect and fix cycles in the instance tree, then report
@@ -115,6 +133,45 @@ export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
           (node) => node.component === "Slot"
         );
       }
+    }
+  );
+};
+
+export const updateInstanceData = (
+  mutate: (data: WebstudioInstanceData) => void
+) => {
+  const selectedPage = $selectedPage.get();
+  if (isPageTemplate(selectedPage) && $canOpenPageTemplates.get() === false) {
+    return;
+  }
+  serverSyncStore.createTransaction(
+    [
+      $instances,
+      $props,
+      $styleSourceSelections,
+      $styleSources,
+      $styles,
+      $dataSources,
+      $resources,
+    ],
+    (
+      instances,
+      props,
+      styleSourceSelections,
+      styleSources,
+      styles,
+      dataSources,
+      resources
+    ) => {
+      mutate({
+        instances,
+        props,
+        styleSourceSelections,
+        styleSources,
+        styles,
+        dataSources,
+        resources,
+      });
     }
   );
 };

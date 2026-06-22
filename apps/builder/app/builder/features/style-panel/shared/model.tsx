@@ -24,16 +24,13 @@ import {
 import { rootComponent } from "@webstudio-is/sdk";
 import {
   $registeredComponentMetas,
+  $propsIndex,
   $selectedBreakpoint,
   $selectedInstanceStates,
   $selectedOrLastStyleSourceSelector,
 } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
-import {
-  $props,
-  $styles,
-  $styleSourceSelections,
-} from "~/shared/sync/data-stores";
+import { $styles, $styleSourceSelections } from "~/shared/sync/data-stores";
 import {
   getComputedStyleDecl,
   getPresetStyleDeclKey,
@@ -45,6 +42,8 @@ import {
   type InstancePath,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/instance-utils/tree";
+
+const propertyNameCollator = new Intl.Collator();
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();
@@ -65,14 +64,18 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
 });
 
 export const $instanceTags = computed(
-  [$registeredComponentMetas, $props, $selectedInstancePathWithRoot],
-  (metas, props, instancePath) => {
+  [$registeredComponentMetas, $propsIndex, $selectedInstancePathWithRoot],
+  (metas, propsIndex, instancePath) => {
     const instanceTags = new Map<Instance["id"], HtmlTags>();
     if (instancePath === undefined) {
       return instanceTags;
     }
     for (const { instance } of instancePath) {
-      const tag = getHtmlTagFromInstance({ instance, metas, props });
+      const tag = getHtmlTagFromInstance({
+        instance,
+        metas,
+        htmlTagsByInstanceId: propsIndex.htmlTagsByInstanceId,
+      });
       if (tag !== undefined) {
         instanceTags.set(instance.id, tag as HtmlTags);
       }
@@ -188,7 +191,7 @@ const getDefinedStyles = ({
 
   // We are sorting by alphabet within each group.
   const sortByProperty = (a: { property: string }, b: { property: string }) => {
-    return Intl.Collator().compare(a.property, b.property);
+    return propertyNameCollator.compare(a.property, b.property);
   };
 
   return [

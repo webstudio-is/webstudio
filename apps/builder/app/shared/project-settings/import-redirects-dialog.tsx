@@ -27,6 +27,7 @@ import {
   type SkippedLine,
 } from "~/shared/redirects/redirect-parsers";
 import { detectLoopsInBatch } from "~/shared/redirects/redirect-loop-detection";
+import { normalizeRedirectSource } from "~/shared/redirects/redirect-source";
 
 type ImportStep = "input" | "preview";
 type MergeMode = "add" | "replace";
@@ -41,6 +42,45 @@ type ImportRedirectsDialogProps = {
 const ACCEPTED_EXTENSIONS = [".csv", ".json", ".txt", ".htaccess"];
 
 const formatSupportsText = `Supports: CSV, JSON, Netlify _redirects, Apache .htaccess`;
+
+const splitDuplicateRedirects = <Redirect extends { old: string }>(
+  redirects: Redirect[],
+  existingRedirects: Array<{ old: string }>
+) => {
+  const seenSources = new Set(
+    existingRedirects.map((redirect) => normalizeRedirectSource(redirect.old))
+  );
+  const unique: Redirect[] = [];
+  const duplicates: Redirect[] = [];
+
+  for (const redirect of redirects) {
+    const source = normalizeRedirectSource(redirect.old);
+    if (seenSources.has(source)) {
+      duplicates.push(redirect);
+      continue;
+    }
+    seenSources.add(source);
+    unique.push(redirect);
+  }
+
+  return { unique, duplicates };
+};
+
+const splitRedirectsForMergeMode = <Redirect extends { old: string }>(
+  redirects: Redirect[],
+  existingRedirects: Array<{ old: string }>,
+  mergeMode: MergeMode
+) => {
+  return splitDuplicateRedirects(
+    redirects,
+    mergeMode === "add" ? existingRedirects : []
+  );
+};
+
+export const __testing__ = {
+  splitDuplicateRedirects,
+  splitRedirectsForMergeMode,
+};
 
 export const ImportRedirectsDialog = ({
   isOpen,
@@ -150,10 +190,11 @@ export const ImportRedirectsDialog = ({
       status: r.status === 301 ? "301" : "302",
     }));
 
-    // Find duplicates with existing redirects
-    const existingPaths = new Set(existingRedirects.map((r) => r.old));
-    const duplicates = newRedirects.filter((r) => existingPaths.has(r.old));
-    const uniqueNew = newRedirects.filter((r) => !existingPaths.has(r.old));
+    const { unique: uniqueNew, duplicates } = splitRedirectsForMergeMode(
+      newRedirects,
+      existingRedirects,
+      mergeMode
+    );
 
     if (mergeMode === "add") {
       // Detect loops with existing redirects
@@ -176,14 +217,17 @@ export const ImportRedirectsDialog = ({
       );
     } else {
       // Replace all - detect loops within the new set
-      const { valid, looped } = detectLoopsInBatch(newRedirects, []);
+      const { valid, looped } = detectLoopsInBatch(uniqueNew, []);
       const loopCount = looped.length;
 
       onImport(valid, "replace");
+      const skippedParts = [
+        duplicates.length > 0 &&
+          `${duplicates.length} duplicate${duplicates.length !== 1 ? "s" : ""}`,
+        loopCount > 0 && `${loopCount} loop${loopCount !== 1 ? "s" : ""}`,
+      ].filter(Boolean);
       const skippedMessage =
-        loopCount > 0
-          ? ` (${loopCount} loop${loopCount !== 1 ? "s" : ""} skipped)`
-          : "";
+        skippedParts.length > 0 ? ` (${skippedParts.join(", ")} skipped)` : "";
       toast.success(
         `Replaced all redirects with ${valid.length} new redirect${valid.length !== 1 ? "s" : ""}${skippedMessage}`
       );
@@ -192,13 +236,10 @@ export const ImportRedirectsDialog = ({
     handleOpenChange(false);
   };
 
-  // Count duplicates for display
-  const existingPaths = new Set(existingRedirects.map((r) => r.old));
-  const duplicateRedirects = parsedRedirects.filter((r) =>
-    existingPaths.has(r.old)
-  );
+  const { unique: uniqueRedirects, duplicates: duplicateRedirects } =
+    splitRedirectsForMergeMode(parsedRedirects, existingRedirects, mergeMode);
   const duplicateCount = duplicateRedirects.length;
-  const uniqueCount = parsedRedirects.length - duplicateCount;
+  const uniqueCount = uniqueRedirects.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>

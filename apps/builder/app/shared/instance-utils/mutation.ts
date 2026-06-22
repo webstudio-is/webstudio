@@ -58,7 +58,12 @@ import {
   findLocalStyleSourcesWithinInstances,
   getReparentDropTargetMutable,
 } from "./tree";
-import { canDeleteInstanceInContentMode, updateWebstudioData } from "./data";
+import {
+  canDeleteInstanceInContentMode,
+  updateInstanceData,
+  updateWebstudioData,
+  type WebstudioInstanceData,
+} from "./data";
 import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
@@ -155,14 +160,17 @@ export const reparentInstance = (
   sourceInstanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
-  updateWebstudioData((data) => {
-    const newSelector = reparentInstanceMutable(
-      data,
-      sourceInstanceSelector,
-      dropTarget
-    );
-    selectInstance(newSelector);
-  });
+  updateWebstudioData(
+    (data) => {
+      const newSelector = reparentInstanceMutable(
+        data,
+        sourceInstanceSelector,
+        dropTarget
+      );
+      selectInstance(newSelector);
+    },
+    { validateInstances: false }
+  );
 };
 
 const countInstanceChildReferences = (
@@ -335,7 +343,7 @@ const getDeleteTarget = (
 };
 
 export const deleteInstanceMutable = (
-  data: Omit<WebstudioData, "pages">,
+  data: WebstudioInstanceData,
   instancePath: undefined | InstancePath
 ) => {
   if (instancePath === undefined) {
@@ -1112,7 +1120,7 @@ export const deleteSelectedInstance = () => {
     }
   }
 
-  updateWebstudioData((data) => {
+  updateInstanceData((data) => {
     const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
       data.instances,
       instancePath

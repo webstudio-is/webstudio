@@ -38,6 +38,53 @@ import type { Database } from "@webstudio-is/postgrest/index.server";
 enableMapSet();
 enablePatches();
 
+type TouchedKeys = {
+  keys: Set<string>;
+  wholeMap: boolean;
+};
+
+const createTouchedKeys = (): TouchedKeys => ({
+  keys: new Set(),
+  wholeMap: false,
+});
+
+const addTouchedPatchKeys = (touched: TouchedKeys, patches: Patch[]) => {
+  for (const patch of patches) {
+    const key = patch.path[0];
+    if (key === undefined) {
+      touched.wholeMap = true;
+      continue;
+    }
+    touched.keys.add(`${key}`);
+  }
+};
+
+const getTouchedMap = <Value>(
+  map: Map<string, Value>,
+  touched: TouchedKeys
+) => {
+  if (touched.wholeMap) {
+    return map;
+  }
+  const touchedMap = new Map<string, Value>();
+  for (const key of touched.keys) {
+    if (map.has(key) === false) {
+      continue;
+    }
+    const value = map.get(key) as Value;
+    touchedMap.set(key, value);
+  }
+  return touchedMap;
+};
+
+const validateTouchedMap = <Value>(
+  schema: { parse: (value: Map<string, Value>) => unknown },
+  map: Map<string, Value>,
+  touched: TouchedKeys
+) => {
+  schema.parse(getTouchedMap(map, touched));
+};
+
 export type BuildPatchChange = {
   namespace: string;
   patches: Array<Patch>;
@@ -108,11 +155,18 @@ export const createBuildPatchUpdate = async ({
   } = {};
 
   let previewImageAssetId: string | null | undefined = undefined;
-  const patchedStyleDeclKeysSet = new Set<string>();
+  const touchedBreakpoints = createTouchedKeys();
+  const touchedDataSources = createTouchedKeys();
+  const touchedInstances = createTouchedKeys();
+  const touchedProps = createTouchedKeys();
+  const touchedResources = createTouchedKeys();
+  const touchedStyles = createTouchedKeys();
+  const touchedStyleSources = createTouchedKeys();
+  const touchedStyleSourceSelections = createTouchedKeys();
   const assetPatches: Patch[][] = [];
 
-  for await (const transaction of transactions) {
-    for await (const change of transaction.payload) {
+  for (const transaction of transactions) {
+    for (const change of transaction.payload) {
       const { namespace, patches } = change;
       if (patches.length === 0) {
         continue;
@@ -132,12 +186,13 @@ export const createBuildPatchUpdate = async ({
       }
 
       if (namespace === "instances") {
+        addTouchedPatchKeys(touchedInstances, patches);
         const instances =
           buildData.instances ?? parseInstanceData(build.instances);
 
         buildData.instances = applyPatches(instances, patches);
 
-        const cycles = findCycles(buildData.instances.values());
+        const cycles = findCycles(buildData.instances?.values() ?? []);
         if (cycles.length > 0) {
           console.error(
             "Cycles detected in the instance tree after patching",
@@ -154,6 +209,7 @@ export const createBuildPatchUpdate = async ({
       }
 
       if (namespace === "props") {
+        addTouchedPatchKeys(touchedProps, patches);
         const props = buildData.props ?? parseData<Prop>(build.props);
         buildData.props = applyPatches(props, patches);
         continue;
@@ -165,6 +221,7 @@ export const createBuildPatchUpdate = async ({
       }
 
       if (namespace === "styleSourceSelections") {
+        addTouchedPatchKeys(touchedStyleSourceSelections, patches);
         const styleSourceSelections =
           buildData.styleSourceSelections ??
           parseStyleSourceSelections(build.styleSourceSelections);
@@ -176,6 +233,7 @@ export const createBuildPatchUpdate = async ({
       }
 
       if (namespace === "styleSources") {
+        addTouchedPatchKeys(touchedStyleSources, patches);
         const styleSources =
           buildData.styleSources ?? parseData<StyleSource>(build.styleSources);
         buildData.styleSources = applyPatches(styleSources, patches);
@@ -183,9 +241,7 @@ export const createBuildPatchUpdate = async ({
       }
 
       if (namespace === "styles") {
-        for (const patch of patches) {
-          patchedStyleDeclKeysSet.add(`${patch.path[0]}`);
-        }
+        addTouchedPatchKeys(touchedStyles, patches);
 
         const styles = buildData.styles ?? parseStyles(build.styles);
         buildData.styles = applyPatches(styles, patches);
@@ -193,6 +249,7 @@ export const createBuildPatchUpdate = async ({
       }
 
       if (namespace === "dataSources") {
+        addTouchedPatchKeys(touchedDataSources, patches);
         const dataSources =
           buildData.dataSources ?? parseData<DataSource>(build.dataSources);
         buildData.dataSources = applyPatches(dataSources, patches);
@@ -200,6 +257,7 @@ export const createBuildPatchUpdate = async ({
       }
 
       if (namespace === "resources") {
+        addTouchedPatchKeys(touchedResources, patches);
         const resources =
           buildData.resources ?? parseData<Resource>(build.resources);
         buildData.resources = applyPatches(resources, patches);
@@ -207,6 +265,7 @@ export const createBuildPatchUpdate = async ({
       }
 
       if (namespace === "breakpoints") {
+        addTouchedPatchKeys(touchedBreakpoints, patches);
         const breakpoints =
           buildData.breakpoints ?? parseData<Breakpoint>(build.breakpoints);
         buildData.breakpoints = applyPatches(breakpoints, patches);
@@ -237,66 +296,68 @@ export const createBuildPatchUpdate = async ({
   };
 
   if (buildData.pages) {
-    update.pages = serializePages(Pages.parse(buildData.pages));
+    const pages = buildData.pages;
+    update.pages = serializePages(Pages.parse(pages));
   }
 
   if (buildData.breakpoints) {
-    update.breakpoints = serializeData<Breakpoint>(
-      Breakpoints.parse(buildData.breakpoints)
-    );
+    const breakpoints = buildData.breakpoints;
+    validateTouchedMap(Breakpoints, breakpoints, touchedBreakpoints);
+    update.breakpoints = serializeData<Breakpoint>(breakpoints);
   }
 
   if (buildData.instances) {
-    update.instances = serializeData<Instance>(
-      Instances.parse(buildData.instances)
-    );
+    const instances = buildData.instances;
+    validateTouchedMap(Instances, instances, touchedInstances);
+    update.instances = serializeData<Instance>(instances);
   }
 
   if (buildData.props) {
-    update.props = serializeData<Prop>(Props.parse(buildData.props));
+    const props = buildData.props;
+    validateTouchedMap(Props, props, touchedProps);
+    update.props = serializeData<Prop>(props);
   }
 
   if (buildData.dataSources) {
-    update.dataSources = serializeData<DataSource>(
-      DataSources.parse(buildData.dataSources)
-    );
+    const dataSources = buildData.dataSources;
+    validateTouchedMap(DataSources, dataSources, touchedDataSources);
+    update.dataSources = serializeData<DataSource>(dataSources);
   }
 
   if (buildData.resources) {
-    update.resources = serializeData<Resource>(
-      Resources.parse(buildData.resources)
-    );
+    const resources = buildData.resources;
+    validateTouchedMap(Resources, resources, touchedResources);
+    update.resources = serializeData<Resource>(resources);
   }
 
   if (buildData.styleSources) {
-    update.styleSources = serializeData<StyleSource>(
-      StyleSources.parse(buildData.styleSources)
-    );
+    const styleSources = buildData.styleSources;
+    validateTouchedMap(StyleSources, styleSources, touchedStyleSources);
+    update.styleSources = serializeData<StyleSource>(styleSources);
   }
 
   if (buildData.styleSourceSelections) {
+    const styleSourceSelections = buildData.styleSourceSelections;
+    validateTouchedMap(
+      StyleSourceSelections,
+      styleSourceSelections,
+      touchedStyleSourceSelections
+    );
     update.styleSourceSelections = serializeStyleSourceSelections(
-      StyleSourceSelections.parse(buildData.styleSourceSelections)
+      styleSourceSelections
     );
   }
 
   if (buildData.styles) {
-    const stylesToValidate: Styles = new Map();
-    for (const styleId of patchedStyleDeclKeysSet) {
-      const style = buildData.styles.get(styleId);
-      if (style === undefined) {
-        continue;
-      }
-      stylesToValidate.set(styleId, style);
-    }
-
-    Styles.parse(stylesToValidate);
-    update.styles = serializeStyles(buildData.styles);
+    const styles = buildData.styles;
+    validateTouchedMap(Styles, styles, touchedStyles);
+    update.styles = serializeStyles(styles);
   }
 
   if (buildData.marketplaceProduct) {
+    const marketplaceProduct = buildData.marketplaceProduct;
     update.marketplaceProduct = serializeConfig<MarketplaceProduct>(
-      MarketplaceProduct.parse(buildData.marketplaceProduct)
+      MarketplaceProduct.parse(marketplaceProduct)
     );
   }
 

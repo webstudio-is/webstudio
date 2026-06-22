@@ -80,19 +80,28 @@ export const getHtmlTagFromInstance = ({
 }: {
   instance: Instance;
   metas: Map<Instance["component"], WsComponentMeta>;
-  props: Props;
+  props?: Props;
   htmlTagsByInstanceId?: Map<Instance["id"], string>;
 }) => {
   // XmlNode's "tag" prop is an XML element name, not an HTML rendering tag.
   if (instance.component === "XmlNode") {
     return;
   }
+  if (instance.tag !== undefined) {
+    return instance.tag;
+  }
+  const propTag =
+    htmlTagsByInstanceId === undefined
+      ? props === undefined
+        ? undefined
+        : getHtmlTagsFromProps(props).get(instance.id)
+      : htmlTagsByInstanceId.get(instance.id);
+  if (propTag !== undefined) {
+    return propTag;
+  }
   const meta = metas.get(instance.component);
   const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
-  const propTag =
-    htmlTagsByInstanceId?.get(instance.id) ??
-    getHtmlTagsFromProps(props).get(instance.id);
-  return instance.tag ?? propTag ?? metaTag;
+  return metaTag;
 };
 
 export type IndexesWithinAncestors = Map<Instance["id"], number>;

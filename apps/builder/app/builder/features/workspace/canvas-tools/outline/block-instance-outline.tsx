@@ -1,5 +1,5 @@
 import { deleteInstanceMutable } from "~/shared/instance-utils/mutation";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import { updateInstanceData } from "~/shared/instance-utils/data";
 import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
@@ -377,7 +377,7 @@ export const BlockChildHoveredInstanceOutline = () => {
                 return;
               }
 
-              updateWebstudioData((data) => {
+              updateInstanceData((data) => {
                 deleteInstanceMutable(
                   data,
                   getInstancePath(outline.selector, data.instances)
