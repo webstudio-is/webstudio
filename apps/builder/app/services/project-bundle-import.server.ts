@@ -121,9 +121,9 @@ const createImportedFileRows = ({
     isDeleted: false,
   }));
 
-async function* toByteStream(data: Uint8Array) {
+const toByteStream = async function* (data: Uint8Array) {
   yield data;
-}
+};
 
 const getAssetInfoFallback = (asset: Asset) => {
   if (asset.type !== "image") {

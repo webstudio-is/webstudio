@@ -12,7 +12,6 @@ const MIN_TITLE_LENGTH = 2;
 
 export const PageId = z.string();
 export const FolderId = z.string();
-export const ROOT_FOLDER_ID = "root";
 
 export const FolderName = z
   .string()
@@ -33,8 +32,6 @@ export const Folder = z.object({
 });
 
 export type Folder = z.infer<typeof Folder>;
-export const isRootFolder = ({ id }: { id: Folder["id"] }) =>
-  id === ROOT_FOLDER_ID;
 
 export const PageName = z
   .string()

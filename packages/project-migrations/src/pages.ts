@@ -6,9 +6,8 @@ import {
   ProjectMeta,
   PageRedirect,
   Pages,
-  isRootFolder,
-  ROOT_FOLDER_ID,
 } from "@webstudio-is/sdk/schema";
+import { isRootFolder, ROOT_FOLDER_ID } from "@webstudio-is/sdk";
 import { z } from "zod";
 
 type LegacyPages = {

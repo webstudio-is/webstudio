@@ -197,11 +197,17 @@ const stableStringify = (value: unknown): string => {
 
 export const createContractVersion = (
   schema: z.ZodTypeAny,
-  version: string
+  version: string,
+  additionalSchemas: z.ZodTypeAny[] = []
 ) => {
   const bundlePackageVersion = version.replace(/-webstudio-version$/, "");
   let hash = 0x811c9dc5;
-  for (const char of stableStringify(getSchemaContract(schema))) {
+  for (const char of stableStringify({
+    additionalSchemas: additionalSchemas.map((schema) =>
+      getSchemaContract(schema)
+    ),
+    schema: getSchemaContract(schema),
+  })) {
     hash ^= char.charCodeAt(0);
     hash = Math.imul(hash, 0x01000193);
   }

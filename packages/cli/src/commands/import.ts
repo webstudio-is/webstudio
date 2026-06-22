@@ -15,6 +15,7 @@ import { LOCAL_DATA_FILE } from "../config";
 import { loadJSONFile } from "../fs-utils";
 import { HandledCliError } from "../errors";
 import { loadAssetFiles } from "../asset-files";
+import { LOCAL_AUTH_FILE, validateAuthConfigFile } from "../auth-config";
 import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { parseShareLink, validateShareLink } from "./link";
 import { formatZodIssues } from "../zod-utils";
@@ -54,6 +55,8 @@ const missingProjectBundleMessage =
   "Project bundle is missing. Please run webstudio sync before importing.";
 const invalidProjectBundleMessage =
   "Project bundle is invalid. Please run webstudio sync before importing.";
+const invalidAuthConfigMessage =
+  "Project bundle auth config is invalid. Please run webstudio prebuild before importing.";
 const invalidDestinationMessage = "Destination share link is invalid.";
 
 export const importOptions = (yargs: CommonYargsArgv) =>
@@ -134,6 +137,26 @@ export const importProject = async (
     throw new HandledCliError();
   }
   const importData = parsedData.data;
+
+  importing.message(`Reading ${LOCAL_AUTH_FILE}`);
+  try {
+    if (
+      await validateAuthConfigFile({
+        data: importData,
+        filePath: join(cwd(), LOCAL_AUTH_FILE),
+      })
+    ) {
+      dependencies.log.info(`Read ${LOCAL_AUTH_FILE}`);
+    }
+  } catch (error) {
+    importing.stop(
+      error instanceof Error
+        ? `${invalidAuthConfigMessage} ${error.message}`
+        : invalidAuthConfigMessage,
+      2
+    );
+    throw new HandledCliError();
+  }
 
   let destinationShareLink = options.to;
   if (

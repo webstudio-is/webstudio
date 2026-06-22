@@ -40,9 +40,9 @@ import {
   elementComponent,
   toRuntimeAsset,
 } from "@webstudio-is/sdk";
-import { createWsAuthResources } from "@webstudio-is/wsauth";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { publishedProjectBundleSchema } from "@webstudio-is/bundle";
+import { createAuthConfigResources, LOCAL_AUTH_FILE } from "./auth-config";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
@@ -53,8 +53,6 @@ import { htmlToJsx } from "./html-to-jsx";
 import { compareMedia } from "@webstudio-is/css-engine";
 import { materializeAssetFiles } from "./asset-files";
 import { formatZodIssues } from "./zod-utils";
-
-const wsAuthFile = ".webstudio/auth.json";
 
 const createRemixFramework = async () =>
   (await import("./framework-remix")).createFramework();
@@ -108,33 +106,9 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
 };
 
 const writeWsAuthResources = async (generatedDir: string, pages: Pages) => {
-  console.info("[wsauth] prebuild create auth config", {
-    file: wsAuthFile,
-    projectAuthContentLength: pages.meta?.auth?.length ?? 0,
-    projectAuthContent: pages.meta?.auth,
-    pages: getAllPages(pages).map((page) => ({
-      id: page.id,
-      name: page.name,
-      route: getPagePath(page.id, pages),
-      auth: page.meta.auth,
-    })),
-  });
-  const { content, module } = createWsAuthResources({
-    projectContent: pages.meta?.auth,
-    pages: getAllPages(pages).map((page) => ({
-      route: getPagePath(page.id, pages),
-      auth: page.meta.auth,
-    })),
-  });
-  console.info("[wsauth] prebuild write auth config", {
-    file: wsAuthFile,
-    contentLength: content.length,
-    content,
-    generatedModulePath: join(generatedDir, "$resources.wsauth.server.ts"),
-    generatedModule: module,
-  });
-  await createFolderIfNotExists(dirname(wsAuthFile));
-  await writeFile(wsAuthFile, content);
+  const { content, module } = createAuthConfigResources(pages);
+  await createFolderIfNotExists(dirname(LOCAL_AUTH_FILE));
+  await writeFile(LOCAL_AUTH_FILE, content);
   await createFileIfNotExists(
     join(generatedDir, "$resources.wsauth.server.ts"),
     module

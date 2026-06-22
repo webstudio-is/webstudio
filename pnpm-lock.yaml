@@ -1131,6 +1131,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../wsauth
       zod:
         specifier: ^3.24.2
         version: 3.24.2
@@ -2485,6 +2488,10 @@ importers:
   packages/tsconfig: {}
 
   packages/wsauth:
+    dependencies:
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*

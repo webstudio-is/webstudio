@@ -11,6 +11,10 @@ import {
 } from "@webstudio-is/bundle/fixtures";
 import { loadJSONFile } from "../fs-utils";
 import { loadAssetFiles } from "../asset-files";
+import {
+  createAuthConfigContentFromBundle,
+  LOCAL_AUTH_FILE,
+} from "../auth-config";
 import { importOptions, importProject } from "./import";
 import type { CommonYargsArgv } from "./yargs-types";
 
@@ -60,11 +64,9 @@ const createSyncedData = (data = {}) =>
   });
 
 const writeSyncedData = async (data = {}) => {
-  await writeFile(
-    ".webstudio/data.json",
-    JSON.stringify(createSyncedData(data)),
-    "utf8"
-  );
+  const syncedData = createSyncedData(data);
+  await writeFile(".webstudio/data.json", JSON.stringify(syncedData), "utf8");
+  return syncedData;
 };
 
 beforeEach(async () => {
@@ -367,6 +369,69 @@ test("loads local asset files for import", async () => {
     expect.objectContaining({
       assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
     })
+  );
+});
+
+test("validates exported auth config before importing", async () => {
+  const syncedData = await writeSyncedData();
+  await writeFile(
+    LOCAL_AUTH_FILE,
+    createAuthConfigContentFromBundle(syncedData),
+    "utf8"
+  );
+
+  await importProject({ to: destinationShareLink }, dependencies);
+
+  expect(importProjectBundle).toHaveBeenCalledWith(
+    expect.objectContaining({
+      data: syncedData,
+    })
+  );
+  expect(log.info).toHaveBeenCalledWith(`Read ${LOCAL_AUTH_FILE}`);
+});
+
+test("stops before API request when exported auth config is malformed", async () => {
+  await writeSyncedData();
+  await writeFile(LOCAL_AUTH_FILE, "{", "utf8");
+
+  await expect(
+    importProject({ to: destinationShareLink }, dependencies)
+  ).rejects.toThrow("Handled CLI error");
+
+  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
+  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(indicator.stop).toHaveBeenCalledWith(
+    `Project bundle auth config is invalid. Please run webstudio prebuild before importing. ${LOCAL_AUTH_FILE} is invalid JSON`,
+    2
+  );
+});
+
+test("stops before API request when exported auth config does not match data", async () => {
+  await writeSyncedData();
+  await writeFile(
+    LOCAL_AUTH_FILE,
+    JSON.stringify({
+      version: 1,
+      routes: {
+        "/private": {
+          method: "basic",
+          login: "admin",
+          password: "secret",
+        },
+      },
+    }),
+    "utf8"
+  );
+
+  await expect(
+    importProject({ to: destinationShareLink }, dependencies)
+  ).rejects.toThrow("Handled CLI error");
+
+  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
+  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(indicator.stop).toHaveBeenCalledWith(
+    `Project bundle auth config is invalid. Please run webstudio prebuild before importing. ${LOCAL_AUTH_FILE} does not match .webstudio/data.json`,
+    2
   );
 });
 

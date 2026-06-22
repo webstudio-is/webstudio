@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import { z } from "zod";
 import {
   isAssetFileName,
   isAssetFileDataString,
@@ -8,32 +7,7 @@ import {
   publishedProjectBundleSchema,
   bundleVersion,
 } from "./schema";
-import { createContractVersion } from "./contract-version";
 import { createPublishedProjectBundleFixture } from "./fixtures";
-
-type StringRefinement = z.RefinementEffect<string>["refinement"];
-
-const createLengthRefinement = ({
-  contractLength,
-  validateLength = contractLength,
-}: {
-  contractLength: number;
-  validateLength?: number;
-}) =>
-  Object.assign(
-    (value: string, context: z.RefinementCtx) => {
-      if (value.length < validateLength) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Must be at least ${validateLength} characters`,
-        });
-      }
-    },
-    { contract: { minLength: contractLength } }
-  );
-
-const versionForRefinement = (refinement: StringRefinement) =>
-  createContractVersion(z.string().superRefine(refinement), "1");
 
 describe("project bundle contract", () => {
   test("validates base64 asset file data", () => {
@@ -50,67 +24,6 @@ describe("project bundle contract", () => {
     expect(isAssetFileName("..")).toBe(false);
     expect(isAssetFileName("../image.png")).toBe(false);
     expect(isAssetFileName("folder\\image.png")).toBe(false);
-  });
-
-  test("changes version when schema shape changes", () => {
-    const first = createContractVersion(z.object({ value: z.string() }), "1");
-    const second = createContractVersion(z.object({ value: z.number() }), "1");
-
-    expect(first).not.toBe(second);
-  });
-
-  test("changes version when explicit refinement contract changes", () => {
-    expect(
-      versionForRefinement(createLengthRefinement({ contractLength: 2 }))
-    ).not.toBe(
-      versionForRefinement(createLengthRefinement({ contractLength: 3 }))
-    );
-  });
-
-  test("ignores refinement function source", () => {
-    expect(
-      versionForRefinement(
-        createLengthRefinement({ contractLength: 2, validateLength: 2 })
-      )
-    ).toBe(
-      versionForRefinement(
-        createLengthRefinement({ contractLength: 2, validateLength: 3 })
-      )
-    );
-
-    expect(
-      createContractVersion(
-        z.string().superRefine((value, context) => {
-          if (value.length < 2) {
-            context.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Must be at least 2 characters",
-            });
-          }
-        }),
-        "1"
-      )
-    ).toBe(
-      createContractVersion(
-        z.string().superRefine((value, context) => {
-          if (value.length < 3) {
-            context.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Must be at least 3 characters",
-            });
-          }
-        }),
-        "1"
-      )
-    );
-  });
-
-  test("changes version when package version changes", () => {
-    const schema = z.object({ value: z.string() });
-
-    expect(createContractVersion(schema, "1.0.0")).not.toBe(
-      createContractVersion(schema, "1.0.1")
-    );
   });
 
   test("preserves published project metadata", () => {

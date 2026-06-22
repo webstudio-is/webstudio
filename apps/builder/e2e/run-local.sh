@@ -198,6 +198,7 @@ install_playwright_chromium() {
 }
 
 build_builder_package_entries() {
+  pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/bundle build
   pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/http-client build
 }
 

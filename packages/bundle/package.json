@@ -14,6 +14,7 @@
   "dependencies": {
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/wsauth": "workspace:*",
     "zod": "^3.24.2"
   },
   "devDependencies": {
