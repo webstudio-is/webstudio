@@ -3,7 +3,10 @@ import { cwd } from "node:process";
 import { join } from "node:path";
 import pc from "picocolors";
 import { spinner } from "@clack/prompts";
-import type { PublishedProjectBundle } from "@webstudio-is/protocol";
+import {
+  bundleVersion,
+  type PublishedProjectBundle,
+} from "@webstudio-is/protocol";
 import {
   loadProjectBundleByBuildId,
   loadProjectBundleByProjectId,
@@ -44,6 +47,14 @@ const defaultDependencies: SyncDependencies = {
   readFile,
   spinner,
   writeFile,
+};
+
+const toLocalProjectBundle = (project: PublishedProjectBundle) => {
+  const { bundleVersion: synchronizedBundleVersion, ...projectData } = project;
+  return {
+    bundleVersion: synchronizedBundleVersion ?? bundleVersion,
+    ...projectData,
+  };
 };
 
 export const syncOptions = (yargs: CommonYargsArgv) =>
@@ -194,7 +205,7 @@ export const sync = async (
   await dependencies.createFileIfNotExists(localBuildFilePath);
   await dependencies.writeFile(
     localBuildFilePath,
-    JSON.stringify(project, null, 2),
+    JSON.stringify(toLocalProjectBundle(project), null, 2),
     "utf8"
   );
 

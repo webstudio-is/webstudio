@@ -76,6 +76,26 @@ test("preserves synchronized data version from the API", async () => {
   );
 });
 
+test("adds current bundle version when synchronizing data from old API", async () => {
+  loadProjectBundleByBuildId.mockResolvedValue(
+    createProjectBundle({ bundleVersion: undefined })
+  );
+
+  await sync(
+    {
+      authToken: "token-1",
+      buildId: "build-1",
+      origin: "https://example.com",
+    },
+    dependencies
+  );
+
+  const data = await readFile(".webstudio/data.json", "utf8");
+
+  expect(JSON.parse(data)).toMatchObject({ bundleVersion });
+  expect(data.startsWith(`{\n  "bundleVersion":`)).toBe(true);
+});
+
 test("downloads project bundle asset files into local project bundle", async () => {
   const assets = [createImageAssetFixture()];
   loadProjectBundleByBuildId.mockResolvedValue(createProjectBundle({ assets }));
