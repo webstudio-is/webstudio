@@ -135,7 +135,7 @@ export const domainRouter = router({
         }
 
         const result = await deploymentTrpc.publish.mutate({
-          // used to load build data from the builder with build.loadProjectDataByBuildId
+          // used to load build data from the builder with build.loadProjectBundleByBuildId
           builderOrigin: env.BUILDER_ORIGIN,
           githubSha: env.GITHUB_SHA,
           buildId: build.id,

@@ -1,3 +1,6 @@
+import type { BasicAuthInput, WsAuthConfig } from "./schema";
+export type { BasicAuthInput, WsAuthConfig } from "./schema";
+
 export type BasicAuthRule = {
   method: "basic";
   login: string;
@@ -36,23 +39,6 @@ export type WsAuthBuildResult = {
   routes: WsAuthRoute[];
   content: string;
 };
-
-export type WsAuthConfig = {
-  version: 1;
-  routes: Record<string, BasicAuthInput>;
-};
-
-export type BasicAuthInput =
-  | {
-      method: "basic";
-      login: string;
-      password: string;
-    }
-  | {
-      type: "basic";
-      login: string;
-      password: string;
-    };
 
 export type WsAuthPageInput = {
   route: string;
@@ -395,16 +381,6 @@ export const createWsAuthResources = ({
     { name: projectSourceName, content: projectContent },
     { name: generatedSourceName, routes: generatedRoutes },
   ]);
-  console.info("[wsauth] create resources", {
-    projectContentLength: projectContent.length,
-    projectContent,
-    pageCount: pages.length,
-    pages,
-    generatedRouteCount: generatedRoutes.length,
-    generatedRoutes,
-    routeCount: result.routes.length,
-    routes: result.routes,
-  });
   return {
     ...result,
     module: [
@@ -494,22 +470,8 @@ export const matchWsAuthRoute = (route: string, pathname: string) => {
   return matchSegments(0, 0);
 };
 
-export const findWsAuthRoute = (
-  authRoutes: WsAuthRoute[],
-  pathname: string
-) => {
-  const authRoute = authRoutes.find(({ route }) =>
-    matchWsAuthRoute(route, pathname)
-  );
-  console.info("[wsauth] find route", {
-    pathname,
-    routeCount: authRoutes.length,
-    authRoutes,
-    matchedRoute: authRoute?.route,
-    matchedAuth: authRoute?.auth,
-  });
-  return authRoute;
-};
+export const findWsAuthRoute = (authRoutes: WsAuthRoute[], pathname: string) =>
+  authRoutes.find(({ route }) => matchWsAuthRoute(route, pathname));
 
 export const authenticateRequest = (
   request: Request,
@@ -517,53 +479,15 @@ export const authenticateRequest = (
 ) => {
   const url = new URL(request.url);
   const authorization = request.headers.get("Authorization");
-  console.info("[wsauth] authenticate request", {
-    method: request.method,
-    url: url.href,
-    pathname: url.pathname,
-    routeCount: authRoutes.length,
-    authRoutes,
-    hasAuthorization: authorization !== null,
-    authorization,
-    authorizationScheme: authorization?.split(/\s+/, 1)[0]?.toLowerCase(),
-  });
   const authRoute = findWsAuthRoute(authRoutes, url.pathname);
   if (authRoute === undefined) {
-    console.info("[wsauth] authenticate result", {
-      pathname: url.pathname,
-      result: "not-protected",
-    });
     return;
   }
   if (authRoute.auth.method === "basic") {
     const credentials = getBasicAuthCredentials(authorization);
     if (credentials === authRoute.auth.credentials) {
-      console.info("[wsauth] authenticate result", {
-        pathname: url.pathname,
-        route: authRoute.route,
-        method: authRoute.auth.method,
-        result: "authorized",
-        hasParsedCredentials: credentials !== undefined,
-        parsedCredentials: credentials,
-        expectedCredentials: authRoute.auth.credentials,
-        expectedLogin: authRoute.auth.login,
-        expectedPassword: authRoute.auth.password,
-      });
       return authRoute;
     }
-    console.warn("[wsauth] authenticate result", {
-      pathname: url.pathname,
-      route: authRoute.route,
-      method: authRoute.auth.method,
-      result: "unauthorized",
-      hasAuthorization: authorization !== null,
-      hasParsedCredentials: credentials !== undefined,
-      authorization,
-      parsedCredentials: credentials,
-      expectedCredentials: authRoute.auth.credentials,
-      expectedLogin: authRoute.auth.login,
-      expectedPassword: authRoute.auth.password,
-    });
     throw new Response("Authentication required", {
       status: 401,
       headers: {

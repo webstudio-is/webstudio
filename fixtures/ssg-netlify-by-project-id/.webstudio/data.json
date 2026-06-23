@@ -1,4 +1,5 @@
 {
+  "bundleVersion": "bundle-0.0.0-a6dad953",
   "build": {
     "id": "8f0fdff2-e76b-4f86-9203-ea7df5f1143c",
     "projectId": "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e",
@@ -92,18 +93,6 @@
     "styleSources": [],
     "styleSourceSelections": [],
     "props": [],
-    "dataSources": [
-      [
-        "XE93KQdVwfiA3TCf8hQAQ",
-        {
-          "id": "XE93KQdVwfiA3TCf8hQAQ",
-          "scopeInstanceId": "iavYtlaxaMTf7HB5DBf8e",
-          "name": "system",
-          "type": "parameter"
-        }
-      ]
-    ],
-    "resources": [],
     "instances": [
       [
         "iavYtlaxaMTf7HB5DBf8e",
@@ -144,6 +133,18 @@
         }
       ]
     ],
+    "dataSources": [
+      [
+        "XE93KQdVwfiA3TCf8hQAQ",
+        {
+          "type": "parameter",
+          "id": "XE93KQdVwfiA3TCf8hQAQ",
+          "scopeInstanceId": "iavYtlaxaMTf7HB5DBf8e",
+          "name": "system"
+        }
+      ]
+    ],
+    "resources": [],
     "deployment": {
       "destination": "saas",
       "domains": ["fixture-client-do-not-touch-wsmel"],

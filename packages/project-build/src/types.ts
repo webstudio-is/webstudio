@@ -1,15 +1,15 @@
 import type {
-  Pages,
   Breakpoint,
+  DataSource,
+  Deployment,
+  Instance,
+  Pages,
+  Prop,
+  Resource,
   StyleDecl,
   StyleDeclKey,
   StyleSource,
-  Instance,
-  Prop,
   StyleSourceSelection,
-  Deployment,
-  DataSource,
-  Resource,
 } from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "./shared/marketplace";
 
