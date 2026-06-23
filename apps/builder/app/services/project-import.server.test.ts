@@ -10,6 +10,16 @@ import {
   importPublishedProjectBundle,
 } from "./project-import.server";
 
+const {
+  assertBundleVersion,
+  assertImportedAssetFilesUploaded,
+  assertImportedAssetNames,
+  assertProjectBuildPermit,
+  createBuildImportUpdate,
+  createImportedAssetRows,
+  getImportedPreviewImageAssetId,
+} = __testing__;
+
 const createData = (
   overrides: Partial<PublishedProjectBundle> = {}
 ): PublishedProjectBundle => {
@@ -170,9 +180,7 @@ describe("build import helpers", () => {
 
   test("rejects missing synced data version with compatibility message", () => {
     expect(() =>
-      __testing__.assertBundleVersion(
-        {} as Pick<PublishedProjectBundle, "bundleVersion">
-      )
+      assertBundleVersion({} as Pick<PublishedProjectBundle, "bundleVersion">)
     ).toThrow("Sync with a compatible API/CLI version");
   });
 
@@ -180,7 +188,7 @@ describe("build import helpers", () => {
     hasProjectPermit.mockResolvedValue(false);
 
     await expect(
-      __testing__.assertProjectBuildPermit({
+      assertProjectBuildPermit({
         ctx: {} as never,
         hasProjectPermit,
         projectId: "target-project",
@@ -193,7 +201,7 @@ describe("build import helpers", () => {
   });
 
   test("serializes imported build data into compact build columns", () => {
-    const update = __testing__.createBuildImportUpdate({
+    const update = createBuildImportUpdate({
       data: createData(),
       lastTransactionId: "import-tx",
       updatedAt: "2024-02-01T00:00:00.000Z",
@@ -226,18 +234,16 @@ describe("build import helpers", () => {
   });
 
   test("uses imported home social image only when corresponding asset exists", () => {
-    expect(__testing__.getImportedPreviewImageAssetId(createData())).toBe(
-      "asset-1"
-    );
+    expect(getImportedPreviewImageAssetId(createData())).toBe("asset-1");
 
     expect(
-      __testing__.getImportedPreviewImageAssetId(createData({ assets: [] }))
+      getImportedPreviewImageAssetId(createData({ assets: [] }))
     ).toBeNull();
   });
 
   test("remaps imported asset rows to destination project", () => {
     expect(
-      __testing__.createImportedAssetRows({
+      createImportedAssetRows({
         assets: [
           createData().assets[0],
           {
@@ -347,7 +353,7 @@ describe("build import helpers", () => {
     const fileFilters: [string, string][] = [];
 
     await expect(
-      __testing__.assertImportedAssetFilesUploaded({
+      assertImportedAssetFilesUploaded({
         assets: createData().assets,
         ctx: {
           postgrest: {
@@ -394,7 +400,7 @@ describe("build import helpers", () => {
 
   test("rejects imported asset names with path separators", () => {
     expect(() =>
-      __testing__.assertImportedAssetNames([
+      assertImportedAssetNames([
         { ...createData().assets[0], name: "../image.png" },
       ])
     ).toThrow("Imported asset name is invalid: ../image.png");
@@ -402,7 +408,7 @@ describe("build import helpers", () => {
 
   test("rejects duplicated imported asset names", () => {
     expect(() =>
-      __testing__.assertImportedAssetNames([
+      assertImportedAssetNames([
         createData().assets[0],
         { ...createData().assets[0], id: "asset-2" },
       ])
@@ -411,7 +417,7 @@ describe("build import helpers", () => {
 
   test("rejects duplicated imported asset ids", () => {
     expect(() =>
-      __testing__.assertImportedAssetNames([
+      assertImportedAssetNames([
         createData().assets[0],
         { ...createData().assets[0], name: "other.png" },
       ])
@@ -420,9 +426,7 @@ describe("build import helpers", () => {
 
   test("rejects empty imported asset ids", () => {
     expect(() =>
-      __testing__.assertImportedAssetNames([
-        { ...createData().assets[0], id: "" },
-      ])
+      assertImportedAssetNames([{ ...createData().assets[0], id: "" }])
     ).toThrow("Imported asset id is invalid.");
   });
 });

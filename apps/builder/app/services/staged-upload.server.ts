@@ -67,6 +67,7 @@ const createStagedUploadStore = (
     return new S3Store({
       expirationPeriodInMilliseconds: stagedUploadExpiration,
       partSize: 8 * 1024 * 1024,
+      useTags: false,
       s3ClientConfig: {
         endpoint,
         region,

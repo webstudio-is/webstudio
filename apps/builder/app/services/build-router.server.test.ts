@@ -2,6 +2,8 @@ import { describe, expect, test, vi } from "vitest";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import { __testing__ } from "./build-router.server";
 
+const { createImportProjectBundleHandler } = __testing__;
+
 describe("build router project bundle import", () => {
   test("imports staged project bundle data and removes the upload", async () => {
     const data = createPublishedProjectBundleFixture();
@@ -12,7 +14,7 @@ describe("build router project bundle import", () => {
       .fn()
       .mockResolvedValue(JSON.stringify(data));
     const removeStagedUpload = vi.fn().mockResolvedValue(undefined);
-    const handler = __testing__.createImportProjectBundleHandler({
+    const handler = createImportProjectBundleHandler({
       importPublishedProjectBundle,
       readStagedUploadText,
       removeStagedUpload,
@@ -47,7 +49,7 @@ describe("build router project bundle import", () => {
     const importPublishedProjectBundle = vi.fn();
     const readStagedUploadText = vi.fn().mockResolvedValue("{");
     const removeStagedUpload = vi.fn().mockResolvedValue(undefined);
-    const handler = __testing__.createImportProjectBundleHandler({
+    const handler = createImportProjectBundleHandler({
       importPublishedProjectBundle,
       readStagedUploadText,
       removeStagedUpload,
@@ -74,7 +76,7 @@ describe("build router project bundle import", () => {
     });
     const readStagedUploadText = vi.fn();
     const removeStagedUpload = vi.fn();
-    const handler = __testing__.createImportProjectBundleHandler({
+    const handler = createImportProjectBundleHandler({
       importPublishedProjectBundle,
       readStagedUploadText,
       removeStagedUpload,
