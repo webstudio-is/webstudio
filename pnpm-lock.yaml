@@ -1137,9 +1137,6 @@ importers:
       '@webstudio-is/project-migrations':
         specifier: workspace:*
         version: link:../project-migrations
-      '@webstudio-is/protocol':
-        specifier: workspace:*
-        version: link:../protocol
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
@@ -1240,6 +1237,9 @@ importers:
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../image
+      '@webstudio-is/protocol':
+        specifier: workspace:*
+        version: link:../protocol
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
@@ -1953,22 +1953,22 @@ importers:
 
   packages/protocol:
     dependencies:
-      '@webstudio-is/project-build':
-        specifier: workspace:*
-        version: link:../project-build
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
-      '@webstudio-is/wsauth':
-        specifier: workspace:*
-        version: link:../wsauth
       zod:
         specifier: ^3.24.2
         version: 3.24.2
     devDependencies:
+      '@webstudio-is/project-build':
+        specifier: workspace:*
+        version: link:../project-build
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@webstudio-is/wsauth':
+        specifier: workspace:*
+        version: link:../wsauth
       vitest:
         specifier: ^3.1.2
         version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)

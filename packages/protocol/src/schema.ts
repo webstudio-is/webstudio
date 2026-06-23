@@ -2,7 +2,7 @@ import { Asset, Page } from "@webstudio-is/sdk/schema";
 import { SerializedBuildSchema } from "@webstudio-is/project-build/schema";
 import { wsAuthConfigSchema } from "@webstudio-is/wsauth/schema";
 import { z } from "zod";
-import packageJson from "../package.json";
+import { version } from "../package.json";
 import { createContractVersion } from "./contract-version";
 
 // Bundle owns the assembled external project import/export format.
@@ -100,7 +100,7 @@ export const checkProjectBuildPermissionInputSchema = z.object({
 
 export const bundleVersion = createContractVersion(
   publishedProjectBundleSchema,
-  packageJson.version,
+  version,
   [wsAuthConfigSchema]
 );
 
