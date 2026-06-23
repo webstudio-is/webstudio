@@ -8,14 +8,14 @@ import {
   createErrorResponse,
   getProjectOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
-import { Title } from "../shared/project-schema";
-import { MarketplaceApprovalStatus } from "../shared/marketplace-schema";
+import { projectTitle } from "../shared/project-schema";
+import { marketplaceApprovalStatus } from "../shared/marketplace-schema";
 
 export const projectRouter = router({
   rename: procedure
     .input(
       z.object({
-        title: Title,
+        title: projectTitle,
         projectId: z.string(),
       })
     )
@@ -47,7 +47,9 @@ export const projectRouter = router({
     }),
 
   create: procedure
-    .input(z.object({ title: Title, workspaceId: z.string().optional() }))
+    .input(
+      z.object({ title: projectTitle, workspaceId: z.string().optional() })
+    )
     .mutation(async ({ input, ctx }) => {
       return await projectApi.create(input, ctx);
     }),
@@ -56,7 +58,7 @@ export const projectRouter = router({
     .input(
       z.object({
         projectId: z.string(),
-        marketplaceApprovalStatus: MarketplaceApprovalStatus,
+        marketplaceApprovalStatus: marketplaceApprovalStatus,
       })
     )
     .mutation(async ({ input, ctx }) => {

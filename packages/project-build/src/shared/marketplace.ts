@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const MarketplaceProduct = z.object({
+export const marketplaceProduct = z.object({
   category: z.union([
     z.literal("sectionTemplates"),
     z.literal("pageTemplates"),
@@ -17,7 +17,7 @@ export const MarketplaceProduct = z.object({
   issues: z.union([z.string().max(200).url().trim().optional(), z.literal("")]),
   description: z.string().trim().min(10).max(1000),
 });
-export type MarketplaceProduct = z.infer<typeof MarketplaceProduct>;
+export type MarketplaceProduct = z.infer<typeof marketplaceProduct>;
 
 export const marketplaceCategories = new Map<
   MarketplaceProduct["category"],

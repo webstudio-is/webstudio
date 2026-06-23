@@ -7,7 +7,7 @@ import type { Database } from "@webstudio-is/postgrest/index.server";
 type Relation =
   Database["public"]["Tables"]["AuthorizationToken"]["Row"]["relation"];
 
-const TokenProjectRelation = z.enum([
+const tokenProjectRelation = z.enum([
   "viewers",
   "editors",
   "builders",
@@ -15,7 +15,7 @@ const TokenProjectRelation = z.enum([
 ]);
 
 // Check DB types are compatible with zod types
-type TokenRelation = z.infer<typeof TokenProjectRelation>;
+type TokenRelation = z.infer<typeof tokenProjectRelation>;
 true satisfies IsEqual<TokenRelation, Relation>;
 
 export const authorizationTokenRouter = router({
@@ -32,7 +32,7 @@ export const authorizationTokenRouter = router({
     .input(
       z.object({
         projectId: z.string(),
-        relation: TokenProjectRelation,
+        relation: tokenProjectRelation,
         name: z.string(),
       })
     )
@@ -65,7 +65,7 @@ export const authorizationTokenRouter = router({
         projectId: z.string(),
         token: z.string(),
         name: z.string(),
-        relation: TokenProjectRelation,
+        relation: tokenProjectRelation,
         canClone: z.boolean(),
         canCopy: z.boolean(),
         canPublish: z.boolean(),

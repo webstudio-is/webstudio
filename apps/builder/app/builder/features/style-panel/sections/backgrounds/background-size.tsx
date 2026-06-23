@@ -3,8 +3,8 @@ import { toValue } from "@webstudio-is/css-engine";
 import { keywordValues, propertyDescriptions } from "@webstudio-is/css-data";
 import {
   type StyleValue,
-  TupleValue,
-  TupleValueItem,
+  tupleValue,
+  tupleValueItem,
 } from "@webstudio-is/css-engine";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { SetValue } from "../../shared/use-style-data";
@@ -35,13 +35,13 @@ const toTuple = (
   valueX?: StyleValue | string,
   valueY?: StyleValue | string
 ) => {
-  const parsedValue = TupleValue.safeParse(valueX);
+  const parsedValue = tupleValue.safeParse(valueX);
   if (parsedValue.success) {
     return parsedValue.data;
   }
 
-  const parsedValueX = valueX ? TupleValueItem.parse(valueX) : autoKeyword;
-  const parsedValueY = valueY ? TupleValueItem.parse(valueY) : parsedValueX;
+  const parsedValueX = valueX ? tupleValueItem.parse(valueX) : autoKeyword;
+  const parsedValueY = valueY ? tupleValueItem.parse(valueY) : parsedValueX;
 
   return {
     type: "tuple" as const,

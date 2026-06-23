@@ -4,8 +4,9 @@ import {
   propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
-  TupleValue,
-  TupleValueItem,
+  type TupleValue,
+  tupleValue,
+  tupleValueItem,
   type StyleValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
@@ -37,15 +38,15 @@ const toTuple = (
   valueX?: StyleValue | string,
   valueY?: StyleValue | string
 ) => {
-  const parsedValue = TupleValue.safeParse(valueX);
+  const parsedValue = tupleValue.safeParse(valueX);
   if (parsedValue.success) {
     return parsedValue.data;
   }
 
   const parsedValueX = valueX
-    ? TupleValueItem.parse(valueX)
+    ? tupleValueItem.parse(valueX)
     : ({ type: "unit", value: 0, unit: "px" } as const);
-  const parsedValueY = valueY ? TupleValueItem.parse(valueY) : parsedValueX;
+  const parsedValueY = valueY ? tupleValueItem.parse(valueY) : parsedValueX;
 
   return {
     type: "tuple" as const,

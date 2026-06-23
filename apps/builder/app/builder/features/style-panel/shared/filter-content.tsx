@@ -2,7 +2,7 @@ import {
   type InvalidValue,
   type TupleValue,
   toValue,
-  StyleValue,
+  type StyleValue,
 } from "@webstudio-is/css-engine";
 import {
   Flex,

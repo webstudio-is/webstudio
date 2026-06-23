@@ -12,8 +12,9 @@ import {
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  DataSources,
-  Resource,
+  type DataSources,
+  type Resource,
+  resource,
   type DataSource,
   type Page,
   type PageTemplate,
@@ -88,7 +89,7 @@ export const parseResource = ({
   const searchParamValues = formData.getAll("search-param-value") as string[];
   const headerNames = formData.getAll("header-name") as string[];
   const headerValues = formData.getAll("header-value") as string[];
-  return Resource.parse({
+  return resource.parse({
     id,
     control,
     name: name ?? formData.get("name"),

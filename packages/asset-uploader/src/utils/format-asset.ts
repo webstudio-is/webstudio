@@ -1,5 +1,5 @@
-import { type FontFormat, FontMeta, FONT_FORMATS } from "@webstudio-is/fonts";
-import { type Asset, ImageMeta, detectAssetType } from "@webstudio-is/sdk";
+import { type FontFormat, fontMeta, FONT_FORMATS } from "@webstudio-is/fonts";
+import { type Asset, imageMeta, detectAssetType } from "@webstudio-is/sdk";
 
 export const formatAsset = ({
   assetId,
@@ -35,7 +35,7 @@ export const formatAsset = ({
       type: "font",
       createdAt: file.createdAt,
       format: file.format as FontFormat,
-      meta: FontMeta.parse(parsedMeta),
+      meta: fontMeta.parse(parsedMeta),
     };
   }
 
@@ -61,7 +61,7 @@ export const formatAsset = ({
       type: "image",
       format: file.format,
       createdAt: file.createdAt,
-      meta: ImageMeta.parse(parsedMeta),
+      meta: imageMeta.parse(parsedMeta),
     };
   }
 

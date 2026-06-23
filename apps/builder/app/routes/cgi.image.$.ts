@@ -9,7 +9,7 @@ import env from "~/env/env.server";
 import { getImageNameAndType } from "~/builder/shared/assets/asset-utils";
 import { fileUploadPath } from "~/shared/asset-client";
 
-const ImageParams = z.object({
+const imageParams = z.object({
   width: z.string().transform((value) => Math.round(parseFloat(value))),
   height: z.optional(
     z.string().transform((value) => Math.round(parseFloat(value)))
@@ -58,7 +58,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     rawParameters.fit = fit;
   }
 
-  const imageParameters = ImageParams.parse(rawParameters);
+  const imageParameters = imageParams.parse(rawParameters);
 
   // Allow direct image access, and from the same origin
   const refererRawUrl = request.headers.get("referer");

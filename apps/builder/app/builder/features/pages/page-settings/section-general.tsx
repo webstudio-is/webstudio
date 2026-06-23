@@ -18,10 +18,10 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import {
-  HomePagePath,
-  PageName,
-  PagePath,
-  ProjectNewRedirectPath,
+  homePagePath,
+  pageName,
+  pagePath,
+  projectNewRedirectPath,
   documentTypes,
   getPagePath,
   isLiteralExpression,
@@ -45,23 +45,23 @@ import type { Errors, OnChange, Values } from "./shared";
 
 // 2xx, 3xx, 4xx, 5xx
 const statusRegex = /^[2345]\d\d$/;
-const Status = z
+const status = z
   .number()
   .refine(
     (value) => statusRegex.test(String(value)),
     "Status code expects 2xx, 3xx, 4xx or 5xx"
   );
 
-const GeneralValues = z.object({
-  name: PageName,
-  path: PagePath,
-  status: Status.optional(),
-  redirect: z.optional(ProjectNewRedirectPath.or(z.literal(""))),
+const generalValues = z.object({
+  name: pageName,
+  path: pagePath,
+  status: status.optional(),
+  redirect: z.optional(projectNewRedirectPath.or(z.literal(""))),
   documentType: z.optional(z.enum(documentTypes)),
 });
 
-const HomePageGeneralValues = GeneralValues.extend({
-  path: HomePagePath,
+const homePageGeneralValues = generalValues.extend({
+  path: homePagePath,
 });
 
 const computePageRoute = (values: Values, pages: Pages) => {
@@ -94,8 +94,8 @@ export const validateGeneralSection = ({
     documentType: values.documentType,
   };
 
-  const Validator = values.isHomePage ? HomePageGeneralValues : GeneralValues;
-  const parsedResult = Validator.safeParse(computedValues);
+  const validator = values.isHomePage ? homePageGeneralValues : generalValues;
+  const parsedResult = validator.safeParse(computedValues);
   const errors: Errors = {};
   if (parsedResult.success === false) {
     Object.assign(errors, parsedResult.error.formErrors.fieldErrors);

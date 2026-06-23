@@ -17,7 +17,7 @@ import type { BloomFilter } from "~/services/bloom-filter.server";
 import { isBuilder, isCanvas } from "./router-utils";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import {
-  ApiClient,
+  apiClient,
   apiClientHeader,
   apiClientVersionHeader,
 } from "@webstudio-is/trpc-interface/api-compatibility";
@@ -186,7 +186,7 @@ const createTrpcCache = () => {
 };
 
 const createApiClientContext = (request: Request): AppContext["apiClient"] => {
-  const client = ApiClient.safeParse(request.headers.get(apiClientHeader));
+  const client = apiClient.safeParse(request.headers.get(apiClientHeader));
   if (client.success === false) {
     return {
       type: "unknown",

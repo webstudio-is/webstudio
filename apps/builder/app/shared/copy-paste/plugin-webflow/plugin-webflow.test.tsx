@@ -17,7 +17,7 @@ import { $registeredComponentMetas } from "../../nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $project, $styleSources, $styles } from "~/shared/sync/data-stores";
 import invariant from "tiny-invariant";
-import { WfData } from "./schema";
+import { wfData } from "./schema";
 
 const { toWebstudioFragment } = __testing__;
 
@@ -3025,7 +3025,7 @@ describe("Styles", () => {
   });
 
   test("background images", async () => {
-    const input = WfData.parse({
+    const input = wfData.parse({
       type: "@webflow/XscpData",
       payload: {
         nodes: [
@@ -3183,7 +3183,7 @@ describe("Styles", () => {
   });
 
   test("@raw webflow custom properties", async () => {
-    const input = WfData.parse({
+    const input = wfData.parse({
       type: "@webflow/XscpData",
       payload: {
         nodes: [
@@ -3226,7 +3226,7 @@ describe("Styles", () => {
   });
 
   test("append transparent color when background-clip is used", async () => {
-    const input = WfData.parse({
+    const input = wfData.parse({
       type: "@webflow/XscpData",
       payload: {
         nodes: [

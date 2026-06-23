@@ -1,6 +1,6 @@
 import { clamp } from "@react-aria/utils";
 import {
-  ColorValue,
+  type ColorValue,
   toValue,
   type CssProperty,
   type KeywordValue,

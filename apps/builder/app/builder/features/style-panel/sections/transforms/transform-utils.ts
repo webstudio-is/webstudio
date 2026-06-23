@@ -1,7 +1,7 @@
 import { parseCssValue } from "@webstudio-is/css-data";
 import {
-  FunctionValue,
-  StyleValue,
+  type FunctionValue,
+  type StyleValue,
   toValue,
   type TupleValue,
 } from "@webstudio-is/css-engine";

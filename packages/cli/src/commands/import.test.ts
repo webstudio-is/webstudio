@@ -188,6 +188,22 @@ test("requires destination share link before running non-interactive command", a
   );
 });
 
+test("parses skip-assets flag", async () => {
+  const parser = importOptions(
+    makeCLI([])
+      .exitProcess(false)
+      .fail((message, error) => {
+        throw error ?? new Error(message);
+      }) as CommonYargsArgv
+  );
+
+  expect(
+    parser.parse(["--to", destinationShareLink, "--skip-assets"])
+  ).toMatchObject({
+    skipAssets: true,
+  });
+});
+
 test("stops with sync instruction when local data is missing", async () => {
   await expect(
     importProject(
@@ -372,6 +388,28 @@ test("uploads local asset files before import", async () => {
   );
 });
 
+test("imports without uploading assets when requested", async () => {
+  await writeSyncedData({
+    assets: [imageAsset],
+  });
+
+  await importProject(
+    {
+      to: destinationShareLink,
+      skipAssets: true,
+    },
+    dependencies
+  );
+
+  expect(uploadAssetFiles).not.toHaveBeenCalled();
+  expect(log.info).toHaveBeenCalledWith("Skipped asset upload and asset rows");
+  expect(importProjectBundle).toHaveBeenCalledWith(
+    expect.objectContaining({
+      data: createSyncedData({ assets: [] }),
+    })
+  );
+});
+
 test("validates exported auth config before importing", async () => {
   const syncedData = await writeSyncedData();
   await writeFile(
@@ -547,6 +585,27 @@ test("prints import command in CLI compatibility guidance", async () => {
 
   expect(indicator.stop).toHaveBeenCalledWith(
     expect.stringContaining("npx webstudio@latest import"),
+    2
+  );
+});
+
+test("forwards oversized project bundle import error", async () => {
+  await writeSyncedData();
+  importProjectBundle.mockRejectedValue(
+    new Error("Project bundle is too large to import. Maximum size is 20 MiB.")
+  );
+
+  await expect(
+    importProject(
+      {
+        to: destinationShareLink,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expect(indicator.stop).toHaveBeenCalledWith(
+    "Project bundle is too large to import. Maximum size is 20 MiB.",
     2
   );
 });

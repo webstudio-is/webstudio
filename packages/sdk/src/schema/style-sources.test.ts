@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { StyleSource } from "./style-sources";
+import { styleSource } from "./style-sources";
 
 describe("StyleSource", () => {
   test("parses unlocked tokens without locked field", () => {
     expect(
-      StyleSource.parse({
+      styleSource.parse({
         id: "token",
         type: "token",
         name: "Token",
@@ -18,7 +18,7 @@ describe("StyleSource", () => {
 
   test("parses locked tokens", () => {
     expect(
-      StyleSource.parse({
+      styleSource.parse({
         id: "token",
         type: "token",
         name: "Token",

@@ -1,5 +1,5 @@
 import { expectType, type TypeEqual } from "ts-expect";
-import { Templates } from "@webstudio-is/sdk";
+import type { Templates } from "@webstudio-is/sdk";
 import { PROJECT_TEMPLATES } from "./config";
 
 // We must ensure the validated template type always matches the CLI-supported templates.

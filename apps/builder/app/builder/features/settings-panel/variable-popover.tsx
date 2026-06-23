@@ -47,7 +47,7 @@ import {
   transpileExpression,
   lintExpression,
   SYSTEM_VARIABLE_ID,
-  ResourceRequest,
+  resourceRequest,
 } from "@webstudio-is/sdk";
 import {
   ExpressionEditor,
@@ -695,18 +695,18 @@ const VariablePreview = ({
     computedValue = variable ? variableValues.get(variable.id) : undefined;
   } else {
     // try to load current resource or saved one
-    let resourceRequest = ResourceRequest.safeParse(variableValue).data;
-    if (!resourceRequest && variable?.type === "resource") {
+    let parsedResourceRequest = resourceRequest.safeParse(variableValue).data;
+    if (!parsedResourceRequest && variable?.type === "resource") {
       const resource = resources.get(variable.resourceId);
       if (resource) {
-        resourceRequest = computeResourceRequest(
+        parsedResourceRequest = computeResourceRequest(
           resource,
           resourceScope.variableValues
         );
       }
     }
-    if (resourceRequest) {
-      computedValue = resourcesCache.get(getResourceKey(resourceRequest));
+    if (parsedResourceRequest) {
+      computedValue = resourcesCache.get(getResourceKey(parsedResourceRequest));
     }
   }
   const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);

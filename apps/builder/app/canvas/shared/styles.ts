@@ -2,7 +2,7 @@ import { useLayoutEffect } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
-  Instance,
+  type Instance,
   ROOT_INSTANCE_ID,
   getStyleDeclKey,
   descendantComponent,
@@ -17,7 +17,7 @@ import { inflatedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import { INFLATE_PADDING } from "~/canvas/inflator";
 import { isPseudoElement, parseMediaCondition } from "@webstudio-is/css-data";
 import {
-  StyleValue,
+  type StyleValue,
   type MediaRuleOptions,
   type StyleSheetRegular,
   type TransformValue,

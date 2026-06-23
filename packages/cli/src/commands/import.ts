@@ -4,7 +4,7 @@ import { cancel, isCancel, log, spinner, text } from "@clack/prompts";
 import {
   getBundleVersion,
   getBundleVersionMismatchMessage,
-  publishedProjectBundleSchema,
+  publishedProjectBundle,
   bundleVersion,
 } from "@webstudio-is/protocol";
 import {
@@ -70,6 +70,11 @@ export const importOptions = (yargs: CommonYargsArgv) =>
       describe:
         "Import data without a compatible data version; import may fail if source and target API data formats differ",
     })
+    .option("skip-assets", {
+      type: "boolean",
+      describe:
+        "Import project data without uploading or importing asset files; referenced assets may be missing in the target project",
+    })
     .check((options) => {
       if (options.to === undefined && isInteractiveTerminal() === false) {
         return missingDestinationMessage;
@@ -79,7 +84,7 @@ export const importOptions = (yargs: CommonYargsArgv) =>
 
 type ImportOptions = Pick<
   Partial<StrictYargsOptionsToInterface<typeof importOptions>>,
-  "ignoreVersionCheck"
+  "ignoreVersionCheck" | "skipAssets"
 > & {
   to?: string;
 };
@@ -126,7 +131,7 @@ export const importProject = async (
     );
     throw new HandledCliError();
   }
-  const parsedData = publishedProjectBundleSchema.safeParse(data);
+  const parsedData = publishedProjectBundle.safeParse(data);
   if (parsedData.success === false) {
     importing.stop(
       `${invalidProjectBundleMessage} Invalid fields: ${formatZodIssues(
@@ -211,20 +216,24 @@ export const importProject = async (
     throw new HandledCliError();
   }
 
-  importing.message(`Uploading ${importData.assets.length} assets`);
-  try {
-    await dependencies.uploadAssetFiles({
-      assets: importData.assets,
-      ...destinationRequest,
-    });
-  } catch (error) {
-    importing.stop(
-      error instanceof Error
-        ? `Unable to upload assets: ${error.message}`
-        : "Unable to upload assets",
-      2
-    );
-    throw new HandledCliError();
+  if (options.skipAssets === true) {
+    dependencies.log.info("Skipped asset upload and asset rows");
+  } else {
+    importing.message(`Uploading ${importData.assets.length} assets`);
+    try {
+      await dependencies.uploadAssetFiles({
+        assets: importData.assets,
+        ...destinationRequest,
+      });
+    } catch (error) {
+      importing.stop(
+        error instanceof Error
+          ? `Unable to upload assets: ${error.message}`
+          : "Unable to upload assets",
+        2
+      );
+      throw new HandledCliError();
+    }
   }
 
   importing.message(
@@ -234,7 +243,10 @@ export const importProject = async (
   try {
     await dependencies.importProjectBundle({
       ...destinationRequest,
-      data: importData,
+      data:
+        options.skipAssets === true
+          ? { ...importData, assets: [] }
+          : importData,
       ignoreVersionCheck: options.ignoreVersionCheck,
     });
   } catch (error) {

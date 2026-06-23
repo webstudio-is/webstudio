@@ -13,18 +13,16 @@ import {
 } from "@webstudio-is/design-system";
 import { keywordValues } from "@webstudio-is/css-data";
 
-import type {
-  DurationUnitValue,
-  RangeUnitValue,
-  IterationsUnitValue,
-  ScrollAnimation,
-  ViewAnimation,
-} from "@webstudio-is/sdk";
 import {
-  durationUnitValueSchema,
-  rangeUnitValueSchema,
-  scrollAnimationSchema,
-  viewAnimationSchema,
+  type DurationUnitValue,
+  durationUnitValue,
+  type RangeUnitValue,
+  rangeUnitValue,
+  type IterationsUnitValue,
+  type ScrollAnimation,
+  scrollAnimation,
+  type ViewAnimation,
+  viewAnimation,
 } from "@webstudio-is/sdk";
 import {
   CssValueInput,
@@ -214,7 +212,7 @@ const RangeValueInput = ({
     property="margin-left" /* allows negative values */
     disabled={disabled}
     onValidate={(styleValue) => {
-      const parsedValue = rangeUnitValueSchema.safeParse(styleValue);
+      const parsedValue = rangeUnitValue.safeParse(styleValue);
       return parsedValue.success
         ? { success: true, data: parsedValue.data }
         : { success: false };
@@ -268,7 +266,7 @@ const DurationInput = ({
       if (rawValue.toLowerCase() === "auto") {
         return { success: true, data: undefined };
       }
-      const parsedValue = durationUnitValueSchema.safeParse(styleValue);
+      const parsedValue = durationUnitValue.safeParse(styleValue);
       return parsedValue.success
         ? { success: true, data: parsedValue.data }
         : { success: false };
@@ -475,9 +473,7 @@ export const AnimationPanelContent = ({
   const isRangeStartEnabled = value.timing.delay === undefined;
   const isIterationsEnabled = value.timing.duration !== undefined;
 
-  const animationSchema = isScrollAnimation
-    ? scrollAnimationSchema
-    : viewAnimationSchema;
+  const animation = isScrollAnimation ? scrollAnimation : viewAnimation;
 
   const handleChange = (rawValue: unknown, isEphemeral: boolean) => {
     if (rawValue === undefined) {
@@ -485,7 +481,7 @@ export const AnimationPanelContent = ({
       return;
     }
 
-    const parsedValue = animationSchema.safeParse(rawValue);
+    const parsedValue = animation.safeParse(rawValue);
 
     if (parsedValue.success) {
       onChange(parsedValue.data, isEphemeral);

@@ -2,13 +2,20 @@ import { describe, expect, test } from "vitest";
 import {
   isAssetFileName,
   getBundleVersionMismatchMessage,
-  importProjectBundleInputSchema,
-  publishedProjectBundleSchema,
+  importProjectBundleInput,
+  publishedProjectBundle,
   bundleVersion,
+  stagedUploadPath,
+  stagedUploadProjectIdHeader,
 } from "./schema";
 import { createPublishedProjectBundleFixture } from "./fixtures";
 
 describe("project bundle contract", () => {
+  test("defines staged upload transport details", () => {
+    expect(stagedUploadPath).toBe("/rest/staged-upload");
+    expect(stagedUploadProjectIdHeader).toBe("x-webstudio-project-id");
+  });
+
   test("validates asset file names", () => {
     expect(isAssetFileName("image.png")).toBe(true);
     expect(isAssetFileName("")).toBe(false);
@@ -20,7 +27,7 @@ describe("project bundle contract", () => {
 
   test("preserves published project metadata", () => {
     expect(
-      publishedProjectBundleSchema.parse(
+      publishedProjectBundle.parse(
         createPublishedProjectBundleFixture({
           user: { email: "user@example.com" },
         })
@@ -36,7 +43,7 @@ describe("project bundle contract", () => {
     const data = createPublishedProjectBundleFixture();
     delete (data as Partial<typeof data>).projectTitle;
 
-    expect(() => publishedProjectBundleSchema.parse(data)).toThrow();
+    expect(() => publishedProjectBundle.parse(data)).toThrow();
   });
 
   test("requires published project bundle when importing", () => {
@@ -44,11 +51,55 @@ describe("project bundle contract", () => {
     delete (data as Partial<typeof data>).projectTitle;
 
     expect(() =>
-      importProjectBundleInputSchema.parse({
+      importProjectBundleInput.parse({
         projectId: "project",
         data,
       })
     ).toThrow();
+  });
+
+  test("accepts staged upload id when importing", () => {
+    expect(
+      importProjectBundleInput.parse({
+        projectId: "project",
+        uploadId: "upload",
+      })
+    ).toEqual({
+      projectId: "project",
+      uploadId: "upload",
+    });
+  });
+
+  test("requires non-empty project and upload ids when importing", () => {
+    expect(() =>
+      importProjectBundleInput.parse({
+        projectId: "",
+        uploadId: "upload",
+      })
+    ).toThrow();
+
+    expect(() =>
+      importProjectBundleInput.parse({
+        projectId: "project",
+        uploadId: "",
+      })
+    ).toThrow();
+  });
+
+  test("requires exactly one project bundle import source", () => {
+    expect(() =>
+      importProjectBundleInput.parse({
+        projectId: "project",
+      })
+    ).toThrow("Provide either project bundle data or an upload id");
+
+    expect(() =>
+      importProjectBundleInput.parse({
+        projectId: "project",
+        data: createPublishedProjectBundleFixture(),
+        uploadId: "upload",
+      })
+    ).toThrow("Provide either project bundle data or an upload id");
   });
 
   test("generates the current bundle version", () => {

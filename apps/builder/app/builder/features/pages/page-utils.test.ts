@@ -12,7 +12,7 @@ import {
   type Instance,
   type Page,
   SYSTEM_VARIABLE_ID,
-  Resource,
+  type Resource,
   type Pages,
   type WebstudioData,
 } from "@webstudio-is/sdk";

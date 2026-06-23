@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
-  StyleDecl,
+  type StyleDecl,
   type Breakpoints,
   type Instance,
   type Styles,

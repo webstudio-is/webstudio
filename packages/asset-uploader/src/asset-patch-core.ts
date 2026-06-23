@@ -1,5 +1,5 @@
 import { type Patch, applyPatches } from "immer";
-import { type Asset, Assets } from "@webstudio-is/sdk";
+import { type Asset, assets } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import { formatAsset } from "./utils/format-asset";
 
@@ -117,17 +117,17 @@ export const patchAssetsWithClient = async (
   patches: Array<Patch>
 ): Promise<void> => {
   const assetsList = await loadAssetsByProjectWithClient(projectId, client);
-  const assets = new Map<Asset["id"], Asset>();
+  const assetsMap = new Map<Asset["id"], Asset>();
   for (const asset of assetsList) {
-    assets.set(asset.id, asset);
+    assetsMap.set(asset.id, asset);
   }
-  const patchedAssets = applyPatches(assets, patches);
+  const patchedAssets = applyPatches(assetsMap, patches);
   // validate assets without recreating objects
   // we expect referencial equality to find updated assets
-  Assets.parse(patchedAssets);
+  assets.parse(patchedAssets);
 
   const deletedAssetIds: Asset["id"][] = [];
-  for (const assetId of assets.keys()) {
+  for (const assetId of assetsMap.keys()) {
     if (patchedAssets.has(assetId) === false) {
       deletedAssetIds.push(assetId);
     }
@@ -136,7 +136,7 @@ export const patchAssetsWithClient = async (
     await deleteAssetsWithClient({ projectId, ids: deletedAssetIds }, client);
   }
 
-  for (const asset of assets.values()) {
+  for (const asset of assetsMap.values()) {
     const patchedAsset = patchedAssets.get(asset.id);
     if (asset !== patchedAsset && patchedAsset) {
       const { filename, description } = patchedAsset;
@@ -151,7 +151,7 @@ export const patchAssetsWithClient = async (
 
   const addedAssets: Asset[] = [];
   for (const [assetId, asset] of patchedAssets) {
-    if (assets.has(assetId) === false) {
+    if (assetsMap.has(assetId) === false) {
       addedAssets.push(asset);
     }
   }

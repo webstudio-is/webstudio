@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const MarketplaceApprovalStatus = z.enum([
+export const marketplaceApprovalStatus = z.enum([
   "UNLISTED",
   "PENDING",
   "APPROVED",
@@ -8,5 +8,5 @@ export const MarketplaceApprovalStatus = z.enum([
 ]);
 
 export type MarketplaceApprovalStatus = z.infer<
-  typeof MarketplaceApprovalStatus
+  typeof marketplaceApprovalStatus
 >;

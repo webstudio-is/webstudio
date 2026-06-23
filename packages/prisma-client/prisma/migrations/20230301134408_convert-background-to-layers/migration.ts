@@ -1,129 +1,129 @@
 import { z } from "zod";
 import { PrismaClient } from "./client";
 
-const Unit = z.string();
+const unit = z.string();
 
-type Unit = z.infer<typeof Unit>;
+type Unit = z.infer<typeof unit>;
 
-const UnitValue = z.object({
+const unitValue = z.object({
   type: z.literal("unit"),
-  unit: Unit,
+  unit: unit,
   value: z.number(),
 });
 
-type UnitValue = z.infer<typeof UnitValue>;
+type UnitValue = z.infer<typeof unitValue>;
 
-const KeywordValue = z.object({
+const keywordValue = z.object({
   type: z.literal("keyword"),
   // @todo use exact type
   value: z.string(),
 });
-type KeywordValue = z.infer<typeof KeywordValue>;
+type KeywordValue = z.infer<typeof keywordValue>;
 
 /**
  * Valid unparsed css value
  **/
-const UnparsedValue = z.object({
+const unparsedValue = z.object({
   type: z.literal("unparsed"),
   value: z.string(),
 });
 
-const FontFamilyValue = z.object({
+const fontFamilyValue = z.object({
   type: z.literal("fontFamily"),
   value: z.array(z.string()),
 });
-type FontFamilyValue = z.infer<typeof FontFamilyValue>;
+type FontFamilyValue = z.infer<typeof fontFamilyValue>;
 
-const RgbValue = z.object({
+const rgbValue = z.object({
   type: z.literal("rgb"),
   r: z.number(),
   g: z.number(),
   b: z.number(),
   alpha: z.number(),
 });
-type RgbValue = z.infer<typeof RgbValue>;
+type RgbValue = z.infer<typeof rgbValue>;
 
-const ImageValue = z.object({
+const imageValue = z.object({
   type: z.literal("image"),
   value: z.object({ type: z.literal("asset"), value: z.unknown() }),
 });
 
-type ImageValue = z.infer<typeof ImageValue>;
+type ImageValue = z.infer<typeof imageValue>;
 
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
-const InvalidValue = z.object({
+const invalidValue = z.object({
   type: z.literal("invalid"),
   value: z.string(),
 });
-type InvalidValue = z.infer<typeof InvalidValue>;
+type InvalidValue = z.infer<typeof invalidValue>;
 
-const UnsetValue = z.object({
+const unsetValue = z.object({
   type: z.literal("unset"),
   value: z.literal(""),
 });
-type UnsetValue = z.infer<typeof UnsetValue>;
+type UnsetValue = z.infer<typeof unsetValue>;
 
 /**
  * Shared zod types with DB types.
  * ImageValue in DB has a different type
  */
-const SharedStaticStyleValue = z.union([
-  UnitValue,
-  KeywordValue,
-  FontFamilyValue,
-  RgbValue,
-  UnparsedValue,
+const sharedStaticStyleValue = z.union([
+  unitValue,
+  keywordValue,
+  fontFamilyValue,
+  rgbValue,
+  unparsedValue,
 ]);
 
-const ValidStaticStyleValue = z.union([ImageValue, SharedStaticStyleValue]);
+const validStaticStyleValue = z.union([imageValue, sharedStaticStyleValue]);
 
-type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
+type ValidStaticStyleValue = z.infer<typeof validStaticStyleValue>;
 
-const VarValue = z.object({
+const varValue = z.object({
   type: z.literal("var"),
   value: z.string(),
-  fallbacks: z.array(ValidStaticStyleValue),
+  fallbacks: z.array(validStaticStyleValue),
 });
-type VarValue = z.infer<typeof VarValue>;
+type VarValue = z.infer<typeof varValue>;
 
 /**
  * Shared types with DB types
  */
-const SharedStyleValue = z.union([
-  SharedStaticStyleValue,
-  InvalidValue,
-  UnsetValue,
-  VarValue,
+const sharedStyleValue = z.union([
+  sharedStaticStyleValue,
+  invalidValue,
+  unsetValue,
+  varValue,
 ]);
 
-const StoredImageValue = z.object({
+const storedImageValue = z.object({
   type: z.literal("image"),
   value: z.object({ type: z.literal("asset"), value: z.string() }),
 });
 
-const StoredLayersValue = z.object({
+const storedLayersValue = z.object({
   type: z.literal("layers"),
   value: z.array(
     z.union([
-      UnitValue,
-      KeywordValue,
-      UnparsedValue,
-      StoredImageValue,
-      InvalidValue,
+      unitValue,
+      keywordValue,
+      unparsedValue,
+      storedImageValue,
+      invalidValue,
     ])
   ),
 });
 
-export const StoredStyleDecl = z.object({
+export const storedStyleDecl = z.object({
   styleSourceId: z.string(),
   breakpointId: z.string(),
   // @todo can't figure out how to make property to be enum
   property: z.string(),
-  value: z.union([StoredImageValue, StoredLayersValue, SharedStyleValue]),
+  value: z.union([storedImageValue, storedLayersValue, sharedStyleValue]),
 });
 
-type StoredStyleDecl = z.infer<typeof StoredStyleDecl>;
+type StoredStyleDecl = z.infer<typeof storedStyleDecl>;
 
 const layeredBackgroundProps = [
   "backgroundAttachment",

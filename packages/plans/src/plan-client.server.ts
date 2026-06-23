@@ -1,7 +1,7 @@
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import {
   type PlanFeatures,
-  PlanFeaturesSchema,
+  planFeatures,
   defaultPlanFeatures,
   parsePlansEnv,
   type Purchase,
@@ -23,7 +23,7 @@ type PlanInfo = {
 };
 
 export const parseProductMeta = (meta: unknown): Partial<PlanFeatures> => {
-  const result = PlanFeaturesSchema.partial().safeParse(meta);
+  const result = planFeatures.partial().safeParse(meta);
   return result.success ? result.data : {};
 };
 

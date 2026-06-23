@@ -3,7 +3,8 @@ import { updateWebstudioData } from "../instance-utils/data";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
 import {
-  WebstudioFragment,
+  type WebstudioFragment,
+  webstudioFragment,
   findPageByIdOrPath,
   findParentFolderByChildId,
   type Folder,
@@ -40,33 +41,33 @@ type FolderData = Omit<FolderCopyData, "children"> & {
   children: Array<PageData | FolderData>;
 };
 
-const PageData: z.ZodType<PageData> = z.object({
+const pageData: z.ZodType<PageData> = z.object({
   type: z.literal("page"),
   page: z.custom<Page>(),
-  rootFragment: WebstudioFragment,
-  bodyFragment: WebstudioFragment,
+  rootFragment: webstudioFragment,
+  bodyFragment: webstudioFragment,
 });
 
-const TemplateData: z.ZodType<TemplateData> = z.object({
+const templateData: z.ZodType<TemplateData> = z.object({
   type: z.literal("template"),
   template: z.custom<PageTemplate>(),
-  rootFragment: WebstudioFragment,
-  bodyFragment: WebstudioFragment,
+  rootFragment: webstudioFragment,
+  bodyFragment: webstudioFragment,
 });
 
-const FolderData: z.ZodType<FolderData> = z.lazy(() =>
+const folderData: z.ZodType<FolderData> = z.lazy(() =>
   z.object({
     type: z.literal("folder"),
     folder: z.custom<Folder>(),
-    children: z.array(z.union([PageData, FolderData])),
+    children: z.array(z.union([pageData, folderData])),
   })
 );
 
-const ClipboardItem = z.union([PageData, TemplateData, FolderData]);
+const clipboardItem = z.union([pageData, templateData, folderData]);
 
-type ClipboardItem = z.infer<typeof ClipboardItem>;
+type ClipboardItem = z.infer<typeof clipboardItem>;
 
-const ClipboardData = z.object({ [version]: ClipboardItem });
+const clipboard = z.object({ [version]: clipboardItem });
 
 const stringify = (data: ClipboardItem) => {
   return JSON.stringify({ [version]: data });
@@ -74,7 +75,7 @@ const stringify = (data: ClipboardItem) => {
 
 const parse = (clipboardData: string): ClipboardItem | undefined => {
   try {
-    const data = ClipboardData.parse(JSON.parse(clipboardData));
+    const data = clipboard.parse(JSON.parse(clipboardData));
     return data[version];
   } catch {
     return;

@@ -9,7 +9,7 @@ import {
   RESIZABLE_IMAGE_MIME_TYPES,
   ALLOWED_FILE_TYPES,
   type Asset,
-  AssetType,
+  assetType,
 } from "@webstudio-is/sdk";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import { isAssetFileName } from "@webstudio-is/protocol";
@@ -22,12 +22,12 @@ import { parseError } from "~/shared/error/error-parse";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 import { assertProjectBuildPermit } from "~/services/project-import.server";
 
-const UrlBody = z.object({
+const urlBody = z.object({
   url: z.string(),
 });
 
 const parseAssetType = (value: string | null) => {
-  const result = AssetType.safeParse(value);
+  const result = assetType.safeParse(value);
   return result.success ? result.data : undefined;
 };
 
@@ -158,7 +158,7 @@ const getBrowserUploadBody = async (
   // vs uploading a JSON file directly (JSON file content in body)
   if (contentType?.includes("application/json")) {
     const jsonBody = await request.json();
-    const urlParse = UrlBody.safeParse(jsonBody);
+    const urlParse = urlBody.safeParse(jsonBody);
 
     // Only fetch from URL if the body has a valid url field
     if (urlParse.success) {

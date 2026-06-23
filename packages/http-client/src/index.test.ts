@@ -1,8 +1,12 @@
+import { createServer, type IncomingMessage } from "node:http";
 import { afterEach, expect, test, vi } from "vitest";
+import { stagedUploadPath } from "@webstudio-is/protocol";
 import {
+  importProjectBundle,
   loadProjectBundleByProjectId,
   parseBuilderUrl,
   uploadAsset,
+  type PublishedProjectBundle,
 } from "./index";
 
 afterEach(() => {
@@ -215,4 +219,127 @@ test("reports asset upload errors", async () => {
       },
     })
   ).rejects.toThrow("Upload failed");
+});
+
+const readRequestBody = async (request: IncomingMessage) => {
+  const chunks = [];
+  for await (const chunk of request) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+};
+
+test("imports project bundle through staged upload", async () => {
+  const uploadChunks: Buffer[] = [];
+  let trpcBody: unknown;
+
+  const server = createServer(async (request, response) => {
+    const url = new URL(request.url ?? "/", "http://localhost");
+
+    if (request.method === "POST" && url.pathname === stagedUploadPath) {
+      response.writeHead(201, {
+        Location: `http://${request.headers.host}${stagedUploadPath}/upload-id`,
+        "Tus-Resumable": "1.0.0",
+      });
+      response.end();
+      return;
+    }
+
+    if (
+      request.method === "PATCH" &&
+      url.pathname === `${stagedUploadPath}/upload-id`
+    ) {
+      uploadChunks.push(await readRequestBody(request));
+      response.writeHead(204, {
+        "Tus-Resumable": "1.0.0",
+        "Upload-Offset": String(
+          uploadChunks.reduce((size, chunk) => size + chunk.byteLength, 0)
+        ),
+      });
+      response.end();
+      return;
+    }
+
+    if (
+      request.method === "POST" &&
+      url.pathname === "/trpc/build.importProjectBundle"
+    ) {
+      trpcBody = JSON.parse((await readRequestBody(request)).toString("utf8"));
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify([{ result: { data: { version: 2 } } }]));
+      return;
+    }
+
+    response.writeHead(404);
+    response.end();
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(0, "127.0.0.1", resolve);
+  });
+
+  try {
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Server address is unavailable");
+    }
+
+    await expect(
+      importProjectBundle({
+        authToken: "token",
+        origin: `http://127.0.0.1:${address.port}`,
+        projectId: "project-id",
+        data: {
+          largeContent: "x".repeat(3 * 1024 * 1024 + 1),
+        } as unknown as PublishedProjectBundle,
+      })
+    ).resolves.toEqual({ version: 2 });
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+
+  expect(uploadChunks).toHaveLength(2);
+  expect(JSON.stringify(trpcBody)).toContain('"uploadId":"upload-id"');
+  expect(JSON.stringify(trpcBody)).not.toContain("largeContent");
+});
+
+test("rejects project bundles over the import size limit", async () => {
+  let requestCount = 0;
+  const server = createServer((_request, response) => {
+    requestCount += 1;
+    response.writeHead(500);
+    response.end();
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(0, "127.0.0.1", resolve);
+  });
+
+  try {
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Server address is unavailable");
+    }
+
+    await expect(
+      importProjectBundle({
+        authToken: "token",
+        origin: `http://127.0.0.1:${address.port}`,
+        projectId: "project-id",
+        data: {
+          largeContent: "x".repeat(20 * 1024 * 1024),
+        } as unknown as PublishedProjectBundle,
+      })
+    ).rejects.toThrow(
+      "Project bundle is too large to import. Maximum size is 20 MiB."
+    );
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+
+  expect(requestCount).toBe(0);
 });

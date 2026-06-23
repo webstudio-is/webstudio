@@ -1,5 +1,5 @@
 import Papa from "papaparse";
-import { ProjectNewRedirectPath, RedirectSourcePath } from "@webstudio-is/sdk";
+import { projectNewRedirectPath, redirectSourcePath } from "@webstudio-is/sdk";
 import {
   getRedirectSourceSearchIndex,
   hasInvalidLocalTargetParams,
@@ -298,7 +298,7 @@ const normalizeRecord = (
   const normalizedTo = normalizePath(to);
 
   // Validate source path
-  const sourceValidationResult = RedirectSourcePath.safeParse(normalizedFrom);
+  const sourceValidationResult = redirectSourcePath.safeParse(normalizedFrom);
   if (sourceValidationResult.success === false) {
     return {
       skipped: {
@@ -330,7 +330,7 @@ const normalizeRecord = (
   }
 
   // Validate target path
-  const targetValidationResult = ProjectNewRedirectPath.safeParse(normalizedTo);
+  const targetValidationResult = projectNewRedirectPath.safeParse(normalizedTo);
   if (targetValidationResult.success === false) {
     return {
       skipped: {

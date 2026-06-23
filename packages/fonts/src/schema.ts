@@ -1,14 +1,14 @@
 import { z } from "zod";
 import { FONT_STYLES } from "./constants";
 
-export const FontFormat = z.union([
+export const fontFormat = z.union([
   z.literal("ttf"),
   z.literal("woff"),
   z.literal("woff2"),
 ]);
-export type FontFormat = z.infer<typeof FontFormat>;
+export type FontFormat = z.infer<typeof fontFormat>;
 
-const AxisName = z.enum([
+const axisName = z.enum([
   "wght",
   "wdth",
   "slnt",
@@ -25,8 +25,8 @@ const AxisName = z.enum([
   "YTFI",
 ]);
 
-const VariationAxes = z.record(
-  AxisName,
+const variationAxes = z.record(
+  axisName,
   z.object({
     name: z.string(),
     min: z.number(),
@@ -35,21 +35,21 @@ const VariationAxes = z.record(
   })
 );
 
-export type VariationAxes = z.infer<typeof VariationAxes>;
+export type VariationAxes = z.infer<typeof variationAxes>;
 
-export const FontMetaStatic = z.object({
+export const fontMetaStatic = z.object({
   family: z.string(),
   style: z.enum(FONT_STYLES),
   weight: z.number(),
 });
 
-export type FontMetaStatic = z.infer<typeof FontMetaStatic>;
+export type FontMetaStatic = z.infer<typeof fontMetaStatic>;
 
-const FontMetaVariable = z.object({
+const fontMetaVariable = z.object({
   family: z.string(),
-  variationAxes: VariationAxes,
+  variationAxes: variationAxes,
 });
 
-export const FontMeta = z.union([FontMetaStatic, FontMetaVariable]);
+export const fontMeta = z.union([fontMetaStatic, fontMetaVariable]);
 
-export type FontMeta = z.infer<typeof FontMeta>;
+export type FontMeta = z.infer<typeof fontMeta>;

@@ -12,7 +12,7 @@ import {
   TextArea,
   theme,
 } from "@webstudio-is/design-system";
-import { isLiteralExpression, PageTitle } from "@webstudio-is/sdk";
+import { isLiteralExpression, pageTitle } from "@webstudio-is/sdk";
 import {
   BindingControl,
   BindingPopover,
@@ -24,27 +24,27 @@ import { $pageRootScope } from "../page-utils";
 import { SearchPreview } from "../search-preview";
 import { usePageUrl, type Errors, type OnChange, type Values } from "./shared";
 
-const EmptyString = z.string().refine((string) => string === "");
+const emptyString = z.string().refine((string) => string === "");
 
-const Language = z
+const language = z
   .string()
   .refine(
     (value) => bcp47.parse(value).language !== null,
     "The language is invalid"
   );
 
-const SearchValues = z.object({
-  title: PageTitle,
+const searchValues = z.object({
+  title: pageTitle,
   description: z.string().optional(),
   excludePageFromSearch: z.boolean().optional(),
-  language: Language.or(EmptyString),
+  language: language.or(emptyString),
 });
 
 export const validateSearchSection = (
   values: Values,
   variableValues: Map<string, unknown>
 ): Errors => {
-  const parsedResult = SearchValues.safeParse({
+  const parsedResult = searchValues.safeParse({
     title:
       computeExpression(values.title, variableValues) ??
       "exclude from validation",

@@ -10,8 +10,8 @@ import { roles } from "@webstudio-is/trpc-interface/authorize";
 import { getExtraPaidSeats } from "@webstudio-is/plans/index.server";
 import env from "~/env/env.server";
 
-const Name = z.string().min(2).max(100);
-const Relation = z.enum(roles);
+const name = z.string().min(2).max(100);
+const relation = z.enum(roles);
 
 /**
  * Tells the payment worker to count members and adjust Stripe seats.
@@ -54,7 +54,7 @@ const syncSeats = async (workspaceId: string, delta = 0): Promise<void> => {
 
 export const workspaceRouter = router({
   create: procedure
-    .input(z.object({ name: Name }))
+    .input(z.object({ name: name }))
     .mutation(async ({ input, ctx }) => {
       try {
         const workspace = await workspaceApi.create(
@@ -68,7 +68,7 @@ export const workspaceRouter = router({
     }),
 
   rename: procedure
-    .input(z.object({ workspaceId: z.string(), name: Name }))
+    .input(z.object({ workspaceId: z.string(), name: name }))
     .mutation(async ({ input, ctx }) => {
       try {
         const workspace = await workspaceApi.rename(input, ctx);
@@ -114,7 +114,7 @@ export const workspaceRouter = router({
       z.object({
         workspaceId: z.string(),
         email: z.string().email(),
-        relation: Relation,
+        relation: relation,
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -230,7 +230,7 @@ export const workspaceRouter = router({
       z.object({
         workspaceId: z.string(),
         memberUserId: z.string(),
-        relation: Relation,
+        relation: relation,
       })
     )
     .mutation(async ({ input, ctx }) => {

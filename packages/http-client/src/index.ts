@@ -1,7 +1,11 @@
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
+import { Upload } from "tus-js-client";
 import {
-  importProjectBundleResultSchema,
-  publishedProjectBundleSchema,
+  importProjectBundleResult,
+  publishedProjectBundle,
+  maxProjectBundleSize,
+  stagedUploadPath,
+  stagedUploadProjectIdHeader,
   type ImportProjectBundleResult,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
@@ -60,10 +64,14 @@ const fetchJsonResponse: typeof fetch = async (request, init) => {
 };
 
 const createHeaders = (headers: Record<string, string | undefined>) => {
-  const result = new Headers();
+  return new Headers(createHeadersObject(headers));
+};
+
+const createHeadersObject = (headers: Record<string, string | undefined>) => {
+  const result: Record<string, string> = {};
   for (const [name, value] of Object.entries(headers)) {
     if (value !== undefined) {
-      result.set(name, value);
+      result[name] = value;
     }
   }
   return result;
@@ -102,6 +110,11 @@ type AuthProjectParams = {
   authToken: string;
   headers?: RequestHeaders;
 };
+
+const stagedUploadChunkSize = 3 * 1024 * 1024;
+
+const formatMebibytes = (bytes: number) =>
+  `${Math.round(bytes / 1024 / 1024)} MiB`;
 
 type Asset = PublishedProjectBundle["assets"][number];
 type BinaryAssetData = Blob | ArrayBuffer | ArrayBufferView<ArrayBuffer>;
@@ -191,7 +204,7 @@ export const loadProjectBundleByBuildId = async (
   }).query("build.loadProjectBundleByBuildId", {
     buildId: params.buildId,
   });
-  return publishedProjectBundleSchema.parse(data);
+  return publishedProjectBundle.parse(data);
 };
 
 export const loadProjectBundleByProjectId = async (
@@ -203,7 +216,7 @@ export const loadProjectBundleByProjectId = async (
       projectId: params.projectId,
     }
   );
-  return publishedProjectBundleSchema.parse(data);
+  return publishedProjectBundle.parse(data);
 };
 
 export const checkProjectBuildPermission = async (
@@ -217,21 +230,76 @@ export const checkProjectBuildPermission = async (
   );
 };
 
+const getUploadIdFromUrl = (uploadUrl: string | null) => {
+  if (uploadUrl === null) {
+    throw new Error("Project bundle upload did not return an upload URL.");
+  }
+
+  const { pathname } = new URL(uploadUrl);
+  const uploadId = pathname.split("/").filter(Boolean).at(-1);
+  if (uploadId === undefined) {
+    throw new Error("Project bundle upload did not return an upload id.");
+  }
+
+  return decodeURIComponent(uploadId);
+};
+
+const uploadProjectBundleData = async (
+  params: AuthProjectParams & {
+    data: PublishedProjectBundle;
+  }
+) => {
+  const { sourceOrigin } = parseBuilderUrl(params.origin);
+  const endpoint = new URL(stagedUploadPath, sourceOrigin);
+  const data = JSON.stringify(params.data);
+  if (new TextEncoder().encode(data).byteLength > maxProjectBundleSize) {
+    throw new Error(
+      `Project bundle is too large to import. Maximum size is ${formatMebibytes(maxProjectBundleSize)}.`
+    );
+  }
+  const file =
+    typeof Buffer === "undefined"
+      ? new Blob([data], { type: "application/json" })
+      : Buffer.from(data);
+
+  return await new Promise<string>((resolve, reject) => {
+    const upload = new Upload(file, {
+      endpoint: endpoint.href,
+      chunkSize: stagedUploadChunkSize,
+      retryDelays: [0, 1000],
+      removeFingerprintOnSuccess: true,
+      storeFingerprintForResuming: false,
+      headers: createHeadersObject({
+        ...params.headers,
+        "x-auth-token": params.authToken,
+        [stagedUploadProjectIdHeader]: params.projectId,
+      }),
+      metadata: {
+        projectId: params.projectId,
+      },
+      onError: reject,
+      onSuccess: () => resolve(getUploadIdFromUrl(upload.url)),
+    });
+    upload.start();
+  });
+};
+
 export const importProjectBundle = async (
   params: AuthProjectParams & {
     data: PublishedProjectBundle;
     ignoreVersionCheck?: boolean;
   }
 ): Promise<ImportProjectBundleResult> => {
+  const uploadId = await uploadProjectBundleData(params);
   const result = await createAuthTrpcClient(params).mutation(
     "build.importProjectBundle",
     {
       projectId: params.projectId,
-      data: params.data,
+      uploadId,
       ignoreVersionCheck: params.ignoreVersionCheck,
     }
   );
-  return importProjectBundleResultSchema.parse(result);
+  return importProjectBundleResult.parse(result);
 };
 
 // For easier detecting the builder URL
