@@ -1,12 +1,12 @@
 import type { Patch } from "immer";
 import {
-  Instance as InstanceSchema,
-  InstanceChild as InstanceChildSchema,
-  Prop as PropSchema,
-  StyleDecl as StyleDeclSchema,
-  StyleSource as StyleSourceSchema,
-  StyleSourceSelection as StyleSourceSelectionSchema,
-  PagePath,
+  instance,
+  instanceChild,
+  prop,
+  styleDecl,
+  styleSource,
+  styleSourceSelection,
+  pagePath,
   blockComponent,
   blockTemplateComponent,
   getHtmlTagsFromProps,
@@ -71,7 +71,7 @@ const contentModePageFields = new Set(["name", "path", "title"]);
 
 export const isContentModePagePath = (value: unknown) =>
   typeof value === "string" &&
-  (value === "" || PagePath.safeParse(value).success) &&
+  (value === "" || pagePath.safeParse(value).success) &&
   isPathnamePattern(value) === false &&
   value.includes(":") === false &&
   value.includes("*") === false;
@@ -389,16 +389,16 @@ const isContentModePropPatchValue = ({
   expectedPropId: Prop["id"];
   value: unknown;
 }) => {
-  const prop = PropSchema.safeParse(value);
-  if (prop.success === false) {
+  const parsedProp = prop.safeParse(value);
+  if (parsedProp.success === false) {
     return false;
   }
 
-  if (prop.data.id !== expectedPropId) {
+  if (parsedProp.data.id !== expectedPropId) {
     return false;
   }
 
-  const instance = capabilities.instances.get(prop.data.instanceId);
+  const instance = capabilities.instances.get(parsedProp.data.instanceId);
   if (instance === undefined) {
     return false;
   }
@@ -409,7 +409,7 @@ const isContentModePropPatchValue = ({
   return isContentModePropForInstance({
     capabilities,
     instance,
-    prop: prop.data,
+    prop: parsedProp.data,
   });
 };
 
@@ -427,8 +427,11 @@ const validatePropPatch = (
   }
 
   if (patch.op === "remove" && patch.path.length === 1) {
-    const prop = capabilities.props.get(propId);
-    if (prop && context.removedEditableInstanceIds.has(prop.instanceId)) {
+    const existingProp = capabilities.props.get(propId);
+    if (
+      existingProp &&
+      context.removedEditableInstanceIds.has(existingProp.instanceId)
+    ) {
       capabilities.editablePropIds.delete(propId);
       capabilities.props.delete(propId);
       return { success: true };
@@ -441,15 +444,18 @@ const validatePropPatch = (
       capabilities.props.delete(propId);
       return { success: true };
     }
-    const prop = capabilities.props.get(propId);
+    const existingProp = capabilities.props.get(propId);
     if (
-      prop &&
+      existingProp &&
       patch.path.length === 2 &&
       patch.path[1] === "value" &&
       (patch.op === "add" || patch.op === "replace") &&
-      PropSchema.safeParse({ ...prop, value: patch.value }).success
+      prop.safeParse({ ...existingProp, value: patch.value }).success
     ) {
-      capabilities.props.set(propId, { ...prop, value: patch.value } as Prop);
+      capabilities.props.set(propId, {
+        ...existingProp,
+        value: patch.value,
+      } as Prop);
       return { success: true };
     }
   }
@@ -534,7 +540,7 @@ const hasOnlyContentModePageMeta = (meta: Record<string, unknown>) => {
 };
 
 const isInstanceChild = (value: unknown) =>
-  InstanceChildSchema.safeParse(value).success;
+  instanceChild.safeParse(value).success;
 
 const isInstanceChildren = (value: unknown) =>
   Array.isArray(value) && value.every(isInstanceChild);
@@ -784,11 +790,11 @@ const validateInstancePatch = (
   }
 
   if (patch.path.length === 1 && patch.op === "replace") {
-    const instance = InstanceSchema.safeParse(patch.value);
+    const parsedInstance = instance.safeParse(patch.value);
     if (
-      instance.success &&
-      instance.data.id === instanceId &&
-      hasOnlyAllowedContentModeChildReferences(context, instance.data)
+      parsedInstance.success &&
+      parsedInstance.data.id === instanceId &&
+      hasOnlyAllowedContentModeChildReferences(context, parsedInstance.data)
     ) {
       return context.editableInstanceIds.has(instanceId)
         ? { success: true }
@@ -804,16 +810,16 @@ const validateInstancePatch = (
     patch.op === "add" &&
     context.addedInstanceIds.has(instanceId)
   ) {
-    const instance = InstanceSchema.safeParse(patch.value);
+    const parsedInstance = instance.safeParse(patch.value);
     if (
-      instance.success &&
-      instance.data.id === instanceId &&
+      parsedInstance.success &&
+      parsedInstance.data.id === instanceId &&
       context.editableInstanceIds.has(instanceId) &&
-      hasOnlyAllowedContentModeChildReferences(context, instance.data)
+      hasOnlyAllowedContentModeChildReferences(context, parsedInstance.data)
     ) {
       return { success: true };
     }
-    if (instance.success && instance.data.id === instanceId) {
+    if (parsedInstance.success && parsedInstance.data.id === instanceId) {
       return {
         success: false,
         error: "Instance patch is outside content roots.",
@@ -848,13 +854,13 @@ const validateInstancePatchShape = (
   }
 
   if (patch.path.length === 1 && patch.op === "replace") {
-    const instance = InstanceSchema.safeParse(patch.value);
+    const parsedInstance = instance.safeParse(patch.value);
     const currentInstance = capabilities.instances.get(instanceId);
     if (
-      instance.success &&
-      instance.data.id === instanceId &&
+      parsedInstance.success &&
+      parsedInstance.data.id === instanceId &&
       currentInstance !== undefined &&
-      hasSameInstanceMetadata(currentInstance, instance.data)
+      hasSameInstanceMetadata(currentInstance, parsedInstance.data)
     ) {
       return { success: true };
     }
@@ -865,8 +871,8 @@ const validateInstancePatchShape = (
     patch.op === "add" &&
     capabilities.instances.has(instanceId) === false
   ) {
-    const instance = InstanceSchema.safeParse(patch.value);
-    if (instance.success && instance.data.id === instanceId) {
+    const parsedInstance = instance.safeParse(patch.value);
+    if (parsedInstance.success && parsedInstance.data.id === instanceId) {
       return { success: true };
     }
   }
@@ -923,7 +929,7 @@ const validateStyleSourceSelectionPatch = (
     };
   }
 
-  const selection = StyleSourceSelectionSchema.safeParse(patch.value);
+  const selection = styleSourceSelection.safeParse(patch.value);
   if (selection.success === false) {
     return {
       success: false,
@@ -1125,11 +1131,11 @@ const validateStyleSourcePatch = (
     };
   }
 
-  const styleSource = StyleSourceSchema.safeParse(patch.value);
+  const parsedStyleSource = styleSource.safeParse(patch.value);
   if (
-    styleSource.success === false ||
-    styleSource.data.type !== "local" ||
-    styleSource.data.id !== styleSourceId
+    parsedStyleSource.success === false ||
+    parsedStyleSource.data.type !== "local" ||
+    parsedStyleSource.data.id !== styleSourceId
   ) {
     return {
       success: false,
@@ -1138,7 +1144,7 @@ const validateStyleSourcePatch = (
   }
 
   context.addedLocalStyleSourceIds.add(styleSourceId);
-  context.capabilities.styleSources.set(styleSourceId, styleSource.data);
+  context.capabilities.styleSources.set(styleSourceId, parsedStyleSource.data);
   return { success: true };
 };
 
@@ -1252,12 +1258,13 @@ const validateStylePatch = (
     };
   }
 
-  const styleDecl = StyleDeclSchema.safeParse(patch.value);
+  const parsedStyleDecl = styleDecl.safeParse(patch.value);
   if (
-    styleDecl.success === false ||
-    getStyleDeclKey(styleDecl.data as StyleDecl) !== styleDeclKey ||
-    context.selectedLocalStyleSourceIds.has(styleDecl.data.styleSourceId) ===
-      false
+    parsedStyleDecl.success === false ||
+    getStyleDeclKey(parsedStyleDecl.data as StyleDecl) !== styleDeclKey ||
+    context.selectedLocalStyleSourceIds.has(
+      parsedStyleDecl.data.styleSourceId
+    ) === false
   ) {
     return {
       success: false,
@@ -1267,7 +1274,8 @@ const validateStylePatch = (
   }
   if (
     context.capabilities.breakpoints !== undefined &&
-    context.capabilities.breakpoints.has(styleDecl.data.breakpointId) === false
+    context.capabilities.breakpoints.has(parsedStyleDecl.data.breakpointId) ===
+      false
   ) {
     return {
       success: false,
@@ -1276,8 +1284,8 @@ const validateStylePatch = (
     };
   }
 
-  context.styledLocalStyleSourceIds.add(styleDecl.data.styleSourceId);
-  context.capabilities.styles.set(styleDeclKey, styleDecl.data);
+  context.styledLocalStyleSourceIds.add(parsedStyleDecl.data.styleSourceId);
+  context.capabilities.styles.set(styleDeclKey, parsedStyleDecl.data);
   return { success: true };
 };
 

@@ -23,8 +23,9 @@ import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.serve
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import {
-  checkProjectBuildPermissionInputSchema,
-  importProjectBundleInputSchema,
+  checkProjectBuildPermissionInput,
+  importProjectBundleInput,
+  publishedProjectBundle,
 } from "@webstudio-is/protocol";
 import {
   loadPublishedProjectBundleByBuildId,
@@ -33,7 +34,59 @@ import {
 import {
   assertProjectBuildPermit,
   importPublishedProjectBundle,
-} from "./project-bundle-import.server";
+} from "./project-import.server";
+import {
+  readStagedUploadText,
+  removeStagedUpload,
+} from "./staged-upload.server";
+
+type ImportProjectBundleDependencies = {
+  importPublishedProjectBundle: typeof importPublishedProjectBundle;
+  readStagedUploadText: typeof readStagedUploadText;
+  removeStagedUpload: typeof removeStagedUpload;
+};
+
+const createImportProjectBundleHandler =
+  ({
+    importPublishedProjectBundle,
+    readStagedUploadText,
+    removeStagedUpload,
+  }: ImportProjectBundleDependencies) =>
+  async ({
+    ctx,
+    input,
+  }: {
+    ctx: AppContext;
+    input: z.infer<typeof importProjectBundleInput>;
+  }) => {
+    if (input.uploadId !== undefined) {
+      try {
+        const text = await readStagedUploadText({
+          projectId: input.projectId,
+          uploadId: input.uploadId,
+        });
+        return await importPublishedProjectBundle({
+          ctx,
+          data: publishedProjectBundle.parse(JSON.parse(text)),
+          ignoreVersionCheck: input.ignoreVersionCheck,
+          projectId: input.projectId,
+        });
+      } finally {
+        await removeStagedUpload(input.uploadId).catch(console.error);
+      }
+    }
+
+    if (input.data === undefined) {
+      throw new Error("Project bundle data is required.");
+    }
+
+    return await importPublishedProjectBundle({
+      ctx,
+      data: input.data,
+      ignoreVersionCheck: input.ignoreVersionCheck,
+      projectId: input.projectId,
+    });
+  };
 
 const patchEntryInput = z.object({
   seq: z.number().optional(),
@@ -152,22 +205,18 @@ export const buildRouter = router({
     }),
 
   checkProjectBuildPermission: procedure
-    .input(checkProjectBuildPermissionInputSchema)
+    .input(checkProjectBuildPermissionInput)
     .query(async ({ ctx, input }) => {
       await assertProjectBuildPermit({ ctx, projectId: input.projectId });
     }),
 
-  importProjectBundle: procedure
-    .input(importProjectBundleInputSchema)
-    .mutation(async ({ ctx, input }) => {
-      return await importPublishedProjectBundle({
-        ctx,
-        assetFiles: input.assetFiles,
-        data: input.data,
-        ignoreVersionCheck: input.ignoreVersionCheck,
-        projectId: input.projectId,
-      });
-    }),
+  importProjectBundle: procedure.input(importProjectBundleInput).mutation(
+    createImportProjectBundleHandler({
+      importPublishedProjectBundle,
+      readStagedUploadText,
+      removeStagedUpload,
+    })
+  ),
 
   createCollabToken: procedure
     .input(
@@ -264,3 +313,7 @@ export const buildRouter = router({
       }
     }),
 });
+
+export const __testing__ = {
+  createImportProjectBundleHandler,
+};

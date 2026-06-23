@@ -1,5 +1,5 @@
 import { Box, StorySection, theme } from "@webstudio-is/design-system";
-import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
+import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import { $selectedBreakpointId } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import {

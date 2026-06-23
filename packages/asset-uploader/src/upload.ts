@@ -19,6 +19,11 @@ type UploadData = {
 
 const UPLOADING_STALE_TIMEOUT = 1000 * 60 * 30; // 30 minutes
 
+export type UploadErrorCleanup = (
+  name: string,
+  context: AppContext
+) => Promise<void>;
+
 export const createUploadName = async (
   data: UploadData,
   context: AppContext
@@ -157,7 +162,8 @@ export const uploadFile = async (
   context: AppContext,
   assetInfoFallback:
     | { width: number; height: number; format: string }
-    | undefined
+    | undefined,
+  onUploadError?: UploadErrorCleanup
 ): Promise<Asset> => {
   let file = await context.postgrest.client
     .from("File")
@@ -204,8 +210,12 @@ export const uploadFile = async (
       file: file.data,
     });
   } catch (error) {
-    await context.postgrest.client.from("Asset").delete().eq("name", name);
-    await context.postgrest.client.from("File").delete().eq("name", name);
+    if (onUploadError) {
+      await onUploadError(name, context);
+    } else {
+      await context.postgrest.client.from("Asset").delete().eq("name", name);
+      await context.postgrest.client.from("File").delete().eq("name", name);
+    }
 
     throw error;
   }

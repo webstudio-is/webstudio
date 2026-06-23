@@ -5,10 +5,10 @@ import {
 } from "@webstudio-is/css-data";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import {
-  KeywordValue,
-  StyleValue,
-  TupleValue,
-  UnitValue,
+  type KeywordValue,
+  type StyleValue,
+  type TupleValue,
+  type UnitValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
 import { useMemo } from "react";

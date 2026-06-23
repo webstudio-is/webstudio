@@ -3,8 +3,8 @@ import {
   type Pages,
   type Folder,
   ROOT_FOLDER_ID,
-  Instance,
-  DataSource,
+  type Instance,
+  type DataSource,
 } from "@webstudio-is/sdk";
 
 export const createRootFolder = (

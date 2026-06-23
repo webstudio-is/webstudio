@@ -1,6 +1,6 @@
 import type { Meta } from "@storybook/react";
 import { Box, StorySection, theme } from "@webstudio-is/design-system";
-import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
+import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { InsetControl } from "./inset-control";
 import { registerContainers } from "~/shared/sync/sync-stores";

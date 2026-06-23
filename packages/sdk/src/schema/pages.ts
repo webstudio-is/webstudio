@@ -10,34 +10,34 @@ export type System = {
 
 const MIN_TITLE_LENGTH = 2;
 
-export const PageId = z.string();
-export const FolderId = z.string();
+export const pageId = z.string();
+export const folderId = z.string();
 
-export const FolderName = z
+export const folderName = z
   .string()
   .refine((value) => value.trim() !== "", "Can't be empty");
 
-const Slug = z
+const slug = z
   .string()
   .refine(
     (path) => /^[-a-z0-9]*$/.test(path),
     "Only a-z, 0-9 and - are allowed"
   );
 
-export const Folder = z.object({
-  id: FolderId,
-  name: FolderName,
-  slug: Slug,
-  children: z.array(z.union([FolderId, PageId])),
+export const folder = z.object({
+  id: folderId,
+  name: folderName,
+  slug: slug,
+  children: z.array(z.union([folderId, pageId])),
 });
 
-export type Folder = z.infer<typeof Folder>;
+export type Folder = z.infer<typeof folder>;
 
-export const PageName = z
+export const pageName = z
   .string()
   .refine((value) => value.trim() !== "", "Can't be empty");
 
-export const PageTitle = z
+export const pageTitle = z
   .string()
   .refine(
     (val) => val.length >= MIN_TITLE_LENGTH,
@@ -46,7 +46,7 @@ export const PageTitle = z
 
 export const documentTypes = ["html", "xml", "text"] as const;
 
-const BasicAuthFields = {
+const basicAuthFields = {
   login: z.string(),
   password: z.string(),
 };
@@ -70,17 +70,17 @@ const validateBasicAuthFields = (
   }
 };
 
-const PageBasicAuth = z
+const pageBasicAuth = z
   .object({
     method: z.literal("basic"),
-    ...BasicAuthFields,
+    ...basicAuthFields,
   })
   .superRefine(validateBasicAuthFields);
 
-const LegacyPageBasicAuth = z
+const legacyPageBasicAuth = z
   .object({
     type: z.literal("basic"),
-    ...BasicAuthFields,
+    ...basicAuthFields,
   })
   .superRefine(validateBasicAuthFields)
   .transform(({ login, password }) => ({
@@ -89,13 +89,13 @@ const LegacyPageBasicAuth = z
     password,
   }));
 
-export const PageAuth = z.union([PageBasicAuth, LegacyPageBasicAuth]);
-export type PageAuth = z.infer<typeof PageAuth>;
+export const pageAuth = z.union([pageBasicAuth, legacyPageBasicAuth]);
+export type PageAuth = z.infer<typeof pageAuth>;
 
 const commonPageFields = {
-  id: PageId,
-  name: PageName,
-  title: PageTitle,
+  id: pageId,
+  name: pageName,
+  title: pageTitle,
   history: z.optional(z.array(z.string())),
   rootInstanceId: z.string(),
   systemDataSourceId: z.string().optional(),
@@ -110,7 +110,7 @@ const commonPageFields = {
     redirect: z.string().optional(),
     documentType: z.optional(z.enum(documentTypes)),
     content: z.string().optional(),
-    auth: PageAuth.optional(),
+    auth: pageAuth.optional(),
     custom: z
       .array(
         z.object({
@@ -129,11 +129,11 @@ const commonPageFields = {
   ),
 } as const;
 
-export const HomePagePath = z
+export const homePagePath = z
   .string()
   .refine((path) => path === "", "Home page path must be empty");
 
-const DefaultPagePage = z
+const defaultPagePath = z
   .string()
   .refine((path) => path !== "", "Can't be empty")
   .refine((path) => path !== "/", "Can't be just a /")
@@ -156,7 +156,7 @@ const DefaultPagePage = z
   )
   .refine((path) => path.length <= 255, "Path can't exceed 255 characters");
 
-export const RedirectSourcePath = z
+export const redirectSourcePath = z
   .string()
   .refine((path) => path !== "", "Can't be empty")
   .refine((path) => path !== "/", "Can't be just a /")
@@ -189,28 +189,28 @@ export const RedirectSourcePath = z
     "/build prefix is reserved for the system"
   );
 
-export const PagePath = DefaultPagePage.refine(
+export const pagePath = defaultPagePath.refine(
   (path) => path === "" || path.startsWith("/"),
   "Must start with a / or a full URL e.g. https://website.org"
 );
 
-export const Page = z.object({
+export const page = z.object({
   ...commonPageFields,
-  path: z.union([HomePagePath, PagePath]),
+  path: z.union([homePagePath, pagePath]),
 });
 
-export const PageTemplate = z.object({
-  id: PageId,
-  name: PageName,
-  title: PageTitle,
+export const pageTemplate = z.object({
+  id: pageId,
+  name: pageName,
+  title: pageTitle,
   rootInstanceId: z.string(),
   systemDataSourceId: z.string().optional(),
   meta: commonPageFields.meta,
 });
 
-export type PageTemplate = z.infer<typeof PageTemplate>;
+export type PageTemplate = z.infer<typeof pageTemplate>;
 
-export const ProjectMeta = z.object({
+export const projectMeta = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   siteName: z.string().optional(),
   contactEmail: z.string().optional(),
@@ -218,9 +218,9 @@ export const ProjectMeta = z.object({
   code: z.string().optional(),
   auth: z.string().optional(),
 });
-export type ProjectMeta = z.infer<typeof ProjectMeta>;
+export type ProjectMeta = z.infer<typeof projectMeta>;
 
-export const ProjectNewRedirectPath = z
+export const projectNewRedirectPath = z
   .string()
   .min(1, "Path is required")
   .refine((data) => {
@@ -234,32 +234,32 @@ export const ProjectNewRedirectPath = z
     }
   }, "Must be a valid URL");
 
-export const PageRedirect = z.object({
-  old: RedirectSourcePath,
-  new: ProjectNewRedirectPath,
+export const pageRedirect = z.object({
+  old: redirectSourcePath,
+  new: projectNewRedirectPath,
   status: z.enum(["301", "302"]).optional(),
 });
-export type PageRedirect = z.infer<typeof PageRedirect>;
+export type PageRedirect = z.infer<typeof pageRedirect>;
 
-export const CompilerSettings = z.object({
+export const compilerSettings = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   atomicStyles: z.boolean().optional(),
 });
-export type CompilerSettings = z.infer<typeof CompilerSettings>;
+export type CompilerSettings = z.infer<typeof compilerSettings>;
 
-export type Page = z.infer<typeof Page>;
+export type Page = z.infer<typeof page>;
 
-export const Pages = z
+export const pages = z
   .object({
-    meta: ProjectMeta.optional(),
-    compiler: CompilerSettings.optional(),
-    redirects: z.array(PageRedirect).optional(),
-    homePageId: PageId,
-    rootFolderId: FolderId,
-    pages: z.map(PageId, Page),
-    pageTemplates: z.map(PageId, PageTemplate).optional(),
+    meta: projectMeta.optional(),
+    compiler: compilerSettings.optional(),
+    redirects: z.array(pageRedirect).optional(),
+    homePageId: pageId,
+    rootFolderId: folderId,
+    pages: z.map(pageId, page),
+    pageTemplates: z.map(pageId, pageTemplate).optional(),
     folders: z
-      .map(FolderId, Folder)
+      .map(folderId, folder)
       .refine((folders) => folders.size > 0, "Folders can't be empty"),
   })
   .superRefine((pages, context) => {
@@ -405,4 +405,4 @@ export const Pages = z
     }
   });
 
-export type Pages = z.infer<typeof Pages>;
+export type Pages = z.infer<typeof pages>;

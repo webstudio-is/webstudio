@@ -1,6 +1,6 @@
 import { Fragment, useId, useMemo, useRef, useState } from "react";
 import {
-  StyleValue,
+  type StyleValue,
   toValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";

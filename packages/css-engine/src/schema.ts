@@ -14,47 +14,47 @@ export type CssProperty = HyphenatedProperty | CustomProperty;
 
 export type CssStyleMap = Map<CssProperty, StyleValue>;
 
-const Unit = z.string() as z.ZodType<GeneratedUnit | "number">;
+const unit = z.string() as z.ZodType<GeneratedUnit | "number">;
 
-export type Unit = z.infer<typeof Unit>;
+export type Unit = z.infer<typeof unit>;
 
-export const UnitValue = z.object({
+export const unitValue = z.object({
   type: z.literal("unit"),
-  unit: Unit,
+  unit: unit,
   value: z.number(),
   hidden: z.boolean().optional(),
 });
 
-export type UnitValue = z.infer<typeof UnitValue>;
+export type UnitValue = z.infer<typeof unitValue>;
 
-export const KeywordValue = z.object({
+export const keywordValue = z.object({
   type: z.literal("keyword"),
   // @todo use exact type
   value: z.string(),
   hidden: z.boolean().optional(),
 });
-export type KeywordValue = z.infer<typeof KeywordValue>;
+export type KeywordValue = z.infer<typeof keywordValue>;
 
 /**
  * Valid unparsed css value
  **/
-export const UnparsedValue = z.object({
+export const unparsedValue = z.object({
   type: z.literal("unparsed"),
   value: z.string(),
   // For the builder we want to be able to hide background-image
   hidden: z.boolean().optional(),
 });
 
-export type UnparsedValue = z.infer<typeof UnparsedValue>;
+export type UnparsedValue = z.infer<typeof unparsedValue>;
 
-const FontFamilyValue = z.object({
+const fontFamilyValue = z.object({
   type: z.literal("fontFamily"),
   value: z.array(z.string()),
   hidden: z.boolean().optional(),
 });
-export type FontFamilyValue = z.infer<typeof FontFamilyValue>;
+export type FontFamilyValue = z.infer<typeof fontFamilyValue>;
 
-const RgbValue = z.object({
+const rgbValue = z.object({
   type: z.literal("rgb"),
   r: z.number(),
   g: z.number(),
@@ -62,7 +62,7 @@ const RgbValue = z.object({
   alpha: z.number(),
   hidden: z.boolean().optional(),
 });
-export type RgbValue = z.infer<typeof RgbValue>;
+export type RgbValue = z.infer<typeof rgbValue>;
 
 // Explicit type declaration needed to break the ColorValue ↔ VarValue ↔ VarFallback cycle.
 // VarValue (defined later) may appear as the alpha channel value.
@@ -89,7 +89,7 @@ export type ColorValue = {
   hidden?: boolean;
 };
 
-export const ColorValue: z.ZodType<ColorValue> = z.object({
+export const colorValue: z.ZodType<ColorValue> = z.object({
   type: z.literal("color"),
   // all these color spaces are defined by design tokens specification
   colorSpace: z.union([
@@ -110,13 +110,13 @@ export const ColorValue: z.ZodType<ColorValue> = z.object({
     z.literal("xyz-d50"),
   ]),
   components: z.tuple([z.number(), z.number(), z.number()]),
-  alpha: z.union([z.number(), z.lazy(() => VarValue) as z.ZodType<VarValue>]),
+  alpha: z.union([z.number(), z.lazy(() => varValue) as z.ZodType<VarValue>]),
   hidden: z.boolean().optional(),
 });
 
-export type FunctionValue = z.infer<typeof FunctionValue>;
+export type FunctionValue = z.infer<typeof functionValue>;
 
-export const FunctionValue: z.ZodType<{
+export const functionValue: z.ZodType<{
   type: "function";
   name: string;
   args: StyleValue;
@@ -124,11 +124,11 @@ export const FunctionValue: z.ZodType<{
 }> = z.object({
   type: z.literal("function"),
   name: z.string(),
-  args: z.lazy(() => StyleValue),
+  args: z.lazy(() => styleValue),
   hidden: z.boolean().optional(),
 });
 
-export const ImageValue = z.object({
+export const imageValue = z.object({
   type: z.literal("image"),
   value: z.union([
     z.object({ type: z.literal("asset"), value: z.string() }),
@@ -140,44 +140,44 @@ export const ImageValue = z.object({
   hidden: z.boolean().optional(),
 });
 
-export type ImageValue = z.infer<typeof ImageValue>;
+export type ImageValue = z.infer<typeof imageValue>;
 
 // initial value of custom properties
 // https://www.w3.org/TR/css-variables-1/#guaranteed-invalid
-export const GuaranteedInvalidValue = z.object({
+export const guaranteedInvalidValue = z.object({
   type: z.literal("guaranteedInvalid"),
   hidden: z.boolean().optional(),
 });
-export type GuaranteedInvalidValue = z.infer<typeof GuaranteedInvalidValue>;
+export type GuaranteedInvalidValue = z.infer<typeof guaranteedInvalidValue>;
 
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
-export const InvalidValue = z.object({
+export const invalidValue = z.object({
   type: z.literal("invalid"),
   value: z.string(),
   hidden: z.boolean().optional(),
 });
-export type InvalidValue = z.infer<typeof InvalidValue>;
+export type InvalidValue = z.infer<typeof invalidValue>;
 
 /**
  * Use GuaranteedInvalidValue if you need a temp placeholder before user enters a value
  * @deprecated
  */
-const UnsetValue = z.object({
+const unsetValue = z.object({
   type: z.literal("unset"),
   value: z.literal(""),
   hidden: z.boolean().optional(),
 });
-export type UnsetValue = z.infer<typeof UnsetValue>;
+export type UnsetValue = z.infer<typeof unsetValue>;
 
-export const VarFallback = z.union([
-  UnparsedValue,
-  KeywordValue,
-  UnitValue,
-  ColorValue,
-  RgbValue,
+export const varFallback = z.union([
+  unparsedValue,
+  keywordValue,
+  unitValue,
+  colorValue,
+  rgbValue,
 ]);
-export type VarFallback = z.infer<typeof VarFallback>;
+export type VarFallback = z.infer<typeof varFallback>;
 
 export const toVarFallback = (
   styleValue: StyleValue,
@@ -196,89 +196,89 @@ export const toVarFallback = (
   return { type: "unparsed", value: toValue(styleValue, transformValue) };
 };
 
-const VarValue = z.object({
+const varValue = z.object({
   type: z.literal("var"),
   value: z.string(),
-  fallback: VarFallback.optional(),
+  fallback: varFallback.optional(),
   hidden: z.boolean().optional(),
 });
-export type VarValue = z.infer<typeof VarValue>;
+export type VarValue = z.infer<typeof varValue>;
 
-export const TupleValueItem = z.union([
-  UnitValue,
-  KeywordValue,
-  UnparsedValue,
-  ImageValue,
-  ColorValue,
-  RgbValue,
-  FunctionValue,
-  VarValue,
+export const tupleValueItem = z.union([
+  unitValue,
+  keywordValue,
+  unparsedValue,
+  imageValue,
+  colorValue,
+  rgbValue,
+  functionValue,
+  varValue,
 ]);
-export type TupleValueItem = z.infer<typeof TupleValueItem>;
+export type TupleValueItem = z.infer<typeof tupleValueItem>;
 
-export const TupleValue = z.object({
+export const tupleValue = z.object({
   type: z.literal("tuple"),
-  value: z.array(TupleValueItem),
+  value: z.array(tupleValueItem),
   hidden: z.boolean().optional(),
 });
 
-export type TupleValue = z.infer<typeof TupleValue>;
+export type TupleValue = z.infer<typeof tupleValue>;
 
-export const ShadowValue = z.object({
+export const shadowValue = z.object({
   type: z.literal("shadow"),
   hidden: z.boolean().optional(),
   position: z.union([z.literal("inset"), z.literal("outset")]),
-  offsetX: z.union([UnitValue, VarValue]),
-  offsetY: z.union([UnitValue, VarValue]),
-  blur: z.union([UnitValue, VarValue]).optional(),
-  spread: z.union([UnitValue, VarValue]).optional(),
-  color: z.union([ColorValue, RgbValue, KeywordValue, VarValue]).optional(),
+  offsetX: z.union([unitValue, varValue]),
+  offsetY: z.union([unitValue, varValue]),
+  blur: z.union([unitValue, varValue]).optional(),
+  spread: z.union([unitValue, varValue]).optional(),
+  color: z.union([colorValue, rgbValue, keywordValue, varValue]).optional(),
 });
 
-export type ShadowValue = z.infer<typeof ShadowValue>;
+export type ShadowValue = z.infer<typeof shadowValue>;
 
-const LayerValueItem = z.union([
-  UnitValue,
-  KeywordValue,
-  UnparsedValue,
-  ImageValue,
-  TupleValue,
-  ShadowValue,
-  ColorValue,
-  RgbValue,
-  InvalidValue,
-  FunctionValue,
-  VarValue,
+const layerValueItem = z.union([
+  unitValue,
+  keywordValue,
+  unparsedValue,
+  imageValue,
+  tupleValue,
+  shadowValue,
+  colorValue,
+  rgbValue,
+  invalidValue,
+  functionValue,
+  varValue,
 ]);
 
-export type LayerValueItem = z.infer<typeof LayerValueItem>;
+export type LayerValueItem = z.infer<typeof layerValueItem>;
 // To support background layers https://developer.mozilla.org/en-US/docs/Web/CSS/background
 // and similar comma separated css properties
 // InvalidValue used in case of asset not found
-export const LayersValue = z.object({
+export const layersValue = z.object({
   type: z.literal("layers"),
-  value: z.array(LayerValueItem),
+  value: z.array(layerValueItem),
   hidden: z.boolean().optional(),
 });
 
-export type LayersValue = z.infer<typeof LayersValue>;
+export type LayersValue = z.infer<typeof layersValue>;
 
-export const StyleValue = z.union([
-  ImageValue,
-  LayersValue,
-  UnitValue,
-  KeywordValue,
-  FontFamilyValue,
-  ColorValue,
-  RgbValue,
-  UnparsedValue,
-  TupleValue,
-  FunctionValue,
-  GuaranteedInvalidValue,
-  InvalidValue,
-  UnsetValue,
-  VarValue,
-  ShadowValue,
+export const styleValue = z.union([
+  imageValue,
+  layersValue,
+  unitValue,
+  keywordValue,
+  fontFamilyValue,
+  colorValue,
+  rgbValue,
+  unparsedValue,
+  tupleValue,
+  functionValue,
+  guaranteedInvalidValue,
+  invalidValue,
+  unsetValue,
+  varValue,
+  shadowValue,
 ]);
 
-export type StyleValue = z.infer<typeof StyleValue>;
+export type StyleValue = z.infer<typeof styleValue>;

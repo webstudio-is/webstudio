@@ -5,13 +5,13 @@ export const apiCompatibilityErrorType = "webstudioApiCompatibilityError";
 export const apiClientHeader = "x-webstudio-client";
 export const apiClientVersionHeader = "x-webstudio-client-version";
 
-export const ApiCompatibilityTarget = z.enum(["browser", "cli"]);
-export type ApiCompatibilityTarget = z.infer<typeof ApiCompatibilityTarget>;
+export const apiCompatibilityTarget = z.enum(["browser", "cli"]);
+export type ApiCompatibilityTarget = z.infer<typeof apiCompatibilityTarget>;
 
-export const ApiClient = z.enum(["browser", "cli", "service"]);
-export type ApiClient = z.infer<typeof ApiClient>;
+export const apiClient = z.enum(["browser", "cli", "service"]);
+export type ApiClient = z.infer<typeof apiClient>;
 
-const ApiCompatibilityAction = z.discriminatedUnion("type", [
+const apiCompatibilityAction = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("reloadBrowser"),
   }),
@@ -20,15 +20,15 @@ const ApiCompatibilityAction = z.discriminatedUnion("type", [
   }),
 ]);
 
-export const ApiCompatibilityPayload = z.object({
+export const apiCompatibilityPayload = z.object({
   type: z.literal(apiCompatibilityErrorType),
   reason: z.enum(["apiRouteNotFound", "apiProcedureNotFound"]),
-  target: ApiCompatibilityTarget,
+  target: apiCompatibilityTarget,
   message: z.string(),
-  action: ApiCompatibilityAction,
+  action: apiCompatibilityAction,
 });
 
-export type ApiCompatibilityPayload = z.infer<typeof ApiCompatibilityPayload>;
+export type ApiCompatibilityPayload = z.infer<typeof apiCompatibilityPayload>;
 
 export const createApiCompatibilityPayload = ({
   reason,
@@ -67,7 +67,7 @@ export const getApiCompatibilityPayload = (
     value: unknown,
     seen: WeakSet<object>
   ): ApiCompatibilityPayload | undefined => {
-    const parsed = ApiCompatibilityPayload.safeParse(value);
+    const parsed = apiCompatibilityPayload.safeParse(value);
     if (parsed.success) {
       return parsed.data;
     }

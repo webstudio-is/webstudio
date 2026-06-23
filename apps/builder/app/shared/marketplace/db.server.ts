@@ -1,4 +1,4 @@
-import { MarketplaceProduct } from "@webstudio-is/project-build";
+import { marketplaceProduct } from "@webstudio-is/project-build";
 import type { MarketplaceOverviewItem } from "./types";
 import {
   loadApprovedProdBuildByProjectId,
@@ -42,7 +42,7 @@ export const getItems = async (
     if (product.marketplaceProduct === null || product.projectId === null) {
       continue;
     }
-    const parsedProduct = MarketplaceProduct.safeParse(
+    const parsedProduct = marketplaceProduct.safeParse(
       parseConfig(product.marketplaceProduct)
     );
 

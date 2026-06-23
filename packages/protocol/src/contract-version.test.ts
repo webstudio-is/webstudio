@@ -24,13 +24,13 @@ const createLengthRefinement = ({
   );
 
 const versionForRefinement = (refinement: StringRefinement) =>
-  createContractVersion(z.string().superRefine(refinement), "1");
+  createContractVersion(z.string().superRefine(refinement));
 
 describe("contract version", () => {
   test("changes when schema shape changes", () => {
-    expect(
-      createContractVersion(z.object({ value: z.string() }), "1")
-    ).not.toBe(createContractVersion(z.object({ value: z.number() }), "1"));
+    expect(createContractVersion(z.object({ value: z.string() }))).not.toBe(
+      createContractVersion(z.object({ value: z.number() }))
+    );
   });
 
   test("changes when explicit refinement contract changes", () => {
@@ -61,8 +61,7 @@ describe("contract version", () => {
               message: "Must be at least 2 characters",
             });
           }
-        }),
-        "1"
+        })
       )
     ).toBe(
       createContractVersion(
@@ -73,17 +72,8 @@ describe("contract version", () => {
               message: "Must be at least 3 characters",
             });
           }
-        }),
-        "1"
+        })
       )
-    );
-  });
-
-  test("changes when package version changes", () => {
-    const schema = z.object({ value: z.string() });
-
-    expect(createContractVersion(schema, "1.0.0")).not.toBe(
-      createContractVersion(schema, "1.0.1")
     );
   });
 
@@ -91,15 +81,13 @@ describe("contract version", () => {
     const schema = z.object({ value: z.string() });
 
     expect(
-      createContractVersion(schema, "1", [z.object({ auth: z.literal(1) })])
+      createContractVersion(schema, [z.object({ auth: z.literal(1) })])
     ).not.toBe(
-      createContractVersion(schema, "1", [z.object({ auth: z.literal(2) })])
+      createContractVersion(schema, [z.object({ auth: z.literal(2) })])
     );
   });
 
-  test("uses short bundle package version", () => {
-    expect(
-      createContractVersion(z.string(), "0.0.0-webstudio-version")
-    ).toMatch(/^bundle-0\.0\.0-[0-9a-f]{8}$/);
+  test("uses only the bundle contract hash", () => {
+    expect(createContractVersion(z.string())).toMatch(/^bundle-[0-9a-f]{8}$/);
   });
 });

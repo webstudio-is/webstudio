@@ -14,7 +14,7 @@ import {
   DialogActions,
   toast,
 } from "@webstudio-is/design-system";
-import { Title, type Project } from "@webstudio-is/project";
+import { projectTitle, type Project } from "@webstudio-is/project";
 import { nativeClient } from "./trpc/trpc-client";
 import { useEffectEvent } from "./hook-utils/effect-event";
 
@@ -31,7 +31,7 @@ const useCloneProjectWithDialog = ({
   const [errors, setErrors] = useState<string>();
 
   const handleSubmit = async ({ title }: { title: string }) => {
-    const parsed = Title.safeParse(title);
+    const parsed = projectTitle.safeParse(title);
     const errors =
       "error" in parsed
         ? parsed.error?.issues.map((issue) => issue.message).join("\n")
@@ -102,7 +102,7 @@ const CloneProjectView = ({
             }}
             gap="1"
           >
-            <Label>Project title</Label>
+            <Label>Project Title</Label>
             <InputField
               name="title"
               defaultValue={title}

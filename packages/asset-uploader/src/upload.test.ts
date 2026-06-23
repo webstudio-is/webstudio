@@ -7,7 +7,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { createUploadName } from "./upload";
+import { createUploadName, uploadFile } from "./upload";
 
 const server = createTestServer();
 
@@ -274,5 +274,58 @@ describe("createUploadName", () => {
     );
 
     expect(attemptedFileUpdate).toBe(false);
+  });
+});
+
+describe("uploadFile", () => {
+  test("uses custom failed upload cleanup without deleting asset rows", async () => {
+    let customCleanupCalled = false;
+    let assetDeleted = false;
+    let fileDeleted = false;
+
+    server.use(
+      db.get("File", () =>
+        json({
+          name: "existing.png",
+          format: "image",
+          size: 0,
+          status: "UPLOADING",
+          uploaderProjectId: "project-1",
+          isDeleted: false,
+          meta: "{}",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+      ),
+      db.delete("Asset", () => {
+        assetDeleted = true;
+        return empty({ status: 204 });
+      }),
+      db.delete("File", () => {
+        fileDeleted = true;
+        return empty({ status: 204 });
+      })
+    );
+
+    await expect(
+      uploadFile(
+        "existing.png",
+        new Blob(["asset"]).stream(),
+        {
+          uploadFile: async () => {
+            throw new Error("Storage upload failed");
+          },
+        },
+        createContext(),
+        undefined,
+        async () => {
+          customCleanupCalled = true;
+        }
+      )
+    ).rejects.toThrow("Storage upload failed");
+
+    expect(customCleanupCalled).toBe(true);
+    expect(assetDeleted).toBe(false);
+    expect(fileDeleted).toBe(false);
   });
 });

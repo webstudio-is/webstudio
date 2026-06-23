@@ -87,7 +87,7 @@ export type LogoutPageProps = {
   logoutUrls: string[];
 };
 
-const LogoutResponse = z.object({
+const logoutResponse = z.object({
   redirectTo: z.string(),
 });
 
@@ -110,7 +110,7 @@ export const LogoutPage = (props: LogoutPageProps) => {
     }
 
     const data = await response.json();
-    const parsedData = LogoutResponse.safeParse(data);
+    const parsedData = logoutResponse.safeParse(data);
 
     if (false === parsedData.success) {
       throw {

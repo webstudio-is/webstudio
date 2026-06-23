@@ -13,7 +13,7 @@ import {
   getProjectOwnerId,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
-import { Templates } from "@webstudio-is/sdk";
+import { templates } from "@webstudio-is/sdk";
 import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
 
@@ -69,7 +69,7 @@ export const domainRouter = router({
         z.object({
           projectId: z.string(),
           destination: z.literal("static"),
-          templates: z.array(Templates),
+          templates: z.array(templates),
         }),
       ])
     )

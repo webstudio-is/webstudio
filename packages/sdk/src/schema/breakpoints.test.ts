@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { Breakpoint } from "./breakpoints";
+import { breakpoint } from "./breakpoints";
 
 describe("Breakpoint schema", () => {
   test("accepts valid width-based breakpoints", () => {
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "1",
         label: "Desktop",
         minWidth: 1024,
@@ -12,7 +12,7 @@ describe("Breakpoint schema", () => {
     ).not.toThrow();
 
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "2",
         label: "Mobile",
         maxWidth: 767,
@@ -20,7 +20,7 @@ describe("Breakpoint schema", () => {
     ).not.toThrow();
 
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "3",
         label: "Base",
       })
@@ -29,7 +29,7 @@ describe("Breakpoint schema", () => {
 
   test("accepts valid custom condition breakpoints", () => {
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "1",
         label: "Portrait",
         condition: "orientation:portrait",
@@ -37,7 +37,7 @@ describe("Breakpoint schema", () => {
     ).not.toThrow();
 
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "2",
         label: "Hover",
         condition: "hover:hover",
@@ -45,7 +45,7 @@ describe("Breakpoint schema", () => {
     ).not.toThrow();
 
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "3",
         label: "Dark Mode",
         condition: "prefers-color-scheme:dark",
@@ -54,14 +54,14 @@ describe("Breakpoint schema", () => {
   });
 
   test("normalizes empty condition to undefined", () => {
-    const result = Breakpoint.parse({
+    const result = breakpoint.parse({
       id: "1",
       label: "Test",
       condition: "",
     });
     expect(result.condition).toBeUndefined();
 
-    const result2 = Breakpoint.parse({
+    const result2 = breakpoint.parse({
       id: "2",
       label: "Test",
       condition: "   ",
@@ -71,7 +71,7 @@ describe("Breakpoint schema", () => {
 
   test("rejects breakpoint with both condition and width", () => {
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "1",
         label: "Invalid",
         condition: "orientation:portrait",
@@ -80,7 +80,7 @@ describe("Breakpoint schema", () => {
     ).toThrow();
 
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "2",
         label: "Invalid",
         condition: "hover:hover",
@@ -89,7 +89,7 @@ describe("Breakpoint schema", () => {
     ).toThrow();
 
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "3",
         label: "Invalid",
         condition: "hover:hover",
@@ -100,7 +100,7 @@ describe("Breakpoint schema", () => {
   });
 
   test("allows breakpoint with both minWidth and maxWidth when min < max", () => {
-    const result = Breakpoint.parse({
+    const result = breakpoint.parse({
       id: "1",
       label: "Tablet range",
       minWidth: 768,
@@ -113,7 +113,7 @@ describe("Breakpoint schema", () => {
 
   test("rejects breakpoint with minWidth >= maxWidth", () => {
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "1",
         label: "Invalid",
         minWidth: 1024,
@@ -122,7 +122,7 @@ describe("Breakpoint schema", () => {
     ).toThrow();
 
     expect(() =>
-      Breakpoint.parse({
+      breakpoint.parse({
         id: "2",
         label: "Invalid",
         minWidth: 768,
@@ -132,7 +132,7 @@ describe("Breakpoint schema", () => {
   });
 
   test("preserves valid condition values", () => {
-    const result = Breakpoint.parse({
+    const result = breakpoint.parse({
       id: "1",
       label: "Portrait",
       condition: "orientation:portrait",
@@ -143,7 +143,7 @@ describe("Breakpoint schema", () => {
   });
 
   test("handles complex conditions", () => {
-    const result = Breakpoint.parse({
+    const result = breakpoint.parse({
       id: "1",
       label: "Complex",
       condition: "orientation:portrait and hover:hover",

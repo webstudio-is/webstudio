@@ -8,12 +8,12 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { roles } from "@webstudio-is/trpc-interface/authorize";
 
-const Name = z.string().min(2).max(100);
-const Relation = z.enum(roles);
+const name = z.string().min(2).max(100);
+const relation = z.enum(roles);
 
 export const workspaceRouter = router({
   create: procedure
-    .input(z.object({ name: Name }))
+    .input(z.object({ name: name }))
     .mutation(async ({ input, ctx }) => {
       try {
         const workspace = await workspaceApi.create(
@@ -27,7 +27,7 @@ export const workspaceRouter = router({
     }),
 
   rename: procedure
-    .input(z.object({ workspaceId: z.string(), name: Name }))
+    .input(z.object({ workspaceId: z.string(), name: name }))
     .mutation(async ({ input, ctx }) => {
       try {
         const workspace = await workspaceApi.rename(input, ctx);
@@ -73,7 +73,7 @@ export const workspaceRouter = router({
       z.object({
         workspaceId: z.string(),
         email: z.string().email(),
-        relation: Relation,
+        relation: relation,
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -99,7 +99,7 @@ export const workspaceRouter = router({
       z.object({
         workspaceId: z.string(),
         memberUserId: z.string(),
-        relation: Relation,
+        relation: relation,
       })
     )
     .mutation(async ({ input, ctx }) => {

@@ -11,7 +11,7 @@ import { computeExpression } from "~/shared/data-variables";
 import { $pageRootScope } from "../page-utils";
 import type { Errors, OnChange, Values } from "./shared";
 
-const TextContentValues = z.object({
+const textContentValues = z.object({
   content: z.string().optional(),
 });
 
@@ -23,7 +23,7 @@ export const validateTextContentSection = (
     return {};
   }
 
-  const parsedResult = TextContentValues.safeParse({
+  const parsedResult = textContentValues.safeParse({
     content: computeExpression(values.content, variableValues),
   });
 

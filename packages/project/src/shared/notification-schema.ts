@@ -19,16 +19,16 @@ export type NotificationStatus = (typeof notificationStatuses)[number];
 /** Notifications expire after this many milliseconds (7 days). */
 export const NOTIFICATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-export const WorkspaceInvitePayload = z.object({
+export const workspaceInvitePayload = z.object({
   workspaceId: z.string(),
   relation: z.enum(roles),
 });
 
-export type WorkspaceInvitePayload = z.infer<typeof WorkspaceInvitePayload>;
+export type WorkspaceInvitePayload = z.infer<typeof workspaceInvitePayload>;
 
-export const ProjectTransferPayload = z.object({
+export const projectTransferPayload = z.object({
   projectId: z.string(),
   targetWorkspaceId: z.string().optional(),
 });
 
-export type ProjectTransferPayload = z.infer<typeof ProjectTransferPayload>;
+export type ProjectTransferPayload = z.infer<typeof projectTransferPayload>;

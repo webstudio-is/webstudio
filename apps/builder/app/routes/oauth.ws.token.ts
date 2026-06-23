@@ -21,7 +21,7 @@ import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
  *
  * https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3
  */
-const TokenRequest = z.object({
+const tokenRequest = z.object({
   // Check that the grant_type parameter is present and is one of the supported values
   grant_type: z.literal("authorization_code"),
   code: z.string(),
@@ -89,7 +89,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const jsonBody = Object.fromEntries((await request.formData()).entries());
 
-  const parsedBody = TokenRequest.safeParse(jsonBody);
+  const parsedBody = tokenRequest.safeParse(jsonBody);
 
   if (false === parsedBody.success) {
     debug(fromError(parsedBody.error).toString());

@@ -1,40 +1,40 @@
 import { z } from "zod";
 
-export const TextChild = z.object({
+export const textChild = z.object({
   type: z.literal("text"),
   value: z.string(),
   placeholder: z.boolean().optional(),
 });
 
-export type TextChild = z.infer<typeof TextChild>;
+export type TextChild = z.infer<typeof textChild>;
 
-const InstanceId = z.string();
+const instanceId = z.string();
 
-export const IdChild = z.object({
+export const idChild = z.object({
   type: z.literal("id"),
-  value: InstanceId,
+  value: instanceId,
 });
-export type IdChild = z.infer<typeof IdChild>;
+export type IdChild = z.infer<typeof idChild>;
 
-export const ExpressionChild = z.object({
+export const expressionChild = z.object({
   type: z.literal("expression"),
   value: z.string(),
 });
-export type ExpressionChild = z.infer<typeof ExpressionChild>;
+export type ExpressionChild = z.infer<typeof expressionChild>;
 
-export const InstanceChild = z.union([IdChild, TextChild, ExpressionChild]);
+export const instanceChild = z.union([idChild, textChild, expressionChild]);
 
-export const Instance = z.object({
+export const instance = z.object({
   type: z.literal("instance"),
-  id: InstanceId,
+  id: instanceId,
   component: z.string(),
   tag: z.string().optional(),
   label: z.string().optional(),
-  children: z.array(InstanceChild),
+  children: z.array(instanceChild),
 });
 
-export type Instance = z.infer<typeof Instance>;
+export type Instance = z.infer<typeof instance>;
 
-export const Instances = z.map(InstanceId, Instance);
+export const instances = z.map(instanceId, instance);
 
-export type Instances = z.infer<typeof Instances>;
+export type Instances = z.infer<typeof instances>;

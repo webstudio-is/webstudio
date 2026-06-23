@@ -1,25 +1,25 @@
 import { z } from "zod";
 
-const StyleSourceId = z.string();
+const styleSourceId = z.string();
 
-const StyleSourceToken = z.object({
+const styleSourceToken = z.object({
   type: z.literal("token"),
-  id: StyleSourceId,
+  id: styleSourceId,
   name: z.string(),
   locked: z.boolean().optional(),
 });
 
-export type StyleSourceToken = z.infer<typeof StyleSourceToken>;
+export type StyleSourceToken = z.infer<typeof styleSourceToken>;
 
-const StyleSourceLocal = z.object({
+const styleSourceLocal = z.object({
   type: z.literal("local"),
-  id: StyleSourceId,
+  id: styleSourceId,
 });
 
-export const StyleSource = z.union([StyleSourceToken, StyleSourceLocal]);
+export const styleSource = z.union([styleSourceToken, styleSourceLocal]);
 
-export type StyleSource = z.infer<typeof StyleSource>;
+export type StyleSource = z.infer<typeof styleSource>;
 
-export const StyleSources = z.map(StyleSourceId, StyleSource);
+export const styleSources = z.map(styleSourceId, styleSource);
 
-export type StyleSources = z.infer<typeof StyleSources>;
+export type StyleSources = z.infer<typeof styleSources>;

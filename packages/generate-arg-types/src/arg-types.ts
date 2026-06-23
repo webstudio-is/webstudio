@@ -1,5 +1,5 @@
 import type { PropItem } from "react-docgen-typescript";
-import { PropMeta } from "@webstudio-is/sdk";
+import { type PropMeta, propMeta } from "@webstudio-is/sdk";
 
 export type FilterPredicate = (prop: PropItem) => boolean;
 
@@ -74,7 +74,7 @@ export const getArgType = (propItem: PropItem): PropMeta | undefined => {
     if (type === "number" && typeof value === "string") {
       value = Number(value);
     }
-    return PropMeta.parse({
+    return propMeta.parse({
       type,
       required: propItem.required,
       control,

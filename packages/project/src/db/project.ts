@@ -6,8 +6,8 @@ import {
   getPlanFeaturesByOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createBuild } from "@webstudio-is/project-build/index.server";
-import { Title } from "../shared/project-schema";
-import { MarketplaceApprovalStatus } from "../shared/marketplace-schema";
+import { projectTitle } from "../shared/project-schema";
+import type { MarketplaceApprovalStatus } from "../shared/marketplace-schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 import type { SetNonNullable } from "type-fest";
 
@@ -87,7 +87,7 @@ export const create = async (
   { title, workspaceId }: { title: string; workspaceId?: string },
   context: AppContext
 ) => {
-  Title.parse(title);
+  projectTitle.parse(title);
 
   if (context.authorization.type !== "user") {
     throw new AuthorizationError("Only logged in users can create a project");
@@ -257,7 +257,7 @@ export const rename = async (
   },
   context: AppContext
 ) => {
-  Title.parse(title);
+  projectTitle.parse(title);
 
   await assertEditPermission(projectId, context);
 

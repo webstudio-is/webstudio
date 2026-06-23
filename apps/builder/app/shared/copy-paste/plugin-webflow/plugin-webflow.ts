@@ -7,7 +7,8 @@ import { insertWebstudioFragmentCopy } from "../../instance-utils/fragment";
 import { updateWebstudioData } from "../../instance-utils/data";
 import { $project } from "~/shared/sync/data-stores";
 import {
-  WfData,
+  type WfData,
+  wfData,
   wfNodeTypes,
   type WfNode,
   type WfStyle,
@@ -129,7 +130,7 @@ const parse = (clipboardData: string) => {
     console.info(message);
   }
 
-  const result = WfData.safeParse(data);
+  const result = wfData.safeParse(data);
 
   if (result.success) {
     const unpasedTypes = new Set<string>();

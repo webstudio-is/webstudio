@@ -7,8 +7,10 @@ import {
   type NotificationType,
   type NotificationStatus,
   NOTIFICATION_TTL_MS,
-  WorkspaceInvitePayload,
-  ProjectTransferPayload,
+  type WorkspaceInvitePayload,
+  workspaceInvitePayload,
+  type ProjectTransferPayload,
+  projectTransferPayload,
 } from "../shared/notification-schema";
 import { roleLabels } from "@webstudio-is/trpc-interface/authorize";
 
@@ -246,12 +248,12 @@ export const list = async (context: AppContext) => {
 
   for (const n of result.data) {
     if (n.type === "workspaceInvite") {
-      const parsed = WorkspaceInvitePayload.safeParse(n.payload);
+      const parsed = workspaceInvitePayload.safeParse(n.payload);
       if (parsed.success) {
         parsedInvites.set(n.id, parsed.data);
       }
     } else if (n.type === "projectTransfer") {
-      const parsed = ProjectTransferPayload.safeParse(n.payload);
+      const parsed = projectTransferPayload.safeParse(n.payload);
       if (parsed.success) {
         parsedTransfers.set(n.id, parsed.data);
       }
@@ -511,7 +513,7 @@ const performAcceptSideEffect = async ({
   context: AppContext;
 }) => {
   if (notification.type === "workspaceInvite") {
-    const parseResult = WorkspaceInvitePayload.safeParse(notification.payload);
+    const parseResult = workspaceInvitePayload.safeParse(notification.payload);
     if (parseResult.success === false) {
       throw new Error("Invalid workspace invite payload");
     }
@@ -561,7 +563,7 @@ const performAcceptSideEffect = async ({
       throw new Error("You cannot accept your own transfer request");
     }
 
-    const parseResult = ProjectTransferPayload.safeParse(notification.payload);
+    const parseResult = projectTransferPayload.safeParse(notification.payload);
     if (parseResult.success === false) {
       throw new Error("Invalid project transfer payload");
     }

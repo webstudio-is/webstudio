@@ -6,7 +6,7 @@ import {
   elementComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
-  WsComponentMeta,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   $,

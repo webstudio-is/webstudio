@@ -10,29 +10,29 @@
  */
 
 import { describe, test, expect } from "vitest";
-import { ProjectNewRedirectPath, RedirectSourcePath } from "./schema/pages";
+import { projectNewRedirectPath, redirectSourcePath } from "./schema/pages";
 import {
   REDIRECT_SOURCE_INVALID_PATHS,
   REDIRECT_SOURCE_VALID_PATHS,
 } from "./router-path-test-data";
 
 describe("Router path validation consistency", () => {
-  describe("RedirectSourcePath schema - valid paths", () => {
+  describe("redirectSourcePath schema - valid paths", () => {
     test.each(REDIRECT_SOURCE_VALID_PATHS)("accepts: %s", (path) => {
-      const result = RedirectSourcePath.safeParse(path);
+      const result = redirectSourcePath.safeParse(path);
       expect(result.success).toBe(true);
     });
   });
 
-  describe("RedirectSourcePath schema - invalid paths", () => {
+  describe("redirectSourcePath schema - invalid paths", () => {
     test.each(REDIRECT_SOURCE_INVALID_PATHS)("rejects: %s", (path) => {
-      const result = RedirectSourcePath.safeParse(path);
+      const result = redirectSourcePath.safeParse(path);
       expect(result.success).toBe(false);
     });
   });
 
-  describe("ProjectNewRedirectPath schema - valid paths", () => {
-    // ProjectNewRedirectPath is more permissive (allows / and external URLs)
+  describe("projectNewRedirectPath schema - valid paths", () => {
+    // projectNewRedirectPath is more permissive (allows / and external URLs)
     const validTargetPaths = [
       "/",
       "/about",
@@ -42,7 +42,7 @@ describe("Router path validation consistency", () => {
     ];
 
     test.each(validTargetPaths)("accepts: %s", (path) => {
-      const result = ProjectNewRedirectPath.safeParse(path);
+      const result = projectNewRedirectPath.safeParse(path);
       expect(result.success).toBe(true);
     });
   });

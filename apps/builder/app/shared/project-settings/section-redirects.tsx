@@ -31,7 +31,7 @@ import {
   UploadIcon,
 } from "@webstudio-is/icons";
 import { ImportRedirectsDialog } from "./import-redirects-dialog";
-import { RedirectSourcePath, ProjectNewRedirectPath } from "@webstudio-is/sdk";
+import { redirectSourcePath, projectNewRedirectPath } from "@webstudio-is/sdk";
 import type { PageRedirect } from "@webstudio-is/sdk";
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
@@ -71,7 +71,7 @@ const validateFromPath = (
   redirects: Array<PageRedirect>,
   existingPaths: Set<string>
 ): ValidationResult => {
-  const fromPathValidationResult = RedirectSourcePath.safeParse(fromPath);
+  const fromPathValidationResult = redirectSourcePath.safeParse(fromPath);
 
   if (fromPathValidationResult.success) {
     if (hasNamedSplat(fromPath)) {
@@ -125,7 +125,7 @@ const unsupportedTargetParamMessage =
   "Target route params must match params from the source path";
 
 const validateToPath = (toPath: string, fromPath?: string): string[] => {
-  const toPathValidationResult = ProjectNewRedirectPath.safeParse(toPath);
+  const toPathValidationResult = projectNewRedirectPath.safeParse(toPath);
   if (toPathValidationResult.success === false) {
     return toPathValidationResult.error.format()._errors;
   }

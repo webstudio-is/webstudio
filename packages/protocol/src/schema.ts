@@ -1,108 +1,103 @@
-import { Asset, Page } from "@webstudio-is/sdk/schema";
-import { SerializedBuildSchema } from "@webstudio-is/project-build/schema";
-import { wsAuthConfigSchema } from "@webstudio-is/wsauth/schema";
+import { asset, page } from "@webstudio-is/sdk/schema";
+import { serializedBuild } from "@webstudio-is/project-build/schema";
+import { wsAuthConfig } from "@webstudio-is/wsauth/schema";
 import { z } from "zod";
-import { version } from "../package.json";
 import { createContractVersion } from "./contract-version";
 
-// Bundle owns the assembled external project import/export format.
+// Protocol owns the assembled external project import/export format.
 // Domain schemas stay owned by their packages (sdk, project-build, etc.) and
 // are imported through schema-only entrypoints to avoid duplicating model
-// definitions or pulling non-schema runtime code into bundle consumers.
+// definitions or pulling non-schema runtime code into protocol consumers.
 
-export const assetFileDataPattern = /^[A-Za-z0-9+/]*={0,2}$/;
+export const maxProjectBundleSize = 20 * 1024 * 1024;
+export const stagedUploadPath = "/rest/staged-upload";
+export const stagedUploadProjectIdHeader = "x-webstudio-project-id";
 
-export const isAssetFileDataString = (value: string) => {
-  if (value.length % 4 !== 0) {
-    return false;
-  }
-  if (assetFileDataPattern.test(value) === false) {
-    return false;
-  }
-  const paddingIndex = value.indexOf("=");
-  return paddingIndex === -1 || paddingIndex >= value.length - 2;
-};
-
-const assertAssetFileDataString: z.RefinementEffect<string>["refinement"] =
-  Object.assign(
-    (value: string, context: z.RefinementCtx) => {
-      if (isAssetFileDataString(value)) {
-        return;
-      }
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Invalid asset file data",
-      });
-    },
-    {
-      contract: {
-        encoding: "base64",
-        length: "multiple-of-4",
-        padding: "only-last-two-characters",
-        pattern: assetFileDataPattern,
-      },
-    }
-  );
-
-const assetFileNameSchema = z
+const assetFileName = z
   .string()
   .min(1)
   .regex(/^(?!\.{1,2}$)[^/\\]+$/);
 
 export const isAssetFileName = (value: string) =>
-  assetFileNameSchema.safeParse(value).success;
+  assetFileName.safeParse(value).success;
 
-export const assetFileDataSchema = z.object({
-  name: assetFileNameSchema,
-  data: z.string().superRefine(assertAssetFileDataString),
-});
-export type AssetFileData = z.infer<typeof assetFileDataSchema>;
+const missingImportedAssetFilesPrefix = "Imported asset files are missing: ";
 
-export const projectBundleSchema = z.object({
-  page: Page,
-  pages: z.array(Page),
-  build: SerializedBuildSchema,
-  assets: z.array(Asset),
+export const getMissingImportedAssetFilesMessage = (assetNames: string[]) =>
+  `${missingImportedAssetFilesPrefix}${JSON.stringify(assetNames)}`;
+
+export const parseMissingImportedAssetFilesMessage = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  const start = message.indexOf(missingImportedAssetFilesPrefix);
+  if (start === -1) {
+    return;
+  }
+  const data = message.slice(start + missingImportedAssetFilesPrefix.length);
+  try {
+    const names = JSON.parse(data);
+    if (
+      Array.isArray(names) &&
+      names.every((name) => typeof name === "string")
+    ) {
+      return names;
+    }
+  } catch {
+    // Support already-deployed API responses using the previous comma-separated
+    // format. New responses use JSON so valid filenames can contain commas.
+  }
+  return data
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name !== "");
+};
+
+export const projectBundle = z.object({
+  page,
+  pages: z.array(page),
+  build: serializedBuild,
+  assets: z.array(asset),
   origin: z.string().optional(),
 });
-export type ProjectBundle = z.infer<typeof projectBundleSchema>;
+export type ProjectBundle = z.infer<typeof projectBundle>;
 
-export const publishedProjectBundleSchema = projectBundleSchema.extend({
+export const publishedProjectBundle = projectBundle.extend({
   bundleVersion: z.union([z.string(), z.number()]).optional(),
   user: z.object({ email: z.string().nullable() }).optional(),
   projectDomain: z.string(),
   projectTitle: z.string(),
 });
-export type PublishedProjectBundle = z.infer<
-  typeof publishedProjectBundleSchema
->;
+export type PublishedProjectBundle = z.infer<typeof publishedProjectBundle>;
 
-export const importProjectBundleInputSchema = z.object({
-  projectId: z.string(),
-  data: publishedProjectBundleSchema,
-  assetFiles: z.array(assetFileDataSchema).optional(),
-  ignoreVersionCheck: z.boolean().optional(),
-});
-export type ImportProjectBundleInput = z.infer<
-  typeof importProjectBundleInputSchema
->;
+export const importProjectBundleInput = z
+  .object({
+    projectId: z.string().min(1),
+    data: publishedProjectBundle.optional(),
+    uploadId: z.string().min(1).optional(),
+    ignoreVersionCheck: z.boolean().optional(),
+  })
+  .refine(
+    ({ data, uploadId }) => (data === undefined) !== (uploadId === undefined),
+    {
+      message: "Provide either project bundle data or an upload id",
+      path: ["data"],
+    }
+  );
+export type ImportProjectBundleInput = z.infer<typeof importProjectBundleInput>;
 
-export const importProjectBundleResultSchema = z.object({
+export const importProjectBundleResult = z.object({
   version: z.number(),
 });
 export type ImportProjectBundleResult = z.infer<
-  typeof importProjectBundleResultSchema
+  typeof importProjectBundleResult
 >;
 
-export const checkProjectBuildPermissionInputSchema = z.object({
-  projectId: z.string(),
+export const checkProjectBuildPermissionInput = z.object({
+  projectId: z.string().min(1),
 });
 
-export const bundleVersion = createContractVersion(
-  publishedProjectBundleSchema,
-  version,
-  [wsAuthConfigSchema]
-);
+export const bundleVersion = createContractVersion(publishedProjectBundle, [
+  wsAuthConfig,
+]);
 
 export const getBundleVersion = (data: unknown) => {
   if (typeof data !== "object" || data === null) {

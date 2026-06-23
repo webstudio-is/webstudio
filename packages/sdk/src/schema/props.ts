@@ -1,16 +1,16 @@
 import { z } from "zod";
-import { animationActionSchema } from "./animation-schema";
+import { animationAction } from "./animation-schema";
 
-const PropId = z.string();
+const propId = z.string();
 
 const baseProp = {
-  id: PropId,
+  id: propId,
   instanceId: z.string(),
   name: z.string(),
   required: z.optional(z.boolean()),
 };
 
-export const Prop = z.union([
+export const prop = z.union([
   z.object({
     ...baseProp,
     type: z.literal("number"),
@@ -84,12 +84,12 @@ export const Prop = z.union([
   z.object({
     ...baseProp,
     type: z.literal("animationAction"),
-    value: animationActionSchema,
+    value: animationAction,
   }),
 ]);
 
-export type Prop = z.infer<typeof Prop>;
+export type Prop = z.infer<typeof prop>;
 
-export const Props = z.map(PropId, Prop);
+export const props = z.map(propId, prop);
 
-export type Props = z.infer<typeof Props>;
+export type Props = z.infer<typeof props>;

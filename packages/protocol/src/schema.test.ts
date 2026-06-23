@@ -1,20 +1,21 @@
 import { describe, expect, test } from "vitest";
 import {
   isAssetFileName,
-  isAssetFileDataString,
+  getMissingImportedAssetFilesMessage,
+  parseMissingImportedAssetFilesMessage,
   getBundleVersionMismatchMessage,
-  importProjectBundleInputSchema,
-  publishedProjectBundleSchema,
+  importProjectBundleInput,
+  publishedProjectBundle,
   bundleVersion,
+  stagedUploadPath,
+  stagedUploadProjectIdHeader,
 } from "./schema";
 import { createPublishedProjectBundleFixture } from "./fixtures";
 
 describe("project bundle contract", () => {
-  test("validates base64 asset file data", () => {
-    expect(isAssetFileDataString("aGVsbG8=")).toBe(true);
-    expect(isAssetFileDataString("")).toBe(true);
-    expect(isAssetFileDataString("not base64")).toBe(false);
-    expect(isAssetFileDataString("a===")).toBe(false);
+  test("defines staged upload transport details", () => {
+    expect(stagedUploadPath).toBe("/rest/staged-upload");
+    expect(stagedUploadProjectIdHeader).toBe("x-webstudio-project-id");
   });
 
   test("validates asset file names", () => {
@@ -26,9 +27,35 @@ describe("project bundle contract", () => {
     expect(isAssetFileName("folder\\image.png")).toBe(false);
   });
 
+  test("formats and parses missing imported asset file messages", () => {
+    const message = getMissingImportedAssetFilesMessage([
+      "image.png",
+      "font,latin.woff2",
+    ]);
+
+    expect(message).toBe(
+      'Imported asset files are missing: ["image.png","font,latin.woff2"]'
+    );
+    expect(parseMissingImportedAssetFilesMessage(new Error(message))).toEqual([
+      "image.png",
+      "font,latin.woff2",
+    ]);
+    expect(
+      parseMissingImportedAssetFilesMessage("Other error")
+    ).toBeUndefined();
+  });
+
+  test("parses already-deployed comma-separated missing asset messages", () => {
+    expect(
+      parseMissingImportedAssetFilesMessage(
+        new Error("Imported asset files are missing: image.png, font.woff2")
+      )
+    ).toEqual(["image.png", "font.woff2"]);
+  });
+
   test("preserves published project metadata", () => {
     expect(
-      publishedProjectBundleSchema.parse(
+      publishedProjectBundle.parse(
         createPublishedProjectBundleFixture({
           user: { email: "user@example.com" },
         })
@@ -44,7 +71,7 @@ describe("project bundle contract", () => {
     const data = createPublishedProjectBundleFixture();
     delete (data as Partial<typeof data>).projectTitle;
 
-    expect(() => publishedProjectBundleSchema.parse(data)).toThrow();
+    expect(() => publishedProjectBundle.parse(data)).toThrow();
   });
 
   test("requires published project bundle when importing", () => {
@@ -52,15 +79,59 @@ describe("project bundle contract", () => {
     delete (data as Partial<typeof data>).projectTitle;
 
     expect(() =>
-      importProjectBundleInputSchema.parse({
+      importProjectBundleInput.parse({
         projectId: "project",
         data,
       })
     ).toThrow();
   });
 
+  test("accepts staged upload id when importing", () => {
+    expect(
+      importProjectBundleInput.parse({
+        projectId: "project",
+        uploadId: "upload",
+      })
+    ).toEqual({
+      projectId: "project",
+      uploadId: "upload",
+    });
+  });
+
+  test("requires non-empty project and upload ids when importing", () => {
+    expect(() =>
+      importProjectBundleInput.parse({
+        projectId: "",
+        uploadId: "upload",
+      })
+    ).toThrow();
+
+    expect(() =>
+      importProjectBundleInput.parse({
+        projectId: "project",
+        uploadId: "",
+      })
+    ).toThrow();
+  });
+
+  test("requires exactly one project bundle import source", () => {
+    expect(() =>
+      importProjectBundleInput.parse({
+        projectId: "project",
+      })
+    ).toThrow("Provide either project bundle data or an upload id");
+
+    expect(() =>
+      importProjectBundleInput.parse({
+        projectId: "project",
+        data: createPublishedProjectBundleFixture(),
+        uploadId: "upload",
+      })
+    ).toThrow("Provide either project bundle data or an upload id");
+  });
+
   test("generates the current bundle version", () => {
-    expect(bundleVersion).toMatch(/^bundle-0\.0\.0-[0-9a-f]{8}$/);
+    expect(bundleVersion).toMatch(/^bundle-[0-9a-f]{8}$/);
   });
 
   test("formats project bundle version mismatch messages", () => {

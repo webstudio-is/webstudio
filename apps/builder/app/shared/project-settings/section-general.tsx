@@ -46,7 +46,7 @@ const defaultMetaSettings: ProjectMeta = {
   code: "",
 };
 
-const Email = z.string().email();
+const emailAddress = z.string().email();
 
 const validateContactEmail = (
   contactEmail: string,
@@ -63,7 +63,9 @@ const validateContactEmail = (
     }
     return `Only ${maxContactEmailsPerProject} emails are allowed.`;
   }
-  if (emails.every((email) => Email.safeParse(email).success) === false) {
+  if (
+    emails.every((email) => emailAddress.safeParse(email).success) === false
+  ) {
     return "Contact email is invalid.";
   }
 };

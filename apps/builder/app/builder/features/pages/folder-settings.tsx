@@ -17,8 +17,9 @@ import {
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
 import {
-  Folder,
-  Pages,
+  type Folder,
+  folder,
+  type Pages,
   ROOT_FOLDER_ID,
   findParentFolderByChildId,
   getFolderById,
@@ -37,11 +38,11 @@ import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { copyFolder } from "~/shared/copy-paste/copy-paste";
 import { PageItemActionsDropdown } from "./page-item-actions";
 
-const Values = Folder.pick({ name: true, slug: true }).extend({
+const folderValues = folder.pick({ name: true, slug: true }).extend({
   parentFolderId: z.string(),
 });
 
-type Values = z.infer<typeof Values>;
+type Values = z.infer<typeof folderValues>;
 
 type FieldName = keyof Values;
 
@@ -64,7 +65,7 @@ const validateValues = (
   values: Values,
   folderId?: Folder["id"]
 ): Errors => {
-  const parsedResult = Values.safeParse(values);
+  const parsedResult = folderValues.safeParse(values);
   const errors: Errors = {};
   if (parsedResult.success === false) {
     return parsedResult.error.formErrors.fieldErrors;

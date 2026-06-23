@@ -4,7 +4,8 @@ import { cancel, isCancel, log, spinner, text } from "@clack/prompts";
 import {
   getBundleVersion,
   getBundleVersionMismatchMessage,
-  publishedProjectBundleSchema,
+  parseMissingImportedAssetFilesMessage,
+  publishedProjectBundle,
   bundleVersion,
 } from "@webstudio-is/protocol";
 import {
@@ -14,7 +15,7 @@ import {
 import { LOCAL_DATA_FILE } from "../config";
 import { loadJSONFile } from "../fs-utils";
 import { HandledCliError } from "../errors";
-import { loadAssetFiles } from "../asset-files";
+import { uploadAssetFiles } from "../asset-files";
 import { LOCAL_AUTH_FILE, validateAuthConfigFile } from "../auth-config";
 import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { parseShareLink, validateShareLink } from "./link";
@@ -27,7 +28,7 @@ import type {
 type ImportProjectDependencies = {
   checkProjectBuildPermission: typeof checkProjectBuildPermission;
   importProjectBundle: typeof importProjectBundle;
-  loadAssetFiles: typeof loadAssetFiles;
+  uploadAssetFiles: typeof uploadAssetFiles;
   loadJSONFile: typeof loadJSONFile;
   text: typeof text;
   isInteractive: boolean;
@@ -41,7 +42,7 @@ const isInteractiveTerminal = () =>
 const defaultDependencies: ImportProjectDependencies = {
   checkProjectBuildPermission,
   importProjectBundle,
-  loadAssetFiles,
+  uploadAssetFiles,
   loadJSONFile,
   text,
   isInteractive: isInteractiveTerminal(),
@@ -58,6 +59,7 @@ const invalidProjectBundleMessage =
 const invalidAuthConfigMessage =
   "Project bundle auth config is invalid. Please run webstudio prebuild before importing.";
 const invalidDestinationMessage = "Destination share link is invalid.";
+const maxMissingAssetImportRetries = 5;
 
 export const importOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -70,6 +72,11 @@ export const importOptions = (yargs: CommonYargsArgv) =>
       describe:
         "Import data without a compatible data version; import may fail if source and target API data formats differ",
     })
+    .option("skip-assets", {
+      type: "boolean",
+      describe:
+        "Import project data without uploading or importing asset files; referenced assets may be missing in the target project",
+    })
     .check((options) => {
       if (options.to === undefined && isInteractiveTerminal() === false) {
         return missingDestinationMessage;
@@ -79,7 +86,7 @@ export const importOptions = (yargs: CommonYargsArgv) =>
 
 type ImportOptions = Pick<
   Partial<StrictYargsOptionsToInterface<typeof importOptions>>,
-  "ignoreVersionCheck"
+  "ignoreVersionCheck" | "skipAssets"
 > & {
   to?: string;
 };
@@ -126,7 +133,7 @@ export const importProject = async (
     );
     throw new HandledCliError();
   }
-  const parsedData = publishedProjectBundleSchema.safeParse(data);
+  const parsedData = publishedProjectBundle.safeParse(data);
   if (parsedData.success === false) {
     importing.stop(
       `${invalidProjectBundleMessage} Invalid fields: ${formatZodIssues(
@@ -211,34 +218,29 @@ export const importProject = async (
     throw new HandledCliError();
   }
 
-  importing.message(`Reading ${importData.assets.length} local asset files`);
-  let assetFiles;
-  try {
-    assetFiles = await dependencies.loadAssetFiles({
-      assets: importData.assets,
-    });
-  } catch (error) {
-    importing.stop(
-      error instanceof Error
-        ? `Unable to read project bundle asset files: ${error.message}`
-        : "Unable to read project bundle asset files",
-      2
-    );
-    throw new HandledCliError();
+  if (options.skipAssets === true) {
+    dependencies.log.info("Skipped asset upload and asset rows");
+  } else {
+    importing.message(`Uploading ${importData.assets.length} assets`);
+    try {
+      await dependencies.uploadAssetFiles({
+        assets: importData.assets,
+        ...destinationRequest,
+      });
+    } catch (error) {
+      importing.stop(
+        error instanceof Error
+          ? `Unable to upload assets: ${error.message}`
+          : "Unable to upload assets",
+        2
+      );
+      throw new HandledCliError();
+    }
   }
 
-  importing.message(
-    `Waiting for API response while importing into ${destination.projectId}`
-  );
-
-  try {
-    await dependencies.importProjectBundle({
-      ...destinationRequest,
-      data: importData,
-      assetFiles,
-      ignoreVersionCheck: options.ignoreVersionCheck,
-    });
-  } catch (error) {
+  const dataToImport =
+    options.skipAssets === true ? { ...importData, assets: [] } : importData;
+  const stopImportWithError = (error: unknown): never => {
     stopSpinnerWithError(
       importing,
       error,
@@ -246,7 +248,53 @@ export const importProject = async (
       "import"
     );
     throw new HandledCliError();
-  }
+  };
 
-  importing.stop("Project bundle imported successfully");
+  for (let attempt = 0; attempt <= maxMissingAssetImportRetries; attempt += 1) {
+    importing.message(
+      `Waiting for API response while importing into ${destination.projectId}`
+    );
+
+    try {
+      await dependencies.importProjectBundle({
+        ...destinationRequest,
+        data: dataToImport,
+        ignoreVersionCheck: options.ignoreVersionCheck,
+      });
+      importing.stop("Project imported successfully");
+      return;
+    } catch (error) {
+      const missingAssetNames =
+        options.skipAssets === true
+          ? undefined
+          : parseMissingImportedAssetFilesMessage(error);
+      const assetNames = missingAssetNames ?? [];
+      if (assetNames.length === 0 || attempt === maxMissingAssetImportRetries) {
+        stopImportWithError(error);
+      }
+
+      const missingAssets = importData.assets.filter((asset) =>
+        assetNames.includes(asset.name)
+      );
+      if (missingAssets.length !== assetNames.length) {
+        stopImportWithError(error);
+      }
+
+      importing.message(`Re-uploading ${missingAssets.length} missing assets`);
+      try {
+        await dependencies.uploadAssetFiles({
+          assets: missingAssets,
+          ...destinationRequest,
+        });
+      } catch (uploadError) {
+        importing.stop(
+          uploadError instanceof Error
+            ? `Unable to upload missing assets: ${uploadError.message}`
+            : "Unable to upload missing assets",
+          2
+        );
+        throw new HandledCliError();
+      }
+    }
+  }
 };

@@ -15,14 +15,12 @@ import {
   FloatingPanel,
   IconButton,
 } from "@webstudio-is/design-system";
-import type {
-  AnimationAction,
-  AnimationActionScroll,
-  InsetUnitValue,
-} from "@webstudio-is/sdk";
 import {
-  animationActionSchema,
-  insetUnitValueSchema,
+  type AnimationAction,
+  type AnimationActionScroll,
+  animationAction,
+  type InsetUnitValue,
+  insetUnitValue,
   RANGE_UNITS,
 } from "@webstudio-is/sdk";
 import {
@@ -139,7 +137,7 @@ const InsetValueInput = ({
       return;
     }
 
-    const parsedResult = insetUnitValueSchema.safeParse(styleValue);
+    const parsedResult = insetUnitValue.safeParse(styleValue);
 
     if (parsedResult.success) {
       onChange(parsedResult.data, true);
@@ -176,7 +174,7 @@ const InsetValueInput = ({
         handleEphemeralChange(value);
       }}
       onChangeComplete={(event) => {
-        const parsedValue = insetUnitValueSchema.safeParse(event.value);
+        const parsedValue = insetUnitValue.safeParse(event.value);
         if (parsedValue.success) {
           onChange(parsedValue.data, false);
           setIntermediateValue(undefined);
@@ -360,7 +358,7 @@ const AnimationConfigButton = forwardRef<
 });
 
 export const AnimationSection = ({
-  animationAction,
+  animationAction: animationActionProp,
   onChange,
   isAnimationEnabled,
   selectedBreakpointId,
@@ -373,7 +371,7 @@ export const AnimationSection = ({
   ) => boolean | undefined;
   selectedBreakpointId: string;
 }) => {
-  const { prop } = animationAction;
+  const { prop } = animationActionProp;
 
   const value: AnimationAction =
     prop?.type === "animationAction" ? prop.value : defaultActionValue;
@@ -384,7 +382,7 @@ export const AnimationSection = ({
       return;
     }
 
-    const parsedValue = animationActionSchema.safeParse(value);
+    const parsedValue = animationAction.safeParse(value);
     if (parsedValue.success) {
       onChange(parsedValue.data, isEphemeral);
       return;

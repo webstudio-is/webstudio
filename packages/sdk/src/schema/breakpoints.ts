@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-const BreakpointId = z.string();
+const breakpointId = z.string();
 
-export const Breakpoint = z
+export const breakpoint = z
   .object({
-    id: BreakpointId,
+    id: breakpointId,
     label: z.string(),
     minWidth: z.number().optional(),
     maxWidth: z.number().optional(),
@@ -29,11 +29,11 @@ export const Breakpoint = z
     return true;
   }, "Width-based (minWidth/maxWidth) and condition are mutually exclusive, and minWidth must be less than maxWidth");
 
-export type Breakpoint = z.infer<typeof Breakpoint>;
+export type Breakpoint = z.infer<typeof breakpoint>;
 
-export const Breakpoints = z.map(BreakpointId, Breakpoint);
+export const breakpoints = z.map(breakpointId, breakpoint);
 
-export type Breakpoints = z.infer<typeof Breakpoints>;
+export type Breakpoints = z.infer<typeof breakpoints>;
 
 export const initialBreakpoints: Array<Breakpoint> = [
   { id: "placeholder", label: "Base" },

@@ -1,36 +1,36 @@
 import { z } from "zod";
-import { Asset, Assets } from "./assets";
-import { DataSource, DataSources } from "./data-sources";
-import { Resource, Resources } from "./resources";
-import { Instance, InstanceChild, Instances } from "./instances";
-import { Prop, Props } from "./props";
-import { Breakpoint, Breakpoints } from "./breakpoints";
+import { asset, type Assets } from "./assets";
+import { dataSource, type DataSources } from "./data-sources";
+import { resource, type Resources } from "./resources";
+import { instance, instanceChild, type Instances } from "./instances";
+import { prop, type Props } from "./props";
+import { breakpoint, type Breakpoints } from "./breakpoints";
 import {
-  StyleSourceSelection,
-  StyleSourceSelections,
+  styleSourceSelection,
+  type StyleSourceSelections,
 } from "./style-source-selections";
-import { StyleSource, StyleSources } from "./style-sources";
-import { StyleDecl, Styles } from "./styles";
-import { Pages } from "./pages";
+import { styleSource, type StyleSources } from "./style-sources";
+import { styleDecl, type Styles } from "./styles";
+import type { Pages } from "./pages";
 
 /**
  * transferrable and insertable part of webstudio data
  * may contain reusable parts like tokens and custom components
  */
-export const WebstudioFragment = z.object({
-  children: z.array(InstanceChild),
-  instances: z.array(Instance),
-  assets: z.array(Asset),
-  dataSources: z.array(DataSource),
-  resources: z.array(Resource),
-  props: z.array(Prop),
-  breakpoints: z.array(Breakpoint),
-  styleSourceSelections: z.array(StyleSourceSelection),
-  styleSources: z.array(StyleSource),
-  styles: z.array(StyleDecl),
+export const webstudioFragment = z.object({
+  children: z.array(instanceChild),
+  instances: z.array(instance),
+  assets: z.array(asset),
+  dataSources: z.array(dataSource),
+  resources: z.array(resource),
+  props: z.array(prop),
+  breakpoints: z.array(breakpoint),
+  styleSourceSelections: z.array(styleSourceSelection),
+  styleSources: z.array(styleSource),
+  styles: z.array(styleDecl),
 });
 
-export type WebstudioFragment = z.infer<typeof WebstudioFragment>;
+export type WebstudioFragment = z.infer<typeof webstudioFragment>;
 
 /**
  * all persisted webstudio data in normalized format

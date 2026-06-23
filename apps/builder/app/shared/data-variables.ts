@@ -7,7 +7,7 @@ import {
   type Resource,
   type Resources,
   type WebstudioData,
-  Pages,
+  type Pages,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
   collectionComponent,
@@ -361,7 +361,7 @@ const traverseExpressions = ({
   resources,
   update,
 }: {
-  startingInstanceId: Instance["id"];
+  startingInstanceId: undefined | Instance["id"];
   pages: undefined | Pages;
   instances: Instances;
   props: Props;
@@ -375,10 +375,13 @@ const traverseExpressions = ({
 }) => {
   const pagesList = pages ? getAllPages(pages) : [];
 
-  let instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
-    instances,
-    startingInstanceId
-  );
+  let instanceIds =
+    startingInstanceId === undefined
+      ? new Set(instances.keys())
+      : findTreeInstanceIdsExcludingSlotDescendants(
+          instances,
+          startingInstanceId
+        );
   for (const page of pagesList) {
     // global variables can be accessed on all pages and inside of slots
     if (startingInstanceId === ROOT_INSTANCE_ID) {
@@ -492,7 +495,6 @@ const traverseExpressions = ({
 };
 
 export const findUnsetVariableNames = ({
-  startingInstanceId,
   instances,
   props,
   dataSources,
@@ -506,7 +508,7 @@ export const findUnsetVariableNames = ({
 }) => {
   const unsetVariables = new Set<DataSource["name"]>();
   traverseExpressions({
-    startingInstanceId,
+    startingInstanceId: undefined,
     pages: undefined,
     instances,
     props,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const basicAuthInputSchema = z.union([
+export const basicAuthInput = z.union([
   z.object({
     method: z.literal("basic"),
     login: z.string(),
@@ -13,10 +13,10 @@ export const basicAuthInputSchema = z.union([
   }),
 ]);
 
-export type BasicAuthInput = z.infer<typeof basicAuthInputSchema>;
+export type BasicAuthInput = z.infer<typeof basicAuthInput>;
 
-export const wsAuthConfigSchema = z.object({
+export const wsAuthConfig = z.object({
   version: z.literal(1),
-  routes: z.record(basicAuthInputSchema),
+  routes: z.record(basicAuthInput),
 });
-export type WsAuthConfig = z.infer<typeof wsAuthConfigSchema>;
+export type WsAuthConfig = z.infer<typeof wsAuthConfig>;

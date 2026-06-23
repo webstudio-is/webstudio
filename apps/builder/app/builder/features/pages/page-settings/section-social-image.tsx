@@ -21,7 +21,7 @@ import { ImageInfo } from "../image-info";
 import { SocialPreview } from "../social-preview";
 import { usePageUrl, type Errors, type OnChange, type Values } from "./shared";
 
-const SocialImageValues = z.object({
+const socialImageValues = z.object({
   socialImageUrl: z.string().optional(),
 });
 
@@ -29,7 +29,7 @@ export const validateSocialImageSection = (
   values: Values,
   variableValues: Map<string, unknown>
 ): Errors => {
-  const parsedResult = SocialImageValues.safeParse({
+  const parsedResult = socialImageValues.safeParse({
     socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
   });
   return parsedResult.success ? {} : parsedResult.error.formErrors.fieldErrors;

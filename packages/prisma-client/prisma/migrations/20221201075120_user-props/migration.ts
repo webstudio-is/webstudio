@@ -7,7 +7,7 @@ const baseUserProps = {
   required: z.optional(z.boolean()),
 };
 
-export const UserDbProp = z.discriminatedUnion("type", [
+export const userDbProp = z.discriminatedUnion("type", [
   z.object({
     ...baseUserProps,
     type: z.literal("number"),
@@ -31,10 +31,10 @@ export const UserDbProp = z.discriminatedUnion("type", [
   }),
 ]);
 
-const UserDbProps = z.array(UserDbProp);
-type UserDbProp = z.infer<typeof UserDbProp>;
+const userDbProps = z.array(userDbProp);
+type UserDbProp = z.infer<typeof userDbProp>;
 
-const OutdatedProp = z.object({
+const outdatedProp = z.object({
   ...baseUserProps,
   value: z.optional(z.union([z.string(), z.number(), z.boolean()])),
   asset_id: z.optional(z.string()),
@@ -42,7 +42,7 @@ const OutdatedProp = z.object({
   type: z.optional(z.string()),
 });
 
-const OutdatedProps = z.array(OutdatedProp);
+const outdatedProps = z.array(outdatedProp);
 
 export default () => {
   const client = new PrismaClient({
@@ -63,7 +63,7 @@ export default () => {
 
       for (const instanceProps of allInstanceProps) {
         const rawProps = JSON.parse(instanceProps.props);
-        const props = OutdatedProps.parse(rawProps);
+        const props = outdatedProps.parse(rawProps);
 
         const newProps: UserDbProp[] = [];
 
@@ -71,7 +71,7 @@ export default () => {
 
         for (const prop of props) {
           if (prop.type != null) {
-            const dbProp = UserDbProp.parse(prop);
+            const dbProp = userDbProp.parse(prop);
             newProps.push(dbProp);
             continue;
           }
@@ -143,7 +143,7 @@ export default () => {
         if (need_update) {
           await prisma.instanceProps.update({
             where: { id: instanceProps.id },
-            data: { props: JSON.stringify(UserDbProps.parse(newProps)) },
+            data: { props: JSON.stringify(userDbProps.parse(newProps)) },
           });
         }
       }
