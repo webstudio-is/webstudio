@@ -93,18 +93,6 @@
     "styleSources": [],
     "styleSourceSelections": [],
     "props": [],
-    "dataSources": [
-      [
-        "XE93KQdVwfiA3TCf8hQAQ",
-        {
-          "id": "XE93KQdVwfiA3TCf8hQAQ",
-          "scopeInstanceId": "iavYtlaxaMTf7HB5DBf8e",
-          "name": "system",
-          "type": "parameter"
-        }
-      ]
-    ],
-    "resources": [],
     "instances": [
       [
         "iavYtlaxaMTf7HB5DBf8e",
@@ -145,6 +133,18 @@
         }
       ]
     ],
+    "dataSources": [
+      [
+        "XE93KQdVwfiA3TCf8hQAQ",
+        {
+          "type": "parameter",
+          "id": "XE93KQdVwfiA3TCf8hQAQ",
+          "scopeInstanceId": "iavYtlaxaMTf7HB5DBf8e",
+          "name": "system"
+        }
+      ]
+    ],
+    "resources": [],
     "deployment": {
       "destination": "saas",
       "domains": ["fixture-client-do-not-touch-wsmel"],

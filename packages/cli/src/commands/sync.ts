@@ -5,6 +5,7 @@ import pc from "picocolors";
 import { spinner } from "@clack/prompts";
 import {
   bundleVersion,
+  publishedProjectBundleSchema,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
 import {
@@ -50,6 +51,7 @@ const defaultDependencies: SyncDependencies = {
 };
 
 const toLocalProjectBundle = (project: PublishedProjectBundle) => {
+  const normalizedProject = publishedProjectBundleSchema.parse(project);
   const {
     assets,
     build,
@@ -60,7 +62,7 @@ const toLocalProjectBundle = (project: PublishedProjectBundle) => {
     projectDomain,
     projectTitle,
     user,
-  } = project;
+  } = normalizedProject;
   return {
     bundleVersion: synchronizedBundleVersion ?? bundleVersion,
     build,

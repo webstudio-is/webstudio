@@ -2,10 +2,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import {
-  bundleVersion,
-  type PublishedProjectBundle,
-} from "@webstudio-is/protocol";
+import { bundleVersion } from "@webstudio-is/protocol";
 import {
   createImageAssetFixture,
   createPublishedProjectBundleFixture,
@@ -34,7 +31,11 @@ const dependencies = {
   writeFile,
 };
 
-const createProjectBundle = (data: Partial<PublishedProjectBundle> = {}) =>
+type ProjectBundleFixtureOptions = Parameters<
+  typeof createPublishedProjectBundleFixture
+>[0];
+
+const createProjectBundle = (data: ProjectBundleFixtureOptions = {}) =>
   createPublishedProjectBundleFixture(data);
 
 beforeEach(async () => {
@@ -78,7 +79,22 @@ test("preserves synchronized data version from the API", async () => {
 
 test("adds current bundle version when synchronizing data from old API", async () => {
   loadProjectBundleByBuildId.mockResolvedValue(
-    createProjectBundle({ bundleVersion: undefined })
+    createProjectBundle({
+      bundleVersion: undefined,
+      build: {
+        styles: [
+          [
+            "style-1",
+            {
+              breakpointId: "breakpoint-1",
+              styleSourceId: "style-source-1",
+              property: "display",
+              value: { type: "keyword", value: "block" },
+            },
+          ],
+        ],
+      },
+    })
   );
 
   await sync(
@@ -95,6 +111,9 @@ test("adds current bundle version when synchronizing data from old API", async (
   expect(JSON.parse(data)).toMatchObject({ bundleVersion });
   expect(data.startsWith(`{\n  "bundleVersion":`)).toBe(true);
   expect(data.indexOf(`"build"`)).toBeLessThan(data.indexOf(`"page"`));
+  expect(data.indexOf(`"styleSourceId"`)).toBeLessThan(
+    data.indexOf(`"breakpointId"`)
+  );
 });
 
 test("downloads project bundle asset files into local project bundle", async () => {
