@@ -2,7 +2,6 @@ import { asset, page } from "@webstudio-is/sdk/schema";
 import { serializedBuild } from "@webstudio-is/project-build/schema";
 import { wsAuthConfig } from "@webstudio-is/wsauth/schema";
 import { z } from "zod";
-import { version } from "../package.json";
 import { createContractVersion } from "./contract-version";
 
 // Protocol owns the assembled external project import/export format.
@@ -96,11 +95,9 @@ export const checkProjectBuildPermissionInput = z.object({
   projectId: z.string().min(1),
 });
 
-export const bundleVersion = createContractVersion(
-  publishedProjectBundle,
-  version,
-  [wsAuthConfig]
-);
+export const bundleVersion = createContractVersion(publishedProjectBundle, [
+  wsAuthConfig,
+]);
 
 export const getBundleVersion = (data: unknown) => {
   if (typeof data !== "object" || data === null) {

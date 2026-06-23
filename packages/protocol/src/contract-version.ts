@@ -197,10 +197,8 @@ const stableStringify = (value: unknown): string => {
 
 export const createContractVersion = (
   schema: z.ZodTypeAny,
-  version: string,
   additionalSchemas: z.ZodTypeAny[] = []
 ) => {
-  const bundlePackageVersion = version.replace(/-webstudio-version$/, "");
   let hash = 0x811c9dc5;
   for (const char of stableStringify({
     additionalSchemas: additionalSchemas.map((schema) =>
@@ -211,5 +209,5 @@ export const createContractVersion = (
     hash ^= char.charCodeAt(0);
     hash = Math.imul(hash, 0x01000193);
   }
-  return `bundle-${bundlePackageVersion}-${(hash >>> 0).toString(16).padStart(8, "0")}` as const;
+  return `bundle-${(hash >>> 0).toString(16).padStart(8, "0")}` as const;
 };
