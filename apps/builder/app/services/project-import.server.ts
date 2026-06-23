@@ -1,4 +1,3 @@
-import { Buffer } from "node:buffer";
 import {
   AuthorizationError,
   authorizeProject,
@@ -13,14 +12,11 @@ import { serializeStyles } from "@webstudio-is/project-build/styles.server";
 import { serializeStyleSourceSelections } from "@webstudio-is/project-build/style-source-selections.server";
 import {
   isAssetFileName,
-  isAssetFileDataString,
   getBundleVersionMismatchMessage,
   bundleVersion,
-  type AssetFileData,
   type PublishedProjectBundle,
   type ProjectBundle,
 } from "@webstudio-is/protocol";
-import { createAssetClient } from "~/shared/asset-client";
 import {
   getHomePage,
   type Asset,
@@ -103,39 +99,6 @@ const getImportedPreviewImageAssetId = (data: ProjectBundle) => {
   return importedAssetIds.has(socialImageAssetId) ? socialImageAssetId : null;
 };
 
-const createImportedFileRows = ({
-  assets,
-  projectId,
-}: {
-  assets: Asset[];
-  projectId: string;
-}) =>
-  assets.map((asset) => ({
-    name: asset.name,
-    status: "UPLOADED" as const,
-    format: asset.format,
-    size: asset.size,
-    meta: JSON.stringify(asset.meta),
-    createdAt: asset.createdAt,
-    uploaderProjectId: projectId,
-    isDeleted: false,
-  }));
-
-const toByteStream = async function* (data: Uint8Array) {
-  yield data;
-};
-
-const getAssetInfoFallback = (asset: Asset) => {
-  if (asset.type !== "image") {
-    return;
-  }
-  return {
-    width: asset.meta.width,
-    height: asset.meta.height,
-    format: asset.format,
-  };
-};
-
 const assertImportedAssetNames = (assets: Asset[]) => {
   const assetIds = new Set<string>();
   const assetNames = new Set<string>();
@@ -158,83 +121,28 @@ const assertImportedAssetNames = (assets: Asset[]) => {
   }
 };
 
-const assertAssetFilesMatchAssets = ({
-  assetFiles,
-  assets,
-}: {
-  assetFiles: AssetFileData[] | undefined;
-  assets: Asset[];
-}) => {
+const assertImportedAssets = (assets: Asset[]) => {
   assertImportedAssetNames(assets);
-
-  if (assetFiles === undefined) {
-    if (assets.length > 0) {
-      throw new Error("Imported asset files are required.");
-    }
-    return;
-  }
-
-  const assetNames = new Set(assets.map((asset) => asset.name));
-  const assetFilesByName = new Map<string, AssetFileData>();
-
-  for (const assetFile of assetFiles) {
-    if (isAssetFileDataString(assetFile.data) === false) {
-      throw new Error(`Imported asset file data is invalid: ${assetFile.name}`);
-    }
-    if (assetFilesByName.has(assetFile.name)) {
-      throw new Error(`Imported asset file is duplicated: ${assetFile.name}`);
-    }
-    if (assetNames.has(assetFile.name) === false) {
-      throw new Error(
-        `Imported asset file does not exist in data assets: ${assetFile.name}`
-      );
-    }
-    assetFilesByName.set(assetFile.name, assetFile);
-  }
-
-  for (const assetName of assetNames) {
-    if (assetFilesByName.has(assetName) === false) {
-      throw new Error(`Imported asset file is missing: ${assetName}`);
-    }
-  }
 };
 
-const uploadImportedAssetFiles = async ({
-  assetClient,
-  assetFiles,
-  assets,
-}: {
-  assetClient: ReturnType<typeof createAssetClient>;
-  assetFiles: AssetFileData[];
-  assets: Asset[];
-}) => {
-  const assetsByName = new Map(assets.map((asset) => [asset.name, asset]));
-
-  for (const assetFile of assetFiles) {
-    const asset = assetsByName.get(assetFile.name)!;
-    await assetClient.uploadFile(
-      asset.name,
-      asset.type,
-      toByteStream(Buffer.from(assetFile.data, "base64")),
-      getAssetInfoFallback(asset)
-    );
-  }
-};
-
-const loadExistingImportedAssetFileNames = async ({
+const assertImportedAssetFilesUploaded = async ({
   assets,
   ctx,
+  projectId,
 }: {
   assets: Asset[];
   ctx: AppContext;
+  projectId: string;
 }) => {
   if (assets.length === 0) {
-    return new Set<string>();
+    return;
   }
 
   const files = await ctx.postgrest.client
     .from("File")
     .select("name")
+    .eq("status", "UPLOADED")
+    .eq("uploaderProjectId", projectId)
     .in(
       "name",
       assets.map((asset) => asset.name)
@@ -244,50 +152,28 @@ const loadExistingImportedAssetFileNames = async ({
     throw files.error;
   }
 
-  return new Set((files.data ?? []).map((file) => file.name));
-};
-
-const ensureImportedAssetFiles = async ({
-  assets,
-  ctx,
-  existingFileNames,
-  projectId,
-}: {
-  assets: Asset[];
-  ctx: AppContext;
-  existingFileNames: Set<string>;
-  projectId: string;
-}) => {
-  if (assets.length === 0) {
-    return;
-  }
-
+  const existingFileNames = new Set(
+    (files.data ?? []).map((file) => file.name)
+  );
   const missingAssets = assets.filter(
     (asset) => existingFileNames.has(asset.name) === false
   );
+  if (missingAssets.length > 0) {
+    throw new Error(
+      `Imported asset files are missing: ${missingAssets
+        .map((asset) => asset.name)
+        .join(", ")}`
+    );
+  }
 
   if (existingFileNames.size > 0) {
-    const restoreFiles = await ctx.postgrest.client
+    const visibleFiles = await ctx.postgrest.client
       .from("File")
       .update({ isDeleted: false })
       .in("name", Array.from(existingFileNames));
-    if (restoreFiles.error) {
-      throw restoreFiles.error;
+    if (visibleFiles.error) {
+      throw visibleFiles.error;
     }
-  }
-
-  if (missingAssets.length === 0) {
-    return;
-  }
-
-  const insertedFiles = await ctx.postgrest.client.from("File").insert(
-    createImportedFileRows({
-      assets: missingAssets,
-      projectId,
-    })
-  );
-  if (insertedFiles.error) {
-    throw insertedFiles.error;
   }
 };
 
@@ -363,23 +249,19 @@ const updateProjectPreviewImage = async ({
 
 export const importPublishedProjectBundle = async (
   {
-    assetFiles,
     ctx,
     data,
     ignoreVersionCheck = false,
     projectId,
   }: {
-    assetFiles?: AssetFileData[];
     ctx: AppContext;
     data: PublishedProjectBundle;
     ignoreVersionCheck?: boolean;
     projectId: string;
   },
   dependencies = {
-    createAssetClient,
     hasProjectPermit: authorizeProject.hasProjectPermit,
     loadDevBuildByProjectId,
-    uploadImportedAssetFiles,
   }
 ) => {
   if (ignoreVersionCheck === false) {
@@ -395,25 +277,11 @@ export const importPublishedProjectBundle = async (
   const build = await dependencies.loadDevBuildByProjectId(ctx, projectId);
   const nextVersion = build.version + 1;
 
-  assertAssetFilesMatchAssets({ assetFiles, assets: data.assets });
+  assertImportedAssets(data.assets);
 
-  const existingFileNames = await loadExistingImportedAssetFileNames({
+  await assertImportedAssetFilesUploaded({
     assets: data.assets,
     ctx,
-  });
-
-  if (assetFiles !== undefined && assetFiles.length > 0) {
-    await dependencies.uploadImportedAssetFiles({
-      assetClient: dependencies.createAssetClient(),
-      assetFiles,
-      assets: data.assets,
-    });
-  }
-
-  await ensureImportedAssetFiles({
-    assets: data.assets,
-    ctx,
-    existingFileNames,
     projectId,
   });
 
@@ -455,12 +323,10 @@ export const importPublishedProjectBundle = async (
 export const __testing__ = {
   assertProjectBuildPermit,
   assertBundleVersion,
-  createImportedFileRows,
   createImportedAssetRows,
   createBuildImportUpdate,
   getImportedPreviewImageAssetId,
   assertImportedAssetNames,
-  assertAssetFilesMatchAssets,
-  loadExistingImportedAssetFileNames,
-  uploadImportedAssetFiles,
+  assertImportedAssets,
+  assertImportedAssetFilesUploaded,
 };

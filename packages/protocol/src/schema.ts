@@ -10,40 +10,6 @@ import { createContractVersion } from "./contract-version";
 // are imported through schema-only entrypoints to avoid duplicating model
 // definitions or pulling non-schema runtime code into bundle consumers.
 
-export const assetFileDataPattern = /^[A-Za-z0-9+/]*={0,2}$/;
-
-export const isAssetFileDataString = (value: string) => {
-  if (value.length % 4 !== 0) {
-    return false;
-  }
-  if (assetFileDataPattern.test(value) === false) {
-    return false;
-  }
-  const paddingIndex = value.indexOf("=");
-  return paddingIndex === -1 || paddingIndex >= value.length - 2;
-};
-
-const assertAssetFileDataString: z.RefinementEffect<string>["refinement"] =
-  Object.assign(
-    (value: string, context: z.RefinementCtx) => {
-      if (isAssetFileDataString(value)) {
-        return;
-      }
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Invalid asset file data",
-      });
-    },
-    {
-      contract: {
-        encoding: "base64",
-        length: "multiple-of-4",
-        padding: "only-last-two-characters",
-        pattern: assetFileDataPattern,
-      },
-    }
-  );
-
 const assetFileNameSchema = z
   .string()
   .min(1)
@@ -51,12 +17,6 @@ const assetFileNameSchema = z
 
 export const isAssetFileName = (value: string) =>
   assetFileNameSchema.safeParse(value).success;
-
-export const assetFileDataSchema = z.object({
-  name: assetFileNameSchema,
-  data: z.string().superRefine(assertAssetFileDataString),
-});
-export type AssetFileData = z.infer<typeof assetFileDataSchema>;
 
 export const projectBundleSchema = z.object({
   page: Page,
@@ -80,7 +40,6 @@ export type PublishedProjectBundle = z.infer<
 export const importProjectBundleInputSchema = z.object({
   projectId: z.string(),
   data: publishedProjectBundleSchema,
-  assetFiles: z.array(assetFileDataSchema).optional(),
   ignoreVersionCheck: z.boolean().optional(),
 });
 export type ImportProjectBundleInput = z.infer<

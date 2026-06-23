@@ -13,11 +13,14 @@ const baseAsset = {
   createdAt: z.string(),
 };
 
+export const AssetType = z.enum(["font", "image", "file"]);
+export type AssetType = z.infer<typeof AssetType>;
+
 export const FontAsset = z.object({
   ...baseAsset,
   format: FontFormat,
   meta: FontMeta,
-  type: z.literal("font"),
+  type: z.literal(AssetType.enum.font),
 });
 export type FontAsset = z.infer<typeof FontAsset>;
 
@@ -31,7 +34,7 @@ export const ImageAsset = z.object({
   ...baseAsset,
   format: z.string(),
   meta: ImageMeta,
-  type: z.literal("image"),
+  type: z.literal(AssetType.enum.image),
 });
 export type ImageAsset = z.infer<typeof ImageAsset>;
 
@@ -39,7 +42,7 @@ export const FileAsset = z.object({
   ...baseAsset,
   format: z.string(),
   meta: z.object({}),
-  type: z.literal("file"),
+  type: z.literal(AssetType.enum.file),
 });
 export type FileAsset = z.infer<typeof FileAsset>;
 

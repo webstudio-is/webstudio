@@ -10,7 +10,6 @@ import {
   createPublishedProjectBundleFixture,
 } from "@webstudio-is/protocol/fixtures";
 import { loadJSONFile } from "../fs-utils";
-import { loadAssetFiles } from "../asset-files";
 import {
   createAuthConfigContentFromBundle,
   LOCAL_AUTH_FILE,
@@ -44,11 +43,12 @@ const indicator = {
 };
 const checkProjectBuildPermission = vi.fn();
 const importProjectBundle = vi.fn();
+const uploadAssetFiles = vi.fn();
 const promptText = vi.fn();
 const dependencies = {
   checkProjectBuildPermission,
   importProjectBundle,
-  loadAssetFiles,
+  uploadAssetFiles,
   loadJSONFile,
   text: promptText,
   isInteractive: false,
@@ -75,8 +75,10 @@ beforeEach(async () => {
   await mkdir(".webstudio", { recursive: true });
   checkProjectBuildPermission.mockResolvedValue(undefined);
   importProjectBundle.mockResolvedValue({ version: 1 });
+  uploadAssetFiles.mockResolvedValue(undefined);
   promptText.mockResolvedValue(destinationShareLink);
   checkProjectBuildPermission.mockClear();
+  uploadAssetFiles.mockClear();
   promptText.mockClear();
   log.info.mockClear();
   indicator.start.mockClear();
@@ -99,12 +101,9 @@ test("imports local synced data into destination project", async () => {
   expect(importProjectBundle).toHaveBeenCalledWith({
     ...destinationRequest,
     data: createSyncedData(),
-    assetFiles: [],
     ignoreVersionCheck: undefined,
   });
-  expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle imported successfully"
-  );
+  expect(indicator.stop).toHaveBeenCalledWith("Project imported successfully");
   expect(indicator.message).toHaveBeenCalledWith(
     "Reading .webstudio/data.json"
   );
@@ -282,12 +281,9 @@ test("imports old local data when version check is explicitly ignored", async ()
     expect.objectContaining({
       ignoreVersionCheck: true,
       data: createSyncedData({ bundleVersion: undefined }),
-      assetFiles: [],
     })
   );
-  expect(indicator.stop).toHaveBeenCalledWith(
-    "Project bundle imported successfully"
-  );
+  expect(indicator.stop).toHaveBeenCalledWith("Project imported successfully");
 });
 
 test("stops before API request when ignored-version data is missing assets", async () => {
@@ -356,7 +352,7 @@ test("passes version-check bypass to target API", async () => {
   );
 });
 
-test("loads local asset files for import", async () => {
+test("uploads local asset files before import", async () => {
   await mkdir(".webstudio/assets", { recursive: true });
   await writeSyncedData({
     assets: [imageAsset],
@@ -365,9 +361,13 @@ test("loads local asset files for import", async () => {
 
   await importProject({ to: destinationShareLink }, dependencies);
 
+  expect(uploadAssetFiles).toHaveBeenCalledWith({
+    ...destinationRequest,
+    assets: [imageAsset],
+  });
   expect(importProjectBundle).toHaveBeenCalledWith(
     expect.objectContaining({
-      assetFiles: [{ name: "image.png", data: "aGVsbG8=" }],
+      data: createSyncedData({ assets: [imageAsset] }),
     })
   );
 });
@@ -495,11 +495,11 @@ test("stops before API request when current local data is missing published meta
   );
 });
 
-test("stops before reading asset files when destination permission check fails", async () => {
+test("stops before uploading asset files when destination permission check fails", async () => {
   await writeSyncedData({
     assets: [imageAsset],
   });
-  const loadAssetFiles = vi.fn();
+  const uploadAssetFiles = vi.fn();
   checkProjectBuildPermission.mockRejectedValue(
     new Error("You don't have permission to build this project")
   );
@@ -511,13 +511,13 @@ test("stops before reading asset files when destination permission check fails",
       },
       {
         ...dependencies,
-        loadAssetFiles,
+        uploadAssetFiles,
       }
     )
   ).rejects.toThrow("Handled CLI error");
 
   expect(checkProjectBuildPermission).toHaveBeenCalledWith(destinationRequest);
-  expect(loadAssetFiles).not.toHaveBeenCalled();
+  expect(uploadAssetFiles).not.toHaveBeenCalled();
   expect(importProjectBundle).not.toHaveBeenCalled();
   expect(indicator.stop).toHaveBeenCalledWith(
     "You don't have permission to build this project",

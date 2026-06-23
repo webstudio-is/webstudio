@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
   isAssetFileName,
-  isAssetFileDataString,
   getBundleVersionMismatchMessage,
   importProjectBundleInputSchema,
   publishedProjectBundleSchema,
@@ -10,13 +9,6 @@ import {
 import { createPublishedProjectBundleFixture } from "./fixtures";
 
 describe("project bundle contract", () => {
-  test("validates base64 asset file data", () => {
-    expect(isAssetFileDataString("aGVsbG8=")).toBe(true);
-    expect(isAssetFileDataString("")).toBe(true);
-    expect(isAssetFileDataString("not base64")).toBe(false);
-    expect(isAssetFileDataString("a===")).toBe(false);
-  });
-
   test("validates asset file names", () => {
     expect(isAssetFileName("image.png")).toBe(true);
     expect(isAssetFileName("")).toBe(false);

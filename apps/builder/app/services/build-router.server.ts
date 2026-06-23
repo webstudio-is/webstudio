@@ -33,7 +33,7 @@ import {
 import {
   assertProjectBuildPermit,
   importPublishedProjectBundle,
-} from "./project-bundle-import.server";
+} from "./project-import.server";
 
 const patchEntryInput = z.object({
   seq: z.number().optional(),
@@ -162,7 +162,6 @@ export const buildRouter = router({
     .mutation(async ({ ctx, input }) => {
       return await importPublishedProjectBundle({
         ctx,
-        assetFiles: input.assetFiles,
         data: input.data,
         ignoreVersionCheck: input.ignoreVersionCheck,
         projectId: input.projectId,

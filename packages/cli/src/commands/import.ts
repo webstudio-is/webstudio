@@ -14,7 +14,7 @@ import {
 import { LOCAL_DATA_FILE } from "../config";
 import { loadJSONFile } from "../fs-utils";
 import { HandledCliError } from "../errors";
-import { loadAssetFiles } from "../asset-files";
+import { uploadAssetFiles } from "../asset-files";
 import { LOCAL_AUTH_FILE, validateAuthConfigFile } from "../auth-config";
 import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { parseShareLink, validateShareLink } from "./link";
@@ -27,7 +27,7 @@ import type {
 type ImportProjectDependencies = {
   checkProjectBuildPermission: typeof checkProjectBuildPermission;
   importProjectBundle: typeof importProjectBundle;
-  loadAssetFiles: typeof loadAssetFiles;
+  uploadAssetFiles: typeof uploadAssetFiles;
   loadJSONFile: typeof loadJSONFile;
   text: typeof text;
   isInteractive: boolean;
@@ -41,7 +41,7 @@ const isInteractiveTerminal = () =>
 const defaultDependencies: ImportProjectDependencies = {
   checkProjectBuildPermission,
   importProjectBundle,
-  loadAssetFiles,
+  uploadAssetFiles,
   loadJSONFile,
   text,
   isInteractive: isInteractiveTerminal(),
@@ -211,17 +211,17 @@ export const importProject = async (
     throw new HandledCliError();
   }
 
-  importing.message(`Reading ${importData.assets.length} local asset files`);
-  let assetFiles;
+  importing.message(`Uploading ${importData.assets.length} assets`);
   try {
-    assetFiles = await dependencies.loadAssetFiles({
+    await dependencies.uploadAssetFiles({
       assets: importData.assets,
+      ...destinationRequest,
     });
   } catch (error) {
     importing.stop(
       error instanceof Error
-        ? `Unable to read project bundle asset files: ${error.message}`
-        : "Unable to read project bundle asset files",
+        ? `Unable to upload assets: ${error.message}`
+        : "Unable to upload assets",
       2
     );
     throw new HandledCliError();
@@ -235,7 +235,6 @@ export const importProject = async (
     await dependencies.importProjectBundle({
       ...destinationRequest,
       data: importData,
-      assetFiles,
       ignoreVersionCheck: options.ignoreVersionCheck,
     });
   } catch (error) {
@@ -248,5 +247,5 @@ export const importProject = async (
     throw new HandledCliError();
   }
 
-  importing.stop("Project bundle imported successfully");
+  importing.stop("Project imported successfully");
 };
