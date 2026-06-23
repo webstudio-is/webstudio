@@ -1,44 +1,21 @@
-import type {
-  Asset,
-  Breakpoint,
-  DataSource,
-  Deployment,
-  Instance,
-  Page,
-  Prop,
-  Resource,
-  StyleDecl,
-  StyleDeclKey,
-  StyleSource,
-  StyleSourceSelection,
-} from "@webstudio-is/sdk";
-import type { SerializedPages } from "@webstudio-is/project-migrations/pages";
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
-
-export type Data = {
-  page: Page;
-  pages: Array<Page>;
-  build: {
-    id: string;
-    projectId: string;
-    version: number;
-    createdAt: string;
-    updatedAt: string;
-    pages: SerializedPages;
-    breakpoints: [Breakpoint["id"], Breakpoint][];
-    styles: [StyleDeclKey, StyleDecl][];
-    styleSources: [StyleSource["id"], StyleSource][];
-    styleSourceSelections: [Instance["id"], StyleSourceSelection][];
-    props: [Prop["id"], Prop][];
-    instances: [Instance["id"], Instance][];
-    dataSources: [DataSource["id"], DataSource][];
-    resources: [Resource["id"], Resource][];
-    deployment?: Deployment | undefined;
-  };
-  assets: Array<Asset>;
-  projectDomain?: string;
-  origin?: string;
-};
+import {
+  importProjectBundleResultSchema,
+  publishedProjectBundleSchema,
+  type AssetFileData,
+  type ImportProjectBundleResult,
+  type PublishedProjectBundle,
+} from "@webstudio-is/protocol";
+export {
+  getBundleVersion,
+  isAssetFileDataString,
+  bundleVersion,
+} from "@webstudio-is/protocol";
+export type {
+  AssetFileData,
+  PublishedProjectBundle,
+  ProjectBundle,
+} from "@webstudio-is/protocol";
 
 const createTrpcClient = (
   origin: string,
@@ -57,43 +34,90 @@ const createTrpcClient = (
   });
 };
 
-export const loadProjectDataByBuildId = async (
+const createAuthTrpcClient = (params: {
+  origin: string;
+  authToken: string;
+  headers?: Record<string, string | undefined>;
+}) =>
+  createTrpcClient(params.origin, {
+    ...params.headers,
+    "x-auth-token": params.authToken,
+  });
+
+export const loadProjectBundleByBuildId = async (
   params: {
     buildId: string;
     origin: string;
     headers?: Record<string, string | undefined>;
   } & (
     | {
-        seviceToken: string;
+        serviceToken: string;
       }
     | { authToken: string }
   )
-): Promise<Data> => {
+): Promise<PublishedProjectBundle> => {
   const headers: Record<string, string | undefined> =
-    "seviceToken" in params
-      ? { Authorization: params.seviceToken }
+    "serviceToken" in params
+      ? { Authorization: params.serviceToken }
       : { "x-auth-token": params.authToken };
 
-  return (await createTrpcClient(params.origin, {
+  const data = await createTrpcClient(params.origin, {
     ...params.headers,
     ...headers,
-  }).query("build.loadProjectDataByBuildId", {
+  }).query("build.loadProjectBundleByBuildId", {
     buildId: params.buildId,
-  })) as Data;
+  });
+  return publishedProjectBundleSchema.parse(data);
 };
 
-export const loadProjectDataByProjectId = async (params: {
+export const loadProjectBundleByProjectId = async (params: {
   projectId: string;
   origin: string;
   authToken: string;
   headers?: Record<string, string | undefined>;
-}): Promise<Data> => {
-  return (await createTrpcClient(params.origin, {
-    ...params.headers,
-    "x-auth-token": params.authToken,
-  }).query("build.loadProjectDataByProjectId", {
-    projectId: params.projectId,
-  })) as Data;
+}): Promise<PublishedProjectBundle> => {
+  const data = await createAuthTrpcClient(params).query(
+    "build.loadProjectBundleByProjectId",
+    {
+      projectId: params.projectId,
+    }
+  );
+  return publishedProjectBundleSchema.parse(data);
+};
+
+export const checkProjectBuildPermission = async (params: {
+  projectId: string;
+  origin: string;
+  authToken: string;
+  headers?: Record<string, string | undefined>;
+}): Promise<void> => {
+  await createAuthTrpcClient(params).query(
+    "build.checkProjectBuildPermission",
+    {
+      projectId: params.projectId,
+    }
+  );
+};
+
+export const importProjectBundle = async (params: {
+  projectId: string;
+  origin: string;
+  authToken: string;
+  data: PublishedProjectBundle;
+  assetFiles?: AssetFileData[];
+  ignoreVersionCheck?: boolean;
+  headers?: Record<string, string | undefined>;
+}): Promise<ImportProjectBundleResult> => {
+  const result = await createAuthTrpcClient(params).mutation(
+    "build.importProjectBundle",
+    {
+      projectId: params.projectId,
+      data: params.data,
+      assetFiles: params.assetFiles,
+      ignoreVersionCheck: params.ignoreVersionCheck,
+    }
+  );
+  return importProjectBundleResultSchema.parse(result);
 };
 
 // For easier detecting the builder URL

@@ -1,12 +1,14 @@
 import {
-  Pages as PagesSchema,
-  type Folder,
-  type Page,
-  type PageTemplate,
-  type Pages,
-  isRootFolder,
-  ROOT_FOLDER_ID,
-} from "@webstudio-is/sdk";
+  CompilerSettings,
+  Folder,
+  Page,
+  PageTemplate,
+  ProjectMeta,
+  PageRedirect,
+  Pages,
+} from "@webstudio-is/sdk/schema";
+import { isRootFolder, ROOT_FOLDER_ID } from "@webstudio-is/sdk";
+import { z } from "zod";
 
 type LegacyPages = {
   meta?: Pages["meta"];
@@ -25,6 +27,23 @@ export type SerializedPages = Omit<
   pageTemplates?: PageTemplate[] | Record<PageTemplate["id"], PageTemplate>;
   folders: Folder[];
 };
+
+export const SerializedPagesSchema: z.ZodType<
+  SerializedPages,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  meta: ProjectMeta.optional(),
+  compiler: CompilerSettings.optional(),
+  redirects: z.array(PageRedirect).optional(),
+  homePageId: z.string(),
+  rootFolderId: z.string(),
+  pages: z.array(Page),
+  pageTemplates: z
+    .union([z.array(PageTemplate), z.record(PageTemplate)])
+    .optional(),
+  folders: z.array(Folder),
+});
 
 type MigratablePages = Omit<Pages, "pages" | "pageTemplates" | "folders"> & {
   pages: Page[] | Record<Page["id"], Page> | Map<Page["id"], Page>;
@@ -92,7 +111,7 @@ const removeOrphanFolderChildren = (
 };
 
 export const serializePages = (pages: Pages): SerializedPages => {
-  const parsedPages = PagesSchema.parse(pages);
+  const parsedPages = Pages.parse(pages);
   return {
     meta: parsedPages.meta,
     compiler: parsedPages.compiler,
@@ -115,7 +134,7 @@ export const migratePages = (pages: unknown): Pages => {
     pages.folders instanceof Map
   ) {
     const currentPages = pages as Pages;
-    const result = PagesSchema.safeParse(currentPages);
+    const result = Pages.safeParse(currentPages);
     if (result.success && currentPages.pageTemplates !== undefined) {
       return currentPages;
     }

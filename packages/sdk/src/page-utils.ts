@@ -1,5 +1,10 @@
 import { executeExpression } from "./expression";
-import type { Folder, Page, PageTemplate, Pages } from "./schema/pages";
+import {
+  type Folder,
+  type Page,
+  type PageTemplate,
+  type Pages,
+} from "./schema/pages";
 import { isPathnamePattern } from "./url-pattern";
 
 export const ROOT_FOLDER_ID = "root";

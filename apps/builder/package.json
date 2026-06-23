@@ -5,7 +5,7 @@
   "description": "Webstudio Builder UI as a service",
   "type": "module",
   "scripts": {
-    "prebuild": "which remix",
+    "prebuild": "pnpm --filter=@webstudio-is/http-client... build && which remix",
     "build": "remix vite:build",
     "css-to-ws": "tsx --conditions=webstudio ../../packages/css-data/bin/css-to-ws.ts",
     "build:webflow-presets": "pnpm css-to-ws ./app/shared/copy-paste/plugin-webflow/style-presets.css ./app/shared/copy-paste/plugin-webflow/__generated__/style-presets.ts",
@@ -60,6 +60,7 @@
     "@tsndr/cloudflare-worker-jwt": "^2.5.3",
     "@unocss/core": "66.6.8",
     "@vercel/remix": "2.15.3",
+    "@webstudio-is/protocol": "workspace:*",
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
     "@webstudio-is/css-data": "workspace:*",

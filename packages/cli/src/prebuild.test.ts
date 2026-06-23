@@ -9,7 +9,8 @@ import {
 } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { downloadAsset, generateRedirectsModule, prebuild } from "./prebuild";
+import { bundleVersion } from "@webstudio-is/protocol";
+import { generateRedirectsModule, prebuild } from "./prebuild";
 
 const originalCwd = process.cwd();
 const originalFetch = globalThis.fetch;
@@ -47,6 +48,7 @@ const createSiteData = (
       [
         string,
         {
+          type?: "instance";
           id: string;
           component: string;
           tag?: string;
@@ -70,14 +72,19 @@ const createSiteData = (
   ];
 
   return {
+    bundleVersion,
     origin: "https://assets.example",
     projectDomain: "example.com",
+    projectTitle: "Example",
     user: {
       email: "owner@example.com",
     },
+    page: pages[0],
+    pages,
     assets: [
       {
         id: "asset-image",
+        projectId: "project-id",
         name: "image.png",
         type: "image",
         format: "png",
@@ -91,7 +98,9 @@ const createSiteData = (
       },
     ],
     build: {
+      id: "build-id",
       projectId: "project-id",
+      version: 1,
       createdAt: "2024-01-01T00:00:00.000Z",
       updatedAt: "2024-01-02T00:00:00.000Z",
       pages: {
@@ -127,18 +136,21 @@ const createSiteData = (
         ],
       },
       props: [],
-      instances: overrides.instances ?? [
-        [
-          "root",
-          {
-            id: "root",
-            component: "Box",
-            children: [],
-          },
-        ],
-      ],
+      instances: (
+        overrides.instances ?? [
+          [
+            "root",
+            {
+              id: "root",
+              component: "Box",
+              children: [],
+            },
+          ],
+        ]
+      ).map(([id, instance]) => [id, { type: "instance", ...instance }]),
       dataSources: [],
       resources: [],
+      styleSources: [],
       styleSourceSelections: [],
       styles: [],
       breakpoints: [],
@@ -238,47 +250,6 @@ describe("generateRedirectsModule", () => {
   }
 ];
     `);
-  });
-});
-
-describe("downloadAsset", () => {
-  test("does not fetch assets that already exist", async () => {
-    await mkdir("public/assets", { recursive: true });
-    await writeFile("public/assets/image.png", "existing", "utf8");
-    const fetch = vi.fn();
-    globalThis.fetch = fetch;
-
-    await downloadAsset(
-      "https://assets.example/image.png",
-      "image.png",
-      "assets"
-    );
-
-    expect(fetch).not.toHaveBeenCalled();
-  });
-
-  test("logs fetch failures without throwing", async () => {
-    const fetch = vi.fn(async () => ({
-      ok: false,
-      statusText: "Not Found",
-    }));
-    globalThis.fetch = fetch as unknown as typeof globalThis.fetch;
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-
-    await expect(
-      downloadAsset(
-        "https://assets.example/missing.png",
-        "missing.png",
-        "assets"
-      )
-    ).resolves.toBeUndefined();
-
-    expect(fetch).toHaveBeenCalledWith("https://assets.example/missing.png");
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("Error in downloading file missing.png")
-    );
   });
 });
 
@@ -556,8 +527,25 @@ describe("prebuild", () => {
     );
     expect(consoleWarn).not.toHaveBeenCalled();
     expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("Error in downloading file image.png")
+      expect.stringContaining("Error materializing file image.png")
     );
+  });
+
+  test("uses synced asset files before downloading during prebuild", async () => {
+    await mkdir(".webstudio/assets", { recursive: true });
+    await writeFile(".webstudio/assets/image.png", "synced", "utf8");
+    const fetch = vi.fn();
+    globalThis.fetch = fetch;
+
+    await prebuild({
+      assets: true,
+      template: ["defaults"],
+    });
+
+    await expect(readFile("public/assets/image.png", "utf8")).resolves.toBe(
+      "synced"
+    );
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   test("merges package and tsconfig from every template", async () => {
@@ -631,7 +619,7 @@ describe("prebuild", () => {
     });
   });
 
-  test("throws when project data is missing", async () => {
+  test("throws when project bundle is missing", async () => {
     await rm(".webstudio/data.json", { force: true });
 
     await expect(
@@ -639,6 +627,19 @@ describe("prebuild", () => {
         assets: false,
         template: ["defaults"],
       })
-    ).rejects.toThrow("Project data is missing");
+    ).rejects.toThrow("Project bundle is missing");
+  });
+
+  test("throws when project bundle is invalid", async () => {
+    await writeFile(".webstudio/data.json", JSON.stringify({ assets: [] }));
+
+    await expect(
+      prebuild({
+        assets: false,
+        template: ["defaults"],
+      })
+    ).rejects.toThrow(
+      "Project bundle is invalid, please make sure the project is synced. Invalid fields: page: Required"
+    );
   });
 });

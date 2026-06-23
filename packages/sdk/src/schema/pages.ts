@@ -194,7 +194,7 @@ export const PagePath = DefaultPagePage.refine(
   "Must start with a / or a full URL e.g. https://website.org"
 );
 
-const Page = z.object({
+export const Page = z.object({
   ...commonPageFields,
   path: z.union([HomePagePath, PagePath]),
 });
@@ -210,7 +210,7 @@ export const PageTemplate = z.object({
 
 export type PageTemplate = z.infer<typeof PageTemplate>;
 
-const ProjectMeta = z.object({
+export const ProjectMeta = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   siteName: z.string().optional(),
   contactEmail: z.string().optional(),
