@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { imageMeta } from "image-meta";
-import { FontMeta } from "@webstudio-is/fonts";
-import { ImageMeta, validateFileName } from "@webstudio-is/sdk";
+import { imageMeta as parseImageMeta } from "image-meta";
+import { type FontMeta, fontMeta } from "@webstudio-is/fonts";
+import { type ImageMeta, imageMeta, validateFileName } from "@webstudio-is/sdk";
 import { getFontData } from "./font-data";
 
 export type AssetData = {
@@ -10,10 +10,10 @@ export type AssetData = {
   meta: ImageMeta | FontMeta | object;
 };
 
-export const AssetData: z.ZodType<AssetData> = z.object({
+export const assetData: z.ZodType<AssetData> = z.object({
   size: z.number(),
   format: z.string(),
-  meta: z.union([ImageMeta, FontMeta, z.object({})]),
+  meta: z.union([imageMeta, fontMeta, z.object({})]),
 });
 
 type BaseAssetOptions = {
@@ -35,7 +35,7 @@ export const getAssetData = async (
   if (options.type === "image") {
     let image: undefined | { format: string; width: number; height: number };
     try {
-      const parsed = imageMeta(Buffer.from(options.data));
+      const parsed = parseImageMeta(Buffer.from(options.data));
       if (parsed.type) {
         image = {
           format: parsed.type,

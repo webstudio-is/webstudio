@@ -72,13 +72,13 @@ export const verifyChallenge = async (
   return base64Hash === codeChallenge;
 };
 
-const CodeTokenPayload = z.object({
+const codeTokenPayload = z.object({
   userId: z.string(),
   projectId: z.string(),
   codeChallenge: z.string(),
 });
 
-type CodeTokenPayload = z.infer<typeof CodeTokenPayload>;
+type CodeTokenPayload = z.infer<typeof codeTokenPayload>;
 
 /**
  * JWT is used because it includes a signature check and expiration,
@@ -127,17 +127,17 @@ export const readCodeToken = async (
 
   const token = await jwt.decode(jwtToken);
 
-  const parsedToken = CodeTokenPayload.parse(token.payload);
+  const parsedToken = codeTokenPayload.parse(token.payload);
 
   return parsedToken;
 };
 
-const AccessTokenPayload = z.object({
+const accessTokenPayload = z.object({
   userId: z.string(),
   projectId: z.string(),
 });
 
-type AccessTokenPayload = z.infer<typeof AccessTokenPayload>;
+type AccessTokenPayload = z.infer<typeof accessTokenPayload>;
 
 /**
  * JWT is used because it includes a signature check and expiration,
@@ -172,7 +172,7 @@ export const readAccessToken = async (
 
   const token = jwt.decode(accessToken);
 
-  const parsedToken = AccessTokenPayload.parse(token.payload);
+  const parsedToken = accessTokenPayload.parse(token.payload);
 
   return parsedToken;
 };

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type ActionFunctionArgs, data, json } from "@remix-run/server-runtime";
-import { ResourceRequest } from "@webstudio-is/sdk";
+import { type ResourceRequest, resourceRequest } from "@webstudio-is/sdk";
 import { isLocalResource, loadResource } from "@webstudio-is/sdk/runtime";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
 import { loader as currentDateLoader } from "../shared/$resources/current-date.server";
@@ -48,7 +48,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const output = await Promise.all(
     requestList.data.map(async (item) => {
-      const resource = ResourceRequest.safeParse(item);
+      const resource = resourceRequest.safeParse(item);
       if (resource.success === false) {
         return [
           getResourceKey(item as ResourceRequest),

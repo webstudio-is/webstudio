@@ -150,12 +150,12 @@ export const createOrLoginWithDev = async (
   return newUser;
 };
 
-export const userProjectTagSchema = z.object({
+export const userProjectTag = z.object({
   id: z.string(),
   label: z.string().min(1).max(100),
 });
 
-export type ProjectTag = z.infer<typeof userProjectTagSchema>;
+export type ProjectTag = z.infer<typeof userProjectTag>;
 
 export const updateUserProjectsTags = async (
   { tags }: { tags: ProjectTag[] },

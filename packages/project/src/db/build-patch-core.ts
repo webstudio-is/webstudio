@@ -1,25 +1,35 @@
 import { applyPatches, enableMapSet, enablePatches, type Patch } from "immer";
 import {
-  Breakpoints,
+  type Breakpoints,
+  breakpoints,
   type Breakpoint,
-  DataSources,
+  type DataSources,
+  dataSources,
   type DataSource,
-  Instances,
+  type Instances,
+  instances,
   type Instance,
-  Pages,
-  Props,
+  type Pages,
+  pages,
+  type Props,
+  props,
   type Prop,
-  Resources,
+  type Resources,
+  resources,
   type Resource,
-  StyleSourceSelections,
-  StyleSources,
+  type StyleSourceSelections,
+  styleSourceSelections,
+  type StyleSources,
+  styleSources,
   type StyleSource,
-  Styles,
+  type Styles,
+  styles,
   getHomePage,
 } from "@webstudio-is/sdk";
 import {
   findCycles,
-  MarketplaceProduct,
+  type MarketplaceProduct,
+  marketplaceProduct,
   parsePages,
   serializePages,
   parseStyleSourceSelections,
@@ -295,68 +305,68 @@ export const createBuildPatchUpdate = async ({
   };
 
   if (buildData.pages) {
-    const pages = buildData.pages;
-    update.pages = serializePages(Pages.parse(pages));
+    const pagesData = buildData.pages;
+    update.pages = serializePages(pages.parse(pagesData));
   }
 
   if (buildData.breakpoints) {
-    const breakpoints = buildData.breakpoints;
-    validateTouchedMap(Breakpoints, breakpoints, touchedBreakpoints);
-    update.breakpoints = serializeData<Breakpoint>(breakpoints);
+    const breakpointsData = buildData.breakpoints;
+    validateTouchedMap(breakpoints, breakpointsData, touchedBreakpoints);
+    update.breakpoints = serializeData<Breakpoint>(breakpointsData);
   }
 
   if (buildData.instances) {
-    const instances = buildData.instances;
-    validateTouchedMap(Instances, instances, touchedInstances);
-    update.instances = serializeData<Instance>(instances);
+    const instancesData = buildData.instances;
+    validateTouchedMap(instances, instancesData, touchedInstances);
+    update.instances = serializeData<Instance>(instancesData);
   }
 
   if (buildData.props) {
-    const props = buildData.props;
-    validateTouchedMap(Props, props, touchedProps);
-    update.props = serializeData<Prop>(props);
+    const propsData = buildData.props;
+    validateTouchedMap(props, propsData, touchedProps);
+    update.props = serializeData<Prop>(propsData);
   }
 
   if (buildData.dataSources) {
-    const dataSources = buildData.dataSources;
-    validateTouchedMap(DataSources, dataSources, touchedDataSources);
-    update.dataSources = serializeData<DataSource>(dataSources);
+    const dataSourcesData = buildData.dataSources;
+    validateTouchedMap(dataSources, dataSourcesData, touchedDataSources);
+    update.dataSources = serializeData<DataSource>(dataSourcesData);
   }
 
   if (buildData.resources) {
-    const resources = buildData.resources;
-    validateTouchedMap(Resources, resources, touchedResources);
-    update.resources = serializeData<Resource>(resources);
+    const resourcesData = buildData.resources;
+    validateTouchedMap(resources, resourcesData, touchedResources);
+    update.resources = serializeData<Resource>(resourcesData);
   }
 
   if (buildData.styleSources) {
-    const styleSources = buildData.styleSources;
-    validateTouchedMap(StyleSources, styleSources, touchedStyleSources);
-    update.styleSources = serializeData<StyleSource>(styleSources);
+    const styleSourcesData = buildData.styleSources;
+    validateTouchedMap(styleSources, styleSourcesData, touchedStyleSources);
+    update.styleSources = serializeData<StyleSource>(styleSourcesData);
   }
 
   if (buildData.styleSourceSelections) {
-    const styleSourceSelections = buildData.styleSourceSelections;
+    const styleSourceSelectionsData = buildData.styleSourceSelections;
     validateTouchedMap(
-      StyleSourceSelections,
       styleSourceSelections,
+      styleSourceSelectionsData,
       touchedStyleSourceSelections
     );
     update.styleSourceSelections = serializeStyleSourceSelections(
-      styleSourceSelections
+      styleSourceSelectionsData
     );
   }
 
   if (buildData.styles) {
-    const styles = buildData.styles;
-    validateTouchedMap(Styles, styles, touchedStyles);
-    update.styles = serializeStyles(styles);
+    const stylesData = buildData.styles;
+    validateTouchedMap(styles, stylesData, touchedStyles);
+    update.styles = serializeStyles(stylesData);
   }
 
   if (buildData.marketplaceProduct) {
-    const marketplaceProduct = buildData.marketplaceProduct;
+    const marketplaceProductData = buildData.marketplaceProduct;
     update.marketplaceProduct = serializeConfig<MarketplaceProduct>(
-      MarketplaceProduct.parse(marketplaceProduct)
+      marketplaceProduct.parse(marketplaceProductData)
     );
   }
 

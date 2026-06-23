@@ -21,7 +21,7 @@ import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import {
   elementComponent,
   getAllPages,
-  Instance,
+  type Instance,
   ROOT_FOLDER_ID,
   type Asset,
   type Page,

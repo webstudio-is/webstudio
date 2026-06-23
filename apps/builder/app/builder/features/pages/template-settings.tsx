@@ -4,8 +4,8 @@ import { useState, type JSX } from "react";
 import { useStore } from "@nanostores/react";
 import {
   type PageTemplate,
-  PageName,
-  PageTitle,
+  pageName,
+  pageTitle,
   elementComponent,
   type Page,
   type Pages,
@@ -43,13 +43,13 @@ import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { copyTemplate } from "~/shared/copy-paste/copy-paste";
 import { PageItemActionsDropdown } from "./page-item-actions";
 
-const TemplateValues = z.object({
-  name: PageName,
-  title: PageTitle,
+const templateValues = z.object({
+  name: pageName,
+  title: pageTitle,
 });
 
 const validateTemplateValues = (values: Values): Errors => {
-  const result = TemplateValues.safeParse(values);
+  const result = templateValues.safeParse(values);
   if (result.success) {
     return {};
   }

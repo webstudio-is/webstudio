@@ -1,7 +1,7 @@
 import { PrismaClient } from "./client";
 import { z } from "zod";
 
-const Page = z.object({
+const page = z.object({
   id: z.string(),
   name: z.string(),
   path: z.string(),
@@ -10,9 +10,9 @@ const Page = z.object({
   treeId: z.string(),
 });
 
-const Pages = z.object({
-  homePage: Page,
-  pages: z.array(Page),
+const pages = z.object({
+  homePage: page,
+  pages: z.array(page),
 });
 
 export default () => {
@@ -27,7 +27,7 @@ export default () => {
 
       const buildsParsed = builds.map((build) => ({
         id: build.id,
-        pages: Pages.parse(JSON.parse(build.pages)),
+        pages: pages.parse(JSON.parse(build.pages)),
       }));
 
       // await Promise.all(

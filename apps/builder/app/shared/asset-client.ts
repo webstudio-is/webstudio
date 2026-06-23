@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import { MaxSize } from "@webstudio-is/asset-uploader";
+import { maxSize } from "@webstudio-is/asset-uploader";
 import {
   createFsClient,
   createS3Client,
@@ -9,7 +9,7 @@ import env from "~/env/env.server";
 export const fileUploadPath = "public/cgi/asset";
 
 export const createAssetClient = () => {
-  const maxUploadSize = MaxSize.parse(env.MAX_UPLOAD_SIZE);
+  const maxUploadSize = maxSize.parse(env.MAX_UPLOAD_SIZE);
   if (
     env.S3_ENDPOINT !== undefined &&
     env.S3_REGION !== undefined &&

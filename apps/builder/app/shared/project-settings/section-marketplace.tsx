@@ -19,7 +19,8 @@ import {
 import { Image, wsImageLoader } from "@webstudio-is/image";
 import { useState } from "react";
 import {
-  MarketplaceProduct,
+  type MarketplaceProduct,
+  marketplaceProduct,
   marketplaceCategories,
 } from "@webstudio-is/project-build";
 import { ImageControl } from "./image-control";
@@ -29,7 +30,7 @@ import {
   $project,
 } from "~/shared/sync/data-stores";
 import { useIds } from "~/shared/form-utils";
-import { MarketplaceApprovalStatus } from "@webstudio-is/project";
+import type { MarketplaceApprovalStatus } from "@webstudio-is/project";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 import { rightPanelWidth, sectionSpacing } from "./utils";
@@ -62,7 +63,7 @@ const defaultMarketplaceProduct: Partial<MarketplaceProduct> = {
 };
 
 const validate = (data: MarketplaceProduct) => {
-  const parsedResult = MarketplaceProduct.safeParse(data);
+  const parsedResult = marketplaceProduct.safeParse(data);
   if (parsedResult.success === false) {
     return parsedResult.error.formErrors.fieldErrors;
   }

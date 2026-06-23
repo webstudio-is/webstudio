@@ -1,12 +1,12 @@
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import {
-  ApiCompatibilityTarget,
+  apiCompatibilityTarget,
   apiClientHeader,
   createApiCompatibilityPayload,
 } from "@webstudio-is/trpc-interface/api-compatibility";
 
 const getTarget = (request: Request) => {
-  const client = ApiCompatibilityTarget.safeParse(
+  const client = apiCompatibilityTarget.safeParse(
     request.headers.get(apiClientHeader)
   );
   if (client.success) {

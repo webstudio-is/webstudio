@@ -6,7 +6,7 @@ import {
   type PageTemplate,
   type Folder,
   type WebstudioData,
-  Pages,
+  type Pages,
   findPageByIdOrPath,
   getPagePath,
   findParentFolderByChildId,
@@ -268,7 +268,7 @@ export const deletePageMutable = (pageId: Page["id"], data: WebstudioData) => {
   if ($selectedPage.get()?.id === pageId) {
     selectPage(pages.homePageId);
   }
-  const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
+  const rootInstanceId = findPageByIdOrPath(pageId, data.pages)?.rootInstanceId;
   if (rootInstanceId !== undefined) {
     deleteInstanceMutable(
       data,
@@ -276,12 +276,12 @@ export const deletePageMutable = (pageId: Page["id"], data: WebstudioData) => {
     );
   }
   pages.pages.delete(pageId);
-  cleanupChildRefsMutable(pageId, pages.folders);
+  cleanupChildRefsMutable(pageId, data.pages.folders);
 };
 
 /**
  * Deletes folder and child folders.
- * Doesn't delete pages, only returns pageIds.
+ * Doesn't delete only returns pageIds.
  */
 export const deleteFolderWithChildrenMutable = (
   folderId: Folder["id"],

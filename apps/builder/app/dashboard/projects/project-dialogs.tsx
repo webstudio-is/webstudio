@@ -17,7 +17,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { Title } from "@webstudio-is/project";
+import { projectTitle } from "@webstudio-is/project";
 import { builderUrl } from "~/shared/router-utils";
 import { ShareProjectContainer } from "~/shared/share-project";
 import { trpcClient } from "~/shared/trpc/trpc-client";
@@ -141,7 +141,7 @@ const useCreateProject = (workspaceId?: string) => {
   const [errors, setErrors] = useState<string>();
 
   const handleSubmit = ({ title }: { title: string }) => {
-    const parsed = Title.safeParse(title);
+    const parsed = projectTitle.safeParse(title);
     const errors =
       "error" in parsed
         ? parsed.error?.issues.map((issue) => issue.message).join("\n")
@@ -217,7 +217,7 @@ const useRenameProject = ({
   const revalidator = useRevalidator();
 
   const handleSubmit = ({ title }: { title: string }) => {
-    const parsed = Title.safeParse(title);
+    const parsed = projectTitle.safeParse(title);
     const errors =
       "error" in parsed
         ? parsed.error?.issues.map((issue) => issue.message).join("\n")

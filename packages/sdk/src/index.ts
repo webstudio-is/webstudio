@@ -47,12 +47,12 @@ export type {
 } from "./schema/animation-schema";
 
 export {
-  animationActionSchema,
-  scrollAnimationSchema,
-  viewAnimationSchema,
-  rangeUnitValueSchema,
-  animationKeyframeSchema,
-  insetUnitValueSchema,
-  durationUnitValueSchema,
+  animationAction,
+  scrollAnimation,
+  viewAnimation,
+  rangeUnitValue,
+  animationKeyframe,
+  insetUnitValue,
+  durationUnitValue,
   RANGE_UNITS,
 } from "./schema/animation-schema";

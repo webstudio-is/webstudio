@@ -41,7 +41,7 @@ import {
   toRuntimeAsset,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
-import { publishedProjectBundleSchema } from "@webstudio-is/protocol";
+import { publishedProjectBundle } from "@webstudio-is/protocol";
 import { createAuthConfigResources, LOCAL_AUTH_FILE } from "./auth-config";
 import { LOCAL_DATA_FILE } from "./config";
 import {
@@ -265,7 +265,7 @@ export const prebuild = async (options: {
       `Project bundle is missing, please make sure the project is synced.`
     );
   }
-  const parsedSiteData = publishedProjectBundleSchema.safeParse(loadedSiteData);
+  const parsedSiteData = publishedProjectBundle.safeParse(loadedSiteData);
   if (parsedSiteData.success === false) {
     throw new Error(
       `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(parsedSiteData.error.issues)}`

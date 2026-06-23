@@ -3,7 +3,7 @@ import { cssTryParseValue } from "../parse-css-value";
 import {
   type UnitValue,
   toValue,
-  KeywordValue,
+  type KeywordValue,
   type VarValue,
 } from "@webstudio-is/css-engine";
 import {

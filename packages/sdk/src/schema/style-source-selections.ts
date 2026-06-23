@@ -1,16 +1,16 @@
 import { z } from "zod";
 
-const InstanceId = z.string();
+const instanceId = z.string();
 
-const StyleSourceId = z.string();
+const styleSourceId = z.string();
 
-export const StyleSourceSelection = z.object({
-  instanceId: InstanceId,
-  values: z.array(StyleSourceId),
+export const styleSourceSelection = z.object({
+  instanceId: instanceId,
+  values: z.array(styleSourceId),
 });
 
-export type StyleSourceSelection = z.infer<typeof StyleSourceSelection>;
+export type StyleSourceSelection = z.infer<typeof styleSourceSelection>;
 
-export const StyleSourceSelections = z.map(InstanceId, StyleSourceSelection);
+export const styleSourceSelections = z.map(instanceId, styleSourceSelection);
 
-export type StyleSourceSelections = z.infer<typeof StyleSourceSelections>;
+export type StyleSourceSelections = z.infer<typeof styleSourceSelections>;

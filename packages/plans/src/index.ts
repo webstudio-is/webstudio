@@ -1,5 +1,5 @@
 export {
-  PlanFeaturesSchema,
+  planFeatures,
   defaultPlanFeatures,
   parsePlansEnv,
 } from "./plan-features";

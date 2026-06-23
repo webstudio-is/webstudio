@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { FontFormat, FontMeta } from "@webstudio-is/fonts";
+import { fontFormat, fontMeta } from "@webstudio-is/fonts";
 
-const AssetId = z.string();
+const assetId = z.string();
 
 const baseAsset = {
-  id: AssetId,
+  id: assetId,
   projectId: z.string(),
   size: z.number(),
   name: z.string(),
@@ -13,38 +13,41 @@ const baseAsset = {
   createdAt: z.string(),
 };
 
-export const FontAsset = z.object({
-  ...baseAsset,
-  format: FontFormat,
-  meta: FontMeta,
-  type: z.literal("font"),
-});
-export type FontAsset = z.infer<typeof FontAsset>;
+export const assetType = z.enum(["font", "image", "file"]);
+export type AssetType = z.infer<typeof assetType>;
 
-export const ImageMeta = z.object({
+export const fontAsset = z.object({
+  ...baseAsset,
+  format: fontFormat,
+  meta: fontMeta,
+  type: z.literal(assetType.enum.font),
+});
+export type FontAsset = z.infer<typeof fontAsset>;
+
+export const imageMeta = z.object({
   width: z.number(),
   height: z.number(),
 });
-export type ImageMeta = z.infer<typeof ImageMeta>;
+export type ImageMeta = z.infer<typeof imageMeta>;
 
-export const ImageAsset = z.object({
+export const imageAsset = z.object({
   ...baseAsset,
   format: z.string(),
-  meta: ImageMeta,
-  type: z.literal("image"),
+  meta: imageMeta,
+  type: z.literal(assetType.enum.image),
 });
-export type ImageAsset = z.infer<typeof ImageAsset>;
+export type ImageAsset = z.infer<typeof imageAsset>;
 
-export const FileAsset = z.object({
+export const fileAsset = z.object({
   ...baseAsset,
   format: z.string(),
   meta: z.object({}),
-  type: z.literal("file"),
+  type: z.literal(assetType.enum.file),
 });
-export type FileAsset = z.infer<typeof FileAsset>;
+export type FileAsset = z.infer<typeof fileAsset>;
 
-export const Asset = z.union([FontAsset, ImageAsset, FileAsset]);
-export type Asset = z.infer<typeof Asset>;
+export const asset = z.union([fontAsset, imageAsset, fileAsset]);
+export type Asset = z.infer<typeof asset>;
 
-export const Assets = z.map(AssetId, Asset);
-export type Assets = z.infer<typeof Assets>;
+export const assets = z.map(assetId, asset);
+export type Assets = z.infer<typeof assets>;

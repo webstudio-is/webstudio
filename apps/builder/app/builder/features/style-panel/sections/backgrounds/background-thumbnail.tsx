@@ -3,7 +3,7 @@ import type { Assets } from "@webstudio-is/sdk";
 import { Image as WebstudioImage, wsImageLoader } from "@webstudio-is/image";
 import { styled, theme } from "@webstudio-is/design-system";
 import {
-  StyleValue,
+  type StyleValue,
   toValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";

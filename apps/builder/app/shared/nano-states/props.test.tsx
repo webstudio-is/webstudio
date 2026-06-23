@@ -3,10 +3,10 @@ import { cleanStores } from "nanostores";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { setEnv } from "@webstudio-is/feature-flags";
 import {
-  DataSource,
+  type DataSource,
   type Instance,
   ROOT_INSTANCE_ID,
-  Resource,
+  type Resource,
   SYSTEM_VARIABLE_ID,
   collectionComponent,
 } from "@webstudio-is/sdk";

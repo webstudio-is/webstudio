@@ -9,7 +9,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { isBuilder } from "~/shared/router-utils";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
-const SessionError = z.object({
+const sessionError = z.object({
   message: z.string(),
   description: z.string().optional(),
 });
@@ -82,7 +82,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const rawError = session.get(sessionErrorKey);
 
-  const parsedError = SessionError.safeParse(rawError);
+  const parsedError = sessionError.safeParse(rawError);
 
   const error = parsedError.success
     ? parsedError.data

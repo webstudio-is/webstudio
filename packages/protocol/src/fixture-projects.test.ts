@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
-import { bundleVersion, publishedProjectBundleSchema } from "./schema";
+import { bundleVersion, publishedProjectBundle } from "./schema";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const fixturesRoot = join(root, "fixtures");
@@ -42,9 +42,7 @@ describe("fixture project bundles", () => {
   test.each(fixtureDataFiles)(
     "$fixtureName has current bundle-compatible data",
     ({ dataFile }) => {
-      const data = publishedProjectBundleSchema.parse(
-        readFixtureData(dataFile)
-      );
+      const data = publishedProjectBundle.parse(readFixtureData(dataFile));
 
       expect(data.bundleVersion).toBe(bundleVersion);
     }
@@ -53,9 +51,7 @@ describe("fixture project bundles", () => {
   test.each(fixtureDataFiles)(
     "$fixtureName asset records point at fixture files",
     ({ dataFile, fixtureDirectory }) => {
-      const data = publishedProjectBundleSchema.parse(
-        readFixtureData(dataFile)
-      );
+      const data = publishedProjectBundle.parse(readFixtureData(dataFile));
       const missingAssetFiles = data.assets
         .map((asset) => asset.name)
         .filter(

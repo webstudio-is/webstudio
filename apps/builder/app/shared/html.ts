@@ -7,12 +7,12 @@ import {
   type WebstudioFragment,
   type Instance,
   elementComponent,
-  Prop,
+  type Prop,
   tags,
-  StyleDecl,
-  Breakpoint,
-  StyleSource,
-  StyleSourceSelection,
+  type StyleDecl,
+  type Breakpoint,
+  type StyleSource,
+  type StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
 import {

@@ -19,7 +19,11 @@ import {
   NestedInputButton,
   theme,
 } from "@webstudio-is/design-system";
-import { isLiteralExpression, Resource, type Prop } from "@webstudio-is/sdk";
+import {
+  isLiteralExpression,
+  type Resource,
+  type Prop,
+} from "@webstudio-is/sdk";
 import {
   BindingControl,
   BindingPopover,

@@ -4,7 +4,7 @@ import {
   coreMetas,
   createScope,
   elementComponent,
-  Prop,
+  type Prop,
   type Instance,
   type Instances,
   type Props,

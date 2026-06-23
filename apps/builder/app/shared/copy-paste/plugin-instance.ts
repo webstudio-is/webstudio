@@ -17,9 +17,9 @@ import { shallowEqual } from "shallow-equal";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
 import {
-  Instance,
-  Instances,
-  WebstudioFragment,
+  type Instance,
+  type Instances,
+  webstudioFragment,
   findTreeInstanceIdsExcludingSlotDescendants,
   isComponentDetachable,
   portalComponent,
@@ -38,11 +38,11 @@ import { breakpointPasteLimitWarning } from "../breakpoints";
 
 const version = "@webstudio/instance/v0.1";
 
-const InstanceData = WebstudioFragment.extend({
+const instanceData = webstudioFragment.extend({
   instanceSelector: z.array(z.string()),
 });
 
-type InstanceData = z.infer<typeof InstanceData>;
+type InstanceData = z.infer<typeof instanceData>;
 
 const getTreeData = (instanceSelector: InstanceSelector) => {
   const instances = $instances.get();
@@ -70,11 +70,11 @@ const stringify = (data: InstanceData) => {
   return JSON.stringify({ [version]: data });
 };
 
-const ClipboardData = z.object({ [version]: InstanceData });
+const clipboard = z.object({ [version]: instanceData });
 
 const parse = (clipboardData: string): InstanceData | undefined => {
   try {
-    const data = ClipboardData.parse(JSON.parse(clipboardData));
+    const data = clipboard.parse(JSON.parse(clipboardData));
     return data[version];
   } catch {
     return;

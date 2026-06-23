@@ -1,19 +1,19 @@
 import { z } from "zod";
 
-const ResourceId = z.string();
+const resourceId = z.string();
 
-const Method = z.union([
+const method = z.union([
   z.literal("get"),
   z.literal("post"),
   z.literal("put"),
   z.literal("delete"),
 ]);
 
-export const Resource = z.object({
-  id: ResourceId,
+export const resource = z.object({
+  id: resourceId,
   name: z.string(),
   control: z.optional(z.union([z.literal("system"), z.literal("graphql")])),
-  method: Method,
+  method: method,
   // expression
   url: z.string(),
   searchParams: z
@@ -36,12 +36,12 @@ export const Resource = z.object({
   body: z.optional(z.string()),
 });
 
-export type Resource = z.infer<typeof Resource>;
+export type Resource = z.infer<typeof resource>;
 
 // evaluated variant of resource
-export const ResourceRequest = z.object({
+export const resourceRequest = z.object({
   name: z.string(),
-  method: Method,
+  method: method,
   url: z.string(),
   searchParams: z.array(
     z.object({
@@ -60,8 +60,8 @@ export const ResourceRequest = z.object({
   body: z.optional(z.unknown()),
 });
 
-export type ResourceRequest = z.infer<typeof ResourceRequest>;
+export type ResourceRequest = z.infer<typeof resourceRequest>;
 
-export const Resources = z.map(ResourceId, Resource);
+export const resources = z.map(resourceId, resource);
 
-export type Resources = z.infer<typeof Resources>;
+export type Resources = z.infer<typeof resources>;

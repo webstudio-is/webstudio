@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const envSchema = z.object({
+const environment = z.object({
   // Authentication
   DEV_LOGIN: z.string().optional(),
   GH_CLIENT_ID: z.string().optional(),
@@ -119,7 +119,7 @@ const rawEnv = {
   VERCEL_URL: process.env.VERCEL_URL,
 };
 
-const parseResult = envSchema.safeParse(rawEnv);
+const parseResult = environment.safeParse(rawEnv);
 
 if (!parseResult.success) {
   console.error("Invalid environment variables:", parseResult.error.format());

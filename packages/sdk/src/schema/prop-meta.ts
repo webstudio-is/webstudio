@@ -17,7 +17,7 @@ const common = {
   contentMode: z.boolean().optional(),
 };
 
-const Tag = z.object({
+const tag = z.object({
   ...common,
   control: z.literal("tag"),
   type: z.literal("string"),
@@ -25,21 +25,21 @@ const Tag = z.object({
   options: z.array(z.string()),
 });
 
-const Number = z.object({
+const number = z.object({
   ...common,
   control: z.literal("number"),
   type: z.literal("number"),
   defaultValue: z.number().optional(),
 });
 
-const Range = z.object({
+const range = z.object({
   ...common,
   control: z.literal("range"),
   type: z.literal("number"),
   defaultValue: z.number().optional(),
 });
 
-const Text = z.object({
+const text = z.object({
   ...common,
   control: z.literal("text"),
   type: z.literal("string"),
@@ -51,14 +51,14 @@ const Text = z.object({
   rows: z.number().optional(),
 });
 
-const Resource = z.object({
+const resource = z.object({
   ...common,
   control: z.literal("resource"),
   type: z.literal("resource"),
   defaultValue: z.string().optional(),
 });
 
-const Code = z.object({
+const code = z.object({
   ...common,
   control: z.literal("code"),
   type: z.literal("string"),
@@ -66,28 +66,28 @@ const Code = z.object({
   defaultValue: z.string().optional(),
 });
 
-const CodeText = z.object({
+const codeText = z.object({
   ...common,
   control: z.literal("codetext"),
   type: z.literal("string"),
   defaultValue: z.string().optional(),
 });
 
-const Color = z.object({
+const color = z.object({
   ...common,
   control: z.literal("color"),
   type: z.literal("string"),
   defaultValue: z.string().optional(),
 });
 
-const Boolean = z.object({
+const boolean = z.object({
   ...common,
   control: z.literal("boolean"),
   type: z.literal("boolean"),
   defaultValue: z.boolean().optional(),
 });
 
-const Radio = z.object({
+const radio = z.object({
   ...common,
   control: z.literal("radio"),
   type: z.literal("string"),
@@ -95,7 +95,7 @@ const Radio = z.object({
   options: z.array(z.string()),
 });
 
-const InlineRadio = z.object({
+const inlineRadio = z.object({
   ...common,
   control: z.literal("inline-radio"),
   type: z.literal("string"),
@@ -103,7 +103,7 @@ const InlineRadio = z.object({
   options: z.array(z.string()),
 });
 
-const Select = z.object({
+const select = z.object({
   ...common,
   control: z.literal("select"),
   type: z.literal("string"),
@@ -111,7 +111,7 @@ const Select = z.object({
   options: z.array(z.string()),
 });
 
-const TimeZone = z.object({
+const timeZone = z.object({
   ...common,
   control: z.literal("timeZone"),
   type: z.literal("string"),
@@ -119,7 +119,7 @@ const TimeZone = z.object({
   options: z.array(z.string()),
 });
 
-const Check = z.object({
+const check = z.object({
   ...common,
   control: z.literal("check"),
   type: z.literal("string[]"),
@@ -127,7 +127,7 @@ const Check = z.object({
   options: z.array(z.string()),
 });
 
-const InlineCheck = z.object({
+const inlineCheck = z.object({
   ...common,
   control: z.literal("inline-check"),
   type: z.literal("string[]"),
@@ -135,7 +135,7 @@ const InlineCheck = z.object({
   options: z.array(z.string()),
 });
 
-const MultiSelect = z.object({
+const multiSelect = z.object({
   ...common,
   control: z.literal("multi-select"),
   type: z.literal("string[]"),
@@ -143,7 +143,7 @@ const MultiSelect = z.object({
   options: z.array(z.string()),
 });
 
-const File = z.object({
+const file = z.object({
   ...common,
   control: z.literal("file"),
   type: z.literal("string"),
@@ -152,14 +152,14 @@ const File = z.object({
   accept: z.string().optional(),
 });
 
-const Url = z.object({
+const url = z.object({
   ...common,
   control: z.literal("url"),
   type: z.literal("string"),
   defaultValue: z.string().optional(),
 });
 
-const Json = z.object({
+const json = z.object({
   ...common,
   control: z.literal("json"),
   type: z.literal("json"),
@@ -167,7 +167,7 @@ const Json = z.object({
 });
 
 // we neither generate date nor support it in props panel, listed here for completeness
-const Date = z.object({
+const date = z.object({
   ...common,
   control: z.literal("date"),
 
@@ -177,51 +177,51 @@ const Date = z.object({
   defaultValue: z.string().optional(),
 });
 
-const Action = z.object({
+const action = z.object({
   ...common,
   control: z.literal("action"),
   type: z.literal("action"),
   defaultValue: z.undefined().optional(),
 });
 
-const TextContent = z.object({
+const textContent = z.object({
   ...common,
   control: z.literal("textContent"),
   type: z.literal("string"),
   defaultValue: z.string().optional(),
 });
 
-const AnimationAction = z.object({
+const animationAction = z.object({
   ...common,
   control: z.literal("animationAction"),
   type: z.literal("animationAction"),
   defaultValue: z.undefined().optional(),
 });
 
-export const PropMeta = z.union([
-  Tag,
-  Number,
-  Range,
-  Text,
-  Resource,
-  Code,
-  CodeText,
-  Color,
-  Boolean,
-  Radio,
-  InlineRadio,
-  Select,
-  TimeZone,
-  MultiSelect,
-  Check,
-  InlineCheck,
-  File,
-  Url,
-  Json,
-  Date,
-  Action,
-  TextContent,
-  AnimationAction,
+export const propMeta = z.union([
+  tag,
+  number,
+  range,
+  text,
+  resource,
+  code,
+  codeText,
+  color,
+  boolean,
+  radio,
+  inlineRadio,
+  select,
+  timeZone,
+  multiSelect,
+  check,
+  inlineCheck,
+  file,
+  url,
+  json,
+  date,
+  action,
+  textContent,
+  animationAction,
 ]);
 
-export type PropMeta = z.infer<typeof PropMeta>;
+export type PropMeta = z.infer<typeof propMeta>;
