@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   isAssetFileName,
+  getMissingImportedAssetFilesMessage,
+  parseMissingImportedAssetFilesMessage,
   getBundleVersionMismatchMessage,
   importProjectBundleInput,
   publishedProjectBundle,
@@ -23,6 +25,32 @@ describe("project bundle contract", () => {
     expect(isAssetFileName("..")).toBe(false);
     expect(isAssetFileName("../image.png")).toBe(false);
     expect(isAssetFileName("folder\\image.png")).toBe(false);
+  });
+
+  test("formats and parses missing imported asset file messages", () => {
+    const message = getMissingImportedAssetFilesMessage([
+      "image.png",
+      "font,latin.woff2",
+    ]);
+
+    expect(message).toBe(
+      'Imported asset files are missing: ["image.png","font,latin.woff2"]'
+    );
+    expect(parseMissingImportedAssetFilesMessage(new Error(message))).toEqual([
+      "image.png",
+      "font,latin.woff2",
+    ]);
+    expect(
+      parseMissingImportedAssetFilesMessage("Other error")
+    ).toBeUndefined();
+  });
+
+  test("parses already-deployed comma-separated missing asset messages", () => {
+    expect(
+      parseMissingImportedAssetFilesMessage(
+        new Error("Imported asset files are missing: image.png, font.woff2")
+      )
+    ).toEqual(["image.png", "font.woff2"]);
   });
 
   test("preserves published project metadata", () => {

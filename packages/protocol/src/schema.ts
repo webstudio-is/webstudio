@@ -22,6 +22,36 @@ const assetFileName = z
 export const isAssetFileName = (value: string) =>
   assetFileName.safeParse(value).success;
 
+const missingImportedAssetFilesPrefix = "Imported asset files are missing: ";
+
+export const getMissingImportedAssetFilesMessage = (assetNames: string[]) =>
+  `${missingImportedAssetFilesPrefix}${JSON.stringify(assetNames)}`;
+
+export const parseMissingImportedAssetFilesMessage = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  const start = message.indexOf(missingImportedAssetFilesPrefix);
+  if (start === -1) {
+    return;
+  }
+  const data = message.slice(start + missingImportedAssetFilesPrefix.length);
+  try {
+    const names = JSON.parse(data);
+    if (
+      Array.isArray(names) &&
+      names.every((name) => typeof name === "string")
+    ) {
+      return names;
+    }
+  } catch {
+    // Support already-deployed API responses using the previous comma-separated
+    // format. New responses use JSON so valid filenames can contain commas.
+  }
+  return data
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name !== "");
+};
+
 export const projectBundle = z.object({
   page,
   pages: z.array(page),

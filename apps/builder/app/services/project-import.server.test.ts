@@ -345,7 +345,7 @@ describe("build import helpers", () => {
           loadDevBuildByProjectId,
         }
       )
-    ).rejects.toThrow("Imported asset files are missing: image.png");
+    ).rejects.toThrow('Imported asset files are missing: ["image.png"]');
   });
 
   test("requires uploaded destination file rows for imported assets", async () => {

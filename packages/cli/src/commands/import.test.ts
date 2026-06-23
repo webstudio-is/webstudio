@@ -388,6 +388,57 @@ test("uploads local asset files before import", async () => {
   );
 });
 
+test("re-uploads missing asset files reported by import API", async () => {
+  await mkdir(".webstudio/assets", { recursive: true });
+  await writeSyncedData({
+    assets: [imageAsset],
+  });
+  await writeFile(".webstudio/assets/image.png", "hello", "utf8");
+  importProjectBundle
+    .mockRejectedValueOnce(
+      new Error("Imported asset files are missing: image.png")
+    )
+    .mockResolvedValueOnce({ version: 1 });
+
+  await importProject({ to: destinationShareLink }, dependencies);
+
+  expect(uploadAssetFiles).toHaveBeenNthCalledWith(1, {
+    ...destinationRequest,
+    assets: [imageAsset],
+  });
+  expect(uploadAssetFiles).toHaveBeenNthCalledWith(2, {
+    ...destinationRequest,
+    assets: [imageAsset],
+  });
+  expect(importProjectBundle).toHaveBeenCalledTimes(2);
+  expect(indicator.message).toHaveBeenCalledWith(
+    "Re-uploading 1 missing assets"
+  );
+  expect(indicator.stop).toHaveBeenCalledWith("Project imported successfully");
+});
+
+test("does not retry unknown missing asset files", async () => {
+  await mkdir(".webstudio/assets", { recursive: true });
+  await writeSyncedData({
+    assets: [imageAsset],
+  });
+  await writeFile(".webstudio/assets/image.png", "hello", "utf8");
+  importProjectBundle.mockRejectedValueOnce(
+    new Error("Imported asset files are missing: unknown.png")
+  );
+
+  await expect(
+    importProject({ to: destinationShareLink }, dependencies)
+  ).rejects.toThrow("Handled CLI error");
+
+  expect(uploadAssetFiles).toHaveBeenCalledTimes(1);
+  expect(importProjectBundle).toHaveBeenCalledTimes(1);
+  expect(indicator.stop).toHaveBeenCalledWith(
+    "Imported asset files are missing: unknown.png",
+    2
+  );
+});
+
 test("imports without uploading assets when requested", async () => {
   await writeSyncedData({
     assets: [imageAsset],

@@ -12,6 +12,7 @@ import { serializeStyles } from "@webstudio-is/project-build/styles.server";
 import { serializeStyleSourceSelections } from "@webstudio-is/project-build/style-source-selections.server";
 import {
   isAssetFileName,
+  getMissingImportedAssetFilesMessage,
   getBundleVersionMismatchMessage,
   bundleVersion,
   type PublishedProjectBundle,
@@ -160,9 +161,9 @@ const assertImportedAssetFilesUploaded = async ({
   );
   if (missingAssets.length > 0) {
     throw new Error(
-      `Imported asset files are missing: ${missingAssets
-        .map((asset) => asset.name)
-        .join(", ")}`
+      getMissingImportedAssetFilesMessage(
+        missingAssets.map((asset) => asset.name)
+      )
     );
   }
 

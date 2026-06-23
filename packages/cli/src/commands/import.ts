@@ -4,6 +4,7 @@ import { cancel, isCancel, log, spinner, text } from "@clack/prompts";
 import {
   getBundleVersion,
   getBundleVersionMismatchMessage,
+  parseMissingImportedAssetFilesMessage,
   publishedProjectBundle,
   bundleVersion,
 } from "@webstudio-is/protocol";
@@ -58,6 +59,7 @@ const invalidProjectBundleMessage =
 const invalidAuthConfigMessage =
   "Project bundle auth config is invalid. Please run webstudio prebuild before importing.";
 const invalidDestinationMessage = "Destination share link is invalid.";
+const maxMissingAssetImportRetries = 5;
 
 export const importOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -236,20 +238,9 @@ export const importProject = async (
     }
   }
 
-  importing.message(
-    `Waiting for API response while importing into ${destination.projectId}`
-  );
-
-  try {
-    await dependencies.importProjectBundle({
-      ...destinationRequest,
-      data:
-        options.skipAssets === true
-          ? { ...importData, assets: [] }
-          : importData,
-      ignoreVersionCheck: options.ignoreVersionCheck,
-    });
-  } catch (error) {
+  const dataToImport =
+    options.skipAssets === true ? { ...importData, assets: [] } : importData;
+  const stopImportWithError = (error: unknown): never => {
     stopSpinnerWithError(
       importing,
       error,
@@ -257,7 +248,53 @@ export const importProject = async (
       "import"
     );
     throw new HandledCliError();
-  }
+  };
 
-  importing.stop("Project imported successfully");
+  for (let attempt = 0; attempt <= maxMissingAssetImportRetries; attempt += 1) {
+    importing.message(
+      `Waiting for API response while importing into ${destination.projectId}`
+    );
+
+    try {
+      await dependencies.importProjectBundle({
+        ...destinationRequest,
+        data: dataToImport,
+        ignoreVersionCheck: options.ignoreVersionCheck,
+      });
+      importing.stop("Project imported successfully");
+      return;
+    } catch (error) {
+      const missingAssetNames =
+        options.skipAssets === true
+          ? undefined
+          : parseMissingImportedAssetFilesMessage(error);
+      const assetNames = missingAssetNames ?? [];
+      if (assetNames.length === 0 || attempt === maxMissingAssetImportRetries) {
+        stopImportWithError(error);
+      }
+
+      const missingAssets = importData.assets.filter((asset) =>
+        assetNames.includes(asset.name)
+      );
+      if (missingAssets.length !== assetNames.length) {
+        stopImportWithError(error);
+      }
+
+      importing.message(`Re-uploading ${missingAssets.length} missing assets`);
+      try {
+        await dependencies.uploadAssetFiles({
+          assets: missingAssets,
+          ...destinationRequest,
+        });
+      } catch (uploadError) {
+        importing.stop(
+          uploadError instanceof Error
+            ? `Unable to upload missing assets: ${uploadError.message}`
+            : "Unable to upload missing assets",
+          2
+        );
+        throw new HandledCliError();
+      }
+    }
+  }
 };
