@@ -3,9 +3,9 @@ import { useEffect, useRef } from "react";
 import {
   $allSelectedInstanceSelectors,
   $instanceContextMenu,
-  getContextMenuSelectedInstanceSelectors,
   selectInstances,
 } from "~/shared/nano-states";
+import { getContextMenuSelectedInstanceSelectors } from "~/shared/instance-utils/selection";
 import {
   ContextMenu,
   ContextMenuTrigger,

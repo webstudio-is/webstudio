@@ -13,7 +13,6 @@ export {
   $allSelectedInstanceSelectors,
   $selectedInstanceSelector,
   clearInstanceSelection,
-  getContextMenuSelectedInstanceSelectors,
   selectInstance,
   selectInstances,
   toggleSelectedInstance,

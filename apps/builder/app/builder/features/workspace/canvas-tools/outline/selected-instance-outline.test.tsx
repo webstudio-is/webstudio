@@ -95,6 +95,33 @@ describe("SelectedInstanceOutline", () => {
     expect(getOutlines()).toHaveLength(2);
   });
 
+  test("renders multiple selected outlines when stale ephemeral styles exist", () => {
+    $selectedInstanceOutlines.set([
+      {
+        selector: ["box1", "body"],
+        instanceId: "box1",
+        rect: rect(10, 20, 100, 50),
+      },
+      {
+        selector: ["box2", "body"],
+        instanceId: "box2",
+        rect: rect(40, 80, 120, 60),
+      },
+    ]);
+    $ephemeralStyles.set([
+      {
+        breakpointId: "base",
+        styleSourceId: "style-source",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+    ]);
+
+    const { getOutlines } = renderSelectedInstanceOutline();
+
+    expect(getOutlines()).toHaveLength(2);
+  });
+
   test("hides only the outline for the instance being text edited", () => {
     $selectedInstanceOutlines.set([
       {

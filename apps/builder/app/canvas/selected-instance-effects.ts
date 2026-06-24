@@ -36,6 +36,13 @@ import {
   type InstanceSelector,
 } from "~/shared/instance-utils/tree";
 
+const toRect = (rect: DOMRect) => ({
+  top: rect.top,
+  left: rect.left,
+  width: rect.width,
+  height: rect.height,
+});
+
 const setOutline = (
   selector: InstanceSelector,
   instanceId: Instance["id"],
@@ -45,7 +52,11 @@ const setOutline = (
   const outline = {
     selector,
     instanceId,
-    rect: getAllElementsBoundingBox(elements),
+    rect: toRect(
+      getAllElementsBoundingBox(elements, {
+        fallbackToParent: syncSingleOutline,
+      })
+    ),
   };
   const outlines = $selectedInstanceOutlines.get();
   const index = outlines.findIndex((item) =>

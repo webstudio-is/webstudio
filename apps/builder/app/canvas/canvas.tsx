@@ -62,7 +62,7 @@ import {
 } from "~/shared/copy-paste/copy-paste";
 import { inflateInstance, subscribeInflator } from "./inflator";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
-import { subscribeInstanceSelection } from "./instance-selection";
+import { subscribeInstanceSelection } from "./instance-selection-events";
 import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
@@ -71,7 +71,7 @@ import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { initCanvasApi } from "~/shared/canvas-api";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
-import { subscribeSelected } from "./instance-selected";
+import { subscribeSelected } from "./selected-instance-effects";
 import { subscribeGridGuidesOnSelected } from "./grid-guide-utils";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
 import { $selectedPage } from "~/shared/nano-states";

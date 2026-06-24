@@ -8,7 +8,6 @@ import {
   $selectedInstancePath,
   $selectedInstanceSelector,
   clearInstanceSelection,
-  getContextMenuSelectedInstanceSelectors,
   selectInstance,
   selectInstances,
   toggleSelectedInstance,
@@ -267,34 +266,6 @@ describe("toggleSelectedInstance", () => {
 
     toggleSelectedInstance(["heading", "body"]);
     expect($allSelectedInstanceSelectors.get()).toEqual([]);
-  });
-});
-
-describe("getContextMenuSelectedInstanceSelectors", () => {
-  test("preserves selected set when context menu opens on a selected instance", () => {
-    const selectedSelectors = [
-      ["box", "section", "body"],
-      ["heading", "section", "body"],
-    ];
-
-    expect(
-      getContextMenuSelectedInstanceSelectors({
-        selectedSelectors,
-        clickedSelector: ["heading", "section", "body"],
-      })
-    ).toBe(selectedSelectors);
-  });
-
-  test("selects only the clicked instance when context menu opens on an unselected instance", () => {
-    expect(
-      getContextMenuSelectedInstanceSelectors({
-        selectedSelectors: [
-          ["box", "section", "body"],
-          ["heading", "section", "body"],
-        ],
-        clickedSelector: ["footer", "body"],
-      })
-    ).toEqual([["footer", "body"]]);
   });
 });
 

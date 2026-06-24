@@ -53,7 +53,6 @@ import {
   $selectedInstanceSelector,
   $selectedPage,
   clearInstanceSelection,
-  getContextMenuSelectedInstanceSelectors,
   getIndexedInstanceId,
   getInstanceKey,
   selectInstance,
@@ -61,7 +60,12 @@ import {
   type ItemDropTarget,
   $propValuesByInstanceSelectorWithMemoryProps,
 } from "~/shared/nano-states";
+import {
+  getContextMenuSelectedInstanceSelectors,
+  getInstanceSelectionUpdate,
+} from "~/shared/instance-utils/selection";
 import { $instances, $props } from "~/shared/sync/data-stores";
+import { suppressCommandsForEvent } from "~/shared/commands-emitter";
 import {
   areInstanceSelectorsEqual,
   isDescendantOrSelf,
@@ -109,107 +113,19 @@ function getSelectorKey(selector: undefined | InstanceSelector) {
   return selector === undefined ? undefined : JSON.stringify(selector);
 }
 
-const getVisibleRangeSelectors = ({
-  anchorSelector,
-  clickedSelector,
-  flatSelectors,
-}: {
-  anchorSelector: InstanceSelector;
-  clickedSelector: InstanceSelector;
-  flatSelectors: InstanceSelector[];
-}) => {
-  const anchorIndex = flatSelectors.findIndex((selector) =>
-    areInstanceSelectorsEqual(selector, anchorSelector)
-  );
-  const clickedIndex = flatSelectors.findIndex((selector) =>
-    areInstanceSelectorsEqual(selector, clickedSelector)
-  );
-  if (anchorIndex === -1 || clickedIndex === -1) {
-    return;
-  }
-  const start = Math.min(anchorIndex, clickedIndex);
-  const end = Math.max(anchorIndex, clickedIndex);
-  return flatSelectors.slice(start, end + 1);
-};
-
-const sortSelectorsByVisibleOrder = (
-  selectors: InstanceSelector[],
-  flatSelectors: InstanceSelector[]
-) => {
-  const visibleOrder = new Map(
-    flatSelectors.map((selector, index) => [getSelectorKey(selector), index])
-  );
-  return [...selectors].sort((left, right) => {
-    const leftIndex = visibleOrder.get(getSelectorKey(left)) ?? Infinity;
-    const rightIndex = visibleOrder.get(getSelectorKey(right)) ?? Infinity;
-    return leftIndex - rightIndex;
-  });
-};
-
 const getNavigatorSelectionUpdate = ({
-  selectedSelectors,
-  clickedSelector,
   flatSelectors,
-  anchorSelector,
-  isToggle,
-  isRange,
-}: {
-  selectedSelectors: InstanceSelector[];
-  clickedSelector: InstanceSelector;
+  ...options
+}: Omit<
+  Parameters<typeof getInstanceSelectionUpdate>[0],
+  "orderedSelectors"
+> & {
   flatSelectors: InstanceSelector[];
-  anchorSelector: undefined | InstanceSelector;
-  isToggle: boolean;
-  isRange: boolean;
-}) => {
-  if (isRange && anchorSelector !== undefined) {
-    const rangeSelectors = getVisibleRangeSelectors({
-      anchorSelector,
-      clickedSelector,
-      flatSelectors,
-    });
-    if (rangeSelectors !== undefined) {
-      return {
-        selectedSelectors: sortSelectorsByVisibleOrder(
-          [
-            ...selectedSelectors.filter(
-              (selector) =>
-                rangeSelectors.some((rangeSelector) =>
-                  areInstanceSelectorsEqual(selector, rangeSelector)
-                ) === false
-            ),
-            ...rangeSelectors,
-          ],
-          flatSelectors
-        ),
-        anchorSelector: clickedSelector,
-      };
-    }
-  }
-
-  if (isToggle) {
-    const isSelected = selectedSelectors.some((selector) =>
-      areInstanceSelectorsEqual(selector, clickedSelector)
-    );
-    const nextSelectedSelectors = isSelected
-      ? selectedSelectors.filter(
-          (selector) =>
-            areInstanceSelectorsEqual(selector, clickedSelector) === false
-        )
-      : [...selectedSelectors, clickedSelector];
-    return {
-      selectedSelectors: sortSelectorsByVisibleOrder(
-        nextSelectedSelectors,
-        flatSelectors
-      ),
-      anchorSelector: clickedSelector,
-    };
-  }
-
-  return {
-    selectedSelectors: [clickedSelector],
-    anchorSelector: clickedSelector,
-  };
-};
+}) =>
+  getInstanceSelectionUpdate({
+    ...options,
+    orderedSelectors: flatSelectors,
+  });
 
 const getNavigatorKeyboardSelectionUpdate = ({
   selectedSelectors,
@@ -237,10 +153,10 @@ const getNavigatorKeyboardSelectionUpdate = ({
     return;
   }
   const nextAnchorSelector = anchorSelector ?? focusedSelector;
-  const nextSelection = getNavigatorSelectionUpdate({
+  const nextSelection = getInstanceSelectionUpdate({
     selectedSelectors,
     clickedSelector,
-    flatSelectors,
+    orderedSelectors: flatSelectors,
     anchorSelector: nextAnchorSelector,
     isToggle: false,
     isRange: true,
@@ -787,6 +703,7 @@ export const NavigatorTree = () => {
   );
   const rootMeta = metas.get(rootComponent);
   const rangeAnchorSelectorRef = useRef<undefined | InstanceSelector>();
+  const suppressFocusSelectionRef = useRef(false);
   const skipFocusSelectionCountRef = useRef(0);
   const skipNextClickSelectionRef = useRef(false);
   const flatSelectors = useMemo(() => {
@@ -843,10 +760,17 @@ export const NavigatorTree = () => {
     }
   };
 
-  const selectInstanceAndClearSelection = (
+  const selectInstanceOnFocus = (
     instanceSelector: undefined | Instance["id"][],
     event: React.MouseEvent | React.FocusEvent
   ) => {
+    if (suppressFocusSelectionRef.current) {
+      return;
+    }
+    if (skipFocusSelectionCountRef.current > 0) {
+      skipFocusSelectionCountRef.current -= 1;
+      return;
+    }
     clearTextSelection(event);
     selectInstance(instanceSelector);
     rangeAnchorSelectorRef.current = instanceSelector;
@@ -857,10 +781,11 @@ export const NavigatorTree = () => {
     event: React.MouseEvent | React.PointerEvent
   ) => {
     clearTextSelection(event);
-    const nextSelection = getNavigatorSelectionUpdate({
+    suppressFocusSelectionRef.current = false;
+    const nextSelection = getInstanceSelectionUpdate({
       selectedSelectors: selectedInstanceSelectors,
       clickedSelector: instanceSelector,
-      flatSelectors,
+      orderedSelectors: flatSelectors,
       anchorSelector: rangeAnchorSelectorRef.current,
       isToggle: event.metaKey || event.ctrlKey,
       isRange: event.shiftKey,
@@ -890,6 +815,7 @@ export const NavigatorTree = () => {
       return;
     }
     clearTextSelection(event);
+    suppressFocusSelectionRef.current = false;
     selectInstances(
       getContextMenuSelectedInstanceSelectors({
         selectedSelectors: selectedInstanceSelectors,
@@ -920,16 +846,20 @@ export const NavigatorTree = () => {
         selectedSelectors: selectedInstanceSelectors,
       })
     ) {
+      suppressCommandsForEvent(event.nativeEvent);
       event.preventDefault();
       event.stopPropagation();
+      suppressFocusSelectionRef.current = false;
       clearInstanceSelection();
       rangeAnchorSelectorRef.current = undefined;
       return;
     }
 
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") {
+      suppressCommandsForEvent(event.nativeEvent);
       event.preventDefault();
       event.stopPropagation();
+      suppressFocusSelectionRef.current = false;
       const nextSelection = getNavigatorSiblingSelectionUpdate({
         focusedSelector: instanceSelector,
         flatSelectors,
@@ -943,6 +873,7 @@ export const NavigatorTree = () => {
     }
 
     if (event.shiftKey === false) {
+      suppressFocusSelectionRef.current = false;
       return;
     }
     const direction =
@@ -954,6 +885,7 @@ export const NavigatorTree = () => {
     if (direction === undefined) {
       return;
     }
+    suppressCommandsForEvent(event.nativeEvent);
     event.preventDefault();
     event.stopPropagation();
     const nextSelection = getNavigatorKeyboardSelectionUpdate({
@@ -966,6 +898,7 @@ export const NavigatorTree = () => {
     if (nextSelection === undefined) {
       return;
     }
+    suppressFocusSelectionRef.current = true;
     selectInstances(nextSelection.selectedSelectors);
     rangeAnchorSelectorRef.current = nextSelection.anchorSelector;
 
@@ -978,11 +911,13 @@ export const NavigatorTree = () => {
     const nextFocusedButton =
       direction === "previous" ? buttonIndex - 1 : buttonIndex + 1;
     if (treeButtons[nextFocusedButton] !== undefined) {
-      skipFocusSelectionCountRef.current = Math.max(
-        skipFocusSelectionCountRef.current,
-        1
-      );
       treeButtons[nextFocusedButton]?.focus({ preventScroll: true });
+    }
+  };
+
+  const handleKeyUp = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "Shift" || event.shiftKey === false) {
+      suppressFocusSelectionRef.current = false;
     }
   };
 
@@ -1007,13 +942,9 @@ export const NavigatorTree = () => {
                   handlePointerDown([ROOT_INSTANCE_ID], event),
                 onClick: (event) => handleClick([ROOT_INSTANCE_ID], event),
                 onKeyDown: (event) => handleKeyDown([ROOT_INSTANCE_ID], event),
-                onFocus: (event) => {
-                  if (skipFocusSelectionCountRef.current > 0) {
-                    skipFocusSelectionCountRef.current -= 1;
-                    return;
-                  }
-                  selectInstanceAndClearSelection([ROOT_INSTANCE_ID], event);
-                },
+                onKeyUp: handleKeyUp,
+                onFocus: (event) =>
+                  selectInstanceOnFocus([ROOT_INSTANCE_ID], event),
               }}
               action={
                 <Tooltip
@@ -1152,13 +1083,8 @@ export const NavigatorTree = () => {
                       onMouseLeave: () =>
                         $hoveredInstanceSelector.set(undefined),
                       onClick: (event) => handleClick(item.selector, event),
-                      onFocus: (event) => {
-                        if (skipFocusSelectionCountRef.current > 0) {
-                          skipFocusSelectionCountRef.current -= 1;
-                          return;
-                        }
-                        selectInstanceAndClearSelection(item.selector, event);
-                      },
+                      onFocus: (event) =>
+                        selectInstanceOnFocus(item.selector, event),
                       onKeyDown: (event) => {
                         handleKeyDown(item.selector, event);
                         if (event.defaultPrevented) {
@@ -1168,6 +1094,7 @@ export const NavigatorTree = () => {
                           emitCommand("editInstanceText");
                         }
                       },
+                      onKeyUp: handleKeyUp,
                     }}
                     action={
                       <ShowToggle

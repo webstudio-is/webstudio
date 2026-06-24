@@ -2,6 +2,7 @@ import { atom, computed } from "nanostores";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import { blockComponent, blockTemplateComponent } from "@webstudio-is/sdk";
 import type { FontWeight } from "@webstudio-is/fonts";
+import type { Rect } from "@webstudio-is/design-system";
 import { $instances } from "../sync/data-stores";
 import type { InstanceSelector } from "../instance-utils/tree";
 
@@ -19,7 +20,7 @@ export const $textToolbar = atom<undefined | TextToolbarState>(undefined);
 
 type InstanceOutline = {
   instanceId: Instance["id"];
-  rect: DOMRect;
+  rect: Rect;
 };
 
 export type SelectedInstanceOutline = InstanceOutline & {

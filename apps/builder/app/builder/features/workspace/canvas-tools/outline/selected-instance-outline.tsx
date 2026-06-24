@@ -23,7 +23,11 @@ export const SelectedInstanceOutline = () => {
     return;
   }
 
-  if (outlines.length === 0 || ephemeralStyles.length !== 0) {
+  if (outlines.length === 0) {
+    return;
+  }
+
+  if (outlines.length === 1 && ephemeralStyles.length !== 0) {
     return;
   }
 
