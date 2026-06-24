@@ -49,6 +49,12 @@ export type Command<CommandName extends string> = CommandMeta<CommandName> & {
 export const $commandMetas = atom(new Map<string, CommandMeta<string>>());
 clientSyncStore.register("commandMetas", $commandMetas);
 
+const suppressedCommandEvents = new WeakSet<KeyboardEvent>();
+
+export const suppressCommandsForEvent = (event: KeyboardEvent) => {
+  suppressedCommandEvents.add(event);
+};
+
 // Copied from https://github.com/ai/keyux/blob/main/hotkey.js#L1C1-L2C1
 // eslint-disable-next-line no-control-regex
 const nonEnglishLayout = /^[^\x00-\x7F]$/;
@@ -147,6 +153,9 @@ export const createCommandsEmitter = <CommandName extends string>({
       commandHandlers.get(name)?.(source);
     });
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (suppressedCommandEvents.has(event)) {
+        return;
+      }
       let emitted = false;
       let preventDefault = true;
       for (const commandMeta of findCommandsMatchingHotkeys(event)) {
@@ -160,14 +169,15 @@ export const createCommandsEmitter = <CommandName extends string>({
         const { disableOnInputLikeControls } = commandMeta;
 
         if (disableOnInputLikeControls) {
-          const element = event.target as HTMLElement;
+          const element = event.target;
           const isOnInputLikeControl =
-            ["input", "select", "textarea", "color-input"].includes(
+            element instanceof HTMLElement &&
+            (["input", "select", "textarea", "color-input"].includes(
               element.tagName.toLowerCase()
             ) ||
-            element.isContentEditable ||
-            // Detect Radix select, dropdown and co.
-            element.getAttribute("role") === "option";
+              element.isContentEditable ||
+              // Detect Radix select, dropdown and co.
+              element.getAttribute("role") === "option");
 
           if (isOnInputLikeControl) {
             continue;

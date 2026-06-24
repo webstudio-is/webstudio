@@ -36,6 +36,7 @@ import {
   $selectedInstanceRenderState,
   $hoveredInstanceSelector,
   $selectedInstanceOutline,
+  $selectedInstanceOutlines,
   $hoveredInstanceOutline,
 } from "~/shared/nano-states";
 import { $marketplaceProduct } from "~/shared/sync/data-stores";
@@ -66,7 +67,12 @@ import {
 } from "~/shared/sync/data-stores";
 import { $pointerPosition } from "../awareness";
 import { $temporaryInstances } from "../nano-states";
-import { $selectedInstanceSelector } from "../nano-states/instances";
+import {
+  $allSelectedInstanceSelectors,
+  $selectedInstanceSelector,
+  selectInstance,
+  selectInstances,
+} from "../nano-states/instances";
 import { $selectedPageId } from "../nano-states/pages";
 import { $systemDataByPage } from "../system";
 import { $resourcesCache } from "../resources";
@@ -118,13 +124,19 @@ export const registerContainers = () => {
 type SelectedPageAndInstance = {
   selectedPageId: string | undefined;
   selectedInstanceSelector: InstanceSelector | undefined;
+  allSelectedInstanceSelectors: InstanceSelector[];
 };
 
 const $selectedPageAndInstance = batched(
-  [$selectedPageId, $selectedInstanceSelector],
-  (selectedPageId, selectedInstanceSelector): SelectedPageAndInstance => ({
+  [$selectedPageId, $selectedInstanceSelector, $allSelectedInstanceSelectors],
+  (
     selectedPageId,
     selectedInstanceSelector,
+    allSelectedInstanceSelectors
+  ): SelectedPageAndInstance => ({
+    selectedPageId,
+    selectedInstanceSelector,
+    allSelectedInstanceSelectors,
   })
 );
 
@@ -180,8 +192,11 @@ class SelectedPageAndInstanceSyncObject {
     if (typeof state !== "object" || state === null) {
       return false;
     }
-    const { selectedPageId, selectedInstanceSelector } =
-      state as Partial<SelectedPageAndInstance>;
+    const {
+      selectedPageId,
+      selectedInstanceSelector,
+      allSelectedInstanceSelectors,
+    } = state as Partial<SelectedPageAndInstance>;
     if (selectedPageId !== undefined && typeof selectedPageId !== "string") {
       return false;
     }
@@ -193,8 +208,23 @@ class SelectedPageAndInstanceSyncObject {
     ) {
       return false;
     }
+    if (
+      allSelectedInstanceSelectors !== undefined &&
+      (Array.isArray(allSelectedInstanceSelectors) === false ||
+        allSelectedInstanceSelectors.every(
+          (selector) =>
+            Array.isArray(selector) &&
+            selector.every((id) => typeof id === "string")
+        ) === false)
+    ) {
+      return false;
+    }
     $selectedPageId.set(selectedPageId);
-    $selectedInstanceSelector.set(selectedInstanceSelector);
+    if (allSelectedInstanceSelectors !== undefined) {
+      selectInstances(allSelectedInstanceSelectors);
+      return true;
+    }
+    selectInstance(selectedInstanceSelector);
     return true;
   }
 }
@@ -227,6 +257,10 @@ export const createObjectPool = () => {
     new NanostoresSyncObject(
       "selectedInstanceOutline",
       $selectedInstanceOutline
+    ),
+    new NanostoresSyncObject(
+      "selectedInstanceOutlines",
+      $selectedInstanceOutlines
     ),
     new NanostoresSyncObject("hoveredInstanceOutline", $hoveredInstanceOutline),
     new NanostoresSyncObject("builderMode", $builderMode),

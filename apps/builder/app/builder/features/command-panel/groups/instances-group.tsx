@@ -11,10 +11,7 @@ import { parseComponentName } from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import {
-  $selectedPageId,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
 import {
   closeCommandPanel,
@@ -98,7 +95,7 @@ export const InstancesGroup = ({ options }: { options: InstanceOption[] }) => {
                 );
                 if (awareness) {
                   $selectedPageId.set(awareness.pageId);
-                  $selectedInstanceSelector.set(awareness.instanceSelector);
+                  selectInstance(awareness.instanceSelector);
                   setActiveSidebarPanel("auto");
                 }
               }

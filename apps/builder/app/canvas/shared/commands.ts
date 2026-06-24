@@ -4,21 +4,22 @@ import { createCommandsEmitter } from "~/shared/commands-emitter";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
 import {
+  $allSelectedInstanceSelectors,
   $registeredComponentMetas,
   $propsIndex,
+  $selectedInstanceSelector,
   $textEditingInstanceSelector,
   $textToolbar,
+  clearInstanceSelection,
+  selectInstance,
 } from "~/shared/nano-states";
-import { $instances } from "~/shared/sync/data-stores";
-import { $props } from "~/shared/sync/data-stores";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import {
   CLEAR_FORMAT_COMMAND,
   TOGGLE_SPAN_COMMAND,
   getActiveEditor,
   hasSelectionFormat,
 } from "../features/text-editor/toolbar-connector";
-import { $selectedInstanceSelector } from "~/shared/nano-states";
-import { selectInstance } from "~/shared/nano-states";
 import {
   isDescendantOrSelf,
   type InstanceSelector,
@@ -45,6 +46,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     "moveInstanceDown",
     "moveInstanceOut",
     "moveInstanceIntoPreviousSibling",
+    "selectPreviousSibling",
+    "selectNextSibling",
+    "selectSiblingInstances",
   ],
   commands: [
     {
@@ -134,7 +138,6 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       // reset selection for canvas, but not for the builder
       disableHotkeyOutsideApp: true,
       handler: () => {
-        const selectedInstanceSelector = $selectedInstanceSelector.get();
         const textEditingInstanceSelector = $textEditingInstanceSelector.get();
         const textToolbar = $textToolbar.get();
 
@@ -150,9 +153,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
 
-        if (selectedInstanceSelector) {
+        if ($allSelectedInstanceSelectors.get().length > 0) {
           // unselect both instance and style source
-          selectInstance(undefined);
+          clearInstanceSelection();
           return;
         }
       },

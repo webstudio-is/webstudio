@@ -9,11 +9,15 @@ import {
   isPage,
 } from "@webstudio-is/sdk";
 import { $pages } from "../sync/data-stores";
-import { $selectedInstanceSelector } from "./instance-selection";
+import { clearInstanceSelection, selectInstance } from "./instance-selection";
 
 export const $selectedPageId = atom<
   undefined | Page["id"] | PageTemplate["id"]
 >(undefined);
+
+$selectedPageId.listen(() => {
+  clearInstanceSelection();
+});
 
 export const $selectedPageHash = atom<{ hash: string }>({ hash: "" });
 
@@ -68,5 +72,5 @@ export const selectPage = (pageId: Page["id"] | PageTemplate["id"]) => {
     return;
   }
   $selectedPageId.set(page.id);
-  $selectedInstanceSelector.set([page.rootInstanceId]);
+  selectInstance([page.rootInstanceId]);
 };

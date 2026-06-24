@@ -155,21 +155,68 @@ export const initCopyPasteForContentEditMode = ({
 }: {
   signal: AbortSignal;
 }) => {
-  const handleClipboard = (event: ClipboardEvent) => {
+  const showUnsupportedCopyMessage = () => {
+    builderApi.toast.info("This selection cannot be copied here.");
+  };
+
+  const showUnsupportedPasteMessage = () => {
+    builderApi.toast.info("This clipboard data cannot be pasted here.");
+  };
+
+  const showCutDesignModeOnlyMessage = () => {
+    builderApi.toast.info("Cutting is allowed in design mode only.");
+  };
+
+  const handleCopy = (event: ClipboardEvent) => {
     if (validateClipboardEvent(event) === false) {
       return;
     }
-
-    builderApi.toast.info(
-      "Copying and pasting is allowed in design mode only."
-    );
+    const data = instanceText.onCopy?.();
+    if (data) {
+      event.preventDefault();
+      event.clipboardData?.setData(instanceText.mimeType, data);
+      return;
+    }
+    showUnsupportedCopyMessage();
   };
 
-  document.addEventListener("copy", handleClipboard, { signal });
-  document.addEventListener("cut", handleClipboard, { signal });
+  const handlePaste = async (event: ClipboardEvent) => {
+    if (validateClipboardEvent(event) === false) {
+      return;
+    }
+    const jsonData = event.clipboardData?.getData(instanceJson.mimeType).trim();
+    if (jsonData) {
+      event.preventDefault();
+      if (await instanceJson.onPaste?.(jsonData)) {
+        return;
+      }
+      showUnsupportedPasteMessage();
+      return;
+    }
+    const textData = event.clipboardData?.getData(instanceText.mimeType).trim();
+    if (textData) {
+      event.preventDefault();
+      if (await instanceText.onPaste?.(textData)) {
+        return;
+      }
+      showUnsupportedPasteMessage();
+      return;
+    }
+    showUnsupportedPasteMessage();
+  };
+
+  const handleCut = (event: ClipboardEvent) => {
+    if (validateClipboardEvent(event) === false) {
+      return;
+    }
+    showCutDesignModeOnlyMessage();
+  };
+
+  document.addEventListener("copy", handleCopy, { signal });
+  document.addEventListener("cut", handleCut, { signal });
   // Capture is required so we get the element before content-editable removes it
   // This way we can detect when we are inside content-editable and ignore the event
-  document.addEventListener("paste", handleClipboard, {
+  document.addEventListener("paste", handlePaste, {
     capture: true,
     signal,
   });

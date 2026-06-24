@@ -12,6 +12,7 @@ import {
   $stylesIndex,
   $propValuesByInstanceSelectorWithMemoryProps,
   $selectedInstanceStates,
+  $allSelectedInstanceSelectors,
   type UnitSizes,
   type PropertySizes,
 } from "~/shared/nano-states";
@@ -24,21 +25,69 @@ import {
   hasDoNotTrackMutationRecord,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
-import { $selectedInstanceOutline } from "~/shared/nano-states";
+import {
+  $selectedInstanceOutline,
+  $selectedInstanceOutlines,
+} from "~/shared/nano-states";
 import { $instances, $styles } from "~/shared/sync/data-stores";
 import { inflateInstance } from "~/canvas/inflator";
-import type { InstanceSelector } from "~/shared/instance-utils/tree";
-import { $selectedInstanceSelector } from "~/shared/nano-states";
+import {
+  areInstanceSelectorsEqual,
+  type InstanceSelector,
+} from "~/shared/instance-utils/tree";
 
-const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {
-  $selectedInstanceOutline.set({
+const toRect = (rect: DOMRect) => ({
+  top: rect.top,
+  left: rect.left,
+  width: rect.width,
+  height: rect.height,
+});
+
+const setOutline = (
+  selector: InstanceSelector,
+  instanceId: Instance["id"],
+  elements: HTMLElement[],
+  syncSingleOutline: boolean
+) => {
+  const outline = {
+    selector,
     instanceId,
-    rect: getAllElementsBoundingBox(elements),
-  });
+    rect: toRect(
+      getAllElementsBoundingBox(elements, {
+        fallbackToParent: syncSingleOutline,
+      })
+    ),
+  };
+  const outlines = $selectedInstanceOutlines.get();
+  const index = outlines.findIndex((item) =>
+    areInstanceSelectorsEqual(item.selector, selector)
+  );
+  if (index === -1) {
+    $selectedInstanceOutlines.set([...outlines, outline]);
+  } else {
+    const nextOutlines = [...outlines];
+    nextOutlines[index] = outline;
+    $selectedInstanceOutlines.set(nextOutlines);
+  }
+  if (syncSingleOutline) {
+    $selectedInstanceOutline.set(outline);
+  }
 };
 
-const hideOutline = () => {
-  $selectedInstanceOutline.set(undefined);
+const hideOutline = (
+  selector: InstanceSelector,
+  syncSingleOutline: boolean
+) => {
+  $selectedInstanceOutlines.set(
+    $selectedInstanceOutlines
+      .get()
+      .filter(
+        (item) => areInstanceSelectorsEqual(item.selector, selector) === false
+      )
+  );
+  if (syncSingleOutline) {
+    $selectedInstanceOutline.set(undefined);
+  }
 };
 
 const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
@@ -101,12 +150,14 @@ const calculatePropertySizes = (element: HTMLElement) => {
 
 const subscribeSelectedInstance = (
   selectedInstanceSelector: Readonly<InstanceSelector>,
-  debounceEffect: (callback: () => void) => void
+  debounceEffect: (callback: () => void) => void,
+  syncSingleSelectionStores: boolean
 ) => {
   if (selectedInstanceSelector.length === 0) {
     return;
   }
 
+  const selector = [...selectedInstanceSelector];
   const instanceId = selectedInstanceSelector[0];
 
   let visibleElements = getVisibleElementsByInstanceSelector(
@@ -114,6 +165,9 @@ const subscribeSelectedInstance = (
   );
 
   const updateScroll = () => {
+    if (syncSingleSelectionStores === false) {
+      return;
+    }
     const bbox = getAllElementsBoundingBox(visibleElements);
     if (visibleElements.length === 0) {
       return;
@@ -157,13 +211,21 @@ const subscribeSelectedInstance = (
     if ($isResizingCanvas.get()) {
       return;
     }
-    setOutline(instanceId, visibleElements);
+    setOutline(
+      selector,
+      instanceId,
+      visibleElements,
+      syncSingleSelectionStores
+    );
   };
   // effect close to rendered element also catches dnd remounts
   // so actual state is always provided here
   showOutline();
 
   const updateStores = () => {
+    if (syncSingleSelectionStores === false) {
+      return;
+    }
     const elements = getAllElementsByInstanceSelector(selectedInstanceSelector);
 
     if (elements.length === 0) {
@@ -294,8 +356,8 @@ const subscribeSelectedInstance = (
 
   const unsubscribeIsResizingCanvas = $isResizingCanvas.subscribe(
     (isResizing) => {
-      if (isResizing && $selectedInstanceOutline.get()) {
-        return hideOutline();
+      if (isResizing) {
+        return hideOutline(selector, syncSingleSelectionStores);
       }
       showOutline();
     }
@@ -303,7 +365,7 @@ const subscribeSelectedInstance = (
 
   const unsubscribeScrollState = subscribeScrollState({
     onScrollStart() {
-      hideOutline();
+      hideOutline(selector, syncSingleSelectionStores);
     },
     onScrollEnd() {
       showOutline();
@@ -312,19 +374,23 @@ const subscribeSelectedInstance = (
 
   const unsubscribeWindowResize = subscribeWindowResize({
     onResizeStart() {
-      hideOutline();
+      hideOutline(selector, syncSingleSelectionStores);
     },
     onResizeEnd() {
       showOutline();
     },
   });
 
-  $selectedInstanceRenderState.set("mounted");
+  if (syncSingleSelectionStores) {
+    $selectedInstanceRenderState.set("mounted");
+  }
 
   return () => {
     clearTimeout(updateStoreTimeouHandle);
-    hideOutline();
-    $selectedInstanceRenderState.set("notMounted");
+    hideOutline(selector, syncSingleSelectionStores);
+    if (syncSingleSelectionStores) {
+      $selectedInstanceRenderState.set("notMounted");
+    }
     resizeObserver.disconnect();
     mutationObserver.disconnect();
     bodyStyleMutationObserver.disconnect();
@@ -340,23 +406,35 @@ const subscribeSelectedInstance = (
 export const subscribeSelected = (
   debounceEffect: (callback: () => void) => void
 ) => {
-  let previousSelectedInstance: readonly string[] | undefined = undefined;
-  let unsubscribeSelectedInstance = () => {};
+  let previousSelectedInstances: readonly InstanceSelector[] | undefined =
+    undefined;
+  let unsubscribeSelectedInstances = () => {};
 
-  const unsubscribe = $selectedInstanceSelector.subscribe(
-    (instanceSelector) => {
-      if (instanceSelector !== previousSelectedInstance) {
-        unsubscribeSelectedInstance();
-        unsubscribeSelectedInstance =
-          subscribeSelectedInstance(instanceSelector ?? [], debounceEffect) ??
-          (() => {});
-        previousSelectedInstance = instanceSelector;
+  const unsubscribe = $allSelectedInstanceSelectors.subscribe(
+    (instanceSelectors) => {
+      if (instanceSelectors !== previousSelectedInstances) {
+        unsubscribeSelectedInstances();
+        $selectedInstanceOutline.set(undefined);
+        $selectedInstanceOutlines.set([]);
+        const unsubscribes = instanceSelectors.map((instanceSelector) =>
+          subscribeSelectedInstance(
+            instanceSelector,
+            debounceEffect,
+            instanceSelectors.length === 1
+          )
+        );
+        unsubscribeSelectedInstances = () => {
+          for (const unsubscribe of unsubscribes) {
+            unsubscribe?.();
+          }
+        };
+        previousSelectedInstances = instanceSelectors;
       }
     }
   );
 
   return () => {
     unsubscribe();
-    unsubscribeSelectedInstance();
+    unsubscribeSelectedInstances();
   };
 };

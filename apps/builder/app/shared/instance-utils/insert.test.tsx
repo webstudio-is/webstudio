@@ -42,7 +42,7 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "../sync/sync-stores";
-import { $selectedInstanceSelector, getInstancePath } from "../nano-states";
+import { getInstancePath } from "../nano-states";
 import { selectPage } from "../nano-states";
 import { selectInstance } from "../nano-states";
 import { $selectedPageId } from "../nano-states/pages";
@@ -932,11 +932,7 @@ describe("find closest insertable", () => {
       })
     );
     $selectedPageId.set("homePageId");
-    $selectedInstanceSelector.set([
-      "collectionId[1]",
-      "collectionId",
-      "bodyId",
-    ]);
+    selectInstance(["collectionId[1]", "collectionId", "bodyId"]);
     $registeredComponentMetas.set(defaultMetasMap);
   });
 

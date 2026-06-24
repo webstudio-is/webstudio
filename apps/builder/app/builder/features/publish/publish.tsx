@@ -41,7 +41,7 @@ import {
   SmallIconButton,
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import { $selectedInstanceSelector } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { $selectedPageId } from "~/shared/nano-states";
 import {
   $authTokenPermissions,
@@ -810,9 +810,7 @@ const UpgradeBanner = ({ hasCustomDomains }: { hasCustomDomains: boolean }) => {
                       type="button"
                       onClick={() => {
                         $selectedPageId.set(navigate.pageId);
-                        $selectedInstanceSelector.set(
-                          navigate.instanceSelector
-                        );
+                        selectInstance(navigate.instanceSelector);
                         if (view === "pageSettings") {
                           setActiveSidebarPanel("pages");
                           $editingPageId.set(navigate.pageId);

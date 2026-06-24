@@ -11,7 +11,7 @@ import { $pages, $project } from "~/shared/sync/data-stores";
 import {
   $registeredComponentMetas,
   $selectedPageId,
-  $selectedInstanceSelector,
+  selectInstance,
 } from "../nano-states";
 import { html } from "./plugin-html";
 
@@ -33,7 +33,7 @@ test("paste html fragment", async () => {
     createDefaultPages({ rootInstanceId: "bodyId", homePageId: "pageId" })
   );
   $selectedPageId.set("pageId");
-  $selectedInstanceSelector.set(["divId", "bodyId"]);
+  selectInstance(["divId", "bodyId"]);
   expect(
     await html.onPaste?.(`
       <section>
@@ -71,7 +71,7 @@ test("ignore html without any tags", async () => {
     createDefaultPages({ rootInstanceId: "bodyId", homePageId: "pageId" })
   );
   $selectedPageId.set("pageId");
-  $selectedInstanceSelector.set(["divId", "bodyId"]);
+  selectInstance(["divId", "bodyId"]);
   expect(await html.onPaste?.(`It works`)).toEqual(false);
   expect($instances.get()).toEqual(data.instances);
 });
@@ -88,7 +88,7 @@ test("skip whitespace-only text nodes between element siblings", async () => {
     createDefaultPages({ rootInstanceId: "bodyId", homePageId: "pageId" })
   );
   $selectedPageId.set("pageId");
-  $selectedInstanceSelector.set(["divId", "bodyId"]);
+  selectInstance(["divId", "bodyId"]);
 
   // Regression test: whitespace between elements should not create separate text nodes
   // but the space should be preserved as part of one of the adjacent span instances
