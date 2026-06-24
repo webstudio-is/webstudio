@@ -38,6 +38,41 @@ const additionalShortcuts = [
     defaultHotkeys: ["←"],
   },
   {
+    name: "toggleNavigatorSelection",
+    label: "Toggle Navigator selection",
+    description: "Add or remove an item from Navigator selection",
+    category: "Navigator",
+    defaultHotkeys: ["meta+click", "ctrl+click"],
+  },
+  {
+    name: "rangeNavigatorSelection",
+    label: "Range-select Navigator items",
+    description: "Select a range of Navigator items",
+    category: "Navigator",
+    defaultHotkeys: ["shift+click"],
+  },
+  {
+    name: "extendNavigatorSelectionUp",
+    label: "Extend Navigator selection up",
+    description: "Extend Navigator selection up",
+    category: "Navigator",
+    defaultHotkeys: ["shift+arrowup"],
+  },
+  {
+    name: "extendNavigatorSelectionDown",
+    label: "Extend Navigator selection down",
+    description: "Extend Navigator selection down",
+    category: "Navigator",
+    defaultHotkeys: ["shift+arrowdown"],
+  },
+  {
+    name: "selectNavigatorSiblings",
+    label: "Select Navigator siblings",
+    description: "Select sibling Navigator items",
+    category: "Navigator",
+    defaultHotkeys: ["meta+a", "ctrl+a"],
+  },
+  {
     name: "expandAllNavigatorNodes",
     label: "Expand all items",
     description: "Click on arrow to expand or collapse all child items",
@@ -52,6 +87,29 @@ const additionalShortcuts = [
     defaultHotkeys: ["1-9"],
   },
 ];
+
+const leftCategoryOrder = ["General", "Top bar", "Panels", "Style panel"];
+const rightCategoryOrder = ["Navigator"];
+
+const getShortcutCategoryColumns = (categories: string[]) => {
+  const orderedCategories = new Set([
+    ...leftCategoryOrder,
+    ...rightCategoryOrder,
+  ]);
+  const remainingCategories = categories.filter(
+    (category) => orderedCategories.has(category) === false
+  );
+  return {
+    leftCategories: [
+      ...leftCategoryOrder.filter((category) => categories.includes(category)),
+      ...remainingCategories.filter((_, index) => index % 2 === 0),
+    ],
+    rightCategories: [
+      ...rightCategoryOrder.filter((category) => categories.includes(category)),
+      ...remainingCategories.filter((_, index) => index % 2 === 1),
+    ],
+  };
+};
 
 export const KeyboardShortcutsDialog = () => {
   const isOpen = useStore($isKeyboardShortcutsOpen);
@@ -86,24 +144,45 @@ export const KeyboardShortcutsDialog = () => {
   // Define popularity order for shortcuts within each category
   const shortcutOrder: Record<string, ValidCommandName[]> = {
     General: [
-      "cancelCurrentDrag",
       "openCommandPanel",
+      "undo",
+      "redo",
+      "save",
       "toggleUiHidden",
+      "cancelCurrentDrag",
       "openPublishDialog",
       "openExportDialog",
       "openKeyboardShortcuts",
     ],
-    "Top bar": ["toggleDesignMode", "togglePreviewMode", "toggleContentMode"],
+    "Top bar": [
+      "toggleDesignMode",
+      "toggleContentMode",
+      "togglePreviewMode",
+      "switchBreakpoint",
+      "openPublishDialog",
+    ],
     Navigator: [
+      "expandNavigatorItem",
+      "collapseNavigatorItem",
+      "expandAllNavigatorNodes",
+      "selectNavigatorSiblings",
+      "toggleNavigatorSelection",
+      "rangeNavigatorSelection",
+      "extendNavigatorSelectionUp",
+      "extendNavigatorSelectionDown",
       "copy",
       "cut",
       "paste",
       "duplicateInstance",
+      "deleteInstanceBuilder",
+      "moveInstanceUp",
+      "moveInstanceDown",
+      "moveInstanceOut",
+      "moveInstanceIntoPreviousSibling",
+      "editInstanceLabel",
+      "toggleShow",
       "wrap",
       "unwrap",
-      "expandNavigatorItem",
-      "collapseNavigatorItem",
-      "expandAllNavigatorNodes",
     ],
     Panels: [
       "toggleComponentsPanel",
@@ -172,6 +251,56 @@ export const KeyboardShortcutsDialog = () => {
     return 0;
   });
 
+  const { leftCategories, rightCategories } =
+    getShortcutCategoryColumns(sortedCategories);
+
+  const renderCategory = (category: ValidCategory) => {
+    const categoryCommands = groupedCommands[category];
+    return (
+      <Box key={category}>
+        <Text variant="titles" color="main" css={{ mb: theme.spacing[5] }}>
+          {category}
+        </Text>
+        <Grid gap={3} align="center" css={{ gridTemplateColumns: "10ch 1fr" }}>
+          {categoryCommands.map((command) => {
+            const hotkey = command.defaultHotkeys
+              ? filterHotkeyByOs(command.defaultHotkeys)
+              : undefined;
+
+            if (!hotkey) {
+              return;
+            }
+
+            return (
+              <Fragment key={command.name}>
+                <Box css={{ textAlign: "right" }}>
+                  <Box
+                    as="span"
+                    css={{
+                      paddingInline: 4,
+                      border: `1px solid ${theme.colors.borderNeutral}`,
+                      borderRadius: theme.borderRadius[2],
+                    }}
+                  >
+                    <Kbd
+                      value={hotkey.split("+") as string[]}
+                      color="moreSubtle"
+                    />
+                  </Box>
+                </Box>
+                <Text variant="regular" color="subtle">
+                  {("description" in command && command.description) ||
+                    command.label ||
+                    command.name}
+                </Text>
+              </Fragment>
+            );
+          })}
+        </Grid>
+      </Box>
+    );
+  };
+
   return (
     <Dialog
       open={isOpen}
@@ -187,64 +316,16 @@ export const KeyboardShortcutsDialog = () => {
         <DialogTitle>Keyboard shortcuts</DialogTitle>
         <ScrollArea>
           <Grid columns={2} gap={3} css={{ padding: theme.panel.padding }}>
-            {sortedCategories.map((category) => {
-              const categoryCommands = groupedCommands[category];
-              return (
-                <Box key={category}>
-                  <Text
-                    variant="titles"
-                    color="main"
-                    css={{ mb: theme.spacing[5] }}
-                  >
-                    {category}
-                  </Text>
-                  <Grid
-                    gap={3}
-                    align="center"
-                    css={{ gridTemplateColumns: "10ch 1fr" }}
-                  >
-                    {categoryCommands.map((command) => {
-                      const hotkey = command.defaultHotkeys
-                        ? filterHotkeyByOs(command.defaultHotkeys)
-                        : undefined;
-
-                      if (!hotkey) {
-                        return;
-                      }
-
-                      return (
-                        <Fragment key={command.name}>
-                          <Box css={{ textAlign: "right" }}>
-                            <Box
-                              as="span"
-                              css={{
-                                paddingInline: 4,
-                                border: `1px solid ${theme.colors.borderNeutral}`,
-                                borderRadius: theme.borderRadius[2],
-                              }}
-                            >
-                              <Kbd
-                                value={hotkey.split("+") as string[]}
-                                color="moreSubtle"
-                              />
-                            </Box>
-                          </Box>
-                          <Text variant="regular" color="subtle">
-                            {("description" in command &&
-                              command.description) ||
-                              command.label ||
-                              command.name}
-                          </Text>
-                        </Fragment>
-                      );
-                    })}
-                  </Grid>
-                </Box>
-              );
-            })}
+            <Grid gap={5}>{leftCategories.map(renderCategory)}</Grid>
+            <Grid gap={5}>{rightCategories.map(renderCategory)}</Grid>
           </Grid>
         </ScrollArea>
       </DialogContent>
     </Dialog>
   );
+};
+
+export const __testing__ = {
+  additionalShortcuts,
+  getShortcutCategoryColumns,
 };

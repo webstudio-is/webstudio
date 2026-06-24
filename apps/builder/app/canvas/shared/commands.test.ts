@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, test } from "vitest";
 import {
+  $allSelectedInstanceSelectors,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
   $textToolbar,
   selectInstance,
+  selectInstances,
 } from "~/shared/nano-states";
 import { emitCommand } from "./commands";
 
@@ -58,6 +60,18 @@ describe("escapeSelection", () => {
 
     emitCommand("escapeSelection");
 
+    expect($selectedInstanceSelector.get()).toBeUndefined();
+  });
+
+  test("clears multi-selection when not editing text", () => {
+    selectInstances([
+      ["box1", "body"],
+      ["box2", "body"],
+    ]);
+
+    emitCommand("escapeSelection");
+
+    expect($allSelectedInstanceSelectors.get()).toEqual([]);
     expect($selectedInstanceSelector.get()).toBeUndefined();
   });
 });

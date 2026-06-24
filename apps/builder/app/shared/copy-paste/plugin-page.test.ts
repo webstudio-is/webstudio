@@ -25,7 +25,7 @@ import {
 import {
   $editingPageId,
   $editingTemplateId,
-  $selectedInstanceSelector,
+  selectInstance,
   $selectedPageId,
 } from "../nano-states";
 import {
@@ -51,7 +51,7 @@ const resetBuildStores = () => {
   $assets.set(new Map());
   $editingPageId.set(undefined);
   $editingTemplateId.set(undefined);
-  $selectedInstanceSelector.set(undefined);
+  selectInstance(undefined);
   $selectedPageId.set(undefined);
 };
 
@@ -70,7 +70,7 @@ test("copies the selected page root from the copy plugin", () => {
   page.name = "Selected Page";
   $pages.set(pages);
   $selectedPageId.set("source-page");
-  $selectedInstanceSelector.set(["source-root"]);
+  selectInstance(["source-root"]);
   $instances.set(
     new Map<Instance["id"], Instance>([
       [

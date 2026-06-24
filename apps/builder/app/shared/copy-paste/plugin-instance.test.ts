@@ -15,6 +15,7 @@ import {
   collectionComponent,
   coreMetas,
   elementComponent,
+  blockTemplateComponent,
   portalComponent,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
@@ -31,7 +32,8 @@ import {
 } from "~/shared/sync/data-stores";
 import { instanceText } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { selectInstance } from "~/shared/nano-states";
+import { selectInstance, selectInstances } from "~/shared/nano-states";
+import { $allSelectedInstanceSelectors } from "~/shared/nano-states";
 import { $selectedPageId } from "../nano-states/pages";
 import * as instanceMutationUtils from "../instance-utils/mutation";
 import {
@@ -115,6 +117,247 @@ describe("copy and cut guards", () => {
     expect(instanceText.onCut?.()).toBeUndefined();
     expect($instances.get()).toEqual(instances);
   });
+
+  test("copies multiple selected roots into one combined fragment", () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "box1" },
+          { type: "id", value: "box2" },
+        ]),
+        createInstance("box1", "Box", []),
+        createInstance("box2", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstances([
+      ["box1", "body0"],
+      ["box2", "body0"],
+    ]);
+
+    const clipboardData = instanceText.onCopy?.();
+
+    expect(JSON.parse(clipboardData ?? "")).toMatchObject({
+      "@webstudio/instances/v0.1": {
+        rootInstanceIds: ["box1", "box2"],
+        fragment: {
+          children: [
+            { type: "id", value: "box1" },
+            { type: "id", value: "box2" },
+          ],
+          instances: [
+            { id: "box1", type: "instance", component: "Box", children: [] },
+            { id: "box2", type: "instance", component: "Box", children: [] },
+          ],
+        },
+      },
+    });
+  });
+
+  test("pastes multiple copied roots in order and selects pasted roots", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "box1" },
+          { type: "id", value: "box2" },
+        ]),
+        createInstance("box1", "Box", [{ type: "id", value: "child" }]),
+        createInstance("child", "Box", []),
+        createInstance("box2", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstances([
+      ["box1", "body0"],
+      ["box2", "body0"],
+    ]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstance(["body0"]);
+
+    expect(await instanceText.onPaste?.(clipboardData)).toBe(true);
+
+    const bodyChildren = $instances.get().get("body0")?.children;
+    const pastedRootIds = bodyChildren?.slice(2).map((child) => child.value);
+    expect(bodyChildren).toEqual([
+      { type: "id", value: "box1" },
+      { type: "id", value: "box2" },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect(pastedRootIds?.[0]).not.toBe("box1");
+    expect(pastedRootIds?.[1]).not.toBe("box2");
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      [pastedRootIds?.[0], "body0"],
+      [pastedRootIds?.[1], "body0"],
+    ]);
+  });
+
+  test("sanitizes multi-root clipboard root ids before paste", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "box1" },
+          { type: "id", value: "box2" },
+        ]),
+        createInstance("box1", "Box", []),
+        createInstance("box2", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstances([
+      ["box1", "body0"],
+      ["box2", "body0"],
+    ]);
+    const clipboardData = JSON.parse(instanceText.onCopy?.() ?? "");
+    clipboardData["@webstudio/instances/v0.1"].rootInstanceIds = [
+      "box1",
+      "child",
+      "missing",
+      "box1",
+    ];
+    selectInstance(["body0"]);
+
+    expect(await instanceText.onPaste?.(JSON.stringify(clipboardData))).toBe(
+      true
+    );
+
+    const bodyChildren = $instances.get().get("body0")?.children;
+    expect(bodyChildren).toEqual([
+      { type: "id", value: "box1" },
+      { type: "id", value: "box2" },
+      { type: "id", value: expect.any(String) },
+    ]);
+
+    clipboardData["@webstudio/instances/v0.1"].rootInstanceIds = ["missing"];
+    expect(await instanceText.onPaste?.(JSON.stringify(clipboardData))).toBe(
+      false
+    );
+    expect($instances.get().get("body0")?.children).toEqual(bodyChildren);
+  });
+
+  test("writes only copyable roots when multi-copy skips selected roots", () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "box1" },
+          { type: "id", value: "template" },
+        ]),
+        createInstance("box1", "Box", []),
+        createInstance("template", blockTemplateComponent, []),
+      ] satisfies Instance[])
+    );
+    selectInstances([
+      ["template", "body0"],
+      ["box1", "body0"],
+    ]);
+
+    const clipboardData = instanceText.onCopy?.();
+
+    expect(JSON.parse(clipboardData ?? "")).toMatchObject({
+      "@webstudio/instances/v0.1": {
+        rootInstanceIds: ["box1"],
+      },
+    });
+  });
+
+  test("does not copy when no multi-selected root is copyable", () => {
+    const instances: Instances = toMap([
+      createInstance("body0", "Body", [
+        { type: "id", value: "template1" },
+        { type: "id", value: "template2" },
+      ]),
+      createInstance("template1", blockTemplateComponent, []),
+      createInstance("template2", blockTemplateComponent, []),
+    ] satisfies Instance[]);
+    $instances.set(instances);
+    selectInstances([
+      ["template1", "body0"],
+      ["template2", "body0"],
+    ]);
+
+    expect(instanceText.onCopy?.()).toBeUndefined();
+    expect($instances.get()).toEqual(instances);
+  });
+
+  test("cuts multiple selected roots into one combined fragment and removes them", () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "box1" },
+          { type: "id", value: "box2" },
+        ]),
+        createInstance("box1", "Box", []),
+        createInstance("box2", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstances([
+      ["box1", "body0"],
+      ["box2", "body0"],
+    ]);
+
+    const clipboardData = instanceText.onCut?.();
+
+    expect(JSON.parse(clipboardData ?? "")).toMatchObject({
+      "@webstudio/instances/v0.1": {
+        rootInstanceIds: ["box1", "box2"],
+      },
+    });
+    expect($instances.get().get("body0")?.children).toEqual([]);
+    expect($instances.get().has("box1")).toBe(false);
+    expect($instances.get().has("box2")).toBe(false);
+    expect($allSelectedInstanceSelectors.get()).toEqual([]);
+  });
+
+  test("cuts only copyable roots when multi-cut skips selected roots", () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "box1" },
+          { type: "id", value: "template" },
+        ]),
+        createInstance("box1", "Box", []),
+        createInstance("template", blockTemplateComponent, []),
+      ] satisfies Instance[])
+    );
+    selectInstances([
+      ["template", "body0"],
+      ["box1", "body0"],
+    ]);
+
+    const clipboardData = instanceText.onCut?.();
+
+    expect(JSON.parse(clipboardData ?? "")).toMatchObject({
+      "@webstudio/instances/v0.1": {
+        rootInstanceIds: ["box1"],
+      },
+    });
+    expect($instances.get().get("body0")?.children).toEqual([
+      { type: "id", value: "template" },
+    ]);
+    expect($instances.get().has("box1")).toBe(false);
+    expect($instances.get().has("template")).toBe(true);
+    expect($allSelectedInstanceSelectors.get()).toEqual([]);
+  });
+
+  test("does not cut when no multi-selected root is copyable", () => {
+    const instances: Instances = toMap([
+      createInstance("body0", "Body", [
+        { type: "id", value: "template1" },
+        { type: "id", value: "template2" },
+      ]),
+      createInstance("template1", blockTemplateComponent, []),
+      createInstance("template2", blockTemplateComponent, []),
+    ] satisfies Instance[]);
+    $instances.set(instances);
+    selectInstances([
+      ["template1", "body0"],
+      ["template2", "body0"],
+    ]);
+
+    expect(instanceText.onCut?.()).toBeUndefined();
+    expect($instances.get()).toEqual(instances);
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["template1", "body0"],
+      ["template2", "body0"],
+    ]);
+  });
 });
 
 describe("paste target", () => {
@@ -164,6 +407,127 @@ describe("paste target", () => {
     expect(instancesDifference).toEqual(
       toMap([createInstance(newBox1, "Box", [])])
     );
+  });
+
+  test("uses multi-selection paste target after the last selected sibling for old single-root clipboard data", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "source" },
+          { type: "id", value: "box1" },
+          { type: "id", value: "box2" },
+          { type: "id", value: "tail" },
+        ]),
+        createInstance("source", "Box", []),
+        createInstance("box1", "Box", []),
+        createInstance("box2", "Box", []),
+        createInstance("tail", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["source", "body0"]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstances([
+      ["box1", "body0"],
+      ["box2", "body0"],
+    ]);
+
+    await instanceText.onPaste?.(clipboardData);
+
+    const bodyChildren = $instances.get().get("body0")?.children;
+    expect(bodyChildren).toEqual([
+      { type: "id", value: "source" },
+      { type: "id", value: "box1" },
+      { type: "id", value: "box2" },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "tail" },
+    ]);
+    const pastedId = bodyChildren?.[3]?.value;
+    expect(pastedId).not.toBe("source");
+    expect($allSelectedInstanceSelectors.get()).toEqual([[pastedId, "body0"]]);
+  });
+
+  test("uses multi-selection paste target after the last selected sibling for multi-root clipboard data", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "source1" },
+          { type: "id", value: "source2" },
+          { type: "id", value: "box1" },
+          { type: "id", value: "box2" },
+          { type: "id", value: "tail" },
+        ]),
+        createInstance("source1", "Box", []),
+        createInstance("source2", "Box", []),
+        createInstance("box1", "Box", []),
+        createInstance("box2", "Box", []),
+        createInstance("tail", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstances([
+      ["source1", "body0"],
+      ["source2", "body0"],
+    ]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstances([
+      ["box1", "body0"],
+      ["box2", "body0"],
+    ]);
+
+    await instanceText.onPaste?.(clipboardData);
+
+    const bodyChildren = $instances.get().get("body0")?.children;
+    expect(bodyChildren).toEqual([
+      { type: "id", value: "source1" },
+      { type: "id", value: "source2" },
+      { type: "id", value: "box1" },
+      { type: "id", value: "box2" },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "tail" },
+    ]);
+  });
+
+  test("uses lowest common ancestor paste target for mixed-parent multi-selection", async () => {
+    $instances.set(
+      toMap([
+        createInstance("body0", "Body", [
+          { type: "id", value: "source" },
+          { type: "id", value: "section" },
+          { type: "id", value: "footer" },
+        ]),
+        createInstance("source", "Box", []),
+        createInstance("section", "Box", [
+          { type: "id", value: "group" },
+          { type: "id", value: "aside" },
+          { type: "id", value: "tail" },
+        ]),
+        createInstance("group", "Box", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+        createInstance("aside", "Box", []),
+        createInstance("tail", "Box", []),
+        createInstance("footer", "Box", []),
+      ] satisfies Instance[])
+    );
+    selectInstance(["source", "body0"]);
+    const clipboardData = instanceText.onCopy?.() ?? "";
+    selectInstances([
+      ["box", "group", "section", "body0"],
+      ["aside", "section", "body0"],
+    ]);
+
+    await instanceText.onPaste?.(clipboardData);
+
+    expect($instances.get().get("section")?.children).toEqual([
+      { type: "id", value: "group" },
+      { type: "id", value: "aside" },
+      { type: "id", value: "tail" },
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect($instances.get().get("body0")?.children).toEqual([
+      { type: "id", value: "source" },
+      { type: "id", value: "section" },
+      { type: "id", value: "footer" },
+    ]);
   });
 
   test("pastes into shared slot content", async () => {
@@ -599,7 +963,13 @@ describe("paste target", () => {
     );
     selectInstance(["box", "fragment", "slot1", "body0"]);
 
-    expect(instanceText.onCut?.()).toBeDefined();
+    const clipboardData = instanceText.onCut?.();
+    expect(JSON.parse(clipboardData ?? "")).toMatchObject({
+      "@webstudio/instance/v0.1": {
+        instanceSelector: ["box", "fragment", "slot1", "body0"],
+        children: [{ type: "id", value: "box" }],
+      },
+    });
 
     expectSlotsShareFragment($instances.get(), ["slot1", "slot2"]);
     expect($instances.get().get("slot1")?.children).toEqual([
@@ -633,7 +1003,13 @@ describe("paste target", () => {
     );
     selectInstance(["box", "slot1", "body0"]);
 
-    expect(instanceText.onCut?.()).toBeDefined();
+    const clipboardData = instanceText.onCut?.();
+    expect(JSON.parse(clipboardData ?? "")).toMatchObject({
+      "@webstudio/instance/v0.1": {
+        instanceSelector: ["box", "slot1", "body0"],
+        children: [{ type: "id", value: "box" }],
+      },
+    });
 
     const fragmentId = expectSlotsShareFragment($instances.get(), [
       "slot1",
@@ -667,7 +1043,13 @@ describe("paste target", () => {
     );
     selectInstance(["box", "div", "fragment", "slot1", "body0"]);
 
-    expect(instanceText.onCut?.()).toBeDefined();
+    const clipboardData = instanceText.onCut?.();
+    expect(JSON.parse(clipboardData ?? "")).toMatchObject({
+      "@webstudio/instance/v0.1": {
+        instanceSelector: ["box", "div", "fragment", "slot1", "body0"],
+        children: [{ type: "id", value: "box" }],
+      },
+    });
 
     expect($instances.get().get("slot1")?.children).toEqual([
       { type: "id", value: "fragment" },
@@ -701,7 +1083,13 @@ describe("paste target", () => {
     );
     selectInstance(["box", "fragment", "slot1", "body0"]);
 
-    expect(instanceText.onCut?.()).toBeDefined();
+    const clipboardData = instanceText.onCut?.();
+    expect(JSON.parse(clipboardData ?? "")).toMatchObject({
+      "@webstudio/instance/v0.1": {
+        instanceSelector: ["box", "fragment", "slot1", "body0"],
+        children: [{ type: "id", value: "box" }],
+      },
+    });
 
     expect($instances.get().get("slot1")?.children).toEqual([
       { type: "id", value: "fragment" },
@@ -1030,9 +1418,9 @@ test("prevent pasting portal into copy of it", async () => {
     createInstance("fragment", "Fragment", []),
   ]);
   $instances.set(instances);
-  selectInstance(["box", "body"]);
+  selectInstance(["portal1", "body"]);
   const clipboardData = instanceText.onCopy?.() ?? "";
-  selectInstance(["portal", "body"]);
+  selectInstance(["portal2", "body"]);
   await instanceText.onPaste?.(clipboardData);
   expect($instances.get()).toEqual(instances);
 });
@@ -1074,6 +1462,44 @@ test("insert portal into its sibling", async () => {
   );
 });
 
+test("inserts multi-root clipboard into descendant of copied non-portal root", async () => {
+  $instances.set(
+    toMap([
+      createInstance("body", "Body", [
+        { type: "id", value: "portal" },
+        { type: "id", value: "box" },
+      ]),
+      createInstance("portal", portalComponent, [
+        { type: "id", value: "fragment" },
+      ]),
+      createInstance("fragment", "Fragment", []),
+      createInstance("box", "Box", [{ type: "id", value: "target" }]),
+      createInstance("target", "Box", []),
+    ])
+  );
+  selectInstances([
+    ["portal", "body"],
+    ["box", "body"],
+  ]);
+  const clipboardData = instanceText.onCopy?.() ?? "";
+  selectInstance(["target", "box", "body"]);
+
+  await instanceText.onPaste?.(clipboardData);
+
+  const targetChildren = $instances.get().get("target")?.children;
+  const [pastedPortalId, pastedBoxId] =
+    targetChildren?.map((child) => (child.type === "id" ? child.value : "")) ??
+    [];
+  expect(targetChildren).toEqual([
+    { type: "id", value: expectString },
+    { type: "id", value: expectString },
+  ]);
+  expect($instances.get().get(pastedPortalId ?? "")?.component).toBe(
+    portalComponent
+  );
+  expect($instances.get().get(pastedBoxId ?? "")?.component).toBe("Box");
+});
+
 test("insert into portal fragment when portal is a target", async () => {
   $instances.set(
     toMap([
@@ -1112,6 +1538,7 @@ test("insert into portal fragment when portal is a target", async () => {
   );
 
   // fragment already exists
+  selectInstance(["portal", "body"]);
   await instanceText.onPaste?.(clipboardData);
   expect($instances.get()).toEqual(
     toMap([

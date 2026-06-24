@@ -12,10 +12,7 @@ import {
   $styleSources,
   $styleSourceSelections,
 } from "~/shared/sync/data-stores";
-import {
-  $selectedPageId,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 
 const top: StyleDecl = {
   breakpointId: "base",
@@ -92,7 +89,7 @@ $pages.set(
   })
 );
 $selectedPageId.set("homePageId");
-$selectedInstanceSelector.set(["box"]);
+selectInstance(["box"]);
 
 export const Inset = () => {
   return (

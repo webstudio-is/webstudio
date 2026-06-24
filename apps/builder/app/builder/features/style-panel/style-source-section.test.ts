@@ -9,10 +9,7 @@ import {
   $styles,
 } from "~/shared/sync/data-stores";
 import { addStyleSourceToInstance, __testing__ } from "./style-source-section";
-import {
-  $selectedPageId,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 
 const { duplicateStyleSource, getComponentStates } = __testing__;
 
@@ -158,7 +155,7 @@ test("add style source to instance", () => {
     ])
   );
   $selectedPageId.set("");
-  $selectedInstanceSelector.set(["body"]);
+  selectInstance(["body"]);
   $styleSources.set(new Map([["local1", { id: "local1", type: "local" }]]));
   $styleSourceSelections.set(new Map());
   $selectedStyleSources.set(new Map());
@@ -195,7 +192,7 @@ test("duplicate locked style source creates an unlocked copy", () => {
     ])
   );
   $selectedPageId.set("");
-  $selectedInstanceSelector.set(["body"]);
+  selectInstance(["body"]);
   $styleSources.set(
     new Map([
       [

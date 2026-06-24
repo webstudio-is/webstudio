@@ -29,10 +29,7 @@ import {
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { setProperty } from "./use-style-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import {
-  $selectedPageId,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 
 setEnv("*");
 registerContainers();
@@ -41,7 +38,7 @@ beforeEach(() => {
   $breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
   $selectedBreakpointId.set("base");
   $selectedPageId.set("");
-  $selectedInstanceSelector.set(["box"]);
+  selectInstance(["box"]);
   $instances.set(
     new Map([
       ["box", { type: "instance", id: "box", component: "Box", children: [] }],

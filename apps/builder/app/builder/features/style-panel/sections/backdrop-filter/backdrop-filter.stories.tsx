@@ -18,10 +18,7 @@ import {
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import {
-  $selectedPageId,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { Section } from "./backdrop-filter";
 
 registerContainers();
@@ -43,7 +40,7 @@ $pages.set(
   })
 );
 $selectedPageId.set("homePageId");
-$selectedInstanceSelector.set(["box"]);
+selectInstance(["box"]);
 
 const blurBackdropFilter: StyleDecl = {
   breakpointId: "base",

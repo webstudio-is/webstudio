@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $pages } from "../sync/data-stores";
-import { $selectedInstanceSelector, selectInstance } from "./instances";
+import {
+  $allSelectedInstanceSelectors,
+  $selectedInstanceSelector,
+  selectInstance,
+  selectInstances,
+} from "./instances";
 import { $selectedPageId, selectPage } from "./pages";
 
 beforeEach(() => {
@@ -50,5 +55,17 @@ describe("selectPage", () => {
 
     expect($selectedPageId.get()).toBe("home-page");
     expect($selectedInstanceSelector.get()).toEqual(["box-id", "body-id"]);
+  });
+
+  test("clears multi-selection when selected page id changes", () => {
+    selectInstances([
+      ["box-id", "body-id"],
+      ["heading-id", "body-id"],
+    ]);
+
+    $selectedPageId.set("other-page");
+
+    expect($allSelectedInstanceSelectors.get()).toEqual([]);
+    expect($selectedInstanceSelector.get()).toBeUndefined();
   });
 });

@@ -18,10 +18,7 @@ import {
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { BackgroundContent as BackgroundContentPanel } from "./background-content";
-import {
-  $selectedPageId,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { useComputedStyleDecl } from "../../shared/model";
 import { setRepeatedStyleItem } from "../../shared/repeated-style";
 import { type StyleValue } from "@webstudio-is/css-engine";
@@ -59,7 +56,7 @@ $styles.set(
 );
 
 $selectedPageId.set("homePageId");
-$selectedInstanceSelector.set(["box"]);
+selectInstance(["box"]);
 
 const BackgroundStory = ({ styleValue }: { styleValue: StyleValue }) => {
   const backgroundImage = useComputedStyleDecl("background-image");

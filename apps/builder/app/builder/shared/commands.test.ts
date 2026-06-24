@@ -1,8 +1,14 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import type { Instance, PageTemplate } from "@webstudio-is/sdk";
+import {
+  blockTemplateComponent,
+  type Instance,
+  type PageTemplate,
+} from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
 import {
+  $allSelectedInstanceSelectors,
+  $editingItemSelector,
   $editingPageId,
   $editingTemplateId,
   $folderIdToDelete,
@@ -12,6 +18,7 @@ import {
   $selectedInstanceSelector,
   $templateIdToDelete,
   selectInstance,
+  selectInstances,
   selectPage,
 } from "~/shared/nano-states";
 import {
@@ -33,11 +40,21 @@ import {
   getPageActionTarget,
 } from "~/shared/page-action-target";
 import { expectSlotsShareFragment } from "~/shared/slot-test-utils";
-import { __testing__, emitCommand } from "./commands";
+import { __testing__, emitCommand, subscribeCommands } from "./commands";
+import { $activeInspectorPanel } from "./nano-states";
 
-const { canRunDesignModeCommand, guardDesignModeCommand } = __testing__;
+const {
+  canRunDesignModeCommand,
+  canRunDesignOrContentModeCommand,
+  guardDesignModeCommand,
+  guardDesignOrContentModeCommand,
+} = __testing__;
 
 registerContainers();
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 const resetPageActionStores = () => {
   $editingPageId.set(undefined);
@@ -135,6 +152,29 @@ describe("canRunDesignModeCommand", () => {
   });
 });
 
+describe("canRunDesignOrContentModeCommand", () => {
+  test("allows commands in design and content modes only", () => {
+    expect(
+      canRunDesignOrContentModeCommand({
+        isContentMode: false,
+        isDesignMode: true,
+      })
+    ).toBe(true);
+    expect(
+      canRunDesignOrContentModeCommand({
+        isContentMode: true,
+        isDesignMode: false,
+      })
+    ).toBe(true);
+    expect(
+      canRunDesignOrContentModeCommand({
+        isContentMode: false,
+        isDesignMode: false,
+      })
+    ).toBe(false);
+  });
+});
+
 describe("guardDesignModeCommand", () => {
   test("allows design mode commands without showing a message", () => {
     const messages: string[] = [];
@@ -160,6 +200,173 @@ describe("guardDesignModeCommand", () => {
       })
     ).toBe(false);
     expect(messages).toEqual(["Blocked"]);
+  });
+});
+
+describe("guardDesignOrContentModeCommand", () => {
+  test("allows content mode commands without showing a message", () => {
+    const messages: string[] = [];
+
+    expect(
+      guardDesignOrContentModeCommand({
+        isContentMode: true,
+        isDesignMode: false,
+        message: "Blocked",
+        toastInfo: (message) => messages.push(message),
+      })
+    ).toBe(true);
+    expect(messages).toEqual([]);
+  });
+
+  test("blocks commands outside design and content modes", () => {
+    const messages: string[] = [];
+
+    expect(
+      guardDesignOrContentModeCommand({
+        isContentMode: false,
+        isDesignMode: false,
+        message: "Blocked",
+        toastInfo: (message) => messages.push(message),
+      })
+    ).toBe(false);
+    expect(messages).toEqual(["Blocked"]);
+  });
+});
+
+describe("single-instance-only commands", () => {
+  const setupMultiSelectionProject = () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "box1" },
+            { type: "id", value: "box2" },
+          ],
+        },
+      ],
+      [
+        "box1",
+        {
+          type: "instance",
+          id: "box1",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "box2",
+        {
+          type: "instance",
+          id: "box2",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstances([
+      ["box1", "body"],
+      ["box2", "body"],
+    ]);
+  };
+
+  test("does not open settings or style source input for multi-selection", () => {
+    setupMultiSelectionProject();
+    $activeInspectorPanel.set("style");
+
+    emitCommand("openSettingsPanel");
+    emitCommand("focusStyleSources");
+
+    expect($activeInspectorPanel.get()).toBe("style");
+  });
+
+  test("does not toggle visibility or edit label for multi-selection", () => {
+    setupMultiSelectionProject();
+
+    emitCommand("toggleShow");
+    emitCommand("editInstanceLabel");
+
+    expect($props.get()).toEqual(new Map());
+    expect($editingItemSelector.get()).toBeUndefined();
+  });
+});
+
+describe("cut", () => {
+  test("cuts multiple selected sibling instances through command", async () => {
+    resetDataStores();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText },
+    });
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "box1" },
+            { type: "id", value: "box2" },
+          ],
+        },
+      ],
+      [
+        "box1",
+        {
+          type: "instance",
+          id: "box1",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "box2",
+        {
+          type: "instance",
+          id: "box2",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstances([
+      ["box1", "body"],
+      ["box2", "body"],
+    ]);
+
+    emitCommand("cut");
+    await Promise.resolve();
+
+    expect(JSON.parse(writeText.mock.calls[0]?.[0] ?? "")).toMatchObject({
+      "@webstudio/instances/v0.1": {
+        rootInstanceIds: ["box1", "box2"],
+      },
+    });
+    expect($instances.get().get("body")?.children).toEqual([]);
+    expect($instances.get().has("box1")).toBe(false);
+    expect($instances.get().has("box2")).toBe(false);
   });
 });
 
@@ -542,6 +749,259 @@ describe("duplicateInstance", () => {
       "body",
     ]);
   });
+
+  test("duplicates multiple selected sibling instances", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "box1" },
+            { type: "id", value: "box2" },
+          ],
+        },
+      ],
+      [
+        "box1",
+        {
+          type: "instance",
+          id: "box1",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "box2",
+        {
+          type: "instance",
+          id: "box2",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstances([
+      ["box1", "body"],
+      ["box2", "body"],
+    ]);
+
+    emitCommand("duplicateInstance");
+
+    const bodyChildren = $instances.get().get("body")?.children;
+    const duplicateIds = [bodyChildren?.[1]?.value, bodyChildren?.[3]?.value];
+    expect(bodyChildren).toEqual([
+      { type: "id", value: "box1" },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "box2" },
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect(duplicateIds[0]).not.toBe("box1");
+    expect(duplicateIds[1]).not.toBe("box2");
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      [duplicateIds[0], "body"],
+      [duplicateIds[1], "body"],
+    ]);
+  });
+
+  test("duplicates multiple selected sibling instances through keyboard shortcut", () => {
+    resetDataStores();
+    const unsubscribe = subscribeCommands();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "box1" },
+            { type: "id", value: "box2" },
+          ],
+        },
+      ],
+      [
+        "box1",
+        {
+          type: "instance",
+          id: "box1",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "box2",
+        {
+          type: "instance",
+          id: "box2",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstances([
+      ["box1", "body"],
+      ["box2", "body"],
+    ]);
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "d",
+        metaKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+
+    const bodyChildren = $instances.get().get("body")?.children;
+    const duplicateIds = [bodyChildren?.[1]?.value, bodyChildren?.[3]?.value];
+    expect(bodyChildren).toEqual([
+      { type: "id", value: "box1" },
+      { type: "id", value: expect.any(String) },
+      { type: "id", value: "box2" },
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect(duplicateIds[0]).not.toBe("box1");
+    expect(duplicateIds[1]).not.toBe("box2");
+    unsubscribe();
+  });
+
+  test("duplicates only detachable roots when multi-selection includes non-detachable roots", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "template" },
+            { type: "id", value: "box" },
+          ],
+        },
+      ],
+      [
+        "template",
+        {
+          type: "instance",
+          id: "template",
+          component: blockTemplateComponent,
+          children: [],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstances([
+      ["template", "body"],
+      ["box", "body"],
+    ]);
+
+    emitCommand("duplicateInstance");
+
+    const bodyChildren = $instances.get().get("body")?.children;
+    const duplicateId = bodyChildren?.[2]?.value;
+    expect(bodyChildren).toEqual([
+      { type: "id", value: "template" },
+      { type: "id", value: "box" },
+      { type: "id", value: expect.any(String) },
+    ]);
+    expect(duplicateId).not.toBe("template");
+    expect(duplicateId).not.toBe("box");
+    expect($instances.get().get("template")).toEqual(instances.get("template"));
+    expect($selectedInstanceSelector.get()).toEqual([duplicateId, "body"]);
+  });
+
+  test("does not duplicate when no multi-selected root is detachable", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "template1" },
+            { type: "id", value: "template2" },
+          ],
+        },
+      ],
+      [
+        "template1",
+        {
+          type: "instance",
+          id: "template1",
+          component: blockTemplateComponent,
+          children: [],
+        },
+      ],
+      [
+        "template2",
+        {
+          type: "instance",
+          id: "template2",
+          component: blockTemplateComponent,
+          children: [],
+        },
+      ],
+    ]);
+    const pages = createDefaultPages({
+      homePageId: "page-id",
+      rootInstanceId: "body",
+    });
+    $pages.set(pages);
+    $selectedPageId.set(pages.homePageId);
+    $project.set({ id: "project-id" } as Project);
+    $instances.set(instances);
+    selectInstances([
+      ["template1", "body"],
+      ["template2", "body"],
+    ]);
+
+    emitCommand("duplicateInstance");
+
+    expect($instances.get()).toEqual(instances);
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["template1", "body"],
+      ["template2", "body"],
+    ]);
+  });
 });
 
 describe("deleteInstanceBuilder", () => {
@@ -575,9 +1035,213 @@ describe("deleteInstanceBuilder", () => {
     expect($instances.get()).toEqual(instances);
     expect($selectedInstanceSelector.get()).toBeUndefined();
   });
+
+  test("deletes multiple selected sibling instances", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "box1" },
+            { type: "id", value: "box2" },
+          ],
+        },
+      ],
+      [
+        "box1",
+        {
+          type: "instance",
+          id: "box1",
+          component: "Box",
+          children: [],
+        },
+      ],
+      [
+        "box2",
+        {
+          type: "instance",
+          id: "box2",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]);
+    $instances.set(instances);
+    selectInstances([
+      ["box1", "body"],
+      ["box2", "body"],
+    ]);
+
+    emitCommand("deleteInstanceBuilder");
+
+    expect($instances.get().get("body")?.children).toEqual([]);
+    expect($instances.get().has("box1")).toBe(false);
+    expect($instances.get().has("box2")).toBe(false);
+    expect($allSelectedInstanceSelectors.get()).toEqual([]);
+  });
+
+  test("deletes only detachable roots when multi-selection includes non-detachable roots", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "template" },
+            { type: "id", value: "box" },
+          ],
+        },
+      ],
+      [
+        "template",
+        {
+          type: "instance",
+          id: "template",
+          component: blockTemplateComponent,
+          children: [],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]);
+    $instances.set(instances);
+    selectInstances([
+      ["template", "body"],
+      ["box", "body"],
+    ]);
+
+    emitCommand("deleteInstanceBuilder");
+
+    expect($instances.get().get("body")?.children).toEqual([
+      { type: "id", value: "template" },
+    ]);
+    expect($instances.get().has("template")).toBe(true);
+    expect($instances.get().has("box")).toBe(false);
+    expect($allSelectedInstanceSelectors.get()).toEqual([]);
+  });
+
+  test("does not delete when no multi-selected root is detachable", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [
+            { type: "id", value: "template1" },
+            { type: "id", value: "template2" },
+          ],
+        },
+      ],
+      [
+        "template1",
+        {
+          type: "instance",
+          id: "template1",
+          component: blockTemplateComponent,
+          children: [],
+        },
+      ],
+      [
+        "template2",
+        {
+          type: "instance",
+          id: "template2",
+          component: blockTemplateComponent,
+          children: [],
+        },
+      ],
+    ]);
+    $instances.set(instances);
+    selectInstances([
+      ["template1", "body"],
+      ["template2", "body"],
+    ]);
+
+    emitCommand("deleteInstanceBuilder");
+
+    expect($instances.get()).toEqual(instances);
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["template1", "body"],
+      ["template2", "body"],
+    ]);
+  });
 });
 
 describe("move instance commands", () => {
+  test("extends instance selection with shift arrows when navigator is not focused", () => {
+    setupMoveInstanceProject();
+    const unsubscribe = subscribeCommands();
+    selectInstance(["box", "body"]);
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["box", "body"],
+      ["heading", "body"],
+    ]);
+
+    document.body.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["box", "body"],
+      ["heading", "body"],
+      ["paragraph", "body"],
+    ]);
+
+    unsubscribe();
+  });
+
+  test("selects all siblings with command-a when navigator is not focused", () => {
+    setupMoveInstanceProject();
+    const unsubscribe = subscribeCommands();
+    selectInstance(["heading", "body"]);
+
+    document.body.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "a",
+        metaKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["box", "body"],
+      ["heading", "body"],
+      ["paragraph", "body"],
+    ]);
+    unsubscribe();
+  });
+
   test("moves the selected instance above the previous sibling", () => {
     setupMoveInstanceProject();
     selectInstance(["heading", "body"]);

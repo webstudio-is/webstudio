@@ -66,7 +66,10 @@ import {
 } from "~/shared/sync/data-stores";
 import { $pointerPosition } from "../awareness";
 import { $temporaryInstances } from "../nano-states";
-import { $selectedInstanceSelector } from "../nano-states/instances";
+import {
+  $selectedInstanceSelector,
+  selectInstance,
+} from "../nano-states/instances";
 import { $selectedPageId } from "../nano-states/pages";
 import { $systemDataByPage } from "../system";
 import { $resourcesCache } from "../resources";
@@ -194,7 +197,7 @@ class SelectedPageAndInstanceSyncObject {
       return false;
     }
     $selectedPageId.set(selectedPageId);
-    $selectedInstanceSelector.set(selectedInstanceSelector);
+    selectInstance(selectedInstanceSelector);
     return true;
   }
 }

@@ -22,6 +22,10 @@ type InstanceOutline = {
   rect: DOMRect;
 };
 
+export type SelectedInstanceOutline = InstanceOutline & {
+  selector: InstanceSelector;
+};
+
 export type BlockChildOutline = {
   selector: InstanceSelector;
   hoveredSelector: InstanceSelector;
@@ -49,6 +53,8 @@ const getInstanceOutlineAndInstance = (
 export const $selectedInstanceOutline = atom<undefined | InstanceOutline>(
   undefined
 );
+
+export const $selectedInstanceOutlines = atom<SelectedInstanceOutline[]>([]);
 
 export const $selectedInstanceOutlineAndInstance = computed(
   [$instances, $selectedInstanceOutline],

@@ -3,6 +3,7 @@ import {
   $selectedInstanceSelector,
   $selectedPageId,
   selectInstance,
+  selectInstances,
 } from "../nano-states";
 import { __testing__ } from "./sync-stores";
 
@@ -85,6 +86,33 @@ describe("SelectedPageAndInstanceSyncObject", () => {
 
     expect($selectedPageId.get()).toBe("page-after");
     expect($selectedInstanceSelector.get()).toBeUndefined();
+  });
+
+  test("sends undefined instance selector when multiple instances are selected", async () => {
+    const syncObject = new SelectedPageAndInstanceSyncObject();
+    const sendTransaction = vi.fn();
+    syncObject.subscribe(sendTransaction, new AbortController().signal);
+
+    await waitForBatchedStore();
+    sendTransaction.mockClear();
+
+    $selectedPageId.set("page-a");
+    selectInstances([
+      ["box-a", "body-a"],
+      ["heading-a", "body-a"],
+    ]);
+
+    await waitForBatchedStore();
+
+    expect(sendTransaction).toHaveBeenCalledTimes(1);
+    expect(sendTransaction).toHaveBeenCalledWith({
+      id: expect.any(String),
+      object: "selectedPageAndInstance",
+      payload: {
+        selectedPageId: "page-a",
+        selectedInstanceSelector: undefined,
+      },
+    });
   });
 
   test("malformed remote payload does not suppress next local transaction", async () => {

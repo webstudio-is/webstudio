@@ -160,14 +160,15 @@ export const createCommandsEmitter = <CommandName extends string>({
         const { disableOnInputLikeControls } = commandMeta;
 
         if (disableOnInputLikeControls) {
-          const element = event.target as HTMLElement;
+          const element = event.target;
           const isOnInputLikeControl =
-            ["input", "select", "textarea", "color-input"].includes(
+            element instanceof HTMLElement &&
+            (["input", "select", "textarea", "color-input"].includes(
               element.tagName.toLowerCase()
             ) ||
-            element.isContentEditable ||
-            // Detect Radix select, dropdown and co.
-            element.getAttribute("role") === "option";
+              element.isContentEditable ||
+              // Detect Radix select, dropdown and co.
+              element.getAttribute("role") === "option");
 
           if (isOnInputLikeControl) {
             continue;

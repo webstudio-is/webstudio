@@ -16,10 +16,7 @@ import {
   $styleSourceSelections,
 } from "~/shared/sync/data-stores";
 import { Section as SectionComponent } from "./backgrounds";
-import {
-  $selectedPageId,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 
 const backgroundImage: StyleDecl = {
   breakpointId: "base",
@@ -57,7 +54,7 @@ $instances.set(
   ])
 );
 $selectedPageId.set("");
-$selectedInstanceSelector.set(["box"]);
+selectInstance(["box"]);
 
 const SingleLayerVariant = () => {
   useEffect(() => {

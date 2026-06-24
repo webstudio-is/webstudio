@@ -20,10 +20,7 @@ import { buildInstancePath } from "~/shared/instance-utils/lookup";
 import { $commandContent } from "~/builder/features/command-panel/command-state";
 import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
-import {
-  $selectedPageId,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { useAutoSelectFirstItem } from "./auto-select";
 import { InstancePathFooter } from "./instance-path-footer";
 
@@ -167,7 +164,7 @@ export const showInstance = (
     instanceId
   );
   $selectedPageId.set(pageId);
-  $selectedInstanceSelector.set(instanceSelector);
+  selectInstance(instanceSelector);
   if (panel !== undefined) {
     $activeInspectorPanel.set(panel);
   }
