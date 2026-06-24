@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeAll } from "vitest";
+import { describe, test, expect } from "vitest";
 import { enableMapSet } from "immer";
 import type {
   Instance,
@@ -33,7 +33,6 @@ import { instanceText } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { selectInstance } from "~/shared/nano-states";
 import { $selectedPageId } from "../nano-states/pages";
-import * as instanceFragmentUtils from "../instance-utils/fragment";
 import * as instanceMutationUtils from "../instance-utils/mutation";
 import {
   expectSlotTreeIntegrity,
@@ -44,14 +43,6 @@ const expectString = expect.any(String) as unknown as string;
 
 enableMapSet();
 registerContainers();
-
-// Mock detectFragmentTokenConflicts to always return no conflicts
-beforeAll(() => {
-  vi.spyOn(
-    instanceFragmentUtils,
-    "detectFragmentTokenConflicts"
-  ).mockReturnValue([]);
-});
 
 $registeredComponentMetas.set(
   new Map(Object.entries({ ...baseComponentMetas, ...coreMetas }))
@@ -98,6 +89,33 @@ const getMapDifference = <Type extends Map<unknown, unknown>>(
   }
   return difference;
 };
+
+describe("copy and cut guards", () => {
+  test("does not copy without a selected instance", () => {
+    selectInstance(undefined);
+
+    expect(instanceText.onCopy?.()).toBeUndefined();
+  });
+
+  test("does not cut without a selected instance", () => {
+    selectInstance(undefined);
+
+    expect(instanceText.onCut?.()).toBeUndefined();
+  });
+
+  test("does not copy or cut the selected root instance", () => {
+    const instances: Instances = toMap([
+      createInstance("body0", "Body", [{ type: "id", value: "box1" }]),
+      createInstance("box1", "Box", []),
+    ] satisfies Instance[]);
+    $instances.set(instances);
+    selectInstance(["body0"]);
+
+    expect(instanceText.onCopy?.()).toBeUndefined();
+    expect(instanceText.onCut?.()).toBeUndefined();
+    expect($instances.get()).toEqual(instances);
+  });
+});
 
 describe("paste target", () => {
   // body0

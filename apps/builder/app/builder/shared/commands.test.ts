@@ -164,6 +164,38 @@ describe("guardDesignModeCommand", () => {
 });
 
 describe("duplicateInstance", () => {
+  test("does nothing when no page item or instance is selected", () => {
+    resetDataStores();
+    $project.set({ id: "project-id" } as Project);
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [{ type: "id", value: "box" }],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]);
+    $instances.set(instances);
+    selectInstance(undefined);
+
+    emitCommand("duplicateInstance");
+
+    expect($instances.get()).toEqual(instances);
+    expect($selectedInstanceSelector.get()).toBeUndefined();
+  });
+
   test("duplicates shared slot child in shared slot content", () => {
     resetDataStores();
     const instances = new Map<Instance["id"], Instance>([
@@ -509,6 +541,39 @@ describe("duplicateInstance", () => {
       "slot1",
       "body",
     ]);
+  });
+});
+
+describe("deleteInstanceBuilder", () => {
+  test("does nothing when no page item or instance is selected", () => {
+    resetDataStores();
+    const instances = new Map<Instance["id"], Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [{ type: "id", value: "box" }],
+        },
+      ],
+      [
+        "box",
+        {
+          type: "instance",
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]);
+    $instances.set(instances);
+    selectInstance(undefined);
+
+    emitCommand("deleteInstanceBuilder");
+
+    expect($instances.get()).toEqual(instances);
+    expect($selectedInstanceSelector.get()).toBeUndefined();
   });
 });
 

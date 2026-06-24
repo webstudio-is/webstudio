@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { $selectedInstanceSelector, $selectedPageId } from "../nano-states";
+import {
+  $selectedInstanceSelector,
+  $selectedPageId,
+  selectInstance,
+} from "../nano-states";
 import { __testing__ } from "./sync-stores";
 
 const { SelectedPageAndInstanceSyncObject } = __testing__;
@@ -11,7 +15,7 @@ const waitForBatchedStore = () =>
 
 afterEach(() => {
   $selectedPageId.set(undefined);
-  $selectedInstanceSelector.set(undefined);
+  selectInstance(undefined);
 });
 
 describe("SelectedPageAndInstanceSyncObject", () => {
@@ -24,7 +28,7 @@ describe("SelectedPageAndInstanceSyncObject", () => {
     sendTransaction.mockClear();
 
     $selectedPageId.set("page-a");
-    $selectedInstanceSelector.set(["body-a"]);
+    selectInstance(["body-a"]);
 
     await waitForBatchedStore();
 
@@ -64,6 +68,25 @@ describe("SelectedPageAndInstanceSyncObject", () => {
     expect(sendTransaction).not.toHaveBeenCalled();
   });
 
+  test("applies undefined instance selector as cleared selection", async () => {
+    const syncObject = new SelectedPageAndInstanceSyncObject();
+
+    $selectedPageId.set("page-before");
+    selectInstance(["body-before"]);
+
+    syncObject.applyTransaction({
+      id: "selection",
+      object: "selectedPageAndInstance",
+      payload: {
+        selectedPageId: "page-after",
+        selectedInstanceSelector: undefined,
+      },
+    });
+
+    expect($selectedPageId.get()).toBe("page-after");
+    expect($selectedInstanceSelector.get()).toBeUndefined();
+  });
+
   test("malformed remote payload does not suppress next local transaction", async () => {
     const syncObject = new SelectedPageAndInstanceSyncObject();
     const sendTransaction = vi.fn();
@@ -79,7 +102,7 @@ describe("SelectedPageAndInstanceSyncObject", () => {
     });
 
     $selectedPageId.set("page-c");
-    $selectedInstanceSelector.set(["body-c"]);
+    selectInstance(["body-c"]);
 
     await waitForBatchedStore();
 
@@ -98,7 +121,7 @@ describe("SelectedPageAndInstanceSyncObject", () => {
     const syncObject = new SelectedPageAndInstanceSyncObject();
 
     $selectedPageId.set("page-before");
-    $selectedInstanceSelector.set(["body-before"]);
+    selectInstance(["body-before"]);
 
     syncObject.applyTransaction({
       id: "selection",
