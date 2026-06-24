@@ -10,6 +10,7 @@ import {
   type ParsedRadialGradient,
   type GradientStop,
   formatLinearGradient,
+  keywordValues,
 } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -44,6 +45,7 @@ import {
 } from "@webstudio-is/icons";
 import {
   useComputedStyleDecl,
+  $availableColorVariables,
   $availableUnitVariables,
 } from "../../shared/model";
 import { setRepeatedStyleItem } from "../../shared/repeated-style";
@@ -131,6 +133,13 @@ type GradientEditorApplyFn = (
 ) => void;
 
 const getAvailableUnitVariables = () => $availableUnitVariables.get();
+const getAvailableColorOptions = () => [
+  ...(keywordValues.color ?? []).map((item) => ({
+    type: "keyword" as const,
+    value: item,
+  })),
+  ...$availableColorVariables.get(),
+];
 
 export const BackgroundGradient = ({
   index,
@@ -711,6 +720,7 @@ const SolidColorControls = ({
           property="color"
           value={solidColor}
           currentColor={solidColor}
+          getOptions={getAvailableColorOptions}
           onChange={handleColorChange}
           onChangeComplete={handleColorChangeComplete}
           onAbort={() => {}}
@@ -1038,6 +1048,7 @@ const GradientStopControls = ({
                     property="color"
                     value={stopColor}
                     currentColor={currentColor}
+                    getOptions={getAvailableColorOptions}
                     onChange={handleStopColorChange}
                     onChangeComplete={handleStopColorChangeComplete}
                     onAbort={() => {}}
