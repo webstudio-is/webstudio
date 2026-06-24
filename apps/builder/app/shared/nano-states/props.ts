@@ -316,9 +316,11 @@ export const $propValuesByInstanceSelector = computed(
         const originalData = propValues.get("data");
         const itemVariableId = parameters.get("item");
         const itemKeyVariableId = parameters.get("itemKey");
-        if (itemVariableId !== undefined && originalData) {
+        if (originalData) {
           for (const [key, value] of getCollectionEntries(originalData)) {
-            variableValues.set(itemVariableId, value);
+            if (itemVariableId !== undefined) {
+              variableValues.set(itemVariableId, value);
+            }
             if (itemKeyVariableId !== undefined) {
               variableValues.set(itemKeyVariableId, key);
             }
@@ -520,18 +522,19 @@ export const $variableValuesByInstanceSelector = computed(
         const originalData = propValues.get("data");
         const itemVariableId = parameters.get("item");
         const itemKeyVariableId = parameters.get("itemKey");
-        if (itemVariableId === undefined) {
-          return;
-        }
         // prevent accessing item from collection
-        variableValues.delete(itemVariableId);
+        if (itemVariableId !== undefined) {
+          variableValues.delete(itemVariableId);
+        }
         if (itemKeyVariableId !== undefined) {
           variableValues.delete(itemKeyVariableId);
         }
         if (originalData) {
           for (const [key, value] of getCollectionEntries(originalData)) {
             const itemVariableValues = new Map(variableValues);
-            itemVariableValues.set(itemVariableId, value);
+            if (itemVariableId !== undefined) {
+              itemVariableValues.set(itemVariableId, value);
+            }
             if (itemKeyVariableId !== undefined) {
               itemVariableValues.set(itemKeyVariableId, key);
             }
