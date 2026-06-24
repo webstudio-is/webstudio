@@ -133,6 +133,148 @@ describe("getMenuPermissions", () => {
     });
   });
 
+  test("keeps multi-selection actions and disables single-instance-only actions", () => {
+    const bodyPath: InstancePath = [
+      { instance: createInstance("body"), instanceSelector: ["body"] },
+    ];
+    const childPath: InstancePath = [
+      {
+        instance: createInstance("child"),
+        instanceSelector: ["child", "body"],
+      },
+      { instance: createInstance("body"), instanceSelector: ["body"] },
+    ];
+    const siblingPath: InstancePath = [
+      {
+        instance: createInstance("sibling"),
+        instanceSelector: ["sibling", "body"],
+      },
+      { instance: createInstance("body"), instanceSelector: ["body"] },
+    ];
+
+    expect(
+      getMenuPermissions({
+        instancePath: undefined,
+        selectedInstancePaths: [childPath, siblingPath],
+        isContentMode: false,
+        isDesignMode: true,
+        instances: emptyInstances,
+      })
+    ).toMatchObject({
+      canCopy: true,
+      canPaste: true,
+      canCut: true,
+      canDuplicate: true,
+      canDelete: true,
+      canHide: false,
+      canRename: false,
+      canWrap: false,
+      canUnwrap: false,
+      canConvert: false,
+      canAddToken: false,
+      canOpenSettings: false,
+    });
+
+    expect(
+      getMenuPermissions({
+        instancePath: undefined,
+        selectedInstancePaths: [bodyPath, childPath],
+        isContentMode: false,
+        isDesignMode: true,
+        instances: emptyInstances,
+      })
+    ).toMatchObject({
+      canCopy: true,
+      canCut: true,
+      canDuplicate: true,
+      canDelete: true,
+    });
+  });
+
+  test("disables multi-selection actions when no selected path is actionable", () => {
+    const rootPath: InstancePath = [
+      {
+        instance: createInstance(ROOT_INSTANCE_ID),
+        instanceSelector: [ROOT_INSTANCE_ID],
+      },
+    ];
+    const bodyPath: InstancePath = [
+      { instance: createInstance("body"), instanceSelector: ["body"] },
+    ];
+
+    expect(
+      getMenuPermissions({
+        instancePath: undefined,
+        selectedInstancePaths: [rootPath, bodyPath],
+        isContentMode: false,
+        isDesignMode: true,
+        instances: emptyInstances,
+      })
+    ).toMatchObject({
+      canCopy: false,
+      canCut: false,
+      canDuplicate: false,
+      canDelete: false,
+      canOpenSettings: false,
+    });
+
+    const templatePath: InstancePath = [
+      {
+        instance: createInstance("template", blockTemplateComponent),
+        instanceSelector: ["template", "body"],
+      },
+      { instance: createInstance("body"), instanceSelector: ["body"] },
+    ];
+
+    expect(
+      getMenuPermissions({
+        instancePath: undefined,
+        selectedInstancePaths: [templatePath],
+        isContentMode: false,
+        isDesignMode: true,
+        instances: emptyInstances,
+      })
+    ).toMatchObject({
+      canCopy: false,
+      canCut: false,
+      canDuplicate: false,
+      canDelete: false,
+    });
+  });
+
+  test("keeps single-instance actions disabled when part of a multi-selection cannot resolve", () => {
+    const childPath: InstancePath = [
+      {
+        instance: createInstance("child"),
+        instanceSelector: ["child", "body"],
+      },
+      { instance: createInstance("body"), instanceSelector: ["body"] },
+    ];
+
+    expect(
+      getMenuPermissions({
+        instancePath: undefined,
+        selectedInstanceCount: 2,
+        selectedInstancePaths: [childPath],
+        isContentMode: false,
+        isDesignMode: true,
+        instances: emptyInstances,
+      })
+    ).toMatchObject({
+      canCopy: true,
+      canCut: true,
+      canDuplicate: true,
+      canDelete: true,
+      canHide: false,
+      canRename: false,
+      canWrap: false,
+      canUnwrap: false,
+      canConvert: false,
+      canAddToken: false,
+      canOpenSettings: false,
+    });
+  });
+
   test("disables design mutations outside of design and content modes", () => {
     const instancePath: InstancePath = [
       {
@@ -238,8 +380,8 @@ describe("getMenuPermissions", () => {
     });
 
     expect(permissions).toMatchObject({
-      canCopy: false,
-      canPaste: false,
+      canCopy: true,
+      canPaste: true,
       canCut: false,
       canDuplicate: false,
       canHide: false,
@@ -275,5 +417,68 @@ describe("getMenuPermissions", () => {
         instances,
       }).canDelete
     ).toBe(false);
+  });
+
+  test("content mode keeps multi-copy available but disables single-instance and mutation actions", () => {
+    const instances: Instances = new Map([
+      [
+        "body",
+        createInstance("body", "Body", [{ type: "id", value: "block" }]),
+      ],
+      [
+        "block",
+        createInstance("block", blockComponent, [
+          { type: "id", value: "child" },
+          { type: "id", value: "sibling" },
+        ]),
+      ],
+      ["child", createInstance("child")],
+      ["sibling", createInstance("sibling")],
+    ]);
+    const childPath: InstancePath = [
+      {
+        instance: createInstance("child"),
+        instanceSelector: ["child", "block", "body"],
+      },
+      {
+        instance: createInstance("block", blockComponent),
+        instanceSelector: ["block", "body"],
+      },
+      { instance: createInstance("body"), instanceSelector: ["body"] },
+    ];
+    const siblingPath: InstancePath = [
+      {
+        instance: createInstance("sibling"),
+        instanceSelector: ["sibling", "block", "body"],
+      },
+      {
+        instance: createInstance("block", blockComponent),
+        instanceSelector: ["block", "body"],
+      },
+      { instance: createInstance("body"), instanceSelector: ["body"] },
+    ];
+
+    expect(
+      getMenuPermissions({
+        instancePath: undefined,
+        selectedInstancePaths: [childPath, siblingPath],
+        isContentMode: true,
+        isDesignMode: false,
+        instances,
+      })
+    ).toMatchObject({
+      canCopy: true,
+      canPaste: true,
+      canCut: false,
+      canDuplicate: false,
+      canHide: false,
+      canRename: false,
+      canWrap: false,
+      canUnwrap: false,
+      canConvert: false,
+      canAddToken: false,
+      canOpenSettings: false,
+      canDelete: false,
+    });
   });
 });

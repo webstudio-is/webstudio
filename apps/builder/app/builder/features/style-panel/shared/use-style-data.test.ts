@@ -12,10 +12,7 @@ import {
   $styleSources,
   $styles,
 } from "~/shared/sync/data-stores";
-import {
-  $selectedPageId,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { deleteProperty, setProperty } from "./use-style-data";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 
@@ -37,7 +34,7 @@ const setupSelection = (styleSource: {
     ])
   );
   $selectedPageId.set("");
-  $selectedInstanceSelector.set(["body"]);
+  selectInstance(["body"]);
   $breakpoints.set(new Map([["base", { id: "base", label: "Base" }]]));
   $selectedBreakpointId.set("base");
   $styleSources.set(new Map([[styleSource.id, styleSource]]));

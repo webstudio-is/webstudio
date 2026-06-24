@@ -1,19 +1,32 @@
 import { getInstanceSelectorFromElement } from "~/shared/dom-utils";
+import { selectorIdAttribute } from "@webstudio-is/react-sdk";
 import {
+  $allSelectedInstanceSelectors,
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
   $isContentMode,
   $propsIndex,
   $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $textEditingInstanceSelector,
+  selectInstance,
+  selectInstances,
 } from "~/shared/nano-states";
+import { getInstanceSelectionUpdate } from "~/shared/instance-utils/selection";
 import { $props } from "~/shared/sync/data-stores";
-import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
+import { $ephemeralStyles } from "~/canvas/stores";
 import { emitCommand } from "./shared/commands";
 import { shallowEqual } from "shallow-equal";
-import { $selectedInstanceSelector } from "~/shared/nano-states";
-import { selectInstance } from "~/shared/nano-states";
 import { findClosestRichText } from "~/shared/content-model";
+import {
+  areInstanceSelectorsEqual,
+  type InstanceSelector,
+} from "~/shared/instance-utils/tree";
+
+type SelectionAnchor = {
+  current: undefined | InstanceSelector;
+};
 
 const isElementBeingEdited = (element: Element) => {
   if (element.closest("[contenteditable=true]")) {
@@ -23,7 +36,30 @@ const isElementBeingEdited = (element: Element) => {
   return false;
 };
 
-const handleSelect = (event: MouseEvent) => {
+const getRenderedInstanceSelectors = () => {
+  const selectors: InstanceSelector[] = [];
+  for (const element of document.querySelectorAll(`[${selectorIdAttribute}]`)) {
+    const selectorId = element.getAttribute(selectorIdAttribute);
+    const selector = selectorId?.split(",");
+    if (selector === undefined || selector.length === 0) {
+      continue;
+    }
+    if (
+      selectors.some((selectedSelector) =>
+        areInstanceSelectorsEqual(selectedSelector, selector)
+      )
+    ) {
+      continue;
+    }
+    selectors.push(selector);
+  }
+  return selectors;
+};
+
+const handleSelect = (
+  event: MouseEvent,
+  rangeAnchorSelector: SelectionAnchor
+) => {
   const element = event.target;
 
   if (!(element instanceof Element)) {
@@ -45,13 +81,34 @@ const handleSelect = (event: MouseEvent) => {
     $textEditingInstanceSelector.set(undefined);
   }
 
+  if (event.metaKey || event.ctrlKey || event.shiftKey) {
+    const nextSelection = getInstanceSelectionUpdate({
+      selectedSelectors: $allSelectedInstanceSelectors.get(),
+      clickedSelector: instanceSelector,
+      orderedSelectors: getRenderedInstanceSelectors(),
+      anchorSelector: rangeAnchorSelector.current,
+      isToggle: event.metaKey || event.ctrlKey,
+      isRange: event.shiftKey,
+    });
+    selectInstances(nextSelection.selectedSelectors);
+    if (nextSelection.selectedSelectors.length !== 1) {
+      $ephemeralStyles.set([]);
+    }
+    rangeAnchorSelector.current = nextSelection.anchorSelector;
+    return;
+  }
+
   // Prevent unnecessary updates (2 clicks are registered before a double click)
   if (!shallowEqual(instanceSelector, $selectedInstanceSelector.get())) {
     selectInstance(instanceSelector);
   }
+  rangeAnchorSelector.current = instanceSelector;
 };
 
-const handleEdit = (event: MouseEvent) => {
+const handleEdit = (
+  event: MouseEvent,
+  rangeAnchorSelector: SelectionAnchor
+) => {
   const element = event.target;
 
   if (!(element instanceof Element)) {
@@ -106,6 +163,7 @@ const handleEdit = (event: MouseEvent) => {
     if (!shallowEqual(instanceSelector, $selectedInstanceSelector.get())) {
       selectInstance(instanceSelector);
     }
+    rangeAnchorSelector.current = instanceSelector;
 
     return;
   }
@@ -116,6 +174,7 @@ const handleEdit = (event: MouseEvent) => {
   ) {
     selectInstance(editableInstanceSelector);
   }
+  rangeAnchorSelector.current = editableInstanceSelector;
 
   $hoveredInstanceOutline.set(undefined);
   $hoveredInstanceSelector.set(undefined);
@@ -133,17 +192,19 @@ export const subscribeInstanceSelection = ({
 }: {
   signal: AbortSignal;
 }) => {
+  const rangeAnchorSelector: SelectionAnchor = { current: undefined };
+
   addEventListener(
     "click",
     (event) => {
       emitCommand("clickCanvas");
 
       if ($isContentMode.get()) {
-        handleEdit(event);
+        handleEdit(event, rangeAnchorSelector);
         return;
       }
 
-      handleSelect(event);
+      handleSelect(event, rangeAnchorSelector);
     },
     { passive: true, signal }
   );
@@ -151,7 +212,7 @@ export const subscribeInstanceSelection = ({
   addEventListener(
     "dblclick",
     (event) => {
-      handleEdit(event);
+      handleEdit(event, rangeAnchorSelector);
     },
     { passive: true, signal }
   );

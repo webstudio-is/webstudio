@@ -135,6 +135,7 @@ export const Outline = ({
     <>
       {propertyStyle}
       <div
+        data-ws-outline={variant ?? "default"}
         className={`${baseStyle()} ${baseOutlineStyle({ variant, isLeftClamped, isRightClamped, isBottomClamped, isTopClamped })}`}
         style={style}
       >

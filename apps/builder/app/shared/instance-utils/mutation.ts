@@ -415,6 +415,39 @@ export const deleteInstanceMutable = (
   return true;
 };
 
+const getIdChildIndex = (children: Instance["children"], instanceId: string) =>
+  children.findIndex(
+    (child) => child.type === "id" && child.value === instanceId
+  );
+
+const getInstancePathSiblingIndex = (instancePath: InstancePath) => {
+  const selectedItem = instancePath[0];
+  const parentItem = instancePath[1];
+  if (parentItem === undefined) {
+    return -1;
+  }
+  return getIdChildIndex(
+    parentItem.instance.children,
+    selectedItem.instance.id
+  );
+};
+
+export const sortInstancePathsForChildMutation = <
+  Item extends { instancePath: InstancePath },
+>(
+  items: Item[]
+) =>
+  [...items].sort((left, right) => {
+    const depthDiff = right.instancePath.length - left.instancePath.length;
+    if (depthDiff !== 0) {
+      return depthDiff;
+    }
+    return (
+      getInstancePathSiblingIndex(right.instancePath) -
+      getInstancePathSiblingIndex(left.instancePath)
+    );
+  });
+
 const cloneSharedSlotFragmentMutable = (
   data: Omit<WebstudioData, "pages">,
   slotId: Instance["id"],

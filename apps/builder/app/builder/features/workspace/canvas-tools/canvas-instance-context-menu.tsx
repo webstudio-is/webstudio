@@ -1,7 +1,11 @@
 import { useStore } from "@nanostores/react";
-import { $instanceContextMenu } from "~/shared/nano-states";
 import { useEffect, useRef } from "react";
-import { selectInstance } from "~/shared/nano-states";
+import {
+  $allSelectedInstanceSelectors,
+  $instanceContextMenu,
+  selectInstances,
+} from "~/shared/nano-states";
+import { getContextMenuSelectedInstanceSelectors } from "~/shared/instance-utils/selection";
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -19,7 +23,12 @@ export const CanvasInstanceContextMenu = () => {
 
   useEffect(() => {
     if (contextMenu && triggerRef.current && canvasRect) {
-      selectInstance(contextMenu.instanceSelector);
+      selectInstances(
+        getContextMenuSelectedInstanceSelectors({
+          selectedSelectors: $allSelectedInstanceSelectors.get(),
+          clickedSelector: contextMenu.instanceSelector,
+        })
+      );
 
       // Calculate the scaled and offset position
       const scaledPosition = applyScale(

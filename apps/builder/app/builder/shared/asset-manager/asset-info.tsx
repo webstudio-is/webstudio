@@ -63,7 +63,7 @@ import { $assets } from "~/shared/sync/data-stores";
 import { $styleSourceSelections } from "~/shared/sync/data-stores";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $styles } from "~/shared/sync/data-stores";
-import { $selectedInstanceSelector } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
 import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
 import { $selectedPageId } from "~/shared/nano-states";
@@ -274,7 +274,7 @@ const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
                       prop.instanceId
                     );
                   $selectedPageId.set(pageId);
-                  $selectedInstanceSelector.set(instanceSelector);
+                  selectInstance(instanceSelector);
                   setActiveSidebarPanel("auto");
                   $activeInspectorPanel.set("settings");
                 }}
@@ -321,7 +321,7 @@ const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
                       styleInstanceId
                     );
                   $selectedPageId.set(pageId);
-                  $selectedInstanceSelector.set(instanceSelector);
+                  selectInstance(instanceSelector);
                   setActiveSidebarPanel("auto");
                   $activeInspectorPanel.set("style");
                 }}

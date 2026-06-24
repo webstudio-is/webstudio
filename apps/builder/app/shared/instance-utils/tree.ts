@@ -27,10 +27,12 @@ export const areInstanceSelectorsEqual = (
   left?: InstanceSelector,
   right?: InstanceSelector
 ) => {
-  if (left === undefined || right === undefined) {
-    return false;
-  }
-  return left.join(",") === right.join(",");
+  return (
+    left !== undefined &&
+    right !== undefined &&
+    left.length === right.length &&
+    left.every((instanceId, index) => instanceId === right[index])
+  );
 };
 
 export const isDescendantOrSelf = (

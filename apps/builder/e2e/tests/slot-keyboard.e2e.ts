@@ -16,6 +16,7 @@ let topChildFixture: SeededSlotKeyboardProject;
 let bottomChildFixture: SeededSlotKeyboardProject;
 let navigatorTopChildFixture: SeededSlotKeyboardProject;
 let navigatorBottomChildFixture: SeededSlotKeyboardProject;
+let multiSelectFixture: SeededSlotKeyboardProject;
 
 const selector = (instanceSelector: string[]) =>
   `[data-ws-selector="${instanceSelector.join(",")}"]`;
@@ -89,6 +90,11 @@ test.beforeAll(async () => {
     title: "Slot Keyboard Navigator Bottom Child E2E",
     builderToken: "slot-keyboard-navigator-bottom-child-e2e-builder-token",
   });
+  multiSelectFixture = await createSlotKeyboardProject({
+    email: "slot-keyboard-navigator-multi-select-e2e@webstudio.test",
+    title: "Slot Keyboard Multi Select E2E",
+    builderToken: "slot-keyboard-navigator-multi-select-e2e-builder-token",
+  });
 });
 
 const expectCanvasInstancePrecedes = async ({
@@ -135,6 +141,40 @@ const getFocusedTreeButtonText = async ({ page }: { page: Page }) => {
     }
     return activeElement?.textContent?.trim();
   });
+};
+
+const getSelectedTreeButtonTexts = async ({ page }: { page: Page }) => {
+  return await page
+    .locator("[data-tree-button][aria-selected='true']")
+    .evaluateAll((buttons) =>
+      buttons.map((button) => button.textContent?.trim() ?? "")
+    );
+};
+
+const expectSelectedTreeButtonTexts = async ({
+  page,
+  expectedTexts,
+}: {
+  page: Page;
+  expectedTexts: string[];
+}) => {
+  await page.waitForFunction(
+    (expected) => {
+      const selectedTexts = Array.from(
+        document.querySelectorAll("[data-tree-button][aria-selected='true']")
+      ).map((button) => button.textContent?.trim() ?? "");
+      return (
+        selectedTexts.length === expected.length &&
+        expected.every((expectedText) =>
+          selectedTexts.some((selectedText) =>
+            selectedText.includes(expectedText)
+          )
+        )
+      );
+    },
+    expectedTexts,
+    { timeout: 10_000 }
+  );
 };
 
 test("Keyboard shortcut moves a shared slot child into the previous sibling", async () => {
@@ -239,6 +279,102 @@ test("Keyboard shortcut keeps Navigator arrows working after outdenting a row", 
     ) {
       throw new Error(
         `Expected ArrowUp to move Navigator focus from ${focusedTextAfterMove}, received ${focusedTextAfterArrow}`
+      );
+    }
+  } finally {
+    await close();
+  }
+});
+
+test("Shift+ArrowDown in Navigator selects exactly one additional row", async () => {
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    const canvas = await measure(
+      "slot keyboard navigator multi-select open builder",
+      async () => {
+        return await openProjectBuilder({
+          page,
+          projectId: multiSelectFixture.projectId,
+          authToken: multiSelectFixture.builderToken,
+        });
+      }
+    );
+
+    const slotADivSelector = [
+      "slot-keyboard-div",
+      "slot-keyboard-fragment",
+      "slot-keyboard-slot-a",
+      "slot-keyboard-wrapper",
+      "slot-keyboard-body",
+    ];
+    await canvasInstance({
+      canvas,
+      instanceSelector: slotADivSelector,
+    }).click();
+    await openNavigatorPanel({ page });
+    await page.getByRole("button", { name: "Drop Div" }).first().click();
+    await expectSelectedTreeButtonTexts({
+      page,
+      expectedTexts: ["Drop Div"],
+    });
+
+    await page.keyboard.press("Shift+ArrowDown");
+
+    await expectSelectedTreeButtonTexts({
+      page,
+      expectedTexts: ["Drop Div", "Slot Heading"],
+    });
+    const focusedText = await getFocusedTreeButtonText({ page });
+    if (focusedText?.includes("Slot Heading") !== true) {
+      throw new Error(
+        `Expected Shift+ArrowDown to focus Slot Heading, received ${focusedText}`
+      );
+    }
+  } finally {
+    await close();
+  }
+});
+
+test("Control/Command+A after canvas selection selects sibling rows", async () => {
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    const canvas = await measure(
+      "slot keyboard canvas multi-select open builder",
+      async () => {
+        return await openProjectBuilder({
+          page,
+          projectId: multiSelectFixture.projectId,
+          authToken: multiSelectFixture.builderToken,
+        });
+      }
+    );
+
+    const slotAHeadingSelector = [
+      "slot-keyboard-heading",
+      "slot-keyboard-fragment",
+      "slot-keyboard-slot-a",
+      "slot-keyboard-wrapper",
+      "slot-keyboard-body",
+    ];
+    await canvasInstance({
+      canvas,
+      instanceSelector: slotAHeadingSelector,
+    }).click();
+
+    await page.keyboard.press("Control+A");
+
+    await openNavigatorPanel({ page });
+    await expectSelectedTreeButtonTexts({
+      page,
+      expectedTexts: ["Drop Div", "Slot Heading"],
+    });
+
+    const selectedTexts = await getSelectedTreeButtonTexts({ page });
+    if (selectedTexts.some((selectedText) => selectedText.includes("Slot A"))) {
+      throw new Error(
+        `Expected Command+A to select only siblings, received ${selectedTexts.join(", ")}`
       );
     }
   } finally {

@@ -3,7 +3,8 @@ import { $awareness, startPointerTracking, __testing__ } from "./awareness";
 
 const { $pointerPosition, getUserAwareness } = __testing__;
 import { findPageAndSelectorByInstanceId } from "./instance-utils/lookup";
-import { $selectedPageId } from "./nano-states/pages";
+import { selectInstance, selectInstances } from "./nano-states/instances";
+import { $selectedPageId } from "./nano-states";
 import { $user } from "./nano-states/misc";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $, renderData } from "@webstudio-is/template";
@@ -54,6 +55,7 @@ test("find awareness by instance inside of slot", () => {
 afterEach(async () => {
   vi.useRealTimers();
   $selectedPageId.set(undefined);
+  selectInstance(undefined);
   $pointerPosition.set(undefined);
   $user.set(undefined);
   await Promise.resolve();
@@ -104,6 +106,47 @@ test("awareness includes user identity", async () => {
     name: "Ada",
     pageId: undefined,
     pointerPosition: undefined,
+    selectedInstanceIds: undefined,
+  });
+
+  unsubscribe();
+});
+
+test("awareness includes selected instance selector", async () => {
+  const listener = vi.fn();
+  const unsubscribe = $awareness.listen(listener);
+
+  await Promise.resolve();
+  listener.mockClear();
+
+  $selectedPageId.set("homePageId");
+  selectInstance(["boxId", "bodyId"]);
+  await Promise.resolve();
+
+  expect(listener.mock.calls[0]?.[0]).toMatchObject({
+    pageId: "homePageId",
+    selectedInstanceIds: ["boxId", "bodyId"],
+  });
+
+  unsubscribe();
+});
+
+test("awareness does not include multi-selected instance selectors", async () => {
+  const listener = vi.fn();
+  const unsubscribe = $awareness.listen(listener);
+
+  await Promise.resolve();
+  listener.mockClear();
+
+  $selectedPageId.set("homePageId");
+  selectInstances([
+    ["boxId", "bodyId"],
+    ["headingId", "bodyId"],
+  ]);
+  await Promise.resolve();
+
+  expect(listener.mock.calls[0]?.[0]).toMatchObject({
+    pageId: "homePageId",
     selectedInstanceIds: undefined,
   });
 

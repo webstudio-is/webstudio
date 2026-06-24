@@ -10,10 +10,7 @@ import {
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { Section } from "./transitions";
-import {
-  $selectedPageId,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { createDefaultPages } from "@webstudio-is/project-build";
 
 const transitionProperty: StyleDecl = {
@@ -57,7 +54,7 @@ $pages.set(
   })
 );
 $selectedPageId.set("homePageId");
-$selectedInstanceSelector.set(["box"]);
+selectInstance(["box"]);
 
 export const Transitions = () => (
   <StorySection title="Transitions">
