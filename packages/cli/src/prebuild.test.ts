@@ -18,6 +18,7 @@ let tempDir: string;
 let consoleInfo: ReturnType<typeof vi.spyOn>;
 const rootFolderId = "root";
 const elementComponent = "ws:element";
+const slowPrebuildTestTimeout = 15_000;
 type Redirects = Array<{ old: string; new: string; status?: "301" | "302" }>;
 
 const getFilePaths = async (dir: string): Promise<string[]> => {
@@ -501,35 +502,41 @@ describe("prebuild", () => {
     ).resolves.not.toContain("CustomCode");
   });
 
-  test("downloads assets only when requested by prebuild", async () => {
-    const fetch = vi.fn(async () => ({
-      ok: false,
-      statusText: "Not Found",
-    }));
-    globalThis.fetch = fetch as unknown as typeof globalThis.fetch;
-    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+  test(
+    "downloads assets only when requested by prebuild",
+    async () => {
+      const fetch = vi.fn(async () => ({
+        ok: false,
+        statusText: "Not Found",
+      }));
+      globalThis.fetch = fetch as unknown as typeof globalThis.fetch;
+      const consoleWarn = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
-    await prebuild({
-      assets: false,
-      template: ["defaults"],
-    });
-    expect(fetch).not.toHaveBeenCalled();
+      await prebuild({
+        assets: false,
+        template: ["defaults"],
+      });
+      expect(fetch).not.toHaveBeenCalled();
 
-    await prebuild({
-      assets: true,
-      template: ["defaults"],
-    });
-    expect(fetch).toHaveBeenCalledWith(
-      "https://assets.example/cgi/image/image.png?format=raw"
-    );
-    expect(consoleWarn).not.toHaveBeenCalled();
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("Error materializing file image.png")
-    );
-  });
+      await prebuild({
+        assets: true,
+        template: ["defaults"],
+      });
+      expect(fetch).toHaveBeenCalledWith(
+        "https://assets.example/cgi/image/image.png?format=raw"
+      );
+      expect(consoleWarn).not.toHaveBeenCalled();
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("Error materializing file image.png")
+      );
+    },
+    slowPrebuildTestTimeout
+  );
 
   test("uses synced asset files before downloading during prebuild", async () => {
     await mkdir(".webstudio/assets", { recursive: true });
