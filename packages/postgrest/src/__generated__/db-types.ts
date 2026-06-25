@@ -104,6 +104,7 @@ export type Database = {
           canClone: boolean;
           canCopy: boolean;
           canPublish: boolean;
+          canUseApi: boolean;
           createdAt: string;
           name: string;
           projectId: string;
@@ -114,6 +115,7 @@ export type Database = {
           canClone?: boolean;
           canCopy?: boolean;
           canPublish?: boolean;
+          canUseApi?: boolean;
           createdAt?: string;
           name?: string;
           projectId: string;
@@ -124,6 +126,7 @@ export type Database = {
           canClone?: boolean;
           canCopy?: boolean;
           canPublish?: boolean;
+          canUseApi?: boolean;
           createdAt?: string;
           name?: string;
           projectId?: string;

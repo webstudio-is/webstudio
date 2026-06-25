@@ -6,6 +6,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { PlanRequiredError } from "@webstudio-is/trpc-interface/index.server";
 import {
   findMany,
   getTokenInfo,
@@ -30,6 +31,7 @@ const baseToken = {
   canClone: false,
   canCopy: false,
   canPublish: true,
+  canUseApi: false,
 };
 
 describe("applyTokenPermissions", () => {
@@ -73,6 +75,15 @@ describe("applyTokenPermissions", () => {
     expect(result.canCopy).toBe(true);
     expect(result.canPublish).toBe(true);
   });
+
+  test("preserves explicit API capability", () => {
+    const result = applyTokenPermissions({
+      ...baseToken,
+      relation: "viewers",
+      canUseApi: true,
+    });
+    expect(result.canUseApi).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -81,10 +92,11 @@ describe("applyTokenPermissions", () => {
 
 const server = createTestServer();
 
-const createContext = (): AppContext =>
+const createContext = (allowAdditionalPermissions = true): AppContext =>
   ({
     ...testContext,
     authorization: { type: "user", userId: "user-1" },
+    planFeatures: { allowAdditionalPermissions },
     getOwnerPlanFeatures: () => Promise.resolve({}),
   }) as unknown as AppContext;
 
@@ -105,6 +117,7 @@ const tokenRow = {
   canClone: false,
   canCopy: false,
   canPublish: true,
+  canUseApi: false,
   createdAt: "2024-01-01T00:00:00.000Z",
 };
 
@@ -155,37 +168,122 @@ describe("create (msw)", () => {
       ...tokenRow,
       relation: "viewers" as const,
       token: "tok-new",
+      canUseApi: true,
     };
     server.use(
       projectOwnershipHandler,
-      db.post("AuthorizationToken", () => json([newRow], { status: 201 }))
+      db.post("AuthorizationToken", async ({ request }) => {
+        await expect(request.json()).resolves.toMatchObject({
+          canUseApi: true,
+        });
+        return json([newRow], { status: 201 });
+      })
     );
 
     const result = await create(
-      { projectId: "proj-1", relation: "viewers", name: "Viewer Token" },
+      {
+        projectId: "proj-1",
+        relation: "viewers",
+        name: "Viewer Token",
+        canUseApi: true,
+      },
       createContext()
     );
     expect(result[0].token).toBe("tok-new");
+    expect(result[0].canUseApi).toBe(true);
+  });
+
+  test("rejects API capability when plan does not allow it", async () => {
+    server.use(projectOwnershipHandler);
+
+    const promise = create(
+      {
+        projectId: "proj-1",
+        relation: "viewers",
+        name: "Viewer Token",
+        canUseApi: true,
+      },
+      createContext(false)
+    );
+    await expect(promise).rejects.toThrow(PlanRequiredError);
+    await expect(promise).rejects.toMatchObject({ code: "PLAN_REQUIRED" });
   });
 });
 
 describe("update (msw)", () => {
   test("updates token relation and returns updated row", async () => {
-    const updatedRow = { ...tokenRow, relation: "editors" as const };
+    const updatedRow = {
+      ...tokenRow,
+      relation: "editors" as const,
+      canUseApi: true,
+    };
     server.use(
       projectOwnershipHandler,
       // previous token fetch
       db.get("AuthorizationToken", () => json(tokenRow)),
       // update
-      db.patch("AuthorizationToken", () => json(updatedRow))
+      db.patch("AuthorizationToken", async ({ request }) => {
+        await expect(request.json()).resolves.toMatchObject({
+          canUseApi: true,
+        });
+        return json(updatedRow);
+      })
     );
 
     const result = await update(
       "proj-1",
-      { token: "tok-abc", relation: "editors" },
+      { token: "tok-abc", relation: "editors", canUseApi: true },
       createContext()
     );
     expect(result.relation).toBe("editors");
+    expect(result.canUseApi).toBe(true);
+  });
+
+  test("rejects API capability update when plan does not allow it", async () => {
+    server.use(
+      projectOwnershipHandler,
+      db.get("AuthorizationToken", () => json(tokenRow))
+    );
+
+    const promise = update(
+      "proj-1",
+      { token: "tok-abc", relation: "editors", canUseApi: true },
+      createContext(false)
+    );
+    await expect(promise).rejects.toThrow(PlanRequiredError);
+    await expect(promise).rejects.toMatchObject({ code: "PLAN_REQUIRED" });
+  });
+
+  test("allows preserving existing API capability when plan no longer allows it", async () => {
+    const existingToken = { ...tokenRow, canUseApi: true };
+    const updatedRow = {
+      ...existingToken,
+      name: "Renamed Token",
+    };
+    server.use(
+      projectOwnershipHandler,
+      db.get("AuthorizationToken", () => json(existingToken)),
+      db.patch("AuthorizationToken", async ({ request }) => {
+        await expect(request.json()).resolves.toMatchObject({
+          name: "Renamed Token",
+          canUseApi: true,
+        });
+        return json(updatedRow);
+      })
+    );
+
+    const result = await update(
+      "proj-1",
+      {
+        token: "tok-abc",
+        name: "Renamed Token",
+        relation: "builders",
+        canUseApi: true,
+      },
+      createContext(false)
+    );
+    expect(result.name).toBe("Renamed Token");
+    expect(result.canUseApi).toBe(true);
   });
 });
 

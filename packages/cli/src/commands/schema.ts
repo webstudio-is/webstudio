@@ -1,0 +1,77 @@
+import { HandledCliError } from "../errors";
+import { apiCommandMetadata } from "./api-command-metadata";
+import { buildPatchNamespaces } from "./patch-utils";
+import type {
+  CommonYargsArgv,
+  StrictYargsOptionsToInterface,
+} from "./yargs-types";
+
+export const schemaOptions = (yargs: CommonYargsArgv) =>
+  yargs
+    .positional("topic", {
+      type: "string",
+      describe: "Schema topic to print",
+      default: "api",
+    })
+    .option("json", {
+      type: "boolean",
+      describe: "Required. Print a machine-readable JSON schema to stdout",
+      default: false,
+    });
+
+type SchemaOptions = StrictYargsOptionsToInterface<typeof schemaOptions> & {
+  topic?: string;
+};
+
+const printJson = (value: unknown) => {
+  console.log(JSON.stringify(value, undefined, 2));
+};
+
+const apiSchema = {
+  name: "webstudio-api-cli",
+  version: 1,
+  projectScope:
+    "All API commands operate on the single project configured by webstudio init --link.",
+  requiredOutputMode:
+    "Use --json. Successful responses are { ok: true, data, meta }. Failures are { ok: false, error, meta }.",
+  commands: apiCommandMetadata.map((command) => ({
+    name: command.command,
+    summary: command.description,
+    method: command.method,
+    trpcPath: command.trpcPath,
+    requiredOptions: command.requiredOptions ?? ["json"],
+    examples: command.examples ?? [],
+  })),
+  patch: {
+    validationCommand:
+      "webstudio validate-patch --base-version <version> --input patch.json --json",
+    writeCommand:
+      "webstudio apply-patch --base-version <version> --input patch.json --json",
+    transactionInput:
+      "Either BuildPatchTransaction[] or { transactions: BuildPatchTransaction[] }",
+    namespaces: buildPatchNamespaces,
+    operations: ["add", "remove", "replace"],
+    rules: [
+      "Run webstudio inspect --json before writing and use the returned latest build version as --base-version.",
+      "Use semantic read commands first, then snapshot for exact patch paths.",
+      "Regenerate patches after a VERSION_CONFLICT failure.",
+    ],
+  },
+};
+
+export const schema = (options: SchemaOptions) => {
+  try {
+    if (options.json !== true) {
+      throw new Error("schema currently requires --json.");
+    }
+    if ((options.topic ?? "api") !== "api") {
+      throw new Error(
+        `Unknown schema topic "${options.topic}". Available topics: api`
+      );
+    }
+    printJson(apiSchema);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    throw new HandledCliError();
+  }
+};

@@ -1,5 +1,5 @@
 import { cwd, exit } from "node:process";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { cancel, isCancel, log, text } from "@clack/prompts";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
@@ -10,7 +10,6 @@ import {
   jsonToGlobalConfig,
   type LocalConfig,
 } from "../config";
-import { createFileIfNotExists } from "../fs-utils";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -105,6 +104,39 @@ export const linkOptions = (yargs: CommonYargsArgv) =>
     describe: "Link to a webstudio project",
   });
 
+export const saveShareLink = async (shareLink: string) => {
+  const { origin, projectId, token } = parseShareLink(shareLink);
+
+  await withConfigLock(async () => {
+    const currentConfig = await readFile(GLOBAL_CONFIG_FILE, "utf-8");
+    const currentConfigJson = jsonToGlobalConfig(JSON.parse(currentConfig));
+
+    const newConfig: GlobalConfig = {
+      ...currentConfigJson,
+      [projectId]: {
+        origin,
+        token,
+      },
+    };
+
+    await writeConfigFile(JSON.stringify(newConfig, null, 2));
+  });
+
+  const localConfig: LocalConfig = {
+    projectId,
+  };
+
+  const localConfigPath = join(cwd(), LOCAL_CONFIG_FILE);
+  await mkdir(dirname(localConfigPath), { recursive: true });
+  await writeFile(
+    localConfigPath,
+    JSON.stringify(localConfig, null, 2),
+    "utf8"
+  );
+
+  return { origin, projectId };
+};
+
 export const link = async (
   options: StrictYargsOptionsToInterface<typeof linkOptions> | { link?: string }
 ) => {
@@ -122,32 +154,8 @@ export const link = async (
     }
   }
 
-  const { origin, projectId, token } = parseShareLink(shareLink);
-
-  await withConfigLock(async () => {
-    const currentConfig = await readFile(GLOBAL_CONFIG_FILE, "utf-8");
-    const currentConfigJson = jsonToGlobalConfig(JSON.parse(currentConfig));
-
-    const newConfig: GlobalConfig = {
-      ...currentConfigJson,
-      [projectId]: {
-        origin,
-        token,
-      },
-    };
-
-    await writeConfigFile(JSON.stringify(newConfig, null, 2));
-  });
+  const { projectId } = await saveShareLink(shareLink);
   log.info(`Saved credentials for project ${projectId}.
 You can find your config at ${GLOBAL_CONFIG_FILE}`);
-
-  const localConfig: LocalConfig = {
-    projectId,
-  };
-
-  await createFileIfNotExists(
-    join(cwd(), LOCAL_CONFIG_FILE),
-    JSON.stringify(localConfig, null, 2)
-  );
   log.step("The project is linked successfully");
 };

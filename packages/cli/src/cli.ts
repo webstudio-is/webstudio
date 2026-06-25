@@ -6,7 +6,15 @@ import { link, linkOptions } from "./commands/link";
 import { sync, syncOptions } from "./commands/sync";
 import { importOptions, importProject } from "./commands/import";
 import { build, buildOptions } from "./commands/build";
-import { initFlow } from "./commands/init-flow";
+import { man, manOptions } from "./commands/man";
+import { apiCommand } from "./commands/api-command";
+import {
+  apiCommandMetadata,
+  getApiCommandOptions,
+} from "./commands/api-command-metadata";
+import { schema, schemaOptions } from "./commands/schema";
+import { validatePatch, validatePatchOptions } from "./commands/validate-patch";
+import { initFlow, initOptions } from "./commands/init-flow";
 import makeCLI from "yargs";
 import packageJson from "../package.json" assert { type: "json" };
 import type { CommonYargsArgv } from "./commands/yargs-types";
@@ -41,7 +49,7 @@ export const main = async () => {
       })
       .scriptName("webstudio")
       .usage(
-        `Webstudio CLI (${packageJson.version}) allows you to setup, sync, build and preview your project.`
+        `Webstudio CLI (${packageJson.version}) sets up, syncs, builds, imports, and automates the configured project.`
       );
 
     cmd.version(packageJson.version).alias("v", "version");
@@ -59,13 +67,40 @@ export const main = async () => {
     );
     cmd.command(["link"], "Link the project with the cloud", linkOptions, link);
     cmd.command(["sync"], "Sync your project", syncOptions, sync);
+    for (const metadata of apiCommandMetadata) {
+      const { command, description } = metadata;
+      cmd.command(
+        [command],
+        description,
+        getApiCommandOptions(metadata),
+        (options) => apiCommand({ ...options, command })
+      );
+    }
+    cmd.command(
+      ["validate-patch"],
+      "Validate Builder patch JSON locally without writing",
+      validatePatchOptions,
+      validatePatch
+    );
     cmd.command(
       ["import"],
       "Import project bundle into another project",
       importOptions,
       importProject
     );
-    cmd.command(["$0", "init"], "Setup the project", buildOptions, initFlow);
+    cmd.command(
+      ["schema [topic]"],
+      "Print machine-readable command and patch schemas",
+      schemaOptions,
+      schema
+    );
+    cmd.command(
+      ["man [topic]"],
+      "Print long-form manuals with workflows and examples",
+      manOptions,
+      man
+    );
+    cmd.command(["$0", "init"], "Setup the project", initOptions, initFlow);
 
     await cmd.parse();
   } catch (error) {

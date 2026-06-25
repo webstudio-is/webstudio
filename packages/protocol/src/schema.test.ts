@@ -9,6 +9,7 @@ import {
   bundleVersion,
   stagedUploadPath,
   stagedUploadProjectIdHeader,
+  buildPatchTransaction,
 } from "./schema";
 import { createPublishedProjectBundleFixture } from "./fixtures";
 
@@ -143,5 +144,37 @@ describe("project bundle contract", () => {
     ).toBe(
       `Project bundle format is incompatible. Expected version ${bundleVersion}, received missing. Sync with a compatible API/CLI version and retry, or override the check.`
     );
+  });
+
+  test("validates build patch transactions", () => {
+    expect(
+      buildPatchTransaction.safeParse({
+        id: "tx-1",
+        payload: [
+          {
+            namespace: "pages",
+            patches: [
+              {
+                op: "replace",
+                path: ["meta", "siteName"],
+                value: "Site",
+              },
+            ],
+          },
+        ],
+      }).success
+    ).toBe(true);
+
+    expect(
+      buildPatchTransaction.safeParse({
+        id: "tx-1",
+        payload: [
+          {
+            namespace: "pages",
+            patches: [{ op: "replace", path: ["meta", "siteName"] }],
+          },
+        ],
+      }).success
+    ).toBe(false);
   });
 });

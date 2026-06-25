@@ -26,7 +26,7 @@ export const authorizationTokenRouter = router({
       })
     )
     .query(async ({ input, ctx }) => {
-      return await db.findMany({ projectId: input.projectId }, ctx);
+      return await db.findMany(input, ctx);
     }),
   create: procedure
     .input(
@@ -34,17 +34,11 @@ export const authorizationTokenRouter = router({
         projectId: z.string(),
         relation: tokenProjectRelation,
         name: z.string(),
+        canUseApi: z.boolean().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await db.create(
-        {
-          projectId: input.projectId,
-          relation: input.relation,
-          name: input.name,
-        },
-        ctx
-      );
+      return await db.create(input, ctx);
     }),
   remove: procedure
     .input(
@@ -54,10 +48,7 @@ export const authorizationTokenRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await db.remove(
-        { projectId: input.projectId, token: input.token },
-        ctx
-      );
+      return await db.remove(input, ctx);
     }),
   update: procedure
     .input(
@@ -69,21 +60,12 @@ export const authorizationTokenRouter = router({
         canClone: z.boolean(),
         canCopy: z.boolean(),
         canPublish: z.boolean(),
+        canUseApi: z.boolean().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await db.update(
-        input.projectId,
-        {
-          token: input.token,
-          name: input.name,
-          relation: input.relation,
-          canPublish: input.canPublish,
-          canClone: input.canClone,
-          canCopy: input.canCopy,
-        },
-        ctx
-      );
+      const { projectId, ...token } = input;
+      return await db.update(projectId, token, ctx);
     }),
 });
 

@@ -79,6 +79,14 @@ const createHeadersObject = (headers: Record<string, string | undefined>) => {
 
 type RequestHeaders = Record<string, string | undefined>;
 
+export type AuthTrpcClient = {
+  query: <Result = unknown>(path: string, input?: unknown) => Promise<Result>;
+  mutation: <Result = unknown>(
+    path: string,
+    input?: unknown
+  ) => Promise<Result>;
+};
+
 const createTrpcClient = (origin: string, headers: RequestHeaders) => {
   const { sourceOrigin } = parseBuilderUrl(origin);
   const url = new URL("/trpc", sourceOrigin);
@@ -94,15 +102,22 @@ const createTrpcClient = (origin: string, headers: RequestHeaders) => {
   });
 };
 
-const createAuthTrpcClient = (params: {
+export const createAuthTrpcClient = (params: {
   origin: string;
   authToken: string;
   headers?: RequestHeaders;
-}) =>
-  createTrpcClient(params.origin, {
+}): AuthTrpcClient => {
+  const client = createTrpcClient(params.origin, {
     ...params.headers,
     "x-auth-token": params.authToken,
   });
+  return {
+    query: <Result = unknown>(path: string, input?: unknown) =>
+      client.query(path, input) as Promise<Result>,
+    mutation: <Result = unknown>(path: string, input?: unknown) =>
+      client.mutation(path, input) as Promise<Result>,
+  };
+};
 
 type AuthProjectParams = {
   projectId: string;

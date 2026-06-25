@@ -29,7 +29,6 @@ import {
   Text,
   InputField,
   Link,
-  buttonStyle,
   IconButton,
   Checkbox,
   Grid,
@@ -55,20 +54,13 @@ const Item = (props: ComponentProps<typeof Flex>) => (
   />
 );
 
-const PricingUpgradeLink = ({
-  children = "Upgrade",
-}: {
-  children?: string;
-}) => (
-  <Link
-    className={buttonStyle({ color: "gradient" })}
-    color="contrast"
-    underline="none"
-    href="https://webstudio.is/pricing"
-    target="_blank"
-  >
-    {children}
-  </Link>
+const UpgradeLink = () => (
+  <Flex align="center" gap={1}>
+    <UpgradeIcon />
+    <Link color="inherit" target="_blank" href="https://webstudio.is/pricing">
+      Upgrade
+    </Link>
+  </Flex>
 );
 
 export const ShareLinkSecurityNotice = () => (
@@ -77,40 +69,67 @@ export const ShareLinkSecurityNotice = () => (
       Sharing links over insecure channels can expose project access. Upgrade to
       the Team plan for safer collaboration.
     </Text>
-    <Flex align="center" gap={1}>
-      <UpgradeIcon />
-      <Link color="inherit" target="_blank" href="https://webstudio.is/pricing">
-        Upgrade
-      </Link>
-    </Flex>
+    <UpgradeLink />
   </PanelBanner>
+);
+
+const PermissionTooltip = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) => (
+  <Tooltip
+    content={
+      <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
+        <Text variant="titles">{title}</Text>
+        <Text>{children}</Text>
+      </Flex>
+    }
+    variant="wrapped"
+  >
+    <InfoCircleIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+  </Tooltip>
+);
+
+const PermissionTooltipContent = ({
+  children,
+  upgrade = false,
+}: {
+  children: ReactNode;
+  upgrade?: boolean;
+}) => (
+  <Flex direction="column">
+    {children}
+    {upgrade && (
+      <Box css={{ mt: theme.spacing[2] }}>
+        <UpgradeLink />
+      </Box>
+    )}
+  </Flex>
 );
 
 type PermissionProps = {
   title: string;
-  info: ReactNode;
+  description: ReactNode;
+  upgrade?: boolean;
   checked: boolean;
   disabled?: boolean;
   onCheckedChange: (checked: boolean) => void;
 };
 const Permission = ({
   title,
-  info,
+  description,
+  upgrade = false,
   checked,
   disabled = false,
   onCheckedChange,
 }: PermissionProps) => {
   const id = useId();
 
-  const tooltipContent = (
-    <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
-      <Text variant="titles">{title}</Text>
-      <Text>{info}</Text>
-    </Flex>
-  );
-
   return (
-    <Flex align="center" gap="1">
+    <Flex align="center" gap="1" css={{ whiteSpace: "nowrap" }}>
       <Switch
         disabled={disabled}
         checked={checked}
@@ -120,10 +139,55 @@ const Permission = ({
       <Label disabled={disabled} htmlFor={id}>
         {title}
       </Label>
-      <Tooltip content={tooltipContent} variant="wrapped">
-        <InfoCircleIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
-      </Tooltip>
+      <PermissionTooltip title={title}>
+        <PermissionTooltipContent upgrade={upgrade}>
+          {description}
+        </PermissionTooltipContent>
+      </PermissionTooltip>
     </Flex>
+  );
+};
+
+type CapabilityProps = {
+  id: string;
+  title: string;
+  description: ReactNode;
+  checked: boolean;
+  disabled?: boolean;
+  onCheckedChange: (checked: boolean) => void;
+};
+
+const Capability = ({
+  id,
+  title,
+  description,
+  checked,
+  disabled = false,
+  onCheckedChange,
+}: CapabilityProps) => {
+  return (
+    <Grid
+      gap={1}
+      flow="column"
+      css={{
+        alignItems: "center",
+        justifyContent: "start",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <Checkbox
+        disabled={disabled}
+        checked={checked}
+        onCheckedChange={(value) => {
+          onCheckedChange(Boolean(value));
+        }}
+        id={id}
+      />
+      <Label htmlFor={id} disabled={disabled}>
+        {title}
+      </Label>
+      <PermissionTooltip title={title}>{description}</PermissionTooltip>
+    </Grid>
   );
 };
 
@@ -142,15 +206,18 @@ const Menu = ({
   onChange,
   onDelete,
 }: MenuProps) => {
-  const ids = useIds(["name", "canClone", "canCopy", "canPublish"]);
+  const ids = useIds([
+    "name",
+    "canClone",
+    "canCopy",
+    "canPublish",
+    "canUseApi",
+  ]);
   const [isOpen, setIsOpen] = useState(false);
   const [draftLink, setDraftLink] = useState(value);
-  const draftLinkRef = useRef(value);
 
   const updateDraftLink = (update: LinkOptionsUpdate) => {
-    const nextLink = { ...draftLinkRef.current, ...update };
-    draftLinkRef.current = nextLink;
-    setDraftLink(nextLink);
+    setDraftLink((draftLink) => ({ ...draftLink, ...update }));
   };
 
   const handleCheckedChange = (role: Role) => (checked: boolean) => {
@@ -159,11 +226,35 @@ const Menu = ({
     }
   };
 
+  const renderAdvanced = (role: Role, children: ReactNode) =>
+    draftLink.relation === role ? (
+      <Grid gap={1} css={{ ml: theme.spacing[6] }}>
+        {children}
+      </Grid>
+    ) : undefined;
+
+  const renderApiCapability = () => (
+    <Capability
+      id={ids.canUseApi}
+      title="API"
+      checked={draftLink.canUseApi}
+      disabled={!allowAdditionalPermissions && draftLink.canUseApi === false}
+      onCheckedChange={(canUseApi) => updateDraftLink({ canUseApi })}
+      description={
+        <PermissionTooltipContent upgrade={!allowAdditionalPermissions}>
+          Allows this share link token to authenticate requests from the
+          Webstudio CLI and Builder API. The selected permission controls what
+          API calls can do: viewers can read, editors can edit content, builders
+          can make design changes, and administrators can manage the project.
+        </PermissionTooltipContent>
+      }
+    />
+  );
+
   const saveDraftLink = () => {
-    const draft = draftLinkRef.current;
-    const nextName = draft.name.trim();
+    const nextName = draftLink.name.trim();
     const nextLink = {
-      ...draft,
+      ...draftLink,
       name: nextName.length === 0 ? value.name : nextName,
     };
     if (
@@ -185,7 +276,6 @@ const Menu = ({
         if (open === false) {
           saveDraftLink();
         } else {
-          draftLinkRef.current = value;
           setDraftLink(value);
         }
         setIsOpen(open);
@@ -201,8 +291,7 @@ const Menu = ({
       <PopoverContent
         aria-label={`Share link options ${name}`}
         css={{
-          //padding: 0,
-          width: theme.spacing[24],
+          width: theme.spacing[28],
         }}
         sideOffset={0}
       >
@@ -231,182 +320,100 @@ const Menu = ({
             checked={draftLink.relation === "viewers"}
             onCheckedChange={handleCheckedChange("viewers")}
             title={roleLabels.viewers}
-            info={
-              <Flex direction="column">
-                {roleDescriptions.viewers}
-                {!allowAdditionalPermissions && (
-                  <>
-                    <br />
-                    <br />
-                    Upgrade to a Pro account to set additional permissions.
-                    <br /> <br />
-                    <PricingUpgradeLink />
-                  </>
-                )}
-              </Flex>
-            }
+            description={roleDescriptions.viewers}
           />
-
-          <Grid
-            css={{
-              ml: theme.spacing[6],
-            }}
-          >
-            <Grid
-              gap={1}
-              flow={"column"}
-              css={{
-                alignItems: "center",
-                justifyContent: "start",
-              }}
-            >
-              <Checkbox
-                disabled={
-                  !allowAdditionalPermissions ||
-                  draftLink.relation !== "viewers"
-                }
-                checked={draftLink.canClone}
-                onCheckedChange={(canClone) => {
-                  updateDraftLink({ canClone: Boolean(canClone) });
-                }}
+          {renderAdvanced(
+            "viewers",
+            <>
+              <Capability
                 id={ids.canClone}
+                title="Can clone"
+                checked={draftLink.canClone}
+                disabled={!allowAdditionalPermissions}
+                onCheckedChange={(canClone) => updateDraftLink({ canClone })}
+                description={
+                  <PermissionTooltipContent
+                    upgrade={!allowAdditionalPermissions}
+                  >
+                    Allows viewers to clone the project from this share link.
+                  </PermissionTooltipContent>
+                }
               />
-              <Label
-                htmlFor={ids.canClone}
-                disabled={
-                  !allowAdditionalPermissions ||
-                  draftLink.relation !== "viewers"
-                }
-              >
-                Can clone
-              </Label>
-            </Grid>
-            <Grid
-              gap={1}
-              flow={"column"}
-              css={{
-                alignItems: "center",
-                justifyContent: "start",
-              }}
-            >
-              <Checkbox
-                disabled={
-                  !allowAdditionalPermissions ||
-                  draftLink.relation !== "viewers"
-                }
-                checked={draftLink.canCopy}
-                onCheckedChange={(canCopy) => {
-                  updateDraftLink({ canCopy: Boolean(canCopy) });
-                }}
+              <Capability
                 id={ids.canCopy}
-              />
-              <Label
-                htmlFor={ids.canCopy}
-                disabled={
-                  !allowAdditionalPermissions ||
-                  draftLink.relation !== "viewers"
+                title="Can copy"
+                checked={draftLink.canCopy}
+                disabled={!allowAdditionalPermissions}
+                onCheckedChange={(canCopy) => updateDraftLink({ canCopy })}
+                description={
+                  <PermissionTooltipContent
+                    upgrade={!allowAdditionalPermissions}
+                  >
+                    Allows viewers to copy project content from this share link.
+                  </PermissionTooltipContent>
                 }
-              >
-                Can copy
-              </Label>
-            </Grid>
-          </Grid>
+              />
+              {renderApiCapability()}
+            </>
+          )}
 
           <Permission
             disabled={!allowAdditionalPermissions}
             onCheckedChange={handleCheckedChange("editors")}
             checked={draftLink.relation === "editors"}
             title={roleLabels.editors}
-            info={
-              <Flex direction="column">
-                {roleDescriptions.editors}
-                {!allowAdditionalPermissions && (
-                  <>
-                    <br />
-                    <br />
-                    Upgrade to a Pro account to share with Content Edit
-                    permissions.
-                    <br /> <br />
-                    <PricingUpgradeLink />
-                  </>
-                )}
-              </Flex>
-            }
+            description={roleDescriptions.editors}
+            upgrade={!allowAdditionalPermissions}
           />
-          <Grid
-            css={{
-              ml: theme.spacing[6],
-            }}
-          >
-            <Grid
-              gap={1}
-              flow={"column"}
-              css={{
-                alignItems: "center",
-                justifyContent: "start",
-              }}
-            >
-              <Checkbox
-                disabled={
-                  !allowAdditionalPermissions ||
-                  draftLink.relation !== "editors"
-                }
-                checked={draftLink.canPublish}
-                onCheckedChange={(canPublish) => {
-                  updateDraftLink({ canPublish: Boolean(canPublish) });
-                }}
+          {renderAdvanced(
+            "editors",
+            <>
+              <Capability
                 id={ids.canPublish}
-              />
-              <Label
-                htmlFor={ids.canPublish}
-                disabled={
-                  !allowAdditionalPermissions ||
-                  draftLink.relation !== "editors"
+                title="Can publish"
+                checked={draftLink.canPublish}
+                disabled={!allowAdditionalPermissions}
+                onCheckedChange={(canPublish) =>
+                  updateDraftLink({ canPublish })
                 }
-              >
-                Can publish
-              </Label>
-            </Grid>
-          </Grid>
-
+                description={
+                  <PermissionTooltipContent
+                    upgrade={!allowAdditionalPermissions}
+                  >
+                    Allows editors to publish from this share link.
+                  </PermissionTooltipContent>
+                }
+              />
+              {renderApiCapability()}
+            </>
+          )}
           <Permission
             onCheckedChange={handleCheckedChange("builders")}
             checked={draftLink.relation === "builders"}
             title={roleLabels.builders}
-            info={roleDescriptions.builders}
+            description={roleDescriptions.builders}
           />
+          {renderAdvanced("builders", renderApiCapability())}
 
           <Permission
             disabled={!allowAdditionalPermissions}
             onCheckedChange={handleCheckedChange("administrators")}
             checked={draftLink.relation === "administrators"}
             title={roleLabels.administrators}
-            info={
-              <Flex direction="column">
-                {roleDescriptions.administrators}
-                {!allowAdditionalPermissions && (
-                  <>
-                    <br />
-                    <br />
-                    Upgrade to a Pro account to share with Admin permissions.
-                    <br /> <br />
-                    <PricingUpgradeLink />
-                  </>
-                )}
-              </Flex>
-            }
+            description={roleDescriptions.administrators}
+            upgrade={!allowAdditionalPermissions}
           />
+          {renderAdvanced("administrators", renderApiCapability())}
         </Item>
         <Separator />
         <Item>
-          {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
           <Button
             color="neutral-destructive"
             onClick={() => {
               onDelete();
             }}
           >
-            Delete Link
+            Delete
           </Button>
         </Item>
       </PopoverContent>
@@ -429,6 +436,7 @@ export type LinkOptions = {
   canCopy: boolean;
   canClone: boolean;
   canPublish: boolean;
+  canUseApi: boolean;
 };
 
 type LinkOptionsUpdate = Partial<Omit<LinkOptions, "token">>;
