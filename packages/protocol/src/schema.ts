@@ -1,4 +1,11 @@
 import { asset, page } from "@webstudio-is/sdk/schema";
+import {
+  builderNamespaces,
+  builderPatchSchema,
+  builderPatchTransactionSchema,
+  type BuilderPatch,
+  type BuilderPatchTransaction,
+} from "@webstudio-is/project-build/contracts";
 import { serializedBuild } from "@webstudio-is/project-build/schema";
 import { wsAuthConfig } from "@webstudio-is/wsauth/schema";
 import { z } from "zod";
@@ -95,67 +102,11 @@ export const checkProjectBuildPermissionInput = z.object({
   projectId: z.string().min(1),
 });
 
-export const buildPatchNamespaces = [
-  "pages",
-  "instances",
-  "props",
-  "styles",
-  "styleSources",
-  "styleSourceSelections",
-  "dataSources",
-  "resources",
-  "assets",
-  "breakpoints",
-  "marketplaceProduct",
-] as const;
-
-const buildPatchPathPart = z.union([z.string(), z.number()]);
-
-const requireBuildPatchValue = (
-  patch: { value?: unknown },
-  context: z.RefinementCtx
-) => {
-  if (Object.hasOwn(patch, "value") === false) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["value"],
-      message: "Required",
-    });
-  }
-};
-
-export const buildPatch = z.union([
-  z
-    .object({
-      op: z.literal("add"),
-      path: z.array(buildPatchPathPart),
-      value: z.unknown(),
-    })
-    .superRefine(requireBuildPatchValue),
-  z
-    .object({
-      op: z.literal("replace"),
-      path: z.array(buildPatchPathPart),
-      value: z.unknown(),
-    })
-    .superRefine(requireBuildPatchValue),
-  z.object({
-    op: z.literal("remove"),
-    path: z.array(buildPatchPathPart),
-  }),
-]);
-export type BuildPatch = z.infer<typeof buildPatch>;
-
-export const buildPatchTransaction = z.object({
-  id: z.string().min(1),
-  payload: z.array(
-    z.object({
-      namespace: z.enum(buildPatchNamespaces),
-      patches: z.array(buildPatch),
-    })
-  ),
-});
-export type BuildPatchTransaction = z.infer<typeof buildPatchTransaction>;
+export const buildPatchNamespaces = builderNamespaces;
+export const buildPatch = builderPatchSchema;
+export type BuildPatch = BuilderPatch;
+export const buildPatchTransaction = builderPatchTransactionSchema;
+export type BuildPatchTransaction = BuilderPatchTransaction;
 
 export const bundleVersion = createContractVersion(publishedProjectBundle, [
   wsAuthConfig,

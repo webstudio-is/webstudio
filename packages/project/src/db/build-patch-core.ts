@@ -1,4 +1,4 @@
-import { applyPatches, enableMapSet, enablePatches, type Patch } from "immer";
+import type { Patch } from "immer";
 import {
   type Breakpoints,
   breakpoints,
@@ -42,10 +42,12 @@ import {
   serializeConfig,
   serializeData,
 } from "@webstudio-is/project-build";
+import type {
+  BuilderPatch,
+  BuilderPatchTransaction,
+} from "@webstudio-is/project-build/contracts";
+import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state";
 import type { Database } from "@webstudio-is/postgrest/index.server";
-
-enableMapSet();
-enablePatches();
 
 type TouchedKeys = {
   keys: Set<string>;
@@ -96,11 +98,10 @@ const validateTouchedMap = <Value>(
 
 export type BuildPatchChange = {
   namespace: string;
-  patches: Array<Patch>;
+  patches: BuilderPatch[];
 };
 
-export type BuildPatchTransaction = {
-  id: string;
+export type BuildPatchTransaction = Omit<BuilderPatchTransaction, "payload"> & {
   payload: BuildPatchChange[];
 };
 
@@ -185,7 +186,7 @@ export const createBuildPatchUpdate = async ({
         const pages = buildData.pages ?? parsePages(build.pages);
         const currentSocialImageAssetId =
           getHomePage(pages).meta.socialImageAssetId;
-        buildData.pages = applyPatches(pages, patches);
+        buildData.pages = applyBuilderNamespacePatches(pages, patches);
         const newSocialImageAssetId = getHomePage(buildData.pages).meta
           .socialImageAssetId;
         if (currentSocialImageAssetId !== newSocialImageAssetId) {
@@ -199,7 +200,7 @@ export const createBuildPatchUpdate = async ({
         const instances =
           buildData.instances ?? parseInstanceData(build.instances);
 
-        buildData.instances = applyPatches(instances, patches);
+        buildData.instances = applyBuilderNamespacePatches(instances, patches);
 
         const cycles = findCycles(buildData.instances?.values() ?? []);
         if (cycles.length > 0) {
@@ -220,7 +221,7 @@ export const createBuildPatchUpdate = async ({
       if (namespace === "props") {
         addTouchedPatchKeys(touchedProps, patches);
         const props = buildData.props ?? parseData<Prop>(build.props);
-        buildData.props = applyPatches(props, patches);
+        buildData.props = applyBuilderNamespacePatches(props, patches);
         continue;
       }
 
@@ -234,7 +235,7 @@ export const createBuildPatchUpdate = async ({
         const styleSourceSelections =
           buildData.styleSourceSelections ??
           parseStyleSourceSelections(build.styleSourceSelections);
-        buildData.styleSourceSelections = applyPatches(
+        buildData.styleSourceSelections = applyBuilderNamespacePatches(
           styleSourceSelections,
           patches
         );
@@ -245,7 +246,10 @@ export const createBuildPatchUpdate = async ({
         addTouchedPatchKeys(touchedStyleSources, patches);
         const styleSources =
           buildData.styleSources ?? parseData<StyleSource>(build.styleSources);
-        buildData.styleSources = applyPatches(styleSources, patches);
+        buildData.styleSources = applyBuilderNamespacePatches(
+          styleSources,
+          patches
+        );
         continue;
       }
 
@@ -253,7 +257,7 @@ export const createBuildPatchUpdate = async ({
         addTouchedPatchKeys(touchedStyles, patches);
 
         const styles = buildData.styles ?? parseStyles(build.styles);
-        buildData.styles = applyPatches(styles, patches);
+        buildData.styles = applyBuilderNamespacePatches(styles, patches);
         continue;
       }
 
@@ -261,7 +265,10 @@ export const createBuildPatchUpdate = async ({
         addTouchedPatchKeys(touchedDataSources, patches);
         const dataSources =
           buildData.dataSources ?? parseData<DataSource>(build.dataSources);
-        buildData.dataSources = applyPatches(dataSources, patches);
+        buildData.dataSources = applyBuilderNamespacePatches(
+          dataSources,
+          patches
+        );
         continue;
       }
 
@@ -269,7 +276,7 @@ export const createBuildPatchUpdate = async ({
         addTouchedPatchKeys(touchedResources, patches);
         const resources =
           buildData.resources ?? parseData<Resource>(build.resources);
-        buildData.resources = applyPatches(resources, patches);
+        buildData.resources = applyBuilderNamespacePatches(resources, patches);
         continue;
       }
 
@@ -277,7 +284,10 @@ export const createBuildPatchUpdate = async ({
         addTouchedPatchKeys(touchedBreakpoints, patches);
         const breakpoints =
           buildData.breakpoints ?? parseData<Breakpoint>(build.breakpoints);
-        buildData.breakpoints = applyPatches(breakpoints, patches);
+        buildData.breakpoints = applyBuilderNamespacePatches(
+          breakpoints,
+          patches
+        );
         continue;
       }
 
@@ -286,7 +296,7 @@ export const createBuildPatchUpdate = async ({
           buildData.marketplaceProduct ??
           parseConfig<MarketplaceProduct>(build.marketplaceProduct);
 
-        buildData.marketplaceProduct = applyPatches(
+        buildData.marketplaceProduct = applyBuilderNamespacePatches(
           marketplaceProduct,
           patches
         );

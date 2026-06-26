@@ -1927,6 +1927,9 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
+      immer:
+        specifier: ^10.1.1
+        version: 10.1.1
       nanoid:
         specifier: ^5.1.5
         version: 5.1.5
@@ -1971,6 +1974,9 @@ importers:
 
   packages/protocol:
     dependencies:
+      '@webstudio-is/project-build':
+        specifier: workspace:*
+        version: link:../project-build
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
@@ -1978,9 +1984,6 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
     devDependencies:
-      '@webstudio-is/project-build':
-        specifier: workspace:*
-        version: link:../project-build
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

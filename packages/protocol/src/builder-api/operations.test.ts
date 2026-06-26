@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts";
 import {
   getPublicApiOperation,
   getPublicApiOperationPath,
@@ -53,29 +52,6 @@ describe("public api operation catalog", () => {
 
     expect(localCapableOperations.length).toBeGreaterThan(0);
     expect(serverOnlyOperations.length).toBeGreaterThan(0);
-  });
-
-  test("keeps protocol runtime metadata in sync with project-build contracts", () => {
-    const normalize = (
-      contracts: readonly {
-        id: string;
-        readNamespaces: readonly string[];
-        writeNamespaces: readonly string[];
-        invalidatesNamespaces: readonly string[];
-      }[]
-    ) =>
-      contracts.map(
-        ({ id, readNamespaces, writeNamespaces, invalidatesNamespaces }) => ({
-          id,
-          readNamespaces,
-          writeNamespaces,
-          invalidatesNamespaces,
-        })
-      );
-
-    expect(normalize(publicRuntimeOperationContracts)).toEqual(
-      normalize(runtimeOperationContracts)
-    );
   });
 
   test("keeps operation lookup and tRPC path lookup strict", () => {

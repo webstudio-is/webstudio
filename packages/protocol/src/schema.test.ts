@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
 import {
+  builderNamespaces,
+  builderPatchTransactionSchema,
+} from "@webstudio-is/project-build/contracts";
+import {
   isAssetFileName,
   getMissingImportedAssetFilesMessage,
   parseMissingImportedAssetFilesMessage,
@@ -9,6 +13,7 @@ import {
   bundleVersion,
   stagedUploadPath,
   stagedUploadProjectIdHeader,
+  buildPatchNamespaces,
   buildPatchTransaction,
 } from "./schema";
 import { createPublishedProjectBundleFixture } from "./fixtures";
@@ -147,6 +152,9 @@ describe("project bundle contract", () => {
   });
 
   test("validates build patch transactions", () => {
+    expect(buildPatchNamespaces).toBe(builderNamespaces);
+    expect(buildPatchTransaction).toBe(builderPatchTransactionSchema);
+
     expect(
       buildPatchTransaction.safeParse({
         id: "tx-1",

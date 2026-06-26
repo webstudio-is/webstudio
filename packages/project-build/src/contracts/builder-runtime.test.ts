@@ -34,5 +34,8 @@ describe("builder runtime operation contracts", () => {
     expect(getRuntimeOperationContract("pages.list").readNamespaces).toEqual([
       "pages",
     ]);
+    expect(() => getRuntimeOperationContract("unknown")).toThrow(
+      'Unknown runtime operation "unknown".'
+    );
   });
 });

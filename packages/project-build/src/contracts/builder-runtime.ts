@@ -1,15 +1,4 @@
-export type BuilderNamespace =
-  | "pages"
-  | "instances"
-  | "props"
-  | "styles"
-  | "styleSources"
-  | "styleSourceSelections"
-  | "dataSources"
-  | "resources"
-  | "assets"
-  | "breakpoints"
-  | "marketplaceProduct";
+import type { BuilderNamespace } from "./namespaces";
 
 export type RuntimeOperationKind = "read" | "mutation";
 
@@ -271,7 +260,7 @@ const runtimeOperationContractById = new Map(
   runtimeOperationContracts.map((contract) => [contract.id, contract])
 );
 
-export const getRuntimeOperationContract = (id: RuntimeOperationId) => {
+export const getRuntimeOperationContract = (id: string) => {
   const contract = runtimeOperationContractById.get(id);
   if (contract === undefined) {
     throw new Error(`Unknown runtime operation "${id}".`);

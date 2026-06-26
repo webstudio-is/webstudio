@@ -12,11 +12,11 @@
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
+    "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/wsauth": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "vitest": "^3.1.2"

@@ -22,6 +22,11 @@
       "import": "./src/contracts/index.ts",
       "default": "./src/contracts/index.ts"
     },
+    "./state": {
+      "webstudio": "./src/state/index.ts",
+      "import": "./src/state/index.ts",
+      "default": "./src/state/index.ts"
+    },
     "./index.server": {
       "webstudio": "./src/index.server.ts"
     },
@@ -47,6 +52,7 @@
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
+    "immer": "^10.1.1",
     "nanoid": "^5.1.5",
     "zod": "^3.24.2"
   },

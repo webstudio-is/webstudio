@@ -7,7 +7,6 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import type { Patch } from "immer";
 import {
   patchBuild,
   patchLoadedBuild,
@@ -649,7 +648,7 @@ describe("patchBuild", () => {
   });
 
   test("core patch helper is decoupled from asset app logic", async () => {
-    const assetPatch: Patch = { op: "add", path: ["asset-1"], value: {} };
+    const assetPatch = { op: "add" as const, path: ["asset-1"], value: {} };
     const result = await createBuildPatchUpdate({
       build: buildRow,
       clientVersion: 3,
