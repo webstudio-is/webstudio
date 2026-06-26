@@ -17,6 +17,7 @@ import {
   stagedUploadProjectIdHeader,
   type BuildPatchTransaction,
   type ImportProjectBundleResult,
+  isPublicApiRemoteErrorCode,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
 import { getPublicApiOperationPath } from "./api-operations";
@@ -33,6 +34,7 @@ export type {
   BuildPatchTransaction,
   PublishedProjectBundle,
   ProjectBundle,
+  PublicApiRemoteErrorCode,
 } from "@webstudio-is/protocol";
 
 const maxResponsePreviewLength = 500;
@@ -144,7 +146,9 @@ export const getApiErrorCode = (error: unknown) => {
     return;
   }
   const code = (data as { code?: unknown }).code;
-  return typeof code === "string" ? code : undefined;
+  return typeof code === "string" && isPublicApiRemoteErrorCode(code)
+    ? code
+    : undefined;
 };
 
 const createTrpcClient = (origin: string, headers: RequestHeaders) => {

@@ -17,6 +17,11 @@
       "import": "./src/schema.ts",
       "default": "./src/schema.ts"
     },
+    "./contracts": {
+      "webstudio": "./src/contracts/index.ts",
+      "import": "./src/contracts/index.ts",
+      "default": "./src/contracts/index.ts"
+    },
     "./index.server": {
       "webstudio": "./src/index.server.ts"
     },

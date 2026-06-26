@@ -239,6 +239,9 @@ test("formats api compatibility update messages", () => {
 
 test("extracts api error codes", () => {
   expect(getApiErrorCode({ data: { code: "CONFLICT" } })).toBe("CONFLICT");
+  expect(
+    getApiErrorCode({ data: { code: "SOME_PRIVATE_CODE" } })
+  ).toBeUndefined();
   expect(getApiErrorCode(new Error("No code"))).toBeUndefined();
 });
 
