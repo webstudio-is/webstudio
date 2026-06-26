@@ -15,7 +15,7 @@ import {
   Radio,
   Label,
 } from "@webstudio-is/design-system";
-import type { TokenConflict } from "./style-source-utils";
+import type { TokenConflict } from "@webstudio-is/project-build/runtime/style-copy";
 
 export type ConflictResolution = "ours" | "theirs" | "merge";
 

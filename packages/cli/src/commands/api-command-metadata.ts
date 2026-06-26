@@ -85,7 +85,7 @@ const apiCommandOptionsByCommand: Partial<
   "delete-asset": apiCommand.deleteAssetCommandOptions,
 };
 
-export const apiCommandCatalog = publicApiOperations.map((operation) => ({
+export const apiCommandMetadata = publicApiOperations.map((operation) => ({
   command: operation.command as ApiCommandName,
   description: operation.description,
   method: operation.method,
@@ -93,8 +93,6 @@ export const apiCommandCatalog = publicApiOperations.map((operation) => ({
   requiredOptions: operation.requiredOptions,
   examples: operation.examples,
 })) satisfies ApiCommandMetadata[];
-
-export const apiCommandMetadata = apiCommandCatalog;
 
 export const getApiCommandOptions = (
   metadata: ApiCommandMetadata

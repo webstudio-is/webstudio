@@ -1,8 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-  getRuntimeOperationContract,
-  runtimeOperationContracts,
-} from "./builder-runtime";
+import { runtimeOperationContracts } from "./builder-runtime";
 
 describe("builder runtime operation contracts", () => {
   test("has unique operation ids", () => {
@@ -30,12 +27,10 @@ describe("builder runtime operation contracts", () => {
     }
   });
 
-  test("looks up contracts strictly", () => {
-    expect(getRuntimeOperationContract("pages.list").readNamespaces).toEqual([
-      "pages",
-    ]);
-    expect(() => getRuntimeOperationContract("unknown")).toThrow(
-      'Unknown runtime operation "unknown".'
-    );
+  test("includes page list contract", () => {
+    expect(
+      runtimeOperationContracts.find((contract) => contract.id === "pages.list")
+        ?.readNamespaces
+    ).toEqual(["pages"]);
   });
 });

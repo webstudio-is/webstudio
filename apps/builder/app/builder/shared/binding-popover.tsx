@@ -41,7 +41,7 @@ import { $dataSourceVariables, $isDesignMode } from "~/shared/nano-states";
 import {
   computeExpression,
   encodeDataVariableName,
-} from "~/shared/data-variables";
+} from "@webstudio-is/project-build/runtime/data";
 import {
   ExpressionEditor,
   formatValuePreview,

@@ -33,10 +33,10 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
-import { computeExpression } from "~/shared/data-variables";
+import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import { $permissions } from "~/shared/nano-states";
 import { $pageRootScope } from "../page-utils";
-import { isPathAvailable } from "~/shared/page-utils/tree";
+import { isPathAvailable } from "@webstudio-is/project-build/runtime/pages";
 import { validatePathnamePattern } from "~/builder/shared/url-pattern";
 import {
   LOOP_ERROR,

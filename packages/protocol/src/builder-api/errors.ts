@@ -1,4 +1,4 @@
-export const publicApiRemoteErrorCodes = [
+const publicApiRemoteErrorCodes = [
   "BAD_REQUEST",
   "CONFLICT",
   "FORBIDDEN",

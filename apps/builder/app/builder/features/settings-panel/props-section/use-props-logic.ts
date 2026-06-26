@@ -28,7 +28,7 @@ import {
   showAttributeMeta,
   type PropValue,
 } from "../shared";
-import { createPropValue } from "~/shared/prop-utils";
+import { createPropValue } from "@webstudio-is/project-build/runtime/props";
 
 type PropOrName = { prop?: Prop; propName: string };
 

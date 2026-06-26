@@ -1,4 +1,8 @@
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import {
+  applyBuilderPatchPayloadMutable,
+  updateWebstudioData,
+} from "~/shared/instance-utils/data";
+import { isFragmentContentModeCopyableProp } from "~/shared/content-mode-copy-policy";
 import { computed } from "nanostores";
 import slugify from "slugify";
 import {
@@ -15,9 +19,13 @@ import {
   systemParameter,
   SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
-import { deleteInstanceMutable } from "~/shared/instance-utils/mutation";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources, $pages, $project } from "~/shared/sync/data-stores";
+import { getFolderDeletionTargets } from "@webstudio-is/project-build/runtime/pages";
+import {
+  collectExclusiveInstanceIds,
+  createInstanceCleanupPayload,
+} from "@webstudio-is/project-build/runtime/instances";
 import {
   createFolderCopyData,
   createTemplateCopyData,
@@ -25,16 +33,12 @@ import {
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
   insertTemplateCopyFromFragmentsMutable,
-} from "~/shared/page-utils";
-import {
-  cleanupChildRefsMutable,
-  getFolderDeletionTargets,
-} from "~/shared/page-utils/tree";
+} from "@webstudio-is/project-build/runtime/page-copy";
+import { cleanupChildRefsMutable } from "~/shared/page-utils/tree";
 import {
   $selectedPage,
   $registeredComponentMetas,
   getInstanceKey,
-  getInstancePath,
 } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
 
@@ -57,6 +61,25 @@ export const nameToPath = (pages: Pages | undefined, name: string) => {
   return `${path}${suffix}`;
 };
 
+const deleteRootInstanceMutable = (
+  data: WebstudioData,
+  rootInstanceId: string
+) => {
+  applyBuilderPatchPayloadMutable(
+    data,
+    createInstanceCleanupPayload({
+      instanceIds: collectExclusiveInstanceIds(data.instances, [
+        rootInstanceId,
+      ]),
+      props: data.props?.values() ?? [],
+      dataSources: data.dataSources?.values() ?? [],
+      styleSources: data.styleSources?.values() ?? [],
+      styleSourceSelections: data.styleSourceSelections?.values() ?? [],
+      styles: data.styles?.values() ?? [],
+    })
+  );
+};
+
 /**
  * Deletes a page.
  */
@@ -71,10 +94,7 @@ export const deletePageMutable = (pageId: Page["id"], data: WebstudioData) => {
   }
   const rootInstanceId = findPageByIdOrPath(pageId, data.pages)?.rootInstanceId;
   if (rootInstanceId !== undefined) {
-    deleteInstanceMutable(
-      data,
-      getInstancePath([rootInstanceId], data.instances)
-    );
+    deleteRootInstanceMutable(data, rootInstanceId);
   }
   pages.pages.delete(pageId);
   cleanupChildRefsMutable(pageId, data.pages.folders);
@@ -249,10 +269,7 @@ export const deleteTemplateMutable = (
   if (template === undefined) {
     return;
   }
-  deleteInstanceMutable(
-    data,
-    getInstancePath([template.rootInstanceId], data.instances)
-  );
+  deleteRootInstanceMutable(data, template.rootInstanceId);
   data.pages.pageTemplates?.delete(templateId);
 };
 
@@ -306,6 +323,7 @@ export const instantiateTemplate = ({
       overrides,
       projectId,
       metas: $registeredComponentMetas.get(),
+      contentModeCopyableProp: isFragmentContentModeCopyableProp,
       contentMode,
     });
   });

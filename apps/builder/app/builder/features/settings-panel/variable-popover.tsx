@@ -74,7 +74,7 @@ import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
   findUnsetVariableNames,
   rebindTreeVariablesMutable,
-} from "~/shared/data-variables";
+} from "@webstudio-is/project-build/runtime/data";
 import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
   GraphqlResourceForm,

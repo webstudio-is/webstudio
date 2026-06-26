@@ -14,7 +14,7 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
+import { createSelectedStyleDeclarationUpdatePayload } from "@webstudio-is/project-build/runtime/styles";
 import {
   parseGridTemplateTrackList,
   parseGridAreas,
@@ -30,7 +30,10 @@ import { $gridCellData } from "~/shared/nano-states";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $instances } from "~/shared/sync/data-stores";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import {
+  applyBuilderPatchPayloadMutable,
+  updateWebstudioData,
+} from "~/shared/instance-utils/data";
 import { DEFAULT_GRID_TRACK_COUNT } from "./constants";
 
 /**
@@ -326,28 +329,36 @@ const applyFillGridItems = (
       component: "Box",
       children: [],
     });
-    data.styleSources.set(styleSourceId, {
+    const styleSource = {
       type: "local",
       id: styleSourceId,
-    });
-    data.styleSourceSelections.set(instanceId, {
-      instanceId,
-      values: [styleSourceId],
-    });
-    const displayStyleDecl: StyleDecl = {
-      breakpointId,
-      styleSourceId,
-      property: "display",
-      value: { type: "keyword", value: "flex" },
-    };
-    data.styles.set(getStyleDeclKey(displayStyleDecl), displayStyleDecl);
-    const directionStyleDecl: StyleDecl = {
-      breakpointId,
-      styleSourceId,
-      property: "flexDirection",
-      value: { type: "keyword", value: "column" },
-    };
-    data.styles.set(getStyleDeclKey(directionStyleDecl), directionStyleDecl);
+    } as const;
+    applyBuilderPatchPayloadMutable(
+      data,
+      createSelectedStyleDeclarationUpdatePayload({
+        updates: [
+          {
+            instanceId,
+            styleSource,
+            styleSourceId,
+            breakpoint: breakpointId,
+            property: "display",
+            value: { type: "keyword", value: "flex" },
+          },
+          {
+            instanceId,
+            styleSource,
+            styleSourceId,
+            breakpoint: breakpointId,
+            property: "flexDirection",
+            value: { type: "keyword", value: "column" },
+          },
+        ],
+        styleSources: data.styleSources,
+        styleSourceSelections: data.styleSourceSelections.values(),
+        styles: data.styles.values(),
+      }).payload
+    );
     parentInstance.children.push({ type: "id", value: instanceId });
   }
 };

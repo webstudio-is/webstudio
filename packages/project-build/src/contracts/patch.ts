@@ -68,10 +68,6 @@ export const builderPatchTransactionSchema: z.ZodType<
   payload: z.array(builderPatchChangeSchema),
 });
 
-export const builderPatchTransactionsSchema = z.array(
-  builderPatchTransactionSchema
-);
-
 export type BuilderPatchChange = {
   namespace: (typeof builderNamespaces)[number];
   patches: BuilderPatch[];

@@ -1,8 +1,6 @@
 import { describe, expect, test } from "vitest";
-import {
-  builderNamespaces,
-  builderPatchTransactionSchema,
-} from "@webstudio-is/project-build/contracts";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
+import { builderPatchTransactionSchema } from "@webstudio-is/project-build/contracts/patch";
 import {
   isAssetFileName,
   getMissingImportedAssetFilesMessage,

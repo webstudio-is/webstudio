@@ -2,10 +2,11 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   getPublicApiOperation,
   publicApiOperations,
+  type PublicApiCommand,
 } from "@webstudio-is/http-client";
 import { apiCompatibilityHeaders } from "./api";
-import { apiCommand, apiCommandNames } from "./api-command";
-import { apiCommandCatalog } from "./api-command-metadata";
+import { apiCommand } from "./api-command";
+import { apiCommandMetadata } from "./api-command-metadata";
 
 const apiCalls = new Proxy({} as Record<string, ReturnType<typeof vi.fn>>, {
   get(target, property: string) {
@@ -166,26 +167,23 @@ test("requires json output flag", async () => {
 });
 
 test("documents every executable api command", () => {
-  expect(apiCommandCatalog.map(({ command }) => command)).toEqual([
-    ...apiCommandNames,
-  ]);
+  expect(apiCommandMetadata.map(({ command }) => command)).toEqual(
+    publicApiOperations.map(({ command }) => command)
+  );
 });
 
 test("has a public operation descriptor for every executable api command", () => {
-  expect(publicApiOperations.map(({ command }) => command)).toEqual([
-    ...apiCommandNames,
-  ]);
   expect(
-    apiCommandCatalog.map(({ command, method, permit }) => ({
+    apiCommandMetadata.map(({ command, method, permit }) => ({
       command,
       method,
       permit,
     }))
   ).toEqual(
-    apiCommandNames.map((command) => ({
+    publicApiOperations.map(({ command }) => ({
       command,
-      method: getPublicApiOperation(command).method,
-      permit: getPublicApiOperation(command).permit,
+      method: getPublicApiOperation(command as PublicApiCommand).method,
+      permit: getPublicApiOperation(command as PublicApiCommand).permit,
     }))
   );
 });

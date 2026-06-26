@@ -32,8 +32,6 @@ export type BuilderStateValueByNamespace = {
 
 export type BuilderState = Partial<BuilderStateValueByNamespace>;
 
-export { builderNamespaces, type BuilderNamespace };
-
 export const getLoadedBuilderStateNamespaces = (
   state: BuilderState
 ): BuilderNamespace[] => {

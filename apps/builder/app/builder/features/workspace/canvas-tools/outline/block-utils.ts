@@ -6,15 +6,16 @@ import {
 } from "~/shared/instance-utils/data";
 import { insertInstanceChildrenMutable } from "~/shared/instance-utils/insert";
 import {
-  insertWebstudioFragmentCopy,
   detectFragmentTokenConflicts,
-} from "~/shared/instance-utils/fragment";
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
+} from "@webstudio-is/project-build/runtime/fragment";
 import { blockTemplateComponent } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
 import { selectInstance } from "~/shared/nano-states";
 import { builderApi } from "~/shared/builder-api";
-import { findAvailableVariables } from "~/shared/data-variables";
-import { extractWebstudioFragment } from "~/shared/instance-utils/fragment";
+import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
+import { isFragmentContentModeCopyableProp } from "~/shared/content-mode-copy-policy";
 import {
   $registeredComponentMetas,
   $isContentMode,
@@ -230,6 +231,7 @@ export const insertTemplateAt = async (
         projectId: project.id,
         conflictResolution,
         metas: $registeredComponentMetas.get(),
+        contentModeCopyableProp: isFragmentContentModeCopyableProp,
         contentMode,
       });
       const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);

@@ -24,6 +24,10 @@ import {
   findParentFolderByChildId,
   getFolderById,
 } from "@webstudio-is/sdk";
+import {
+  createFolderValue,
+  isSlugAvailable,
+} from "@webstudio-is/project-build/runtime/pages";
 import { nanoid } from "nanoid";
 import { useState, type FocusEventHandler } from "react";
 import slugify from "slugify";
@@ -34,9 +38,7 @@ import { $isDesignMode } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { Form } from "./form";
 import {
-  createFolderValue,
   insertFolderMutable,
-  isSlugAvailable,
   updateFolderFieldsMutable,
 } from "~/shared/page-utils/tree";
 import { useDraftValue } from "~/builder/shared/use-draft-value";

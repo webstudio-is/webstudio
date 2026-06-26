@@ -15,6 +15,41 @@ import {
   loadBuildById,
   parseDeployment,
 } from "@webstudio-is/project-build/index.server";
+import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime/errors";
+import {
+  cssVariableValueInput,
+  designTokenCreateInput,
+  designTokenStyleInput,
+  styleDeleteInput,
+  styleReplaceInput,
+  styleUpdateInput,
+} from "@webstudio-is/project-build/runtime/styles";
+import {
+  dataVariableValueInput,
+  findResource,
+  resourceFieldsInput,
+  resourceFieldsUpdateInput,
+} from "@webstudio-is/project-build/runtime/data";
+import { executeBuilderRuntimeOperation } from "@webstudio-is/project-build/runtime/registry";
+import {
+  findSerializedPageByInput,
+  getParentFolderId,
+  getSerializedPages,
+  isPathAvailable,
+  pageFieldsInput,
+  pageMetaInput,
+  serializePageDetailsByInput,
+} from "@webstudio-is/project-build/runtime/pages";
+import {
+  findTextContentChild,
+  getTextContentErrors,
+} from "@webstudio-is/project-build/runtime/instances";
+import {
+  propBindingInput,
+  propValueInput,
+} from "@webstudio-is/project-build/runtime/props";
+import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
+import type { BuilderState } from "@webstudio-is/project-build/state/builder-state";
 import {
   createProjectDomain,
   createUnpublishJobId,
@@ -35,124 +70,14 @@ import {
   getTokenPermits,
   loadApiToken,
 } from "./api-permits.server";
+import { findFolder, findPage } from "~/shared/page-utils/tree";
+import { findParentInstanceReference } from "@webstudio-is/project-build/runtime/instances";
 import {
-  createPageUpdatePayload,
-  pageFieldsInput,
-  pageMetaInput,
-  pageMetaToPatchValue,
-} from "~/shared/page-utils/meta";
-import {
-  createPageCreatePayload,
-  createPageRootInstance,
-  createPageValue,
-} from "~/shared/page-utils/create";
-import { createPageDuplicatePayload } from "~/shared/page-utils";
-import {
-  createCssVariableDeletePayload,
-  createCssVariableReferenceRewritePayload,
-  createCssVariableRootDefinePayload,
-  cssVariableValueInput,
-  serializeCssVariables,
-  validateCssVariableNameWithStyles,
-} from "~/shared/css-variable-usage";
-import {
-  createAssetDeletePayload,
-  createAssetReplacementPayload,
-  createAssetUsageList,
-  findAsset,
-  serializeAssetList,
-} from "~/shared/asset-style-value";
-import {
-  createResource as createResourceValue,
-  createResourceCreatePayload,
-  createResourceDeletePayload,
-  createResourceUpdatePayload,
-  createResourceUpsertPatchPayload,
-  findResource,
-  getResourceExpressionErrors,
-  resourceFieldsInput,
-  resourceFieldsUpdateInput,
-  serializeResources,
-} from "~/shared/resource-utils";
-import {
-  createDataVariableCreatePayload,
-  createDataVariableDeletePayload,
-  createDataVariableUpdatePayload,
-  dataVariableValueInput,
-  findDataVariable,
-  serializeDataVariables,
-} from "~/shared/data-variables";
-import {
-  createDesignTokenExtractionPayload,
-  createDesignTokenCreatePayload,
-  createDesignTokenStyleDeletePayload,
-  createDesignTokenStyleUpdatePayload,
-  createStyleDeclarationDeletePayload,
-  createStyleDeclarationUpdatePayload,
-  createStyleSourceSelectionAttachPayload,
-  createStyleSourceSelectionDetachPayload,
-  createStyleValueReplacementPayload,
-  designTokenCreateInput,
-  designTokenStyleInput,
-  findDesignToken,
-  serializeDesignTokens,
-  serializeStyleDeclarations,
-  styleDeleteInput,
-  styleReplaceInput,
-  styleUpdateInput,
-} from "~/shared/style-source-utils";
-import {
-  createTextContentChild,
-  createTextContentUpdatePayload,
-  findTextContentChild,
-  getTextContentErrors,
-  serializeTextNodes,
-} from "~/shared/instance-utils/text-content";
-import {
-  createFolderValue,
-  createFolderCreatePayload,
-  createFolderUpdatePayload,
-  findFolder,
-  findPage,
-  findSerializedPageByInput,
-  getAllChildrenAndSelf,
-  getSerializedPages,
-  getHomePageRootInstanceId,
-  getParentFolderId,
-  isPathAvailable,
-  isSlugAvailable,
-  createFolderDeletePayload,
-  createPageDeletePayload,
-  serializePageDetailsByInput,
-  serializePageSummary,
-  findParentFolderId,
-} from "~/shared/page-utils/tree";
-import {
-  createValidatedPropBindingFromInput,
-  createValidatedPropValueFromInput,
-  createPropDeletePayload,
-  createPropUpsertPayload,
-  findProp,
-  propBindingInput,
-  propValueInput,
-} from "~/shared/prop-utils";
-import {
-  createInstanceAppendPayload,
-  createInstanceDeletePayload,
-  createInstanceMovePayload,
-  findParentInstanceReference,
-  getBuildInstanceDepths as getInstanceDepths,
-  serializeInstanceSummary,
-} from "~/shared/instance-utils/tree";
-import { createInstanceClonePayload } from "~/shared/instance-utils/clone";
-import {
-  elementComponent,
   coreMetas,
   getStyleDeclKey,
   type Asset,
   type Instance,
   type Pages,
-  type Prop,
   type Resource,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
@@ -180,6 +105,70 @@ const throwApiError = (
 ): never => {
   throw new TRPCError({ code, message });
 };
+
+const defaultBuilderRuntimeContext = {
+  createId: nanoid,
+  now: () => new Date(),
+};
+
+const createBuilderRuntimeState = (
+  build: CompactBuild,
+  assets?: Asset[]
+): BuilderState => ({
+  pages: build.pages,
+  breakpoints: mapById(build.breakpoints),
+  styles: new Map(
+    build.styles.map((styleDecl) => [getStyleDeclKey(styleDecl), styleDecl])
+  ),
+  styleSources: mapById(build.styleSources),
+  styleSourceSelections: new Map(
+    build.styleSourceSelections.map((selection) => [
+      selection.instanceId,
+      selection,
+    ])
+  ),
+  props: mapById(build.props),
+  dataSources: mapById(build.dataSources),
+  resources: mapById(build.resources),
+  instances: mapById(build.instances),
+  assets: assets === undefined ? undefined : mapById(assets),
+  marketplaceProduct: build.marketplaceProduct,
+});
+
+const executeApiRuntimeOperation = <Result>({
+  id,
+  build,
+  assets,
+  input,
+}: {
+  id: string;
+  build: CompactBuild;
+  assets?: Asset[];
+  input: unknown;
+}): Result => {
+  try {
+    return executeBuilderRuntimeOperation<Result>({
+      id,
+      state: createBuilderRuntimeState(build, assets),
+      input,
+      context: defaultBuilderRuntimeContext,
+    });
+  } catch (error) {
+    if (error instanceof BuilderRuntimeError) {
+      return throwApiError(error.code, error.message);
+    }
+    throw error;
+  }
+};
+
+const executeApiRuntimeMutation = <
+  Result extends Record<string, unknown> = Record<string, unknown>,
+>(args: {
+  id: string;
+  build: CompactBuild;
+  assets?: Asset[];
+  input: unknown;
+}) => executeApiRuntimeOperation<BuilderRuntimeMutation<Result>>(args);
 
 const loadBuildByProjectVersion = async (
   ctx: AppContext,
@@ -503,70 +492,6 @@ const getResourceOrThrow = (
     return throwApiError("NOT_FOUND", "Resource not found");
   }
   return found;
-};
-
-const validateResourceExpressions = (
-  fields: z.infer<typeof resourceFieldsUpdateInput>
-) => {
-  const errors = getResourceExpressionErrors(fields);
-  if (errors.length > 0) {
-    throwBadRequest(errors);
-  }
-};
-
-const validatePropValue = (value: z.infer<typeof propValueInput>): Prop => {
-  const result = createValidatedPropValueFromInput(value);
-  if (result.success === true) {
-    return result.prop;
-  }
-  return throwBadRequest(result.errors);
-};
-
-const validatePropBinding = (
-  binding: z.infer<typeof propBindingInput>
-): Prop => {
-  const result = createValidatedPropBindingFromInput(binding);
-  if (result.success === true) {
-    return result.prop;
-  }
-  return throwBadRequest(result.errors);
-};
-
-const getDesignTokenOrThrow = (
-  build: CompactBuild,
-  tokenId: string
-): NonNullable<ReturnType<typeof findDesignToken>> => {
-  const token = findDesignToken(build.styleSources, tokenId);
-  if (token === undefined) {
-    return throwApiError("NOT_FOUND", "Design token not found");
-  }
-  return token;
-};
-
-const assertCssVariableName = (name: string) => {
-  const error = validateCssVariableNameWithStyles({ name, styles: [] });
-  if (error !== undefined) {
-    throwApiError("BAD_REQUEST", error.message);
-  }
-};
-
-const compileOptionalRegex = (pattern: string | undefined) => {
-  if (pattern === undefined) {
-    return;
-  }
-  try {
-    return new RegExp(pattern);
-  } catch {
-    return throwApiError("BAD_REQUEST", "Invalid scope regex");
-  }
-};
-
-const getAssetOrThrow = (assets: Asset[], assetId: string): Asset => {
-  const asset = findAsset(assets, assetId);
-  if (asset === undefined) {
-    return throwApiError("NOT_FOUND", "Asset not found");
-  }
-  return asset;
 };
 
 const applySemanticBuildPatch = async ({
@@ -903,26 +828,32 @@ export const apiRouter = router({
     list: buildQuery(
       projectIdInput.extend({ includeFolders: z.boolean().optional() }),
       async ({ input, build }) => {
-        const pages = getSerializedPages(build);
-        return {
-          pages: pages.pages.map((page) => serializePageSummary(pages, page)),
-          folders: input.includeFolders === true ? pages.folders : undefined,
-        };
+        return executeApiRuntimeOperation({
+          id: "pages.list",
+          build,
+          input,
+        });
       }
     ),
 
     get: buildQuery(
       projectIdInput.extend({ pageId: z.string() }),
       async ({ input, build }) => {
-        return serializeRequiredPageDetails(build, { pageId: input.pageId });
+        return executeApiRuntimeOperation({
+          id: "pages.get",
+          build,
+          input,
+        });
       }
     ),
 
     getByPath: buildQuery(
       projectIdInput.extend({ path: z.string() }),
       async ({ input, build }) => {
-        return serializeRequiredPageDetails(build, {
-          pagePath: input.path === "/" ? "" : input.path,
+        return executeApiRuntimeOperation({
+          id: "pages.getByPath",
+          build,
+          input,
         });
       }
     ),
@@ -937,46 +868,12 @@ export const apiRouter = router({
         meta: pageMetaInput.optional(),
       }),
       async ({ input, build, commit }) => {
-        const pages = build.pages;
-        const parentFolderId = input.parentFolderId ?? pages.rootFolderId;
-        const parentFolder = getFolderOrThrow(pages, parentFolderId);
-        const pageId = input.pageId ?? nanoid();
-        if (pages.pages.has(pageId)) {
-          throwApiError("CONFLICT", "Page id already exists");
-        }
-        if (
-          isPathAvailable({
-            pages,
-            path: input.path,
-            parentFolderId,
-            pageId,
-          }) === false
-        ) {
-          throwApiError(
-            "CONFLICT",
-            `Page path "${input.path}" is already in use`
-          );
-        }
-        const rootInstanceId = nanoid();
-        const page = createPageValue({
-          pageId,
-          name: input.name,
-          path: input.path,
-          title: input.title,
-          rootInstanceId,
-          meta:
-            input.meta === undefined ? {} : pageMetaToPatchValue(input.meta),
+        const mutation = executeApiRuntimeMutation<{ pageId: string }>({
+          id: "pages.create",
+          build,
+          input,
         });
-        const rootInstance = createPageRootInstance(rootInstanceId);
-        return await commit(
-          createPageCreatePayload({
-            page,
-            parentFolderId,
-            parentChildIndex: parentFolder.children.length,
-            rootInstance,
-          }),
-          { pageId }
-        );
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -986,57 +883,30 @@ export const apiRouter = router({
         values: pageFieldsInput,
       }),
       async ({ input, build, commit }) => {
-        const page = getPageOrThrow(build.pages, input.pageId);
-        if (
-          (input.values.path !== undefined ||
-            input.values.parentFolderId !== undefined) &&
-          isPathAvailable({
-            pages: build.pages,
-            path: input.values.path ?? page.path,
-            parentFolderId:
-              input.values.parentFolderId ??
-              getParentFolderIdOrThrow(build.pages, page.id),
-            pageId: page.id,
-          }) === false
-        ) {
-          throwApiError(
-            "CONFLICT",
-            `Page path "${input.values.path ?? page.path}" is already in use`
-          );
-        }
-        if (input.values.parentFolderId !== undefined) {
-          getFolderOrThrow(build.pages, input.values.parentFolderId);
-          getParentFolderIdOrThrow(build.pages, page.id);
-        }
-        const payload = createPageUpdatePayload({
-          input: input.values,
-          page,
-          pages: build.pages,
+        const mutation = executeApiRuntimeMutation<{ pageId: string }>({
+          id: "pages.update",
+          build,
+          input,
         });
-        if (payload.length === 0) {
-          return { version: build.version, pageId: input.pageId };
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        return await commit(payload, { pageId: input.pageId });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
     delete: buildMutation(
       projectIdInput.extend({ pageId: z.string() }),
       async ({ input, build, commit }) => {
-        const page = getPageOrThrow(build.pages, input.pageId);
-        if (page.id === build.pages.homePageId) {
-          throwApiError("BAD_REQUEST", "Home page cannot be deleted");
-        }
-        const parentFolderId = getParentFolderIdOrThrow(
-          build.pages,
-          input.pageId
-        );
-        const payload = createPageDeletePayload({
+        const mutation = executeApiRuntimeMutation<{ pageId: string }>({
+          id: "pages.delete",
           build,
-          page,
-          parentFolderId,
+          input,
         });
-        return await commit(payload, { pageId: input.pageId });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1066,18 +936,18 @@ export const apiRouter = router({
             `Page path "${input.path}" is already in use`
           );
         }
-        const duplicate = createPageDuplicatePayload({
+        const mutation = executeApiRuntimeMutation<{ pageId: string }>({
+          id: "pages.duplicate",
           build,
-          projectId: input.projectId,
-          pageId: sourcePage.id,
-          parentFolderId,
-          name: input.name,
-          path: input.path,
+          input: {
+            projectId: input.projectId,
+            pageId: sourcePage.id,
+            parentFolderId,
+            name: input.name,
+            path: input.path,
+          },
         });
-        if (duplicate === undefined) {
-          return throwApiError("BAD_REQUEST", "Page could not be duplicated");
-        }
-        return await commit(duplicate.payload, { pageId: duplicate.pageId });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -1086,20 +956,11 @@ export const apiRouter = router({
     list: buildQuery(
       projectIdInput.extend({ includePages: z.boolean().optional() }),
       async ({ input, build }) => {
-        const pages = getSerializedPages(build);
-        return {
-          folders: pages.folders.map((folder) => ({
-            id: folder.id,
-            name: folder.name,
-            slug: folder.slug,
-            parentFolderId: findParentFolderId(pages.folders, folder.id),
-            children: folder.children,
-          })),
-          pages:
-            input.includePages === true
-              ? pages.pages.map((page) => serializePageSummary(pages, page))
-              : undefined,
-        };
+        return executeApiRuntimeOperation({
+          id: "folders.list",
+          build,
+          input,
+        });
       }
     ),
 
@@ -1111,39 +972,12 @@ export const apiRouter = router({
         parentFolderId: z.string().optional(),
       }),
       async ({ input, build, commit }) => {
-        const pages = build.pages;
-        const parentFolderId = input.parentFolderId ?? pages.rootFolderId;
-        const parentFolder = getFolderOrThrow(pages, parentFolderId);
-        const folderId = input.folderId ?? nanoid();
-        if (pages.folders.has(folderId)) {
-          throwApiError("CONFLICT", "Folder id already exists");
-        }
-        if (
-          isSlugAvailable(
-            input.slug,
-            pages.folders,
-            parentFolderId,
-            folderId
-          ) === false
-        ) {
-          throwApiError(
-            "CONFLICT",
-            `Folder slug "${input.slug}" is already in use`
-          );
-        }
-        const folder = createFolderValue({
-          folderId,
-          name: input.name,
-          slug: input.slug,
+        const mutation = executeApiRuntimeMutation<{ folderId: string }>({
+          id: "folders.create",
+          build,
+          input,
         });
-        return await commit(
-          createFolderCreatePayload({
-            folder,
-            parentFolderId,
-            parentChildIndex: parentFolder.children.length,
-          }),
-          { folderId }
-        );
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1157,93 +991,34 @@ export const apiRouter = router({
         }),
       }),
       async ({ input, build, commit }) => {
-        const pages = build.pages;
-        const folder = getFolderOrThrow(pages, input.folderId);
-        if (folder.id === pages.rootFolderId) {
-          throwApiError("BAD_REQUEST", "Root folder cannot be updated");
-        }
-        if (input.values.slug !== undefined) {
-          if (
-            isSlugAvailable(
-              input.values.slug,
-              pages.folders,
-              input.values.parentFolderId ??
-                getParentFolderIdOrThrow(pages, folder.id),
-              folder.id
-            ) === false
-          ) {
-            throwApiError(
-              "CONFLICT",
-              `Folder slug "${input.values.slug}" is already in use`
-            );
-          }
-        }
-        if (input.values.parentFolderId !== undefined) {
-          const descendantFolderIds = getAllChildrenAndSelf(
-            folder.id,
-            pages.folders,
-            "folder"
-          );
-          if (descendantFolderIds.includes(input.values.parentFolderId)) {
-            throwApiError(
-              "BAD_REQUEST",
-              "Folder cannot be moved into itself or a descendant"
-            );
-          }
-          const slug = input.values.slug ?? folder.slug;
-          if (
-            isSlugAvailable(
-              slug,
-              pages.folders,
-              input.values.parentFolderId,
-              folder.id
-            ) === false
-          ) {
-            throwApiError(
-              "CONFLICT",
-              `Folder slug "${slug}" is already in use`
-            );
-          }
-          getFolderOrThrow(pages, input.values.parentFolderId);
-          getParentFolderIdOrThrow(pages, folder.id);
-        }
-        const payload = createFolderUpdatePayload({
-          folder,
-          pages,
-          values: input.values,
+        const mutation = executeApiRuntimeMutation<{ folderId: string }>({
+          id: "folders.update",
+          build,
+          input,
         });
-        if (payload.length === 0) {
-          return { version: build.version, folderId: input.folderId };
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        return await commit(payload, { folderId: input.folderId });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
     delete: buildMutation(
       projectIdInput.extend({ folderId: z.string() }),
       async ({ input, build, commit }) => {
-        const pages = build.pages;
-        const folder = getFolderOrThrow(pages, input.folderId);
-        if (folder.id === pages.rootFolderId) {
-          throwApiError("BAD_REQUEST", "Root folder cannot be deleted");
-        }
-        const parentFolderId = getParentFolderIdOrThrow(pages, folder.id);
-        const { folderIds, pageIds, payload } = createFolderDeletePayload({
+        const mutation = executeApiRuntimeMutation<{
+          folderId: string;
+          pageIds: string[];
+          folderIds: string[];
+        }>({
+          id: "folders.delete",
           build,
-          folder,
-          parentFolderId,
+          input,
         });
-        if (folderIds.length === 0) {
-          throwApiError(
-            "BAD_REQUEST",
-            "Folder containing home page cannot be deleted"
-          );
-        }
-        return await commit(payload, {
-          folderId: input.folderId,
-          pageIds,
-          folderIds,
-        });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -1261,45 +1036,11 @@ export const apiRouter = router({
         labelContains: z.string().optional(),
       }),
       async ({ input, build }) => {
-        const pages = getSerializedPages(build);
-        const page = getRequiredPageByInput(pages, input);
-        const rootInstanceIds =
-          input.rootInstanceId !== undefined
-            ? [input.rootInstanceId]
-            : page === undefined
-              ? undefined
-              : [page.rootInstanceId];
-        const depths = getInstanceDepths(build, rootInstanceIds);
-        const instances = [];
-        for (const instance of build.instances) {
-          const depth = depths.get(instance.id);
-          if (depth === undefined) {
-            continue;
-          }
-          if (input.maxDepth !== undefined && depth > input.maxDepth) {
-            continue;
-          }
-          if (input.topLevelOnly === true && depth > 0) {
-            continue;
-          }
-          if (
-            input.component !== undefined &&
-            instance.component !== input.component
-          ) {
-            continue;
-          }
-          if (input.tag !== undefined && instance.tag !== input.tag) {
-            continue;
-          }
-          if (
-            input.labelContains !== undefined &&
-            instance.label?.includes(input.labelContains) !== true
-          ) {
-            continue;
-          }
-          instances.push(serializeInstanceSummary(instance, depth));
-        }
-        return { instances };
+        return executeApiRuntimeOperation({
+          id: "instances.list",
+          build,
+          input,
+        });
       }
     ),
 
@@ -1312,60 +1053,11 @@ export const apiRouter = router({
         childDepth: z.number().int().optional(),
       }),
       async ({ input, build }) => {
-        const depths = getInstanceDepths(build, [input.instanceId]);
-        const instance = build.instances.find(
-          (instance) => instance.id === input.instanceId
-        );
-        if (instance === undefined) {
-          return throwApiError("NOT_FOUND", "Instance not found");
-        }
-
-        const include = new Set(input.include ?? []);
-        const details: Record<string, unknown> = serializeInstanceSummary(
-          instance,
-          depths.get(instance.id) ?? 0
-        );
-        if (include.has("props")) {
-          details.props = build.props.filter(
-            (prop) => prop.instanceId === instance.id
-          );
-        }
-        if (include.has("styles")) {
-          details.styles = serializeStyleDeclarations({
-            styles: build.styles,
-            styleSources: build.styleSources,
-            styleSourceSelections: build.styleSourceSelections,
-            instanceIds: new Set([instance.id]),
-          });
-        }
-        if (include.has("children")) {
-          const maxDepth = input.childDepth ?? 1;
-          details.children = build.instances
-            .filter((child) => {
-              const depth = depths.get(child.id);
-              return depth !== undefined && depth > 0 && depth <= maxDepth;
-            })
-            .map((child) =>
-              serializeInstanceSummary(child, depths.get(child.id) ?? 0)
-            );
-        }
-        if (include.has("bindings")) {
-          details.bindings = build.props.filter(
-            (prop) =>
-              prop.instanceId === instance.id &&
-              (prop.type === "expression" ||
-                prop.type === "parameter" ||
-                prop.type === "resource" ||
-                prop.type === "action")
-          );
-        }
-        if (include.has("sources")) {
-          const selected = build.styleSourceSelections.find(
-            (selection) => selection.instanceId === instance.id
-          );
-          details.sources = selected?.values ?? [];
-        }
-        return details;
+        return executeApiRuntimeOperation({
+          id: "instances.inspect",
+          build,
+          input,
+        });
       }
     ),
 
@@ -1387,50 +1079,15 @@ export const apiRouter = router({
           .min(1),
       }),
       async ({ input, build, commit }) => {
-        const instances = mapById(build.instances);
-        const parent = getInstanceOrThrow(instances, input.parentInstanceId);
-        const mode = input.mode ?? "append";
-        const insertIndex =
-          mode === "replace"
-            ? 0
-            : mode === "prepend"
-              ? 0
-              : (input.insertIndex ?? parent.children.length);
-        if (insertIndex > parent.children.length) {
-          throwApiError(
-            "BAD_REQUEST",
-            "Insert index is outside parent children"
-          );
-        }
-        const createdInstances: Instance[] = input.children.map((child) => {
-          const instanceId = child.instanceId ?? nanoid();
-          if (instances.has(instanceId)) {
-            throwApiError("CONFLICT", "Instance id already exists");
-          }
-          return {
-            type: "instance",
-            id: instanceId,
-            component: child.component ?? elementComponent,
-            tag: child.tag,
-            label: child.label,
-            children:
-              child.text === undefined
-                ? []
-                : [createTextContentChild({ type: "text", value: child.text })],
-          };
-        });
-        const { payload, replacedInstanceIds } = createInstanceAppendPayload({
+        const mutation = executeApiRuntimeMutation<{
+          instanceIds: string[];
+          removedInstanceIds: string[];
+        }>({
+          id: "instances.append",
           build,
-          parent,
-          instances,
-          createdInstances,
-          insertIndex,
-          mode,
+          input,
         });
-        return await commit(payload, {
-          instanceIds: createdInstances.map((instance) => instance.id),
-          removedInstanceIds: replacedInstanceIds,
-        });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1447,36 +1104,12 @@ export const apiRouter = router({
           .min(1),
       }),
       async ({ input, build, commit }) => {
-        const instances = mapById(build.instances);
-        const { errors, payload } = createInstanceMovePayload({
-          instances,
-          moves: input.moves,
+        const mutation = executeApiRuntimeMutation<{ instanceIds: string[] }>({
+          id: "instances.move",
+          build,
+          input,
         });
-        const error = errors.at(0);
-        if (error?.type === "instance-not-found") {
-          throwApiError("NOT_FOUND", "Instance not found");
-        }
-        if (error?.type === "parent-not-found") {
-          throwApiError("NOT_FOUND", "Parent instance not found");
-        }
-        if (error?.type === "target-parent-not-found") {
-          throwApiError("NOT_FOUND", "Instance not found");
-        }
-        if (error?.type === "descendant-target") {
-          throwApiError(
-            "BAD_REQUEST",
-            "Instance cannot be moved into itself or a descendant"
-          );
-        }
-        if (error?.type === "insert-index-outside-parent") {
-          throwApiError(
-            "BAD_REQUEST",
-            "Insert index is outside parent children"
-          );
-        }
-        return await commit(payload, {
-          instanceIds: input.moves.map((move) => move.instanceId),
-        });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1487,39 +1120,15 @@ export const apiRouter = router({
         insertIndex: z.number().int().nonnegative().optional(),
       }),
       async ({ input, build, commit }) => {
-        const instances = mapById(build.instances);
-        const source = getInstanceOrThrow(instances, input.sourceInstanceId);
-        const targetParent =
-          input.targetParentInstanceId === undefined
-            ? getParentInstanceOrThrow(instances, source.id).instance
-            : getInstanceOrThrow(instances, input.targetParentInstanceId);
-        const insertIndex = input.insertIndex ?? targetParent.children.length;
-        if (insertIndex > targetParent.children.length) {
-          throwApiError(
-            "BAD_REQUEST",
-            "Insert index is outside parent children"
-          );
-        }
-        const clone = createInstanceClonePayload({
-          instances,
-          sourceInstanceId: source.id,
-          targetParent,
-          insertIndex,
-          props: build.props,
-          styleSourceSelections: build.styleSourceSelections,
-          styleSources: build.styleSources,
-          styles: build.styles,
+        const mutation = executeApiRuntimeMutation<{
+          instanceId: string;
+          instanceIds: string[];
+        }>({
+          id: "instances.clone",
+          build,
+          input,
         });
-        if (clone === undefined) {
-          return throwApiError(
-            "BAD_REQUEST",
-            "Source instance could not be cloned"
-          );
-        }
-        return await commit(clone.payload, {
-          instanceId: clone.clonedRootId,
-          instanceIds: clone.clonedInstanceIds,
-        });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1528,32 +1137,12 @@ export const apiRouter = router({
         instanceIds: z.array(z.string()).min(1),
       }),
       async ({ input, build, commit }) => {
-        const pages = getSerializedPages(build);
-        const pageRootIds = new Set(
-          pages.pages.map((page) => page.rootInstanceId)
-        );
-        const instances = mapById(build.instances);
-        const { errors, payload, instanceIds } = createInstanceDeletePayload({
-          instances,
-          instanceIds: input.instanceIds,
-          pageRootIds,
-          props: build.props,
-          dataSources: build.dataSources,
-          styleSources: build.styleSources,
-          styleSourceSelections: build.styleSourceSelections,
-          styles: build.styles,
+        const mutation = executeApiRuntimeMutation<{ instanceIds: string[] }>({
+          id: "instances.delete",
+          build,
+          input,
         });
-        const error = errors.at(0);
-        if (error?.type === "page-root") {
-          throwApiError("BAD_REQUEST", "Page root instance cannot be deleted");
-        }
-        if (error?.type === "instance-not-found") {
-          throwApiError("NOT_FOUND", "Instance not found");
-        }
-        if (error?.type === "parent-not-found") {
-          throwApiError("NOT_FOUND", "Parent instance not found");
-        }
-        return await commit(payload, { instanceIds });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1562,25 +1151,15 @@ export const apiRouter = router({
         updates: z.array(propValueInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const instances = mapById(build.instances);
-        const nextProps = input.updates.map((update) => {
-          getInstanceOrThrow(instances, update.instanceId);
-          const existing = findProp(
-            build.props,
-            update.instanceId,
-            update.name
-          );
-          const nextProp = validatePropValue({
-            ...update,
-            propId: update.propId ?? existing?.id,
-          });
-          return nextProp;
+        const mutation = executeApiRuntimeMutation<{ propIds: string[] }>({
+          id: "instances.updateProps",
+          build,
+          input,
         });
-        const { payload, propIds } = createPropUpsertPayload({
-          props: build.props,
-          nextProps,
-        });
-        return await commit(payload, { propIds });
+        if (mutation.noop) {
+          return { version: build.version, ...mutation.result };
+        }
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1591,20 +1170,15 @@ export const apiRouter = router({
           .min(1),
       }),
       async ({ input, build, commit }) => {
-        const { missingInstanceId, payload, propIds } = createPropDeletePayload(
-          {
-            instances: mapById(build.instances),
-            props: build.props,
-            deletions: input.deletions,
-          }
-        );
-        if (missingInstanceId !== undefined) {
-          throwApiError("NOT_FOUND", "Instance not found");
+        const mutation = executeApiRuntimeMutation<{ propIds: string[] }>({
+          id: "instances.deleteProps",
+          build,
+          input,
+        });
+        if (mutation.noop) {
+          return { version: build.version, ...mutation.result };
         }
-        if (payload.length === 0) {
-          return { version: build.version, propIds: [] };
-        }
-        return await commit(payload, { propIds });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1613,25 +1187,15 @@ export const apiRouter = router({
         bindings: z.array(propBindingInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const instances = mapById(build.instances);
-        const nextProps = input.bindings.map((binding) => {
-          getInstanceOrThrow(instances, binding.instanceId);
-          const existing = findProp(
-            build.props,
-            binding.instanceId,
-            binding.name
-          );
-          const nextProp = validatePropBinding({
-            ...binding,
-            propId: binding.propId ?? existing?.id,
-          });
-          return nextProp;
+        const mutation = executeApiRuntimeMutation<{ propIds: string[] }>({
+          id: "instances.bindProps",
+          build,
+          input,
         });
-        const { payload, propIds } = createPropUpsertPayload({
-          props: build.props,
-          nextProps,
-        });
-        return await commit(payload, { propIds });
+        if (mutation.noop) {
+          return { version: build.version, ...mutation.result };
+        }
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1645,22 +1209,11 @@ export const apiRouter = router({
         maxValueLength: z.number().int().nonnegative().optional(),
       }),
       async ({ input, build }) => {
-        const pages = getSerializedPages(build);
-        const page = getRequiredPageByInput(pages, input);
-        const rootInstanceIds =
-          page === undefined
-            ? undefined
-            : new Set(getInstanceDepths(build, [page.rootInstanceId]).keys());
-        return {
-          texts: serializeTextNodes({
-            instances: build.instances,
-            rootInstanceIds,
-            instanceId: input.instanceId,
-            mode: input.mode,
-            contains: input.contains,
-            maxValueLength: input.maxValueLength,
-          }),
-        };
+        return executeApiRuntimeOperation({
+          id: "instances.listTexts",
+          build,
+          input,
+        });
       }
     ),
 
@@ -1672,32 +1225,22 @@ export const apiRouter = router({
         mode: z.enum(["text", "expression"]).optional(),
       }),
       async ({ input, build, commit }) => {
-        const child = getTextChildOrThrow(build, input);
-        const mode = input.mode ?? child.type;
-        validateTextValue(mode, input.text);
-        if (child.value === input.text) {
+        const mutation = executeApiRuntimeMutation<{
+          instanceId: string;
+          childIndex: number;
+          mode: "text" | "expression";
+        }>({
+          id: "instances.updateText",
+          build,
+          input,
+        });
+        if (mutation.noop) {
           return {
             version: build.version,
-            instanceId: input.instanceId,
-            childIndex: input.childIndex,
-            mode,
+            ...mutation.result,
           };
         }
-        return await commit(
-          createTextContentUpdatePayload({
-            instanceId: input.instanceId,
-            childIndex: input.childIndex,
-            child: createTextContentChild({
-              type: mode,
-              value: input.text,
-            }),
-          }),
-          {
-            instanceId: input.instanceId,
-            childIndex: input.childIndex,
-            mode,
-          }
-        );
+        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -1715,37 +1258,11 @@ export const apiRouter = router({
         includeTokens: z.boolean().optional(),
       }),
       async ({ input, build }) => {
-        const pages = getSerializedPages(build);
-        const page = getRequiredPageByInput(pages, input);
-        const pageInstanceIds =
-          page === undefined
-            ? undefined
-            : new Set(getInstanceDepths(build, [page.rootInstanceId]).keys());
-        const inputInstanceIds =
-          input.instanceIds === undefined
-            ? undefined
-            : new Set(input.instanceIds);
-        const instanceIds =
-          pageInstanceIds === undefined
-            ? inputInstanceIds
-            : new Set(
-                Array.from(inputInstanceIds ?? pageInstanceIds).filter(
-                  (instanceId) => pageInstanceIds.has(instanceId)
-                )
-              );
-        return {
-          declarations: serializeStyleDeclarations({
-            styles: build.styles,
-            styleSources: build.styleSources,
-            styleSourceSelections: build.styleSourceSelections,
-            instanceIds,
-            breakpoint: input.breakpoint,
-            state: input.state,
-            property: input.property,
-            propertyFilter: input.propertyFilter,
-            includeTokens: input.includeTokens,
-          }),
-        };
+        return executeApiRuntimeOperation({
+          id: "styles.getDeclarations",
+          build,
+          input,
+        });
       }
     ),
 
@@ -1754,24 +1271,18 @@ export const apiRouter = router({
         updates: z.array(styleUpdateInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const instances = mapById(build.instances);
-        for (const update of input.updates) {
-          getInstanceOrThrow(instances, update.instanceId);
+        const mutation = executeApiRuntimeMutation<{ styleKeys: string[] }>({
+          id: "styles.updateDeclarations",
+          build,
+          input,
+        });
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        const { payload, styleKeys, missingLocalStyleSourceInstanceIds } =
-          createStyleDeclarationUpdatePayload({
-            updates: input.updates,
-            styleSources: mapById(build.styleSources),
-            styleSourceSelections: build.styleSourceSelections,
-            styles: build.styles,
-          });
-        if (missingLocalStyleSourceInstanceIds.length > 0) {
-          throwApiError(
-            "NOT_FOUND",
-            "Local style source not found for instance"
-          );
-        }
-        return await commit(payload, { styleKeys });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1780,46 +1291,36 @@ export const apiRouter = router({
         deletions: z.array(styleDeleteInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const instances = mapById(build.instances);
-        const styleSources = mapById(build.styleSources);
-        for (const deletion of input.deletions) {
-          getInstanceOrThrow(instances, deletion.instanceId);
-        }
-        const { payload, styleKeys } = createStyleDeclarationDeletePayload({
-          deletions: input.deletions,
-          styleSources,
-          styleSourceSelections: build.styleSourceSelections,
-          styles: build.styles,
+        const mutation = executeApiRuntimeMutation<{ styleKeys: string[] }>({
+          id: "styles.deleteDeclarations",
+          build,
+          input,
         });
-        if (styleKeys.length === 0) {
-          return { version: build.version, styleKeys: [] };
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        return await commit(payload, { styleKeys });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
     replaceValues: buildMutation(
       projectIdInput.merge(styleReplaceInput),
       async ({ input, build, commit }) => {
-        const pages = getSerializedPages(build);
-        const page = getRequiredPageByInput(pages, input);
-        const pageInstanceIds =
-          page === undefined
-            ? undefined
-            : new Set(getInstanceDepths(build, [page.rootInstanceId]).keys());
-        const { payload, styleKeys } = createStyleValueReplacementPayload({
-          styles: build.styles,
-          styleSources: build.styleSources,
-          styleSourceSelections: build.styleSourceSelections,
-          instanceIds: pageInstanceIds,
-          property: input.property,
-          fromValue: input.fromValue,
-          toValue: input.toValue,
+        const mutation = executeApiRuntimeMutation<{ styleKeys: string[] }>({
+          id: "styles.replaceValues",
+          build,
+          input,
         });
-        if (styleKeys.length === 0) {
-          return { version: build.version, styleKeys: [] };
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        return await commit(payload, { styleKeys });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -1832,13 +1333,10 @@ export const apiRouter = router({
         sort: z.enum(["name", "usage"]).optional(),
       }),
       async ({ input, build }) => {
-        return serializeDesignTokens({
-          styleSources: build.styleSources,
-          styles: build.styles,
-          styleSourceSelections: build.styleSourceSelections,
-          filter: input.filter,
-          withUsage: input.withUsage,
-          sort: input.sort,
+        return executeApiRuntimeOperation({
+          id: "designTokens.list",
+          build,
+          input,
         });
       }
     ),
@@ -1848,23 +1346,18 @@ export const apiRouter = router({
         tokens: z.array(designTokenCreateInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const { payload, tokenIds, errors } = createDesignTokenCreatePayload({
-          tokens: input.tokens,
-          styleSources: mapById(build.styleSources),
+        const mutation = executeApiRuntimeMutation<{ tokenIds: string[] }>({
+          id: "designTokens.create",
+          build,
+          input,
         });
-        const error = errors.at(0);
-        if (error?.type === "duplicate-id") {
-          throwApiError("CONFLICT", "Design token id already exists");
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        if (error?.type === "invalid-name") {
-          throwApiError(
-            "CONFLICT",
-            error.error?.type === "minlength"
-              ? "Design token name is required"
-              : "Design token name already exists"
-          );
-        }
-        return await commit(payload, { tokenIds });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1874,16 +1367,15 @@ export const apiRouter = router({
         updates: z.array(designTokenStyleInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        getDesignTokenOrThrow(build, input.designTokenId);
-        const { payload, styleKeys } = createDesignTokenStyleUpdatePayload({
-          designTokenId: input.designTokenId,
-          updates: input.updates,
-          styles: build.styles,
+        const mutation = executeApiRuntimeMutation<{
+          designTokenId: string;
+          styleKeys: string[];
+        }>({
+          id: "designTokens.updateStyles",
+          build,
+          input,
         });
-        return await commit(payload, {
-          designTokenId: input.designTokenId,
-          styleKeys,
-        });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1893,23 +1385,21 @@ export const apiRouter = router({
         deletions: z.array(styleDeleteInput.omit({ instanceId: true })).min(1),
       }),
       async ({ input, build, commit }) => {
-        getDesignTokenOrThrow(build, input.designTokenId);
-        const { payload, styleKeys } = createDesignTokenStyleDeletePayload({
-          designTokenId: input.designTokenId,
-          deletions: input.deletions,
-          styles: build.styles,
+        const mutation = executeApiRuntimeMutation<{
+          designTokenId: string;
+          styleKeys: string[];
+        }>({
+          id: "designTokens.deleteStyles",
+          build,
+          input,
         });
-        if (styleKeys.length === 0) {
+        if (mutation.noop) {
           return {
             version: build.version,
-            designTokenId: input.designTokenId,
-            styleKeys,
+            ...mutation.result,
           };
         }
-        return await commit(payload, {
-          designTokenId: input.designTokenId,
-          styleKeys,
-        });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1920,23 +1410,20 @@ export const apiRouter = router({
         position: z.enum(["before-local", "after-local"]).optional(),
       }),
       async ({ input, build, commit }) => {
-        getDesignTokenOrThrow(build, input.designTokenId);
-        const instances = mapById(build.instances);
-        const styleSources = mapById(build.styleSources);
-        for (const instanceId of input.instanceIds) {
-          getInstanceOrThrow(instances, instanceId);
-        }
-        const payload = createStyleSourceSelectionAttachPayload({
-          instanceIds: input.instanceIds,
-          styleSourceSelections: build.styleSourceSelections,
-          styleSources,
-          styleSourceId: input.designTokenId,
-          position: input.position,
+        const mutation = executeApiRuntimeMutation<{
+          designTokenId: string;
+        }>({
+          id: "designTokens.attach",
+          build,
+          input,
         });
-        if (payload.length === 0) {
-          return { version: build.version, designTokenId: input.designTokenId };
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        return await commit(payload, { designTokenId: input.designTokenId });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1946,20 +1433,20 @@ export const apiRouter = router({
         instanceIds: z.array(z.string()).min(1),
       }),
       async ({ input, build, commit }) => {
-        getDesignTokenOrThrow(build, input.designTokenId);
-        const instances = mapById(build.instances);
-        for (const instanceId of input.instanceIds) {
-          getInstanceOrThrow(instances, instanceId);
-        }
-        const payload = createStyleSourceSelectionDetachPayload({
-          instanceIds: input.instanceIds,
-          styleSourceSelections: build.styleSourceSelections,
-          styleSourceId: input.designTokenId,
+        const mutation = executeApiRuntimeMutation<{
+          designTokenId: string;
+        }>({
+          id: "designTokens.detach",
+          build,
+          input,
         });
-        if (payload.length === 0) {
-          return { version: build.version, designTokenId: input.designTokenId };
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        return await commit(payload, { designTokenId: input.designTokenId });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1970,129 +1457,73 @@ export const apiRouter = router({
         removeLocalProps: z.array(z.string()).optional(),
       }),
       async ({ input, build, commit }) => {
-        const tokenId = nanoid();
-        const instances = mapById(build.instances);
-        for (const instanceId of input.instanceIds) {
-          getInstanceOrThrow(instances, instanceId);
-        }
-        const { payload, styleKeys } = createDesignTokenExtractionPayload({
-          tokenId,
-          tokenName: input.name,
-          instanceIds: input.instanceIds,
-          styleSources: mapById(build.styleSources),
-          styleSourceSelections: build.styleSourceSelections,
-          styles: build.styles,
-          removeLocalProps: input.removeLocalProps,
+        const mutation = executeApiRuntimeMutation<{
+          designTokenId: string;
+          styleKeys: string[];
+        }>({
+          id: "designTokens.extract",
+          build,
+          input,
         });
-        return await commit(payload, {
-          designTokenId: tokenId,
-          styleKeys,
-        });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
 
   cssVariables: router({
     list: buildQuery(cssVariableListInput, async ({ input, build }) => {
-      return serializeCssVariables({
-        styles: build.styles,
-        props: build.props,
-        styleSourceSelections: build.styleSourceSelections,
-        filter: input.filter,
-        withUsage: input.withUsage,
+      return executeApiRuntimeOperation({
+        id: "cssVariables.list",
+        build,
+        input,
       });
     }),
 
     define: buildMutation(
       cssVariableDefineInput,
       async ({ input, build, commit }) => {
-        const rootInstanceId = getHomePageRootInstanceId(build.pages);
-        if (rootInstanceId === undefined) {
-          return throwApiError("NOT_FOUND", "Home page not found");
-        }
-        for (const [property] of Object.entries(input.vars)) {
-          assertCssVariableName(property);
-        }
-        const resultPayload = createCssVariableRootDefinePayload({
-          rootInstanceId,
-          vars: input.vars,
-          styleSources: mapById(build.styleSources),
-          styleSourceSelections: build.styleSourceSelections,
-          styles: build.styles,
-          overwrite: input.overwrite,
+        const mutation = executeApiRuntimeMutation<{ names: string[] }>({
+          id: "cssVariables.define",
+          build,
+          input,
         });
-        if (resultPayload.missingRootStyleSource) {
-          throwApiError(
-            "NOT_FOUND",
-            "Local style source not found for instance"
-          );
-        }
-        const conflict = resultPayload.conflicts.at(0);
-        if (conflict !== undefined) {
-          throwApiError(
-            "CONFLICT",
-            `CSS variable "${conflict}" already exists`
-          );
-        }
-        return await commit(resultPayload.payload, {
-          names: Object.keys(input.vars),
-        });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
     delete: buildMutation(
       cssVariableDeleteInput,
       async ({ input, build, commit }) => {
-        for (const name of input.names) {
-          assertCssVariableName(name);
+        const mutation = executeApiRuntimeMutation<{
+          names: string[];
+          styleKeys: string[];
+        }>({
+          id: "cssVariables.delete",
+          build,
+          input,
+        });
+        if (mutation.noop) {
+          return { version: build.version, ...mutation.result };
         }
-        const { payload, styleKeys, referenced } =
-          createCssVariableDeletePayload({
-            names: input.names,
-            styles: build.styles,
-            props: build.props,
-            force: input.force,
-          });
-        if (referenced.length > 0) {
-          throwApiError(
-            "BAD_REQUEST",
-            `CSS variables are still referenced: ${referenced.join(", ")}`
-          );
-        }
-        if (styleKeys.length === 0) {
-          return { version: build.version, names: input.names, styleKeys };
-        }
-        return await commit(payload, { names: input.names, styleKeys });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
     rewriteRefs: buildMutation(
       cssVariableRewriteRefsInput,
       async ({ input, build, commit }) => {
-        for (const [fromName, toName] of Object.entries(input.map)) {
-          assertCssVariableName(fromName);
-          assertCssVariableName(toName);
-        }
-        const scopeRegex = compileOptionalRegex(input.scopeRegex);
-        const { payload, styleKeys, propIds } =
-          createCssVariableReferenceRewritePayload({
-            replacements: input.map,
-            scopeRegex,
-            styles: build.styles,
-            props: build.props,
-            styleSourceSelections: build.styleSourceSelections,
-          });
-        if (payload.length === 0) {
-          return {
-            version: build.version,
-            styleKeys: [],
-            propIds: [],
-          };
-        }
-        return await commit(payload, {
-          styleKeys,
-          propIds,
+        const mutation = executeApiRuntimeMutation<{
+          styleKeys: string[];
+          propIds: string[];
+        }>({
+          id: "cssVariables.rewriteRefs",
+          build,
+          input,
         });
+        if (mutation.noop) {
+          return { version: build.version, ...mutation.result };
+        }
+        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -2101,9 +1532,10 @@ export const apiRouter = router({
     list: buildQuery(
       projectIdInput.extend({ scopeInstanceId: z.string().optional() }),
       async ({ input, build }) => {
-        return serializeDataVariables({
-          dataSources: build.dataSources,
-          scopeInstanceId: input.scopeInstanceId,
+        return executeApiRuntimeOperation({
+          id: "variables.list",
+          build,
+          input,
         });
       }
     ),
@@ -2116,25 +1548,18 @@ export const apiRouter = router({
         value: dataVariableValueInput,
       }),
       async ({ input, build, commit }) => {
-        const dataSourceId = input.dataSourceId ?? nanoid();
-        const { payload, errors } = createDataVariableCreatePayload({
-          dataSourceId,
-          scopeInstanceId: input.scopeInstanceId,
-          name: input.name,
-          value: input.value,
-          dataSources: build.dataSources,
+        const mutation = executeApiRuntimeMutation<{ dataSourceId: string }>({
+          id: "variables.create",
+          build,
+          input,
         });
-        const error = errors.at(0);
-        if (error?.type === "duplicate-id") {
-          throwApiError("CONFLICT", "Variable id already exists");
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        if (error) {
-          throwApiError(
-            "BAD_REQUEST",
-            "message" in error ? error.message : "Invalid variable"
-          );
-        }
-        return await commit(payload, { dataSourceId });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -2148,25 +1573,18 @@ export const apiRouter = router({
         }),
       }),
       async ({ input, build, commit }) => {
-        const variable = findDataVariable(
-          build.dataSources,
-          input.dataSourceId
-        );
-        if (variable === undefined) {
-          return throwApiError("NOT_FOUND", "Variable not found");
-        }
-        const { payload, error } = createDataVariableUpdatePayload({
-          variable,
-          values: input.values,
-          dataSources: build.dataSources,
+        const mutation = executeApiRuntimeMutation<{ dataSourceId: string }>({
+          id: "variables.update",
+          build,
+          input,
         });
-        if (error) {
-          throwApiError("BAD_REQUEST", error.message);
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        if (payload.length === 0) {
-          return { version: build.version, dataSourceId: variable.id };
-        }
-        return await commit(payload, { dataSourceId: variable.id });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -2175,18 +1593,18 @@ export const apiRouter = router({
         dataSourceId: z.string(),
       }),
       async ({ input, build, commit }) => {
-        const { payload, deletedVariable } = createDataVariableDeletePayload({
-          variableId: input.dataSourceId,
-          pages: build.pages,
-          instances: mapById(build.instances),
-          props: mapById(build.props),
-          dataSources: mapById(build.dataSources),
-          resources: mapById(build.resources),
+        const mutation = executeApiRuntimeMutation<{ dataSourceId: string }>({
+          id: "variables.delete",
+          build,
+          input,
         });
-        if (deletedVariable === undefined) {
-          return throwApiError("NOT_FOUND", "Variable not found");
+        if (mutation.noop) {
+          return {
+            version: build.version,
+            ...mutation.result,
+          };
         }
-        return await commit(payload, { dataSourceId: deletedVariable.id });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -2195,10 +1613,10 @@ export const apiRouter = router({
     list: buildQuery(
       projectIdInput.extend({ scopeInstanceId: z.string().optional() }),
       async ({ input, build }) => {
-        return serializeResources({
-          resources: build.resources,
-          dataSources: build.dataSources,
-          scopeInstanceId: input.scopeInstanceId,
+        return executeApiRuntimeOperation({
+          id: "resources.list",
+          build,
+          input,
         });
       }
     ),
@@ -2212,46 +1630,18 @@ export const apiRouter = router({
         dataSourceName: z.string().optional(),
       }),
       async ({ input, build, commit }) => {
-        const resourceId = input.resourceId ?? nanoid();
-        validateResourceExpressions(input.resource);
-        const dataSourceId =
-          input.scopeInstanceId === undefined
-            ? undefined
-            : (input.dataSourceId ?? nanoid());
-        const resultPayload = createResourceCreatePayload({
-          resourceId,
-          resource: input.resource,
-          resources: build.resources,
-          dataSources: build.dataSources,
-          dataSourceId,
-          scopeInstanceId: input.scopeInstanceId,
-          dataSourceName: input.dataSourceName,
-        });
-        const error = resultPayload.errors.at(0);
-        if (error?.type === "duplicate-resource-id") {
-          throwApiError("CONFLICT", "Resource id already exists");
-        }
-        if (error?.type === "duplicate-data-source-id") {
-          throwApiError("CONFLICT", "Data source id already exists");
-        }
-        const resourceValue = createResourceValue({
-          id: resourceId,
-          name: input.resource.name,
-          control: input.resource.control,
-          method: input.resource.method,
-          url: input.resource.url,
-          searchParams: input.resource.searchParams,
-          headers: input.resource.headers,
-          body: input.resource.body,
-        });
-        const payload = createResourceUpsertPatchPayload({
+        const mutation = executeApiRuntimeMutation<{
+          resourceId: string;
+          dataSourceId?: string;
+        }>({
+          id: "resources.create",
           build,
-          resource: resourceValue,
-          dataSourceId,
-          scopeInstanceId: input.scopeInstanceId,
-          dataSourceName: input.dataSourceName,
+          input,
         });
-        return await commit(payload, { resourceId, dataSourceId });
+        if (mutation.noop) {
+          return { version: build.version, ...mutation.result };
+        }
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -2263,38 +1653,15 @@ export const apiRouter = router({
         scopeInstanceId: z.string().optional(),
       }),
       async ({ input, build, commit }) => {
-        const resourceValue = getResourceOrThrow(
-          build.resources,
-          input.resourceId
-        );
-        validateResourceExpressions(input.values);
-        const payload = createResourceUpdatePayload({
-          resource: resourceValue,
-          values: input.values,
-          dataSources: build.dataSources,
-          dataSourceName: input.dataSourceName,
-          scopeInstanceId: input.scopeInstanceId,
-        });
-        if (payload.length === 0) {
-          return { version: build.version, resourceId: resourceValue.id };
-        }
-        const nextResourceValue = createResourceValue({
-          ...resourceValue,
-          ...input.values,
-        });
-        const dataSource = build.dataSources.find(
-          (dataSource) =>
-            dataSource.type === "resource" &&
-            dataSource.resourceId === resourceValue.id
-        );
-        const nextPayload = createResourceUpsertPatchPayload({
+        const mutation = executeApiRuntimeMutation<{ resourceId: string }>({
+          id: "resources.update",
           build,
-          resource: nextResourceValue,
-          dataSourceId: dataSource?.id,
-          scopeInstanceId: input.scopeInstanceId ?? dataSource?.scopeInstanceId,
-          dataSourceName: input.dataSourceName ?? dataSource?.name,
+          input,
         });
-        return await commit(nextPayload, { resourceId: resourceValue.id });
+        if (mutation.noop) {
+          return { version: build.version, ...mutation.result };
+        }
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -2304,27 +1671,19 @@ export const apiRouter = router({
         force: z.boolean().optional(),
       }),
       async ({ input, build, commit }) => {
-        const resourceValue = getResourceOrThrow(
-          build.resources,
-          input.resourceId
-        );
-        const resultPayload = createResourceDeletePayload({
-          resource: resourceValue,
-          dataSources: build.dataSources,
-          props: build.props,
-          force: input.force,
+        const mutation = executeApiRuntimeMutation<{
+          resourceId: string;
+          dataSourceIds: string[];
+          propIds: string[];
+        }>({
+          id: "resources.delete",
+          build,
+          input,
         });
-        if (resultPayload.isUsed) {
-          throwApiError(
-            "BAD_REQUEST",
-            "Resource is used by props. Pass force to remove those prop references."
-          );
+        if (mutation.noop) {
+          return { version: build.version, ...mutation.result };
         }
-        return await commit(resultPayload.payload, {
-          resourceId: resourceValue.id,
-          dataSourceIds: resultPayload.dataSourceIds,
-          propIds: resultPayload.propIds,
-        });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -2503,21 +1862,13 @@ export const apiRouter = router({
         const assets = await loadAssetsByProject(input.projectId, ctx, {
           skipPermissionsCheck: true,
         });
-        const build =
-          input.withUsage === true || input.sort === "usage"
-            ? await loadDevBuildByProjectId(ctx, input.projectId)
-            : undefined;
-        try {
-          return serializeAssetList({ assets, build, input });
-        } catch (error) {
-          if (
-            error instanceof Error &&
-            error.message === "Invalid asset cursor"
-          ) {
-            throwApiError("BAD_REQUEST", error.message);
-          }
-          throw error;
-        }
+        const build = await loadDevBuildByProjectId(ctx, input.projectId);
+        return executeApiRuntimeOperation({
+          id: "assets.list",
+          build,
+          assets,
+          input,
+        });
       }
     ),
 
@@ -2528,9 +1879,13 @@ export const apiRouter = router({
         const assets = await loadAssetsByProject(input.projectId, ctx, {
           skipPermissionsCheck: true,
         });
-        const asset = getAssetOrThrow(assets, input.assetId);
         const build = await loadDevBuildByProjectId(ctx, input.projectId);
-        return { usages: createAssetUsageList({ asset, assets, build }) };
+        return executeApiRuntimeOperation({
+          id: "assets.findUsage",
+          build,
+          assets,
+          input,
+        });
       }
     ),
 
@@ -2544,17 +1899,13 @@ export const apiRouter = router({
         const assets = await loadAssetsByProject(input.projectId, ctx, {
           skipPermissionsCheck: true,
         });
-        const fromAsset = getAssetOrThrow(assets, input.fromAssetId);
-        const toAsset = getAssetOrThrow(assets, input.toAssetId);
-        const payload = createAssetReplacementPayload({
+        const mutation = executeApiRuntimeMutation({
+          id: "assets.replace",
           build,
-          fromAsset,
-          toAsset,
+          assets,
+          input,
         });
-        return await commit(payload, {
-          fromAssetId: fromAsset.id,
-          toAssetId: toAsset.id,
-        });
+        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -2568,34 +1919,16 @@ export const apiRouter = router({
         const assets = await loadAssetsByProject(input.projectId, ctx, {
           skipPermissionsCheck: true,
         });
-        const selectedAssets = assets.filter((asset) =>
-          input.assetIdsOrPrefixes.some(
-            (value) => asset.id === value || asset.id.startsWith(value)
-          )
-        );
-        if (selectedAssets.length === 0) {
-          return { version: build.version, assetIds: [] };
-        }
-        const usagesByAsset = new Map(
-          selectedAssets.map((asset) => [
-            asset.id,
-            createAssetUsageList({ asset, assets, build }),
-          ])
-        );
-        if (input.force !== true) {
-          const usedAssetIds = selectedAssets
-            .filter((asset) => (usagesByAsset.get(asset.id)?.length ?? 0) > 0)
-            .map((asset) => asset.id);
-          if (usedAssetIds.length > 0) {
-            throwApiError(
-              "BAD_REQUEST",
-              `Assets are still referenced: ${usedAssetIds.join(", ")}`
-            );
-          }
-        }
-        return await commit(createAssetDeletePayload(selectedAssets), {
-          assetIds: selectedAssets.map((asset) => asset.id),
+        const mutation = executeApiRuntimeMutation({
+          id: "assets.delete",
+          build,
+          assets,
+          input,
         });
+        if (mutation.payload.length === 0) {
+          return { version: build.version, ...mutation.result };
+        }
+        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -2608,7 +1941,6 @@ export const __testing__ = {
   getTokenPermits,
   applySemanticBuildPatch,
   serializeProjectSummary,
-  serializeCssVariables,
   commitBuildPatch,
   commitBuildTransactions,
   assertContentOrBuildPayload,
@@ -2623,11 +1955,4 @@ export const __testing__ = {
   getTextChildOrThrow,
   validateTextValue,
   getResourceOrThrow,
-  validateResourceExpressions,
-  validatePropValue,
-  validatePropBinding,
-  getDesignTokenOrThrow,
-  assertCssVariableName,
-  compileOptionalRegex,
-  getAssetOrThrow,
 };

@@ -6,13 +6,12 @@ import {
   type StyleSources,
   type StyleSourceSelections,
 } from "@webstudio-is/sdk";
+import { nanoid } from "nanoid";
 
 import { isBaseBreakpoint } from "~/shared/breakpoints-utils";
 import { camelCaseProperty } from "@webstudio-is/css-data";
-import {
-  getOrCreateLocalStyleSourceIdMutable,
-  setStyleDeclMutable,
-} from "~/shared/style-source-utils";
+import { createStyleDeclarationUpdatePayload } from "@webstudio-is/project-build/runtime/styles";
+import { applyBuilderPatchPayloadMutable } from "~/shared/instance-utils/data";
 
 export const setListedCssProperty =
   (
@@ -23,12 +22,6 @@ export const setListedCssProperty =
     styles: Styles
   ) =>
   (instanceId: Instance["id"], property: CssProperty, value: StyleValue) => {
-    const localStyleSourceId = getOrCreateLocalStyleSourceIdMutable({
-      styleSourceSelections,
-      styleSources,
-      instanceId,
-    });
-
     const baseBreakpoint = Array.from(breakpoints.values()).find(
       isBaseBreakpoint
     );
@@ -37,12 +30,23 @@ export const setListedCssProperty =
       throw new Error("Base breakpoint not found");
     }
 
-    setStyleDeclMutable({
-      styles,
-      breakpointId: baseBreakpoint.id,
-      property: camelCaseProperty(property),
-      styleSourceId: localStyleSourceId,
-      value,
-      listed: true,
-    });
+    applyBuilderPatchPayloadMutable(
+      { styleSourceSelections, styleSources, styles },
+      createStyleDeclarationUpdatePayload({
+        updates: [
+          {
+            instanceId,
+            breakpoint: baseBreakpoint.id,
+            property: camelCaseProperty(property),
+            value,
+            listed: true,
+            createLocalIfMissing: true,
+          },
+        ],
+        styleSources,
+        styleSourceSelections: styleSourceSelections.values(),
+        styles: styles.values(),
+        createId: nanoid,
+      }).payload
+    );
   };

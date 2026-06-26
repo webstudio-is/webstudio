@@ -45,8 +45,8 @@ import {
 import type {
   BuilderPatch,
   BuilderPatchTransaction,
-} from "@webstudio-is/project-build/contracts";
-import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state";
+} from "@webstudio-is/project-build/contracts/patch";
+import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state/patch";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 
 type TouchedKeys = {

@@ -15,13 +15,19 @@ import {
 import { AlertIcon } from "@webstudio-is/icons";
 import type { Prop } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import {
+  applyBuilderPatchPayloadMutable,
+  updateWebstudioData,
+} from "~/shared/instance-utils/data";
 import {
   $authPermit,
   $isContentMode,
   $selectedInstance,
 } from "~/shared/nano-states";
-import { getPropDeletePlan, getPropIdsToDelete } from "~/shared/prop-utils";
+import {
+  createPropDeletePayload,
+  getPropIdsToDelete,
+} from "@webstudio-is/project-build/runtime/props";
 import { $props } from "~/shared/sync/data-stores";
 import {
   $selectedInstanceInitialPropNames,
@@ -72,22 +78,16 @@ export const __testing__ = {
 
 const deleteProp = (name: string) => {
   const instance = $selectedInstance.get();
-  const instanceProps = $selectedInstanceProps.get();
   updateWebstudioData((data) => {
     if (instance === undefined) {
       return;
     }
-    const { propIds, resourceIds } = getPropDeletePlan({
-      instance,
-      props: instanceProps.values(),
-      propName: name,
+    const { payload } = createPropDeletePayload({
+      deletions: [{ instanceId: instance.id, name }],
+      instances: data.instances,
+      props: data.props.values(),
     });
-    for (const propId of propIds) {
-      data.props.delete(propId);
-    }
-    for (const resourceId of resourceIds) {
-      data.resources.delete(resourceId);
-    }
+    applyBuilderPatchPayloadMutable(data, payload);
   });
 };
 

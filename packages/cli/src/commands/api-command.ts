@@ -1891,10 +1891,6 @@ const apiCommandHandlers = {
   },
 } satisfies Record<string, ApiCommandHandler>;
 
-export const apiCommandNames = Object.keys(
-  apiCommandHandlers
-) as ApiCommandName[];
-
 export type ApiCommandName = keyof typeof apiCommandHandlers;
 
 export const apiCommand = async (

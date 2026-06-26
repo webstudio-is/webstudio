@@ -47,11 +47,11 @@ import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { Form } from "../form";
 import { findMatchingRedirect } from "~/shared/project-settings/utils";
 import { isContentModePagePath } from "@webstudio-is/project/content-mode-permissions";
-import { updatePageFieldsMutable } from "~/shared/page-utils/meta";
 import {
   createPageRootInstance,
   createPageValue,
-} from "~/shared/page-utils/create";
+} from "@webstudio-is/project-build/runtime/pages";
+import { updatePageFieldsMutable } from "~/shared/page-utils/meta";
 import { AuthSection, validateAuthSection } from "./section-auth";
 import {
   CustomMetadataSection,

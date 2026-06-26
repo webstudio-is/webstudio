@@ -1,8 +1,8 @@
+import type { BuilderState } from "./builder-state";
 import {
   builderNamespaces,
   type BuilderNamespace,
-  type BuilderState,
-} from "./builder-state";
+} from "../contracts/namespaces";
 
 export type BuilderStateNamespaceStatus =
   | "missing"

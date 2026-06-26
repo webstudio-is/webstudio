@@ -7,7 +7,7 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
-import { computeExpression } from "~/shared/data-variables";
+import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import { $pageRootScope } from "../page-utils";
 import type { Errors, OnChange, Values } from "./shared";
 

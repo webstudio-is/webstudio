@@ -1,10 +1,10 @@
 import { readFile } from "node:fs/promises";
-import { HandledCliError } from "../errors";
 import {
-  getPatchSummary,
-  parsePatchTransactions,
+  getBuildPatchSummary,
+  parseBuildPatchTransactions,
   type BuildPatchTransaction,
-} from "./patch-utils";
+} from "@webstudio-is/http-client";
+import { HandledCliError } from "../errors";
 import type { CommonYargsArgv } from "./yargs-types";
 
 type ValidatePatchDependencies = {
@@ -58,7 +58,7 @@ const readTransactions = async (
     throw new Error("--input is required.");
   }
   const input = JSON.parse(await dependencies.readFile(options.input, "utf-8"));
-  return parsePatchTransactions(input);
+  return parseBuildPatchTransactions(input);
 };
 
 const printSuccess = (
@@ -70,7 +70,7 @@ const printSuccess = (
     data: {
       valid: true,
       baseVersion,
-      ...getPatchSummary(transactions),
+      ...getBuildPatchSummary(transactions),
     },
     meta: {
       command: "validate-patch",

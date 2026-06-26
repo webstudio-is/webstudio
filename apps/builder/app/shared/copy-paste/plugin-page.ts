@@ -12,7 +12,7 @@ import {
   type PageTemplate,
 } from "@webstudio-is/sdk";
 import { $pages, $project } from "~/shared/sync/data-stores";
-import { detectFragmentTokenConflicts } from "../instance-utils/fragment";
+import { detectFragmentTokenConflicts } from "@webstudio-is/project-build/runtime/fragment";
 import { builderApi } from "../builder-api";
 import {
   createFolderCopyData,
@@ -24,7 +24,7 @@ import {
   type FolderCopyData,
   type PageCopyData,
   type TemplateCopyData,
-} from "../page-utils";
+} from "@webstudio-is/project-build/runtime/page-copy";
 import { $selectedPage } from "../nano-states";
 import { getPageActionTarget } from "../page-action-target";
 import type { Plugin } from "./copy-paste";

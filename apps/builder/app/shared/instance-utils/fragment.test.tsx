@@ -1,10 +1,10 @@
 import {
+  __testing__,
   detectFragmentTokenConflicts,
+  detectPageTokenConflicts,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-  detectPageTokenConflicts,
-} from "./fragment";
-import { __testing__ } from "./fragment";
+} from "@webstudio-is/project-build/runtime/fragment";
 import { getWebstudioData } from "./data";
 import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach } from "vitest";
@@ -47,9 +47,9 @@ import {
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "../sync/sync-stores";
 import { getInstancePath } from "../nano-states";
+import { isFragmentContentModeCopyableProp } from "../content-mode-copy-policy";
 
 const {
-  getFragmentContentModeCapabilities,
   getFragmentInstancesData,
   insertFragmentAssetsMutable,
   insertFragmentBreakpointsMutable,
@@ -286,15 +286,15 @@ describe("fragment copy helpers", () => {
       });
       const { fragmentInstances } = getFragmentInstancesData(fragment);
 
-      const capabilities = getFragmentContentModeCapabilities({
+      const isCopyable = isFragmentContentModeCopyableProp({
+        prop: fragment.props[0],
         fragment,
         fragmentInstances,
         styleSources: new Map(),
         metas: $registeredComponentMetas.get(),
       });
 
-      expect(capabilities.contentRootIds).toEqual(new Set(["link"]));
-      expect(capabilities.editablePropIds.has("href-prop")).toBe(true);
+      expect(isCopyable).toBe(true);
     } finally {
       $registeredComponentMetas.set(registeredComponentMetas);
     }
@@ -796,6 +796,7 @@ describe("insert webstudio fragment copy", () => {
       projectId: "current_project",
       metas: defaultMetasMap,
       contentMode: true,
+      contentModeCopyableProp: isFragmentContentModeCopyableProp,
     });
     const newInstanceId = newInstanceIds.get("templateBox");
 
@@ -884,6 +885,7 @@ describe("insert webstudio fragment copy", () => {
       projectId: "current_project",
       metas: $registeredComponentMetas.get(),
       contentMode: true,
+      contentModeCopyableProp: isFragmentContentModeCopyableProp,
     });
     const newInstanceId = newInstanceIds.get("item");
 
@@ -939,6 +941,7 @@ describe("insert webstudio fragment copy", () => {
       projectId: "current_project",
       metas: defaultMetasMap,
       contentMode: true,
+      contentModeCopyableProp: isFragmentContentModeCopyableProp,
     });
     const newInstanceId = newInstanceIds.get("image");
 

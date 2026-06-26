@@ -4,12 +4,13 @@ import type { Instance, PageTemplate } from "@webstudio-is/sdk";
 import { blockComponent, blockTemplateComponent } from "@webstudio-is/sdk";
 import { createDefaultPages, findCycles } from "@webstudio-is/project-build";
 import {
+  applyBuilderPatchPayloadMutable,
   canDeleteInstanceInContentMode,
   getWebstudioData,
-  unwrap,
   updateInstanceData,
   updateWebstudioData,
 } from "./data";
+import { unwrap } from "../unwrap";
 import { registerContainers } from "../sync/sync-stores";
 import {
   $assets,
@@ -171,6 +172,52 @@ describe("data store helpers", () => {
     });
     expect($pages.get()).toBe(pages);
     expect($assets.get()).toBe(assets);
+  });
+
+  test("applies shared build patch payloads to store data", () => {
+    const data = {
+      instances: new Map([
+        [
+          "parent",
+          createInstance("parent", "Box", [{ type: "id", value: "child" }]),
+        ],
+        ["child", createInstance("child", "Box", [])],
+      ]),
+      props: new Map(),
+      styleSourceSelections: new Map(),
+      styleSources: new Map(),
+      styles: new Map(),
+      dataSources: new Map(),
+      resources: new Map(),
+    };
+
+    applyBuilderPatchPayloadMutable(data, [
+      {
+        namespace: "instances",
+        patches: [
+          { op: "remove", path: ["parent", "children", 0] },
+          {
+            op: "add",
+            path: ["parent", "children", 0],
+            value: { type: "id", value: "next" },
+          },
+          {
+            op: "add",
+            path: ["next"],
+            value: createInstance("next", "Box", []),
+          },
+          { op: "remove", path: ["child"] },
+        ],
+      },
+    ]);
+
+    expect(data.instances.get("parent")?.children).toEqual([
+      { type: "id", value: "next" },
+    ]);
+    expect(data.instances.has("child")).toBe(false);
+    expect(data.instances.get("next")).toEqual(
+      createInstance("next", "Box", [])
+    );
   });
 
   test("updateWebstudioData skips page templates without build access", () => {

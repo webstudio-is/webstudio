@@ -1,11 +1,13 @@
 import { asset, page } from "@webstudio-is/sdk/schema";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
 import {
-  builderNamespaces,
   builderPatchSchema,
   builderPatchTransactionSchema,
+} from "@webstudio-is/project-build/contracts/patch";
+import {
   type BuilderPatch,
   type BuilderPatchTransaction,
-} from "@webstudio-is/project-build/contracts";
+} from "@webstudio-is/project-build/contracts/patch";
 import { serializedBuild } from "@webstudio-is/project-build/schema";
 import { wsAuthConfig } from "@webstudio-is/wsauth/schema";
 import { z } from "zod";

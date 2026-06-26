@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { InputErrorsTooltip } from "@webstudio-is/design-system";
 import { CustomMetadata } from "../custom-metadata";
-import { computeExpression } from "~/shared/data-variables";
+import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import type { Errors, OnChange, Values } from "./shared";
 
 const customMetadataValues = z.object({

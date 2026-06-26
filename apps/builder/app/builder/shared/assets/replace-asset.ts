@@ -4,7 +4,7 @@ import { $assets, $pages, $props, $styles } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
-import { replaceAssetMutable } from "~/shared/asset-style-value";
+import { replaceAssetMutable } from "@webstudio-is/project-build/runtime/assets";
 import { uploadAssets } from "./upload-assets";
 
 /**

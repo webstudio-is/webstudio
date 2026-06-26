@@ -19,8 +19,15 @@ import {
   validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
-import { setTextContentMutable } from "~/shared/instance-utils/text-content";
+import {
+  applyBuilderPatchPayloadMutable,
+  updateWebstudioData,
+} from "~/shared/instance-utils/data";
+import {
+  createTextContentChild,
+  createTextContentResetPayload,
+  createTextContentUpdatePayload,
+} from "@webstudio-is/project-build/runtime/instances";
 import { CodeEditor } from "~/shared/code-editor";
 import {
   type ControlProps,
@@ -46,7 +53,14 @@ const updateChildren = (
   updateWebstudioData((data) => {
     const instance = data.instances.get(instanceId);
     if (instance) {
-      setTextContentMutable(instance, type, value);
+      applyBuilderPatchPayloadMutable(
+        data,
+        createTextContentUpdatePayload({
+          instanceId,
+          childIndex: 0,
+          child: createTextContentChild({ type, value }),
+        })
+      );
     }
   });
 };
@@ -111,7 +125,10 @@ export const TextContent = ({
             updateWebstudioData((data) => {
               const instance = data.instances.get(instanceId);
               if (instance) {
-                instance.children = [];
+                applyBuilderPatchPayloadMutable(
+                  data,
+                  createTextContentResetPayload({ instanceId })
+                );
               }
             });
           }}

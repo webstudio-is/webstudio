@@ -1,7 +1,7 @@
+import { buildPatchNamespaces } from "@webstudio-is/protocol";
 import { HandledCliError } from "../errors";
 import { useCaseScenarios } from "./api-command-docs";
 import { apiCommandMetadata } from "./api-command-metadata";
-import { buildPatchNamespaces } from "./patch-utils";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,

@@ -5,6 +5,8 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { ShareProject, __testing__, type LinkOptions } from "./share-project";
 
+const { getApiPermissionDescription } = __testing__;
+
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
@@ -123,7 +125,7 @@ afterEach(() => {
 describe("ShareProject", () => {
   test("documents api permissions per role", () => {
     expect(
-      __testing__.getApiPermissionDescription({
+      getApiPermissionDescription({
         role: "viewers",
         canPublish: false,
       })
@@ -131,7 +133,7 @@ describe("ShareProject", () => {
       "Allows read-only API access: inspect permissions, project/build snapshots, pages, folders, instances, text, styles, variables, resources, assets, publish history, domains, and asset usage."
     );
     expect(
-      __testing__.getApiPermissionDescription({
+      getApiPermissionDescription({
         role: "editors",
         canPublish: false,
       })
@@ -139,7 +141,7 @@ describe("ShareProject", () => {
       "Allows viewer API access and content-mode text and prop changes. Enable Can publish to allow publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains."
     );
     expect(
-      __testing__.getApiPermissionDescription({
+      getApiPermissionDescription({
         role: "editors",
         canPublish: true,
       })
@@ -147,7 +149,7 @@ describe("ShareProject", () => {
       "Allows viewer API access, content-mode text and prop changes, plus publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains."
     );
     expect(
-      __testing__.getApiPermissionDescription({
+      getApiPermissionDescription({
         role: "builders",
         canPublish: false,
       })
@@ -155,7 +157,7 @@ describe("ShareProject", () => {
       "Allows read and build API access: pages, folders, instances, text, props, styles, design tokens, CSS variables, data variables, resources, assets, patches, and staging publish/unpublish."
     );
     expect(
-      __testing__.getApiPermissionDescription({
+      getApiPermissionDescription({
         role: "administrators",
         canPublish: true,
       })

@@ -1,9 +1,9 @@
 import {
+  detectFragmentTokenConflicts,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-} from "../instance-utils/fragment";
+} from "@webstudio-is/project-build/runtime/fragment";
 import { findClosestInsertable } from "../instance-utils/insert";
-import { detectFragmentTokenConflicts } from "../instance-utils/fragment";
 import {
   updateInstanceData,
   updateWebstudioData,
@@ -26,10 +26,8 @@ import {
   portalComponent,
 } from "@webstudio-is/sdk";
 import { $instances, $project } from "~/shared/sync/data-stores";
-import {
-  findChildReferenceIndex,
-  type InstanceSelector,
-} from "../instance-utils/tree";
+import type { InstanceSelector } from "../instance-utils/tree";
+import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime/instances";
 import {
   deleteInstanceMutable,
   sortInstancePathsForChildMutation,
@@ -42,7 +40,7 @@ import {
   $selectedInstanceSelector,
   selectInstances,
 } from "~/shared/nano-states";
-import { findAvailableVariables } from "../data-variables";
+import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
 import { builderApi } from "../builder-api";
 import type { Plugin } from "./copy-paste";
 import { breakpointPasteLimitWarning } from "../breakpoints";

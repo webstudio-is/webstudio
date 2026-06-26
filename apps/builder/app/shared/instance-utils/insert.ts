@@ -29,7 +29,7 @@ import {
   findClosestNonTextualContainer,
   isTreeSatisfyingContentModel,
 } from "../content-model";
-import { findAvailableVariables } from "../data-variables";
+import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { getSlotFragmentDropTargetMutable } from "./slot";
 import {
@@ -38,7 +38,7 @@ import {
   wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree";
 import { updateWebstudioData } from "./data";
-import { insertWebstudioFragmentCopy } from "./fragment";
+import { insertWebstudioFragmentCopy } from "@webstudio-is/project-build/runtime/fragment";
 
 const getExistingInsertTargetPath = (insertable: Insertable) => {
   const instancePath = getInstancePath(

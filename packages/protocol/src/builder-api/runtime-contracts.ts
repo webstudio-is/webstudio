@@ -1,7 +1,5 @@
-import {
-  runtimeOperationContracts,
-  type BuilderNamespace,
-} from "@webstudio-is/project-build/contracts";
+import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts/builder-runtime";
+import { type BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
 
 export type PublicApiOperationNamespace = BuilderNamespace;
 

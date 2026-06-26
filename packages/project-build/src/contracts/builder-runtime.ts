@@ -20,11 +20,11 @@ const styleNamespaces = [
 const dataNamespaces = ["dataSources", "resources"] as const;
 const assetUsageNamespaces = [
   "assets",
-  "instances",
+  "pages",
   "props",
   "styles",
-  "styleSources",
-  "styleSourceSelections",
+  "resources",
+  "dataSources",
 ] as const;
 
 const read = (
@@ -129,7 +129,7 @@ export const runtimeOperationContracts = [
   ]),
   mutation("instances.append", {
     readNamespaces: treeNamespaces,
-    writeNamespaces: ["instances", "props"],
+    writeNamespaces: treeNamespaces,
   }),
   mutation("instances.move", {
     readNamespaces: ["instances"],
@@ -137,11 +137,17 @@ export const runtimeOperationContracts = [
   }),
   mutation("instances.clone", {
     readNamespaces: treeNamespaces,
-    writeNamespaces: ["instances", "props", "styles", "styleSources"],
+    writeNamespaces: [
+      "instances",
+      "props",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+    ],
   }),
   mutation("instances.delete", {
     readNamespaces: treeNamespaces,
-    writeNamespaces: ["instances", "props", "styles", "styleSources"],
+    writeNamespaces: treeNamespaces,
   }),
   mutation("instances.updateProps", {
     readNamespaces: ["instances", "props"],
@@ -149,7 +155,7 @@ export const runtimeOperationContracts = [
   }),
   mutation("instances.deleteProps", {
     readNamespaces: ["instances", "props"],
-    writeNamespaces: ["props"],
+    writeNamespaces: ["props", "resources"],
   }),
   mutation("instances.bindProps", {
     readNamespaces: ["instances", "props", ...dataNamespaces],
@@ -174,7 +180,7 @@ export const runtimeOperationContracts = [
     writeNamespaces: ["styles"],
   }),
   mutation("styles.replaceValues", {
-    readNamespaces: styleNamespaces,
+    readNamespaces: ["pages", "instances", ...styleNamespaces],
     writeNamespaces: ["styles"],
   }),
   read("designTokens.list", styleNamespaces),
@@ -202,18 +208,18 @@ export const runtimeOperationContracts = [
     readNamespaces: ["instances", ...styleNamespaces],
     writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
   }),
-  read("cssVariables.list", styleNamespaces),
+  read("cssVariables.list", [...styleNamespaces, "props"]),
   mutation("cssVariables.define", {
-    readNamespaces: styleNamespaces,
-    writeNamespaces: ["styleSources"],
+    readNamespaces: ["pages", ...styleNamespaces],
+    writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
   }),
   mutation("cssVariables.delete", {
-    readNamespaces: styleNamespaces,
-    writeNamespaces: ["styles", "styleSources"],
+    readNamespaces: [...styleNamespaces, "props"],
+    writeNamespaces: ["styles"],
   }),
   mutation("cssVariables.rewriteRefs", {
-    readNamespaces: styleNamespaces,
-    writeNamespaces: ["styles"],
+    readNamespaces: [...styleNamespaces, "props"],
+    writeNamespaces: ["styles", "props"],
   }),
   read("variables.list", ["dataSources"]),
   mutation("variables.create", {
@@ -225,45 +231,61 @@ export const runtimeOperationContracts = [
     writeNamespaces: ["dataSources"],
   }),
   mutation("variables.delete", {
-    readNamespaces: ["dataSources"],
-    writeNamespaces: ["dataSources"],
+    readNamespaces: ["pages", "instances", "props", ...dataNamespaces],
+    writeNamespaces: ["pages", "instances", "props", ...dataNamespaces],
   }),
   read("resources.list", dataNamespaces),
   mutation("resources.create", {
-    readNamespaces: [...dataNamespaces, "instances"],
-    writeNamespaces: dataNamespaces,
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      ...dataNamespaces,
+      ...styleNamespaces,
+      "breakpoints",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      ...dataNamespaces,
+      ...styleNamespaces,
+      "breakpoints",
+    ],
   }),
   mutation("resources.update", {
-    readNamespaces: dataNamespaces,
-    writeNamespaces: dataNamespaces,
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      ...dataNamespaces,
+      ...styleNamespaces,
+      "breakpoints",
+    ],
+    writeNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      ...dataNamespaces,
+      ...styleNamespaces,
+      "breakpoints",
+    ],
   }),
   mutation("resources.delete", {
-    readNamespaces: dataNamespaces,
-    writeNamespaces: dataNamespaces,
+    readNamespaces: [...dataNamespaces, "props"],
+    writeNamespaces: [...dataNamespaces, "props"],
   }),
-  read("assets.list", ["assets"]),
+  read("assets.list", assetUsageNamespaces),
   read("assets.findUsage", assetUsageNamespaces),
   mutation("assets.replace", {
     readNamespaces: assetUsageNamespaces,
-    writeNamespaces: ["props", "styles", "assets"],
+    writeNamespaces: ["pages", "props", "styles", "assets"],
   }),
   mutation("assets.delete", {
     readNamespaces: assetUsageNamespaces,
-    writeNamespaces: ["assets", "props", "styles"],
+    writeNamespaces: ["assets"],
   }),
 ] as const satisfies readonly RuntimeOperationContract[];
 
 export type RuntimeOperationId =
   (typeof runtimeOperationContracts)[number]["id"];
-
-const runtimeOperationContractById = new Map(
-  runtimeOperationContracts.map((contract) => [contract.id, contract])
-);
-
-export const getRuntimeOperationContract = (id: string) => {
-  const contract = runtimeOperationContractById.get(id);
-  if (contract === undefined) {
-    throw new Error(`Unknown runtime operation "${id}".`);
-  }
-  return contract;
-};

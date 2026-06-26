@@ -3,11 +3,13 @@ import {
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
 import {
-  builderNamespaces,
-  type BuilderNamespace,
   type BuilderState,
   type BuilderStateValueByNamespace,
 } from "./builder-state";
+import {
+  builderNamespaces,
+  type BuilderNamespace,
+} from "../contracts/namespaces";
 import type { Pages } from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "../shared/marketplace";
 

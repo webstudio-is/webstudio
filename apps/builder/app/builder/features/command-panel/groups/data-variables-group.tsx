@@ -24,7 +24,7 @@ import {
   focusCommandPanel,
 } from "../command-state";
 import { InstanceList, showInstance } from "../shared/instance-list";
-import { deleteVariableMutable } from "~/shared/data-variables";
+import { deleteVariableMutable } from "@webstudio-is/project-build/runtime/data";
 import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
   DeleteDataVariableDialog,
@@ -33,7 +33,7 @@ import {
 import type { BaseOption } from "../shared/types";
 import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { findVariableUsagesByInstance } from "~/shared/data-variables";
+import { findVariableUsagesByInstance } from "@webstudio-is/project-build/runtime/data";
 
 export type DataVariableOption = BaseOption & {
   type: "dataVariable";

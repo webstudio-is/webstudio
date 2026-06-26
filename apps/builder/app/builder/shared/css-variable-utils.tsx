@@ -31,16 +31,14 @@ import { serverSyncStore } from "~/shared/sync/sync-stores";
 import {
   collectCssVariableReferences,
   createCssVariableNamesRegex,
-} from "~/shared/css-variable-references";
-import {
   getDefinedCssVariableNames,
   getInstanceIdByStyleSourceId,
-  renameCssVariableMutable,
   performCssVariableRename,
-  type CssVariableNameError,
+  renameCssVariableMutable,
   updateVarReferencesInProps,
   validateCssVariableNameWithStyles,
-} from "~/shared/css-variable-usage";
+} from "@webstudio-is/project-build/runtime/styles";
+import { type CssVariableNameError } from "@webstudio-is/project-build/runtime/styles";
 
 export { performCssVariableRename, updateVarReferencesInProps };
 

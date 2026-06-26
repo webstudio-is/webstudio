@@ -9,7 +9,7 @@ import { toggleInstanceShow } from "~/shared/instance-utils/mutation";
 import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-} from "~/shared/instance-utils/fragment";
+} from "@webstudio-is/project-build/runtime/fragment";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { toast } from "@webstudio-is/design-system";
 import {
@@ -81,7 +81,7 @@ import { showWrapComponentsList } from "../features/command-panel/groups/wrap-gr
 import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";
 import { builderApi } from "~/shared/builder-api";
 import { getSetting, setSetting } from "./client-settings";
-import { findAvailableVariables } from "~/shared/data-variables";
+import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
 import { generateFragmentFromHtml } from "~/shared/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
@@ -108,10 +108,8 @@ import {
   normalizeLegacySlotInstancePathMutable,
 } from "~/shared/instance-utils/slot";
 import type { InstanceSelector } from "~/shared/instance-utils/tree";
-import {
-  areInstanceSelectorsEqual,
-  findChildReferenceIndex,
-} from "~/shared/instance-utils/tree";
+import { areInstanceSelectorsEqual } from "~/shared/instance-utils/tree";
+import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime/instances";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,

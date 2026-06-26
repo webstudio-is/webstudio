@@ -24,16 +24,26 @@ import type { z } from "zod";
 import {
   createAssetReplacementPayload,
   serializeAssetList,
-} from "~/shared/asset-style-value";
-import { serializeCssVariables } from "~/shared/css-variable-usage";
-import { createPageUpdatePatches } from "~/shared/page-utils/meta";
-import { getSerializedPages } from "~/shared/page-utils/tree";
-import { createInstanceCleanupPayload } from "~/shared/instance-utils/tree";
+} from "@webstudio-is/project-build/runtime/assets";
 import {
-  createStyleClonePayload,
-  serializeStyleDeclarations,
-} from "~/shared/style-source-utils";
-import { serializeTextNodes } from "~/shared/instance-utils/text-content";
+  createInstanceCleanupPayload,
+  serializeTextNodes,
+} from "@webstudio-is/project-build/runtime/instances";
+import {
+  createPageUpdatePatches,
+  getSerializedPages,
+} from "@webstudio-is/project-build/runtime/pages";
+import { createStyleClonePayload } from "@webstudio-is/project-build/runtime/style-utils";
+import { getResourceExpressionErrors } from "@webstudio-is/project-build/runtime/data";
+import {
+  findDesignToken,
+  serializeCssVariables,
+} from "@webstudio-is/project-build/runtime/styles";
+import { serializeStyleDeclarations } from "@webstudio-is/project-build/runtime/style-utils";
+import {
+  createValidatedPropBindingFromInput,
+  createValidatedPropValueFromInput,
+} from "@webstudio-is/project-build/runtime/props";
 import { apiRouter, __testing__ } from "./api-router.server";
 
 const servicesDir = new URL(".", import.meta.url);
@@ -59,14 +69,38 @@ const {
   getTextChildOrThrow,
   validateTextValue,
   getResourceOrThrow,
-  validateResourceExpressions,
-  validatePropValue,
-  validatePropBinding,
-  getDesignTokenOrThrow,
-  assertCssVariableName,
-  compileOptionalRegex,
-  getAssetOrThrow,
 } = __testing__;
+
+const validatePropValue = (
+  input: Parameters<typeof createValidatedPropValueFromInput>[0]
+) => {
+  const result = createValidatedPropValueFromInput(input);
+  if (result.success === false) {
+    throw new Error(result.errors[0] ?? "Invalid prop value");
+  }
+  return result.prop;
+};
+
+const validatePropBinding = (
+  input: Parameters<typeof createValidatedPropBindingFromInput>[0]
+) => {
+  const result = createValidatedPropBindingFromInput(input);
+  if (result.success === false) {
+    throw new Error(result.errors[0] ?? "Invalid prop binding");
+  }
+  return result.prop;
+};
+
+const getDesignTokenOrThrow = (
+  build: Pick<CompactBuild, "styleSources">,
+  tokenId: string
+) => {
+  const token = findDesignToken(build.styleSources, tokenId);
+  if (token === undefined) {
+    throw new Error("Design token not found");
+  }
+  return token;
+};
 
 type ProjectSummaryInput = Parameters<typeof serializeProjectSummary>[0];
 type SemanticPatchBuildInput = Parameters<
@@ -365,15 +399,14 @@ describe("api router build operation adapters", () => {
 
   test("validate values and resolve referenced entities", () => {
     const resource = { id: "resource", name: "Resource" } as Resource;
-    const asset = { id: "asset", name: "Asset" } as Asset;
 
     expect(validateTextValue("text", "invalid {")).toBeUndefined();
     expect(validateTextValue("expression", "title")).toBeUndefined();
     expect(() => validateTextValue("expression", "invalid {")).toThrow();
     expect(
-      validateResourceExpressions({ url: '"https://example.com"' })
-    ).toBeUndefined();
-    expect(() => validateResourceExpressions({ url: "invalid +" })).toThrow(
+      getResourceExpressionErrors({ url: '"https://example.com"' })
+    ).toEqual([]);
+    expect(getResourceExpressionErrors({ url: "invalid +" })[0]).toMatch(
       /^url: /
     );
     expect(
@@ -420,27 +453,18 @@ describe("api router build operation adapters", () => {
         binding: { type: "expression", value: "invalid {" },
       })
     ).toThrow();
-    expect(assertCssVariableName("--color")).toBeUndefined();
-    expect(() => assertCssVariableName("color")).toThrow(
-      'CSS variable name must start with "--"'
-    );
-    expect(compileOptionalRegex("body")?.test("body")).toBe(true);
-    expect(compileOptionalRegex(undefined)).toBeUndefined();
-    expect(() => compileOptionalRegex("[")).toThrow("Invalid scope regex");
     expect(getResourceOrThrow([resource], "resource")).toBe(resource);
     expect(getDesignTokenOrThrow(build, "token")).toEqual({
       type: "token",
       id: "token",
       name: "Token",
     });
-    expect(getAssetOrThrow([asset], "asset")).toBe(asset);
     expect(() => getResourceOrThrow([], "missing")).toThrow(
       "Resource not found"
     );
     expect(() => getDesignTokenOrThrow(build, "missing")).toThrow(
       "Design token not found"
     );
-    expect(() => getAssetOrThrow([], "missing")).toThrow("Asset not found");
   });
 });
 
@@ -1056,8 +1080,11 @@ describe("api semantic build writes", () => {
     const payload = createStyleClonePayload({
       styleSourceSelections: build.styleSourceSelections,
       styleSources: build.styleSources,
-      styles: build.styles,
+      styles: new Map(
+        build.styles.map((styleDecl) => [getStyleDeclKey(styleDecl), styleDecl])
+      ),
       nextIdById: new Map([["source-1", "clone-1"]]),
+      createId: () => "local-copy",
     });
     const styleSourcePatch = payload.find(
       (change) => change.namespace === "styleSources"

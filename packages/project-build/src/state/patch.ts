@@ -1,19 +1,7 @@
 import { applyPatches, enableMapSet, enablePatches, type Patch } from "immer";
-import {
-  type BuilderPatch,
-  type BuilderPatchTransaction,
-} from "../contracts/patch";
-import { type BuilderNamespace, type BuilderState } from "./builder-state";
-
-export {
-  builderPatchSchema,
-  builderPatchChangeSchema,
-  builderPatchTransactionSchema,
-  builderPatchTransactionsSchema,
-  type BuilderPatch,
-  type BuilderPatchChange,
-  type BuilderPatchTransaction,
-} from "../contracts/patch";
+import type { BuilderPatch, BuilderPatchTransaction } from "../contracts/patch";
+import type { BuilderState } from "./builder-state";
+import type { BuilderNamespace } from "../contracts/namespaces";
 
 export class MissingBuilderStateNamespaceError extends Error {
   constructor(namespace: BuilderNamespace) {

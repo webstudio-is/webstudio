@@ -31,7 +31,7 @@ import { $dataSourceVariables } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 import { $selectedPage } from "./pages";
 import { getInstanceKey } from "./instances";
-import { computeExpression } from "../data-variables";
+import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import { $currentSystem } from "../system";
 import {
   $resourcesCache,

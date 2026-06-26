@@ -10,14 +10,15 @@ import {
   type StyleDecl,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
+import { cloneStyles } from "@webstudio-is/project-build/runtime/style-utils";
+import { createTokenStyleSource } from "@webstudio-is/project-build/runtime/styles";
+import { type RenameStyleSourceError } from "@webstudio-is/project-build/runtime/styles";
 import { type ItemSource, StyleSourceInput } from "./style-source";
 import {
   addStyleSourceToInstanceMutable,
-  createTokenStyleSource,
   getOrCreateStyleSourceSelectionMutable,
   removeStyleSourceFromInstanceMutable,
-  type RenameStyleSourceError,
-} from "~/shared/style-source-utils";
+} from "@webstudio-is/project-build/runtime/styles";
 import {
   renameStyleSource,
   deleteStyleSource,
@@ -38,7 +39,6 @@ import {
   $styleSources,
   $styles,
 } from "~/shared/sync/data-stores";
-import { cloneStyles } from "~/shared/instance-utils/tree";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/nano-states";
@@ -146,7 +146,7 @@ const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
     id: nanoid(),
     name: `${styleSource.name} (copy)`,
   });
-  const clonedStyleSourceIds = new Map();
+  const clonedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>();
   clonedStyleSourceIds.set(styleSourceId, newStyleSource.id);
   const clonedStyles = cloneStyles($styles.get(), clonedStyleSourceIds);
 

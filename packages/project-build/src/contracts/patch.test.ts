@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { builderPatchSchema, builderPatchTransactionSchema } from "./patch";
+import {
+  builderPatchChangeSchema,
+  builderPatchSchema,
+  builderPatchTransactionSchema,
+} from "./patch";
 
 describe("builder patch contracts", () => {
   test("requires values for add and replace patches", () => {
@@ -45,5 +49,17 @@ describe("builder patch contracts", () => {
     expect(transaction.payload.map((change) => change.namespace)).toEqual([
       "props",
     ]);
+  });
+
+  test("parses patch changes", () => {
+    expect(
+      builderPatchChangeSchema.parse({
+        namespace: "props",
+        patches: [{ op: "remove", path: ["prop-title"] }],
+      })
+    ).toEqual({
+      namespace: "props",
+      patches: [{ op: "remove", path: ["prop-title"] }],
+    });
   });
 });

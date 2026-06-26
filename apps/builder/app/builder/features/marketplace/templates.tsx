@@ -3,7 +3,8 @@ import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import {
   detectFragmentTokenConflicts,
   detectPageTokenConflicts,
-} from "~/shared/instance-utils/fragment";
+  extractWebstudioFragment,
+} from "@webstudio-is/project-build/runtime/fragment";
 import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { useMemo } from "react";
 import {
@@ -31,10 +32,9 @@ import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import { mapGroupBy } from "~/shared/shim";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { builderUrl } from "~/shared/router-utils";
-import { extractWebstudioFragment } from "~/shared/instance-utils/fragment";
 import { getWebstudioData } from "~/shared/instance-utils/data";
 import { builderApi } from "~/shared/builder-api";
-import { insertPageCopyMutable } from "~/shared/page-utils";
+import { insertPageCopyMutable } from "@webstudio-is/project-build/runtime/page-copy";
 import { $project } from "~/shared/sync/data-stores";
 import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";

@@ -27,8 +27,8 @@ import { serverSyncStore } from "~/shared/sync/sync-stores";
 import {
   findVariableUsagesByInstance,
   validateDataVariableNameWithSources,
-  type DataVariableNameError,
-} from "~/shared/data-variables";
+} from "@webstudio-is/project-build/runtime/data";
+import { type DataVariableNameError } from "@webstudio-is/project-build/runtime/data";
 
 const $isDeleteUnusedDataVariablesDialogOpen = atom(false);
 

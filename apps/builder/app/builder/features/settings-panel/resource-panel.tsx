@@ -70,7 +70,10 @@ import {
   type InstancePath,
 } from "~/shared/nano-states";
 import { updateWebstudioData } from "~/shared/instance-utils/data";
-import { createResource, upsertResourceMutable } from "~/shared/resource-utils";
+import {
+  createResourceValue,
+  upsertResourceMutable,
+} from "@webstudio-is/project-build/runtime/data";
 import { parseCurl, type CurlRequest } from "./curl";
 
 export const parseResource = ({
@@ -88,7 +91,7 @@ export const parseResource = ({
   const searchParamValues = formData.getAll("search-param-value") as string[];
   const headerNames = formData.getAll("header-name") as string[];
   const headerValues = formData.getAll("header-value") as string[];
-  return createResource({
+  return createResourceValue({
     id,
     control,
     name: name ?? formData.get("name"),

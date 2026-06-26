@@ -7,6 +7,7 @@ const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const sourceDirectory = join(currentDirectory, "..");
 const checkedDirectories = [
   join(sourceDirectory, "contracts"),
+  join(sourceDirectory, "runtime"),
   join(sourceDirectory, "state"),
 ];
 

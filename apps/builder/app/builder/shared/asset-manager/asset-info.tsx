@@ -75,7 +75,7 @@ import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import {
   calculateUsagesByAssetId,
   type AssetUsage,
-} from "~/shared/asset-style-value";
+} from "@webstudio-is/project-build/runtime/assets";
 
 const $usagesByAssetId = computed(
   [$pages, $props, $styles, $assets],
