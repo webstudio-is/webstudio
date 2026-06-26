@@ -32,6 +32,11 @@
       "import": "./src/contracts/patch.ts",
       "default": "./src/contracts/patch.ts"
     },
+    "./project-session": {
+      "webstudio": "./src/project-session.ts",
+      "import": "./src/project-session.ts",
+      "default": "./src/project-session.ts"
+    },
     "./state/adapters": {
       "webstudio": "./src/state/adapters.ts",
       "import": "./src/state/adapters.ts",

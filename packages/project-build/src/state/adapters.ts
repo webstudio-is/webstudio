@@ -10,7 +10,19 @@ import {
   builderNamespaces,
   type BuilderNamespace,
 } from "../contracts/namespaces";
-import type { Pages } from "@webstudio-is/sdk";
+import {
+  getStyleDeclKey,
+  type Asset,
+  type Breakpoint,
+  type DataSource,
+  type Instance,
+  type Pages,
+  type Prop,
+  type Resource,
+  type StyleDecl,
+  type StyleSource,
+  type StyleSourceSelection,
+} from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "../shared/marketplace";
 
 type SnapshotValue<Namespace extends BuilderNamespace> =
@@ -29,6 +41,20 @@ export type SerializedBuilderStateSnapshot = Omit<
   pages?: unknown;
 };
 
+export type BuilderBuildDataSnapshot = Partial<{
+  pages: Pages;
+  instances: Instance[];
+  props: Prop[];
+  styles: StyleDecl[];
+  styleSources: StyleSource[];
+  styleSourceSelections: StyleSourceSelection[];
+  dataSources: DataSource[];
+  resources: Resource[];
+  assets: Asset[];
+  breakpoints: Breakpoint[];
+  marketplaceProduct: MarketplaceProduct;
+}>;
+
 export type BuilderStateStore<Namespace extends BuilderNamespace> = {
   get: () => BuilderStateValueByNamespace[Namespace] | undefined;
 };
@@ -46,6 +72,9 @@ const cloneMapEntries = <Key, Value>(
 const cloneMap = <Key, Value>(map: Map<Key, Value>) => {
   return cloneMapEntries(Array.from(map.entries()));
 };
+
+const mapEntriesById = <Item extends { id: string }>(items: Item[]) =>
+  items.map((item) => [item.id, item] as const);
 
 const setClonedBuilderStateValue = <Namespace extends BuilderNamespace>(
   state: BuilderState,
@@ -129,4 +158,85 @@ export const createBuilderStateFromSerializedSnapshot = (
   }
 
   return state;
+};
+
+export const createBuilderStateFromBuildData = (
+  build: BuilderBuildDataSnapshot
+): BuilderState => {
+  const snapshot: BuilderStateSnapshot = {};
+
+  if (build.pages !== undefined) {
+    snapshot.pages = build.pages;
+  }
+  if (build.instances !== undefined) {
+    snapshot.instances = mapEntriesById(build.instances);
+  }
+  if (build.props !== undefined) {
+    snapshot.props = mapEntriesById(build.props);
+  }
+  if (build.styles !== undefined) {
+    snapshot.styles = build.styles.map((styleDecl) => [
+      getStyleDeclKey(styleDecl),
+      styleDecl,
+    ]);
+  }
+  if (build.styleSources !== undefined) {
+    snapshot.styleSources = mapEntriesById(build.styleSources);
+  }
+  if (build.styleSourceSelections !== undefined) {
+    snapshot.styleSourceSelections = build.styleSourceSelections.map(
+      (selection) => [selection.instanceId, selection] as const
+    );
+  }
+  if (build.dataSources !== undefined) {
+    snapshot.dataSources = mapEntriesById(build.dataSources);
+  }
+  if (build.resources !== undefined) {
+    snapshot.resources = mapEntriesById(build.resources);
+  }
+  if (build.assets !== undefined) {
+    snapshot.assets = mapEntriesById(build.assets);
+  }
+  if (build.breakpoints !== undefined) {
+    snapshot.breakpoints = mapEntriesById(build.breakpoints);
+  }
+  if (build.marketplaceProduct !== undefined) {
+    snapshot.marketplaceProduct = build.marketplaceProduct;
+  }
+
+  return createBuilderStateFromSnapshot(snapshot);
+};
+
+export const createBuilderStateSnapshotFromState = (
+  state: BuilderState
+): BuilderStateSnapshot => {
+  const snapshot: BuilderStateSnapshot = {};
+
+  for (const namespace of builderNamespaces) {
+    const value = state[namespace];
+    if (value === undefined) {
+      continue;
+    }
+    if (namespace === "pages" || namespace === "marketplaceProduct") {
+      (snapshot as Record<string, unknown>)[namespace] = structuredClone(value);
+      continue;
+    }
+    (snapshot as Record<string, unknown>)[namespace] = Array.from(
+      (value as Map<unknown, unknown>).entries()
+    ).map(([key, entry]) => [key, structuredClone(entry)]);
+  }
+
+  return snapshot;
+};
+
+export const createSerializedBuilderStateSnapshotFromState = (
+  state: BuilderState
+): SerializedBuilderStateSnapshot => {
+  const snapshot = createBuilderStateSnapshotFromState(
+    state
+  ) as SerializedBuilderStateSnapshot;
+  if (state.pages !== undefined) {
+    snapshot.pages = serializePages(state.pages);
+  }
+  return snapshot;
 };

@@ -8,6 +8,7 @@ export type RuntimeOperationContract = {
   readNamespaces: readonly BuilderNamespace[];
   writeNamespaces: readonly BuilderNamespace[];
   invalidatesNamespaces: readonly BuilderNamespace[];
+  retryOnConflict: boolean;
 };
 
 const pageNamespaces = ["pages", "instances"] as const;
@@ -36,6 +37,7 @@ const read = (
   readNamespaces,
   writeNamespaces: [],
   invalidatesNamespaces: [],
+  retryOnConflict: false,
 });
 
 const mutation = (
@@ -44,10 +46,12 @@ const mutation = (
     readNamespaces,
     writeNamespaces,
     invalidatesNamespaces = writeNamespaces,
+    retryOnConflict = false,
   }: {
     readNamespaces: readonly BuilderNamespace[];
     writeNamespaces: readonly BuilderNamespace[];
     invalidatesNamespaces?: readonly BuilderNamespace[];
+    retryOnConflict?: boolean;
   }
 ): RuntimeOperationContract => ({
   id,
@@ -55,38 +59,10 @@ const mutation = (
   readNamespaces,
   writeNamespaces,
   invalidatesNamespaces,
+  retryOnConflict,
 });
 
 export const runtimeOperationContracts = [
-  read("build.get", [
-    "pages",
-    "instances",
-    "props",
-    "styles",
-    "styleSources",
-    "styleSourceSelections",
-    "dataSources",
-    "resources",
-    "assets",
-    "breakpoints",
-    "marketplaceProduct",
-  ]),
-  mutation("build.patch", {
-    readNamespaces: [],
-    writeNamespaces: [
-      "pages",
-      "instances",
-      "props",
-      "styles",
-      "styleSources",
-      "styleSourceSelections",
-      "dataSources",
-      "resources",
-      "assets",
-      "breakpoints",
-      "marketplaceProduct",
-    ],
-  }),
   read("pages.list", ["pages"]),
   read("pages.get", pageNamespaces),
   read("pages.getByPath", pageNamespaces),
@@ -97,6 +73,7 @@ export const runtimeOperationContracts = [
   mutation("pages.update", {
     readNamespaces: ["pages"],
     writeNamespaces: ["pages"],
+    retryOnConflict: true,
   }),
   mutation("pages.delete", {
     readNamespaces: pageNamespaces,
@@ -114,6 +91,7 @@ export const runtimeOperationContracts = [
   mutation("folders.update", {
     readNamespaces: ["pages"],
     writeNamespaces: ["pages"],
+    retryOnConflict: true,
   }),
   mutation("folders.delete", {
     readNamespaces: pageNamespaces,
@@ -165,6 +143,7 @@ export const runtimeOperationContracts = [
   mutation("instances.updateText", {
     readNamespaces: ["instances"],
     writeNamespaces: ["instances"],
+    retryOnConflict: true,
   }),
   read("styles.getDeclarations", [
     "instances",
@@ -229,6 +208,7 @@ export const runtimeOperationContracts = [
   mutation("variables.update", {
     readNamespaces: ["dataSources"],
     writeNamespaces: ["dataSources"],
+    retryOnConflict: true,
   }),
   mutation("variables.delete", {
     readNamespaces: ["pages", "instances", "props", ...dataNamespaces],

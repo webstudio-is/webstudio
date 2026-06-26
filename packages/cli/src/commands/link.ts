@@ -1,6 +1,6 @@
 import { cwd, exit } from "node:process";
 import { dirname, join } from "node:path";
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { cancel, isCancel, log, text } from "@clack/prompts";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import {
@@ -10,6 +10,7 @@ import {
   jsonToGlobalConfig,
   type LocalConfig,
 } from "../config";
+import { writeFileAtomic } from "../fs-utils";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -46,9 +47,7 @@ const withConfigLock = async <Result>(callback: () => Promise<Result>) => {
 };
 
 const writeConfigFile = async (content: string) => {
-  const temporaryFile = `${GLOBAL_CONFIG_FILE}.${process.pid}.tmp`;
-  await writeFile(temporaryFile, content, "utf8");
-  await rename(temporaryFile, GLOBAL_CONFIG_FILE);
+  await writeFileAtomic(GLOBAL_CONFIG_FILE, content);
 };
 
 export const parseShareLink = (value: string) => {

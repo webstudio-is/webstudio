@@ -16,13 +16,77 @@ const apiCalls = new Proxy({} as Record<string, ReturnType<typeof vi.fn>>, {
 });
 const isFileExists = vi.fn();
 const readFile = vi.fn();
+const apiClientByOperationId = new Map(
+  publicApiOperations.map((operation) => [operation.id, operation.client])
+);
+const createSessionEnvelope = ({
+  operationId,
+  projectId,
+  result,
+  source,
+}: {
+  operationId: string;
+  projectId: string;
+  result: unknown;
+  source: "local" | "remote" | "server";
+}) => ({
+  operationId,
+  projectId,
+  buildId: "build-1",
+  version: 1,
+  source,
+  result,
+  state: { committed: source !== "local", freshness: {} },
+  namespaces: { read: [], write: [], invalidated: [], missing: [] },
+  diagnostics: [],
+});
+const createCliProjectSession = vi.fn(({ connection }) => ({
+  initialize: vi.fn(async () => ({ result: { loaded: true } })),
+  refresh: vi.fn(async () => ({ result: { refreshedNamespaces: [] } })),
+  executeServerOperation: vi.fn(
+    async ({ id }: { id: string }, input: unknown) =>
+      createSessionEnvelope({
+        operationId: id,
+        projectId: connection.projectId,
+        source: "server",
+        result: await apiCalls[apiClientByOperationId.get(id) ?? ""]({
+          ...connection,
+          ...(input as Record<string, unknown>),
+        }),
+      })
+  ),
+  read: vi.fn(async (operationId: string, input: unknown) =>
+    createSessionEnvelope({
+      operationId,
+      projectId: connection.projectId,
+      source: "local",
+      result: await apiCalls[apiClientByOperationId.get(operationId) ?? ""]({
+        ...connection,
+        ...(input as Record<string, unknown>),
+      }),
+    })
+  ),
+  mutate: vi.fn(async (operationId: string, input: unknown) =>
+    createSessionEnvelope({
+      operationId,
+      projectId: connection.projectId,
+      source: "remote",
+      result: await apiCalls[apiClientByOperationId.get(operationId) ?? ""]({
+        ...connection,
+        ...(input as Record<string, unknown>),
+      }),
+    })
+  ),
+}));
 const dependencies = new Proxy(
   {
     isFileExists,
     readFile,
+    createCliProjectSession,
   } as typeof apiCalls & {
     isFileExists: typeof isFileExists;
     readFile: typeof readFile;
+    createCliProjectSession: typeof createCliProjectSession;
   },
   {
     get(target, property: string) {
@@ -42,6 +106,16 @@ const expectJsonOutput = (command: string) => {
       command,
       projectId: "project-1",
       durationMs: expect.any(Number),
+      session: {
+        operationId: expect.any(String),
+        projectId: "project-1",
+        buildId: "build-1",
+        version: 1,
+        source: expect.any(String),
+        committed: expect.any(Boolean),
+        namespaces: { read: [], write: [], invalidated: [], missing: [] },
+        diagnostics: [],
+      },
     },
   });
 };
@@ -142,6 +216,7 @@ beforeEach(() => {
   isFileExists.mockReset();
   isFileExists.mockResolvedValue(false);
   readFile.mockReset();
+  createCliProjectSession.mockClear();
   vi.spyOn(console, "info").mockImplementation(() => undefined);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
@@ -246,6 +321,86 @@ test.each(simpleCommandCases)(
     });
   }
 );
+
+test("routes local-capable commands through project session runtime", async () => {
+  mockConfig();
+
+  await apiCommand(
+    { command: "list-pages", includeFolders: true, json: true },
+    dependencies
+  );
+
+  const session = createCliProjectSession.mock.results[0]?.value;
+  expect(session.read).toHaveBeenCalledWith(
+    "pages.list",
+    {
+      includeFolders: true,
+    },
+    {
+      permit: "view",
+    }
+  );
+});
+
+test("routes server-only commands through project session transport", async () => {
+  mockConfig();
+
+  await apiCommand({ command: "whoami", json: true }, dependencies);
+
+  const session = createCliProjectSession.mock.results[0]?.value;
+  expect(session.executeServerOperation).toHaveBeenCalledWith(
+    {
+      id: "auth.me",
+      invalidatesNamespaces: [],
+      refetchInvalidatedNamespaces: false,
+    },
+    {}
+  );
+});
+
+test("passes refresh to local-capable command session", async () => {
+  mockConfig();
+
+  await apiCommand(
+    { command: "list-pages", refresh: true, json: true },
+    dependencies
+  );
+
+  const session = createCliProjectSession.mock.results[0]?.value;
+  expect(session.refresh).toHaveBeenCalledWith(["pages"]);
+  expect(session.read).toHaveBeenCalledWith(
+    "pages.list",
+    { includeFolders: undefined },
+    { permit: "view" }
+  );
+});
+
+test("passes dry-run to local-capable mutations", async () => {
+  mockConfig();
+
+  await apiCommand(
+    {
+      command: "create-folder",
+      name: "Draft",
+      slug: "draft",
+      dryRun: true,
+      json: true,
+    },
+    dependencies
+  );
+
+  const session = createCliProjectSession.mock.results[0]?.value;
+  expect(session.mutate).toHaveBeenCalledWith(
+    "folders.create",
+    {
+      folderId: undefined,
+      name: "Draft",
+      slug: "draft",
+      parentFolderId: undefined,
+    },
+    { permit: "build", dryRun: true }
+  );
+});
 
 test("calls build snapshot for configured project", async () => {
   await expectCommandCall({

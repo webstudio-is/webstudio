@@ -8,6 +8,7 @@ import {
   createPublishedProjectBundleFixture,
 } from "@webstudio-is/protocol/fixtures";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
+import { resolveApiConnection } from "../api-connection";
 import { sync } from "./sync";
 
 const originalCwd = process.cwd();
@@ -27,6 +28,7 @@ const dependencies = {
   loadProjectBundleByBuildId,
   loadProjectBundleByProjectId,
   readFile,
+  resolveApiConnection,
   spinner: () => indicator,
   writeFile,
 };

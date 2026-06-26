@@ -1,16 +1,17 @@
 import { readFile } from "node:fs/promises";
-import { cwd } from "node:process";
-import { join } from "node:path";
 import * as httpClient from "@webstudio-is/http-client";
-import {
-  GLOBAL_CONFIG_FILE,
-  LOCAL_CONFIG_FILE,
-  jsonToGlobalConfig,
-  jsonToLocalConfig,
-} from "../config";
 import { isFileExists } from "../fs-utils";
 import { HandledCliError } from "../errors";
 import { getLocalAssetPath, LOCAL_ASSETS_DIR } from "../asset-files";
+import { createCliProjectSession } from "../project-session";
+import { getStableErrorCode } from "../error-codes";
+import {
+  executeProjectSessionApiOperation,
+  getProjectSessionMeta,
+  isProjectSessionEnvelope,
+  type ProjectSessionApiCommand,
+} from "../project-session-api";
+import { resolveApiConnection, type ApiConnection } from "../api-connection";
 import { apiCompatibilityHeaders } from "./api";
 import type { CommonYargsArgv } from "./yargs-types";
 
@@ -19,20 +20,38 @@ const apiCommandHttpClient = httpClient;
 type ApiCommandDependencies = typeof apiCommandHttpClient & {
   isFileExists: typeof isFileExists;
   readFile: typeof readFile;
+  createCliProjectSession: typeof createCliProjectSession;
 };
 
 const defaultDependencies: ApiCommandDependencies = {
   ...apiCommandHttpClient,
   isFileExists,
   readFile,
+  createCliProjectSession,
 };
 
+export type ApiCommandName = ProjectSessionApiCommand;
+
+let activeApiCommandDryRun = false;
+let activeApiCommandRefresh = false;
+
 export const apiCommandOptions = (yargs: CommonYargsArgv) =>
-  yargs.option("json", {
-    type: "boolean",
-    describe: "Required. Print a machine-readable JSON response to stdout",
-    default: false,
-  });
+  yargs
+    .option("json", {
+      type: "boolean",
+      describe: "Required. Print a machine-readable JSON response to stdout",
+      default: false,
+    })
+    .option("dry-run", {
+      type: "boolean",
+      describe:
+        "Plan a local-capable mutation and return the patch without committing it. Not supported for server-only operations.",
+    })
+    .option("refresh", {
+      type: "boolean",
+      describe:
+        "Refresh required local project namespaces from the remote project before running a local-capable command.",
+    });
 
 const requiredInputOption = (yargs: CommonYargsArgv, describe: string) =>
   yargs.option("input", {
@@ -1009,38 +1028,11 @@ type ApiCommandOptions = {
   sort?: "name" | "usage" | "size" | "createdAt";
   cursor?: string;
   limit?: number;
+  dryRun?: boolean;
+  refresh?: boolean;
 };
 
-const resolveConnection = async (dependencies: ApiCommandDependencies) => {
-  if ((await dependencies.isFileExists(LOCAL_CONFIG_FILE)) === false) {
-    throw new Error(
-      "Local config file is not found. Run webstudio init --link <api-share-link> from a Webstudio project."
-    );
-  }
-
-  const localConfig = jsonToLocalConfig(
-    JSON.parse(
-      await dependencies.readFile(join(cwd(), LOCAL_CONFIG_FILE), "utf-8")
-    )
-  );
-  const globalConfig = jsonToGlobalConfig(
-    JSON.parse(await dependencies.readFile(GLOBAL_CONFIG_FILE, "utf-8"))
-  );
-  const projectConfig = globalConfig[localConfig.projectId];
-  if (projectConfig === undefined) {
-    throw new Error(
-      "Project config is not found. Run webstudio init --link <api-share-link>."
-    );
-  }
-
-  return {
-    origin: projectConfig.origin,
-    authToken: projectConfig.token,
-    projectId: localConfig.projectId,
-  };
-};
-
-type ApiConnection = Awaited<ReturnType<typeof resolveConnection>> & {
+type ApiCommandConnection = ApiConnection & {
   headers: typeof apiCompatibilityHeaders;
 };
 
@@ -1377,21 +1369,21 @@ const getPageMetaOptions = (options: ApiCommandOptions) => {
 
 const getErrorCode = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
-  if (error instanceof SyntaxError) {
-    return "INVALID_JSON";
-  }
-  const apiErrorCode = httpClient.getApiErrorCode(error);
-  if (apiErrorCode === "CONFLICT") {
+  const stableCode = getStableErrorCode(error);
+  if (stableCode === "CONFLICT") {
     return "VERSION_CONFLICT";
   }
-  if (apiErrorCode === "NOT_FOUND") {
-    return "NOT_FOUND";
-  }
-  if (apiErrorCode === "UNAUTHORIZED" || apiErrorCode === "FORBIDDEN") {
+  if (stableCode === "UNAUTHORIZED" || stableCode === "FORBIDDEN") {
     return "UNAUTHORIZED";
   }
-  if (apiErrorCode === "BAD_REQUEST") {
+  if (stableCode === "BAD_REQUEST") {
     return "INVALID_ARGUMENT";
+  }
+  if (stableCode !== undefined) {
+    return stableCode;
+  }
+  if (error instanceof SyntaxError) {
+    return "INVALID_JSON";
   }
   if (
     message.includes("Local config file") ||
@@ -1400,6 +1392,9 @@ const getErrorCode = (error: unknown) => {
     return "NOT_INITIALIZED";
   }
   if (message.includes(" is required")) {
+    return "INVALID_ARGUMENT";
+  }
+  if (message.includes("does not support --dry-run")) {
     return "INVALID_ARGUMENT";
   }
   if (message.includes("Invalid patch JSON")) {
@@ -1417,65 +1412,109 @@ const getRetryHint = (code: string) => {
   }
 };
 
+const runProjectSessionCommand = async (
+  command: ApiCommandName,
+  input: unknown,
+  connection: ApiCommandConnection,
+  dependencies: ApiCommandDependencies,
+  options: { dryRun?: boolean } = {}
+) =>
+  executeProjectSessionApiOperation({
+    command,
+    input,
+    connection,
+    createProjectSession: dependencies.createCliProjectSession,
+    dryRun: options.dryRun ?? activeApiCommandDryRun,
+    refresh: activeApiCommandRefresh,
+  });
+
 type ApiCommandHandler = (
   options: ApiCommandOptions,
-  connection: ApiConnection,
+  connection: ApiCommandConnection,
   dependencies: ApiCommandDependencies
 ) => Promise<unknown>;
 
 const apiCommandHandlers = {
   whoami: async (_options, connection, dependencies) =>
-    dependencies.getApiTokenInfo(connection),
+    runProjectSessionCommand("whoami", {}, connection, dependencies),
   permissions: async (_options, connection, dependencies) =>
-    dependencies.getProjectPermissions(connection),
+    runProjectSessionCommand("permissions", {}, connection, dependencies),
   inspect: async (_options, connection, dependencies) =>
-    dependencies.getProjectInfo(connection),
-  snapshot: async (options, connection, dependencies) =>
-    dependencies.getBuildSnapshot({
-      ...connection,
+    runProjectSessionCommand("inspect", {}, connection, dependencies),
+  snapshot: async (options, connection, dependencies) => {
+    const input = {
       include: listOption(options.include),
       version: options.version,
-    }),
+    };
+    return runProjectSessionCommand(
+      "snapshot",
+      input,
+      connection,
+      dependencies
+    );
+  },
   "apply-patch": async (options, connection, dependencies) => {
     const patchInput = await readJsonFile(
       dependencies,
       options.input,
       "--input"
     );
-    return dependencies.applyBuildPatch({
-      ...connection,
+    const input = {
       baseVersion: requireNumberOption(options.baseVersion, "--base-version"),
       transactions: patchInput,
-    });
+    };
+    return runProjectSessionCommand(
+      "apply-patch",
+      input,
+      connection,
+      dependencies
+    );
   },
-  "list-pages": async (options, connection, dependencies) =>
-    dependencies.listPages({
-      ...connection,
-      includeFolders: options.includeFolders,
-    }),
-  "get-page": async (options, connection, dependencies) =>
-    dependencies.getPage({
-      ...connection,
-      pageId: requireOption(options.page, "--page"),
-    }),
-  "get-page-by-path": async (options, connection, dependencies) =>
-    dependencies.getPageByPath({
-      ...connection,
-      path: requireOption(options.path, "--path"),
-    }),
-  "create-page": async (options, connection, dependencies) =>
-    dependencies.createPage({
-      ...connection,
+  "list-pages": async (options, connection, dependencies) => {
+    const input = { includeFolders: options.includeFolders };
+    return runProjectSessionCommand(
+      "list-pages",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "get-page": async (options, connection, dependencies) => {
+    const input = { pageId: requireOption(options.page, "--page") };
+    return runProjectSessionCommand(
+      "get-page",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "get-page-by-path": async (options, connection, dependencies) => {
+    const input = { path: requireOption(options.path, "--path") };
+    return runProjectSessionCommand(
+      "get-page-by-path",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "create-page": async (options, connection, dependencies) => {
+    const input = {
       pageId: options.page,
       name: requireOption(options.name, "--name"),
       path: requireOption(options.path, "--path"),
       title: options.title,
       parentFolderId: options.parentFolder,
       meta: getPageMetaOptions(options),
-    }),
-  "update-page": async (options, connection, dependencies) =>
-    dependencies.updatePage({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "create-page",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-page": async (options, connection, dependencies) => {
+    const input = {
       pageId: requireOption(options.page, "--page"),
       values: {
         name: options.name,
@@ -1484,51 +1523,87 @@ const apiCommandHandlers = {
         parentFolderId: options.parentFolder,
         meta: getPageMetaOptions(options),
       },
-    }),
-  "delete-page": async (options, connection, dependencies) =>
-    dependencies.deletePage({
-      ...connection,
-      pageId: requireOption(options.page, "--page"),
-    }),
-  "duplicate-page": async (options, connection, dependencies) =>
-    dependencies.duplicatePage({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "update-page",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-page": async (options, connection, dependencies) => {
+    const input = { pageId: requireOption(options.page, "--page") };
+    return runProjectSessionCommand(
+      "delete-page",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "duplicate-page": async (options, connection, dependencies) => {
+    const input = {
       pageId: requireOption(options.page, "--page"),
       parentFolderId: options.parentFolder,
       name: options.name,
       path: options.path,
-    }),
-  "list-folders": async (options, connection, dependencies) =>
-    dependencies.listFolders({
-      ...connection,
-      includePages: options.includePages,
-    }),
-  "create-folder": async (options, connection, dependencies) =>
-    dependencies.createFolder({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "duplicate-page",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-folders": async (options, connection, dependencies) => {
+    const input = { includePages: options.includePages };
+    return runProjectSessionCommand(
+      "list-folders",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "create-folder": async (options, connection, dependencies) => {
+    const input = {
       folderId: options.folder,
       name: requireOption(options.name, "--name"),
       slug: requireOption(options.slug, "--slug"),
       parentFolderId: options.parentFolder,
-    }),
-  "update-folder": async (options, connection, dependencies) =>
-    dependencies.updateFolder({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "create-folder",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-folder": async (options, connection, dependencies) => {
+    const input = {
       folderId: requireOption(options.folder, "--folder"),
       values: {
         name: options.name,
         slug: options.slug,
         parentFolderId: options.parentFolder,
       },
-    }),
-  "delete-folder": async (options, connection, dependencies) =>
-    dependencies.deleteFolder({
-      ...connection,
-      folderId: requireOption(options.folder, "--folder"),
-    }),
-  "list-instances": async (options, connection, dependencies) =>
-    dependencies.listInstances({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "update-folder",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-folder": async (options, connection, dependencies) => {
+    const input = { folderId: requireOption(options.folder, "--folder") };
+    return runProjectSessionCommand(
+      "delete-folder",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-instances": async (options, connection, dependencies) => {
+    const input = {
       pageId: options.page,
       pagePath: options.path,
       rootInstanceId: options.root,
@@ -1537,17 +1612,29 @@ const apiCommandHandlers = {
       component: options.component,
       tag: options.tag,
       labelContains: options.label,
-    }),
-  "inspect-instance": async (options, connection, dependencies) =>
-    dependencies.inspectInstance({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "list-instances",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "inspect-instance": async (options, connection, dependencies) => {
+    const input = {
       instanceId: requireSingleOption(options.instance, "--instance"),
       include: listOption(options.include),
       childDepth: options.childDepth,
-    }),
-  "append-instance": async (options, connection, dependencies) =>
-    dependencies.appendInstance({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "inspect-instance",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "append-instance": async (options, connection, dependencies) => {
+    const input = {
       parentInstanceId: requireOption(options.parent, "--parent"),
       mode: appendInstanceModeOption(options.mode),
       insertIndex: options.insertIndex,
@@ -1555,45 +1642,87 @@ const apiCommandHandlers = {
         dependencies,
         options
       ),
-    }),
-  "move-instance": async (options, connection, dependencies) =>
-    dependencies.moveInstance({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "append-instance",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "move-instance": async (options, connection, dependencies) => {
+    const input = {
       moves: await readInputArray<MoveInstanceInput>(dependencies, options),
-    }),
-  "clone-instance": async (options, connection, dependencies) =>
-    dependencies.cloneInstance({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "move-instance",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "clone-instance": async (options, connection, dependencies) => {
+    const input = {
       sourceInstanceId: requireOption(options.source, "--source"),
       targetParentInstanceId: options.parent,
       insertIndex: options.insertIndex,
-    }),
-  "delete-instance": async (options, connection, dependencies) =>
-    dependencies.deleteInstance({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "clone-instance",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-instance": async (options, connection, dependencies) => {
+    const input = {
       instanceIds: requireListOption(options.instance, "--instance"),
-    }),
-  "update-props": async (options, connection, dependencies) =>
-    dependencies.updateProps({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "delete-instance",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-props": async (options, connection, dependencies) => {
+    const input = {
       updates: await readInputArray<PropUpdatesInput>(dependencies, options),
-    }),
-  "delete-props": async (options, connection, dependencies) =>
-    dependencies.deleteProps({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "update-props",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-props": async (options, connection, dependencies) => {
+    const input = {
       deletions: await readInputArray<PropDeletionsInput>(
         dependencies,
         options
       ),
-    }),
-  "bind-props": async (options, connection, dependencies) =>
-    dependencies.bindProps({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "delete-props",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "bind-props": async (options, connection, dependencies) => {
+    const input = {
       bindings: await readInputArray<PropBindingsInput>(dependencies, options),
-    }),
-  "list-texts": async (options, connection, dependencies) =>
-    dependencies.listTexts({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "bind-props",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-texts": async (options, connection, dependencies) => {
+    const input = {
       pageId: options.page,
       pagePath: options.path,
       instanceId:
@@ -1601,18 +1730,30 @@ const apiCommandHandlers = {
       mode: textListModeOption(options.mode),
       contains: options.contains,
       maxValueLength: options.maxValueLength,
-    }),
-  "update-text": async (options, connection, dependencies) =>
-    dependencies.updateText({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "list-texts",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-text": async (options, connection, dependencies) => {
+    const input = {
       instanceId: requireSingleOption(options.instance, "--instance"),
       childIndex: requireNumberOption(options.childIndex, "--child-index"),
       text: requireStringOption(options.text, "--text"),
       mode: textUpdateModeOption(options.mode),
-    }),
-  "get-styles": async (options, connection, dependencies) =>
-    dependencies.getStyleDeclarations({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "update-text",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "get-styles": async (options, connection, dependencies) => {
+    const input = {
       instanceIds:
         typeof options.instance === "string" ? [options.instance] : undefined,
       pageId: options.page,
@@ -1622,150 +1763,264 @@ const apiCommandHandlers = {
       property: options.property,
       propertyFilter: options.propertyFilter,
       includeTokens: options.includeTokens,
-    }),
-  "update-styles": async (options, connection, dependencies) =>
-    dependencies.updateStyleDeclarations({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "get-styles",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-styles": async (options, connection, dependencies) => {
+    const input = {
       updates: await readInputArray<StyleUpdatesInput>(dependencies, options),
-    }),
-  "delete-styles": async (options, connection, dependencies) =>
-    dependencies.deleteStyleDeclarations({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "update-styles",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-styles": async (options, connection, dependencies) => {
+    const input = {
       deletions: await readInputArray<StyleDeletionsInput>(
         dependencies,
         options
       ),
-    }),
-  "replace-styles": async (options, connection, dependencies) =>
-    dependencies.replaceStyleValues({
-      ...connection,
-      ...(await readInputObject<StyleReplaceInput>(dependencies, options)),
-    }),
-  "list-design-tokens": async (options, connection, dependencies) =>
-    dependencies.listDesignTokens({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "delete-styles",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "replace-styles": async (options, connection, dependencies) => {
+    const input = await readInputObject<StyleReplaceInput>(
+      dependencies,
+      options
+    );
+    return runProjectSessionCommand(
+      "replace-styles",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-design-tokens": async (options, connection, dependencies) => {
+    const input = {
       filter: options.filter,
       withUsage: options.withUsage,
       sort: designTokenSortOption(options.sort),
-    }),
-  "create-design-token": async (options, connection, dependencies) =>
-    dependencies.createDesignTokens({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "list-design-tokens",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "create-design-token": async (options, connection, dependencies) => {
+    const input = {
       tokens: await readInputArray<CreateDesignTokensInput>(
         dependencies,
         options
       ),
-    }),
-  "update-design-token-styles": async (options, connection, dependencies) =>
-    dependencies.updateDesignTokenStyles({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "create-design-token",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-design-token-styles": async (options, connection, dependencies) => {
+    const input = {
       designTokenId: requireOption(options.designToken, "--design-token"),
       updates: await readInputArray<UpdateDesignTokenStylesInput>(
         dependencies,
         options
       ),
-    }),
-  "delete-design-token-styles": async (options, connection, dependencies) =>
-    dependencies.deleteDesignTokenStyles({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "update-design-token-styles",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-design-token-styles": async (options, connection, dependencies) => {
+    const input = {
       designTokenId: requireOption(options.designToken, "--design-token"),
       deletions: await readInputArray<DeleteDesignTokenStylesInput>(
         dependencies,
         options
       ),
-    }),
-  "attach-design-token": async (options, connection, dependencies) =>
-    dependencies.attachDesignToken({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "delete-design-token-styles",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "attach-design-token": async (options, connection, dependencies) => {
+    const input = {
       designTokenId: requireOption(options.designToken, "--design-token"),
       instanceIds: await readInputArray<string[]>(dependencies, options),
       position: options.position,
-    }),
-  "detach-design-token": async (options, connection, dependencies) =>
-    dependencies.detachDesignToken({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "attach-design-token",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "detach-design-token": async (options, connection, dependencies) => {
+    const input = {
       designTokenId: requireOption(options.designToken, "--design-token"),
       instanceIds: await readInputArray<string[]>(dependencies, options),
-    }),
-  "extract-design-token": async (options, connection, dependencies) =>
-    dependencies.extractDesignToken({
-      ...connection,
-      ...(await readInputObject<ExtractDesignTokenInput>(
-        dependencies,
-        options
-      )),
-    }),
-  "list-css-variables": async (options, connection, dependencies) =>
-    dependencies.listCssVariables({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "detach-design-token",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "extract-design-token": async (options, connection, dependencies) => {
+    const input = await readInputObject<ExtractDesignTokenInput>(
+      dependencies,
+      options
+    );
+    return runProjectSessionCommand(
+      "extract-design-token",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-css-variables": async (options, connection, dependencies) => {
+    const input = {
       filter: options.filter,
       withUsage: options.withUsage,
-    }),
-  "define-css-variable": async (options, connection, dependencies) =>
-    dependencies.defineCssVariables({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "list-css-variables",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "define-css-variable": async (options, connection, dependencies) => {
+    const input = {
       vars: await readInputObject<DefineCssVariablesInput>(
         dependencies,
         options
       ),
       overwrite: options.overwrite,
-    }),
+    };
+    return runProjectSessionCommand(
+      "define-css-variable",
+      input,
+      connection,
+      dependencies
+    );
+  },
   "delete-css-variable": async (options, connection, dependencies) => {
     requireTrueOption(options.confirm, "--confirm");
-    return dependencies.deleteCssVariables({
-      ...connection,
+    const input = {
       names: await readInputArray<DeleteCssVariablesInput>(
         dependencies,
         options
       ),
       force: options.force,
-    });
+    };
+    return runProjectSessionCommand(
+      "delete-css-variable",
+      input,
+      connection,
+      dependencies
+    );
   },
-  "rewrite-css-variable-refs": async (options, connection, dependencies) =>
-    dependencies.rewriteCssVariableRefs({
-      ...connection,
+  "rewrite-css-variable-refs": async (options, connection, dependencies) => {
+    const input = {
       map: await readInputObject<RewriteCssVariableRefsInput>(
         dependencies,
         options
       ),
       scopeRegex: options.scopeRegex,
-    }),
-  "list-variables": async (options, connection, dependencies) =>
-    dependencies.listVariables({
-      ...connection,
-      scopeInstanceId: options.scopeInstance,
-    }),
-  "create-variable": async (options, connection, dependencies) =>
-    dependencies.createVariable({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "rewrite-css-variable-refs",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-variables": async (options, connection, dependencies) => {
+    const input = { scopeInstanceId: options.scopeInstance };
+    return runProjectSessionCommand(
+      "list-variables",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "create-variable": async (options, connection, dependencies) => {
+    const input = {
       dataSourceId: options.variable,
       scopeInstanceId: requireOption(options.scopeInstance, "--scope-instance"),
       name: requireOption(options.name, "--name"),
       value: parseVariableValue(options.valueType, options.value),
-    }),
-  "update-variable": async (options, connection, dependencies) =>
-    dependencies.updateVariable({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "create-variable",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-variable": async (options, connection, dependencies) => {
+    const input = {
       dataSourceId: requireOption(options.variable, "--variable"),
       values: {
         scopeInstanceId: options.scopeInstance,
         name: options.name,
         value: parseOptionalVariableValue(options),
       },
-    }),
-  "delete-variable": async (options, connection, dependencies) =>
-    dependencies.deleteVariable({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "update-variable",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-variable": async (options, connection, dependencies) => {
+    const input = {
       dataSourceId: requireOption(options.variable, "--variable"),
-    }),
-  "list-resources": async (options, connection, dependencies) =>
-    dependencies.listResources({
-      ...connection,
-      scopeInstanceId: options.scopeInstance,
-    }),
-  "create-resource": async (options, connection, dependencies) =>
-    dependencies.createResource({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "delete-variable",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-resources": async (options, connection, dependencies) => {
+    const input = { scopeInstanceId: options.scopeInstance };
+    return runProjectSessionCommand(
+      "list-resources",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "create-resource": async (options, connection, dependencies) => {
+    const input = {
       resourceId: options.resource,
       resource: (await getResourceFields(
         dependencies,
@@ -1775,10 +2030,16 @@ const apiCommandHandlers = {
       dataSourceId: options.dataSource,
       scopeInstanceId: options.scopeInstance,
       dataSourceName: options.dataSourceName,
-    }),
-  "update-resource": async (options, connection, dependencies) =>
-    dependencies.updateResource({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "create-resource",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-resource": async (options, connection, dependencies) => {
+    const input = {
       resourceId: requireOption(options.resource, "--resource"),
       values: (await getResourceFields(
         dependencies,
@@ -1787,111 +2048,181 @@ const apiCommandHandlers = {
       )) as Partial<ResourceFieldsInput>,
       dataSourceName: options.dataSourceName,
       scopeInstanceId: options.scopeInstance,
-    }),
-  "delete-resource": async (options, connection, dependencies) =>
-    dependencies.deleteResource({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "update-resource",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-resource": async (options, connection, dependencies) => {
+    const input = {
       resourceId: requireOption(options.resource, "--resource"),
       force: options.force,
-    }),
-  publish: async (options, connection, dependencies) =>
-    dependencies.publish({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "delete-resource",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  publish: async (options, connection, dependencies) => {
+    const input = {
       target: publishTargetValue(options.target),
       domains: listStringOption(options.domain),
       message: options.message,
       idempotencyKey: options.idempotencyKey,
-    }),
+    };
+    return runProjectSessionCommand("publish", input, connection, dependencies);
+  },
   "list-publishes": async (_options, connection, dependencies) =>
-    dependencies.listPublishes(connection),
-  "get-publish-job": async (options, connection, dependencies) =>
-    dependencies.getPublishJob({
-      ...connection,
-      jobId: requireOption(options.job, "--job"),
-    }),
+    runProjectSessionCommand("list-publishes", {}, connection, dependencies),
+  "get-publish-job": async (options, connection, dependencies) => {
+    const input = { jobId: requireOption(options.job, "--job") };
+    return runProjectSessionCommand(
+      "get-publish-job",
+      input,
+      connection,
+      dependencies
+    );
+  },
   unpublish: async (options, connection, dependencies) => {
     requireTrueOption(options.confirm, "--confirm");
-    return dependencies.unpublish({
-      ...connection,
+    const input = {
       target: publishTargetValue(options.target),
       domains: listStringOption(options.domain),
       message: options.message,
       idempotencyKey: options.idempotencyKey,
-    });
+    };
+    return runProjectSessionCommand(
+      "unpublish",
+      input,
+      connection,
+      dependencies
+    );
   },
   "list-domains": async (_options, connection, dependencies) =>
-    dependencies.listDomains(connection),
-  "create-domain": async (options, connection, dependencies) =>
-    dependencies.createDomain({
-      ...connection,
-      domain: requireSingleOption(options.domain, "--domain"),
-    }),
-  "update-domain": async (options, connection, dependencies) =>
-    dependencies.updateDomain({
-      ...connection,
+    runProjectSessionCommand("list-domains", {}, connection, dependencies),
+  "create-domain": async (options, connection, dependencies) => {
+    const input = { domain: requireSingleOption(options.domain, "--domain") };
+    return runProjectSessionCommand(
+      "create-domain",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-domain": async (options, connection, dependencies) => {
+    const input = {
       domainId: requireOption(options.domainId, "--domain-id"),
       updates: {
         ...(await readInputObject<UpdateDomainInput>(dependencies, options)),
         domain: typeof options.domain === "string" ? options.domain : undefined,
       },
-    }),
+    };
+    return runProjectSessionCommand(
+      "update-domain",
+      input,
+      connection,
+      dependencies
+    );
+  },
   "delete-domain": async (options, connection, dependencies) => {
     requireTrueOption(options.confirm, "--confirm");
-    return dependencies.deleteDomain({
-      ...connection,
-      domainId: requireOption(options.domainId, "--domain-id"),
-    });
+    const input = { domainId: requireOption(options.domainId, "--domain-id") };
+    return runProjectSessionCommand(
+      "delete-domain",
+      input,
+      connection,
+      dependencies
+    );
   },
-  "verify-domain": async (options, connection, dependencies) =>
-    dependencies.verifyDomain({
-      ...connection,
-      domainId: requireOption(options.domainId, "--domain-id"),
-    }),
-  "list-assets": async (options, connection, dependencies) =>
-    dependencies.listAssets({
-      ...connection,
+  "verify-domain": async (options, connection, dependencies) => {
+    const input = { domainId: requireOption(options.domainId, "--domain-id") };
+    return runProjectSessionCommand(
+      "verify-domain",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-assets": async (options, connection, dependencies) => {
+    const input = {
       type: assetListTypeOption(options.type),
       sort: options.sort,
       withUsage: options.withUsage,
       cursor: options.cursor,
       limit: options.limit,
-    }),
-  "upload-asset": async (options, connection, dependencies) =>
-    dependencies.uploadProjectAsset({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "list-assets",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "upload-asset": async (options, connection, dependencies) => {
+    const input = {
       asset: await readInputObject<UploadAssetInput>(dependencies, options),
       readAssetData: readAssetData(dependencies, options.assetsDir),
-    }),
-  "upload-assets": async (options, connection, dependencies) =>
-    dependencies.uploadProjectAssets({
-      ...connection,
+    };
+    return runProjectSessionCommand(
+      "upload-asset",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "upload-assets": async (options, connection, dependencies) => {
+    const input = {
       assets: await readInputArray<UploadAssetsInput>(dependencies, options),
       readAssetData: readAssetData(dependencies, options.assetsDir),
-    }),
-  "find-asset-usage": async (options, connection, dependencies) =>
-    dependencies.findAssetUsage({
-      ...connection,
-      assetId: requireSingleOption(options.asset, "--asset"),
-    }),
+    };
+    return runProjectSessionCommand(
+      "upload-assets",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "find-asset-usage": async (options, connection, dependencies) => {
+    const input = { assetId: requireSingleOption(options.asset, "--asset") };
+    return runProjectSessionCommand(
+      "find-asset-usage",
+      input,
+      connection,
+      dependencies
+    );
+  },
   "replace-asset": async (options, connection, dependencies) => {
     requireTrueOption(options.confirm, "--confirm");
-    return dependencies.replaceAsset({
-      ...connection,
+    const input = {
       fromAssetId: requireOption(options.from, "--from"),
       toAssetId: requireOption(options.to, "--to"),
-    });
+    };
+    return runProjectSessionCommand(
+      "replace-asset",
+      input,
+      connection,
+      dependencies
+    );
   },
   "delete-asset": async (options, connection, dependencies) => {
     requireTrueOption(options.confirm, "--confirm");
-    return dependencies.deleteAssets({
-      ...connection,
+    const input = {
       assetIdsOrPrefixes: requireListOption(options.asset, "--asset"),
       force: options.force,
-    });
+    };
+    return runProjectSessionCommand(
+      "delete-asset",
+      input,
+      connection,
+      dependencies
+    );
   },
-} satisfies Record<string, ApiCommandHandler>;
-
-export type ApiCommandName = keyof typeof apiCommandHandlers;
+} satisfies Record<ApiCommandName, ApiCommandHandler>;
 
 export const apiCommand = async (
   options: ApiCommandOptions,
@@ -1904,7 +2235,7 @@ export const apiCommand = async (
       throw new Error(`${options.command} currently requires --json.`);
     }
 
-    const connection = await resolveConnection(dependencies);
+    const connection = await resolveApiConnection(dependencies);
     projectId = connection.projectId;
     const apiConnection = {
       ...connection,
@@ -1912,14 +2243,27 @@ export const apiCommand = async (
     };
 
     const query = apiCommandHandlers[options.command];
-    const data = await query(options, apiConnection, dependencies);
+    const previousDryRun = activeApiCommandDryRun;
+    const previousRefresh = activeApiCommandRefresh;
+    activeApiCommandDryRun = options.dryRun === true;
+    activeApiCommandRefresh = options.refresh === true;
+    const response = await query(options, apiConnection, dependencies).finally(
+      () => {
+        activeApiCommandDryRun = previousDryRun;
+        activeApiCommandRefresh = previousRefresh;
+      }
+    );
+    const session = isProjectSessionEnvelope(response)
+      ? getProjectSessionMeta(response)
+      : undefined;
     printJson({
       ok: true,
-      data,
+      data: isProjectSessionEnvelope(response) ? response.result : response,
       meta: {
         command: options.command,
         projectId: connection.projectId,
         durationMs: Date.now() - start,
+        ...(session === undefined ? {} : { session }),
       },
     });
   } catch (error) {

@@ -1149,6 +1149,9 @@ importers:
       '@webstudio-is/http-client':
         specifier: workspace:*
         version: link:../http-client
+      '@webstudio-is/project-build':
+        specifier: workspace:*
+        version: link:../project-build
       '@webstudio-is/project-migrations':
         specifier: workspace:*
         version: link:../project-migrations

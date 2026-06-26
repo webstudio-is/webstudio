@@ -4,6 +4,7 @@ import {
   getPublicApiOperationPath,
   publicApiOperations,
 } from "./operations";
+import { publicApiOperationNamespaces } from "./runtime-contracts";
 import { publicRuntimeOperationContracts } from "./runtime-contracts";
 
 describe("public api operation catalog", () => {
@@ -45,6 +46,9 @@ describe("public api operation catalog", () => {
       expect(operation.writeNamespaces).toEqual(
         contract?.writeNamespaces ?? []
       );
+      expect(operation.retryOnConflict).toBe(
+        contract?.retryOnConflict ?? false
+      );
       if (contract !== undefined) {
         expect(operation.invalidatesNamespaces).toEqual(
           contract.invalidatesNamespaces
@@ -57,6 +61,10 @@ describe("public api operation catalog", () => {
   });
 
   test("documents server-only namespace invalidation", () => {
+    expect(getPublicApiOperation("apply-patch").serverOnly).toBe(true);
+    expect(getPublicApiOperation("apply-patch").invalidatesNamespaces).toBe(
+      publicApiOperationNamespaces
+    );
     expect(getPublicApiOperation("upload-asset").serverOnly).toBe(true);
     expect(getPublicApiOperation("upload-asset").invalidatesNamespaces).toEqual(
       ["assets"]

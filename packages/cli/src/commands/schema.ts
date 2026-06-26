@@ -43,6 +43,19 @@ const apiSchema = {
     requiredOptions: command.requiredOptions ?? ["json"],
     examples: command.examples ?? [],
   })),
+  session: {
+    stateFile: ".webstudio/project-session.json",
+    refreshFlag:
+      "Use --refresh to refresh required namespaces before local-capable commands.",
+    localReads:
+      "Local-capable read commands use compatible cached namespaces and fetch only missing or stale namespaces.",
+    localMutations:
+      "Local-capable mutation commands build patches locally, commit with the cached build version, and update local state only after the remote commit succeeds.",
+    serverOnly:
+      "Server-only commands run remotely and invalidate/refetch namespaces declared by the public operation catalog.",
+    resultMetadata:
+      "Successful command JSON includes meta.session with operationId, buildId, version, source, committed, compatibility, namespace metadata, and diagnostics.",
+  },
   useCases: useCaseScenarios,
   patch: {
     validationCommand:

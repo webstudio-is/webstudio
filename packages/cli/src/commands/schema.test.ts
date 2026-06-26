@@ -44,6 +44,8 @@ test("prints api command schema as json", () => {
     ])
   );
   expect(output.patch.namespaces).toContain("dataSources");
+  expect(output.session.refreshFlag).toContain("--refresh");
+  expect(output.session.resultMetadata).toContain("meta.session");
 });
 
 test("requires json output", () => {

@@ -22,3 +22,22 @@ test("returns command-specific options when available", () => {
     expect.objectContaining({ type: "string" })
   );
 });
+
+test("registers every catalog required option", () => {
+  for (const metadata of apiCommandMetadata) {
+    const registeredOptions = new Set<string>();
+    const yargs = {
+      option: vi.fn((name: string) => {
+        registeredOptions.add(name);
+        return yargs;
+      }),
+      example: vi.fn(() => yargs),
+    };
+
+    getApiCommandOptions(metadata)(yargs as never);
+
+    for (const option of metadata.requiredOptions ?? ["json"]) {
+      expect(registeredOptions, metadata.command).toContain(option);
+    }
+  }
+});

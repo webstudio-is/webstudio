@@ -2,6 +2,7 @@ import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
+import { buildPatchNamespaces } from "@webstudio-is/protocol";
 import { apiCommandMetadata } from "./api-command-metadata";
 import { useCaseScenarios } from "./api-command-docs";
 
@@ -145,10 +146,18 @@ const commandsByUseCase = new Map(
   useCaseScenarios.map((scenario) => [scenario.useCase, scenario.commands])
 );
 
+const getCommandsForUseCase = (useCase: string) => {
+  const commands = commandsByUseCase.get(useCase);
+  if (commands === undefined) {
+    throw new Error(`Unknown API CLI use case "${useCase}".`);
+  }
+  return commands;
+};
+
 const taskRecipes = Object.fromEntries(
   Object.entries(taskRecipeUseCases).map(([group, useCases]) => [
     group,
-    useCases.flatMap((useCase) => commandsByUseCase.get(useCase) ?? []),
+    useCases.flatMap(getCommandsForUseCase),
   ])
 ) as Record<keyof typeof taskRecipeUseCases, string[]>;
 
@@ -314,6 +323,16 @@ Rules:
 - Domains: webstudio list-domains --json
 - Publishes: webstudio list-publishes --json
 - Raw data: webstudio snapshot --include pages,instances,props,styles,styleSources,styleSourceSelections,resources,variables,assets --json
+
+## Project Session Cache
+
+- CLI commands use one local ProjectSession snapshot for the configured project.
+- Local-capable reads use cached namespaces when compatible and fetch only missing or stale namespaces.
+- Local-capable mutations build patches from the local snapshot, then commit with the cached build version.
+- Successful mutation commits update the local snapshot only after the remote commit succeeds.
+- Server-only commands run remotely and invalidate/refetch namespaces declared by the operation catalog.
+- Use --refresh on local-capable commands to refresh required namespaces before running.
+- Successful JSON responses include meta.session with operationId, buildId, version, source, committed, compatibility, namespace freshness, and diagnostics.
 
 ## Task Recipes
 
@@ -613,6 +632,7 @@ Use this order. Stop only when a command returns ok:false.
 
 - Never guess ids for existing records. Read them first.
 - Never use project ids from user input. Commands use the configured project.
+- Use --refresh before a local-capable command when cached data may be stale.
 - On VERSION_CONFLICT, read inspect and snapshot again, regenerate the patch, then retry.
 - Treat stdout JSON as the API contract and stderr as diagnostics.
 - Confirm destructive commands with --confirm only when user requested deletion/unpublish/replacement.
@@ -640,19 +660,19 @@ const topics = {
       commands: commandCatalog,
       readCommands,
       writeCommands,
-      mutationNamespaces: [
-        "pages",
-        "instances",
-        "props",
-        "styles",
-        "styleSources",
-        "styleSourceSelections",
-        "dataSources",
-        "resources",
-        "assets",
-        "breakpoints",
-        "marketplaceProduct",
-      ],
+      mutationNamespaces: buildPatchNamespaces,
+      sessionBehavior: {
+        localReads:
+          "Use compatible cached namespaces and fetch only missing or stale namespaces.",
+        localMutations:
+          "Build patches locally, commit with the cached build version, and update local state only after remote commit succeeds.",
+        serverOnly:
+          "Run remotely and invalidate/refetch namespaces declared by the public operation catalog.",
+        refreshFlag:
+          "Use --refresh to refresh required namespaces before local-capable commands.",
+        metadata:
+          "Successful command JSON includes meta.session with operationId, buildId, version, source, committed, compatibility, namespace metadata, and diagnostics.",
+      },
       safetyRules: [
         "Always pass --json.",
         "Never pass project ids; commands use the configured project.",
@@ -683,6 +703,11 @@ const topics = {
       commands: commandCatalog,
       readCommands,
       writeCommands,
+      sessionBehavior: [
+        "Read meta.session.source and meta.session.namespaces to understand whether data came from local cache, remote refresh, dry-run, or server-only execution.",
+        "Use --refresh before a local-capable command when the cached snapshot may be stale.",
+        "A mutation is durable only when meta.session.committed is true.",
+      ],
       writes: [
         "Use semantic write commands from taskRecipes first.",
         "Use validate-patch/apply-patch only when no semantic command exists.",

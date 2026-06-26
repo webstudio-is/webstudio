@@ -17,6 +17,9 @@ test("prints api manual with patch workflow and examples", () => {
   expect(output).toContain("webstudio apply-patch --base-version");
   expect(output).toContain("Supported namespaces");
   expect(output).toContain("## Use Case Index");
+  expect(output).toContain("## Project Session Cache");
+  expect(output).toContain("Use --refresh");
+  expect(output).toContain("meta.session");
   expect(output).toContain("Manage breakpoints");
   expect(output).toContain("Manage marketplace metadata");
   expect(output).toContain("Create a design token");
@@ -43,6 +46,8 @@ test("prints api manual as json", () => {
     "webstudio snapshot --include pages,instances,props,styles,styleSources,styleSourceSelections,dataSources,resources,assets --json"
   );
   expect(output.mutationNamespaces).toContain("instances");
+  expect(output.sessionBehavior.refreshFlag).toContain("--refresh");
+  expect(output.sessionBehavior.metadata).toContain("meta.session");
   expect(
     output.commands.map((command: { command: string }) => command.command)
   ).toEqual(apiCommandMetadata.map(({ command }) => command));
@@ -148,6 +153,7 @@ test("prints llm manual with discovery rules", () => {
   expect(output).toContain("webstudio schema api --json");
   expect(output).toContain("webstudio permissions --json");
   expect(output).toContain("Never guess ids");
+  expect(output).toContain("--refresh");
 });
 
 test("prints available topics for unknown manual topic", () => {

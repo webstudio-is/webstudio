@@ -1,7 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { cwd } from "node:process";
 import { join } from "node:path";
-import pc from "picocolors";
+import { cwd } from "node:process";
 import { spinner } from "@clack/prompts";
 import { type PublishedProjectBundle } from "@webstudio-is/protocol";
 import {
@@ -10,13 +9,7 @@ import {
   toLocalProjectBundle,
 } from "@webstudio-is/http-client";
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
-import {
-  GLOBAL_CONFIG_FILE,
-  LOCAL_CONFIG_FILE,
-  LOCAL_DATA_FILE,
-  jsonToGlobalConfig,
-  jsonToLocalConfig,
-} from "../config";
+import { LOCAL_DATA_FILE } from "../config";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -24,6 +17,7 @@ import type {
 import { HandledCliError } from "../errors";
 import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { downloadAssetFiles } from "../asset-files";
+import { resolveApiConnection } from "../api-connection";
 
 type SyncDependencies = {
   createFileIfNotExists: typeof createFileIfNotExists;
@@ -32,6 +26,7 @@ type SyncDependencies = {
   loadProjectBundleByBuildId: typeof loadProjectBundleByBuildId;
   loadProjectBundleByProjectId: typeof loadProjectBundleByProjectId;
   readFile: typeof readFile;
+  resolveApiConnection: typeof resolveApiConnection;
   spinner: typeof spinner;
   writeFile: typeof writeFile;
 };
@@ -43,6 +38,7 @@ const defaultDependencies: SyncDependencies = {
   loadProjectBundleByBuildId,
   loadProjectBundleByProjectId,
   readFile,
+  resolveApiConnection,
   spinner,
   writeFile,
 };
@@ -100,38 +96,23 @@ export const sync = async (
       throw error;
     }
   } else {
-    const globalConfigText = await dependencies.readFile(
-      GLOBAL_CONFIG_FILE,
-      "utf-8"
-    );
-    const globalConfig = jsonToGlobalConfig(JSON.parse(globalConfigText));
-
-    if ((await dependencies.isFileExists(LOCAL_CONFIG_FILE)) === false) {
+    let connection: Awaited<ReturnType<typeof resolveApiConnection>>;
+    try {
+      connection = await dependencies.resolveApiConnection(dependencies);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       syncing.stop(
-        `Local config file is not found. Please make sure current directory is a webstudio project`,
+        message.includes("Local config file")
+          ? "Local config file is not found. Please make sure current directory is a webstudio project"
+          : message.includes("Project config")
+            ? "Project config is not found, please run webstudio link"
+            : message,
         2
       );
       throw new HandledCliError();
     }
 
-    const localConfigText = await dependencies.readFile(
-      join(cwd(), LOCAL_CONFIG_FILE),
-      "utf-8"
-    );
-
-    const localConfig = jsonToLocalConfig(JSON.parse(localConfigText));
-
-    const projectConfig = globalConfig[localConfig.projectId];
-
-    if (projectConfig === undefined) {
-      syncing.stop(
-        `Project config is not found, please run ${pc.dim("webstudio link")}`,
-        2
-      );
-      throw new HandledCliError();
-    }
-
-    const { origin, token } = projectConfig;
+    const { origin, authToken, projectId } = connection;
     syncing.message(`Synchronizing project bundle from ${origin}`);
 
     try {
@@ -139,13 +120,13 @@ export const sync = async (
         options.buildId !== undefined
           ? await dependencies.loadProjectBundleByBuildId({
               buildId: options.buildId,
-              authToken: token,
+              authToken,
               origin,
               headers: apiCompatibilityHeaders,
             })
           : await dependencies.loadProjectBundleByProjectId({
-              projectId: localConfig.projectId,
-              authToken: token,
+              projectId,
+              authToken,
               origin,
               headers: apiCompatibilityHeaders,
             });

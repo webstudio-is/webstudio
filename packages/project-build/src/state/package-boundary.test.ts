@@ -10,6 +10,7 @@ const checkedDirectories = [
   join(sourceDirectory, "runtime"),
   join(sourceDirectory, "state"),
 ];
+const checkedFiles = [join(sourceDirectory, "project-session.ts")];
 
 const forbiddenImports = [
   "@webstudio-is/protocol",
@@ -52,7 +53,9 @@ describe("project-build state entry point boundaries", () => {
   test("does not import transport, builder app, db, auth, or deployment code", async () => {
     const files = (
       await Promise.all(checkedDirectories.map(readTypeScriptFiles))
-    ).flat();
+    )
+      .flat()
+      .concat(checkedFiles);
 
     for (const file of files) {
       const source = await readFile(file, "utf8");

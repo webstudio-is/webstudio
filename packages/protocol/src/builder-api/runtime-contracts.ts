@@ -1,13 +1,19 @@
 import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts/builder-runtime";
-import { type BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
+import {
+  builderNamespaces,
+  type BuilderNamespace,
+} from "@webstudio-is/project-build/contracts/namespaces";
 
 export type PublicApiOperationNamespace = BuilderNamespace;
+
+export const publicApiOperationNamespaces = builderNamespaces;
 
 export type PublicRuntimeOperationContract = {
   id: string;
   readNamespaces: readonly PublicApiOperationNamespace[];
   writeNamespaces: readonly PublicApiOperationNamespace[];
   invalidatesNamespaces: readonly PublicApiOperationNamespace[];
+  retryOnConflict: boolean;
 };
 
 export const publicRuntimeOperationContracts: readonly PublicRuntimeOperationContract[] =
@@ -17,10 +23,12 @@ export const publicRuntimeOperationContracts: readonly PublicRuntimeOperationCon
       readNamespaces,
       writeNamespaces,
       invalidatesNamespaces,
+      retryOnConflict,
     }): PublicRuntimeOperationContract => ({
       id,
       readNamespaces,
       writeNamespaces,
       invalidatesNamespaces,
+      retryOnConflict,
     })
   );

@@ -5,14 +5,11 @@ import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime/errors"
 import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
 import type { BuilderState } from "@webstudio-is/project-build/state/builder-state";
 import {
-  createBuilderStateFromSnapshot,
-  type BuilderStateSnapshot,
+  createBuilderStateFromBuildData,
+  type BuilderBuildDataSnapshot,
 } from "@webstudio-is/project-build/state/adapters";
-import { getStyleDeclKey, type Asset } from "@webstudio-is/sdk";
+import { type Asset } from "@webstudio-is/sdk";
 import { throwApiError } from "./api-errors.server";
-
-const mapEntriesById = <Item extends { id: string }>(items: Item[]) =>
-  items.map((item) => [item.id, item] as const);
 
 const defaultBuilderRuntimeContext = {
   createId: nanoid,
@@ -25,25 +22,19 @@ export const createBuilderRuntimeState = (
 ): BuilderState => {
   const snapshot = {
     pages: build.pages,
-    breakpoints: mapEntriesById(build.breakpoints),
-    styles: build.styles.map((styleDecl) => [
-      getStyleDeclKey(styleDecl),
-      styleDecl,
-    ]),
-    styleSources: mapEntriesById(build.styleSources),
-    styleSourceSelections: build.styleSourceSelections.map((selection) => [
-      selection.instanceId,
-      selection,
-    ]),
-    props: mapEntriesById(build.props),
-    dataSources: mapEntriesById(build.dataSources),
-    resources: mapEntriesById(build.resources),
-    instances: mapEntriesById(build.instances),
-    assets: assets === undefined ? undefined : mapEntriesById(assets),
+    breakpoints: build.breakpoints,
+    styles: build.styles,
+    styleSources: build.styleSources,
+    styleSourceSelections: build.styleSourceSelections,
+    props: build.props,
+    dataSources: build.dataSources,
+    resources: build.resources,
+    instances: build.instances,
+    assets,
     marketplaceProduct: build.marketplaceProduct,
-  } satisfies BuilderStateSnapshot;
+  } satisfies BuilderBuildDataSnapshot;
 
-  return createBuilderStateFromSnapshot(snapshot);
+  return createBuilderStateFromBuildData(snapshot);
 };
 
 export const executeApiRuntimeOperation = <Result>({

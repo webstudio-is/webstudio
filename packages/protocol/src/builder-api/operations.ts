@@ -1,5 +1,6 @@
 import { publicApiOperationDocumentation } from "./operation-docs";
 import {
+  publicApiOperationNamespaces,
   publicRuntimeOperationContracts,
   type PublicApiOperationNamespace,
 } from "./runtime-contracts";
@@ -34,6 +35,7 @@ export type PublicApiOperation = Omit<PublicApiOperationInput, "permit"> & {
   readNamespaces: readonly PublicApiOperationNamespace[];
   writeNamespaces: readonly PublicApiOperationNamespace[];
   invalidatesNamespaces: readonly PublicApiOperationNamespace[];
+  retryOnConflict: boolean;
 };
 
 const runtimeOperationById = new Map(
@@ -80,6 +82,7 @@ const withDefaultPermit = (
       runtimeOperation?.invalidatesNamespaces ??
       operation.invalidatesNamespaces ??
       [],
+    retryOnConflict: runtimeOperation?.retryOnConflict ?? false,
   };
 };
 
@@ -119,6 +122,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.build.patch",
     client: "applyBuildPatch",
+    invalidatesNamespaces: publicApiOperationNamespaces,
   },
   {
     command: "list-pages",

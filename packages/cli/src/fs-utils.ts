@@ -1,7 +1,10 @@
 import { dirname } from "node:path";
+import { randomUUID } from "node:crypto";
 import {
   access,
   mkdir,
+  rename,
+  rm,
   writeFile,
   constants,
   readFile,
@@ -36,6 +39,18 @@ export const createFolderIfNotExists = async (folderPath: string) => {
     await access(folderPath, constants.F_OK);
   } catch {
     await mkdir(folderPath, { recursive: true });
+  }
+};
+
+export const writeFileAtomic = async (filePath: string, content: string) => {
+  const temporaryFilePath = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
+  await createFolderIfNotExists(dirname(filePath));
+  try {
+    await writeFile(temporaryFilePath, content, "utf8");
+    await rename(temporaryFilePath, filePath);
+  } catch (error) {
+    await rm(temporaryFilePath, { force: true });
+    throw error;
   }
 };
 
