@@ -290,6 +290,7 @@ describe("fragment copy helpers", () => {
         fragment,
         fragmentInstances,
         styleSources: new Map(),
+        metas: $registeredComponentMetas.get(),
       });
 
       expect(capabilities.contentRootIds).toEqual(new Set(["link"]));
@@ -793,6 +794,7 @@ describe("insert webstudio fragment copy", () => {
       fragment,
       availableVariables: [],
       projectId: "current_project",
+      metas: defaultMetasMap,
       contentMode: true,
     });
     const newInstanceId = newInstanceIds.get("templateBox");
@@ -880,6 +882,7 @@ describe("insert webstudio fragment copy", () => {
       fragment,
       availableVariables: [],
       projectId: "current_project",
+      metas: $registeredComponentMetas.get(),
       contentMode: true,
     });
     const newInstanceId = newInstanceIds.get("item");
@@ -934,6 +937,7 @@ describe("insert webstudio fragment copy", () => {
       fragment,
       availableVariables: [],
       projectId: "current_project",
+      metas: defaultMetasMap,
       contentMode: true,
     });
     const newInstanceId = newInstanceIds.get("image");
@@ -2258,6 +2262,10 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectFragmentTokenConflicts({
       fragment: extractWebstudioFragment(sourceData, "source-box"),
+      targetData: {
+        ...targetData,
+        pages: createDefaultPages({ rootInstanceId: "body" }),
+      },
     });
 
     expect(conflicts).toHaveLength(1);
@@ -2300,6 +2308,7 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectPageTokenConflicts({
       sourceData: sourceWebstudioData,
+      targetData: { ...targetData, pages },
       pageId: sourcePages.homePageId,
     });
 
@@ -2352,6 +2361,7 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectPageTokenConflicts({
       sourceData: sourceWebstudioData,
+      targetData: { ...targetData, pages },
       pageId: sourcePages.homePageId,
     });
 
@@ -2425,6 +2435,7 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectPageTokenConflicts({
       sourceData: sourceWebstudioData,
+      targetData: { ...targetData, pages },
       pageId: sourcePages.homePageId,
     });
 
@@ -2449,6 +2460,7 @@ describe("detectPageTokenConflicts", () => {
     expect(() =>
       detectPageTokenConflicts({
         sourceData: sourceWebstudioData,
+        targetData: { ...targetData, pages },
         pageId: "non-existent-page-id",
       })
     ).toThrow("Page not found");

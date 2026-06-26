@@ -15,7 +15,6 @@ import { toast } from "@webstudio-is/design-system";
 import {
   ROOT_INSTANCE_ID,
   isComponentDetachable,
-  type Instance,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
@@ -109,7 +108,10 @@ import {
   normalizeLegacySlotInstancePathMutable,
 } from "~/shared/instance-utils/slot";
 import type { InstanceSelector } from "~/shared/instance-utils/tree";
-import { areInstanceSelectorsEqual } from "~/shared/instance-utils/tree";
+import {
+  areInstanceSelectorsEqual,
+  findChildReferenceIndex,
+} from "~/shared/instance-utils/tree";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -258,11 +260,6 @@ const requestSelectedPageItemDelete = () => {
 };
 
 type InstanceMoveDirection = "up" | "down" | "intoPreviousSibling" | "out";
-
-const getIdChildIndex = (children: Instance["children"], instanceId: string) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
 
 type SelectedInstancePath = {
   index: number;
@@ -464,7 +461,7 @@ const duplicateSelectedInstances = (project: Project) => {
       if (parentInstance === undefined) {
         continue;
       }
-      const indexWithinChildren = getIdChildIndex(
+      const indexWithinChildren = findChildReferenceIndex(
         parentInstance.children,
         selectedItem.instance.id
       );
@@ -507,7 +504,7 @@ const getOutdentMoveTarget = (
     if (slotParentItem === undefined) {
       return;
     }
-    const slotPosition = getIdChildIndex(
+    const slotPosition = findChildReferenceIndex(
       slotParentItem.instance.children,
       directSlotBoundary.slotId
     );
@@ -522,7 +519,7 @@ const getOutdentMoveTarget = (
   }
 
   const parent = parentItem.instance;
-  const parentIndex = getIdChildIndex(
+  const parentIndex = findChildReferenceIndex(
     grandparentItem.instance.children,
     parent.id
   );
@@ -549,7 +546,7 @@ const getInstanceMoveTarget = (direction: InstanceMoveDirection) => {
   }
 
   const parent = parentItem.instance;
-  const selectedIndex = getIdChildIndex(
+  const selectedIndex = findChildReferenceIndex(
     parent.children,
     selectedItem.instance.id
   );

@@ -55,7 +55,10 @@ import {
 import {
   type DroppableTarget,
   type InstanceSelector,
-  findLocalStyleSourcesWithinInstances,
+  createInstanceChild,
+  findChildReferenceIndex,
+  getSameParentAdjustedInsertIndex,
+  getInstanceDeleteTargets,
   getReparentDropTargetMutable,
 } from "./tree";
 import {
@@ -188,17 +191,6 @@ const countInstanceChildReferences = (
   return count;
 };
 
-const createInstanceChild = (instanceId: Instance["id"]) =>
-  ({ type: "id", value: instanceId }) as const;
-
-const findChildReferenceIndex = (
-  children: Instance["children"],
-  instanceId: Instance["id"]
-) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
-
 const removeChildReferenceMutable = (
   children: Instance["children"],
   instanceId: Instance["id"]
@@ -274,10 +266,10 @@ const reorderInstanceWithinParentMutable = (
     return;
   }
   // When parent is the same, account for removal before reinserting.
-  let nextPosition = dropTarget.position;
-  if (prevPosition < nextPosition) {
-    nextPosition -= 1;
-  }
+  const nextPosition = getSameParentAdjustedInsertIndex({
+    currentIndex: prevPosition,
+    requestedIndex: dropTarget.position,
+  });
   parent.children.splice(nextPosition, 0, child);
 };
 
@@ -371,11 +363,13 @@ export const deleteInstanceMutable = (
     instances,
     targetInstance.id
   );
-  const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
-    styleSources.values(),
-    styleSourceSelections.values(),
-    instanceIds
-  );
+  const deleteTargets = getInstanceDeleteTargets({
+    instanceIds,
+    props: props.values(),
+    dataSources: dataSources.values(),
+    styleSources: styleSources.values(),
+    styleSourceSelections: styleSourceSelections.values(),
+  });
 
   // mutate instances from data instead of instance path
   const parentToMutate = data.instances.get(parentInstance?.id as string);
@@ -388,37 +382,25 @@ export const deleteInstanceMutable = (
     instances.delete(instanceId);
   }
   // delete props, data sources and styles of deleted instance and its descendants
-  for (const prop of props.values()) {
-    if (instanceIds.has(prop.instanceId)) {
-      props.delete(prop.id);
-      if (prop.type === "resource") {
-        resources.delete(prop.value);
-      }
-    }
+  for (const propId of deleteTargets.propIds) {
+    props.delete(propId);
   }
-  for (const dataSource of dataSources.values()) {
-    if (instanceIds.has(dataSource.scopeInstanceId ?? "")) {
-      dataSources.delete(dataSource.id);
-      if (dataSource.type === "resource") {
-        resources.delete(dataSource.resourceId);
-      }
-    }
+  for (const dataSourceId of deleteTargets.dataSourceIds) {
+    dataSources.delete(dataSourceId);
   }
-  for (const instanceId of instanceIds) {
+  for (const resourceId of deleteTargets.resourceIds) {
+    resources.delete(resourceId);
+  }
+  for (const instanceId of deleteTargets.styleSourceSelectionInstanceIds) {
     styleSourceSelections.delete(instanceId);
   }
   deleteLocalStyleSourcesMutable({
-    localStyleSourceIds,
+    localStyleSourceIds: deleteTargets.localStyleSourceIds,
     styleSources,
     styles,
   });
   return true;
 };
-
-const getIdChildIndex = (children: Instance["children"], instanceId: string) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
 
 const getInstancePathSiblingIndex = (instancePath: InstancePath) => {
   const selectedItem = instancePath[0];
@@ -426,7 +408,7 @@ const getInstancePathSiblingIndex = (instancePath: InstancePath) => {
   if (parentItem === undefined) {
     return -1;
   }
-  return getIdChildIndex(
+  return findChildReferenceIndex(
     parentItem.instance.children,
     selectedItem.instance.id
   );

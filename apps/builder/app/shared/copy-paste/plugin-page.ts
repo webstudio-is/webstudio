@@ -11,7 +11,7 @@ import {
   type Page,
   type PageTemplate,
 } from "@webstudio-is/sdk";
-import { $pages } from "~/shared/sync/data-stores";
+import { $pages, $project } from "~/shared/sync/data-stores";
 import { detectFragmentTokenConflicts } from "../instance-utils/fragment";
 import { builderApi } from "../builder-api";
 import {
@@ -214,9 +214,15 @@ export const handlePastePage = async (
   }
 
   try {
+    const targetData = getWebstudioData();
+    const projectId = $project.get()?.id;
+    if (projectId === undefined) {
+      return true;
+    }
     const conflicts = collectPageLikeItems(item).flatMap((item) =>
       detectFragmentTokenConflicts({
         fragment: mergeWebstudioFragments(item.rootFragment, item.bodyFragment),
+        targetData,
       })
     );
     const conflictResolution =
@@ -233,6 +239,7 @@ export const handlePastePage = async (
         newId = insertPageCopyFromFragmentsMutable({
           source: item,
           target: { data, folderId },
+          projectId,
           conflictResolution,
           onBreakpointLimitMerge,
         });
@@ -242,6 +249,7 @@ export const handlePastePage = async (
         newId = insertTemplateCopyFromFragmentsMutable({
           source: item,
           target: { data },
+          projectId,
           conflictResolution,
           onBreakpointLimitMerge,
         });
@@ -250,6 +258,7 @@ export const handlePastePage = async (
       newId = insertFolderCopyFromDataMutable({
         source: item,
         target: { data, parentFolderId: folderId },
+        projectId,
         conflictResolution,
         onBreakpointLimitMerge,
       });

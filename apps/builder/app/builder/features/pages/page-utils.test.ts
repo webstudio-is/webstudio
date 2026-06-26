@@ -17,19 +17,27 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import {
-  cleanupChildRefsMutable,
   deleteFolderWithChildrenMutable,
-  getAllChildrenAndSelf,
-  isSlugAvailable,
-  registerFolderChildMutable,
-  reparentOrphansMutable,
   $pageRootScope,
-  isPathAvailable,
-  reparentPageOrFolderMutable,
   deletePageMutable,
   deleteTemplateMutable,
   instantiateTemplate,
 } from "./page-utils";
+import {
+  cleanupChildRefsMutable,
+  createFolderValue,
+  getAllChildrenAndSelf,
+  getFolderChildReparentPlan,
+  getFolderDeletionTargets,
+  getParentFolderId,
+  insertFolderMutable,
+  isPathAvailable,
+  isSlugAvailable,
+  registerFolderChildMutable,
+  reparentOrphansMutable,
+  reparentPageOrFolderMutable,
+  updateFolderFieldsMutable,
+} from "~/shared/page-utils/tree";
 import { $dataSourceVariables } from "~/shared/nano-states";
 import {
   $assets,
@@ -213,6 +221,42 @@ describe("reparentOrphansMutable", () => {
       "folderId",
     ]);
     expect(pages.folders.get("folderId")?.children).toEqual([]);
+  });
+});
+
+describe("folder child parent helpers", () => {
+  test("finds parent folder id for a child", () => {
+    const { pages, f, p, register } = createPages();
+    const page = p("page", "/page");
+    register([f("folder", [page])]);
+
+    expect(getParentFolderId(pages.folders, page.id)).toBe("folder");
+    expect(getParentFolderId(pages.folders, "missing")).toBeUndefined();
+  });
+
+  test("plans cross-folder reparent", () => {
+    const { pages, f, p, register } = createPages();
+    const page = p("page", "/page");
+    register([f("folder", [page]), f("target", [])]);
+
+    expect(
+      getFolderChildReparentPlan(pages.folders, page.id, "target")
+    ).toEqual({
+      currentFolderId: "folder",
+      currentIndex: 0,
+      nextFolderId: "target",
+      nextIndex: 0,
+    });
+  });
+
+  test("does not plan same-folder reparent", () => {
+    const { pages, f, p, register } = createPages();
+    const page = p("page", "/page");
+    register([f("folder", [page])]);
+
+    expect(
+      getFolderChildReparentPlan(pages.folders, page.id, "folder")
+    ).toBeUndefined();
   });
 });
 
@@ -409,6 +453,100 @@ describe("registerFolderChildMutable", () => {
   });
 });
 
+describe("folder creation helpers", () => {
+  test("creates and inserts folder into requested parent", () => {
+    const { pages } = createPages();
+    const folder = createFolderValue({
+      folderId: "folderId",
+      name: "Folder",
+      slug: "folder",
+    });
+
+    insertFolderMutable({ pages, folder, parentFolderId: ROOT_FOLDER_ID });
+
+    expect(pages.folders.get("folderId")).toEqual({
+      id: "folderId",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    });
+    expect(pages.folders.get(ROOT_FOLDER_ID)?.children).toEqual([
+      "homePageId",
+      "folderId",
+    ]);
+  });
+
+  test("falls back to root folder when inserting into missing parent", () => {
+    const { pages } = createPages();
+    const folder = createFolderValue({
+      folderId: "folderId",
+      name: "Folder",
+      slug: "folder",
+    });
+
+    insertFolderMutable({ pages, folder, parentFolderId: "missing" });
+
+    expect(pages.folders.get(ROOT_FOLDER_ID)?.children).toEqual([
+      "homePageId",
+      "folderId",
+    ]);
+  });
+});
+
+describe("updateFolderFieldsMutable", () => {
+  test("updates folder fields and moves folder", () => {
+    const { pages } = createPages();
+    const folder = {
+      id: "folderId",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    };
+    const target = {
+      id: "targetId",
+      name: "Target",
+      slug: "target",
+      children: [],
+    };
+    pages.folders.set(folder.id, folder);
+    pages.folders.set(target.id, target);
+    registerFolderChildMutable(pages, folder.id, ROOT_FOLDER_ID);
+    registerFolderChildMutable(pages, target.id, ROOT_FOLDER_ID);
+
+    updateFolderFieldsMutable({
+      folder,
+      folderId: folder.id,
+      pages,
+      values: {
+        name: "Updated",
+        slug: "updated",
+        parentFolderId: target.id,
+      },
+    });
+
+    expect(folder).toMatchObject({ name: "Updated", slug: "updated" });
+    expect(pages.folders.get(ROOT_FOLDER_ID)?.children).toEqual([
+      "homePageId",
+      "targetId",
+    ]);
+    expect(target.children).toEqual(["folderId"]);
+  });
+
+  test("does not update root folder", () => {
+    const { pages } = createPages();
+    const root = pages.folders.get(ROOT_FOLDER_ID);
+
+    updateFolderFieldsMutable({
+      folder: root!,
+      folderId: ROOT_FOLDER_ID,
+      pages,
+      values: { name: "Updated", slug: "updated" },
+    });
+
+    expect(root).toMatchObject({ name: "Root", slug: "" });
+  });
+});
+
 describe("reparent pages and folders", () => {
   test("move page up within single parent", () => {
     const { f, p, register, pages } = createPages();
@@ -593,6 +731,58 @@ describe("deleteFolderWithChildrenMutable", () => {
     const result = deleteFolderWithChildrenMutable("2", pagesData);
     expect(result).toEqual({ folderIds: [], pageIds: [] });
     expect(pagesData.folders.get("2")).toBeDefined();
+  });
+});
+
+describe("getFolderDeletionTargets", () => {
+  const pages = (): Pages => ({
+    homePageId: "homePageId",
+    rootFolderId: ROOT_FOLDER_ID,
+    pages: new Map(),
+    folders: toMap<Folder>([
+      {
+        id: ROOT_FOLDER_ID,
+        name: "Root",
+        slug: "",
+        children: ["2"],
+      },
+      {
+        id: "2",
+        name: "2",
+        slug: "2",
+        children: ["3", "page1"],
+      },
+      {
+        id: "3",
+        name: "3",
+        slug: "3",
+        children: [],
+      },
+    ]),
+  });
+
+  test("returns nested folders and pages", () => {
+    expect(getFolderDeletionTargets("2", pages())).toEqual({
+      folderIds: ["2", "3"],
+      pageIds: ["page1"],
+    });
+  });
+
+  test("returns no targets for root folder", () => {
+    expect(getFolderDeletionTargets(ROOT_FOLDER_ID, pages())).toEqual({
+      folderIds: [],
+      pageIds: [],
+    });
+  });
+
+  test("returns no targets for folder containing home page", () => {
+    const pagesData = pages();
+    pagesData.folders.get("2")?.children.push("homePageId");
+
+    expect(getFolderDeletionTargets("2", pagesData)).toEqual({
+      folderIds: [],
+      pageIds: [],
+    });
   });
 });
 

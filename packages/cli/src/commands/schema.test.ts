@@ -6,22 +6,40 @@ afterEach(() => {
 });
 
 test("prints api command schema as json", () => {
-  vi.spyOn(console, "log").mockImplementation(() => undefined);
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
 
   schema({ topic: "api", json: true });
 
-  const output = JSON.parse(vi.mocked(console.log).mock.calls.at(-1)?.[0]);
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.projectScope).toContain("single project");
   expect(output.commands).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
         name: "apply-patch",
         method: "mutation",
-        trpcPath: "api.build.patch",
       }),
       expect.objectContaining({
         name: "list-assets",
         method: "query",
+      }),
+      expect.objectContaining({
+        name: "permissions",
+        method: "query",
+      }),
+    ])
+  );
+  for (const command of output.commands) {
+    expect(command).not.toHaveProperty("trpcPath");
+  }
+  expect(output.useCases).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        useCase: "Manage breakpoints",
+        patchNamespaces: ["breakpoints"],
+      }),
+      expect.objectContaining({
+        useCase: "Manage marketplace metadata",
+        patchNamespaces: ["marketplaceProduct"],
       }),
     ])
   );

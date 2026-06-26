@@ -26,7 +26,10 @@ import {
   portalComponent,
 } from "@webstudio-is/sdk";
 import { $instances, $project } from "~/shared/sync/data-stores";
-import type { InstanceSelector } from "../instance-utils/tree";
+import {
+  findChildReferenceIndex,
+  type InstanceSelector,
+} from "../instance-utils/tree";
 import {
   deleteInstanceMutable,
   sortInstancePathsForChildMutation,
@@ -206,14 +209,6 @@ const getPortalFragmentSelector = (
   return [instance.children[0].value, ...instanceSelector];
 };
 
-const getIdChildIndex = (
-  children: Instance["children"],
-  instanceId: Instance["id"]
-) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
-
 const getCommonAncestorSelector = (
   instanceSelectors: InstanceSelector[]
 ): undefined | InstanceSelector => {
@@ -264,7 +259,7 @@ const findMultiSelectionInsertable = (
       return;
     }
     const selectedSiblingIndexes = selectedPaths.map((path) =>
-      getIdChildIndex(parentInstance.children, path[0].instance.id)
+      findChildReferenceIndex(parentInstance.children, path[0].instance.id)
     );
     if (selectedSiblingIndexes.includes(-1)) {
       return;
@@ -386,7 +381,10 @@ const findPasteTarget = (data: InstanceData): undefined | Insertable => {
 };
 
 const resolveFragmentTokenConflicts = async (fragment: WebstudioFragment) => {
-  const conflicts = detectFragmentTokenConflicts({ fragment });
+  const conflicts = detectFragmentTokenConflicts({
+    fragment,
+    targetData: getWebstudioData(),
+  });
   return conflicts.length > 0
     ? await builderApi.showTokenConflictDialog(conflicts)
     : "theirs";

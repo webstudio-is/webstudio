@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import {
+  createUploadName,
   uploadFile,
   type UploadErrorCleanup,
 } from "@webstudio-is/asset-uploader/index.server";
@@ -8,10 +9,8 @@ import {
   isAllowedMimeCategory,
   RESIZABLE_IMAGE_MIME_TYPES,
   ALLOWED_FILE_TYPES,
-  type Asset,
   assetType,
 } from "@webstudio-is/sdk";
-import type { Database } from "@webstudio-is/postgrest/index.server";
 import { isAssetFileName } from "@webstudio-is/protocol";
 import type { AssetActionResponse } from "~/builder/shared/assets";
 import { createAssetClient } from "~/shared/asset-client";
@@ -20,7 +19,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { parseError } from "~/shared/error/error-parse";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
-import { assertProjectBuildPermit } from "~/services/project-import.server";
+import { assertApiProjectPermit } from "~/services/api-permits.server";
 
 const urlBody = z.object({
   url: z.string(),
@@ -34,7 +33,6 @@ const parseAssetType = (value: string | null) => {
 type AssetInfoFallback =
   | { width: number; height: number; format: string }
   | undefined;
-type FileRow = Database["public"]["Tables"]["File"]["Row"];
 
 const getAssetInfoFallback = ({
   format,
@@ -54,70 +52,6 @@ const getAssetInfoFallback = ({
   }
   return { width, height, format };
 };
-
-const reserveAssetUpload = async ({
-  context,
-  name,
-  projectId,
-  type,
-}: {
-  context: Awaited<ReturnType<typeof createContext>>;
-  name: string;
-  projectId: string;
-  type: Asset["type"];
-}): Promise<UploadErrorCleanup> => {
-  const existingFile = await context.postgrest.client
-    .from("File")
-    .select("*")
-    .eq("name", name)
-    .maybeSingle();
-  if (existingFile.error) {
-    throw existingFile.error;
-  }
-
-  const fileRow = {
-    name,
-    status: "UPLOADING" as const,
-    format: type,
-    size: 0,
-    uploaderProjectId: projectId,
-    isDeleted: false,
-    createdAt: new Date().toISOString(),
-  };
-  const onUploadError = createUploadErrorCleanup(existingFile.data, name);
-
-  const upsertFile = await context.postgrest.client
-    .from("File")
-    .upsert(fileRow, { onConflict: "name" });
-  if (upsertFile.error) {
-    throw upsertFile.error;
-  }
-
-  return onUploadError;
-};
-
-const createUploadErrorCleanup =
-  (previousFile: FileRow | null, name: string): UploadErrorCleanup =>
-  async (_name, context) => {
-    if (previousFile) {
-      const restoreFile = await context.postgrest.client
-        .from("File")
-        .update(previousFile)
-        .eq("name", name);
-      if (restoreFile.error) {
-        throw restoreFile.error;
-      }
-      return;
-    }
-
-    const deleteFile = await context.postgrest.client
-      .from("File")
-      .delete()
-      .eq("name", name);
-    if (deleteFile.error) {
-      throw deleteFile.error;
-    }
-  };
 
 const createAssetUploadResponse = async ({
   body,
@@ -144,6 +78,26 @@ const createAssetUploadResponse = async ({
     headers: privateNoStoreResponseHeaders,
   });
 };
+
+const createApiUploadErrorCleanup =
+  (assetId: string, projectId: string): UploadErrorCleanup =>
+  async (name, context) => {
+    const deleteAsset = await context.postgrest.client
+      .from("Asset")
+      .delete()
+      .eq("id", assetId)
+      .eq("projectId", projectId);
+    if (deleteAsset.error) {
+      throw deleteAsset.error;
+    }
+    const deleteFile = await context.postgrest.client
+      .from("File")
+      .delete()
+      .eq("name", name);
+    if (deleteFile.error) {
+      throw deleteFile.error;
+    }
+  };
 
 const getBrowserUploadBody = async (
   request: Request,
@@ -257,6 +211,10 @@ export const action = async (props: ActionFunctionArgs) => {
       if (projectId === null) {
         throw new Error("Project id is required");
       }
+      const assetId = url.searchParams.get("assetId");
+      if (assetId === null) {
+        throw new Error("Asset id is required");
+      }
       if (assetType === undefined) {
         throw new Error("Asset type is invalid");
       }
@@ -269,19 +227,22 @@ export const action = async (props: ActionFunctionArgs) => {
       });
 
       const context = await createContext(request);
-      await assertProjectBuildPermit({ ctx: context, projectId });
-      const onUploadError = await reserveAssetUpload({
-        context,
-        name: params.name,
-        projectId,
-        type: assetType,
-      });
+      await assertApiProjectPermit(context, projectId, "build");
+      const uploadName = await createUploadName(
+        {
+          assetId,
+          projectId,
+          type: assetType,
+          filename: params.name,
+        },
+        context
+      );
       return await createAssetUploadResponse({
         body: request.body,
         context,
-        name: params.name,
+        name: uploadName,
         assetInfoFallback,
-        onUploadError,
+        onUploadError: createApiUploadErrorCleanup(assetId, projectId),
       });
     }
 

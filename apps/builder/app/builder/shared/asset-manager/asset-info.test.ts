@@ -1,13 +1,6 @@
 import { describe, test, expect } from "vitest";
 import type { Pages, Props, Styles, Asset, Page } from "@webstudio-is/sdk";
-import type {
-  ImageValue,
-  FontFamilyValue,
-  StyleValue,
-} from "@webstudio-is/css-engine";
-import { __testing__ } from "./asset-info";
-
-const { traverseStyleValue, calculateUsagesByAssetId } = __testing__;
+import { calculateUsagesByAssetId } from "~/shared/asset-style-value";
 
 const createPages = ({
   meta = {},
@@ -49,92 +42,6 @@ const createPages = ({
 });
 
 describe("asset-info", () => {
-  describe("traverseStyleValue", () => {
-    test("calls callback for image values", () => {
-      const imageValue: ImageValue = {
-        type: "image",
-        value: { type: "asset", value: "asset-1" },
-      };
-      const results: (ImageValue | FontFamilyValue)[] = [];
-      traverseStyleValue(imageValue, (value) => results.push(value));
-      expect(results).toEqual([imageValue]);
-    });
-
-    test("traverses tuple values", () => {
-      const imageValue1: ImageValue = {
-        type: "image",
-        value: { type: "asset", value: "asset-1" },
-      };
-      const imageValue2: ImageValue = {
-        type: "image",
-        value: { type: "asset", value: "asset-2" },
-      };
-      const tupleValue: StyleValue = {
-        type: "tuple",
-        value: [imageValue1, imageValue2],
-      };
-      const results: (ImageValue | FontFamilyValue)[] = [];
-      traverseStyleValue(tupleValue, (value) => results.push(value));
-      expect(results).toEqual([imageValue1, imageValue2]);
-    });
-
-    test("traverses layers values", () => {
-      const imageValue1: ImageValue = {
-        type: "image",
-        value: { type: "asset", value: "asset-1" },
-      };
-      const imageValue2: ImageValue = {
-        type: "image",
-        value: { type: "asset", value: "asset-2" },
-      };
-      const layersValue: StyleValue = {
-        type: "layers",
-        value: [imageValue1, imageValue2],
-      };
-      const results: (ImageValue | FontFamilyValue)[] = [];
-      traverseStyleValue(layersValue, (value) => results.push(value));
-      expect(results).toEqual([imageValue1, imageValue2]);
-    });
-
-    test("does not call callback for other value types", () => {
-      const keywordValue: StyleValue = {
-        type: "keyword",
-        value: "auto",
-      };
-      const results: (ImageValue | FontFamilyValue)[] = [];
-      traverseStyleValue(keywordValue, (value) => results.push(value));
-      expect(results).toEqual([]);
-    });
-
-    test("traverses nested tuple and layers", () => {
-      const imageValue: ImageValue = {
-        type: "image",
-        value: { type: "asset", value: "asset-1" },
-      };
-      const nestedTuple: StyleValue = {
-        type: "tuple",
-        value: [imageValue],
-      };
-      const layersValue: StyleValue = {
-        type: "layers",
-        value: [nestedTuple],
-      };
-      const results: (ImageValue | FontFamilyValue)[] = [];
-      traverseStyleValue(layersValue, (value) => results.push(value));
-      expect(results).toEqual([imageValue]);
-    });
-
-    test("calls callback for fontFamily values", () => {
-      const fontFamilyValue: FontFamilyValue = {
-        type: "fontFamily",
-        value: ["CustomFont", "Arial", "sans-serif"],
-      };
-      const results: (ImageValue | FontFamilyValue)[] = [];
-      traverseStyleValue(fontFamilyValue, (value) => results.push(value));
-      expect(results).toEqual([fontFamilyValue]);
-    });
-  });
-
   describe("calculateUsagesByAssetId", () => {
     test("tracks favicon asset usage", () => {
       const pages = createPages({

@@ -47,7 +47,7 @@ type ValidatePatchOptions = {
 };
 
 const printJson = (value: unknown) => {
-  console.log(JSON.stringify(value, undefined, 2));
+  console.info(JSON.stringify(value, undefined, 2));
 };
 
 const readTransactions = async (

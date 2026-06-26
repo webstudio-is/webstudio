@@ -1,29 +1,38 @@
-import { insertWebstudioFragmentCopy } from "./instance-utils/fragment";
-import { unwrap } from "./instance-utils/data";
+import { insertWebstudioFragmentCopy } from "../instance-utils/fragment";
+import { unwrap } from "../unwrap";
 import { nanoid } from "nanoid";
+import deepEqual from "fast-deep-equal";
+import type { z } from "zod";
+import type { buildPatchTransaction } from "@webstudio-is/protocol";
+import type { CompactBuild } from "@webstudio-is/project-build";
 import {
+  getStyleDeclKey,
   findPageByIdOrPath,
   getFolderById,
   getPagePath,
+  type Asset,
   type Folder,
   type DataSource,
   type Page,
   type PageTemplate,
   type Pages,
+  type WsComponentMeta,
   type WebstudioFragment,
   type WebstudioData,
   ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import { contentModePageMetaFields } from "@webstudio-is/project/content-mode-permissions";
-import { extractWebstudioFragment } from "./instance-utils/fragment";
+import { compactBuildPatchPayload } from "../build-patch-utils";
+import { extractWebstudioFragment } from "../instance-utils/fragment";
 import {
   findAvailableVariables,
   replaceDataSourcesInExpression,
   restoreExpressionVariables,
   unsetExpressionVariables,
-} from "./data-variables";
-import { $project } from "./sync/data-stores";
-import type { ConflictResolution } from "./token-conflict-dialog";
+} from "../data-variables";
+import type { ConflictResolution } from "../token-conflict-dialog";
+
+type BuildPatchPayload = z.infer<typeof buildPatchTransaction>["payload"];
 
 const parseCopyNumberSuffix = (value: string) => {
   const { name = value, copyNumber = "0" } =
@@ -107,6 +116,8 @@ const copyPageRootAndBodyMutable = ({
   target,
   sourceRootInstanceId,
   systemDataSourceId,
+  projectId,
+  metas,
   conflictResolution,
   contentMode = false,
 }: {
@@ -114,6 +125,8 @@ const copyPageRootAndBodyMutable = ({
   target: WebstudioData;
   sourceRootInstanceId: string;
   systemDataSourceId: string | undefined;
+  projectId?: string;
+  metas?: Map<string, WsComponentMeta>;
   conflictResolution: ConflictResolution | undefined;
   contentMode?: boolean;
 }) => {
@@ -132,6 +145,8 @@ const copyPageRootAndBodyMutable = ({
     bodyFragment: extractWebstudioFragment(source, sourceRootInstanceId, {
       unsetVariables,
     }),
+    projectId,
+    metas,
     conflictResolution,
     systemDataSourceId,
     contentMode,
@@ -143,6 +158,8 @@ const copyPageFragmentsMutable = ({
   rootFragment,
   bodyFragment,
   systemDataSourceId,
+  projectId,
+  metas,
   conflictResolution,
   onBreakpointLimitMerge,
   contentMode = false,
@@ -151,12 +168,13 @@ const copyPageFragmentsMutable = ({
   rootFragment?: WebstudioFragment;
   bodyFragment: WebstudioFragment;
   systemDataSourceId: string | undefined;
+  projectId?: string;
+  metas?: Map<string, WsComponentMeta>;
   conflictResolution: ConflictResolution | undefined;
   onBreakpointLimitMerge?: () => void;
   contentMode?: boolean;
 }) => {
-  const project = $project.get();
-  if (project === undefined) {
+  if (projectId === undefined) {
     return;
   }
   if (contentMode === false && rootFragment !== undefined) {
@@ -167,7 +185,8 @@ const copyPageFragmentsMutable = ({
         ...target,
         startingInstanceId: ROOT_INSTANCE_ID,
       }),
-      projectId: project.id,
+      projectId,
+      metas,
       conflictResolution,
       onBreakpointLimitMerge,
     });
@@ -188,7 +207,8 @@ const copyPageFragmentsMutable = ({
     data: target,
     fragment: bodyFragment,
     availableVariables,
-    projectId: project.id,
+    projectId,
+    metas,
     conflictResolution,
     onBreakpointLimitMerge,
     contentMode,
@@ -338,6 +358,8 @@ export const insertPageFromTemplateMutable = ({
   source,
   target,
   overrides,
+  projectId,
+  metas,
   conflictResolution,
   contentMode = false,
 }: {
@@ -345,6 +367,8 @@ export const insertPageFromTemplateMutable = ({
   source: { data: WebstudioData };
   target: { data: WebstudioData; folderId: Folder["id"] };
   overrides: { name: string; path: string };
+  projectId?: string;
+  metas?: Map<string, WsComponentMeta>;
   conflictResolution?: ConflictResolution;
   contentMode?: boolean;
 }) => {
@@ -357,6 +381,8 @@ export const insertPageFromTemplateMutable = ({
     target: target.data,
     sourceRootInstanceId: template.rootInstanceId,
     systemDataSourceId: template.systemDataSourceId,
+    projectId,
+    metas,
     conflictResolution,
     contentMode,
   });
@@ -389,10 +415,12 @@ export const insertPageFromTemplateMutable = ({
 export const insertPageCopyMutable = ({
   source,
   target,
+  projectId,
   conflictResolution,
 }: {
   source: { data: WebstudioData; pageId: Page["id"] };
   target: { data: WebstudioData; folderId: Folder["id"] };
+  projectId?: string;
   conflictResolution?: ConflictResolution;
 }) => {
   const page = findPageByIdOrPath(source.pageId, source.data.pages);
@@ -404,6 +432,7 @@ export const insertPageCopyMutable = ({
     target: target.data,
     sourceRootInstanceId: page.rootInstanceId,
     systemDataSourceId: page.systemDataSourceId,
+    projectId,
     conflictResolution,
   });
   if (copied === undefined) {
@@ -412,9 +441,223 @@ export const insertPageCopyMutable = ({
   return insertCopiedPageMutable({ page, copied, target });
 };
 
+const getClonedPair = <Item extends { id: string }>(item: Item) =>
+  [item.id, structuredClone(item)] as const;
+
+export const createWebstudioDataFromBuild = ({
+  build,
+  assets = [],
+}: {
+  build: Pick<
+    CompactBuild,
+    | "pages"
+    | "instances"
+    | "props"
+    | "dataSources"
+    | "resources"
+    | "breakpoints"
+    | "styleSources"
+    | "styleSourceSelections"
+    | "styles"
+  >;
+  assets?: Asset[];
+}): WebstudioData => ({
+  pages: structuredClone(build.pages),
+  assets: new Map(assets.map(getClonedPair)),
+  instances: new Map(build.instances.map(getClonedPair)),
+  props: new Map(build.props.map(getClonedPair)),
+  dataSources: new Map(build.dataSources.map(getClonedPair)),
+  resources: new Map(build.resources.map(getClonedPair)),
+  breakpoints: new Map(build.breakpoints.map(getClonedPair)),
+  styleSources: new Map(build.styleSources.map(getClonedPair)),
+  styleSourceSelections: new Map(
+    build.styleSourceSelections.map((item) => [
+      item.instanceId,
+      structuredClone(item),
+    ])
+  ),
+  styles: new Map(
+    build.styles.map((item) => [getStyleDeclKey(item), structuredClone(item)])
+  ),
+});
+
+const createMapPatches = <Value>({
+  before,
+  after,
+  getPath,
+}: {
+  before: Map<string, Value>;
+  after: Map<string, Value>;
+  getPath: (id: string) => string[];
+}) => {
+  const patches = [];
+  for (const [id, value] of after) {
+    if (before.has(id) === false) {
+      patches.push({ op: "add" as const, path: getPath(id), value });
+      continue;
+    }
+    if (deepEqual(before.get(id), value) === false) {
+      patches.push({ op: "replace" as const, path: getPath(id), value });
+    }
+  }
+  for (const id of before.keys()) {
+    if (after.has(id) === false) {
+      patches.push({ op: "remove" as const, path: getPath(id) });
+    }
+  }
+  return patches;
+};
+
+export const createWebstudioDataPatchPayload = ({
+  before,
+  after,
+}: {
+  before: WebstudioData;
+  after: WebstudioData;
+}): BuildPatchPayload => {
+  const pagesPatches = [
+    ...createMapPatches({
+      before: before.pages.pages,
+      after: after.pages.pages,
+      getPath: (id) => ["pages", id],
+    }),
+    ...createMapPatches({
+      before: before.pages.pageTemplates ?? new Map(),
+      after: after.pages.pageTemplates ?? new Map(),
+      getPath: (id) => ["pageTemplates", id],
+    }),
+    ...createMapPatches({
+      before: before.pages.folders,
+      after: after.pages.folders,
+      getPath: (id) => ["folders", id],
+    }),
+  ];
+
+  const payload: BuildPatchPayload = [
+    { namespace: "pages", patches: pagesPatches },
+    {
+      namespace: "assets",
+      patches: createMapPatches({
+        before: before.assets,
+        after: after.assets,
+        getPath: (id) => [id],
+      }),
+    },
+    {
+      namespace: "instances",
+      patches: createMapPatches({
+        before: before.instances,
+        after: after.instances,
+        getPath: (id) => [id],
+      }),
+    },
+    {
+      namespace: "props",
+      patches: createMapPatches({
+        before: before.props,
+        after: after.props,
+        getPath: (id) => [id],
+      }),
+    },
+    {
+      namespace: "dataSources",
+      patches: createMapPatches({
+        before: before.dataSources,
+        after: after.dataSources,
+        getPath: (id) => [id],
+      }),
+    },
+    {
+      namespace: "resources",
+      patches: createMapPatches({
+        before: before.resources,
+        after: after.resources,
+        getPath: (id) => [id],
+      }),
+    },
+    {
+      namespace: "breakpoints",
+      patches: createMapPatches({
+        before: before.breakpoints,
+        after: after.breakpoints,
+        getPath: (id) => [id],
+      }),
+    },
+    {
+      namespace: "styleSourceSelections",
+      patches: createMapPatches({
+        before: before.styleSourceSelections,
+        after: after.styleSourceSelections,
+        getPath: (id) => [id],
+      }),
+    },
+    {
+      namespace: "styleSources",
+      patches: createMapPatches({
+        before: before.styleSources,
+        after: after.styleSources,
+        getPath: (id) => [id],
+      }),
+    },
+    {
+      namespace: "styles",
+      patches: createMapPatches({
+        before: before.styles,
+        after: after.styles,
+        getPath: (id) => [id],
+      }),
+    },
+  ];
+  return compactBuildPatchPayload(payload);
+};
+
+export const createPageDuplicatePayload = ({
+  build,
+  assets,
+  projectId,
+  pageId,
+  parentFolderId,
+  name,
+  path,
+}: {
+  build: Parameters<typeof createWebstudioDataFromBuild>[0]["build"];
+  assets?: Asset[];
+  projectId: string;
+  pageId: Page["id"];
+  parentFolderId: Folder["id"];
+  name?: Page["name"];
+  path?: Page["path"];
+}) => {
+  const before = createWebstudioDataFromBuild({ build, assets });
+  const after = structuredClone(before);
+  const duplicatedPageId = insertPageCopyMutable({
+    source: { data: after, pageId },
+    target: { data: after, folderId: parentFolderId },
+    projectId,
+  });
+  if (duplicatedPageId === undefined) {
+    return;
+  }
+  const page = after.pages.pages.get(duplicatedPageId);
+  if (page === undefined) {
+    return;
+  }
+  if (name !== undefined) {
+    page.name = name;
+  }
+  if (path !== undefined) {
+    page.path = path;
+  }
+  return {
+    pageId: duplicatedPageId,
+    payload: createWebstudioDataPatchPayload({ before, after }),
+  };
+};
+
 export const insertPageCopyFromFragmentsMutable = ({
   source,
   target,
+  projectId,
   conflictResolution,
   onBreakpointLimitMerge,
 }: {
@@ -424,6 +667,7 @@ export const insertPageCopyFromFragmentsMutable = ({
     bodyFragment: WebstudioFragment;
   };
   target: { data: WebstudioData; folderId: Folder["id"] };
+  projectId?: string;
   conflictResolution?: ConflictResolution;
   onBreakpointLimitMerge?: () => void;
 }) => {
@@ -432,6 +676,7 @@ export const insertPageCopyFromFragmentsMutable = ({
     rootFragment: source.rootFragment,
     bodyFragment: source.bodyFragment,
     systemDataSourceId: source.page.systemDataSourceId,
+    projectId,
     conflictResolution,
     onBreakpointLimitMerge,
   });
@@ -444,6 +689,7 @@ export const insertPageCopyFromFragmentsMutable = ({
 export const insertTemplateCopyFromFragmentsMutable = ({
   source,
   target,
+  projectId,
   conflictResolution,
   onBreakpointLimitMerge,
 }: {
@@ -453,6 +699,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
     bodyFragment: WebstudioFragment;
   };
   target: { data: WebstudioData };
+  projectId?: string;
   conflictResolution?: ConflictResolution;
   onBreakpointLimitMerge?: () => void;
 }) => {
@@ -461,6 +708,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
     rootFragment: source.rootFragment,
     bodyFragment: source.bodyFragment,
     systemDataSourceId: undefined,
+    projectId,
     conflictResolution,
     onBreakpointLimitMerge,
   });
@@ -613,12 +861,14 @@ const deduplicateFolderSlug = (
 export const insertFolderCopyFromDataMutable = ({
   source,
   target,
+  projectId,
   conflictResolution,
   onBreakpointLimitMerge,
   forceFolderCopySuffix = false,
 }: {
   source: FolderCopyData;
   target: { data: WebstudioData; parentFolderId: Folder["id"] };
+  projectId?: string;
   conflictResolution?: ConflictResolution;
   onBreakpointLimitMerge?: () => void;
   forceFolderCopySuffix?: boolean;
@@ -630,6 +880,7 @@ export const insertFolderCopyFromDataMutable = ({
   return insertFolderCopyFromDataWithContextMutable({
     source,
     target,
+    projectId,
     conflictResolution,
     onBreakpointLimitMerge,
     forceFolderCopySuffix,
@@ -640,6 +891,7 @@ export const insertFolderCopyFromDataMutable = ({
 const insertFolderCopyFromDataWithContextMutable = ({
   source,
   target,
+  projectId,
   conflictResolution,
   onBreakpointLimitMerge,
   forceFolderCopySuffix,
@@ -647,6 +899,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
 }: {
   source: FolderCopyData;
   target: { data: WebstudioData; parentFolderId: Folder["id"] };
+  projectId?: string;
   conflictResolution?: ConflictResolution;
   onBreakpointLimitMerge?: () => void;
   forceFolderCopySuffix?: boolean;
@@ -658,7 +911,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
   }
 
   const newFolder: Folder = {
-    ...structuredClone(unwrap(source.folder)),
+    ...unwrap(source.folder),
     id: nanoid(),
     name: deduplicateFolderName(
       target.data.pages,
@@ -682,6 +935,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
       insertFolderCopyFromDataWithContextMutable({
         source: child,
         target: { data: target.data, parentFolderId: newFolder.id },
+        projectId,
         conflictResolution,
         onBreakpointLimitMerge,
         forceFolderCopySuffix,
@@ -695,6 +949,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
     const pageId = insertPageCopyFromFragmentsMutable({
       source: { ...child, rootFragment },
       target: { data: target.data, folderId: newFolder.id },
+      projectId,
       conflictResolution,
       onBreakpointLimitMerge,
     });

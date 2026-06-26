@@ -29,6 +29,11 @@ import {
   findAvailableVariables,
   findVariableUsagesByInstance,
   replaceDataSourcesInExpression,
+  validateDataVariableNameWithSources,
+  createDataVariableCreatePayload,
+  createDataVariableDeletePayload,
+  createDataVariableUpdatePayload,
+  serializeDataVariables,
 } from "./data-variables";
 
 test("encode data variable name when necessary", () => {
@@ -46,6 +51,228 @@ test("dencode data variable name", () => {
   expect(
     decodeDataVariableName(encodeDataVariableName("Collection Item"))
   ).toEqual("Collection Item");
+});
+
+test("validate data variable name", () => {
+  const dataSources = [
+    {
+      id: "variable-1",
+      scopeInstanceId: "instance-1",
+      name: "existingVariable",
+      type: "variable",
+      value: { type: "string", value: "" },
+    },
+    {
+      id: "resource-1",
+      scopeInstanceId: "instance-1",
+      name: "existingResource",
+      type: "resource",
+      resourceId: "resource-value-1",
+    },
+  ] as const;
+
+  expect(
+    validateDataVariableNameWithSources({
+      dataSources,
+      name: "",
+      scopeInstanceId: "instance-1",
+    })
+  ).toEqual({
+    type: "required",
+    message: "Variable name is required",
+  });
+  expect(
+    validateDataVariableNameWithSources({
+      dataSources,
+      name: "existingVariable",
+      scopeInstanceId: "instance-1",
+    })
+  ).toEqual({
+    type: "duplicate",
+    message: "Name is already used by another variable on this instance",
+  });
+  expect(
+    validateDataVariableNameWithSources({
+      dataSources,
+      name: "existingVariable",
+      scopeInstanceId: "instance-2",
+    })
+  ).toBeUndefined();
+  expect(
+    validateDataVariableNameWithSources({
+      dataSources,
+      name: "existingResource",
+      scopeInstanceId: "instance-1",
+    })
+  ).toBeUndefined();
+});
+
+test("serialize data variables filters by scope", () => {
+  const dataSources = [
+    {
+      id: "variable-1",
+      scopeInstanceId: "box-1",
+      name: "title",
+      type: "variable",
+      value: { type: "string", value: "Hello" },
+    },
+    {
+      id: "variable-2",
+      scopeInstanceId: "box-2",
+      name: "count",
+      type: "variable",
+      value: { type: "number", value: 1 },
+    },
+    {
+      id: "resource-1",
+      scopeInstanceId: "box-1",
+      name: "users",
+      type: "resource",
+      resourceId: "resource-value-1",
+    },
+  ] as const;
+
+  expect(serializeDataVariables({ dataSources })).toEqual({
+    variables: [
+      {
+        id: "variable-1",
+        name: "title",
+        scopeInstanceId: "box-1",
+        value: { type: "string", value: "Hello" },
+      },
+      {
+        id: "variable-2",
+        name: "count",
+        scopeInstanceId: "box-2",
+        value: { type: "number", value: 1 },
+      },
+    ],
+  });
+  expect(
+    serializeDataVariables({ dataSources, scopeInstanceId: "box-1" })
+  ).toEqual({
+    variables: [
+      {
+        id: "variable-1",
+        name: "title",
+        scopeInstanceId: "box-1",
+        value: { type: "string", value: "Hello" },
+      },
+    ],
+  });
+});
+
+test("create data variable payload validates ids and names", () => {
+  expect(
+    createDataVariableCreatePayload({
+      dataSourceId: "variable-2",
+      scopeInstanceId: "instance-1",
+      name: "newVariable",
+      value: { type: "string", value: "hello" },
+      dataSources: [
+        {
+          id: "variable-1",
+          scopeInstanceId: "instance-1",
+          name: "existingVariable",
+          type: "variable",
+          value: { type: "string", value: "" },
+        },
+      ],
+    })
+  ).toEqual({
+    errors: [],
+    payload: [
+      {
+        namespace: "dataSources",
+        patches: [
+          {
+            op: "add",
+            path: ["variable-2"],
+            value: {
+              id: "variable-2",
+              scopeInstanceId: "instance-1",
+              name: "newVariable",
+              type: "variable",
+              value: { type: "string", value: "hello" },
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  expect(
+    createDataVariableCreatePayload({
+      dataSourceId: "variable-1",
+      scopeInstanceId: "instance-1",
+      name: "existingVariable",
+      value: { type: "string", value: "" },
+      dataSources: [
+        {
+          id: "variable-1",
+          scopeInstanceId: "instance-1",
+          name: "existingVariable",
+          type: "variable",
+          value: { type: "string", value: "" },
+        },
+      ],
+    }).errors
+  ).toEqual([{ type: "duplicate-id", dataSourceId: "variable-1" }]);
+});
+
+test("update data variable payload validates renamed variables", () => {
+  const variable = {
+    id: "variable-1",
+    scopeInstanceId: "instance-1",
+    name: "oldName",
+    type: "variable",
+    value: { type: "string", value: "" },
+  } as const;
+
+  expect(
+    createDataVariableUpdatePayload({
+      variable,
+      values: {
+        name: "newName",
+        value: { type: "number", value: 1 },
+      },
+      dataSources: [variable],
+    })
+  ).toEqual({
+    payload: [
+      {
+        namespace: "dataSources",
+        patches: [
+          { op: "replace", path: ["variable-1", "name"], value: "newName" },
+          {
+            op: "replace",
+            path: ["variable-1", "value"],
+            value: { type: "number", value: 1 },
+          },
+        ],
+      },
+    ],
+  });
+
+  expect(
+    createDataVariableUpdatePayload({
+      variable,
+      values: { name: "duplicateName" },
+      dataSources: [
+        variable,
+        {
+          id: "variable-2",
+          scopeInstanceId: "instance-1",
+          name: "duplicateName",
+          type: "variable",
+          value: { type: "string", value: "" },
+        },
+      ],
+    }).error
+  ).toEqual({
+    type: "duplicate",
+    message: "Name is already used by another variable on this instance",
+  });
 });
 
 test("dencode data variable name with dollar sign", () => {
@@ -736,6 +963,80 @@ test("delete variable and unset it in expressions", () => {
   ]);
   expect(data.instances.get("boxId")?.children).toEqual([
     { type: "expression", value: "bodyVariable" },
+  ]);
+});
+
+test("delete data variable payload reuses mutable cleanup semantics", () => {
+  const bodyVariable = new Variable("bodyVariable", "one value of body");
+  const resourceVariable = new ResourceValue("resourceVariable", {
+    url: expression`${bodyVariable}`,
+    method: "post",
+    searchParams: [],
+    headers: [{ name: "auth", value: expression`${bodyVariable}` }],
+  });
+  const data = renderData(
+    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <$.Box ws:id="boxId" data-box-vars={expression`${resourceVariable}`}>
+        {expression`${bodyVariable}`}
+      </$.Box>
+    </$.Body>
+  );
+  const [bodyVariableId] = data.dataSources.keys();
+
+  const { payload, deletedVariable } = createDataVariableDeletePayload({
+    variableId: bodyVariableId,
+    ...data,
+  });
+
+  expect(deletedVariable).toEqual(
+    expect.objectContaining({ name: "bodyVariable" })
+  );
+  expect(payload).toEqual([
+    {
+      namespace: "instances",
+      patches: [
+        {
+          op: "replace",
+          path: ["boxId"],
+          value: expect.objectContaining({
+            children: [{ type: "expression", value: "bodyVariable" }],
+          }),
+        },
+      ],
+    },
+    {
+      namespace: "props",
+      patches: [
+        {
+          op: "replace",
+          path: expect.any(Array),
+          value: expect.objectContaining({
+            name: "data-body-vars",
+            value: "bodyVariable",
+          }),
+        },
+      ],
+    },
+    {
+      namespace: "dataSources",
+      patches: [{ op: "remove", path: [bodyVariableId] }],
+    },
+    {
+      namespace: "resources",
+      patches: [
+        {
+          op: "replace",
+          path: expect.any(Array),
+          value: expect.objectContaining({
+            url: "bodyVariable",
+            headers: [{ name: "auth", value: "bodyVariable" }],
+          }),
+        },
+      ],
+    },
+  ]);
+  expect(data.instances.get("boxId")?.children).toEqual([
+    { type: "expression", value: encodeDataVariableId(bodyVariableId) },
   ]);
 });
 

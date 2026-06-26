@@ -3,7 +3,6 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import makeCLI from "yargs";
-import { createApiCompatibilityPayload } from "@webstudio-is/trpc-interface/api-compatibility";
 import { bundleVersion } from "@webstudio-is/protocol";
 import {
   createImageAssetFixture,
@@ -41,15 +40,13 @@ const indicator = {
   message: vi.fn(),
   stop: vi.fn(),
 };
-const checkProjectBuildPermission = vi.fn();
-const importProjectBundle = vi.fn();
-const uploadAssetFiles = vi.fn();
+const importProjectBundleWithAssets = vi.fn();
+const readAssetFile = vi.fn();
 const promptText = vi.fn();
 const dependencies = {
-  checkProjectBuildPermission,
-  importProjectBundle,
-  uploadAssetFiles,
+  importProjectBundleWithAssets,
   loadJSONFile,
+  readFile: readAssetFile,
   text: promptText,
   isInteractive: false,
   log,
@@ -73,12 +70,15 @@ beforeEach(async () => {
   tempDir = await mkdtemp(join(tmpdir(), "webstudio-import-"));
   process.chdir(tempDir);
   await mkdir(".webstudio", { recursive: true });
-  checkProjectBuildPermission.mockResolvedValue(undefined);
-  importProjectBundle.mockResolvedValue({ version: 1 });
-  uploadAssetFiles.mockResolvedValue(undefined);
+  importProjectBundleWithAssets.mockImplementation(async (options) => {
+    options.onUploadAssets?.(options.data.assets);
+    options.onImportAttempt?.();
+    return { version: 1 };
+  });
+  readAssetFile.mockResolvedValue(Buffer.from("asset"));
   promptText.mockResolvedValue(destinationShareLink);
-  checkProjectBuildPermission.mockClear();
-  uploadAssetFiles.mockClear();
+  importProjectBundleWithAssets.mockClear();
+  readAssetFile.mockClear();
   promptText.mockClear();
   log.info.mockClear();
   indicator.start.mockClear();
@@ -97,11 +97,14 @@ test("imports local synced data into destination project", async () => {
 
   await importProject({ to: destinationShareLink }, dependencies);
 
-  expect(checkProjectBuildPermission).toHaveBeenCalledWith(destinationRequest);
-  expect(importProjectBundle).toHaveBeenCalledWith({
+  expect(importProjectBundleWithAssets).toHaveBeenCalledWith({
     ...destinationRequest,
     data: createSyncedData(),
     ignoreVersionCheck: undefined,
+    readAssetData: expect.any(Function),
+    onImportAttempt: expect.any(Function),
+    onMissingAssets: expect.any(Function),
+    onUploadAssets: expect.any(Function),
   });
   expect(indicator.stop).toHaveBeenCalledWith("Project imported successfully");
   expect(indicator.message).toHaveBeenCalledWith(
@@ -137,16 +140,11 @@ test("prompts for destination share link when running interactively", async () =
     message: "Please paste a destination share link with build permissions",
     validate: expect.any(Function),
   });
-  expect(checkProjectBuildPermission).toHaveBeenCalledWith(
+  expect(importProjectBundleWithAssets).toHaveBeenCalledWith(
     expect.objectContaining({
       projectId: destinationProjectId,
       authToken: "token-1",
       origin: "https://example.com",
-    })
-  );
-  expect(importProjectBundle).toHaveBeenCalledWith(
-    expect.objectContaining({
-      projectId: destinationProjectId,
     })
   );
 });
@@ -166,8 +164,8 @@ test("stops when destination share link is missing in non-interactive mode", asy
 
   expect(loadJSONFile).not.toHaveBeenCalled();
   expect(promptText).not.toHaveBeenCalled();
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
-  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     "Please specify a destination share link with --to",
     2
@@ -214,8 +212,8 @@ test("stops with sync instruction when local data is missing", async () => {
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(importProjectBundle).not.toHaveBeenCalled();
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     "Project bundle is missing. Please run webstudio sync before importing.",
     2
@@ -234,8 +232,8 @@ test("stops with invalid data message when local data is malformed JSON", async 
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(importProjectBundle).not.toHaveBeenCalled();
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     "Project bundle is invalid. Please run webstudio sync before importing.",
     2
@@ -254,8 +252,8 @@ test("does not prompt for destination when local data is missing", async () => {
   ).rejects.toThrow("Handled CLI error");
 
   expect(promptText).not.toHaveBeenCalled();
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
-  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     "Project bundle is missing. Please run webstudio sync before importing.",
     2
@@ -274,8 +272,8 @@ test("stops before API request when local data is from old format", async () => 
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(importProjectBundle).not.toHaveBeenCalled();
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     `Project bundle format is incompatible. Expected version ${bundleVersion}, received missing. Sync with a compatible API/CLI version and retry, or pass --ignore-version-check if you know the source and target data formats are compatible.`,
     2
@@ -293,7 +291,7 @@ test("imports old local data when version check is explicitly ignored", async ()
     dependencies
   );
 
-  expect(importProjectBundle).toHaveBeenCalledWith(
+  expect(importProjectBundleWithAssets).toHaveBeenCalledWith(
     expect.objectContaining({
       ignoreVersionCheck: true,
       data: createSyncedData({ bundleVersion: undefined }),
@@ -318,8 +316,8 @@ test("stops before API request when ignored-version data is missing assets", asy
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
-  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     "Project bundle is invalid. Please run webstudio sync before importing. Invalid fields: assets: Required",
     2
@@ -342,8 +340,8 @@ test("stops before API request when ignored-version data is missing published me
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
-  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     "Project bundle is invalid. Please run webstudio sync before importing. Invalid fields: projectTitle: Required",
     2
@@ -361,7 +359,7 @@ test("passes version-check bypass to target API", async () => {
     dependencies
   );
 
-  expect(importProjectBundle).toHaveBeenCalledWith(
+  expect(importProjectBundleWithAssets).toHaveBeenCalledWith(
     expect.objectContaining({
       ignoreVersionCheck: true,
     })
@@ -374,69 +372,22 @@ test("uploads local asset files before import", async () => {
     assets: [imageAsset],
   });
   await writeFile(".webstudio/assets/image.png", "hello", "utf8");
+  readAssetFile.mockResolvedValueOnce(Buffer.from("hello"));
 
   await importProject({ to: destinationShareLink }, dependencies);
 
-  expect(uploadAssetFiles).toHaveBeenCalledWith({
-    ...destinationRequest,
-    assets: [imageAsset],
-  });
-  expect(importProjectBundle).toHaveBeenCalledWith(
+  expect(importProjectBundleWithAssets).toHaveBeenCalledWith(
     expect.objectContaining({
       data: createSyncedData({ assets: [imageAsset] }),
+      readAssetData: expect.any(Function),
     })
   );
-});
-
-test("re-uploads missing asset files reported by import API", async () => {
-  await mkdir(".webstudio/assets", { recursive: true });
-  await writeSyncedData({
-    assets: [imageAsset],
-  });
-  await writeFile(".webstudio/assets/image.png", "hello", "utf8");
-  importProjectBundle
-    .mockRejectedValueOnce(
-      new Error("Imported asset files are missing: image.png")
-    )
-    .mockResolvedValueOnce({ version: 1 });
-
-  await importProject({ to: destinationShareLink }, dependencies);
-
-  expect(uploadAssetFiles).toHaveBeenNthCalledWith(1, {
-    ...destinationRequest,
-    assets: [imageAsset],
-  });
-  expect(uploadAssetFiles).toHaveBeenNthCalledWith(2, {
-    ...destinationRequest,
-    assets: [imageAsset],
-  });
-  expect(importProjectBundle).toHaveBeenCalledTimes(2);
-  expect(indicator.message).toHaveBeenCalledWith(
-    "Re-uploading 1 missing assets"
-  );
-  expect(indicator.stop).toHaveBeenCalledWith("Project imported successfully");
-});
-
-test("does not retry unknown missing asset files", async () => {
-  await mkdir(".webstudio/assets", { recursive: true });
-  await writeSyncedData({
-    assets: [imageAsset],
-  });
-  await writeFile(".webstudio/assets/image.png", "hello", "utf8");
-  importProjectBundle.mockRejectedValueOnce(
-    new Error("Imported asset files are missing: unknown.png")
-  );
-
+  const lastCall = importProjectBundleWithAssets.mock.calls.at(-1);
+  expect(lastCall).toBeDefined();
+  const [{ readAssetData }] = lastCall!;
   await expect(
-    importProject({ to: destinationShareLink }, dependencies)
-  ).rejects.toThrow("Handled CLI error");
-
-  expect(uploadAssetFiles).toHaveBeenCalledTimes(1);
-  expect(importProjectBundle).toHaveBeenCalledTimes(1);
-  expect(indicator.stop).toHaveBeenCalledWith(
-    "Imported asset files are missing: unknown.png",
-    2
-  );
+    readAssetData(imageAsset).then((blob: Blob) => blob.text())
+  ).resolves.toBe("hello");
 });
 
 test("imports without uploading assets when requested", async () => {
@@ -452,11 +403,11 @@ test("imports without uploading assets when requested", async () => {
     dependencies
   );
 
-  expect(uploadAssetFiles).not.toHaveBeenCalled();
   expect(log.info).toHaveBeenCalledWith("Skipped asset upload and asset rows");
-  expect(importProjectBundle).toHaveBeenCalledWith(
+  expect(importProjectBundleWithAssets).toHaveBeenCalledWith(
     expect.objectContaining({
-      data: createSyncedData({ assets: [] }),
+      data: createSyncedData({ assets: [imageAsset] }),
+      skipAssets: true,
     })
   );
 });
@@ -471,7 +422,7 @@ test("validates exported auth config before importing", async () => {
 
   await importProject({ to: destinationShareLink }, dependencies);
 
-  expect(importProjectBundle).toHaveBeenCalledWith(
+  expect(importProjectBundleWithAssets).toHaveBeenCalledWith(
     expect.objectContaining({
       data: syncedData,
     })
@@ -487,8 +438,8 @@ test("stops before API request when exported auth config is malformed", async ()
     importProject({ to: destinationShareLink }, dependencies)
   ).rejects.toThrow("Handled CLI error");
 
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
-  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     `Project bundle auth config is invalid. Please run webstudio prebuild before importing. ${LOCAL_AUTH_FILE} is invalid JSON`,
     2
@@ -516,8 +467,8 @@ test("stops before API request when exported auth config does not match data", a
     importProject({ to: destinationShareLink }, dependencies)
   ).rejects.toThrow("Handled CLI error");
 
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
-  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     `Project bundle auth config is invalid. Please run webstudio prebuild before importing. ${LOCAL_AUTH_FILE} does not match .webstudio/data.json`,
     2
@@ -536,8 +487,8 @@ test("stops before API request when destination link is invalid", async () => {
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(importProjectBundle).not.toHaveBeenCalled();
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     "Destination share link is invalid.",
     2
@@ -556,8 +507,8 @@ test("stops before API request when current local data is malformed", async () =
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
-  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     "Project bundle is invalid. Please run webstudio sync before importing. Invalid fields: assets: Required",
     2
@@ -576,8 +527,8 @@ test("stops before API request when current local data is missing published meta
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(checkProjectBuildPermission).not.toHaveBeenCalled();
-  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).not.toHaveBeenCalled();
+
   expect(indicator.stop).toHaveBeenCalledWith(
     "Project bundle is invalid. Please run webstudio sync before importing. Invalid fields: projectTitle: Required",
     2
@@ -588,8 +539,8 @@ test("stops before uploading asset files when destination permission check fails
   await writeSyncedData({
     assets: [imageAsset],
   });
-  const uploadAssetFiles = vi.fn();
-  checkProjectBuildPermission.mockRejectedValue(
+  const importProjectBundleWithAssets = vi.fn();
+  importProjectBundleWithAssets.mockRejectedValue(
     new Error("You don't have permission to build this project")
   );
 
@@ -600,14 +551,15 @@ test("stops before uploading asset files when destination permission check fails
       },
       {
         ...dependencies,
-        uploadAssetFiles,
+        importProjectBundleWithAssets,
       }
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(checkProjectBuildPermission).toHaveBeenCalledWith(destinationRequest);
-  expect(uploadAssetFiles).not.toHaveBeenCalled();
-  expect(importProjectBundle).not.toHaveBeenCalled();
+  expect(importProjectBundleWithAssets).toHaveBeenCalledWith(
+    expect.objectContaining(destinationRequest)
+  );
+
   expect(indicator.stop).toHaveBeenCalledWith(
     "You don't have permission to build this project",
     2
@@ -616,12 +568,16 @@ test("stops before uploading asset files when destination permission check fails
 
 test("prints import command in CLI compatibility guidance", async () => {
   await writeSyncedData();
-  importProjectBundle.mockRejectedValue(
+  importProjectBundleWithAssets.mockRejectedValue(
     new Error("Version mismatch", {
-      cause: createApiCompatibilityPayload({
+      cause: {
+        type: "webstudioApiCompatibilityError",
         reason: "apiProcedureNotFound",
         target: "cli",
-      }),
+        message:
+          "This version of the Webstudio CLI is incompatible with the current API.",
+        action: { type: "updateCli" },
+      },
     })
   );
 
@@ -642,7 +598,7 @@ test("prints import command in CLI compatibility guidance", async () => {
 
 test("forwards oversized project bundle import error", async () => {
   await writeSyncedData();
-  importProjectBundle.mockRejectedValue(
+  importProjectBundleWithAssets.mockRejectedValue(
     new Error("Project bundle is too large to import. Maximum size is 20 MiB.")
   );
 

@@ -16,13 +16,21 @@ const fragment: WebstudioFragment = {
   styleSources: [],
   styles: [],
 };
+const targetData = {} as Parameters<
+  typeof getTemplateTokenConflicts
+>[0]["targetData"];
 
 describe("getTemplateTokenConflicts", () => {
   test("does not scan template token conflicts in content mode", () => {
     const detect = vi.fn(() => []);
 
     expect(
-      getTemplateTokenConflicts({ fragment, contentMode: true, detect })
+      getTemplateTokenConflicts({
+        fragment,
+        targetData,
+        contentMode: true,
+        detect,
+      })
     ).toEqual([]);
     expect(detect).not.toHaveBeenCalled();
   });
@@ -32,8 +40,13 @@ describe("getTemplateTokenConflicts", () => {
     const detect = vi.fn(() => conflicts);
 
     expect(
-      getTemplateTokenConflicts({ fragment, contentMode: false, detect })
+      getTemplateTokenConflicts({
+        fragment,
+        targetData,
+        contentMode: false,
+        detect,
+      })
     ).toBe(conflicts);
-    expect(detect).toHaveBeenCalledWith({ fragment });
+    expect(detect).toHaveBeenCalledWith({ fragment, targetData });
   });
 });

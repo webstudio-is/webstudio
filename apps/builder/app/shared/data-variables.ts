@@ -10,6 +10,7 @@ import {
   type Pages,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
+  dataSourceVariableValue,
   collectionComponent,
   decodeDataVariableId,
   decodeDataSourceVariable,
@@ -22,19 +23,212 @@ import {
   systemParameter,
   transpileExpression,
 } from "@webstudio-is/sdk";
+import type { z } from "zod";
+import type { buildPatchTransaction } from "@webstudio-is/protocol";
 import {
   createJsonStringifyProxy,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
 import { setUnion } from "./shim";
+import { compactBuildPatchPayload } from "./build-patch-utils";
 
 const allowedJsChars = /[A-Za-z_]/;
 const compiledExpressionCacheLimit = 10_000;
+type BuildPatchPayload = z.infer<typeof buildPatchTransaction>["payload"];
+type DataVariable = Extract<DataSource, { type: "variable" }>;
+
+export const dataVariableValueInput = dataSourceVariableValue;
 type CompiledExpression = (variables: {
   get: (key: DataSource["name"]) => unknown;
   // Dynamic expressions intentionally preserve the historical `any` result.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }) => any;
+
+export type DataVariableNameError = {
+  type: "required" | "duplicate";
+  message: string;
+};
+
+export const validateDataVariableNameWithSources = ({
+  dataSources,
+  name,
+  variableId,
+  scopeInstanceId,
+}: {
+  dataSources: Iterable<DataSource>;
+  name: string;
+  variableId?: DataSource["id"];
+  scopeInstanceId?: Instance["id"];
+}): DataVariableNameError | undefined => {
+  if (name.trim().length === 0) {
+    return {
+      type: "required",
+      message: "Variable name is required",
+    };
+  }
+
+  for (const dataSource of dataSources) {
+    if (
+      dataSource.type === "variable" &&
+      dataSource.scopeInstanceId === scopeInstanceId &&
+      dataSource.name === name &&
+      dataSource.id !== variableId
+    ) {
+      return {
+        type: "duplicate",
+        message: "Name is already used by another variable on this instance",
+      };
+    }
+  }
+};
+
+const createDataVariable = ({
+  dataSourceId,
+  scopeInstanceId,
+  name,
+  value,
+}: {
+  dataSourceId: DataSource["id"];
+  scopeInstanceId: Instance["id"];
+  name: DataSource["name"];
+  value: DataVariable["value"];
+}): DataVariable => ({
+  id: dataSourceId,
+  scopeInstanceId,
+  name,
+  type: "variable",
+  value,
+});
+
+export const findDataVariable = (
+  dataSources: Iterable<DataSource>,
+  dataSourceId: DataSource["id"]
+) => {
+  for (const dataSource of dataSources) {
+    if (dataSource.id === dataSourceId && dataSource.type === "variable") {
+      return dataSource;
+    }
+  }
+};
+
+export const serializeDataVariables = ({
+  dataSources,
+  scopeInstanceId,
+}: {
+  dataSources: Iterable<DataSource> | Map<string, DataSource>;
+  scopeInstanceId?: Instance["id"];
+}) => ({
+  variables: (dataSources instanceof Map
+    ? Array.from(dataSources.values())
+    : Array.from(dataSources)
+  )
+    .filter((dataSource) => dataSource.type === "variable")
+    .filter(
+      (dataSource) =>
+        scopeInstanceId === undefined ||
+        dataSource.scopeInstanceId === scopeInstanceId
+    )
+    .map((dataSource) => ({
+      id: dataSource.id,
+      name: dataSource.name,
+      scopeInstanceId: dataSource.scopeInstanceId,
+      value: dataSource.value,
+    })),
+});
+
+export const createDataVariableCreatePayload = ({
+  dataSourceId,
+  scopeInstanceId,
+  name,
+  value,
+  dataSources,
+}: {
+  dataSourceId: DataSource["id"];
+  scopeInstanceId: Instance["id"];
+  name: DataSource["name"];
+  value: DataVariable["value"];
+  dataSources: Iterable<DataSource>;
+}): {
+  payload: BuildPatchPayload;
+  errors: Array<
+    | { type: "duplicate-id"; dataSourceId: DataSource["id"] }
+    | DataVariableNameError
+  >;
+} => {
+  const errors = [];
+  for (const dataSource of dataSources) {
+    if (dataSource.id === dataSourceId) {
+      errors.push({ type: "duplicate-id" as const, dataSourceId });
+      break;
+    }
+  }
+  const nameError = validateDataVariableNameWithSources({
+    dataSources,
+    name,
+    variableId: dataSourceId,
+    scopeInstanceId,
+  });
+  if (nameError) {
+    errors.push(nameError);
+  }
+  if (errors.length > 0) {
+    return { payload: [], errors };
+  }
+  return {
+    payload: [
+      {
+        namespace: "dataSources",
+        patches: [
+          {
+            op: "add",
+            path: [dataSourceId],
+            value: createDataVariable({
+              dataSourceId,
+              scopeInstanceId,
+              name,
+              value,
+            }),
+          },
+        ],
+      },
+    ],
+    errors,
+  };
+};
+
+export const createDataVariableUpdatePayload = ({
+  variable,
+  values,
+  dataSources,
+}: {
+  variable: DataVariable;
+  values: Partial<Pick<DataVariable, "scopeInstanceId" | "name" | "value">>;
+  dataSources: Iterable<DataSource>;
+}): { payload: BuildPatchPayload; error?: DataVariableNameError } => {
+  if (values.name !== undefined || values.scopeInstanceId !== undefined) {
+    const error = validateDataVariableNameWithSources({
+      dataSources,
+      name: values.name ?? variable.name,
+      variableId: variable.id,
+      scopeInstanceId: values.scopeInstanceId ?? variable.scopeInstanceId,
+    });
+    if (error) {
+      return { payload: [], error };
+    }
+  }
+  return {
+    payload: compactBuildPatchPayload([
+      {
+        namespace: "dataSources",
+        patches: Object.entries(values).flatMap(([name, value]) =>
+          value === undefined
+            ? []
+            : [{ op: "replace" as const, path: [variable.id, name], value }]
+        ),
+      },
+    ]),
+  };
+};
 
 const compiledExpressionCache = new Map<string, CompiledExpression>();
 
@@ -665,7 +859,12 @@ export const rebindTreeVariablesMutable = ({
 };
 
 export const deleteVariableMutable = (
-  data: Omit<WebstudioData, "pages"> & { pages?: Pages },
+  data: Pick<
+    WebstudioData,
+    "instances" | "props" | "dataSources" | "resources"
+  > & {
+    pages?: Pages;
+  },
   variableId: DataSource["id"]
 ) => {
   const dataSource = data.dataSources.get(variableId);
@@ -705,4 +904,85 @@ export const deleteVariableMutable = (
       return expression;
     },
   });
+};
+
+const valuesEqual = (left: unknown, right: unknown) =>
+  JSON.stringify(left) === JSON.stringify(right);
+
+const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
+  new Map<Key, Value>(
+    Array.from(map, ([key, value]) => [key, structuredClone(value)])
+  );
+
+const createMapPatchPayload = <
+  Namespace extends BuildPatchPayload[number]["namespace"],
+  Key extends string,
+  Value,
+>(
+  namespace: Namespace,
+  before: Map<Key, Value>,
+  after: Map<Key, Value>
+): BuildPatchPayload[number] => {
+  const patches: BuildPatchPayload[number]["patches"] = [];
+  for (const [key, value] of before) {
+    const nextValue = after.get(key);
+    if (nextValue === undefined) {
+      patches.push({ op: "remove", path: [key] });
+      continue;
+    }
+    if (valuesEqual(value, nextValue) === false) {
+      patches.push({ op: "replace", path: [key], value: nextValue });
+    }
+  }
+  for (const [key, value] of after) {
+    if (before.has(key) === false) {
+      patches.push({ op: "add", path: [key], value });
+    }
+  }
+  return { namespace, patches };
+};
+
+export const createDataVariableDeletePayload = ({
+  variableId,
+  pages,
+  instances,
+  props,
+  dataSources,
+  resources,
+}: Pick<WebstudioData, "instances" | "props" | "dataSources" | "resources"> & {
+  pages?: Pages;
+  variableId: DataSource["id"];
+}): {
+  payload: BuildPatchPayload;
+  deletedVariable?: DataSource;
+} => {
+  const deletedVariable = dataSources.get(variableId);
+  if (deletedVariable === undefined) {
+    return { payload: [] };
+  }
+
+  const beforePages = pages === undefined ? undefined : structuredClone(pages);
+  const nextData = {
+    pages: beforePages === undefined ? undefined : structuredClone(beforePages),
+    instances: cloneMap(instances),
+    props: cloneMap(props),
+    dataSources: cloneMap(dataSources),
+    resources: cloneMap(resources),
+  };
+  deleteVariableMutable(nextData, variableId);
+  const payload = compactBuildPatchPayload([
+    beforePages === undefined || valuesEqual(beforePages, nextData.pages)
+      ? { namespace: "pages" as const, patches: [] }
+      : {
+          namespace: "pages" as const,
+          patches: [
+            { op: "replace" as const, path: [], value: nextData.pages },
+          ],
+        },
+    createMapPatchPayload("instances", instances, nextData.instances),
+    createMapPatchPayload("props", props, nextData.props),
+    createMapPatchPayload("dataSources", dataSources, nextData.dataSources),
+    createMapPatchPayload("resources", resources, nextData.resources),
+  ]);
+  return { payload, deletedVariable };
 };

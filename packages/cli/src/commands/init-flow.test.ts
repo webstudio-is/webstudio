@@ -10,7 +10,7 @@ let tempDir: string;
 beforeEach(async () => {
   tempDir = await mkdtemp(join(tmpdir(), "webstudio-init-"));
   process.chdir(tempDir);
-  vi.spyOn(console, "log").mockImplementation(() => undefined);
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
 });
 
 afterEach(async () => {
@@ -39,7 +39,7 @@ test("initializes credentials from share link", async () => {
   expect(saveShareLink).toHaveBeenCalledWith(
     `https://p-${projectId}-dot-example.com/?authToken=token-1`
   );
-  const output = JSON.parse(vi.mocked(console.log).mock.calls[0][0]);
+  const output = JSON.parse(vi.mocked(console.info).mock.calls[0][0]);
   expect(output).toEqual({
     ok: true,
     data: { projectId },

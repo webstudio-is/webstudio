@@ -1,7 +1,6 @@
 // Data utilities own access to Webstudio's instance-related stores and
 // transaction boundaries. Put generic store reads/writes and content-mode data
 // guards here, not tree-shape mutations.
-import { current, isDraft } from "immer";
 import { toast } from "@webstudio-is/design-system";
 import {
   type Instances,
@@ -26,6 +25,7 @@ import {
   $styleSources,
 } from "../sync/data-stores";
 import type { InstanceSelector } from "./tree";
+export { unwrap } from "../unwrap";
 
 export type WebstudioInstanceData = Pick<
   WebstudioData,
@@ -37,13 +37,6 @@ export type WebstudioInstanceData = Pick<
   | "dataSources"
   | "resources"
 >;
-
-/**
- * structuredClone can be invoked on draft and throw error
- * extract current snapshot before cloning
- */
-export const unwrap = <Value>(value: Value) =>
-  isDraft(value) ? current(value) : value;
 
 export const canDeleteInstanceInContentMode = ({
   instanceSelector,

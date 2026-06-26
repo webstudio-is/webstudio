@@ -6,7 +6,7 @@ const dependencies = { readFile };
 
 beforeEach(() => {
   readFile.mockReset();
-  vi.spyOn(console, "log").mockImplementation(() => undefined);
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
@@ -50,7 +50,7 @@ test("validates patch json and reports summary", async () => {
     dependencies
   );
 
-  expect(JSON.parse(vi.mocked(console.log).mock.calls.at(-1)?.[0])).toEqual({
+  expect(JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0])).toEqual({
     ok: true,
     data: {
       valid: true,
@@ -83,7 +83,7 @@ test("reports invalid patch json as structured error", async () => {
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(JSON.parse(vi.mocked(console.log).mock.calls.at(-1)?.[0])).toEqual({
+  expect(JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0])).toEqual({
     ok: false,
     error: {
       code: "INVALID_PATCH",
@@ -121,7 +121,7 @@ test("requires values for add and replace patches", async () => {
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(JSON.parse(vi.mocked(console.log).mock.calls.at(-1)?.[0])).toEqual({
+  expect(JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0])).toEqual({
     ok: false,
     error: {
       code: "INVALID_PATCH",

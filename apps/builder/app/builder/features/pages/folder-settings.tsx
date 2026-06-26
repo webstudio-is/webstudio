@@ -33,7 +33,12 @@ import { $pages } from "~/shared/sync/data-stores";
 import { $isDesignMode } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { Form } from "./form";
-import { isSlugAvailable, registerFolderChildMutable } from "./page-utils";
+import {
+  createFolderValue,
+  insertFolderMutable,
+  isSlugAvailable,
+  updateFolderFieldsMutable,
+} from "~/shared/page-utils/tree";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { copyFolder } from "~/shared/copy-paste/copy-paste";
 import { PageItemActionsDropdown } from "./page-item-actions";
@@ -295,16 +300,15 @@ const createFolder = (folderId: Folder["id"], values: Values) => {
     if (pages === undefined) {
       return;
     }
-    pages.folders.set(folderId, {
-      id: folderId,
-      name: values.name,
-      slug: values.slug,
-      children: [],
-    } satisfies Folder);
-    const parentFolder =
-      getFolderById(pages, values.parentFolderId) ??
-      getFolderById(pages, pages.rootFolderId);
-    parentFolder?.children.push(folderId);
+    insertFolderMutable({
+      pages,
+      folder: createFolderValue({
+        folderId,
+        name: values.name,
+        slug: values.slug,
+      }),
+      parentFolderId: values.parentFolderId,
+    });
   });
 };
 
@@ -317,15 +321,7 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
     if (folder === undefined || folderId === pages.rootFolderId) {
       return;
     }
-    if (values.name !== undefined) {
-      folder.name = values.name;
-    }
-    if (values.slug !== undefined) {
-      folder.slug = values.slug;
-    }
-    if (values.parentFolderId !== undefined) {
-      registerFolderChildMutable(pages, folderId, values.parentFolderId);
-    }
+    updateFolderFieldsMutable({ folder, folderId, pages, values });
   });
 };
 

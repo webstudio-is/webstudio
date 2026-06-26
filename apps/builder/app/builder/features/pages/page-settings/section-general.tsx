@@ -35,7 +35,8 @@ import {
 } from "~/builder/shared/binding-popover";
 import { computeExpression } from "~/shared/data-variables";
 import { $permissions } from "~/shared/nano-states";
-import { $pageRootScope, isPathAvailable } from "../page-utils";
+import { $pageRootScope } from "../page-utils";
+import { isPathAvailable } from "~/shared/page-utils/tree";
 import { validatePathnamePattern } from "~/builder/shared/url-pattern";
 import {
   LOOP_ERROR,

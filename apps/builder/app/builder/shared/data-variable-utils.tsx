@@ -24,7 +24,11 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { findVariableUsagesByInstance } from "~/shared/data-variables";
+import {
+  findVariableUsagesByInstance,
+  validateDataVariableNameWithSources,
+  type DataVariableNameError,
+} from "~/shared/data-variables";
 
 const $isDeleteUnusedDataVariablesDialogOpen = atom(false);
 
@@ -32,10 +36,7 @@ export const openDeleteUnusedDataVariablesDialog = () => {
   $isDeleteUnusedDataVariablesDialogOpen.set(true);
 };
 
-export type DataVariableError = {
-  type: "required" | "duplicate";
-  message: string;
-};
+export type DataVariableError = DataVariableNameError;
 
 const getUsedVariablesInInstances = () => {
   return findVariableUsagesByInstance({
@@ -143,13 +144,6 @@ export const validateDataVariableName = (
   variableId?: DataSource["id"],
   scopeInstanceId?: Instance["id"]
 ): DataVariableError | undefined => {
-  if (name.trim().length === 0) {
-    return {
-      type: "required",
-      message: "Variable name is required",
-    };
-  }
-
   const dataSources = $dataSources.get();
   const currentVariable = variableId ? dataSources.get(variableId) : undefined;
   const actualScopeInstanceId =
@@ -157,20 +151,12 @@ export const validateDataVariableName = (
     (currentVariable?.type === "variable"
       ? currentVariable.scopeInstanceId
       : undefined);
-
-  for (const dataSource of dataSources.values()) {
-    if (
-      dataSource.type === "variable" &&
-      dataSource.scopeInstanceId === actualScopeInstanceId &&
-      dataSource.name === name &&
-      dataSource.id !== variableId
-    ) {
-      return {
-        type: "duplicate",
-        message: "Name is already used by another variable on this instance",
-      };
-    }
-  }
+  return validateDataVariableNameWithSources({
+    dataSources: dataSources.values(),
+    name,
+    variableId,
+    scopeInstanceId: actualScopeInstanceId,
+  });
 };
 
 export const renameDataVariable = (

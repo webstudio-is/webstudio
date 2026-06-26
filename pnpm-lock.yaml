@@ -1109,6 +1109,9 @@ importers:
 
   packages/authorization-token:
     dependencies:
+      '@trpc/server':
+        specifier: ^10.45.2
+        version: 10.45.2
       '@webstudio-is/postgrest':
         specifier: workspace:*
         version: link:../postgrest
@@ -1143,12 +1146,15 @@ importers:
       '@trpc/client':
         specifier: ^10.45.2
         version: 10.45.2(@trpc/server@10.45.2)
+      '@webstudio-is/http-client':
+        specifier: workspace:*
+        version: link:../http-client
       '@webstudio-is/project-migrations':
         specifier: workspace:*
         version: link:../project-migrations
-      '@webstudio-is/trpc-interface':
+      '@webstudio-is/protocol':
         specifier: workspace:*
-        version: link:../trpc-interface
+        version: link:../protocol
       acorn:
         specifier: ^8.14.1
         version: 8.14.1
@@ -1243,15 +1249,9 @@ importers:
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
-      '@webstudio-is/http-client':
-        specifier: workspace:*
-        version: link:../http-client
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../image
-      '@webstudio-is/protocol':
-        specifier: workspace:*
-        version: link:../protocol
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
@@ -1708,6 +1708,9 @@ importers:
       '@webstudio-is/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@webstudio-is/trpc-interface':
+        specifier: workspace:*
+        version: link:../trpc-interface
       tus-js-client:
         specifier: ^4.3.1
         version: 4.3.1

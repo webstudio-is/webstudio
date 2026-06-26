@@ -1,21 +1,18 @@
 import { cwd, stdin, stdout } from "node:process";
 import { join } from "node:path";
+import { readFile } from "node:fs/promises";
 import { cancel, isCancel, log, spinner, text } from "@clack/prompts";
 import {
   getBundleVersion,
   getBundleVersionMismatchMessage,
-  parseMissingImportedAssetFilesMessage,
   publishedProjectBundle,
   bundleVersion,
 } from "@webstudio-is/protocol";
-import {
-  checkProjectBuildPermission,
-  importProjectBundle,
-} from "@webstudio-is/http-client";
+import { importProjectBundleWithAssets } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "../config";
 import { loadJSONFile } from "../fs-utils";
 import { HandledCliError } from "../errors";
-import { uploadAssetFiles } from "../asset-files";
+import { getLocalAssetPath } from "../asset-files";
 import { LOCAL_AUTH_FILE, validateAuthConfigFile } from "../auth-config";
 import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { parseShareLink, validateShareLink } from "./link";
@@ -26,10 +23,9 @@ import type {
 } from "./yargs-types";
 
 type ImportProjectDependencies = {
-  checkProjectBuildPermission: typeof checkProjectBuildPermission;
-  importProjectBundle: typeof importProjectBundle;
-  uploadAssetFiles: typeof uploadAssetFiles;
+  importProjectBundleWithAssets: typeof importProjectBundleWithAssets;
   loadJSONFile: typeof loadJSONFile;
+  readFile: typeof readFile;
   text: typeof text;
   isInteractive: boolean;
   log: Pick<typeof log, "info">;
@@ -40,10 +36,9 @@ const isInteractiveTerminal = () =>
   stdin.isTTY === true && stdout.isTTY === true;
 
 const defaultDependencies: ImportProjectDependencies = {
-  checkProjectBuildPermission,
-  importProjectBundle,
-  uploadAssetFiles,
+  importProjectBundleWithAssets,
   loadJSONFile,
+  readFile,
   text,
   isInteractive: isInteractiveTerminal(),
   log,
@@ -59,7 +54,6 @@ const invalidProjectBundleMessage =
 const invalidAuthConfigMessage =
   "Project bundle auth config is invalid. Please run webstudio prebuild before importing.";
 const invalidDestinationMessage = "Destination share link is invalid.";
-const maxMissingAssetImportRetries = 5;
 
 export const importOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -205,41 +199,10 @@ export const importProject = async (
     headers: apiCompatibilityHeaders,
   };
 
-  importing.message("Checking destination build permission");
-  try {
-    await dependencies.checkProjectBuildPermission(destinationRequest);
-  } catch (error) {
-    stopSpinnerWithError(
-      importing,
-      error,
-      "Unable to check destination build permission",
-      "import"
-    );
-    throw new HandledCliError();
-  }
-
   if (options.skipAssets === true) {
     dependencies.log.info("Skipped asset upload and asset rows");
-  } else {
-    importing.message(`Uploading ${importData.assets.length} assets`);
-    try {
-      await dependencies.uploadAssetFiles({
-        assets: importData.assets,
-        ...destinationRequest,
-      });
-    } catch (error) {
-      importing.stop(
-        error instanceof Error
-          ? `Unable to upload assets: ${error.message}`
-          : "Unable to upload assets",
-        2
-      );
-      throw new HandledCliError();
-    }
   }
 
-  const dataToImport =
-    options.skipAssets === true ? { ...importData, assets: [] } : importData;
   const stopImportWithError = (error: unknown): never => {
     stopSpinnerWithError(
       importing,
@@ -250,51 +213,38 @@ export const importProject = async (
     throw new HandledCliError();
   };
 
-  for (let attempt = 0; attempt <= maxMissingAssetImportRetries; attempt += 1) {
-    importing.message(
-      `Waiting for API response while importing into ${destination.projectId}`
-    );
-
-    try {
-      await dependencies.importProjectBundle({
-        ...destinationRequest,
-        data: dataToImport,
-        ignoreVersionCheck: options.ignoreVersionCheck,
-      });
-      importing.stop("Project imported successfully");
-      return;
-    } catch (error) {
-      const missingAssetNames =
-        options.skipAssets === true
-          ? undefined
-          : parseMissingImportedAssetFilesMessage(error);
-      const assetNames = missingAssetNames ?? [];
-      if (assetNames.length === 0 || attempt === maxMissingAssetImportRetries) {
-        stopImportWithError(error);
-      }
-
-      const missingAssets = importData.assets.filter((asset) =>
-        assetNames.includes(asset.name)
-      );
-      if (missingAssets.length !== assetNames.length) {
-        stopImportWithError(error);
-      }
-
-      importing.message(`Re-uploading ${missingAssets.length} missing assets`);
-      try {
-        await dependencies.uploadAssetFiles({
-          assets: missingAssets,
-          ...destinationRequest,
-        });
-      } catch (uploadError) {
-        importing.stop(
-          uploadError instanceof Error
-            ? `Unable to upload missing assets: ${uploadError.message}`
-            : "Unable to upload missing assets",
-          2
+  importing.message("Checking destination build permission");
+  try {
+    await dependencies.importProjectBundleWithAssets({
+      ...destinationRequest,
+      data: importData,
+      ignoreVersionCheck: options.ignoreVersionCheck,
+      ...(options.skipAssets === true
+        ? { skipAssets: true }
+        : {
+            readAssetData: async (asset) => {
+              const file = await dependencies.readFile(
+                getLocalAssetPath(asset.name)
+              );
+              return new Blob([new Uint8Array(file)]);
+            },
+          }),
+      onImportAttempt: () => {
+        importing.message(
+          `Waiting for API response while importing into ${destination.projectId}`
         );
-        throw new HandledCliError();
-      }
-    }
+      },
+      onUploadAssets: (assets) => {
+        importing.message(`Uploading ${assets.length} assets`);
+      },
+      onMissingAssets: (missingAssets) => {
+        importing.message(
+          `Re-uploading ${missingAssets.length} missing assets`
+        );
+      },
+    });
+    importing.stop("Project imported successfully");
+  } catch (error) {
+    stopImportWithError(error);
   }
 };

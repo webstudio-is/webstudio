@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
+import { TRPCError } from "@trpc/server";
+import {
+  PlanRequiredError,
+  router,
+  procedure,
+} from "@webstudio-is/trpc-interface/index.server";
 import { db } from "../db";
 import type { IsEqual } from "type-fest";
 import type { Database } from "@webstudio-is/postgrest/index.server";
@@ -17,6 +22,17 @@ const tokenProjectRelation = z.enum([
 // Check DB types are compatible with zod types
 type TokenRelation = z.infer<typeof tokenProjectRelation>;
 true satisfies IsEqual<TokenRelation, Relation>;
+
+const toTrpcError = (error: unknown): never => {
+  if (error instanceof PlanRequiredError) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: error.message,
+      cause: error,
+    });
+  }
+  throw error;
+};
 
 export const authorizationTokenRouter = router({
   findMany: procedure
@@ -38,7 +54,11 @@ export const authorizationTokenRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await db.create(input, ctx);
+      try {
+        return await db.create(input, ctx);
+      } catch (error) {
+        toTrpcError(error);
+      }
     }),
   remove: procedure
     .input(
@@ -65,7 +85,11 @@ export const authorizationTokenRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const { projectId, ...token } = input;
-      return await db.update(projectId, token, ctx);
+      try {
+        return await db.update(projectId, token, ctx);
+      } catch (error) {
+        toTrpcError(error);
+      }
     }),
 });
 

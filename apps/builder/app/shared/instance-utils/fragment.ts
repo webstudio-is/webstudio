@@ -13,6 +13,7 @@ import {
   type Prop,
   type Resource,
   type StyleDecl,
+  type WsComponentMeta,
   type WebstudioData,
   type WebstudioFragment,
   ROOT_INSTANCE_ID,
@@ -42,8 +43,9 @@ import {
 } from "../style-source-utils";
 import type { ConflictResolution } from "../token-conflict-dialog";
 import { setDifference, setUnion } from "../shim";
-import { $registeredComponentMetas } from "../nano-states";
-import { getWebstudioData, unwrap } from "./data";
+import { unwrap } from "../unwrap";
+import { cloneInstanceWithNewIds } from "./tree";
+import { clonePropForInstance } from "../prop-utils";
 
 const traverseStyleValue = (
   value: StyleValue,
@@ -364,14 +366,16 @@ const getFragmentContentModeCapabilities = ({
   fragment,
   fragmentInstances,
   styleSources,
+  metas,
 }: {
   fragment: WebstudioFragment;
   fragmentInstances: Instances;
   styleSources: WebstudioData["styleSources"];
+  metas: Map<string, WsComponentMeta>;
 }) =>
   getContentModeCapabilities({
     instances: fragmentInstances,
-    metas: $registeredComponentMetas.get(),
+    metas,
     props: new Map(fragment.props.map((prop) => [prop.id, prop])),
     styleSources,
     contentRootIds: new Set(
@@ -395,6 +399,7 @@ export const insertWebstudioFragmentCopy = ({
   projectId,
   conflictResolution = "theirs",
   onBreakpointLimitMerge,
+  metas,
   // In content mode, insertion keeps content-editable instance data, creates
   // local styles for inserted instances, and avoids data/resource records.
   contentMode = false,
@@ -405,6 +410,7 @@ export const insertWebstudioFragmentCopy = ({
   projectId: Project["id"];
   conflictResolution?: ConflictResolution;
   onBreakpointLimitMerge?: () => void;
+  metas?: Map<string, WsComponentMeta>;
   contentMode?: boolean;
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
@@ -603,6 +609,7 @@ export const insertWebstudioFragmentCopy = ({
           fragment,
           fragmentInstances,
           styleSources,
+          metas: metas ?? new Map(),
         });
   for (let prop of fragment.props) {
     if (fragmentInstanceIds.has(prop.instanceId) === false) {
@@ -618,9 +625,11 @@ export const insertWebstudioFragmentCopy = ({
     ) {
       continue;
     }
-    prop = structuredClone(unwrap(prop));
-    prop.id = nanoid();
-    prop.instanceId = newInstanceIds.get(prop.instanceId) ?? prop.instanceId;
+    prop = clonePropForInstance({
+      prop: unwrap(prop),
+      propId: nanoid(),
+      instanceId: newInstanceIds.get(prop.instanceId) ?? prop.instanceId,
+    });
     if (prop.type === "expression") {
       prop.value = restoreExpressionVariables({
         expression: prop.value,
@@ -704,12 +713,11 @@ export const insertWebstudioFragmentCopy = ({
 
   for (let instance of fragment.instances) {
     if (fragmentInstanceIds.has(instance.id)) {
-      instance = structuredClone(unwrap(instance));
-      instance.id = newInstanceIds.get(instance.id) ?? instance.id;
+      instance = cloneInstanceWithNewIds({
+        instance: unwrap(instance),
+        newInstanceIds,
+      });
       for (const child of instance.children) {
-        if (child.type === "id") {
-          child.value = newInstanceIds.get(child.value) ?? child.value;
-        }
         if (child.type === "expression") {
           child.value = restoreExpressionVariables({
             expression: child.value,
@@ -755,23 +763,23 @@ export const insertWebstudioFragmentCopy = ({
 };
 export const detectFragmentTokenConflicts = ({
   fragment,
+  targetData,
 }: {
   fragment: WebstudioFragment;
+  targetData: WebstudioData;
 }) => {
-  const data = getWebstudioData();
-
   const mergedBreakpointIds = buildMergedBreakpointIds(
     fragment.breakpoints,
-    data.breakpoints,
+    targetData.breakpoints,
     { maxBreakpointCount: maxBreakpoints }
   );
 
   return detectTokenConflicts({
     fragmentStyleSources: fragment.styleSources,
     fragmentStyles: fragment.styles,
-    existingStyleSources: data.styleSources,
-    existingStyles: data.styles,
-    breakpoints: data.breakpoints,
+    existingStyleSources: targetData.styleSources,
+    existingStyles: targetData.styles,
+    breakpoints: targetData.breakpoints,
     mergedBreakpointIds,
   });
 };
@@ -786,13 +794,13 @@ export const detectFragmentTokenConflicts = ({
  */
 export const detectPageTokenConflicts = ({
   sourceData,
+  targetData,
   pageId,
 }: {
   sourceData: WebstudioData;
+  targetData: WebstudioData;
   pageId: string;
 }) => {
-  const data = getWebstudioData();
-
   const page = findPageByIdOrPath(pageId, sourceData.pages);
   if (page === undefined) {
     throw new Error("Page not found");
@@ -819,16 +827,16 @@ export const detectPageTokenConflicts = ({
 
   const mergedBreakpointIds = buildMergedBreakpointIds(
     combinedBreakpoints,
-    data.breakpoints,
+    targetData.breakpoints,
     { maxBreakpointCount: maxBreakpoints }
   );
 
   return detectTokenConflicts({
     fragmentStyleSources: combinedStyleSources,
     fragmentStyles: combinedStyles,
-    existingStyleSources: data.styleSources,
-    existingStyles: data.styles,
-    breakpoints: data.breakpoints,
+    existingStyleSources: targetData.styleSources,
+    existingStyles: targetData.styles,
+    breakpoints: targetData.breakpoints,
     mergedBreakpointIds,
   });
 };

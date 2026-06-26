@@ -15,15 +15,16 @@ import {
   createDefaultPages,
   createRootFolder,
 } from "@webstudio-is/project-build";
-import { $project } from "./sync/data-stores";
+import { $project } from "../sync/data-stores";
 import {
   __testing__,
+  createPageDuplicatePayload,
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
   createTemplateCopyData,
   insertTemplateCopyFromFragmentsMutable,
   copyAndTransformPageMeta,
-} from "./page-utils";
+} from "./index";
 import {
   $,
   expression,
@@ -196,6 +197,7 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     const copiedPages = getCopiedPages(data);
     expect(copiedPages.length).toEqual(1);
@@ -214,6 +216,82 @@ describe("insert page copy", () => {
       id: newPage.rootInstanceId,
       component: "Body",
       children: [],
+    });
+  });
+
+  test("creates duplicate page patch payload from shared copy semantics", () => {
+    const data = getWebstudioDataStub({
+      instances: toMap<Instance>([
+        { type: "instance", id: "bodyId", component: "Body", children: [] },
+      ]),
+      pages: migratePages({
+        meta: {},
+        homePage: {
+          id: "pageId",
+          name: "Name",
+          path: "",
+          title: `"Title"`,
+          meta: {},
+          rootInstanceId: "bodyId",
+        },
+        pages: [],
+        folders: [createRootFolder(["pageId"])],
+      }),
+    });
+
+    const result = createPageDuplicatePayload({
+      build: {
+        pages: data.pages,
+        instances: Array.from(data.instances.values()),
+        props: [],
+        dataSources: [],
+        resources: [],
+        breakpoints: [],
+        styleSources: [],
+        styleSourceSelections: [],
+        styles: [],
+      },
+      projectId: "projectId",
+      pageId: "pageId",
+      parentFolderId: ROOT_FOLDER_ID,
+      name: "Custom",
+      path: "/custom",
+    });
+
+    expect(result?.pageId).toEqual(expect.any(String));
+    expect(result?.pageId).not.toEqual("pageId");
+    const pagesPayload = result?.payload.find(
+      (item) => item.namespace === "pages"
+    );
+    expect(pagesPayload?.patches).toEqual([
+      {
+        op: "add",
+        path: ["pages", result?.pageId],
+        value: expect.objectContaining({
+          id: result?.pageId,
+          name: "Custom",
+          path: "/custom",
+          title: `"Title"`,
+          rootInstanceId: expect.not.stringMatching("bodyId"),
+        }),
+      },
+      {
+        op: "replace",
+        path: ["folders", ROOT_FOLDER_ID],
+        value: expect.objectContaining({
+          children: ["pageId", result?.pageId],
+        }),
+      },
+    ]);
+    expect(result?.payload).toContainEqual({
+      namespace: "instances",
+      patches: [
+        {
+          op: "add",
+          path: [expect.not.stringMatching("bodyId")],
+          value: expect.objectContaining({ component: "Body" }),
+        },
+      ],
     });
   });
 
@@ -247,6 +325,7 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
 
     const copiedPage = getCopiedPages(data)[0];
@@ -301,6 +380,7 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     const copiedPages = getCopiedPages(data);
     expect(copiedPages.length).toEqual(2);
@@ -349,10 +429,12 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data, pageId: "page1Id" },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     insertPageCopyMutable({
       source: { data, pageId: "page2Id" },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     const copiedPages = getCopiedPages(data);
     expect(copiedPages.length).toEqual(4);
@@ -401,10 +483,12 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: "folderId" },
+      projectId: "projectId",
     });
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     const copiedPages = getCopiedPages(data);
     expect(copiedPages.length).toEqual(3);
@@ -453,6 +537,7 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: "folderId" },
+      projectId: "projectId",
     });
     const copiedPages = getCopiedPages(data);
     expect(copiedPages.length).toEqual(2);
@@ -501,6 +586,7 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     const copiedPages = getCopiedPages(data);
     expect(copiedPages.length).toEqual(1);
@@ -561,18 +647,22 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: "folderId" },
+      projectId: "projectId",
     });
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
       target: { data, folderId: "folderId" },
+      projectId: "projectId",
     });
     const copiedPages = getCopiedPages(data);
     expect(copiedPages.length).toEqual(4);
@@ -602,6 +692,7 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data, pageId: data.pages.homePageId },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     expect(data.dataSources.size).toEqual(1);
     const [globalVariableId] = data.dataSources.keys();
@@ -650,6 +741,7 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data: sourceData, pageId: sourceData.pages.homePageId },
       target: { data: targetData, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     expect(targetData.dataSources.size).toEqual(1);
     const [globalVariableId] = targetData.dataSources.keys();
@@ -691,6 +783,7 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data: sourceData, pageId: sourceData.pages.homePageId },
       target: { data: targetData, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     expect(targetData.dataSources.size).toEqual(1);
     const [globalVariableId] = targetData.dataSources.keys();
@@ -726,6 +819,7 @@ describe("insert page copy", () => {
     insertPageCopyMutable({
       source: { data, pageId: data.pages.homePageId },
       target: { data, folderId: ROOT_FOLDER_ID },
+      projectId: "projectId",
     });
     expect(data.dataSources.size).toEqual(1);
     expect(Array.from(data.instances.values())).toEqual([
@@ -794,6 +888,7 @@ describe("insert page copy", () => {
       source: { data },
       target: { data, folderId: ROOT_FOLDER_ID },
       overrides: { name: "Template", path: "/template" },
+      projectId: "projectId",
     });
 
     expect(pageId).toBeDefined();
@@ -872,6 +967,7 @@ describe("insert page copy", () => {
     const templateId = insertTemplateCopyFromFragmentsMutable({
       source: createTemplateCopyData({ data, template: template! }),
       target: { data },
+      projectId: "projectId",
     });
 
     const copiedTemplate = data.pages.pageTemplates?.get(templateId ?? "");

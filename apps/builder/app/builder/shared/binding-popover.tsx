@@ -35,8 +35,8 @@ import {
 import {
   decodeDataSourceVariable,
   getExpressionIdentifiers,
-  lintExpression,
 } from "@webstudio-is/sdk";
+import { getExpressionErrorMessages } from "~/shared/expression-validation";
 import { $dataSourceVariables, $isDesignMode } from "~/shared/nano-states";
 import {
   computeExpression,
@@ -122,12 +122,10 @@ const BindingPanel = ({
   const scopeEntries = Object.entries(scope);
 
   const validate = (expression: string) => {
-    const diagnostics = lintExpression({
+    const errors = getExpressionErrorMessages({
       expression,
       availableVariables: new Set(aliases.keys()),
     });
-    // prevent saving expression only with syntax error
-    const errors = diagnostics.filter((item) => item.severity === "error");
     setErrorsCount(errors.length);
   };
 

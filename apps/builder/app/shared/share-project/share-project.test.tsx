@@ -3,7 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
-import { ShareProject, type LinkOptions } from "./share-project";
+import { ShareProject, __testing__, type LinkOptions } from "./share-project";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -121,6 +121,49 @@ afterEach(() => {
 });
 
 describe("ShareProject", () => {
+  test("documents api permissions per role", () => {
+    expect(
+      __testing__.getApiPermissionDescription({
+        role: "viewers",
+        canPublish: false,
+      })
+    ).toBe(
+      "Allows read-only API access: inspect permissions, project/build snapshots, pages, folders, instances, text, styles, variables, resources, assets, publish history, domains, and asset usage."
+    );
+    expect(
+      __testing__.getApiPermissionDescription({
+        role: "editors",
+        canPublish: false,
+      })
+    ).toBe(
+      "Allows viewer API access and content-mode text and prop changes. Enable Can publish to allow publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains."
+    );
+    expect(
+      __testing__.getApiPermissionDescription({
+        role: "editors",
+        canPublish: true,
+      })
+    ).toBe(
+      "Allows viewer API access, content-mode text and prop changes, plus publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains."
+    );
+    expect(
+      __testing__.getApiPermissionDescription({
+        role: "builders",
+        canPublish: false,
+      })
+    ).toBe(
+      "Allows read and build API access: pages, folders, instances, text, props, styles, design tokens, CSS variables, data variables, resources, assets, patches, and staging publish/unpublish."
+    );
+    expect(
+      __testing__.getApiPermissionDescription({
+        role: "administrators",
+        canPublish: true,
+      })
+    ).toBe(
+      "Allows full project API access: all read, content, build, asset, publish/unpublish, and domain management operations."
+    );
+  });
+
   test("saves share link permission changes when link options close", () => {
     const onChange = vi.fn();
     renderShareProject({ onChange });
@@ -193,6 +236,28 @@ describe("ShareProject", () => {
     const onChange = vi.fn();
     renderShareProject({
       allowAdditionalPermissions: false,
+      onChange,
+    });
+
+    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    click(optionsButton);
+
+    const apiCheckbox = getControlByLabel<HTMLButtonElement>("API");
+    expect(apiCheckbox.disabled).toBe(true);
+    click(apiCheckbox);
+    click(optionsButton);
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  test("disables missing api permission when it requires an upgrade", () => {
+    const onChange = vi.fn();
+    renderShareProject({
+      allowAdditionalPermissions: false,
+      linkOptions: {
+        ...link,
+        canUseApi: undefined as unknown as boolean,
+      },
       onChange,
     });
 

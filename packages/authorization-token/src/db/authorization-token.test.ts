@@ -10,11 +10,13 @@ import { PlanRequiredError } from "@webstudio-is/trpc-interface/index.server";
 import {
   findMany,
   getTokenInfo,
+  getTokenProjectPermits,
   create,
   update,
   remove,
   __testing__,
 } from "./authorization-token";
+import { authorizationTokenRouter } from "../trpc/authorization-tokens-router";
 
 const { applyTokenPermissions } = __testing__;
 
@@ -83,6 +85,27 @@ describe("applyTokenPermissions", () => {
       canUseApi: true,
     });
     expect(result.canUseApi).toBe(true);
+  });
+});
+
+describe("getTokenProjectPermits", () => {
+  test("maps token relation to project permits", () => {
+    expect(getTokenProjectPermits({ relation: "viewers" })).toEqual(["view"]);
+    expect(getTokenProjectPermits({ relation: "editors" })).toEqual([
+      "view",
+      "edit",
+    ]);
+    expect(getTokenProjectPermits({ relation: "builders" })).toEqual([
+      "view",
+      "edit",
+      "build",
+    ]);
+    expect(getTokenProjectPermits({ relation: "administrators" })).toEqual([
+      "view",
+      "edit",
+      "build",
+      "admin",
+    ]);
   });
 });
 
@@ -208,6 +231,24 @@ describe("create (msw)", () => {
     await expect(promise).rejects.toThrow(PlanRequiredError);
     await expect(promise).rejects.toMatchObject({ code: "PLAN_REQUIRED" });
   });
+
+  test("maps API capability plan errors to forbidden tRPC errors", async () => {
+    server.use(projectOwnershipHandler);
+
+    const caller = authorizationTokenRouter.createCaller(createContext(false));
+
+    await expect(
+      caller.create({
+        projectId: "proj-1",
+        relation: "viewers",
+        name: "Viewer Token",
+        canUseApi: true,
+      })
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "API permission requires an upgrade.",
+    });
+  });
 });
 
 describe("update (msw)", () => {
@@ -252,6 +293,31 @@ describe("update (msw)", () => {
     );
     await expect(promise).rejects.toThrow(PlanRequiredError);
     await expect(promise).rejects.toMatchObject({ code: "PLAN_REQUIRED" });
+  });
+
+  test("maps API capability update plan errors to forbidden tRPC errors", async () => {
+    server.use(
+      projectOwnershipHandler,
+      db.get("AuthorizationToken", () => json(tokenRow))
+    );
+
+    const caller = authorizationTokenRouter.createCaller(createContext(false));
+
+    await expect(
+      caller.update({
+        projectId: "proj-1",
+        token: "tok-abc",
+        name: "My Token",
+        relation: "editors",
+        canClone: false,
+        canCopy: true,
+        canPublish: false,
+        canUseApi: true,
+      })
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "API permission requires an upgrade.",
+    });
   });
 
   test("allows preserving existing API capability when plan no longer allows it", async () => {

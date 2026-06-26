@@ -21,6 +21,7 @@ import {
   $isContentMode,
   $selectedInstance,
 } from "~/shared/nano-states";
+import { getPropDeletePlan, getPropIdsToDelete } from "~/shared/prop-utils";
 import { $props } from "~/shared/sync/data-stores";
 import {
   $selectedInstanceInitialPropNames,
@@ -65,33 +66,6 @@ const useProp = (name: string) => {
   return useStore(store);
 };
 
-const getPropIdsToDelete = ({
-  instanceComponent,
-  instanceProps,
-  propName,
-}: {
-  instanceComponent: string | undefined;
-  instanceProps: Map<Prop["name"], Prop>;
-  propName: Prop["name"];
-}) => {
-  const propIds = new Set<Prop["id"]>();
-  const prop = instanceProps.get(propName);
-  if (prop) {
-    propIds.add(prop.id);
-  }
-  if (instanceComponent === "Image" && propName === "src") {
-    const widthProp = instanceProps.get("width");
-    if (widthProp) {
-      propIds.add(widthProp.id);
-    }
-    const heightProp = instanceProps.get("height");
-    if (heightProp) {
-      propIds.add(heightProp.id);
-    }
-  }
-  return propIds;
-};
-
 export const __testing__ = {
   getPropIdsToDelete,
 };
@@ -100,16 +74,19 @@ const deleteProp = (name: string) => {
   const instance = $selectedInstance.get();
   const instanceProps = $selectedInstanceProps.get();
   updateWebstudioData((data) => {
-    const prop = instanceProps.get(name);
-    for (const propId of getPropIdsToDelete({
-      instanceComponent: instance?.component,
-      instanceProps,
+    if (instance === undefined) {
+      return;
+    }
+    const { propIds, resourceIds } = getPropDeletePlan({
+      instance,
+      props: instanceProps.values(),
       propName: name,
-    })) {
+    });
+    for (const propId of propIds) {
       data.props.delete(propId);
     }
-    if (prop?.type === "resource") {
-      data.resources.delete(prop.value);
+    for (const resourceId of resourceIds) {
+      data.resources.delete(resourceId);
     }
   });
 };

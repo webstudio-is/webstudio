@@ -1,4 +1,7 @@
 import { nanoid } from "nanoid";
+import { z } from "zod";
+import deepEqual from "fast-deep-equal";
+import type { buildPatchTransaction } from "@webstudio-is/protocol";
 import type {
   Breakpoint,
   Instance,
@@ -9,13 +12,1365 @@ import type {
   StyleSources,
   StyleSourceSelections,
 } from "@webstudio-is/sdk";
-import { getStyleDeclKey, ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import {
+  getStyleDeclKey,
+  ROOT_INSTANCE_ID,
+  styleDecl as styleDeclSchema,
+} from "@webstudio-is/sdk";
 import { toValue } from "@webstudio-is/css-engine";
 import type { ConflictResolution } from "./token-conflict-dialog";
 import { removeByMutable } from "./array-utils";
+import { cloneStyles } from "./instance-utils/tree";
+import { compactBuildPatchPayload } from "./build-patch-utils";
+
+type BuildPatchPayload = z.infer<typeof buildPatchTransaction>["payload"];
 
 export const isStyleSourceLocked = (styleSource: StyleSource | undefined) =>
   styleSource?.type === "token" && styleSource.locked === true;
+
+const DEFAULT_BREAKPOINT_ID = "base";
+
+export const createTokenStyleSource = ({
+  id,
+  name,
+  locked,
+}: {
+  id: StyleSource["id"];
+  name: string;
+  locked?: boolean;
+}): Extract<StyleSource, { type: "token" }> => ({
+  type: "token",
+  id,
+  name,
+  ...(locked === true ? { locked: true } : {}),
+});
+
+export const findDesignToken = (
+  styleSources: Iterable<StyleSource>,
+  tokenId: StyleSource["id"]
+) =>
+  Array.from(styleSources).find(
+    (styleSource) => styleSource.type === "token" && styleSource.id === tokenId
+  );
+
+export const getLocalStyleSourceId = ({
+  styleSources,
+  styleSourceSelection,
+}: {
+  styleSources: Pick<StyleSources, "get">;
+  styleSourceSelection: StyleSourceSelection | undefined;
+}) =>
+  styleSourceSelection?.values.find(
+    (styleSourceId) => styleSources.get(styleSourceId)?.type === "local"
+  );
+
+export const getOrCreateStyleSourceSelectionMutable = (
+  styleSourceSelections: StyleSourceSelections,
+  instanceId: Instance["id"]
+) => {
+  let styleSourceSelection = styleSourceSelections.get(instanceId);
+  if (styleSourceSelection === undefined) {
+    styleSourceSelection = {
+      instanceId,
+      values: [],
+    };
+    styleSourceSelections.set(instanceId, styleSourceSelection);
+  }
+  return styleSourceSelection;
+};
+
+export const getStyleSourceInsertionIndex = ({
+  styleSourceIds,
+  styleSources,
+  position = "before-local",
+}: {
+  styleSourceIds: StyleSource["id"][];
+  styleSources: Pick<StyleSources, "get">;
+  position?: "before-local" | "after-local";
+}) => {
+  const localIndex = styleSourceIds.findIndex(
+    (styleSourceId) => styleSources.get(styleSourceId)?.type === "local"
+  );
+  if (localIndex === -1) {
+    return styleSourceIds.length;
+  }
+  return position === "after-local" ? localIndex + 1 : localIndex;
+};
+
+type StyleSourceSelectionAddPlan =
+  | {
+      type: "create";
+      selection: StyleSourceSelection;
+    }
+  | {
+      type: "insert";
+      index: number;
+    }
+  | {
+      type: "exists";
+    };
+
+type StyleSourceSelectionRemovePlan =
+  | {
+      type: "remove";
+      index: number;
+    }
+  | {
+      type: "missing";
+    };
+
+export const createStyleSourceSelectionAddPlan = ({
+  styleSourceSelection,
+  styleSources,
+  instanceId,
+  styleSourceId,
+  position,
+}: {
+  styleSourceSelection: StyleSourceSelection | undefined;
+  styleSources: Pick<StyleSources, "get">;
+  instanceId: Instance["id"];
+  styleSourceId: StyleSource["id"];
+  position?: "before-local" | "after-local";
+}): StyleSourceSelectionAddPlan => {
+  if (styleSourceSelection === undefined) {
+    return {
+      type: "create",
+      selection: { instanceId, values: [styleSourceId] },
+    };
+  }
+  if (styleSourceSelection.values.includes(styleSourceId)) {
+    return { type: "exists" };
+  }
+  return {
+    type: "insert",
+    index: getStyleSourceInsertionIndex({
+      styleSourceIds: styleSourceSelection.values,
+      styleSources,
+      position,
+    }),
+  };
+};
+
+export const createStyleSourceSelectionAddPatch = ({
+  styleSourceSelection,
+  styleSources,
+  instanceId,
+  styleSourceId,
+  position,
+}: {
+  styleSourceSelection: StyleSourceSelection | undefined;
+  styleSources: Pick<StyleSources, "get">;
+  instanceId: Instance["id"];
+  styleSourceId: StyleSource["id"];
+  position?: "before-local" | "after-local";
+}) => {
+  const plan = createStyleSourceSelectionAddPlan({
+    styleSourceSelection,
+    styleSources,
+    instanceId,
+    styleSourceId,
+    position,
+  });
+  if (plan.type === "exists") {
+    return;
+  }
+  if (plan.type === "create") {
+    return {
+      op: "add" as const,
+      path: [instanceId],
+      value: plan.selection,
+    };
+  }
+  return {
+    op: "add" as const,
+    path: [instanceId, "values", plan.index],
+    value: styleSourceId,
+  };
+};
+
+export const createStyleSourceSelectionRemovePlan = ({
+  styleSourceSelection,
+  styleSourceId,
+}: {
+  styleSourceSelection: StyleSourceSelection | undefined;
+  styleSourceId: StyleSource["id"];
+}): StyleSourceSelectionRemovePlan => {
+  const index = styleSourceSelection?.values.indexOf(styleSourceId) ?? -1;
+  return index === -1 ? { type: "missing" } : { type: "remove", index };
+};
+
+export const createStyleSourceSelectionRemovePatch = ({
+  styleSourceSelection,
+  instanceId,
+  styleSourceId,
+}: {
+  styleSourceSelection: StyleSourceSelection | undefined;
+  instanceId: Instance["id"];
+  styleSourceId: StyleSource["id"];
+}) => {
+  const plan = createStyleSourceSelectionRemovePlan({
+    styleSourceSelection,
+    styleSourceId,
+  });
+  return plan.type === "missing"
+    ? undefined
+    : {
+        op: "remove" as const,
+        path: [instanceId, "values", plan.index],
+      };
+};
+
+const createStyleSourceSelectionPayload = (
+  patches: BuildPatchPayload[number]["patches"]
+): BuildPatchPayload =>
+  compactBuildPatchPayload([{ namespace: "styleSourceSelections", patches }]);
+
+export const createStyleSourceSelectionAttachPayload = ({
+  instanceIds,
+  styleSourceSelections,
+  styleSources,
+  styleSourceId,
+  position,
+}: {
+  instanceIds: Instance["id"][];
+  styleSourceSelections: StyleSourceSelection[];
+  styleSources: Pick<StyleSources, "get">;
+  styleSourceId: StyleSource["id"];
+  position?: "before-local" | "after-local";
+}): BuildPatchPayload => {
+  const patches = instanceIds.flatMap((instanceId) => {
+    const patch = createStyleSourceSelectionAddPatch({
+      styleSourceSelection: styleSourceSelections.find(
+        (selection) => selection.instanceId === instanceId
+      ),
+      styleSources,
+      instanceId,
+      styleSourceId,
+      position,
+    });
+    return patch === undefined ? [] : [patch];
+  });
+  return createStyleSourceSelectionPayload(patches);
+};
+
+export const createStyleSourceSelectionDetachPayload = ({
+  instanceIds,
+  styleSourceSelections,
+  styleSourceId,
+}: {
+  instanceIds: Instance["id"][];
+  styleSourceSelections: StyleSourceSelection[];
+  styleSourceId: StyleSource["id"];
+}): BuildPatchPayload => {
+  const patches = instanceIds.flatMap((instanceId) => {
+    const patch = createStyleSourceSelectionRemovePatch({
+      styleSourceSelection: styleSourceSelections.find(
+        (selection) => selection.instanceId === instanceId
+      ),
+      instanceId,
+      styleSourceId,
+    });
+    return patch === undefined ? [] : [patch];
+  });
+  return createStyleSourceSelectionPayload(patches);
+};
+
+export const addStyleSourceToInstanceMutable = ({
+  styleSourceSelections,
+  styleSources,
+  instanceId,
+  styleSourceId,
+  position,
+}: {
+  styleSourceSelections: StyleSourceSelections;
+  styleSources: StyleSources;
+  instanceId: Instance["id"];
+  styleSourceId: StyleSource["id"];
+  position?: "before-local" | "after-local";
+}) => {
+  const styleSourceSelection = styleSourceSelections.get(instanceId);
+  const plan = createStyleSourceSelectionAddPlan({
+    styleSourceSelection,
+    styleSources,
+    instanceId,
+    styleSourceId,
+    position,
+  });
+  if (plan.type === "exists") {
+    return;
+  }
+  if (plan.type === "create") {
+    styleSourceSelections.set(instanceId, plan.selection);
+    return;
+  }
+  styleSourceSelection?.values.splice(plan.index, 0, styleSourceId);
+};
+
+export const removeStyleSourceFromInstanceMutable = ({
+  styleSourceSelections,
+  instanceId,
+  styleSourceId,
+}: {
+  styleSourceSelections: StyleSourceSelections;
+  instanceId: Instance["id"];
+  styleSourceId: StyleSource["id"];
+}) => {
+  const styleSourceSelection = styleSourceSelections.get(instanceId);
+  const plan = createStyleSourceSelectionRemovePlan({
+    styleSourceSelection,
+    styleSourceId,
+  });
+  if (plan.type === "missing") {
+    return;
+  }
+  styleSourceSelection?.values.splice(plan.index, 1);
+};
+
+type LocalStyleSourcePlan =
+  | {
+      styleSourceId: StyleSource["id"];
+      styleSource?: undefined;
+      selection?: undefined;
+      selectionValueIndex?: undefined;
+    }
+  | {
+      styleSourceId: StyleSource["id"];
+      styleSource: StyleSource;
+      selection: StyleSourceSelection;
+      selectionValueIndex?: undefined;
+    }
+  | {
+      styleSourceId: StyleSource["id"];
+      styleSource: StyleSource;
+      selection?: undefined;
+      selectionValueIndex: number;
+    };
+
+export const createLocalStyleSourcePlan = ({
+  styleSourceSelection,
+  styleSources,
+  instanceId,
+  createId = nanoid,
+}: {
+  styleSourceSelection: StyleSourceSelection | undefined;
+  styleSources: Pick<StyleSources, "get">;
+  instanceId: Instance["id"];
+  createId?: () => StyleSource["id"];
+}): LocalStyleSourcePlan => {
+  const localStyleSourceId = getLocalStyleSourceId({
+    styleSources,
+    styleSourceSelection,
+  });
+  if (localStyleSourceId !== undefined) {
+    return { styleSourceId: localStyleSourceId };
+  }
+
+  const styleSourceId = createId();
+  const styleSource: StyleSource = { type: "local", id: styleSourceId };
+  if (styleSourceSelection === undefined) {
+    return {
+      styleSourceId,
+      styleSource,
+      selection: { instanceId, values: [styleSourceId] },
+    };
+  }
+
+  return {
+    styleSourceId,
+    styleSource,
+    selectionValueIndex: styleSourceSelection.values.length,
+  };
+};
+
+export const getLocalStyleSourceIdWithCreated = ({
+  createdLocalSourceIds,
+  instanceId,
+  styleSources,
+  styleSourceSelection,
+}: {
+  createdLocalSourceIds: Map<Instance["id"], StyleSource["id"]>;
+  instanceId: Instance["id"];
+  styleSources: Pick<StyleSources, "get">;
+  styleSourceSelection: StyleSourceSelection | undefined;
+}) => {
+  const created = createdLocalSourceIds.get(instanceId);
+  if (created !== undefined) {
+    return created;
+  }
+  return getLocalStyleSourceId({ styleSources, styleSourceSelection });
+};
+
+export const createLocalStyleSourcePatchPlan = ({
+  createdLocalSourceIds,
+  instanceId,
+  styleSources,
+  styleSourceSelection,
+  shouldCreate,
+}: {
+  createdLocalSourceIds: Map<Instance["id"], StyleSource["id"]>;
+  instanceId: Instance["id"];
+  styleSources: Pick<StyleSources, "get">;
+  styleSourceSelection: StyleSourceSelection | undefined;
+  shouldCreate: boolean;
+}) => {
+  const existingStyleSourceId = getLocalStyleSourceIdWithCreated({
+    createdLocalSourceIds,
+    instanceId,
+    styleSources,
+    styleSourceSelection,
+  });
+  if (existingStyleSourceId !== undefined) {
+    return { styleSourceId: existingStyleSourceId, payload: [] };
+  }
+  if (shouldCreate === false) {
+    return;
+  }
+  const plan = createLocalStyleSourcePlan({
+    styleSourceSelection,
+    styleSources,
+    instanceId,
+  });
+  const { styleSourceId } = plan;
+  createdLocalSourceIds.set(instanceId, styleSourceId);
+  if (plan.styleSource === undefined) {
+    return { styleSourceId, payload: [] };
+  }
+  const selectionPatch =
+    plan.selection !== undefined
+      ? {
+          op: "add" as const,
+          path: [instanceId],
+          value: plan.selection,
+        }
+      : {
+          op: "add" as const,
+          path: [instanceId, "values", plan.selectionValueIndex],
+          value: styleSourceId,
+        };
+  return {
+    styleSourceId,
+    payload: [
+      {
+        namespace: "styleSources" as const,
+        patches: [
+          {
+            op: "add" as const,
+            path: [styleSourceId],
+            value: plan.styleSource,
+          },
+        ],
+      },
+      {
+        namespace: "styleSourceSelections" as const,
+        patches: [selectionPatch],
+      },
+    ],
+  };
+};
+
+export const createLocalStyleSourceClonePlan = ({
+  styleSourceSelections,
+  styleSources,
+  newInstanceIds,
+  createId = nanoid,
+}: {
+  styleSourceSelections: Iterable<StyleSourceSelection>;
+  styleSources: Iterable<StyleSource>;
+  newInstanceIds: Map<Instance["id"], Instance["id"]>;
+  createId?: () => StyleSource["id"];
+}) => {
+  const styleSourceById = new Map(
+    Array.from(styleSources, (styleSource) => [styleSource.id, styleSource])
+  );
+  const newLocalStyleSourceIds = new Map<
+    StyleSource["id"],
+    StyleSource["id"]
+  >();
+  const getNextStyleSourceId = (styleSourceId: StyleSource["id"]) => {
+    const styleSource = styleSourceById.get(styleSourceId);
+    if (styleSource?.type !== "local") {
+      return styleSourceId;
+    }
+    let nextStyleSourceId = newLocalStyleSourceIds.get(styleSourceId);
+    if (nextStyleSourceId === undefined) {
+      nextStyleSourceId = createId();
+      newLocalStyleSourceIds.set(styleSourceId, nextStyleSourceId);
+    }
+    return nextStyleSourceId;
+  };
+
+  const selections: StyleSourceSelection[] = [];
+  for (const selection of styleSourceSelections) {
+    const nextInstanceId = newInstanceIds.get(selection.instanceId);
+    if (nextInstanceId === undefined) {
+      continue;
+    }
+    selections.push({
+      ...selection,
+      instanceId: nextInstanceId,
+      values: selection.values.map(getNextStyleSourceId),
+    });
+  }
+
+  const localStyleSources: StyleSource[] = [];
+  for (const [styleSourceId, nextStyleSourceId] of newLocalStyleSourceIds) {
+    const styleSource = styleSourceById.get(styleSourceId);
+    if (styleSource !== undefined) {
+      localStyleSources.push({
+        ...styleSource,
+        id: nextStyleSourceId,
+      });
+    }
+  }
+
+  return {
+    localStyleSources,
+    localStyleSourceIds: newLocalStyleSourceIds,
+    selections,
+  };
+};
+
+export const createStyleClonePayload = ({
+  styleSourceSelections,
+  styleSources,
+  styles,
+  nextIdById,
+}: {
+  styleSourceSelections: Iterable<StyleSourceSelection>;
+  styleSources: Iterable<StyleSource>;
+  styles: Iterable<StyleDecl>;
+  nextIdById: Map<Instance["id"], Instance["id"]>;
+}): z.infer<typeof buildPatchTransaction>["payload"] => {
+  const clonePlan = createLocalStyleSourceClonePlan({
+    styleSourceSelections,
+    styleSources,
+    newInstanceIds: nextIdById,
+  });
+  const selectionPatches = clonePlan.selections.map((selection) => ({
+    op: "add" as const,
+    path: [selection.instanceId],
+    value: selection,
+  }));
+  const styleSourcePatches = clonePlan.localStyleSources.map((styleSource) => ({
+    op: "add" as const,
+    path: [styleSource.id],
+    value: styleSource,
+  }));
+  const stylesMap = new Map(
+    Array.from(styles, (styleDecl) => [getStyleDeclKey(styleDecl), styleDecl])
+  );
+  const stylePatches = cloneStyles(
+    stylesMap,
+    clonePlan.localStyleSourceIds
+  ).map((styleDecl) => ({
+    op: "add" as const,
+    path: [getStyleDeclKey(styleDecl)],
+    value: styleDecl,
+  }));
+
+  return compactBuildPatchPayload([
+    { namespace: "styleSources", patches: styleSourcePatches },
+    { namespace: "styleSourceSelections", patches: selectionPatches },
+    { namespace: "styles", patches: stylePatches },
+  ]);
+};
+
+export const createDesignTokenExtractionPayload = ({
+  tokenId,
+  tokenName,
+  instanceIds,
+  styleSources,
+  styleSourceSelections,
+  styles,
+  removeLocalProps,
+}: {
+  tokenId: StyleSource["id"];
+  tokenName: string;
+  instanceIds: Instance["id"][];
+  styleSources: Pick<StyleSources, "get">;
+  styleSourceSelections: Iterable<StyleSourceSelection>;
+  styles: Iterable<StyleDecl>;
+  removeLocalProps?: string[];
+}): { payload: BuildPatchPayload; styleKeys: string[] } => {
+  const selectionByInstanceId = new Map(
+    Array.from(styleSourceSelections, (selection) => [
+      selection.instanceId,
+      selection,
+    ])
+  );
+  const selectedLocalSourceIds = new Set<StyleSource["id"]>();
+  for (const instanceId of instanceIds) {
+    const styleSourceId = getLocalStyleSourceIdWithCreated({
+      createdLocalSourceIds: new Map(),
+      instanceId,
+      styleSources,
+      styleSourceSelection: selectionByInstanceId.get(instanceId),
+    });
+    if (styleSourceId !== undefined) {
+      selectedLocalSourceIds.add(styleSourceId);
+    }
+  }
+  const properties =
+    removeLocalProps === undefined ? undefined : new Set(removeLocalProps);
+  const tokenStylePatches = [];
+  const localStyleRemovePatches = [];
+  const coveredKeys = new Set<string>();
+  for (const declaration of styles) {
+    if (
+      selectedLocalSourceIds.has(declaration.styleSourceId) === false ||
+      (properties !== undefined &&
+        properties.has(declaration.property) === false)
+    ) {
+      continue;
+    }
+    const tokenDeclaration = updateStyleDecl(declaration, {
+      styleSourceId: tokenId,
+    });
+    const tokenKey = getStyleDeclKey(tokenDeclaration);
+    if (coveredKeys.has(tokenKey) === false) {
+      coveredKeys.add(tokenKey);
+      tokenStylePatches.push({
+        op: "add" as const,
+        path: [tokenKey],
+        value: tokenDeclaration,
+      });
+    }
+    if (properties !== undefined) {
+      localStyleRemovePatches.push({
+        op: "remove" as const,
+        path: [getStyleDeclKey(declaration)],
+      });
+    }
+  }
+  const selectionPatches = instanceIds.flatMap((instanceId) => {
+    const patch = createStyleSourceSelectionAddPatch({
+      styleSourceSelection: selectionByInstanceId.get(instanceId),
+      styleSources,
+      instanceId,
+      styleSourceId: tokenId,
+    });
+    return patch === undefined ? [] : [patch];
+  });
+
+  return {
+    payload: compactBuildPatchPayload([
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "add",
+            path: [tokenId],
+            value: createTokenStyleSource({ id: tokenId, name: tokenName }),
+          },
+        ],
+      },
+      {
+        namespace: "styles",
+        patches: [...tokenStylePatches, ...localStyleRemovePatches],
+      },
+      {
+        namespace: "styleSourceSelections",
+        patches: selectionPatches,
+      },
+    ]),
+    styleKeys: tokenStylePatches.map((patch) => String(patch.path[0])),
+  };
+};
+
+export const getOrCreateLocalStyleSourceIdMutable = ({
+  styleSourceSelections,
+  styleSources,
+  instanceId,
+  createId = nanoid,
+}: {
+  styleSourceSelections: StyleSourceSelections;
+  styleSources: StyleSources;
+  instanceId: Instance["id"];
+  createId?: () => StyleSource["id"];
+}) => {
+  const styleSourceSelection = styleSourceSelections.get(instanceId);
+  const plan = createLocalStyleSourcePlan({
+    styleSources,
+    styleSourceSelection,
+    instanceId,
+    createId,
+  });
+  if (plan.styleSource !== undefined) {
+    styleSources.set(plan.styleSourceId, plan.styleSource);
+  }
+  if (plan.selection !== undefined) {
+    styleSourceSelections.set(instanceId, plan.selection);
+  } else if (plan.selectionValueIndex !== undefined) {
+    styleSourceSelection?.values.splice(
+      plan.selectionValueIndex,
+      0,
+      plan.styleSourceId
+    );
+  }
+  return plan.styleSourceId;
+};
+
+export const createStyleDecl = ({
+  styleSourceId,
+  breakpointId,
+  property,
+  value,
+  state,
+  listed,
+}: {
+  styleSourceId: StyleDecl["styleSourceId"];
+  breakpointId: StyleDecl["breakpointId"];
+  property: unknown;
+  value: unknown;
+  state?: StyleDecl["state"];
+  listed?: StyleDecl["listed"];
+}) =>
+  styleDeclSchema.parse({
+    styleSourceId,
+    breakpointId,
+    state,
+    property,
+    value,
+    listed,
+  });
+
+export const createStyleDeclFromInput = ({
+  styleSourceId,
+  property,
+  value,
+  breakpoint = DEFAULT_BREAKPOINT_ID,
+  state,
+}: {
+  styleSourceId: StyleSource["id"];
+  property: unknown;
+  value: unknown;
+  breakpoint?: Breakpoint["id"];
+  state?: StyleDecl["state"];
+}): StyleDecl =>
+  createStyleDecl({
+    styleSourceId,
+    breakpointId: breakpoint,
+    state,
+    property,
+    value,
+  });
+
+export const setStyleDeclMutable = ({
+  styles,
+  styleSourceId,
+  breakpointId,
+  property,
+  value,
+  state,
+  listed,
+}: {
+  styles: Styles;
+  styleSourceId: StyleDecl["styleSourceId"];
+  breakpointId: StyleDecl["breakpointId"];
+  property: unknown;
+  value: unknown;
+  state?: StyleDecl["state"];
+  listed?: StyleDecl["listed"];
+}) => {
+  const styleDecl = createStyleDecl({
+    styleSourceId,
+    breakpointId,
+    property,
+    value,
+    state,
+    listed,
+  });
+  const styleKey = getStyleDeclKey(styleDecl);
+  styles.set(styleKey, styleDecl);
+  return { styleDecl, styleKey };
+};
+
+export const deleteStyleDeclMutable = ({
+  styles,
+  styleSourceId,
+  breakpointId,
+  property,
+  state,
+}: {
+  styles: Styles;
+  styleSourceId: StyleDecl["styleSourceId"];
+  breakpointId: StyleDecl["breakpointId"];
+  property: unknown;
+  state?: StyleDecl["state"];
+}) => {
+  const styleKey = getStyleDeclKey({
+    styleSourceId,
+    breakpointId,
+    state,
+    property: property as StyleDecl["property"],
+  });
+  return styles.delete(styleKey);
+};
+
+export const createDesignTokenStyleInputs = (input: {
+  styles?: Record<string, unknown>;
+  declarations?: Array<{
+    property: string;
+    value?: unknown;
+    breakpoint?: string;
+    state?: StyleDecl["state"];
+  }>;
+}): Array<{
+  property: string;
+  value?: unknown;
+  breakpoint?: string;
+  state?: StyleDecl["state"];
+}> => [
+  ...Object.entries(input.styles ?? {}).map(([property, value]) => ({
+    property,
+    value,
+  })),
+  ...(input.declarations ?? []),
+];
+
+export const styleUpdateInput = z.object({
+  instanceId: z.string(),
+  property: z.string(),
+  value: z.unknown(),
+  breakpoint: z.string().optional(),
+  state: z.string().optional(),
+  createLocalIfMissing: z.boolean().optional(),
+});
+
+export const styleDeleteInput = z.object({
+  instanceId: z.string(),
+  property: z.string(),
+  breakpoint: z.string().optional(),
+  state: z.string().optional(),
+});
+
+export const styleReplaceInput = z.object({
+  property: z.string(),
+  fromValue: z.unknown(),
+  toValue: z.unknown(),
+  pageId: z.string().optional(),
+  pagePath: z.string().optional(),
+});
+
+export const designTokenStyleInput = z.object({
+  property: z.string(),
+  value: z.unknown(),
+  breakpoint: z.string().optional(),
+  state: z.string().optional(),
+});
+
+export const designTokenCreateInput = z.object({
+  tokenId: z.string().optional(),
+  name: z.string().min(1),
+  styles: z.record(z.unknown()).optional(),
+  declarations: z.array(designTokenStyleInput).optional(),
+});
+
+const createStyleRemovePayload = (styleKeys: string[]): BuildPatchPayload =>
+  styleKeys.length === 0
+    ? []
+    : [
+        {
+          namespace: "styles",
+          patches: styleKeys.map((key) => ({
+            op: "remove" as const,
+            path: [key],
+          })),
+        },
+      ];
+
+export const createStyleDeclarationUpdatePayload = ({
+  updates,
+  styleSources,
+  styleSourceSelections,
+  styles,
+  createdLocalSourceIds = new Map(),
+}: {
+  updates: Array<z.infer<typeof styleUpdateInput>>;
+  styleSources: Pick<StyleSources, "get">;
+  styleSourceSelections: Iterable<StyleSourceSelection>;
+  styles: Iterable<StyleDecl>;
+  createdLocalSourceIds?: Map<Instance["id"], StyleSource["id"]>;
+}): {
+  payload: BuildPatchPayload;
+  styleKeys: string[];
+  missingLocalStyleSourceInstanceIds: Instance["id"][];
+} => {
+  const payload: BuildPatchPayload = [];
+  const stylePatches = [];
+  const styleKeys = new Set(
+    Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
+  );
+  const styleSourceSelectionByInstanceId = new Map(
+    Array.from(styleSourceSelections, (selection) => [
+      selection.instanceId,
+      selection,
+    ])
+  );
+  const missingLocalStyleSourceInstanceIds = [];
+
+  for (const update of updates) {
+    const result = createLocalStyleSourcePatchPlan({
+      createdLocalSourceIds,
+      instanceId: update.instanceId,
+      styleSources,
+      styleSourceSelection: styleSourceSelectionByInstanceId.get(
+        update.instanceId
+      ),
+      shouldCreate: update.createLocalIfMissing ?? true,
+    });
+    if (result === undefined) {
+      missingLocalStyleSourceInstanceIds.push(update.instanceId);
+      continue;
+    }
+    payload.push(...result.payload);
+    const nextStyleDecl = createStyleDeclFromInput({
+      styleSourceId: result.styleSourceId,
+      breakpoint: update.breakpoint,
+      property: update.property,
+      value: update.value,
+      state: update.state,
+    });
+    const key = getStyleDeclKey(nextStyleDecl);
+    stylePatches.push({
+      op: styleKeys.has(key) ? ("replace" as const) : ("add" as const),
+      path: [key],
+      value: nextStyleDecl,
+    });
+    styleKeys.add(key);
+  }
+
+  if (stylePatches.length > 0) {
+    payload.push({ namespace: "styles", patches: stylePatches });
+  }
+
+  return {
+    payload,
+    styleKeys: stylePatches.map((patch) => String(patch.path[0])),
+    missingLocalStyleSourceInstanceIds,
+  };
+};
+
+export const createStyleDeclarationDeletePayload = ({
+  deletions,
+  styleSources,
+  styleSourceSelections,
+  styles,
+}: {
+  deletions: Array<z.infer<typeof styleDeleteInput>>;
+  styleSources: Pick<StyleSources, "get">;
+  styleSourceSelections: Iterable<StyleSourceSelection>;
+  styles: Iterable<StyleDecl>;
+}): { payload: BuildPatchPayload; styleKeys: string[] } => {
+  const styleKeys = new Set<string>();
+  const styleSourceSelectionByInstanceId = new Map(
+    Array.from(styleSourceSelections, (selection) => [
+      selection.instanceId,
+      selection,
+    ])
+  );
+  const existingStyleKeys = new Set(
+    Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
+  );
+
+  for (const deletion of deletions) {
+    const styleSourceId = getLocalStyleSourceIdWithCreated({
+      createdLocalSourceIds: new Map(),
+      instanceId: deletion.instanceId,
+      styleSources,
+      styleSourceSelection: styleSourceSelectionByInstanceId.get(
+        deletion.instanceId
+      ),
+    });
+    if (styleSourceId === undefined) {
+      continue;
+    }
+    const key = getStyleDeclKeyFromInput({
+      styleSourceId,
+      breakpoint: deletion.breakpoint,
+      state: deletion.state,
+      property: deletion.property,
+    });
+    if (existingStyleKeys.has(key)) {
+      styleKeys.add(key);
+    }
+  }
+
+  const removedStyleKeys = Array.from(styleKeys);
+  return {
+    payload: createStyleRemovePayload(removedStyleKeys),
+    styleKeys: removedStyleKeys,
+  };
+};
+
+export const createStyleValueReplacementPayload = ({
+  styles,
+  styleSources,
+  styleSourceSelections,
+  instanceIds,
+  property,
+  fromValue,
+  toValue,
+}: {
+  styles: Iterable<StyleDecl>;
+  styleSources: Iterable<StyleSource>;
+  styleSourceSelections: Iterable<StyleSourceSelection>;
+  instanceIds?: Set<Instance["id"]>;
+  property: string;
+  fromValue: unknown;
+  toValue: unknown;
+}): { payload: BuildPatchPayload; styleKeys: string[] } => {
+  const styleSourceById = new Map(
+    Array.from(styleSources, (styleSource) => [styleSource.id, styleSource])
+  );
+  const selectedLocalSources = new Set(
+    Array.from(styleSourceSelections)
+      .filter(
+        (selection) =>
+          instanceIds === undefined || instanceIds.has(selection.instanceId)
+      )
+      .flatMap((selection) => selection.values)
+      .filter(
+        (styleSourceId) => styleSourceById.get(styleSourceId)?.type === "local"
+      )
+  );
+  const patches = Array.from(styles).flatMap((declaration) => {
+    if (
+      declaration.property !== property ||
+      selectedLocalSources.has(declaration.styleSourceId) === false ||
+      deepEqual(declaration.value, fromValue) === false
+    ) {
+      return [];
+    }
+    const nextStyleDecl = updateStyleDecl(declaration, { value: toValue });
+    return [
+      {
+        op: "replace" as const,
+        path: [getStyleDeclKey(declaration)],
+        value: nextStyleDecl,
+      },
+    ];
+  });
+
+  return {
+    payload: compactBuildPatchPayload([{ namespace: "styles", patches }]),
+    styleKeys: patches.map((patch) => String(patch.path[0])),
+  };
+};
+
+export const createDesignTokenCreatePayload = ({
+  tokens,
+  styleSources,
+}: {
+  tokens: Array<z.infer<typeof designTokenCreateInput>>;
+  styleSources: StyleSources;
+}): {
+  payload: BuildPatchPayload;
+  tokenIds: StyleSource["id"][];
+  errors: Array<
+    | { type: "duplicate-id"; tokenId: StyleSource["id"] }
+    | {
+        type: "invalid-name";
+        tokenId: StyleSource["id"];
+        error: ReturnType<typeof validateStyleSourceName>;
+      }
+  >;
+} => {
+  const styleSourcePatches = [];
+  const stylePatches = [];
+  const tokenIds = [];
+  const errors: Array<
+    | { type: "duplicate-id"; tokenId: StyleSource["id"] }
+    | {
+        type: "invalid-name";
+        tokenId: StyleSource["id"];
+        error: ReturnType<typeof validateStyleSourceName>;
+      }
+  > = [];
+
+  for (const token of tokens) {
+    const tokenId = token.tokenId ?? nanoid();
+    if (styleSources.has(tokenId)) {
+      errors.push({ type: "duplicate-id", tokenId });
+      continue;
+    }
+    const nameError = validateStyleSourceName({
+      id: tokenId,
+      name: token.name,
+      styleSources,
+    });
+    if (nameError !== undefined) {
+      errors.push({ type: "invalid-name", tokenId, error: nameError });
+      continue;
+    }
+    tokenIds.push(tokenId);
+    const styleSource = createTokenStyleSource({
+      id: tokenId,
+      name: token.name,
+    });
+    styleSources.set(tokenId, styleSource);
+    styleSourcePatches.push({
+      op: "add" as const,
+      path: [tokenId],
+      value: styleSource,
+    });
+    for (const declaration of createDesignTokenStyleInputs(token)) {
+      const style = createStyleDeclFromInput({
+        styleSourceId: tokenId,
+        breakpoint: declaration.breakpoint,
+        property: declaration.property,
+        value: declaration.value,
+        state: declaration.state,
+      });
+      stylePatches.push({
+        op: "add" as const,
+        path: [getStyleDeclKey(style)],
+        value: style,
+      });
+    }
+  }
+
+  return {
+    payload: compactBuildPatchPayload([
+      ...(styleSourcePatches.length === 0
+        ? []
+        : [
+            { namespace: "styleSources" as const, patches: styleSourcePatches },
+          ]),
+      ...(stylePatches.length === 0
+        ? []
+        : [{ namespace: "styles" as const, patches: stylePatches }]),
+    ]),
+    tokenIds,
+    errors,
+  };
+};
+
+export const createDesignTokenStyleUpdatePayload = ({
+  designTokenId,
+  updates,
+  styles,
+}: {
+  designTokenId: StyleSource["id"];
+  updates: Array<z.infer<typeof designTokenStyleInput>>;
+  styles: Iterable<StyleDecl>;
+}): { payload: BuildPatchPayload; styleKeys: string[] } => {
+  const styleKeys = new Set(
+    Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
+  );
+  const patches = updates.map((update) => {
+    const style = createStyleDeclFromInput({
+      styleSourceId: designTokenId,
+      breakpoint: update.breakpoint,
+      property: update.property,
+      value: update.value,
+      state: update.state,
+    });
+    const key = getStyleDeclKey(style);
+    const patch = {
+      op: styleKeys.has(key) ? ("replace" as const) : ("add" as const),
+      path: [key],
+      value: style,
+    };
+    styleKeys.add(key);
+    return patch;
+  });
+
+  return {
+    payload: compactBuildPatchPayload([{ namespace: "styles", patches }]),
+    styleKeys: patches.map((patch) => String(patch.path[0])),
+  };
+};
+
+export const createDesignTokenStyleDeletePayload = ({
+  designTokenId,
+  deletions,
+  styles,
+}: {
+  designTokenId: StyleSource["id"];
+  deletions: Array<Omit<z.infer<typeof styleDeleteInput>, "instanceId">>;
+  styles: Iterable<StyleDecl>;
+}): { payload: BuildPatchPayload; styleKeys: string[] } => {
+  const existingStyleKeys = new Set(
+    Array.from(styles, (styleDecl) => getStyleDeclKey(styleDecl))
+  );
+  const styleKeys = deletions.flatMap((deletion) => {
+    const key = getStyleDeclKeyFromInput({
+      styleSourceId: designTokenId,
+      breakpoint: deletion.breakpoint,
+      state: deletion.state,
+      property: deletion.property,
+    });
+    return existingStyleKeys.has(key) ? [key] : [];
+  });
+
+  return {
+    payload: createStyleRemovePayload(styleKeys),
+    styleKeys,
+  };
+};
+
+export const getStyleDeclKeyFromInput = ({
+  styleSourceId,
+  property,
+  breakpoint = DEFAULT_BREAKPOINT_ID,
+  state,
+}: {
+  styleSourceId: StyleDecl["styleSourceId"];
+  property: unknown;
+  breakpoint?: StyleDecl["breakpointId"];
+  state?: StyleDecl["state"];
+}) =>
+  getStyleDeclKey({
+    styleSourceId,
+    breakpointId: breakpoint,
+    state,
+    property: property as StyleDecl["property"],
+  });
+
+export const serializeStyleDeclarations = ({
+  styles,
+  styleSources,
+  styleSourceSelections,
+  instanceIds,
+  breakpoint,
+  state,
+  property,
+  propertyFilter,
+  includeTokens,
+}: {
+  styles: Iterable<StyleDecl>;
+  styleSources: Iterable<StyleSource>;
+  styleSourceSelections: Iterable<StyleSourceSelection>;
+  instanceIds?: Set<Instance["id"]>;
+  breakpoint?: string;
+  state?: string;
+  property?: string;
+  propertyFilter?: string;
+  includeTokens?: boolean;
+}) => {
+  const sourceById = new Map(
+    Array.from(styleSources, (styleSource) => [styleSource.id, styleSource])
+  );
+  const selectionsBySource = new Map<StyleSource["id"], Instance["id"][]>();
+  for (const selection of styleSourceSelections) {
+    for (const styleSourceId of selection.values) {
+      const list = selectionsBySource.get(styleSourceId) ?? [];
+      list.push(selection.instanceId);
+      selectionsBySource.set(styleSourceId, list);
+    }
+  }
+
+  const declarations = [];
+  for (const styleDecl of styles) {
+    if (breakpoint !== undefined && styleDecl.breakpointId !== breakpoint) {
+      continue;
+    }
+    if (state !== undefined && styleDecl.state !== state) {
+      continue;
+    }
+    if (property !== undefined && styleDecl.property !== property) {
+      continue;
+    }
+    if (
+      propertyFilter !== undefined &&
+      styleDecl.property.includes(propertyFilter) === false
+    ) {
+      continue;
+    }
+
+    const source = sourceById.get(styleDecl.styleSourceId);
+    if (source?.type === "token" && includeTokens !== true) {
+      continue;
+    }
+    const sourceInstanceIds = selectionsBySource.get(styleDecl.styleSourceId);
+    for (const instanceId of sourceInstanceIds ?? []) {
+      if (instanceIds !== undefined && instanceIds.has(instanceId) === false) {
+        continue;
+      }
+      declarations.push({
+        instanceId,
+        styleSourceId: styleDecl.styleSourceId,
+        property: styleDecl.property,
+        value: styleDecl.value,
+        breakpoint: styleDecl.breakpointId,
+        state: styleDecl.state,
+        source: source?.type ?? "local",
+      });
+    }
+  }
+  return declarations;
+};
+
+export const serializeDesignTokens = ({
+  styleSources,
+  styles,
+  styleSourceSelections,
+  filter,
+  withUsage,
+  sort,
+}: {
+  styleSources: Iterable<StyleSource> | Map<string, StyleSource>;
+  styles: Iterable<StyleDecl> | Map<string, StyleDecl>;
+  styleSourceSelections:
+    | Iterable<StyleSourceSelection>
+    | Map<string, StyleSourceSelection>;
+  filter?: string;
+  withUsage?: boolean;
+  sort?: "name" | "usage";
+}) => {
+  const shouldCountUsage = withUsage === true || sort === "usage";
+  const styleDecls =
+    styles instanceof Map ? Array.from(styles.values()) : Array.from(styles);
+  const selections =
+    styleSourceSelections instanceof Map
+      ? Array.from(styleSourceSelections.values())
+      : Array.from(styleSourceSelections);
+  const tokens = (
+    styleSources instanceof Map
+      ? Array.from(styleSources.values())
+      : Array.from(styleSources)
+  )
+    .filter((styleSource) => styleSource.type === "token")
+    .filter(
+      (styleSource) => filter === undefined || styleSource.name.includes(filter)
+    )
+    .map((styleSource) => {
+      const tokenStyles = Object.fromEntries(
+        styleDecls
+          .filter((style) => style.styleSourceId === styleSource.id)
+          .map((style) => [style.property, style.value])
+      );
+      const usageCount = selections.filter((selection) =>
+        selection.values.includes(styleSource.id)
+      ).length;
+      return {
+        id: styleSource.id,
+        name: styleSource.name,
+        styles: tokenStyles,
+        usageCount: shouldCountUsage ? usageCount : undefined,
+      };
+    });
+
+  tokens.sort((left, right) =>
+    sort === "usage"
+      ? (right.usageCount ?? 0) - (left.usageCount ?? 0)
+      : left.name.localeCompare(right.name)
+  );
+  return { tokens };
+};
+
+export const updateStyleDecl = (
+  declaration: StyleDecl,
+  values: Partial<Omit<StyleDecl, "property" | "value">> & {
+    property?: unknown;
+    value?: unknown;
+  }
+) =>
+  styleDeclSchema.parse({
+    ...declaration,
+    ...values,
+  });
 
 /**
  * Generates a normalized CSS string for comparing style source styles.
@@ -694,11 +2049,7 @@ export type RenameStyleSourceError =
   | { type: "minlength"; id: StyleSource["id"] }
   | { type: "duplicate"; id: StyleSource["id"] };
 
-/**
- * Validate and perform a style source rename.
- * Returns an error if validation fails, undefined on success.
- */
-export const validateAndRenameStyleSource = ({
+export const validateStyleSourceName = ({
   id,
   name,
   styleSources,
@@ -718,6 +2069,25 @@ export const validateAndRenameStyleSource = ({
     ) {
       return { type: "duplicate", id };
     }
+  }
+};
+
+/**
+ * Validate and perform a style source rename.
+ * Returns an error if validation fails, undefined on success.
+ */
+export const validateAndRenameStyleSource = ({
+  id,
+  name,
+  styleSources,
+}: {
+  id: StyleSource["id"];
+  name: string;
+  styleSources: StyleSources;
+}): RenameStyleSourceError | undefined => {
+  const error = validateStyleSourceName({ id, name, styleSources });
+  if (error !== undefined) {
+    return error;
   }
   return;
 };

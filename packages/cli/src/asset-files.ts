@@ -1,11 +1,10 @@
 import { constants, createWriteStream } from "node:fs";
-import { copyFile, readFile, rename, rm } from "node:fs/promises";
+import { copyFile, rename, rm } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import { pipeline } from "node:stream/promises";
 import pLimit from "p-limit";
 import { getAssetUrl, type Asset } from "@webstudio-is/sdk";
 import { createFolderIfNotExists, isFileExists } from "./fs-utils";
-import { uploadAsset } from "@webstudio-is/http-client";
 import { isAssetFileName } from "@webstudio-is/protocol";
 
 export const LOCAL_ASSETS_DIR = ".webstudio/assets";
@@ -38,17 +37,6 @@ const runAssetTasks = async ({
       })
     )
   );
-};
-
-const formatError = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
-
-const retryOnce = async (task: () => Promise<void>) => {
-  try {
-    await task();
-  } catch {
-    await task();
-  }
 };
 
 export const getLocalAssetPath = (
@@ -192,58 +180,4 @@ export const materializeAssetFiles = async ({
         targetAssetsDirectory,
       }),
   });
-};
-
-export const uploadAssetFiles = async ({
-  assets,
-  assetsDirectory = LOCAL_ASSETS_DIR,
-  authToken,
-  headers,
-  origin,
-  projectId,
-}: {
-  assets: Asset[];
-  assetsDirectory?: string;
-  authToken: string;
-  headers?: Record<string, string | undefined>;
-  origin: string;
-  projectId: string;
-}): Promise<void> => {
-  const failedUploads: { asset: Asset; error: unknown }[] = [];
-
-  await runAssetTasks({
-    assets,
-    operation: "uploading",
-    task: async (asset) => {
-      try {
-        const file = await readFile(
-          getLocalAssetPath(asset.name, assetsDirectory)
-        );
-        const upload = async () => {
-          await uploadAsset({
-            authToken,
-            headers,
-            origin,
-            projectId,
-            upload: {
-              asset,
-              data: new Blob([new Uint8Array(file)]),
-            },
-          });
-        };
-
-        await retryOnce(upload);
-      } catch (error) {
-        failedUploads.push({ asset, error });
-      }
-    },
-  });
-
-  if (failedUploads.length > 0) {
-    throw new Error(
-      `Failed to upload assets: ${failedUploads
-        .map(({ asset, error }) => `${asset.name}: ${formatError(error)}`)
-        .join("; ")}`
-    );
-  }
 };

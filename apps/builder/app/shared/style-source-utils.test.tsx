@@ -19,6 +19,7 @@ import {
   deleteStyleSourceMutable,
   findUnusedTokens,
   deleteStyleSourcesMutable,
+  validateStyleSourceName,
   validateAndRenameStyleSource,
   renameStyleSourceMutable,
   toggleStyleSourceLockMutable,
@@ -28,6 +29,42 @@ import {
   findDuplicateTokens,
   findTokenWithMatchingStyles,
   detectTokenConflicts,
+  getLocalStyleSourceId,
+  getStyleSourceInsertionIndex,
+  createStyleSourceSelectionAddPlan,
+  createStyleSourceSelectionAddPatch,
+  createStyleSourceSelectionAttachPayload,
+  createStyleSourceSelectionDetachPayload,
+  createStyleSourceSelectionRemovePatch,
+  createStyleSourceSelectionRemovePlan,
+  addStyleSourceToInstanceMutable,
+  removeStyleSourceFromInstanceMutable,
+  createDesignTokenExtractionPayload,
+  createDesignTokenCreatePayload,
+  createDesignTokenStyleDeletePayload,
+  createDesignTokenStyleUpdatePayload,
+  createStyleDeclarationDeletePayload,
+  createStyleDeclarationUpdatePayload,
+  createStyleValueReplacementPayload,
+  createLocalStyleSourcePatchPlan,
+  createLocalStyleSourcePlan,
+  createLocalStyleSourceClonePlan,
+  getLocalStyleSourceIdWithCreated,
+  getOrCreateLocalStyleSourceIdMutable,
+  createDesignTokenStyleInputs,
+  createStyleDeclFromInput,
+  createStyleDecl as createStyleDeclValue,
+  designTokenCreateInput,
+  deleteStyleDeclMutable,
+  getStyleDeclKeyFromInput,
+  createTokenStyleSource,
+  findDesignToken,
+  setStyleDeclMutable,
+  styleDeleteInput,
+  styleReplaceInput,
+  styleUpdateInput,
+  updateStyleDecl,
+  serializeDesignTokens,
 } from "./style-source-utils";
 
 enableMapSet();
@@ -50,9 +87,1483 @@ const createStyleDecl = (
   value: typeof value === "string" ? { type: "unparsed", value } : value,
 });
 
+const createStyleDeclMap = (styles: StyleDecl[]) =>
+  new Map(
+    styles.map((style) => [
+      `${style.styleSourceId}:${style.breakpointId}:${style.property}:${style.state ?? ""}`,
+      style,
+    ])
+  );
+
+const baseBreakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+const token = (
+  id: string,
+  name = "Token",
+  rest: Partial<Extract<StyleSource, { type: "token" }>> = {}
+): Extract<StyleSource, { type: "token" }> => ({
+  type: "token",
+  id,
+  name,
+  ...rest,
+});
+const local = (id: string): Extract<StyleSource, { type: "local" }> => ({
+  type: "local",
+  id,
+});
+
+const sources = (items: StyleSource[]) => toMap<StyleSource>(items);
+
+describe("serializeDesignTokens", () => {
+  test("filters, sorts, includes styles, and counts usage when requested", () => {
+    expect(
+      serializeDesignTokens({
+        styleSources: sources([
+          token("secondary", "Secondary"),
+          token("primary", "Primary"),
+          local("local"),
+        ]),
+        styles: createStyleDeclMap([
+          createStyleDecl("primary", "base", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+          createStyleDecl("secondary", "base", "marginTop", {
+            type: "unit",
+            value: 10,
+            unit: "px",
+          }),
+        ]),
+        styleSourceSelections: [
+          { instanceId: "box-1", values: ["primary", "local"] },
+          { instanceId: "box-2", values: ["primary"] },
+          { instanceId: "box-3", values: ["secondary"] },
+        ],
+        filter: "Primary",
+        withUsage: true,
+      })
+    ).toEqual({
+      tokens: [
+        {
+          id: "primary",
+          name: "Primary",
+          styles: { color: { type: "keyword", value: "red" } },
+          usageCount: 2,
+        },
+      ],
+    });
+
+    expect(
+      serializeDesignTokens({
+        styleSources: sources([
+          token("secondary", "Secondary"),
+          token("primary", "Primary"),
+        ]),
+        styles: [],
+        styleSourceSelections: [
+          { instanceId: "box-1", values: ["primary"] },
+          { instanceId: "box-2", values: ["secondary"] },
+          { instanceId: "box-3", values: ["secondary"] },
+        ],
+        sort: "usage",
+      }).tokens.map((item) => item.id)
+    ).toEqual(["secondary", "primary"]);
+  });
+});
+
+describe("getLocalStyleSourceId", () => {
+  test("returns local style source id from selection", () => {
+    const styleSources = sources([
+      { id: "token", type: "token", name: "Token" },
+      local("local"),
+    ]);
+
+    expect(
+      getLocalStyleSourceId({
+        styleSources,
+        styleSourceSelection: {
+          instanceId: "instance",
+          values: ["token", "local"],
+        },
+      })
+    ).toBe("local");
+  });
+
+  test("returns undefined when selection has no local source", () => {
+    const styleSources = sources([
+      { id: "token", type: "token", name: "Token" },
+    ]);
+
+    expect(
+      getLocalStyleSourceId({
+        styleSources,
+        styleSourceSelection: {
+          instanceId: "instance",
+          values: ["token"],
+        },
+      })
+    ).toBeUndefined();
+  });
+});
+
+describe("style declaration helpers", () => {
+  test("parse style and design token inputs used by the API", () => {
+    expect(
+      styleUpdateInput.parse({
+        instanceId: "box",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+        createLocalIfMissing: true,
+      })
+    ).toEqual({
+      instanceId: "box",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+      createLocalIfMissing: true,
+    });
+
+    expect(
+      styleDeleteInput.parse({ instanceId: "box", property: "color" })
+    ).toEqual({
+      instanceId: "box",
+      property: "color",
+    });
+
+    expect(
+      styleReplaceInput.parse({
+        property: "color",
+        fromValue: { type: "keyword", value: "red" },
+        toValue: { type: "keyword", value: "blue" },
+        pagePath: "/about",
+      })
+    ).toEqual({
+      property: "color",
+      fromValue: { type: "keyword", value: "red" },
+      toValue: { type: "keyword", value: "blue" },
+      pagePath: "/about",
+    });
+
+    expect(
+      designTokenCreateInput.parse({
+        name: "Primary",
+        styles: { color: { type: "keyword", value: "red" } },
+        declarations: [
+          {
+            property: "fontSize",
+            value: { type: "unit", value: 16, unit: "px" },
+          },
+        ],
+      })
+    ).toEqual({
+      name: "Primary",
+      styles: { color: { type: "keyword", value: "red" } },
+      declarations: [
+        {
+          property: "fontSize",
+          value: { type: "unit", value: 16, unit: "px" },
+        },
+      ],
+    });
+  });
+
+  test("reject empty design token names", () => {
+    expect(() => designTokenCreateInput.parse({ name: "" })).toThrow();
+  });
+
+  test("creates token style sources and omits unlocked state", () => {
+    expect(createTokenStyleSource({ id: "token", name: "Token" })).toEqual({
+      type: "token",
+      id: "token",
+      name: "Token",
+    });
+    expect(
+      createTokenStyleSource({ id: "token", name: "Token", locked: true })
+    ).toEqual({
+      type: "token",
+      id: "token",
+      name: "Token",
+      locked: true,
+    });
+  });
+
+  test("finds design token style sources", () => {
+    expect(
+      findDesignToken(
+        [local("local"), { id: "token", type: "token", name: "Token" }],
+        "token"
+      )
+    ).toEqual({ id: "token", type: "token", name: "Token" });
+    expect(findDesignToken([local("local")], "local")).toBeUndefined();
+  });
+
+  test("creates style declarations through the sdk schema", () => {
+    expect(
+      createStyleDeclValue({
+        styleSourceId: "local",
+        breakpointId: "base",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      })
+    ).toEqual({
+      styleSourceId: "local",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+  });
+
+  test("creates style declarations from user input with base breakpoint default", () => {
+    expect(
+      createStyleDeclFromInput({
+        styleSourceId: "token",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+        state: ":hover",
+      })
+    ).toEqual({
+      styleSourceId: "token",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+      state: ":hover",
+    });
+  });
+
+  test("creates style declaration keys from user input with base breakpoint default", () => {
+    expect(
+      getStyleDeclKeyFromInput({
+        styleSourceId: "token",
+        property: "color",
+        state: ":hover",
+      })
+    ).toBe("token:base:color::hover");
+  });
+
+  test("sets and deletes style declarations through shared mutable helpers", () => {
+    const styles = new Map();
+
+    const { styleDecl, styleKey } = setStyleDeclMutable({
+      styles,
+      styleSourceId: "local",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+      listed: true,
+    });
+
+    expect(styleKey).toBe("local:base:color:");
+    expect(styles.get(styleKey)).toEqual(styleDecl);
+    expect(
+      deleteStyleDeclMutable({
+        styles,
+        styleSourceId: "local",
+        breakpointId: "base",
+        property: "color",
+      })
+    ).toBe(true);
+    expect(styles.has(styleKey)).toBe(false);
+  });
+
+  test("creates design token style inputs from styles map and declarations", () => {
+    expect(
+      createDesignTokenStyleInputs({
+        styles: {
+          color: { type: "keyword", value: "red" },
+        },
+        declarations: [
+          {
+            property: "fontSize",
+            value: { type: "unit", value: 16, unit: "px" },
+            breakpoint: "desktop",
+          },
+        ],
+      })
+    ).toEqual([
+      { property: "color", value: { type: "keyword", value: "red" } },
+      {
+        property: "fontSize",
+        value: { type: "unit", value: 16, unit: "px" },
+        breakpoint: "desktop",
+      },
+    ]);
+  });
+
+  test("updates style declarations through the sdk schema", () => {
+    const declaration = createStyleDeclValue({
+      styleSourceId: "local",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+
+    expect(
+      updateStyleDecl(declaration, {
+        value: { type: "keyword", value: "blue" },
+      })
+    ).toEqual({
+      styleSourceId: "local",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    });
+  });
+});
+
+describe("createStyleSourceSelectionAddPatch", () => {
+  const styleSources = sources([
+    { id: "token", type: "token", name: "Token" },
+    local("local"),
+  ]);
+
+  test("creates a style source selection when instance has none", () => {
+    expect(
+      createStyleSourceSelectionAddPatch({
+        styleSourceSelection: undefined,
+        styleSources,
+        instanceId: "instance",
+        styleSourceId: "token",
+      })
+    ).toEqual({
+      op: "add",
+      path: ["instance"],
+      value: { instanceId: "instance", values: ["token"] },
+    });
+  });
+
+  test("inserts before local style source by default", () => {
+    expect(
+      createStyleSourceSelectionAddPatch({
+        styleSourceSelection: {
+          instanceId: "instance",
+          values: ["local"],
+        },
+        styleSources,
+        instanceId: "instance",
+        styleSourceId: "token",
+      })
+    ).toEqual({
+      op: "add",
+      path: ["instance", "values", 0],
+      value: "token",
+    });
+  });
+
+  test("does not create a patch when source is already selected", () => {
+    expect(
+      createStyleSourceSelectionAddPatch({
+        styleSourceSelection: {
+          instanceId: "instance",
+          values: ["token"],
+        },
+        styleSources,
+        instanceId: "instance",
+        styleSourceId: "token",
+      })
+    ).toBeUndefined();
+  });
+});
+
+describe("createStyleSourceSelectionAttachPayload", () => {
+  const styleSources = sources([
+    { id: "token", type: "token", name: "Token" },
+    local("local"),
+  ]);
+
+  test("creates a selection payload for attached style sources", () => {
+    expect(
+      createStyleSourceSelectionAttachPayload({
+        instanceIds: ["instance-a", "instance-b"],
+        styleSourceSelections: [
+          { instanceId: "instance-b", values: ["local"] },
+        ],
+        styleSources,
+        styleSourceId: "token",
+      })
+    ).toEqual([
+      {
+        namespace: "styleSourceSelections",
+        patches: [
+          {
+            op: "add",
+            path: ["instance-a"],
+            value: { instanceId: "instance-a", values: ["token"] },
+          },
+          {
+            op: "add",
+            path: ["instance-b", "values", 0],
+            value: "token",
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("returns empty payload when style source is already attached", () => {
+    expect(
+      createStyleSourceSelectionAttachPayload({
+        instanceIds: ["instance"],
+        styleSourceSelections: [{ instanceId: "instance", values: ["token"] }],
+        styleSources,
+        styleSourceId: "token",
+      })
+    ).toEqual([]);
+  });
+});
+
+describe("createStyleSourceSelectionRemovePlan", () => {
+  test("finds the selected style source index", () => {
+    expect(
+      createStyleSourceSelectionRemovePlan({
+        styleSourceSelection: {
+          instanceId: "instance",
+          values: ["token-a", "token-b"],
+        },
+        styleSourceId: "token-b",
+      })
+    ).toEqual({ type: "remove", index: 1 });
+  });
+
+  test("reports missing selection", () => {
+    expect(
+      createStyleSourceSelectionRemovePlan({
+        styleSourceSelection: undefined,
+        styleSourceId: "token",
+      })
+    ).toEqual({ type: "missing" });
+  });
+});
+
+describe("createStyleSourceSelectionRemovePatch", () => {
+  test("creates a remove patch for selected style source", () => {
+    expect(
+      createStyleSourceSelectionRemovePatch({
+        styleSourceSelection: {
+          instanceId: "instance",
+          values: ["token-a", "token-b"],
+        },
+        instanceId: "instance",
+        styleSourceId: "token-b",
+      })
+    ).toEqual({
+      op: "remove",
+      path: ["instance", "values", 1],
+    });
+  });
+
+  test("does not create a patch when source is not selected", () => {
+    expect(
+      createStyleSourceSelectionRemovePatch({
+        styleSourceSelection: {
+          instanceId: "instance",
+          values: ["token-a"],
+        },
+        instanceId: "instance",
+        styleSourceId: "token-b",
+      })
+    ).toBeUndefined();
+  });
+});
+
+describe("createStyleSourceSelectionDetachPayload", () => {
+  test("creates a selection payload for detached style sources", () => {
+    expect(
+      createStyleSourceSelectionDetachPayload({
+        instanceIds: ["instance"],
+        styleSourceSelections: [
+          { instanceId: "instance", values: ["token-a", "token-b"] },
+        ],
+        styleSourceId: "token-b",
+      })
+    ).toEqual([
+      {
+        namespace: "styleSourceSelections",
+        patches: [
+          {
+            op: "remove",
+            path: ["instance", "values", 1],
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("returns empty payload when style source is not attached", () => {
+    expect(
+      createStyleSourceSelectionDetachPayload({
+        instanceIds: ["instance"],
+        styleSourceSelections: [{ instanceId: "instance", values: ["token"] }],
+        styleSourceId: "missing",
+      })
+    ).toEqual([]);
+  });
+});
+
+describe("removeStyleSourceFromInstanceMutable", () => {
+  test("removes selected style source", () => {
+    const styleSourceSelections: StyleSourceSelections = new Map([
+      ["instance", { instanceId: "instance", values: ["token-a", "token-b"] }],
+    ]);
+
+    removeStyleSourceFromInstanceMutable({
+      styleSourceSelections,
+      instanceId: "instance",
+      styleSourceId: "token-a",
+    });
+
+    expect(styleSourceSelections.get("instance")?.values).toEqual(["token-b"]);
+  });
+});
+
+describe("createDesignTokenExtractionPayload", () => {
+  test("extracts local styles into a new token and attaches it to instances", () => {
+    const { payload, styleKeys } = createDesignTokenExtractionPayload({
+      tokenId: "token",
+      tokenName: "Primary",
+      instanceIds: ["box"],
+      styleSources: sources([
+        local("local"),
+        { id: "existing-token", type: "token", name: "Existing" },
+      ]),
+      styleSourceSelections: [
+        {
+          instanceId: "box",
+          values: ["existing-token", "local"],
+        },
+      ],
+      styles: [
+        createStyleDecl("local", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+        createStyleDecl("existing-token", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
+    });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "add",
+            path: ["token"],
+            value: { type: "token", id: "token", name: "Primary" },
+          },
+        ],
+      },
+      {
+        namespace: "styles",
+        patches: [
+          {
+            op: "add",
+            path: ["token:base:color:"],
+            value: createStyleDecl("token", "base", "color", {
+              type: "keyword",
+              value: "red",
+            }),
+          },
+        ],
+      },
+      {
+        namespace: "styleSourceSelections",
+        patches: [
+          {
+            op: "add",
+            path: ["box", "values", 1],
+            value: "token",
+          },
+        ],
+      },
+    ]);
+    expect(styleKeys).toEqual(["token:base:color:"]);
+  });
+
+  test("removes extracted local properties when requested", () => {
+    const { payload, styleKeys } = createDesignTokenExtractionPayload({
+      tokenId: "token",
+      tokenName: "Primary",
+      instanceIds: ["box"],
+      styleSources: sources([local("local")]),
+      styleSourceSelections: [{ instanceId: "box", values: ["local"] }],
+      styles: [
+        createStyleDecl("local", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+        createStyleDecl("local", "base", "fontSize", {
+          type: "unit",
+          value: 16,
+          unit: "px",
+        }),
+      ],
+      removeLocalProps: ["color"],
+    });
+
+    expect(payload[1]).toEqual({
+      namespace: "styles",
+      patches: [
+        {
+          op: "add",
+          path: ["token:base:color:"],
+          value: createStyleDecl("token", "base", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        },
+        {
+          op: "remove",
+          path: ["local:base:color:"],
+        },
+      ],
+    });
+    expect(styleKeys).toEqual(["token:base:color:"]);
+  });
+
+  test("dedupes token declarations extracted from multiple local sources", () => {
+    const { payload, styleKeys } = createDesignTokenExtractionPayload({
+      tokenId: "token",
+      tokenName: "Primary",
+      instanceIds: ["box-a", "box-b"],
+      styleSources: sources([
+        { id: "local-a", type: "local" },
+        { id: "local-b", type: "local" },
+      ]),
+      styleSourceSelections: [
+        { instanceId: "box-a", values: ["local-a"] },
+        { instanceId: "box-b", values: ["local-b"] },
+      ],
+      styles: [
+        createStyleDecl("local-a", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+        createStyleDecl("local-b", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+    });
+
+    expect(payload[1]).toEqual({
+      namespace: "styles",
+      patches: [
+        {
+          op: "add",
+          path: ["token:base:color:"],
+          value: createStyleDecl("token", "base", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        },
+      ],
+    });
+    expect(styleKeys).toEqual(["token:base:color:"]);
+  });
+
+  test("omits empty styles and selection namespaces", () => {
+    const { payload, styleKeys } = createDesignTokenExtractionPayload({
+      tokenId: "token",
+      tokenName: "Primary",
+      instanceIds: [],
+      styleSources: sources([]),
+      styleSourceSelections: [],
+      styles: [],
+    });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "add",
+            path: ["token"],
+            value: { type: "token", id: "token", name: "Primary" },
+          },
+        ],
+      },
+    ]);
+    expect(styleKeys).toEqual([]);
+  });
+});
+
+describe("createStyleDeclarationUpdatePayload", () => {
+  test("creates style add patches for local style sources", () => {
+    const { payload, styleKeys, missingLocalStyleSourceInstanceIds } =
+      createStyleDeclarationUpdatePayload({
+        styleSources: sources([local("local")]),
+        styleSourceSelections: [{ instanceId: "box", values: ["local"] }],
+        styles: [],
+        updates: [
+          {
+            instanceId: "box",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [
+          {
+            op: "add",
+            path: ["local:base:color:"],
+            value: createStyleDecl("local", "base", "color", {
+              type: "keyword",
+              value: "red",
+            }),
+          },
+        ],
+      },
+    ]);
+    expect(styleKeys).toEqual(["local:base:color:"]);
+    expect(missingLocalStyleSourceInstanceIds).toEqual([]);
+  });
+
+  test("reports missing local style source when creation is disabled", () => {
+    const result = createStyleDeclarationUpdatePayload({
+      styleSources: new Map(),
+      styleSourceSelections: [],
+      styles: [],
+      updates: [
+        {
+          instanceId: "box",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+          createLocalIfMissing: false,
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      payload: [],
+      styleKeys: [],
+      missingLocalStyleSourceInstanceIds: ["box"],
+    });
+  });
+
+  test("replaces repeated style keys within the same batch", () => {
+    const { payload, styleKeys } = createStyleDeclarationUpdatePayload({
+      styleSources: sources([local("local")]),
+      styleSourceSelections: [{ instanceId: "box", values: ["local"] }],
+      styles: [],
+      updates: [
+        {
+          instanceId: "box",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+        {
+          instanceId: "box",
+          property: "color",
+          value: { type: "keyword", value: "blue" },
+        },
+      ],
+    });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [
+          {
+            op: "add",
+            path: ["local:base:color:"],
+            value: createStyleDecl("local", "base", "color", {
+              type: "keyword",
+              value: "red",
+            }),
+          },
+          {
+            op: "replace",
+            path: ["local:base:color:"],
+            value: createStyleDecl("local", "base", "color", {
+              type: "keyword",
+              value: "blue",
+            }),
+          },
+        ],
+      },
+    ]);
+    expect(styleKeys).toEqual(["local:base:color:", "local:base:color:"]);
+  });
+});
+
+describe("createStyleDeclarationDeletePayload", () => {
+  test("creates remove patches for existing local declarations", () => {
+    const { payload, styleKeys } = createStyleDeclarationDeletePayload({
+      styleSources: sources([local("local")]),
+      styleSourceSelections: [{ instanceId: "box", values: ["local"] }],
+      styles: [
+        createStyleDecl("local", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      deletions: [{ instanceId: "box", property: "color" }],
+    });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [{ op: "remove", path: ["local:base:color:"] }],
+      },
+    ]);
+    expect(styleKeys).toEqual(["local:base:color:"]);
+  });
+
+  test("skips missing local declarations", () => {
+    expect(
+      createStyleDeclarationDeletePayload({
+        styleSources: new Map(),
+        styleSourceSelections: [],
+        styles: [],
+        deletions: [{ instanceId: "box", property: "color" }],
+      })
+    ).toEqual({ payload: [], styleKeys: [] });
+  });
+});
+
+describe("createStyleValueReplacementPayload", () => {
+  test("replaces matching local style values in scope", () => {
+    const { payload, styleKeys } = createStyleValueReplacementPayload({
+      styleSources: [
+        local("local"),
+        { id: "token", type: "token", name: "Token" },
+      ],
+      styleSourceSelections: [
+        { instanceId: "box", values: ["token", "local"] },
+        { instanceId: "other", values: ["other-local"] },
+      ],
+      instanceIds: new Set(["box"]),
+      styles: [
+        createStyleDecl("local", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+        createStyleDecl("token", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      property: "color",
+      fromValue: { type: "keyword", value: "red" },
+      toValue: { type: "keyword", value: "blue" },
+    });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [
+          {
+            op: "replace",
+            path: ["local:base:color:"],
+            value: createStyleDecl("local", "base", "color", {
+              type: "keyword",
+              value: "blue",
+            }),
+          },
+        ],
+      },
+    ]);
+    expect(styleKeys).toEqual(["local:base:color:"]);
+  });
+});
+
+describe("design token patch helpers", () => {
+  test("creates token and style patches", () => {
+    const { payload, tokenIds, errors } = createDesignTokenCreatePayload({
+      styleSources: new Map(),
+      tokens: [
+        {
+          tokenId: "token",
+          name: "Primary",
+          styles: { color: { type: "keyword", value: "red" } },
+        },
+      ],
+    });
+
+    expect(errors).toEqual([]);
+    expect(tokenIds).toEqual(["token"]);
+    expect(payload).toEqual([
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "add",
+            path: ["token"],
+            value: { type: "token", id: "token", name: "Primary" },
+          },
+        ],
+      },
+      {
+        namespace: "styles",
+        patches: [
+          {
+            op: "add",
+            path: ["token:base:color:"],
+            value: createStyleDecl("token", "base", "color", {
+              type: "keyword",
+              value: "red",
+            }),
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("does not emit empty style patch namespace for token without styles", () => {
+    const { payload, tokenIds, errors } = createDesignTokenCreatePayload({
+      styleSources: new Map(),
+      tokens: [{ tokenId: "token", name: "Primary" }],
+    });
+
+    expect(errors).toEqual([]);
+    expect(tokenIds).toEqual(["token"]);
+    expect(payload).toEqual([
+      {
+        namespace: "styleSources",
+        patches: [
+          {
+            op: "add",
+            path: ["token"],
+            value: { type: "token", id: "token", name: "Primary" },
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("reports token create conflicts", () => {
+    const result = createDesignTokenCreatePayload({
+      styleSources: sources([{ id: "token", type: "token", name: "Primary" }]),
+      tokens: [
+        { tokenId: "token", name: "Primary" },
+        { tokenId: "next", name: "Primary" },
+      ],
+    });
+
+    expect(result.errors).toEqual([
+      { type: "duplicate-id", tokenId: "token" },
+      {
+        type: "invalid-name",
+        tokenId: "next",
+        error: { type: "duplicate", id: "next" },
+      },
+    ]);
+  });
+
+  test("updates token styles with same-batch add then replace", () => {
+    const { payload, styleKeys } = createDesignTokenStyleUpdatePayload({
+      designTokenId: "token",
+      styles: [],
+      updates: [
+        {
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+        {
+          property: "color",
+          value: { type: "keyword", value: "blue" },
+        },
+      ],
+    });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [
+          {
+            op: "add",
+            path: ["token:base:color:"],
+            value: createStyleDecl("token", "base", "color", {
+              type: "keyword",
+              value: "red",
+            }),
+          },
+          {
+            op: "replace",
+            path: ["token:base:color:"],
+            value: createStyleDecl("token", "base", "color", {
+              type: "keyword",
+              value: "blue",
+            }),
+          },
+        ],
+      },
+    ]);
+    expect(styleKeys).toEqual(["token:base:color:", "token:base:color:"]);
+  });
+
+  test("returns empty payload when token style updates are empty", () => {
+    const { payload, styleKeys } = createDesignTokenStyleUpdatePayload({
+      designTokenId: "token",
+      styles: [],
+      updates: [],
+    });
+
+    expect(payload).toEqual([]);
+    expect(styleKeys).toEqual([]);
+  });
+
+  test("deletes existing token styles", () => {
+    const { payload, styleKeys } = createDesignTokenStyleDeletePayload({
+      designTokenId: "token",
+      styles: [
+        createStyleDecl("token", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      deletions: [{ property: "color" }],
+    });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [{ op: "remove", path: ["token:base:color:"] }],
+      },
+    ]);
+    expect(styleKeys).toEqual(["token:base:color:"]);
+  });
+});
+
+describe("validateStyleSourceName", () => {
+  test("validates required and duplicate token names", () => {
+    const styleSources = sources([
+      { id: "token", type: "token", name: "Token" },
+      local("local"),
+    ]);
+
+    expect(
+      validateStyleSourceName({
+        id: "next",
+        name: "",
+        styleSources,
+      })
+    ).toEqual({ type: "minlength", id: "next" });
+    expect(
+      validateStyleSourceName({
+        id: "next",
+        name: "Token",
+        styleSources,
+      })
+    ).toEqual({ type: "duplicate", id: "next" });
+    expect(
+      validateStyleSourceName({
+        id: "token",
+        name: "Token",
+        styleSources,
+      })
+    ).toBeUndefined();
+  });
+});
+
+describe("getOrCreateLocalStyleSourceIdMutable", () => {
+  test("returns existing local style source", () => {
+    const styleSources = sources([local("local")]);
+    const styleSourceSelections: StyleSourceSelections = new Map([
+      ["instance", { instanceId: "instance", values: ["local"] }],
+    ]);
+
+    expect(
+      getOrCreateLocalStyleSourceIdMutable({
+        styleSourceSelections,
+        styleSources,
+        instanceId: "instance",
+        createId: () => "new-local",
+      })
+    ).toBe("local");
+    expect(Array.from(styleSources.values())).toEqual([local("local")]);
+  });
+
+  test("creates local style source on existing token selection", () => {
+    const styleSources = sources([
+      { id: "token", type: "token", name: "Token" },
+    ]);
+    const styleSourceSelections: StyleSourceSelections = new Map([
+      ["instance", { instanceId: "instance", values: ["token"] }],
+    ]);
+
+    expect(
+      getOrCreateLocalStyleSourceIdMutable({
+        styleSourceSelections,
+        styleSources,
+        instanceId: "instance",
+        createId: () => "local",
+      })
+    ).toBe("local");
+    expect(styleSources.get("local")).toEqual(local("local"));
+    expect(styleSourceSelections.get("instance")?.values).toEqual([
+      "token",
+      "local",
+    ]);
+  });
+
+  test("creates selection when missing", () => {
+    const styleSources: StyleSources = new Map();
+    const styleSourceSelections: StyleSourceSelections = new Map();
+
+    expect(
+      getOrCreateLocalStyleSourceIdMutable({
+        styleSourceSelections,
+        styleSources,
+        instanceId: "instance",
+        createId: () => "local",
+      })
+    ).toBe("local");
+    expect(styleSourceSelections.get("instance")).toEqual({
+      instanceId: "instance",
+      values: ["local"],
+    });
+  });
+});
+
+describe("createLocalStyleSourcePlan", () => {
+  test("returns existing local style source", () => {
+    const styleSources = sources([local("local")]);
+
+    expect(
+      createLocalStyleSourcePlan({
+        styleSources,
+        styleSourceSelection: { instanceId: "instance", values: ["local"] },
+        instanceId: "instance",
+      })
+    ).toEqual({ styleSourceId: "local" });
+  });
+
+  test("creates style source and selection when instance has no selection", () => {
+    const styleSources: StyleSources = new Map();
+
+    expect(
+      createLocalStyleSourcePlan({
+        styleSources,
+        styleSourceSelection: undefined,
+        instanceId: "instance",
+        createId: () => "local",
+      })
+    ).toEqual({
+      styleSourceId: "local",
+      styleSource: { type: "local", id: "local" },
+      selection: { instanceId: "instance", values: ["local"] },
+    });
+  });
+
+  test("appends style source to existing selection without local source", () => {
+    const styleSources = sources([token("token", "Token")]);
+
+    expect(
+      createLocalStyleSourcePlan({
+        styleSources,
+        styleSourceSelection: { instanceId: "instance", values: ["token"] },
+        instanceId: "instance",
+        createId: () => "local",
+      })
+    ).toEqual({
+      styleSourceId: "local",
+      styleSource: { type: "local", id: "local" },
+      selectionValueIndex: 1,
+    });
+  });
+});
+
+describe("getStyleSourceInsertionIndex", () => {
+  const styleSources = sources([token("token", "Token"), local("local")]);
+
+  test("inserts before local style source by default", () => {
+    expect(
+      getStyleSourceInsertionIndex({
+        styleSourceIds: ["token", "local"],
+        styleSources,
+      })
+    ).toBe(1);
+  });
+
+  test("inserts after local style source when requested", () => {
+    expect(
+      getStyleSourceInsertionIndex({
+        styleSourceIds: ["token", "local"],
+        styleSources,
+        position: "after-local",
+      })
+    ).toBe(2);
+  });
+
+  test("inserts at end when no local style source exists", () => {
+    expect(
+      getStyleSourceInsertionIndex({
+        styleSourceIds: ["token"],
+        styleSources,
+      })
+    ).toBe(1);
+  });
+});
+
+describe("addStyleSourceToInstanceMutable", () => {
+  test("creates missing selection and adds style source", () => {
+    const styleSources = sources([
+      { id: "token", type: "token", name: "Token" },
+    ]);
+    const styleSourceSelections: StyleSourceSelections = new Map();
+
+    addStyleSourceToInstanceMutable({
+      styleSourceSelections,
+      styleSources,
+      instanceId: "instance",
+      styleSourceId: "token",
+    });
+
+    expect(styleSourceSelections.get("instance")).toEqual({
+      instanceId: "instance",
+      values: ["token"],
+    });
+  });
+
+  test("adds token before local style source", () => {
+    const styleSources = sources([
+      { id: "token", type: "token", name: "Token" },
+      local("local"),
+    ]);
+    const styleSourceSelections: StyleSourceSelections = new Map([
+      ["instance", { instanceId: "instance", values: ["local"] }],
+    ]);
+
+    addStyleSourceToInstanceMutable({
+      styleSourceSelections,
+      styleSources,
+      instanceId: "instance",
+      styleSourceId: "token",
+    });
+
+    expect(styleSourceSelections.get("instance")?.values).toEqual([
+      "token",
+      "local",
+    ]);
+  });
+});
+
+describe("createLocalStyleSourceClonePlan", () => {
+  test("clones local style sources and remaps copied selections", () => {
+    const plan = createLocalStyleSourceClonePlan({
+      styleSourceSelections: [
+        { instanceId: "source", values: ["token", "local"] },
+        { instanceId: "ignored", values: ["local"] },
+      ],
+      styleSources: [
+        { id: "token", type: "token", name: "Token" },
+        local("local"),
+      ],
+      newInstanceIds: new Map([["source", "copy"]]),
+      createId: () => "local-copy",
+    });
+
+    expect(plan.localStyleSourceIds).toEqual(
+      new Map([["local", "local-copy"]])
+    );
+    expect(plan.localStyleSources).toEqual([
+      { id: "local-copy", type: "local" },
+    ]);
+    expect(plan.selections).toEqual([
+      { instanceId: "copy", values: ["token", "local-copy"] },
+    ]);
+  });
+
+  test("reuses a cloned local style source across copied selections", () => {
+    let idIndex = 0;
+    const plan = createLocalStyleSourceClonePlan({
+      styleSourceSelections: [
+        { instanceId: "source-1", values: ["local"] },
+        { instanceId: "source-2", values: ["local"] },
+      ],
+      styleSources: [local("local")],
+      newInstanceIds: new Map([
+        ["source-1", "copy-1"],
+        ["source-2", "copy-2"],
+      ]),
+      createId: () => `local-copy-${idIndex++}`,
+    });
+
+    expect(plan.localStyleSourceIds).toEqual(
+      new Map([["local", "local-copy-0"]])
+    );
+    expect(plan.localStyleSources).toEqual([
+      { id: "local-copy-0", type: "local" },
+    ]);
+    expect(plan.selections).toEqual([
+      { instanceId: "copy-1", values: ["local-copy-0"] },
+      { instanceId: "copy-2", values: ["local-copy-0"] },
+    ]);
+  });
+});
+
+describe("createLocalStyleSourcePatchPlan", () => {
+  test("returns existing local style source", () => {
+    const styleSources = sources([local("local")]);
+    expect(
+      createLocalStyleSourcePatchPlan({
+        createdLocalSourceIds: new Map(),
+        instanceId: "instance",
+        styleSources,
+        styleSourceSelection: { instanceId: "instance", values: ["local"] },
+        shouldCreate: true,
+      })
+    ).toEqual({ styleSourceId: "local", payload: [] });
+  });
+
+  test("creates a missing selection", () => {
+    const createdLocalSourceIds = new Map<string, string>();
+    const result = createLocalStyleSourcePatchPlan({
+      createdLocalSourceIds,
+      instanceId: "instance",
+      styleSources: new Map(),
+      styleSourceSelection: undefined,
+      shouldCreate: true,
+    });
+    const styleSourceId = result?.styleSourceId;
+
+    expect(styleSourceId).toEqual(expect.any(String));
+    expect(createdLocalSourceIds).toEqual(
+      new Map([["instance", styleSourceId]])
+    );
+    expect(result).toEqual({
+      styleSourceId,
+      payload: [
+        {
+          namespace: "styleSources",
+          patches: [
+            {
+              op: "add",
+              path: [styleSourceId],
+              value: { type: "local", id: styleSourceId },
+            },
+          ],
+        },
+        {
+          namespace: "styleSourceSelections",
+          patches: [
+            {
+              op: "add",
+              path: ["instance"],
+              value: { instanceId: "instance", values: [styleSourceId] },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("inserts into an existing selection", () => {
+    const result = createLocalStyleSourcePatchPlan({
+      createdLocalSourceIds: new Map(),
+      instanceId: "instance",
+      styleSources: new Map(),
+      styleSourceSelection: { instanceId: "instance", values: ["token"] },
+      shouldCreate: true,
+    });
+
+    expect(result?.payload[1]).toEqual({
+      namespace: "styleSourceSelections",
+      patches: [
+        {
+          op: "add",
+          path: ["instance", "values", 1],
+          value: result?.styleSourceId,
+        },
+      ],
+    });
+  });
+
+  test("skips missing local style source when creation is disabled", () => {
+    expect(
+      createLocalStyleSourcePatchPlan({
+        createdLocalSourceIds: new Map(),
+        instanceId: "instance",
+        styleSources: new Map(),
+        styleSourceSelection: undefined,
+        shouldCreate: false,
+      })
+    ).toBeUndefined();
+  });
+
+  test("prefers created local style source ids", () => {
+    expect(
+      getLocalStyleSourceIdWithCreated({
+        createdLocalSourceIds: new Map([["instance", "created"]]),
+        instanceId: "instance",
+        styleSources: new Map(),
+        styleSourceSelection: undefined,
+      })
+    ).toBe("created");
+  });
+});
+
+describe("createStyleSourceSelectionAddPlan", () => {
+  test("creates missing selection", () => {
+    const styleSources = sources([
+      { id: "token", type: "token", name: "Token" },
+    ]);
+
+    expect(
+      createStyleSourceSelectionAddPlan({
+        styleSourceSelection: undefined,
+        styleSources,
+        instanceId: "instance",
+        styleSourceId: "token",
+      })
+    ).toEqual({
+      type: "create",
+      selection: { instanceId: "instance", values: ["token"] },
+    });
+  });
+
+  test("skips existing style source", () => {
+    const styleSources = sources([
+      { id: "token", type: "token", name: "Token" },
+    ]);
+
+    expect(
+      createStyleSourceSelectionAddPlan({
+        styleSourceSelection: { instanceId: "instance", values: ["token"] },
+        styleSources,
+        instanceId: "instance",
+        styleSourceId: "token",
+      })
+    ).toEqual({ type: "exists" });
+  });
+
+  test("inserts before local source by default", () => {
+    const styleSources = sources([
+      { id: "token", type: "token", name: "Token" },
+      local("local"),
+    ]);
+
+    expect(
+      createStyleSourceSelectionAddPlan({
+        styleSourceSelection: { instanceId: "instance", values: ["local"] },
+        styleSources,
+        instanceId: "instance",
+        styleSourceId: "token",
+      })
+    ).toEqual({ type: "insert", index: 0 });
+  });
+});
+
 describe("getStyleSourceStylesSignature", () => {
+  const getSignature = (
+    styleSourceId: string,
+    styles: StyleDecl[],
+    breakpoints = baseBreakpoints,
+    mergedBreakpointIds = new Map<string, string>()
+  ) =>
+    getStyleSourceStylesSignature(
+      styleSourceId,
+      styles,
+      breakpoints,
+      mergedBreakpointIds
+    );
+
   test("generates consistent signature for token styles", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
     const styles: StyleDecl[] = [
       createStyleDecl("token1", "base", "color", {
         type: "keyword",
@@ -65,19 +1576,13 @@ describe("getStyleSourceStylesSignature", () => {
       }),
     ];
 
-    const signature = getStyleSourceStylesSignature(
-      "token1",
-      styles,
-      breakpoints,
-      new Map()
-    );
+    const signature = getSignature("token1", styles);
 
     expect(signature).toBeTruthy();
     expect(typeof signature).toBe("string");
   });
 
   test("generates same signature for same styles in different order", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
     const styles1: StyleDecl[] = [
       createStyleDecl("token1", "base", "color", {
         type: "keyword",
@@ -101,24 +1606,13 @@ describe("getStyleSourceStylesSignature", () => {
       }),
     ];
 
-    const signature1 = getStyleSourceStylesSignature(
-      "token1",
-      styles1,
-      breakpoints,
-      new Map()
-    );
-    const signature2 = getStyleSourceStylesSignature(
-      "token1",
-      styles2,
-      breakpoints,
-      new Map()
-    );
+    const signature1 = getSignature("token1", styles1);
+    const signature2 = getSignature("token1", styles2);
 
     expect(signature1).toBe(signature2);
   });
 
   test("generates different signature for different styles", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
     const styles1: StyleDecl[] = [
       createStyleDecl("token1", "base", "color", {
         type: "keyword",
@@ -132,18 +1626,8 @@ describe("getStyleSourceStylesSignature", () => {
       }),
     ];
 
-    const signature1 = getStyleSourceStylesSignature(
-      "token1",
-      styles1,
-      breakpoints,
-      new Map()
-    );
-    const signature2 = getStyleSourceStylesSignature(
-      "token2",
-      styles2,
-      breakpoints,
-      new Map()
-    );
+    const signature1 = getSignature("token1", styles1);
+    const signature2 = getSignature("token2", styles2);
 
     expect(signature1).not.toBe(signature2);
   });
@@ -166,24 +1650,13 @@ describe("getStyleSourceStylesSignature", () => {
       }),
     ];
 
-    const signature1 = getStyleSourceStylesSignature(
-      "token1",
-      styles1,
-      breakpoints,
-      new Map()
-    );
-    const signature2 = getStyleSourceStylesSignature(
-      "token2",
-      styles2,
-      breakpoints,
-      new Map()
-    );
+    const signature1 = getSignature("token1", styles1, breakpoints);
+    const signature2 = getSignature("token2", styles2, breakpoints);
 
     expect(signature1).not.toBe(signature2);
   });
 
   test("handles pseudo states correctly", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
     const styles1: StyleDecl[] = [
       {
         styleSourceId: "token1",
@@ -202,18 +1675,8 @@ describe("getStyleSourceStylesSignature", () => {
       },
     ];
 
-    const signature1 = getStyleSourceStylesSignature(
-      "token1",
-      styles1,
-      breakpoints,
-      new Map()
-    );
-    const signature2 = getStyleSourceStylesSignature(
-      "token2",
-      styles2,
-      breakpoints,
-      new Map()
-    );
+    const signature1 = getSignature("token1", styles1);
+    const signature2 = getSignature("token2", styles2);
 
     expect(signature1).not.toBe(signature2);
   });
@@ -234,13 +1697,8 @@ describe("getStyleSourceStylesSignature", () => {
       }),
     ];
 
-    const signature1 = getStyleSourceStylesSignature(
-      "token1",
-      styles1,
-      breakpoints,
-      new Map()
-    );
-    const signature2 = getStyleSourceStylesSignature(
+    const signature1 = getSignature("token1", styles1, breakpoints);
+    const signature2 = getSignature(
       "token2",
       styles2,
       breakpoints,
@@ -289,70 +1747,70 @@ describe("getStyleSourceStylesSignature", () => {
       }),
     ];
 
-    const signature1 = getStyleSourceStylesSignature(
-      "token1",
-      styles1,
-      breakpoints,
-      new Map()
-    );
-    const signature2 = getStyleSourceStylesSignature(
-      "token2",
-      styles2,
-      breakpoints,
-      new Map()
-    );
+    const signature1 = getSignature("token1", styles1, breakpoints);
+    const signature2 = getSignature("token2", styles2, breakpoints);
 
     expect(signature1).toBe(signature2);
   });
 });
 
 describe("insertStyleSources", () => {
+  const insertTokenStyles = ({
+    existingStyleSources,
+    existingStyles,
+    fragmentStyleSources,
+    fragmentStyles,
+    conflictResolution,
+  }: {
+    existingStyleSources: StyleSource[];
+    existingStyles: StyleDecl[];
+    fragmentStyleSources: StyleSource[];
+    fragmentStyles: StyleDecl[];
+    conflictResolution?: Parameters<
+      typeof insertStyleSources
+    >[0]["conflictResolution"];
+  }) =>
+    insertStyleSources({
+      fragmentStyleSources,
+      fragmentStyles,
+      existingStyleSources: toMap(existingStyleSources),
+      existingStyles: createStyleDeclMap(existingStyles),
+      breakpoints: baseBreakpoints,
+      mergedBreakpointIds: new Map(),
+      conflictResolution,
+    });
+
   // Case 2: Same styles AND same name -> reuse existing token
   test("token with same styles and same name reuses existing token", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const existingStyleSources = toMap<StyleSource>([
-      { id: "existingToken", type: "token", name: "primaryColor" },
-    ]);
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "existingToken:base:color:",
+    const { styleSourceIdMap, updatedStyleSources } = insertTokenStyles({
+      existingStyleSources: [
+        { id: "existingToken", type: "token", name: "primaryColor" },
+      ],
+      existingStyles: [
         createStyleDecl("existingToken", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "existingToken:base:fontSize:",
         createStyleDecl("existingToken", "base", "fontSize", {
           type: "unit",
           value: 16,
           unit: "px",
         }),
       ],
-    ]);
-
-    const fragmentStyleSources: StyleSource[] = [
-      { id: "newToken", type: "token", name: "primaryColor" },
-    ];
-    const fragmentStyles: StyleDecl[] = [
-      createStyleDecl("newToken", "base", "color", {
-        type: "keyword",
-        value: "red",
-      }),
-      createStyleDecl("newToken", "base", "fontSize", {
-        type: "unit",
-        value: 16,
-        unit: "px",
-      }),
-    ];
-
-    const { styleSourceIdMap, updatedStyleSources } = insertStyleSources({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+      fragmentStyleSources: [
+        { id: "newToken", type: "token", name: "primaryColor" },
+      ],
+      fragmentStyles: [
+        createStyleDecl("newToken", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+        createStyleDecl("newToken", "base", "fontSize", {
+          type: "unit",
+          value: 16,
+          unit: "px",
+        }),
+      ],
     });
 
     // Should reuse existing token, not create a new one
@@ -365,38 +1823,26 @@ describe("insertStyleSources", () => {
 
   // Case 3: Same styles but different name -> insert new token with original name
   test("token with same styles but different name inserts new token", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const existingStyleSources = toMap<StyleSource>([
-      { id: "token1", type: "token", name: "primaryColor" },
-    ]);
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "token1:base:color:",
-        createStyleDecl("token1", "base", "color", {
-          type: "keyword",
-          value: "red",
-        }),
-      ],
-    ]);
-
-    const fragmentStyleSources: StyleSource[] = [
-      { id: "token2", type: "token", name: "accentColor" },
-    ];
-    const fragmentStyles: StyleDecl[] = [
-      createStyleDecl("token2", "base", "color", {
-        type: "keyword",
-        value: "red",
-      }),
-    ];
-
     const { styleSourceIds, styleSourceIdMap, updatedStyleSources } =
-      insertStyleSources({
-        fragmentStyleSources,
-        fragmentStyles,
-        existingStyleSources,
-        existingStyles,
-        breakpoints,
-        mergedBreakpointIds: new Map(),
+      insertTokenStyles({
+        existingStyleSources: [
+          { id: "token1", type: "token", name: "primaryColor" },
+        ],
+        existingStyles: [
+          createStyleDecl("token1", "base", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        ],
+        fragmentStyleSources: [
+          { id: "token2", type: "token", name: "accentColor" },
+        ],
+        fragmentStyles: [
+          createStyleDecl("token2", "base", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        ],
       });
 
     // Should insert new token with its original name
@@ -415,38 +1861,26 @@ describe("insertStyleSources", () => {
 
   // Case 4: Different styles but same name -> add counter suffix
   test("token with different styles but same name adds counter suffix", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const existingStyleSources = toMap<StyleSource>([
-      { id: "token1", type: "token", name: "myToken" },
-    ]);
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "token1:base:color:",
-        createStyleDecl("token1", "base", "color", {
-          type: "keyword",
-          value: "blue",
-        }),
-      ],
-    ]);
-
-    const fragmentStyleSources: StyleSource[] = [
-      { id: "token2", type: "token", name: "myToken" },
-    ];
-    const fragmentStyles: StyleDecl[] = [
-      createStyleDecl("token2", "base", "color", {
-        type: "keyword",
-        value: "red",
-      }),
-    ];
-
     const { styleSourceIds, styleSourceIdMap, updatedStyleSources } =
-      insertStyleSources({
-        fragmentStyleSources,
-        fragmentStyles,
-        existingStyleSources,
-        existingStyles,
-        breakpoints,
-        mergedBreakpointIds: new Map(),
+      insertTokenStyles({
+        existingStyleSources: [
+          { id: "token1", type: "token", name: "myToken" },
+        ],
+        existingStyles: [
+          createStyleDecl("token1", "base", "color", {
+            type: "keyword",
+            value: "blue",
+          }),
+        ],
+        fragmentStyleSources: [
+          { id: "token2", type: "token", name: "myToken" },
+        ],
+        fragmentStyles: [
+          createStyleDecl("token2", "base", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        ],
       });
 
     // Should add counter suffix to the new token
@@ -461,53 +1895,33 @@ describe("insertStyleSources", () => {
 
   // Case 4b: Multiple counter suffixes
   test("token with name conflict increments counter correctly", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const existingStyleSources = toMap<StyleSource>([
-      { id: "token1", type: "token", name: "myToken" },
-      { id: "token2", type: "token", name: "myToken-1" },
-      { id: "token3", type: "token", name: "myToken-2" },
-    ]);
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "token1:base:color:",
+    const { updatedStyleSources } = insertTokenStyles({
+      existingStyleSources: [
+        { id: "token1", type: "token", name: "myToken" },
+        { id: "token2", type: "token", name: "myToken-1" },
+        { id: "token3", type: "token", name: "myToken-2" },
+      ],
+      existingStyles: [
         createStyleDecl("token1", "base", "color", {
           type: "keyword",
           value: "blue",
         }),
-      ],
-      [
-        "token2:base:color:",
         createStyleDecl("token2", "base", "color", {
           type: "keyword",
           value: "green",
         }),
-      ],
-      [
-        "token3:base:color:",
         createStyleDecl("token3", "base", "color", {
           type: "keyword",
           value: "yellow",
         }),
       ],
-    ]);
-
-    const fragmentStyleSources: StyleSource[] = [
-      { id: "token4", type: "token", name: "myToken" },
-    ];
-    const fragmentStyles: StyleDecl[] = [
-      createStyleDecl("token4", "base", "color", {
-        type: "keyword",
-        value: "red",
-      }),
-    ];
-
-    const { updatedStyleSources } = insertStyleSources({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+      fragmentStyleSources: [{ id: "token4", type: "token", name: "myToken" }],
+      fragmentStyles: [
+        createStyleDecl("token4", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
     });
 
     // Should use counter 3
@@ -530,38 +1944,26 @@ describe("insertStyleSources", () => {
 
   // Case 6: Different styles and different name -> insert as-is
   test("token with different styles and different name inserts normally", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const existingStyleSources = toMap<StyleSource>([
-      { id: "token1", type: "token", name: "primaryColor" },
-    ]);
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "token1:base:color:",
-        createStyleDecl("token1", "base", "color", {
-          type: "keyword",
-          value: "blue",
-        }),
-      ],
-    ]);
-
-    const fragmentStyleSources: StyleSource[] = [
-      { id: "token2", type: "token", name: "secondaryColor" },
-    ];
-    const fragmentStyles: StyleDecl[] = [
-      createStyleDecl("token2", "base", "color", {
-        type: "keyword",
-        value: "red",
-      }),
-    ];
-
     const { styleSourceIds, styleSourceIdMap, updatedStyleSources } =
-      insertStyleSources({
-        fragmentStyleSources,
-        fragmentStyles,
-        existingStyleSources,
-        existingStyles,
-        breakpoints,
-        mergedBreakpointIds: new Map(),
+      insertTokenStyles({
+        existingStyleSources: [
+          { id: "token1", type: "token", name: "primaryColor" },
+        ],
+        existingStyles: [
+          createStyleDecl("token1", "base", "color", {
+            type: "keyword",
+            value: "blue",
+          }),
+        ],
+        fragmentStyleSources: [
+          { id: "token2", type: "token", name: "secondaryColor" },
+        ],
+        fragmentStyles: [
+          createStyleDecl("token2", "base", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        ],
       });
 
     // Should insert new token normally
@@ -580,46 +1982,31 @@ describe("insertStyleSources", () => {
 
   // Case 3 safeguard: Same styles but different name gets suffix when name conflicts
   test("token with same styles but different name adds suffix when name already exists", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const existingStyleSources = toMap<StyleSource>([
-      { id: "token1", type: "token", name: "primaryColor" },
-      { id: "token2", type: "token", name: "accentColor" }, // This name is taken
-    ]);
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "token1:base:color:",
+    const { updatedStyleSources } = insertTokenStyles({
+      existingStyleSources: [
+        { id: "token1", type: "token", name: "primaryColor" },
+        { id: "token2", type: "token", name: "accentColor" },
+      ],
+      existingStyles: [
         createStyleDecl("token1", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token2:base:fontSize:",
         createStyleDecl("token2", "base", "fontSize", {
           type: "unit",
           value: 16,
           unit: "px",
         }),
       ],
-    ]);
-
-    const fragmentStyleSources: StyleSource[] = [
-      { id: "token3", type: "token", name: "accentColor" },
-    ];
-    const fragmentStyles: StyleDecl[] = [
-      createStyleDecl("token3", "base", "color", {
-        type: "keyword",
-        value: "red",
-      }),
-    ];
-
-    const { updatedStyleSources } = insertStyleSources({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+      fragmentStyleSources: [
+        { id: "token3", type: "token", name: "accentColor" },
+      ],
+      fragmentStyles: [
+        createStyleDecl("token3", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
     });
 
     // Should add counter suffix to prevent duplicate name
@@ -641,45 +2028,30 @@ describe("insertStyleSources", () => {
 
   // Case 6 safeguard: Different styles and different name gets suffix when name conflicts
   test("token with different styles and name adds suffix when name already exists", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const existingStyleSources = toMap<StyleSource>([
-      { id: "token1", type: "token", name: "primaryColor" },
-      { id: "token2", type: "token", name: "secondaryColor" }, // This name is taken
-    ]);
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "token1:base:color:",
+    const { updatedStyleSources } = insertTokenStyles({
+      existingStyleSources: [
+        { id: "token1", type: "token", name: "primaryColor" },
+        { id: "token2", type: "token", name: "secondaryColor" },
+      ],
+      existingStyles: [
         createStyleDecl("token1", "base", "color", {
           type: "keyword",
           value: "blue",
         }),
-      ],
-      [
-        "token2:base:color:",
         createStyleDecl("token2", "base", "color", {
           type: "keyword",
           value: "green",
         }),
       ],
-    ]);
-
-    const fragmentStyleSources: StyleSource[] = [
-      { id: "token3", type: "token", name: "secondaryColor" },
-    ];
-    const fragmentStyles: StyleDecl[] = [
-      createStyleDecl("token3", "base", "color", {
-        type: "keyword",
-        value: "red",
-      }),
-    ];
-
-    const { updatedStyleSources } = insertStyleSources({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+      fragmentStyleSources: [
+        { id: "token3", type: "token", name: "secondaryColor" },
+      ],
+      fragmentStyles: [
+        createStyleDecl("token3", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
     });
 
     // Should add counter suffix to prevent duplicate name
@@ -704,50 +2076,35 @@ describe("insertStyleSources", () => {
 
   // Test that existing token with same styles but different name stays untouched
   test("existing token with matching styles but different name stays untouched when inserting new token", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const existingStyleSources = toMap<StyleSource>([
-      { id: "existingToken", type: "token", name: "primaryColor" },
-    ]);
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "existingToken:base:color:",
+    const { updatedStyleSources } = insertTokenStyles({
+      existingStyleSources: [
+        { id: "existingToken", type: "token", name: "primaryColor" },
+      ],
+      existingStyles: [
         createStyleDecl("existingToken", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "existingToken:base:fontSize:",
         createStyleDecl("existingToken", "base", "fontSize", {
           type: "unit",
           value: 16,
           unit: "px",
         }),
       ],
-    ]);
-
-    const fragmentStyleSources: StyleSource[] = [
-      { id: "newToken", type: "token", name: "accentColor" },
-    ];
-    const fragmentStyles: StyleDecl[] = [
-      createStyleDecl("newToken", "base", "color", {
-        type: "keyword",
-        value: "red",
-      }),
-      createStyleDecl("newToken", "base", "fontSize", {
-        type: "unit",
-        value: 16,
-        unit: "px",
-      }),
-    ];
-
-    const { updatedStyleSources } = insertStyleSources({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+      fragmentStyleSources: [
+        { id: "newToken", type: "token", name: "accentColor" },
+      ],
+      fragmentStyles: [
+        createStyleDecl("newToken", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+        createStyleDecl("newToken", "base", "fontSize", {
+          type: "unit",
+          value: 16,
+          unit: "px",
+        }),
+      ],
     });
 
     // Should insert new token with its own name, leaving existing one untouched
@@ -764,37 +2121,23 @@ describe("insertStyleSources", () => {
 
   // Critical test: inserting base name when suffixed version exists
   test("inserting token 'bbb' when 'bbb-1' with same styles exists inserts both tokens", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const existingStyleSources = toMap<StyleSource>([
-      { id: "existingToken", type: "token", name: "bbb-1" },
-    ]);
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "existingToken:base:color:",
+    const { styleSourceIdMap, updatedStyleSources } = insertTokenStyles({
+      existingStyleSources: [
+        { id: "existingToken", type: "token", name: "bbb-1" },
+      ],
+      existingStyles: [
         createStyleDecl("existingToken", "base", "color", {
           type: "keyword",
           value: "blue",
         }),
       ],
-    ]);
-
-    const fragmentStyleSources: StyleSource[] = [
-      { id: "newToken", type: "token", name: "bbb" },
-    ];
-    const fragmentStyles: StyleDecl[] = [
-      createStyleDecl("newToken", "base", "color", {
-        type: "keyword",
-        value: "blue",
-      }),
-    ];
-
-    const { styleSourceIdMap, updatedStyleSources } = insertStyleSources({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+      fragmentStyleSources: [{ id: "newToken", type: "token", name: "bbb" }],
+      fragmentStyles: [
+        createStyleDecl("newToken", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
     });
 
     // Both tokens should exist
@@ -812,50 +2155,35 @@ describe("insertStyleSources", () => {
 
   // Test merge conflict resolution
   test('token with different styles and same name merges when conflictResolution="merge"', () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const existingStyleSources = toMap<StyleSource>([
-      { id: "existingToken", type: "token", name: "primaryColor" },
-    ]);
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "existingToken:base:color:",
-        createStyleDecl("existingToken", "base", "color", {
-          type: "keyword",
-          value: "blue",
-        }),
-      ],
-      [
-        "existingToken:base:fontSize:",
-        createStyleDecl("existingToken", "base", "fontSize", {
-          type: "unit",
-          value: 16,
-          unit: "px",
-        }),
-      ],
-    ]);
-
-    const fragmentStyleSources: StyleSource[] = [
-      { id: "newToken", type: "token", name: "primaryColor" },
-    ];
-    const fragmentStyles: StyleDecl[] = [
-      createStyleDecl("newToken", "base", "color", {
-        type: "keyword",
-        value: "red", // Different color - should override
-      }),
-      createStyleDecl("newToken", "base", "fontWeight", {
-        type: "keyword",
-        value: "bold", // Additional property - should be added
-      }),
-    ];
-
     const { styleSourceIds, styleSourceIdMap, updatedStyleSources } =
-      insertStyleSources({
-        fragmentStyleSources,
-        fragmentStyles,
-        existingStyleSources,
-        existingStyles,
-        breakpoints,
-        mergedBreakpointIds: new Map(),
+      insertTokenStyles({
+        existingStyleSources: [
+          { id: "existingToken", type: "token", name: "primaryColor" },
+        ],
+        existingStyles: [
+          createStyleDecl("existingToken", "base", "color", {
+            type: "keyword",
+            value: "blue",
+          }),
+          createStyleDecl("existingToken", "base", "fontSize", {
+            type: "unit",
+            value: 16,
+            unit: "px",
+          }),
+        ],
+        fragmentStyleSources: [
+          { id: "newToken", type: "token", name: "primaryColor" },
+        ],
+        fragmentStyles: [
+          createStyleDecl("newToken", "base", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+          createStyleDecl("newToken", "base", "fontWeight", {
+            type: "keyword",
+            value: "bold",
+          }),
+        ],
         conflictResolution: "merge",
       });
 
@@ -1552,14 +2880,8 @@ describe("insertTokenStyleSources", () => {
 describe("deleteStyleSourceMutable", () => {
   test("deletes style source from styleSources map", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Primary Color" } as StyleSource,
-      ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Secondary Color" } as StyleSource,
-      ],
+      ["token1", token("token1", "Primary Color")],
+      ["token2", token("token2", "Secondary Color")],
     ]);
     const styleSourceSelections: StyleSourceSelections = new Map();
     const styles: Styles = new Map();
@@ -1577,10 +2899,7 @@ describe("deleteStyleSourceMutable", () => {
 
   test("removes style source from style source selections", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Primary Color" } as StyleSource,
-      ],
+      ["token1", token("token1", "Primary Color")],
     ]);
     const styleSourceSelections: StyleSourceSelections = new Map([
       ["instance1", { instanceId: "instance1", values: ["token1", "local1"] }],
@@ -1608,10 +2927,7 @@ describe("deleteStyleSourceMutable", () => {
 
   test("deletes all styles associated with the style source", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Primary Color" } as StyleSource,
-      ],
+      ["token1", token("token1", "Primary Color")],
     ]);
     const styleSourceSelections: StyleSourceSelections = new Map();
     const styles: Styles = new Map([
@@ -1675,20 +2991,11 @@ describe("deleteStyleSourceMutable", () => {
 
 describe("findUnusedTokens", () => {
   test("identifies tokens with no usages", () => {
-    const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Used Token" } as StyleSource,
-      ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Unused Token" } as StyleSource,
-      ],
-      [
-        "token3",
-        { type: "token", id: "token3", name: "Another Unused" } as StyleSource,
-      ],
-      ["local1", { type: "local", id: "local1" } as StyleSource],
+    const styleSources = sources([
+      token("token1", "Used Token"),
+      token("token2", "Unused Token"),
+      token("token3", "Another Unused"),
+      local("local1"),
     ]);
     const styleSourceUsages = new Map<string, Set<string>>([
       ["token1", new Set(["instance1", "instance2"])],
@@ -1707,14 +3014,8 @@ describe("findUnusedTokens", () => {
 
   test("returns empty array when all tokens are used", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Used Token 1" } as StyleSource,
-      ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Used Token 2" } as StyleSource,
-      ],
+      ["token1", token("token1", "Used Token 1")],
+      ["token2", token("token2", "Used Token 2")],
     ]);
     const styleSourceUsages = new Map([
       ["token1", new Set(["instance1"])],
@@ -1728,8 +3029,8 @@ describe("findUnusedTokens", () => {
 
   test("ignores local style sources", () => {
     const styleSources: StyleSources = new Map([
-      ["local1", { type: "local", id: "local1" } as StyleSource],
-      ["local2", { type: "local", id: "local2" } as StyleSource],
+      ["local1", local("local1")],
+      ["local2", local("local2")],
     ]);
     const styleSourceUsages = new Map();
 
@@ -1740,10 +3041,7 @@ describe("findUnusedTokens", () => {
 
   test("treats undefined usages as unused", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Unused Token" } as StyleSource,
-      ],
+      ["token1", token("token1", "Unused Token")],
     ]);
     const styleSourceUsages = new Map();
 
@@ -1756,18 +3054,9 @@ describe("findUnusedTokens", () => {
 describe("deleteStyleSourcesMutable", () => {
   test("deletes multiple style sources", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Token 1" } as StyleSource,
-      ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Token 2" } as StyleSource,
-      ],
-      [
-        "token3",
-        { type: "token", id: "token3", name: "Token 3" } as StyleSource,
-      ],
+      ["token1", token("token1", "Token 1")],
+      ["token2", token("token2", "Token 2")],
+      ["token3", token("token3", "Token 3")],
     ]);
     const styleSourceSelections: StyleSourceSelections = new Map();
     const styles: Styles = new Map();
@@ -1786,14 +3075,8 @@ describe("deleteStyleSourcesMutable", () => {
 
   test("removes deleted style sources from all selections", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Token 1" } as StyleSource,
-      ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Token 2" } as StyleSource,
-      ],
+      ["token1", token("token1", "Token 1")],
+      ["token2", token("token2", "Token 2")],
     ]);
     const styleSourceSelections: StyleSourceSelections = new Map([
       [
@@ -1820,14 +3103,8 @@ describe("deleteStyleSourcesMutable", () => {
 
   test("deletes all associated styles", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Token 1" } as StyleSource,
-      ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Token 2" } as StyleSource,
-      ],
+      ["token1", token("token1", "Token 1")],
+      ["token2", token("token2", "Token 2")],
     ]);
     const styleSourceSelections: StyleSourceSelections = new Map();
     const styles: Styles = new Map([
@@ -1875,10 +3152,7 @@ describe("deleteStyleSourcesMutable", () => {
 
   test("handles empty array of style source IDs", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Token 1" } as StyleSource,
-      ],
+      ["token1", token("token1", "Token 1")],
     ]);
     const styleSourceSelections: StyleSourceSelections = new Map();
     const styles: Styles = new Map();
@@ -1897,14 +3171,8 @@ describe("deleteStyleSourcesMutable", () => {
 describe("validateAndRenameStyleSource", () => {
   test("returns undefined for valid rename", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Old Name" } as StyleSource,
-      ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Other Token" } as StyleSource,
-      ],
+      ["token1", token("token1", "Old Name")],
+      ["token2", token("token2", "Other Token")],
     ]);
 
     const error = validateAndRenameStyleSource({
@@ -1918,10 +3186,7 @@ describe("validateAndRenameStyleSource", () => {
 
   test("returns minlength error for empty name", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Old Name" } as StyleSource,
-      ],
+      ["token1", token("token1", "Old Name")],
     ]);
 
     const error = validateAndRenameStyleSource({
@@ -1935,10 +3200,7 @@ describe("validateAndRenameStyleSource", () => {
 
   test("returns minlength error for whitespace-only name", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Old Name" } as StyleSource,
-      ],
+      ["token1", token("token1", "Old Name")],
     ]);
 
     const error = validateAndRenameStyleSource({
@@ -1952,18 +3214,8 @@ describe("validateAndRenameStyleSource", () => {
 
   test("returns duplicate error when name already exists", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Primary Color" } as StyleSource,
-      ],
-      [
-        "token2",
-        {
-          type: "token",
-          id: "token2",
-          name: "Secondary Color",
-        } as StyleSource,
-      ],
+      ["token1", token("token1", "Primary Color")],
+      ["token2", token("token2", "Secondary Color")],
     ]);
 
     const error = validateAndRenameStyleSource({
@@ -1977,10 +3229,7 @@ describe("validateAndRenameStyleSource", () => {
 
   test("allows renaming to same name (no change)", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Primary Color" } as StyleSource,
-      ],
+      ["token1", token("token1", "Primary Color")],
     ]);
 
     const error = validateAndRenameStyleSource({
@@ -1993,12 +3242,9 @@ describe("validateAndRenameStyleSource", () => {
   });
 
   test("ignores local style sources when checking duplicates", () => {
-    const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Primary Color" } as StyleSource,
-      ],
-      ["local1", { type: "local", id: "local1" } as StyleSource],
+    const styleSources = sources([
+      token("token1", "Primary Color"),
+      local("local1"),
     ]);
 
     const error = validateAndRenameStyleSource({
@@ -2014,10 +3260,7 @@ describe("validateAndRenameStyleSource", () => {
 describe("renameStyleSourceMutable", () => {
   test("renames a token style source", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Old Name" } as StyleSource,
-      ],
+      ["token1", token("token1", "Old Name")],
     ]);
 
     renameStyleSourceMutable({
@@ -2034,9 +3277,7 @@ describe("renameStyleSourceMutable", () => {
   });
 
   test("does not rename local style source", () => {
-    const styleSources: StyleSources = new Map([
-      ["local1", { type: "local", id: "local1" } as StyleSource],
-    ]);
+    const styleSources: StyleSources = new Map([["local1", local("local1")]]);
 
     renameStyleSourceMutable({
       id: "local1",
@@ -2062,10 +3303,7 @@ describe("renameStyleSourceMutable", () => {
 
   test("preserves other properties of the style source", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Old Name" } as StyleSource,
-      ],
+      ["token1", token("token1", "Old Name")],
     ]);
 
     renameStyleSourceMutable({
@@ -2083,7 +3321,7 @@ describe("renameStyleSourceMutable", () => {
 describe("toggleStyleSourceLockMutable", () => {
   test("locks a token style source", () => {
     const styleSources: StyleSources = new Map([
-      ["token1", { type: "token", id: "token1", name: "Token" } as StyleSource],
+      ["token1", token("token1", "Token")],
     ]);
 
     toggleStyleSourceLockMutable({
@@ -2102,15 +3340,7 @@ describe("toggleStyleSourceLockMutable", () => {
 
   test("unlocks a token style source by removing the locked field", () => {
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        {
-          type: "token",
-          id: "token1",
-          name: "Token",
-          locked: true,
-        } as StyleSource,
-      ],
+      ["token1", token("token1", "Token", { locked: true })],
     ]);
 
     toggleStyleSourceLockMutable({
@@ -2127,9 +3357,7 @@ describe("toggleStyleSourceLockMutable", () => {
   });
 
   test("does not lock local style sources", () => {
-    const styleSources: StyleSources = new Map([
-      ["local1", { type: "local", id: "local1" } as StyleSource],
-    ]);
+    const styleSources: StyleSources = new Map([["local1", local("local1")]]);
 
     toggleStyleSourceLockMutable({
       id: "local1",
@@ -2169,11 +3397,11 @@ describe("isStyleSourceLocked", () => {
 describe("deleteLocalStyleSourcesMutable", () => {
   test("deletes local style sources from styleSources map", () => {
     const localStyleSourceIds = new Set(["local1", "local2"]);
-    const styleSources: StyleSources = new Map([
-      ["local1", { type: "local", id: "local1" } as StyleSource],
-      ["local2", { type: "local", id: "local2" } as StyleSource],
-      ["local3", { type: "local", id: "local3" } as StyleSource],
-      ["token1", { type: "token", id: "token1", name: "Token" } as StyleSource],
+    const styleSources = sources([
+      local("local1"),
+      local("local2"),
+      local("local3"),
+      token("token1", "Token"),
     ]);
     const styles: Styles = new Map();
 
@@ -2192,8 +3420,8 @@ describe("deleteLocalStyleSourcesMutable", () => {
   test("deletes styles associated with local style sources", () => {
     const localStyleSourceIds = new Set(["local1", "local2"]);
     const styleSources: StyleSources = new Map([
-      ["local1", { type: "local", id: "local1" } as StyleSource],
-      ["local2", { type: "local", id: "local2" } as StyleSource],
+      ["local1", local("local1")],
+      ["local2", local("local2")],
     ]);
     const styles: Styles = new Map([
       [
@@ -2239,9 +3467,7 @@ describe("deleteLocalStyleSourcesMutable", () => {
 
   test("handles empty set of local style source IDs", () => {
     const localStyleSourceIds = new Set<string>();
-    const styleSources: StyleSources = new Map([
-      ["local1", { type: "local", id: "local1" } as StyleSource],
-    ]);
+    const styleSources: StyleSources = new Map([["local1", local("local1")]]);
     const styles: Styles = new Map();
 
     deleteLocalStyleSourcesMutable({
@@ -2262,14 +3488,11 @@ describe("collectStyleSourcesFromInstances", () => {
       ["instance2", { instanceId: "instance2", values: ["local2"] }],
       ["instance3", { instanceId: "instance3", values: ["local3"] }],
     ]);
-    const styleSources: StyleSources = new Map([
-      ["local1", { type: "local", id: "local1" } as StyleSource],
-      ["local2", { type: "local", id: "local2" } as StyleSource],
-      ["local3", { type: "local", id: "local3" } as StyleSource],
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Token 1" } as StyleSource,
-      ],
+    const styleSources = sources([
+      local("local1"),
+      local("local2"),
+      local("local3"),
+      token("token1", "Token 1"),
     ]);
     const styles: Styles = new Map([
       [
@@ -2368,9 +3591,7 @@ describe("collectStyleSourcesFromInstances", () => {
         { instanceId: "instance1", values: ["local1", "missing-source"] },
       ],
     ]);
-    const styleSources: StyleSources = new Map([
-      ["local1", { type: "local", id: "local1" } as StyleSource],
-    ]);
+    const styleSources: StyleSources = new Map([["local1", local("local1")]]);
     const styles: Styles = new Map([
       [
         "local1:base:color",
@@ -2403,10 +3624,7 @@ describe("collectStyleSourcesFromInstances", () => {
       ["instance2", { instanceId: "instance2", values: ["token1"] }],
     ]);
     const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Shared Token" } as StyleSource,
-      ],
+      ["token1", token("token1", "Shared Token")],
     ]);
     const styles: Styles = new Map([
       [
@@ -2434,48 +3652,45 @@ describe("collectStyleSourcesFromInstances", () => {
 });
 
 describe("findDuplicateTokens", () => {
+  const findDuplicates = ({
+    styleSources,
+    styles,
+    breakpoints = baseBreakpoints,
+  }: {
+    styleSources: StyleSource[];
+    styles: StyleDecl[];
+    breakpoints?: Breakpoint[] | Map<string, Breakpoint>;
+  }) =>
+    findDuplicateTokens({
+      styleSources: toMap(styleSources),
+      styles: createStyleDeclMap(styles),
+      breakpoints: Array.isArray(breakpoints)
+        ? toMap(breakpoints)
+        : breakpoints,
+    });
+
   test("finds tokens with identical styles", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Primary Red" } as StyleSource,
+    const duplicates = findDuplicates({
+      styleSources: [
+        { type: "token", id: "token1", name: "Primary Red" },
+        { type: "token", id: "token2", name: "Accent Red" },
+        { type: "token", id: "token3", name: "Blue" },
+        { type: "local", id: "local1" },
       ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Accent Red" } as StyleSource,
-      ],
-      ["token3", { type: "token", id: "token3", name: "Blue" } as StyleSource],
-      ["local1", { type: "local", id: "local1" } as StyleSource],
-    ]);
-    const styles: Styles = new Map([
-      [
-        "token1:base:color",
+      styles: [
         createStyleDecl("token1", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token2:base:color",
         createStyleDecl("token2", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token3:base:color",
         createStyleDecl("token3", "base", "color", {
           type: "keyword",
           value: "blue",
         }),
       ],
-    ]);
-
-    const duplicates = findDuplicateTokens({
-      styleSources,
-      styles,
-      breakpoints,
     });
 
     expect(duplicates.size).toBe(2);
@@ -2486,49 +3701,26 @@ describe("findDuplicateTokens", () => {
   });
 
   test("finds tokens with same name", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Primary" } as StyleSource,
+    const duplicates = findDuplicates({
+      styleSources: [
+        { type: "token", id: "token1", name: "Primary" },
+        { type: "token", id: "token2", name: "Primary" },
+        { type: "token", id: "token3", name: "Secondary" },
       ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Primary" } as StyleSource,
-      ],
-      [
-        "token3",
-        { type: "token", id: "token3", name: "Secondary" } as StyleSource,
-      ],
-    ]);
-    const styles: Styles = new Map([
-      [
-        "token1:base:color",
+      styles: [
         createStyleDecl("token1", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token2:base:color",
         createStyleDecl("token2", "base", "color", {
           type: "keyword",
           value: "blue",
         }),
-      ],
-      [
-        "token3:base:color",
         createStyleDecl("token3", "base", "color", {
           type: "keyword",
           value: "green",
         }),
       ],
-    ]);
-
-    const duplicates = findDuplicateTokens({
-      styleSources,
-      styles,
-      breakpoints,
     });
 
     expect(duplicates.size).toBe(2);
@@ -2538,38 +3730,21 @@ describe("findDuplicateTokens", () => {
   });
 
   test("finds tokens with same name AND same styles without duplicating", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Primary" } as StyleSource,
+    const duplicates = findDuplicates({
+      styleSources: [
+        { type: "token", id: "token1", name: "Primary" },
+        { type: "token", id: "token2", name: "Primary" },
       ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Primary" } as StyleSource,
-      ],
-    ]);
-    const styles: Styles = new Map([
-      [
-        "token1:base:color",
+      styles: [
         createStyleDecl("token1", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token2:base:color",
         createStyleDecl("token2", "base", "color", {
           type: "keyword",
           value: "red",
         }),
       ],
-    ]);
-
-    const duplicates = findDuplicateTokens({
-      styleSources,
-      styles,
-      breakpoints,
     });
 
     expect(duplicates.size).toBe(2);
@@ -2579,54 +3754,31 @@ describe("findDuplicateTokens", () => {
   });
 
   test("finds mixed duplicates: some by style, some by name", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const styleSources: StyleSources = new Map([
-      ["token1", { type: "token", id: "token1", name: "Red A" } as StyleSource],
-      ["token2", { type: "token", id: "token2", name: "Red B" } as StyleSource],
-      [
-        "token3",
-        { type: "token", id: "token3", name: "Duplicate Name" } as StyleSource,
+    const duplicates = findDuplicates({
+      styleSources: [
+        { type: "token", id: "token1", name: "Red A" },
+        { type: "token", id: "token2", name: "Red B" },
+        { type: "token", id: "token3", name: "Duplicate Name" },
+        { type: "token", id: "token4", name: "Duplicate Name" },
       ],
-      [
-        "token4",
-        { type: "token", id: "token4", name: "Duplicate Name" } as StyleSource,
-      ],
-    ]);
-    const styles: Styles = new Map([
-      [
-        "token1:base:color",
+      styles: [
         createStyleDecl("token1", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token2:base:color",
         createStyleDecl("token2", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token3:base:color",
         createStyleDecl("token3", "base", "color", {
           type: "keyword",
           value: "blue",
         }),
-      ],
-      [
-        "token4:base:color",
         createStyleDecl("token4", "base", "color", {
           type: "keyword",
           value: "green",
         }),
       ],
-    ]);
-
-    const duplicates = findDuplicateTokens({
-      styleSources,
-      styles,
-      breakpoints,
     });
 
     expect(duplicates.size).toBe(4);
@@ -2637,65 +3789,36 @@ describe("findDuplicateTokens", () => {
   });
 
   test("finds multiple groups of duplicates", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const styleSources: StyleSources = new Map([
-      ["token1", { type: "token", id: "token1", name: "Red 1" } as StyleSource],
-      ["token2", { type: "token", id: "token2", name: "Red 2" } as StyleSource],
-      [
-        "token3",
-        { type: "token", id: "token3", name: "Blue 1" } as StyleSource,
+    const duplicates = findDuplicates({
+      styleSources: [
+        { type: "token", id: "token1", name: "Red 1" },
+        { type: "token", id: "token2", name: "Red 2" },
+        { type: "token", id: "token3", name: "Blue 1" },
+        { type: "token", id: "token4", name: "Blue 2" },
+        { type: "token", id: "token5", name: "Blue 3" },
       ],
-      [
-        "token4",
-        { type: "token", id: "token4", name: "Blue 2" } as StyleSource,
-      ],
-      [
-        "token5",
-        { type: "token", id: "token5", name: "Blue 3" } as StyleSource,
-      ],
-    ]);
-    const styles: Styles = new Map([
-      [
-        "token1:base:color",
+      styles: [
         createStyleDecl("token1", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token2:base:color",
         createStyleDecl("token2", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token3:base:color",
         createStyleDecl("token3", "base", "color", {
           type: "keyword",
           value: "blue",
         }),
-      ],
-      [
-        "token4:base:color",
         createStyleDecl("token4", "base", "color", {
           type: "keyword",
           value: "blue",
         }),
-      ],
-      [
-        "token5:base:color",
         createStyleDecl("token5", "base", "color", {
           type: "keyword",
           value: "blue",
         }),
       ],
-    ]);
-
-    const duplicates = findDuplicateTokens({
-      styleSources,
-      styles,
-      breakpoints,
     });
 
     expect(duplicates.size).toBe(5);
@@ -2707,62 +3830,41 @@ describe("findDuplicateTokens", () => {
   });
 
   test("returns empty map when no duplicates exist", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const styleSources: StyleSources = new Map([
-      ["token1", { type: "token", id: "token1", name: "Red" } as StyleSource],
-      ["token2", { type: "token", id: "token2", name: "Blue" } as StyleSource],
-    ]);
-    const styles: Styles = new Map([
-      [
-        "token1:base:color",
+    const duplicates = findDuplicates({
+      styleSources: [
+        { type: "token", id: "token1", name: "Red" },
+        { type: "token", id: "token2", name: "Blue" },
+      ],
+      styles: [
         createStyleDecl("token1", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token2:base:color",
         createStyleDecl("token2", "base", "color", {
           type: "keyword",
           value: "blue",
         }),
       ],
-    ]);
-
-    const duplicates = findDuplicateTokens({
-      styleSources,
-      styles,
-      breakpoints,
     });
 
     expect(duplicates.size).toBe(0);
   });
 
   test("compares tokens across breakpoints and states", () => {
-    const breakpoints = toMap<Breakpoint>([
-      { id: "base", label: "base" },
-      { id: "tablet", label: "tablet", minWidth: 768 },
-    ]);
-    const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Token 1" } as StyleSource,
+    const duplicates = findDuplicates({
+      breakpoints: [
+        { id: "base", label: "base" },
+        { id: "tablet", label: "tablet", minWidth: 768 },
       ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Token 2" } as StyleSource,
+      styleSources: [
+        { type: "token", id: "token1", name: "Token 1" },
+        { type: "token", id: "token2", name: "Token 2" },
       ],
-    ]);
-    const styles: Styles = new Map([
-      [
-        "token1:base:color",
+      styles: [
         createStyleDecl("token1", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token1:tablet:color",
         {
           ...createStyleDecl("token1", "tablet", "color", {
             type: "keyword",
@@ -2770,16 +3872,10 @@ describe("findDuplicateTokens", () => {
           }),
           state: ":hover",
         },
-      ],
-      [
-        "token2:base:color",
         createStyleDecl("token2", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "token2:tablet:color",
         {
           ...createStyleDecl("token2", "tablet", "color", {
             type: "keyword",
@@ -2788,12 +3884,6 @@ describe("findDuplicateTokens", () => {
           state: ":hover",
         },
       ],
-    ]);
-
-    const duplicates = findDuplicateTokens({
-      styleSources,
-      styles,
-      breakpoints,
     });
 
     expect(duplicates.size).toBe(2);
@@ -2802,67 +3892,39 @@ describe("findDuplicateTokens", () => {
   });
 
   test("ignores local style sources", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const styleSources: StyleSources = new Map([
-      ["local1", { type: "local", id: "local1" } as StyleSource],
-      ["local2", { type: "local", id: "local2" } as StyleSource],
-    ]);
-    const styles: Styles = new Map([
-      [
-        "local1:base:color",
+    const duplicates = findDuplicates({
+      styleSources: [
+        { type: "local", id: "local1" },
+        { type: "local", id: "local2" },
+      ],
+      styles: [
         createStyleDecl("local1", "base", "color", {
           type: "keyword",
           value: "red",
         }),
-      ],
-      [
-        "local2:base:color",
         createStyleDecl("local2", "base", "color", {
           type: "keyword",
           value: "red",
         }),
       ],
-    ]);
-
-    const duplicates = findDuplicateTokens({
-      styleSources,
-      styles,
-      breakpoints,
     });
 
     expect(duplicates.size).toBe(0);
   });
 
   test("handles tokens with no styles", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const styleSources: StyleSources = new Map([
-      [
-        "token1",
-        { type: "token", id: "token1", name: "Empty 1" } as StyleSource,
+    const duplicates = findDuplicates({
+      styleSources: [
+        { type: "token", id: "token1", name: "Empty 1" },
+        { type: "token", id: "token2", name: "Empty 2" },
+        { type: "token", id: "token3", name: "With Styles" },
       ],
-      [
-        "token2",
-        { type: "token", id: "token2", name: "Empty 2" } as StyleSource,
-      ],
-      [
-        "token3",
-        { type: "token", id: "token3", name: "With Styles" } as StyleSource,
-      ],
-    ]);
-    const styles: Styles = new Map([
-      [
-        "token3:base:color",
+      styles: [
         createStyleDecl("token3", "base", "color", {
           type: "keyword",
           value: "red",
         }),
       ],
-    ]);
-
-    const duplicates = findDuplicateTokens({
-      styleSources,
-      styles,
-      breakpoints,
     });
 
     // Empty tokens should be considered duplicates of each other
@@ -2877,19 +3939,32 @@ describe("findTokenWithMatchingStyles", () => {
   const breakpoints = new Map<Breakpoint["id"], Breakpoint>([
     ["base", { id: "base", label: "Base" }],
   ]);
-
-  test("returns no conflict when token name doesn't exist", () => {
-    const existingTokens: StyleSource[] = [
-      { type: "token", id: "existing1", name: "PrimaryColor" },
-    ];
-
-    const result = findTokenWithMatchingStyles({
-      tokenName: "SecondaryColor",
-      tokenStyles: [],
-      existingTokens,
-      existingStyles: [],
+  const findTokenMatch = ({
+    tokenName,
+    existingTokenName = tokenName,
+    tokenStyles = [],
+    existingStyles = [],
+  }: {
+    tokenName: string;
+    existingTokenName?: string;
+    tokenStyles?: StyleDecl[];
+    existingStyles?: StyleDecl[];
+  }) =>
+    findTokenWithMatchingStyles({
+      tokenName,
+      tokenStyles,
+      existingTokens: [
+        { type: "token", id: "existing1", name: existingTokenName },
+      ],
+      existingStyles,
       breakpoints,
       mergedBreakpointIds: new Map(),
+    });
+
+  test("returns no conflict when token name doesn't exist", () => {
+    const result = findTokenMatch({
+      tokenName: "SecondaryColor",
+      existingTokenName: "PrimaryColor",
     });
 
     expect(result.hasConflict).toBe(false);
@@ -2897,37 +3972,22 @@ describe("findTokenWithMatchingStyles", () => {
   });
 
   test("returns matching token when name and styles match", () => {
-    const existingToken: Extract<StyleSource, { type: "token" }> = {
-      type: "token",
-      id: "existing1",
-      name: "PrimaryColor",
-    };
-
     const existingStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "existing1",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
+      createStyleDecl("existing1", "base", "color", {
+        type: "keyword",
+        value: "red",
+      }),
     ];
-
     const tokenStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "fragment1",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
+      createStyleDecl("fragment1", "base", "color", {
+        type: "keyword",
+        value: "red",
+      }),
     ];
-
-    const result = findTokenWithMatchingStyles({
+    const result = findTokenMatch({
       tokenName: "PrimaryColor",
       tokenStyles,
-      existingTokens: [existingToken],
       existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
     });
 
     expect(result.hasConflict).toBe(false);
@@ -2936,37 +3996,22 @@ describe("findTokenWithMatchingStyles", () => {
   });
 
   test("returns conflict when name matches but styles differ", () => {
-    const existingToken: Extract<StyleSource, { type: "token" }> = {
-      type: "token",
-      id: "existing1",
-      name: "PrimaryColor",
-    };
-
     const existingStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "existing1",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
+      createStyleDecl("existing1", "base", "color", {
+        type: "keyword",
+        value: "red",
+      }),
     ];
-
     const tokenStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "fragment1",
-        property: "color",
-        value: { type: "keyword", value: "blue" }, // Different color
-      },
+      createStyleDecl("fragment1", "base", "color", {
+        type: "keyword",
+        value: "blue",
+      }),
     ];
-
-    const result = findTokenWithMatchingStyles({
+    const result = findTokenMatch({
       tokenName: "PrimaryColor",
       tokenStyles,
-      existingTokens: [existingToken],
       existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
     });
 
     expect(result.hasConflict).toBe(true);
@@ -2974,61 +4019,40 @@ describe("findTokenWithMatchingStyles", () => {
   });
 
   test("matches token with multiple style properties", () => {
-    const existingToken: Extract<StyleSource, { type: "token" }> = {
-      type: "token",
-      id: "existing1",
-      name: "ButtonStyle",
-    };
-
     const existingStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "existing1",
-        property: "color",
-        value: { type: "keyword", value: "white" },
-      },
-      {
-        breakpointId: "base",
-        styleSourceId: "existing1",
-        property: "backgroundColor",
-        value: { type: "keyword", value: "blue" },
-      },
-      {
-        breakpointId: "base",
-        styleSourceId: "existing1",
-        property: "paddingTop",
-        value: { type: "unit", value: 10, unit: "px" },
-      },
+      createStyleDecl("existing1", "base", "color", {
+        type: "keyword",
+        value: "white",
+      }),
+      createStyleDecl("existing1", "base", "backgroundColor", {
+        type: "keyword",
+        value: "blue",
+      }),
+      createStyleDecl("existing1", "base", "paddingTop", {
+        type: "unit",
+        value: 10,
+        unit: "px",
+      }),
     ];
-
     const tokenStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "fragment1",
-        property: "paddingTop",
-        value: { type: "unit", value: 10, unit: "px" },
-      },
-      {
-        breakpointId: "base",
-        styleSourceId: "fragment1",
-        property: "backgroundColor",
-        value: { type: "keyword", value: "blue" },
-      },
-      {
-        breakpointId: "base",
-        styleSourceId: "fragment1",
-        property: "color",
-        value: { type: "keyword", value: "white" },
-      },
+      createStyleDecl("fragment1", "base", "paddingTop", {
+        type: "unit",
+        value: 10,
+        unit: "px",
+      }),
+      createStyleDecl("fragment1", "base", "backgroundColor", {
+        type: "keyword",
+        value: "blue",
+      }),
+      createStyleDecl("fragment1", "base", "color", {
+        type: "keyword",
+        value: "white",
+      }),
     ];
-
-    const result = findTokenWithMatchingStyles({
+    const result = findTokenMatch({
       tokenName: "ButtonStyle",
       tokenStyles,
-      existingTokens: [existingToken],
       existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
     });
 
     expect(result.hasConflict).toBe(false);
@@ -3036,49 +4060,30 @@ describe("findTokenWithMatchingStyles", () => {
   });
 
   test("detects conflict when one style property differs", () => {
-    const existingToken: Extract<StyleSource, { type: "token" }> = {
-      type: "token",
-      id: "existing1",
-      name: "ButtonStyle",
-    };
-
     const existingStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "existing1",
-        property: "color",
-        value: { type: "keyword", value: "white" },
-      },
-      {
-        breakpointId: "base",
-        styleSourceId: "existing1",
-        property: "backgroundColor",
-        value: { type: "keyword", value: "blue" },
-      },
+      createStyleDecl("existing1", "base", "color", {
+        type: "keyword",
+        value: "white",
+      }),
+      createStyleDecl("existing1", "base", "backgroundColor", {
+        type: "keyword",
+        value: "blue",
+      }),
     ];
-
     const tokenStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "fragment1",
-        property: "color",
-        value: { type: "keyword", value: "white" },
-      },
-      {
-        breakpointId: "base",
-        styleSourceId: "fragment1",
-        property: "backgroundColor",
-        value: { type: "keyword", value: "red" }, // Different!
-      },
+      createStyleDecl("fragment1", "base", "color", {
+        type: "keyword",
+        value: "white",
+      }),
+      createStyleDecl("fragment1", "base", "backgroundColor", {
+        type: "keyword",
+        value: "red",
+      }),
     ];
-
-    const result = findTokenWithMatchingStyles({
+    const result = findTokenMatch({
       tokenName: "ButtonStyle",
       tokenStyles,
-      existingTokens: [existingToken],
       existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
     });
 
     expect(result.hasConflict).toBe(true);
@@ -3086,19 +4091,8 @@ describe("findTokenWithMatchingStyles", () => {
   });
 
   test("handles empty token styles", () => {
-    const existingToken: Extract<StyleSource, { type: "token" }> = {
-      type: "token",
-      id: "existing1",
-      name: "EmptyToken",
-    };
-
-    const result = findTokenWithMatchingStyles({
+    const result = findTokenMatch({
       tokenName: "EmptyToken",
-      tokenStyles: [],
-      existingTokens: [existingToken],
-      existingStyles: [],
-      breakpoints,
-      mergedBreakpointIds: new Map(),
     });
 
     expect(result.hasConflict).toBe(false);
@@ -3110,86 +4104,73 @@ describe("detectTokenConflicts", () => {
   const breakpoints = new Map<Breakpoint["id"], Breakpoint>([
     ["base", { id: "base", label: "Base" }],
   ]);
-
-  test("returns empty array when no conflicts exist", () => {
-    const fragmentStyleSources: StyleSource[] = [
-      { type: "token", id: "frag1", name: "NewToken" },
-    ];
-
-    const fragmentStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "frag1",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
-    ];
-
-    const existingStyleSources = new Map<string, StyleSource>([
-      ["exist1", { type: "token", id: "exist1", name: "ExistingToken" }],
-    ]);
-
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "exist1:base:color",
-        {
-          breakpointId: "base",
-          styleSourceId: "exist1",
-          property: "color",
-          value: { type: "keyword", value: "blue" },
-        },
-      ],
-    ]);
-
-    const conflicts = detectTokenConflicts({
+  const getConflicts = ({
+    fragmentStyleSources,
+    fragmentStyles,
+    existingStyleSources = [],
+    existingStyles = [],
+    breakpointsMap = breakpoints,
+    mergedBreakpointIds = new Map<string, string>(),
+  }: {
+    fragmentStyleSources: StyleSource[];
+    fragmentStyles: StyleDecl[];
+    existingStyleSources?: StyleSource[];
+    existingStyles?: StyleDecl[];
+    breakpointsMap?: Map<Breakpoint["id"], Breakpoint>;
+    mergedBreakpointIds?: Map<string, string>;
+  }) =>
+    detectTokenConflicts({
       fragmentStyleSources,
       fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+      existingStyleSources: toMap(existingStyleSources),
+      existingStyles: createStyleDeclMap(existingStyles),
+      breakpoints: breakpointsMap,
+      mergedBreakpointIds,
+    });
+
+  test("returns empty array when no conflicts exist", () => {
+    const conflicts = getConflicts({
+      fragmentStyleSources: [{ type: "token", id: "frag1", name: "NewToken" }],
+      fragmentStyles: [
+        createStyleDecl("frag1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      existingStyleSources: [
+        { type: "token", id: "exist1", name: "ExistingToken" },
+      ],
+      existingStyles: [
+        createStyleDecl("exist1", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
     });
 
     expect(conflicts).toHaveLength(0);
   });
 
   test("detects conflict when token name exists with different styles", () => {
-    const fragmentStyleSources: StyleSource[] = [
-      { type: "token", id: "frag1", name: "PrimaryColor" },
-    ];
-
-    const fragmentStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "frag1",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
-    ];
-
-    const existingStyleSources = new Map<string, StyleSource>([
-      ["exist1", { type: "token", id: "exist1", name: "PrimaryColor" }],
-    ]);
-
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "exist1:base:color",
-        {
-          breakpointId: "base",
-          styleSourceId: "exist1",
-          property: "color",
-          value: { type: "keyword", value: "blue" }, // Different color
-        },
+    const conflicts = getConflicts({
+      fragmentStyleSources: [
+        { type: "token", id: "frag1", name: "PrimaryColor" },
       ],
-    ]);
-
-    const conflicts = detectTokenConflicts({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+      fragmentStyles: [
+        createStyleDecl("frag1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      existingStyleSources: [
+        { type: "token", id: "exist1", name: "PrimaryColor" },
+      ],
+      existingStyles: [
+        createStyleDecl("exist1", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
     });
 
     expect(conflicts).toHaveLength(1);
@@ -3199,59 +4180,35 @@ describe("detectTokenConflicts", () => {
   });
 
   test("detects multiple conflicts", () => {
-    const fragmentStyleSources: StyleSource[] = [
-      { type: "token", id: "frag1", name: "PrimaryColor" },
-      { type: "token", id: "frag2", name: "SecondaryColor" },
-    ];
-
-    const fragmentStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "frag1",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
-      {
-        breakpointId: "base",
-        styleSourceId: "frag2",
-        property: "color",
-        value: { type: "keyword", value: "green" },
-      },
-    ];
-
-    const existingStyleSources = new Map<string, StyleSource>([
-      ["exist1", { type: "token", id: "exist1", name: "PrimaryColor" }],
-      ["exist2", { type: "token", id: "exist2", name: "SecondaryColor" }],
-    ]);
-
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "exist1:base:color",
-        {
-          breakpointId: "base",
-          styleSourceId: "exist1",
-          property: "color",
-          value: { type: "keyword", value: "blue" },
-        },
+    const conflicts = getConflicts({
+      fragmentStyleSources: [
+        { type: "token", id: "frag1", name: "PrimaryColor" },
+        { type: "token", id: "frag2", name: "SecondaryColor" },
       ],
-      [
-        "exist2:base:color",
-        {
-          breakpointId: "base",
-          styleSourceId: "exist2",
-          property: "color",
-          value: { type: "keyword", value: "yellow" },
-        },
+      fragmentStyles: [
+        createStyleDecl("frag1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+        createStyleDecl("frag2", "base", "color", {
+          type: "keyword",
+          value: "green",
+        }),
       ],
-    ]);
-
-    const conflicts = detectTokenConflicts({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+      existingStyleSources: [
+        { type: "token", id: "exist1", name: "PrimaryColor" },
+        { type: "token", id: "exist2", name: "SecondaryColor" },
+      ],
+      existingStyles: [
+        createStyleDecl("exist1", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+        createStyleDecl("exist2", "base", "color", {
+          type: "keyword",
+          value: "yellow",
+        }),
+      ],
     });
 
     expect(conflicts).toHaveLength(2);
@@ -3260,151 +4217,94 @@ describe("detectTokenConflicts", () => {
   });
 
   test("ignores local style sources", () => {
-    const fragmentStyleSources: StyleSource[] = [
-      { type: "local", id: "frag1" },
-      { type: "token", id: "frag2", name: "SomeToken" },
-    ];
-
-    const fragmentStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "frag1",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
-      {
-        breakpointId: "base",
-        styleSourceId: "frag2",
-        property: "color",
-        value: { type: "keyword", value: "blue" },
-      },
-    ];
-
-    const existingStyleSources = new Map<string, StyleSource>();
-    const existingStyles = new Map<string, StyleDecl>();
-
-    const conflicts = detectTokenConflicts({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+    const conflicts = getConflicts({
+      fragmentStyleSources: [
+        { type: "local", id: "frag1" },
+        { type: "token", id: "frag2", name: "SomeToken" },
+      ],
+      fragmentStyles: [
+        createStyleDecl("frag1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+        createStyleDecl("frag2", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
     });
 
     expect(conflicts).toHaveLength(0);
   });
 
   test("no conflict when token name matches and styles match", () => {
-    const fragmentStyleSources: StyleSource[] = [
-      { type: "token", id: "frag1", name: "SharedToken" },
-    ];
-
-    const fragmentStyles: StyleDecl[] = [
-      {
-        breakpointId: "base",
-        styleSourceId: "frag1",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
-    ];
-
-    const existingStyleSources = new Map<string, StyleSource>([
-      ["exist1", { type: "token", id: "exist1", name: "SharedToken" }],
-    ]);
-
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "exist1:base:color",
-        {
-          breakpointId: "base",
-          styleSourceId: "exist1",
-          property: "color",
-          value: { type: "keyword", value: "red" }, // Same color
-        },
+    const conflicts = getConflicts({
+      fragmentStyleSources: [
+        { type: "token", id: "frag1", name: "SharedToken" },
       ],
-    ]);
-
-    const conflicts = detectTokenConflicts({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+      fragmentStyles: [
+        createStyleDecl("frag1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      existingStyleSources: [
+        { type: "token", id: "exist1", name: "SharedToken" },
+      ],
+      existingStyles: [
+        createStyleDecl("exist1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
     });
 
     expect(conflicts).toHaveLength(0);
   });
 
   test("handles tokens with no styles", () => {
-    const fragmentStyleSources: StyleSource[] = [
-      { type: "token", id: "frag1", name: "EmptyToken" },
-    ];
-
-    const fragmentStyles: StyleDecl[] = [];
-
-    const existingStyleSources = new Map<string, StyleSource>([
-      ["exist1", { type: "token", id: "exist1", name: "EmptyToken" }],
-    ]);
-
-    const existingStyles = new Map<string, StyleDecl>();
-
-    const conflicts = detectTokenConflicts({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints,
-      mergedBreakpointIds: new Map(),
+    const conflicts = getConflicts({
+      fragmentStyleSources: [
+        { type: "token", id: "frag1", name: "EmptyToken" },
+      ],
+      fragmentStyles: [],
+      existingStyleSources: [
+        { type: "token", id: "exist1", name: "EmptyToken" },
+      ],
     });
 
     expect(conflicts).toHaveLength(0);
   });
 
   test("uses merged breakpoint IDs when comparing", () => {
-    const fragmentStyleSources: StyleSource[] = [
-      { type: "token", id: "frag1", name: "ResponsiveToken" },
-    ];
-
-    const fragmentStyles: StyleDecl[] = [
-      {
-        breakpointId: "tablet-frag",
-        styleSourceId: "frag1",
-        property: "fontSize",
-        value: { type: "unit", value: 18, unit: "px" },
-      },
-    ];
-
     const breakpointsMap = new Map<Breakpoint["id"], Breakpoint>([
       ["base", { id: "base", label: "Base" }],
       ["tablet-exist", { id: "tablet-exist", minWidth: 768, label: "Tablet" }],
     ]);
-
     const mergedBreakpointIds = new Map([["tablet-frag", "tablet-exist"]]);
 
-    const existingStyleSources = new Map<string, StyleSource>([
-      ["exist1", { type: "token", id: "exist1", name: "ResponsiveToken" }],
-    ]);
-
-    const existingStyles = new Map<string, StyleDecl>([
-      [
-        "exist1:tablet-exist:fontSize",
-        {
-          breakpointId: "tablet-exist",
-          styleSourceId: "exist1",
-          property: "fontSize",
-          value: { type: "unit", value: 18, unit: "px" },
-        },
+    const conflicts = getConflicts({
+      fragmentStyleSources: [
+        { type: "token", id: "frag1", name: "ResponsiveToken" },
       ],
-    ]);
-
-    const conflicts = detectTokenConflicts({
-      fragmentStyleSources,
-      fragmentStyles,
-      existingStyleSources,
-      existingStyles,
-      breakpoints: breakpointsMap,
+      fragmentStyles: [
+        createStyleDecl("frag1", "tablet-frag", "fontSize", {
+          type: "unit",
+          value: 18,
+          unit: "px",
+        }),
+      ],
+      existingStyleSources: [
+        { type: "token", id: "exist1", name: "ResponsiveToken" },
+      ],
+      existingStyles: [
+        createStyleDecl("exist1", "tablet-exist", "fontSize", {
+          type: "unit",
+          value: 18,
+          unit: "px",
+        }),
+      ],
+      breakpointsMap,
       mergedBreakpointIds,
     });
 

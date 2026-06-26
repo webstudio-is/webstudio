@@ -1,19 +1,40 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { apiCommand } from "./api-command";
+import {
+  getPublicApiOperation,
+  publicApiOperations,
+} from "@webstudio-is/http-client";
+import { apiCompatibilityHeaders } from "./api";
+import { apiCommand, apiCommandNames } from "./api-command";
+import { apiCommandCatalog } from "./api-command-metadata";
 
-const query = vi.fn();
-const mutation = vi.fn();
-const createAuthTrpcClient = vi.fn(() => ({ query, mutation }));
+const apiCalls = new Proxy({} as Record<string, ReturnType<typeof vi.fn>>, {
+  get(target, property: string) {
+    target[property] ??= vi.fn().mockResolvedValue({ ok: true });
+    return target[property];
+  },
+});
 const isFileExists = vi.fn();
 const readFile = vi.fn();
-const dependencies = {
-  createAuthTrpcClient,
-  isFileExists,
-  readFile,
-};
+const dependencies = new Proxy(
+  {
+    isFileExists,
+    readFile,
+  } as typeof apiCalls & {
+    isFileExists: typeof isFileExists;
+    readFile: typeof readFile;
+  },
+  {
+    get(target, property: string) {
+      if (property in target) {
+        return target[property];
+      }
+      return apiCalls[property];
+    },
+  }
+) as unknown as Parameters<typeof apiCommand>[1];
 
 const expectJsonOutput = (command: string) => {
-  expect(JSON.parse(vi.mocked(console.log).mock.calls.at(-1)?.[0])).toEqual({
+  expect(getLastJsonOutput()).toEqual({
     ok: true,
     data: { ok: true },
     meta: {
@@ -23,6 +44,76 @@ const expectJsonOutput = (command: string) => {
     },
   });
 };
+
+const getLastJsonOutput = () =>
+  JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+
+const expectJsonErrorOutput = ({
+  command,
+  code,
+  message,
+  projectId = "project-1",
+  retry,
+}: {
+  command: string;
+  code: string;
+  message: string;
+  projectId?: string | false;
+  retry?: string;
+}) => {
+  expect(getLastJsonOutput()).toEqual({
+    ok: false,
+    error: { code, message, ...(retry === undefined ? {} : { retry }) },
+    meta: {
+      command,
+      ...(projectId === false ? {} : { projectId }),
+      durationMs: expect.any(Number),
+    },
+  });
+};
+
+const expectConnection = (extra = {}) =>
+  expect.objectContaining({
+    origin: "https://example.com",
+    authToken: "token-1",
+    projectId: "project-1",
+    headers: apiCompatibilityHeaders,
+    ...extra,
+  });
+
+const expectCommandCall = async ({
+  options,
+  call,
+  connection = {},
+  inputJson,
+}: {
+  options: Parameters<typeof apiCommand>[0];
+  call: ReturnType<typeof vi.fn>;
+  connection?: Record<string, unknown>;
+  inputJson?: unknown;
+}) => {
+  mockConfig();
+  if (inputJson !== undefined) {
+    readFile.mockResolvedValueOnce(JSON.stringify(inputJson));
+  }
+
+  await apiCommand({ ...options, json: true }, dependencies);
+
+  expect(call).toHaveBeenCalledWith(expectConnection(connection));
+  expectJsonOutput(options.command);
+};
+
+const patchTransactions = [
+  {
+    id: "tx-1",
+    payload: [
+      {
+        namespace: "pages",
+        patches: [{ op: "replace", path: ["meta", "siteName"], value: "Site" }],
+      },
+    ],
+  },
+];
 
 const mockConfig = ({
   origin = "https://example.com",
@@ -43,16 +134,14 @@ const mockConfig = ({
 };
 
 beforeEach(() => {
-  query.mockReset();
-  query.mockResolvedValue({ ok: true });
-  mutation.mockReset();
-  mutation.mockResolvedValue({ ok: true });
-  createAuthTrpcClient.mockReset();
-  createAuthTrpcClient.mockReturnValue({ query, mutation });
+  for (const call of Object.values(apiCalls)) {
+    call.mockReset();
+    call.mockResolvedValue({ ok: true });
+  }
   isFileExists.mockReset();
   isFileExists.mockResolvedValue(false);
   readFile.mockReset();
-  vi.spyOn(console, "log").mockImplementation(() => undefined);
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
@@ -70,138 +159,125 @@ test("requires json output flag", async () => {
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(query).not.toHaveBeenCalled();
+  expect(apiCalls.getApiTokenInfo).not.toHaveBeenCalled();
   expect(console.error).toHaveBeenCalledWith(
     "whoami currently requires --json."
   );
 });
 
-test("calls auth introspection for whoami", async () => {
-  mockConfig();
-
-  await apiCommand(
-    {
-      command: "whoami",
-      json: true,
-    },
-    dependencies
-  );
-
-  expect(createAuthTrpcClient).toHaveBeenCalledWith(
-    expect.objectContaining({
-      origin: "https://example.com",
-      authToken: "token-1",
-    })
-  );
-  expect(query).toHaveBeenCalledWith("api.auth.me");
-  expectJsonOutput("whoami");
+test("documents every executable api command", () => {
+  expect(apiCommandCatalog.map(({ command }) => command)).toEqual([
+    ...apiCommandNames,
+  ]);
 });
 
-test("calls project details for configured project", async () => {
-  mockConfig();
-
-  await apiCommand(
-    {
-      command: "inspect",
-      json: true,
-    },
-    dependencies
+test("has a public operation descriptor for every executable api command", () => {
+  expect(publicApiOperations.map(({ command }) => command)).toEqual([
+    ...apiCommandNames,
+  ]);
+  expect(
+    apiCommandCatalog.map(({ command, method, permit }) => ({
+      command,
+      method,
+      permit,
+    }))
+  ).toEqual(
+    apiCommandNames.map((command) => ({
+      command,
+      method: getPublicApiOperation(command).method,
+      permit: getPublicApiOperation(command).permit,
+    }))
   );
-
-  expect(query).toHaveBeenCalledWith("api.projects.get", {
-    projectId: "project-1",
-  });
-  expectJsonOutput("inspect");
 });
+
+const simpleCommandCases = [
+  ["auth introspection", { command: "whoami" }, "getApiTokenInfo", {}],
+  ["project details", { command: "inspect" }, "getProjectInfo", {}],
+  [
+    "project permissions",
+    { command: "permissions" },
+    "getProjectPermissions",
+    {},
+  ],
+  [
+    "page list",
+    { command: "list-pages", includeFolders: true },
+    "listPages",
+    { includeFolders: true },
+  ],
+  [
+    "folder list",
+    { command: "list-folders", includePages: true },
+    "listFolders",
+    { includePages: true },
+  ],
+  [
+    "folder delete",
+    { command: "delete-folder", folder: "folder-1" },
+    "deleteFolder",
+    { folderId: "folder-1" },
+  ],
+  [
+    "page details by id",
+    { command: "get-page", page: "page-1" },
+    "getPage",
+    { pageId: "page-1" },
+  ],
+  [
+    "page details by path",
+    { command: "get-page-by-path", path: "/pricing" },
+    "getPageByPath",
+    { path: "/pricing" },
+  ],
+] satisfies Array<
+  readonly [
+    string,
+    Parameters<typeof apiCommand>[0],
+    string,
+    Record<string, unknown>?,
+  ]
+>;
+
+test.each(simpleCommandCases)(
+  "calls %s",
+  async (_name, options, callName, connection) => {
+    await expectCommandCall({
+      options,
+      call: apiCalls[callName],
+      connection: connection ?? {},
+    });
+  }
+);
 
 test("calls build snapshot for configured project", async () => {
-  mockConfig();
-
-  await apiCommand(
-    {
+  await expectCommandCall({
+    options: {
       command: "snapshot",
       include: ["pages", "designTokens"],
       version: 3,
-      json: true,
     },
-    dependencies
-  );
-
-  expect(query).toHaveBeenCalledWith("api.build.get", {
-    projectId: "project-1",
-    include: ["pages", "designTokens"],
-    version: 3,
+    call: apiCalls.getBuildSnapshot,
+    connection: { include: ["pages", "designTokens"], version: 3 },
   });
-  expectJsonOutput("snapshot");
 });
 
 test("applies build patch transactions for configured project", async () => {
-  mockConfig();
-  readFile.mockResolvedValueOnce(
-    JSON.stringify([
-      {
-        id: "tx-1",
-        payload: [
-          {
-            namespace: "pages",
-            patches: [
-              { op: "replace", path: ["meta", "siteName"], value: "Site" },
-            ],
-          },
-        ],
-      },
-    ])
-  );
-
-  await apiCommand(
-    {
+  await expectCommandCall({
+    options: {
       command: "apply-patch",
       baseVersion: 5,
       input: "patch.json",
-      json: true,
     },
-    dependencies
-  );
-
-  expect(query).not.toHaveBeenCalled();
-  expect(mutation).toHaveBeenCalledWith("api.build.patch", {
-    projectId: "project-1",
-    baseVersion: 5,
-    transactions: [
-      {
-        id: "tx-1",
-        payload: [
-          {
-            namespace: "pages",
-            patches: [
-              { op: "replace", path: ["meta", "siteName"], value: "Site" },
-            ],
-          },
-        ],
-      },
-    ],
+    call: apiCalls.applyBuildPatch,
+    inputJson: patchTransactions,
+    connection: { baseVersion: 5, transactions: patchTransactions },
   });
-  expectJsonOutput("apply-patch");
 });
 
-test("maps trpc conflict errors to version conflict json", async () => {
+test("maps api conflict errors to version conflict json", async () => {
   mockConfig();
-  readFile.mockResolvedValueOnce(
-    JSON.stringify([
-      {
-        id: "tx-1",
-        payload: [
-          {
-            namespace: "pages",
-            patches: [
-              { op: "replace", path: ["meta", "siteName"], value: "Site" },
-            ],
-          },
-        ],
-      },
-    ])
-  );
-  mutation.mockRejectedValue(
+  readFile.mockResolvedValueOnce(JSON.stringify(patchTransactions));
+  apiCalls.applyBuildPatch.mockRejectedValue(
     Object.assign(new Error("Build version mismatch"), {
       data: { code: "CONFLICT" },
     })
@@ -219,25 +295,18 @@ test("maps trpc conflict errors to version conflict json", async () => {
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(JSON.parse(vi.mocked(console.log).mock.calls.at(-1)?.[0])).toEqual({
-    ok: false,
-    error: {
-      code: "VERSION_CONFLICT",
-      message: "Build version mismatch",
-      retry:
-        "Run webstudio inspect --json, read the latest build, regenerate the patch, then retry apply-patch.",
-    },
-    meta: {
-      command: "apply-patch",
-      projectId: "project-1",
-      durationMs: expect.any(Number),
-    },
+  expectJsonErrorOutput({
+    command: "apply-patch",
+    code: "VERSION_CONFLICT",
+    message: "Build version mismatch",
+    retry:
+      "Run webstudio inspect --json, read the latest build, regenerate the patch, then retry apply-patch.",
   });
 });
 
-test("maps trpc not found errors to not found json", async () => {
+test("maps api not found errors to not found json", async () => {
   mockConfig();
-  query.mockRejectedValue(
+  apiCalls.getPage.mockRejectedValue(
     Object.assign(new Error("Page not found"), {
       data: { code: "NOT_FOUND" },
     })
@@ -254,17 +323,10 @@ test("maps trpc not found errors to not found json", async () => {
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(JSON.parse(vi.mocked(console.log).mock.calls.at(-1)?.[0])).toEqual({
-    ok: false,
-    error: {
-      code: "NOT_FOUND",
-      message: "Page not found",
-    },
-    meta: {
-      command: "get-page",
-      projectId: "project-1",
-      durationMs: expect.any(Number),
-    },
+  expectJsonErrorOutput({
+    command: "get-page",
+    code: "NOT_FOUND",
+    message: "Page not found",
   });
 });
 
@@ -280,47 +342,140 @@ test("splits comma-separated include values", async () => {
     dependencies
   );
 
-  expect(query).toHaveBeenCalledWith("api.build.get", {
-    projectId: "project-1",
-    include: ["pages", "instances", "styles"],
-    version: undefined,
-  });
-});
-
-test("calls page list for configured project", async () => {
-  mockConfig();
-
-  await apiCommand(
-    {
-      command: "list-pages",
-      json: true,
-    },
-    dependencies
+  expect(apiCalls.getBuildSnapshot).toHaveBeenCalledWith(
+    expectConnection({
+      include: ["pages", "instances", "styles"],
+      version: undefined,
+    })
   );
-
-  expect(query).toHaveBeenCalledWith("api.pages.list", {
-    projectId: "project-1",
-  });
-  expectJsonOutput("list-pages");
 });
 
-test("calls page details with required page id", async () => {
-  mockConfig();
+test("creates folder with settings", async () => {
+  await expectCommandCall({
+    options: {
+      command: "create-folder",
+      name: "Blog",
+      slug: "blog",
+      parentFolder: "root-folder",
+    },
+    call: apiCalls.createFolder,
+    connection: {
+      folderId: undefined,
+      name: "Blog",
+      slug: "blog",
+      parentFolderId: "root-folder",
+    },
+  });
+});
 
-  await apiCommand(
-    {
-      command: "get-page",
+test("updates folder settings", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-folder",
+      folder: "folder-1",
+      name: "Blog",
+      slug: "blog",
+      parentFolder: "root-folder",
+    },
+    call: apiCalls.updateFolder,
+    connection: {
+      folderId: "folder-1",
+      values: {
+        name: "Blog",
+        slug: "blog",
+        parentFolderId: "root-folder",
+      },
+    },
+  });
+});
+
+test("creates page with settings", async () => {
+  await expectCommandCall({
+    options: {
+      command: "create-page",
+      name: "Pricing",
+      path: "/pricing",
+      title: "Pricing",
+      parentFolder: "folder-1",
+      description: "Plans",
+    },
+    call: apiCalls.createPage,
+    connection: {
+      pageId: undefined,
+      name: "Pricing",
+      path: "/pricing",
+      title: "Pricing",
+      parentFolderId: "folder-1",
+      meta: {
+        description: "Plans",
+        language: undefined,
+        redirect: undefined,
+        socialImageUrl: undefined,
+        socialImageAssetId: undefined,
+        excludePageFromSearch: undefined,
+        documentType: undefined,
+        content: undefined,
+      },
+    },
+  });
+});
+
+test("updates page metadata", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-page",
       page: "page-1",
-      json: true,
+      title: "Pricing",
+      excludePageFromSearch: true,
     },
-    dependencies
-  );
-
-  expect(query).toHaveBeenCalledWith("api.pages.get", {
-    projectId: "project-1",
-    pageId: "page-1",
+    call: apiCalls.updatePage,
+    connection: {
+      pageId: "page-1",
+      values: {
+        name: undefined,
+        path: undefined,
+        title: "Pricing",
+        parentFolderId: undefined,
+        meta: {
+          description: undefined,
+          language: undefined,
+          redirect: undefined,
+          socialImageUrl: undefined,
+          socialImageAssetId: undefined,
+          excludePageFromSearch: true,
+          documentType: undefined,
+          content: undefined,
+        },
+      },
+    },
   });
-  expectJsonOutput("get-page");
+});
+
+test("deletes page", async () => {
+  await expectCommandCall({
+    options: { command: "delete-page", page: "page-1" },
+    call: apiCalls.deletePage,
+    connection: { pageId: "page-1" },
+  });
+});
+
+test("duplicates page", async () => {
+  await expectCommandCall({
+    options: {
+      command: "duplicate-page",
+      page: "page-1",
+      name: "Pricing Copy",
+      path: "/pricing-copy",
+      parentFolder: "folder-1",
+    },
+    call: apiCalls.duplicatePage,
+    connection: {
+      pageId: "page-1",
+      name: "Pricing Copy",
+      path: "/pricing-copy",
+      parentFolderId: "folder-1",
+    },
+  });
 });
 
 test("requires page id for page details", async () => {
@@ -336,101 +491,813 @@ test("requires page id for page details", async () => {
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(query).not.toHaveBeenCalled();
-  expect(JSON.parse(vi.mocked(console.log).mock.calls.at(-1)?.[0])).toEqual({
-    ok: false,
-    error: {
-      code: "INVALID_ARGUMENT",
-      message: "--page is required.",
-    },
-    meta: {
-      command: "get-page",
-      projectId: "project-1",
-      durationMs: expect.any(Number),
-    },
+  expect(apiCalls.getPage).not.toHaveBeenCalled();
+  expectJsonErrorOutput({
+    command: "get-page",
+    code: "INVALID_ARGUMENT",
+    message: "--page is required.",
   });
 });
 
 test("calls instance list with filters", async () => {
-  mockConfig();
-
-  await apiCommand(
-    {
+  await expectCommandCall({
+    options: {
       command: "list-instances",
       page: "page-1",
       maxDepth: 2,
       topLevel: true,
       component: "Box",
       label: "Hero",
-      json: true,
     },
-    dependencies
-  );
-
-  expect(query).toHaveBeenCalledWith("api.instances.list", {
-    projectId: "project-1",
-    pageId: "page-1",
-    pagePath: undefined,
-    rootInstanceId: undefined,
-    maxDepth: 2,
-    topLevelOnly: true,
-    component: "Box",
-    tag: undefined,
-    labelContains: "Hero",
+    call: apiCalls.listInstances,
+    connection: {
+      pageId: "page-1",
+      pagePath: undefined,
+      rootInstanceId: undefined,
+      maxDepth: 2,
+      topLevelOnly: true,
+      component: "Box",
+      tag: undefined,
+      labelContains: "Hero",
+    },
   });
-  expectJsonOutput("list-instances");
+});
+
+test("inspects instance details", async () => {
+  await expectCommandCall({
+    options: {
+      command: "inspect-instance",
+      instance: "instance-1",
+      include: ["props,styles,children"],
+      childDepth: 2,
+    },
+    call: apiCalls.inspectInstance,
+    connection: {
+      instanceId: "instance-1",
+      include: ["props", "styles", "children"],
+      childDepth: 2,
+    },
+  });
+});
+
+test("appends instances from input file", async () => {
+  await expectCommandCall({
+    options: {
+      command: "append-instance",
+      parent: "parent-id",
+      input: "children.json",
+      mode: "prepend",
+    },
+    call: apiCalls.appendInstance,
+    inputJson: [{ tag: "div", label: "Hero", text: "Hello" }],
+    connection: {
+      parentInstanceId: "parent-id",
+      mode: "prepend",
+      insertIndex: undefined,
+      children: [{ tag: "div", label: "Hero", text: "Hello" }],
+    },
+  });
+});
+
+test("moves instances from input file", async () => {
+  await expectCommandCall({
+    options: { command: "move-instance", input: "moves.json" },
+    call: apiCalls.moveInstance,
+    inputJson: [{ instanceId: "instance-id", parentInstanceId: "parent-id" }],
+    connection: {
+      moves: [{ instanceId: "instance-id", parentInstanceId: "parent-id" }],
+    },
+  });
+});
+
+test("clones instance", async () => {
+  await expectCommandCall({
+    options: {
+      command: "clone-instance",
+      source: "source-id",
+      parent: "parent-id",
+      insertIndex: 1,
+    },
+    call: apiCalls.cloneInstance,
+    connection: {
+      sourceInstanceId: "source-id",
+      targetParentInstanceId: "parent-id",
+      insertIndex: 1,
+    },
+  });
+});
+
+test("deletes instances", async () => {
+  await expectCommandCall({
+    options: {
+      command: "delete-instance",
+      instance: ["instance-1,instance-2"],
+    },
+    call: apiCalls.deleteInstance,
+    connection: { instanceIds: ["instance-1", "instance-2"] },
+  });
+});
+
+test("rejects empty required list options", async () => {
+  mockConfig();
+
+  await expect(
+    apiCommand(
+      {
+        command: "delete-instance",
+        instance: [","],
+        json: true,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expect(apiCalls.deleteInstance).not.toHaveBeenCalled();
+  expectJsonErrorOutput({
+    command: "delete-instance",
+    code: "INVALID_ARGUMENT",
+    message: "--instance is required.",
+  });
+});
+
+test("updates props from input file", async () => {
+  const updates = [
+    {
+      instanceId: "instance-id",
+      name: "title",
+      type: "string",
+      value: "Hello",
+    },
+  ];
+  await expectCommandCall({
+    options: { command: "update-props", input: "props.json" },
+    call: apiCalls.updateProps,
+    inputJson: updates,
+    connection: { updates },
+  });
+});
+
+test("deletes props from input file", async () => {
+  await expectCommandCall({
+    options: { command: "delete-props", input: "props.json" },
+    call: apiCalls.deleteProps,
+    inputJson: [{ instanceId: "instance-id", name: "title" }],
+    connection: {
+      deletions: [{ instanceId: "instance-id", name: "title" }],
+    },
+  });
+});
+
+test("binds props from input file", async () => {
+  const bindings = [
+    {
+      instanceId: "instance-id",
+      name: "title",
+      binding: { type: "expression", value: "title" },
+    },
+  ];
+  await expectCommandCall({
+    options: { command: "bind-props", input: "bindings.json" },
+    call: apiCalls.bindProps,
+    inputJson: bindings,
+    connection: { bindings },
+  });
+});
+
+test("updates text child", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-text",
+      instance: "instance-1",
+      childIndex: 2,
+      text: "Launch faster",
+      mode: "text",
+    },
+    call: apiCalls.updateText,
+    connection: {
+      instanceId: "instance-1",
+      childIndex: 2,
+      text: "Launch faster",
+      mode: "text",
+    },
+  });
+});
+
+test("lists text children with filters", async () => {
+  await expectCommandCall({
+    options: {
+      command: "list-texts",
+      page: "page-1",
+      instance: "instance-1",
+      mode: "expression",
+      contains: "headline",
+      maxValueLength: 80,
+    },
+    call: apiCalls.listTexts,
+    connection: {
+      pageId: "page-1",
+      pagePath: undefined,
+      instanceId: "instance-1",
+      mode: "expression",
+      contains: "headline",
+      maxValueLength: 80,
+    },
+  });
+});
+
+test("allows clearing text child", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-text",
+      instance: "instance-1",
+      childIndex: 2,
+      text: "",
+    },
+    call: apiCalls.updateText,
+    connection: {
+      instanceId: "instance-1",
+      childIndex: 2,
+      text: "",
+      mode: undefined,
+    },
+  });
+});
+
+test("creates variable with parsed value", async () => {
+  await expectCommandCall({
+    options: {
+      command: "create-variable",
+      scopeInstance: "body-id",
+      name: "items",
+      valueType: "string[]",
+      value: '["a","b"]',
+    },
+    call: apiCalls.createVariable,
+    connection: {
+      dataSourceId: undefined,
+      scopeInstanceId: "body-id",
+      name: "items",
+      value: { type: "string[]", value: ["a", "b"] },
+    },
+  });
+});
+
+test("lists variables with scope filter", async () => {
+  await expectCommandCall({
+    options: { command: "list-variables", scopeInstance: "body-id" },
+    call: apiCalls.listVariables,
+    connection: { scopeInstanceId: "body-id" },
+  });
+});
+
+test("updates variable", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-variable",
+      variable: "variable-id",
+      name: "count",
+      valueType: "number",
+      value: "2",
+    },
+    call: apiCalls.updateVariable,
+    connection: {
+      dataSourceId: "variable-id",
+      values: {
+        scopeInstanceId: undefined,
+        name: "count",
+        value: { type: "number", value: 2 },
+      },
+    },
+  });
+});
+
+test("deletes variable", async () => {
+  await expectCommandCall({
+    options: { command: "delete-variable", variable: "variable-id" },
+    call: apiCalls.deleteVariable,
+    connection: { dataSourceId: "variable-id" },
+  });
+});
+
+test("creates resource from options and exposes data source", async () => {
+  await expectCommandCall({
+    options: {
+      command: "create-resource",
+      name: "Posts",
+      method: "get",
+      url: '"https://api.example.com/posts"',
+      scopeInstance: "body-id",
+      dataSourceName: "posts",
+    },
+    call: apiCalls.createResource,
+    connection: {
+      resourceId: undefined,
+      resource: {
+        name: "Posts",
+        method: "get",
+        url: '"https://api.example.com/posts"',
+        body: undefined,
+        headers: [],
+      },
+      dataSourceId: undefined,
+      scopeInstanceId: "body-id",
+      dataSourceName: "posts",
+    },
+  });
+});
+
+test("lists resources with scope filter", async () => {
+  await expectCommandCall({
+    options: { command: "list-resources", scopeInstance: "body-id" },
+    call: apiCalls.listResources,
+    connection: { scopeInstanceId: "body-id" },
+  });
+});
+
+test("updates resource from input file", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-resource",
+      resource: "resource-id",
+      input: "resource.json",
+      name: "Posts",
+    },
+    call: apiCalls.updateResource,
+    inputJson: { headers: [{ name: "Authorization", value: "token" }] },
+    connection: {
+      resourceId: "resource-id",
+      values: {
+        name: "Posts",
+        method: undefined,
+        url: undefined,
+        body: undefined,
+        headers: [{ name: "Authorization", value: "token" }],
+      },
+      dataSourceName: undefined,
+      scopeInstanceId: undefined,
+    },
+  });
+});
+
+test("deletes resource with force", async () => {
+  await expectCommandCall({
+    options: {
+      command: "delete-resource",
+      resource: "resource-id",
+      force: true,
+    },
+    call: apiCalls.deleteResource,
+    connection: { resourceId: "resource-id", force: true },
+  });
+});
+
+test("publishes project", async () => {
+  await expectCommandCall({
+    options: {
+      command: "publish",
+      target: "production",
+      domain: ["example.com,www.example.com"],
+      message: "Ship",
+      idempotencyKey: "publish-key",
+    },
+    call: apiCalls.publish,
+    connection: {
+      target: "production",
+      domains: ["example.com", "www.example.com"],
+      message: "Ship",
+      idempotencyKey: "publish-key",
+    },
+  });
+});
+
+test("lists publishes", async () => {
+  await expectCommandCall({
+    options: { command: "list-publishes" },
+    call: apiCalls.listPublishes,
+  });
+});
+
+test("gets publish job", async () => {
+  await expectCommandCall({
+    options: { command: "get-publish-job", job: "job-id" },
+    call: apiCalls.getPublishJob,
+    connection: { jobId: "job-id" },
+  });
+});
+
+test("unpublishes project with confirmation", async () => {
+  await expectCommandCall({
+    options: {
+      command: "unpublish",
+      target: "production",
+      domain: ["example.com"],
+      confirm: true,
+    },
+    call: apiCalls.unpublish,
+    connection: {
+      target: "production",
+      domains: ["example.com"],
+      message: undefined,
+      idempotencyKey: undefined,
+    },
+  });
+});
+
+test("lists domains", async () => {
+  await expectCommandCall({
+    options: { command: "list-domains" },
+    call: apiCalls.listDomains,
+  });
+});
+
+test("creates domain", async () => {
+  await expectCommandCall({
+    options: { command: "create-domain", domain: "example.com" },
+    call: apiCalls.createDomain,
+    connection: { domain: "example.com" },
+  });
+});
+
+test("updates domain", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-domain",
+      domainId: "domain-id",
+      domain: "www.example.com",
+    },
+    call: apiCalls.updateDomain,
+    connection: {
+      domainId: "domain-id",
+      updates: { domain: "www.example.com" },
+    },
+  });
+});
+
+test("deletes domain with confirmation", async () => {
+  await expectCommandCall({
+    options: { command: "delete-domain", domainId: "domain-id", confirm: true },
+    call: apiCalls.deleteDomain,
+    connection: { domainId: "domain-id" },
+  });
+});
+
+test("verifies domain", async () => {
+  await expectCommandCall({
+    options: { command: "verify-domain", domainId: "domain-id" },
+    call: apiCalls.verifyDomain,
+    connection: { domainId: "domain-id" },
+  });
 });
 
 test("calls asset list with pagination", async () => {
-  mockConfig();
-
-  await apiCommand(
-    {
+  await expectCommandCall({
+    options: {
       command: "list-assets",
       type: "image",
       sort: "createdAt",
       withUsage: true,
       cursor: "2",
       limit: 10,
-      json: true,
     },
-    dependencies
-  );
-
-  expect(query).toHaveBeenCalledWith("api.assets.list", {
-    projectId: "project-1",
-    type: "image",
-    sort: "createdAt",
-    withUsage: true,
-    cursor: "2",
-    limit: 10,
+    call: apiCalls.listAssets,
+    connection: {
+      type: "image",
+      sort: "createdAt",
+      withUsage: true,
+      cursor: "2",
+      limit: 10,
+    },
   });
-  expectJsonOutput("list-assets");
 });
 
-test("passes style token inclusion through to the api", async () => {
+test("uploads asset descriptor with local file reader", async () => {
   mockConfig();
+  readFile.mockResolvedValueOnce(
+    JSON.stringify({
+      name: "image.png",
+      type: "image",
+      format: "png",
+      meta: { width: 10, height: 20 },
+    })
+  );
+  readFile.mockResolvedValueOnce(new Uint8Array([1, 2, 3]));
 
   await apiCommand(
     {
-      command: "get-styles",
-      instance: "instance-1",
-      includeTokens: true,
+      command: "upload-asset",
+      input: "asset.json",
+      assetsDir: "assets",
       json: true,
     },
     dependencies
   );
 
-  expect(query).toHaveBeenCalledWith("api.styles.getDeclarations", {
-    projectId: "project-1",
-    instanceIds: ["instance-1"],
-    pageId: undefined,
-    pagePath: undefined,
-    breakpoint: undefined,
-    state: undefined,
-    property: undefined,
-    propertyFilter: undefined,
-    includeTokens: true,
+  expect(apiCalls.uploadProjectAsset).toHaveBeenCalledWith(
+    expectConnection({
+      asset: {
+        name: "image.png",
+        type: "image",
+        format: "png",
+        meta: { width: 10, height: 20 },
+      },
+      readAssetData: expect.any(Function),
+    })
+  );
+  const call = apiCalls.uploadProjectAsset.mock.calls.at(-1)?.[0];
+  await call.readAssetData({ name: "image.png" });
+  expect(readFile).toHaveBeenLastCalledWith(
+    expect.stringMatching(/assets[/\\]image\.png$/)
+  );
+  expectJsonOutput("upload-asset");
+});
+
+test("uploads asset descriptors with local file reader", async () => {
+  await expectCommandCall({
+    options: {
+      command: "upload-assets",
+      input: "assets.json",
+    },
+    call: apiCalls.uploadProjectAssets,
+    inputJson: [
+      {
+        name: "image.png",
+        type: "image",
+        format: "png",
+        meta: { width: 10, height: 20 },
+      },
+    ],
+    connection: {
+      assets: [
+        {
+          name: "image.png",
+          type: "image",
+          format: "png",
+          meta: { width: 10, height: 20 },
+        },
+      ],
+      readAssetData: expect.any(Function),
+    },
+  });
+});
+
+test("finds asset usage", async () => {
+  await expectCommandCall({
+    options: {
+      command: "find-asset-usage",
+      asset: "asset-id",
+    },
+    call: apiCalls.findAssetUsage,
+    connection: { assetId: "asset-id" },
+  });
+});
+
+test("replaces asset with confirmation", async () => {
+  await expectCommandCall({
+    options: {
+      command: "replace-asset",
+      from: "old-asset-id",
+      to: "new-asset-id",
+      confirm: true,
+    },
+    call: apiCalls.replaceAsset,
+    connection: {
+      fromAssetId: "old-asset-id",
+      toAssetId: "new-asset-id",
+    },
+  });
+});
+
+test("deletes assets with confirmation", async () => {
+  await expectCommandCall({
+    options: {
+      command: "delete-asset",
+      asset: ["asset-id,asset-prefix"],
+      confirm: true,
+      force: true,
+    },
+    call: apiCalls.deleteAssets,
+    connection: {
+      assetIdsOrPrefixes: ["asset-id", "asset-prefix"],
+      force: true,
+    },
+  });
+});
+
+test("passes style token inclusion through to the api", async () => {
+  await expectCommandCall({
+    options: {
+      command: "get-styles",
+      instance: "instance-1",
+      includeTokens: true,
+    },
+    call: apiCalls.getStyleDeclarations,
+    connection: {
+      instanceIds: ["instance-1"],
+      pageId: undefined,
+      pagePath: undefined,
+      breakpoint: undefined,
+      state: undefined,
+      property: undefined,
+      propertyFilter: undefined,
+      includeTokens: true,
+    },
+  });
+});
+
+test("lists design tokens with filters", async () => {
+  await expectCommandCall({
+    options: {
+      command: "list-design-tokens",
+      filter: "brand",
+      withUsage: true,
+      sort: "usage",
+    },
+    call: apiCalls.listDesignTokens,
+    connection: { filter: "brand", withUsage: true, sort: "usage" },
+  });
+});
+
+test("updates styles from input file", async () => {
+  const updates = [
+    {
+      instanceId: "instance-id",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ];
+  await expectCommandCall({
+    options: { command: "update-styles", input: "styles.json" },
+    call: apiCalls.updateStyleDeclarations,
+    inputJson: updates,
+    connection: { updates },
+  });
+});
+
+test("deletes styles from input file", async () => {
+  await expectCommandCall({
+    options: { command: "delete-styles", input: "styles.json" },
+    call: apiCalls.deleteStyleDeclarations,
+    inputJson: [{ instanceId: "instance-id", property: "color" }],
+    connection: {
+      deletions: [{ instanceId: "instance-id", property: "color" }],
+    },
+  });
+});
+
+test("replaces styles from input file", async () => {
+  const inputJson = {
+    property: "color",
+    fromValue: { type: "keyword", value: "red" },
+    toValue: { type: "keyword", value: "blue" },
+  };
+  await expectCommandCall({
+    options: { command: "replace-styles", input: "replace.json" },
+    call: apiCalls.replaceStyleValues,
+    inputJson,
+    connection: inputJson,
+  });
+});
+
+test("creates design tokens from input file", async () => {
+  const tokens = [
+    {
+      name: "Primary",
+      styles: { color: { type: "keyword", value: "red" } },
+    },
+  ];
+  await expectCommandCall({
+    options: { command: "create-design-token", input: "tokens.json" },
+    call: apiCalls.createDesignTokens,
+    inputJson: tokens,
+    connection: { tokens },
+  });
+});
+
+test("updates design token styles from input file", async () => {
+  const updates = [
+    { property: "color", value: { type: "keyword", value: "blue" } },
+  ];
+  await expectCommandCall({
+    options: {
+      command: "update-design-token-styles",
+      designToken: "token-id",
+      input: "styles.json",
+    },
+    call: apiCalls.updateDesignTokenStyles,
+    inputJson: updates,
+    connection: { designTokenId: "token-id", updates },
+  });
+});
+
+test("deletes design token styles from input file", async () => {
+  await expectCommandCall({
+    options: {
+      command: "delete-design-token-styles",
+      designToken: "token-id",
+      input: "styles.json",
+    },
+    call: apiCalls.deleteDesignTokenStyles,
+    inputJson: [{ property: "color" }],
+    connection: {
+      designTokenId: "token-id",
+      deletions: [{ property: "color" }],
+    },
+  });
+});
+
+test("attaches design token from input file", async () => {
+  await expectCommandCall({
+    options: {
+      command: "attach-design-token",
+      designToken: "token-id",
+      input: "instances.json",
+      position: "before-local",
+    },
+    call: apiCalls.attachDesignToken,
+    inputJson: ["instance-id"],
+    connection: {
+      designTokenId: "token-id",
+      instanceIds: ["instance-id"],
+      position: "before-local",
+    },
+  });
+});
+
+test("detaches design token from input file", async () => {
+  await expectCommandCall({
+    options: {
+      command: "detach-design-token",
+      designToken: "token-id",
+      input: "instances.json",
+    },
+    call: apiCalls.detachDesignToken,
+    inputJson: ["instance-id"],
+    connection: { designTokenId: "token-id", instanceIds: ["instance-id"] },
+  });
+});
+
+test("extracts design token from input file", async () => {
+  const inputJson = {
+    instanceIds: ["instance-id"],
+    name: "Extracted",
+    removeLocalProps: ["color"],
+  };
+  await expectCommandCall({
+    options: { command: "extract-design-token", input: "token.json" },
+    call: apiCalls.extractDesignToken,
+    inputJson,
+    connection: inputJson,
+  });
+});
+
+test("lists css variables", async () => {
+  await expectCommandCall({
+    options: { command: "list-css-variables", withUsage: true },
+    call: apiCalls.listCssVariables,
+    connection: { filter: undefined, withUsage: true },
+  });
+});
+
+test("defines css variables from input file", async () => {
+  await expectCommandCall({
+    options: {
+      command: "define-css-variable",
+      input: "vars.json",
+      overwrite: true,
+    },
+    call: apiCalls.defineCssVariables,
+    inputJson: { "--brand-color": "red" },
+    connection: { vars: { "--brand-color": "red" }, overwrite: true },
+  });
+});
+
+test("deletes css variables from input file", async () => {
+  await expectCommandCall({
+    options: {
+      command: "delete-css-variable",
+      input: "names.json",
+      confirm: true,
+      force: true,
+    },
+    call: apiCalls.deleteCssVariables,
+    inputJson: ["--brand-color"],
+    connection: { names: ["--brand-color"], force: true },
+  });
+});
+
+test("rewrites css variable refs from input file", async () => {
+  await expectCommandCall({
+    options: {
+      command: "rewrite-css-variable-refs",
+      input: "variables.json",
+      scopeRegex: "body",
+    },
+    call: apiCalls.rewriteCssVariableRefs,
+    inputJson: { "--brand-color": "--accent-color" },
+    connection: {
+      map: { "--brand-color": "--accent-color" },
+      scopeRegex: "body",
+    },
   });
 });
 
@@ -445,7 +1312,7 @@ test("supports legacy host field in global linked config", async () => {
     dependencies
   );
 
-  expect(createAuthTrpcClient).toHaveBeenCalledWith(
+  expect(apiCalls.getApiTokenInfo).toHaveBeenCalledWith(
     expect.objectContaining({
       origin: "https://legacy.example.com",
       authToken: "token-1",
@@ -464,18 +1331,13 @@ test("requires initialized local config", async () => {
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(createAuthTrpcClient).not.toHaveBeenCalled();
-  expect(JSON.parse(vi.mocked(console.log).mock.calls.at(-1)?.[0])).toEqual({
-    ok: false,
-    error: {
-      code: "NOT_INITIALIZED",
-      message:
-        "Local config file is not found. Run webstudio init --link <api-share-link> from a Webstudio project.",
-    },
-    meta: {
-      command: "whoami",
-      durationMs: expect.any(Number),
-    },
+  expect(apiCalls.getApiTokenInfo).not.toHaveBeenCalled();
+  expectJsonErrorOutput({
+    command: "whoami",
+    code: "NOT_INITIALIZED",
+    message:
+      "Local config file is not found. Run webstudio init --link <api-share-link> from a Webstudio project.",
+    projectId: false,
   });
 });
 
@@ -495,17 +1357,12 @@ test("requires global config for configured project", async () => {
     )
   ).rejects.toThrow("Handled CLI error");
 
-  expect(createAuthTrpcClient).not.toHaveBeenCalled();
-  expect(JSON.parse(vi.mocked(console.log).mock.calls.at(-1)?.[0])).toEqual({
-    ok: false,
-    error: {
-      code: "NOT_INITIALIZED",
-      message:
-        "Project config is not found. Run webstudio init --link <api-share-link>.",
-    },
-    meta: {
-      command: "inspect",
-      durationMs: expect.any(Number),
-    },
+  expect(apiCalls.getProjectInfo).not.toHaveBeenCalled();
+  expectJsonErrorOutput({
+    command: "inspect",
+    code: "NOT_INITIALIZED",
+    message:
+      "Project config is not found. Run webstudio init --link <api-share-link>.",
+    projectId: false,
   });
 });

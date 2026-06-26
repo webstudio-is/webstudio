@@ -1,6 +1,7 @@
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   type AppContext,
+  type AuthPermit,
   authorizeProject,
   AuthorizationError,
   PlanRequiredError,
@@ -96,6 +97,20 @@ export const tokenDefaultPermissions = {
 };
 
 export type TokenPermissions = typeof tokenDefaultPermissions;
+
+export const tokenProjectPermits: Record<
+  AuthorizationToken["relation"],
+  AuthPermit[]
+> = {
+  viewers: ["view"],
+  editors: ["view", "edit"],
+  builders: ["view", "edit", "build"],
+  administrators: ["view", "edit", "build", "admin"],
+};
+
+export const getTokenProjectPermits = (
+  token: Pick<AuthorizationToken, "relation">
+) => tokenProjectPermits[token.relation];
 
 const assertCanEnableApi = (
   canUseApi: boolean | undefined,

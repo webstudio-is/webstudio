@@ -20,11 +20,7 @@ import type {
   StyleSourceSelections,
   Props,
 } from "@webstudio-is/sdk";
-import type {
-  StyleValue,
-  StyleProperty,
-  CustomProperty,
-} from "@webstudio-is/css-engine";
+import type { CustomProperty } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
 import {
   $styles,
@@ -32,64 +28,26 @@ import {
   $props,
 } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { getStyleDeclKey } from "@webstudio-is/sdk";
+import {
+  collectCssVariableReferences,
+  createCssVariableNamesRegex,
+} from "~/shared/css-variable-references";
+import {
+  getDefinedCssVariableNames,
+  getInstanceIdByStyleSourceId,
+  renameCssVariableMutable,
+  performCssVariableRename,
+  type CssVariableNameError,
+  updateVarReferencesInProps,
+  validateCssVariableNameWithStyles,
+} from "~/shared/css-variable-usage";
+
+export { performCssVariableRename, updateVarReferencesInProps };
 
 const $isDeleteUnusedCssVariablesDialogOpen = atom(false);
 
 export const openDeleteUnusedCssVariablesDialog = () => {
   $isDeleteUnusedCssVariablesDialogOpen.set(true);
-};
-
-// Utility: Escape regex special characters
-const escapeRegex = (str: string): string => {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-};
-
-// Utility: Create regex to match variable name with word boundary
-// This avoids matching --color inside --color-dark
-// Uses negative lookahead (?![\\w-]) to ensure variable name doesn't continue
-// with word characters or hyphens, preventing partial matches.
-const createVarNameRegex = (varName: string): RegExp => {
-  return new RegExp(`${escapeRegex(varName)}(?![\\w-])`, "g");
-};
-
-const createVarNamesRegex = (definedVariables: Set<string>): RegExp => {
-  const alternatives = Array.from(definedVariables)
-    .sort((left, right) => right.length - left.length)
-    .map(escapeRegex)
-    .join("|");
-  return new RegExp(`(?:${alternatives})(?![\\w-])`, "g");
-};
-
-const collectVariableReferencesFromString = (value: string, regex: RegExp) => {
-  const varReferences = new Set<string>();
-  regex.lastIndex = 0;
-  for (const match of value.matchAll(regex)) {
-    varReferences.add(match[0]);
-  }
-  return varReferences;
-};
-
-const getDefinedVariables = (styles: Map<string, StyleDecl>) => {
-  const definedVariables = new Set<string>();
-  for (const styleDecl of styles.values()) {
-    if (styleDecl.property.startsWith("--")) {
-      definedVariables.add(styleDecl.property);
-    }
-  }
-  return definedVariables;
-};
-
-const getInstancesByStyleSource = (
-  styleSourceSelections: StyleSourceSelections
-) => {
-  const instancesByStyleSource = new Map<string, Instance["id"]>();
-  for (const { instanceId, values } of styleSourceSelections.values()) {
-    for (const styleSourceId of values) {
-      instancesByStyleSource.set(styleSourceId, instanceId);
-    }
-  }
-  return instancesByStyleSource;
 };
 
 // Find CSS variable usage counts (how many times each variable is referenced via var())
@@ -108,14 +66,14 @@ export const findCssVariableUsagesByInstance = ({
   const usageCounts = new Map<string, number>();
   const usageInstances = new Map<string, Set<Instance["id"]>>();
 
-  const definedVariables = getDefinedVariables(styles);
+  const definedVariables = getDefinedCssVariableNames(styles.values());
   if (definedVariables.size === 0) {
     return { counts: usageCounts, instances: usageInstances };
   }
-  const definedVariablesRegex = createVarNamesRegex(definedVariables);
+  const definedVariablesRegex = createCssVariableNamesRegex(definedVariables);
 
-  const instancesByStyleSource = getInstancesByStyleSource(
-    styleSourceSelections
+  const instancesByStyleSource = getInstanceIdByStyleSourceId(
+    styleSourceSelections.values()
   );
 
   const addVarReference = (varName: string, instanceId: Instance["id"]) => {
@@ -137,7 +95,7 @@ export const findCssVariableUsagesByInstance = ({
       continue;
     }
 
-    for (const varName of collectVariableReferencesFromString(
+    for (const varName of collectCssVariableReferences(
       toValue(styleDecl.value),
       definedVariablesRegex
     )) {
@@ -148,7 +106,7 @@ export const findCssVariableUsagesByInstance = ({
   // Track CSS variable references in HTML Embed code props
   for (const prop of props.values()) {
     if (prop.type === "string" && prop.name === "code" && prop.value) {
-      for (const varName of collectVariableReferencesFromString(
+      for (const varName of collectCssVariableReferences(
         prop.value,
         definedVariablesRegex
       )) {
@@ -183,7 +141,7 @@ export const $cssVariableInstancesByVariable = computed(
 
 // Get all defined CSS variables (unique properties that start with --)
 export const $definedCssVariables = computed($styles, (styles) => {
-  return getDefinedVariables(styles) as Set<CustomProperty>;
+  return getDefinedCssVariableNames(styles.values()) as Set<CustomProperty>;
 });
 
 // Map CSS variables to the instances where they are defined
@@ -192,8 +150,8 @@ export const $cssVariableDefinitionsByVariable = computed(
   (styleSourceSelections, styles) => {
     const definitionsByVariable = new Map<string, Set<Instance["id"]>>();
 
-    const instancesByStyleSource = getInstancesByStyleSource(
-      styleSourceSelections
+    const instancesByStyleSource = getInstanceIdByStyleSourceId(
+      styleSourceSelections.values()
     );
 
     // Find all CSS variable definitions
@@ -221,14 +179,14 @@ export const $referencedCssVariables = computed(
   (styles, props) => {
     const referencedVariables = new Set<string>();
 
-    const definedVariables = getDefinedVariables(styles);
+    const definedVariables = getDefinedCssVariableNames(styles.values());
     if (definedVariables.size === 0) {
       return referencedVariables;
     }
 
-    const definedVariablesRegex = createVarNamesRegex(definedVariables);
+    const definedVariablesRegex = createCssVariableNamesRegex(definedVariables);
     for (const styleDecl of styles.values()) {
-      for (const varName of collectVariableReferencesFromString(
+      for (const varName of collectCssVariableReferences(
         toValue(styleDecl.value),
         definedVariablesRegex
       )) {
@@ -237,7 +195,7 @@ export const $referencedCssVariables = computed(
     }
     for (const prop of props.values()) {
       if (prop.type === "string" && prop.name === "code" && prop.value) {
-        for (const varName of collectVariableReferencesFromString(
+        for (const varName of collectCssVariableReferences(
           prop.value,
           definedVariablesRegex
         )) {
@@ -264,178 +222,32 @@ export const $unusedCssVariables = computed(
   }
 );
 
-type CssVariableError =
-  | { type: "required"; message: string }
-  | { type: "invalid"; message: string }
-  | { type: "duplicate"; message: string };
-
 export const validateCssVariableName = (
   name: string,
   currentProperty?: string
-): CssVariableError | undefined => {
-  // Check if name is required
-  if (name.trim().length === 0) {
-    return {
-      type: "required",
-      message: "CSS variable name cannot be empty",
-    };
-  }
-
-  // Ensure name starts with --
-  if (!name.startsWith("--")) {
-    return {
-      type: "invalid",
-      message: 'CSS variable name must start with "--"',
-    };
-  }
-
-  // Check for duplicates within the same style source + breakpoint + state
-  const styles = $styles.get();
-  for (const styleDecl of styles.values()) {
-    if (
-      styleDecl.property === name &&
-      styleDecl.property !== currentProperty &&
-      styleDecl.property.startsWith("--")
-    ) {
-      return {
-        type: "duplicate",
-        message: `CSS variable "${name}" already exists`,
-      };
-    }
-  }
-};
-
-// Update all var() references in a StyleValue
-const updateVarReferences = (
-  value: StyleValue,
-  oldProperty: string,
-  newProperty: string
-): StyleValue => {
-  // For simple replacement, use JSON stringify/parse approach
-  // since toValue produces CSS string which is harder to parse back
-  let valueStr = JSON.stringify(value);
-
-  // Handle two patterns:
-  // 1. In var type objects: "value":"variable-name" (without --)
-  //    StyleValue stores var without -- prefix in "value" field
-  // 2. In literal strings: "--variable-name" (with --)
-  //    Unparsed strings contain full --variable-name syntax
-  // Both patterns are needed because StyleValue can contain both structured
-  // var types and unparsed CSS strings with var() references
-
-  // Strip -- prefix for var type replacement
-  const oldVarName = oldProperty.startsWith("--")
-    ? oldProperty.slice(2)
-    : oldProperty;
-  const newVarName = newProperty.startsWith("--")
-    ? newProperty.slice(2)
-    : newProperty;
-
-  // Replace in var type value fields: "value":"old-name" -> "value":"new-name"
-  // Use word boundary to avoid replacing "color" in "color-dark"
-  const varTypeRegex = new RegExp(
-    `("value":")${escapeRegex(oldVarName)}(?![\\w-])`,
-    "g"
-  );
-  valueStr = valueStr.replace(varTypeRegex, `$1${newVarName}`);
-
-  // Also replace literal --variable-name in unparsed strings
-  valueStr = valueStr.replace(createVarNameRegex(oldProperty), newProperty);
-
-  return JSON.parse(valueStr) as StyleValue;
-};
-
-// Core rename logic without transaction wrapper (for testing)
-export const performCssVariableRename = (
-  styles: Map<string, StyleDecl>,
-  oldProperty: string,
-  newProperty: string
-): Map<string, StyleDecl> => {
-  const updatedStyles = new Map(styles);
-
-  // Update all StyleDecl with the old property name
-  const styleDeclsToUpdate: Array<{ key: string; decl: StyleDecl }> = [];
-  for (const [key, styleDecl] of updatedStyles) {
-    if (styleDecl.property === oldProperty) {
-      styleDeclsToUpdate.push({ key, decl: styleDecl });
-    }
-  }
-
-  for (const { key, decl } of styleDeclsToUpdate) {
-    updatedStyles.delete(key);
-    const newDecl = { ...decl, property: newProperty as StyleProperty };
-    updatedStyles.set(getStyleDeclKey(newDecl), newDecl);
-  }
-
-  // Update all var() references in StyleValue
-  const styleDeclsToUpdateRefs: Array<{ key: string; decl: StyleDecl }> = [];
-  for (const [key, styleDecl] of updatedStyles) {
-    styleDeclsToUpdateRefs.push({ key, decl: styleDecl });
-  }
-
-  for (const { key, decl } of styleDeclsToUpdateRefs) {
-    const newValue = updateVarReferences(decl.value, oldProperty, newProperty);
-    if (newValue !== decl.value) {
-      updatedStyles.set(key, { ...decl, value: newValue });
-    }
-  }
-
-  return updatedStyles;
-};
-
-// Update var() references in HTML Embed code props (pure function for testing)
-export const updateVarReferencesInProps = (
-  props: Props,
-  oldProperty: string,
-  newProperty: string
-): Props => {
-  const updatedProps = new Map(props);
-  const regex = createVarNameRegex(oldProperty);
-
-  for (const [key, prop] of updatedProps) {
-    if (prop.type === "string" && prop.name === "code" && prop.value) {
-      const updatedValue = prop.value.replace(regex, newProperty);
-      if (updatedValue !== prop.value) {
-        updatedProps.set(key, { ...prop, value: updatedValue });
-      }
-    }
-  }
-
-  return updatedProps;
-};
+) =>
+  validateCssVariableNameWithStyles({
+    name,
+    currentProperty,
+    styles: $styles.get().values(),
+  });
 
 export const renameCssVariable = (
   oldProperty: string,
   newProperty: string
-): CssVariableError | undefined => {
+): CssVariableNameError | undefined => {
   const validationError = validateCssVariableName(newProperty, oldProperty);
   if (validationError) {
     return validationError;
   }
 
   serverSyncStore.createTransaction([$styles, $props], (styles, props) => {
-    const updatedStyles = performCssVariableRename(
+    renameCssVariableMutable({
       styles,
-      oldProperty,
-      newProperty
-    );
-
-    // Clear and repopulate the styles map
-    styles.clear();
-    for (const [key, value] of updatedStyles) {
-      styles.set(key, value);
-    }
-
-    // Update var() references in HTML Embed code props
-    const updatedProps = updateVarReferencesInProps(
       props,
       oldProperty,
-      newProperty
-    );
-    props.clear();
-    for (const [key, value] of updatedProps) {
-      props.set(key, value);
-    }
+      newProperty,
+    });
   });
 
   return;

@@ -1,8 +1,5 @@
-import { nanoid } from "nanoid";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
-  getStyleDeclKey,
-  type StyleDecl,
   type Breakpoints,
   type Instance,
   type Styles,
@@ -12,6 +9,10 @@ import {
 
 import { isBaseBreakpoint } from "~/shared/breakpoints-utils";
 import { camelCaseProperty } from "@webstudio-is/css-data";
+import {
+  getOrCreateLocalStyleSourceIdMutable,
+  setStyleDeclMutable,
+} from "~/shared/style-source-utils";
 
 export const setListedCssProperty =
   (
@@ -22,25 +23,11 @@ export const setListedCssProperty =
     styles: Styles
   ) =>
   (instanceId: Instance["id"], property: CssProperty, value: StyleValue) => {
-    if (!styleSourceSelections.has(instanceId)) {
-      const styleSourceId = nanoid();
-      styleSources.set(styleSourceId, { type: "local", id: styleSourceId });
-
-      styleSourceSelections.set(instanceId, {
-        instanceId,
-        values: [styleSourceId],
-      });
-    }
-
-    const styleSourceSelection = styleSourceSelections.get(instanceId)!;
-
-    const localStyleSorceId = styleSourceSelection.values.find(
-      (styleSourceId) => styleSources.get(styleSourceId)?.type === "local"
-    );
-
-    if (localStyleSorceId === undefined) {
-      throw new Error("Local style source not found");
-    }
+    const localStyleSourceId = getOrCreateLocalStyleSourceIdMutable({
+      styleSourceSelections,
+      styleSources,
+      instanceId,
+    });
 
     const baseBreakpoint = Array.from(breakpoints.values()).find(
       isBaseBreakpoint
@@ -50,12 +37,12 @@ export const setListedCssProperty =
       throw new Error("Base breakpoint not found");
     }
 
-    const styleDecl: StyleDecl = {
+    setStyleDeclMutable({
+      styles,
       breakpointId: baseBreakpoint.id,
       property: camelCaseProperty(property),
-      styleSourceId: localStyleSorceId,
+      styleSourceId: localStyleSourceId,
       value,
       listed: true,
-    };
-    styles.set(getStyleDeclKey(styleDecl), styleDecl);
+    });
   };

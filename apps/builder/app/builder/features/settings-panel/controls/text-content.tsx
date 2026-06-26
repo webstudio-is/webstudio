@@ -20,6 +20,7 @@ import {
 } from "~/builder/shared/binding-popover";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { updateWebstudioData } from "~/shared/instance-utils/data";
+import { setTextContentMutable } from "~/shared/instance-utils/text-content";
 import { CodeEditor } from "~/shared/code-editor";
 import {
   type ControlProps,
@@ -45,7 +46,7 @@ const updateChildren = (
   updateWebstudioData((data) => {
     const instance = data.instances.get(instanceId);
     if (instance) {
-      instance.children = [{ type, value }];
+      setTextContentMutable(instance, type, value);
     }
   });
 };

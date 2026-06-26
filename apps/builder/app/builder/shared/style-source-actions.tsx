@@ -57,7 +57,9 @@ export const $styleSourceUsages = computed(
   }
 );
 
-const deselectMatchingStyleSource = (styleSourceId: StyleSource["id"]) => {
+export const deselectMatchingStyleSource = (
+  styleSourceId: StyleSource["id"]
+) => {
   const instanceId = $selectedInstance.get()?.id;
   if (instanceId === undefined) {
     return;

@@ -110,6 +110,29 @@ const PermissionTooltipContent = ({
   </Flex>
 );
 
+const getApiPermissionDescription = ({
+  canPublish,
+  role,
+}: {
+  canPublish: boolean;
+  role: Role;
+}) => {
+  const descriptions: Record<Role, string> = {
+    viewers:
+      "Allows read-only API access: inspect permissions, project/build snapshots, pages, folders, instances, text, styles, variables, resources, assets, publish history, domains, and asset usage.",
+    editors: canPublish
+      ? "Allows viewer API access, content-mode text and prop changes, plus publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains."
+      : "Allows viewer API access and content-mode text and prop changes. Enable Can publish to allow publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains.",
+    builders:
+      "Allows read and build API access: pages, folders, instances, text, props, styles, design tokens, CSS variables, data variables, resources, assets, patches, and staging publish/unpublish.",
+    administrators:
+      "Allows full project API access: all read, content, build, asset, publish/unpublish, and domain management operations.",
+  };
+  return descriptions[role];
+};
+
+export const __testing__ = { getApiPermissionDescription };
+
 type PermissionProps = {
   title: string;
   description: ReactNode;
@@ -179,6 +202,9 @@ const Capability = ({
         disabled={disabled}
         checked={checked}
         onCheckedChange={(value) => {
+          if (disabled) {
+            return;
+          }
           onCheckedChange(Boolean(value));
         }}
         id={id}
@@ -233,23 +259,29 @@ const Menu = ({
       </Grid>
     ) : undefined;
 
-  const renderApiCapability = () => (
-    <Capability
-      id={ids.canUseApi}
-      title="API"
-      checked={draftLink.canUseApi}
-      disabled={!allowAdditionalPermissions && draftLink.canUseApi === false}
-      onCheckedChange={(canUseApi) => updateDraftLink({ canUseApi })}
-      description={
-        <PermissionTooltipContent upgrade={!allowAdditionalPermissions}>
-          Allows this share link token to authenticate requests from the
-          Webstudio CLI and Builder API. The selected permission controls what
-          API calls can do: viewers can read, editors can edit content, builders
-          can make design changes, and administrators can manage the project.
-        </PermissionTooltipContent>
-      }
-    />
-  );
+  const renderApiCapability = (role: Role) => {
+    const canUseApi = draftLink.canUseApi === true;
+    const isApiForbidden = !allowAdditionalPermissions && canUseApi === false;
+    const description = (
+      <PermissionTooltipContent upgrade={!allowAdditionalPermissions}>
+        {getApiPermissionDescription({
+          canPublish: draftLink.canPublish,
+          role,
+        })}
+      </PermissionTooltipContent>
+    );
+
+    return (
+      <Capability
+        id={ids.canUseApi}
+        title="API"
+        checked={canUseApi}
+        disabled={isApiForbidden}
+        onCheckedChange={(canUseApi) => updateDraftLink({ canUseApi })}
+        description={description}
+      />
+    );
+  };
 
   const saveDraftLink = () => {
     const nextName = draftLink.name.trim();
@@ -353,7 +385,7 @@ const Menu = ({
                   </PermissionTooltipContent>
                 }
               />
-              {renderApiCapability()}
+              {renderApiCapability("viewers")}
             </>
           )}
 
@@ -384,7 +416,7 @@ const Menu = ({
                   </PermissionTooltipContent>
                 }
               />
-              {renderApiCapability()}
+              {renderApiCapability("editors")}
             </>
           )}
           <Permission
@@ -393,7 +425,7 @@ const Menu = ({
             title={roleLabels.builders}
             description={roleDescriptions.builders}
           />
-          {renderAdvanced("builders", renderApiCapability())}
+          {renderAdvanced("builders", renderApiCapability("builders"))}
 
           <Permission
             disabled={!allowAdditionalPermissions}
@@ -403,7 +435,10 @@ const Menu = ({
             description={roleDescriptions.administrators}
             upgrade={!allowAdditionalPermissions}
           />
-          {renderAdvanced("administrators", renderApiCapability())}
+          {renderAdvanced(
+            "administrators",
+            renderApiCapability("administrators")
+          )}
         </Item>
         <Separator />
         <Item>

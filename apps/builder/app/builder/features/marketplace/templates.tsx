@@ -32,8 +32,10 @@ import { mapGroupBy } from "~/shared/shim";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { builderUrl } from "~/shared/router-utils";
 import { extractWebstudioFragment } from "~/shared/instance-utils/fragment";
+import { getWebstudioData } from "~/shared/instance-utils/data";
 import { builderApi } from "~/shared/builder-api";
 import { insertPageCopyMutable } from "~/shared/page-utils";
+import { $project } from "~/shared/sync/data-stores";
 import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import { selectPage } from "~/shared/nano-states";
@@ -70,7 +72,10 @@ const insertSection = async ({
     if (insertable.position === "end") {
       insertable.position = "after";
     }
-    const conflicts = detectFragmentTokenConflicts({ fragment });
+    const conflicts = detectFragmentTokenConflicts({
+      fragment,
+      targetData: getWebstudioData(),
+    });
     const conflictResolution =
       conflicts.length > 0
         ? await builderApi.showTokenConflictDialog(conflicts)
@@ -86,16 +91,25 @@ const insertPage = async ({
   data: WebstudioData;
   pageId: Page["id"];
 }) => {
-  const conflicts = detectPageTokenConflicts({ sourceData, pageId });
+  const conflicts = detectPageTokenConflicts({
+    sourceData,
+    targetData: getWebstudioData(),
+    pageId,
+  });
   const conflictResolution =
     conflicts.length > 0
       ? await builderApi.showTokenConflictDialog(conflicts)
       : "theirs";
   let newPageId: undefined | Page["id"];
+  const projectId = $project.get()?.id;
+  if (projectId === undefined) {
+    return;
+  }
   updateWebstudioData((targetData) => {
     newPageId = insertPageCopyMutable({
       source: { data: sourceData, pageId },
       target: { data: targetData, folderId: ROOT_FOLDER_ID },
+      projectId,
       conflictResolution,
     });
   });

@@ -1,4 +1,5 @@
 import { HandledCliError } from "../errors";
+import { useCaseScenarios } from "./api-command-docs";
 import { apiCommandMetadata } from "./api-command-metadata";
 import { buildPatchNamespaces } from "./patch-utils";
 import type {
@@ -24,7 +25,7 @@ type SchemaOptions = StrictYargsOptionsToInterface<typeof schemaOptions> & {
 };
 
 const printJson = (value: unknown) => {
-  console.log(JSON.stringify(value, undefined, 2));
+  console.info(JSON.stringify(value, undefined, 2));
 };
 
 const apiSchema = {
@@ -38,10 +39,11 @@ const apiSchema = {
     name: command.command,
     summary: command.description,
     method: command.method,
-    trpcPath: command.trpcPath,
+    permit: command.permit,
     requiredOptions: command.requiredOptions ?? ["json"],
     examples: command.examples ?? [],
   })),
+  useCases: useCaseScenarios,
   patch: {
     validationCommand:
       "webstudio validate-patch --base-version <version> --input patch.json --json",

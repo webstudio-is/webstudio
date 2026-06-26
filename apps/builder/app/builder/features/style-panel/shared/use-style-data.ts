@@ -1,4 +1,3 @@
-import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { camelCaseProperty } from "@webstudio-is/css-data";
 import {
@@ -14,7 +13,11 @@ import {
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $selectedInstance } from "~/shared/nano-states";
-import { isStyleSourceLocked } from "~/shared/style-source-utils";
+import {
+  deleteStyleDeclMutable,
+  isStyleSourceLocked,
+  setStyleDeclMutable,
+} from "~/shared/style-source-utils";
 
 type StyleUpdate =
   | {
@@ -117,25 +120,25 @@ const publishUpdates = (
 
       for (const update of updates) {
         if (update.operation === "set") {
-          const styleDecl: StyleDecl = {
+          setStyleDeclMutable({
+            styles,
             breakpointId,
             styleSourceId: styleSourceSelector.styleSourceId,
             state: styleSourceSelector.state,
             property: camelCaseProperty(update.property),
             value: update.value,
             listed: options.listed,
-          };
-          styles.set(getStyleDeclKey(styleDecl), styleDecl);
+          });
         }
 
         if (update.operation === "delete") {
-          const styleDeclKey = getStyleDeclKey({
+          deleteStyleDeclMutable({
+            styles,
             breakpointId,
             styleSourceId: styleSourceSelector.styleSourceId,
             state: styleSourceSelector.state,
             property: camelCaseProperty(update.property),
           });
-          styles.delete(styleDeclKey);
         }
       }
     }

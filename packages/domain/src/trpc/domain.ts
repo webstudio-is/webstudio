@@ -1,10 +1,7 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import * as projectApi from "@webstudio-is/project/index.server";
-import {
-  createProductionBuild,
-  unpublishBuild,
-} from "@webstudio-is/project-build/index.server";
+import { createProductionBuild } from "@webstudio-is/project-build/index.server";
 import {
   router,
   procedure,
@@ -16,6 +13,11 @@ import {
 import { templates } from "@webstudio-is/sdk";
 import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
+import {
+  getVerifiedPublishDomains,
+  publishProject,
+  unpublishProjectDomains,
+} from "../project-domain-api.server";
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -76,54 +78,23 @@ export const domainRouter = router({
     .mutation(async ({ input, ctx }) => {
       try {
         const project = await projectApi.loadById(input.projectId, ctx);
-
         const name = `${project.id}-${nanoid()}.zip`;
 
-        const domains: string[] = [];
-
-        let hasCustomDomain = false;
-
         if (input.destination === "saas") {
-          const currentProjectDomains = project.domainsVirtual;
-
-          if (input.domains.includes(project.domain)) {
-            domains.push(project.domain);
-          }
-
-          domains.push(
-            ...input.domains.filter((domain) =>
-              currentProjectDomains.some(
-                (projectDomain) =>
-                  projectDomain.domain === domain &&
-                  projectDomain.status === "ACTIVE" &&
-                  projectDomain.verified
-              )
-            )
-          );
-
-          hasCustomDomain = currentProjectDomains.some(
-            (projectDomain) =>
-              projectDomain.status === "ACTIVE" && projectDomain.verified
-          );
+          const domains = getVerifiedPublishDomains(project, input.domains);
+          await publishProject({ projectId: input.projectId, domains }, ctx);
+          return { success: true as const };
         }
 
         const build = await createProductionBuild(
           {
             projectId: input.projectId,
-            deployment:
-              input.destination === "saas"
-                ? {
-                    destination: input.destination,
-                    domains: domains,
-                    assetsDomain: project.domain,
-                    excludeWstdDomainFromSearch: hasCustomDomain,
-                  }
-                : {
-                    destination: input.destination,
-                    name,
-                    assetsDomain: project.domain,
-                    templates: input.templates,
-                  },
+            deployment: {
+              destination: input.destination,
+              name,
+              assetsDomain: project.domain,
+              templates: input.templates,
+            },
           },
           ctx
         );
@@ -146,7 +117,7 @@ export const domainRouter = router({
           logProjectName: `${project.title} - ${project.id}`,
         });
 
-        if (input.destination === "static" && result.success) {
+        if (result.success) {
           return { success: true as const, name };
         }
 
@@ -167,30 +138,13 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const { deploymentTrpc, env } = ctx.deployment;
-
-        // Call deployment service to delete the worker for this domain
-        const result = await deploymentTrpc.unpublish.mutate({
-          domain: input.domain,
-        });
-
-        // Extract subdomain for DB lookup (strip publisher host suffix)
-        // e.g., "myproject.wstd.work" → "myproject", "custom.com" → "custom.com"
-        const dbDomain = input.domain.replace(`.${env.PUBLISHER_HOST}`, "");
-
-        // Always unpublish in DB regardless of worker deletion result
-        await unpublishBuild(
-          { projectId: input.projectId, domain: dbDomain },
+        await unpublishProjectDomains(
+          {
+            projectId: input.projectId,
+            domains: [input.domain],
+          },
           ctx
         );
-
-        // If worker deletion failed (and not NOT_IMPLEMENTED), return error
-        if (result.success === false && result.error !== "NOT_IMPLEMENTED") {
-          return {
-            success: false,
-            message: `Failed to unpublish ${input.domain}: ${result.error}`,
-          };
-        }
 
         return {
           success: true,
