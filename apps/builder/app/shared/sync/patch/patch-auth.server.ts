@@ -9,11 +9,9 @@ import {
   getContentModeCapabilities,
 } from "@webstudio-is/project/content-mode-permissions";
 import {
-  coreMetas,
   type Breakpoint,
   type Prop,
   type StyleSource,
-  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   parseData,
@@ -21,24 +19,13 @@ import {
 } from "@webstudio-is/project-build/build-parser.server";
 import { parseStyleSourceSelections } from "@webstudio-is/project-build/style-source-selections.server";
 import { parseStyles } from "@webstudio-is/project-build/styles.server";
-import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
-import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import env from "~/env/env.server";
 import { readAccessToken } from "~/services/token.server";
+import { componentMetas } from "~/shared/component-metas.server";
 import type {
   NormalizedPatchRequest,
   PatchEntry,
 } from "./patch-normalize.server";
-
-const componentMetas = new Map<string, WsComponentMeta>(
-  Object.entries({
-    ...coreMetas,
-    ...baseComponentMetas,
-    ...animationComponentMetas,
-    ...radixComponentMetas,
-  })
-);
 
 export type AuthorizedPatchEntry = {
   entry: PatchEntry;

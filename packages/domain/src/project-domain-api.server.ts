@@ -1,10 +1,15 @@
 import { nanoid } from "nanoid";
+import { z } from "zod";
 import * as projectApi from "@webstudio-is/project/index.server";
 import {
   createProductionBuild,
+  parseDeployment,
   unpublishBuild,
 } from "@webstudio-is/project-build/index.server";
-import type { Deployment } from "@webstudio-is/sdk";
+import {
+  templates as templateSchema,
+  type Deployment,
+} from "@webstudio-is/sdk";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { db } from "./db";
 import { validateDomain } from "./db/validate";
@@ -82,6 +87,74 @@ export const getVerifiedPublishDomains = (
   return verifiedDomains;
 };
 
+export const listProjectPublishes = async (
+  projectId: string,
+  context: AppContext
+) => {
+  const result = await context.postgrest.client
+    .from("Build")
+    .select("id, version, createdAt, deployment")
+    .eq("projectId", projectId)
+    .not("deployment", "is", null)
+    .order("createdAt", { ascending: false });
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return {
+    publishes: result.data.flatMap((build) => {
+      const deployment = parseDeployment(build.deployment);
+      if (deployment === undefined || deployment.destination === "static") {
+        return [];
+      }
+      return [
+        {
+          id: build.id,
+          jobId: build.id,
+          version: build.version,
+          target: deployment.domains.length > 1 ? "production" : "staging",
+          domains: deployment.domains,
+          createdAt: build.createdAt,
+        },
+      ];
+    }),
+  };
+};
+
+export const getProjectPublishJob = async (
+  input: { projectId: string; jobId: string },
+  context: AppContext
+) => {
+  const result = await context.postgrest.client
+    .from("Build")
+    .select("id, version, createdAt, deployment")
+    .eq("projectId", input.projectId)
+    .eq("id", input.jobId)
+    .maybeSingle();
+
+  if (result.error) {
+    throw result.error;
+  }
+  const publishJob = result.data;
+  if (publishJob === null) {
+    return undefined;
+  }
+
+  const deployment = parseDeployment(publishJob.deployment);
+  return {
+    id: publishJob.id,
+    version: publishJob.version,
+    status: deployment === undefined ? "removed" : "success",
+    domains:
+      deployment !== undefined && deployment.destination !== "static"
+        ? deployment.domains
+        : [],
+    createdAt: publishJob.createdAt,
+    completedAt: publishJob.createdAt,
+  };
+};
+
 const createSaasDeployment = ({
   project,
   domains,
@@ -99,18 +172,17 @@ const createSaasDeployment = ({
 
 export const publishProject = async (
   {
-    projectId,
+    project,
     domains,
   }: {
-    projectId: string;
+    project: LoadedProject;
     domains: string[];
   },
   context: AppContext
 ) => {
-  const project = await projectApi.loadById(projectId, context);
   const build = await createProductionBuild(
     {
-      projectId,
+      projectId: project.id,
       deployment: createSaasDeployment({ project, domains }),
     },
     context
@@ -137,6 +209,52 @@ export const publishProject = async (
   }
 
   return { build, project, deploymentNotImplemented };
+};
+
+export const publishStaticProject = async (
+  {
+    projectId,
+    templates,
+    name = `${projectId}-${nanoid()}.zip`,
+  }: {
+    projectId: string;
+    templates: z.infer<typeof templateSchema>[];
+    name?: string;
+  },
+  context: AppContext
+) => {
+  const project = await projectApi.loadById(projectId, context);
+  const build = await createProductionBuild(
+    {
+      projectId,
+      deployment: {
+        destination: "static",
+        name,
+        assetsDomain: project.domain,
+        templates,
+      },
+    },
+    context
+  );
+
+  const { deploymentTrpc, env } = context.deployment;
+
+  if (env.BUILDER_ORIGIN === undefined) {
+    throw new Error("Missing env.BUILDER_ORIGIN");
+  }
+
+  const result = await deploymentTrpc.publish.mutate({
+    builderOrigin: env.BUILDER_ORIGIN,
+    githubSha: env.GITHUB_SHA,
+    buildId: build.id,
+    branchName: env.GITHUB_REF_NAME,
+    destination: "static",
+    logProjectName: `${project.title} - ${project.id}`,
+  });
+
+  return result.success
+    ? { success: true as const, name, build, project }
+    : result;
 };
 
 export const unpublishProjectDomains = async (
@@ -183,7 +301,7 @@ export const createProjectDomain = async (
   input: { projectId: string; domain: string },
   context: AppContext
 ) => {
-  assertMutation(await db.create(input, context));
+  assertMutation(await createProjectDomainResult(input, context));
   const project = await projectApi.loadById(input.projectId, context);
   const validation = validateDomain(input.domain);
   const domain =
@@ -193,6 +311,13 @@ export const createProjectDomain = async (
   return serializeProjectDomain(
     getProjectDomainOrThrow(project, (item) => item.domain === domain)
   );
+};
+
+export const createProjectDomainResult = async (
+  input: { projectId: string; domain: string },
+  context: AppContext
+) => {
+  return await db.create(input, context);
 };
 
 export const updateProjectDomain = async (
@@ -241,15 +366,22 @@ export const deleteProjectDomain = async (
   input: { projectId: string; domainId: string },
   context: AppContext
 ) => {
-  assertMutation(await db.remove(input, context));
+  assertMutation(await deleteProjectDomainResult(input, context));
   return { status: "deleted" as const };
+};
+
+export const deleteProjectDomainResult = async (
+  input: { projectId: string; domainId: string },
+  context: AppContext
+) => {
+  return await db.remove(input, context);
 };
 
 export const verifyProjectDomain = async (
   input: { projectId: string; domainId: string },
   context: AppContext
 ) => {
-  assertMutation(await db.verify(input, context));
+  assertMutation(await verifyProjectDomainResult(input, context));
   const project = await projectApi.loadById(input.projectId, context);
   return serializeProjectDomain(
     getProjectDomainOrThrow(
@@ -257,6 +389,13 @@ export const verifyProjectDomain = async (
       (domain) => domain.domainId === input.domainId
     )
   );
+};
+
+export const verifyProjectDomainResult = async (
+  input: { projectId: string; domainId: string },
+  context: AppContext
+) => {
+  return await db.verify(input, context);
 };
 
 export const createUnpublishJobId = () => `unpublish-${nanoid()}`;

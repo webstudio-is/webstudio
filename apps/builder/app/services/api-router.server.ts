@@ -1,6 +1,4 @@
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { nanoid } from "nanoid";
 import {
   AuthorizationError,
   authorizeProject,
@@ -9,13 +7,8 @@ import {
   type AppContext,
   type AuthPermit,
 } from "@webstudio-is/trpc-interface/index.server";
-import { loadById, patchBuild } from "@webstudio-is/project/index.server";
-import {
-  loadDevBuildByProjectId,
-  loadBuildById,
-  parseDeployment,
-} from "@webstudio-is/project-build/index.server";
-import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime/errors";
+import { loadById } from "@webstudio-is/project/index.server";
+import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import {
   cssVariableValueInput,
   designTokenCreateInput,
@@ -26,179 +19,63 @@ import {
 } from "@webstudio-is/project-build/runtime/styles";
 import {
   dataVariableValueInput,
-  findResource,
   resourceFieldsInput,
   resourceFieldsUpdateInput,
 } from "@webstudio-is/project-build/runtime/data";
-import { executeBuilderRuntimeOperation } from "@webstudio-is/project-build/runtime/registry";
 import {
-  findSerializedPageByInput,
   getParentFolderId,
-  getSerializedPages,
   isPathAvailable,
   pageFieldsInput,
   pageMetaInput,
-  serializePageDetailsByInput,
 } from "@webstudio-is/project-build/runtime/pages";
-import {
-  findTextContentChild,
-  getTextContentErrors,
-} from "@webstudio-is/project-build/runtime/instances";
 import {
   propBindingInput,
   propValueInput,
 } from "@webstudio-is/project-build/runtime/props";
-import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
-import type { BuilderState } from "@webstudio-is/project-build/state/builder-state";
 import {
   createProjectDomain,
   createUnpublishJobId,
   deleteProjectDomain,
   getDefaultPublishDomains,
+  getProjectPublishJob,
   listProjectDomains,
+  listProjectPublishes,
   publishProject,
   updateProjectDomain,
   unpublishProjectDomains,
   verifyProjectDomain,
 } from "@webstudio-is/domain/index.server";
-import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol";
 import {
   assertApiProjectPermit,
-  assertApiTokenPermit,
   getTokenPermits,
   loadApiToken,
 } from "./api-permits.server";
 import { findFolder, findPage } from "~/shared/page-utils/tree";
-import { findParentInstanceReference } from "@webstudio-is/project-build/runtime/instances";
-import {
-  coreMetas,
-  getStyleDeclKey,
-  type Asset,
-  type Instance,
-  type Pages,
-  type Resource,
-  type WsComponentMeta,
-} from "@webstudio-is/sdk";
+import { componentMetas } from "~/shared/component-metas.server";
+import { type Pages } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
 } from "@webstudio-is/project/content-mode-permissions";
-import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
-import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type { CompactBuild } from "@webstudio-is/project-build";
-
-const componentMetas = new Map<string, WsComponentMeta>(
-  Object.entries({
-    ...coreMetas,
-    ...baseComponentMetas,
-    ...animationComponentMetas,
-    ...radixComponentMetas,
-  })
-);
-
-const throwApiError = (
-  code: "BAD_REQUEST" | "NOT_FOUND" | "CONFLICT",
-  message: string
-): never => {
-  throw new TRPCError({ code, message });
-};
-
-const defaultBuilderRuntimeContext = {
-  createId: nanoid,
-  now: () => new Date(),
-};
-
-const createBuilderRuntimeState = (
-  build: CompactBuild,
-  assets?: Asset[]
-): BuilderState => ({
-  pages: build.pages,
-  breakpoints: mapById(build.breakpoints),
-  styles: new Map(
-    build.styles.map((styleDecl) => [getStyleDeclKey(styleDecl), styleDecl])
-  ),
-  styleSources: mapById(build.styleSources),
-  styleSourceSelections: new Map(
-    build.styleSourceSelections.map((selection) => [
-      selection.instanceId,
-      selection,
-    ])
-  ),
-  props: mapById(build.props),
-  dataSources: mapById(build.dataSources),
-  resources: mapById(build.resources),
-  instances: mapById(build.instances),
-  assets: assets === undefined ? undefined : mapById(assets),
-  marketplaceProduct: build.marketplaceProduct,
-});
-
-const executeApiRuntimeOperation = <Result>({
-  id,
-  build,
-  assets,
-  input,
-}: {
-  id: string;
-  build: CompactBuild;
-  assets?: Asset[];
-  input: unknown;
-}): Result => {
-  try {
-    return executeBuilderRuntimeOperation<Result>({
-      id,
-      state: createBuilderRuntimeState(build, assets),
-      input,
-      context: defaultBuilderRuntimeContext,
-    });
-  } catch (error) {
-    if (error instanceof BuilderRuntimeError) {
-      return throwApiError(error.code, error.message);
-    }
-    throw error;
-  }
-};
-
-const executeApiRuntimeMutation = <
-  Result extends Record<string, unknown> = Record<string, unknown>,
->(args: {
-  id: string;
-  build: CompactBuild;
-  assets?: Asset[];
-  input: unknown;
-}) => executeApiRuntimeOperation<BuilderRuntimeMutation<Result>>(args);
-
-const loadBuildByProjectVersion = async (
-  ctx: AppContext,
-  projectId: string,
-  version: number
-) => {
-  const build = await ctx.postgrest.client
-    .from("Build")
-    .select("id")
-    .eq("projectId", projectId)
-    .eq("version", version)
-    .is("deployment", null)
-    .order("createdAt", { ascending: false })
-    .limit(1);
-
-  if (build.error) {
-    throw build.error;
-  }
-  const buildId = build.data.at(0)?.id;
-  if (buildId === undefined) {
-    return throwApiError("NOT_FOUND", "Build version not found for project");
-  }
-
-  return await loadBuildById(ctx, buildId);
-};
-
-const loadReadableDevBuild = async (ctx: AppContext, projectId: string) => {
-  await assertApiProjectPermit(ctx, projectId, "view");
-  return await loadDevBuildByProjectId(ctx, projectId);
-};
+import {
+  buildGetInput,
+  buildPatchInput,
+  commitBuildPatch,
+  commitBuildTransactions,
+  createBuildSnapshot,
+  loadBuildByProjectVersion,
+  loadReadableDevBuild,
+  serializeProjectSummary,
+} from "./api-build.server";
+import { throwApiError } from "./api-errors.server";
+import {
+  createBuilderRuntimeState,
+  executeApiRuntimeMutation,
+  executeApiRuntimeOperation,
+} from "./api-runtime.server";
 
 const assertApiPublishDomains = ({
   auth,
@@ -226,149 +103,6 @@ const assertApiPublishDomains = ({
 };
 
 const projectIdInput = z.object({ projectId: z.string() });
-
-const buildInclude = z.enum([
-  "pages",
-  "folders",
-  "instances",
-  "props",
-  "styles",
-  "styleSources",
-  "styleSourceSelections",
-  "designTokens",
-  "assets",
-  "resources",
-  "variables",
-  "breakpoints",
-  "marketplaceProduct",
-]);
-
-type BuildInclude = z.infer<typeof buildInclude>;
-
-const createBuildSnapshot = ({
-  build,
-  include,
-  projectId,
-}: {
-  build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
-  include: Set<BuildInclude>;
-  projectId: string;
-}) => {
-  const snapshot: Record<string, unknown> = {
-    projectId,
-    buildId: build.id,
-    version: build.version,
-  };
-  const add = (name: BuildInclude, value: unknown) => {
-    if (include.has(name)) {
-      snapshot[name] = value;
-    }
-  };
-
-  if (include.has("pages") || include.has("folders")) {
-    const pages = serializePages(build.pages);
-    snapshot.homePageId = pages.homePageId;
-    snapshot.rootFolderId = pages.rootFolderId;
-    add("pages", pages.pages);
-    add("folders", pages.folders);
-  }
-  add("instances", build.instances);
-  add("props", build.props);
-  add("styles", build.styles);
-  add("styleSources", build.styleSources);
-  add("styleSourceSelections", build.styleSourceSelections);
-  if (include.has("designTokens")) {
-    snapshot.designTokens = build.styleSources.filter(
-      (styleSource) => styleSource.type === "token"
-    );
-  }
-  add("resources", build.resources);
-  add("variables", build.dataSources);
-  add("breakpoints", build.breakpoints);
-  add("marketplaceProduct", build.marketplaceProduct);
-
-  return snapshot;
-};
-
-const serializeProjectSummary = (
-  project: Awaited<ReturnType<typeof loadById>>
-) => {
-  if (project === null) {
-    throwApiError("NOT_FOUND", "Project not found");
-  }
-
-  return {
-    id: project.id,
-    name: project.title,
-    domain: project.domain ?? undefined,
-    createdAt: project.createdAt,
-    updatedAt:
-      project.latestBuildVirtual?.createdAt ??
-      project.latestStaticBuild?.updatedAt ??
-      project.createdAt,
-  };
-};
-
-const throwBadRequest = (errors: string[]): never => {
-  return throwApiError("BAD_REQUEST", errors.join(", "));
-};
-
-const mapById = <Item extends { id: string }>(items: Item[]) =>
-  new Map(items.map((item) => [item.id, item]));
-
-const commitBuildPatch = async ({
-  build,
-  ctx,
-  projectId,
-  payload,
-}: {
-  build: CompactBuild;
-  ctx: AppContext;
-  projectId: string;
-  payload: z.infer<typeof buildPatchTransaction>["payload"];
-}) => {
-  return commitBuildTransactions({
-    ctx,
-    projectId,
-    buildId: build.id,
-    clientVersion: build.version,
-    transactions: [{ id: nanoid(), payload }],
-  });
-};
-
-const commitBuildTransactions = async ({
-  ctx,
-  projectId,
-  buildId,
-  clientVersion,
-  transactions,
-}: {
-  ctx: AppContext;
-  projectId: string;
-  buildId: string;
-  clientVersion: number;
-  transactions: z.infer<typeof buildPatchTransaction>[];
-}) => {
-  const result = await patchBuild(
-    {
-      buildId,
-      projectId,
-      clientVersion,
-      transactions,
-    },
-    ctx
-  );
-  if (result.status === "version_mismatched") {
-    throwApiError("CONFLICT", result.errors);
-  }
-  if (result.status === "error") {
-    throwApiError("BAD_REQUEST", result.errors);
-  }
-  if (result.status !== "ok") {
-    return throwApiError("BAD_REQUEST", "Unexpected patch result");
-  }
-  return { version: result.version };
-};
 
 const getParentFolderIdOrThrow = (pages: Pages, pageId: string) => {
   const folderId = getParentFolderId(pages.folders, pageId);
@@ -400,115 +134,6 @@ const getPageOrThrow = (
   return page;
 };
 
-const getInstanceOrThrow = (
-  instances: Map<string, Instance>,
-  instanceId: string
-): Instance => {
-  const instance = instances.get(instanceId);
-  if (instance === undefined) {
-    return throwApiError("NOT_FOUND", "Instance not found");
-  }
-  return instance;
-};
-
-const getParentInstanceOrThrow = (
-  instances: Map<string, Instance>,
-  instanceId: string
-): NonNullable<ReturnType<typeof findParentInstanceReference>> => {
-  const parent = findParentInstanceReference(instances, instanceId);
-  if (parent === undefined) {
-    return throwApiError("NOT_FOUND", "Parent instance not found");
-  }
-  return parent;
-};
-
-const getRequiredPageByInput = (
-  pages: ReturnType<typeof getSerializedPages>,
-  input: { pageId?: string; pagePath?: string }
-) => {
-  if (input.pageId === undefined && input.pagePath === undefined) {
-    return undefined;
-  }
-  const page = findSerializedPageByInput(pages, input);
-  if (page === undefined) {
-    throwApiError("NOT_FOUND", "Page not found");
-  }
-  return page;
-};
-
-const serializeRequiredPageDetails = (
-  build: CompactBuild,
-  input: { pageId?: string; pagePath?: string }
-) => {
-  const details = serializePageDetailsByInput(build, input);
-  if (details === undefined) {
-    throwApiError("NOT_FOUND", "Page not found");
-  }
-  return details;
-};
-
-const getTextChildOrThrow = (
-  build: CompactBuild,
-  input: {
-    instanceId: string;
-    childIndex: number;
-    mode?: "text" | "expression";
-  }
-): Extract<
-  ReturnType<typeof findTextContentChild>,
-  { status: "found" }
->["child"] => {
-  const result = findTextContentChild(build.instances, input);
-  switch (result.status) {
-    case "found":
-      return result.child;
-    case "instance-not-found":
-      return throwApiError("NOT_FOUND", "Instance not found");
-    case "child-not-found":
-      return throwApiError("NOT_FOUND", "Child not found");
-    case "not-text-content":
-      return throwApiError("BAD_REQUEST", "Child is not text or expression");
-    case "mode-mismatch":
-      return throwApiError(
-        "BAD_REQUEST",
-        `Child is ${result.actual}, not ${input.mode}`
-      );
-  }
-};
-
-const validateTextValue = (mode: "text" | "expression", value: string) => {
-  const errors = getTextContentErrors({ type: mode, value });
-  if (errors.length > 0) {
-    throwBadRequest(errors);
-  }
-};
-
-const getResourceOrThrow = (
-  resources: Resource[],
-  resourceId: string
-): Resource => {
-  const found = findResource(resources, resourceId);
-  if (found === undefined) {
-    return throwApiError("NOT_FOUND", "Resource not found");
-  }
-  return found;
-};
-
-const applySemanticBuildPatch = async ({
-  build,
-  ctx,
-  projectId,
-  payload,
-}: {
-  build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
-  ctx: AppContext;
-  projectId: string;
-  payload: z.infer<typeof buildPatchTransaction>["payload"];
-}) => {
-  await assertApiProjectPermit(ctx, projectId, "build");
-  return await commitBuildPatch({ build, ctx, projectId, payload });
-};
-
 const applyBuildPayload = async <Result extends Record<string, unknown> = {}>(
   ctx: AppContext,
   build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>,
@@ -516,18 +141,8 @@ const applyBuildPayload = async <Result extends Record<string, unknown> = {}>(
   payload: z.infer<typeof buildPatchTransaction>["payload"],
   result?: Result
 ) => ({
-  ...(await applySemanticBuildPatch({ build, ctx, projectId, payload })),
+  ...(await commitBuildPatch({ build, ctx, projectId, payload })),
   ...(result ?? {}),
-});
-
-const buildGetInput = projectIdInput.extend({
-  include: z.array(buildInclude).optional(),
-  version: z.number().int().optional(),
-});
-
-const buildPatchInput = projectIdInput.extend({
-  baseVersion: z.number().int(),
-  transactions: z.array(buildPatchTransaction).min(1),
 });
 
 const projectQuery = <Schema extends z.ZodType<{ projectId: string }>, Result>(
@@ -601,7 +216,7 @@ const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
   procedure.input(input).mutation(async ({ ctx, input }) => {
     const parsedInput = input as z.infer<Schema>;
     await assertApiProjectPermit(ctx, parsedInput.projectId, "build");
-    const build = await loadReadableDevBuild(ctx, parsedInput.projectId);
+    const build = await loadDevBuildByProjectId(ctx, parsedInput.projectId);
     return await handler({
       ctx,
       input: parsedInput,
@@ -620,23 +235,18 @@ const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
     });
   });
 
-const createContentModeCapabilitiesFromBuild = (build: CompactBuild) =>
-  getContentModeCapabilities({
-    instances: mapById(build.instances),
+const createContentModeCapabilitiesFromBuild = (build: CompactBuild) => {
+  const state = createBuilderRuntimeState(build);
+  return getContentModeCapabilities({
+    instances: state.instances!,
     metas: componentMetas,
-    props: mapById(build.props),
-    styleSources: mapById(build.styleSources),
-    styleSourceSelections: new Map(
-      build.styleSourceSelections.map((selection) => [
-        selection.instanceId,
-        selection,
-      ])
-    ),
-    styles: new Map(
-      build.styles.map((styleDecl) => [getStyleDeclKey(styleDecl), styleDecl])
-    ),
-    breakpoints: mapById(build.breakpoints),
+    props: state.props!,
+    styleSources: state.styleSources!,
+    styleSourceSelections: state.styleSourceSelections,
+    styles: state.styles,
+    breakpoints: state.breakpoints,
   });
+};
 
 const assertContentOrBuildPayload = ({
   auth,
@@ -681,7 +291,7 @@ const contentOrBuildMutation = <
       parsedInput.projectId,
       "edit"
     );
-    const build = await loadReadableDevBuild(ctx, parsedInput.projectId);
+    const build = await loadDevBuildByProjectId(ctx, parsedInput.projectId);
     return await handler({
       ctx,
       input: parsedInput,
@@ -1690,35 +1300,7 @@ export const apiRouter = router({
 
   publish: router({
     list: projectQuery(projectIdInput, "view", async ({ ctx, input }) => {
-      const result = await ctx.postgrest.client
-        .from("Build")
-        .select("id, version, createdAt, deployment")
-        .eq("projectId", input.projectId)
-        .not("deployment", "is", null)
-        .order("createdAt", { ascending: false });
-
-      if (result.error) {
-        throw result.error;
-      }
-
-      return {
-        publishes: result.data.flatMap((build) => {
-          const deployment = parseDeployment(build.deployment);
-          if (deployment === undefined || deployment.destination === "static") {
-            return [];
-          }
-          return [
-            {
-              id: build.id,
-              jobId: build.id,
-              version: build.version,
-              target: deployment.domains.length > 1 ? "production" : "staging",
-              domains: deployment.domains,
-              createdAt: build.createdAt,
-            },
-          ];
-        }),
-      };
+      return await listProjectPublishes(input.projectId, ctx);
     }),
 
     create: projectMutation(
@@ -1735,7 +1317,7 @@ export const apiRouter = router({
           input.domains ?? getDefaultPublishDomains(project, input.target);
         assertApiPublishDomains({ auth, domains, project });
         const { build, deploymentNotImplemented } = await publishProject(
-          { projectId: input.projectId, domains },
+          { project, domains },
           ctx
         );
         return {
@@ -1751,33 +1333,11 @@ export const apiRouter = router({
       projectIdInput.extend({ jobId: z.string() }),
       "view",
       async ({ ctx, input }) => {
-        const result = await ctx.postgrest.client
-          .from("Build")
-          .select("id, version, createdAt, deployment")
-          .eq("projectId", input.projectId)
-          .eq("id", input.jobId)
-          .maybeSingle();
-
-        if (result.error) {
-          throw result.error;
-        }
-        const publishJob = result.data;
-        if (publishJob === null) {
+        const publishJob = await getProjectPublishJob(input, ctx);
+        if (publishJob === undefined) {
           return throwApiError("NOT_FOUND", "Publish job not found");
         }
-
-        const deployment = parseDeployment(publishJob.deployment);
-        return {
-          id: publishJob.id,
-          version: publishJob.version,
-          status: deployment === undefined ? "removed" : "success",
-          domains:
-            deployment !== undefined && deployment.destination !== "static"
-              ? deployment.domains
-              : [],
-          createdAt: publishJob.createdAt,
-          completedAt: publishJob.createdAt,
-        };
+        return publishJob;
       }
     ),
 
@@ -1935,24 +1495,9 @@ export const apiRouter = router({
 });
 
 export const __testing__ = {
-  assertApiTokenPermit,
-  assertApiProjectPermit,
-  createBuildSnapshot,
-  getTokenPermits,
-  applySemanticBuildPatch,
-  serializeProjectSummary,
-  commitBuildPatch,
-  commitBuildTransactions,
   assertContentOrBuildPayload,
   assertApiPublishDomains,
   getParentFolderIdOrThrow,
   getFolderOrThrow,
   getPageOrThrow,
-  getInstanceOrThrow,
-  getParentInstanceOrThrow,
-  getRequiredPageByInput,
-  serializeRequiredPageDetails,
-  getTextChildOrThrow,
-  validateTextValue,
-  getResourceOrThrow,
 };

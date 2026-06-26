@@ -20,6 +20,7 @@ type PublicApiOperationInput = {
   path?: string;
   client: string;
   permit?: PublicApiOperationPermit;
+  invalidatesNamespaces?: readonly PublicApiOperationNamespace[];
 };
 
 export type PublicApiOperation = Omit<PublicApiOperationInput, "permit"> & {
@@ -75,7 +76,10 @@ const withDefaultPermit = (
     runtimeOperationId,
     readNamespaces: runtimeOperation?.readNamespaces ?? [],
     writeNamespaces: runtimeOperation?.writeNamespaces ?? [],
-    invalidatesNamespaces: runtimeOperation?.invalidatesNamespaces ?? [],
+    invalidatesNamespaces:
+      runtimeOperation?.invalidatesNamespaces ??
+      operation.invalidatesNamespaces ??
+      [],
   };
 };
 
@@ -515,12 +519,14 @@ const publicApiOperationInputs = [
     id: "assets.upload",
     method: "mutation",
     client: "uploadProjectAsset",
+    invalidatesNamespaces: ["assets"],
   },
   {
     command: "upload-assets",
     id: "assets.uploadMany",
     method: "mutation",
     client: "uploadProjectAssets",
+    invalidatesNamespaces: ["assets"],
   },
   {
     command: "find-asset-usage",

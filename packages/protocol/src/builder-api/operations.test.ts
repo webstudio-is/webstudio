@@ -45,13 +45,25 @@ describe("public api operation catalog", () => {
       expect(operation.writeNamespaces).toEqual(
         contract?.writeNamespaces ?? []
       );
-      expect(operation.invalidatesNamespaces).toEqual(
-        contract?.invalidatesNamespaces ?? []
-      );
+      if (contract !== undefined) {
+        expect(operation.invalidatesNamespaces).toEqual(
+          contract.invalidatesNamespaces
+        );
+      }
     }
 
     expect(localCapableOperations.length).toBeGreaterThan(0);
     expect(serverOnlyOperations.length).toBeGreaterThan(0);
+  });
+
+  test("documents server-only namespace invalidation", () => {
+    expect(getPublicApiOperation("upload-asset").serverOnly).toBe(true);
+    expect(getPublicApiOperation("upload-asset").invalidatesNamespaces).toEqual(
+      ["assets"]
+    );
+    expect(
+      getPublicApiOperation("upload-assets").invalidatesNamespaces
+    ).toEqual(["assets"]);
   });
 
   test("keeps operation lookup and tRPC path lookup strict", () => {

@@ -1,7 +1,5 @@
 import { z } from "zod";
-import { nanoid } from "nanoid";
 import * as projectApi from "@webstudio-is/project/index.server";
-import { createProductionBuild } from "@webstudio-is/project-build/index.server";
 import {
   router,
   procedure,
@@ -15,8 +13,12 @@ import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
 import {
   getVerifiedPublishDomains,
+  createProjectDomainResult,
+  deleteProjectDomainResult,
   publishProject,
+  publishStaticProject,
   unpublishProjectDomains,
+  verifyProjectDomainResult,
 } from "../project-domain-api.server";
 
 export const domainRouter = router({
@@ -77,48 +79,23 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const project = await projectApi.loadById(input.projectId, ctx);
-        const name = `${project.id}-${nanoid()}.zip`;
-
         if (input.destination === "saas") {
+          const project = await projectApi.loadById(input.projectId, ctx);
           const domains = getVerifiedPublishDomains(project, input.domains);
-          await publishProject({ projectId: input.projectId, domains }, ctx);
+          await publishProject({ project, domains }, ctx);
           return { success: true as const };
         }
 
-        const build = await createProductionBuild(
+        const result = await publishStaticProject(
           {
             projectId: input.projectId,
-            deployment: {
-              destination: input.destination,
-              name,
-              assetsDomain: project.domain,
-              templates: input.templates,
-            },
+            templates: input.templates,
           },
           ctx
         );
 
-        const { deploymentTrpc, env } = ctx.deployment;
-
-        if (env.BUILDER_ORIGIN === undefined) {
-          throw new Error("Missing env.BUILDER_ORIGIN");
-        }
-
-        const result = await deploymentTrpc.publish.mutate({
-          // used to load build data from the builder with build.loadProjectBundleByBuildId
-          builderOrigin: env.BUILDER_ORIGIN,
-          githubSha: env.GITHUB_SHA,
-          buildId: build.id,
-          // preview support
-          branchName: env.GITHUB_REF_NAME,
-          destination: input.destination,
-          // action log helper (not used for deployment, but for action logs readablity)
-          logProjectName: `${project.title} - ${project.id}`,
-        });
-
         if (result.success) {
-          return { success: true as const, name };
+          return { success: true as const, name: result.name };
         }
 
         return result;
@@ -197,7 +174,7 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        return await db.create(
+        return await createProjectDomainResult(
           {
             projectId: input.projectId,
             domain: input.domain,
@@ -218,7 +195,7 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        return await db.verify(
+        return await verifyProjectDomainResult(
           {
             projectId: input.projectId,
             domainId: input.domainId,
@@ -238,7 +215,7 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        return await db.remove(
+        return await deleteProjectDomainResult(
           {
             projectId: input.projectId,
             domainId: input.domainId,

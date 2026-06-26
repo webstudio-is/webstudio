@@ -1,9 +1,11 @@
 import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import * as projectBuild from "@webstudio-is/project-build/index.server";
+import * as projectApi from "@webstudio-is/project/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol";
 import {
   AuthorizationError,
@@ -11,16 +13,13 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import * as projectApi from "@webstudio-is/project/index.server";
 import {
   blockComponent,
   getStyleDeclKey,
   type Asset,
   type Instance,
-  type Resource,
   type StyleDecl,
 } from "@webstudio-is/sdk";
-import type { z } from "zod";
 import {
   createAssetReplacementPayload,
   serializeAssetList,
@@ -29,10 +28,7 @@ import {
   createInstanceCleanupPayload,
   serializeTextNodes,
 } from "@webstudio-is/project-build/runtime/instances";
-import {
-  createPageUpdatePatches,
-  getSerializedPages,
-} from "@webstudio-is/project-build/runtime/pages";
+import { createPageUpdatePatches } from "@webstudio-is/project-build/runtime/pages";
 import { createStyleClonePayload } from "@webstudio-is/project-build/runtime/style-utils";
 import { getResourceExpressionErrors } from "@webstudio-is/project-build/runtime/data";
 import {
@@ -45,30 +41,20 @@ import {
   createValidatedPropValueFromInput,
 } from "@webstudio-is/project-build/runtime/props";
 import { apiRouter, __testing__ } from "./api-router.server";
+import {
+  assertApiProjectPermit,
+  assertApiTokenPermit,
+  getTokenPermits,
+} from "./api-permits.server";
 
 const servicesDir = new URL(".", import.meta.url);
 
 const {
-  assertApiTokenPermit,
-  assertApiProjectPermit,
-  applySemanticBuildPatch,
-  createBuildSnapshot,
-  getTokenPermits,
-  serializeProjectSummary,
-  commitBuildPatch,
-  commitBuildTransactions,
   assertContentOrBuildPayload,
   assertApiPublishDomains,
   getParentFolderIdOrThrow,
   getFolderOrThrow,
   getPageOrThrow,
-  getInstanceOrThrow,
-  getParentInstanceOrThrow,
-  getRequiredPageByInput,
-  serializeRequiredPageDetails,
-  getTextChildOrThrow,
-  validateTextValue,
-  getResourceOrThrow,
 } = __testing__;
 
 const validatePropValue = (
@@ -101,12 +87,6 @@ const getDesignTokenOrThrow = (
   }
   return token;
 };
-
-type ProjectSummaryInput = Parameters<typeof serializeProjectSummary>[0];
-type SemanticPatchBuildInput = Parameters<
-  typeof applySemanticBuildPatch
->[0]["build"];
-type SnapshotBuildInput = Parameters<typeof createBuildSnapshot>[0]["build"];
 
 const createContext = (
   allowAdditionalPermissions: boolean,
@@ -223,112 +203,7 @@ describe("api router build operation adapters", () => {
     instances: [root, child],
     styleSources: [{ type: "token", id: "token", name: "Token" }],
   } as CompactBuild;
-  const transaction: z.infer<typeof buildPatchTransaction> = {
-    id: "transaction",
-    payload: [
-      {
-        namespace: "pages",
-        patches: [{ op: "replace", path: ["meta", "siteName"], value: "Site" }],
-      },
-    ],
-  };
-
-  test("commit transactions and semantic payloads", async () => {
-    const ctx = createContext(true);
-    const patchBuild = vi
-      .spyOn(projectApi, "patchBuild")
-      .mockResolvedValue({ status: "ok", version: 2 });
-
-    await expect(
-      commitBuildTransactions({
-        ctx,
-        projectId: "project",
-        buildId: "build",
-        clientVersion: 1,
-        transactions: [transaction],
-      })
-    ).resolves.toEqual({ version: 2 });
-    await expect(
-      commitBuildPatch({
-        build,
-        ctx,
-        projectId: "project",
-        payload: transaction.payload,
-      })
-    ).resolves.toEqual({ version: 2 });
-
-    expect(patchBuild).toHaveBeenNthCalledWith(
-      1,
-      {
-        buildId: "build",
-        projectId: "project",
-        clientVersion: 1,
-        transactions: [transaction],
-      },
-      ctx
-    );
-    expect(patchBuild).toHaveBeenNthCalledWith(
-      2,
-      {
-        buildId: "build",
-        projectId: "project",
-        clientVersion: 1,
-        transactions: [
-          {
-            id: expect.any(String),
-            payload: transaction.payload,
-          },
-        ],
-      },
-      ctx
-    );
-  });
-
-  test("map patch conflicts and errors to TRPC errors", async () => {
-    const ctx = createContext(true);
-    const patchBuild = vi.spyOn(projectApi, "patchBuild");
-
-    patchBuild.mockResolvedValueOnce({
-      status: "version_mismatched",
-      errors: "Version changed",
-    });
-    await expect(
-      commitBuildTransactions({
-        ctx,
-        projectId: "project",
-        buildId: "build",
-        clientVersion: 1,
-        transactions: [transaction],
-      })
-    ).rejects.toMatchObject({
-      code: "CONFLICT",
-      message: "Version changed",
-    });
-
-    patchBuild.mockResolvedValueOnce({
-      status: "error",
-      errors: "Invalid patch",
-    });
-    await expect(
-      commitBuildTransactions({
-        ctx,
-        projectId: "project",
-        buildId: "build",
-        clientVersion: 1,
-        transactions: [transaction],
-      })
-    ).rejects.toMatchObject({
-      code: "BAD_REQUEST",
-      message: "Invalid patch",
-    });
-  });
-
-  test("resolve pages, folders, instances, and text children", () => {
-    const serializedPages = getSerializedPages(build);
-    const instances = new Map(
-      build.instances.map((instance) => [instance.id, instance])
-    );
-
+  test("resolves pages and folders used by route adapters", () => {
     expect(getPageOrThrow(pages, pages.homePageId).id).toBe(pages.homePageId);
     expect(getFolderOrThrow(pages, pages.rootFolderId).id).toBe(
       pages.rootFolderId
@@ -336,32 +211,6 @@ describe("api router build operation adapters", () => {
     expect(getParentFolderIdOrThrow(pages, pages.homePageId)).toBe(
       pages.rootFolderId
     );
-    expect(
-      getRequiredPageByInput(serializedPages, { pageId: pages.homePageId })?.id
-    ).toBe(pages.homePageId);
-    expect(getRequiredPageByInput(serializedPages, {})).toBeUndefined();
-    expect(serializeRequiredPageDetails(build, { pagePath: "" })).toMatchObject(
-      {
-        id: pages.homePageId,
-        path: "",
-        isHome: true,
-      }
-    );
-    expect(getInstanceOrThrow(instances, "root")).toBe(root);
-    expect(getParentInstanceOrThrow(instances, "child")).toEqual({
-      instance: root,
-      childIndex: 0,
-    });
-    expect(
-      getTextChildOrThrow(build, { instanceId: "root", childIndex: 1 })
-    ).toEqual({ type: "text", value: "Hello" });
-    expect(
-      getTextChildOrThrow(build, {
-        instanceId: "root",
-        childIndex: 2,
-        mode: "expression",
-      })
-    ).toEqual({ type: "expression", value: "title" });
 
     expect(() => getPageOrThrow(pages, "missing")).toThrow("Page not found");
     expect(() => getFolderOrThrow(pages, "missing")).toThrow(
@@ -370,39 +219,9 @@ describe("api router build operation adapters", () => {
     expect(() => getParentFolderIdOrThrow(pages, "missing")).toThrow(
       "Page parent folder not found"
     );
-    expect(() =>
-      getRequiredPageByInput(serializedPages, { pageId: "missing" })
-    ).toThrow("Page not found");
-    expect(() => getInstanceOrThrow(instances, "missing")).toThrow(
-      "Instance not found"
-    );
-    expect(() => getParentInstanceOrThrow(instances, "root")).toThrow(
-      "Parent instance not found"
-    );
-    expect(() =>
-      getTextChildOrThrow(build, { instanceId: "missing", childIndex: 1 })
-    ).toThrow("Instance not found");
-    expect(() =>
-      getTextChildOrThrow(build, { instanceId: "root", childIndex: 10 })
-    ).toThrow("Child not found");
-    expect(() =>
-      getTextChildOrThrow(build, { instanceId: "root", childIndex: 0 })
-    ).toThrow("Child is not text or expression");
-    expect(() =>
-      getTextChildOrThrow(build, {
-        instanceId: "root",
-        childIndex: 1,
-        mode: "expression",
-      })
-    ).toThrow("Child is text, not expression");
   });
 
-  test("validate values and resolve referenced entities", () => {
-    const resource = { id: "resource", name: "Resource" } as Resource;
-
-    expect(validateTextValue("text", "invalid {")).toBeUndefined();
-    expect(validateTextValue("expression", "title")).toBeUndefined();
-    expect(() => validateTextValue("expression", "invalid {")).toThrow();
+  test("validates values and resolves referenced tokens", () => {
     expect(
       getResourceExpressionErrors({ url: '"https://example.com"' })
     ).toEqual([]);
@@ -453,15 +272,11 @@ describe("api router build operation adapters", () => {
         binding: { type: "expression", value: "invalid {" },
       })
     ).toThrow();
-    expect(getResourceOrThrow([resource], "resource")).toBe(resource);
     expect(getDesignTokenOrThrow(build, "token")).toEqual({
       type: "token",
       id: "token",
       name: "Token",
     });
-    expect(() => getResourceOrThrow([], "missing")).toThrow(
-      "Resource not found"
-    );
     expect(() => getDesignTokenOrThrow(build, "missing")).toThrow(
       "Design token not found"
     );
@@ -845,6 +660,74 @@ describe("api router permits", () => {
       })
     ).not.toThrow();
   });
+
+  test("commits content-mode mutations with editor api tokens", async () => {
+    const build = {
+      id: "build-1",
+      projectId: "project-1",
+      version: 3,
+      pages: createDefaultPages({ rootInstanceId: "block" }),
+      breakpoints: [],
+      styles: [],
+      styleSources: [],
+      styleSourceSelections: [],
+      props: [],
+      dataSources: [],
+      resources: [],
+      instances: [
+        {
+          type: "instance",
+          id: "block",
+          component: blockComponent,
+          children: [{ type: "id", value: "text-instance" }],
+        },
+        {
+          type: "instance",
+          id: "text-instance",
+          component: "ws:element",
+          tag: "p",
+          children: [{ type: "text", value: "Old" }],
+        },
+      ],
+      marketplaceProduct: {},
+    } as unknown as Awaited<
+      ReturnType<typeof projectBuild.loadDevBuildByProjectId>
+    >;
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ relation: "editors" })
+    );
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+    const patchBuild = vi
+      .spyOn(projectApi, "patchBuild")
+      .mockResolvedValue({ status: "ok", version: 4 });
+
+    const caller = apiRouter.createCaller(createContext(true));
+
+    await expect(
+      caller.instances.updateText({
+        projectId: "project-1",
+        instanceId: "text-instance",
+        childIndex: 0,
+        text: "New",
+        mode: "text",
+      })
+    ).resolves.toMatchObject({
+      version: 4,
+      instanceId: "text-instance",
+      childIndex: 0,
+      mode: "text",
+    });
+
+    expect(patchBuild).toHaveBeenCalledWith(
+      expect.objectContaining({
+        buildId: "build-1",
+        projectId: "project-1",
+        clientVersion: 3,
+      }),
+      expect.anything()
+    );
+  });
 });
 
 describe("api semantic build writes", () => {
@@ -884,67 +767,6 @@ describe("api semantic build writes", () => {
       { op: "remove", path: ["pages", "page", "meta", "language"] },
       { op: "remove", path: ["pages", "page", "meta", "socialImageUrl"] },
     ]);
-  });
-
-  test("patches the same build version used to generate semantic payload", async () => {
-    const token = createToken();
-    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
-    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(token);
-    const patchBuild = vi
-      .spyOn(projectApi, "patchBuild")
-      .mockResolvedValue({ status: "ok", version: 4 });
-    const build = {
-      id: "build-3",
-      projectId: "project-1",
-      version: 3,
-    } as unknown as SemanticPatchBuildInput;
-    const ctx = createContext(true);
-
-    await expect(
-      applySemanticBuildPatch({
-        build,
-        ctx,
-        projectId: "project-1",
-        payload: [
-          {
-            namespace: "pages",
-            patches: [
-              {
-                op: "replace",
-                path: ["meta", "siteName"],
-                value: "Site",
-              },
-            ],
-          },
-        ],
-      })
-    ).resolves.toEqual({ version: 4 });
-
-    expect(patchBuild).toHaveBeenCalledWith(
-      {
-        buildId: "build-3",
-        projectId: "project-1",
-        clientVersion: 3,
-        transactions: [
-          {
-            id: expect.any(String),
-            payload: [
-              {
-                namespace: "pages",
-                patches: [
-                  {
-                    op: "replace",
-                    path: ["meta", "siteName"],
-                    value: "Site",
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      ctx
-    );
   });
 
   test("cleans local styles when removing instances", () => {
@@ -1384,159 +1206,6 @@ describe("api instance queries", () => {
         },
       ],
     });
-  });
-});
-
-describe("api build snapshot", () => {
-  test("returns only requested build namespaces", () => {
-    const tokenStyleSource = {
-      type: "token" as const,
-      id: "token-1",
-      name: "Primary",
-    };
-    const localStyleSource = { type: "local" as const, id: "local-1" };
-    const build = {
-      id: "build-1",
-      projectId: "project-1",
-      version: 7,
-      pages: createDefaultPages({ rootInstanceId: "root-1" }),
-      instances: [{ type: "instance", id: "root-1", component: "Body" }],
-      props: [],
-      styles: [],
-      styleSources: [tokenStyleSource, localStyleSource],
-      styleSourceSelections: [],
-      resources: [],
-      dataSources: [],
-      breakpoints: [],
-    } as unknown as SnapshotBuildInput;
-
-    expect(
-      createBuildSnapshot({
-        build,
-        include: new Set(["designTokens", "instances"]),
-        projectId: "project-1",
-      })
-    ).toEqual({
-      projectId: "project-1",
-      buildId: "build-1",
-      version: 7,
-      designTokens: [tokenStyleSource],
-      instances: [{ type: "instance", id: "root-1", component: "Body" }],
-    });
-  });
-
-  test("returns page folders and data namespaces when requested", () => {
-    const build = {
-      id: "build-1",
-      projectId: "project-1",
-      version: 7,
-      pages: createDefaultPages({ rootInstanceId: "root-1" }),
-      instances: [],
-      props: [],
-      styles: [],
-      styleSources: [],
-      styleSourceSelections: [],
-      resources: [{ id: "resource-1" }],
-      dataSources: [{ id: "variable-1" }],
-      breakpoints: [{ id: "breakpoint-1" }],
-      marketplaceProduct: { categories: ["template"] },
-    } as unknown as SnapshotBuildInput;
-
-    expect(
-      createBuildSnapshot({
-        build,
-        include: new Set([
-          "pages",
-          "folders",
-          "resources",
-          "variables",
-          "breakpoints",
-          "marketplaceProduct",
-        ]),
-        projectId: "project-1",
-      })
-    ).toEqual(
-      expect.objectContaining({
-        projectId: "project-1",
-        buildId: "build-1",
-        version: 7,
-        homePageId: build.pages.homePageId,
-        rootFolderId: build.pages.rootFolderId,
-        resources: [{ id: "resource-1" }],
-        variables: [{ id: "variable-1" }],
-        breakpoints: [{ id: "breakpoint-1" }],
-        marketplaceProduct: { categories: ["template"] },
-      })
-    );
-  });
-});
-
-describe("api project serialization", () => {
-  test("uses latest virtual build time as project updated time", () => {
-    const project = {
-      id: "project-1",
-      title: "Project",
-      domain: "example.com",
-      createdAt: "2024-01-01T00:00:00.000Z",
-      latestBuildVirtual: {
-        createdAt: "2024-01-03T00:00:00.000Z",
-      },
-      latestStaticBuild: {
-        updatedAt: "2024-01-02T00:00:00.000Z",
-      },
-    } as unknown as ProjectSummaryInput;
-
-    expect(serializeProjectSummary(project)).toEqual({
-      id: "project-1",
-      name: "Project",
-      domain: "example.com",
-      createdAt: "2024-01-01T00:00:00.000Z",
-      updatedAt: "2024-01-03T00:00:00.000Z",
-    });
-  });
-
-  test("falls back to latest static build and then project creation time", () => {
-    expect(
-      serializeProjectSummary({
-        id: "project-1",
-        title: "Project",
-        domain: null,
-        createdAt: "2024-01-01T00:00:00.000Z",
-        latestBuildVirtual: null,
-        latestStaticBuild: {
-          updatedAt: "2024-01-02T00:00:00.000Z",
-        },
-      } as unknown as ProjectSummaryInput)
-    ).toEqual({
-      id: "project-1",
-      name: "Project",
-      domain: undefined,
-      createdAt: "2024-01-01T00:00:00.000Z",
-      updatedAt: "2024-01-02T00:00:00.000Z",
-    });
-
-    expect(
-      serializeProjectSummary({
-        id: "project-1",
-        title: "Project",
-        domain: null,
-        createdAt: "2024-01-01T00:00:00.000Z",
-        latestBuildVirtual: null,
-        latestStaticBuild: null,
-      } as unknown as ProjectSummaryInput)
-    ).toEqual({
-      id: "project-1",
-      name: "Project",
-      domain: undefined,
-      createdAt: "2024-01-01T00:00:00.000Z",
-      updatedAt: "2024-01-01T00:00:00.000Z",
-    });
-  });
-
-  test("throws not found when project is missing", () => {
-    expect(() =>
-      serializeProjectSummary(null as unknown as ProjectSummaryInput)
-    ).toThrow("Project not found");
   });
 });
 
