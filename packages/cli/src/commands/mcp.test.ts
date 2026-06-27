@@ -8,10 +8,20 @@ import type { ProjectSessionMcpCallResult } from "../project-session-mcp";
 
 type TestMcpAdapter = Parameters<typeof handleMcpRequest>[0];
 
+const toolInputSchema = {
+  type: "object" as const,
+  additionalProperties: true as const,
+  properties: {
+    "page-id": { description: "Page id" },
+  },
+  required: ["page-id"],
+};
+
 const createTool = () =>
   ({
     name: "list-pages",
     description: "List pages",
+    inputSchema: toolInputSchema,
     annotations: {
       command: "list-pages",
       operationId: "pages.list",
@@ -112,10 +122,7 @@ describe("mcp command protocol helpers", () => {
         tools: [
           expect.objectContaining({
             name: "list-pages",
-            inputSchema: {
-              type: "object",
-              additionalProperties: true,
-            },
+            inputSchema: toolInputSchema,
             annotations: expect.objectContaining({
               operationId: "pages.list",
               localCapable: true,

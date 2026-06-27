@@ -79,10 +79,7 @@ export const handleMcpRequest = async (
       tools: adapter.listTools().map((tool) => ({
         name: tool.name,
         description: tool.description,
-        inputSchema: {
-          type: "object",
-          additionalProperties: true,
-        },
+        inputSchema: tool.inputSchema,
         annotations: tool.annotations,
       })),
     });

@@ -12,13 +12,15 @@ type CreateProjectSession = NonNullable<
 
 describe("project session mcp adapter", () => {
   test("lists tools from the public operation catalog", () => {
-    expect(listProjectSessionMcpTools().map((tool) => tool.name)).toEqual([
+    const tools = listProjectSessionMcpTools();
+
+    expect(tools.map((tool) => tool.name)).toEqual([
       ...publicApiOperations.map((operation) => operation.command),
       "status",
       "refresh",
       "reset-session",
     ]);
-    expect(listProjectSessionMcpTools()).toEqual(
+    expect(tools).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           name: "list-pages",
@@ -39,6 +41,13 @@ describe("project session mcp adapter", () => {
         }),
         expect.objectContaining({
           name: "refresh",
+          inputSchema: expect.objectContaining({
+            properties: expect.objectContaining({
+              namespaces: expect.objectContaining({
+                type: "array",
+              }),
+            }),
+          }),
           annotations: expect.objectContaining({
             operationId: "project-session.refresh",
             localCapable: true,
@@ -52,6 +61,21 @@ describe("project session mcp adapter", () => {
         }),
       ])
     );
+  });
+
+  test("derives required tool inputs from the public operation catalog", () => {
+    const toolsByName = new Map(
+      listProjectSessionMcpTools().map((tool) => [tool.name, tool])
+    );
+
+    for (const operation of publicApiOperations) {
+      const required =
+        operation.requiredOptions?.filter((option) => option !== "json") ?? [];
+      const tool = toolsByName.get(operation.command);
+
+      expect(tool?.inputSchema.required ?? []).toEqual(required);
+      expect(Object.keys(tool?.inputSchema.properties ?? {})).toEqual(required);
+    }
   });
 
   test("lists MCP resources for project status and tool catalog", () => {

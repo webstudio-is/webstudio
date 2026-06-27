@@ -12,9 +12,22 @@ import { createCliProjectSession } from "./project-session";
 
 type CreateProjectSession = typeof createCliProjectSession;
 
+type ProjectSessionMcpInputSchema = {
+  type: "object";
+  additionalProperties: true;
+  properties?: Record<string, unknown>;
+  required?: readonly string[];
+};
+
+const emptyInputSchema = {
+  type: "object",
+  additionalProperties: true,
+} as const satisfies ProjectSessionMcpInputSchema;
+
 export type ProjectSessionMcpTool = {
   name: string;
   description: string;
+  inputSchema: ProjectSessionMcpInputSchema;
   annotations: {
     command: string;
     operationId: string;
@@ -33,6 +46,7 @@ const sessionTools = [
   {
     name: "status",
     description: "Read the current local ProjectSession status and freshness.",
+    inputSchema: emptyInputSchema,
     annotations: {
       command: "status",
       operationId: "project-session.status",
@@ -50,6 +64,17 @@ const sessionTools = [
     name: "refresh",
     description:
       "Refresh local ProjectSession namespaces from the configured project. Pass { namespaces } or omit it to refresh all namespaces.",
+    inputSchema: {
+      ...emptyInputSchema,
+      properties: {
+        namespaces: {
+          type: "array",
+          items: { type: "string", enum: builderNamespaces },
+          description:
+            "Synced namespaces to refresh. Omit to refresh every namespace.",
+        },
+      },
+    },
     annotations: {
       command: "refresh",
       operationId: "project-session.refresh",
@@ -66,6 +91,7 @@ const sessionTools = [
   {
     name: "reset-session",
     description: "Delete the persisted local ProjectSession snapshot.",
+    inputSchema: emptyInputSchema,
     annotations: {
       command: "reset-session",
       operationId: "project-session.reset",
@@ -80,6 +106,21 @@ const sessionTools = [
     },
   },
 ] as const satisfies readonly ProjectSessionMcpTool[];
+
+const createCatalogInputSchema = (
+  requiredOptions: readonly string[] | undefined
+): ProjectSessionMcpInputSchema => {
+  const required = requiredOptions?.filter((option) => option !== "json") ?? [];
+  if (required.length === 0) {
+    return emptyInputSchema;
+  }
+
+  return {
+    ...emptyInputSchema,
+    required,
+    properties: Object.fromEntries(required.map((option) => [option, {}])),
+  };
+};
 
 export type ProjectSessionMcpCallResult = {
   content: [{ type: "text"; text: string }];
@@ -103,6 +144,7 @@ export const listProjectSessionMcpTools = (): ProjectSessionMcpTool[] => [
   ...httpClient.publicApiOperations.map((operation) => ({
     name: operation.command,
     description: operation.description,
+    inputSchema: createCatalogInputSchema(operation.requiredOptions),
     annotations: {
       command: operation.command,
       operationId: operation.id,
