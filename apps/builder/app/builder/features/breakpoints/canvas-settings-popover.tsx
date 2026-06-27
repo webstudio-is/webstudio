@@ -11,7 +11,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { WidthInput } from "./width-input";
-import { minCanvasWidth } from "~/shared/breakpoints";
+import { minCanvasWidth } from "~/shared/breakpoints-utils";
 import { $canvasWidth, $scale } from "~/builder/shared/nano-states";
 import { $selectedBreakpoint } from "~/shared/nano-states";
 import { ChevronDownIcon } from "@webstudio-is/icons";

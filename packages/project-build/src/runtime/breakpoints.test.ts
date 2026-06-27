@@ -50,6 +50,17 @@ describe("breakpoint grouping and matching", () => {
     expect(grouped.custom).toEqual([custom]);
   });
 
+  test("groups max-width-only and empty breakpoint lists", () => {
+    expect(
+      groupBreakpoints([
+        breakpoint("mobile", { maxWidth: 479 }),
+        breakpoint("tablet", { maxWidth: 991 }),
+      ]).widthBased.map(({ id }) => id)
+    ).toEqual(["tablet", "mobile"]);
+
+    expect(groupBreakpoints([])).toEqual({ widthBased: [], custom: [] });
+  });
+
   test("finds closest width breakpoint and falls back to base", () => {
     const existing = [
       breakpoint("base"),
@@ -88,5 +99,39 @@ describe("breakpoint grouping and matching", () => {
     expect(merged.get("same-tablet")).toBe("tablet");
     expect(merged.get("desktop")).toBe("tablet");
     expect(onMerged).toHaveBeenCalledTimes(1);
+  });
+
+  test("merges matching media even when labels differ", () => {
+    const existing: Breakpoints = new Map([
+      ["tablet", breakpoint("tablet", { minWidth: 768, label: "Tablet" })],
+    ]);
+
+    const merged = buildMergedBreakpointIds(
+      [breakpoint("ipad", { minWidth: 768, label: "iPad" })],
+      existing
+    );
+
+    expect(merged.get("ipad")).toBe("tablet");
+  });
+
+  test("does not count the base breakpoint against the max breakpoint count", () => {
+    const existing: Breakpoints = new Map([
+      ["base", breakpoint("base")],
+      ["0", breakpoint("0", { maxWidth: 320 })],
+      ["1", breakpoint("1", { maxWidth: 480 })],
+      ["2", breakpoint("2", { maxWidth: 768 })],
+      ["3", breakpoint("3", { maxWidth: 1024 })],
+      ["4", breakpoint("4", { minWidth: 1280 })],
+      ["5", breakpoint("5", { minWidth: 1440 })],
+      ["6", breakpoint("6", { minWidth: 1920 })],
+    ]);
+
+    const merged = buildMergedBreakpointIds(
+      [breakpoint("incoming", { minWidth: 1500 })],
+      existing,
+      { maxBreakpointCount: maxBreakpoints }
+    );
+
+    expect(merged.has("incoming")).toBe(false);
   });
 });

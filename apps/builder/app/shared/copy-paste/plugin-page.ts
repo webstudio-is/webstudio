@@ -28,7 +28,7 @@ import {
 import { $selectedPage } from "../nano-states";
 import { getPageActionTarget } from "../page-action-target";
 import type { Plugin } from "./copy-paste";
-import { breakpointPasteLimitWarning } from "../breakpoints";
+import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
 
 const version = "@webstudio/page/v0.1";
 

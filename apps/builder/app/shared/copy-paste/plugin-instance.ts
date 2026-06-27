@@ -43,7 +43,7 @@ import {
 import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
 import { builderApi } from "../builder-api";
 import type { Plugin } from "./copy-paste";
-import { breakpointPasteLimitWarning } from "../breakpoints";
+import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
 
 const version = "@webstudio/instance/v0.1";
 const multiRootVersion = "@webstudio/instances/v0.1";

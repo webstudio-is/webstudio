@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
 
-import { isBaseBreakpoint } from "~/shared/breakpoints-utils";
+import { isBaseBreakpoint } from "@webstudio-is/project-build/runtime/breakpoints";
 import { camelCaseProperty } from "@webstudio-is/css-data";
 import { createStyleDeclarationUpdatePayload } from "@webstudio-is/project-build/runtime/styles";
 import { applyBuilderPatchPayloadMutable } from "~/shared/instance-utils/data";

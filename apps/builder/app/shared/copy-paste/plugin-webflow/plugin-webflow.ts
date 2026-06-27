@@ -21,7 +21,7 @@ import { denormalizeSrcProps } from "../asset-upload";
 import { nanoHash } from "~/shared/nano-hash";
 import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
 import type { Plugin } from "../copy-paste";
-import { breakpointPasteLimitWarning } from "~/shared/breakpoints";
+import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
 
 const { toast } = builderApi;
 

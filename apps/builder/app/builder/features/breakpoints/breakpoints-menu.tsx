@@ -12,7 +12,7 @@ import {
   Button,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
-import { groupBreakpoints } from "~/shared/breakpoints";
+import { groupBreakpoints } from "@webstudio-is/project-build/runtime/breakpoints";
 import { $selectedBreakpointId } from "~/shared/nano-states";
 import { setCanvasWidth } from "../../shared/calc-canvas-width";
 

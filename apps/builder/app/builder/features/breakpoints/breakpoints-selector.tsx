@@ -17,7 +17,10 @@ import {
   $selectedBreakpointId,
 } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
-import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
+import {
+  groupBreakpoints,
+  isBaseBreakpoint,
+} from "@webstudio-is/project-build/runtime/breakpoints";
 import { setCanvasWidth } from "../../shared/calc-canvas-width";
 import { $canvasWidth } from "~/builder/shared/nano-states";
 import { useDebouncedCallback } from "use-debounce";
