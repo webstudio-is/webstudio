@@ -28,10 +28,10 @@ const assetUsageNamespaces = [
   "dataSources",
 ] as const;
 
-const read = (
-  id: string,
+const read = <Id extends string>(
+  id: Id,
   readNamespaces: readonly BuilderNamespace[]
-): RuntimeOperationContract => ({
+): RuntimeOperationContract & { id: Id } => ({
   id,
   kind: "read",
   readNamespaces,
@@ -40,8 +40,8 @@ const read = (
   retryOnConflict: false,
 });
 
-const mutation = (
-  id: string,
+const mutation = <Id extends string>(
+  id: Id,
   {
     readNamespaces,
     writeNamespaces,
@@ -53,7 +53,7 @@ const mutation = (
     invalidatesNamespaces?: readonly BuilderNamespace[];
     retryOnConflict?: boolean;
   }
-): RuntimeOperationContract => ({
+): RuntimeOperationContract & { id: Id } => ({
   id,
   kind: "mutation",
   readNamespaces,

@@ -31,7 +31,10 @@ describe("public api operation catalog", () => {
     const serverOnlyOperations: string[] = [];
 
     for (const operation of publicApiOperations) {
-      const contract = runtimeContractsById.get(operation.id);
+      const contract =
+        operation.runtimeOperationId === undefined
+          ? undefined
+          : runtimeContractsById.get(operation.runtimeOperationId);
       if (operation.localCapable) {
         localCapableOperations.push(operation.id);
       }

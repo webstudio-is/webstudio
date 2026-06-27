@@ -3,6 +3,7 @@ import {
   publicApiOperationNamespaces,
   publicRuntimeOperationContracts,
   type PublicApiOperationNamespace,
+  type PublicRuntimeOperationId,
 } from "./runtime-contracts";
 export type { PublicApiOperationNamespace } from "./runtime-contracts";
 
@@ -24,14 +25,18 @@ type PublicApiOperationInput = {
   invalidatesNamespaces?: readonly PublicApiOperationNamespace[];
 };
 
-export type PublicApiOperation = Omit<PublicApiOperationInput, "permit"> & {
+export type PublicApiOperation<Command extends string = string> = Omit<
+  PublicApiOperationInput,
+  "command" | "permit"
+> & {
+  command: Command;
   permit: PublicApiOperationPermit;
   description: string;
   requiredOptions?: readonly string[];
   examples: readonly string[];
   localCapable: boolean;
   serverOnly: boolean;
-  runtimeOperationId?: string;
+  runtimeOperationId?: PublicRuntimeOperationId;
   readNamespaces: readonly PublicApiOperationNamespace[];
   writeNamespaces: readonly PublicApiOperationNamespace[];
   invalidatesNamespaces: readonly PublicApiOperationNamespace[];
@@ -48,11 +53,12 @@ const documentationByCommand = new Map(
   ])
 );
 
-const isRuntimeOperationId = (id: string) => runtimeOperationById.has(id);
+const isRuntimeOperationId = (id: string): id is PublicRuntimeOperationId =>
+  runtimeOperationById.has(id as PublicRuntimeOperationId);
 
-const withDefaultPermit = (
-  operation: PublicApiOperationInput
-): PublicApiOperation => {
+const withDefaultPermit = <Operation extends PublicApiOperationInput>(
+  operation: Operation
+): PublicApiOperation<Operation["command"]> => {
   const documentation = documentationByCommand.get(operation.command);
   if (documentation === undefined) {
     throw new Error(

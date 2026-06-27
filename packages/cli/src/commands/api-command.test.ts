@@ -2,7 +2,6 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   getPublicApiOperation,
   publicApiOperations,
-  type PublicApiCommand,
 } from "@webstudio-is/http-client";
 import { apiCompatibilityHeaders } from "./api";
 import { apiCommand } from "./api-command";
@@ -257,8 +256,8 @@ test("has a public operation descriptor for every executable api command", () =>
   ).toEqual(
     publicApiOperations.map(({ command }) => ({
       command,
-      method: getPublicApiOperation(command as PublicApiCommand).method,
-      permit: getPublicApiOperation(command as PublicApiCommand).permit,
+      method: getPublicApiOperation(command).method,
+      permit: getPublicApiOperation(command).permit,
     }))
   );
 });

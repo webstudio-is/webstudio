@@ -1,5 +1,14 @@
 import { describe, expect, test } from "vitest";
-import { runtimeOperationContracts } from "./builder-runtime";
+import {
+  runtimeOperationContracts,
+  type RuntimeOperationId,
+} from "./builder-runtime";
+
+const knownOperationId: RuntimeOperationId = "pages.list";
+void knownOperationId;
+// @ts-expect-error RuntimeOperationId must stay narrowed to the catalog union.
+const unknownOperationId: RuntimeOperationId = "unknown.operation";
+void unknownOperationId;
 
 describe("builder runtime operation contracts", () => {
   test("has unique operation ids", () => {

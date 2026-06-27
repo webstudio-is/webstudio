@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import { produce } from "immer";
 import type { Instance, PageTemplate } from "@webstudio-is/sdk";
 import { blockComponent, blockTemplateComponent } from "@webstudio-is/sdk";
 import { createDefaultPages, findCycles } from "@webstudio-is/project-build";
@@ -10,7 +9,6 @@ import {
   updateInstanceData,
   updateWebstudioData,
 } from "./data";
-import { unwrap } from "../unwrap";
 import { registerContainers } from "../sync/sync-stores";
 import {
   $assets,
@@ -87,16 +85,6 @@ describe("canDeleteInstanceInContentMode", () => {
 });
 
 describe("data store helpers", () => {
-  test("unwrap returns current value for immer drafts and original value otherwise", () => {
-    const source = { count: 1 };
-    expect(unwrap(source)).toBe(source);
-
-    produce(source, (draft) => {
-      draft.count = 2;
-      expect(unwrap(draft)).toEqual({ count: 2 });
-    });
-  });
-
   test("getWebstudioData reads all instance-related stores", () => {
     const pages = createDefaultPages({ rootInstanceId: "body" });
     const instances = new Map([["body", createInstance("body", "Body", [])]]);

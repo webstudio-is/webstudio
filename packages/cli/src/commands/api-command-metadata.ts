@@ -86,7 +86,7 @@ const apiCommandOptionsByCommand: Partial<
 };
 
 export const apiCommandMetadata = publicApiOperations.map((operation) => ({
-  command: operation.command as ApiCommandName,
+  command: operation.command,
   description: operation.description,
   method: operation.method,
   permit: operation.permit,

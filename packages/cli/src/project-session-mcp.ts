@@ -208,6 +208,11 @@ const toResourceContent = (
   },
 });
 
+const builderNamespaceSet = new Set<string>(builderNamespaces);
+
+const isBuilderNamespace = (value: unknown): value is BuilderNamespace =>
+  typeof value === "string" && builderNamespaceSet.has(value);
+
 const getRefreshNamespaces = (input: unknown): readonly BuilderNamespace[] => {
   const namespaces =
     typeof input === "object" && input !== null && "namespaces" in input
@@ -219,13 +224,14 @@ const getRefreshNamespaces = (input: unknown): readonly BuilderNamespace[] => {
   if (Array.isArray(namespaces) === false) {
     throw new Error("refresh namespaces must be an array.");
   }
-  const allowed = new Set<string>(builderNamespaces);
+  const result: BuilderNamespace[] = [];
   for (const namespace of namespaces) {
-    if (typeof namespace !== "string" || allowed.has(namespace) === false) {
+    if (isBuilderNamespace(namespace) === false) {
       throw new Error(`Unknown ProjectSession namespace "${namespace}".`);
     }
+    result.push(namespace);
   }
-  return namespaces as BuilderNamespace[];
+  return result;
 };
 
 export const createProjectSessionMcpAdapter = ({

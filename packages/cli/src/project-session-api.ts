@@ -1,5 +1,4 @@
 import * as httpClient from "@webstudio-is/http-client";
-import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts/builder-runtime";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
 import type { ProjectSessionEnvelope } from "@webstudio-is/project-build/project-session";
 import { createCliProjectSession } from "./project-session";
@@ -15,9 +14,13 @@ export type ProjectSessionApiCommand = httpClient.PublicApiCommand;
 
 type CreateProjectSession = typeof createCliProjectSession;
 
+const uniqueNamespaces = (
+  namespaces: readonly BuilderNamespace[]
+): readonly BuilderNamespace[] => [...new Set(namespaces)];
+
 const getRuntimeOperationId = (command: ProjectSessionApiCommand) => {
   const operation = httpClient.getPublicApiOperation(command);
-  return operation.runtimeOperationId as RuntimeOperationId | undefined;
+  return operation.runtimeOperationId;
 };
 
 const getSessionError = (envelope: {
@@ -85,20 +88,19 @@ export const executeProjectSessionApiOperation = async ({
   const session = createProjectSession({ connection });
   await session.initialize();
   if (refresh && runtimeOperationId !== undefined) {
-    await session.refresh([
-      ...new Set([
+    await session.refresh(
+      uniqueNamespaces([
         ...operation.readNamespaces,
         ...operation.writeNamespaces,
-      ] as BuilderNamespace[]),
-    ]);
+      ])
+    );
   }
   const envelope =
     runtimeOperationId === undefined
       ? await session.executeServerOperation(
           {
             id: operation.id,
-            invalidatesNamespaces:
-              operation.invalidatesNamespaces as readonly BuilderNamespace[],
+            invalidatesNamespaces: operation.invalidatesNamespaces,
             refetchInvalidatedNamespaces:
               operation.invalidatesNamespaces.length > 0,
           },

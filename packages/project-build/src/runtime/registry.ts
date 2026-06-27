@@ -303,14 +303,17 @@ export const builderRuntimeOperations = [
   ),
 ] as const satisfies readonly BuilderRuntimeOperation[];
 
-const builderRuntimeOperationById = new Map(
+const builderRuntimeOperationById: ReadonlyMap<
+  string,
+  BuilderRuntimeOperation
+> = new Map(
   builderRuntimeOperations.map((operation) => [operation.id, operation])
 );
 
 export const getBuilderRuntimeOperation = (id: string) => {
-  const operation = builderRuntimeOperationById.get(id as RuntimeOperationId);
+  const operation = builderRuntimeOperationById.get(id);
   if (operation === undefined) {
-    throw new Error(`Builder runtime operation "${id}" is not implemented.`);
+    throw new Error(`Unknown builder runtime operation "${id}".`);
   }
   return operation;
 };
