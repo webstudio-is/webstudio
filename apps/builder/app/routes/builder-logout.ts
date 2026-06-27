@@ -46,99 +46,108 @@ const withCors = (request: Request, response: Response) => {
   });
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  // IMPORTANT: This route allows cross-origin cookies to enable dashboard logout from builders.
-  // Enforcing preflight by checking Content-Type to be application/json.
-  // Both the preflight and actual logout response must include CORS headers
-  // or browser fetch reports the project logout as failed.
+type BuilderLogout = typeof builderAuthenticator.logout;
 
-  if (false === isBuilder(request)) {
-    throw new Response("Not found", {
-      status: 404,
-    });
-  }
+export const createBuilderLogoutAction =
+  (logout: BuilderLogout) =>
+  async ({ request }: ActionFunctionArgs) => {
+    // IMPORTANT: This route allows cross-origin cookies to enable dashboard logout from builders.
+    // Enforcing preflight by checking Content-Type to be application/json.
+    // Both the preflight and actual logout response must include CORS headers
+    // or browser fetch reports the project logout as failed.
 
-  if (request.method === "OPTIONS") {
-    const corsHeaders = getCorsHeaders(request);
-    if (corsHeaders === undefined) {
-      return new Response("Origin not allowed", {
-        status: 403,
+    if (false === isBuilder(request)) {
+      throw new Response("Not found", {
+        status: 404,
       });
     }
 
-    const headers = createPrivateNoStoreHeaders(corsHeaders);
-    appendVaryHeader(headers, "Origin");
-
-    return new Response(null, {
-      status: 204,
-      headers,
-    });
-  }
-
-  if (request.method !== "POST") {
-    return withCors(
-      request,
-      json(
-        { message: "Method not allowed" },
-        {
-          status: 405,
-        }
-      )
-    );
-  }
-
-  if (request.headers.get("sec-fetch-site") === "same-origin") {
-    // To prevent logout initiated from the builder iframe
-
-    return withCors(
-      request,
-      new Response("Only cross-origin requests are allowed", {
-        status: 403,
-      })
-    );
-  }
-
-  if (
-    false === request.headers.get("Content-Type")?.includes("application/json")
-  ) {
-    // Enforce preflight request, preflight is checked on allowed origin
-
-    return withCors(
-      request,
-      new Response("Invalid content type, only application/json is allowed", {
-        status: 415,
-      })
-    );
-  }
-
-  const redirectTo = `${getAuthorizationServerOrigin(request.url)}${loginPath({})}`;
-
-  try {
-    debug("Logging out");
-
-    await builderAuthenticator.logout(request, {
-      redirectTo,
-    });
-  } catch (error) {
-    if (error instanceof Response) {
-      if (isRedirectResponse(error)) {
-        return withCors(
-          request,
-          new Response(null, {
-            status: 204,
-            headers: error.headers,
-          })
-        );
+    if (request.method === "OPTIONS") {
+      const corsHeaders = getCorsHeaders(request);
+      if (corsHeaders === undefined) {
+        return new Response("Origin not allowed", {
+          status: 403,
+        });
       }
 
-      return withCors(request, error);
+      const headers = createPrivateNoStoreHeaders(corsHeaders);
+      appendVaryHeader(headers, "Origin");
+
+      return new Response(null, {
+        status: 204,
+        headers,
+      });
     }
 
-    console.error(error);
-    throw error;
-  }
+    if (request.method !== "POST") {
+      return withCors(
+        request,
+        json(
+          { message: "Method not allowed" },
+          {
+            status: 405,
+          }
+        )
+      );
+    }
 
-  throw new Response("Should not reach this point", {
-    status: 500,
-  });
-};
+    if (request.headers.get("sec-fetch-site") === "same-origin") {
+      // To prevent logout initiated from the builder iframe
+
+      return withCors(
+        request,
+        new Response("Only cross-origin requests are allowed", {
+          status: 403,
+        })
+      );
+    }
+
+    if (
+      false ===
+      request.headers.get("Content-Type")?.includes("application/json")
+    ) {
+      // Enforce preflight request, preflight is checked on allowed origin
+
+      return withCors(
+        request,
+        new Response("Invalid content type, only application/json is allowed", {
+          status: 415,
+        })
+      );
+    }
+
+    const redirectTo = `${getAuthorizationServerOrigin(request.url)}${loginPath({})}`;
+
+    try {
+      debug("Logging out");
+
+      await logout(request, {
+        redirectTo,
+      });
+    } catch (error) {
+      if (error instanceof Response) {
+        if (isRedirectResponse(error)) {
+          return withCors(
+            request,
+            new Response(null, {
+              status: 204,
+              headers: error.headers,
+            })
+          );
+        }
+
+        return withCors(request, error);
+      }
+
+      console.error(error);
+      throw error;
+    }
+
+    throw new Response("Should not reach this point", {
+      status: 500,
+    });
+  };
+
+export const action = createBuilderLogoutAction((request, options) =>
+  builderAuthenticator.logout(request, options)
+);

@@ -17,7 +17,7 @@ import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { notification as notificationApi } from "@webstudio-is/project/index.server";
 import type { Role } from "@webstudio-is/project";
-import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
 import { getSetting, setSetting } from "~/builder/shared/client-settings";

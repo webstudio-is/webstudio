@@ -395,6 +395,7 @@ export const insertWebstudioFragmentCopy = ({
   onBreakpointLimitMerge,
   metas,
   contentModeCopyableProp,
+  createId = nanoid,
   // In content mode, insertion keeps content-editable instance data, creates
   // local styles for inserted instances, and avoids data/resource records.
   contentMode = false,
@@ -407,6 +408,7 @@ export const insertWebstudioFragmentCopy = ({
   onBreakpointLimitMerge?: () => void;
   metas?: Map<string, WsComponentMeta>;
   contentModeCopyableProp?: ContentModeCopyableProp;
+  createId?: () => string;
   contentMode?: boolean;
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
@@ -470,6 +472,7 @@ export const insertWebstudioFragmentCopy = ({
       breakpoints,
       mergedBreakpointIds,
       conflictResolution,
+      createId,
     });
   }
 
@@ -557,7 +560,7 @@ export const insertWebstudioFragmentCopy = ({
     portalContentIds
   );
   for (const instanceId of fragmentInstanceIds) {
-    newInstanceIds.set(instanceId, nanoid());
+    newInstanceIds.set(instanceId, createId());
   }
   fragmentInstanceIds.add(ROOT_INSTANCE_ID);
   newInstanceIds.set(ROOT_INSTANCE_ID, ROOT_INSTANCE_ID);
@@ -582,14 +585,14 @@ export const insertWebstudioFragmentCopy = ({
       }
       // insert only data sources within portal content
       if (fragmentInstanceIds.has(scopeInstanceId)) {
-        const newDataSourceId = nanoid();
+        const newDataSourceId = createId();
         newDataSourceIds.set(dataSource.id, newDataSourceId);
         dataSource = structuredClone(unwrap(dataSource));
         dataSource.id = newDataSourceId;
         dataSource.scopeInstanceId =
           newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId;
         if (dataSource.type === "resource") {
-          const newResourceId = nanoid();
+          const newResourceId = createId();
           newResourceIds.set(dataSource.resourceId, newResourceId);
           dataSource.resourceId = newResourceId;
         }
@@ -617,7 +620,7 @@ export const insertWebstudioFragmentCopy = ({
     }
     prop = clonePropForInstance({
       prop: unwrap(prop),
-      propId: nanoid(),
+      propId: createId(),
       instanceId: newInstanceIds.get(prop.instanceId) ?? prop.instanceId,
     });
     if (prop.type === "expression") {
@@ -643,7 +646,7 @@ export const insertWebstudioFragmentCopy = ({
       prop.value = newDataSourceIds.get(prop.value) ?? prop.value;
     }
     if (prop.type === "resource") {
-      const newResourceId = nanoid();
+      const newResourceId = createId();
       newResourceIds.set(prop.value, newResourceId);
       prop.value = newResourceId;
     }
@@ -738,6 +741,7 @@ export const insertWebstudioFragmentCopy = ({
       ...localStyleSourceInput,
       contentMode: true,
       breakpoints,
+      createId,
     });
   } else {
     insertLocalStyleSourcesWithNewIds({
@@ -746,6 +750,7 @@ export const insertWebstudioFragmentCopy = ({
       styleSourceIdMap,
       mergedBreakpointIds,
       breakpoints,
+      createId,
     });
   }
 

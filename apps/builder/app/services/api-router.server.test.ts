@@ -728,6 +728,52 @@ describe("api router permits", () => {
       expect.anything()
     );
   });
+
+  test("does not commit empty runtime mutation payloads", async () => {
+    const build = {
+      id: "build-1",
+      projectId: "project-1",
+      version: 7,
+      pages: createDefaultPages({ rootInstanceId: "root" }),
+      breakpoints: [],
+      styles: [],
+      styleSources: [],
+      styleSourceSelections: [],
+      props: [],
+      dataSources: [],
+      resources: [],
+      instances: [
+        {
+          type: "instance",
+          id: "root",
+          component: blockComponent,
+          children: [],
+        },
+      ],
+      marketplaceProduct: {},
+    } as unknown as Awaited<
+      ReturnType<typeof projectBuild.loadDevBuildByProjectId>
+    >;
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+    const patchBuild = vi.spyOn(projectApi, "patchBuild");
+
+    const caller = apiRouter.createCaller(createContext(true));
+
+    await expect(
+      caller.pages.update({
+        projectId: "project-1",
+        pageId: build.pages.homePageId,
+        values: {},
+      })
+    ).resolves.toEqual({
+      version: 7,
+      pageId: build.pages.homePageId,
+    });
+
+    expect(patchBuild).not.toHaveBeenCalled();
+  });
 });
 
 describe("api semantic build writes", () => {

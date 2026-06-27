@@ -23,6 +23,8 @@ import {
   resourceFieldsUpdateInput,
 } from "@webstudio-is/project-build/runtime/data";
 import {
+  findFolder,
+  findPage,
   getParentFolderId,
   isPathAvailable,
   pageFieldsInput,
@@ -52,9 +54,8 @@ import {
   getTokenPermits,
   loadApiToken,
 } from "./api-permits.server";
-import { findFolder, findPage } from "~/shared/page-utils/tree";
 import { componentMetas } from "~/shared/component-metas.server";
-import { type Pages } from "@webstudio-is/sdk";
+import { type Asset, type Pages } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
@@ -207,10 +208,7 @@ const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
     ctx: AppContext;
     input: z.infer<Schema>;
     build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
-    commit: <CommitResult extends Record<string, unknown> = {}>(
-      payload: z.infer<typeof buildPatchTransaction>["payload"],
-      result?: CommitResult
-    ) => Promise<{ version: number } & CommitResult>;
+    commit: BuildCommit;
   }) => Promise<Result>
 ) =>
   procedure.input(input).mutation(async ({ ctx, input }) => {
@@ -234,6 +232,41 @@ const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
         )) as { version: number } & CommitResult,
     });
   });
+
+type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
+  payload: z.infer<typeof buildPatchTransaction>["payload"],
+  result?: CommitResult
+) => Promise<{ version: number } & CommitResult>;
+
+const commitRuntimeMutation = async <
+  Result extends Record<string, unknown> = Record<string, unknown>,
+>({
+  id,
+  build,
+  assets,
+  input,
+  commit,
+}: {
+  id: string;
+  build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
+  assets?: Asset[];
+  input: unknown;
+  commit: BuildCommit;
+}) => {
+  const mutation = executeApiRuntimeMutation<Result>({
+    id,
+    build,
+    assets,
+    input,
+  });
+  if (mutation.noop || mutation.payload.length === 0) {
+    return {
+      version: build.version,
+      ...mutation.result,
+    };
+  }
+  return await commit(mutation.payload, mutation.result);
+};
 
 const createContentModeCapabilitiesFromBuild = (build: CompactBuild) => {
   const state = createBuilderRuntimeState(build);
@@ -278,10 +311,7 @@ const contentOrBuildMutation = <
     ctx: AppContext;
     input: z.infer<Schema>;
     build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
-    commit: <CommitResult extends Record<string, unknown> = {}>(
-      payload: z.infer<typeof buildPatchTransaction>["payload"],
-      result?: CommitResult
-    ) => Promise<{ version: number } & CommitResult>;
+    commit: BuildCommit;
   }) => Promise<Result>
 ) =>
   procedure.input(input).mutation(async ({ ctx, input }) => {
@@ -478,12 +508,12 @@ export const apiRouter = router({
         meta: pageMetaInput.optional(),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ pageId: string }>({
+        return await commitRuntimeMutation<{ pageId: string }>({
           id: "pages.create",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -493,30 +523,24 @@ export const apiRouter = router({
         values: pageFieldsInput,
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ pageId: string }>({
+        return await commitRuntimeMutation<{ pageId: string }>({
           id: "pages.update",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
     delete: buildMutation(
       projectIdInput.extend({ pageId: z.string() }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ pageId: string }>({
+        return await commitRuntimeMutation<{ pageId: string }>({
           id: "pages.delete",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -546,7 +570,7 @@ export const apiRouter = router({
             `Page path "${input.path}" is already in use`
           );
         }
-        const mutation = executeApiRuntimeMutation<{ pageId: string }>({
+        return await commitRuntimeMutation<{ pageId: string }>({
           id: "pages.duplicate",
           build,
           input: {
@@ -556,8 +580,8 @@ export const apiRouter = router({
             name: input.name,
             path: input.path,
           },
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -582,12 +606,12 @@ export const apiRouter = router({
         parentFolderId: z.string().optional(),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ folderId: string }>({
+        return await commitRuntimeMutation<{ folderId: string }>({
           id: "folders.create",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -601,25 +625,19 @@ export const apiRouter = router({
         }),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ folderId: string }>({
+        return await commitRuntimeMutation<{ folderId: string }>({
           id: "folders.update",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
     delete: buildMutation(
       projectIdInput.extend({ folderId: z.string() }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           folderId: string;
           pageIds: string[];
           folderIds: string[];
@@ -627,8 +645,8 @@ export const apiRouter = router({
           id: "folders.delete",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -689,15 +707,15 @@ export const apiRouter = router({
           .min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           instanceIds: string[];
           removedInstanceIds: string[];
         }>({
           id: "instances.append",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -714,12 +732,12 @@ export const apiRouter = router({
           .min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ instanceIds: string[] }>({
+        return await commitRuntimeMutation<{ instanceIds: string[] }>({
           id: "instances.move",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -730,15 +748,15 @@ export const apiRouter = router({
         insertIndex: z.number().int().nonnegative().optional(),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           instanceId: string;
           instanceIds: string[];
         }>({
           id: "instances.clone",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -747,12 +765,12 @@ export const apiRouter = router({
         instanceIds: z.array(z.string()).min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ instanceIds: string[] }>({
+        return await commitRuntimeMutation<{ instanceIds: string[] }>({
           id: "instances.delete",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -761,15 +779,12 @@ export const apiRouter = router({
         updates: z.array(propValueInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ propIds: string[] }>({
+        return await commitRuntimeMutation<{ propIds: string[] }>({
           id: "instances.updateProps",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return { version: build.version, ...mutation.result };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -780,15 +795,12 @@ export const apiRouter = router({
           .min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ propIds: string[] }>({
+        return await commitRuntimeMutation<{ propIds: string[] }>({
           id: "instances.deleteProps",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return { version: build.version, ...mutation.result };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -797,15 +809,12 @@ export const apiRouter = router({
         bindings: z.array(propBindingInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ propIds: string[] }>({
+        return await commitRuntimeMutation<{ propIds: string[] }>({
           id: "instances.bindProps",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return { version: build.version, ...mutation.result };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -835,7 +844,7 @@ export const apiRouter = router({
         mode: z.enum(["text", "expression"]).optional(),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           instanceId: string;
           childIndex: number;
           mode: "text" | "expression";
@@ -843,14 +852,8 @@ export const apiRouter = router({
           id: "instances.updateText",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -881,18 +884,12 @@ export const apiRouter = router({
         updates: z.array(styleUpdateInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ styleKeys: string[] }>({
+        return await commitRuntimeMutation<{ styleKeys: string[] }>({
           id: "styles.updateDeclarations",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -901,36 +898,24 @@ export const apiRouter = router({
         deletions: z.array(styleDeleteInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ styleKeys: string[] }>({
+        return await commitRuntimeMutation<{ styleKeys: string[] }>({
           id: "styles.deleteDeclarations",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
     replaceValues: buildMutation(
       projectIdInput.merge(styleReplaceInput),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ styleKeys: string[] }>({
+        return await commitRuntimeMutation<{ styleKeys: string[] }>({
           id: "styles.replaceValues",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -956,18 +941,12 @@ export const apiRouter = router({
         tokens: z.array(designTokenCreateInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ tokenIds: string[] }>({
+        return await commitRuntimeMutation<{ tokenIds: string[] }>({
           id: "designTokens.create",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -977,15 +956,15 @@ export const apiRouter = router({
         updates: z.array(designTokenStyleInput).min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           designTokenId: string;
           styleKeys: string[];
         }>({
           id: "designTokens.updateStyles",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -995,21 +974,15 @@ export const apiRouter = router({
         deletions: z.array(styleDeleteInput.omit({ instanceId: true })).min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           designTokenId: string;
           styleKeys: string[];
         }>({
           id: "designTokens.deleteStyles",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1020,20 +993,14 @@ export const apiRouter = router({
         position: z.enum(["before-local", "after-local"]).optional(),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           designTokenId: string;
         }>({
           id: "designTokens.attach",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1043,20 +1010,14 @@ export const apiRouter = router({
         instanceIds: z.array(z.string()).min(1),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           designTokenId: string;
         }>({
           id: "designTokens.detach",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1067,15 +1028,15 @@ export const apiRouter = router({
         removeLocalProps: z.array(z.string()).optional(),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           designTokenId: string;
           styleKeys: string[];
         }>({
           id: "designTokens.extract",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -1092,48 +1053,42 @@ export const apiRouter = router({
     define: buildMutation(
       cssVariableDefineInput,
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ names: string[] }>({
+        return await commitRuntimeMutation<{ names: string[] }>({
           id: "cssVariables.define",
           build,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
     delete: buildMutation(
       cssVariableDeleteInput,
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           names: string[];
           styleKeys: string[];
         }>({
           id: "cssVariables.delete",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return { version: build.version, ...mutation.result };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
     rewriteRefs: buildMutation(
       cssVariableRewriteRefsInput,
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           styleKeys: string[];
           propIds: string[];
         }>({
           id: "cssVariables.rewriteRefs",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return { version: build.version, ...mutation.result };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -1158,18 +1113,12 @@ export const apiRouter = router({
         value: dataVariableValueInput,
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ dataSourceId: string }>({
+        return await commitRuntimeMutation<{ dataSourceId: string }>({
           id: "variables.create",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1183,18 +1132,12 @@ export const apiRouter = router({
         }),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ dataSourceId: string }>({
+        return await commitRuntimeMutation<{ dataSourceId: string }>({
           id: "variables.update",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1203,18 +1146,12 @@ export const apiRouter = router({
         dataSourceId: z.string(),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ dataSourceId: string }>({
+        return await commitRuntimeMutation<{ dataSourceId: string }>({
           id: "variables.delete",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return {
-            version: build.version,
-            ...mutation.result,
-          };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -1240,18 +1177,15 @@ export const apiRouter = router({
         dataSourceName: z.string().optional(),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           resourceId: string;
           dataSourceId?: string;
         }>({
           id: "resources.create",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return { version: build.version, ...mutation.result };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1263,15 +1197,12 @@ export const apiRouter = router({
         scopeInstanceId: z.string().optional(),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{ resourceId: string }>({
+        return await commitRuntimeMutation<{ resourceId: string }>({
           id: "resources.update",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return { version: build.version, ...mutation.result };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1281,7 +1212,7 @@ export const apiRouter = router({
         force: z.boolean().optional(),
       }),
       async ({ input, build, commit }) => {
-        const mutation = executeApiRuntimeMutation<{
+        return await commitRuntimeMutation<{
           resourceId: string;
           dataSourceIds: string[];
           propIds: string[];
@@ -1289,11 +1220,8 @@ export const apiRouter = router({
           id: "resources.delete",
           build,
           input,
+          commit,
         });
-        if (mutation.noop) {
-          return { version: build.version, ...mutation.result };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),
@@ -1459,13 +1387,13 @@ export const apiRouter = router({
         const assets = await loadAssetsByProject(input.projectId, ctx, {
           skipPermissionsCheck: true,
         });
-        const mutation = executeApiRuntimeMutation({
+        return await commitRuntimeMutation({
           id: "assets.replace",
           build,
           assets,
           input,
+          commit,
         });
-        return await commit(mutation.payload, mutation.result);
       }
     ),
 
@@ -1479,16 +1407,13 @@ export const apiRouter = router({
         const assets = await loadAssetsByProject(input.projectId, ctx, {
           skipPermissionsCheck: true,
         });
-        const mutation = executeApiRuntimeMutation({
+        return await commitRuntimeMutation({
           id: "assets.delete",
           build,
           assets,
           input,
+          commit,
         });
-        if (mutation.payload.length === 0) {
-          return { version: build.version, ...mutation.result };
-        }
-        return await commit(mutation.payload, mutation.result);
       }
     ),
   }),

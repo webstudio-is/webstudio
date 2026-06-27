@@ -21,6 +21,7 @@ import type {
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
 import { mapToTemplatesFromOptions } from "../build-utils";
+import { printJson } from "../json-output";
 
 type ProjectTemplates = (typeof PROJECT_TEMPLATES)[number]["value"];
 
@@ -53,10 +54,6 @@ type InitFlowDependencies = {
 
 const defaultDependencies: InitFlowDependencies = {
   saveShareLink,
-};
-
-const printJson = (value: unknown) => {
-  console.info(JSON.stringify(value, undefined, 2));
 };
 
 export const initFlow = async (

@@ -35,7 +35,10 @@ import {
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
 import type { CompactBuild } from "../types";
-import type { BuilderPatchChange } from "../contracts/patch";
+import {
+  compactBuilderPatchPayload,
+  type BuilderPatchChange,
+} from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
@@ -203,9 +206,6 @@ export const validateDataVariableNameWithSources = ({
     }
   }
 };
-
-const compactPatchPayload = (payload: BuilderPatchChange[]) =>
-  payload.flatMap((change) => (change.patches.length === 0 ? [] : [change]));
 
 const allowedJsChars = /[A-Za-z_]/;
 const compiledExpressionCacheLimit = 10_000;
@@ -918,7 +918,7 @@ export const createDataVariableDeletePayload = ({
     resources: cloneMap(resources),
   };
   deleteVariableMutable(nextData, variableId);
-  const payload = compactPatchPayload([
+  const payload = compactBuilderPatchPayload([
     beforePages === undefined || valuesEqual(beforePages, nextData.pages)
       ? { namespace: "pages" as const, patches: [] }
       : {
@@ -1028,7 +1028,7 @@ export const createDataVariableUpdatePayload = ({
     }
   }
   return {
-    payload: compactPatchPayload([
+    payload: compactBuilderPatchPayload([
       {
         namespace: "dataSources",
         patches: Object.entries(values).flatMap(([name, value]) =>
@@ -1402,7 +1402,7 @@ export const createWebstudioDataPatchPayload = ({
       }),
     },
   ];
-  return compactPatchPayload(payload);
+  return compactBuilderPatchPayload(payload);
 };
 
 export const upsertResourceMutable = ({
@@ -1589,7 +1589,7 @@ export const createResourceUpdatePayload = ({
       ? []
       : [{ op: "replace" as const, path: [resource.id, name], value }]
   );
-  const payload: BuilderPatchChange[] = compactPatchPayload([
+  const payload: BuilderPatchChange[] = compactBuilderPatchPayload([
     { namespace: "resources", patches },
   ]);
   const dataSource = Array.from(dataSources).find(

@@ -1,18 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-
-const logoutMock = vi.hoisted(() => vi.fn());
-
-vi.mock("~/services/builder-auth.server", () => ({
-  builderAuthenticator: {
-    logout: logoutMock,
-  },
-}));
-
-import { action } from "./builder-logout";
+import { createBuilderLogoutAction } from "./builder-logout";
 
 const projectOrigin =
   "https://p-042d35b0-718e-4c5f-a5dd-8568282366e5.apps.webstudio.is";
 const dashboardOrigin = "https://apps.webstudio.is";
+
+const logout = vi.fn();
+const action = createBuilderLogoutAction(logout);
 
 const callAction = (request: Request) =>
   action({
@@ -23,7 +17,7 @@ const callAction = (request: Request) =>
 
 describe("builder logout route", () => {
   beforeEach(() => {
-    logoutMock.mockReset();
+    logout.mockReset();
   });
 
   test("responds to authorized preflight with CORS headers", async () => {
@@ -52,7 +46,7 @@ describe("builder logout route", () => {
   });
 
   test("adds CORS headers to successful logout response", async () => {
-    logoutMock.mockRejectedValueOnce(
+    logout.mockRejectedValueOnce(
       new Response(null, {
         status: 302,
         headers: {
@@ -81,6 +75,9 @@ describe("builder logout route", () => {
     expect(response.headers.get("Access-Control-Allow-Credentials")).toBe(
       "true"
     );
+    expect(logout).toHaveBeenCalledWith(expect.any(Request), {
+      redirectTo: `${dashboardOrigin}/login`,
+    });
   });
 
   test("rejects preflight from a different origin", async () => {
@@ -110,6 +107,6 @@ describe("builder logout route", () => {
     );
 
     expect(response.status).toBe(403);
-    expect(logoutMock).not.toHaveBeenCalled();
+    expect(logout).not.toHaveBeenCalled();
   });
 });

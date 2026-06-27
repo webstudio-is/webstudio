@@ -3,6 +3,7 @@ import {
   builderPatchChangeSchema,
   builderPatchSchema,
   builderPatchTransactionSchema,
+  compactBuilderPatchPayload,
 } from "./patch";
 
 describe("builder patch contracts", () => {
@@ -61,5 +62,22 @@ describe("builder patch contracts", () => {
       namespace: "props",
       patches: [{ op: "remove", path: ["prop-title"] }],
     });
+  });
+
+  test("removes empty patch changes from payload", () => {
+    expect(
+      compactBuilderPatchPayload([
+        { namespace: "pages", patches: [] },
+        {
+          namespace: "props",
+          patches: [{ op: "remove", path: ["prop-title"] }],
+        },
+      ])
+    ).toEqual([
+      {
+        namespace: "props",
+        patches: [{ op: "remove", path: ["prop-title"] }],
+      },
+    ]);
   });
 });

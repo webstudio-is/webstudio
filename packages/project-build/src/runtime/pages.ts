@@ -9,7 +9,10 @@ import {
 } from "@webstudio-is/sdk";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { z } from "zod";
-import type { BuilderPatchChange } from "../contracts/patch";
+import {
+  compactBuilderPatchPayload,
+  type BuilderPatchChange,
+} from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
@@ -225,9 +228,6 @@ export const listFolders = (
   };
 };
 
-const compactPatchPayload = (payload: BuilderPatchChange[]) =>
-  payload.flatMap((change) => (change.patches.length === 0 ? [] : [change]));
-
 export const isSlugAvailable = (
   slug: string,
   folders: Pages["folders"],
@@ -437,7 +437,7 @@ export const createFolderUpdatePayload = ({
       });
     }
   }
-  return compactPatchPayload([{ namespace: "pages", patches }]);
+  return compactBuilderPatchPayload([{ namespace: "pages", patches }]);
 };
 
 const getFolderOrThrow = (pages: Pages, folderId: string) => {
@@ -538,7 +538,7 @@ const emptyStringRemovesMetaFields = new Set<keyof PageMeta>([
   "socialImageUrl",
 ]);
 
-const normalizePageMetaValue = <Name extends keyof PageMeta>(
+export const normalizePageMetaValue = <Name extends keyof PageMeta>(
   name: Name,
   value: PageMeta[Name]
 ) => {
@@ -706,7 +706,7 @@ export const createPageUpdatePayload = (
   input: Parameters<typeof createPageUpdatePatches>[0]
 ): BuilderPatchChange[] => {
   const patches = createPageUpdatePatches(input);
-  return compactPatchPayload([{ namespace: "pages", patches }]);
+  return compactBuilderPatchPayload([{ namespace: "pages", patches }]);
 };
 
 export const createPage = (

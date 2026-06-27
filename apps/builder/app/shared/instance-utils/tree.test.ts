@@ -5,7 +5,6 @@ import {
   areInstanceSelectorsEqual,
   getReparentDropTargetMutable,
   isDescendantOrSelf,
-  serializeInstanceSummary,
   wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree";
 
@@ -43,25 +42,6 @@ test("is descendant or self", () => {
       ["collection", "body", "page-root"]
     )
   ).toBe(true);
-});
-
-test("serializes instance summary", () => {
-  expect(
-    serializeInstanceSummary(
-      createInstance("instance", elementComponent, [
-        { type: "id", value: "child" },
-        { type: "text", value: "Text" },
-      ]),
-      2
-    )
-  ).toEqual({
-    id: "instance",
-    label: undefined,
-    component: elementComponent,
-    tag: undefined,
-    depth: 2,
-    childCount: 2,
-  });
 });
 
 test("wrap editable children around drop target", () => {

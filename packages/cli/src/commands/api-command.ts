@@ -5,6 +5,7 @@ import { HandledCliError } from "../errors";
 import { getLocalAssetPath, LOCAL_ASSETS_DIR } from "../asset-files";
 import { createCliProjectSession } from "../project-session";
 import { getStableErrorCode } from "../error-codes";
+import { printJson } from "../json-output";
 import {
   executeProjectSessionApiOperation,
   getProjectSessionMeta,
@@ -1092,10 +1093,6 @@ type UploadAssetsInput = Parameters<
 type UpdateDomainInput = Parameters<
   typeof httpClient.updateDomain
 >[0]["updates"];
-
-const printJson = (value: unknown) => {
-  console.info(JSON.stringify(value, undefined, 2));
-};
 
 const requireOption = (value: string | undefined, name: string) => {
   if (value === undefined || value.length === 0) {

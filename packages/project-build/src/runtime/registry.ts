@@ -49,10 +49,11 @@ export const builderRuntimeOperations = [
   runtimeOperation("pages.delete", ({ state, input }) =>
     pages.deletePage(state, input as Parameters<typeof pages.deletePage>[1])
   ),
-  runtimeOperation("pages.duplicate", ({ state, input }) =>
+  runtimeOperation("pages.duplicate", ({ state, input, context }) =>
     pageCopy.duplicatePage(
       state,
-      input as Parameters<typeof pageCopy.duplicatePage>[1]
+      input as Parameters<typeof pageCopy.duplicatePage>[1],
+      context
     )
   ),
   runtimeOperation("folders.list", ({ state, input }) =>

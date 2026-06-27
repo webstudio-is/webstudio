@@ -4,6 +4,7 @@ import type { BuilderState } from "./builder-state";
 import type { Props } from "@webstudio-is/sdk";
 import {
   applyBuilderNamespacePatches,
+  applyBuilderPatchPayloadMutable,
   applyBuilderPatchTransactions,
   MissingBuilderStateNamespaceError,
 } from "./patch";
@@ -29,6 +30,49 @@ test("applies namespace patches", () => {
     name: "Subtitle",
     type: "string",
     value: "Subtitle",
+  });
+});
+
+test("applies patch payloads mutably through namespace resolver", () => {
+  const props = new Map<string, unknown>(build.props);
+  applyBuilderPatchPayloadMutable(
+    (namespace) => {
+      if (namespace !== "props") {
+        throw new Error("Unexpected namespace");
+      }
+      return props;
+    },
+    [
+      {
+        namespace: "props",
+        patches: [
+          {
+            op: "add",
+            path: ["prop-subtitle"],
+            value: {
+              id: "prop-subtitle",
+              instanceId: "instance-root",
+              name: "Subtitle",
+              type: "string",
+              value: "Subtitle",
+            },
+          },
+          {
+            op: "replace",
+            path: ["prop-subtitle", "value"],
+            value: "Updated subtitle",
+          },
+        ],
+      },
+    ]
+  );
+
+  expect(props.get("prop-subtitle")).toEqual({
+    id: "prop-subtitle",
+    instanceId: "instance-root",
+    name: "Subtitle",
+    type: "string",
+    value: "Updated subtitle",
   });
 });
 

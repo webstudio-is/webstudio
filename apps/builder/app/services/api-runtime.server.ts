@@ -4,10 +4,7 @@ import { executeBuilderRuntimeOperation } from "@webstudio-is/project-build/runt
 import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime/errors";
 import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
 import type { BuilderState } from "@webstudio-is/project-build/state/builder-state";
-import {
-  createBuilderStateFromBuildData,
-  type BuilderBuildDataSnapshot,
-} from "@webstudio-is/project-build/state/adapters";
+import { createBuilderStateFromCompactBuild } from "@webstudio-is/project-build/state/adapters";
 import { type Asset } from "@webstudio-is/sdk";
 import { throwApiError } from "./api-errors.server";
 
@@ -19,23 +16,7 @@ const defaultBuilderRuntimeContext = {
 export const createBuilderRuntimeState = (
   build: CompactBuild,
   assets?: Asset[]
-): BuilderState => {
-  const snapshot = {
-    pages: build.pages,
-    breakpoints: build.breakpoints,
-    styles: build.styles,
-    styleSources: build.styleSources,
-    styleSourceSelections: build.styleSourceSelections,
-    props: build.props,
-    dataSources: build.dataSources,
-    resources: build.resources,
-    instances: build.instances,
-    assets,
-    marketplaceProduct: build.marketplaceProduct,
-  } satisfies BuilderBuildDataSnapshot;
-
-  return createBuilderStateFromBuildData(snapshot);
-};
+): BuilderState => createBuilderStateFromCompactBuild({ ...build, assets });
 
 export const executeApiRuntimeOperation = <Result>({
   id,

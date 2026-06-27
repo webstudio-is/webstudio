@@ -28,7 +28,7 @@ import env from "~/env/env.server";
 
 import builderStyles from "~/builder/builder.css?url";
 import { ClientOnly } from "~/shared/client-only";
-import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
 import { builderSessionStorage } from "~/services/builder-session.server";

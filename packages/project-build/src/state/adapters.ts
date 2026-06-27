@@ -24,6 +24,7 @@ import {
   type StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "../shared/marketplace";
+import type { CompactBuild } from "../types";
 
 type SnapshotValue<Namespace extends BuilderNamespace> =
   BuilderStateValueByNamespace[Namespace] extends Map<infer Key, infer Value>
@@ -54,6 +55,22 @@ export type BuilderBuildDataSnapshot = Partial<{
   breakpoints: Breakpoint[];
   marketplaceProduct: MarketplaceProduct;
 }>;
+
+export type BuilderCompactBuildDataSnapshot = Pick<
+  CompactBuild,
+  | "pages"
+  | "breakpoints"
+  | "styles"
+  | "styleSources"
+  | "styleSourceSelections"
+  | "props"
+  | "dataSources"
+  | "resources"
+  | "instances"
+  | "marketplaceProduct"
+> & {
+  assets?: Asset[];
+};
 
 export type BuilderStateStore<Namespace extends BuilderNamespace> = {
   get: () => BuilderStateValueByNamespace[Namespace] | undefined;
@@ -206,6 +223,23 @@ export const createBuilderStateFromBuildData = (
 
   return createBuilderStateFromSnapshot(snapshot);
 };
+
+export const createBuilderStateFromCompactBuild = (
+  build: BuilderCompactBuildDataSnapshot
+): BuilderState =>
+  createBuilderStateFromBuildData({
+    pages: build.pages,
+    breakpoints: build.breakpoints,
+    styles: build.styles,
+    styleSources: build.styleSources,
+    styleSourceSelections: build.styleSourceSelections,
+    props: build.props,
+    dataSources: build.dataSources,
+    resources: build.resources,
+    instances: build.instances,
+    assets: build.assets,
+    marketplaceProduct: build.marketplaceProduct,
+  });
 
 export const createBuilderStateSnapshotFromState = (
   state: BuilderState

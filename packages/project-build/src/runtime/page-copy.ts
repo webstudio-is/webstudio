@@ -33,6 +33,8 @@ import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
 import { unwrap } from "./unwrap";
 
+type CreateId = () => string;
+
 const contentModePageMetaFields = new Set([
   "description",
   "title",
@@ -153,6 +155,7 @@ const copyPageRootAndBodyMutable = ({
   metas,
   conflictResolution,
   contentModeCopyableProp,
+  createId = nanoid,
   contentMode = false,
 }: {
   source: WebstudioData;
@@ -163,6 +166,7 @@ const copyPageRootAndBodyMutable = ({
   metas?: Map<string, WsComponentMeta>;
   conflictResolution: ConflictResolution | undefined;
   contentModeCopyableProp?: ContentModeCopyableProp;
+  createId?: CreateId;
   contentMode?: boolean;
 }) => {
   const unsetVariables = new Set<DataSource["id"]>();
@@ -185,6 +189,7 @@ const copyPageRootAndBodyMutable = ({
     conflictResolution,
     systemDataSourceId,
     contentModeCopyableProp,
+    createId,
     contentMode,
   });
 };
@@ -199,6 +204,7 @@ const copyPageFragmentsMutable = ({
   conflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
+  createId = nanoid,
   contentMode = false,
 }: {
   target: WebstudioData;
@@ -210,6 +216,7 @@ const copyPageFragmentsMutable = ({
   conflictResolution: ConflictResolution | undefined;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
+  createId?: CreateId;
   contentMode?: boolean;
 }) => {
   if (projectId === undefined) {
@@ -228,6 +235,7 @@ const copyPageFragmentsMutable = ({
       conflictResolution,
       contentModeCopyableProp,
       onBreakpointLimitMerge,
+      createId,
     });
   }
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
@@ -252,6 +260,7 @@ const copyPageFragmentsMutable = ({
     contentModeCopyableProp,
     onBreakpointLimitMerge,
     contentMode,
+    createId,
   });
   const transformExpression = (expression: string) => {
     expression = unsetExpressionVariables({ expression, unsetNameById });
@@ -266,13 +275,15 @@ const insertCopiedPageMutable = ({
   page,
   copied,
   target,
+  createId,
 }: {
   page: Page;
   copied: NonNullable<ReturnType<typeof copyPageFragmentsMutable>>;
   target: { data: WebstudioData; folderId: Folder["id"] };
+  createId: CreateId;
 }) => {
   const newPage = structuredClone(unwrap(page));
-  newPage.id = nanoid();
+  newPage.id = createId();
   delete newPage.systemDataSourceId;
   newPage.rootInstanceId =
     copied.newInstanceIds.get(page.rootInstanceId) ?? page.rootInstanceId;
@@ -304,13 +315,15 @@ const insertCopiedTemplateMutable = ({
   template,
   copied,
   target,
+  createId,
 }: {
   template: PageTemplate;
   copied: NonNullable<ReturnType<typeof copyPageFragmentsMutable>>;
   target: { data: WebstudioData };
+  createId: CreateId;
 }) => {
   const newTemplate = structuredClone(unwrap(template));
-  newTemplate.id = nanoid();
+  newTemplate.id = createId();
   newTemplate.rootInstanceId =
     copied.newInstanceIds.get(template.rootInstanceId) ??
     template.rootInstanceId;
@@ -402,6 +415,7 @@ export const insertPageFromTemplateMutable = ({
   metas,
   conflictResolution,
   contentModeCopyableProp,
+  createId = nanoid,
   contentMode = false,
 }: {
   templateId: PageTemplate["id"];
@@ -412,6 +426,7 @@ export const insertPageFromTemplateMutable = ({
   metas?: Map<string, WsComponentMeta>;
   conflictResolution?: ConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
+  createId?: CreateId;
   contentMode?: boolean;
 }) => {
   const template = source.data.pages.pageTemplates?.get(templateId);
@@ -428,12 +443,13 @@ export const insertPageFromTemplateMutable = ({
     conflictResolution,
     contentModeCopyableProp,
     contentMode,
+    createId,
   });
   if (copied === undefined) {
     return;
   }
   const newPage: Page = {
-    id: nanoid(),
+    id: createId(),
     name: deduplicateName(target.data.pages, target.folderId, overrides.name),
     path: deduplicatePath(target.data.pages, target.folderId, overrides.path),
     title: copied.transformExpression(template.title),
@@ -460,11 +476,13 @@ export const insertPageCopyMutable = ({
   target,
   projectId,
   conflictResolution,
+  createId = nanoid,
 }: {
   source: { data: WebstudioData; pageId: Page["id"] };
   target: { data: WebstudioData; folderId: Folder["id"] };
   projectId?: string;
   conflictResolution?: ConflictResolution;
+  createId?: CreateId;
 }) => {
   const page = findPageByIdOrPath(source.pageId, source.data.pages);
   if (page === undefined) {
@@ -477,11 +495,12 @@ export const insertPageCopyMutable = ({
     systemDataSourceId: page.systemDataSourceId,
     projectId,
     conflictResolution,
+    createId,
   });
   if (copied === undefined) {
     return;
   }
-  return insertCopiedPageMutable({ page, copied, target });
+  return insertCopiedPageMutable({ page, copied, target, createId });
 };
 
 export const createPageDuplicatePayload = ({
@@ -492,6 +511,7 @@ export const createPageDuplicatePayload = ({
   parentFolderId,
   name,
   path,
+  createId = nanoid,
 }: {
   build: Parameters<typeof createWebstudioDataFromBuild>[0]["build"];
   assets?: Asset[];
@@ -500,6 +520,7 @@ export const createPageDuplicatePayload = ({
   parentFolderId: Folder["id"];
   name?: Page["name"];
   path?: Page["path"];
+  createId?: CreateId;
 }) => {
   const before = createWebstudioDataFromBuild({ build, assets });
   const after = structuredClone(before);
@@ -507,6 +528,7 @@ export const createPageDuplicatePayload = ({
     source: { data: after, pageId },
     target: { data: after, folderId: parentFolderId },
     projectId,
+    createId,
   });
   if (duplicatedPageId === undefined) {
     return;
@@ -535,7 +557,8 @@ export const duplicatePage = (
     parentFolderId: Folder["id"];
     name?: Page["name"];
     path?: Page["path"];
-  }
+  },
+  context: { createId: CreateId }
 ) => {
   const duplicate = createPageDuplicatePayload({
     build: getRequiredWebstudioData(state),
@@ -544,6 +567,7 @@ export const duplicatePage = (
     parentFolderId: input.parentFolderId,
     name: input.name,
     path: input.path,
+    createId: context.createId,
   });
   if (duplicate === undefined) {
     return throwBuilderRuntimeError(
@@ -576,6 +600,7 @@ export const insertPageCopyFromFragmentsMutable = ({
   conflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
+  createId = nanoid,
 }: {
   source: {
     page: Page;
@@ -587,6 +612,7 @@ export const insertPageCopyFromFragmentsMutable = ({
   conflictResolution?: ConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
+  createId?: CreateId;
 }) => {
   const copied = copyPageFragmentsMutable({
     target: target.data,
@@ -597,11 +623,17 @@ export const insertPageCopyFromFragmentsMutable = ({
     conflictResolution,
     contentModeCopyableProp,
     onBreakpointLimitMerge,
+    createId,
   });
   if (copied === undefined) {
     return;
   }
-  return insertCopiedPageMutable({ page: source.page, copied, target });
+  return insertCopiedPageMutable({
+    page: source.page,
+    copied,
+    target,
+    createId,
+  });
 };
 
 export const insertTemplateCopyFromFragmentsMutable = ({
@@ -611,6 +643,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
   conflictResolution,
   contentModeCopyableProp,
   onBreakpointLimitMerge,
+  createId = nanoid,
 }: {
   source: {
     template: PageTemplate;
@@ -622,6 +655,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
   conflictResolution?: ConflictResolution;
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
+  createId?: CreateId;
 }) => {
   const copied = copyPageFragmentsMutable({
     target: target.data,
@@ -632,6 +666,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
     conflictResolution,
     contentModeCopyableProp,
     onBreakpointLimitMerge,
+    createId,
   });
   if (copied === undefined) {
     return;
@@ -640,6 +675,7 @@ export const insertTemplateCopyFromFragmentsMutable = ({
     template: source.template,
     copied,
     target,
+    createId,
   });
 };
 
@@ -787,6 +823,7 @@ export const insertFolderCopyFromDataMutable = ({
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   forceFolderCopySuffix = false,
+  createId = nanoid,
 }: {
   source: FolderCopyData;
   target: { data: WebstudioData; parentFolderId: Folder["id"] };
@@ -795,6 +832,7 @@ export const insertFolderCopyFromDataMutable = ({
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   forceFolderCopySuffix?: boolean;
+  createId?: CreateId;
 }) => {
   const copyContext = {
     didCopyRootFragment: false,
@@ -808,6 +846,7 @@ export const insertFolderCopyFromDataMutable = ({
     contentModeCopyableProp,
     onBreakpointLimitMerge,
     forceFolderCopySuffix,
+    createId,
     copyContext,
   });
 };
@@ -820,6 +859,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
   contentModeCopyableProp,
   onBreakpointLimitMerge,
   forceFolderCopySuffix,
+  createId,
   copyContext,
 }: {
   source: FolderCopyData;
@@ -829,6 +869,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
   contentModeCopyableProp?: ContentModeCopyableProp;
   onBreakpointLimitMerge?: () => void;
   forceFolderCopySuffix?: boolean;
+  createId: CreateId;
   copyContext: { didCopyRootFragment: boolean };
 }) => {
   const parentFolder = target.data.pages.folders.get(target.parentFolderId);
@@ -838,7 +879,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
 
   const newFolder: Folder = {
     ...unwrap(source.folder),
-    id: nanoid(),
+    id: createId(),
     name: deduplicateFolderName(
       target.data.pages,
       target.parentFolderId,
@@ -866,6 +907,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
         contentModeCopyableProp,
         onBreakpointLimitMerge,
         forceFolderCopySuffix,
+        createId,
         copyContext,
       });
       continue;
@@ -880,6 +922,7 @@ const insertFolderCopyFromDataWithContextMutable = ({
       conflictResolution,
       contentModeCopyableProp,
       onBreakpointLimitMerge,
+      createId,
     });
     if (rootFragment !== undefined && pageId !== undefined) {
       copyContext.didCopyRootFragment = true;

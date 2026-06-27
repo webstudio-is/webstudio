@@ -3,6 +3,7 @@ import { serializePages } from "@webstudio-is/project-migrations/pages";
 import { build, pages } from "./fixtures.test-utils";
 import {
   createBuilderStateFromBuildData,
+  createBuilderStateFromCompactBuild,
   createBuilderStateFromSerializedSnapshot,
   createBuilderStateFromSnapshot,
   createSerializedBuilderStateSnapshotFromState,
@@ -61,6 +62,26 @@ test("adapts serialized snapshots with migrated pages", () => {
 
 test("adapts array build data snapshots into normalized builder state", () => {
   const state = createBuilderStateFromBuildData({
+    pages,
+    instances: Array.from(new Map(build.instances).values()),
+    props: Array.from(new Map(build.props).values()),
+    styles: [],
+    styleSources: [],
+    styleSourceSelections: [],
+    dataSources: [],
+    resources: [],
+    assets: [],
+    breakpoints: [],
+    marketplaceProduct: build.marketplaceProduct,
+  });
+
+  expect(state.pages?.pages).toEqual(pages.pages);
+  expect(state.instances).toEqual(new Map(build.instances));
+  expect(state.props).toEqual(new Map(build.props));
+});
+
+test("adapts compact build snapshots into normalized builder state", () => {
+  const state = createBuilderStateFromCompactBuild({
     pages,
     instances: Array.from(new Map(build.instances).values()),
     props: Array.from(new Map(build.props).values()),

@@ -3,6 +3,7 @@ import type {
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
 import { buildPatchNamespaces } from "@webstudio-is/protocol";
+import { printJson } from "../json-output";
 import { apiCommandMetadata } from "./api-command-metadata";
 import { useCaseScenarios } from "./api-command-docs";
 
@@ -274,6 +275,39 @@ const useCaseIndex = useCaseScenarios
   })
   .join("\n\n");
 
+const renderUseCaseCommands = (useCases: readonly string[]) =>
+  useCases
+    .map((useCase) =>
+      [
+        `${useCase}:`,
+        ...getCommandsForUseCase(useCase).map((command) => `- ${command}`),
+      ].join("\n")
+    )
+    .join("\n\n");
+
+const readFirstUseCases = [
+  "List pages",
+  "Read page by id",
+  "Read page by path",
+  "List folders",
+  "List element instances",
+  "Inspect one element instance",
+  "List text/expression children",
+  "Read styles",
+  "List data variables",
+  "List resources",
+  "List assets",
+  "List domains",
+  "List publishes",
+  "Make arbitrary store-level changes",
+] as const;
+
+const taskRecipeIndex = Object.entries(taskRecipeUseCases)
+  .map(([group, useCases]) =>
+    [`### ${group}`, renderUseCaseCommands(useCases)].join("\n\n")
+  )
+  .join("\n\n");
+
 const apiManual = `# Webstudio API CLI Manual
 
 The API commands operate on the single project configured by:
@@ -291,38 +325,11 @@ Rules:
 
 ## Start
 
-1. Link a project token:
-
-   webstudio init --link <api-share-link> --json
-
-2. Check capabilities:
-
-   webstudio permissions --json
-
-3. Inspect project and latest build:
-
-   webstudio inspect --json
-
-4. Discover commands:
-
-   webstudio schema api --json
+${renderUseCaseCommands(taskRecipeUseCases.setup)}
 
 ## Read First
 
-- Pages: webstudio list-pages --include-folders --json
-- Page details: webstudio get-page --page <pageId> --json
-- Page by path: webstudio get-page-by-path --path /pricing --json
-- Folders: webstudio list-folders --include-pages --json
-- Instances: webstudio list-instances --path / --max-depth 3 --json
-- Instance details: webstudio inspect-instance --instance <instanceId> --include props,styles,children --json
-- Text nodes: webstudio list-texts --path / --json
-- Styles: webstudio get-styles --instance <instanceId> --include-tokens --json
-- Variables: webstudio list-variables --json
-- Resources: webstudio list-resources --json
-- Assets: webstudio list-assets --with-usage --json
-- Domains: webstudio list-domains --json
-- Publishes: webstudio list-publishes --json
-- Raw data: webstudio snapshot --include pages,instances,props,styles,styleSources,styleSourceSelections,resources,variables,assets --json
+${renderUseCaseCommands(readFirstUseCases)}
 
 ## Project Session Cache
 
@@ -336,82 +343,7 @@ Rules:
 
 ## Task Recipes
 
-Create a page:
-
-webstudio create-page --name Pricing --path /pricing --json
-
-Update page metadata:
-
-webstudio update-page --page <pageId> --title "Pricing" --description "Plans" --json
-
-Duplicate a page:
-
-webstudio duplicate-page --page <pageId> --name "Pricing Copy" --path /pricing-copy --json
-
-Add element children:
-
-webstudio append-instance --parent <instanceId> --input children.json --json
-
-Move elements:
-
-webstudio move-instance --input moves.json --json
-
-Clone an element subtree:
-
-webstudio clone-instance --source <instanceId> --parent <targetParentId> --json
-
-Update text:
-
-webstudio update-text --instance <instanceId> --child-index 0 --text "Launch faster" --json
-
-Update props:
-
-webstudio update-props --input props.json --json
-
-Bind props:
-
-webstudio bind-props --input bindings.json --json
-
-Update styles:
-
-webstudio update-styles --input styles.json --json
-
-Create design tokens:
-
-webstudio create-design-token --input tokens.json --json
-
-Attach a design token:
-
-webstudio attach-design-token --design-token <tokenId> --input instances.json --json
-
-Define CSS variables:
-
-webstudio define-css-variable --input vars.json --json
-
-Create a variable:
-
-webstudio create-variable --scope-instance <instanceId> --name title --value-type string --value "Hello" --json
-
-Create a resource:
-
-webstudio create-resource --name Posts --method get --url '"https://api.example.com/posts"' --json
-
-Upload assets:
-
-webstudio upload-assets --input assets.json --assets-dir .webstudio/assets --json
-
-Replace asset references:
-
-webstudio replace-asset --from <oldAssetId> --to <newAssetId> --confirm --json
-
-Publish:
-
-webstudio publish --target production --json
-
-Add and verify a domain:
-
-webstudio create-domain --domain example.com --json
-webstudio verify-domain --domain-id <domainId> --json
+${taskRecipeIndex}
 
 ## Use Case Index
 
@@ -597,28 +529,11 @@ Use this order. Stop only when a command returns ok:false.
 
 ## Pick Read Command
 
-- Need page ids: webstudio list-pages --include-folders --json
-- Need one page: webstudio get-page --page <pageId> --json
-- Need elements: webstudio list-instances --path <path> --max-depth 3 --json
-- Need element props/styles/children: webstudio inspect-instance --instance <id> --include props,styles,children --json
-- Need text nodes: webstudio list-texts --path <path> --json
-- Need styles: webstudio get-styles --instance <id> --include-tokens --json
-- Need assets: webstudio list-assets --with-usage --json
-- Need exact store paths: webstudio snapshot --include pages,instances,props,styles,styleSources,styleSourceSelections,resources,variables,assets --json
+${renderUseCaseCommands(readFirstUseCases)}
 
 ## Pick Write Command
 
-- Page: create-page, update-page, delete-page, duplicate-page
-- Folder: create-folder, update-folder, delete-folder
-- Element tree: append-instance, move-instance, clone-instance, delete-instance
-- Text: update-text
-- Props/bindings: update-props, delete-props, bind-props
-- Styles: update-styles, delete-styles, replace-styles
-- Design tokens: create-design-token, update-design-token-styles, delete-design-token-styles, attach-design-token, detach-design-token, extract-design-token
-- CSS variables: define-css-variable, delete-css-variable, rewrite-css-variable-refs
-- Data: create-variable, update-variable, delete-variable, create-resource, update-resource, delete-resource
-- Assets: upload-asset, upload-assets, find-asset-usage, replace-asset, delete-asset
-- Publish/domains: publish, unpublish, list-publishes, get-publish-job, list-domains, create-domain, update-domain, delete-domain, verify-domain
+${taskRecipeIndex}
 
 ## Raw Patch Only If Needed
 
@@ -736,7 +651,7 @@ Available topics:
     return;
   }
   if (options.json === true) {
-    console.info(JSON.stringify(entry.json, undefined, 2));
+    printJson(entry.json);
     return;
   }
   console.info(entry.manual);

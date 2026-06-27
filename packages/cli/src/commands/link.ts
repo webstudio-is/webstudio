@@ -2,7 +2,7 @@ import { cwd, exit } from "node:process";
 import { dirname, join } from "node:path";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { cancel, isCancel, log, text } from "@clack/prompts";
-import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import {
   GLOBAL_CONFIG_FILE,
   LOCAL_CONFIG_FILE,

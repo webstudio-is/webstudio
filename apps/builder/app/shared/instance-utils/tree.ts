@@ -176,15 +176,3 @@ export const getReparentDropTargetMutable = (
     ) ?? dropTarget;
   return dropTarget;
 };
-
-export const serializeInstanceSummary = (
-  instance: Instance,
-  depth: number
-) => ({
-  id: instance.id,
-  label: instance.label,
-  component: instance.component,
-  tag: instance.tag,
-  depth,
-  childCount: instance.children.length,
-});

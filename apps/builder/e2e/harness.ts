@@ -1,4 +1,4 @@
-import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { basename } from "node:path";
 import {
   chromium,

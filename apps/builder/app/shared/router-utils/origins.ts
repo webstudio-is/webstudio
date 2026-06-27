@@ -1,4 +1,4 @@
-import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 
 export const getRequestOrigin = (urlStr: string) => {
   const url = new URL(urlStr);

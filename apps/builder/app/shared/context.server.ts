@@ -15,7 +15,7 @@ import { builderAuthenticator } from "~/services/builder-auth.server";
 import { readLoginSessionBloomFilter } from "~/services/session.server";
 import type { BloomFilter } from "~/services/bloom-filter.server";
 import { isBuilder, isCanvas } from "./router-utils";
-import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import {
   apiClient,
   apiClientHeader,

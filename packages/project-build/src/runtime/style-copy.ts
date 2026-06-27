@@ -193,6 +193,7 @@ export const insertStyleSources = ({
   breakpoints,
   mergedBreakpointIds,
   conflictResolution = "theirs",
+  createId = nanoid,
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
@@ -202,6 +203,7 @@ export const insertStyleSources = ({
   mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
   /** How to handle conflicts: "theirs" = add suffix (keep incoming), "ours" = use existing token, "merge" = merge styles (theirs overrides ours) */
   conflictResolution?: ConflictResolution;
+  createId?: () => string;
 }): {
   styleSourceIds: Set<StyleSource["id"]>;
   styleSourceIdMap: Map<StyleSource["id"], StyleSource["id"]>;
@@ -230,7 +232,7 @@ export const insertStyleSources = ({
     styleSource.type satisfies "token";
 
     const originalFragmentTokenId = styleSource.id;
-    const newTokenId = nanoid();
+    const newTokenId = createId();
 
     // Check if there's an existing token with the same name
     const tokensWithSameName = existingTokensByName.get(styleSource.name);
@@ -340,6 +342,7 @@ export const insertTokenStyleSources = ({
   breakpoints,
   mergedBreakpointIds,
   conflictResolution = "theirs",
+  createId,
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
@@ -348,6 +351,7 @@ export const insertTokenStyleSources = ({
   breakpoints: Map<Breakpoint["id"], Breakpoint>;
   mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
   conflictResolution?: ConflictResolution;
+  createId?: () => string;
 }) => {
   const { styleSourceIds, styleSourceIdMap, updatedStyleSources } =
     insertStyleSources({
@@ -358,6 +362,7 @@ export const insertTokenStyleSources = ({
       breakpoints,
       mergedBreakpointIds,
       conflictResolution,
+      createId,
     });
 
   for (const [id, styleSource] of updatedStyleSources) {
@@ -448,6 +453,7 @@ type InsertLocalStyleSourcesWithNewIdsOptions = {
   styleSources: StyleSources;
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
+  createId?: () => string;
 } & (
   | {
       contentMode: true;
@@ -478,6 +484,7 @@ export const insertLocalStyleSourcesWithNewIds = ({
   styleSources,
   styleSourceSelections,
   styles,
+  createId = nanoid,
   contentMode = false,
   breakpoints,
   styleSourceIdMap = new Map(),
@@ -553,7 +560,7 @@ export const insertLocalStyleSourcesWithNewIds = ({
           styleSourceId = existingLocalStyleSource.id;
         } else {
           // create new local styles
-          const newId = nanoid();
+          const newId = createId();
           styleSources.set(newId, { ...newLocalStyleSource, id: newId });
           styleSourceId = newId;
         }

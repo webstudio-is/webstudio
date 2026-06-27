@@ -77,3 +77,8 @@ export type BuilderPatchTransaction = {
   id: string;
   payload: BuilderPatchChange[];
 };
+
+export const compactBuilderPatchPayload = (
+  payload: BuilderPatchChange[]
+): BuilderPatchChange[] =>
+  payload.flatMap((change) => (change.patches.length === 0 ? [] : [change]));

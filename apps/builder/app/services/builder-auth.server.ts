@@ -10,7 +10,7 @@ import {
   getAuthorizationServerOrigin,
   getRequestOrigin,
 } from "~/shared/router-utils/origins";
-import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { createDebug } from "~/shared/debug";
 import { readAccessToken } from "./token.server";
 import { isUserAuthorizedForProject } from "./builder-access.server";

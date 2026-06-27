@@ -1,24 +1,8 @@
 import type { Page, Pages } from "@webstudio-is/sdk";
+import { normalizePageMetaValue } from "@webstudio-is/project-build/runtime/pages";
 import { registerFolderChildMutable } from "./tree";
 
 type PageMeta = Page["meta"];
-
-const emptyStringRemovesMetaFields = new Set<keyof PageMeta>([
-  "language",
-  "redirect",
-  "socialImageAssetId",
-  "socialImageUrl",
-]);
-
-const normalizePageMetaValue = <Name extends keyof PageMeta>(
-  name: Name,
-  value: PageMeta[Name]
-) => {
-  if (value === "" && emptyStringRemovesMetaFields.has(name)) {
-    return undefined;
-  }
-  return value;
-};
 
 const assignPageMetaValueMutable = <Name extends keyof PageMeta>(
   meta: PageMeta,

@@ -7,31 +7,7 @@ import {
   type Page,
   type Pages,
 } from "@webstudio-is/sdk";
-
-/**
- * Get all child folder or page ids of the current id, including the id itself
- * when it matches the requested type.
- */
-const getAllChildrenAndSelf = (
-  id: Folder["id"] | Page["id"],
-  folders: Pages["folders"],
-  filter: "folder" | "page"
-) => {
-  const child = folders.get(id);
-  const children: Array<Folder["id"] | Page["id"]> = [];
-  const type = child === undefined ? "page" : "folder";
-
-  if (type === filter) {
-    children.push(id);
-  }
-
-  if (child) {
-    for (const childId of child.children) {
-      children.push(...getAllChildrenAndSelf(childId, folders, filter));
-    }
-  }
-  return children;
-};
+import { getAllChildrenAndSelf } from "@webstudio-is/project-build/runtime/pages";
 
 /**
  * When page or folder needs to be deleted or moved to a different parent,
@@ -151,14 +127,6 @@ export const updateFolderFieldsMutable = ({
     registerFolderChildMutable(pages, folderId, values.parentFolderId);
   }
 };
-
-export const findFolder = (
-  pages: Pick<Pages, "folders">,
-  folderId: Folder["id"]
-) => pages.folders.get(folderId);
-
-export const findPage = (pages: Pick<Pages, "pages">, pageId: Page["id"]) =>
-  pages.pages.get(pageId);
 
 export const reparentPageOrFolderMutable = (
   folders: Pages["folders"],

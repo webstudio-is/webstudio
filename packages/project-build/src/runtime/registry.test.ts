@@ -176,12 +176,14 @@ const state = {
         id: "resource",
         name: "Posts",
         method: "get",
-        url: "/posts",
+        url: `"/posts"`,
         headers: [],
         searchParams: [],
       },
     ],
   ]),
+  assets: new Map(),
+  breakpoints: new Map(),
 } satisfies BuilderState;
 
 describe("builder runtime pages", () => {
@@ -377,5 +379,28 @@ describe("builder runtime registry", () => {
         expect(getBuilderRuntimeOperation(operationId).id).toBe(operationId);
       }
     }
+  });
+
+  test("uses runtime context for ids in migrated mutations", () => {
+    const duplicateWithDeterministicIds = () => {
+      let nextId = 0;
+      return executeBuilderRuntimeOperation({
+        id: "pages.duplicate",
+        state,
+        input: {
+          projectId: "project-1",
+          pageId: "home",
+          parentFolderId: "root",
+        },
+        context: {
+          ...context,
+          createId: () => `runtime-id-${++nextId}`,
+        },
+      });
+    };
+
+    expect(duplicateWithDeterministicIds()).toEqual(
+      duplicateWithDeterministicIds()
+    );
   });
 });

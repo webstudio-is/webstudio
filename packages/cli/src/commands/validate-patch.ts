@@ -5,6 +5,7 @@ import {
   type BuildPatchTransaction,
 } from "@webstudio-is/http-client";
 import { HandledCliError } from "../errors";
+import { printJson } from "../json-output";
 import type { CommonYargsArgv } from "./yargs-types";
 
 type ValidatePatchDependencies = {
@@ -44,10 +45,6 @@ type ValidatePatchOptions = {
   "base-version"?: number;
   input?: string;
   json?: boolean;
-};
-
-const printJson = (value: unknown) => {
-  console.info(JSON.stringify(value, undefined, 2));
 };
 
 const readTransactions = async (

@@ -10,7 +10,10 @@ import {
   type StyleSource,
   type StyleSourceSelection,
 } from "@webstudio-is/sdk";
-import type { BuilderPatchChange } from "../contracts/patch";
+import {
+  compactBuilderPatchPayload,
+  type BuilderPatchChange,
+} from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
@@ -298,9 +301,6 @@ export const getInstanceDeleteTargets = ({
 const createRemovePatches = (ids: Iterable<string>) =>
   Array.from(ids, (id) => ({ op: "remove" as const, path: [id] }));
 
-const compactPatchPayload = (payload: BuilderPatchChange[]) =>
-  payload.flatMap((change) => (change.patches.length === 0 ? [] : [change]));
-
 const sortChildRemovalPatches = <
   Patch extends {
     path: [string, "children", number];
@@ -336,7 +336,7 @@ export const createInstanceCleanupPayload = ({
     styleSourceSelections,
   });
 
-  return compactPatchPayload([
+  return compactBuilderPatchPayload([
     {
       namespace: "instances",
       patches: createRemovePatches(deleteTargets.instanceIds),
@@ -465,7 +465,7 @@ export const createInstanceMovePayload = (
   const { errors, patches } = createInstanceMovePatches(input);
   return {
     errors,
-    payload: compactPatchPayload([{ namespace: "instances", patches }]),
+    payload: compactBuilderPatchPayload([{ namespace: "instances", patches }]),
   };
 };
 
@@ -541,7 +541,7 @@ export const createInstanceAppendPayload = ({
       styles,
     });
     payload[0]?.patches.push(...(instanceCleanup?.patches ?? []));
-    payload.push(...compactPatchPayload(cleanupPayload));
+    payload.push(...compactBuilderPatchPayload(cleanupPayload));
   }
 
   return {
@@ -672,7 +672,7 @@ export const createInstanceClonePayload = ({
   return {
     clonedRootId,
     clonedInstanceIds: clonedInstances.map(([instanceId]) => instanceId),
-    payload: compactPatchPayload([
+    payload: compactBuilderPatchPayload([
       {
         namespace: "instances",
         patches: [

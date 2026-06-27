@@ -6,6 +6,7 @@ test("documents cutover families with known runtime operation ids", () => {
   const operationIds = new Set(
     runtimeOperationContracts.map((contract) => contract.id)
   );
+  const cutoverOperationIds = new Set<string>();
   const familyNames = builderRuntimeCutoverManifests.map(
     (manifest) => manifest.family
   );
@@ -16,6 +17,8 @@ test("documents cutover families with known runtime operation ids", () => {
     expect(manifest.callers.length).toBeGreaterThan(0);
     for (const operationId of manifest.operationIds) {
       expect(operationIds.has(operationId)).toBe(true);
+      cutoverOperationIds.add(operationId);
     }
   }
+  expect(cutoverOperationIds).toEqual(operationIds);
 });

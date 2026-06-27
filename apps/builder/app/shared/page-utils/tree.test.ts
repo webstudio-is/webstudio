@@ -8,8 +8,6 @@ import {
 } from "@webstudio-is/sdk";
 import {
   cleanupChildRefsMutable,
-  findFolder,
-  findPage,
   insertFolderMutable,
   registerFolderChildMutable,
   reparentOrphansMutable,
@@ -447,19 +445,5 @@ describe("reparent pages and folders", () => {
     reparentPageOrFolderMutable(pages.folders, "page3", "folder", 1);
 
     expect(pages.folders.get("folder")?.children).toEqual(["page1", "page2"]);
-  });
-});
-
-describe("find page and folder", () => {
-  test("finds pages and folders by id", () => {
-    const { pages, f, p, register } = createPages();
-    const page = p("page", "/page");
-    const folder = f("folder", [page]);
-    register([folder]);
-
-    expect(findPage(pages, page.id)).toBe(page);
-    expect(findPage(pages, "missing")).toBeUndefined();
-    expect(findFolder(pages, folder.id)).toBe(folder);
-    expect(findFolder(pages, "missing")).toBeUndefined();
   });
 });

@@ -1,5 +1,6 @@
 import { buildPatchNamespaces } from "@webstudio-is/protocol";
 import { HandledCliError } from "../errors";
+import { printJson } from "../json-output";
 import { useCaseScenarios } from "./api-command-docs";
 import { apiCommandMetadata } from "./api-command-metadata";
 import type {
@@ -22,10 +23,6 @@ export const schemaOptions = (yargs: CommonYargsArgv) =>
 
 type SchemaOptions = StrictYargsOptionsToInterface<typeof schemaOptions> & {
   topic?: string;
-};
-
-const printJson = (value: unknown) => {
-  console.info(JSON.stringify(value, undefined, 2));
 };
 
 const apiSchema = {

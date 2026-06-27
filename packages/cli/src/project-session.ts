@@ -14,10 +14,10 @@ import {
 } from "@webstudio-is/project-build/project-session";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
 import {
-  createBuilderStateFromBuildData,
+  createBuilderStateFromCompactBuild,
   createBuilderStateFromSerializedSnapshot,
   createSerializedBuilderStateSnapshotFromState,
-  type BuilderBuildDataSnapshot,
+  type BuilderCompactBuildDataSnapshot,
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state/adapters";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state/freshness";
@@ -32,11 +32,15 @@ type ApiConnection = {
   headers?: Record<string, string | undefined>;
 };
 
-type PublicBuildSnapshot = BuilderBuildDataSnapshot & {
+type PublicBuildSnapshot = Omit<
+  BuilderCompactBuildDataSnapshot,
+  "dataSources"
+> & {
   projectId: string;
   buildId: string;
   version: number;
-  variables?: BuilderBuildDataSnapshot["dataSources"];
+  dataSources?: BuilderCompactBuildDataSnapshot["dataSources"];
+  variables?: BuilderCompactBuildDataSnapshot["dataSources"];
 };
 
 type PersistedCliProjectSessionSnapshot = Omit<
@@ -67,9 +71,9 @@ const toRemoteSnapshot = (
   projectId: snapshot.projectId,
   buildId: snapshot.buildId,
   version: snapshot.version,
-  state: createBuilderStateFromBuildData({
+  state: createBuilderStateFromCompactBuild({
     ...snapshot,
-    dataSources: snapshot.dataSources ?? snapshot.variables,
+    dataSources: snapshot.dataSources ?? snapshot.variables ?? [],
   }),
 });
 
