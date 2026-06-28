@@ -24,6 +24,39 @@ export const builderRuntimeCutoverManifests = [
     ] as const,
   },
   {
+    family: "page-template-operations",
+    operationIds: ["pageTemplates.list", "pageTemplates.createPage"] as const,
+    callers: ["appRouter.api.pageTemplates", "Builder pages UI"] as const,
+  },
+  {
+    family: "project-settings-operations",
+    operationIds: ["projectSettings.get", "projectSettings.update"] as const,
+    callers: ["appRouter.api.projectSettings"] as const,
+  },
+  {
+    family: "redirect-operations",
+    operationIds: [
+      "redirects.list",
+      "redirects.create",
+      "redirects.update",
+      "redirects.delete",
+    ] as const,
+    callers: ["appRouter.api.redirects"] as const,
+  },
+  {
+    family: "breakpoint-operations",
+    operationIds: [
+      "breakpoints.list",
+      "breakpoints.create",
+      "breakpoints.update",
+      "breakpoints.delete",
+    ] as const,
+    callers: [
+      "appRouter.api.breakpoints",
+      "Builder breakpoint utilities",
+    ] as const,
+  },
+  {
     family: "folders-read",
     operationIds: ["folders.list"] as const,
     callers: ["appRouter.api.folders"] as const,

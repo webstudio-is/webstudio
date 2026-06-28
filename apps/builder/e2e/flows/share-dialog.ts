@@ -116,11 +116,26 @@ export const createShareLink = async ({
   });
   const nameInput = customLinkOptions.getByLabel("Name");
   await nameInput.fill(name);
-  await nameInput.press("Enter");
+  await customLink
+    .getByRole("button", { name: "Menu Button for options" })
+    .click();
   await waitForShareLinkMutation({ page });
 
   const renamedLink = getShareLinkGroup({ page, name });
-  await renamedLink.waitFor({ state: "visible", timeout: 10_000 });
+  try {
+    await renamedLink.waitFor({ state: "visible", timeout: 10_000 });
+  } catch (error) {
+    const shareLinkLabels = await page
+      .locator('[role="group"][aria-label^="Share link "]')
+      .evaluateAll((elements) =>
+        elements.map((element) => element.getAttribute("aria-label"))
+      );
+    const isBusy = await getShareLinksRegion(page).getAttribute("aria-busy");
+    throw new Error(
+      `Expected renamed share link "${name}" to be visible. aria-busy=${isBusy}; links=${shareLinkLabels.join(", ")}`,
+      { cause: error }
+    );
+  }
   await renamedLink
     .getByRole("button", { name: "Menu Button for options" })
     .click();
