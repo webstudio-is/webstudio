@@ -1,5 +1,5 @@
+import { TRPCError } from "@trpc/server";
 import {
-  AuthorizationError,
   authorizeProject,
   type AppContext,
   type AuthPermit,
@@ -12,7 +12,10 @@ type ApiToken = Awaited<ReturnType<typeof authDb.getTokenInfo>>;
 
 export const loadApiToken = async (ctx: AppContext) => {
   if (ctx.authorization.type !== "token") {
-    throw new AuthorizationError("Builder API requires an API token");
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Builder API requires an API token",
+    });
   }
 
   return await authDb.getTokenInfo(ctx.authorization.authToken, ctx);
@@ -33,7 +36,10 @@ export const assertApiTokenPermit = async (ctx: AppContext) => {
   const token = await loadApiToken(ctx);
   const permits = getTokenPermits(token, ctx);
   if (permits.includes("api") === false) {
-    throw new AuthorizationError("Authorization token cannot use Builder API");
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Authorization token cannot use Builder API",
+    });
   }
   return { token, permits };
 };
@@ -45,15 +51,17 @@ export const assertApiProjectPermit = async (
 ) => {
   const { token, permits } = await assertApiTokenPermit(ctx);
   if (token.projectId !== projectId) {
-    throw new AuthorizationError(
-      "Authorization token is not valid for project"
-    );
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Authorization token is not valid for project",
+    });
   }
 
   if (permits.includes(permit) === false) {
-    throw new AuthorizationError(
-      `Authorization token does not have ${permit} permission`
-    );
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: `Authorization token does not have ${permit} permission`,
+    });
   }
 
   const canUseProject = await authorizeProject.hasProjectPermit(
@@ -61,7 +69,10 @@ export const assertApiProjectPermit = async (
     ctx
   );
   if (canUseProject === false) {
-    throw new AuthorizationError("You don't have access to this project");
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You don't have access to this project",
+    });
   }
 
   return { token, permits };

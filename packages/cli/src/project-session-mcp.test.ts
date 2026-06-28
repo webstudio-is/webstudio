@@ -125,7 +125,7 @@ describe("project session mcp adapter", () => {
 
     expect(session.read).toHaveBeenCalledWith(
       "pages.list",
-      { includeFolders: true },
+      { projectId: "project-1", includeFolders: true },
       { permit: "view" }
     );
     expect(result.structuredContent).toEqual({

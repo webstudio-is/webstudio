@@ -12,8 +12,11 @@ import {
   attachDesignToken,
   bindProps,
   cloneInstance,
+  createBreakpoint,
+  createPageFromTemplate,
   createDesignTokens,
   createDomain,
+  createRedirect,
   defineCssVariables,
   createFolder,
   createPage,
@@ -23,6 +26,7 @@ import {
   deleteDesignTokenStyles,
   deleteCssVariables,
   deleteAssets,
+  deleteBreakpoint,
   deleteDomain,
   deletePage,
   deleteFolder,
@@ -30,6 +34,7 @@ import {
   deleteInstance,
   deleteProps,
   deleteResource,
+  deleteRedirect,
   deleteVariable,
   duplicatePage,
   extractDesignToken,
@@ -42,18 +47,22 @@ import {
   getPageByPath,
   getBuildPatchSummary,
   getProjectPermissions,
+  getProjectSettings,
   getStyleDeclarations,
   inspectInstance,
   importProjectBundle,
   importProjectBundleWithAssets,
   listAssets,
+  listBreakpoints,
   listDesignTokens,
   listDomains,
   listFolders,
   listCssVariables,
   listInstances,
   listPages,
+  listPageTemplates,
   listPublishes,
+  listRedirects,
   listResources,
   listTexts,
   listVariables,
@@ -74,9 +83,12 @@ import {
   rewriteCssVariableRefs,
   updateDesignTokenStyles,
   updateDomain,
+  updateBreakpoint,
   updatePage,
   updateFolder,
   updateProps,
+  updateProjectSettings,
+  updateRedirect,
   updateResource,
   updateStyleDeclarations,
   updateText,
@@ -402,10 +414,55 @@ test("wraps project api trpc calls in named functions", async () => {
       pageId: "page-id",
       values: { title: "Pricing" },
     });
+    await getProjectSettings(params);
+    await updateProjectSettings({
+      ...params,
+      meta: { siteName: "Acme", faviconAssetId: null },
+      compiler: { atomicStyles: true },
+    });
+    await listRedirects(params);
+    await createRedirect({
+      ...params,
+      old: "/old",
+      new: "/new",
+      status: "301",
+    });
+    await updateRedirect({
+      ...params,
+      old: "/old",
+      values: { old: "/older", new: "/newer", status: null },
+    });
+    await deleteRedirect({
+      ...params,
+      old: "/older",
+    });
+    await listBreakpoints(params);
+    await createBreakpoint({
+      ...params,
+      id: "tablet",
+      label: "Tablet",
+      maxWidth: 991,
+    });
+    await updateBreakpoint({
+      ...params,
+      breakpointId: "tablet",
+      values: { maxWidth: 1023, condition: null },
+    });
+    await deleteBreakpoint({
+      ...params,
+      breakpointId: "tablet",
+    });
     await duplicatePage({
       ...params,
       pageId: "page-id",
       name: "Pricing Copy",
+    });
+    await listPageTemplates(params);
+    await createPageFromTemplate({
+      ...params,
+      templateId: "template-id",
+      name: "Landing",
+      path: "/landing",
     });
     await deletePage({
       ...params,
@@ -718,7 +775,25 @@ test("wraps project api trpc calls in named functions", async () => {
     expectRequest("/trpc/api.pages.getByPath"),
     expectBodyRequest("/trpc/api.pages.create", '"name":"Pricing"'),
     expectBodyRequest("/trpc/api.pages.update", '"title":"Pricing"'),
+    expectRequest("/trpc/api.projectSettings.get"),
+    expectBodyRequest("/trpc/api.projectSettings.update", '"siteName":"Acme"'),
+    expectRequest("/trpc/api.redirects.list"),
+    expectBodyRequest("/trpc/api.redirects.create", '"old":"/old"'),
+    expectBodyRequest("/trpc/api.redirects.update", '"old":"/older"'),
+    expectBodyRequest("/trpc/api.redirects.delete", '"old":"/older"'),
+    expectRequest("/trpc/api.breakpoints.list"),
+    expectBodyRequest("/trpc/api.breakpoints.create", '"maxWidth":991'),
+    expectBodyRequest("/trpc/api.breakpoints.update", '"condition":null'),
+    expectBodyRequest(
+      "/trpc/api.breakpoints.delete",
+      '"breakpointId":"tablet"'
+    ),
     expectBodyRequest("/trpc/api.pages.duplicate", '"name":"Pricing Copy"'),
+    expectRequest("/trpc/api.pageTemplates.list"),
+    expectBodyRequest(
+      "/trpc/api.pageTemplates.createPage",
+      '"templateId":"template-id"'
+    ),
     expectBodyRequest("/trpc/api.pages.delete", '"pageId":"page-id"'),
     expectBodyRequest("/trpc/api.folders.create", '"slug":"blog"'),
     expectBodyRequest("/trpc/api.folders.update", '"folderId":"folder-id"'),

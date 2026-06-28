@@ -15,11 +15,14 @@ import {
 } from "@webstudio-is/project-build";
 import {
   __testing__,
+  createPageFromTemplate,
   createPageDuplicatePayload,
   createTemplateCopyData,
+  duplicatePage,
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
   insertTemplateCopyFromFragmentsMutable,
+  listPageTemplates,
 } from "./page-copy";
 import {
   $,
@@ -240,6 +243,78 @@ describe("insert page copy", () => {
           value: expect.objectContaining({ component: "Body" }),
         },
       ],
+    });
+  });
+
+  test("runtime duplicate infers the source page parent folder", () => {
+    const data = getWebstudioDataStub({
+      instances: toMap<Instance>([
+        { type: "instance", id: "bodyId", component: "Body", children: [] },
+      ]),
+      pages: migratePages({
+        meta: {},
+        homePage: {
+          id: "homePageId",
+          name: "Home",
+          path: "",
+          title: `"Home"`,
+          meta: {},
+          rootInstanceId: "bodyId",
+        },
+        pages: [
+          {
+            id: "pageId",
+            name: "Name",
+            path: "/nested",
+            title: `"Title"`,
+            meta: {},
+            rootInstanceId: "bodyId",
+          },
+        ],
+        folders: [
+          createRootFolder(["homePageId", "folderId"]),
+          {
+            id: "folderId",
+            name: "Folder",
+            slug: "folder",
+            children: ["pageId"],
+          },
+        ],
+      }),
+    });
+
+    const result = duplicatePage(
+      data,
+      {
+        projectId: "projectId",
+        pageId: "pageId",
+        name: "Copy",
+        path: "/copy",
+      },
+      { createId: nanoid }
+    );
+
+    expect(result.result.pageId).toEqual(expect.any(String));
+    expect(result.payload).toContainEqual({
+      namespace: "pages",
+      patches: expect.arrayContaining([
+        {
+          op: "add",
+          path: ["pages", result.result.pageId],
+          value: expect.objectContaining({
+            id: result.result.pageId,
+            name: "Copy",
+            path: "/copy",
+          }),
+        },
+        {
+          op: "replace",
+          path: ["folders", "folderId"],
+          value: expect.objectContaining({
+            children: ["pageId", result.result.pageId],
+          }),
+        },
+      ]),
     });
   });
 
@@ -861,6 +936,127 @@ describe("insert page copy", () => {
       },
     });
     expect(data.pages.folders.get(ROOT_FOLDER_ID)?.children).toContain(pageId);
+  });
+
+  test("lists page templates", () => {
+    const pages = migratePages({
+      homePage: {
+        id: "homePageId",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        rootInstanceId: "homeBodyId",
+        meta: {},
+      },
+      pages: [],
+      folders: [createRootFolder(["homePageId"])],
+    });
+    pages.pageTemplates = new Map([
+      [
+        "templateId",
+        {
+          id: "templateId",
+          name: "Template",
+          title: `"Template"`,
+          rootInstanceId: "templateBodyId",
+          meta: { description: `"Description"` },
+        },
+      ],
+    ]);
+    const data = getWebstudioDataStub({
+      pages,
+    });
+
+    expect(listPageTemplates(data)).toEqual({
+      templates: [
+        {
+          id: "templateId",
+          name: "Template",
+          title: `"Template"`,
+          rootInstanceId: "templateBodyId",
+          systemDataSourceId: undefined,
+          meta: { description: `"Description"` },
+        },
+      ],
+    });
+  });
+
+  test("creates page from template patch payload from shared copy semantics", () => {
+    const pages = migratePages({
+      homePage: {
+        id: "homePageId",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        rootInstanceId: "homeBodyId",
+        meta: {},
+      },
+      pages: [],
+      folders: [createRootFolder(["homePageId"])],
+    });
+    pages.pageTemplates = new Map([
+      [
+        "templateId",
+        {
+          id: "templateId",
+          name: "Template",
+          title: `"Template"`,
+          rootInstanceId: "templateBodyId",
+          meta: {},
+        },
+      ],
+    ]);
+    const data = getWebstudioDataStub({
+      pages,
+      instances: toMap<Instance>([
+        {
+          type: "instance",
+          id: ROOT_INSTANCE_ID,
+          component: "Root",
+          children: [{ type: "id", value: "templateBodyId" }],
+        },
+        {
+          type: "instance",
+          id: "templateBodyId",
+          component: "Body",
+          tag: "body",
+          children: [],
+        },
+      ]),
+    });
+    let index = 0;
+
+    const result = createPageFromTemplate(
+      data,
+      {
+        projectId: "projectId",
+        templateId: "templateId",
+        name: "Landing",
+        path: "/landing",
+      },
+      { createId: () => `id-${index++}` }
+    );
+    const { pageId } = result.result;
+
+    expect(pageId).toBeDefined();
+    expect(result.payload).toContainEqual({
+      namespace: "pages",
+      patches: expect.arrayContaining([
+        expect.objectContaining({
+          op: "add",
+          path: ["pages", pageId],
+          value: expect.objectContaining({
+            id: pageId,
+            name: "Landing",
+            path: "/landing",
+          }),
+        }),
+      ]),
+    });
+    expect(result.payload).toContainEqual({
+      namespace: "instances",
+      patches: expect.arrayContaining([expect.objectContaining({ op: "add" })]),
+    });
   });
 
   test("insert template copy preserves and remaps system data source", () => {

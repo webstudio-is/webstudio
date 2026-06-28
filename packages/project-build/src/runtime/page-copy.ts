@@ -13,6 +13,7 @@ import {
   unsetExpressionVariables,
 } from "./data";
 import {
+  findParentFolderByChildId,
   findPageByIdOrPath,
   getFolderById,
   getPagePath,
@@ -31,6 +32,7 @@ import type { ConflictResolution } from "./style-copy";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
+import { getRequiredPages } from "./pages";
 import { unwrap } from "./unwrap";
 
 type CreateId = () => string;
@@ -554,17 +556,28 @@ export const duplicatePage = (
   input: {
     projectId: string;
     pageId: Page["id"];
-    parentFolderId: Folder["id"];
+    parentFolderId?: Folder["id"];
     name?: Page["name"];
     path?: Page["path"];
   },
   context: { createId: CreateId }
 ) => {
+  const data = getRequiredWebstudioData(state);
+  const parentFolderId =
+    input.parentFolderId ??
+    findParentFolderByChildId(input.pageId, data.pages.folders)?.id;
+  if (parentFolderId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Page parent folder was not found"
+    );
+  }
   const duplicate = createPageDuplicatePayload({
-    build: getRequiredWebstudioData(state),
+    build: data,
+    assets: Array.from(data.assets.values()),
     projectId: input.projectId,
     pageId: input.pageId,
-    parentFolderId: input.parentFolderId,
+    parentFolderId,
     name: input.name,
     path: input.path,
     createId: context.createId,
@@ -578,6 +591,80 @@ export const duplicatePage = (
   return createRuntimeMutation({
     payload: duplicate.payload,
     result: { pageId: duplicate.pageId },
+    invalidatesNamespaces: [
+      "pages",
+      "assets",
+      "dataSources",
+      "resources",
+      "instances",
+      "props",
+      "breakpoints",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+    ],
+  });
+};
+
+export const listPageTemplates = (state: Pick<BuilderState, "pages">) => {
+  const pages = getRequiredPages(state);
+  return {
+    templates: Array.from(pages.pageTemplates?.values() ?? []).map(
+      (template) => ({
+        id: template.id,
+        name: template.name,
+        title: template.title,
+        rootInstanceId: template.rootInstanceId,
+        systemDataSourceId: template.systemDataSourceId,
+        meta: template.meta,
+      })
+    ),
+  };
+};
+
+export const createPageFromTemplate = (
+  state: BuilderState,
+  input: {
+    projectId: string;
+    templateId: PageTemplate["id"];
+    parentFolderId?: Folder["id"];
+    name: Page["name"];
+    path: Page["path"];
+  },
+  context: { createId: CreateId }
+) => {
+  const data = getRequiredWebstudioData(state);
+  const template = data.pages.pageTemplates?.get(input.templateId);
+  if (template === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Page template not found");
+  }
+  const parentFolderId = input.parentFolderId ?? data.pages.rootFolderId;
+  if (data.pages.folders.has(parentFolderId) === false) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Parent folder not found");
+  }
+
+  const before = createWebstudioDataFromBuild({
+    build: data,
+    assets: Array.from(data.assets.values()),
+  });
+  const after = structuredClone(before);
+  const pageId = insertPageFromTemplateMutable({
+    templateId: input.templateId,
+    source: { data: after },
+    target: { data: after, folderId: parentFolderId },
+    overrides: { name: input.name, path: input.path },
+    projectId: input.projectId,
+    createId: context.createId,
+  });
+  if (pageId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Page could not be created from template"
+    );
+  }
+  return createRuntimeMutation({
+    payload: createWebstudioDataPatchPayload({ before, after }),
+    result: { pageId },
     invalidatesNamespaces: [
       "pages",
       "assets",

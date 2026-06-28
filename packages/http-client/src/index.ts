@@ -704,11 +704,13 @@ type PageMetaInput = {
   description?: string;
   language?: string;
   redirect?: string;
+  status?: string;
   socialImageUrl?: string;
   socialImageAssetId?: string;
   excludePageFromSearch?: boolean;
   documentType?: "html" | "xml" | "text";
   content?: string;
+  auth?: { method: "basic"; login: string; password: string };
   custom?: Array<{ property: string; content: string }>;
 };
 
@@ -763,6 +765,96 @@ export const updatePage = projectMutationInput<
   }
 >(getPublicApiOperationPath("update-page"), ["pageId", "values"]);
 
+type ProjectSettingsInput = {
+  meta?: {
+    siteName?: string | null;
+    contactEmail?: string | null;
+    faviconAssetId?: string | null;
+    code?: string | null;
+    auth?: string | null;
+  };
+  compiler?: {
+    atomicStyles?: boolean | null;
+  };
+};
+
+export const getProjectSettings = projectQuery(
+  getPublicApiOperationPath("get-project-settings")
+);
+
+export const updateProjectSettings = projectMutationInput<
+  AuthProjectParams & ProjectSettingsInput
+>(getPublicApiOperationPath("update-project-settings"), ["meta", "compiler"]);
+
+export const listRedirects = projectQuery(
+  getPublicApiOperationPath("list-redirects")
+);
+
+export const createRedirect = projectMutationInput<
+  AuthProjectParams & {
+    old: string;
+    new: string;
+    status?: "301" | "302";
+  }
+>(getPublicApiOperationPath("create-redirect"), ["old", "new", "status"]);
+
+export const updateRedirect = projectMutationInput<
+  AuthProjectParams & {
+    old: string;
+    values: {
+      old?: string;
+      new?: string;
+      status?: "301" | "302" | null;
+    };
+  }
+>(getPublicApiOperationPath("update-redirect"), ["old", "values"]);
+
+export const deleteRedirect = projectMutationInput<
+  AuthProjectParams & {
+    old: string;
+  }
+>(getPublicApiOperationPath("delete-redirect"), ["old"]);
+
+export const listBreakpoints = projectQuery(
+  getPublicApiOperationPath("list-breakpoints")
+);
+
+type BreakpointInput = {
+  id: string;
+  label: string;
+  minWidth?: number;
+  maxWidth?: number;
+  condition?: string;
+};
+
+type BreakpointUpdateInput = Partial<Omit<BreakpointInput, "id">>;
+type NullableBreakpointUpdateInput = {
+  [Key in keyof BreakpointUpdateInput]?: BreakpointUpdateInput[Key] | null;
+};
+
+export const createBreakpoint = projectMutationInput<
+  AuthProjectParams & BreakpointInput
+>(getPublicApiOperationPath("create-breakpoint"), [
+  "id",
+  "label",
+  "minWidth",
+  "maxWidth",
+  "condition",
+]);
+
+export const updateBreakpoint = projectMutationInput<
+  AuthProjectParams & {
+    breakpointId: string;
+    values: NullableBreakpointUpdateInput;
+  }
+>(getPublicApiOperationPath("update-breakpoint"), ["breakpointId", "values"]);
+
+export const deleteBreakpoint = projectMutationInput<
+  AuthProjectParams & {
+    breakpointId: string;
+  }
+>(getPublicApiOperationPath("delete-breakpoint"), ["breakpointId"]);
+
 export const deletePage = projectMutationInput<
   AuthProjectParams & {
     pageId: string;
@@ -778,6 +870,24 @@ export const duplicatePage = projectMutationInput<
   }
 >(getPublicApiOperationPath("duplicate-page"), [
   "pageId",
+  "parentFolderId",
+  "name",
+  "path",
+]);
+
+export const listPageTemplates = projectQuery(
+  getPublicApiOperationPath("list-page-templates")
+);
+
+export const createPageFromTemplate = projectMutationInput<
+  AuthProjectParams & {
+    templateId: string;
+    parentFolderId?: string;
+    name: string;
+    path: string;
+  }
+>(getPublicApiOperationPath("create-page-from-template"), [
+  "templateId",
   "parentFolderId",
   "name",
   "path",

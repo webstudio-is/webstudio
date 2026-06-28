@@ -60,6 +60,56 @@ const writeCommands = commandCatalog
   .filter((command) => command.kind === "mutation")
   .map((command) => command.command);
 
+const topLevelCommandCatalog = [
+  {
+    command: "init",
+    use: "Create/link a Webstudio project; with --link, stores the configured project id, origin, and token",
+    examples: ["webstudio init --link <api-share-link> --json"],
+  },
+  {
+    command: "link",
+    use: "Link the current directory to one Builder share link",
+    examples: ["webstudio link --link <api-share-link>"],
+  },
+  {
+    command: "sync",
+    use: "Download the configured project bundle and asset files into .webstudio",
+    examples: ["webstudio sync"],
+  },
+  {
+    command: "build",
+    use: "Build the synced project with the selected template",
+    examples: ["webstudio build --template nextjs"],
+  },
+  {
+    command: "import",
+    use: "Import the local synced project bundle into another project share link",
+    examples: ["webstudio import --to <destination-share-link>"],
+  },
+  {
+    command: "schema",
+    use: "Print machine-readable API command and patch schemas",
+    examples: ["webstudio schema api --json"],
+  },
+  {
+    command: "man",
+    use: "Print human and LLM manuals for CLI/API workflows",
+    examples: ["webstudio man api", "webstudio man llm --json"],
+  },
+  {
+    command: "mcp",
+    use: "Run an MCP server over stdio for the configured project",
+    examples: ["webstudio mcp"],
+  },
+  {
+    command: "validate-patch",
+    use: "Validate Builder patch JSON locally before apply-patch",
+    examples: [
+      "webstudio validate-patch --base-version <version> --input patch.json --json",
+    ],
+  },
+] as const;
+
 const taskRecipeUseCases = {
   setup: [
     "Link/configure one project",
@@ -73,7 +123,19 @@ const taskRecipeUseCases = {
     "Read page by path",
     "Create page",
     "Update page settings/metadata",
+    "Read project settings",
+    "Update project settings",
+    "List redirects",
+    "Create redirect",
+    "Update redirect",
+    "Delete redirect",
+    "List breakpoints",
+    "Create breakpoint",
+    "Update breakpoint",
+    "Delete breakpoint",
     "Duplicate page",
+    "List page templates",
+    "Create page from template",
     "Delete page",
   ],
   folders: ["List folders", "Create folder", "Update folder", "Delete folder"],
@@ -216,6 +278,14 @@ const inputFileShapes = {
   "vars.json": { "--brand-color": "red" },
   "names.json": ["--brand-color"],
   "variables.json": { "--old-color": "--new-color" },
+  "project-settings.json": {
+    meta: {
+      siteName: "Acme Studio",
+      faviconAssetId: "asset-id",
+      code: "<script>console.log('site')</script>",
+    },
+    compiler: { atomicStyles: true },
+  },
   "asset.json": {
     name: "hero.png",
     type: "image",
@@ -289,6 +359,10 @@ const readFirstUseCases = [
   "List pages",
   "Read page by id",
   "Read page by path",
+  "Read project settings",
+  "List redirects",
+  "List breakpoints",
+  "List page templates",
   "List folders",
   "List element instances",
   "Inspect one element instance",
@@ -301,6 +375,120 @@ const readFirstUseCases = [
   "List publishes",
   "Make arbitrary store-level changes",
 ] as const;
+
+const apiCommandsByArea = {
+  setupAndDiscovery: [
+    "whoami",
+    "permissions",
+    "inspect",
+    "snapshot",
+    "apply-patch",
+  ],
+  pagesAndFolders: [
+    "list-pages",
+    "get-page",
+    "get-page-by-path",
+    "create-page",
+    "update-page",
+    "get-project-settings",
+    "update-project-settings",
+    "list-redirects",
+    "create-redirect",
+    "update-redirect",
+    "delete-redirect",
+    "list-breakpoints",
+    "create-breakpoint",
+    "update-breakpoint",
+    "delete-breakpoint",
+    "delete-page",
+    "duplicate-page",
+    "list-page-templates",
+    "create-page-from-template",
+    "list-folders",
+    "create-folder",
+    "update-folder",
+    "delete-folder",
+  ],
+  elementsTextPropsStyles: [
+    "list-instances",
+    "inspect-instance",
+    "append-instance",
+    "move-instance",
+    "clone-instance",
+    "delete-instance",
+    "list-texts",
+    "update-text",
+    "update-props",
+    "delete-props",
+    "bind-props",
+    "get-styles",
+    "update-styles",
+    "delete-styles",
+    "replace-styles",
+  ],
+  designTokensAndCssVariables: [
+    "list-design-tokens",
+    "create-design-token",
+    "update-design-token-styles",
+    "delete-design-token-styles",
+    "attach-design-token",
+    "detach-design-token",
+    "extract-design-token",
+    "list-css-variables",
+    "define-css-variable",
+    "delete-css-variable",
+    "rewrite-css-variable-refs",
+  ],
+  dataAndResources: [
+    "list-variables",
+    "create-variable",
+    "update-variable",
+    "delete-variable",
+    "list-resources",
+    "create-resource",
+    "update-resource",
+    "delete-resource",
+  ],
+  assets: [
+    "list-assets",
+    "upload-asset",
+    "upload-assets",
+    "find-asset-usage",
+    "replace-asset",
+    "delete-asset",
+  ],
+  publishAndDomains: [
+    "publish",
+    "list-publishes",
+    "get-publish-job",
+    "unpublish",
+    "list-domains",
+    "create-domain",
+    "update-domain",
+    "delete-domain",
+    "verify-domain",
+  ],
+} as const;
+
+const renderCapabilityCommands = (commands: readonly string[]) =>
+  commands.map((command) => `- ${command}`).join("\n");
+
+const topLevelCapabilityIndex = topLevelCommandCatalog
+  .map((command) =>
+    [
+      `### ${command.command}`,
+      command.use,
+      "Examples:",
+      ...command.examples.map((example) => `- ${example}`),
+    ].join("\n")
+  )
+  .join("\n\n");
+
+const apiCapabilityIndex = Object.entries(apiCommandsByArea)
+  .map(([area, commands]) =>
+    [`### ${area}`, renderCapabilityCommands(commands)].join("\n")
+  )
+  .join("\n\n");
 
 const taskRecipeIndex = Object.entries(taskRecipeUseCases)
   .map(([group, useCases]) =>
@@ -340,6 +528,16 @@ ${renderUseCaseCommands(readFirstUseCases)}
 - Server-only commands run remotely and invalidate/refetch namespaces declared by the operation catalog.
 - Use --refresh on local-capable commands to refresh required namespaces before running.
 - Successful JSON responses include meta.session with operationId, buildId, version, source, committed, compatibility, namespace freshness, and diagnostics.
+
+## CLI Capability Inventory
+
+### Top-Level Commands
+
+${topLevelCapabilityIndex}
+
+### API Commands By Area
+
+${apiCapabilityIndex}
 
 ## Task Recipes
 
@@ -571,6 +769,8 @@ const topics = {
       ],
       taskRecipes,
       useCaseScenarios,
+      topLevelCommands: topLevelCommandCatalog,
+      apiCommandsByArea,
       inputFileShapes,
       commands: commandCatalog,
       readCommands,
@@ -614,6 +814,8 @@ const topics = {
       ],
       taskRecipes,
       useCaseScenarios,
+      topLevelCommands: topLevelCommandCatalog,
+      apiCommandsByArea,
       inputFileShapes,
       commands: commandCatalog,
       readCommands,

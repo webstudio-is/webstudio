@@ -105,6 +105,28 @@ const assertApiPublishDomains = ({
 
 const projectIdInput = z.object({ projectId: z.string() });
 
+const projectSettingsUpdateInput = projectIdInput.extend({
+  meta: z.record(z.unknown()).optional(),
+  compiler: z.record(z.unknown()).optional(),
+});
+
+const redirectStatusInput = z.enum(["301", "302"]);
+
+const breakpointFieldsInput = z.object({
+  id: z.string(),
+  label: z.string(),
+  minWidth: z.number().optional(),
+  maxWidth: z.number().optional(),
+  condition: z.string().optional(),
+});
+
+const breakpointUpdateFieldsInput = z.object({
+  label: z.string().optional(),
+  minWidth: z.number().nullable().optional(),
+  maxWidth: z.number().nullable().optional(),
+  condition: z.string().nullable().optional(),
+});
+
 const getParentFolderIdOrThrow = (pages: Pages, pageId: string) => {
   const folderId = getParentFolderId(pages.folders, pageId);
   if (folderId !== undefined) {
@@ -580,6 +602,161 @@ export const apiRouter = router({
             name: input.name,
             path: input.path,
           },
+          commit,
+        });
+      }
+    ),
+  }),
+
+  pageTemplates: router({
+    list: buildQuery(projectIdInput, async ({ build }) => {
+      return executeApiRuntimeOperation({
+        id: "pageTemplates.list",
+        build,
+        input: {},
+      });
+    }),
+
+    createPage: buildMutation(
+      projectIdInput.extend({
+        templateId: z.string(),
+        parentFolderId: z.string().optional(),
+        name: z.string().min(1),
+        path: z.string(),
+      }),
+      async ({ input, build, commit }) => {
+        return await commitRuntimeMutation<{ pageId: string }>({
+          id: "pageTemplates.createPage",
+          build,
+          input,
+          commit,
+        });
+      }
+    ),
+  }),
+
+  projectSettings: router({
+    get: buildQuery(projectIdInput, async ({ build }) => {
+      return executeApiRuntimeOperation({
+        id: "projectSettings.get",
+        build,
+        input: {},
+      });
+    }),
+
+    update: buildMutation(
+      projectSettingsUpdateInput,
+      async ({ input, build, commit }) => {
+        return await commitRuntimeMutation<{ updated: boolean }>({
+          id: "projectSettings.update",
+          build,
+          input,
+          commit,
+        });
+      }
+    ),
+  }),
+
+  redirects: router({
+    list: buildQuery(projectIdInput, async ({ build }) => {
+      return executeApiRuntimeOperation({
+        id: "redirects.list",
+        build,
+        input: {},
+      });
+    }),
+
+    create: buildMutation(
+      projectIdInput.extend({
+        old: z.string(),
+        new: z.string(),
+        status: redirectStatusInput.optional(),
+      }),
+      async ({ input, build, commit }) => {
+        return await commitRuntimeMutation<{ old: string }>({
+          id: "redirects.create",
+          build,
+          input,
+          commit,
+        });
+      }
+    ),
+
+    update: buildMutation(
+      projectIdInput.extend({
+        old: z.string(),
+        values: z.object({
+          old: z.string().optional(),
+          new: z.string().optional(),
+          status: redirectStatusInput.nullable().optional(),
+        }),
+      }),
+      async ({ input, build, commit }) => {
+        return await commitRuntimeMutation<{ old: string }>({
+          id: "redirects.update",
+          build,
+          input,
+          commit,
+        });
+      }
+    ),
+
+    delete: buildMutation(
+      projectIdInput.extend({ old: z.string() }),
+      async ({ input, build, commit }) => {
+        return await commitRuntimeMutation<{ old: string }>({
+          id: "redirects.delete",
+          build,
+          input,
+          commit,
+        });
+      }
+    ),
+  }),
+
+  breakpoints: router({
+    list: buildQuery(projectIdInput, async ({ build }) => {
+      return executeApiRuntimeOperation({
+        id: "breakpoints.list",
+        build,
+        input: {},
+      });
+    }),
+
+    create: buildMutation(
+      projectIdInput.merge(breakpointFieldsInput),
+      async ({ input, build, commit }) => {
+        return await commitRuntimeMutation<{ breakpointId: string }>({
+          id: "breakpoints.create",
+          build,
+          input,
+          commit,
+        });
+      }
+    ),
+
+    update: buildMutation(
+      projectIdInput.extend({
+        breakpointId: z.string(),
+        values: breakpointUpdateFieldsInput,
+      }),
+      async ({ input, build, commit }) => {
+        return await commitRuntimeMutation<{ breakpointId: string }>({
+          id: "breakpoints.update",
+          build,
+          input,
+          commit,
+        });
+      }
+    ),
+
+    delete: buildMutation(
+      projectIdInput.extend({ breakpointId: z.string() }),
+      async ({ input, build, commit }) => {
+        return await commitRuntimeMutation<{ breakpointId: string }>({
+          id: "breakpoints.delete",
+          build,
+          input,
           commit,
         });
       }

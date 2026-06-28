@@ -241,9 +241,13 @@ const Menu = ({
   ]);
   const [isOpen, setIsOpen] = useState(false);
   const [draftLink, setDraftLink] = useState(value);
+  const draftLinkRef = useRef(value);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const updateDraftLink = (update: LinkOptionsUpdate) => {
-    setDraftLink((draftLink) => ({ ...draftLink, ...update }));
+    const nextDraftLink = { ...draftLinkRef.current, ...update };
+    draftLinkRef.current = nextDraftLink;
+    setDraftLink(nextDraftLink);
   };
 
   const handleCheckedChange = (role: Role) => (checked: boolean) => {
@@ -283,12 +287,13 @@ const Menu = ({
     );
   };
 
-  const saveDraftLink = () => {
-    const nextName = draftLink.name.trim();
+  const saveDraftLink = (name = draftLinkRef.current.name) => {
+    const nextName = name.trim();
     const nextLink = {
-      ...draftLink,
+      ...draftLinkRef.current,
       name: nextName.length === 0 ? value.name : nextName,
     };
+    draftLinkRef.current = nextLink;
     if (
       shallowEqual(
         getComparableLinkOptions(nextLink),
@@ -306,8 +311,9 @@ const Menu = ({
       open={isOpen}
       onOpenChange={(open) => {
         if (open === false) {
-          saveDraftLink();
+          saveDraftLink(nameInputRef.current?.value);
         } else {
+          draftLinkRef.current = value;
           setDraftLink(value);
         }
         setIsOpen(open);
@@ -331,12 +337,16 @@ const Menu = ({
           <Label htmlFor={ids.name}>Name</Label>
           <InputField
             id={ids.name}
+            inputRef={nameInputRef}
             color={draftLink.name.length === 0 ? "error" : undefined}
             value={draftLink.name}
             onChange={(event) => updateDraftLink({ name: event.target.value })}
+            onInput={(event) =>
+              updateDraftLink({ name: event.currentTarget.value })
+            }
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                saveDraftLink();
+                saveDraftLink(event.currentTarget.value);
                 setIsOpen(false);
               }
             }}

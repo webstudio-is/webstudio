@@ -39,6 +39,16 @@ const createProjectSessionApiError = (diagnostic: {
   return error;
 };
 
+const withProjectId = (
+  input: unknown,
+  projectId: string
+): Record<string, unknown> => ({
+  projectId,
+  ...(typeof input === "object" && input !== null
+    ? (input as Record<string, unknown>)
+    : {}),
+});
+
 export const isProjectSessionEnvelope = (
   value: unknown
 ): value is ProjectSessionEnvelope =>
@@ -107,13 +117,16 @@ export const executeProjectSessionApiOperation = async ({
           input
         )
       : operation.method === "query"
-        ? await session.read(runtimeOperationId, input, {
-            permit: operation.permit,
-          })
-        : await session.mutate(runtimeOperationId, input, {
-            permit: operation.permit,
-            dryRun,
-          });
+        ? await session.read(
+            runtimeOperationId,
+            withProjectId(input, connection.projectId),
+            { permit: operation.permit }
+          )
+        : await session.mutate(
+            runtimeOperationId,
+            withProjectId(input, connection.projectId),
+            { permit: operation.permit, dryRun }
+          );
   const error = getSessionError(envelope);
   if (error !== undefined) {
     throw createProjectSessionApiError(error);

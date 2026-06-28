@@ -8,7 +8,6 @@ import * as projectBuild from "@webstudio-is/project-build/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol";
 import {
-  AuthorizationError,
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
@@ -346,7 +345,10 @@ describe("api router permits", () => {
         "project-1",
         "view"
       )
-    ).rejects.toThrow(AuthorizationError);
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Builder API requires an API token",
+    });
   });
 
   test("rejects tokens from another project", async () => {

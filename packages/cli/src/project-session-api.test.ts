@@ -46,7 +46,7 @@ describe("project session api adapter", () => {
 
     expect(session.read).toHaveBeenCalledWith(
       "pages.list",
-      { includeFolders: true },
+      { projectId: "project-1", includeFolders: true },
       { permit: "view" }
     );
     expect(result.result).toEqual(["page"]);

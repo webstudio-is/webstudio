@@ -201,10 +201,149 @@ export const updatePageCommandOptions = (yargs: CommonYargsArgv) =>
       type: "string",
       describe: "Update page custom document content",
     })
+    .option("status", {
+      type: "string",
+      describe: "Update page response status expression",
+    })
+    .option("auth-login", {
+      type: "string",
+      describe: "Set page basic-auth login",
+    })
+    .option("auth-password", {
+      type: "string",
+      describe: "Set page basic-auth password",
+    })
     .option("parent-folder", {
       type: "string",
       describe: "Move page into this folder id",
     });
+
+export const projectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs);
+
+export const updateProjectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
+  requiredInputOption(
+    apiCommandOptions(yargs),
+    "Required JSON file with optional meta and compiler objects. Use null values to remove existing fields."
+  );
+
+export const createRedirectCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs)
+    .option("old", {
+      type: "string",
+      describe: "Required source URL path to redirect from, for example /old",
+      demandOption: true,
+    })
+    .option("new", {
+      type: "string",
+      describe: "Required destination URL or path, for example /new",
+      demandOption: true,
+    })
+    .option("status", {
+      choices: ["301", "302"] as const,
+      describe: "Redirect HTTP status code",
+    });
+
+export const updateRedirectCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs)
+    .option("old", {
+      type: "string",
+      describe: "Required current source URL path to update",
+      demandOption: true,
+    })
+    .option("new-old", {
+      type: "string",
+      describe: "Replace the source URL path",
+    })
+    .option("new", {
+      type: "string",
+      describe: "Replace the destination URL or path",
+    })
+    .option("status", {
+      choices: ["301", "302"] as const,
+      describe: "Replace the redirect HTTP status code",
+    })
+    .option("clear-status", {
+      type: "boolean",
+      describe: "Remove explicit redirect status and use the default",
+    });
+
+export const deleteRedirectCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs).option("old", {
+    type: "string",
+    describe: "Required source URL path to delete",
+    demandOption: true,
+  });
+
+export const breakpointCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs);
+
+const breakpointFieldsCommandOptions = (
+  yargs: CommonYargsArgv,
+  options: { requireLabel?: boolean } = {}
+) =>
+  yargs
+    .option("label", {
+      type: "string",
+      describe:
+        options.requireLabel === true
+          ? "Required breakpoint label shown in Builder"
+          : "Breakpoint label shown in Builder",
+      demandOption: options.requireLabel,
+    })
+    .option("min-width", {
+      type: "number",
+      describe: "Minimum viewport width in pixels",
+    })
+    .option("max-width", {
+      type: "number",
+      describe: "Maximum viewport width in pixels",
+    })
+    .option("condition", {
+      type: "string",
+      describe: "Custom CSS media query condition without @media",
+    })
+    .option("clear-min-width", {
+      type: "boolean",
+      describe: "Remove the minimum viewport width",
+    })
+    .option("clear-max-width", {
+      type: "boolean",
+      describe: "Remove the maximum viewport width",
+    })
+    .option("clear-condition", {
+      type: "boolean",
+      describe: "Remove the custom media query condition",
+    });
+
+export const createBreakpointCommandOptions = (yargs: CommonYargsArgv) =>
+  breakpointFieldsCommandOptions(
+    apiCommandOptions(yargs).option("breakpoint", {
+      type: "string",
+      describe: "Required breakpoint id to create",
+      demandOption: true,
+    }),
+    { requireLabel: true }
+  );
+
+export const updateBreakpointCommandOptions = (yargs: CommonYargsArgv) =>
+  breakpointFieldsCommandOptions(
+    apiCommandOptions(yargs).option("breakpoint", {
+      type: "string",
+      describe: "Required breakpoint id to update",
+      demandOption: true,
+    })
+  );
+
+export const deleteBreakpointCommandOptions = (yargs: CommonYargsArgv) =>
+  confirmOption(
+    apiCommandOptions(yargs).option("breakpoint", {
+      type: "string",
+      describe: "Required breakpoint id to delete",
+      demandOption: true,
+    }),
+    "Required. Confirm deleting this breakpoint and its style declarations"
+  );
 
 export const deletePageCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs).option("page", {
@@ -231,6 +370,31 @@ export const duplicatePageCommandOptions = (yargs: CommonYargsArgv) =>
     .option("parent-folder", {
       type: "string",
       describe: "Folder id where the duplicated page should be inserted",
+    });
+
+export const listPageTemplatesCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs);
+
+export const createPageFromTemplateCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs)
+    .option("template", {
+      type: "string",
+      describe: "Required page template id to copy",
+      demandOption: true,
+    })
+    .option("name", {
+      type: "string",
+      describe: "Required new page name shown in Builder",
+      demandOption: true,
+    })
+    .option("path", {
+      type: "string",
+      describe: "Required new page URL path, for example /landing",
+      demandOption: true,
+    })
+    .option("parent-folder", {
+      type: "string",
+      describe: "Folder id where the new page should be inserted",
     });
 
 export const foldersCommandOptions = (yargs: CommonYargsArgv) =>
@@ -961,6 +1125,7 @@ type ApiCommandOptions = {
   input?: string;
   assetsDir?: string;
   page?: string;
+  template?: string;
   folder?: string;
   path?: string;
   name?: string;
@@ -987,6 +1152,19 @@ type ApiCommandOptions = {
   excludePageFromSearch?: boolean;
   documentType?: "html" | "xml" | "text";
   content?: string;
+  status?: "301" | "302" | string;
+  clearStatus?: boolean;
+  old?: string;
+  new?: string;
+  newOld?: string;
+  minWidth?: number;
+  maxWidth?: number;
+  condition?: string;
+  clearMinWidth?: boolean;
+  clearMaxWidth?: boolean;
+  clearCondition?: boolean;
+  authLogin?: string;
+  authPassword?: string;
   message?: string;
   parentFolder?: string;
   includeFolders?: boolean;
@@ -1040,6 +1218,17 @@ type ApiCommandConnection = ApiConnection & {
 type ResourceFieldsInput = Parameters<
   typeof httpClient.createResource
 >[0]["resource"];
+type ProjectSettingsInput = Pick<
+  Parameters<typeof httpClient.updateProjectSettings>[0],
+  "meta" | "compiler"
+>;
+type BreakpointInput = Pick<
+  Parameters<typeof httpClient.createBreakpoint>[0],
+  "id" | "label" | "minWidth" | "maxWidth" | "condition"
+>;
+type BreakpointUpdateInput = Parameters<
+  typeof httpClient.updateBreakpoint
+>[0]["values"];
 type VariableValueInput = Parameters<
   typeof httpClient.createVariable
 >[0]["value"];
@@ -1121,6 +1310,19 @@ const requireStringOption = (value: string | undefined, name: string) => {
 const requireTrueOption = (value: boolean | undefined, name: string) => {
   if (value !== true) {
     throw new Error(`${name} is required.`);
+  }
+};
+
+const rejectOptionConflict = (
+  clearOption: boolean | undefined,
+  clearOptionName: string,
+  valueOption: unknown,
+  valueOptionName: string
+) => {
+  if (clearOption === true && valueOption !== undefined) {
+    throw new Error(
+      `${clearOptionName} cannot be used with ${valueOptionName}.`
+    );
   }
 };
 
@@ -1349,20 +1551,33 @@ const getResourceFields = async (
 };
 
 const getPageMetaOptions = (options: ApiCommandOptions) => {
+  const auth =
+    options.authLogin !== undefined || options.authPassword !== undefined
+      ? {
+          method: "basic" as const,
+          login: requireOption(options.authLogin, "--auth-login"),
+          password: requireOption(options.authPassword, "--auth-password"),
+        }
+      : undefined;
   const meta = {
     description: options.description,
     language: options.language,
     redirect: options.redirect,
+    status: options.status,
     socialImageUrl: options.socialImageUrl,
     socialImageAssetId: options.socialImageAsset,
     excludePageFromSearch: options.excludePageFromSearch,
     documentType: options.documentType,
     content: options.content,
+    auth,
   };
   return Object.values(meta).some((value) => value !== undefined)
     ? meta
     : undefined;
 };
+
+const redirectStatusOption = (status: ApiCommandOptions["status"]) =>
+  status === "301" || status === "302" ? status : undefined;
 
 const getErrorCode = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
@@ -1528,6 +1743,139 @@ const apiCommandHandlers = {
       dependencies
     );
   },
+  "get-project-settings": async (_options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "get-project-settings",
+      {},
+      connection,
+      dependencies
+    ),
+  "update-project-settings": async (options, connection, dependencies) => {
+    const input = await readInputObject<ProjectSettingsInput>(
+      dependencies,
+      options
+    );
+    return runProjectSessionCommand(
+      "update-project-settings",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-redirects": async (_options, connection, dependencies) =>
+    runProjectSessionCommand("list-redirects", {}, connection, dependencies),
+  "create-redirect": async (options, connection, dependencies) => {
+    const input = {
+      old: requireOption(options.old, "--old"),
+      new: requireOption(options.new, "--new"),
+      status: redirectStatusOption(options.status),
+    };
+    return runProjectSessionCommand(
+      "create-redirect",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-redirect": async (options, connection, dependencies) => {
+    rejectOptionConflict(
+      options.clearStatus,
+      "--clear-status",
+      options.status,
+      "--status"
+    );
+    const input = {
+      old: requireOption(options.old, "--old"),
+      values: {
+        old: options.newOld,
+        new: options.new,
+        status:
+          options.clearStatus === true
+            ? null
+            : redirectStatusOption(options.status),
+      },
+    };
+    return runProjectSessionCommand(
+      "update-redirect",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-redirect": async (options, connection, dependencies) => {
+    const input = { old: requireOption(options.old, "--old") };
+    return runProjectSessionCommand(
+      "delete-redirect",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-breakpoints": async (_options, connection, dependencies) =>
+    runProjectSessionCommand("list-breakpoints", {}, connection, dependencies),
+  "create-breakpoint": async (options, connection, dependencies) => {
+    const input: BreakpointInput = {
+      id: requireOption(options.breakpoint, "--breakpoint"),
+      label: requireOption(options.label, "--label"),
+      minWidth: options.minWidth,
+      maxWidth: options.maxWidth,
+      condition: options.condition,
+    };
+    return runProjectSessionCommand(
+      "create-breakpoint",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-breakpoint": async (options, connection, dependencies) => {
+    rejectOptionConflict(
+      options.clearMinWidth,
+      "--clear-min-width",
+      options.minWidth,
+      "--min-width"
+    );
+    rejectOptionConflict(
+      options.clearMaxWidth,
+      "--clear-max-width",
+      options.maxWidth,
+      "--max-width"
+    );
+    rejectOptionConflict(
+      options.clearCondition,
+      "--clear-condition",
+      options.condition,
+      "--condition"
+    );
+    const values: BreakpointUpdateInput = {
+      label: options.label,
+      minWidth: options.clearMinWidth === true ? null : options.minWidth,
+      maxWidth: options.clearMaxWidth === true ? null : options.maxWidth,
+      condition: options.clearCondition === true ? null : options.condition,
+    };
+    const input = {
+      breakpointId: requireOption(options.breakpoint, "--breakpoint"),
+      values,
+    };
+    return runProjectSessionCommand(
+      "update-breakpoint",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-breakpoint": async (options, connection, dependencies) => {
+    requireTrueOption(options.confirm, "--confirm");
+    const input = {
+      breakpointId: requireOption(options.breakpoint, "--breakpoint"),
+    };
+    return runProjectSessionCommand(
+      "delete-breakpoint",
+      input,
+      connection,
+      dependencies
+    );
+  },
   "delete-page": async (options, connection, dependencies) => {
     const input = { pageId: requireOption(options.page, "--page") };
     return runProjectSessionCommand(
@@ -1546,6 +1894,27 @@ const apiCommandHandlers = {
     };
     return runProjectSessionCommand(
       "duplicate-page",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "list-page-templates": async (_options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "list-page-templates",
+      {},
+      connection,
+      dependencies
+    ),
+  "create-page-from-template": async (options, connection, dependencies) => {
+    const input = {
+      templateId: requireOption(options.template, "--template"),
+      parentFolderId: options.parentFolder,
+      name: requireOption(options.name, "--name"),
+      path: requireOption(options.path, "--path"),
+    };
+    return runProjectSessionCommand(
+      "create-page-from-template",
       input,
       connection,
       dependencies

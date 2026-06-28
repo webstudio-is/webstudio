@@ -12,13 +12,20 @@ export type RuntimeOperationContract = {
 };
 
 const pageNamespaces = ["pages", "instances"] as const;
-const treeNamespaces = ["pages", "instances", "props"] as const;
+const instanceReadNamespaces = ["pages", "instances", "props"] as const;
 const styleNamespaces = [
   "styles",
   "styleSources",
   "styleSourceSelections",
 ] as const;
 const dataNamespaces = ["dataSources", "resources"] as const;
+const treeMutationNamespaces = [
+  "pages",
+  "instances",
+  "props",
+  ...dataNamespaces,
+  ...styleNamespaces,
+] as const;
 const assetUsageNamespaces = [
   "assets",
   "pages",
@@ -26,6 +33,18 @@ const assetUsageNamespaces = [
   "styles",
   "resources",
   "dataSources",
+] as const;
+const pageCopyNamespaces = [
+  "pages",
+  "assets",
+  "dataSources",
+  "resources",
+  "instances",
+  "props",
+  "breakpoints",
+  "styles",
+  "styleSources",
+  "styleSourceSelections",
 ] as const;
 
 const read = <Id extends string>(
@@ -75,13 +94,56 @@ export const runtimeOperationContracts = [
     writeNamespaces: ["pages"],
     retryOnConflict: true,
   }),
+  read("projectSettings.get", ["pages"]),
+  mutation("projectSettings.update", {
+    readNamespaces: ["pages"],
+    writeNamespaces: ["pages"],
+    retryOnConflict: true,
+  }),
+  read("redirects.list", ["pages"]),
+  mutation("redirects.create", {
+    readNamespaces: ["pages"],
+    writeNamespaces: ["pages"],
+    retryOnConflict: true,
+  }),
+  mutation("redirects.update", {
+    readNamespaces: ["pages"],
+    writeNamespaces: ["pages"],
+    retryOnConflict: true,
+  }),
+  mutation("redirects.delete", {
+    readNamespaces: ["pages"],
+    writeNamespaces: ["pages"],
+    retryOnConflict: true,
+  }),
+  read("breakpoints.list", ["breakpoints"]),
+  mutation("breakpoints.create", {
+    readNamespaces: ["breakpoints"],
+    writeNamespaces: ["breakpoints"],
+    retryOnConflict: true,
+  }),
+  mutation("breakpoints.update", {
+    readNamespaces: ["breakpoints"],
+    writeNamespaces: ["breakpoints"],
+    retryOnConflict: true,
+  }),
+  mutation("breakpoints.delete", {
+    readNamespaces: ["breakpoints", "styles"],
+    writeNamespaces: ["breakpoints", "styles"],
+    retryOnConflict: true,
+  }),
   mutation("pages.delete", {
-    readNamespaces: pageNamespaces,
-    writeNamespaces: pageNamespaces,
+    readNamespaces: treeMutationNamespaces,
+    writeNamespaces: treeMutationNamespaces,
   }),
   mutation("pages.duplicate", {
-    readNamespaces: pageNamespaces,
-    writeNamespaces: pageNamespaces,
+    readNamespaces: pageCopyNamespaces,
+    writeNamespaces: pageCopyNamespaces,
+  }),
+  read("pageTemplates.list", ["pages"]),
+  mutation("pageTemplates.createPage", {
+    readNamespaces: pageCopyNamespaces,
+    writeNamespaces: pageCopyNamespaces,
   }),
   read("folders.list", ["pages"]),
   mutation("folders.create", {
@@ -94,10 +156,10 @@ export const runtimeOperationContracts = [
     retryOnConflict: true,
   }),
   mutation("folders.delete", {
-    readNamespaces: pageNamespaces,
-    writeNamespaces: pageNamespaces,
+    readNamespaces: treeMutationNamespaces,
+    writeNamespaces: treeMutationNamespaces,
   }),
-  read("instances.list", treeNamespaces),
+  read("instances.list", instanceReadNamespaces),
   read("instances.inspect", [
     "instances",
     "props",
@@ -106,26 +168,20 @@ export const runtimeOperationContracts = [
     "styleSourceSelections",
   ]),
   mutation("instances.append", {
-    readNamespaces: treeNamespaces,
-    writeNamespaces: treeNamespaces,
+    readNamespaces: treeMutationNamespaces,
+    writeNamespaces: treeMutationNamespaces,
   }),
   mutation("instances.move", {
     readNamespaces: ["instances"],
     writeNamespaces: ["instances"],
   }),
   mutation("instances.clone", {
-    readNamespaces: treeNamespaces,
-    writeNamespaces: [
-      "instances",
-      "props",
-      "styles",
-      "styleSources",
-      "styleSourceSelections",
-    ],
+    readNamespaces: treeMutationNamespaces,
+    writeNamespaces: treeMutationNamespaces,
   }),
   mutation("instances.delete", {
-    readNamespaces: treeNamespaces,
-    writeNamespaces: treeNamespaces,
+    readNamespaces: treeMutationNamespaces,
+    writeNamespaces: treeMutationNamespaces,
   }),
   mutation("instances.updateProps", {
     readNamespaces: ["instances", "props"],

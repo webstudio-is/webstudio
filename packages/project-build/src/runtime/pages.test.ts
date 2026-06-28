@@ -148,6 +148,8 @@ describe("serialized page helpers", () => {
     page.meta = {
       description: "Description",
       excludePageFromSearch: "true",
+      status: "200",
+      auth: { method: "basic", login: "editor", password: "password123" },
     };
     const serializedPages = getSerializedPages({ pages });
     const serializedPage = serializedPages.pages.find(
@@ -178,16 +180,21 @@ describe("serialized page helpers", () => {
       description: "Description",
       language: undefined,
       redirect: undefined,
+      status: "200",
       socialImageUrl: undefined,
       socialImageAssetId: undefined,
       excludePageFromSearch: true,
       documentType: "html",
       content: undefined,
+      auth: { method: "basic", login: "editor", password: "password123" },
       custom: undefined,
     });
     expect(getHomePageRootInstanceId(pages)).toBe("root");
     expect(
       findSerializedPageByInput(serializedPages, { pagePath: "" })?.id
+    ).toBe("home");
+    expect(
+      findSerializedPageByInput(serializedPages, { pagePath: "/" })?.id
     ).toBe("home");
     expect(serializePageDetailsByInput({ pages }, { pageId: "home" })).toEqual(
       expect.objectContaining({

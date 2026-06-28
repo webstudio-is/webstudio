@@ -1,6 +1,7 @@
 import { readFile, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { cwd } from "node:process";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
 import * as httpClient from "@webstudio-is/http-client";
 import {
   createProjectSession,
@@ -14,10 +15,10 @@ import {
 } from "@webstudio-is/project-build/project-session";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
 import {
-  createBuilderStateFromCompactBuild,
+  createBuilderStateFromBuildData,
   createBuilderStateFromSerializedSnapshot,
   createSerializedBuilderStateSnapshotFromState,
-  type BuilderCompactBuildDataSnapshot,
+  type BuilderBuildDataSnapshot,
   type SerializedBuilderStateSnapshot,
 } from "@webstudio-is/project-build/state/adapters";
 import type { BuilderStateFreshness } from "@webstudio-is/project-build/state/freshness";
@@ -33,14 +34,18 @@ type ApiConnection = {
 };
 
 type PublicBuildSnapshot = Omit<
-  BuilderCompactBuildDataSnapshot,
-  "dataSources"
+  BuilderBuildDataSnapshot,
+  "dataSources" | "pages"
 > & {
   projectId: string;
   buildId: string;
   version: number;
-  dataSources?: BuilderCompactBuildDataSnapshot["dataSources"];
-  variables?: BuilderCompactBuildDataSnapshot["dataSources"];
+  homePageId?: string;
+  rootFolderId?: string;
+  pages?: unknown;
+  folders?: unknown;
+  dataSources?: BuilderBuildDataSnapshot["dataSources"];
+  variables?: BuilderBuildDataSnapshot["dataSources"];
 };
 
 type PersistedCliProjectSessionSnapshot = Omit<
@@ -60,10 +65,31 @@ const createCliProjectSessionCompatibility = (
   apiCompatibilityVersion: connection.headers?.["x-webstudio-client-version"],
 });
 
-const toPublicApiInclude = (namespaces: readonly BuilderNamespace[]) =>
-  namespaces.map((namespace) =>
-    namespace === "dataSources" ? "variables" : namespace
-  );
+const toPublicApiInclude = (namespaces: readonly BuilderNamespace[]) => [
+  ...new Set(
+    namespaces.flatMap((namespace) => {
+      if (namespace === "dataSources") {
+        return ["variables"];
+      }
+      if (namespace === "pages") {
+        return ["pages", "folders"];
+      }
+      return [namespace];
+    })
+  ),
+];
+
+const toPages = (snapshot: PublicBuildSnapshot) => {
+  if (snapshot.pages === undefined) {
+    return undefined;
+  }
+  return migratePages({
+    homePageId: snapshot.homePageId,
+    rootFolderId: snapshot.rootFolderId,
+    pages: snapshot.pages,
+    folders: snapshot.folders,
+  });
+};
 
 const toRemoteSnapshot = (
   snapshot: PublicBuildSnapshot
@@ -71,8 +97,9 @@ const toRemoteSnapshot = (
   projectId: snapshot.projectId,
   buildId: snapshot.buildId,
   version: snapshot.version,
-  state: createBuilderStateFromCompactBuild({
+  state: createBuilderStateFromBuildData({
     ...snapshot,
+    pages: toPages(snapshot),
     dataSources: snapshot.dataSources ?? snapshot.variables ?? [],
   }),
 });
@@ -184,10 +211,12 @@ export const createCliProjectSessionStorage = (
 export const createCliProjectSessionTransport = ({
   connection,
   executeServerOperation,
+  getBuildSnapshot = httpClient.getBuildSnapshot,
   getPermissions,
 }: {
   connection: ApiConnection;
   executeServerOperation?: ProjectSessionTransport["executeServerOperation"];
+  getBuildSnapshot?: typeof httpClient.getBuildSnapshot;
   getPermissions?: ProjectSessionTransport["getPermissions"];
 }): ProjectSessionTransport => ({
   async getCompatibility() {
@@ -195,7 +224,7 @@ export const createCliProjectSessionTransport = ({
   },
   async fetchNamespaces({ namespaces }) {
     const snapshot = (await withMappedRemoteError(() =>
-      httpClient.getBuildSnapshot({
+      getBuildSnapshot({
         ...connection,
         include: toPublicApiInclude(namespaces),
       })
@@ -248,7 +277,7 @@ export const createCliProjectSession = ({
   storage = createCliProjectSessionStorage(),
   executeServerOperation,
   getPermissions,
-  createId = crypto.randomUUID,
+  createId = () => crypto.randomUUID(),
   now = () => new Date(),
 }: {
   connection: ApiConnection;

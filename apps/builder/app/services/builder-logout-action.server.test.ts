@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createBuilderLogoutAction } from "./builder-logout";
+import { createBuilderLogoutAction } from "./builder-logout-action.server";
 
 const projectOrigin =
   "https://p-042d35b0-718e-4c5f-a5dd-8568282366e5.apps.webstudio.is";
@@ -15,7 +15,7 @@ const callAction = (request: Request) =>
     context: {},
   });
 
-describe("builder logout route", () => {
+describe("builder logout action", () => {
   beforeEach(() => {
     logout.mockReset();
   });

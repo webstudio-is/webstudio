@@ -6,6 +6,7 @@ import * as data from "./data";
 import * as instances from "./instances";
 import * as pageCopy from "./page-copy";
 import * as pages from "./pages";
+import * as projectSettings from "./project-settings";
 import * as props from "./props";
 import * as styles from "./styles";
 
@@ -46,6 +47,57 @@ export const builderRuntimeOperations = [
   runtimeOperation("pages.update", ({ state, input }) =>
     pages.updatePage(state, input as Parameters<typeof pages.updatePage>[1])
   ),
+  runtimeOperation("projectSettings.get", ({ state }) =>
+    projectSettings.getProjectSettings(state)
+  ),
+  runtimeOperation("projectSettings.update", ({ state, input }) =>
+    projectSettings.updateProjectSettings(
+      state,
+      input as Parameters<typeof projectSettings.updateProjectSettings>[1]
+    )
+  ),
+  runtimeOperation("redirects.list", ({ state }) =>
+    projectSettings.listRedirects(state)
+  ),
+  runtimeOperation("redirects.create", ({ state, input }) =>
+    projectSettings.createRedirect(
+      state,
+      input as Parameters<typeof projectSettings.createRedirect>[1]
+    )
+  ),
+  runtimeOperation("redirects.update", ({ state, input }) =>
+    projectSettings.updateRedirect(
+      state,
+      input as Parameters<typeof projectSettings.updateRedirect>[1]
+    )
+  ),
+  runtimeOperation("redirects.delete", ({ state, input }) =>
+    projectSettings.deleteRedirect(
+      state,
+      input as Parameters<typeof projectSettings.deleteRedirect>[1]
+    )
+  ),
+  runtimeOperation("breakpoints.list", ({ state }) =>
+    projectSettings.listBreakpoints(state)
+  ),
+  runtimeOperation("breakpoints.create", ({ state, input }) =>
+    projectSettings.createBreakpoint(
+      state,
+      input as Parameters<typeof projectSettings.createBreakpoint>[1]
+    )
+  ),
+  runtimeOperation("breakpoints.update", ({ state, input }) =>
+    projectSettings.updateBreakpoint(
+      state,
+      input as Parameters<typeof projectSettings.updateBreakpoint>[1]
+    )
+  ),
+  runtimeOperation("breakpoints.delete", ({ state, input }) =>
+    projectSettings.deleteBreakpoint(
+      state,
+      input as Parameters<typeof projectSettings.deleteBreakpoint>[1]
+    )
+  ),
   runtimeOperation("pages.delete", ({ state, input }) =>
     pages.deletePage(state, input as Parameters<typeof pages.deletePage>[1])
   ),
@@ -53,6 +105,16 @@ export const builderRuntimeOperations = [
     pageCopy.duplicatePage(
       state,
       input as Parameters<typeof pageCopy.duplicatePage>[1],
+      context
+    )
+  ),
+  runtimeOperation("pageTemplates.list", ({ state }) =>
+    pageCopy.listPageTemplates(state)
+  ),
+  runtimeOperation("pageTemplates.createPage", ({ state, input, context }) =>
+    pageCopy.createPageFromTemplate(
+      state,
+      input as Parameters<typeof pageCopy.createPageFromTemplate>[1],
       context
     )
   ),

@@ -114,8 +114,9 @@ export const createShareLink = async ({
     page,
     name: "Custom link",
   });
-  await customLinkOptions.getByLabel("Name").fill(name);
-  await page.keyboard.press("Enter");
+  const nameInput = customLinkOptions.getByLabel("Name");
+  await nameInput.fill(name);
+  await nameInput.press("Enter");
   await waitForShareLinkMutation({ page });
 
   const renamedLink = getShareLinkGroup({ page, name });

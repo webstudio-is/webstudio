@@ -17,10 +17,15 @@ test("prints api manual with patch workflow and examples", () => {
   expect(output).toContain("webstudio apply-patch --base-version");
   expect(output).toContain("Supported namespaces");
   expect(output).toContain("## Use Case Index");
+  expect(output).toContain("## CLI Capability Inventory");
+  expect(output).toContain("### Top-Level Commands");
+  expect(output).toContain("### API Commands By Area");
+  expect(output).toContain("webstudio mcp");
   expect(output).toContain("## Project Session Cache");
   expect(output).toContain("Use --refresh");
   expect(output).toContain("meta.session");
-  expect(output).toContain("Manage breakpoints");
+  expect(output).toContain("webstudio list-breakpoints --json");
+  expect(output).toContain("webstudio update-project-settings");
   expect(output).toContain("Manage marketplace metadata");
   expect(output).toContain("Create a design token");
   for (const { command } of apiCommandMetadata) {
@@ -49,6 +54,22 @@ test("prints api manual as json", () => {
   expect(output.sessionBehavior.refreshFlag).toContain("--refresh");
   expect(output.sessionBehavior.metadata).toContain("meta.session");
   expect(
+    output.topLevelCommands.map(({ command }: { command: string }) => command)
+  ).toEqual([
+    "init",
+    "link",
+    "sync",
+    "build",
+    "import",
+    "schema",
+    "man",
+    "mcp",
+    "validate-patch",
+  ]);
+  expect(Object.values(output.apiCommandsByArea).flat().sort()).toEqual(
+    apiCommandMetadata.map(({ command }) => command).sort()
+  );
+  expect(
     output.commands.map((command: { command: string }) => command.command)
   ).toEqual(apiCommandMetadata.map(({ command }) => command));
   expect(output.taskRecipes.pages).toContain(
@@ -70,7 +91,19 @@ test("prints api manual as json", () => {
     "Read page by path",
     "Create page",
     "Update page settings/metadata",
+    "Read project settings",
+    "Update project settings",
+    "List redirects",
+    "Create redirect",
+    "Update redirect",
+    "Delete redirect",
+    "List breakpoints",
+    "Create breakpoint",
+    "Update breakpoint",
+    "Delete breakpoint",
     "Duplicate page",
+    "List page templates",
+    "Create page from template",
     "Delete page",
     "List folders",
     "Create folder",
@@ -126,8 +159,6 @@ test("prints api manual as json", () => {
     "Delete domain",
     "Verify domain",
     "Make arbitrary store-level changes",
-    "Manage site-level settings not covered by semantic commands",
-    "Manage breakpoints",
     "Manage marketplace metadata",
   ]);
   const documentedCommands = new Set(

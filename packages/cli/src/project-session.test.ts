@@ -124,6 +124,63 @@ describe("cli project session storage", () => {
 });
 
 describe("cli project session transport", () => {
+  test("adapts public API build snapshots into project-session state", async () => {
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+      getBuildSnapshot: async (input) => {
+        expect(input.include).toEqual(["pages", "folders", "instances"]);
+        return {
+          projectId: "project-1",
+          buildId: "build-1",
+          version: 1,
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              path: "",
+              title: "Home",
+              rootInstanceId: "body",
+              meta: {},
+            },
+          ],
+          homePageId: "home",
+          rootFolderId: "root",
+          folders: [
+            {
+              id: "root",
+              name: "Root",
+              slug: "",
+              children: ["home"],
+            },
+          ],
+          instances: [
+            {
+              type: "instance",
+              id: "body",
+              component: "Body",
+              children: [],
+            },
+          ],
+        };
+      },
+    });
+
+    const snapshot = await transport.fetchNamespaces({
+      projectId: "project-1",
+      namespaces: ["pages", "instances"],
+    });
+
+    expect(snapshot.state.pages?.pages.get("home")?.name).toBe("Home");
+    expect(snapshot.state.pages?.folders.get("root")?.children).toEqual([
+      "home",
+    ]);
+    expect(snapshot.state.instances?.get("body")?.component).toBe("Body");
+  });
+
   test("adapts injected permission reader to project session transport", async () => {
     const transport = createCliProjectSessionTransport({
       connection: {

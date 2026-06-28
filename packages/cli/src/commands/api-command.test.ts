@@ -333,6 +333,7 @@ test("routes local-capable commands through project session runtime", async () =
   expect(session.read).toHaveBeenCalledWith(
     "pages.list",
     {
+      projectId: "project-1",
       includeFolders: true,
     },
     {
@@ -369,7 +370,7 @@ test("passes refresh to local-capable command session", async () => {
   expect(session.refresh).toHaveBeenCalledWith(["pages"]);
   expect(session.read).toHaveBeenCalledWith(
     "pages.list",
-    { includeFolders: undefined },
+    { projectId: "project-1", includeFolders: undefined },
     { permit: "view" }
   );
 });
@@ -392,6 +393,7 @@ test("passes dry-run to local-capable mutations", async () => {
   expect(session.mutate).toHaveBeenCalledWith(
     "folders.create",
     {
+      projectId: "project-1",
       folderId: undefined,
       name: "Draft",
       slug: "draft",
@@ -567,6 +569,8 @@ test("creates page with settings", async () => {
         excludePageFromSearch: undefined,
         documentType: undefined,
         content: undefined,
+        status: undefined,
+        auth: undefined,
       },
     },
   });
@@ -579,6 +583,9 @@ test("updates page metadata", async () => {
       page: "page-1",
       title: "Pricing",
       excludePageFromSearch: true,
+      status: "200",
+      authLogin: "user",
+      authPassword: "pass",
     },
     call: apiCalls.updatePage,
     connection: {
@@ -597,9 +604,185 @@ test("updates page metadata", async () => {
           excludePageFromSearch: true,
           documentType: undefined,
           content: undefined,
+          status: "200",
+          auth: { method: "basic", login: "user", password: "pass" },
         },
       },
     },
+  });
+});
+
+test("updates project settings from input file", async () => {
+  const input = {
+    meta: { siteName: "Acme", faviconAssetId: null },
+    compiler: { atomicStyles: true },
+  };
+  await expectCommandCall({
+    options: {
+      command: "update-project-settings",
+      input: "project-settings.json",
+    },
+    inputJson: input,
+    call: apiCalls.updateProjectSettings,
+    connection: input,
+  });
+});
+
+test("creates redirect", async () => {
+  await expectCommandCall({
+    options: {
+      command: "create-redirect",
+      old: "/old",
+      new: "/new",
+      status: "301",
+    },
+    call: apiCalls.createRedirect,
+    connection: { old: "/old", new: "/new", status: "301" },
+  });
+});
+
+test("updates redirect and can clear status", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-redirect",
+      old: "/old",
+      newOld: "/older",
+      new: "/newer",
+      clearStatus: true,
+    },
+    call: apiCalls.updateRedirect,
+    connection: {
+      old: "/old",
+      values: { old: "/older", new: "/newer", status: null },
+    },
+  });
+});
+
+test("rejects redirect status and clear-status together", async () => {
+  mockConfig();
+  await expect(
+    apiCommand(
+      {
+        command: "update-redirect",
+        old: "/old",
+        status: "301",
+        clearStatus: true,
+        json: true,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expectJsonErrorOutput({
+    command: "update-redirect",
+    code: "API_COMMAND_FAILED",
+    message: "--clear-status cannot be used with --status.",
+  });
+  expect(apiCalls.updateRedirect).not.toHaveBeenCalled();
+});
+
+test("deletes redirect", async () => {
+  await expectCommandCall({
+    options: { command: "delete-redirect", old: "/old" },
+    call: apiCalls.deleteRedirect,
+    connection: { old: "/old" },
+  });
+});
+
+test("creates breakpoint", async () => {
+  await expectCommandCall({
+    options: {
+      command: "create-breakpoint",
+      breakpoint: "tablet",
+      label: "Tablet",
+      maxWidth: 991,
+    },
+    call: apiCalls.createBreakpoint,
+    connection: {
+      id: "tablet",
+      label: "Tablet",
+      minWidth: undefined,
+      maxWidth: 991,
+      condition: undefined,
+    },
+  });
+});
+
+test("updates breakpoint", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-breakpoint",
+      breakpoint: "tablet",
+      label: "Tablet",
+      maxWidth: 1023,
+    },
+    call: apiCalls.updateBreakpoint,
+    connection: {
+      breakpointId: "tablet",
+      values: {
+        label: "Tablet",
+        minWidth: undefined,
+        maxWidth: 1023,
+        condition: undefined,
+      },
+    },
+  });
+});
+
+test("updates breakpoint and can clear media fields", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-breakpoint",
+      breakpoint: "tablet",
+      clearMinWidth: true,
+      maxWidth: 1023,
+      clearCondition: true,
+    },
+    call: apiCalls.updateBreakpoint,
+    connection: {
+      breakpointId: "tablet",
+      values: {
+        label: undefined,
+        minWidth: null,
+        maxWidth: 1023,
+        condition: null,
+      },
+    },
+  });
+});
+
+test("rejects breakpoint clear and value options together", async () => {
+  mockConfig();
+  await expect(
+    apiCommand(
+      {
+        command: "update-breakpoint",
+        breakpoint: "tablet",
+        minWidth: 768,
+        clearMinWidth: true,
+        json: true,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expectJsonErrorOutput({
+    command: "update-breakpoint",
+    code: "API_COMMAND_FAILED",
+    message: "--clear-min-width cannot be used with --min-width.",
+  });
+  expect(apiCalls.updateBreakpoint).not.toHaveBeenCalled();
+});
+
+test("deletes breakpoint with confirmation", async () => {
+  await expectCommandCall({
+    options: {
+      command: "delete-breakpoint",
+      breakpoint: "tablet",
+      confirm: true,
+    },
+    call: apiCalls.deleteBreakpoint,
+    connection: { breakpointId: "tablet" },
   });
 });
 
@@ -625,6 +808,32 @@ test("duplicates page", async () => {
       pageId: "page-1",
       name: "Pricing Copy",
       path: "/pricing-copy",
+      parentFolderId: "folder-1",
+    },
+  });
+});
+
+test("lists page templates", async () => {
+  await expectCommandCall({
+    options: { command: "list-page-templates" },
+    call: apiCalls.listPageTemplates,
+  });
+});
+
+test("creates page from template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "create-page-from-template",
+      template: "template-1",
+      name: "Landing",
+      path: "/landing",
+      parentFolder: "folder-1",
+    },
+    call: apiCalls.createPageFromTemplate,
+    connection: {
+      templateId: "template-1",
+      name: "Landing",
+      path: "/landing",
       parentFolderId: "folder-1",
     },
   });

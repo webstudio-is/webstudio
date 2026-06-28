@@ -82,6 +82,12 @@ const focusOut = (element: Element, relatedTarget: EventTarget) => {
   });
 };
 
+const keyDown = (element: Element, key: string) => {
+  act(() => {
+    element.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key }));
+  });
+};
+
 const renderShareProject = ({
   allowAdditionalPermissions = true,
   linkOptions = link,
@@ -345,6 +351,22 @@ describe("ShareProject", () => {
     const nameInput = getElement<HTMLInputElement>('input[name="Name"]');
     input(nameInput, "Renamed link");
     click(optionsButton);
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...link,
+      name: "Renamed link",
+    });
+  });
+
+  test("saves current link name when pressing enter immediately after typing", () => {
+    const onChange = vi.fn();
+    renderShareProject({ onChange });
+
+    click(getElement('[aria-label="Menu Button for options"]'));
+
+    const nameInput = getElement<HTMLInputElement>('input[name="Name"]');
+    input(nameInput, "Renamed link");
+    keyDown(nameInput, "Enter");
 
     expect(onChange).toHaveBeenCalledWith({
       ...link,

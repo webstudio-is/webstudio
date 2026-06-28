@@ -2,14 +2,12 @@
 
 import { afterEach, expect, test, vi } from "vitest";
 import { RESIZABLE_IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
-import { __testing__ } from "./rest.assets_.$name";
-
-const {
+import {
   getAssetInfoFallback,
   getBrowserAssetFormat,
   getBrowserUploadBody,
   parseAssetType,
-} = __testing__;
+} from "./asset-upload.server";
 
 afterEach(() => {
   vi.unstubAllGlobals();

@@ -26,6 +26,14 @@ test("prints api command schema as json", () => {
         name: "permissions",
         method: "query",
       }),
+      expect.objectContaining({
+        name: "list-breakpoints",
+        method: "query",
+      }),
+      expect.objectContaining({
+        name: "create-page-from-template",
+        method: "mutation",
+      }),
     ])
   );
   for (const command of output.commands) {
@@ -34,8 +42,10 @@ test("prints api command schema as json", () => {
   expect(output.useCases).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
-        useCase: "Manage breakpoints",
-        patchNamespaces: ["breakpoints"],
+        useCase: "List breakpoints",
+      }),
+      expect.objectContaining({
+        useCase: "Create page from template",
       }),
       expect.objectContaining({
         useCase: "Manage marketplace metadata",

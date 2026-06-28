@@ -74,6 +74,82 @@ export const publicApiOperationDocumentation: readonly PublicApiOperationDocumen
       ],
     },
     {
+      command: "get-project-settings",
+      description:
+        "Show project site metadata, compiler settings, and redirects",
+      examples: ["webstudio get-project-settings --json"],
+    },
+    {
+      command: "update-project-settings",
+      description:
+        "Update project site metadata and compiler settings from JSON",
+      requiredOptions: ["input", "json"],
+      examples: [
+        "webstudio update-project-settings --input project-settings.json --json",
+      ],
+    },
+    {
+      command: "list-redirects",
+      description: "List project redirects",
+      examples: ["webstudio list-redirects --json"],
+    },
+    {
+      command: "create-redirect",
+      description: "Create a project redirect",
+      requiredOptions: ["old", "new", "json"],
+      examples: [
+        "webstudio create-redirect --old /old --new /new --status 301 --json",
+      ],
+    },
+    {
+      command: "update-redirect",
+      description: "Update a project redirect selected by its old path",
+      requiredOptions: ["old", "json"],
+      examples: [
+        "webstudio update-redirect --old /old --new /newer --status 302 --json",
+        "webstudio update-redirect --old /old --clear-status --json",
+      ],
+    },
+    {
+      command: "delete-redirect",
+      description: "Delete a project redirect selected by its old path",
+      requiredOptions: ["old", "json"],
+      examples: ["webstudio delete-redirect --old /old --json"],
+    },
+    {
+      command: "list-breakpoints",
+      description: "List responsive and custom-condition breakpoints",
+      examples: ["webstudio list-breakpoints --json"],
+    },
+    {
+      command: "create-breakpoint",
+      description:
+        "Create a breakpoint with width limits or a custom media condition",
+      requiredOptions: ["breakpoint", "label", "json"],
+      examples: [
+        "webstudio create-breakpoint --breakpoint tablet --label Tablet --max-width 991 --json",
+      ],
+    },
+    {
+      command: "update-breakpoint",
+      description: "Update breakpoint label, width limits, or media condition",
+      requiredOptions: ["breakpoint", "json"],
+      examples: [
+        "webstudio update-breakpoint --breakpoint tablet --label Tablet --max-width 1023 --json",
+        "webstudio update-breakpoint --breakpoint tablet --clear-condition --min-width 768 --json",
+        "webstudio update-breakpoint --breakpoint tablet --clear-min-width --clear-max-width --condition '(hover: hover)' --json",
+      ],
+    },
+    {
+      command: "delete-breakpoint",
+      description:
+        "Delete a breakpoint and all style declarations assigned to it",
+      requiredOptions: ["breakpoint", "confirm", "json"],
+      examples: [
+        "webstudio delete-breakpoint --breakpoint tablet --confirm --json",
+      ],
+    },
+    {
       command: "delete-page",
       description: "Delete a page and its page content",
       requiredOptions: ["page", "json"],
@@ -85,6 +161,19 @@ export const publicApiOperationDocumentation: readonly PublicApiOperationDocumen
       requiredOptions: ["page", "json"],
       examples: [
         'webstudio duplicate-page --page page-id --name "Pricing Copy" --path /pricing-copy --json',
+      ],
+    },
+    {
+      command: "list-page-templates",
+      description: "List reusable page templates in the configured project",
+      examples: ["webstudio list-page-templates --json"],
+    },
+    {
+      command: "create-page-from-template",
+      description: "Create a page by copying a reusable page template",
+      requiredOptions: ["template", "name", "path", "json"],
+      examples: [
+        'webstudio create-page-from-template --template template-id --name "Landing" --path /landing --json',
       ],
     },
     {

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
+import { TRPCError } from "@trpc/server";
 import { getTokenPermits, loadApiToken } from "./api-permits.server";
 
 const createContext = ({
@@ -15,9 +15,13 @@ const createContext = ({
   };
 
 test("loadApiToken rejects non-token authorization before database lookup", async () => {
-  await expect(loadApiToken(createContext({}))).rejects.toThrow(
-    AuthorizationError
+  await expect(loadApiToken(createContext({}))).rejects.toBeInstanceOf(
+    TRPCError
   );
+  await expect(loadApiToken(createContext({}))).rejects.toMatchObject({
+    code: "FORBIDDEN",
+    message: "Builder API requires an API token",
+  });
 });
 
 test("getTokenPermits includes api only when token and plan allow it", () => {

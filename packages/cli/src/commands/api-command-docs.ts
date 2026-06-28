@@ -46,13 +46,79 @@ export const useCaseScenarios = [
   {
     useCase: "Update page settings/metadata",
     commands: [
-      'webstudio update-page --page <pageId> --title "Pricing" --description "Plans" --json',
+      'webstudio update-page --page <pageId> --title "Pricing" --description "Plans" --status 200 --json',
+      "webstudio update-page --page <pageId> --auth-login <login> --auth-password <password> --json",
+    ],
+  },
+  {
+    useCase: "Read project settings",
+    commands: ["webstudio get-project-settings --json"],
+  },
+  {
+    useCase: "Update project settings",
+    commands: [
+      "webstudio update-project-settings --input project-settings.json --json",
+    ],
+  },
+  {
+    useCase: "List redirects",
+    commands: ["webstudio list-redirects --json"],
+  },
+  {
+    useCase: "Create redirect",
+    commands: [
+      "webstudio create-redirect --old /old --new /new --status 301 --json",
+    ],
+  },
+  {
+    useCase: "Update redirect",
+    commands: [
+      "webstudio update-redirect --old /old --new /newer --status 302 --json",
+      "webstudio update-redirect --old /old --clear-status --json",
+    ],
+  },
+  {
+    useCase: "Delete redirect",
+    commands: ["webstudio delete-redirect --old /old --json"],
+  },
+  {
+    useCase: "List breakpoints",
+    commands: ["webstudio list-breakpoints --json"],
+  },
+  {
+    useCase: "Create breakpoint",
+    commands: [
+      "webstudio create-breakpoint --breakpoint tablet --label Tablet --max-width 991 --json",
+    ],
+  },
+  {
+    useCase: "Update breakpoint",
+    commands: [
+      "webstudio update-breakpoint --breakpoint tablet --label Tablet --max-width 1023 --json",
+      "webstudio update-breakpoint --breakpoint tablet --clear-condition --min-width 768 --json",
+      "webstudio update-breakpoint --breakpoint tablet --clear-min-width --clear-max-width --condition '(hover: hover)' --json",
+    ],
+  },
+  {
+    useCase: "Delete breakpoint",
+    commands: [
+      "webstudio delete-breakpoint --breakpoint tablet --confirm --json",
     ],
   },
   {
     useCase: "Duplicate page",
     commands: [
       'webstudio duplicate-page --page <pageId> --name "Pricing Copy" --path /pricing-copy --json',
+    ],
+  },
+  {
+    useCase: "List page templates",
+    commands: ["webstudio list-page-templates --json"],
+  },
+  {
+    useCase: "Create page from template",
+    commands: [
+      'webstudio create-page-from-template --template <templateId> --name "Landing" --path /landing --json',
     ],
   },
   {
@@ -322,25 +388,6 @@ export const useCaseScenarios = [
       "webstudio apply-patch --base-version <version> --input patch.json --json",
     ],
     notes: ["Use only when no semantic command exists."],
-  },
-  {
-    useCase: "Manage site-level settings not covered by semantic commands",
-    commands: [
-      "webstudio snapshot --include pages --json",
-      "webstudio apply-patch --base-version <version> --input patch.json --json",
-    ],
-    patchNamespaces: ["pages"],
-    notes: [
-      'Use pages paths such as ["meta", "siteName"], redirects, compiler settings, and project/page metadata.',
-    ],
-  },
-  {
-    useCase: "Manage breakpoints",
-    commands: [
-      "webstudio snapshot --include breakpoints --json",
-      "webstudio apply-patch --base-version <version> --input patch.json --json",
-    ],
-    patchNamespaces: ["breakpoints"],
   },
   {
     useCase: "Manage marketplace metadata",

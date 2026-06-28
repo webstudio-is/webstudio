@@ -5,6 +5,8 @@ import {
   getPagePath,
   type Folder,
   type Page,
+  pageAuth,
+  type PageAuth,
   type Pages,
 } from "@webstudio-is/sdk";
 import { serializePages } from "@webstudio-is/project-migrations/pages";
@@ -41,16 +43,18 @@ export type SerializedPageDetails = SerializedPageSummary & {
     description: Page["meta"]["description"];
     language: Page["meta"]["language"];
     redirect: Page["meta"]["redirect"];
+    status: Page["meta"]["status"];
     socialImageUrl: Page["meta"]["socialImageUrl"];
     socialImageAssetId: Page["meta"]["socialImageAssetId"];
     excludePageFromSearch: boolean | undefined;
     documentType: NonNullable<Page["meta"]["documentType"]>;
     content: Page["meta"]["content"];
+    auth: Page["meta"]["auth"];
     custom: Page["meta"]["custom"];
   };
 };
 
-const getRequiredPages = (state: Pick<BuilderState, "pages">): Pages => {
+export const getRequiredPages = (state: Pick<BuilderState, "pages">): Pages => {
   if (state.pages === undefined) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
@@ -112,6 +116,9 @@ export const getSerializedPagePath = (
     page.path
   );
 
+export const normalizeSerializedPagePath = (path: string) =>
+  path === "/" ? "" : path;
+
 export const serializePageSummary = (
   pages: SerializedPages,
   page: SerializedPage
@@ -135,6 +142,7 @@ export const serializePageDetails = (
     description: page.meta.description,
     language: page.meta.language,
     redirect: page.meta.redirect,
+    status: page.meta.status,
     socialImageUrl: page.meta.socialImageUrl,
     socialImageAssetId: page.meta.socialImageAssetId,
     excludePageFromSearch:
@@ -143,6 +151,7 @@ export const serializePageDetails = (
         : page.meta.excludePageFromSearch === "true",
     documentType: page.meta.documentType ?? "html",
     content: page.meta.content,
+    auth: page.meta.auth,
     custom: page.meta.custom,
   },
 });
@@ -155,8 +164,9 @@ export const findSerializedPageByInput = (
     return pages.pages.find((page) => page.id === input.pageId);
   }
   if (input.pagePath !== undefined) {
+    const pagePath = normalizeSerializedPagePath(input.pagePath);
     return pages.pages.find(
-      (page) => getSerializedPagePath(pages, page) === input.pagePath
+      (page) => getSerializedPagePath(pages, page) === pagePath
     );
   }
 };
@@ -200,7 +210,7 @@ export const getPageByPath = (
   input: { path: string }
 ) => {
   const page = serializePageDetailsByInput(state, {
-    pagePath: input.path === "/" ? "" : input.path,
+    pagePath: input.path,
   });
   if (page === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
@@ -557,6 +567,8 @@ type PageMetaPatchInput = Partial<{
   excludePageFromSearch: boolean;
   documentType: Page["meta"]["documentType"];
   content: Page["meta"]["content"];
+  status: Page["meta"]["status"];
+  auth: PageAuth;
   custom: Page["meta"]["custom"];
 }>;
 
@@ -577,6 +589,8 @@ export const pageMetaInput = z.object({
   excludePageFromSearch: z.boolean().optional(),
   documentType: z.enum(["html", "xml", "text"]).optional(),
   content: z.string().optional(),
+  status: z.string().optional(),
+  auth: pageAuth.optional(),
   custom: z
     .array(z.object({ property: z.string(), content: z.string() }))
     .optional(),
