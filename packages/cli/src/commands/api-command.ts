@@ -1622,7 +1622,7 @@ const getErrorCode = (error: unknown) => {
 
 const getRetryHint = (code: string) => {
   if (code === "VERSION_CONFLICT") {
-    return "Run webstudio inspect --json, read the latest build, regenerate the patch, then retry apply-patch.";
+    return "Use MCP tool snapshot, read the latest build version, regenerate the patch, then retry MCP tool apply-patch.";
   }
 };
 

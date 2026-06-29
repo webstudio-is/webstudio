@@ -4,7 +4,13 @@ import type {
 } from "./yargs-types";
 import { buildPatchNamespaces } from "@webstudio-is/protocol";
 import { printJson } from "../json-output";
-import { apiCommandMetadata } from "./api-command-metadata";
+import {
+  cliCommandMetadata,
+  formatApiUseCaseCommand,
+  formatApiUseCaseScenarioCommands,
+  mcpOnlyApiCommandMetadata,
+  topLevelCliCommandMetadata,
+} from "./api-command-metadata";
 import { knownCliGaps, useCaseScenarios } from "./api-command-docs";
 
 export const manOptions = (yargs: CommonYargsArgv) =>
@@ -24,15 +30,16 @@ type ManOptions = StrictYargsOptionsToInterface<typeof manOptions> & {
   topic?: string;
 };
 
-const commandIndex = apiCommandMetadata
+const commandIndex = cliCommandMetadata
   .map((command) => {
     const required = command.requiredOptions?.join(", ") ?? "json";
     const examples = (command.examples ?? []).map(
-      (example) => `  - ${example}`
+      (example) => `  - ${formatApiUseCaseCommand(example)}`
     );
     return [
-      `### ${command.command}`,
+      `### ${command.cliCommand}`,
       `Use: ${command.description}`,
+      `Operation: ${command.operation}`,
       `Kind: ${command.method}`,
       `Permit: ${command.permit}`,
       `Required: ${required}`,
@@ -43,7 +50,17 @@ const commandIndex = apiCommandMetadata
   })
   .join("\n\n");
 
-const commandCatalog = apiCommandMetadata.map((command) => ({
+const commandCatalog = cliCommandMetadata.map((command) => ({
+  command: command.cliCommand,
+  operation: command.operation,
+  kind: command.method,
+  permit: command.permit,
+  use: command.description,
+  required: command.requiredOptions ?? ["json"],
+  examples: (command.examples ?? []).map(formatApiUseCaseCommand),
+}));
+
+const mcpOnlyCommandCatalog = mcpOnlyApiCommandMetadata.map((command) => ({
   command: command.command,
   kind: command.method,
   permit: command.permit,
@@ -60,55 +77,13 @@ const writeCommands = commandCatalog
   .filter((command) => command.kind === "mutation")
   .map((command) => command.command);
 
-const topLevelCommandCatalog = [
-  {
-    command: "init",
-    use: "Create/link a Webstudio project; with --link, stores the configured project id, origin, and token",
-    examples: ["webstudio init --link <api-share-link> --json"],
-  },
-  {
-    command: "link",
-    use: "Link the current directory to one Builder share link",
-    examples: ["webstudio link --link <api-share-link>"],
-  },
-  {
-    command: "sync",
-    use: "Download the configured project bundle and asset files into .webstudio",
-    examples: ["webstudio sync"],
-  },
-  {
-    command: "build",
-    use: "Build the synced project with the selected template",
-    examples: ["webstudio build --template nextjs"],
-  },
-  {
-    command: "import",
-    use: "Import the local synced project bundle into another project share link",
-    examples: ["webstudio import --to <destination-share-link>"],
-  },
-  {
-    command: "schema",
-    use: "Print machine-readable API command and patch schemas",
-    examples: ["webstudio schema api --json"],
-  },
-  {
-    command: "man",
-    use: "Print human and LLM manuals for CLI/API workflows",
-    examples: ["webstudio man api", "webstudio man llm --json"],
-  },
-  {
-    command: "mcp",
-    use: "Run an MCP server over stdio for the configured project",
-    examples: ["webstudio mcp"],
-  },
-  {
-    command: "validate-patch",
-    use: "Validate Builder patch JSON locally before apply-patch",
-    examples: [
-      "webstudio validate-patch --base-version <version> --input patch.json --json",
-    ],
-  },
-] as const;
+const topLevelCommandCatalog = topLevelCliCommandMetadata.map(
+  ({ command, description, examples }) => ({
+    command,
+    use: description,
+    examples,
+  })
+);
 
 const taskRecipeUseCases = {
   setup: [
@@ -214,7 +189,7 @@ const getCommandsForUseCase = (useCase: string) => {
   if (commands === undefined) {
     throw new Error(`Unknown API CLI use case "${useCase}".`);
   }
-  return commands;
+  return commands.map(formatApiUseCaseCommand);
 };
 
 const taskRecipes = Object.fromEntries(
@@ -324,7 +299,11 @@ const inputFileShapeIndex = Object.entries(inputFileShapes)
   .map(([name, value]) => `${name}:\n\n${JSON.stringify(value, undefined, 2)}`)
   .join("\n\n");
 
-const useCaseIndex = useCaseScenarios
+const formattedUseCaseScenarios = useCaseScenarios.map(
+  formatApiUseCaseScenarioCommands
+);
+
+const useCaseIndex = formattedUseCaseScenarios
   .map((scenario) => {
     const commands = scenario.commands.map((command) => `  - ${command}`);
     const namespaces =
@@ -392,98 +371,23 @@ const readFirstUseCases = [
 ] as const;
 
 const apiCommandsByArea = {
-  setupAndDiscovery: [
-    "whoami",
-    "permissions",
-    "inspect",
-    "snapshot",
-    "apply-patch",
-  ],
-  pagesAndFolders: [
-    "list-pages",
-    "get-page",
-    "get-page-by-path",
-    "create-page",
-    "update-page",
-    "get-project-settings",
-    "update-project-settings",
-    "list-redirects",
-    "create-redirect",
-    "update-redirect",
-    "delete-redirect",
-    "list-breakpoints",
-    "create-breakpoint",
-    "update-breakpoint",
-    "delete-breakpoint",
-    "delete-page",
-    "duplicate-page",
-    "list-page-templates",
-    "create-page-from-template",
-    "list-folders",
-    "create-folder",
-    "update-folder",
-    "delete-folder",
-  ],
-  elementsTextPropsStyles: [
-    "list-instances",
-    "inspect-instance",
-    "append-instance",
-    "move-instance",
-    "clone-instance",
-    "delete-instance",
-    "list-texts",
-    "update-text",
-    "update-props",
-    "delete-props",
-    "bind-props",
-    "get-styles",
-    "update-styles",
-    "delete-styles",
-    "replace-styles",
-  ],
-  designTokensAndCssVariables: [
-    "list-design-tokens",
-    "create-design-token",
-    "update-design-token-styles",
-    "delete-design-token-styles",
-    "attach-design-token",
-    "detach-design-token",
-    "extract-design-token",
-    "list-css-variables",
-    "define-css-variable",
-    "delete-css-variable",
-    "rewrite-css-variable-refs",
-  ],
-  dataAndResources: [
-    "list-variables",
-    "create-variable",
-    "update-variable",
-    "delete-variable",
-    "list-resources",
-    "create-resource",
-    "update-resource",
-    "delete-resource",
-  ],
-  assets: [
-    "list-assets",
-    "upload-asset",
-    "upload-assets",
-    "find-asset-usage",
-    "replace-asset",
-    "delete-asset",
-  ],
+  setupAndDiscovery: ["permissions"],
   publishAndDomains: [
-    "publish",
-    "list-publishes",
-    "get-publish-job",
-    "unpublish",
-    "list-domains",
-    "create-domain",
-    "update-domain",
-    "delete-domain",
-    "verify-domain",
+    "publish deploy",
+    "publish list",
+    "publish status",
+    "publish unpublish",
+    "domains list",
+    "domains create",
+    "domains update",
+    "domains delete",
+    "domains verify",
   ],
 } as const;
+
+const mcpOnlyCommandIndex = mcpOnlyCommandCatalog
+  .map((command) => `- ${command.command}: ${command.use}`)
+  .join("\n");
 
 const renderCapabilityCommands = (commands: readonly string[]) =>
   commands.map((command) => `- ${command}`).join("\n");
@@ -524,7 +428,7 @@ Rules:
 - Never pass a project id. Commands use configured project only.
 - Read ids before writing. Do not invent ids for existing records.
 - stdout is one JSON object. stderr is diagnostics.
-- Prefer semantic commands. Use apply-patch only when no semantic command exists.
+- Prefer MCP semantic tools for detailed project edits. Use MCP apply-patch only when no semantic tool exists.
 
 ## Start
 
@@ -550,9 +454,15 @@ ${renderUseCaseCommands(readFirstUseCases)}
 
 ${topLevelCapabilityIndex}
 
-### API Commands By Area
+### High-Level API Commands By Area
 
 ${apiCapabilityIndex}
+
+### MCP-Only Operations
+
+These are intentionally exposed through \`webstudio mcp\`, not as top-level shell commands:
+
+${mcpOnlyCommandIndex}
 
 ## Task Recipes
 
@@ -604,13 +514,9 @@ Supported namespaces:
 - breakpoints: responsive breakpoints
 - marketplaceProduct: marketplace metadata
 
-Validate before raw patch writes:
-
-webstudio validate-patch --base-version <version> --input patch.json --json
-
 Commit raw patch:
 
-webstudio apply-patch --base-version <version> --input patch.json --json
+MCP tool: apply-patch
 
 ## Raw Patch Examples
 
@@ -721,11 +627,11 @@ Create a design token:
 
 ## Safety Rules
 
-- For apply-patch, read latest version with inspect before writing.
-- Reuse ids from snapshot output when updating existing records.
+- For MCP apply-patch, read the latest version with MCP snapshot before writing.
+- Reuse ids from MCP snapshot output when updating existing records.
 - Generate new unique ids when adding records.
 - If apply-patch reports a version conflict, read the latest build and regenerate the patch.
-- Prefer semantic read commands for discovery, then use snapshot for exact patch paths.
+- Prefer semantic MCP read tools for discovery, then use MCP snapshot for exact patch paths.
 
 ## Command Index
 
@@ -739,10 +645,10 @@ Use this order. Stop only when a command returns ok:false.
 ## Always
 
 1. webstudio permissions --json
-2. webstudio inspect --json
-3. Pick focused read command.
-4. Pick semantic write command.
-5. Use apply-patch only if no semantic command exists.
+2. webstudio mcp
+3. Read MCP resource webstudio://project/tools.
+4. Pick focused MCP read tool.
+5. Pick semantic MCP write tool.
 
 ## Pick Read Command
 
@@ -754,18 +660,16 @@ ${taskRecipeIndex}
 
 ## Raw Patch Only If Needed
 
-1. webstudio inspect --json
-2. webstudio snapshot --include <namespaces> --json
-3. Write patch.json as BuildPatchTransaction[].
-4. webstudio validate-patch --base-version <version> --input patch.json --json
-5. webstudio apply-patch --base-version <version> --input patch.json --json
+1. Use MCP tool: snapshot.
+2. Write BuildPatchTransaction[].
+3. Use MCP tool: apply-patch.
 
 ## Rules
 
 - Never guess ids for existing records. Read them first.
 - Never use project ids from user input. Commands use the configured project.
 - Use --refresh before a local-capable command when cached data may be stale.
-- On VERSION_CONFLICT, read inspect and snapshot again, regenerate the patch, then retry.
+- On VERSION_CONFLICT, read MCP snapshot again, regenerate the patch, then retry.
 - Treat stdout JSON as the API contract and stderr as diagnostics.
 - Confirm destructive commands with --confirm only when user requested deletion/unpublish/replacement.
 - Use webstudio schema api --json for machine-readable command metadata.
@@ -784,17 +688,17 @@ const topics = {
       workflows: [
         "webstudio init --link <api-share-link> --json",
         "webstudio permissions --json",
-        "webstudio inspect --json",
         "webstudio schema api --json",
-        "webstudio snapshot --include pages,instances,props,styles,styleSources,styleSourceSelections,resources,variables,assets --json",
-        "webstudio validate-patch --base-version <version> --input patch.json --json",
-        "webstudio apply-patch --base-version <version> --input patch.json --json",
+        "webstudio publish deploy --target production --json",
+        "webstudio domains list --json",
+        "webstudio mcp",
       ],
       taskRecipes,
-      useCaseScenarios,
+      useCaseScenarios: formattedUseCaseScenarios,
       knownGaps: knownCliGaps,
       topLevelCommands: topLevelCommandCatalog,
       apiCommandsByArea,
+      mcpOnlyCommands: mcpOnlyCommandCatalog,
       inputFileShapes,
       commands: commandCatalog,
       readCommands,
@@ -816,9 +720,9 @@ const topics = {
         "Always pass --json.",
         "Never pass project ids; commands use the configured project.",
         "Read ids before writing.",
-        "Prefer semantic write commands over apply-patch.",
-        "For apply-patch, read the latest version with inspect before writing.",
-        "Reuse ids from snapshot output when updating existing records.",
+        "Prefer semantic MCP write tools over apply-patch.",
+        "For MCP apply-patch, read the latest version with MCP snapshot before writing.",
+        "Reuse ids from MCP snapshot output when updating existing records.",
         "Generate new unique ids when adding records.",
         "Regenerate the patch after a version conflict.",
       ],
@@ -832,15 +736,16 @@ const topics = {
       discovery: [
         "webstudio schema api --json",
         "webstudio permissions --json",
-        "webstudio inspect --json",
-        "webstudio list-pages --json",
-        "webstudio list-instances --path / --json",
+        "webstudio mcp",
+        "MCP tool: status",
+        "MCP resource: webstudio://project/tools",
       ],
       taskRecipes,
-      useCaseScenarios,
+      useCaseScenarios: formattedUseCaseScenarios,
       knownGaps: knownCliGaps,
       topLevelCommands: topLevelCommandCatalog,
       apiCommandsByArea,
+      mcpOnlyCommands: mcpOnlyCommandCatalog,
       inputFileShapes,
       commands: commandCatalog,
       readCommands,
@@ -851,8 +756,8 @@ const topics = {
         "A mutation is durable only when meta.session.committed is true.",
       ],
       writes: [
-        "Use semantic write commands from taskRecipes first.",
-        "Use validate-patch/apply-patch only when no semantic command exists.",
+        "Use MCP tools for fine-grained project edits.",
+        "Use top-level CLI only for link/sync/build/publish/domains/permissions/discovery workflows.",
       ],
       rules: [
         "Always pass --json.",

@@ -1,5 +1,9 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { apiCommandMetadata } from "./api-command-metadata";
+import {
+  apiCommandMetadata,
+  cliCommandMetadata,
+  mcpOnlyApiCommandMetadata,
+} from "./api-command-metadata";
 import { man } from "./man";
 
 afterEach(() => {
@@ -13,8 +17,6 @@ test("prints api manual with patch workflow and examples", () => {
 
   const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
   expect(output).toContain("webstudio permissions --json");
-  expect(output).toContain("webstudio inspect --json");
-  expect(output).toContain("webstudio apply-patch --base-version");
   expect(output).toContain("Supported namespaces");
   expect(output).toContain("## Use Case Index");
   expect(output).toContain("## CLI Capability Inventory");
@@ -22,18 +24,26 @@ test("prints api manual with patch workflow and examples", () => {
   expect(output).toContain("Save and manage page templates");
   expect(output).toContain("Generate from design input");
   expect(output).toContain("### Top-Level Commands");
-  expect(output).toContain("### API Commands By Area");
+  expect(output).toContain("### High-Level API Commands By Area");
+  expect(output).toContain("### MCP-Only Operations");
   expect(output).toContain("webstudio mcp");
   expect(output).toContain("## Project Session Cache");
   expect(output).toContain("Use --refresh");
   expect(output).toContain("meta.session");
-  expect(output).toContain("webstudio list-breakpoints --json");
-  expect(output).toContain("webstudio update-project-settings");
+  expect(output).toContain("MCP tool: list-breakpoints (--json)");
+  expect(output).not.toContain("  - webstudio list-breakpoints --json");
+  expect(output).toContain(
+    "MCP tool: update-project-settings (--input project-settings.json --json)"
+  );
   expect(output).toContain("Manage marketplace metadata");
   expect(output).toContain("Create a design token");
-  for (const { command } of apiCommandMetadata) {
-    expect(output).toContain(`### ${command}`);
+  for (const { cliCommand } of cliCommandMetadata) {
+    expect(output).toContain(`### ${cliCommand}`);
   }
+  expect(output).not.toContain("### list-domains\n");
+  expect(output).toContain("Operation: list-domains");
+  expect(output).not.toContain("### update-props\n");
+  expect(output).toContain("- update-props:");
 });
 
 test("prints api manual as json", () => {
@@ -43,13 +53,8 @@ test("prints api manual as json", () => {
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.topic).toBe("api");
-  expect(output.workflows).toContain(
-    "webstudio validate-patch --base-version <version> --input patch.json --json"
-  );
   expect(output.workflows).toContain("webstudio permissions --json");
-  expect(output.workflows).toContain(
-    "webstudio snapshot --include pages,instances,props,styles,styleSources,styleSourceSelections,resources,variables,assets --json"
-  );
+  expect(output.workflows).toContain("webstudio mcp");
   expect(output.workflows).not.toContain(
     "webstudio snapshot --include pages,instances,props,styles,styleSources,styleSourceSelections,dataSources,resources,assets --json"
   );
@@ -73,20 +78,39 @@ test("prints api manual as json", () => {
     "link",
     "sync",
     "build",
-    "import",
+    "permissions",
+    "publish",
+    "domains",
     "schema",
     "man",
     "mcp",
-    "validate-patch",
   ]);
+  expect(
+    output.topLevelCommands.map(({ command }: { command: string }) => command)
+  ).not.toEqual(expect.arrayContaining(["publish deploy", "domains list"]));
   expect(Object.values(output.apiCommandsByArea).flat().sort()).toEqual(
-    apiCommandMetadata.map(({ command }) => command).sort()
+    cliCommandMetadata.map(({ cliCommand }) => cliCommand).sort()
   );
   expect(
     output.commands.map((command: { command: string }) => command.command)
-  ).toEqual(apiCommandMetadata.map(({ command }) => command));
+  ).toEqual(cliCommandMetadata.map(({ cliCommand }) => cliCommand));
+  expect(
+    output.mcpOnlyCommands.map(
+      (command: { command: string }) => command.command
+    )
+  ).toEqual(mcpOnlyApiCommandMetadata.map(({ command }) => command));
   expect(output.taskRecipes.pages).toContain(
-    "webstudio list-pages --include-folders --json"
+    "MCP tool: list-pages (--include-folders --json)"
+  );
+  expect(output.useCaseScenarios).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        useCase: "Update project settings",
+        commands: [
+          "MCP tool: update-project-settings (--input project-settings.json --json)",
+        ],
+      }),
+    ])
   );
   expect(output.inputFileShapes["children.json"]).toEqual([
     { tag: "div", label: "Hero", text: "Launch faster" },
@@ -174,18 +198,38 @@ test("prints api manual as json", () => {
     "Make arbitrary store-level changes",
     "Manage marketplace metadata",
   ]);
-  const documentedCommands = new Set(
+  const documentedCommands = new Set([
+    ...output.commands.map(
+      (command: { operation?: string; command: string }) =>
+        command.operation ?? command.command
+    ),
+    ...output.useCaseScenarios
+      .flatMap(({ commands }: { commands: string[] }) => commands)
+      .flatMap((command: string) => {
+        const match = command.match(/^webstudio ([a-z-]+)/);
+        if (match !== null) {
+          return [match[1]];
+        }
+        const mcpMatch = command.match(/^MCP tool: ([a-z-]+)/);
+        return mcpMatch === null ? [] : [mcpMatch[1]];
+      }),
+  ]);
+  const documentedVisibleCommands = new Set(
     output.useCaseScenarios
       .flatMap(({ commands }: { commands: string[] }) => commands)
       .flatMap((command: string) => {
         const match = command.match(/^webstudio ([a-z-]+)/);
-        return match === null ? [] : [match[1]];
+        if (match !== null) {
+          return [match[1]];
+        }
+        const mcpMatch = command.match(/^MCP tool: ([a-z-]+)/);
+        return mcpMatch === null ? [] : [mcpMatch[1]];
       })
   );
   for (const { command } of apiCommandMetadata) {
     expect(documentedCommands).toContain(command);
   }
-  expect(documentedCommands).toContain("validate-patch");
+  expect(documentedVisibleCommands).not.toContain("validate-patch");
 });
 
 test("prints llm manual with discovery rules", () => {

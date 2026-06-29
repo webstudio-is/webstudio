@@ -4,22 +4,60 @@ import { GLOBAL_CONFIG_FILE } from "./config";
 import { createFileIfNotExists } from "./fs-utils";
 import { link, linkOptions } from "./commands/link";
 import { sync, syncOptions } from "./commands/sync";
-import { importOptions, importProject } from "./commands/import";
 import { build, buildOptions } from "./commands/build";
 import { man, manOptions } from "./commands/man";
 import { mcp, mcpOptions } from "./commands/mcp";
 import { apiCommand } from "./commands/api-command";
 import {
-  apiCommandMetadata,
+  cliCommandGroupMetadata,
+  cliCommandMetadata,
   getApiCommandOptions,
+  type CliCommandMetadata,
 } from "./commands/api-command-metadata";
 import { schema, schemaOptions } from "./commands/schema";
-import { validatePatch, validatePatchOptions } from "./commands/validate-patch";
 import { initFlow, initOptions } from "./commands/init-flow";
 import makeCLI from "yargs";
 import packageJson from "../package.json" assert { type: "json" };
 import type { CommonYargsArgv } from "./commands/yargs-types";
 import { isHandledCliError } from "./errors";
+
+const cliCommandGroupDescriptions = new Map<string, string>(
+  cliCommandGroupMetadata.map(({ command, description }) => [
+    command,
+    description,
+  ])
+);
+
+const getGroupedCommands = (metadata: readonly CliCommandMetadata[]) => {
+  const grouped = new Map<string, CliCommandMetadata[]>();
+  const direct: CliCommandMetadata[] = [];
+
+  for (const command of metadata) {
+    const [group, action, extra] = command.cliCommand.split(" ");
+    if (action === undefined || extra !== undefined) {
+      direct.push(command);
+      continue;
+    }
+    const commands = grouped.get(group) ?? [];
+    commands.push(command);
+    grouped.set(group, commands);
+  }
+
+  return { direct, grouped };
+};
+
+const registerApiCommand = (
+  cmd: CommonYargsArgv,
+  cliCommand: string,
+  metadata: CliCommandMetadata
+) => {
+  cmd.command(
+    [cliCommand],
+    metadata.description,
+    getApiCommandOptions(metadata),
+    (options) => apiCommand({ ...options, command: metadata.operation })
+  );
+};
 
 export const registerCommands = (cmd: CommonYargsArgv) => {
   cmd.command(
@@ -35,27 +73,24 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
   );
   cmd.command(["link"], "Link the project with the cloud", linkOptions, link);
   cmd.command(["sync"], "Sync your project", syncOptions, sync);
-  for (const metadata of apiCommandMetadata) {
-    const { command, description } = metadata;
+  const { direct, grouped } = getGroupedCommands(cliCommandMetadata);
+  for (const metadata of direct) {
+    registerApiCommand(cmd, metadata.cliCommand, metadata);
+  }
+  for (const [group, commands] of grouped) {
     cmd.command(
-      [command],
-      description,
-      getApiCommandOptions(metadata),
-      (options) => apiCommand({ ...options, command })
+      [group],
+      cliCommandGroupDescriptions.get(group) ?? `Run ${group} commands`,
+      (yargs: CommonYargsArgv) => {
+        for (const metadata of commands) {
+          const action = metadata.cliCommand.slice(group.length + 1);
+          registerApiCommand(yargs, action, metadata);
+        }
+        return yargs.demandCommand(1, `Specify a ${group} command.`);
+      },
+      () => undefined
     );
   }
-  cmd.command(
-    ["validate-patch"],
-    "Validate Builder patch JSON locally without writing",
-    validatePatchOptions,
-    validatePatch
-  );
-  cmd.command(
-    ["import"],
-    "Import project bundle into another project",
-    importOptions,
-    importProject
-  );
   cmd.command(
     ["schema [topic]"],
     "Print machine-readable command and patch schemas",
@@ -106,7 +141,7 @@ export const main = async () => {
       })
       .scriptName("webstudio")
       .usage(
-        `Webstudio CLI (${packageJson.version}) sets up, syncs, builds, imports, and automates the configured project.`
+        `Webstudio CLI (${packageJson.version}) sets up, syncs, builds, publishes, and exposes MCP automation for the configured project.`
       );
 
     cmd.version(packageJson.version).alias("v", "version");

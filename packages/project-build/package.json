@@ -37,6 +37,11 @@
       "import": "./src/project-session.ts",
       "default": "./src/project-session.ts"
     },
+    "./mcp": {
+      "webstudio": "./src/mcp.ts",
+      "import": "./src/mcp.ts",
+      "default": "./src/mcp.ts"
+    },
     "./state/adapters": {
       "webstudio": "./src/state/adapters.ts",
       "import": "./src/state/adapters.ts",
@@ -151,6 +156,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.0",
     "@webstudio-is/authorization-token": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/postgrest": "workspace:*",

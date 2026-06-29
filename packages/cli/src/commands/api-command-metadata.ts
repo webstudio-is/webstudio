@@ -18,6 +18,71 @@ type ApiCommandMetadata = {
   examples: readonly string[];
 };
 
+export type CliCommandMetadata = ApiCommandMetadata & {
+  cliCommand: string;
+  operation: ApiCommandName;
+};
+
+export const cliCommandGroupMetadata = [
+  {
+    command: "publish",
+    description: "Publish, unpublish, and inspect publish jobs",
+    examples: ["webstudio publish --help"],
+  },
+  {
+    command: "domains",
+    description: "List and manage custom domains",
+    examples: ["webstudio domains --help"],
+  },
+] as const;
+
+export const topLevelCliCommandMetadata = [
+  {
+    command: "init",
+    description:
+      "Create/link a Webstudio project; with --link, stores the configured project id, origin, and token",
+    examples: ["webstudio init --link <api-share-link> --json"],
+  },
+  {
+    command: "link",
+    description: "Link the current directory to one Builder share link",
+    examples: ["webstudio link --link <api-share-link>"],
+  },
+  {
+    command: "sync",
+    description:
+      "Download the configured project bundle and asset files into .webstudio",
+    examples: ["webstudio sync"],
+  },
+  {
+    command: "build",
+    description: "Build the synced project with the selected template",
+    examples: ["webstudio build --template nextjs"],
+  },
+  {
+    command: "permissions",
+    description:
+      "Show API, role, publish, and domain capabilities for the configured share-link token",
+    examples: ["webstudio permissions --json"],
+  },
+  ...cliCommandGroupMetadata,
+  {
+    command: "schema",
+    description: "Print machine-readable API command and patch schemas",
+    examples: ["webstudio schema api --json"],
+  },
+  {
+    command: "man",
+    description: "Print human and LLM manuals for CLI/API workflows",
+    examples: ["webstudio man api", "webstudio man llm --json"],
+  },
+  {
+    command: "mcp",
+    description: "Run an MCP server over stdio for the configured project",
+    examples: ["webstudio mcp"],
+  },
+] as const;
+
 const apiCommandOptionsByCommand: Partial<
   Record<ApiCommandName, ApiCommandOptions>
 > = {
@@ -105,6 +170,101 @@ export const apiCommandMetadata = publicApiOperations.map((operation) => ({
   requiredOptions: operation.requiredOptions,
   examples: operation.examples,
 })) satisfies ApiCommandMetadata[];
+
+export const highLevelCliCommands = [
+  { command: "permissions", operation: "permissions" },
+  { command: "publish deploy", operation: "publish" },
+  { command: "publish list", operation: "list-publishes" },
+  { command: "publish status", operation: "get-publish-job" },
+  { command: "publish unpublish", operation: "unpublish" },
+  { command: "domains list", operation: "list-domains" },
+  { command: "domains create", operation: "create-domain" },
+  { command: "domains update", operation: "update-domain" },
+  { command: "domains delete", operation: "delete-domain" },
+  { command: "domains verify", operation: "verify-domain" },
+] as const satisfies readonly {
+  command: string;
+  operation: ApiCommandName;
+}[];
+
+export const highLevelApiCommands = highLevelCliCommands.map(
+  ({ operation }) => operation
+) satisfies readonly ApiCommandName[];
+
+const highLevelApiCommandSet = new Set<ApiCommandName>(highLevelApiCommands);
+
+const topLevelCliCommandSet = new Set<string>(
+  topLevelCliCommandMetadata.map(({ command }) => command)
+);
+
+const highLevelCliCommandByOperation = new Map<ApiCommandName, string>(
+  highLevelCliCommands.map(({ command, operation }) => [operation, command])
+);
+const highLevelCliCommandSet = new Set<string>(
+  highLevelCliCommands.map(({ command }) => command)
+);
+
+export const cliApiCommandMetadata = apiCommandMetadata.filter((metadata) =>
+  highLevelApiCommandSet.has(metadata.command)
+);
+
+export const cliCommandMetadata = highLevelCliCommands.map(
+  ({ command, operation }) => {
+    const metadata = apiCommandMetadata.find(
+      (metadata) => metadata.command === operation
+    );
+    if (metadata === undefined) {
+      throw new Error(`Missing API command metadata for "${operation}".`);
+    }
+    return {
+      ...metadata,
+      cliCommand: command,
+      operation,
+    };
+  }
+) satisfies CliCommandMetadata[];
+
+export const mcpOnlyApiCommandMetadata = apiCommandMetadata.filter(
+  (metadata) => highLevelApiCommandSet.has(metadata.command) === false
+);
+
+export const formatApiUseCaseCommand = (command: string) => {
+  const match = command.match(/^webstudio ([a-z-]+)(.*)$/);
+  if (match === null) {
+    return command;
+  }
+  const [, name, rest = ""] = match;
+  const detail = rest.trim();
+  if (
+    topLevelCliCommandSet.has(name) &&
+    (detail.length === 0 || detail === "--help" || detail === "-h")
+  ) {
+    return command;
+  }
+  const existingGroupedCommand = `${name} ${detail.split(/\s+/)[0] ?? ""}`;
+  if (highLevelCliCommandSet.has(existingGroupedCommand)) {
+    return command;
+  }
+  const cliCommand = highLevelCliCommandByOperation.get(name as ApiCommandName);
+  if (cliCommand !== undefined && cliCommand !== name) {
+    return `webstudio ${cliCommand}${rest}`;
+  }
+  if (topLevelCliCommandSet.has(name)) {
+    return command;
+  }
+  return detail.length === 0
+    ? `MCP tool: ${name}`
+    : `MCP tool: ${name} (${detail})`;
+};
+
+export const formatApiUseCaseScenarioCommands = <
+  Scenario extends { commands: readonly string[] },
+>(
+  scenario: Scenario
+) => ({
+  ...scenario,
+  commands: scenario.commands.map(formatApiUseCaseCommand),
+});
 
 export const getApiCommandOptions = (
   metadata: ApiCommandMetadata

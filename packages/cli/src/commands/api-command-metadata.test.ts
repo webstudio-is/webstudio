@@ -1,11 +1,107 @@
 import { expect, test, vi } from "vitest";
 import {
   apiCommandMetadata,
+  cliApiCommandMetadata,
+  cliCommandGroupMetadata,
+  cliCommandMetadata,
+  formatApiUseCaseCommand,
   getApiCommandOptions,
+  highLevelApiCommands,
+  mcpOnlyApiCommandMetadata,
+  topLevelCliCommandMetadata,
 } from "./api-command-metadata";
 
 test("exposes command metadata", () => {
   expect(apiCommandMetadata.length).toBeGreaterThan(0);
+});
+
+test("exposes only high-level API metadata for top-level CLI registration", () => {
+  expect(cliApiCommandMetadata.map((metadata) => metadata.command)).toEqual(
+    highLevelApiCommands
+  );
+  expect(cliCommandMetadata.map((metadata) => metadata.cliCommand)).toEqual([
+    "permissions",
+    "publish deploy",
+    "publish list",
+    "publish status",
+    "publish unpublish",
+    "domains list",
+    "domains create",
+    "domains update",
+    "domains delete",
+    "domains verify",
+  ]);
+  const mcpOnlyCommands = mcpOnlyApiCommandMetadata.map(
+    ({ command }) => command
+  );
+  for (const command of highLevelApiCommands) {
+    expect(mcpOnlyCommands).not.toContain(command);
+  }
+});
+
+test("describes every grouped CLI command", () => {
+  const describedGroups = new Set(
+    cliCommandGroupMetadata.map(({ command }) => command)
+  );
+  const groupedCommands = cliCommandMetadata
+    .map(({ cliCommand }) => cliCommand.split(" "))
+    .filter(([, action, extra]) => action !== undefined && extra === undefined)
+    .map(([group]) => group);
+
+  for (const group of groupedCommands) {
+    expect(describedGroups).toContain(group);
+  }
+});
+
+test("describes root CLI commands once for help-oriented docs", () => {
+  expect(topLevelCliCommandMetadata.map(({ command }) => command)).toEqual([
+    "init",
+    "link",
+    "sync",
+    "build",
+    "permissions",
+    "publish",
+    "domains",
+    "schema",
+    "man",
+    "mcp",
+  ]);
+  expect(topLevelCliCommandMetadata.map(({ command }) => command)).not.toEqual(
+    expect.arrayContaining(["publish deploy", "domains list"])
+  );
+  for (const metadata of topLevelCliCommandMetadata) {
+    expect(metadata.description.length).toBeGreaterThan(0);
+    expect(metadata.examples.length).toBeGreaterThan(0);
+  }
+});
+
+test("formats removed shell commands as MCP tools", () => {
+  expect(
+    formatApiUseCaseCommand("webstudio init --link <api-share-link> --json")
+  ).toBe("webstudio init --link <api-share-link> --json");
+  expect(formatApiUseCaseCommand("webstudio build --template nextjs")).toBe(
+    "webstudio build --template nextjs"
+  );
+  expect(formatApiUseCaseCommand("webstudio permissions --json")).toBe(
+    "webstudio permissions --json"
+  );
+  expect(formatApiUseCaseCommand("webstudio list-domains --json")).toBe(
+    "webstudio domains list --json"
+  );
+  expect(
+    formatApiUseCaseCommand("webstudio publish --target production --json")
+  ).toBe("webstudio publish deploy --target production --json");
+  expect(formatApiUseCaseCommand("webstudio publish --help")).toBe(
+    "webstudio publish --help"
+  );
+  expect(
+    formatApiUseCaseCommand(
+      "webstudio publish deploy --target production --json"
+    )
+  ).toBe("webstudio publish deploy --target production --json");
+  expect(formatApiUseCaseCommand("webstudio list-pages --json")).toBe(
+    "MCP tool: list-pages (--json)"
+  );
 });
 
 test("returns command-specific options when available", () => {

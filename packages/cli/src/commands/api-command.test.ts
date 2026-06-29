@@ -454,7 +454,7 @@ test("maps api conflict errors to version conflict json", async () => {
     code: "VERSION_CONFLICT",
     message: "Build version mismatch",
     retry:
-      "Run webstudio inspect --json, read the latest build, regenerate the patch, then retry apply-patch.",
+      "Use MCP tool snapshot, read the latest build version, regenerate the patch, then retry MCP tool apply-patch.",
   });
 });
 

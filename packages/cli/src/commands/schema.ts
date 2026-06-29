@@ -2,7 +2,14 @@ import { buildPatchNamespaces } from "@webstudio-is/protocol";
 import { HandledCliError } from "../errors";
 import { printJson } from "../json-output";
 import { useCaseScenarios } from "./api-command-docs";
-import { apiCommandMetadata } from "./api-command-metadata";
+import {
+  apiCommandMetadata,
+  cliCommandGroupMetadata,
+  cliCommandMetadata,
+  formatApiUseCaseCommand,
+  formatApiUseCaseScenarioCommands,
+  topLevelCliCommandMetadata,
+} from "./api-command-metadata";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -25,21 +32,52 @@ type SchemaOptions = StrictYargsOptionsToInterface<typeof schemaOptions> & {
   topic?: string;
 };
 
+const schemaUseCaseScenarios = useCaseScenarios.map(
+  formatApiUseCaseScenarioCommands
+);
+
+const topLevelCommands = topLevelCliCommandMetadata.map(
+  ({ command, description, examples }) => ({
+    name: command,
+    summary: description,
+    examples,
+  })
+);
+
+const cliCommands = cliCommandMetadata.map((command) => ({
+  name: command.cliCommand,
+  operation: command.operation,
+  summary: command.description,
+  method: command.method,
+  permit: command.permit,
+  requiredOptions: command.requiredOptions ?? ["json"],
+  examples: (command.examples ?? []).map(formatApiUseCaseCommand),
+}));
+
+const commandGroups = cliCommandGroupMetadata.map(
+  ({ command, description }) => ({
+    name: command,
+    summary: description,
+    commands: cliCommands.filter(({ name }) => name.startsWith(`${command} `)),
+  })
+);
+
 const apiSchema = {
-  name: "webstudio-api-cli",
+  name: "webstudio-cli",
   version: 1,
   projectScope:
-    "All API commands operate on the single project configured by webstudio init --link.",
+    "All high-level API commands operate on the single project configured by webstudio link or webstudio init --link.",
   requiredOutputMode:
     "Use --json. Successful responses are { ok: true, data, meta }. Failures are { ok: false, error, meta }.",
-  commands: apiCommandMetadata.map((command) => ({
-    name: command.command,
-    summary: command.description,
-    method: command.method,
-    permit: command.permit,
-    requiredOptions: command.requiredOptions ?? ["json"],
-    examples: command.examples ?? [],
-  })),
+  topLevelCommands,
+  commandGroups,
+  commands: cliCommands,
+  mcp: {
+    command: "webstudio mcp",
+    toolCount: apiCommandMetadata.length,
+    tools:
+      "MCP exposes the full project operation catalog, including fine-grained page, instance, props, styles, tokens, variables, resources, and assets tools.",
+  },
   session: {
     stateFile: ".webstudio/project-session.json",
     refreshFlag:
@@ -53,19 +91,18 @@ const apiSchema = {
     resultMetadata:
       "Successful command JSON includes meta.session with operationId, buildId, version, source, committed, compatibility, namespace metadata, and diagnostics.",
   },
-  useCases: useCaseScenarios,
+  useCases: schemaUseCaseScenarios,
   patch: {
     validationCommand:
-      "webstudio validate-patch --base-version <version> --input patch.json --json",
-    writeCommand:
-      "webstudio apply-patch --base-version <version> --input patch.json --json",
+      "No top-level CLI validation command. Prefer semantic MCP tools; use MCP apply-patch only for known-valid BuildPatchTransaction[] payloads.",
+    writeCommand: "MCP tool: apply-patch",
     transactionInput:
       "Either BuildPatchTransaction[] or { transactions: BuildPatchTransaction[] }",
     namespaces: buildPatchNamespaces,
     operations: ["add", "remove", "replace"],
     rules: [
-      "Run webstudio inspect --json before writing and use the returned latest build version as --base-version.",
-      "Use semantic read commands first, then snapshot for exact patch paths.",
+      "Use MCP tool: snapshot before writing and use the returned latest build version as baseVersion.",
+      "Use semantic MCP read tools first, then snapshot for exact patch paths.",
       "Regenerate patches after a VERSION_CONFLICT failure.",
     ],
   },
