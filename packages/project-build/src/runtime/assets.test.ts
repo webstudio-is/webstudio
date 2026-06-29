@@ -104,6 +104,16 @@ describe("asset runtime operations", () => {
     });
   });
 
+  test("paginates assets and rejects invalid cursors", () => {
+    expect(listAssets(state, { cursor: "1", limit: 1 })).toMatchObject({
+      items: [{ id: "next" }],
+      nextCursor: "2",
+    });
+    expect(() => listAssets(state, { cursor: "nope" })).toThrow(
+      "Invalid asset cursor"
+    );
+  });
+
   test("finds asset usage", () => {
     expect(findAssetUsage(state, { assetId: "asset" })).toEqual({
       usages: [
@@ -123,6 +133,31 @@ describe("asset runtime operations", () => {
         { namespace: "assets", patches: [{ op: "remove", path: ["asset"] }] },
       ],
     });
+  });
+
+  test("blocks replacing assets referenced by resources or variables", () => {
+    expect(() =>
+      replaceAsset(
+        {
+          ...state,
+          resources: new Map([
+            [
+              "resource",
+              {
+                id: "resource",
+                name: "Resource",
+                method: "get",
+                url: "asset",
+                headers: [],
+              },
+            ],
+          ]),
+        },
+        { fromAssetId: "asset", toAssetId: "next" }
+      )
+    ).toThrow(
+      "Asset is referenced in resources or variables. Update those references before replacing the asset."
+    );
   });
 
   test("blocks deleting referenced assets without force", () => {
@@ -684,7 +719,23 @@ test("creates asset usage list from project, pages, props, styles, and resources
         value: { type: "fontFamily", value: ["Inter"] },
       },
     ],
-    resources: [{ id: "resource-1", name: "Resource", value: asset.id }],
+    resources: [
+      {
+        id: "resource-1",
+        name: "Resource",
+        method: "get",
+        url: asset.id,
+        headers: [],
+      },
+    ],
+    dataSources: [
+      {
+        id: "data-source-1",
+        type: "variable",
+        name: "Variable",
+        value: { type: "string", value: asset.id },
+      },
+    ],
   } as unknown as CompactBuild;
 
   expect(
@@ -704,6 +755,7 @@ test("creates asset usage list from project, pages, props, styles, and resources
     { namespace: "props", instanceId: "box", path: ["prop-1", "value"] },
     { namespace: "styles", path: ["local:base:backgroundImage:", "value"] },
     { namespace: "resources", path: ["resource-1"] },
+    { namespace: "dataSources", path: ["data-source-1"] },
   ]);
 
   expect(
@@ -716,6 +768,35 @@ test("creates asset usage list from project, pages, props, styles, and resources
     { namespace: "styles", path: ["local:base:fontFamily:", "value"] },
   ]);
 });
+
+test("does not count resource or data source metadata as asset usage", () => {
+  const asset = createAsset("asset-1");
+  const build = {
+    pages: createDefaultPages({ rootInstanceId: "root" }),
+    props: [],
+    styles: [],
+    resources: [
+      {
+        id: asset.id,
+        name: asset.id,
+        method: "get",
+        url: "https://example.com",
+        headers: [{ name: asset.id, value: "header-value" }],
+      },
+    ],
+    dataSources: [
+      {
+        id: asset.id,
+        type: "resource",
+        name: asset.id,
+        resourceId: asset.id,
+      },
+    ],
+  } as unknown as CompactBuild;
+
+  expect(createAssetUsageList({ asset, assets: [asset], build })).toEqual([]);
+});
+
 const replaceAssetInStyleValue = (
   value: StyleValue,
   fromAssetId: string,

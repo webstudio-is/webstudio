@@ -122,19 +122,11 @@ export const deleteUnusedDataVariables = () => {
     return 0;
   }
 
-  serverSyncStore.createTransaction(
-    [$dataSources, $resources],
-    (dataSources, resources) => {
-      for (const variableId of unusedVariableIds) {
-        const dataSource = dataSources.get(variableId);
-        // Cleanup resource when variable is deleted
-        if (dataSource?.type === "resource") {
-          resources.delete(dataSource.resourceId);
-        }
-        dataSources.delete(variableId);
-      }
+  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
+    for (const variableId of unusedVariableIds) {
+      dataSources.delete(variableId);
     }
-  );
+  });
 
   return unusedVariableIds.length;
 };

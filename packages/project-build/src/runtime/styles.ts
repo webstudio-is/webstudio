@@ -331,6 +331,10 @@ export const getInstanceIdByStyleSourceId = (
   return instanceIdByStyleSourceId;
 };
 
+const valuesOf = <Value>(
+  value: Iterable<Value> | Map<unknown, Value>
+): Iterable<Value> => (value instanceof Map ? value.values() : value);
+
 const getCssVariableUsageCounts = ({
   styles,
   props,
@@ -356,6 +360,126 @@ const getCssVariableUsageCounts = ({
     }
   }
   return counts;
+};
+
+export const findCssVariableUsagesByInstance = ({
+  styleSourceSelections,
+  styles,
+  props,
+}: {
+  styleSourceSelections:
+    | Iterable<StyleSourceSelection>
+    | Map<string, StyleSourceSelection>;
+  styles: Iterable<StyleDecl> | Map<string, StyleDecl>;
+  props: Iterable<Prop> | Map<string, Prop>;
+}): {
+  counts: Map<string, number>;
+  instances: Map<string, Set<Instance["id"]>>;
+} => {
+  const counts = new Map<string, number>();
+  const instances = new Map<string, Set<Instance["id"]>>();
+  const styleList = Array.from(valuesOf(styles));
+  const definedVariables = getDefinedCssVariableNames(styleList);
+  if (definedVariables.size === 0) {
+    return { counts, instances };
+  }
+  const definedVariablesRegex = createCssVariableNamesRegex(definedVariables);
+  const instancesByStyleSource = getInstanceIdByStyleSourceId(
+    valuesOf(styleSourceSelections)
+  );
+
+  const addReference = (name: string, instanceId: Instance["id"]) => {
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+    const instanceIds = instances.get(name) ?? new Set<Instance["id"]>();
+    instanceIds.add(instanceId);
+    instances.set(name, instanceIds);
+  };
+
+  for (const styleDecl of styleList) {
+    const instanceId = instancesByStyleSource.get(styleDecl.styleSourceId);
+    if (instanceId === undefined) {
+      continue;
+    }
+    for (const name of collectCssVariableReferences(
+      toValue(styleDecl.value),
+      definedVariablesRegex
+    )) {
+      addReference(name, instanceId);
+    }
+  }
+
+  for (const prop of valuesOf(props)) {
+    if (prop.type === "string" && prop.name === "code" && prop.value) {
+      for (const name of collectCssVariableReferences(
+        prop.value,
+        definedVariablesRegex
+      )) {
+        addReference(name, prop.instanceId);
+      }
+    }
+  }
+
+  return { counts, instances };
+};
+
+export const getCssVariableDefinitionsByVariable = ({
+  styleSourceSelections,
+  styles,
+}: {
+  styleSourceSelections:
+    | Iterable<StyleSourceSelection>
+    | Map<string, StyleSourceSelection>;
+  styles: Iterable<StyleDecl> | Map<string, StyleDecl>;
+}) => {
+  const definitions = new Map<string, Set<Instance["id"]>>();
+  const instancesByStyleSource = getInstanceIdByStyleSourceId(
+    valuesOf(styleSourceSelections)
+  );
+
+  for (const styleDecl of valuesOf(styles)) {
+    if (styleDecl.property.startsWith("--") === false) {
+      continue;
+    }
+    const instanceId = instancesByStyleSource.get(styleDecl.styleSourceId);
+    if (instanceId === undefined) {
+      continue;
+    }
+    const instanceIds =
+      definitions.get(styleDecl.property) ?? new Set<Instance["id"]>();
+    instanceIds.add(instanceId);
+    definitions.set(styleDecl.property, instanceIds);
+  }
+
+  return definitions;
+};
+
+export const getReferencedCssVariables = ({
+  styles,
+  props,
+}: {
+  styles: Iterable<StyleDecl> | Map<string, StyleDecl>;
+  props: Iterable<Prop> | Map<string, Prop>;
+}) => {
+  const styleList = Array.from(valuesOf(styles));
+  const names = getDefinedCssVariableNames(styleList);
+  const regex = createCssVariableNamesRegex(names);
+  const referenced = new Set<string>();
+  const addReferences = (value: string) => {
+    for (const name of collectCssVariableReferences(value, regex)) {
+      referenced.add(name);
+    }
+  };
+
+  for (const styleDecl of styleList) {
+    addReferences(toValue(styleDecl.value));
+  }
+  for (const prop of valuesOf(props)) {
+    if (prop.type === "string" && prop.name === "code" && prop.value) {
+      addReferences(prop.value);
+    }
+  }
+
+  return referenced;
 };
 
 const toCssVariableStyleValue = (value: string | StyleValue): StyleValue =>
@@ -511,7 +635,8 @@ export const createCssVariableDeletePayload = ({
   styleKeys: string[];
   referenced: string[];
 } => {
-  const usageCounts = getCssVariableUsageCounts({ styles, props });
+  const styleList = Array.from(styles);
+  const usageCounts = getCssVariableUsageCounts({ styles: styleList, props });
   const referenced =
     force === true
       ? []
@@ -520,7 +645,7 @@ export const createCssVariableDeletePayload = ({
     return { payload: [], styleKeys: [], referenced };
   }
   const namesSet = new Set(names);
-  const styleKeys = Array.from(styles).flatMap((declaration) =>
+  const styleKeys = styleList.flatMap((declaration) =>
     namesSet.has(declaration.property) ? [getStyleDeclKey(declaration)] : []
   );
 

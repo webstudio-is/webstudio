@@ -1,12 +1,8 @@
 import { asset, page } from "@webstudio-is/sdk/schema";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
 import {
-  builderPatchSchema,
-  builderPatchTransactionSchema,
-} from "@webstudio-is/project-build/contracts/patch";
-import {
-  type BuilderPatch,
-  type BuilderPatchTransaction,
+  builderPatchSchema as internalBuilderPatchSchema,
+  builderPatchTransactionSchema as internalBuilderPatchTransactionSchema,
 } from "@webstudio-is/project-build/contracts/patch";
 import { serializedBuild } from "@webstudio-is/project-build/schema";
 import { wsAuthConfig } from "@webstudio-is/wsauth/schema";
@@ -105,10 +101,26 @@ export const checkProjectBuildPermissionInput = z.object({
 });
 
 export const buildPatchNamespaces = builderNamespaces;
-export const buildPatch = builderPatchSchema;
-export type BuildPatch = BuilderPatch;
-export const buildPatchTransaction = builderPatchTransactionSchema;
-export type BuildPatchTransaction = BuilderPatchTransaction;
+export type BuildPatchPath = Array<string | number>;
+export type BuildPatch =
+  | { op: "add"; path: BuildPatchPath; value: unknown }
+  | { op: "replace"; path: BuildPatchPath; value: unknown }
+  | { op: "remove"; path: BuildPatchPath };
+export type BuildPatchChange = {
+  namespace: (typeof buildPatchNamespaces)[number];
+  patches: BuildPatch[];
+};
+export type BuildPatchTransaction = {
+  id: string;
+  payload: BuildPatchChange[];
+};
+export const buildPatch: z.ZodType<BuildPatch, z.ZodTypeDef, unknown> =
+  internalBuilderPatchSchema;
+export const buildPatchTransaction: z.ZodType<
+  BuildPatchTransaction,
+  z.ZodTypeDef,
+  unknown
+> = internalBuilderPatchTransactionSchema;
 
 export const bundleVersion = createContractVersion(publishedProjectBundle, [
   wsAuthConfig,

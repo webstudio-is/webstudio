@@ -1,4 +1,8 @@
 import * as httpClient from "@webstudio-is/http-client";
+import {
+  runtimeOperationContracts,
+  type RuntimeOperationId,
+} from "@webstudio-is/project-build/contracts/builder-runtime";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
 import type { ProjectSessionEnvelope } from "@webstudio-is/project-build/project-session";
 import { createCliProjectSession } from "./project-session";
@@ -18,9 +22,21 @@ const uniqueNamespaces = (
   namespaces: readonly BuilderNamespace[]
 ): readonly BuilderNamespace[] => [...new Set(namespaces)];
 
-const getRuntimeOperationId = (command: ProjectSessionApiCommand) => {
+const runtimeOperationIds = new Set<string>(
+  runtimeOperationContracts.map((contract) => contract.id)
+);
+
+const isRuntimeOperationId = (id: string): id is RuntimeOperationId =>
+  runtimeOperationIds.has(id);
+
+const getRuntimeOperationId = (
+  command: ProjectSessionApiCommand
+): RuntimeOperationId | undefined => {
   const operation = httpClient.getPublicApiOperation(command);
-  return operation.runtimeOperationId;
+  return operation.runtimeOperationId !== undefined &&
+    isRuntimeOperationId(operation.runtimeOperationId)
+    ? operation.runtimeOperationId
+    : undefined;
 };
 
 const getSessionError = (envelope: {
@@ -43,10 +59,10 @@ const withProjectId = (
   input: unknown,
   projectId: string
 ): Record<string, unknown> => ({
-  projectId,
   ...(typeof input === "object" && input !== null
     ? (input as Record<string, unknown>)
     : {}),
+  projectId,
 });
 
 export const isProjectSessionEnvelope = (

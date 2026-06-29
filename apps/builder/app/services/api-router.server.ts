@@ -23,10 +23,6 @@ import {
   resourceFieldsUpdateInput,
 } from "@webstudio-is/project-build/runtime/data";
 import {
-  findFolder,
-  findPage,
-  getParentFolderId,
-  isPathAvailable,
   pageFieldsInput,
   pageMetaInput,
 } from "@webstudio-is/project-build/runtime/pages";
@@ -47,6 +43,13 @@ import {
   unpublishProjectDomains,
   verifyProjectDomain,
 } from "@webstudio-is/domain/index.server";
+import {
+  breakpointFieldsInput,
+  breakpointUpdateFieldsInput,
+  projectSettingsUpdateInput as projectSettingsRuntimeUpdateInput,
+  redirectFieldsInput,
+  redirectUpdateFieldsInput,
+} from "@webstudio-is/project-build/runtime/project-settings";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol";
 import {
@@ -55,7 +58,7 @@ import {
   loadApiToken,
 } from "./api-permits.server";
 import { componentMetas } from "~/shared/component-metas.server";
-import { type Asset, type Pages } from "@webstudio-is/sdk";
+import { type Asset } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
@@ -105,57 +108,9 @@ const assertApiPublishDomains = ({
 
 const projectIdInput = z.object({ projectId: z.string() });
 
-const projectSettingsUpdateInput = projectIdInput.extend({
-  meta: z.record(z.unknown()).optional(),
-  compiler: z.record(z.unknown()).optional(),
-});
-
-const redirectStatusInput = z.enum(["301", "302"]);
-
-const breakpointFieldsInput = z.object({
-  id: z.string(),
-  label: z.string(),
-  minWidth: z.number().optional(),
-  maxWidth: z.number().optional(),
-  condition: z.string().optional(),
-});
-
-const breakpointUpdateFieldsInput = z.object({
-  label: z.string().optional(),
-  minWidth: z.number().nullable().optional(),
-  maxWidth: z.number().nullable().optional(),
-  condition: z.string().nullable().optional(),
-});
-
-const getParentFolderIdOrThrow = (pages: Pages, pageId: string) => {
-  const folderId = getParentFolderId(pages.folders, pageId);
-  if (folderId !== undefined) {
-    return folderId;
-  }
-  return throwApiError("NOT_FOUND", "Page parent folder not found");
-};
-
-const getFolderOrThrow = (
-  pages: Pages,
-  folderId: string
-): NonNullable<ReturnType<typeof findFolder>> => {
-  const folder = findFolder(pages, folderId);
-  if (folder === undefined) {
-    return throwApiError("NOT_FOUND", "Folder not found");
-  }
-  return folder;
-};
-
-const getPageOrThrow = (
-  pages: Pages,
-  pageId: string
-): NonNullable<ReturnType<typeof findPage>> => {
-  const page = findPage(pages, pageId);
-  if (page === undefined) {
-    return throwApiError("NOT_FOUND", "Page not found");
-  }
-  return page;
-};
+const projectSettingsUpdateInput = projectIdInput.merge(
+  projectSettingsRuntimeUpdateInput
+);
 
 const applyBuildPayload = async <Result extends Record<string, unknown> = {}>(
   ctx: AppContext,
@@ -574,34 +529,10 @@ export const apiRouter = router({
         path: z.string().optional(),
       }),
       async ({ input, build, commit }) => {
-        const sourcePage = getPageOrThrow(build.pages, input.pageId);
-        const parentFolderId =
-          input.parentFolderId ??
-          getParentFolderIdOrThrow(build.pages, sourcePage.id);
-        getFolderOrThrow(build.pages, parentFolderId);
-        if (
-          input.path !== undefined &&
-          isPathAvailable({
-            pages: build.pages,
-            path: input.path,
-            parentFolderId,
-          }) === false
-        ) {
-          throwApiError(
-            "CONFLICT",
-            `Page path "${input.path}" is already in use`
-          );
-        }
         return await commitRuntimeMutation<{ pageId: string }>({
           id: "pages.duplicate",
           build,
-          input: {
-            projectId: input.projectId,
-            pageId: sourcePage.id,
-            parentFolderId,
-            name: input.name,
-            path: input.path,
-          },
+          input,
           commit,
         });
       }
@@ -667,11 +598,7 @@ export const apiRouter = router({
     }),
 
     create: buildMutation(
-      projectIdInput.extend({
-        old: z.string(),
-        new: z.string(),
-        status: redirectStatusInput.optional(),
-      }),
+      projectIdInput.merge(redirectFieldsInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ old: string }>({
           id: "redirects.create",
@@ -685,11 +612,7 @@ export const apiRouter = router({
     update: buildMutation(
       projectIdInput.extend({
         old: z.string(),
-        values: z.object({
-          old: z.string().optional(),
-          new: z.string().optional(),
-          status: redirectStatusInput.nullable().optional(),
-        }),
+        values: redirectUpdateFieldsInput,
       }),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ old: string }>({
@@ -1599,7 +1522,4 @@ export const apiRouter = router({
 export const __testing__ = {
   assertContentOrBuildPayload,
   assertApiPublishDomains,
-  getParentFolderIdOrThrow,
-  getFolderOrThrow,
-  getPageOrThrow,
 };

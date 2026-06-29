@@ -99,6 +99,11 @@ export const createBuildSnapshot = ({
     const pages = serializePages(build.pages);
     snapshot.homePageId = pages.homePageId;
     snapshot.rootFolderId = pages.rootFolderId;
+    if (include.has("pages")) {
+      snapshot.meta = pages.meta;
+      snapshot.compiler = pages.compiler;
+      snapshot.redirects = pages.redirects;
+    }
     add("pages", pages.pages);
     add("folders", pages.folders);
   }

@@ -380,6 +380,27 @@ describe("project session", () => {
     expect(storage.saved.at(-1)?.freshness.assets?.status).toBe("invalidated");
   });
 
+  test("returns refreshed snapshot metadata after server-only invalidation refetch", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport(createSnapshot({ version: 5 }));
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.executeServerOperation(
+      {
+        id: "upload-asset",
+        invalidatesNamespaces: ["assets"],
+        refetchInvalidatedNamespaces: true,
+      },
+      { file: "image.png" }
+    );
+
+    expect(result.version).toBe(5);
+    expect(result.state.freshness.assets?.status).toBe("fresh");
+    expect(transport.loadedNamespaces).toEqual([["assets"]]);
+    expect(storage.saved.at(-1)?.version).toBe(5);
+  });
+
   test("redacts sensitive diagnostic values", () => {
     expect(
       redactProjectSessionValue({

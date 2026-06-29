@@ -5,7 +5,7 @@ import type {
 import { buildPatchNamespaces } from "@webstudio-is/protocol";
 import { printJson } from "../json-output";
 import { apiCommandMetadata } from "./api-command-metadata";
-import { useCaseScenarios } from "./api-command-docs";
+import { knownCliGaps, useCaseScenarios } from "./api-command-docs";
 
 export const manOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -345,6 +345,21 @@ const useCaseIndex = useCaseScenarios
   })
   .join("\n\n");
 
+const knownCliGapIndex = knownCliGaps
+  .map((gap) =>
+    [
+      `### ${gap.capability}`,
+      `Missing: ${gap.missing}`,
+      `Current fallback: ${gap.currentFallback}`,
+      gap.suggestedCommands.length > 0
+        ? `Suggested commands: ${gap.suggestedCommands.join(", ")}`
+        : undefined,
+    ]
+      .filter(Boolean)
+      .join("\n")
+  )
+  .join("\n\n");
+
 const renderUseCaseCommands = (useCases: readonly string[]) =>
   useCases
     .map((useCase) =>
@@ -546,6 +561,10 @@ ${taskRecipeIndex}
 ## Use Case Index
 
 ${useCaseIndex}
+
+## Known CLI Gaps
+
+${knownCliGapIndex}
 
 ## Input File Shapes
 
@@ -750,6 +769,10 @@ ${taskRecipeIndex}
 - Treat stdout JSON as the API contract and stderr as diagnostics.
 - Confirm destructive commands with --confirm only when user requested deletion/unpublish/replacement.
 - Use webstudio schema api --json for machine-readable command metadata.
+
+## Known Gaps
+
+${knownCliGapIndex}
 `;
 
 const topics = {
@@ -769,6 +792,7 @@ const topics = {
       ],
       taskRecipes,
       useCaseScenarios,
+      knownGaps: knownCliGaps,
       topLevelCommands: topLevelCommandCatalog,
       apiCommandsByArea,
       inputFileShapes,
@@ -814,6 +838,7 @@ const topics = {
       ],
       taskRecipes,
       useCaseScenarios,
+      knownGaps: knownCliGaps,
       topLevelCommands: topLevelCommandCatalog,
       apiCommandsByArea,
       inputFileShapes,

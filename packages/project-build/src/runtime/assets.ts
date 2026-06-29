@@ -4,9 +4,11 @@ import {
   getAllPages,
   getStyleDeclKey,
   type Asset,
+  type DataSource,
   type Pages,
   type Prop,
   type Props,
+  type Resource,
   type StyleDecl,
   type Styles,
 } from "@webstudio-is/sdk";
@@ -359,9 +361,37 @@ const countStringReferences = (value: unknown, target: string): number => {
   return 0;
 };
 
+const countResourceAssetReferences = (resource: Resource, assetId: string) =>
+  countStringReferences(resource.url, assetId) +
+  countStringReferences(resource.body, assetId) +
+  countStringReferences(
+    resource.searchParams?.map((param) => param.value),
+    assetId
+  ) +
+  countStringReferences(
+    resource.headers.map((header) => header.value),
+    assetId
+  );
+
+const countDataSourceAssetReferences = (
+  dataSource: DataSource,
+  assetId: string
+) =>
+  dataSource.type === "variable"
+    ? countStringReferences(dataSource.value, assetId)
+    : 0;
+
 const countApiOnlyAssetUsage = (build: AssetReferenceBuild, assetId: string) =>
-  countStringReferences(build.resources, assetId) +
-  countStringReferences(build.dataSources, assetId);
+  build.resources.reduce(
+    (count, resource) =>
+      count + countResourceAssetReferences(resource, assetId),
+    0
+  ) +
+  build.dataSources.reduce(
+    (count, dataSource) =>
+      count + countDataSourceAssetReferences(dataSource, assetId),
+    0
+  );
 
 const getAssetUsageCounts = (build: AssetReferenceBuild, assets: Asset[]) => {
   const usageMap = calculateUsagesByAssetId({
@@ -454,7 +484,13 @@ export const createAssetUsageList = ({
   build: AssetReferenceBuild;
 }) => {
   const usages: Array<{
-    namespace: "props" | "styles" | "resources" | "pages" | "project";
+    namespace:
+      | "props"
+      | "styles"
+      | "resources"
+      | "dataSources"
+      | "pages"
+      | "project";
     pageId?: string;
     instanceId?: string;
     path: Array<string | number>;
@@ -502,8 +538,13 @@ export const createAssetUsageList = ({
     }
   }
   for (const resource of build.resources) {
-    if (countStringReferences(resource, asset.id) > 0) {
+    if (countResourceAssetReferences(resource, asset.id) > 0) {
       usages.push({ namespace: "resources", path: [resource.id] });
+    }
+  }
+  for (const dataSource of build.dataSources) {
+    if (countDataSourceAssetReferences(dataSource, asset.id) > 0) {
+      usages.push({ namespace: "dataSources", path: [dataSource.id] });
     }
   }
   return usages;
@@ -585,9 +626,24 @@ export const replaceAsset = (
   if (fromAsset === undefined || toAsset === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Asset not found");
   }
+  const build = getRequiredAssetReferenceBuild(state);
+  const unrewritableUsages = createAssetUsageList({
+    asset: fromAsset,
+    assets,
+    build,
+  }).filter(
+    (usage) =>
+      usage.namespace === "resources" || usage.namespace === "dataSources"
+  );
+  if (unrewritableUsages.length > 0) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Asset is referenced in resources or variables. Update those references before replacing the asset."
+    );
+  }
   return createRuntimeMutation({
     payload: createAssetReplacementPayload({
-      build: getRequiredAssetReferenceBuild(state),
+      build,
       fromAsset,
       toAsset,
     }),

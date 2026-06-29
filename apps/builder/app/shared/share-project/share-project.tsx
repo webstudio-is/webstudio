@@ -121,10 +121,10 @@ const getApiPermissionDescription = ({
     viewers:
       "Allows read-only API access: inspect permissions, project/build snapshots, pages, folders, instances, text, styles, variables, resources, assets, publish history, domains, and asset usage.",
     editors: canPublish
-      ? "Allows viewer API access, content-mode text and prop changes, plus publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains."
+      ? "Allows viewer API access, content-mode text and prop changes, plus publishing and unpublishing project and custom domains. It cannot change pages, design data, assets, variables, resources, or domains."
       : "Allows viewer API access and content-mode text and prop changes. Enable Can publish to allow publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains.",
     builders:
-      "Allows read and build API access: pages, folders, instances, text, props, styles, design tokens, CSS variables, data variables, resources, assets, patches, and staging publish/unpublish.",
+      "Allows read and build API access: pages, folders, instances, text, props, styles, design tokens, CSS variables, data variables, resources, assets, patches, and project-domain publish/unpublish.",
     administrators:
       "Allows full project API access: all read, content, build, asset, publish/unpublish, and domain management operations.",
   };

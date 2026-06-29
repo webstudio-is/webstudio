@@ -32,7 +32,7 @@ import type { ConflictResolution } from "./style-copy";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
-import { getRequiredPages } from "./pages";
+import { getRequiredPages, isPathAvailable } from "./pages";
 import { unwrap } from "./unwrap";
 
 type CreateId = () => string;
@@ -572,6 +572,22 @@ export const duplicatePage = (
       "Page parent folder was not found"
     );
   }
+  if (data.pages.folders.has(parentFolderId) === false) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Parent folder not found");
+  }
+  if (
+    input.path !== undefined &&
+    isPathAvailable({
+      pages: data.pages,
+      path: input.path,
+      parentFolderId,
+    }) === false
+  ) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      `Page path "${input.path}" is already in use`
+    );
+  }
   const duplicate = createPageDuplicatePayload({
     build: data,
     assets: Array.from(data.assets.values()),
@@ -641,6 +657,18 @@ export const createPageFromTemplate = (
   const parentFolderId = input.parentFolderId ?? data.pages.rootFolderId;
   if (data.pages.folders.has(parentFolderId) === false) {
     return throwBuilderRuntimeError("NOT_FOUND", "Parent folder not found");
+  }
+  if (
+    isPathAvailable({
+      pages: data.pages,
+      path: input.path,
+      parentFolderId,
+    }) === false
+  ) {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      `Page path "${input.path}" is already in use`
+    );
   }
 
   const before = createWebstudioDataFromBuild({

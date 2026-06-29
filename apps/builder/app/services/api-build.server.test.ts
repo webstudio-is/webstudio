@@ -283,11 +283,15 @@ describe("api build snapshot", () => {
   });
 
   test("returns page folders and data namespaces when requested", () => {
+    const pages = createDefaultPages({ rootInstanceId: "root-1" });
+    pages.meta = { siteName: "Acme" };
+    pages.compiler = { atomicStyles: true };
+    pages.redirects = [{ old: "/old", new: "/new", status: "301" }];
     const build = {
       id: "build-1",
       projectId: "project-1",
       version: 7,
-      pages: createDefaultPages({ rootInstanceId: "root-1" }),
+      pages,
       instances: [],
       props: [],
       styles: [],
@@ -319,6 +323,9 @@ describe("api build snapshot", () => {
         version: 7,
         homePageId: build.pages.homePageId,
         rootFolderId: build.pages.rootFolderId,
+        meta: { siteName: "Acme" },
+        compiler: { atomicStyles: true },
+        redirects: [{ old: "/old", new: "/new", status: "301" }],
         resources: [{ id: "resource-1" }],
         variables: [{ id: "variable-1" }],
         breakpoints: [{ id: "breakpoint-1" }],

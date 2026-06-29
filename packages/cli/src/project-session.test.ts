@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { createBuilderStateFromSnapshot } from "@webstudio-is/project-build/state/adapters";
 import { createBuilderStateFreshness } from "@webstudio-is/project-build/state/freshness";
 import {
@@ -18,6 +18,7 @@ const createTemporaryDirectory = async () => {
 };
 
 afterEach(async () => {
+  vi.unstubAllGlobals();
   await Promise.all(
     temporaryDirectories
       .splice(0)
@@ -149,6 +150,9 @@ describe("cli project session transport", () => {
           ],
           homePageId: "home",
           rootFolderId: "root",
+          meta: { siteName: "Acme" },
+          compiler: { atomicStyles: true },
+          redirects: [{ old: "/old", new: "/new", status: "301" }],
           folders: [
             {
               id: "root",
@@ -175,6 +179,11 @@ describe("cli project session transport", () => {
     });
 
     expect(snapshot.state.pages?.pages.get("home")?.name).toBe("Home");
+    expect(snapshot.state.pages?.meta).toEqual({ siteName: "Acme" });
+    expect(snapshot.state.pages?.compiler).toEqual({ atomicStyles: true });
+    expect(snapshot.state.pages?.redirects).toEqual([
+      { old: "/old", new: "/new", status: "301" },
+    ]);
     expect(snapshot.state.pages?.folders.get("root")?.children).toEqual([
       "home",
     ]);
@@ -229,5 +238,49 @@ describe("cli project session transport", () => {
         apiCompatibilityVersion: "1.2.3",
       })
     );
+  });
+
+  test("keeps configured project id for default server operation transport", async () => {
+    let requestBody = "";
+    let requestUrl = "";
+    const fetch = vi.fn(async (request: URL | RequestInfo) => {
+      if (request instanceof Request) {
+        requestUrl = request.url;
+        requestBody = await request.clone().text();
+      } else {
+        requestUrl = String(request);
+      }
+      return new Response(
+        JSON.stringify([
+          {
+            result: {
+              data: {
+                id: "project-1",
+                buildId: "build-1",
+                version: 1,
+              },
+            },
+          },
+        ]),
+        { headers: { "content-type": "application/json" } }
+      );
+    });
+    vi.stubGlobal("fetch", fetch);
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+    });
+
+    await transport.executeServerOperation?.({
+      operationId: "projects.get",
+      input: { projectId: "other-project" },
+    });
+
+    const requestText = `${requestUrl}\n${requestBody}`;
+    expect(requestText).toContain("project-1");
+    expect(requestText).not.toContain("other-project");
   });
 });

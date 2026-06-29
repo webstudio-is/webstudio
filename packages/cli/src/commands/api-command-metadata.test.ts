@@ -23,6 +23,38 @@ test("returns command-specific options when available", () => {
   );
 });
 
+test("parses redirect status as a string option", () => {
+  const yargs = { option: vi.fn().mockReturnThis() };
+  const metadata = apiCommandMetadata.find(
+    (item) => item.command === "create-redirect"
+  );
+
+  expect(metadata).toBeDefined();
+  getApiCommandOptions(metadata!)(yargs as never);
+
+  expect(yargs.option).toHaveBeenCalledWith(
+    "status",
+    expect.objectContaining({ type: "string", choices: ["301", "302"] })
+  );
+});
+
+test("describes list-folders include-pages response shape", () => {
+  const yargs = { option: vi.fn().mockReturnThis() };
+  const metadata = apiCommandMetadata.find(
+    (item) => item.command === "list-folders"
+  );
+
+  expect(metadata).toBeDefined();
+  getApiCommandOptions(metadata!)(yargs as never);
+
+  expect(yargs.option).toHaveBeenCalledWith(
+    "include-pages",
+    expect.objectContaining({
+      describe: "Include a top-level pages array with page summaries",
+    })
+  );
+});
+
 test("registers every catalog required option", () => {
   for (const metadata of apiCommandMetadata) {
     const registeredOptions = new Set<string>();
@@ -32,6 +64,7 @@ test("registers every catalog required option", () => {
         return yargs;
       }),
       example: vi.fn(() => yargs),
+      version: vi.fn(() => yargs),
     };
 
     getApiCommandOptions(metadata)(yargs as never);

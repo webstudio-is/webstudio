@@ -1084,6 +1084,35 @@ test("uploads assets with one retry and aggregated failures", async () => {
   expect(fetch).toHaveBeenCalledTimes(4);
 });
 
+test("keeps uploaded assets in input order", async () => {
+  const first = createImageAssetFixture({ id: "first", name: "first.png" });
+  const second = createImageAssetFixture({ id: "second", name: "second.png" });
+  const fetch = vi.fn(async (request: URL | RequestInfo) => {
+    const url = new URL(request.toString());
+    const name = decodeURIComponent(url.pathname.split("/").at(-1) ?? "");
+    if (name === "first.png") {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    return new Response(
+      JSON.stringify({
+        uploadedAssets: [name === "first.png" ? first : second],
+      }),
+      {
+        headers: { "content-type": "application/json" },
+      }
+    );
+  });
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    uploadAssets({
+      assets: [first, second],
+      ...apiParams,
+      readAssetData: async (asset) => new Blob([asset.name]),
+    })
+  ).resolves.toEqual([first, second]);
+});
+
 test("uploads project asset descriptors with local data readers", async () => {
   const uploadedAsset = createImageAssetFixture({ name: "image.png" });
   const fetch = vi.fn(

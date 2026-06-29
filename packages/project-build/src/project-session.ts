@@ -540,19 +540,20 @@ export class ProjectSession {
       }
     );
     const invalidated = descriptor.invalidatesNamespaces ?? [];
-    if (this.#snapshot !== undefined && invalidated.length > 0) {
-      this.#snapshot = {
-        ...this.#snapshot,
+    let snapshot = this.#snapshot;
+    if (snapshot !== undefined && invalidated.length > 0) {
+      snapshot = {
+        ...snapshot,
         freshness: markBuilderStateNamespacesInvalidated(
-          this.#snapshot.freshness,
+          snapshot.freshness,
           invalidated,
           descriptor.id
         ),
       };
-      await this.saveSnapshot(this.#snapshot);
+      await this.saveSnapshot(snapshot);
     }
     if (descriptor.refetchInvalidatedNamespaces && invalidated.length > 0) {
-      await this.fetchAndSave(invalidated);
+      snapshot = await this.fetchAndSave(invalidated);
     }
     return this.createEnvelope({
       source: "server",
@@ -563,6 +564,7 @@ export class ProjectSession {
         id: descriptor.id,
         invalidatesNamespaces: invalidated,
       },
+      snapshot,
     });
   }
 

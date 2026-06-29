@@ -1989,9 +1989,6 @@ importers:
 
   packages/protocol:
     dependencies:
-      '@webstudio-is/project-build':
-        specifier: workspace:*
-        version: link:../project-build
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
@@ -1999,6 +1996,9 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
     devDependencies:
+      '@webstudio-is/project-build':
+        specifier: workspace:*
+        version: link:../project-build
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

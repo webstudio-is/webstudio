@@ -44,6 +44,9 @@ type PublicBuildSnapshot = Omit<
   rootFolderId?: string;
   pages?: unknown;
   folders?: unknown;
+  meta?: unknown;
+  compiler?: unknown;
+  redirects?: unknown;
   dataSources?: BuilderBuildDataSnapshot["dataSources"];
   variables?: BuilderBuildDataSnapshot["dataSources"];
 };
@@ -88,6 +91,9 @@ const toPages = (snapshot: PublicBuildSnapshot) => {
     rootFolderId: snapshot.rootFolderId,
     pages: snapshot.pages,
     folders: snapshot.folders,
+    meta: snapshot.meta,
+    compiler: snapshot.compiler,
+    redirects: snapshot.redirects,
   });
 };
 
@@ -132,6 +138,7 @@ const executePublicServerOperation = async ({
   return await client({
     ...connection,
     ...(input as Record<string, unknown>),
+    projectId: connection.projectId,
   });
 };
 

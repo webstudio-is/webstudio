@@ -398,3 +398,70 @@ export const useCaseScenarios = [
     patchNamespaces: ["marketplaceProduct"],
   },
 ];
+
+export const knownCliGaps = [
+  {
+    capability: "General project search and audit",
+    missing:
+      "No single semantic command searches across instance labels, props, hrefs, resource URLs, HTML embeds, asset references, and missing accessibility metadata.",
+    currentFallback:
+      "Use focused reads such as list-instances, list-texts, list-assets, find-asset-usage, and snapshot.",
+    suggestedCommands: [
+      "search-project",
+      "audit-accessibility",
+      "find-prop-usage",
+    ],
+  },
+  {
+    capability: "Save and manage page templates",
+    missing:
+      "CLI can list page templates and create pages from existing templates, but cannot save a page as a template or update/delete templates semantically.",
+    currentFallback:
+      "Use snapshot and apply-patch only when the template data model is understood.",
+    suggestedCommands: [
+      "create-page-template",
+      "update-page-template",
+      "delete-page-template",
+    ],
+  },
+  {
+    capability: "Semantic marketplace metadata",
+    missing:
+      "Marketplace metadata is only available through snapshot/apply-patch, not dedicated semantic commands.",
+    currentFallback:
+      "Use snapshot --include marketplaceProduct and apply-patch.",
+    suggestedCommands: ["get-marketplace", "update-marketplace"],
+  },
+  {
+    capability: "Provider-specific authenticated pages",
+    missing:
+      "CLI supports page basic auth and generic resources/props/embeds, but not guided Supabase/Firebase auth setup.",
+    currentFallback:
+      "Create the page, resources, variables, props, and embeds manually with existing semantic commands.",
+    suggestedCommands: ["setup-auth-page"],
+  },
+  {
+    capability: "Dynamic script/runtime integration helpers",
+    missing:
+      "CLI can manipulate props/resources/embeds, but has no semantic workflow for converting script-generated UI into editable Webstudio structures.",
+    currentFallback:
+      "Use append-instance, props, resources, and raw patch where necessary.",
+    suggestedCommands: ["integrate-runtime-ui"],
+  },
+  {
+    capability: "Generate from design input",
+    missing:
+      "No command imports Figma, screenshots, Inception output, or design.md and turns it into pages/tokens/layout.",
+    currentFallback:
+      "Use external generation, then apply semantic CLI commands or apply-patch.",
+    suggestedCommands: ["generate-from-design"],
+  },
+  {
+    capability: "Built-in cross-project maintenance",
+    missing:
+      "Public API and CLI intentionally operate on one configured project at a time; there is no built-in multi-project discovery or loop runner.",
+    currentFallback:
+      "Run the CLI from an external script that reconfigures one project/session at a time.",
+    suggestedCommands: [],
+  },
+];

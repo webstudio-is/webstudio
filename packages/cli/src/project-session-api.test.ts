@@ -52,6 +52,48 @@ describe("project session api adapter", () => {
     expect(result.result).toEqual(["page"]);
   });
 
+  test("keeps configured project id for local-capable commands", async () => {
+    const session = {
+      initialize: vi.fn(async () => undefined),
+      read: vi.fn(async () => ({
+        operationId: "pages.list",
+        projectId: "project-1",
+        source: "local",
+        result: [],
+        state: { committed: false, freshness: {} },
+        namespaces: {
+          read: ["pages"],
+          write: [],
+          invalidated: [],
+          missing: [],
+        },
+        diagnostics: [],
+      })),
+      mutate: vi.fn(),
+      refresh: vi.fn(),
+      executeServerOperation: vi.fn(),
+    };
+
+    await executeProjectSessionApiOperation({
+      command: "list-pages",
+      input: { projectId: "other-project" },
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+      createProjectSession: vi.fn(
+        () => session
+      ) as unknown as CreateProjectSession,
+    });
+
+    expect(session.read).toHaveBeenCalledWith(
+      "pages.list",
+      { projectId: "project-1" },
+      { permit: "view" }
+    );
+  });
+
   test("routes server-only commands through project session transport", async () => {
     const session = {
       initialize: vi.fn(async () => undefined),

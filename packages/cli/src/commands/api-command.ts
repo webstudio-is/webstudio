@@ -69,7 +69,7 @@ const confirmOption = (yargs: CommonYargsArgv, describe: string) =>
   });
 
 export const snapshotCommandOptions = (yargs: CommonYargsArgv) =>
-  apiCommandOptions(yargs)
+  apiCommandOptions(yargs.version(false))
     .option("include", {
       type: "array",
       string: true,
@@ -240,6 +240,7 @@ export const createRedirectCommandOptions = (yargs: CommonYargsArgv) =>
       demandOption: true,
     })
     .option("status", {
+      type: "string",
       choices: ["301", "302"] as const,
       describe: "Redirect HTTP status code",
     });
@@ -260,6 +261,7 @@ export const updateRedirectCommandOptions = (yargs: CommonYargsArgv) =>
       describe: "Replace the destination URL or path",
     })
     .option("status", {
+      type: "string",
       choices: ["301", "302"] as const,
       describe: "Replace the redirect HTTP status code",
     })
@@ -400,7 +402,7 @@ export const createPageFromTemplateCommandOptions = (yargs: CommonYargsArgv) =>
 export const foldersCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs).option("include-pages", {
     type: "boolean",
-    describe: "Include page summaries inside their folders",
+    describe: "Include a top-level pages array with page summaries",
   });
 
 export const createFolderCommandOptions = (yargs: CommonYargsArgv) =>

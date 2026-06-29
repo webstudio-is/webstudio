@@ -10,6 +10,7 @@ import {
   pageRedirect,
   projectMeta,
 } from "@webstudio-is/sdk";
+import { z } from "zod";
 import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
@@ -41,6 +42,11 @@ type ProjectMetaValues = Settable<
 type CompilerValues = Settable<
   NonNullable<ReturnType<typeof getRequiredPages>["compiler"]>
 >;
+
+export const projectSettingsUpdateInput = z.object({
+  meta: z.record(z.unknown()).optional(),
+  compiler: z.record(z.unknown()).optional(),
+});
 
 const projectMetaKeys: ReadonlySet<string> = new Set(
   projectMeta.keyof().options
@@ -102,8 +108,15 @@ const pushObjectFieldPatches = ({
   current: Record<string, unknown> | undefined;
   values: Record<string, unknown>;
 }) => {
+  if (current === undefined) {
+    const next = omitNullValues(values);
+    if (Object.keys(next).length > 0) {
+      patches.push({ op: "add", path: basePath, value: next });
+    }
+    return;
+  }
   for (const [name, value] of Object.entries(values)) {
-    const exists = current !== undefined && Object.hasOwn(current, name);
+    const exists = Object.hasOwn(current, name);
     if (value === null) {
       if (exists) {
         patches.push({ op: "remove", path: [...basePath, name] });
@@ -129,9 +142,6 @@ export const updateProjectSettings = (
   const patches: BuilderPatchChange["patches"] = [];
   if (input.meta !== undefined) {
     const values = parseProjectMeta(input.meta);
-    if (pages.meta === undefined && Object.keys(values).length > 0) {
-      patches.push({ op: "add", path: ["meta"], value: {} });
-    }
     pushObjectFieldPatches({
       patches,
       basePath: ["meta"],
@@ -141,9 +151,6 @@ export const updateProjectSettings = (
   }
   if (input.compiler !== undefined) {
     const values = parseCompilerSettings(input.compiler);
-    if (pages.compiler === undefined && Object.keys(values).length > 0) {
-      patches.push({ op: "add", path: ["compiler"], value: {} });
-    }
     pushObjectFieldPatches({
       patches,
       basePath: ["compiler"],
@@ -160,6 +167,20 @@ export const updateProjectSettings = (
 
 export const listRedirects = (state: Pick<BuilderState, "pages">) => ({
   redirects: getRequiredPages(state).redirects ?? [],
+});
+
+export const redirectStatusInput = z.enum(["301", "302"]);
+
+export const redirectFieldsInput = z.object({
+  old: z.string(),
+  new: z.string(),
+  status: redirectStatusInput.optional(),
+});
+
+export const redirectUpdateFieldsInput = z.object({
+  old: z.string().optional(),
+  new: z.string().optional(),
+  status: redirectStatusInput.nullable().optional(),
 });
 
 const findRedirectIndex = (
@@ -276,6 +297,21 @@ export const deleteRedirect = (
 
 export const listBreakpoints = (state: Pick<BuilderState, "breakpoints">) => ({
   breakpoints: Array.from(getRequiredBreakpoints(state).values()),
+});
+
+export const breakpointFieldsInput = z.object({
+  id: z.string(),
+  label: z.string(),
+  minWidth: z.number().optional(),
+  maxWidth: z.number().optional(),
+  condition: z.string().optional(),
+});
+
+export const breakpointUpdateFieldsInput = z.object({
+  label: z.string().optional(),
+  minWidth: z.number().nullable().optional(),
+  maxWidth: z.number().nullable().optional(),
+  condition: z.string().nullable().optional(),
 });
 
 const parseBreakpoint = (input: Breakpoint) => {

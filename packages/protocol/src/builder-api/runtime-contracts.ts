@@ -1,16 +1,11 @@
-import {
-  runtimeOperationContracts,
-  type RuntimeOperationId,
-} from "@webstudio-is/project-build/contracts/builder-runtime";
-import {
-  builderNamespaces,
-  type BuilderNamespace,
-} from "@webstudio-is/project-build/contracts/namespaces";
-
-export type PublicApiOperationNamespace = BuilderNamespace;
-export type PublicRuntimeOperationId = RuntimeOperationId;
+import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts/builder-runtime";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
 
 export const publicApiOperationNamespaces = builderNamespaces;
+export type PublicApiOperationNamespace =
+  (typeof publicApiOperationNamespaces)[number];
+
+export type PublicRuntimeOperationId = string;
 
 export type PublicRuntimeOperationContract = {
   id: PublicRuntimeOperationId;

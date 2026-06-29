@@ -14,14 +14,7 @@ import {
   InputField,
   toast,
 } from "@webstudio-is/design-system";
-import type {
-  Instance,
-  StyleDecl,
-  StyleSourceSelections,
-  Props,
-} from "@webstudio-is/sdk";
 import type { CustomProperty } from "@webstudio-is/css-engine";
-import { toValue } from "@webstudio-is/css-engine";
 import {
   $styles,
   $styleSourceSelections,
@@ -29,10 +22,10 @@ import {
 } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import {
-  collectCssVariableReferences,
-  createCssVariableNamesRegex,
+  findCssVariableUsagesByInstance,
+  getCssVariableDefinitionsByVariable,
   getDefinedCssVariableNames,
-  getInstanceIdByStyleSourceId,
+  getReferencedCssVariables,
   performCssVariableRename,
   renameCssVariableMutable,
   updateVarReferencesInProps,
@@ -48,81 +41,13 @@ export const openDeleteUnusedCssVariablesDialog = () => {
   $isDeleteUnusedCssVariablesDialogOpen.set(true);
 };
 
-// Find CSS variable usage counts (how many times each variable is referenced via var())
-export const findCssVariableUsagesByInstance = ({
-  styleSourceSelections,
-  styles,
-  props,
-}: {
-  styleSourceSelections: StyleSourceSelections;
-  styles: Map<string, StyleDecl>;
-  props: Props;
-}): {
-  counts: Map<string, number>;
-  instances: Map<string, Set<Instance["id"]>>;
-} => {
-  const usageCounts = new Map<string, number>();
-  const usageInstances = new Map<string, Set<Instance["id"]>>();
-
-  const definedVariables = getDefinedCssVariableNames(styles.values());
-  if (definedVariables.size === 0) {
-    return { counts: usageCounts, instances: usageInstances };
-  }
-  const definedVariablesRegex = createCssVariableNamesRegex(definedVariables);
-
-  const instancesByStyleSource = getInstanceIdByStyleSourceId(
-    styleSourceSelections.values()
-  );
-
-  const addVarReference = (varName: string, instanceId: Instance["id"]) => {
-    const count = usageCounts.get(varName) ?? 0;
-    usageCounts.set(varName, count + 1);
-
-    let instances = usageInstances.get(varName);
-    if (instances === undefined) {
-      instances = new Set();
-      usageInstances.set(varName, instances);
-    }
-    instances.add(instanceId);
-  };
-
-  // Track CSS variable references in StyleDecl values
-  for (const styleDecl of styles.values()) {
-    const instanceId = instancesByStyleSource.get(styleDecl.styleSourceId);
-    if (!instanceId) {
-      continue;
-    }
-
-    for (const varName of collectCssVariableReferences(
-      toValue(styleDecl.value),
-      definedVariablesRegex
-    )) {
-      addVarReference(varName, instanceId);
-    }
-  }
-
-  // Track CSS variable references in HTML Embed code props
-  for (const prop of props.values()) {
-    if (prop.type === "string" && prop.name === "code" && prop.value) {
-      for (const varName of collectCssVariableReferences(
-        prop.value,
-        definedVariablesRegex
-      )) {
-        addVarReference(varName, prop.instanceId);
-      }
-    }
-  }
-
-  return { counts: usageCounts, instances: usageInstances };
-};
-
 const $cssVariableUsageData = computed(
   [$styleSourceSelections, $styles, $props],
   (styleSourceSelections, styles, props) => {
     return findCssVariableUsagesByInstance({
-      styleSourceSelections,
-      styles,
-      props,
+      styleSourceSelections: styleSourceSelections.values(),
+      styles: styles.values(),
+      props: props.values(),
     });
   }
 );
@@ -146,28 +71,10 @@ export const $definedCssVariables = computed($styles, (styles) => {
 export const $cssVariableDefinitionsByVariable = computed(
   [$styleSourceSelections, $styles],
   (styleSourceSelections, styles) => {
-    const definitionsByVariable = new Map<string, Set<Instance["id"]>>();
-
-    const instancesByStyleSource = getInstanceIdByStyleSourceId(
-      styleSourceSelections.values()
-    );
-
-    // Find all CSS variable definitions
-    for (const styleDecl of styles.values()) {
-      if (styleDecl.property.startsWith("--")) {
-        const instanceId = instancesByStyleSource.get(styleDecl.styleSourceId);
-        if (instanceId) {
-          let instances = definitionsByVariable.get(styleDecl.property);
-          if (instances === undefined) {
-            instances = new Set();
-            definitionsByVariable.set(styleDecl.property, instances);
-          }
-          instances.add(instanceId);
-        }
-      }
-    }
-
-    return definitionsByVariable;
+    return getCssVariableDefinitionsByVariable({
+      styleSourceSelections: styleSourceSelections.values(),
+      styles: styles.values(),
+    });
   }
 );
 
@@ -175,34 +82,10 @@ export const $cssVariableDefinitionsByVariable = computed(
 export const $referencedCssVariables = computed(
   [$styles, $props],
   (styles, props) => {
-    const referencedVariables = new Set<string>();
-
-    const definedVariables = getDefinedCssVariableNames(styles.values());
-    if (definedVariables.size === 0) {
-      return referencedVariables;
-    }
-
-    const definedVariablesRegex = createCssVariableNamesRegex(definedVariables);
-    for (const styleDecl of styles.values()) {
-      for (const varName of collectCssVariableReferences(
-        toValue(styleDecl.value),
-        definedVariablesRegex
-      )) {
-        referencedVariables.add(varName);
-      }
-    }
-    for (const prop of props.values()) {
-      if (prop.type === "string" && prop.name === "code" && prop.value) {
-        for (const varName of collectCssVariableReferences(
-          prop.value,
-          definedVariablesRegex
-        )) {
-          referencedVariables.add(varName);
-        }
-      }
-    }
-
-    return referencedVariables;
+    return getReferencedCssVariables({
+      styles: styles.values(),
+      props: props.values(),
+    });
   }
 );
 

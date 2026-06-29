@@ -18,6 +18,9 @@ test("prints api manual with patch workflow and examples", () => {
   expect(output).toContain("Supported namespaces");
   expect(output).toContain("## Use Case Index");
   expect(output).toContain("## CLI Capability Inventory");
+  expect(output).toContain("## Known CLI Gaps");
+  expect(output).toContain("Save and manage page templates");
+  expect(output).toContain("Generate from design input");
   expect(output).toContain("### Top-Level Commands");
   expect(output).toContain("### API Commands By Area");
   expect(output).toContain("webstudio mcp");
@@ -53,6 +56,16 @@ test("prints api manual as json", () => {
   expect(output.mutationNamespaces).toContain("instances");
   expect(output.sessionBehavior.refreshFlag).toContain("--refresh");
   expect(output.sessionBehavior.metadata).toContain("meta.session");
+  expect(output.knownGaps).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        capability: "Save and manage page templates",
+      }),
+      expect.objectContaining({
+        capability: "Generate from design input",
+      }),
+    ])
+  );
   expect(
     output.topLevelCommands.map(({ command }: { command: string }) => command)
   ).toEqual([
@@ -185,6 +198,8 @@ test("prints llm manual with discovery rules", () => {
   expect(output).toContain("webstudio permissions --json");
   expect(output).toContain("Never guess ids");
   expect(output).toContain("--refresh");
+  expect(output).toContain("## Known Gaps");
+  expect(output).toContain("Provider-specific authenticated pages");
 });
 
 test("prints available topics for unknown manual topic", () => {

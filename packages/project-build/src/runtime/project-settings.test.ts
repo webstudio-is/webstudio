@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import type { BuilderState } from "../state/builder-state";
 import {
+  breakpointFieldsInput,
+  breakpointUpdateFieldsInput,
   createBreakpoint,
   createRedirect,
   deleteBreakpoint,
@@ -8,6 +10,9 @@ import {
   getProjectSettings,
   listBreakpoints,
   listRedirects,
+  projectSettingsUpdateInput,
+  redirectFieldsInput,
+  redirectUpdateFieldsInput,
   updateBreakpoint,
   updateProjectSettings,
   updateRedirect,
@@ -49,6 +54,34 @@ const createState = (): BuilderState =>
   }) as BuilderState;
 
 describe("project settings runtime", () => {
+  test("exports reusable input contracts for router adapters", () => {
+    expect(
+      projectSettingsUpdateInput.parse({
+        meta: { siteName: "Site", faviconAssetId: null },
+        compiler: { atomicStyles: false },
+      })
+    ).toEqual({
+      meta: { siteName: "Site", faviconAssetId: null },
+      compiler: { atomicStyles: false },
+    });
+    expect(
+      redirectFieldsInput.safeParse({
+        old: "/old",
+        new: "/new",
+        status: "308",
+      }).success
+    ).toBe(false);
+    expect(redirectUpdateFieldsInput.parse({ status: null })).toMatchObject({
+      status: null,
+    });
+    expect(
+      breakpointFieldsInput.parse({ id: "tablet", label: "Tablet" })
+    ).toEqual({ id: "tablet", label: "Tablet" });
+    expect(breakpointUpdateFieldsInput.parse({ condition: null })).toEqual({
+      condition: null,
+    });
+  });
+
   test("reads project settings from pages namespace", () => {
     expect(getProjectSettings(createState())).toEqual({
       meta: { siteName: "Existing site", faviconAssetId: "old-asset" },
@@ -79,6 +112,36 @@ describe("project settings runtime", () => {
               path: ["compiler", "atomicStyles"],
               value: false,
             },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("creates project meta and compiler settings when missing", () => {
+    const state = createState();
+    if (state.pages === undefined) {
+      throw new Error("Expected pages");
+    }
+    state.pages.meta = undefined;
+    state.pages.compiler = undefined;
+
+    expect(
+      updateProjectSettings(state, {
+        meta: { siteName: "New site", faviconAssetId: null },
+        compiler: { atomicStyles: true },
+      })
+    ).toEqual({
+      kind: "mutation",
+      invalidatesNamespaces: ["pages"],
+      noop: false,
+      result: { updated: true },
+      payload: [
+        {
+          namespace: "pages",
+          patches: [
+            { op: "add", path: ["meta"], value: { siteName: "New site" } },
+            { op: "add", path: ["compiler"], value: { atomicStyles: true } },
           ],
         },
       ],

@@ -295,6 +295,9 @@ type AssetUploadDescriptor = {
 };
 
 type AssetUploadResult = { uploadedAssets?: Asset[] };
+type AssetUploadBatchResult =
+  | { status: "fulfilled"; uploadedAssets: Asset[] }
+  | { status: "rejected"; asset: Asset; error: unknown };
 
 const toArrayBuffer = async (data: BinaryAssetData) => {
   if (data instanceof Blob) {
@@ -404,37 +407,38 @@ export const uploadAssets = async (
     readAssetData: (asset: Asset) => Promise<BinaryAssetData>;
   }
 ): Promise<Asset[]> => {
-  const failedUploads: { asset: Asset; error: unknown }[] = [];
-  const uploadedAssets: Asset[] = [];
-
-  await Promise.all(
+  const results: AssetUploadBatchResult[] = await Promise.all(
     params.assets.map(async (asset) => {
       try {
-        await retryOnce(async () => {
+        const uploadedAssets = await retryOnce(async () => {
           const data = await params.readAssetData(asset);
           const assetWithId = {
             ...asset,
             id: asset.id || (await getSha256Hash(data)),
           };
-          uploadedAssets.push(
-            ...(await uploadAsset({
-              authToken: params.authToken,
-              headers: params.headers,
-              origin: params.origin,
-              projectId: params.projectId,
-              upload: {
-                asset: assetWithId,
-                data,
-              },
-            }))
-          );
+          return await uploadAsset({
+            authToken: params.authToken,
+            headers: params.headers,
+            origin: params.origin,
+            projectId: params.projectId,
+            upload: {
+              asset: assetWithId,
+              data,
+            },
+          });
         });
+        return { status: "fulfilled", uploadedAssets };
       } catch (error) {
-        failedUploads.push({ asset, error });
+        return { status: "rejected", asset, error };
       }
     })
   );
 
+  const failedUploads = results.flatMap((result) =>
+    result.status === "rejected"
+      ? [{ asset: result.asset, error: result.error }]
+      : []
+  );
   if (failedUploads.length > 0) {
     throw new Error(
       `Failed to upload assets: ${failedUploads
@@ -442,7 +446,9 @@ export const uploadAssets = async (
         .join("; ")}`
     );
   }
-  return uploadedAssets;
+  return results.flatMap((result) =>
+    result.status === "fulfilled" ? result.uploadedAssets : []
+  );
 };
 
 const toUploadAsset = ({

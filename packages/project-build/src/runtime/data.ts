@@ -375,8 +375,8 @@ export const computeExpression = (
 
     const result = getCompiledExpression(expression)({ get: getVariable });
     return result;
-  } catch (error) {
-    console.error(error);
+  } catch {
+    return undefined;
   }
 };
 
@@ -846,8 +846,7 @@ export const deleteVariableMutable = (
   });
 };
 
-const valuesEqual = (left: unknown, right: unknown) =>
-  JSON.stringify(left) === JSON.stringify(right);
+const valuesEqual = (left: unknown, right: unknown) => deepEqual(left, right);
 
 const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
   new Map<Key, Value>(

@@ -102,6 +102,11 @@
       "import": "./src/runtime/pages.ts",
       "default": "./src/runtime/pages.ts"
     },
+    "./runtime/project-settings": {
+      "webstudio": "./src/runtime/project-settings.ts",
+      "import": "./src/runtime/project-settings.ts",
+      "default": "./src/runtime/project-settings.ts"
+    },
     "./runtime/props": {
       "webstudio": "./src/runtime/props.ts",
       "import": "./src/runtime/props.ts",

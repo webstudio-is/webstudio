@@ -33,8 +33,11 @@ import {
   cssVariableValueInput,
   designTokenCreateInput,
   findDesignToken,
+  findCssVariableUsagesByInstance,
   getDefinedCssVariableNames,
+  getCssVariableDefinitionsByVariable,
   getInstanceIdByStyleSourceId,
+  getReferencedCssVariables,
   getStyleSourceInsertionIndex,
   serializeCssVariables,
   createSelectedStyleDeclarationDeletePayload,
@@ -271,6 +274,65 @@ describe("css variable usage", () => {
     );
   });
 
+  test("finds css variable usage counts and owning instances", () => {
+    const styles = [
+      createCssVariableStyleDecl("local-1", "--color", "red"),
+      createCssVariableStyleDecl("local-2", "color", "var(--color)"),
+    ];
+    const props = [
+      {
+        id: "prop",
+        instanceId: "embed",
+        name: "code",
+        type: "string",
+        value: "var(--color)",
+      },
+    ] as const;
+
+    expect(
+      findCssVariableUsagesByInstance({
+        styleSourceSelections: [
+          { instanceId: "box", values: ["local-1"] },
+          { instanceId: "text", values: ["local-2"] },
+        ],
+        styles,
+        props,
+      })
+    ).toEqual({
+      counts: new Map([["--color", 2]]),
+      instances: new Map([["--color", new Set(["text", "embed"])]]),
+    });
+  });
+
+  test("finds css variable definitions and references", () => {
+    const styles = [
+      createCssVariableStyleDecl("local-1", "--color", "red"),
+      createCssVariableStyleDecl("local-2", "color", "var(--color)"),
+    ];
+    const props = [
+      {
+        id: "prop",
+        instanceId: "embed",
+        name: "code",
+        type: "string",
+        value: "var(--color)",
+      },
+    ] as const;
+
+    expect(
+      getCssVariableDefinitionsByVariable({
+        styleSourceSelections: [
+          { instanceId: "box", values: ["local-1"] },
+          { instanceId: "text", values: ["local-2"] },
+        ],
+        styles,
+      })
+    ).toEqual(new Map([["--color", new Set(["box"])]]));
+    expect(getReferencedCssVariables({ styles, props })).toEqual(
+      new Set(["--color"])
+    );
+  });
+
   test("validates css variable names", () => {
     expect(
       validateCssVariableNameWithStyles({
@@ -459,6 +521,32 @@ describe("css variable usage", () => {
         styles,
         props: [],
         force: true,
+      })
+    ).toEqual({
+      payload: [
+        {
+          namespace: "styles",
+          patches: [{ op: "remove", path: ["local:base:--color:"] }],
+        },
+      ],
+      styleKeys: ["local:base:--color:"],
+      referenced: [],
+    });
+  });
+
+  test("creates css variable delete patches from style iterators", () => {
+    const styles = new Map([
+      [
+        "local:base:--color:",
+        createCssVariableStyleDecl("local", "--color", "red"),
+      ],
+    ]);
+
+    expect(
+      createCssVariableDeletePayload({
+        names: ["--color"],
+        styles: styles.values(),
+        props: [],
       })
     ).toEqual({
       payload: [

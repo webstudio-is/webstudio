@@ -152,7 +152,7 @@ describe("ShareProject", () => {
         canPublish: true,
       })
     ).toBe(
-      "Allows viewer API access, content-mode text and prop changes, plus publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains."
+      "Allows viewer API access, content-mode text and prop changes, plus publishing and unpublishing project and custom domains. It cannot change pages, design data, assets, variables, resources, or domains."
     );
     expect(
       getApiPermissionDescription({
@@ -160,7 +160,7 @@ describe("ShareProject", () => {
         canPublish: false,
       })
     ).toBe(
-      "Allows read and build API access: pages, folders, instances, text, props, styles, design tokens, CSS variables, data variables, resources, assets, patches, and staging publish/unpublish."
+      "Allows read and build API access: pages, folders, instances, text, props, styles, design tokens, CSS variables, data variables, resources, assets, patches, and project-domain publish/unpublish."
     );
     expect(
       getApiPermissionDescription({

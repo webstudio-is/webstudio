@@ -318,6 +318,56 @@ describe("insert page copy", () => {
     });
   });
 
+  test("runtime duplicate rejects explicit path conflicts", () => {
+    const data = getWebstudioDataStub({
+      instances: toMap<Instance>([
+        { type: "instance", id: "bodyId", component: "Body", children: [] },
+      ]),
+      pages: migratePages({
+        meta: {},
+        homePage: {
+          id: "homePageId",
+          name: "Home",
+          path: "",
+          title: `"Home"`,
+          meta: {},
+          rootInstanceId: "bodyId",
+        },
+        pages: [
+          {
+            id: "pageId",
+            name: "Name",
+            path: "/nested",
+            title: `"Title"`,
+            meta: {},
+            rootInstanceId: "bodyId",
+          },
+          {
+            id: "conflictId",
+            name: "Conflict",
+            path: "/copy",
+            title: `"Conflict"`,
+            meta: {},
+            rootInstanceId: "bodyId",
+          },
+        ],
+        folders: [createRootFolder(["homePageId", "pageId", "conflictId"])],
+      }),
+    });
+
+    expect(() =>
+      duplicatePage(
+        data,
+        {
+          projectId: "projectId",
+          pageId: "pageId",
+          path: "/copy",
+        },
+        { createId: nanoid }
+      )
+    ).toThrow('Page path "/copy" is already in use');
+  });
+
   test("preserves slot content ids when duplicating page", () => {
     const dataWithoutPages = renderData(
       <$.Body ws:id="bodyId">
@@ -1057,6 +1107,73 @@ describe("insert page copy", () => {
       namespace: "instances",
       patches: expect.arrayContaining([expect.objectContaining({ op: "add" })]),
     });
+  });
+
+  test("create page from template rejects path conflicts", () => {
+    const pages = migratePages({
+      homePage: {
+        id: "homePageId",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        rootInstanceId: "homeBodyId",
+        meta: {},
+      },
+      pages: [
+        {
+          id: "landingId",
+          name: "Landing",
+          path: "/landing",
+          title: `"Landing"`,
+          rootInstanceId: "homeBodyId",
+          meta: {},
+        },
+      ],
+      folders: [createRootFolder(["homePageId", "landingId"])],
+    });
+    pages.pageTemplates = new Map([
+      [
+        "templateId",
+        {
+          id: "templateId",
+          name: "Template",
+          title: `"Template"`,
+          rootInstanceId: "templateBodyId",
+          meta: {},
+        },
+      ],
+    ]);
+    const data = getWebstudioDataStub({
+      pages,
+      instances: toMap<Instance>([
+        {
+          type: "instance",
+          id: ROOT_INSTANCE_ID,
+          component: "Root",
+          children: [{ type: "id", value: "templateBodyId" }],
+        },
+        {
+          type: "instance",
+          id: "templateBodyId",
+          component: "Body",
+          tag: "body",
+          children: [],
+        },
+      ]),
+    });
+
+    expect(() =>
+      createPageFromTemplate(
+        data,
+        {
+          projectId: "projectId",
+          templateId: "templateId",
+          name: "Landing",
+          path: "/landing",
+        },
+        { createId: nanoid }
+      )
+    ).toThrow('Page path "/landing" is already in use');
   });
 
   test("insert template copy preserves and remaps system data source", () => {

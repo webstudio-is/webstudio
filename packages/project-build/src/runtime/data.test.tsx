@@ -463,11 +463,9 @@ test("compute expression with decoded names", () => {
 });
 
 test("compute expression when invalid syntax", () => {
-  // prevent error message in test report
   const spy = vi.spyOn(console, "error");
-  spy.mockImplementationOnce(() => {});
   expect(computeExpression("https://github.com", new Map())).toEqual(undefined);
-  expect(spy).toHaveBeenCalledOnce();
+  expect(spy).not.toHaveBeenCalled();
   spy.mockRestore();
 });
 

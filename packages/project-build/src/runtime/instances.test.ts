@@ -3,6 +3,7 @@ import {
   elementComponent,
   type Instance,
   type Prop,
+  type StyleDecl,
   type StyleSource,
   type StyleSourceSelection,
 } from "@webstudio-is/sdk";
@@ -13,6 +14,7 @@ import {
   createInstanceAppendPayload,
   createInstanceChild,
   createInstanceClonePayload,
+  createInstanceCleanupPayload,
   createInstanceDeletePayload,
   createInstanceMovePatches,
   createInstanceMovePayload,
@@ -899,6 +901,109 @@ test("reports invalid instance deletes", () => {
   ).toEqual([
     { type: "page-root", instanceId: "root" },
     { type: "instance-not-found", instanceId: "missing" },
+  ]);
+});
+
+test("cleans local styles and scoped data when removing instances", () => {
+  const styleDecl: StyleDecl = {
+    styleSourceId: "local-1",
+    breakpointId: "base",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  const props: Prop[] = [
+    {
+      id: "prop-1",
+      instanceId: "child-1",
+      name: "title",
+      type: "string",
+      value: "Title",
+    },
+    {
+      id: "resource-prop",
+      instanceId: "child-1",
+      name: "data",
+      type: "resource",
+      value: "prop-resource",
+    },
+  ];
+  const styles: StyleDecl[] = [
+    styleDecl,
+    {
+      styleSourceId: "token-1",
+      breakpointId: "base",
+      property: "fontSize",
+      value: { type: "unit", value: 16, unit: "px" },
+    },
+  ];
+
+  expect(
+    createInstanceCleanupPayload({
+      instanceIds: new Set(["child-1"]),
+      props,
+      dataSources: [
+        {
+          id: "variable-1",
+          type: "variable",
+          scopeInstanceId: "child-1",
+          name: "Value",
+          value: { type: "string", value: "text" },
+        },
+        {
+          id: "resource-variable",
+          type: "resource",
+          scopeInstanceId: "child-1",
+          name: "Resource",
+          resourceId: "variable-resource",
+        },
+      ],
+      styleSources: [
+        { type: "local", id: "local-1" },
+        { type: "token", id: "token-1", name: "Token" },
+      ],
+      styleSourceSelections: [
+        { instanceId: "child-1", values: ["token-1", "local-1"] },
+      ],
+      styles,
+    })
+  ).toEqual([
+    {
+      namespace: "instances",
+      patches: [{ op: "remove", path: ["child-1"] }],
+    },
+    {
+      namespace: "props",
+      patches: [
+        { op: "remove", path: ["prop-1"] },
+        { op: "remove", path: ["resource-prop"] },
+      ],
+    },
+    {
+      namespace: "dataSources",
+      patches: [
+        { op: "remove", path: ["variable-1"] },
+        { op: "remove", path: ["resource-variable"] },
+      ],
+    },
+    {
+      namespace: "resources",
+      patches: [
+        { op: "remove", path: ["prop-resource"] },
+        { op: "remove", path: ["variable-resource"] },
+      ],
+    },
+    {
+      namespace: "styleSourceSelections",
+      patches: [{ op: "remove", path: ["child-1"] }],
+    },
+    {
+      namespace: "styleSources",
+      patches: [{ op: "remove", path: ["local-1"] }],
+    },
+    {
+      namespace: "styles",
+      patches: [{ op: "remove", path: ["local-1:base:color:"] }],
+    },
   ]);
 });
 
