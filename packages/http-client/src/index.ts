@@ -21,7 +21,11 @@ import {
   isPublicApiRemoteErrorCode,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
-import { getPublicApiOperationPath } from "./api-operations";
+import {
+  getPublicApiOperation,
+  getPublicApiOperationPath,
+  type PublicApiCommand,
+} from "./api-operations";
 export {
   getPublicApiOperation,
   getPublicApiOperationPath,
@@ -248,29 +252,45 @@ const projectMutation =
     await mutateProjectApi<Result>(params, path, getInput(params));
 
 const projectQueryInput = <Params extends AuthProjectParams, Result = unknown>(
-  path: string,
-  keys: readonly (keyof Params)[]
-) => projectQuery<Params, Result>(path, (params) => pickInput(params, keys));
+  command: PublicApiCommand
+) => {
+  const operation = getPublicApiOperation(command);
+  return projectQuery<Params, Result>(
+    getPublicApiOperationPath(command),
+    (params) =>
+      pickInput(params, operation.inputFields as readonly (keyof Params)[])
+  );
+};
 
 const projectMutationInput = <
   Params extends AuthProjectParams,
   Result = unknown,
 >(
-  path: string,
-  keys: readonly (keyof Params)[]
-) => projectMutation<Params, Result>(path, (params) => pickInput(params, keys));
+  command: PublicApiCommand
+) => {
+  const operation = getPublicApiOperation(command);
+  return projectMutation<Params, Result>(
+    getPublicApiOperationPath(command),
+    (params) =>
+      pickInput(params, operation.inputFields as readonly (keyof Params)[])
+  );
+};
 
 const projectConfirmedMutationInput = <
   Params extends AuthProjectParams,
   Result = unknown,
 >(
-  path: string,
-  keys: readonly (keyof Params)[]
-) =>
-  projectMutation<Params, Result>(path, (params) => ({
-    ...pickInput(params, keys),
-    confirm: true,
-  }));
+  command: PublicApiCommand
+) => {
+  const operation = getPublicApiOperation(command);
+  return projectMutation<Params, Result>(
+    getPublicApiOperationPath(command),
+    (params) => ({
+      ...pickInput(params, operation.inputFields as readonly (keyof Params)[]),
+      confirm: true,
+    })
+  );
+};
 
 const stagedUploadChunkSize = 3 * 1024 * 1024;
 
@@ -688,7 +708,7 @@ export const getBuildSnapshot = projectQueryInput<
     include?: string[];
     version?: number;
   }
->(getPublicApiOperationPath("snapshot"), ["include", "version"]);
+>("snapshot");
 
 export const applyBuildPatch = async (
   params: AuthProjectParams & {
@@ -732,19 +752,19 @@ export const listPages = projectQueryInput<
   AuthProjectParams & {
     includeFolders?: boolean;
   }
->(getPublicApiOperationPath("list-pages"), ["includeFolders"]);
+>("list-pages");
 
 export const getPage = projectQueryInput<
   AuthProjectParams & {
     pageId: string;
   }
->(getPublicApiOperationPath("get-page"), ["pageId"]);
+>("get-page");
 
 export const getPageByPath = projectQueryInput<
   AuthProjectParams & {
     path: string;
   }
->(getPublicApiOperationPath("get-page-by-path"), ["path"]);
+>("get-page-by-path");
 
 export const createPage = projectMutationInput<
   AuthProjectParams & {
@@ -755,21 +775,14 @@ export const createPage = projectMutationInput<
     parentFolderId?: string;
     meta?: PageMetaInput;
   }
->(getPublicApiOperationPath("create-page"), [
-  "pageId",
-  "name",
-  "path",
-  "title",
-  "parentFolderId",
-  "meta",
-]);
+>("create-page");
 
 export const updatePage = projectMutationInput<
   AuthProjectParams & {
     pageId: string;
     values: PageFieldsInput;
   }
->(getPublicApiOperationPath("update-page"), ["pageId", "values"]);
+>("update-page");
 
 type ProjectSettingsInput = {
   meta?: {
@@ -790,7 +803,7 @@ export const getProjectSettings = projectQuery(
 
 export const updateProjectSettings = projectMutationInput<
   AuthProjectParams & ProjectSettingsInput
->(getPublicApiOperationPath("update-project-settings"), ["meta", "compiler"]);
+>("update-project-settings");
 
 export const listRedirects = projectQuery(
   getPublicApiOperationPath("list-redirects")
@@ -802,7 +815,7 @@ export const createRedirect = projectMutationInput<
     new: string;
     status?: "301" | "302";
   }
->(getPublicApiOperationPath("create-redirect"), ["old", "new", "status"]);
+>("create-redirect");
 
 export const updateRedirect = projectMutationInput<
   AuthProjectParams & {
@@ -813,13 +826,13 @@ export const updateRedirect = projectMutationInput<
       status?: "301" | "302" | null;
     };
   }
->(getPublicApiOperationPath("update-redirect"), ["old", "values"]);
+>("update-redirect");
 
 export const deleteRedirect = projectMutationInput<
   AuthProjectParams & {
     old: string;
   }
->(getPublicApiOperationPath("delete-redirect"), ["old"]);
+>("delete-redirect");
 
 export const listBreakpoints = projectQuery(
   getPublicApiOperationPath("list-breakpoints")
@@ -840,32 +853,26 @@ type NullableBreakpointUpdateInput = {
 
 export const createBreakpoint = projectMutationInput<
   AuthProjectParams & BreakpointInput
->(getPublicApiOperationPath("create-breakpoint"), [
-  "id",
-  "label",
-  "minWidth",
-  "maxWidth",
-  "condition",
-]);
+>("create-breakpoint");
 
 export const updateBreakpoint = projectMutationInput<
   AuthProjectParams & {
     breakpointId: string;
     values: NullableBreakpointUpdateInput;
   }
->(getPublicApiOperationPath("update-breakpoint"), ["breakpointId", "values"]);
+>("update-breakpoint");
 
 export const deleteBreakpoint = projectMutationInput<
   AuthProjectParams & {
     breakpointId: string;
   }
->(getPublicApiOperationPath("delete-breakpoint"), ["breakpointId"]);
+>("delete-breakpoint");
 
 export const deletePage = projectMutationInput<
   AuthProjectParams & {
     pageId: string;
   }
->(getPublicApiOperationPath("delete-page"), ["pageId"]);
+>("delete-page");
 
 export const duplicatePage = projectMutationInput<
   AuthProjectParams & {
@@ -874,12 +881,7 @@ export const duplicatePage = projectMutationInput<
     name?: string;
     path?: string;
   }
->(getPublicApiOperationPath("duplicate-page"), [
-  "pageId",
-  "parentFolderId",
-  "name",
-  "path",
-]);
+>("duplicate-page");
 
 export const listPageTemplates = projectQuery(
   getPublicApiOperationPath("list-page-templates")
@@ -892,18 +894,13 @@ export const createPageFromTemplate = projectMutationInput<
     name: string;
     path: string;
   }
->(getPublicApiOperationPath("create-page-from-template"), [
-  "templateId",
-  "parentFolderId",
-  "name",
-  "path",
-]);
+>("create-page-from-template");
 
 export const listFolders = projectQueryInput<
   AuthProjectParams & {
     includePages?: boolean;
   }
->(getPublicApiOperationPath("list-folders"), ["includePages"]);
+>("list-folders");
 
 export const createFolder = projectMutationInput<
   AuthProjectParams & {
@@ -912,12 +909,7 @@ export const createFolder = projectMutationInput<
     slug: string;
     parentFolderId?: string;
   }
->(getPublicApiOperationPath("create-folder"), [
-  "folderId",
-  "name",
-  "slug",
-  "parentFolderId",
-]);
+>("create-folder");
 
 export const updateFolder = projectMutationInput<
   AuthProjectParams & {
@@ -928,13 +920,13 @@ export const updateFolder = projectMutationInput<
       parentFolderId?: string;
     };
   }
->(getPublicApiOperationPath("update-folder"), ["folderId", "values"]);
+>("update-folder");
 
 export const deleteFolder = projectMutationInput<
   AuthProjectParams & {
     folderId: string;
   }
->(getPublicApiOperationPath("delete-folder"), ["folderId"]);
+>("delete-folder");
 
 export const listInstances = projectQueryInput<
   AuthProjectParams & {
@@ -947,16 +939,7 @@ export const listInstances = projectQueryInput<
     tag?: string;
     labelContains?: string;
   }
->(getPublicApiOperationPath("list-instances"), [
-  "pageId",
-  "pagePath",
-  "rootInstanceId",
-  "maxDepth",
-  "topLevelOnly",
-  "component",
-  "tag",
-  "labelContains",
-]);
+>("list-instances");
 
 export const inspectInstance = projectQueryInput<
   AuthProjectParams & {
@@ -964,11 +947,7 @@ export const inspectInstance = projectQueryInput<
     include?: string[];
     childDepth?: number;
   }
->(getPublicApiOperationPath("inspect-instance"), [
-  "instanceId",
-  "include",
-  "childDepth",
-]);
+>("inspect-instance");
 
 export const appendInstance = projectMutationInput<
   AuthProjectParams & {
@@ -983,12 +962,7 @@ export const appendInstance = projectMutationInput<
       text?: string;
     }>;
   }
->(getPublicApiOperationPath("append-instance"), [
-  "parentInstanceId",
-  "mode",
-  "insertIndex",
-  "children",
-]);
+>("append-instance");
 
 export const moveInstance = projectMutationInput<
   AuthProjectParams & {
@@ -998,7 +972,7 @@ export const moveInstance = projectMutationInput<
       insertIndex?: number;
     }>;
   }
->(getPublicApiOperationPath("move-instance"), ["moves"]);
+>("move-instance");
 
 export const cloneInstance = projectMutationInput<
   AuthProjectParams & {
@@ -1006,17 +980,13 @@ export const cloneInstance = projectMutationInput<
     targetParentInstanceId?: string;
     insertIndex?: number;
   }
->(getPublicApiOperationPath("clone-instance"), [
-  "sourceInstanceId",
-  "targetParentInstanceId",
-  "insertIndex",
-]);
+>("clone-instance");
 
 export const deleteInstance = projectMutationInput<
   AuthProjectParams & {
     instanceIds: string[];
   }
->(getPublicApiOperationPath("delete-instance"), ["instanceIds"]);
+>("delete-instance");
 
 type PropValueInput = {
   propId?: string;
@@ -1057,19 +1027,19 @@ export const updateProps = projectMutationInput<
   AuthProjectParams & {
     updates: PropValueInput[];
   }
->(getPublicApiOperationPath("update-props"), ["updates"]);
+>("update-props");
 
 export const deleteProps = projectMutationInput<
   AuthProjectParams & {
     deletions: Array<{ instanceId: string; name: string }>;
   }
->(getPublicApiOperationPath("delete-props"), ["deletions"]);
+>("delete-props");
 
 export const bindProps = projectMutationInput<
   AuthProjectParams & {
     bindings: PropBindingInput[];
   }
->(getPublicApiOperationPath("bind-props"), ["bindings"]);
+>("bind-props");
 
 export const listTexts = projectQueryInput<
   AuthProjectParams & {
@@ -1080,14 +1050,7 @@ export const listTexts = projectQueryInput<
     contains?: string;
     maxValueLength?: number;
   }
->(getPublicApiOperationPath("list-texts"), [
-  "pageId",
-  "pagePath",
-  "instanceId",
-  "mode",
-  "contains",
-  "maxValueLength",
-]);
+>("list-texts");
 
 export const updateText = projectMutationInput<
   AuthProjectParams & {
@@ -1096,12 +1059,7 @@ export const updateText = projectMutationInput<
     text: string;
     mode?: "text" | "expression";
   }
->(getPublicApiOperationPath("update-text"), [
-  "instanceId",
-  "childIndex",
-  "text",
-  "mode",
-]);
+>("update-text");
 
 export const getStyleDeclarations = projectQueryInput<
   AuthProjectParams & {
@@ -1114,16 +1072,7 @@ export const getStyleDeclarations = projectQueryInput<
     propertyFilter?: string;
     includeTokens?: boolean;
   }
->(getPublicApiOperationPath("get-styles"), [
-  "instanceIds",
-  "pageId",
-  "pagePath",
-  "breakpoint",
-  "state",
-  "property",
-  "propertyFilter",
-  "includeTokens",
-]);
+>("get-styles");
 
 type StyleDeclarationUpdateInput = {
   instanceId: string;
@@ -1145,13 +1094,13 @@ export const updateStyleDeclarations = projectMutationInput<
   AuthProjectParams & {
     updates: StyleDeclarationUpdateInput[];
   }
->(getPublicApiOperationPath("update-styles"), ["updates"]);
+>("update-styles");
 
 export const deleteStyleDeclarations = projectMutationInput<
   AuthProjectParams & {
     deletions: StyleDeclarationDeleteInput[];
   }
->(getPublicApiOperationPath("delete-styles"), ["deletions"]);
+>("delete-styles");
 
 export const replaceStyleValues = projectMutationInput<
   AuthProjectParams & {
@@ -1161,13 +1110,7 @@ export const replaceStyleValues = projectMutationInput<
     pageId?: string;
     pagePath?: string;
   }
->(getPublicApiOperationPath("replace-styles"), [
-  "property",
-  "fromValue",
-  "toValue",
-  "pageId",
-  "pagePath",
-]);
+>("replace-styles");
 
 export const listDesignTokens = projectQueryInput<
   AuthProjectParams & {
@@ -1175,11 +1118,7 @@ export const listDesignTokens = projectQueryInput<
     withUsage?: boolean;
     sort?: "name" | "usage";
   }
->(getPublicApiOperationPath("list-design-tokens"), [
-  "filter",
-  "withUsage",
-  "sort",
-]);
+>("list-design-tokens");
 
 type DesignTokenStyleInput = {
   property: string;
@@ -1197,27 +1136,21 @@ export const createDesignTokens = projectMutationInput<
       declarations?: DesignTokenStyleInput[];
     }>;
   }
->(getPublicApiOperationPath("create-design-token"), ["tokens"]);
+>("create-design-token");
 
 export const updateDesignTokenStyles = projectMutationInput<
   AuthProjectParams & {
     designTokenId: string;
     updates: DesignTokenStyleInput[];
   }
->(getPublicApiOperationPath("update-design-token-styles"), [
-  "designTokenId",
-  "updates",
-]);
+>("update-design-token-styles");
 
 export const deleteDesignTokenStyles = projectMutationInput<
   AuthProjectParams & {
     designTokenId: string;
     deletions: Array<Omit<StyleDeclarationDeleteInput, "instanceId">>;
   }
->(getPublicApiOperationPath("delete-design-token-styles"), [
-  "designTokenId",
-  "deletions",
-]);
+>("delete-design-token-styles");
 
 export const attachDesignToken = projectMutationInput<
   AuthProjectParams & {
@@ -1225,21 +1158,14 @@ export const attachDesignToken = projectMutationInput<
     instanceIds: string[];
     position?: "before-local" | "after-local";
   }
->(getPublicApiOperationPath("attach-design-token"), [
-  "designTokenId",
-  "instanceIds",
-  "position",
-]);
+>("attach-design-token");
 
 export const detachDesignToken = projectMutationInput<
   AuthProjectParams & {
     designTokenId: string;
     instanceIds: string[];
   }
->(getPublicApiOperationPath("detach-design-token"), [
-  "designTokenId",
-  "instanceIds",
-]);
+>("detach-design-token");
 
 export const extractDesignToken = projectMutationInput<
   AuthProjectParams & {
@@ -1247,42 +1173,35 @@ export const extractDesignToken = projectMutationInput<
     name: string;
     removeLocalProps?: string[];
   }
->(getPublicApiOperationPath("extract-design-token"), [
-  "instanceIds",
-  "name",
-  "removeLocalProps",
-]);
+>("extract-design-token");
 
 export const listCssVariables = projectQueryInput<
   AuthProjectParams & {
     filter?: string;
     withUsage?: boolean;
   }
->(getPublicApiOperationPath("list-css-variables"), ["filter", "withUsage"]);
+>("list-css-variables");
 
 export const defineCssVariables = projectMutationInput<
   AuthProjectParams & {
     vars: Record<string, string | Record<string, unknown>>;
     overwrite?: boolean;
   }
->(getPublicApiOperationPath("define-css-variable"), ["vars", "overwrite"]);
+>("define-css-variable");
 
 export const deleteCssVariables = projectConfirmedMutationInput<
   AuthProjectParams & {
     names: string[];
     force?: boolean;
   }
->(getPublicApiOperationPath("delete-css-variable"), ["names", "force"]);
+>("delete-css-variable");
 
 export const rewriteCssVariableRefs = projectMutationInput<
   AuthProjectParams & {
     map: Record<string, string>;
     scopeRegex?: string;
   }
->(getPublicApiOperationPath("rewrite-css-variable-refs"), [
-  "map",
-  "scopeRegex",
-]);
+>("rewrite-css-variable-refs");
 
 type VariableValueInput =
   | { type: "number"; value: number }
@@ -1295,7 +1214,7 @@ export const listVariables = projectQueryInput<
   AuthProjectParams & {
     scopeInstanceId?: string;
   }
->(getPublicApiOperationPath("list-variables"), ["scopeInstanceId"]);
+>("list-variables");
 
 export const createVariable = projectMutationInput<
   AuthProjectParams & {
@@ -1304,12 +1223,7 @@ export const createVariable = projectMutationInput<
     name: string;
     value: VariableValueInput;
   }
->(getPublicApiOperationPath("create-variable"), [
-  "dataSourceId",
-  "scopeInstanceId",
-  "name",
-  "value",
-]);
+>("create-variable");
 
 export const updateVariable = projectMutationInput<
   AuthProjectParams & {
@@ -1320,13 +1234,13 @@ export const updateVariable = projectMutationInput<
       value?: VariableValueInput;
     };
   }
->(getPublicApiOperationPath("update-variable"), ["dataSourceId", "values"]);
+>("update-variable");
 
 export const deleteVariable = projectMutationInput<
   AuthProjectParams & {
     dataSourceId: string;
   }
->(getPublicApiOperationPath("delete-variable"), ["dataSourceId"]);
+>("delete-variable");
 
 type ResourceFieldsInput = {
   name: string;
@@ -1342,7 +1256,7 @@ export const listResources = projectQueryInput<
   AuthProjectParams & {
     scopeInstanceId?: string;
   }
->(getPublicApiOperationPath("list-resources"), ["scopeInstanceId"]);
+>("list-resources");
 
 export const createResource = projectMutationInput<
   AuthProjectParams & {
@@ -1352,13 +1266,7 @@ export const createResource = projectMutationInput<
     scopeInstanceId?: string;
     dataSourceName?: string;
   }
->(getPublicApiOperationPath("create-resource"), [
-  "resourceId",
-  "resource",
-  "dataSourceId",
-  "scopeInstanceId",
-  "dataSourceName",
-]);
+>("create-resource");
 
 export const updateResource = projectMutationInput<
   AuthProjectParams & {
@@ -1367,19 +1275,14 @@ export const updateResource = projectMutationInput<
     dataSourceName?: string;
     scopeInstanceId?: string;
   }
->(getPublicApiOperationPath("update-resource"), [
-  "resourceId",
-  "values",
-  "dataSourceName",
-  "scopeInstanceId",
-]);
+>("update-resource");
 
 export const deleteResource = projectMutationInput<
   AuthProjectParams & {
     resourceId: string;
     force?: boolean;
   }
->(getPublicApiOperationPath("delete-resource"), ["resourceId", "force"]);
+>("delete-resource");
 
 export const listPublishes = projectQuery(
   getPublicApiOperationPath("list-publishes")
@@ -1392,16 +1295,11 @@ export const publish = projectMutationInput<
     message?: string;
     idempotencyKey?: string;
   }
->(getPublicApiOperationPath("publish"), [
-  "target",
-  "domains",
-  "message",
-  "idempotencyKey",
-]);
+>("publish");
 
 export const getPublishJob = projectQueryInput<
   AuthProjectParams & { jobId: string }
->(getPublicApiOperationPath("get-publish-job"), ["jobId"]);
+>("get-publish-job");
 
 export const unpublish = projectConfirmedMutationInput<
   AuthProjectParams & {
@@ -1410,12 +1308,7 @@ export const unpublish = projectConfirmedMutationInput<
     message?: string;
     idempotencyKey?: string;
   }
->(getPublicApiOperationPath("unpublish"), [
-  "target",
-  "domains",
-  "message",
-  "idempotencyKey",
-]);
+>("unpublish");
 
 export const listDomains = projectQuery(
   getPublicApiOperationPath("list-domains")
@@ -1423,22 +1316,22 @@ export const listDomains = projectQuery(
 
 export const createDomain = projectMutationInput<
   AuthProjectParams & { domain: string }
->(getPublicApiOperationPath("create-domain"), ["domain"]);
+>("create-domain");
 
 export const updateDomain = projectMutationInput<
   AuthProjectParams & {
     domainId: string;
     updates: { domain?: string };
   }
->(getPublicApiOperationPath("update-domain"), ["domainId", "updates"]);
+>("update-domain");
 
 export const deleteDomain = projectConfirmedMutationInput<
   AuthProjectParams & { domainId: string }
->(getPublicApiOperationPath("delete-domain"), ["domainId"]);
+>("delete-domain");
 
 export const verifyDomain = projectMutationInput<
   AuthProjectParams & { domainId: string }
->(getPublicApiOperationPath("verify-domain"), ["domainId"]);
+>("verify-domain");
 
 export const listAssets = projectQueryInput<
   AuthProjectParams & {
@@ -1448,33 +1341,27 @@ export const listAssets = projectQueryInput<
     cursor?: string;
     limit?: number;
   }
->(getPublicApiOperationPath("list-assets"), [
-  "type",
-  "sort",
-  "withUsage",
-  "cursor",
-  "limit",
-]);
+>("list-assets");
 
 export const findAssetUsage = projectQueryInput<
   AuthProjectParams & {
     assetId: string;
   }
->(getPublicApiOperationPath("find-asset-usage"), ["assetId"]);
+>("find-asset-usage");
 
 export const replaceAsset = projectConfirmedMutationInput<
   AuthProjectParams & {
     fromAssetId: string;
     toAssetId: string;
   }
->(getPublicApiOperationPath("replace-asset"), ["fromAssetId", "toAssetId"]);
+>("replace-asset");
 
 export const deleteAssets = projectConfirmedMutationInput<
   AuthProjectParams & {
     assetIdsOrPrefixes: string[];
     force?: boolean;
   }
->(getPublicApiOperationPath("delete-asset"), ["assetIdsOrPrefixes", "force"]);
+>("delete-asset");
 
 const getUploadIdFromUrl = (uploadUrl: string | null) => {
   if (uploadUrl === null) {

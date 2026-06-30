@@ -1924,6 +1924,9 @@ importers:
       '@webstudio-is/authorization-token':
         specifier: workspace:*
         version: link:../authorization-token
+      '@webstudio-is/css-data':
+        specifier: workspace:*
+        version: link:../css-data
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine

@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import deepEqual from "fast-deep-equal";
+import { camelCaseProperty } from "@webstudio-is/css-data";
 import { styleValue, toValue, type StyleValue } from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
   styleDecl as styleDeclSchema,
   type Breakpoint,
+  type Breakpoints,
   type Instance,
   type Prop,
   type StyleDecl,
@@ -28,6 +30,7 @@ import { createRuntimeMutation } from "./mutation";
 import { serializeStyleDeclarations } from "./style-utils";
 import { createPropValue } from "./props";
 import { getStyleSourceStylesSignature } from "./style-copy";
+import { isBaseBreakpoint } from "./breakpoints";
 
 export const serializeDesignTokens = ({
   styleSources,
@@ -123,6 +126,10 @@ export const getStyleDeclarations = (
     includeTokens?: boolean;
   } = {}
 ) => {
+  const property =
+    input.property === undefined
+      ? undefined
+      : normalizeStyleProperty(input.property);
   const styleState = getRequiredStyleState(state);
   const hasPageFilter =
     input.pageId !== undefined || input.pagePath !== undefined;
@@ -161,7 +168,7 @@ export const getStyleDeclarations = (
       instanceIds,
       breakpoint: input.breakpoint,
       state: input.state,
-      property: input.property,
+      property,
       propertyFilter: input.propertyFilter,
       includeTokens: input.includeTokens,
     }),
@@ -181,6 +188,26 @@ export const listDesignTokens = (
 ) => serializeDesignTokens({ ...getRequiredStyleState(state), ...input });
 
 const DEFAULT_BREAKPOINT_ID = "base";
+
+const normalizeStyleProperty = (property: unknown): StyleDecl["property"] =>
+  typeof property === "string"
+    ? camelCaseProperty(property as StyleDecl["property"])
+    : (property as StyleDecl["property"]);
+
+const getBaseBreakpointId = (breakpoints: Breakpoints | undefined) => {
+  const breakpoint = Array.from(breakpoints?.values() ?? []).find(
+    isBaseBreakpoint
+  );
+  return breakpoint?.id ?? DEFAULT_BREAKPOINT_ID;
+};
+
+const withDefaultBreakpoint = <Input extends { breakpoint?: string }>(
+  input: Input,
+  breakpoint: string
+): Input => ({
+  ...input,
+  breakpoint: input.breakpoint ?? breakpoint,
+});
 
 export const styleUpdateInput = z.object({
   instanceId: z.string(),
@@ -489,12 +516,12 @@ const createCssVariableDeclaration = ({
   styleSourceId,
   property,
   value,
-  breakpointId = DEFAULT_BREAKPOINT_ID,
+  breakpointId,
 }: {
   styleSourceId: string;
   property: string;
   value: string | StyleValue;
-  breakpointId?: string;
+  breakpointId: string;
 }) =>
   createStyleDecl({
     styleSourceId,
@@ -508,11 +535,13 @@ const createCssVariableDefinePayload = ({
   rootStyleSourceId,
   styles,
   overwrite,
+  breakpointId = DEFAULT_BREAKPOINT_ID,
 }: {
   vars: Record<string, string | StyleValue>;
   rootStyleSourceId: string;
   styles: Iterable<StyleDecl>;
   overwrite?: boolean;
+  breakpointId?: string;
 }): {
   payload: BuilderPatchChange[];
   names: string[];
@@ -538,6 +567,7 @@ const createCssVariableDefinePayload = ({
               styleSourceId: rootStyleSourceId,
               property,
               value,
+              breakpointId,
             }),
           ]
         : existingDeclarations.map((declaration) =>
@@ -578,6 +608,7 @@ export const createCssVariableRootDefinePayload = ({
   styleSourceSelections,
   styles,
   overwrite,
+  breakpointId = DEFAULT_BREAKPOINT_ID,
   createId,
 }: {
   rootInstanceId: Instance["id"];
@@ -586,6 +617,7 @@ export const createCssVariableRootDefinePayload = ({
   styleSourceSelections: Iterable<StyleSourceSelection>;
   styles: Iterable<StyleDecl>;
   overwrite?: boolean;
+  breakpointId?: string;
   createId: () => StyleSource["id"];
 }) => {
   const rootStyleSourceResult = createLocalStyleSourcePatchPlan({
@@ -612,6 +644,7 @@ export const createCssVariableRootDefinePayload = ({
     rootStyleSourceId: rootStyleSourceResult.styleSourceId,
     styles,
     overwrite,
+    breakpointId,
   });
   return {
     ...result,
@@ -1445,7 +1478,7 @@ export const createStyleDecl = ({
     styleSourceId,
     breakpointId,
     state,
-    property,
+    property: normalizeStyleProperty(property),
     value,
     listed,
   });
@@ -1489,7 +1522,7 @@ export const getStyleDeclKeyFromInput = ({
     styleSourceId,
     breakpointId: breakpoint,
     state,
-    property: property as StyleDecl["property"],
+    property: normalizeStyleProperty(property),
   });
 
 export const updateStyleDecl = (
@@ -1502,6 +1535,10 @@ export const updateStyleDecl = (
   styleDeclSchema.parse({
     ...declaration,
     ...values,
+    property:
+      values.property === undefined
+        ? declaration.property
+        : normalizeStyleProperty(values.property),
   });
 
 export const setStyleDeclMutable = ({
@@ -1551,7 +1588,7 @@ export const deleteStyleDeclMutable = ({
     styleSourceId,
     breakpointId,
     state,
-    property: property as StyleDecl["property"],
+    property: normalizeStyleProperty(property),
   });
   return styles.delete(styleKey);
 };
@@ -2308,6 +2345,7 @@ export const createStyleValueReplacementPayload = ({
   fromValue: unknown;
   toValue: unknown;
 }) => {
+  const normalizedProperty = normalizeStyleProperty(property);
   const styleSourceById = new Map(
     Array.from(styleSources, (styleSource) => [styleSource.id, styleSource])
   );
@@ -2324,7 +2362,7 @@ export const createStyleValueReplacementPayload = ({
   );
   const patches = Array.from(styles).flatMap((declaration) => {
     if (
-      declaration.property !== property ||
+      declaration.property !== normalizedProperty ||
       selectedLocalSources.has(declaration.styleSourceId) === false ||
       deepEqual(declaration.value, fromValue) === false
     ) {
@@ -2377,7 +2415,11 @@ const assertStyleInstances = (
 export const updateStyleDeclarations = (
   state: Pick<
     BuilderState,
-    "instances" | "styles" | "styleSources" | "styleSourceSelections"
+    | "breakpoints"
+    | "instances"
+    | "styles"
+    | "styleSources"
+    | "styleSourceSelections"
   >,
   input: { updates: Array<z.infer<typeof styleUpdateInput>> },
   context: { createId: () => string }
@@ -2389,7 +2431,9 @@ export const updateStyleDeclarations = (
   );
   const { payload, styleKeys, missingLocalStyleSourceInstanceIds } =
     createStyleDeclarationUpdatePayload({
-      updates: input.updates,
+      updates: input.updates.map((update) =>
+        withDefaultBreakpoint(update, getBaseBreakpointId(state.breakpoints))
+      ),
       styleSources: styleState.styleSources,
       styleSourceSelections: styleState.styleSourceSelections.values(),
       styles: styleState.styles.values(),
@@ -2411,7 +2455,11 @@ export const updateStyleDeclarations = (
 export const deleteStyleDeclarations = (
   state: Pick<
     BuilderState,
-    "instances" | "styles" | "styleSources" | "styleSourceSelections"
+    | "breakpoints"
+    | "instances"
+    | "styles"
+    | "styleSources"
+    | "styleSourceSelections"
   >,
   input: { deletions: Array<z.infer<typeof styleDeleteInput>> }
 ) => {
@@ -2421,7 +2469,9 @@ export const deleteStyleDeclarations = (
     input.deletions.map((deletion) => deletion.instanceId)
   );
   const { payload, styleKeys } = createStyleDeclarationDeletePayload({
-    deletions: input.deletions,
+    deletions: input.deletions.map((deletion) =>
+      withDefaultBreakpoint(deletion, getBaseBreakpointId(state.breakpoints))
+    ),
     styleSources: styleState.styleSources,
     styleSourceSelections: styleState.styleSourceSelections.values(),
     styles: styleState.styles.values(),
@@ -2518,7 +2568,11 @@ export const listCssVariables = (
 export const defineCssVariables = (
   state: Pick<
     BuilderState,
-    "pages" | "styles" | "styleSources" | "styleSourceSelections"
+    | "breakpoints"
+    | "pages"
+    | "styles"
+    | "styleSources"
+    | "styleSourceSelections"
   >,
   input: {
     vars: Record<string, string | StyleValue>;
@@ -2544,6 +2598,7 @@ export const defineCssVariables = (
     styleSourceSelections: styleState.styleSourceSelections.values(),
     styles: styleState.styles.values(),
     overwrite: input.overwrite,
+    breakpointId: getBaseBreakpointId(state.breakpoints),
     createId: context.createId,
   });
   if (resultPayload.missingRootStyleSource) {
@@ -2649,14 +2704,23 @@ const getDesignTokenOrThrow = (
 export const createDesignTokens = (
   state: Pick<
     BuilderState,
-    "styles" | "styleSources" | "styleSourceSelections"
+    "breakpoints" | "styles" | "styleSources" | "styleSourceSelections"
   >,
   input: { tokens: Array<z.infer<typeof designTokenCreateInput>> },
   context: { createId: () => string }
 ) => {
   const styleState = getRequiredStyleState(state);
   const { payload, tokenIds, errors } = createDesignTokenCreatePayload({
-    tokens: input.tokens,
+    tokens: input.tokens.map((token) => ({
+      ...token,
+      styles: undefined,
+      declarations: createDesignTokenStyleInputs(token).map((declaration) =>
+        withDefaultBreakpoint(
+          declaration,
+          getBaseBreakpointId(state.breakpoints)
+        )
+      ),
+    })),
     styleSources: new Map(styleState.styleSources),
     createId: context.createId,
   });
@@ -2685,7 +2749,7 @@ export const createDesignTokens = (
 export const updateDesignTokenStyles = (
   state: Pick<
     BuilderState,
-    "styles" | "styleSources" | "styleSourceSelections"
+    "breakpoints" | "styles" | "styleSources" | "styleSourceSelections"
   >,
   input: {
     designTokenId: string;
@@ -2696,7 +2760,9 @@ export const updateDesignTokenStyles = (
   getDesignTokenOrThrow(styleState.styleSources.values(), input.designTokenId);
   const { payload, styleKeys } = createDesignTokenStyleUpdatePayload({
     designTokenId: input.designTokenId,
-    updates: input.updates,
+    updates: input.updates.map((update) =>
+      withDefaultBreakpoint(update, getBaseBreakpointId(state.breakpoints))
+    ),
     styles: styleState.styles.values(),
   });
   return createRuntimeMutation({
@@ -2709,7 +2775,7 @@ export const updateDesignTokenStyles = (
 export const deleteDesignTokenStyles = (
   state: Pick<
     BuilderState,
-    "styles" | "styleSources" | "styleSourceSelections"
+    "breakpoints" | "styles" | "styleSources" | "styleSourceSelections"
   >,
   input: {
     designTokenId: string;
@@ -2720,7 +2786,9 @@ export const deleteDesignTokenStyles = (
   getDesignTokenOrThrow(styleState.styleSources.values(), input.designTokenId);
   const { payload, styleKeys } = createDesignTokenStyleDeletePayload({
     designTokenId: input.designTokenId,
-    deletions: input.deletions,
+    deletions: input.deletions.map((deletion) =>
+      withDefaultBreakpoint(deletion, getBaseBreakpointId(state.breakpoints))
+    ),
     styles: styleState.styles.values(),
   });
   return createRuntimeMutation({

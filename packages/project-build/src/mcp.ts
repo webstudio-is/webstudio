@@ -22,6 +22,9 @@ export type PublicMcpOperation<Command extends string = string> = {
   method: PublicMcpOperationMethod;
   permit: PublicMcpOperationPermit;
   description: string;
+  inputFields: readonly string[];
+  requiredOptions?: readonly string[];
+  examples?: readonly string[];
   localCapable: boolean;
   serverOnly: boolean;
   readNamespaces: readonly string[];
@@ -70,6 +73,7 @@ const getProjectSessionMeta = (envelope: ProjectSessionEnvelope) => ({
 
 type ProjectSessionMcpInputSchema = {
   type: "object";
+  description?: string;
   additionalProperties: true;
   properties?: Record<string, unknown>;
   required?: readonly string[];
@@ -77,6 +81,8 @@ type ProjectSessionMcpInputSchema = {
 
 const emptyInputSchema = {
   type: "object",
+  description:
+    "Pass the public API input object for this tool. Use meta.get_more_tools for examples and required fields.",
   additionalProperties: true,
 } as const satisfies ProjectSessionMcpInputSchema;
 
@@ -91,15 +97,37 @@ const textInputSchema = (description: string) =>
     },
   }) as const satisfies ProjectSessionMcpInputSchema;
 
+const getOperationInputSchema = (
+  operation: Pick<PublicMcpOperation, "inputFields">
+): ProjectSessionMcpInputSchema => {
+  if (operation.inputFields.length === 0) {
+    return emptyInputSchema;
+  }
+  return {
+    ...emptyInputSchema,
+    properties: Object.fromEntries(
+      operation.inputFields.map((field) => [
+        field,
+        {
+          description: `Public API input field \`${field}\`.`,
+        },
+      ])
+    ),
+  };
+};
+
 export type ProjectSessionMcpTool = {
   name: string;
   description: string;
   inputSchema: ProjectSessionMcpInputSchema;
+  cliRequiredOptions?: readonly string[];
+  cliExamples?: readonly string[];
   annotations: {
     command: string;
     operationId: string;
     method: PublicMcpOperation["method"] | "session";
     permit: PublicMcpOperation["permit"];
+    inputFields: readonly string[];
     localCapable: boolean;
     serverOnly: boolean;
     readNamespaces: readonly string[];
@@ -120,6 +148,7 @@ const sessionTools = [
       operationId: "meta.index",
       method: "session",
       permit: "api",
+      inputFields: [],
       localCapable: true,
       serverOnly: false,
       readNamespaces: [],
@@ -140,6 +169,7 @@ const sessionTools = [
       operationId: "meta.guide",
       method: "session",
       permit: "api",
+      inputFields: ["brief"],
       localCapable: true,
       serverOnly: false,
       readNamespaces: [],
@@ -160,6 +190,7 @@ const sessionTools = [
       operationId: "meta.get_more_tools",
       method: "session",
       permit: "api",
+      inputFields: ["brief"],
       localCapable: true,
       serverOnly: false,
       readNamespaces: [],
@@ -177,6 +208,7 @@ const sessionTools = [
       operationId: "project-session.status",
       method: "session",
       permit: "api",
+      inputFields: [],
       localCapable: true,
       serverOnly: false,
       readNamespaces: [],
@@ -205,6 +237,7 @@ const sessionTools = [
       operationId: "project-session.refresh",
       method: "session",
       permit: "api",
+      inputFields: ["namespaces"],
       localCapable: true,
       serverOnly: false,
       readNamespaces: builderNamespaces,
@@ -222,6 +255,7 @@ const sessionTools = [
       operationId: "project-session.reset",
       method: "session",
       permit: "api",
+      inputFields: [],
       localCapable: true,
       serverOnly: false,
       readNamespaces: [],
@@ -273,12 +307,15 @@ export const listProjectSessionMcpTools = (
   ...operations.map((operation) => ({
     name: operation.command,
     description: operation.description,
-    inputSchema: emptyInputSchema,
+    inputSchema: getOperationInputSchema(operation),
+    cliRequiredOptions: operation.requiredOptions,
+    cliExamples: operation.examples,
     annotations: {
       command: operation.command,
       operationId: operation.id,
       method: operation.method,
       permit: operation.permit,
+      inputFields: operation.inputFields,
       localCapable: operation.localCapable,
       serverOnly: operation.serverOnly,
       readNamespaces: operation.readNamespaces,
@@ -527,6 +564,9 @@ const getMetaGuide = (
       use: tool.description,
       method: tool.annotations.method,
       permit: tool.annotations.permit,
+      inputFields: tool.annotations.inputFields,
+      cliRequiredOptions: tool.cliRequiredOptions ?? [],
+      cliExamples: tool.cliExamples ?? [],
     })),
     more: "Call meta.get_more_tools with the same brief for params, examples, namespaces, and server/local behavior.",
   };
@@ -541,6 +581,11 @@ const getMoreTools = (
     name: tool.name,
     description: tool.description,
     inputSchema: tool.inputSchema,
+    inputFields: tool.annotations.inputFields,
+    cliRequiredOptions: tool.cliRequiredOptions ?? [],
+    cliExamples: tool.cliExamples ?? [],
+    inputNote:
+      "MCP tool arguments are public API input objects. CLI examples show intent, but do not imply MCP flag names.",
     annotations: tool.annotations,
   })),
 });

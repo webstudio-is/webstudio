@@ -32,6 +32,7 @@ export type PublicApiOperation<Command extends string = string> = Omit<
   command: Command;
   permit: PublicApiOperationPermit;
   description: string;
+  inputFields: readonly string[];
   requiredOptions?: readonly string[];
   examples: readonly string[];
   localCapable: boolean;
@@ -52,6 +53,117 @@ const documentationByCommand = new Map(
     documentation,
   ])
 );
+
+const inputFieldsByCommand = {
+  snapshot: ["include", "version"],
+  "list-pages": ["includeFolders"],
+  "get-page": ["pageId"],
+  "get-page-by-path": ["path"],
+  "create-page": ["pageId", "name", "path", "title", "parentFolderId", "meta"],
+  "update-page": ["pageId", "values"],
+  "update-project-settings": ["meta", "compiler"],
+  "create-redirect": ["old", "new", "status"],
+  "update-redirect": ["old", "values"],
+  "delete-redirect": ["old"],
+  "create-breakpoint": ["id", "label", "minWidth", "maxWidth", "condition"],
+  "update-breakpoint": ["breakpointId", "values"],
+  "delete-breakpoint": ["breakpointId"],
+  "delete-page": ["pageId"],
+  "duplicate-page": ["pageId", "parentFolderId", "name", "path"],
+  "create-page-from-template": ["templateId", "parentFolderId", "name", "path"],
+  "list-folders": ["includePages"],
+  "create-folder": ["folderId", "name", "slug", "parentFolderId"],
+  "update-folder": ["folderId", "values"],
+  "delete-folder": ["folderId"],
+  "list-instances": [
+    "pageId",
+    "pagePath",
+    "rootInstanceId",
+    "maxDepth",
+    "topLevelOnly",
+    "component",
+    "tag",
+    "labelContains",
+  ],
+  "inspect-instance": ["instanceId", "include", "childDepth"],
+  "append-instance": ["parentInstanceId", "mode", "insertIndex", "children"],
+  "move-instance": ["moves"],
+  "clone-instance": [
+    "sourceInstanceId",
+    "targetParentInstanceId",
+    "insertIndex",
+  ],
+  "delete-instance": ["instanceIds"],
+  "update-props": ["updates"],
+  "delete-props": ["deletions"],
+  "bind-props": ["bindings"],
+  "list-texts": [
+    "pageId",
+    "pagePath",
+    "instanceId",
+    "mode",
+    "contains",
+    "maxValueLength",
+  ],
+  "update-text": ["instanceId", "childIndex", "text", "mode"],
+  "get-styles": [
+    "instanceIds",
+    "pageId",
+    "pagePath",
+    "breakpoint",
+    "state",
+    "property",
+    "propertyFilter",
+    "includeTokens",
+  ],
+  "update-styles": ["updates"],
+  "delete-styles": ["deletions"],
+  "replace-styles": ["property", "fromValue", "toValue", "pageId", "pagePath"],
+  "list-design-tokens": ["filter", "withUsage", "sort"],
+  "create-design-token": ["tokens"],
+  "update-design-token-styles": ["designTokenId", "updates"],
+  "delete-design-token-styles": ["designTokenId", "deletions"],
+  "attach-design-token": ["designTokenId", "instanceIds", "position"],
+  "detach-design-token": ["designTokenId", "instanceIds"],
+  "extract-design-token": ["instanceIds", "name", "removeLocalProps"],
+  "list-css-variables": ["filter", "withUsage"],
+  "define-css-variable": ["vars", "overwrite"],
+  "delete-css-variable": ["names", "force"],
+  "rewrite-css-variable-refs": ["map", "scopeRegex"],
+  "list-variables": ["scopeInstanceId"],
+  "create-variable": ["dataSourceId", "scopeInstanceId", "name", "value"],
+  "update-variable": ["dataSourceId", "values"],
+  "delete-variable": ["dataSourceId"],
+  "list-resources": ["scopeInstanceId"],
+  "create-resource": [
+    "resourceId",
+    "resource",
+    "dataSourceId",
+    "scopeInstanceId",
+    "dataSourceName",
+  ],
+  "update-resource": [
+    "resourceId",
+    "values",
+    "dataSourceName",
+    "scopeInstanceId",
+  ],
+  "delete-resource": ["resourceId", "force"],
+  publish: ["target", "domains", "message", "idempotencyKey"],
+  "get-publish-job": ["jobId"],
+  unpublish: ["target", "domains", "message", "idempotencyKey"],
+  "create-domain": ["domain"],
+  "update-domain": ["domainId", "updates"],
+  "delete-domain": ["domainId"],
+  "verify-domain": ["domainId"],
+  "list-assets": ["type", "sort", "withUsage", "cursor", "limit"],
+  "find-asset-usage": ["assetId"],
+  "replace-asset": ["fromAssetId", "toAssetId"],
+  "delete-asset": ["assetIdsOrPrefixes", "force"],
+} as const satisfies Partial<Record<string, readonly string[]>>;
+
+const inputFieldsLookup: Partial<Record<string, readonly string[]>> =
+  inputFieldsByCommand;
 
 const isRuntimeOperationId = (id: string): id is PublicRuntimeOperationId =>
   runtimeOperationById.has(id as PublicRuntimeOperationId);
@@ -77,6 +189,7 @@ const withDefaultPermit = <Operation extends PublicApiOperationInput>(
     permit:
       operation.permit ?? (operation.method === "query" ? "view" : "build"),
     description: documentation.description,
+    inputFields: inputFieldsLookup[operation.command] ?? [],
     requiredOptions: documentation.requiredOptions,
     examples: documentation.examples,
     localCapable: runtimeOperation !== undefined,

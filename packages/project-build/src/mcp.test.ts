@@ -25,6 +25,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     method: "query",
     permit: "view",
     description: "List pages",
+    inputFields: ["includeFolders"],
     localCapable: true,
     serverOnly: false,
     readNamespaces: ["pages"],
@@ -38,6 +39,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     method: "query",
     permit: "view",
     description: "Identify token",
+    inputFields: [],
     localCapable: false,
     serverOnly: true,
     readNamespaces: [],
@@ -51,6 +53,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     method: "mutation",
     permit: "build",
     description: "Publish project",
+    inputFields: ["target", "domains"],
     localCapable: false,
     serverOnly: true,
     readNamespaces: [],
@@ -186,8 +189,16 @@ describe("project session mcp adapter", () => {
       expect.arrayContaining([
         expect.objectContaining({
           name: "list-pages",
+          inputSchema: expect.objectContaining({
+            properties: {
+              includeFolders: {
+                description: "Public API input field `includeFolders`.",
+              },
+            },
+          }),
           annotations: expect.objectContaining({
             operationId: "pages.list",
+            inputFields: ["includeFolders"],
             localCapable: true,
             serverOnly: false,
             readNamespaces: ["pages"],
@@ -244,7 +255,14 @@ describe("project session mcp adapter", () => {
           name: "list-pages",
           inputSchema: {
             type: "object",
+            description:
+              "Pass the public API input object for this tool. Use meta.get_more_tools for examples and required fields.",
             additionalProperties: true,
+            properties: {
+              includeFolders: {
+                description: "Public API input field `includeFolders`.",
+              },
+            },
           },
         }),
       ])
@@ -439,6 +457,10 @@ describe("project session mcp adapter", () => {
           expect.objectContaining({
             name: "publish",
             inputSchema: expect.any(Object),
+            inputFields: ["target", "domains"],
+            cliExamples: [],
+            inputNote:
+              "MCP tool arguments are public API input objects. CLI examples show intent, but do not imply MCP flag names.",
           }),
         ]),
       })

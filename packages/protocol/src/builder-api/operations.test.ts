@@ -20,7 +20,30 @@ describe("public api operation catalog", () => {
     for (const operation of publicApiOperations) {
       expect(operation.description).not.toBe("");
       expect(operation.examples.length).toBeGreaterThan(0);
+      expect(Array.isArray(operation.inputFields)).toBe(true);
     }
+  });
+
+  test("documents public API input field names", () => {
+    expect(getPublicApiOperation("create-page").inputFields).toEqual([
+      "pageId",
+      "name",
+      "path",
+      "title",
+      "parentFolderId",
+      "meta",
+    ]);
+    expect(getPublicApiOperation("create-resource").inputFields).toEqual([
+      "resourceId",
+      "resource",
+      "dataSourceId",
+      "scopeInstanceId",
+      "dataSourceName",
+    ]);
+    expect(getPublicApiOperation("create-domain").inputFields).toEqual([
+      "domain",
+    ]);
+    expect(getPublicApiOperation("whoami").inputFields).toEqual([]);
   });
 
   test("derives local-capable namespace metadata from runtime contracts", () => {

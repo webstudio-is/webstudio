@@ -5,6 +5,16 @@ import {
 } from "vite";
 import pkg from "./package.json";
 
+const getPackageName = (id: string) => {
+  if (id.startsWith("@")) {
+    return id.split("/").slice(0, 2).join("/");
+  }
+  return id.split("/")[0];
+};
+
+const isCliSourceImporter = (importer: string | undefined) =>
+  importer?.includes("/packages/cli/") === true;
+
 const isExternal = (id: string, importer: string | undefined) => {
   if (id.startsWith("@webstudio-is/")) {
     return false;
@@ -13,20 +23,26 @@ const isExternal = (id: string, importer: string | undefined) => {
     return true;
   }
   if (id.startsWith("@")) {
-    const packageName = id.split("/").slice(0, 2).join("/");
+    const packageName = getPackageName(id);
     if (packageName in pkg.dependencies === false) {
-      throw Error(
-        `${packageName} imported from ${importer} is not found in direct dependencies`
-      );
+      if (isCliSourceImporter(importer)) {
+        throw Error(
+          `${packageName} imported from ${importer} is not found in direct dependencies`
+        );
+      }
+      return false;
     }
     return true;
   }
   if (id.includes(".") === false) {
-    const [packageName] = id.split("/");
+    const packageName = getPackageName(id);
     if (packageName in pkg.dependencies === false) {
-      throw Error(
-        `${packageName} imported from ${importer} is not found in direct dependencies`
-      );
+      if (isCliSourceImporter(importer)) {
+        throw Error(
+          `${packageName} imported from ${importer} is not found in direct dependencies`
+        );
+      }
+      return false;
     }
     return true;
   }

@@ -211,7 +211,7 @@ export const runtimeOperationContracts = [
     writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
   }),
   mutation("styles.deleteDeclarations", {
-    readNamespaces: ["instances", ...styleNamespaces],
+    readNamespaces: ["instances", ...styleNamespaces, "breakpoints"],
     writeNamespaces: ["styles"],
   }),
   mutation("styles.replaceValues", {
@@ -220,15 +220,15 @@ export const runtimeOperationContracts = [
   }),
   read("designTokens.list", styleNamespaces),
   mutation("designTokens.create", {
-    readNamespaces: styleNamespaces,
-    writeNamespaces: ["styleSources"],
+    readNamespaces: [...styleNamespaces, "breakpoints"],
+    writeNamespaces: ["styleSources", "styles"],
   }),
   mutation("designTokens.updateStyles", {
-    readNamespaces: styleNamespaces,
+    readNamespaces: [...styleNamespaces, "breakpoints"],
     writeNamespaces: ["styles", "styleSources"],
   }),
   mutation("designTokens.deleteStyles", {
-    readNamespaces: styleNamespaces,
+    readNamespaces: [...styleNamespaces, "breakpoints"],
     writeNamespaces: ["styles"],
   }),
   mutation("designTokens.attach", {
@@ -245,7 +245,7 @@ export const runtimeOperationContracts = [
   }),
   read("cssVariables.list", [...styleNamespaces, "props"]),
   mutation("cssVariables.define", {
-    readNamespaces: ["pages", ...styleNamespaces],
+    readNamespaces: ["pages", ...styleNamespaces, "breakpoints"],
     writeNamespaces: ["styles", "styleSources", "styleSourceSelections"],
   }),
   mutation("cssVariables.delete", {

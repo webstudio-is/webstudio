@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   type Breakpoint,
   getStyleDeclKey,
+  type Instance,
   type StyleDecl,
   type StyleSource,
   type StyleSources,
@@ -32,6 +33,7 @@ import {
   createTokenStyleSource,
   cssVariableValueInput,
   designTokenCreateInput,
+  createDesignTokens,
   findDesignToken,
   findCssVariableUsagesByInstance,
   getDefinedCssVariableNames,
@@ -45,6 +47,11 @@ import {
   styleDeleteInput,
   styleReplaceInput,
   styleUpdateInput,
+  defineCssVariables,
+  deleteDesignTokenStyles,
+  deleteStyleDeclarations,
+  updateDesignTokenStyles,
+  updateStyleDeclarations,
   validateCssVariableNameWithStyles,
   validateStyleSourceName,
 } from "./styles";
@@ -88,6 +95,47 @@ const displayStyle: StyleDecl = {
 const displayStyleKey = getStyleDeclKey(displayStyle);
 
 describe("selected style declaration payloads", () => {
+  test("normalizes CSS property names in selected style declarations", () => {
+    const fontSizeStyle: StyleDecl = {
+      breakpointId: "base",
+      styleSourceId: localStyleSource.id,
+      property: "fontSize",
+      value: { type: "unit", value: 24, unit: "px" },
+    };
+    const fontSizeStyleKey = getStyleDeclKey(fontSizeStyle);
+
+    expect(
+      createSelectedStyleDeclarationUpdatePayload({
+        updates: [
+          {
+            instanceId: "box",
+            styleSource: localStyleSource,
+            styleSourceId: localStyleSource.id,
+            property: "font-size",
+            value: { type: "unit", value: 24, unit: "px" },
+          },
+        ],
+        styleSources: new Map([[localStyleSource.id, localStyleSource]]),
+        styleSourceSelections: [],
+        styles: [],
+      })
+    ).toMatchObject({
+      styleKeys: [fontSizeStyleKey],
+      payload: expect.arrayContaining([
+        {
+          namespace: "styles",
+          patches: [
+            {
+              op: "add",
+              path: [fontSizeStyleKey],
+              value: fontSizeStyle,
+            },
+          ],
+        },
+      ]),
+    });
+  });
+
   test("creates selected style source, selection, and declaration patches", () => {
     expect(
       createSelectedStyleDeclarationUpdatePayload({
@@ -648,6 +696,10 @@ const createStyleDeclMap = (styles: StyleDecl[]) =>
 const createId = () => "new-id";
 
 const baseBreakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+const runtimeBreakpoints = toMap<Breakpoint>([
+  { id: "desktop", label: "Base" },
+  { id: "mobile", label: "Mobile", maxWidth: 767 },
+]);
 const token = (
   id: string,
   name = "Token",
@@ -664,6 +716,184 @@ const local = (id: string): Extract<StyleSource, { type: "local" }> => ({
 });
 
 const sources = (items: StyleSource[]) => toMap<StyleSource>(items);
+
+const instance = (id: string): Instance => ({
+  type: "instance",
+  id,
+  component: "ws:element",
+  children: [],
+});
+
+describe("runtime style operations", () => {
+  test("update styles uses the project base breakpoint when omitted", () => {
+    const mutation = updateStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: toMap([instance("box")]),
+        styles: new Map(),
+        styleSources: sources([local("local")]),
+        styleSourceSelections: new Map([
+          ["box", { instanceId: "box", values: ["local"] }],
+        ]),
+      },
+      {
+        updates: [
+          {
+            instanceId: "box",
+            property: "font-size",
+            value: { type: "unit", value: 24, unit: "px" },
+          },
+        ],
+      },
+      { createId }
+    );
+
+    expect(mutation.result.styleKeys).toEqual(["local:desktop:fontSize:"]);
+  });
+
+  test("delete styles uses the project base breakpoint when omitted", () => {
+    const mutation = deleteStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: toMap([instance("box")]),
+        styles: createStyleDeclMap([
+          createStyleDecl("local", "desktop", "fontSize", {
+            type: "unit",
+            value: 24,
+            unit: "px",
+          }),
+        ]),
+        styleSources: sources([local("local")]),
+        styleSourceSelections: new Map([
+          ["box", { instanceId: "box", values: ["local"] }],
+        ]),
+      },
+      { deletions: [{ instanceId: "box", property: "font-size" }] }
+    );
+
+    expect(mutation.result.styleKeys).toEqual(["local:desktop:fontSize:"]);
+  });
+
+  test("design token styles use the project base breakpoint when omitted", () => {
+    const createMutation = createDesignTokens(
+      {
+        breakpoints: runtimeBreakpoints,
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      {
+        tokens: [
+          {
+            tokenId: "token",
+            name: "Primary",
+            styles: { color: { type: "keyword", value: "red" } },
+          },
+        ],
+      },
+      { createId }
+    );
+    expect(createMutation.payload).toContainEqual({
+      namespace: "styles",
+      patches: [
+        {
+          op: "add",
+          path: ["token:desktop:color:"],
+          value: createStyleDecl("token", "desktop", "color", {
+            type: "keyword",
+            value: "red",
+          }),
+        },
+      ],
+    });
+
+    const updateMutation = updateDesignTokenStyles(
+      {
+        breakpoints: runtimeBreakpoints,
+        styles: new Map(),
+        styleSources: sources([token("token", "Primary")]),
+        styleSourceSelections: new Map(),
+      },
+      {
+        designTokenId: "token",
+        updates: [
+          {
+            property: "font-size",
+            value: { type: "unit", value: 16, unit: "px" },
+          },
+        ],
+      }
+    );
+    expect(updateMutation.result.styleKeys).toEqual([
+      "token:desktop:fontSize:",
+    ]);
+
+    const deleteMutation = deleteDesignTokenStyles(
+      {
+        breakpoints: runtimeBreakpoints,
+        styles: createStyleDeclMap([
+          createStyleDecl("token", "desktop", "fontSize", {
+            type: "unit",
+            value: 16,
+            unit: "px",
+          }),
+        ]),
+        styleSources: sources([token("token", "Primary")]),
+        styleSourceSelections: new Map(),
+      },
+      { designTokenId: "token", deletions: [{ property: "font-size" }] }
+    );
+    expect(deleteMutation.result.styleKeys).toEqual([
+      "token:desktop:fontSize:",
+    ]);
+  });
+
+  test("define css variables uses the project base breakpoint", () => {
+    const mutation = defineCssVariables(
+      {
+        breakpoints: runtimeBreakpoints,
+        pages: {
+          homePageId: "home",
+          rootFolderId: "root",
+          pages: new Map([
+            [
+              "home",
+              {
+                id: "home",
+                name: "Home",
+                title: "",
+                rootInstanceId: "root",
+                meta: {},
+                path: "",
+              },
+            ],
+          ]),
+          folders: new Map(),
+        },
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      { vars: { "--color": "red" } },
+      { createId }
+    );
+
+    expect(mutation.result.names).toEqual(["--color"]);
+    expect(mutation.payload).toContainEqual({
+      namespace: "styles",
+      patches: [
+        {
+          op: "add",
+          path: ["new-id:desktop:--color:"],
+          value: createStyleDecl("new-id", "desktop", "--color", {
+            type: "unparsed",
+            value: "red",
+          }),
+        },
+      ],
+    });
+  });
+});
 
 describe("serializeDesignTokens", () => {
   test("filters, sorts, includes styles, and counts usage when requested", () => {
@@ -1340,6 +1570,39 @@ describe("createDesignTokenExtractionPayload", () => {
 });
 
 describe("createStyleDeclarationUpdatePayload", () => {
+  test("normalizes CSS property names before creating style keys", () => {
+    const { payload, styleKeys } = createStyleDeclarationUpdatePayload({
+      styleSources: sources([local("local")]),
+      styleSourceSelections: [{ instanceId: "box", values: ["local"] }],
+      styles: [],
+      createId,
+      updates: [
+        {
+          instanceId: "box",
+          property: "background-color",
+          value: { type: "keyword", value: "black" },
+        },
+      ],
+    });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [
+          {
+            op: "add",
+            path: ["local:base:backgroundColor:"],
+            value: createStyleDecl("local", "base", "backgroundColor", {
+              type: "keyword",
+              value: "black",
+            }),
+          },
+        ],
+      },
+    ]);
+    expect(styleKeys).toEqual(["local:base:backgroundColor:"]);
+  });
+
   test("creates style add patches for local style sources", () => {
     const { payload, styleKeys, missingLocalStyleSourceInstanceIds } =
       createStyleDeclarationUpdatePayload({
@@ -1446,6 +1709,29 @@ describe("createStyleDeclarationUpdatePayload", () => {
 });
 
 describe("createStyleDeclarationDeletePayload", () => {
+  test("normalizes CSS property names before deleting style keys", () => {
+    const { payload, styleKeys } = createStyleDeclarationDeletePayload({
+      styleSources: sources([local("local")]),
+      styleSourceSelections: [{ instanceId: "box", values: ["local"] }],
+      styles: [
+        createStyleDecl("local", "base", "fontSize", {
+          type: "unit",
+          value: 16,
+          unit: "px",
+        }),
+      ],
+      deletions: [{ instanceId: "box", property: "font-size" }],
+    });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [{ op: "remove", path: ["local:base:fontSize:"] }],
+      },
+    ]);
+    expect(styleKeys).toEqual(["local:base:fontSize:"]);
+  });
+
   test("creates remove patches for existing local declarations", () => {
     const { payload, styleKeys } = createStyleDeclarationDeletePayload({
       styleSources: sources([local("local")]),
@@ -1481,6 +1767,39 @@ describe("createStyleDeclarationDeletePayload", () => {
 });
 
 describe("createStyleValueReplacementPayload", () => {
+  test("normalizes CSS property names before replacing style values", () => {
+    const { payload, styleKeys } = createStyleValueReplacementPayload({
+      styleSources: [local("local")],
+      styleSourceSelections: [{ instanceId: "box", values: ["local"] }],
+      styles: [
+        createStyleDecl("local", "base", "fontWeight", {
+          type: "keyword",
+          value: "400",
+        }),
+      ],
+      property: "font-weight",
+      fromValue: { type: "keyword", value: "400" },
+      toValue: { type: "keyword", value: "700" },
+    });
+
+    expect(payload).toEqual([
+      {
+        namespace: "styles",
+        patches: [
+          {
+            op: "replace",
+            path: ["local:base:fontWeight:"],
+            value: createStyleDecl("local", "base", "fontWeight", {
+              type: "keyword",
+              value: "700",
+            }),
+          },
+        ],
+      },
+    ]);
+    expect(styleKeys).toEqual(["local:base:fontWeight:"]);
+  });
+
   test("replaces matching local style values in scope", () => {
     const { payload, styleKeys } = createStyleValueReplacementPayload({
       styleSources: [
