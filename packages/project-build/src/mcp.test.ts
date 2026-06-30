@@ -537,6 +537,10 @@ describe("project session mcp adapter", () => {
         output: "current.png",
         viewport: { width: 1440, height: 900 },
         browser: "auto",
+        waitUntil: "networkidle",
+        waitForSelector: "#ready",
+        waitForTimeout: 500,
+        timeout: 10_000,
       },
     });
 
@@ -548,6 +552,10 @@ describe("project session mcp adapter", () => {
       viewport: { width: 1440, height: 900 },
       browser: "auto",
       browserPath: undefined,
+      waitUntil: "networkidle",
+      waitForSelector: "#ready",
+      waitForTimeout: 500,
+      timeout: 10_000,
     });
     expect(result.structuredContent).toEqual({
       ok: true,
@@ -629,6 +637,91 @@ describe("project session mcp adapter", () => {
     ).rejects.toThrow(
       "screenshot browser must be auto, chromium, chrome, edge, or brave."
     );
+  });
+
+  test("rejects invalid screenshot readiness input", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(),
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot",
+        input: {
+          url: "https://example.com",
+          waitUntil: "interactive",
+        },
+      })
+    ).rejects.toThrow(
+      "screenshot waitUntil must be commit, domcontentloaded, load, or networkidle."
+    );
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot",
+        input: {
+          url: "https://example.com",
+          waitForTimeout: -1,
+        },
+      })
+    ).rejects.toThrow(
+      "screenshot waitForTimeout must be a non-negative integer."
+    );
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot",
+        input: {
+          url: "https://example.com",
+          waitForTimeout: "500",
+        },
+      })
+    ).rejects.toThrow(
+      "screenshot waitForTimeout must be a non-negative integer."
+    );
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot",
+        input: {
+          url: "https://example.com",
+          waitForSelector: "",
+        },
+      })
+    ).rejects.toThrow("screenshot waitForSelector must be a non-empty string.");
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot",
+        input: {
+          url: "https://example.com",
+          waitForSelector: 1,
+        },
+      })
+    ).rejects.toThrow("screenshot waitForSelector must be a non-empty string.");
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot",
+        input: {
+          url: "https://example.com",
+          timeout: 0,
+        },
+      })
+    ).rejects.toThrow("screenshot timeout must be a positive integer.");
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot",
+        input: {
+          url: "https://example.com",
+          timeout: "10000",
+        },
+      })
+    ).rejects.toThrow("screenshot timeout must be a positive integer.");
   });
 
   test("rejects empty screenshot url and path input", async () => {

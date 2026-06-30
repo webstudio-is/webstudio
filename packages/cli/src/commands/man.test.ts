@@ -301,8 +301,12 @@ test("prints mcp manual as json", () => {
   expect(output.visionVerificationLoop).toContain(
     generatedAppDependencyNotes[0]
   );
-  expect(output.visionVerificationLoop).toContain(
-    'Call screenshot with { path: "/" } or the changed page path.'
+  expect(output.visionVerificationLoop).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining(
+        'Call screenshot with { path: "/" } or the changed page path.'
+      ),
+    ])
   );
   expect(output.visionVerificationLoop).toContain(
     "When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir."

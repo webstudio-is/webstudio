@@ -66,13 +66,14 @@ Commands:
 
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
 - MCP tool: preview.status {}
-- MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900}}
+- MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot.diff {"baselinePath":"before.png","currentPath":"current.png","outputDir":".webstudio/screenshots"}
 - MCP tool: vision.install-ocr {"confirm":true}
 
 Notes:
 
 - Use this after page/content/style mutations and after generated project files are current so a vision-capable AI can see what was actually built.
+- Use waitForSelector when the rendered app has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
 - For a fresh checkout, copied fixture, or newly generated app, run npm install or pnpm install in the generated project before preview.start or webstudio preview.
 - If preview fails with a missing generated-app command/package such as react-router or vite, install the generated app dependencies and retry.
 - When a baseline exists, use screenshot.diff to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches.
@@ -645,7 +646,7 @@ Commands:
 - MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
 - MCP tool: update-styles {"updates":"styles.json contents"}
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
-- MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900}}
+- MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 
 Notes:
 

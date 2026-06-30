@@ -5,7 +5,19 @@ import { dirname, resolve } from "node:path";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { Launcher } from "chrome-launcher";
-import type { ScreenshotBrowser } from "@webstudio-is/project-build/visual/screenshot-browser";
+import {
+  defaultScreenshotTimeout,
+  defaultScreenshotWaitForTimeout,
+  defaultScreenshotWaitUntil,
+  type ScreenshotBrowser,
+  type ScreenshotWaitUntil,
+} from "@webstudio-is/project-build/visual/screenshot-browser";
+import {
+  captureBrowserScreenshot,
+  defaultBrowserScreenshotDependencies,
+  type BrowserScreenshotDependencies,
+  type BrowserScreenshotOptions,
+} from "./screenshot-browser-cdp";
 
 const execFileAsync = promisify(execFile);
 
@@ -39,14 +51,14 @@ export type ScreenshotDependencies = {
   mkdir: (path: string, options: { recursive: true }) => Promise<unknown>;
   which: (command: string) => Promise<string | undefined>;
   getChromeLauncherInstallations: () => string[];
-  execFile: (
-    file: string,
-    args: readonly string[]
-  ) => Promise<{ stdout: string; stderr: string }>;
-  installCommand: (file: string, args: readonly string[]) => Promise<void>;
-  getuid: () => number | undefined;
-  now: () => number;
-};
+} & BrowserScreenshotDependencies & {
+    captureBrowserScreenshot?: (
+      options: BrowserScreenshotOptions
+    ) => Promise<void>;
+    installCommand: (file: string, args: readonly string[]) => Promise<void>;
+    getuid: () => number | undefined;
+    now: () => number;
+  };
 
 export const defaultScreenshotDependencies: ScreenshotDependencies = {
   env: process.env,
@@ -69,10 +81,7 @@ export const defaultScreenshotDependencies: ScreenshotDependencies = {
       return [];
     }
   },
-  async execFile(file, args) {
-    const { stdout, stderr } = await execFileAsync(file, [...args]);
-    return { stdout, stderr };
-  },
+  ...defaultBrowserScreenshotDependencies,
   async installCommand(file, args) {
     await new Promise<void>((resolve, reject) => {
       const child = spawn(file, [...args], { stdio: "inherit" });
@@ -481,28 +490,6 @@ export const getScreenshotOutputPath = ({
   now: number;
 }) => resolve(output ?? `${tmpdir()}/webstudio-screenshot-${now}.png`);
 
-export const getScreenshotArgs = ({
-  output,
-  width,
-  height,
-  url,
-  uid,
-}: {
-  output: string;
-  width: number;
-  height: number;
-  url: string;
-  uid?: number;
-}) => [
-  "--headless=new",
-  "--disable-gpu",
-  "--hide-scrollbars",
-  `--window-size=${width},${height}`,
-  ...(uid === 0 ? ["--no-sandbox"] : []),
-  `--screenshot=${output}`,
-  url,
-];
-
 export const captureScreenshot = async (
   options: {
     url: string;
@@ -511,6 +498,10 @@ export const captureScreenshot = async (
     height: number;
     browser: ScreenshotBrowser;
     browserPath?: string;
+    waitUntil?: ScreenshotWaitUntil;
+    waitForSelector?: string;
+    waitForTimeout?: number;
+    timeout?: number;
   },
   dependencies = defaultScreenshotDependencies
 ) => {
@@ -521,16 +512,23 @@ export const captureScreenshot = async (
     now: startedAt,
   });
   await dependencies.mkdir(dirname(output), { recursive: true });
-  await dependencies.execFile(
-    browser.path,
-    getScreenshotArgs({
-      output,
-      width: options.width,
-      height: options.height,
-      url: options.url,
-      uid: dependencies.getuid(),
-    })
-  );
+  const browserScreenshotOptions = {
+    browserPath: browser.path,
+    output,
+    width: options.width,
+    height: options.height,
+    url: options.url,
+    uid: dependencies.getuid(),
+    waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
+    waitForSelector: options.waitForSelector,
+    waitForTimeout: options.waitForTimeout ?? defaultScreenshotWaitForTimeout,
+    timeout: options.timeout ?? defaultScreenshotTimeout,
+  };
+  if (dependencies.captureBrowserScreenshot !== undefined) {
+    await dependencies.captureBrowserScreenshot(browserScreenshotOptions);
+  } else {
+    await captureBrowserScreenshot(browserScreenshotOptions, dependencies);
+  }
   return {
     output,
     browser,
@@ -551,6 +549,10 @@ export const captureScreenshotWithBrowserInstall = async (
     height: number;
     browser: ScreenshotBrowser;
     browserPath?: string;
+    waitUntil?: ScreenshotWaitUntil;
+    waitForSelector?: string;
+    waitForTimeout?: number;
+    timeout?: number;
     isJson: boolean;
     isMcp: boolean;
     isInteractive: boolean;

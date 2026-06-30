@@ -14,7 +14,7 @@ For visual/design work, use preview.start and screenshot after generated project
 - Make focused page/content/style changes with semantic MCP tools.
 - Make sure generated project files are current and generated app dependencies are installed, then call preview.start once to keep the generated site running.
 - {{dependency-notes}}
-- Call screenshot with { path: "/" } or the changed page path.
+- Call screenshot with { path: "/" } or the changed page path. Use waitForSelector when the page has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
 - {{diff}} When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir.
 - {{diff}} Read screenshot.diff textAnalysis: it reports OCR status plus text that appeared, disappeared, moved, changed content, or changed font/style geometry. If OCR is unavailable, ask the user for permission to install Tesseract, then call vision.install-ocr with { "confirm": true }, or rely on visual inspection.
 - Inspect the PNG and any diff artifacts with vision, then compare layout, OCR text evidence, color, spacing, imagery, and responsive framing against the user intent.
@@ -30,7 +30,7 @@ For visual/design work, make sure generated project files are current and genera
 
 ## Screenshot Verification Summary
 
-Inside MCP, prefer preview.start plus screenshot({ path: "/" }) after generated project files are current and generated app dependencies are installed, so the preview server stays running for fast repeated checks. When a baseline exists, use screenshot.diff for changed regions, OCR textAnalysis, and diff artifacts. Outside MCP, use webstudio preview and webstudio screenshot <url> --output current.png.
+Inside MCP, prefer preview.start plus screenshot({ path: "/" }) after generated project files are current and generated app dependencies are installed, so the preview server stays running for fast repeated checks. Screenshot waits for load by default, then fonts and two layout frames; pass waitForSelector for app readiness, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout for final settling. When a baseline exists, use screenshot.diff for changed regions, OCR textAnalysis, and diff artifacts. Outside MCP, use webstudio preview and webstudio screenshot <url> --output current.png.
 
 ## Screenshot Diff Evidence
 

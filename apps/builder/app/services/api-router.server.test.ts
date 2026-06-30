@@ -6,7 +6,10 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import * as projectBuild from "@webstudio-is/project-build/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
-import { buildPatchTransaction } from "@webstudio-is/protocol";
+import {
+  buildPatchTransaction,
+  publicApiOperations,
+} from "@webstudio-is/protocol";
 import {
   authorizeProject,
   type AppContext,
@@ -56,6 +59,25 @@ const createToken = (
   }) as Awaited<ReturnType<typeof authDb.getTokenInfo>>;
 
 describe("api router build operation adapters", () => {
+  test("public operation catalog paths exist on the api router", () => {
+    const procedures = (
+      apiRouter as unknown as {
+        _def: { procedures: Record<string, unknown> };
+      }
+    )._def.procedures;
+
+    for (const operation of publicApiOperations) {
+      if (operation.path === undefined) {
+        continue;
+      }
+      const procedure = procedures[operation.path.replace(/^api\./, "")] as
+        | { _def?: Partial<Record<typeof operation.method, boolean>> }
+        | undefined;
+      expect(procedure).toBeDefined();
+      expect(procedure?._def?.[operation.method]).toBe(true);
+    }
+  });
+
   test("does not keep an api-only build operations service", async () => {
     await expect(
       access(join(servicesDir.pathname, "build-operations.server.ts"))

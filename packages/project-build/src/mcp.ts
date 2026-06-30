@@ -5,8 +5,14 @@ import {
 import path from "node:path";
 import type { ProjectSessionEnvelope } from "./project-session";
 import {
+  defaultScreenshotTimeout,
+  defaultScreenshotWaitForTimeout,
+  defaultScreenshotWaitUntil,
+  isScreenshotWaitUntil,
   screenshotBrowserChoices,
   type ScreenshotBrowser,
+  screenshotWaitUntilValues,
+  type ScreenshotWaitUntil,
 } from "./visual/screenshot-browser";
 import type { ScreenshotDiffResult } from "./visual/screenshot-diff";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -69,6 +75,10 @@ export type ProjectSessionScreenshotInput = {
   };
   browser: ScreenshotBrowser;
   browserPath?: string;
+  waitUntil?: ScreenshotWaitUntil;
+  waitForSelector?: string;
+  waitForTimeout?: number;
+  timeout?: number;
 };
 
 export type ProjectSessionScreenshotResult = {
@@ -235,6 +245,28 @@ const screenshotInputSchema = {
     browserPath: {
       type: "string",
       description: "Explicit Chromium-family browser executable path.",
+    },
+    waitUntil: {
+      type: "string",
+      enum: screenshotWaitUntilValues,
+      default: defaultScreenshotWaitUntil,
+      description:
+        "Page readiness event to wait for before capture: commit, domcontentloaded, load, or networkidle.",
+    },
+    waitForSelector: {
+      type: "string",
+      description: "CSS selector that must exist before capture.",
+    },
+    waitForTimeout: {
+      type: "number",
+      default: defaultScreenshotWaitForTimeout,
+      description:
+        "Extra milliseconds to wait after readiness, selector, fonts, and layout frames.",
+    },
+    timeout: {
+      type: "number",
+      default: defaultScreenshotTimeout,
+      description: "Maximum milliseconds to wait for page readiness.",
     },
   },
 } as const satisfies ProjectSessionMcpInputSchema;
@@ -1202,6 +1234,38 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
       "screenshot browser must be auto, chromium, chrome, edge, or brave."
     );
   }
+  const waitUntil = input.waitUntil === undefined ? undefined : input.waitUntil;
+  if (waitUntil !== undefined && isScreenshotWaitUntil(waitUntil) === false) {
+    throw new Error(
+      "screenshot waitUntil must be commit, domcontentloaded, load, or networkidle."
+    );
+  }
+  const waitForTimeout = input.waitForTimeout;
+  if (
+    waitForTimeout !== undefined &&
+    (typeof waitForTimeout !== "number" ||
+      Number.isInteger(waitForTimeout) === false ||
+      waitForTimeout < 0)
+  ) {
+    throw new Error(
+      "screenshot waitForTimeout must be a non-negative integer."
+    );
+  }
+  const timeout = input.timeout;
+  if (
+    timeout !== undefined &&
+    (typeof timeout !== "number" ||
+      Number.isInteger(timeout) === false ||
+      timeout <= 0)
+  ) {
+    throw new Error("screenshot timeout must be a positive integer.");
+  }
+  const waitForSelector = input.waitForSelector;
+  if (waitForSelector !== undefined) {
+    if (typeof waitForSelector !== "string" || waitForSelector.length === 0) {
+      throw new Error("screenshot waitForSelector must be a non-empty string.");
+    }
+  }
   return {
     url,
     path,
@@ -1210,6 +1274,10 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
     browser,
     browserPath:
       typeof input.browserPath === "string" ? input.browserPath : undefined,
+    waitUntil,
+    waitForSelector,
+    waitForTimeout,
+    timeout,
   };
 };
 

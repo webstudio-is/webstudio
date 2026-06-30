@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
+import { runtimeOperationContracts } from "../contracts/builder-runtime";
 import { builderRuntimeCutoverManifests } from "./cutover";
 import {
+  builderRuntimeOperations,
   executeBuilderRuntimeOperation,
   getBuilderRuntimeOperation,
 } from "./registry";
@@ -185,6 +187,15 @@ const state = {
   assets: new Map(),
   breakpoints: new Map(),
 } satisfies BuilderState;
+
+test("runtime operation registry implements every runtime contract", () => {
+  const contractIds = runtimeOperationContracts.map((contract) => contract.id);
+  const operationIds = builderRuntimeOperations.map(
+    (operation) => operation.id
+  );
+
+  expect(operationIds).toEqual(contractIds);
+});
 
 describe("builder runtime pages", () => {
   test("lists pages and folders from shared state", () => {

@@ -2,11 +2,11 @@ import { describe, expect, test, vi } from "vitest";
 import { constants } from "node:fs";
 import {
   BrowserNotFoundError,
+  BrowserInstallUnavailableError,
   captureScreenshot,
   captureScreenshotWithBrowserInstall,
   getChromiumInstallCommand,
   getNoBrowserFoundMessage,
-  getScreenshotArgs,
   installTesseractForOcr,
   resolveScreenshotBrowser,
   shouldOfferBrowserInstall,
@@ -23,7 +23,19 @@ const createDependencies = (
   mkdir: vi.fn(async () => undefined),
   which: vi.fn(async () => undefined),
   getChromeLauncherInstallations: vi.fn(() => []),
-  execFile: vi.fn(async () => ({ stdout: "", stderr: "" })),
+  spawnBrowser: vi.fn(() => ({
+    kill: vi.fn(),
+    once: vi.fn(),
+  })),
+  readFile: vi.fn(),
+  writeFile: vi.fn(),
+  mkdtemp: vi.fn(
+    async () => "/tmp/webstudio-browser"
+  ) as unknown as ScreenshotDependencies["mkdtemp"],
+  rm: vi.fn(async () => undefined),
+  fetch: vi.fn(),
+  createWebSocket: vi.fn(),
+  captureBrowserScreenshot: vi.fn(async () => undefined),
   installCommand: vi.fn(async () => undefined),
   getuid: vi.fn(() => 1000),
   now: vi.fn(() => 123),
@@ -31,6 +43,50 @@ const createDependencies = (
 });
 
 describe("resolveScreenshotBrowser", () => {
+  test("uses explicit browser path before discovered browsers", async () => {
+    const dependencies = createDependencies({
+      which: vi.fn(async (command) =>
+        command === "chromium" ? "/usr/bin/chromium" : undefined
+      ),
+    });
+
+    await expect(
+      resolveScreenshotBrowser(
+        {
+          browser: "auto",
+          browserPath: "/custom/chromium",
+        },
+        dependencies
+      )
+    ).resolves.toEqual({
+      path: "/custom/chromium",
+      source: "option",
+      browser: "chromium",
+    });
+    expect(dependencies.access).toHaveBeenCalledWith(
+      "/custom/chromium",
+      constants.X_OK
+    );
+    expect(dependencies.access).not.toHaveBeenCalledWith(
+      "/usr/bin/chromium",
+      constants.X_OK
+    );
+  });
+
+  test("uses browser path from environment", async () => {
+    const dependencies = createDependencies({
+      env: { WEBSTUDIO_BROWSER_PATH: "/env/brave-browser" },
+    });
+
+    await expect(
+      resolveScreenshotBrowser({ browser: "auto" }, dependencies)
+    ).resolves.toEqual({
+      path: "/env/brave-browser",
+      source: "env",
+      browser: "brave",
+    });
+  });
+
   test("prefers Chromium over Chrome and chrome-launcher fallback", async () => {
     const dependencies = createDependencies({
       which: vi.fn(async (command) => {
@@ -166,13 +222,13 @@ test("formats actionable browser installation guidance", () => {
 });
 
 describe("captureScreenshot", () => {
-  test("runs browser with headless screenshot arguments", async () => {
-    const execFile = vi.fn(async () => ({ stdout: "", stderr: "" }));
+  test("captures with browser readiness defaults", async () => {
+    const captureBrowserScreenshot = vi.fn(async () => undefined);
     const dependencies = createDependencies({
       which: vi.fn(async (command) =>
         command === "chromium" ? "/usr/bin/chromium" : undefined
       ),
-      execFile,
+      captureBrowserScreenshot,
     });
 
     await expect(
@@ -192,17 +248,54 @@ describe("captureScreenshot", () => {
       elapsedMs: 0,
       warnings: [],
     });
-    expect(execFile).toHaveBeenCalledWith("/usr/bin/chromium", [
-      "--headless=new",
-      "--disable-gpu",
-      "--hide-scrollbars",
-      "--window-size=1440,900",
-      "--screenshot=/tmp/webstudio-screenshot-123.png",
-      "https://example.com",
-    ]);
+    expect(captureBrowserScreenshot).toHaveBeenCalledWith({
+      browserPath: "/usr/bin/chromium",
+      output: "/tmp/webstudio-screenshot-123.png",
+      width: 1440,
+      height: 900,
+      url: "https://example.com",
+      uid: 1000,
+      waitUntil: "load",
+      waitForSelector: undefined,
+      waitForTimeout: 250,
+      timeout: 30000,
+    });
     expect(dependencies.mkdir).toHaveBeenCalledWith("/tmp", {
       recursive: true,
     });
+  });
+
+  test("passes explicit readiness options to browser capture", async () => {
+    const captureBrowserScreenshot = vi.fn(async () => undefined);
+    const dependencies = createDependencies({
+      which: vi.fn(async (command) =>
+        command === "chromium" ? "/usr/bin/chromium" : undefined
+      ),
+      captureBrowserScreenshot,
+    });
+
+    await captureScreenshot(
+      {
+        url: "https://example.com",
+        width: 1440,
+        height: 900,
+        browser: "auto",
+        waitUntil: "networkidle",
+        waitForSelector: "#ready",
+        waitForTimeout: 500,
+        timeout: 10_000,
+      },
+      dependencies
+    );
+
+    expect(captureBrowserScreenshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        waitUntil: "networkidle",
+        waitForSelector: "#ready",
+        waitForTimeout: 500,
+        timeout: 10_000,
+      })
+    );
   });
 
   test("creates the output directory before launching the browser", async () => {
@@ -228,18 +321,6 @@ describe("captureScreenshot", () => {
     expect(mkdir).toHaveBeenCalledWith(expect.stringContaining("nested"), {
       recursive: true,
     });
-  });
-
-  test("adds no-sandbox when running as root", () => {
-    expect(
-      getScreenshotArgs({
-        output: "/tmp/out.png",
-        width: 800,
-        height: 600,
-        url: "https://example.com",
-        uid: 0,
-      })
-    ).toContain("--no-sandbox");
   });
 });
 
@@ -322,12 +403,47 @@ describe("browser installation", () => {
     });
   });
 
+  test("uses apt-get when apt is unavailable", async () => {
+    const dependencies = createDependencies({
+      which: vi.fn(async (command) => {
+        if (command === "sudo") {
+          return "/usr/bin/sudo";
+        }
+        if (command === "apt-get") {
+          return "/usr/bin/apt-get";
+        }
+        return undefined;
+      }),
+    });
+
+    await expect(getChromiumInstallCommand(dependencies)).resolves.toEqual({
+      command: "sudo",
+      args: ["apt-get", "install", "-y", "chromium"],
+      label: "sudo apt-get install -y chromium",
+    });
+  });
+
+  test("uses Homebrew install command on macOS", async () => {
+    const dependencies = createDependencies({
+      platform: "darwin",
+      which: vi.fn(async (command) =>
+        command === "brew" ? "/opt/homebrew/bin/brew" : undefined
+      ),
+    });
+
+    await expect(getChromiumInstallCommand(dependencies)).resolves.toEqual({
+      command: "brew",
+      args: ["install", "--cask", "chromium"],
+      label: "brew install --cask chromium",
+    });
+  });
+
   test("installs Chromium after confirmation and retries capture", async () => {
     let installed = false;
     const installCommand = vi.fn(async () => {
       installed = true;
     });
-    const execFile = vi.fn(async () => ({ stdout: "", stderr: "" }));
+    const captureBrowserScreenshot = vi.fn(async () => undefined);
     const dependencies = createDependencies({
       access: vi.fn(async (path) => {
         if (path.startsWith("/usr/bin/") && installed === false) {
@@ -346,7 +462,7 @@ describe("browser installation", () => {
         }
         return undefined;
       }),
-      execFile,
+      captureBrowserScreenshot,
       installCommand,
     });
     const confirmInstall = vi.fn(async () => true);
@@ -375,10 +491,46 @@ describe("browser installation", () => {
       "-y",
       "chromium",
     ]);
-    expect(execFile).toHaveBeenCalledWith(
-      "/usr/bin/chromium",
-      expect.arrayContaining(["https://example.com"])
+    expect(captureBrowserScreenshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        browserPath: "/usr/bin/chromium",
+        url: "https://example.com",
+      })
     );
+  });
+
+  test("keeps original browser-not-found error when install is declined", async () => {
+    const dependencies = createDependencies({
+      access: vi.fn(async () => {
+        throw new Error("missing");
+      }),
+      which: vi.fn(async (command) => {
+        if (command === "apt") {
+          return "/usr/bin/apt";
+        }
+        if (command === "sudo") {
+          return "/usr/bin/sudo";
+        }
+        return undefined;
+      }),
+    });
+
+    await expect(
+      captureScreenshotWithBrowserInstall(
+        {
+          url: "https://example.com",
+          width: 1440,
+          height: 900,
+          browser: "auto",
+          isJson: false,
+          isMcp: false,
+          isInteractive: true,
+          confirmInstall: vi.fn(async () => false),
+        },
+        dependencies
+      )
+    ).rejects.toBeInstanceOf(BrowserNotFoundError);
+    expect(dependencies.installCommand).not.toHaveBeenCalled();
   });
 
   test("propagates install confirmation errors", async () => {
@@ -439,6 +591,32 @@ describe("browser installation", () => {
         dependencies
       )
     ).rejects.toBeInstanceOf(BrowserNotFoundError);
+  });
+
+  test("reports unavailable browser auto-install separately", async () => {
+    const dependencies = createDependencies({
+      access: vi.fn(async () => {
+        throw new Error("missing");
+      }),
+      which: vi.fn(async () => undefined),
+    });
+
+    await expect(
+      captureScreenshotWithBrowserInstall(
+        {
+          url: "https://example.com",
+          width: 1440,
+          height: 900,
+          browser: "auto",
+          isJson: false,
+          isMcp: false,
+          isInteractive: true,
+          confirmInstall: vi.fn(async () => true),
+        },
+        dependencies
+      )
+    ).rejects.toBeInstanceOf(BrowserInstallUnavailableError);
+    expect(dependencies.installCommand).not.toHaveBeenCalled();
   });
 
   test("rethrows browser not found when install succeeds but rediscovery fails", async () => {

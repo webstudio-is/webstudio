@@ -172,18 +172,6 @@ export const builderRuntimeOperations = [
       input as Parameters<typeof instances.deleteInstances>[1]
     )
   ),
-  runtimeOperation("instances.listTexts", ({ state, input }) =>
-    instances.listTextInstances(
-      state,
-      input as Parameters<typeof instances.listTextInstances>[1]
-    )
-  ),
-  runtimeOperation("instances.updateText", ({ state, input }) =>
-    instances.updateTextInstance(
-      state,
-      input as Parameters<typeof instances.updateTextInstance>[1]
-    )
-  ),
   runtimeOperation("instances.updateProps", ({ state, input, context }) =>
     props.updateProps(
       state,
@@ -199,6 +187,18 @@ export const builderRuntimeOperations = [
       state,
       input as Parameters<typeof props.bindProps>[1],
       context
+    )
+  ),
+  runtimeOperation("instances.listTexts", ({ state, input }) =>
+    instances.listTextInstances(
+      state,
+      input as Parameters<typeof instances.listTextInstances>[1]
+    )
+  ),
+  runtimeOperation("instances.updateText", ({ state, input }) =>
+    instances.updateTextInstance(
+      state,
+      input as Parameters<typeof instances.updateTextInstance>[1]
     )
   ),
   runtimeOperation("styles.getDeclarations", ({ state, input }) =>
@@ -224,31 +224,6 @@ export const builderRuntimeOperations = [
     styles.replaceStyleValues(
       state,
       input as Parameters<typeof styles.replaceStyleValues>[1]
-    )
-  ),
-  runtimeOperation("cssVariables.list", ({ state, input }) =>
-    styles.listCssVariables(
-      state,
-      input as Parameters<typeof styles.listCssVariables>[1]
-    )
-  ),
-  runtimeOperation("cssVariables.define", ({ state, input, context }) =>
-    styles.defineCssVariables(
-      state,
-      input as Parameters<typeof styles.defineCssVariables>[1],
-      context
-    )
-  ),
-  runtimeOperation("cssVariables.delete", ({ state, input }) =>
-    styles.deleteCssVariables(
-      state,
-      input as Parameters<typeof styles.deleteCssVariables>[1]
-    )
-  ),
-  runtimeOperation("cssVariables.rewriteRefs", ({ state, input }) =>
-    styles.rewriteCssVariableRefs(
-      state,
-      input as Parameters<typeof styles.rewriteCssVariableRefs>[1]
     )
   ),
   runtimeOperation("designTokens.list", ({ state, input }) =>
@@ -293,6 +268,31 @@ export const builderRuntimeOperations = [
       state,
       input as Parameters<typeof styles.extractDesignToken>[1],
       context
+    )
+  ),
+  runtimeOperation("cssVariables.list", ({ state, input }) =>
+    styles.listCssVariables(
+      state,
+      input as Parameters<typeof styles.listCssVariables>[1]
+    )
+  ),
+  runtimeOperation("cssVariables.define", ({ state, input, context }) =>
+    styles.defineCssVariables(
+      state,
+      input as Parameters<typeof styles.defineCssVariables>[1],
+      context
+    )
+  ),
+  runtimeOperation("cssVariables.delete", ({ state, input }) =>
+    styles.deleteCssVariables(
+      state,
+      input as Parameters<typeof styles.deleteCssVariables>[1]
+    )
+  ),
+  runtimeOperation("cssVariables.rewriteRefs", ({ state, input }) =>
+    styles.rewriteCssVariableRefs(
+      state,
+      input as Parameters<typeof styles.rewriteCssVariableRefs>[1]
     )
   ),
   runtimeOperation("variables.list", ({ state, input }) =>
