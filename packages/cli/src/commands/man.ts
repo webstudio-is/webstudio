@@ -3,6 +3,7 @@ import type {
   StrictYargsOptionsToInterface,
 } from "./yargs-types";
 import { buildPatchNamespaces } from "@webstudio-is/protocol";
+import { mcpArgumentExamples } from "@webstudio-is/project-build/mcp";
 import { printJson } from "../json-output";
 import {
   cliCommandMetadata,
@@ -297,6 +298,15 @@ const inputFileShapes = {
 
 const inputFileShapeIndex = Object.entries(inputFileShapes)
   .map(([name, value]) => `${name}:\n\n${JSON.stringify(value, undefined, 2)}`)
+  .join("\n\n");
+
+const mcpArgumentExampleIndex = Object.entries(mcpArgumentExamples)
+  .map(
+    ([name, examples]) =>
+      `### ${name}\n\n${examples
+        .map((example) => JSON.stringify(example, undefined, 2))
+        .join("\n\n")}`
+  )
   .join("\n\n");
 
 const formattedUseCaseScenarios = useCaseScenarios.map(
@@ -664,6 +674,12 @@ ${taskRecipeIndex}
 2. Write BuildPatchTransaction[].
 3. Use MCP tool: apply-patch.
 
+## MCP Argument Examples
+
+MCP tools receive JSON argument objects, not CLI flags. Use these shapes:
+
+${mcpArgumentExampleIndex}
+
 ## Rules
 
 - Never guess ids for existing records. Read them first.
@@ -677,6 +693,53 @@ ${taskRecipeIndex}
 ## Known Gaps
 
 ${knownCliGapIndex}
+`;
+
+const mcpManual = `# Webstudio MCP Manual
+
+\`webstudio mcp\` starts a stdio MCP server for the configured project.
+
+## Startup
+
+1. Configure a project with \`webstudio init --link <api-share-link> --json\`.
+2. Check capabilities with \`webstudio permissions --json\`.
+3. Start the server with \`webstudio mcp\`.
+
+While the server is running, stdout is reserved for MCP JSON-RPC messages. Do not print human text from the server process.
+
+## Discovery
+
+Use MCP itself after startup:
+
+- \`tools/list\`: machine-readable available tools
+- \`resources/list\`: available longer JSON resources
+- \`meta.index\`: concise capability catalog
+- \`meta.guide\`: workflow for a user goal
+- \`meta.get_more_tools\`: detailed params, examples, namespaces, and local/server behavior
+
+Useful resources:
+
+- \`webstudio://project/status\`: current ProjectSession status
+- \`webstudio://project/tools\`: operation catalog
+- \`webstudio://project/guide\`: concise discovery guide
+
+## Core Rules
+
+- Operate on the configured project only.
+- Read ids before writing.
+- Prefer semantic tools over \`apply-patch\`.
+- Use \`status\` and \`refresh\` when cached namespaces may be stale.
+- A mutation is durable only when \`meta.session.committed\` is true.
+
+## MCP Argument Examples
+
+MCP tools receive JSON argument objects:
+
+${mcpArgumentExampleIndex}
+
+## Screenshot Verification Note
+
+Builder \`/canvas\` is initialized by Builder and can be blank when opened directly. For automated screenshots, load the Builder URL, wait for \`iframe[src$="/canvas"]\`, then inspect or screenshot that initialized iframe.
 `;
 
 const topics = {
@@ -700,6 +763,7 @@ const topics = {
       apiCommandsByArea,
       mcpOnlyCommands: mcpOnlyCommandCatalog,
       inputFileShapes,
+      mcpArgumentExamples,
       commands: commandCatalog,
       readCommands,
       writeCommands,
@@ -747,6 +811,7 @@ const topics = {
       apiCommandsByArea,
       mcpOnlyCommands: mcpOnlyCommandCatalog,
       inputFileShapes,
+      mcpArgumentExamples,
       commands: commandCatalog,
       readCommands,
       writeCommands,
@@ -768,6 +833,41 @@ const topics = {
       ],
     },
   },
+  mcp: {
+    manual: mcpManual,
+    json: {
+      topic: "mcp",
+      title: "Webstudio MCP Manual",
+      startup: [
+        "webstudio init --link <api-share-link> --json",
+        "webstudio permissions --json",
+        "webstudio mcp",
+      ],
+      discovery: [
+        "tools/list",
+        "resources/list",
+        "meta.index",
+        "meta.guide",
+        "meta.get_more_tools",
+      ],
+      resources: [
+        "webstudio://project/status",
+        "webstudio://project/tools",
+        "webstudio://project/guide",
+      ],
+      rules: [
+        "stdout is reserved for MCP JSON-RPC while the server is running.",
+        "Operate on the configured project only.",
+        "Read ids before writing.",
+        "Prefer semantic tools over apply-patch.",
+        "Use status and refresh when cached namespaces may be stale.",
+        "A mutation is durable only when meta.session.committed is true.",
+      ],
+      mcpArgumentExamples,
+      screenshotVerification:
+        'Load the Builder URL, wait for iframe[src$="/canvas"], then inspect or screenshot that initialized iframe.',
+    },
+  },
 };
 
 export const man = (options: ManOptions) => {
@@ -778,8 +878,9 @@ export const man = (options: ManOptions) => {
 
 Available topics:
 
-- api
-- llm`);
+${Object.keys(topics)
+  .map((name) => `- ${name}`)
+  .join("\n")}`);
     return;
   }
   if (options.json === true) {

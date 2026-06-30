@@ -72,6 +72,19 @@ test("prints api command schema as json", () => {
     ])
   );
   expect(output.mcp.toolCount).toBe(apiCommandMetadata.length);
+  expect(output.mcp.discovery).toContain("meta.get_more_tools");
+  expect(output.mcp.resources).toContain("webstudio://project/tools");
+  expect(output.mcp.argumentExamples["update-styles"]).toEqual([
+    {
+      updates: [
+        {
+          instanceId: "instance-id",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+    },
+  ]);
   for (const command of output.commands) {
     expect(command).not.toHaveProperty("trpcPath");
   }
@@ -86,6 +99,10 @@ test("prints api command schema as json", () => {
         commands: [
           'MCP tool: create-page-from-template (--template <templateId> --name "Landing" --path /landing --json)',
         ],
+      }),
+      expect.objectContaining({
+        useCase: "Discover CLI/API capabilities",
+        commands: expect.arrayContaining(["webstudio man mcp --json"]),
       }),
       expect.objectContaining({
         useCase: "Manage marketplace metadata",

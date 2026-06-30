@@ -1,4 +1,5 @@
 import { buildPatchNamespaces } from "@webstudio-is/protocol";
+import { mcpArgumentExamples } from "@webstudio-is/project-build/mcp";
 import { HandledCliError } from "../errors";
 import { printJson } from "../json-output";
 import { useCaseScenarios } from "./api-command-docs";
@@ -77,6 +78,19 @@ const apiSchema = {
     toolCount: apiCommandMetadata.length,
     tools:
       "MCP exposes the full project operation catalog, including fine-grained page, instance, props, styles, tokens, variables, resources, and assets tools.",
+    discovery: [
+      "tools/list",
+      "resources/list",
+      "meta.index",
+      "meta.guide",
+      "meta.get_more_tools",
+    ],
+    resources: [
+      "webstudio://project/status",
+      "webstudio://project/tools",
+      "webstudio://project/guide",
+    ],
+    argumentExamples: mcpArgumentExamples,
   },
   session: {
     stateFile: ".webstudio/project-session.json",

@@ -25,6 +25,7 @@ export const useCaseScenarios = [
       "webstudio schema api --json",
       "webstudio man api --json",
       "webstudio man llm --json",
+      "webstudio man mcp --json",
     ],
   },
   {

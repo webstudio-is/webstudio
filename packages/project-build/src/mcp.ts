@@ -122,6 +122,7 @@ export type ProjectSessionMcpTool = {
   inputSchema: ProjectSessionMcpInputSchema;
   cliRequiredOptions?: readonly string[];
   cliExamples?: readonly string[];
+  mcpExamples?: readonly unknown[];
   annotations: {
     command: string;
     operationId: string;
@@ -136,6 +137,72 @@ export type ProjectSessionMcpTool = {
     retryOnConflict: boolean;
   };
 };
+
+export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
+  "meta.guide": [{ brief: "Create a pricing page and style the hero" }],
+  "meta.get_more_tools": [{ brief: "update-styles" }],
+  refresh: [{ namespaces: ["pages", "instances", "styles"] }],
+  "list-pages": [{ includeFolders: true }],
+  "get-page-by-path": [{ path: "/pricing" }],
+  "list-instances": [{ pagePath: "/", maxDepth: 3 }],
+  "inspect-instance": [
+    {
+      instanceId: "instance-id",
+      include: ["props", "styles", "children"],
+    },
+  ],
+  "append-instance": [
+    {
+      parentInstanceId: "parent-id",
+      children: [{ tag: "section", label: "Hero", text: "Launch faster" }],
+    },
+  ],
+  "update-text": [
+    {
+      instanceId: "instance-id",
+      childIndex: 0,
+      text: "Launch faster",
+    },
+  ],
+  "update-styles": [
+    {
+      updates: [
+        {
+          instanceId: "instance-id",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+    },
+  ],
+  "apply-patch": [
+    {
+      baseVersion: 12,
+      transactions: [
+        {
+          id: "transaction-id",
+          payload: [
+            {
+              namespace: "pages",
+              patches: [
+                {
+                  op: "replace",
+                  path: ["meta", "siteName"],
+                  value: "Site name",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  publish: [{ target: "production" }],
+  "create-domain": [{ domain: "www.example.com" }],
+} as const;
+
+const getMcpExamples = (command: string): readonly unknown[] =>
+  mcpArgumentExamples[command] ?? [];
 
 const sessionTools = [
   {
@@ -310,6 +377,7 @@ export const listProjectSessionMcpTools = (
     inputSchema: getOperationInputSchema(operation),
     cliRequiredOptions: operation.requiredOptions,
     cliExamples: operation.examples,
+    mcpExamples: getMcpExamples(operation.command),
     annotations: {
       command: operation.command,
       operationId: operation.id,
@@ -324,7 +392,10 @@ export const listProjectSessionMcpTools = (
       retryOnConflict: operation.retryOnConflict,
     },
   })),
-  ...sessionTools,
+  ...sessionTools.map((tool) => ({
+    ...tool,
+    mcpExamples: getMcpExamples(tool.name),
+  })),
 ];
 
 const toMetaResult = (data: unknown): ProjectSessionMcpCallResult => {
@@ -565,6 +636,7 @@ const getMetaGuide = (
       method: tool.annotations.method,
       permit: tool.annotations.permit,
       inputFields: tool.annotations.inputFields,
+      mcpExamples: tool.mcpExamples ?? [],
       cliRequiredOptions: tool.cliRequiredOptions ?? [],
       cliExamples: tool.cliExamples ?? [],
     })),
@@ -582,6 +654,7 @@ const getMoreTools = (
     description: tool.description,
     inputSchema: tool.inputSchema,
     inputFields: tool.annotations.inputFields,
+    mcpExamples: tool.mcpExamples ?? [],
     cliRequiredOptions: tool.cliRequiredOptions ?? [],
     cliExamples: tool.cliExamples ?? [],
     inputNote:

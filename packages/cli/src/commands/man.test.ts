@@ -240,10 +240,44 @@ test("prints llm manual with discovery rules", () => {
   const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
   expect(output).toContain("webstudio schema api --json");
   expect(output).toContain("webstudio permissions --json");
+  expect(output).toContain("## MCP Argument Examples");
+  expect(output).toContain('"updates"');
+  expect(output).toContain('"instanceId": "instance-id"');
   expect(output).toContain("Never guess ids");
   expect(output).toContain("--refresh");
   expect(output).toContain("## Known Gaps");
   expect(output).toContain("Provider-specific authenticated pages");
+});
+
+test("prints mcp manual with startup and JSON argument examples", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  man({ topic: "mcp", json: false });
+
+  const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
+  expect(output).toContain("# Webstudio MCP Manual");
+  expect(output).toContain("stdout is reserved for MCP JSON-RPC");
+  expect(output).toContain("meta.get_more_tools");
+  expect(output).toContain("webstudio://project/tools");
+  expect(output).toContain('"parentInstanceId": "parent-id"');
+});
+
+test("prints mcp manual as json", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  man({ topic: "mcp", json: true });
+
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+  expect(output.topic).toBe("mcp");
+  expect(output.discovery).toContain("meta.index");
+  expect(output.resources).toContain("webstudio://project/tools");
+  expect(output.mcpArgumentExamples["update-text"]).toEqual([
+    {
+      instanceId: "instance-id",
+      childIndex: 0,
+      text: "Launch faster",
+    },
+  ]);
 });
 
 test("prints available topics for unknown manual topic", () => {
@@ -254,4 +288,5 @@ test("prints available topics for unknown manual topic", () => {
   expect(vi.mocked(console.info).mock.calls.at(-1)?.[0]).toContain(
     "Available topics"
   );
+  expect(vi.mocked(console.info).mock.calls.at(-1)?.[0]).toContain("- mcp");
 });

@@ -451,6 +451,16 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(guide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        tools: expect.arrayContaining([
+          expect.objectContaining({
+            name: "publish",
+            mcpExamples: [{ target: "production" }],
+          }),
+        ]),
+      })
+    );
     expect(details.structuredContent.data).toEqual(
       expect.objectContaining({
         tools: expect.arrayContaining([
@@ -458,6 +468,7 @@ describe("project session mcp adapter", () => {
             name: "publish",
             inputSchema: expect.any(Object),
             inputFields: ["target", "domains"],
+            mcpExamples: [{ target: "production" }],
             cliExamples: [],
             inputNote:
               "MCP tool arguments are public API input objects. CLI examples show intent, but do not imply MCP flag names.",

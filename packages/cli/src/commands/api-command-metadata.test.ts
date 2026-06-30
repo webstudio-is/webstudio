@@ -79,8 +79,8 @@ test("formats removed shell commands as MCP tools", () => {
   expect(
     formatApiUseCaseCommand("webstudio init --link <api-share-link> --json")
   ).toBe("webstudio init --link <api-share-link> --json");
-  expect(formatApiUseCaseCommand("webstudio build --template nextjs")).toBe(
-    "webstudio build --template nextjs"
+  expect(formatApiUseCaseCommand("webstudio build --template ssg")).toBe(
+    "webstudio build --template ssg"
   );
   expect(formatApiUseCaseCommand("webstudio permissions --json")).toBe(
     "webstudio permissions --json"

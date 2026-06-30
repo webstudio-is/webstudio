@@ -57,7 +57,7 @@ export const topLevelCliCommandMetadata = [
   {
     command: "build",
     description: "Build the synced project with the selected template",
-    examples: ["webstudio build --template nextjs"],
+    examples: ["webstudio build --template ssg"],
   },
   {
     command: "permissions",
@@ -73,8 +73,12 @@ export const topLevelCliCommandMetadata = [
   },
   {
     command: "man",
-    description: "Print human and LLM manuals for CLI/API workflows",
-    examples: ["webstudio man api", "webstudio man llm --json"],
+    description: "Print human and LLM manuals for CLI/API/MCP workflows",
+    examples: [
+      "webstudio man api",
+      "webstudio man llm --json",
+      "webstudio man mcp",
+    ],
   },
   {
     command: "mcp",
