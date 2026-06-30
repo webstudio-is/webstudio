@@ -20,6 +20,8 @@ test("prints api command schema as json", () => {
     "link",
     "sync",
     "build",
+    "preview",
+    "screenshot",
     "permissions",
     "publish",
     "domains",
@@ -92,12 +94,12 @@ test("prints api command schema as json", () => {
     expect.arrayContaining([
       expect.objectContaining({
         useCase: "List breakpoints",
-        commands: ["MCP tool: list-breakpoints (--json)"],
+        commands: ["MCP tool: list-breakpoints {}"],
       }),
       expect.objectContaining({
         useCase: "Create page from template",
         commands: [
-          'MCP tool: create-page-from-template (--template <templateId> --name "Landing" --path /landing --json)',
+          'MCP tool: create-page-from-template {"templateId":"<templateId>","name":"Landing","path":"/landing"}',
         ],
       }),
       expect.objectContaining({

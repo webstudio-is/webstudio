@@ -23,7 +23,8 @@
   ],
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "build": "rm -rf lib && vite build",
+    "generate-docs": "node scripts/generate-docs.mjs",
+    "build": "pnpm generate-docs && rm -rf lib && vite build",
     "test": "vitest run"
   },
   "license": "AGPL-3.0-or-later",
@@ -41,6 +42,7 @@
     "acorn": "^8.14.1",
     "acorn-walk": "^8.3.4",
     "change-case": "^5.4.4",
+    "chrome-launcher": "^1.2.1",
     "deepmerge": "^4.3.1",
     "env-paths": "^3.0.0",
     "fast-deep-equal": "^3.1.3",

@@ -17,23 +17,13 @@ import {
   stagedUploadProjectIdHeader,
   parseBuilderUrl,
   type BuildPatchTransaction,
+  getPublicApiOperation,
+  getPublicApiOperationPath,
   type ImportProjectBundleResult,
   isPublicApiRemoteErrorCode,
   type PublishedProjectBundle,
+  type PublicApiCommand,
 } from "@webstudio-is/protocol";
-import {
-  getPublicApiOperation,
-  getPublicApiOperationPath,
-  type PublicApiCommand,
-} from "./api-operations";
-export {
-  getPublicApiOperation,
-  getPublicApiOperationPath,
-  publicApiOperations,
-  type PublicApiCommand,
-  type PublicApiOperationMethod,
-  type PublicApiOperationPermit,
-} from "./api-operations";
 export { getBundleVersion, bundleVersion } from "@webstudio-is/protocol";
 export { parseBuilderUrl } from "@webstudio-is/protocol";
 export type {

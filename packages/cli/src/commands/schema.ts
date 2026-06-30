@@ -8,7 +8,6 @@ import {
   cliCommandGroupMetadata,
   cliCommandMetadata,
   formatApiUseCaseCommand,
-  formatApiUseCaseScenarioCommands,
   topLevelCliCommandMetadata,
 } from "./api-command-metadata";
 import type {
@@ -32,10 +31,6 @@ export const schemaOptions = (yargs: CommonYargsArgv) =>
 type SchemaOptions = StrictYargsOptionsToInterface<typeof schemaOptions> & {
   topic?: string;
 };
-
-const schemaUseCaseScenarios = useCaseScenarios.map(
-  formatApiUseCaseScenarioCommands
-);
 
 const topLevelCommands = topLevelCliCommandMetadata.map(
   ({ command, description, examples }) => ({
@@ -105,7 +100,7 @@ const apiSchema = {
     resultMetadata:
       "Successful command JSON includes meta.session with operationId, buildId, version, source, committed, compatibility, namespace metadata, and diagnostics.",
   },
-  useCases: schemaUseCaseScenarios,
+  useCases: useCaseScenarios,
   patch: {
     validationCommand:
       "No top-level CLI validation command. Prefer semantic MCP tools; use MCP apply-patch only for known-valid BuildPatchTransaction[] payloads.",

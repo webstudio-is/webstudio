@@ -2,7 +2,13 @@ import {
   builderNamespaces,
   type BuilderNamespace,
 } from "./contracts/namespaces";
+import path from "node:path";
 import type { ProjectSessionEnvelope } from "./project-session";
+import {
+  screenshotBrowserChoices,
+  type ScreenshotBrowser,
+} from "./visual/screenshot-browser";
+import type { ScreenshotDiffResult } from "./visual/screenshot-diff";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
@@ -53,8 +59,76 @@ export type McpErrorCodeResolver = (error: unknown) => string | undefined;
 
 export type McpTransport = Transport;
 
+export type ProjectSessionScreenshotInput = {
+  url?: string;
+  path?: string;
+  output?: string;
+  viewport: {
+    width: number;
+    height: number;
+  };
+  browser: ScreenshotBrowser;
+  browserPath?: string;
+};
+
+export type ProjectSessionScreenshotResult = {
+  output: string;
+  browserPath: string;
+  browser: "chromium" | "chrome" | "edge" | "brave";
+  viewport: {
+    width: number;
+    height: number;
+  };
+  elapsedMs: number;
+  warnings: readonly string[];
+};
+
+type CaptureScreenshot = (
+  input: ProjectSessionScreenshotInput
+) => Promise<ProjectSessionScreenshotResult>;
+
+export type ProjectSessionScreenshotDiffInput = {
+  baselinePath: string;
+  currentPath: string;
+  outputDir: string;
+  threshold?: number;
+  ignoreTopNormalizedY?: number;
+};
+
+type DiffScreenshots = (
+  input: ProjectSessionScreenshotDiffInput
+) => Promise<ScreenshotDiffResult>;
+
+export type ProjectSessionPreviewInput = {
+  host?: string;
+  port?: number;
+};
+
+export type ProjectSessionPreviewResult = {
+  url: string;
+  pid?: number;
+  running: boolean;
+};
+
+type StartPreview = (
+  input: ProjectSessionPreviewInput
+) => Promise<ProjectSessionPreviewResult>;
+type GetPreviewStatus = () => Promise<ProjectSessionPreviewResult>;
+
+export type ProjectSessionMcpGuidance = {
+  visualVerificationRule: string;
+  getVisionVerificationLoop: (options: {
+    includeDiff: boolean;
+  }) => readonly string[];
+  getVisionWorkflowSummary: (options: { includeDiff: boolean }) => string;
+};
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
+
+const isScreenshotBrowser = (value: unknown): value is ScreenshotBrowser =>
+  typeof value === "string" &&
+  screenshotBrowserChoices.includes(value as ScreenshotBrowser);
 
 const getRequestParams = (request: unknown) =>
   isRecord(request) && isRecord(request.params) ? request.params : {};
@@ -116,6 +190,93 @@ const getOperationInputSchema = (
   };
 };
 
+const screenshotInputSchema = {
+  ...emptyInputSchema,
+  description:
+    "Capture a visual screenshot for AI vision review. Pass { url } for any URL or { path } after preview.start.",
+  properties: {
+    url: {
+      type: "string",
+      description: "Absolute URL to capture.",
+    },
+    path: {
+      type: "string",
+      description:
+        "Generated-site path to capture through the active MCP preview server.",
+    },
+    output: {
+      type: "string",
+      description: "PNG output path.",
+    },
+    viewport: {
+      type: "object",
+      description: "Viewport dimensions in CSS pixels.",
+      properties: {
+        width: { type: "number", default: 1440 },
+        height: { type: "number", default: 900 },
+      },
+    },
+    browser: {
+      type: "string",
+      enum: screenshotBrowserChoices,
+      default: "auto",
+    },
+    browserPath: {
+      type: "string",
+      description: "Explicit Chromium-family browser executable path.",
+    },
+  },
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const screenshotDiffInputSchema = {
+  ...emptyInputSchema,
+  description:
+    "Compare baseline/current PNG screenshots and return pixel-region diff evidence for AI vision review.",
+  properties: {
+    baselinePath: {
+      type: "string",
+      description: "Baseline PNG path.",
+    },
+    currentPath: {
+      type: "string",
+      description: "Current PNG path.",
+    },
+    outputDir: {
+      type: "string",
+      description:
+        "Directory for diff artifacts. Defaults to the current screenshot directory.",
+    },
+    threshold: {
+      type: "number",
+      default: 0.1,
+      description: "RGB distance threshold from 0 to 1.",
+    },
+    ignoreTopNormalizedY: {
+      type: "number",
+      default: 0,
+      description:
+        "Ignore the top fraction of the image, useful for browser chrome or status bars.",
+    },
+  },
+  required: ["baselinePath", "currentPath"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const previewInputSchema = {
+  ...emptyInputSchema,
+  description:
+    "Start or inspect a long-lived generated-site preview server for visual verification. This serves already generated local project files; generate project files first when they are missing or stale.",
+  properties: {
+    host: {
+      type: "string",
+      default: "127.0.0.1",
+    },
+    port: {
+      type: "number",
+      default: 5173,
+    },
+  },
+} as const satisfies ProjectSessionMcpInputSchema;
+
 export type ProjectSessionMcpTool = {
   name: string;
   description: string;
@@ -142,6 +303,8 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "meta.guide": [{ brief: "Create a pricing page and style the hero" }],
   "meta.get_more_tools": [{ brief: "update-styles" }],
   refresh: [{ namespaces: ["pages", "instances", "styles"] }],
+  "preview.start": [{ host: "127.0.0.1", port: 5173 }],
+  "preview.status": [{}],
   "list-pages": [{ includeFolders: true }],
   "get-page-by-path": [{ path: "/pricing" }],
   "list-instances": [{ pagePath: "/", maxDepth: 3 }],
@@ -199,6 +362,22 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   ],
   publish: [{ target: "production" }],
   "create-domain": [{ domain: "www.example.com" }],
+  screenshot: [
+    {
+      url: "https://example.com",
+      output: "current.png",
+      viewport: { width: 1440, height: 900 },
+      browser: "auto",
+    },
+  ],
+  "screenshot.diff": [
+    {
+      baselinePath: "baseline.png",
+      currentPath: "current.png",
+      outputDir: "visual-diff",
+      threshold: 0.1,
+    },
+  ],
 } as const;
 
 const getMcpExamples = (command: string): readonly unknown[] =>
@@ -333,6 +512,104 @@ const sessionTools = [
   },
 ] as const satisfies readonly ProjectSessionMcpTool[];
 
+const screenshotTool = {
+  name: "screenshot",
+  description:
+    "Capture a PNG screenshot so a vision-capable AI can inspect what was actually built, compare it with the intent, and iterate.",
+  inputSchema: screenshotInputSchema,
+  mcpExamples: getMcpExamples("screenshot"),
+  annotations: {
+    command: "screenshot",
+    operationId: "screenshot.capture",
+    method: "session",
+    permit: "api",
+    inputFields: [
+      "url",
+      "path",
+      "output",
+      "viewport",
+      "browser",
+      "browserPath",
+    ],
+    localCapable: false,
+    serverOnly: true,
+    readNamespaces: [],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+} as const satisfies ProjectSessionMcpTool;
+
+const screenshotDiffTool = {
+  name: "screenshot.diff",
+  description:
+    "Compare two PNG screenshots, write diff artifacts, and return changed pixel counts, changed regions, and a compact summary for visual verification.",
+  inputSchema: screenshotDiffInputSchema,
+  mcpExamples: getMcpExamples("screenshot.diff"),
+  annotations: {
+    command: "screenshot.diff",
+    operationId: "screenshot.diff",
+    method: "session",
+    permit: "api",
+    inputFields: [
+      "baselinePath",
+      "currentPath",
+      "outputDir",
+      "threshold",
+      "ignoreTopNormalizedY",
+    ],
+    localCapable: false,
+    serverOnly: true,
+    readNamespaces: [],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+} as const satisfies ProjectSessionMcpTool;
+
+const previewTools = [
+  {
+    name: "preview.start",
+    description:
+      "Start or reuse a generated-site preview server for fast visual verification while MCP is running. The server serves existing generated project files and does not regenerate them.",
+    inputSchema: previewInputSchema,
+    mcpExamples: getMcpExamples("preview.start"),
+    annotations: {
+      command: "preview.start",
+      operationId: "preview.start",
+      method: "session",
+      permit: "api",
+      inputFields: ["host", "port"],
+      localCapable: false,
+      serverOnly: true,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  },
+  {
+    name: "preview.status",
+    description:
+      "Return the active generated-site preview server URL and process state for screenshot-based verification.",
+    inputSchema: emptyInputSchema,
+    mcpExamples: getMcpExamples("preview.status"),
+    annotations: {
+      command: "preview.status",
+      operationId: "preview.status",
+      method: "session",
+      permit: "api",
+      inputFields: [],
+      localCapable: false,
+      serverOnly: true,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  },
+] as const satisfies readonly ProjectSessionMcpTool[];
+
 type ProjectSessionMcpStructuredContent = {
   ok: true;
   data: unknown;
@@ -369,7 +646,12 @@ type SdkTool = {
 };
 
 export const listProjectSessionMcpTools = (
-  operations: readonly PublicMcpOperation[]
+  operations: readonly PublicMcpOperation[],
+  options: {
+    includeScreenshot?: boolean;
+    includeScreenshotDiff?: boolean;
+    includePreview?: boolean;
+  } = {}
 ): ProjectSessionMcpTool[] => [
   ...operations.map((operation) => ({
     name: operation.command,
@@ -396,6 +678,9 @@ export const listProjectSessionMcpTools = (
     ...tool,
     mcpExamples: getMcpExamples(tool.name),
   })),
+  ...(options.includeScreenshot ? [screenshotTool] : []),
+  ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
+  ...(options.includePreview ? previewTools : []),
 ];
 
 const toMetaResult = (data: unknown): ProjectSessionMcpCallResult => {
@@ -411,6 +696,11 @@ const toMetaResult = (data: unknown): ProjectSessionMcpCallResult => {
 };
 
 const capabilityAreas = [
+  {
+    area: "visual-verification",
+    goal: "Let a vision-capable AI see the rendered result, compare it with the user's intent, and iterate.",
+    tools: ["preview.start", "preview.status", "screenshot", "screenshot.diff"],
+  },
   {
     area: "discover",
     goal: "Understand connection, permissions, project status, and available tools.",
@@ -433,9 +723,20 @@ const capabilityAreas = [
       "get-page-by-path",
       "create-page",
       "update-page",
+      "get-project-settings",
+      "update-project-settings",
+      "list-redirects",
+      "create-redirect",
+      "update-redirect",
+      "delete-redirect",
       "duplicate-page",
       "delete-page",
+      "list-page-templates",
+      "create-page-from-template",
       "list-folders",
+      "create-folder",
+      "update-folder",
+      "delete-folder",
     ],
   },
   {
@@ -465,9 +766,19 @@ const capabilityAreas = [
       "replace-styles",
       "list-design-tokens",
       "create-design-token",
+      "update-design-token-styles",
+      "delete-design-token-styles",
+      "attach-design-token",
+      "detach-design-token",
+      "extract-design-token",
       "list-css-variables",
       "define-css-variable",
+      "delete-css-variable",
+      "rewrite-css-variable-refs",
       "list-breakpoints",
+      "create-breakpoint",
+      "update-breakpoint",
+      "delete-breakpoint",
     ],
   },
   {
@@ -561,7 +872,9 @@ const getMatchingTools = (
 ) => {
   const normalizedBrief = normalize(brief);
   if (normalizedBrief.trim().length === 0) {
-    const names = new Set<string>(capabilityAreas[0].tools);
+    const names = new Set<string>(
+      capabilityAreas.find((area) => area.area === "discover")?.tools ?? []
+    );
     return tools.filter((tool) => names.has(tool.name));
   }
   const area = capabilityAreas.find((area) =>
@@ -590,8 +903,14 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
     .filter((capability) => capability.tools.length > 0);
 };
 
-const getMetaIndex = (tools: readonly ProjectSessionMcpTool[]) => {
+const getMetaIndex = (
+  tools: readonly ProjectSessionMcpTool[],
+  guidance: ProjectSessionMcpGuidance | undefined
+) => {
   const names = new Set(tools.map((tool) => tool.name));
+  const canVerifyVisually = ["preview.start", "screenshot"].every((tool) =>
+    names.has(tool)
+  );
   return {
     startHere: ["meta.index", "meta.guide", "status", "permissions"].filter(
       (tool) => names.has(tool)
@@ -608,16 +927,30 @@ const getMetaIndex = (tools: readonly ProjectSessionMcpTool[]) => {
       "Read ids before writing.",
       "Prefer semantic tools over apply-patch.",
       "Use status/refresh when cached data may be stale.",
-    ],
+      guidance?.visualVerificationRule,
+    ].filter((rule): rule is string => rule !== undefined),
+    visionLoop:
+      canVerifyVisually && guidance !== undefined
+        ? guidance.getVisionVerificationLoop({
+            includeDiff: names.has("screenshot.diff"),
+          })
+        : [],
     capabilities: filterCapabilities(tools),
   };
 };
 
 const getMetaGuide = (
   brief: string,
-  tools: readonly ProjectSessionMcpTool[]
+  tools: readonly ProjectSessionMcpTool[],
+  guidance: ProjectSessionMcpGuidance | undefined
 ) => {
   const matches = getMatchingTools(brief, tools).slice(0, 12);
+  const canVerifyVisually =
+    tools.some((tool) => tool.name === "preview.start") &&
+    tools.some((tool) => tool.name === "screenshot");
+  const canDiffScreenshots = tools.some(
+    (tool) => tool.name === "screenshot.diff"
+  );
   return {
     brief,
     workflow: [
@@ -629,6 +962,9 @@ const getMetaGuide = (
       "Use focused read tools to collect ids and current values.",
       "Use the smallest semantic mutation tool that matches the requested change.",
       "Use apply-patch only when no semantic mutation tool fits.",
+      canVerifyVisually && guidance !== undefined
+        ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
+        : undefined,
     ].filter(Boolean),
     tools: matches.map((tool) => ({
       name: tool.name,
@@ -658,20 +994,35 @@ const getMoreTools = (
     cliRequiredOptions: tool.cliRequiredOptions ?? [],
     cliExamples: tool.cliExamples ?? [],
     inputNote:
-      "MCP tool arguments are public API input objects. CLI examples show intent, but do not imply MCP flag names.",
+      "MCP tool arguments are public API input objects. Examples show intent, but do not imply MCP flag names.",
     annotations: tool.annotations,
   })),
 });
+
+const readOnlySessionTools = new Set([
+  "meta.index",
+  "meta.guide",
+  "meta.get_more_tools",
+  "status",
+  "preview.status",
+]);
+
+const isReadOnlyTool = (tool: ProjectSessionMcpTool) =>
+  tool.annotations.method === "query" ||
+  (tool.annotations.method === "session" &&
+    readOnlySessionTools.has(tool.name));
+
+const isDestructiveTool = (tool: ProjectSessionMcpTool) =>
+  tool.annotations.method === "mutation" ||
+  tool.annotations.invalidatesNamespaces.length > 0;
 
 const toSdkTool = (tool: ProjectSessionMcpTool): SdkTool => ({
   name: tool.name,
   description: tool.description,
   inputSchema: tool.inputSchema,
   annotations: {
-    readOnlyHint:
-      tool.annotations.method === "query" ||
-      tool.annotations.method === "session",
-    destructiveHint: tool.annotations.method === "mutation",
+    readOnlyHint: isReadOnlyTool(tool),
+    destructiveHint: isDestructiveTool(tool),
     openWorldHint: tool.annotations.serverOnly,
   },
   _meta: {
@@ -759,20 +1110,155 @@ const getRefreshNamespaces = (input: unknown): readonly BuilderNamespace[] => {
   return result;
 };
 
+const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
+  if (isRecord(input) === false) {
+    throw new Error("screenshot input must be an object.");
+  }
+  const url =
+    typeof input.url === "string" && input.url.length > 0
+      ? input.url
+      : undefined;
+  const path =
+    typeof input.path === "string" && input.path.length > 0
+      ? input.path
+      : undefined;
+  if (url === undefined && path === undefined) {
+    throw new Error("screenshot requires url or path.");
+  }
+  if (url !== undefined && path !== undefined) {
+    throw new Error("screenshot accepts either url or path, not both.");
+  }
+  const viewport = isRecord(input.viewport) ? input.viewport : {};
+  const width =
+    typeof viewport.width === "number" && Number.isInteger(viewport.width)
+      ? viewport.width
+      : 1440;
+  const height =
+    typeof viewport.height === "number" && Number.isInteger(viewport.height)
+      ? viewport.height
+      : 900;
+  if (width <= 0 || height <= 0) {
+    throw new Error("screenshot viewport width and height must be positive.");
+  }
+  const browser = input.browser === undefined ? "auto" : input.browser;
+  if (isScreenshotBrowser(browser) === false) {
+    throw new Error(
+      "screenshot browser must be auto, chromium, chrome, edge, or brave."
+    );
+  }
+  return {
+    url,
+    path,
+    output: typeof input.output === "string" ? input.output : undefined,
+    viewport: { width, height },
+    browser,
+    browserPath:
+      typeof input.browserPath === "string" ? input.browserPath : undefined,
+  };
+};
+
+const getScreenshotDiffInput = (
+  input: unknown
+): ProjectSessionScreenshotDiffInput => {
+  if (isRecord(input) === false) {
+    throw new Error("screenshot.diff input must be an object.");
+  }
+  const baselinePath =
+    typeof input.baselinePath === "string" && input.baselinePath.length > 0
+      ? input.baselinePath
+      : undefined;
+  const currentPath =
+    typeof input.currentPath === "string" && input.currentPath.length > 0
+      ? input.currentPath
+      : undefined;
+  if (baselinePath === undefined || currentPath === undefined) {
+    throw new Error("screenshot.diff requires baselinePath and currentPath.");
+  }
+  const threshold =
+    typeof input.threshold === "number" ? input.threshold : undefined;
+  if (
+    threshold !== undefined &&
+    (Number.isFinite(threshold) === false || threshold < 0 || threshold > 1)
+  ) {
+    throw new Error("screenshot.diff threshold must be between 0 and 1.");
+  }
+  const ignoreTopNormalizedY =
+    typeof input.ignoreTopNormalizedY === "number"
+      ? input.ignoreTopNormalizedY
+      : undefined;
+  if (
+    ignoreTopNormalizedY !== undefined &&
+    (Number.isFinite(ignoreTopNormalizedY) === false ||
+      ignoreTopNormalizedY < 0 ||
+      ignoreTopNormalizedY > 1)
+  ) {
+    throw new Error(
+      "screenshot.diff ignoreTopNormalizedY must be between 0 and 1."
+    );
+  }
+  return {
+    baselinePath,
+    currentPath,
+    outputDir:
+      typeof input.outputDir === "string" && input.outputDir.length > 0
+        ? input.outputDir
+        : path.dirname(currentPath),
+    threshold,
+    ignoreTopNormalizedY,
+  };
+};
+
+const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
+  if (isRecord(input) === false) {
+    return {};
+  }
+  const host = typeof input.host === "string" ? input.host : undefined;
+  if (host !== undefined && host.length === 0) {
+    throw new Error("preview host must not be empty.");
+  }
+  const port = typeof input.port === "number" ? input.port : undefined;
+  if (
+    port !== undefined &&
+    (Number.isInteger(port) === false || port <= 0 || port > 65535)
+  ) {
+    throw new Error("preview port must be an integer between 1 and 65535.");
+  }
+  return {
+    host,
+    port,
+  };
+};
+
 export const createProjectSessionMcpCore = <Command extends string = string>({
   operations,
   createProjectSession,
   executeOperation,
+  captureScreenshot,
+  diffScreenshots,
+  startPreview,
+  getPreviewStatus,
+  guidance,
 }: {
   operations: readonly (PublicMcpOperation & { command: Command })[];
   createProjectSession: CreateProjectSession;
   executeOperation: ExecuteMcpOperation<Command>;
+  captureScreenshot?: CaptureScreenshot;
+  diffScreenshots?: DiffScreenshots;
+  startPreview?: StartPreview;
+  getPreviewStatus?: GetPreviewStatus;
+  guidance?: ProjectSessionMcpGuidance;
 }) => {
   let session: ReturnType<CreateProjectSession> | undefined;
   const operationCommands = new Set(
     operations.map((operation) => operation.command)
   );
-  const listTools = () => listProjectSessionMcpTools(operations);
+  const listTools = () =>
+    listProjectSessionMcpTools(operations, {
+      includeScreenshot: captureScreenshot !== undefined,
+      includeScreenshotDiff: diffScreenshots !== undefined,
+      includePreview:
+        startPreview !== undefined && getPreviewStatus !== undefined,
+    });
   const getSession = () => {
     session ??= createProjectSession();
     return session;
@@ -798,7 +1284,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             {
               uri,
               mimeType: "application/json",
-              text: JSON.stringify(getMetaIndex(listTools())),
+              text: JSON.stringify(getMetaIndex(listTools(), guidance)),
             },
           ],
         };
@@ -829,10 +1315,12 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       dryRun?: boolean;
     }): Promise<ProjectSessionMcpCallResult> {
       if (name === "meta.index") {
-        return toMetaResult(getMetaIndex(listTools()));
+        return toMetaResult(getMetaIndex(listTools(), guidance));
       }
       if (name === "meta.guide") {
-        return toMetaResult(getMetaGuide(getBrief(input), listTools()));
+        return toMetaResult(
+          getMetaGuide(getBrief(input), listTools(), guidance)
+        );
       }
       if (name === "meta.get_more_tools") {
         return toMetaResult(getMoreTools(getBrief(input), listTools()));
@@ -849,6 +1337,20 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "reset-session") {
         const session = getSession();
         return toCallResult(await session.reset());
+      }
+      if (name === "screenshot" && captureScreenshot !== undefined) {
+        return toMetaResult(await captureScreenshot(getScreenshotInput(input)));
+      }
+      if (name === "screenshot.diff" && diffScreenshots !== undefined) {
+        return toMetaResult(
+          await diffScreenshots(getScreenshotDiffInput(input))
+        );
+      }
+      if (name === "preview.start" && startPreview !== undefined) {
+        return toMetaResult(await startPreview(getPreviewInput(input)));
+      }
+      if (name === "preview.status" && getPreviewStatus !== undefined) {
+        return toMetaResult(await getPreviewStatus());
       }
       if (operationCommands.has(name as Command) === false) {
         throw new Error(`Unknown MCP tool "${name}".`);
@@ -911,17 +1413,32 @@ export const createProjectSessionMcpServer = async <
   operations,
   createProjectSession,
   executeOperation,
+  captureScreenshot,
+  diffScreenshots,
+  startPreview,
+  getPreviewStatus,
+  guidance,
   getErrorCode,
 }: {
   operations: readonly (PublicMcpOperation & { command: Command })[];
   createProjectSession: CreateProjectSession;
   executeOperation: ExecuteMcpOperation<Command>;
+  captureScreenshot?: CaptureScreenshot;
+  diffScreenshots?: DiffScreenshots;
+  startPreview?: StartPreview;
+  getPreviewStatus?: GetPreviewStatus;
+  guidance?: ProjectSessionMcpGuidance;
   getErrorCode?: McpErrorCodeResolver;
 }) => {
   const core = createProjectSessionMcpCore({
     operations,
     createProjectSession,
     executeOperation,
+    captureScreenshot,
+    diffScreenshots,
+    startPreview,
+    getPreviewStatus,
+    guidance,
   });
   const server = new Server(
     { name: "webstudio", version: "0.0.0" },

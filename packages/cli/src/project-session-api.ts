@@ -1,4 +1,7 @@
-import * as httpClient from "@webstudio-is/http-client";
+import {
+  getPublicApiOperation,
+  type PublicApiCommand,
+} from "@webstudio-is/protocol";
 import {
   runtimeOperationContracts,
   type RuntimeOperationId,
@@ -14,7 +17,7 @@ export type ProjectSessionApiConnection = {
   headers?: Record<string, string | undefined>;
 };
 
-export type ProjectSessionApiCommand = httpClient.PublicApiCommand;
+export type ProjectSessionApiCommand = PublicApiCommand;
 
 type CreateProjectSession = typeof createCliProjectSession;
 
@@ -32,7 +35,7 @@ const isRuntimeOperationId = (id: string): id is RuntimeOperationId =>
 const getRuntimeOperationId = (
   command: ProjectSessionApiCommand
 ): RuntimeOperationId | undefined => {
-  const operation = httpClient.getPublicApiOperation(command);
+  const operation = getPublicApiOperation(command);
   return operation.runtimeOperationId !== undefined &&
     isRuntimeOperationId(operation.runtimeOperationId)
     ? operation.runtimeOperationId
@@ -104,7 +107,7 @@ export const executeProjectSessionApiOperation = async ({
   refresh?: boolean;
 }) => {
   const runtimeOperationId = getRuntimeOperationId(command);
-  const operation = httpClient.getPublicApiOperation(command);
+  const operation = getPublicApiOperation(command);
   if (
     dryRun === true &&
     (runtimeOperationId === undefined || operation.method !== "mutation")

@@ -1,7 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage } from "node:http";
 import { afterEach, expect, test, vi } from "vitest";
-import { bundleVersion, stagedUploadPath } from "@webstudio-is/protocol";
+import {
+  bundleVersion,
+  publicApiOperations,
+  stagedUploadPath,
+} from "@webstudio-is/protocol";
 import {
   createImageAssetFixture,
   createPublishedProjectBundleFixture,
@@ -71,7 +75,6 @@ import {
   publish,
   parseBuildPatchTransactions,
   parseBuilderUrl,
-  publicApiOperations,
   toLocalProjectBundle,
   uploadAsset,
   uploadAssets,

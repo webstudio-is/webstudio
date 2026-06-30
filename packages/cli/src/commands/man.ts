@@ -4,15 +4,24 @@ import type {
 } from "./yargs-types";
 import { buildPatchNamespaces } from "@webstudio-is/protocol";
 import { mcpArgumentExamples } from "@webstudio-is/project-build/mcp";
+import { readCliDoc } from "../docs";
+import {
+  generatedAppDependencyNotes,
+  getVisionVerificationLoop,
+  screenshotVerificationSummary,
+} from "../mcp-guidance";
 import { printJson } from "../json-output";
 import {
   cliCommandMetadata,
   formatApiUseCaseCommand,
-  formatApiUseCaseScenarioCommands,
   mcpOnlyApiCommandMetadata,
   topLevelCliCommandMetadata,
 } from "./api-command-metadata";
 import { knownCliGaps, useCaseScenarios } from "./api-command-docs";
+
+const apiManualMarkdown = readCliDoc("manual-api");
+const llmManualMarkdown = readCliDoc("manual-llm");
+const mcpManualMarkdown = readCliDoc("manual-mcp");
 
 export const manOptions = (yargs: CommonYargsArgv) =>
   yargs
@@ -190,7 +199,7 @@ const getCommandsForUseCase = (useCase: string) => {
   if (commands === undefined) {
     throw new Error(`Unknown API CLI use case "${useCase}".`);
   }
-  return commands.map(formatApiUseCaseCommand);
+  return commands;
 };
 
 const taskRecipes = Object.fromEntries(
@@ -309,11 +318,19 @@ const mcpArgumentExampleIndex = Object.entries(mcpArgumentExamples)
   )
   .join("\n\n");
 
-const formattedUseCaseScenarios = useCaseScenarios.map(
-  formatApiUseCaseScenarioCommands
-);
+const mcpVisionVerificationLoop = getVisionVerificationLoop({
+  includeDiff: true,
+});
 
-const useCaseIndex = formattedUseCaseScenarios
+const mcpVisionVerificationLoopMarkdown = mcpVisionVerificationLoop
+  .map((step, index) => `${index + 1}. ${step}`)
+  .join("\n");
+
+const mcpGeneratedAppDependencyNotes = generatedAppDependencyNotes
+  .map((note) => `- ${note}`)
+  .join("\n");
+
+const useCaseIndex = useCaseScenarios
   .map((scenario) => {
     const commands = scenario.commands.map((command) => `  - ${command}`);
     const namespaces =
@@ -425,322 +442,35 @@ const taskRecipeIndex = Object.entries(taskRecipeUseCases)
   )
   .join("\n\n");
 
-const apiManual = `# Webstudio API CLI Manual
-
-The API commands operate on the single project configured by:
-
-- .webstudio/config.json: projectId
-- global Webstudio config: origin and token
-
-Rules:
-
-- Always pass --json.
-- Never pass a project id. Commands use configured project only.
-- Read ids before writing. Do not invent ids for existing records.
-- stdout is one JSON object. stderr is diagnostics.
-- Prefer MCP semantic tools for detailed project edits. Use MCP apply-patch only when no semantic tool exists.
-
-## Start
-
-${renderUseCaseCommands(taskRecipeUseCases.setup)}
-
-## Read First
-
-${renderUseCaseCommands(readFirstUseCases)}
-
-## Project Session Cache
-
-- CLI commands use one local ProjectSession snapshot for the configured project.
-- Local-capable reads use cached namespaces when compatible and fetch only missing or stale namespaces.
-- Local-capable mutations build patches from the local snapshot, then commit with the cached build version.
-- Successful mutation commits update the local snapshot only after the remote commit succeeds.
-- Server-only commands run remotely and invalidate/refetch namespaces declared by the operation catalog.
-- Use --refresh on local-capable commands to refresh required namespaces before running.
-- Successful JSON responses include meta.session with operationId, buildId, version, source, committed, compatibility, namespace freshness, and diagnostics.
-
-## CLI Capability Inventory
-
-### Top-Level Commands
-
-${topLevelCapabilityIndex}
-
-### High-Level API Commands By Area
-
-${apiCapabilityIndex}
-
-### MCP-Only Operations
-
-These are intentionally exposed through \`webstudio mcp\`, not as top-level shell commands:
-
-${mcpOnlyCommandIndex}
-
-## Task Recipes
-
-${taskRecipeIndex}
-
-## Use Case Index
-
-${useCaseIndex}
-
-## Known CLI Gaps
-
-${knownCliGapIndex}
-
-## Input File Shapes
-
-${inputFileShapeIndex}
-
-## Raw Patch Fallback
-
-apply-patch accepts either BuildPatchTransaction[] or { "transactions": BuildPatchTransaction[] }.
-
-Each transaction has:
-
-{
-  "id": "unique-client-transaction-id",
-  "payload": [
-    {
-      "namespace": "pages",
-      "patches": [
-        { "op": "replace", "path": ["meta", "siteName"], "value": "New Site" }
-      ]
-    }
-  ]
-}
-
-Patch paths are JSON-patch-like paths into Builder store data. Map-like namespaces use ids as the first path item.
-
-Supported namespaces:
-
-- pages: site metadata, redirects, page records, folders, compiler settings
-- instances: element instances and children, including text/expression children
-- props: element props, bindings, page references, resource bindings
-- styles: CSS declarations keyed by style declaration key
-- styleSources: local style sources and reusable design tokens
-- styleSourceSelections: instance-to-style-source connections
-- dataSources: data variables, parameters, and resource data sources
-- resources: data resource definitions
-- assets: project asset records handled by the existing asset patch path
-- breakpoints: responsive breakpoints
-- marketplaceProduct: marketplace metadata
-
-Commit raw patch:
-
-MCP tool: apply-patch
-
-## Raw Patch Examples
-
-Rename the site:
-
-[
-  {
-    "id": "tx-site-name",
-    "payload": [
-      {
-        "namespace": "pages",
-        "patches": [
-          { "op": "add", "path": ["meta", "siteName"], "value": "Acme Studio" }
-        ]
-      }
-    ]
-  }
-]
-
-Update page title metadata:
-
-[
-  {
-    "id": "tx-page-title",
-    "payload": [
-      {
-        "namespace": "pages",
-        "patches": [
-          { "op": "replace", "path": ["pages", "page-id", "meta", "title"], "value": "Pricing" }
-        ]
-      }
-    ]
-  }
-]
-
-Update a text child on an element:
-
-[
-  {
-    "id": "tx-text",
-    "payload": [
-      {
-        "namespace": "instances",
-        "patches": [
-          { "op": "replace", "path": ["instance-id", "children", 0, "value"], "value": "Launch faster" }
-        ]
-      }
-    ]
-  }
-]
-
-Create a data variable:
-
-[
-  {
-    "id": "tx-variable",
-    "payload": [
-      {
-        "namespace": "dataSources",
-        "patches": [
-          {
-            "op": "add",
-            "path": ["variable-id"],
-            "value": {
-              "type": "variable",
-              "id": "variable-id",
-              "scopeInstanceId": "instance-id",
-              "name": "headline",
-              "value": { "type": "string", "value": "Launch faster" }
-            }
-          }
-        ]
-      }
-    ]
-  }
-]
-
-Create a design token:
-
-[
-  {
-    "id": "tx-token",
-    "payload": [
-      {
-        "namespace": "styleSources",
-        "patches": [
-          { "op": "add", "path": ["token-id"], "value": { "type": "token", "id": "token-id", "name": "Brand Primary" } }
-        ]
-      },
-      {
-        "namespace": "styles",
-        "patches": [
-          {
-            "op": "add",
-            "path": ["token-id:base:color:"],
-            "value": {
-              "styleSourceId": "token-id",
-              "breakpointId": "base",
-              "property": "color",
-              "value": { "type": "keyword", "value": "red" }
-            }
-          }
-        ]
-      }
-    ]
-  }
-]
-
-## Safety Rules
-
-- For MCP apply-patch, read the latest version with MCP snapshot before writing.
-- Reuse ids from MCP snapshot output when updating existing records.
-- Generate new unique ids when adding records.
-- If apply-patch reports a version conflict, read the latest build and regenerate the patch.
-- Prefer semantic MCP read tools for discovery, then use MCP snapshot for exact patch paths.
-
-## Command Index
-
-${commandIndex}
-`;
-
-const llmManual = `# Webstudio CLI Manual for LLMs
-
-Use this order. Stop only when a command returns ok:false.
-
-## Always
-
-1. webstudio permissions --json
-2. webstudio mcp
-3. Read MCP resource webstudio://project/tools.
-4. Pick focused MCP read tool.
-5. Pick semantic MCP write tool.
-
-## Pick Read Command
-
-${renderUseCaseCommands(readFirstUseCases)}
-
-## Pick Write Command
-
-${taskRecipeIndex}
-
-## Raw Patch Only If Needed
-
-1. Use MCP tool: snapshot.
-2. Write BuildPatchTransaction[].
-3. Use MCP tool: apply-patch.
-
-## MCP Argument Examples
-
-MCP tools receive JSON argument objects, not CLI flags. Use these shapes:
-
-${mcpArgumentExampleIndex}
-
-## Rules
-
-- Never guess ids for existing records. Read them first.
-- Never use project ids from user input. Commands use the configured project.
-- Use --refresh before a local-capable command when cached data may be stale.
-- On VERSION_CONFLICT, read MCP snapshot again, regenerate the patch, then retry.
-- Treat stdout JSON as the API contract and stderr as diagnostics.
-- Confirm destructive commands with --confirm only when user requested deletion/unpublish/replacement.
-- Use webstudio schema api --json for machine-readable command metadata.
-
-## Known Gaps
-
-${knownCliGapIndex}
-`;
-
-const mcpManual = `# Webstudio MCP Manual
-
-\`webstudio mcp\` starts a stdio MCP server for the configured project.
-
-## Startup
-
-1. Configure a project with \`webstudio init --link <api-share-link> --json\`.
-2. Check capabilities with \`webstudio permissions --json\`.
-3. Start the server with \`webstudio mcp\`.
-
-While the server is running, stdout is reserved for MCP JSON-RPC messages. Do not print human text from the server process.
-
-## Discovery
-
-Use MCP itself after startup:
-
-- \`tools/list\`: machine-readable available tools
-- \`resources/list\`: available longer JSON resources
-- \`meta.index\`: concise capability catalog
-- \`meta.guide\`: workflow for a user goal
-- \`meta.get_more_tools\`: detailed params, examples, namespaces, and local/server behavior
-
-Useful resources:
-
-- \`webstudio://project/status\`: current ProjectSession status
-- \`webstudio://project/tools\`: operation catalog
-- \`webstudio://project/guide\`: concise discovery guide
-
-## Core Rules
-
-- Operate on the configured project only.
-- Read ids before writing.
-- Prefer semantic tools over \`apply-patch\`.
-- Use \`status\` and \`refresh\` when cached namespaces may be stale.
-- A mutation is durable only when \`meta.session.committed\` is true.
-
-## MCP Argument Examples
-
-MCP tools receive JSON argument objects:
-
-${mcpArgumentExampleIndex}
-
-## Screenshot Verification Note
-
-Builder \`/canvas\` is initialized by Builder and can be blank when opened directly. For automated screenshots, load the Builder URL, wait for \`iframe[src$="/canvas"]\`, then inspect or screenshot that initialized iframe.
-`;
+const renderMarkdownTemplate = (
+  template: string,
+  replacements: Record<string, string>
+) =>
+  template.replace(
+    /{{([a-zA-Z0-9]+)}}/g,
+    (match, name: string) => replacements[name] ?? match
+  );
+
+const manualReplacements = {
+  start: renderUseCaseCommands(taskRecipeUseCases.setup),
+  readFirst: renderUseCaseCommands(readFirstUseCases),
+  topLevelCapabilityIndex,
+  apiCapabilityIndex,
+  mcpOnlyCommandIndex,
+  taskRecipeIndex,
+  useCaseIndex,
+  knownCliGapIndex,
+  inputFileShapeIndex,
+  commandIndex,
+  mcpArgumentExampleIndex,
+  mcpVisionVerificationLoopMarkdown,
+  mcpGeneratedAppDependencyNotes,
+  screenshotVerificationSummary,
+};
+
+const apiManual = renderMarkdownTemplate(apiManualMarkdown, manualReplacements);
+const llmManual = renderMarkdownTemplate(llmManualMarkdown, manualReplacements);
+const mcpManual = renderMarkdownTemplate(mcpManualMarkdown, manualReplacements);
 
 const topics = {
   api: {
@@ -757,7 +487,7 @@ const topics = {
         "webstudio mcp",
       ],
       taskRecipes,
-      useCaseScenarios: formattedUseCaseScenarios,
+      useCaseScenarios,
       knownGaps: knownCliGaps,
       topLevelCommands: topLevelCommandCatalog,
       apiCommandsByArea,
@@ -805,7 +535,7 @@ const topics = {
         "MCP resource: webstudio://project/tools",
       ],
       taskRecipes,
-      useCaseScenarios: formattedUseCaseScenarios,
+      useCaseScenarios,
       knownGaps: knownCliGaps,
       topLevelCommands: topLevelCommandCatalog,
       apiCommandsByArea,
@@ -862,10 +592,11 @@ const topics = {
         "Prefer semantic tools over apply-patch.",
         "Use status and refresh when cached namespaces may be stale.",
         "A mutation is durable only when meta.session.committed is true.",
+        "For visual/design work, verify the rendered result with vision before finishing.",
       ],
+      visionVerificationLoop: [...mcpVisionVerificationLoop],
       mcpArgumentExamples,
-      screenshotVerification:
-        'Load the Builder URL, wait for iframe[src$="/canvas"], then inspect or screenshot that initialized iframe.',
+      screenshotVerification: screenshotVerificationSummary,
     },
   },
 };

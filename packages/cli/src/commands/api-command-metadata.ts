@@ -2,7 +2,7 @@ import {
   publicApiOperations,
   type PublicApiOperationMethod,
   type PublicApiOperationPermit,
-} from "@webstudio-is/http-client";
+} from "@webstudio-is/protocol";
 import type { CommonYargsArgv } from "./yargs-types";
 import * as apiCommand from "./api-command";
 import type { ApiCommandName } from "./api-command";
@@ -58,6 +58,20 @@ export const topLevelCliCommandMetadata = [
     command: "build",
     description: "Build the synced project with the selected template",
     examples: ["webstudio build --template ssg"],
+  },
+  {
+    command: "preview",
+    description:
+      "Regenerate project files and run the generated project dev server for visual verification; dependencies must already be installed",
+    examples: ["webstudio preview --template ssg --port 5173"],
+  },
+  {
+    command: "screenshot",
+    description:
+      "Capture a PNG screenshot of a URL with an installed Chromium-family browser",
+    examples: [
+      'webstudio screenshot "https://example.com" --output current.png --width 1440 --height 900',
+    ],
   },
   {
     command: "permissions",
@@ -256,19 +270,8 @@ export const formatApiUseCaseCommand = (command: string) => {
   if (topLevelCliCommandSet.has(name)) {
     return command;
   }
-  return detail.length === 0
-    ? `MCP tool: ${name}`
-    : `MCP tool: ${name} (${detail})`;
+  return `MCP tool: ${name} {}`;
 };
-
-export const formatApiUseCaseScenarioCommands = <
-  Scenario extends { commands: readonly string[] },
->(
-  scenario: Scenario
-) => ({
-  ...scenario,
-  commands: scenario.commands.map(formatApiUseCaseCommand),
-});
 
 export const getApiCommandOptions = (
   metadata: ApiCommandMetadata

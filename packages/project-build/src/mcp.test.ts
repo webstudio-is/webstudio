@@ -1,3 +1,8 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { describe, expect, test, vi } from "vitest";
 import {
   createProjectSessionMcpCore,
@@ -5,8 +10,11 @@ import {
   listProjectSessionMcpResources,
   listProjectSessionMcpTools,
   type PublicMcpOperation,
+  type ProjectSessionMcpGuidance,
 } from "./mcp";
 import type { ProjectSessionEnvelope } from "./project-session";
+import { diffPngFiles } from "./visual/screenshot-diff";
+import { createPng, paintRect, writePng } from "./visual/screenshot.test-utils";
 
 type CreateProjectSession = NonNullable<
   Parameters<typeof createProjectSessionMcpCore>[0]["createProjectSession"]
@@ -63,6 +71,24 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
   },
 ];
 
+const testMcpGuidance: ProjectSessionMcpGuidance = {
+  visualVerificationRule:
+    "Verify rendered visual/design work before finishing.",
+  getVisionVerificationLoop: ({ includeDiff }) =>
+    [
+      "Make focused changes.",
+      "Start preview.",
+      "Install dependencies if missing.",
+      'Call screenshot with { path: "/" } or the changed page path.',
+      includeDiff ? "Use screenshot.diff when a baseline exists." : undefined,
+      "Inspect the PNG with vision.",
+    ].filter((step): step is string => step !== undefined),
+  getVisionWorkflowSummary: ({ includeDiff }) =>
+    includeDiff
+      ? "Visual workflow with screenshot diff."
+      : "Visual workflow without screenshot diff.",
+};
+
 const createEnvelope = (
   overrides: Partial<ProjectSessionEnvelope> & {
     operationId: string;
@@ -117,48 +143,12 @@ const createExecuteOperation = (
     })
 ): ExecuteOperation => vi.fn(implementation);
 
-const importModule = (specifier: string) =>
-  import(/* @vite-ignore */ specifier) as Promise<Record<string, unknown>>;
-
 const createConnectedClient = async (
   server: Awaited<ReturnType<typeof createProjectSessionMcpServer>>
 ) => {
-  const [{ Client }, { InMemoryTransport }] = await Promise.all([
-    importModule("@modelcontextprotocol/sdk/client/index.js"),
-    importModule("@modelcontextprotocol/sdk/inMemory.js"),
-  ]);
-  const [clientTransport, serverTransport] = (
-    InMemoryTransport as {
-      createLinkedPair: () => [
-        {
-          start: () => Promise<void>;
-          close: () => Promise<void>;
-          send: (message: unknown) => Promise<void>;
-        },
-        {
-          start: () => Promise<void>;
-          close: () => Promise<void>;
-          send: (message: unknown) => Promise<void>;
-        },
-      ];
-    }
-  ).createLinkedPair();
-  const client = new (Client as new (info: {
-    name: string;
-    version: string;
-  }) => {
-    close: () => Promise<void>;
-    connect: (transport: typeof clientTransport) => Promise<void>;
-    callTool: (params: {
-      name: string;
-      arguments?: Record<string, unknown>;
-    }) => Promise<unknown>;
-    getServerCapabilities: () => unknown;
-    getServerVersion: () => unknown;
-    listResources: () => Promise<unknown>;
-    listTools: () => Promise<unknown>;
-    readResource: (params: { uri: string }) => Promise<unknown>;
-  })({ name: "test-client", version: "1.0.0" });
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "test-client", version: "1.0.0" });
   await Promise.all([
     server.connect(serverTransport),
     client.connect(clientTransport),
@@ -471,11 +461,418 @@ describe("project session mcp adapter", () => {
             mcpExamples: [{ target: "production" }],
             cliExamples: [],
             inputNote:
-              "MCP tool arguments are public API input objects. CLI examples show intent, but do not imply MCP flag names.",
+              "MCP tool arguments are public API input objects. Examples show intent, but do not imply MCP flag names.",
           }),
         ]),
       })
     );
+  });
+
+  test("exposes screenshot tools only when screenshot runners are injected", async () => {
+    const session = createSession({
+      initialize: vi.fn(),
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    const captureScreenshot = vi.fn(async () => ({
+      output: "/tmp/current.png",
+      browserPath: "/usr/bin/chromium",
+      browser: "chromium" as const,
+      viewport: { width: 1440, height: 900 },
+      elapsedMs: 12,
+      warnings: [],
+    }));
+    const adapterWithoutScreenshot = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(session),
+      executeOperation: createExecuteOperation(),
+    });
+    const adapterWithScreenshot = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(session),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot,
+    });
+    const adapterWithScreenshotDiff = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(session),
+      executeOperation: createExecuteOperation(),
+      diffScreenshots: diffPngFiles,
+    });
+
+    expect(
+      adapterWithoutScreenshot.listTools().map((tool) => tool.name)
+    ).not.toContain("screenshot");
+    expect(
+      adapterWithoutScreenshot.listTools().map((tool) => tool.name)
+    ).not.toContain("screenshot.diff");
+    expect(
+      adapterWithScreenshot.listTools().map((tool) => tool.name)
+    ).toContain("screenshot");
+    expect(
+      adapterWithScreenshot.listTools().map((tool) => tool.name)
+    ).not.toContain("screenshot.diff");
+    expect(
+      adapterWithScreenshotDiff.listTools().map((tool) => tool.name)
+    ).toContain("screenshot.diff");
+
+    const result = await adapterWithScreenshot.callTool({
+      name: "screenshot",
+      input: {
+        url: "https://example.com",
+        output: "current.png",
+        viewport: { width: 1440, height: 900 },
+        browser: "auto",
+      },
+    });
+
+    expect(session.initialize).not.toHaveBeenCalled();
+    expect(captureScreenshot).toHaveBeenCalledWith({
+      url: "https://example.com",
+      path: undefined,
+      output: "current.png",
+      viewport: { width: 1440, height: 900 },
+      browser: "auto",
+      browserPath: undefined,
+    });
+    expect(result.structuredContent).toEqual({
+      ok: true,
+      data: {
+        output: "/tmp/current.png",
+        browserPath: "/usr/bin/chromium",
+        browser: "chromium",
+        viewport: { width: 1440, height: 900 },
+        elapsedMs: 12,
+        warnings: [],
+      },
+      meta: {},
+    });
+  });
+
+  test("omits screenshot diff guidance when diff runner is not injected", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(async () => ({
+        output: "/tmp/current.png",
+        browserPath: "/usr/bin/chromium",
+        browser: "chromium" as const,
+        viewport: { width: 1440, height: 900 },
+        elapsedMs: 12,
+        warnings: [],
+      })),
+      startPreview: vi.fn(async () => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+      })),
+      getPreviewStatus: vi.fn(async () => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+      })),
+      guidance: testMcpGuidance,
+    });
+
+    const index = await adapter.callTool({ name: "meta.index" });
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "visual verification" },
+    });
+
+    expect(index.structuredContent.data).toEqual(
+      expect.objectContaining({
+        visionLoop: expect.not.arrayContaining([
+          expect.stringContaining("screenshot.diff"),
+        ]),
+      })
+    );
+    expect(guide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        workflow: expect.arrayContaining([
+          testMcpGuidance.getVisionWorkflowSummary({ includeDiff: false }),
+        ]),
+      })
+    );
+    expect(guide.content[0].text).not.toContain("screenshot.diff");
+  });
+
+  test("rejects unsupported screenshot browser input", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(),
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot",
+        input: {
+          url: "https://example.com",
+          browser: "firefox",
+        },
+      })
+    ).rejects.toThrow(
+      "screenshot browser must be auto, chromium, chrome, edge, or brave."
+    );
+  });
+
+  test("rejects empty screenshot url and path input", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(),
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot",
+        input: {
+          url: "",
+        },
+      })
+    ).rejects.toThrow("screenshot requires url or path.");
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot",
+        input: {
+          path: "",
+        },
+      })
+    ).rejects.toThrow("screenshot requires url or path.");
+  });
+
+  test("compares screenshot diffs with generated PNG files", async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), "webstudio-mcp-diff-"));
+    try {
+      const baselinePath = path.join(tempDir, "baseline.png");
+      const currentPath = path.join(tempDir, "current.png");
+      const outputDir = path.join(tempDir, "diff");
+      await writePng(baselinePath, createPng(4, 4, { r: 255, g: 255, b: 255 }));
+      const current = createPng(4, 4, { r: 255, g: 255, b: 255 });
+      paintRect(
+        current,
+        { x: 1, y: 1, width: 2, height: 1 },
+        { r: 0, g: 0, b: 0 }
+      );
+      await writePng(currentPath, current);
+      const adapter = createProjectSessionMcpCore({
+        operations: publicMcpOperations,
+        createProjectSession: createSessionFactory(),
+        executeOperation: createExecuteOperation(),
+        diffScreenshots: diffPngFiles,
+      });
+
+      const result = await adapter.callTool({
+        name: "screenshot.diff",
+        input: {
+          baselinePath,
+          currentPath,
+          outputDir,
+        },
+      });
+
+      expect(result.structuredContent.data).toEqual(
+        expect.objectContaining({
+          totalPixels: 16,
+          differentPixels: 2,
+          mismatchPercentage: 12.5,
+          regions: [
+            expect.objectContaining({
+              bounds: { x: 1, y: 1, width: 2, height: 1 },
+              pixelCount: 2,
+            }),
+          ],
+          summary: expect.stringContaining("status: changed"),
+          diffPath: path.join(outputDir, "current-diff.png"),
+          contextDiffPath: path.join(outputDir, "current-context-diff.png"),
+        })
+      );
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects invalid screenshot diff input", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      diffScreenshots: diffPngFiles,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "screenshot.diff",
+        input: { baselinePath: "baseline.png" },
+      })
+    ).rejects.toThrow("screenshot.diff requires baselinePath and currentPath.");
+    await expect(
+      adapter.callTool({
+        name: "screenshot.diff",
+        input: {
+          baselinePath: "baseline.png",
+          currentPath: "current.png",
+          threshold: 2,
+        },
+      })
+    ).rejects.toThrow("screenshot.diff threshold must be between 0 and 1.");
+  });
+
+  test("exposes preview tools when preview runner is injected", async () => {
+    const captureScreenshot = vi.fn(async () => ({
+      output: "/tmp/current.png",
+      browserPath: "/usr/bin/chromium",
+      browser: "chromium" as const,
+      viewport: { width: 1440, height: 900 },
+      elapsedMs: 12,
+      warnings: [],
+    }));
+    const startPreview = vi.fn(async () => ({
+      url: "http://127.0.0.1:5173/",
+      pid: 123,
+      running: true,
+    }));
+    const getPreviewStatus = vi.fn(async () => ({
+      url: "http://127.0.0.1:5173/",
+      pid: 123,
+      running: true,
+    }));
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot,
+      diffScreenshots: diffPngFiles,
+      startPreview,
+      getPreviewStatus,
+      guidance: testMcpGuidance,
+    });
+
+    expect(adapter.listTools().map((tool) => tool.name)).toEqual(
+      expect.arrayContaining(["preview.start", "preview.status"])
+    );
+
+    const started = await adapter.callTool({
+      name: "preview.start",
+      input: { host: "127.0.0.1", port: 5173 },
+    });
+    const status = await adapter.callTool({ name: "preview.status" });
+    const index = await adapter.callTool({ name: "meta.index" });
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "visual verification" },
+    });
+
+    expect(startPreview).toHaveBeenCalledWith({
+      host: "127.0.0.1",
+      port: 5173,
+    });
+    expect(getPreviewStatus).toHaveBeenCalledOnce();
+    expect(started.structuredContent.data).toEqual({
+      url: "http://127.0.0.1:5173/",
+      pid: 123,
+      running: true,
+    });
+    expect(status.structuredContent.data).toEqual({
+      url: "http://127.0.0.1:5173/",
+      pid: 123,
+      running: true,
+    });
+    expect(index.structuredContent.data).toEqual(
+      expect.objectContaining({
+        visionLoop: expect.arrayContaining([
+          ...testMcpGuidance
+            .getVisionVerificationLoop({ includeDiff: true })
+            .slice(1, 3),
+          'Call screenshot with { path: "/" } or the changed page path.',
+        ]),
+        capabilities: expect.arrayContaining([
+          expect.objectContaining({
+            area: "visual-verification",
+            tools: [
+              "preview.start",
+              "preview.status",
+              "screenshot",
+              "screenshot.diff",
+            ],
+          }),
+        ]),
+      })
+    );
+    expect(guide.structuredContent.data).toEqual(
+      expect.objectContaining({
+        workflow: expect.arrayContaining([
+          testMcpGuidance.getVisionWorkflowSummary({ includeDiff: true }),
+        ]),
+        tools: expect.arrayContaining([
+          expect.objectContaining({ name: "preview.start" }),
+          expect.objectContaining({ name: "screenshot" }),
+        ]),
+      })
+    );
+  });
+
+  test("does not include visual guidance without host-provided docs", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      captureScreenshot: vi.fn(),
+      startPreview: vi.fn(),
+      getPreviewStatus: vi.fn(),
+    });
+
+    const index = await adapter.callTool({ name: "meta.index" });
+    const guide = await adapter.callTool({
+      name: "meta.guide",
+      input: { brief: "visual verification" },
+    });
+
+    expect(index.structuredContent.data).toEqual(
+      expect.objectContaining({ visionLoop: [] })
+    );
+    expect(
+      (guide.structuredContent.data as { workflow: string[] }).workflow
+    ).not.toContain(
+      testMcpGuidance.getVisionWorkflowSummary({ includeDiff: false })
+    );
+  });
+
+  test("rejects invalid preview ports", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      startPreview: vi.fn(),
+      getPreviewStatus: vi.fn(),
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "preview.start",
+        input: { port: 70000 },
+      })
+    ).rejects.toThrow("preview port must be an integer between 1 and 65535.");
+  });
+
+  test("rejects empty preview host", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      startPreview: vi.fn(),
+      getPreviewStatus: vi.fn(),
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "preview.start",
+        input: { host: "" },
+      })
+    ).rejects.toThrow("preview host must not be empty.");
   });
 
   test("uses discovery tools when meta guide has no brief", async () => {
@@ -605,13 +1002,107 @@ describe("project session mcp adapter", () => {
               openWorldHint: true,
             }),
           }),
-          expect.objectContaining({ name: "meta.index" }),
+          expect.objectContaining({
+            name: "meta.index",
+            annotations: expect.objectContaining({
+              readOnlyHint: true,
+              destructiveHint: false,
+            }),
+          }),
+          expect.objectContaining({
+            name: "refresh",
+            annotations: expect.objectContaining({
+              readOnlyHint: false,
+              destructiveHint: false,
+            }),
+          }),
+          expect.objectContaining({
+            name: "reset-session",
+            annotations: expect.objectContaining({
+              readOnlyHint: false,
+              destructiveHint: true,
+            }),
+          }),
         ]),
       });
       await expect(client.listResources()).resolves.toEqual({
         resources: expect.arrayContaining([
           expect.objectContaining({ uri: "webstudio://project/status" }),
           expect.objectContaining({ uri: "webstudio://project/tools" }),
+        ]),
+      });
+    } finally {
+      await close();
+    }
+  });
+
+  test("marks visual verification tools with side-effect-aware SDK annotations", async () => {
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      startPreview: vi.fn(async () => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+      })),
+      getPreviewStatus: vi.fn(async () => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+      })),
+      captureScreenshot: vi.fn(async () => ({
+        output: "current.png",
+        browserPath: "/usr/bin/chromium",
+        browser: "chromium" as const,
+        viewport: { width: 1440, height: 900 },
+        elapsedMs: 1,
+        warnings: [],
+      })),
+      diffScreenshots: vi.fn(async () => ({
+        totalPixels: 0,
+        differentPixels: 0,
+        mismatchPercentage: 0,
+        summary: "Screenshot diff summary",
+        regions: [],
+        warnings: [],
+      })),
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      await expect(client.listTools()).resolves.toEqual({
+        tools: expect.arrayContaining([
+          expect.objectContaining({
+            name: "preview.start",
+            annotations: expect.objectContaining({
+              readOnlyHint: false,
+              destructiveHint: false,
+              openWorldHint: true,
+            }),
+          }),
+          expect.objectContaining({
+            name: "preview.status",
+            annotations: expect.objectContaining({
+              readOnlyHint: true,
+              destructiveHint: false,
+              openWorldHint: true,
+            }),
+          }),
+          expect.objectContaining({
+            name: "screenshot",
+            annotations: expect.objectContaining({
+              readOnlyHint: false,
+              destructiveHint: false,
+              openWorldHint: true,
+            }),
+          }),
+          expect.objectContaining({
+            name: "screenshot.diff",
+            annotations: expect.objectContaining({
+              readOnlyHint: false,
+              destructiveHint: false,
+              openWorldHint: true,
+            }),
+          }),
         ]),
       });
     } finally {

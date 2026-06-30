@@ -59,6 +59,8 @@ test("describes root CLI commands once for help-oriented docs", () => {
     "link",
     "sync",
     "build",
+    "preview",
+    "screenshot",
     "permissions",
     "publish",
     "domains",
@@ -100,7 +102,7 @@ test("formats removed shell commands as MCP tools", () => {
     )
   ).toBe("webstudio publish deploy --target production --json");
   expect(formatApiUseCaseCommand("webstudio list-pages --json")).toBe(
-    "MCP tool: list-pages (--json)"
+    "MCP tool: list-pages {}"
   );
 });
 

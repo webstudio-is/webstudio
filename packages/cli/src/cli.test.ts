@@ -89,7 +89,15 @@ describe("registerCommands", () => {
     registerCommands(yargs);
 
     expect(commandNames(commands)).toEqual(
-      expect.arrayContaining(["permissions", "publish", "domains", "mcp", "$0"])
+      expect.arrayContaining([
+        "preview",
+        "screenshot <url>",
+        "permissions",
+        "publish",
+        "domains",
+        "mcp",
+        "$0",
+      ])
     );
     expect(commandNames(commands)).not.toEqual(
       expect.arrayContaining(["publish deploy", "domains list"])

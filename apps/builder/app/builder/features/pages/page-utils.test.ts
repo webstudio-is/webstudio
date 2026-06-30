@@ -19,9 +19,14 @@ import {
 import {
   deleteFolderWithChildrenMutable,
   $pageRootScope,
+  canDrop,
   deletePageMutable,
   deleteTemplateMutable,
+  duplicateFolder,
+  duplicateTemplate,
+  getStoredDropTarget,
   instantiateTemplate,
+  isFolder,
 } from "./page-utils";
 import { $dataSourceVariables } from "~/shared/nano-states";
 import {
@@ -578,23 +583,17 @@ describe("isFolder", () => {
   test("should return true for existing folder id", async () => {
     const { pages: pagesData, register, f } = createPages();
     register([f("folder1", [])]);
-
-    const { isFolder } = await import("./page-utils");
     expect(isFolder("folder1", pagesData.folders)).toBe(true);
   });
 
   test("should return false for non-existing folder id", async () => {
     const { pages: pagesData } = createPages();
-
-    const { isFolder } = await import("./page-utils");
     expect(isFolder("nonexistent", pagesData.folders)).toBe(false);
   });
 
   test("should return false for page id", async () => {
     const { pages: pagesData, register, p } = createPages();
     register([p("page1", "/page1")]);
-
-    const { isFolder } = await import("./page-utils");
     expect(isFolder("page1", pagesData.folders)).toBe(false);
   });
 });
@@ -604,8 +603,6 @@ describe("getStoredDropTarget", () => {
     const { pages: pagesData, register, f, p } = createPages();
     register([f("folder1", [p("page1", "/page1")])]);
     $pages.set(pagesData);
-
-    const { getStoredDropTarget } = await import("./page-utils");
     // selector order is [item, parent, grandparent, ...]
     const selector = ["page1", "folder1", ROOT_FOLDER_ID];
     const dropTarget = { parentLevel: 1, beforeLevel: 1 };
@@ -624,8 +621,6 @@ describe("getStoredDropTarget", () => {
     const { pages: pagesData, register, f, p } = createPages();
     register([f("folder1", [p("page1", "/page1"), p("page2", "/page2")])]);
     $pages.set(pagesData);
-
-    const { getStoredDropTarget } = await import("./page-utils");
     const selector = ["page2", "folder1", ROOT_FOLDER_ID];
     const dropTarget = { parentLevel: 1, beforeLevel: 0 };
 
@@ -640,8 +635,6 @@ describe("getStoredDropTarget", () => {
     const { pages: pagesData, register, f, p } = createPages();
     register([f("folder1", [p("page1", "/page1"), p("page2", "/page2")])]);
     $pages.set(pagesData);
-
-    const { getStoredDropTarget } = await import("./page-utils");
     const selector = ["page1", "folder1", ROOT_FOLDER_ID];
     const dropTarget = { parentLevel: 1, afterLevel: 0 };
 
@@ -655,8 +648,6 @@ describe("getStoredDropTarget", () => {
   test("should return undefined when parent id is undefined", async () => {
     const { pages: pagesData } = createPages();
     $pages.set(pagesData);
-
-    const { getStoredDropTarget } = await import("./page-utils");
     const selector = ["page1"];
     const dropTarget = { parentLevel: 5 };
 
@@ -670,8 +661,6 @@ describe("canDrop", () => {
   test("should allow dropping inside a folder", async () => {
     const { pages: pagesData, register, f } = createPages();
     register([f("folder1", [])]);
-
-    const { canDrop } = await import("./page-utils");
     const dropTarget = {
       parentId: "folder1",
       indexWithinChildren: 1,
@@ -683,8 +672,6 @@ describe("canDrop", () => {
   test("should forbid dropping on non-folder", async () => {
     const { pages: pagesData, register, p } = createPages();
     register([p("page1", "/page1")]);
-
-    const { canDrop } = await import("./page-utils");
     const dropTarget = {
       parentId: "page1",
       indexWithinChildren: 0,
@@ -695,8 +682,6 @@ describe("canDrop", () => {
 
   test("should forbid dropping at index 0 of root folder", async () => {
     const { pages: pagesData } = createPages();
-
-    const { canDrop } = await import("./page-utils");
     const dropTarget = {
       parentId: ROOT_FOLDER_ID,
       indexWithinChildren: 0,
@@ -707,8 +692,6 @@ describe("canDrop", () => {
 
   test("should allow dropping at index > 0 of root folder", async () => {
     const { pages: pagesData } = createPages();
-
-    const { canDrop } = await import("./page-utils");
     const dropTarget = {
       parentId: ROOT_FOLDER_ID,
       indexWithinChildren: 1,
@@ -726,8 +709,6 @@ describe("canDrop", () => {
       slug: "",
       children: [],
     });
-
-    const { canDrop } = await import("./page-utils");
     const dropTarget = {
       parentId: "customRoot",
       indexWithinChildren: 0,
@@ -746,8 +727,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     expect(newFolderId).toBeDefined();
@@ -767,8 +746,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     expect(newFolderId).toBeDefined();
@@ -794,8 +771,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     expect(newFolderId).toBeDefined();
@@ -826,8 +801,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     expect(newFolderId).toBeDefined();
@@ -846,8 +819,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     expect(newFolderId).toBeDefined();
@@ -866,8 +837,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     const updatedPages = $pages.get()!;
@@ -955,8 +924,6 @@ describe("duplicateTemplate", () => {
     $styleSources.set(new Map());
     $styles.set(new Map());
     $assets.set(new Map());
-
-    const { duplicateTemplate } = await import("./page-utils");
     const newTemplateId = duplicateTemplate("templateId");
 
     expect(newTemplateId).toBeDefined();

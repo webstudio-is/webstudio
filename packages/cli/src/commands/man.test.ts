@@ -4,6 +4,10 @@ import {
   cliCommandMetadata,
   mcpOnlyApiCommandMetadata,
 } from "./api-command-metadata";
+import {
+  generatedAppDependencyNotes,
+  getVisionVerificationLoop,
+} from "../mcp-guidance";
 import { man } from "./man";
 
 afterEach(() => {
@@ -30,10 +34,11 @@ test("prints api manual with patch workflow and examples", () => {
   expect(output).toContain("## Project Session Cache");
   expect(output).toContain("Use --refresh");
   expect(output).toContain("meta.session");
-  expect(output).toContain("MCP tool: list-breakpoints (--json)");
+  expect(output).toContain("Visually verify rendered work with AI vision");
+  expect(output).toContain("MCP tool: list-breakpoints {}");
   expect(output).not.toContain("  - webstudio list-breakpoints --json");
   expect(output).toContain(
-    "MCP tool: update-project-settings (--input project-settings.json --json)"
+    'MCP tool: update-project-settings {"settings":"project-settings.json contents"}'
   );
   expect(output).toContain("Manage marketplace metadata");
   expect(output).toContain("Create a design token");
@@ -78,6 +83,8 @@ test("prints api manual as json", () => {
     "link",
     "sync",
     "build",
+    "preview",
+    "screenshot",
     "permissions",
     "publish",
     "domains",
@@ -100,14 +107,14 @@ test("prints api manual as json", () => {
     )
   ).toEqual(mcpOnlyApiCommandMetadata.map(({ command }) => command));
   expect(output.taskRecipes.pages).toContain(
-    "MCP tool: list-pages (--include-folders --json)"
+    'MCP tool: list-pages {"includeFolders":true}'
   );
   expect(output.useCaseScenarios).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
         useCase: "Update project settings",
         commands: [
-          "MCP tool: update-project-settings (--input project-settings.json --json)",
+          'MCP tool: update-project-settings {"settings":"project-settings.json contents"}',
         ],
       }),
     ])
@@ -123,6 +130,8 @@ test("prints api manual as json", () => {
     "Check token permissions",
     "Inspect project/build/version",
     "Discover CLI/API capabilities",
+    "Inspect and refresh MCP session cache",
+    "Visually verify rendered work with AI vision",
     "List pages",
     "Read page by id",
     "Read page by path",
@@ -197,6 +206,14 @@ test("prints api manual as json", () => {
     "Verify domain",
     "Make arbitrary store-level changes",
     "Manage marketplace metadata",
+    "Search and inspect safely",
+    "Refactor targeted content",
+    "Optimize existing project",
+    "Connect external data",
+    "Support dynamic runtime behavior",
+    "Build authenticated pages",
+    "Generate from design input",
+    "Cross-project maintenance",
   ]);
   const documentedCommands = new Set([
     ...output.commands.map(
@@ -259,6 +276,11 @@ test("prints mcp manual with startup and JSON argument examples", () => {
   expect(output).toContain("stdout is reserved for MCP JSON-RPC");
   expect(output).toContain("meta.get_more_tools");
   expect(output).toContain("webstudio://project/tools");
+  expect(output).toContain("## Vision Verification Loop");
+  expect(output).toContain("screenshot.diff");
+  expect(output).toContain(
+    "Inspect the PNG and any diff artifacts with vision"
+  );
   expect(output).toContain('"parentInstanceId": "parent-id"');
 });
 
@@ -271,6 +293,30 @@ test("prints mcp manual as json", () => {
   expect(output.topic).toBe("mcp");
   expect(output.discovery).toContain("meta.index");
   expect(output.resources).toContain("webstudio://project/tools");
+  expect(output.rules).toContain(
+    "For visual/design work, verify the rendered result with vision before finishing."
+  );
+  expect(output.visionVerificationLoop).toContain(
+    getVisionVerificationLoop({ includeDiff: true })[1]
+  );
+  expect(output.visionVerificationLoop).toContain(
+    generatedAppDependencyNotes[0]
+  );
+  expect(output.visionVerificationLoop).toContain(
+    'Call screenshot with { path: "/" } or the changed page path.'
+  );
+  expect(output.visionVerificationLoop).toContain(
+    "When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir."
+  );
+  expect(output.screenshotVerification).toContain("screenshot.diff");
+  expect(output.mcpArgumentExamples["screenshot.diff"]).toEqual([
+    {
+      baselinePath: "baseline.png",
+      currentPath: "current.png",
+      outputDir: "visual-diff",
+      threshold: 0.1,
+    },
+  ]);
   expect(output.mcpArgumentExamples["update-text"]).toEqual([
     {
       instanceId: "instance-id",

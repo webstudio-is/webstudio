@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { cwd } from "node:process";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import * as httpClient from "@webstudio-is/http-client";
+import { publicApiOperations } from "@webstudio-is/protocol";
 import {
   createProjectSession,
   createDefaultProjectSessionCompatibility,
@@ -111,7 +112,7 @@ const toRemoteSnapshot = (
 });
 
 const publicOperationById = new Map(
-  httpClient.publicApiOperations.map((operation) => [operation.id, operation])
+  publicApiOperations.map((operation) => [operation.id, operation])
 );
 
 const executePublicServerOperation = async ({

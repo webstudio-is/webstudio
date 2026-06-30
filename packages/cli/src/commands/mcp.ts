@@ -3,11 +3,19 @@ import {
   connectProjectSessionMcpServer,
   createMcpStdioTransport,
 } from "@webstudio-is/project-build/mcp";
-import { publicApiOperations } from "@webstudio-is/http-client";
+import { diffPngFiles } from "@webstudio-is/project-build/visual/screenshot-diff";
+import { publicApiOperations } from "@webstudio-is/protocol";
 import { resolveApiConnection } from "../api-connection";
 import { getStableErrorCode } from "../error-codes";
 import { createCliProjectSession } from "../project-session";
 import { executeProjectSessionApiOperation } from "../project-session-api";
+import { createPreviewController } from "../preview-server";
+import { captureScreenshotWithBrowserInstall } from "../screenshot";
+import {
+  getVisionVerificationLoop,
+  getVisionWorkflowSummary,
+  visualVerificationRule,
+} from "../mcp-guidance";
 import { apiCompatibilityHeaders } from "./api";
 import type { CommonYargsArgv } from "./yargs-types";
 
@@ -40,6 +48,7 @@ export const mcp = async () => {
     headers: apiCompatibilityHeaders,
   };
   const session = createCliProjectSession({ connection: apiConnection });
+  const preview = createPreviewController({ host: "127.0.0.1", port: 5173 });
   await connectProjectSessionMcpServer({
     operations: publicApiOperations,
     createProjectSession: () => session,
@@ -51,6 +60,51 @@ export const mcp = async () => {
         createProjectSession: () => session,
         dryRun,
       }),
+    async startPreview(input) {
+      return preview.startAndWait(input);
+    },
+    async getPreviewStatus() {
+      return preview.status();
+    },
+    async captureScreenshot(input) {
+      const url =
+        input.url ??
+        (input.path === undefined ? undefined : preview.resolveUrl(input.path));
+      if (url === undefined) {
+        throw new Error("MCP screenshot requires url or path.");
+      }
+      if (input.path !== undefined) {
+        await preview.startAndWait();
+      }
+      const result = await captureScreenshotWithBrowserInstall({
+        url,
+        output: input.output,
+        width: input.viewport.width,
+        height: input.viewport.height,
+        browser: input.browser,
+        browserPath: input.browserPath,
+        isJson: false,
+        isMcp: true,
+        isInteractive: false,
+        confirmInstall: async () => false,
+      });
+      return {
+        output: result.output,
+        browserPath: result.browser.path,
+        browser: result.browser.browser,
+        viewport: result.viewport,
+        elapsedMs: result.elapsedMs,
+        warnings: result.warnings,
+      };
+    },
+    async diffScreenshots(input) {
+      return diffPngFiles(input);
+    },
+    guidance: {
+      visualVerificationRule,
+      getVisionVerificationLoop,
+      getVisionWorkflowSummary,
+    },
     getErrorCode: getStableErrorCode,
     transport: await createMcpStdioTransport({ stdin, stdout }),
   });

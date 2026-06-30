@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   getPublicApiOperation,
   publicApiOperations,
-} from "@webstudio-is/http-client";
+} from "@webstudio-is/protocol";
 import { apiCompatibilityHeaders } from "./api";
 import { apiCommand } from "./api-command";
 import { apiCommandMetadata } from "./api-command-metadata";

@@ -7,6 +7,8 @@ import { sync, syncOptions } from "./commands/sync";
 import { build, buildOptions } from "./commands/build";
 import { man, manOptions } from "./commands/man";
 import { mcp, mcpOptions } from "./commands/mcp";
+import { screenshot, screenshotOptions } from "./commands/screenshot";
+import { preview, previewOptions } from "./commands/preview";
 import { apiCommand } from "./commands/api-command";
 import {
   cliCommandGroupMetadata,
@@ -73,6 +75,23 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
   );
   cmd.command(["link"], "Link the project with the cloud", linkOptions, link);
   cmd.command(["sync"], "Sync your project", syncOptions, sync);
+  cmd.command(
+    ["preview"],
+    "Run the generated project dev server for visual verification",
+    (yargs: CommonYargsArgv) => {
+      return previewOptions(yargs).demandOption(
+        "template",
+        "Please specify a template to use for the preview"
+      );
+    },
+    preview
+  );
+  cmd.command(
+    ["screenshot <url>"],
+    "Capture a PNG screenshot of a URL with an installed Chromium-family browser",
+    screenshotOptions,
+    screenshot
+  );
   const { direct, grouped } = getGroupedCommands(cliCommandMetadata);
   for (const metadata of direct) {
     registerApiCommand(cmd, metadata.cliCommand, metadata);
