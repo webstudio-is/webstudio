@@ -9,13 +9,12 @@ import { toggleInstanceShow } from "~/shared/instance-utils/mutation";
 import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-} from "~/shared/instance-utils/fragment";
+} from "@webstudio-is/project-build/runtime/fragment";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { toast } from "@webstudio-is/design-system";
 import {
   ROOT_INSTANCE_ID,
   isComponentDetachable,
-  type Instance,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
@@ -82,7 +81,7 @@ import { showWrapComponentsList } from "../features/command-panel/groups/wrap-gr
 import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";
 import { builderApi } from "~/shared/builder-api";
 import { getSetting, setSetting } from "./client-settings";
-import { findAvailableVariables } from "~/shared/data-variables";
+import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
 import { generateFragmentFromHtml } from "~/shared/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
@@ -110,6 +109,7 @@ import {
 } from "~/shared/instance-utils/slot";
 import type { InstanceSelector } from "~/shared/instance-utils/tree";
 import { areInstanceSelectorsEqual } from "~/shared/instance-utils/tree";
+import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime/instances";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -258,11 +258,6 @@ const requestSelectedPageItemDelete = () => {
 };
 
 type InstanceMoveDirection = "up" | "down" | "intoPreviousSibling" | "out";
-
-const getIdChildIndex = (children: Instance["children"], instanceId: string) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
 
 type SelectedInstancePath = {
   index: number;
@@ -464,7 +459,7 @@ const duplicateSelectedInstances = (project: Project) => {
       if (parentInstance === undefined) {
         continue;
       }
-      const indexWithinChildren = getIdChildIndex(
+      const indexWithinChildren = findChildReferenceIndex(
         parentInstance.children,
         selectedItem.instance.id
       );
@@ -507,7 +502,7 @@ const getOutdentMoveTarget = (
     if (slotParentItem === undefined) {
       return;
     }
-    const slotPosition = getIdChildIndex(
+    const slotPosition = findChildReferenceIndex(
       slotParentItem.instance.children,
       directSlotBoundary.slotId
     );
@@ -522,7 +517,7 @@ const getOutdentMoveTarget = (
   }
 
   const parent = parentItem.instance;
-  const parentIndex = getIdChildIndex(
+  const parentIndex = findChildReferenceIndex(
     grandparentItem.instance.children,
     parent.id
   );
@@ -549,7 +544,7 @@ const getInstanceMoveTarget = (direction: InstanceMoveDirection) => {
   }
 
   const parent = parentItem.instance;
-  const selectedIndex = getIdChildIndex(
+  const selectedIndex = findChildReferenceIndex(
     parent.children,
     selectedItem.instance.id
   );

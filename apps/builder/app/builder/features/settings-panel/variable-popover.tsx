@@ -45,10 +45,10 @@ import {
 import {
   type DataSource,
   transpileExpression,
-  lintExpression,
   SYSTEM_VARIABLE_ID,
   resourceRequest,
 } from "@webstudio-is/sdk";
+import { hasExpressionDiagnostics } from "~/shared/expression-validation";
 import {
   ExpressionEditor,
   formatValue,
@@ -74,7 +74,7 @@ import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
   findUnsetVariableNames,
   rebindTreeVariablesMutable,
-} from "~/shared/data-variables";
+} from "@webstudio-is/project-build/runtime/data";
 import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
   GraphqlResourceForm,
@@ -495,9 +495,8 @@ const BooleanForm = forwardRef<
 BooleanForm.displayName = "BooleanForm";
 
 const validateJsonValue = (expression: string) => {
-  const diagnostics = lintExpression({ expression });
   // prevent saving with any message including unset variable
-  return diagnostics.length > 0 ? "error" : "";
+  return hasExpressionDiagnostics({ expression }) ? "error" : "";
 };
 
 const parseJsonValue = (expression: string) => {

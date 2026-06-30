@@ -65,10 +65,6 @@ vi.mock("./router-utils", () => ({
   isCanvas,
 }));
 
-vi.mock("@webstudio-is/http-client", () => ({
-  parseBuilderUrl: vi.fn(),
-}));
-
 import { extractAuthFromRequest } from "./context.server";
 
 describe("extractAuthFromRequest", () => {

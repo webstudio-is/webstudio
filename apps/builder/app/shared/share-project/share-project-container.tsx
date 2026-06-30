@@ -5,6 +5,13 @@ import { trpcClient } from "../trpc/trpc-client";
 import { ShareProject, type LinkOptions } from "./share-project";
 import { useStore } from "@nanostores/react";
 import { $permissions, $purchases } from "../nano-states";
+import { toast } from "@webstudio-is/design-system";
+
+const normalizeLinks = (links: LinkOptions[]) =>
+  links.map((link) => ({
+    ...link,
+    canUseApi: link.canUseApi === true,
+  }));
 
 const useShareProjectContainer = (projectId: string) => {
   const {
@@ -16,15 +23,19 @@ const useShareProjectContainer = (projectId: string) => {
     trpcClient.authorizationToken.create.useMutation();
   const { send: removeToken, state: removeState } =
     trpcClient.authorizationToken.remove.useMutation();
-  const { send: updateToken, state: updateState } =
-    trpcClient.authorizationToken.update.useMutation();
-  const [links, setLinks] = useState(data ?? []);
+  const {
+    send: updateToken,
+    state: updateState,
+    error: updateError,
+  } = trpcClient.authorizationToken.update.useMutation();
+  const [links, setLinks] = useState(normalizeLinks(data ?? []));
   const [isChangingLink, setIsChangingLink] = useState(false);
   const deletingLinks = useRef(new Set<string>());
+  const lastUpdateError = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     load({ projectId }, (data) => {
-      setLinks(data ?? []);
+      setLinks(normalizeLinks(data ?? []));
     });
   }, [load, projectId]);
 
@@ -48,13 +59,30 @@ const useShareProjectContainer = (projectId: string) => {
     });
     updateToken(updatedLink, () => {
       load({ projectId }, (data) => {
-        setLinks(data ?? []);
+        setLinks(normalizeLinks(data ?? []));
         setIsChangingLink(false);
       });
     });
   }, 100);
 
+  useEffect(() => {
+    if (
+      updateState !== "idle" ||
+      updateError === undefined ||
+      updateError === lastUpdateError.current
+    ) {
+      return;
+    }
+    lastUpdateError.current = updateError;
+    toast.error(updateError);
+    setIsChangingLink(false);
+    load({ projectId }, (data) => {
+      setLinks(normalizeLinks(data ?? []));
+    });
+  }, [load, projectId, updateError, updateState]);
+
   const handleChange = (link: LinkOptions) => {
+    lastUpdateError.current = undefined;
     setIsChangingLink(true);
     handleChangeDebounced(link);
   };
@@ -80,7 +108,7 @@ const useShareProjectContainer = (projectId: string) => {
       },
       () => {
         load({ projectId }, (data) => {
-          setLinks(data ?? []);
+          setLinks(normalizeLinks(data ?? []));
         });
       }
     );

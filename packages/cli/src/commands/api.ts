@@ -1,31 +1,22 @@
 import { spinner } from "@clack/prompts";
 import {
-  apiClientHeader,
-  apiClientVersionHeader,
-  getApiCompatibilityPayload,
-} from "@webstudio-is/trpc-interface/api-compatibility";
+  createApiClientHeaders,
+  getApiCompatibilityMessage,
+} from "@webstudio-is/http-client";
 import packageJson from "../../package.json";
 
-export const apiCompatibilityHeaders = {
-  [apiClientHeader]: "cli",
-  [apiClientVersionHeader]: packageJson.version,
-};
+export const apiCompatibilityHeaders = createApiClientHeaders({
+  name: "cli",
+  version: packageJson.version,
+});
 
 const updateCliCommand = "npm install -g webstudio@latest";
 
 const getCliCompatibilityMessage = (error: unknown, command: string) => {
-  const payload = getApiCompatibilityPayload(error);
-  if (payload?.action.type !== "updateCli") {
-    return;
-  }
-
-  return `${payload.message}
-
-Update the CLI with:
-  ${updateCliCommand}
-
-Or run the latest version once with:
-  npx webstudio@latest ${command}`;
+  return getApiCompatibilityMessage(error, {
+    updateCommand: updateCliCommand,
+    runLatestCommand: `npx webstudio@latest ${command}`,
+  });
 };
 
 export const stopSpinnerWithError = (

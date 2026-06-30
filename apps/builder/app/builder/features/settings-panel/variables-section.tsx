@@ -46,7 +46,7 @@ import {
   deleteVariableMutable,
   findAvailableVariables,
   findUsedVariables,
-} from "~/shared/data-variables";
+} from "@webstudio-is/project-build/runtime/data";
 import { DeleteDataVariableDialog } from "~/builder/shared/data-variable-utils";
 
 /**

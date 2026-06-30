@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
+import { builderPatchTransactionSchema } from "@webstudio-is/project-build/contracts/patch";
 import {
   isAssetFileName,
   getMissingImportedAssetFilesMessage,
@@ -9,6 +11,8 @@ import {
   bundleVersion,
   stagedUploadPath,
   stagedUploadProjectIdHeader,
+  buildPatchNamespaces,
+  buildPatchTransaction,
 } from "./schema";
 import { createPublishedProjectBundleFixture } from "./fixtures";
 
@@ -143,5 +147,40 @@ describe("project bundle contract", () => {
     ).toBe(
       `Project bundle format is incompatible. Expected version ${bundleVersion}, received missing. Sync with a compatible API/CLI version and retry, or override the check.`
     );
+  });
+
+  test("validates build patch transactions", () => {
+    expect(buildPatchNamespaces).toBe(builderNamespaces);
+    expect(buildPatchTransaction).toBe(builderPatchTransactionSchema);
+
+    expect(
+      buildPatchTransaction.safeParse({
+        id: "tx-1",
+        payload: [
+          {
+            namespace: "pages",
+            patches: [
+              {
+                op: "replace",
+                path: ["meta", "siteName"],
+                value: "Site",
+              },
+            ],
+          },
+        ],
+      }).success
+    ).toBe(true);
+
+    expect(
+      buildPatchTransaction.safeParse({
+        id: "tx-1",
+        payload: [
+          {
+            namespace: "pages",
+            patches: [{ op: "replace", path: ["meta", "siteName"] }],
+          },
+        ],
+      }).success
+    ).toBe(false);
   });
 });

@@ -1,86 +1,12 @@
-import { test, expect } from "vitest";
-import type {
-  Instance,
-  Props,
-  StyleDecl,
-  Styles,
-  StyleSource,
-  StyleSourceSelection,
-  WsComponentMeta,
-} from "@webstudio-is/sdk";
-import {
-  collectionComponent,
-  elementComponent,
-  getStyleDeclKey,
-} from "@webstudio-is/sdk";
+import { expect, test } from "vitest";
+import type { Instance, Props, WsComponentMeta } from "@webstudio-is/sdk";
+import { collectionComponent, elementComponent } from "@webstudio-is/sdk";
 import {
   areInstanceSelectorsEqual,
-  cloneStyles,
-  findLocalStyleSourcesWithinInstances,
   getReparentDropTargetMutable,
   isDescendantOrSelf,
   wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree";
-
-const createStyleSource = (
-  type: StyleSource["type"],
-  id: StyleSource["id"]
-): StyleSource => {
-  if (type === "token") {
-    return {
-      type,
-      id,
-      name: id,
-    };
-  }
-  return {
-    type,
-    id,
-  };
-};
-
-const createStyleSourceSelection = (
-  instanceId: Instance["id"],
-  values: StyleSource["id"][]
-): StyleSourceSelection => {
-  return {
-    instanceId,
-    values,
-  };
-};
-
-const createStyleDecl = (
-  styleSourceId: string,
-  breakpointId: string,
-  value?: string
-): StyleDecl => {
-  return {
-    styleSourceId,
-    breakpointId,
-    property: "width",
-    value: {
-      type: "keyword",
-      value: value ?? "value",
-    },
-  };
-};
-
-const createStyleDeclPair = (
-  styleSourceId: string,
-  breakpointId: string,
-  state?: string,
-  value?: string
-) => {
-  return [
-    getStyleDeclKey({
-      styleSourceId,
-      breakpointId,
-      state,
-      property: "width",
-    }),
-    createStyleDecl(styleSourceId, breakpointId, value),
-  ] as const;
-};
 
 const createInstance = (
   id: Instance["id"],
@@ -103,51 +29,6 @@ test("compares instance selectors", () => {
   expect(areInstanceSelectorsEqual(["child"], ["other"])).toBe(false);
   expect(areInstanceSelectorsEqual(undefined, ["child"])).toBe(false);
   expect(areInstanceSelectorsEqual(undefined, undefined)).toBe(false);
-});
-
-test("clone styles with appled new style source ids", () => {
-  const styles: Styles = new Map([
-    createStyleDeclPair("styleSource1", "bp1"),
-    createStyleDeclPair("styleSource2", "bp2"),
-    createStyleDeclPair("styleSource1", "bp3"),
-    createStyleDeclPair("styleSource3", "bp4"),
-    createStyleDeclPair("styleSource1", "bp5"),
-    createStyleDeclPair("styleSource3", "bp6"),
-  ]);
-  const clonedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>();
-  clonedStyleSourceIds.set("styleSource2", "newStyleSource2");
-  clonedStyleSourceIds.set("styleSource3", "newStyleSource3");
-  expect(cloneStyles(styles, clonedStyleSourceIds)).toEqual([
-    createStyleDecl("newStyleSource2", "bp2"),
-    createStyleDecl("newStyleSource3", "bp4"),
-    createStyleDecl("newStyleSource3", "bp6"),
-  ]);
-});
-
-test("find local style sources within instances", () => {
-  const instanceIds = new Set(["instance2", "instance4"]);
-  const styleSources = [
-    createStyleSource("local", "local1"),
-    createStyleSource("local", "local2"),
-    createStyleSource("token", "token3"),
-    createStyleSource("local", "local4"),
-    createStyleSource("token", "token5"),
-    createStyleSource("local", "local6"),
-  ];
-  const styleSourceSelections = [
-    createStyleSourceSelection("instance1", ["local1"]),
-    createStyleSourceSelection("instance2", ["local2"]),
-    createStyleSourceSelection("instance3", ["token3"]),
-    createStyleSourceSelection("instance4", ["local4", "token5"]),
-    createStyleSourceSelection("instance5", ["local6"]),
-  ];
-  expect(
-    findLocalStyleSourcesWithinInstances(
-      styleSources,
-      styleSourceSelections,
-      instanceIds
-    )
-  ).toEqual(new Set(["local2", "local4"]));
 });
 
 test("is descendant or self", () => {

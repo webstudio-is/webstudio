@@ -28,6 +28,7 @@ import {
   showAttributeMeta,
   type PropValue,
 } from "../shared";
+import { createPropValue } from "@webstudio-is/project-build/runtime/props";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -424,9 +425,13 @@ export const usePropsLogic = ({
 
   const handleChange = ({ prop, propName }: PropOrName, value: PropValue) => {
     updateProp(
-      prop === undefined
-        ? { id: nanoid(), instanceId: instance.id, name: propName, ...value }
-        : { ...prop, ...value }
+      createPropValue({
+        id: prop?.id ?? nanoid(),
+        instanceId: instance.id,
+        name: propName,
+        required: prop?.required,
+        ...value,
+      })
     );
   };
 
@@ -434,9 +439,13 @@ export const usePropsLogic = ({
     const prop = props.find((prop) => prop.name === propName);
 
     updateProp(
-      prop === undefined
-        ? { id: nanoid(), instanceId: instance.id, name: propName, ...value }
-        : { ...prop, ...value }
+      createPropValue({
+        id: prop?.id ?? nanoid(),
+        instanceId: instance.id,
+        name: propName,
+        required: prop?.required,
+        ...value,
+      })
     );
   };
 

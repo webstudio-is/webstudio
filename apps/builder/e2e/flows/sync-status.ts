@@ -44,15 +44,24 @@ export const waitForChangeToBeSaved = async ({
     timeout,
   });
 
+  const errorStatus = getSyncStatusDotByStatus({ page, status: "error" })
+    .waitFor({ timeout })
+    .then(async () => {
+      const label =
+        (await getSyncStatusDot(page).getAttribute("aria-label")) ??
+        "Sync status: error";
+      throw new Error(`Expected change to save, received ${label}`);
+    });
+
+  await Promise.race([
+    getSyncStatusDotByStatus({ page, status: "pending" }).waitFor({
+      timeout,
+    }),
+    errorStatus,
+  ]);
+
   await Promise.race([
     getSyncStatusDotByStatus({ page, status: "saved" }).waitFor({ timeout }),
-    getSyncStatusDotByStatus({ page, status: "error" })
-      .waitFor({ timeout })
-      .then(async () => {
-        const label =
-          (await getSyncStatusDot(page).getAttribute("aria-label")) ??
-          "Sync status: error";
-        throw new Error(`Expected change to save, received ${label}`);
-      }),
+    errorStatus,
   ]);
 };

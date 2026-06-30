@@ -25,6 +25,7 @@
   "exports": {
     "./api-compatibility": {
       "webstudio": "./src/api-compatibility.ts",
+      "types": "./src/api-compatibility.ts",
       "import": "./src/api-compatibility.ts"
     },
     "./index.server": {

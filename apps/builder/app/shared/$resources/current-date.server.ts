@@ -1,5 +1,5 @@
 import { json } from "@remix-run/server-runtime";
-import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { isBuilder } from "../router-utils";
 
 /**

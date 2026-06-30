@@ -5,7 +5,7 @@ import { denormalizeSrcProps } from "./asset-upload";
 import { generateFragmentFromHtml } from "../html";
 import type { Plugin } from "./copy-paste";
 import { builderApi } from "../builder-api";
-import { breakpointPasteLimitWarning } from "../breakpoints";
+import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
 
 const parse = (clipboardData: string) => {
   const html = micromark(clipboardData, "utf-8", {

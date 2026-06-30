@@ -5,36 +5,23 @@ import {
 } from "vite";
 import pkg from "./package.json";
 
-const isExternal = (id: string, importer: string | undefined) => {
-  if (id.startsWith("@webstudio-is/")) {
-    return false;
-  }
-  if (id.startsWith("node:")) {
-    return true;
-  }
+const externalDependencies = new Set(
+  Object.keys(pkg.dependencies).filter((name) => {
+    return name.startsWith("@webstudio-is/") === false;
+  })
+);
+
+const getPackageName = (id: string) => {
   if (id.startsWith("@")) {
-    const packageName = id.split("/").slice(0, 2).join("/");
-    if (packageName in pkg.dependencies === false) {
-      throw Error(
-        `${packageName} imported from ${importer} is not found in direct dependencies`
-      );
-    }
-    return true;
+    return id.split("/").slice(0, 2).join("/");
   }
-  if (id.includes(".") === false) {
-    const [packageName] = id.split("/");
-    if (packageName in pkg.dependencies === false) {
-      throw Error(
-        `${packageName} imported from ${importer} is not found in direct dependencies`
-      );
-    }
-    return true;
-  }
-  return false;
+  return id.split("/")[0];
 };
 
+const isExternal = (id: string) =>
+  id.startsWith("node:") || externalDependencies.has(getPackageName(id));
+
 export default defineConfig({
-  // resolve webstudio condition in tests
   resolve: {
     conditions: ["webstudio", ...defaultClientConditions],
   },

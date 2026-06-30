@@ -46,8 +46,12 @@ vi.mock("~/shared/builder-data", () => ({
 
 //  Imports (after mocks)
 
-import type { Change } from "immerhin";
-import { $hasUnsavedSyncChanges, $syncStatus } from "@webstudio-is/sync-client";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
+import {
+  $hasUnsavedSyncChanges,
+  $syncStatus,
+  type Transaction,
+} from "@webstudio-is/sync-client";
 import { toast } from "@webstudio-is/design-system";
 import type { ServerSyncState } from "./sync-stores";
 import {
@@ -76,10 +80,10 @@ const MAX_ALLOWED_API_ERRORS = 5;
 
 const flush = () => vi.advanceTimersByTimeAsync(0);
 
-const makeTx = (id: string) => ({
+const makeTx = (id: string): Transaction<BuilderPatchChange[]> => ({
   id,
   object: "server" as const,
-  payload: [{ namespace: "ns", patches: [], revisePatches: [] }] as Change[],
+  payload: [{ namespace: "pages", patches: [] }],
 });
 
 const initialState: ServerSyncState = new Map();
@@ -517,7 +521,7 @@ describe("project-queue", () => {
       storage.sendTransaction({
         id: "tx-1",
         object: "server",
-        payload: [{ namespace: "ns", patches: [], revisePatches: [] }],
+        payload: [{ namespace: "pages", patches: [] }],
       });
 
       const commands = commandQueue.dequeueAll();
@@ -546,7 +550,7 @@ describe("project-queue", () => {
       storage.sendTransaction({
         id: "tx-42",
         object: "server",
-        payload: [{ namespace: "ns", patches: [], revisePatches: [] }],
+        payload: [{ namespace: "pages", patches: [] }],
       });
 
       expect($lastTransactionId.get()).toBe("tx-42");

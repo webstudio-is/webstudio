@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { atom } from "nanostores";
-import type { Change } from "immerhin";
 import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { toast } from "@webstudio-is/design-system";
 import {
@@ -10,6 +10,7 @@ import {
   $syncStatus,
   createBackoff,
   createTransactionCompletionStore,
+  stripRevisePatchesFromTransaction,
   type SyncStatus,
 } from "@webstudio-is/sync-client";
 import { publicStaticEnv } from "~/env/env.static";
@@ -230,14 +231,9 @@ const pollQueue = async (signal: AbortSignal) => {
     for await (const _ of retry()) {
       // in case of any error continue retrying
       try {
-        // revise patches are not used on the server and reduce possible patch size
-        const optimizedTransactions = transactions.map((transaction) => ({
-          ...transaction,
-          payload: transaction.payload.map((change) => ({
-            namespace: change.namespace,
-            patches: change.patches,
-          })),
-        }));
+        const optimizedTransactions = transactions.map(
+          stripRevisePatchesFromTransaction
+        );
         const patchClient =
           details.authToken === undefined
             ? nativeClient
@@ -344,7 +340,7 @@ export class ServerSyncStorage implements SyncStorage {
     this.initialState = initialState;
   }
 
-  sendTransaction(transaction: Transaction<Change[]>) {
+  sendTransaction(transaction: Transaction<BuilderPatchChange[]>) {
     if (transaction.object === "server") {
       $lastTransactionId.set(transaction.id);
       $syncStatus.set({ status: "syncing" });

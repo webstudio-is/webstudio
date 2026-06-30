@@ -1,16 +1,12 @@
 // Tree utilities own generic instance-tree mechanics that are not tied to a
 // specific command: selector comparison, ancestry checks, drop target shaping,
-// and style-source traversal within instance trees.
+// and rich-text drop target normalization.
 import { nanoid } from "nanoid";
 import { shallowEqual } from "shallow-equal";
 import type {
   Instance,
   Instances,
   Props,
-  StyleDecl,
-  Styles,
-  StyleSource,
-  StyleSourceSelection,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { collectionComponent, elementComponent } from "@webstudio-is/sdk";
@@ -179,53 +175,4 @@ export const getReparentDropTargetMutable = (
       dropTarget
     ) ?? dropTarget;
   return dropTarget;
-};
-
-export const cloneStyles = (
-  styles: Styles,
-  clonedStyleSourceIds: Map<Instance["id"], Instance["id"]>
-) => {
-  const clonedStyles: StyleDecl[] = [];
-  for (const styleDecl of styles.values()) {
-    const styleSourceId = clonedStyleSourceIds.get(styleDecl.styleSourceId);
-    if (styleSourceId === undefined) {
-      continue;
-    }
-    clonedStyles.push({
-      ...styleDecl,
-      styleSourceId,
-    });
-  }
-  return clonedStyles;
-};
-
-export const findLocalStyleSourcesWithinInstances = (
-  styleSources: IterableIterator<StyleSource> | StyleSource[],
-  styleSourceSelections:
-    | IterableIterator<StyleSourceSelection>
-    | StyleSourceSelection[],
-  instanceIds: Set<Instance["id"]>
-) => {
-  const localStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const styleSource of styleSources) {
-    if (styleSource.type === "local") {
-      localStyleSourceIds.add(styleSource.id);
-    }
-  }
-
-  const subtreeLocalStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const { instanceId, values } of styleSourceSelections) {
-    // skip selections outside of subtree
-    if (instanceIds.has(instanceId) === false) {
-      continue;
-    }
-    // find only local style sources on selections
-    for (const styleSourceId of values) {
-      if (localStyleSourceIds.has(styleSourceId)) {
-        subtreeLocalStyleSourceIds.add(styleSourceId);
-      }
-    }
-  }
-
-  return subtreeLocalStyleSourceIds;
 };

@@ -17,18 +17,16 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import {
-  cleanupChildRefsMutable,
   deleteFolderWithChildrenMutable,
-  getAllChildrenAndSelf,
-  isSlugAvailable,
-  registerFolderChildMutable,
-  reparentOrphansMutable,
   $pageRootScope,
-  isPathAvailable,
-  reparentPageOrFolderMutable,
+  canDrop,
   deletePageMutable,
   deleteTemplateMutable,
+  duplicateFolder,
+  duplicateTemplate,
+  getStoredDropTarget,
   instantiateTemplate,
+  isFolder,
 } from "./page-utils";
 import { $dataSourceVariables } from "~/shared/nano-states";
 import {
@@ -143,382 +141,6 @@ const createWebstudioData = ({
     resources: new Map(),
     assets: new Map(),
   }) as unknown as WebstudioData;
-
-describe("reparentOrphansMutable", () => {
-  // We must deal with the fact there can be an orphaned folder or page in a collaborative mode,
-  // because user A can add a page to a folder while user B deletes the folder without receiving the create page yet.
-  test("reparent orphans to the root", () => {
-    const { pages } = createPages();
-    pages.pages.set("pageId", {
-      id: "pageId",
-      meta: {},
-      name: "Page",
-      path: "/page",
-      rootInstanceId: "rootInstanceId",
-      title: `"Page"`,
-    });
-    pages.folders.set("folderId", {
-      id: "folderId",
-      name: "Folder",
-      slug: "folder",
-      children: [],
-    });
-    reparentOrphansMutable(pages);
-    const rootFolder = Array.from(pages.folders.values()).find(isRootFolder);
-    expect(rootFolder).toEqual({
-      id: ROOT_FOLDER_ID,
-      name: "Root",
-      slug: "",
-      children: ["homePageId", "folderId", "pageId"],
-    });
-  });
-
-  test("recreates missing root folder with rootFolderId", () => {
-    const { pages } = createPages();
-    pages.rootFolderId = "customRoot";
-    pages.folders = new Map();
-    pages.pages.set("pageId", {
-      id: "pageId",
-      meta: {},
-      name: "Page",
-      path: "/page",
-      rootInstanceId: "rootInstanceId",
-      title: `"Page"`,
-    });
-
-    reparentOrphansMutable(pages);
-
-    expect(pages.folders.get("customRoot")).toEqual({
-      id: "customRoot",
-      name: "Root",
-      slug: "",
-      children: ["homePageId", "pageId"],
-    });
-  });
-
-  test("keeps home page first in root folder", () => {
-    const { pages } = createPages();
-    pages.folders.set("folderId", {
-      id: "folderId",
-      name: "Folder",
-      slug: "folder",
-      children: ["homePageId"],
-    });
-    pages.folders.get(pages.rootFolderId)!.children = ["folderId"];
-
-    reparentOrphansMutable(pages);
-
-    expect(pages.folders.get(pages.rootFolderId)?.children).toEqual([
-      "homePageId",
-      "folderId",
-    ]);
-    expect(pages.folders.get("folderId")?.children).toEqual([]);
-  });
-});
-
-describe("cleanupChildRefsMutable", () => {
-  test("cleanup refs", () => {
-    const {
-      pages: { folders },
-    } = createPages();
-    folders.set("folderId", {
-      id: "folderId",
-      name: "Folder",
-      slug: "folder",
-      children: [],
-    });
-    const rootFolder = Array.from(folders.values()).find(isRootFolder);
-    rootFolder?.children.push("folderId");
-    cleanupChildRefsMutable("folderId", folders);
-    expect(rootFolder).toEqual({
-      id: ROOT_FOLDER_ID,
-      name: "Root",
-      slug: "",
-      children: ["homePageId"],
-    });
-  });
-
-  test("removes duplicate refs from every folder", () => {
-    const {
-      pages: { folders },
-    } = createPages();
-    folders.get(ROOT_FOLDER_ID)?.children.push("folderId", "folderId");
-    folders.set("folderId", {
-      id: "folderId",
-      name: "Folder",
-      slug: "folder",
-      children: ["folderId"],
-    });
-
-    cleanupChildRefsMutable("folderId", folders);
-
-    expect(folders.get(ROOT_FOLDER_ID)?.children).toEqual(["homePageId"]);
-    expect(folders.get("folderId")?.children).toEqual([]);
-  });
-});
-
-describe("isSlugAvailable", () => {
-  const {
-    pages: { folders },
-    register,
-    f,
-  } = createPages();
-
-  register([
-    f("folder1", [f("folder1-1")]),
-    f("folder2-1", ""),
-    f("folder2-2", ""),
-  ]);
-
-  const rootFolder = Array.from(folders.values()).find(isRootFolder)!;
-
-  test("available in the root", () => {
-    expect(isSlugAvailable("folder", folders, rootFolder.id)).toBe(true);
-  });
-
-  test("not available in the root", () => {
-    expect(isSlugAvailable("folder1", folders, rootFolder.id)).toBe(false);
-  });
-
-  test("available in folder1", () => {
-    expect(isSlugAvailable("folder", folders, "folder1")).toBe(true);
-  });
-
-  test("not available in folder1", () => {
-    expect(isSlugAvailable("folder1-1", folders, "folder1")).toBe(false);
-  });
-
-  test("existing folder can have a matching slug when its the same id/folder", () => {
-    expect(isSlugAvailable("folder1-1", folders, "folder1", "folder1-1")).toBe(
-      true
-    );
-  });
-
-  test("empty folder slug can be defined multiple times", () => {
-    expect(isSlugAvailable("", folders, "rootInstanceId")).toBe(true);
-  });
-});
-
-describe("isPathAvailable", () => {
-  const { f, p, register, pages } = createPages();
-
-  register([
-    f("folder1", [p("page1", "/page")]),
-    f("folder2", [p("page2", "/page")]),
-    f("/", [p("page3", "/page")]),
-  ]);
-
-  test("/folder2/page existing page", () => {
-    expect(
-      isPathAvailable({
-        pages,
-        path: "/page",
-        parentFolderId: "folder2",
-        pageId: "page2",
-      })
-    ).toBe(true);
-  });
-
-  test("/folder2/page new page", () => {
-    expect(
-      isPathAvailable({ pages, path: "/page", parentFolderId: "folder2" })
-    ).toBe(false);
-  });
-
-  test("/folder2/page1 new page", () => {
-    expect(
-      isPathAvailable({ pages, path: "/page1", parentFolderId: "folder2" })
-    ).toBe(true);
-  });
-
-  test("/page new page", () => {
-    expect(isPathAvailable({ pages, path: "/page", parentFolderId: "/" })).toBe(
-      false
-    );
-  });
-});
-
-describe("registerFolderChildMutable", () => {
-  test("register a folder child in the root via fallback", () => {
-    const { pages } = createPages();
-    const { folders } = pages;
-    registerFolderChildMutable(pages, "folderId");
-    const rootFolder = Array.from(folders.values()).find(isRootFolder);
-    expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
-  });
-
-  test("register a folder child in a provided folder", () => {
-    const { pages } = createPages();
-    const { folders } = pages;
-    const folder = {
-      id: "folderId",
-      name: "Folder",
-      slug: "folder",
-      children: [],
-    };
-    folders.set(folder.id, folder);
-    registerFolderChildMutable(pages, "folderId2", "folderId");
-    expect(folder.children).toEqual(["folderId2"]);
-  });
-
-  test("register in a provided folder & cleanup old refs", () => {
-    const { pages } = createPages();
-    const { folders } = pages;
-    const folder = {
-      id: "folderId",
-      name: "Folder",
-      slug: "folder",
-      children: [],
-    };
-    folders.set(folder.id, folder);
-    const rootFolder = Array.from(folders.values()).find(isRootFolder);
-    registerFolderChildMutable(pages, "folderId", ROOT_FOLDER_ID);
-    registerFolderChildMutable(pages, "folderId2", ROOT_FOLDER_ID);
-
-    expect(rootFolder?.children).toEqual([
-      "homePageId",
-      "folderId",
-      "folderId2",
-    ]);
-
-    // Moving folderId from root to folderId
-    registerFolderChildMutable(pages, "folderId2", "folderId");
-
-    expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
-    expect(folder.children).toEqual(["folderId2"]);
-  });
-
-  test("uses rootFolderId for fallback instead of hardcoded root id", () => {
-    const { pages } = createPages();
-    pages.rootFolderId = "customRoot";
-    pages.folders = new Map([
-      [
-        "customRoot",
-        {
-          id: "customRoot",
-          name: "Root",
-          slug: "",
-          children: [],
-        },
-      ],
-    ]);
-
-    registerFolderChildMutable(pages, "folderId");
-
-    expect(pages.folders.get("customRoot")?.children).toEqual(["folderId"]);
-  });
-});
-
-describe("reparent pages and folders", () => {
-  test("move page up within single parent", () => {
-    const { f, p, register, pages } = createPages();
-    register([
-      f("folder", [
-        p("page1", "/page1"),
-        p("page2", "/page2"),
-        p("page3", "/page3"),
-      ]),
-    ]);
-    reparentPageOrFolderMutable(pages.folders, "page3", "folder", 1);
-    const folder = pages.folders.get("folder");
-    expect(folder?.children).toEqual(["page1", "page3", "page2"]);
-  });
-
-  test("move page down within single parent", () => {
-    const { f, p, register, pages } = createPages();
-    register([
-      f("folder", [
-        p("page1", "/page1"),
-        p("page2", "/page2"),
-        p("page3", "/page3"),
-      ]),
-    ]);
-    reparentPageOrFolderMutable(pages.folders, "page1", "folder", 2);
-    const folder = pages.folders.get("folder");
-    expect(folder?.children).toEqual(["page2", "page1", "page3"]);
-  });
-
-  test("move page into another folder", () => {
-    const { f, p, register, pages } = createPages();
-    register([
-      f("folder1", [p("page1", "/page1"), p("page2", "/page2")]),
-      f("folder2", [p("page3", "/page3")]),
-    ]);
-    reparentPageOrFolderMutable(pages.folders, "page1", "folder2", 1);
-    const folder1 = pages.folders.get("folder1");
-    const folder2 = pages.folders.get("folder2");
-    expect(folder1?.children).toEqual(["page2"]);
-    expect(folder2?.children).toEqual(["page3", "page1"]);
-  });
-
-  test("move folder into another folder", () => {
-    const { f, register, pages } = createPages();
-    register([f("folder1", []), f("folder2", [])]);
-    reparentPageOrFolderMutable(pages.folders, "folder1", "folder2", 1);
-    expect(Array.from(pages.folders.values())).toEqual([
-      expect.objectContaining({
-        id: "root",
-        children: ["homePageId", "folder2"],
-      }),
-      expect.objectContaining({ id: "folder1", children: [] }),
-      expect.objectContaining({ id: "folder2", children: ["folder1"] }),
-    ]);
-  });
-
-  test("prevent reparanting folder into itself", () => {
-    const { f, register, pages } = createPages();
-    register([f("folder1", [])]);
-    reparentPageOrFolderMutable(pages.folders, "folder1", "folder1", 1);
-    expect(Array.from(pages.folders.values())).toEqual([
-      expect.objectContaining({
-        id: "root",
-        children: ["homePageId", "folder1"],
-      }),
-      expect.objectContaining({ id: "folder1", children: [] }),
-    ]);
-  });
-
-  test("prevent reparanting folder own children", () => {
-    const { f, register, pages } = createPages();
-    register([f("folder1", [f("folder2", [])])]);
-    reparentPageOrFolderMutable(pages.folders, "folder1", "folder2", 1);
-    expect(Array.from(pages.folders.values())).toEqual([
-      expect.objectContaining({
-        id: "root",
-        children: ["homePageId", "folder1"],
-      }),
-      expect.objectContaining({ id: "folder2", children: [] }),
-      expect.objectContaining({ id: "folder1", children: ["folder2"] }),
-    ]);
-  });
-
-  test("does not remove unrelated child when item is missing from previous parent", () => {
-    const { f, p, register, pages } = createPages();
-    register([f("folder", [p("page1", "/page1"), p("page2", "/page2")])]);
-
-    reparentPageOrFolderMutable(pages.folders, "page3", "folder", 1);
-
-    expect(pages.folders.get("folder")?.children).toEqual(["page1", "page2"]);
-  });
-});
-
-describe("getAllChildrenAndSelf", () => {
-  const folders = toMap<Folder>([
-    { id: "1", name: "1", slug: "1", children: ["2"] },
-    { id: "2", name: "2", slug: "2", children: ["3", "page1"] },
-    { id: "3", name: "3", slug: "3", children: ["page2"] },
-  ]);
-
-  test("get nested folders", () => {
-    const result = getAllChildrenAndSelf("1", folders, "folder");
-    expect(result).toEqual(["1", "2", "3"]);
-  });
-
-  test("get nested pages", () => {
-    const result = getAllChildrenAndSelf("1", folders, "page");
-    expect(result).toEqual(["page2", "page1"]);
-  });
-});
 
 describe("deleteFolderWithChildrenMutable", () => {
   const pages = (): Pages => ({
@@ -961,23 +583,17 @@ describe("isFolder", () => {
   test("should return true for existing folder id", async () => {
     const { pages: pagesData, register, f } = createPages();
     register([f("folder1", [])]);
-
-    const { isFolder } = await import("./page-utils");
     expect(isFolder("folder1", pagesData.folders)).toBe(true);
   });
 
   test("should return false for non-existing folder id", async () => {
     const { pages: pagesData } = createPages();
-
-    const { isFolder } = await import("./page-utils");
     expect(isFolder("nonexistent", pagesData.folders)).toBe(false);
   });
 
   test("should return false for page id", async () => {
     const { pages: pagesData, register, p } = createPages();
     register([p("page1", "/page1")]);
-
-    const { isFolder } = await import("./page-utils");
     expect(isFolder("page1", pagesData.folders)).toBe(false);
   });
 });
@@ -987,8 +603,6 @@ describe("getStoredDropTarget", () => {
     const { pages: pagesData, register, f, p } = createPages();
     register([f("folder1", [p("page1", "/page1")])]);
     $pages.set(pagesData);
-
-    const { getStoredDropTarget } = await import("./page-utils");
     // selector order is [item, parent, grandparent, ...]
     const selector = ["page1", "folder1", ROOT_FOLDER_ID];
     const dropTarget = { parentLevel: 1, beforeLevel: 1 };
@@ -1007,8 +621,6 @@ describe("getStoredDropTarget", () => {
     const { pages: pagesData, register, f, p } = createPages();
     register([f("folder1", [p("page1", "/page1"), p("page2", "/page2")])]);
     $pages.set(pagesData);
-
-    const { getStoredDropTarget } = await import("./page-utils");
     const selector = ["page2", "folder1", ROOT_FOLDER_ID];
     const dropTarget = { parentLevel: 1, beforeLevel: 0 };
 
@@ -1023,8 +635,6 @@ describe("getStoredDropTarget", () => {
     const { pages: pagesData, register, f, p } = createPages();
     register([f("folder1", [p("page1", "/page1"), p("page2", "/page2")])]);
     $pages.set(pagesData);
-
-    const { getStoredDropTarget } = await import("./page-utils");
     const selector = ["page1", "folder1", ROOT_FOLDER_ID];
     const dropTarget = { parentLevel: 1, afterLevel: 0 };
 
@@ -1038,8 +648,6 @@ describe("getStoredDropTarget", () => {
   test("should return undefined when parent id is undefined", async () => {
     const { pages: pagesData } = createPages();
     $pages.set(pagesData);
-
-    const { getStoredDropTarget } = await import("./page-utils");
     const selector = ["page1"];
     const dropTarget = { parentLevel: 5 };
 
@@ -1053,8 +661,6 @@ describe("canDrop", () => {
   test("should allow dropping inside a folder", async () => {
     const { pages: pagesData, register, f } = createPages();
     register([f("folder1", [])]);
-
-    const { canDrop } = await import("./page-utils");
     const dropTarget = {
       parentId: "folder1",
       indexWithinChildren: 1,
@@ -1066,8 +672,6 @@ describe("canDrop", () => {
   test("should forbid dropping on non-folder", async () => {
     const { pages: pagesData, register, p } = createPages();
     register([p("page1", "/page1")]);
-
-    const { canDrop } = await import("./page-utils");
     const dropTarget = {
       parentId: "page1",
       indexWithinChildren: 0,
@@ -1078,8 +682,6 @@ describe("canDrop", () => {
 
   test("should forbid dropping at index 0 of root folder", async () => {
     const { pages: pagesData } = createPages();
-
-    const { canDrop } = await import("./page-utils");
     const dropTarget = {
       parentId: ROOT_FOLDER_ID,
       indexWithinChildren: 0,
@@ -1090,8 +692,6 @@ describe("canDrop", () => {
 
   test("should allow dropping at index > 0 of root folder", async () => {
     const { pages: pagesData } = createPages();
-
-    const { canDrop } = await import("./page-utils");
     const dropTarget = {
       parentId: ROOT_FOLDER_ID,
       indexWithinChildren: 1,
@@ -1109,8 +709,6 @@ describe("canDrop", () => {
       slug: "",
       children: [],
     });
-
-    const { canDrop } = await import("./page-utils");
     const dropTarget = {
       parentId: "customRoot",
       indexWithinChildren: 0,
@@ -1129,8 +727,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     expect(newFolderId).toBeDefined();
@@ -1150,8 +746,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     expect(newFolderId).toBeDefined();
@@ -1161,7 +755,7 @@ describe("duplicateFolder", () => {
         ? undefined
         : updatedPages.folders.get(newFolderId);
     expect(newFolder).toBeDefined();
-    // Note: Page duplication is handled by insertPageCopyMutable from ~/shared/page-utils
+    // Note: Page duplication is handled by runtime insertPageCopyMutable
     // which requires full WebstudioData setup. Here we just verify the folder structure.
     expect(newFolder?.children.length).toBeGreaterThan(0);
   });
@@ -1177,8 +771,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     expect(newFolderId).toBeDefined();
@@ -1209,8 +801,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     expect(newFolderId).toBeDefined();
@@ -1229,8 +819,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     expect(newFolderId).toBeDefined();
@@ -1249,8 +837,6 @@ describe("duplicateFolder", () => {
 
     $pages.set(pagesData);
     updateCurrentSystem(initialSystem);
-
-    const { duplicateFolder } = await import("./page-utils");
     const newFolderId = duplicateFolder("folder1");
 
     const updatedPages = $pages.get()!;
@@ -1338,8 +924,6 @@ describe("duplicateTemplate", () => {
     $styleSources.set(new Map());
     $styles.set(new Map());
     $assets.set(new Map());
-
-    const { duplicateTemplate } = await import("./page-utils");
     const newTemplateId = duplicateTemplate("templateId");
 
     expect(newTemplateId).toBeDefined();

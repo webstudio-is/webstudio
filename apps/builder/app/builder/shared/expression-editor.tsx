@@ -47,7 +47,7 @@ import {
   encodeDataVariableName,
   restoreExpressionVariables,
   unsetExpressionVariables,
-} from "~/shared/data-variables";
+} from "@webstudio-is/project-build/runtime/data";
 
 export type { EditorApi };
 

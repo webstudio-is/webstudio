@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, expect, test } from "vitest";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { loadJSONFile } from "./fs-utils";
+import { loadJSONFile, writeFileAtomic } from "./fs-utils";
 
 const originalCwd = process.cwd();
 let tempDir: string;
@@ -31,4 +31,11 @@ test("throws for malformed JSON file", async () => {
   await writeFile("data.json", "{", "utf8");
 
   await expect(loadJSONFile("data.json")).rejects.toThrow();
+});
+
+test("writes files atomically without leaving temporary files", async () => {
+  await writeFileAtomic("nested/data.txt", "hello");
+
+  await expect(readFile("nested/data.txt", "utf8")).resolves.toBe("hello");
+  await expect(readdir("nested")).resolves.toEqual(["data.txt"]);
 });

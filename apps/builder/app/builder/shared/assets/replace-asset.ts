@@ -1,11 +1,11 @@
-import { getAllPages, type Asset } from "@webstudio-is/sdk";
+import type { Asset } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
 import { $assets, $pages, $props, $styles } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
+import { replaceAssetMutable } from "@webstudio-is/project-build/runtime/assets";
 import { uploadAssets } from "./upload-assets";
-import type { StyleValue } from "@webstudio-is/css-engine";
 
 /**
  * Replace an image asset with a new file.
@@ -44,29 +44,15 @@ export const replaceAsset = async (
         updatedNewAsset.description = oldAsset.description;
       }
 
-      for (const prop of props.values()) {
-        if (prop.type === "asset" && prop.value === oldAssetId) {
-          prop.value = newAssetId;
-        }
-      }
-
-      for (const styleDecl of styles.values()) {
-        replaceAssetInStyleValue(styleDecl.value, oldAssetId, newAssetId);
-      }
-
-      if (pages) {
-        if (pages.meta?.faviconAssetId === oldAssetId) {
-          pages.meta.faviconAssetId = newAssetId;
-        }
-        for (const page of getAllPages(pages)) {
-          if (page.meta.socialImageAssetId === oldAssetId) {
-            page.meta.socialImageAssetId = newAssetId;
-          }
-          if (page.marketplace?.thumbnailAssetId === oldAssetId) {
-            page.marketplace.thumbnailAssetId = newAssetId;
-          }
-        }
-      }
+      replaceAssetMutable({
+        pages,
+        props: props.values(),
+        styles: styles.values(),
+        replacement: {
+          fromAssetId: oldAssetId,
+          toAssetId: newAssetId,
+        },
+      });
 
       assets.delete(oldAssetId);
     }
@@ -77,30 +63,6 @@ export const replaceAsset = async (
   });
 
   toast.success("Asset replaced successfully");
-};
-
-const replaceAssetInStyleValue = (
-  styleValue: StyleValue,
-  oldAssetId: string,
-  newAssetId: string
-): void => {
-  if (
-    styleValue.type === "image" &&
-    styleValue.value.type === "asset" &&
-    styleValue.value.value === oldAssetId
-  ) {
-    styleValue.value.value = newAssetId;
-  }
-  if (styleValue.type === "tuple") {
-    for (const item of styleValue.value) {
-      replaceAssetInStyleValue(item, oldAssetId, newAssetId);
-    }
-  }
-  if (styleValue.type === "layers") {
-    for (const item of styleValue.value) {
-      replaceAssetInStyleValue(item, oldAssetId, newAssetId);
-    }
-  }
 };
 
 const waitForAsset = (assetId: string): Promise<Asset> => {
@@ -121,5 +83,3 @@ const waitForAsset = (assetId: string): Promise<Asset> => {
     });
   });
 };
-
-export const __testing__ = { replaceAssetInStyleValue };

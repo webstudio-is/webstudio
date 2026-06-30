@@ -176,6 +176,7 @@ describe("canTokenPublishDeployment", () => {
     canClone: true,
     canCopy: true,
     canPublish: false,
+    canUseApi: false,
   };
 
   test("allows builder tokens to publish to the staging domain", () => {

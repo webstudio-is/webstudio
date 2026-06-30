@@ -27,7 +27,7 @@ import {
   $selectedInstanceRenderState,
   $selectedStyleSource,
 } from "~/shared/nano-states";
-import { isStyleSourceLocked } from "~/shared/style-source-utils";
+import { isStyleSourceLocked } from "@webstudio-is/project-build/runtime/styles";
 import { ReadonlyProvider } from "./shared/readonly";
 import { $selectedInstance } from "~/shared/nano-states";
 import { CollapsibleProvider } from "~/builder/shared/collapsible-section";

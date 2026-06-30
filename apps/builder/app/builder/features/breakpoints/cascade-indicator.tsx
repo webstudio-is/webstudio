@@ -3,7 +3,7 @@ import { useStore } from "@nanostores/react";
 import { css, theme } from "@webstudio-is/design-system";
 import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import { $breakpoints } from "~/shared/sync/data-stores";
-import { isBaseBreakpoint } from "~/shared/breakpoints";
+import { isBaseBreakpoint } from "@webstudio-is/project-build/runtime/breakpoints";
 
 const cascadeIndicatorStyle = css({
   position: "absolute",

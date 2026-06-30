@@ -30,9 +30,9 @@ export const stripRevisePatchesFromPayload = <Payload>(
   return nextPayload as Payload;
 };
 
-export const stripRevisePatchesFromTransaction = (
-  transaction: Transaction
-): Transaction => {
+export const stripRevisePatchesFromTransaction = <Payload>(
+  transaction: Transaction<Payload>
+): Transaction<Payload> => {
   if (transaction.object !== "server") {
     return transaction;
   }

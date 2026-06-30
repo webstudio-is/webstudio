@@ -4,7 +4,6 @@ export default defineConfig({
   resolve: {
     conditions: ["webstudio", "browser", "development|production"],
   },
-  // resolve webstudio condition in tests
   ssr: {
     resolve: {
       conditions: ["webstudio", "node", "development|production"],

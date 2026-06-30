@@ -1,9 +1,9 @@
 import {
+  detectFragmentTokenConflicts,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-} from "../instance-utils/fragment";
+} from "@webstudio-is/project-build/runtime/fragment";
 import { findClosestInsertable } from "../instance-utils/insert";
-import { detectFragmentTokenConflicts } from "../instance-utils/fragment";
 import {
   updateInstanceData,
   updateWebstudioData,
@@ -27,6 +27,7 @@ import {
 } from "@webstudio-is/sdk";
 import { $instances, $project } from "~/shared/sync/data-stores";
 import type { InstanceSelector } from "../instance-utils/tree";
+import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime/instances";
 import {
   deleteInstanceMutable,
   sortInstancePathsForChildMutation,
@@ -39,10 +40,10 @@ import {
   $selectedInstanceSelector,
   selectInstances,
 } from "~/shared/nano-states";
-import { findAvailableVariables } from "../data-variables";
+import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
 import { builderApi } from "../builder-api";
 import type { Plugin } from "./copy-paste";
-import { breakpointPasteLimitWarning } from "../breakpoints";
+import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
 
 const version = "@webstudio/instance/v0.1";
 const multiRootVersion = "@webstudio/instances/v0.1";
@@ -206,14 +207,6 @@ const getPortalFragmentSelector = (
   return [instance.children[0].value, ...instanceSelector];
 };
 
-const getIdChildIndex = (
-  children: Instance["children"],
-  instanceId: Instance["id"]
-) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
-
 const getCommonAncestorSelector = (
   instanceSelectors: InstanceSelector[]
 ): undefined | InstanceSelector => {
@@ -264,7 +257,7 @@ const findMultiSelectionInsertable = (
       return;
     }
     const selectedSiblingIndexes = selectedPaths.map((path) =>
-      getIdChildIndex(parentInstance.children, path[0].instance.id)
+      findChildReferenceIndex(parentInstance.children, path[0].instance.id)
     );
     if (selectedSiblingIndexes.includes(-1)) {
       return;
@@ -386,7 +379,10 @@ const findPasteTarget = (data: InstanceData): undefined | Insertable => {
 };
 
 const resolveFragmentTokenConflicts = async (fragment: WebstudioFragment) => {
-  const conflicts = detectFragmentTokenConflicts({ fragment });
+  const conflicts = detectFragmentTokenConflicts({
+    fragment,
+    targetData: getWebstudioData(),
+  });
   return conflicts.length > 0
     ? await builderApi.showTokenConflictDialog(conflicts)
     : "theirs";

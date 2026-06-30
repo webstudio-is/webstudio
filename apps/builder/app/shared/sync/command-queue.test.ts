@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeEach } from "vitest";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
+import type { Transaction } from "@webstudio-is/sync-client";
 import { enqueue, dequeueAll } from "./command-queue";
 
-const makeTx = (id: string) => ({
+const makeTx = (id: string): Transaction<BuilderPatchChange[]> => ({
   id,
   object: "server",
-  payload: [{ namespace: "ns", patches: [], revisePatches: [] }],
+  payload: [{ namespace: "pages", patches: [] }],
 });
 
 describe("command-queue", () => {

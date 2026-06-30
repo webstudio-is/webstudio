@@ -1,4 +1,3 @@
-import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { camelCaseProperty } from "@webstudio-is/css-data";
 import {
@@ -14,7 +13,12 @@ import {
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $selectedInstance } from "~/shared/nano-states";
-import { isStyleSourceLocked } from "~/shared/style-source-utils";
+import {
+  createSelectedStyleDeclarationDeletePayload,
+  createSelectedStyleDeclarationUpdatePayload,
+  isStyleSourceLocked,
+} from "@webstudio-is/project-build/runtime/styles";
+import { applyBuilderPatchPayloadMutable } from "~/shared/instance-utils/data";
 
 type StyleUpdate =
   | {
@@ -101,41 +105,45 @@ const publishUpdates = (
     (styleSourceSelections, styleSources, styles) => {
       const instanceId = selectedInstance.id;
       const breakpointId = selectedBreakpoint.id;
-      // set only selected style source and update selection with it
-      // generated local style source will not be written if not selected
-      styleSources.set(selectedStyleSource.id, selectedStyleSource);
-      const selectionValues =
-        styleSourceSelections.get(instanceId)?.values ?? [];
-      if (
-        selectionValues.includes(styleSourceSelector.styleSourceId) === false
-      ) {
-        styleSourceSelections.set(instanceId, {
-          instanceId,
-          values: [...selectionValues, styleSourceSelector.styleSourceId],
-        });
-      }
-
       for (const update of updates) {
         if (update.operation === "set") {
-          const styleDecl: StyleDecl = {
-            breakpointId,
-            styleSourceId: styleSourceSelector.styleSourceId,
-            state: styleSourceSelector.state,
-            property: camelCaseProperty(update.property),
-            value: update.value,
-            listed: options.listed,
-          };
-          styles.set(getStyleDeclKey(styleDecl), styleDecl);
+          applyBuilderPatchPayloadMutable(
+            { styleSourceSelections, styleSources, styles },
+            createSelectedStyleDeclarationUpdatePayload({
+              updates: [
+                {
+                  instanceId,
+                  styleSource: selectedStyleSource,
+                  styleSourceId: styleSourceSelector.styleSourceId,
+                  breakpoint: breakpointId,
+                  state: styleSourceSelector.state,
+                  property: camelCaseProperty(update.property),
+                  value: update.value,
+                  listed: options.listed,
+                },
+              ],
+              styleSources,
+              styleSourceSelections: styleSourceSelections.values(),
+              styles: styles.values(),
+            }).payload
+          );
         }
 
         if (update.operation === "delete") {
-          const styleDeclKey = getStyleDeclKey({
-            breakpointId,
-            styleSourceId: styleSourceSelector.styleSourceId,
-            state: styleSourceSelector.state,
-            property: camelCaseProperty(update.property),
-          });
-          styles.delete(styleDeclKey);
+          applyBuilderPatchPayloadMutable(
+            { styles },
+            createSelectedStyleDeclarationDeletePayload({
+              deletions: [
+                {
+                  styleSourceId: styleSourceSelector.styleSourceId,
+                  breakpoint: breakpointId,
+                  state: styleSourceSelector.state,
+                  property: camelCaseProperty(update.property),
+                },
+              ],
+              styles: styles.values(),
+            }).payload
+          );
         }
       }
     }

@@ -26,6 +26,7 @@ const initialLinks: Array<LinkOptions> = [
     canClone: false,
     canCopy: false,
     canPublish: false,
+    canUseApi: false,
   },
   {
     token: nanoid(),
@@ -34,6 +35,7 @@ const initialLinks: Array<LinkOptions> = [
     canClone: false,
     canCopy: false,
     canPublish: false,
+    canUseApi: false,
   },
   {
     token: nanoid(),
@@ -42,6 +44,7 @@ const initialLinks: Array<LinkOptions> = [
     canClone: false,
     canCopy: false,
     canPublish: false,
+    canUseApi: false,
   },
 ];
 
@@ -73,6 +76,7 @@ const useShareProject = (
         canClone: false,
         canCopy: false,
         canPublish: false,
+        canUseApi: false,
       },
     ]);
   };

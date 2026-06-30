@@ -1,26 +1,8 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Folder, Page, Pages } from "@webstudio-is/sdk";
 import { ROOT_FOLDER_ID } from "@webstudio-is/sdk";
 import type { Values } from "./shared";
-
-const mocks = vi.hoisted(() => ({
-  isPathAvailable: vi.fn(() => true),
-}));
-
-vi.mock("../page-utils", () => ({
-  registerFolderChildMutable: () => undefined,
-  cleanupChildRefsMutable: () => undefined,
-  duplicatePage: () => undefined,
-  nameToPath: (_pages: unknown, name: string) =>
-    name === "" ? "" : `/${name.toLowerCase()}`,
-  isPathAvailable: mocks.isPathAvailable,
-  $pageRootScope: {
-    get: () => ({ variableValues: new Map(), scope: {}, aliases: new Map() }),
-    subscribe: () => () => undefined,
-  },
-}));
-
-const { __testing__ } = await import("./page-settings");
+import { __testing__ } from "./page-settings";
 
 const {
   addContentModePathError,
@@ -206,11 +188,12 @@ describe("addContentModePathError", () => {
 
 describe("validateValues", () => {
   test("accumulates duplicate path errors from the general section", () => {
-    mocks.isPathAvailable.mockReturnValueOnce(false);
+    const currentPage = createPage({ id: "page-id", path: "/current" });
+    const existingPage = createPage({ id: "existing", path: "/taken" });
 
     const errors = validateValues(
-      createPages(),
-      "page-id",
+      createPages({ pages: [homePage, currentPage, existingPage] }),
+      currentPage.id,
       createValues({
         path: "/taken",
       }),

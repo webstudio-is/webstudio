@@ -20,7 +20,7 @@ import type { Instance, StyleSource } from "@webstudio-is/sdk";
 import { $styleSources } from "~/shared/sync/data-stores";
 import { $selectedStyleSources } from "~/shared/nano-states";
 import { $styles, $breakpoints } from "~/shared/sync/data-stores";
-import { findDuplicateTokens } from "~/shared/style-source-utils";
+import { findDuplicateTokens } from "@webstudio-is/project-build/runtime/styles";
 import { $styleSourceUsages } from "~/builder/shared/style-source-actions";
 import { InstanceList, showInstance } from "../shared/instance-list";
 import {

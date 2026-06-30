@@ -702,7 +702,8 @@ CREATE TABLE public."AuthorizationToken" (
     "createdAt" timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "canClone" boolean DEFAULT true NOT NULL,
     "canCopy" boolean DEFAULT true NOT NULL,
-    "canPublish" boolean DEFAULT false NOT NULL
+    "canPublish" boolean DEFAULT false NOT NULL,
+    "canUseApi" boolean DEFAULT false NOT NULL
 );
 
 
@@ -1458,4 +1459,3 @@ ALTER TABLE ONLY public."latestBuildVirtual"
 --
 
 \unrestrict J29mZQHzSYuDPm8eRJiWoDBJq2TAh0b0ii1URRuunEM0BP9wmmC5I93noDiexdr
-

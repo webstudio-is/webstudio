@@ -10,8 +10,10 @@ import { logoutRouter } from "./logout-router.server";
 import { notificationRouter } from "./notification-router.server";
 import { workspaceRouter } from "./workspace-router.server";
 import { buildRouter } from "./build-router.server";
+import { apiRouter } from "./api-router.server";
 
 export const appRouter = router({
+  api: apiRouter,
   build: buildRouter,
   user: userRouter,
   marketplace: marketplaceRouter,

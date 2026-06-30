@@ -3,7 +3,9 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
-import { ShareProject, type LinkOptions } from "./share-project";
+import { ShareProject, __testing__, type LinkOptions } from "./share-project";
+
+const { getApiPermissionDescription } = __testing__;
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -18,6 +20,7 @@ const link: LinkOptions = {
   canCopy: false,
   canClone: false,
   canPublish: false,
+  canUseApi: false,
 };
 
 const getElement = <ElementType extends Element>(selector: string) => {
@@ -40,6 +43,18 @@ const getControlByLabel = <ElementType extends HTMLElement>(text: string) => {
     throw new Error(`Expected control for label "${text}"`);
   }
   return control as ElementType;
+};
+
+const hasLabel = (text: string) => {
+  return Array.from(document.querySelectorAll("label")).some(
+    (label) => label.textContent === text
+  );
+};
+
+const countLabels = (text: string) => {
+  return Array.from(document.querySelectorAll("label")).filter(
+    (label) => label.textContent === text
+  ).length;
 };
 
 const click = (element: Element) => {
@@ -67,9 +82,19 @@ const focusOut = (element: Element, relatedTarget: EventTarget) => {
   });
 };
 
+const keyDown = (element: Element, key: string) => {
+  act(() => {
+    element.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key }));
+  });
+};
+
 const renderShareProject = ({
+  allowAdditionalPermissions = true,
+  linkOptions = link,
   onChange,
 }: {
+  allowAdditionalPermissions?: boolean;
+  linkOptions?: LinkOptions;
   onChange: (value: LinkOptions) => void;
 }) => {
   const container = document.createElement("div");
@@ -80,15 +105,15 @@ const renderShareProject = ({
     root?.render(
       createElement(TooltipProvider, {
         children: createElement(ShareProject, {
-          links: [link],
+          links: [linkOptions],
           onChange,
           onDelete: vi.fn(),
           onCreate: vi.fn(),
           builderUrl: ({ authToken }) =>
             `https://example.com?token=${authToken}`,
           isPending: false,
-          allowAdditionalPermissions: true,
-          isFreePlan: false,
+          allowAdditionalPermissions,
+          isFreePlan: allowAdditionalPermissions === false,
         }),
       })
     );
@@ -104,12 +129,58 @@ afterEach(() => {
 });
 
 describe("ShareProject", () => {
+  test("documents api permissions per role", () => {
+    expect(
+      getApiPermissionDescription({
+        role: "viewers",
+        canPublish: false,
+      })
+    ).toBe(
+      "Allows read-only API access: inspect permissions, project/build snapshots, pages, folders, instances, text, styles, variables, resources, assets, publish history, domains, and asset usage."
+    );
+    expect(
+      getApiPermissionDescription({
+        role: "editors",
+        canPublish: false,
+      })
+    ).toBe(
+      "Allows viewer API access and content-mode text and prop changes. Enable Can publish to allow publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains."
+    );
+    expect(
+      getApiPermissionDescription({
+        role: "editors",
+        canPublish: true,
+      })
+    ).toBe(
+      "Allows viewer API access, content-mode text and prop changes, plus publishing and unpublishing project and custom domains. It cannot change pages, design data, assets, variables, resources, or domains."
+    );
+    expect(
+      getApiPermissionDescription({
+        role: "builders",
+        canPublish: false,
+      })
+    ).toBe(
+      "Allows read and build API access: pages, folders, instances, text, props, styles, design tokens, CSS variables, data variables, resources, assets, patches, and project-domain publish/unpublish."
+    );
+    expect(
+      getApiPermissionDescription({
+        role: "administrators",
+        canPublish: true,
+      })
+    ).toBe(
+      "Allows full project API access: all read, content, build, asset, publish/unpublish, and domain management operations."
+    );
+  });
+
   test("saves share link permission changes when link options close", () => {
     const onChange = vi.fn();
     renderShareProject({ onChange });
 
     const optionsButton = getElement('[aria-label="Menu Button for options"]');
     click(optionsButton);
+
+    expect(hasLabel("Can publish")).toBe(false);
+
     click(getControlByLabel("Editor"));
 
     const publishCheckbox = getControlByLabel<HTMLButtonElement>("Can publish");
@@ -125,6 +196,134 @@ describe("ShareProject", () => {
       ...link,
       relation: "editors",
       canPublish: true,
+    });
+  });
+
+  test("shows advanced permissions only for the selected permission", () => {
+    const onChange = vi.fn();
+    renderShareProject({ onChange });
+
+    click(getElement('[aria-label="Menu Button for options"]'));
+
+    expect(getControlByLabel<HTMLButtonElement>("Can clone")).toBeInstanceOf(
+      HTMLButtonElement
+    );
+    expect(getControlByLabel<HTMLButtonElement>("Can copy")).toBeInstanceOf(
+      HTMLButtonElement
+    );
+    expect(hasLabel("Can publish")).toBe(false);
+    expect(countLabels("API")).toBe(1);
+
+    click(getControlByLabel("Builder"));
+
+    expect(hasLabel("Can clone")).toBe(false);
+    expect(hasLabel("Can copy")).toBe(false);
+    expect(hasLabel("Can publish")).toBe(false);
+    expect(countLabels("API")).toBe(1);
+  });
+
+  test("saves api permission as an additive capability", () => {
+    const onChange = vi.fn();
+    renderShareProject({ onChange });
+
+    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    click(optionsButton);
+
+    const apiCheckbox = getControlByLabel<HTMLButtonElement>("API");
+    expect(apiCheckbox.disabled).toBe(false);
+    click(apiCheckbox);
+    click(optionsButton);
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...link,
+      canUseApi: true,
+    });
+  });
+
+  test("disables api permission when it requires an upgrade", () => {
+    const onChange = vi.fn();
+    renderShareProject({
+      allowAdditionalPermissions: false,
+      onChange,
+    });
+
+    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    click(optionsButton);
+
+    const apiCheckbox = getControlByLabel<HTMLButtonElement>("API");
+    expect(apiCheckbox.disabled).toBe(true);
+    click(apiCheckbox);
+    click(optionsButton);
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  test("disables missing api permission when it requires an upgrade", () => {
+    const onChange = vi.fn();
+    renderShareProject({
+      allowAdditionalPermissions: false,
+      linkOptions: {
+        ...link,
+        canUseApi: undefined as unknown as boolean,
+      },
+      onChange,
+    });
+
+    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    click(optionsButton);
+
+    const apiCheckbox = getControlByLabel<HTMLButtonElement>("API");
+    expect(apiCheckbox.disabled).toBe(true);
+    click(apiCheckbox);
+    click(optionsButton);
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  test("allows removing existing api permission without an upgrade", () => {
+    const onChange = vi.fn();
+    renderShareProject({
+      allowAdditionalPermissions: false,
+      linkOptions: {
+        ...link,
+        canUseApi: true,
+      },
+      onChange,
+    });
+
+    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    click(optionsButton);
+
+    const apiCheckbox = getControlByLabel<HTMLButtonElement>("API");
+    expect(apiCheckbox.disabled).toBe(false);
+    click(apiCheckbox);
+    click(optionsButton);
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...link,
+      canUseApi: false,
+    });
+  });
+
+  test("keeps api permission when changing high-level permission", () => {
+    const onChange = vi.fn();
+    renderShareProject({
+      linkOptions: {
+        ...link,
+        canUseApi: true,
+      },
+      onChange,
+    });
+
+    const optionsButton = getElement('[aria-label="Menu Button for options"]');
+    click(optionsButton);
+    click(getControlByLabel("Builder"));
+    click(optionsButton);
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...link,
+      relation: "builders",
+      canUseApi: true,
     });
   });
 
@@ -152,6 +351,22 @@ describe("ShareProject", () => {
     const nameInput = getElement<HTMLInputElement>('input[name="Name"]');
     input(nameInput, "Renamed link");
     click(optionsButton);
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...link,
+      name: "Renamed link",
+    });
+  });
+
+  test("saves current link name when pressing enter immediately after typing", () => {
+    const onChange = vi.fn();
+    renderShareProject({ onChange });
+
+    click(getElement('[aria-label="Menu Button for options"]'));
+
+    const nameInput = getElement<HTMLInputElement>('input[name="Name"]');
+    input(nameInput, "Renamed link");
+    keyDown(nameInput, "Enter");
 
     expect(onChange).toHaveBeenCalledWith({
       ...link,

@@ -15,6 +15,7 @@ import {
   toast,
 } from "@webstudio-is/design-system";
 import type { Instance, StyleSource } from "@webstudio-is/sdk";
+import type { RenameStyleSourceError } from "@webstudio-is/project-build/runtime/styles";
 import {
   $selectedStyleSources,
   $selectedStyleState,
@@ -23,13 +24,12 @@ import { $styleSources } from "~/shared/sync/data-stores";
 import { $styleSourceSelections, $styles } from "~/shared/sync/data-stores";
 import {
   deleteStyleSourceMutable,
-  findUnusedTokens,
   deleteStyleSourcesMutable,
-  validateAndRenameStyleSource,
+  findUnusedTokens,
   renameStyleSourceMutable,
   toggleStyleSourceLockMutable,
-  type RenameStyleSourceError,
-} from "~/shared/style-source-utils";
+  validateAndRenameStyleSource,
+} from "@webstudio-is/project-build/runtime/styles";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $selectedInstance } from "~/shared/nano-states";
 
@@ -57,7 +57,9 @@ export const $styleSourceUsages = computed(
   }
 );
 
-const deselectMatchingStyleSource = (styleSourceId: StyleSource["id"]) => {
+export const deselectMatchingStyleSource = (
+  styleSourceId: StyleSource["id"]
+) => {
   const instanceId = $selectedInstance.get()?.id;
   if (instanceId === undefined) {
     return;

@@ -12,7 +12,7 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
-import { computeExpression } from "~/shared/data-variables";
+import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import { ImageControl } from "~/shared/project-settings";
 import { $assets } from "~/shared/sync/data-stores";
 import { isLiteralExpression } from "@webstudio-is/sdk";

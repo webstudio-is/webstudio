@@ -10,6 +10,7 @@ export {
 
 export {
   AuthorizationError,
+  PlanRequiredError,
   createErrorResponse,
 } from "./context/errors.server";
 export * as authorizeProject from "./authorize/project.server";

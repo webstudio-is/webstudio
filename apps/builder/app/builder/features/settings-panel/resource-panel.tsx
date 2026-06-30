@@ -14,7 +14,6 @@ import { useStore } from "@nanostores/react";
 import {
   type DataSources,
   type Resource,
-  resource,
   type DataSource,
   type Page,
   type PageTemplate,
@@ -71,7 +70,10 @@ import {
   type InstancePath,
 } from "~/shared/nano-states";
 import { updateWebstudioData } from "~/shared/instance-utils/data";
-import { rebindTreeVariablesMutable } from "~/shared/data-variables";
+import {
+  createResourceValue,
+  upsertResourceMutable,
+} from "@webstudio-is/project-build/runtime/data";
 import { parseCurl, type CurlRequest } from "./curl";
 
 export const parseResource = ({
@@ -89,7 +91,7 @@ export const parseResource = ({
   const searchParamValues = formData.getAll("search-param-value") as string[];
   const headerNames = formData.getAll("header-name") as string[];
   const headerValues = formData.getAll("header-value") as string[];
-  return resource.parse({
+  return createResourceValue({
     id,
     control,
     name: name ?? formData.get("name"),
@@ -101,7 +103,6 @@ export const parseResource = ({
     headers: headerNames
       .map((name, index) => ({ name, value: headerValues[index] }))
       .filter((item) => item.name.trim()),
-    // use undefined instead of empty string
     body: formData.get("body") || undefined,
   });
 };
@@ -878,11 +879,12 @@ export const ResourceForm = forwardRef<
         resourceId: newResource.id,
       };
       updateWebstudioData((data) => {
-        data.dataSources.set(newVariable.id, newVariable);
-        data.resources.set(newResource.id, newResource);
-        rebindTreeVariablesMutable({
-          startingInstanceId: scopeInstanceId,
-          ...data,
+        upsertResourceMutable({
+          data,
+          resource: newResource,
+          dataSourceId: newVariable.id,
+          scopeInstanceId,
+          dataSourceName: newVariable.name,
         });
       });
     },
@@ -1037,11 +1039,12 @@ export const SystemResourceForm = forwardRef<
         resourceId: newResource.id,
       };
       updateWebstudioData((data) => {
-        data.dataSources.set(newVariable.id, newVariable);
-        data.resources.set(newResource.id, newResource);
-        rebindTreeVariablesMutable({
-          startingInstanceId: scopeInstanceId,
-          ...data,
+        upsertResourceMutable({
+          data,
+          resource: newResource,
+          dataSourceId: newVariable.id,
+          scopeInstanceId,
+          dataSourceName: newVariable.name,
         });
       });
     },
@@ -1145,11 +1148,12 @@ export const GraphqlResourceForm = forwardRef<
         resourceId: newResource.id,
       };
       updateWebstudioData((data) => {
-        data.dataSources.set(newVariable.id, newVariable);
-        data.resources.set(newResource.id, newResource);
-        rebindTreeVariablesMutable({
-          startingInstanceId: scopeInstanceId,
-          ...data,
+        upsertResourceMutable({
+          data,
+          resource: newResource,
+          dataSourceId: newVariable.id,
+          scopeInstanceId,
+          dataSourceName: newVariable.name,
         });
       });
     },

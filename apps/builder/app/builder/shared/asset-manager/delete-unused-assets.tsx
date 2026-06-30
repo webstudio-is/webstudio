@@ -18,7 +18,7 @@ import type { Asset } from "@webstudio-is/sdk";
 import { $assets, $pages, $props, $styles } from "~/shared/sync/data-stores";
 import { deleteAssets } from "~/builder/shared/assets";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
-import { calculateUsagesByAssetId } from "./asset-info";
+import { calculateUsagesByAssetId } from "@webstudio-is/project-build/runtime/assets";
 
 const $isDeleteUnusedAssetsDialogOpen = atom(false);
 

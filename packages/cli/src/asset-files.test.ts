@@ -10,11 +10,7 @@ import {
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import type { Asset } from "@webstudio-is/sdk";
-import {
-  getLocalAssetPath,
-  materializeAssetFile,
-  uploadAssetFiles,
-} from "./asset-files";
+import { getLocalAssetPath, materializeAssetFile } from "./asset-files";
 
 const originalCwd = process.cwd();
 let tempDir: string;
@@ -28,12 +24,6 @@ const asset = {
   format: "png",
   size: 6,
   meta: { width: 1, height: 1 },
-} satisfies Asset;
-
-const otherAsset = {
-  ...asset,
-  id: "asset-2",
-  name: "other.png",
 } satisfies Asset;
 
 beforeEach(async () => {
@@ -131,103 +121,4 @@ test("fails clearly when asset download response has no body", async () => {
 
   await expect(access("public/assets/image.png")).rejects.toThrow();
   await expect(access("public/assets/image.png.tmp")).rejects.toThrow();
-});
-
-test("uploads assets as binary requests", async () => {
-  await mkdir(".webstudio/assets", { recursive: true });
-  await writeFile(".webstudio/assets/image.png", "synced", "utf8");
-  const fetch = vi.fn(
-    async () =>
-      new Response(JSON.stringify({ ok: true }), {
-        headers: { "content-type": "application/json" },
-      })
-  );
-  globalThis.fetch = fetch;
-
-  await uploadAssetFiles({
-    assets: [asset],
-    authToken: "token",
-    origin: "https://apps.webstudio.is",
-    projectId: "project-1",
-  });
-
-  expect(fetch).toHaveBeenCalledOnce();
-  const [, init] = fetch.mock.calls[0] as unknown as [URL, RequestInit];
-  expect(init.body).toBeInstanceOf(Blob);
-  await expect((init.body as Blob).text()).resolves.toBe("synced");
-});
-
-test("retries failed asset uploads once", async () => {
-  await mkdir(".webstudio/assets", { recursive: true });
-  await writeFile(".webstudio/assets/image.png", "synced", "utf8");
-  const fetch = vi
-    .fn()
-    .mockResolvedValueOnce(
-      new Response(JSON.stringify({ errors: "Temporary failure" }), {
-        headers: { "content-type": "application/json" },
-      })
-    )
-    .mockResolvedValueOnce(
-      new Response(JSON.stringify({ ok: true }), {
-        headers: { "content-type": "application/json" },
-      })
-    );
-  globalThis.fetch = fetch;
-
-  await uploadAssetFiles({
-    assets: [asset],
-    authToken: "token",
-    origin: "https://apps.webstudio.is",
-    projectId: "project-1",
-  });
-
-  expect(fetch).toHaveBeenCalledTimes(2);
-});
-
-test("reports all asset uploads that fail after retry", async () => {
-  await mkdir(".webstudio/assets", { recursive: true });
-  await writeFile(".webstudio/assets/image.png", "synced", "utf8");
-  await writeFile(".webstudio/assets/other.png", "other", "utf8");
-  const fetch = vi.fn(
-    async () =>
-      new Response(JSON.stringify({ errors: "Upload failed" }), {
-        headers: { "content-type": "application/json" },
-      })
-  );
-  globalThis.fetch = fetch;
-
-  let message = "";
-  try {
-    await uploadAssetFiles({
-      assets: [asset, otherAsset],
-      authToken: "token",
-      origin: "https://apps.webstudio.is",
-      projectId: "project-1",
-    });
-  } catch (error) {
-    message = error instanceof Error ? error.message : String(error);
-  }
-
-  expect(message).toContain("Failed to upload assets:");
-  expect(message).toContain("image.png: Upload failed");
-  expect(message).toContain("other.png: Upload failed");
-  expect(fetch).toHaveBeenCalledTimes(4);
-});
-
-test("reports missing local asset files with upload failures", async () => {
-  let message = "";
-  try {
-    await uploadAssetFiles({
-      assets: [asset],
-      authToken: "token",
-      origin: "https://apps.webstudio.is",
-      projectId: "project-1",
-    });
-  } catch (error) {
-    message = error instanceof Error ? error.message : String(error);
-  }
-
-  expect(message).toContain("Failed to upload assets:");
-  expect(message).toContain("image.png:");
-  expect(message).toContain("no such file or directory");
 });

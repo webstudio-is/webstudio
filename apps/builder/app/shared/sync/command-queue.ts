@@ -1,13 +1,13 @@
 import type { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
-import type { Change } from "immerhin";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
 import type { Transaction } from "@webstudio-is/sync-client";
 
 type Command =
   | {
       type: "transactions";
       projectId: Project["id"];
-      transactions: Transaction<Change[]>[];
+      transactions: Transaction<BuilderPatchChange[]>[];
     }
   | {
       type: "setDetails";

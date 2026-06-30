@@ -1,4 +1,8 @@
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import {
+  applyBuilderPatchPayloadMutable,
+  updateWebstudioData,
+} from "~/shared/instance-utils/data";
+import { isFragmentContentModeCopyableProp } from "~/shared/content-mode-copy-policy";
 import { computed } from "nanostores";
 import slugify from "slugify";
 import {
@@ -8,19 +12,20 @@ import {
   type WebstudioData,
   type Pages,
   findPageByIdOrPath,
-  getPagePath,
   findParentFolderByChildId,
-  getAllFolders,
-  getAllPages,
   getFolderById,
   encodeDataSourceVariable,
   ROOT_INSTANCE_ID,
   systemParameter,
   SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
-import { deleteInstanceMutable } from "~/shared/instance-utils/mutation";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
-import { $dataSources, $pages } from "~/shared/sync/data-stores";
+import { $dataSources, $pages, $project } from "~/shared/sync/data-stores";
+import { getFolderDeletionTargets } from "@webstudio-is/project-build/runtime/pages";
+import {
+  collectExclusiveInstanceIds,
+  createInstanceCleanupPayload,
+} from "@webstudio-is/project-build/runtime/instances";
 import {
   createFolderCopyData,
   createTemplateCopyData,
@@ -28,11 +33,12 @@ import {
   insertPageCopyMutable,
   insertPageFromTemplateMutable,
   insertTemplateCopyFromFragmentsMutable,
-} from "~/shared/page-utils";
+} from "@webstudio-is/project-build/runtime/page-copy";
+import { cleanupChildRefsMutable } from "~/shared/page-utils/tree";
 import {
   $selectedPage,
+  $registeredComponentMetas,
   getInstanceKey,
-  getInstancePath,
 } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
 
@@ -55,205 +61,23 @@ export const nameToPath = (pages: Pages | undefined, name: string) => {
   return `${path}${suffix}`;
 };
 
-/**
- * When page or folder needs to be deleted or moved to a different parent,
- * we want to cleanup any existing reference to it in current folder.
- * We could do this in just one folder, but I think its more robust to check all,
- * just in case we got double referencing.
- */
-export const cleanupChildRefsMutable = (
-  id: Folder["id"] | Page["id"],
-  folders: Pages["folders"]
+const deleteRootInstanceMutable = (
+  data: WebstudioData,
+  rootInstanceId: string
 ) => {
-  for (const folder of Array.from(folders.values())) {
-    folder.children = folder.children.filter((childId) => childId !== id);
-  }
-};
-
-/**
- * When page or folder is found and its not referenced in any other folder children,
- * we consider it orphaned due to collaborative changes and we put it into the root folder.
- */
-export const reparentOrphansMutable = (pages: Pages) => {
-  const children = [pages.rootFolderId];
-  for (const folder of getAllFolders(pages)) {
-    children.push(...folder.children);
-  }
-
-  let rootFolder = getFolderById(pages, pages.rootFolderId);
-  // Should never happen, but just in case.
-  if (rootFolder === undefined) {
-    rootFolder = {
-      id: pages.rootFolderId,
-      name: "Root",
-      slug: "",
-      children: [],
-    };
-    pages.folders.set(rootFolder.id, rootFolder);
-  }
-
-  if (pages.pages.has(pages.homePageId)) {
-    let homePageRefCount = 0;
-    for (const folder of getAllFolders(pages)) {
-      for (const childId of folder.children) {
-        if (childId === pages.homePageId) {
-          homePageRefCount += 1;
-        }
-      }
-    }
-    if (rootFolder.children[0] !== pages.homePageId || homePageRefCount !== 1) {
-      cleanupChildRefsMutable(pages.homePageId, pages.folders);
-      rootFolder.children.unshift(pages.homePageId);
-      children.push(pages.homePageId);
-    }
-  }
-
-  for (const folder of getAllFolders(pages)) {
-    // It's an orphan
-    if (children.includes(folder.id) === false) {
-      rootFolder.children.push(folder.id);
-    }
-  }
-
-  for (const page of getAllPages(pages)) {
-    // It's an orphan
-    if (children.includes(page.id) === false) {
-      rootFolder.children.push(page.id);
-    }
-  }
-};
-
-/**
- * Returns true if folder's slug is unique within it's future parent folder.
- * Needed to verify if the folder can be nested under the parent folder without modifying slug.
- */
-export const isSlugAvailable = (
-  slug: string,
-  folders: Pages["folders"],
-  parentFolderId: Folder["id"],
-  // undefined folder id means new folder
-  folderId?: Folder["id"]
-) => {
-  // Empty slug can appear any amount of times.
-  if (slug === "") {
-    return true;
-  }
-  const parentFolder = folders.get(parentFolderId);
-  // Should be impossible because at least root folder is always found.
-  if (parentFolder === undefined) {
-    return false;
-  }
-
-  return (
-    parentFolder.children.some(
-      (id) => folders.get(id)?.slug === slug && id !== folderId
-    ) === false
+  applyBuilderPatchPayloadMutable(
+    data,
+    createInstanceCleanupPayload({
+      instanceIds: collectExclusiveInstanceIds(data.instances, [
+        rootInstanceId,
+      ]),
+      props: data.props?.values() ?? [],
+      dataSources: data.dataSources?.values() ?? [],
+      styleSources: data.styleSources?.values() ?? [],
+      styleSourceSelections: data.styleSourceSelections?.values() ?? [],
+      styles: data.styles?.values() ?? [],
+    })
   );
-};
-
-export const isPathAvailable = ({
-  pages,
-  path,
-  parentFolderId,
-  pageId,
-}: {
-  pages: Pages;
-  path: Page["path"];
-  parentFolderId: Folder["id"];
-  // undefined page id means new page
-  pageId?: Page["id"];
-}) => {
-  const map = new Map<Page["path"], Page>();
-  const allPages = getAllPages(pages);
-  for (const page of allPages) {
-    map.set(getPagePath(page.id, pages), page);
-  }
-  const folderPath = getPagePath(parentFolderId, pages);
-  // When slug is empty, folderPath is "/".
-  const pagePath = folderPath === "/" ? path : `${folderPath}${path}`;
-  const existingPage = map.get(pagePath);
-  // We found another page that has the same path and the current page.
-  if (pageId && existingPage?.id === pageId) {
-    return true;
-  }
-  return existingPage === undefined;
-};
-
-/**
- * - Register a folder or a page inside children of a given parent folder.
- * - Fallback to a root folder.
- * - Cleanup any potential references in other folders.
- */
-export const registerFolderChildMutable = (
-  pages: Pick<Pages, "folders" | "rootFolderId">,
-  id: Page["id"] | Folder["id"],
-  // In case we couldn't find the current folder during update for any reason,
-  // we will always fall back to the root folder.
-  parentFolderId?: Folder["id"]
-) => {
-  const { folders } = pages;
-  const parentFolder =
-    (parentFolderId === undefined ? undefined : folders.get(parentFolderId)) ??
-    folders.get(pages.rootFolderId);
-  cleanupChildRefsMutable(id, folders);
-  parentFolder?.children.push(id);
-};
-
-export const reparentPageOrFolderMutable = (
-  folders: Pages["folders"],
-  pageOrFolderId: string,
-  newFolderId: string,
-  newPosition: number
-) => {
-  const childrenAndSelf = getAllChildrenAndSelf(
-    pageOrFolderId,
-    folders,
-    "folder"
-  );
-  // make sure target folder is not self or descendants
-  if (childrenAndSelf.includes(newFolderId)) {
-    return;
-  }
-  const prevParent = findParentFolderByChildId(pageOrFolderId, folders);
-  const nextParent = folders.get(newFolderId);
-  if (prevParent === undefined || nextParent === undefined) {
-    return;
-  }
-  // if parent is the same, we need to adjust the position
-  // to account for the removal of the instance.
-  const prevPosition = prevParent.children.indexOf(pageOrFolderId);
-  if (prevPosition === -1) {
-    return;
-  }
-  if (prevParent.id === nextParent.id && prevPosition < newPosition) {
-    newPosition -= 1;
-  }
-  prevParent.children.splice(prevPosition, 1);
-  nextParent.children.splice(newPosition, 0, pageOrFolderId);
-};
-
-/**
- * Get all child folder ids of the current folder including itself.
- */
-export const getAllChildrenAndSelf = (
-  id: Folder["id"] | Page["id"],
-  folders: Pages["folders"],
-  filter: "folder" | "page"
-) => {
-  const child = folders.get(id);
-  const children: Array<Folder["id"]> = [];
-  const type = child === undefined ? "page" : "folder";
-
-  if (type === filter) {
-    children.push(id);
-  }
-
-  if (child) {
-    for (const childId of child.children) {
-      children.push(...getAllChildrenAndSelf(childId, folders, filter));
-    }
-  }
-  return children;
 };
 
 /**
@@ -270,10 +94,7 @@ export const deletePageMutable = (pageId: Page["id"], data: WebstudioData) => {
   }
   const rootInstanceId = findPageByIdOrPath(pageId, data.pages)?.rootInstanceId;
   if (rootInstanceId !== undefined) {
-    deleteInstanceMutable(
-      data,
-      getInstancePath([rootInstanceId], data.instances)
-    );
+    deleteRootInstanceMutable(data, rootInstanceId);
   }
   pages.pages.delete(pageId);
   cleanupChildRefsMutable(pageId, data.pages.folders);
@@ -288,21 +109,7 @@ export const deleteFolderWithChildrenMutable = (
   pages: Pages
 ) => {
   const { folders } = pages;
-  const folder = folders.get(folderId);
-  if (folder === undefined || folderId === pages.rootFolderId) {
-    return {
-      folderIds: [],
-      pageIds: [],
-    };
-  }
-  const folderIds = getAllChildrenAndSelf(folderId, folders, "folder");
-  const pageIds = getAllChildrenAndSelf(folderId, folders, "page");
-  if (pageIds.includes(pages.homePageId)) {
-    return {
-      folderIds: [],
-      pageIds: [],
-    };
-  }
+  const { folderIds, pageIds } = getFolderDeletionTargets(folderId, pages);
   for (const folderId of folderIds) {
     cleanupChildRefsMutable(folderId, folders);
     folders.delete(folderId);
@@ -344,12 +151,13 @@ export const $pageRootScope = computed(
 );
 
 export const duplicatePage = (pageId: Page["id"]) => {
+  const projectId = $project.get()?.id;
   const pages = $pages.get();
   const currentFolder =
     pages === undefined
       ? undefined
       : findParentFolderByChildId(pageId, pages.folders);
-  if (currentFolder === undefined) {
+  if (currentFolder === undefined || projectId === undefined) {
     return;
   }
   let newPageId: undefined | string;
@@ -357,18 +165,20 @@ export const duplicatePage = (pageId: Page["id"]) => {
     newPageId = insertPageCopyMutable({
       source: { data, pageId },
       target: { data, folderId: currentFolder.id },
+      projectId,
     });
   });
   return newPageId;
 };
 
 export const duplicateFolder = (folderId: Folder["id"]) => {
+  const projectId = $project.get()?.id;
   const pages = $pages.get();
   const currentFolder =
     pages === undefined
       ? undefined
       : findParentFolderByChildId(folderId, pages.folders);
-  if (currentFolder === undefined) {
+  if (currentFolder === undefined || projectId === undefined) {
     return;
   }
   let newFolderId: undefined | string;
@@ -378,6 +188,7 @@ export const duplicateFolder = (folderId: Folder["id"]) => {
       newFolderId = insertFolderCopyFromDataMutable({
         source: copyData,
         target: { data, parentFolderId: currentFolder.id },
+        projectId,
         forceFolderCopySuffix: true,
       });
     }
@@ -458,17 +269,15 @@ export const deleteTemplateMutable = (
   if (template === undefined) {
     return;
   }
-  deleteInstanceMutable(
-    data,
-    getInstancePath([template.rootInstanceId], data.instances)
-  );
+  deleteRootInstanceMutable(data, template.rootInstanceId);
   data.pages.pageTemplates?.delete(templateId);
 };
 
 export const duplicateTemplate = (templateId: PageTemplate["id"]) => {
+  const projectId = $project.get()?.id;
   const pages = $pages.get();
   const template = pages?.pageTemplates?.get(templateId);
-  if (template === undefined) {
+  if (template === undefined || projectId === undefined) {
     return;
   }
   let newTemplateId: undefined | string;
@@ -484,6 +293,7 @@ export const duplicateTemplate = (templateId: PageTemplate["id"]) => {
         bodyFragment: copyData.bodyFragment,
       },
       target: { data },
+      projectId,
     });
   });
   return newTemplateId;
@@ -500,6 +310,10 @@ export const instantiateTemplate = ({
   folderId: Folder["id"];
   contentMode?: boolean;
 }) => {
+  const projectId = $project.get()?.id;
+  if (projectId === undefined) {
+    return;
+  }
   let newPageId: undefined | string;
   updateWebstudioData((data) => {
     newPageId = insertPageFromTemplateMutable({
@@ -507,6 +321,9 @@ export const instantiateTemplate = ({
       source: { data },
       target: { data, folderId },
       overrides,
+      projectId,
+      metas: $registeredComponentMetas.get(),
+      contentModeCopyableProp: isFragmentContentModeCopyableProp,
       contentMode,
     });
   });

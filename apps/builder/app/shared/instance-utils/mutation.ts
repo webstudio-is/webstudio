@@ -14,7 +14,6 @@ import {
   type WsComponentMeta,
   elementComponent,
   findTreeInstanceIds,
-  findTreeInstanceIdsExcludingSlotDescendants,
   isComponentDetachable,
 } from "@webstudio-is/sdk";
 import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
@@ -35,7 +34,11 @@ import { serverSyncStore } from "../sync/sync-stores";
 import {
   findAvailableVariables,
   rebindTreeVariablesMutable,
-} from "../data-variables";
+} from "@webstudio-is/project-build/runtime/data";
+import {
+  createInstanceChild,
+  getSameParentAdjustedInsertIndex,
+} from "@webstudio-is/project-build/runtime/instances";
 import {
   isRichTextContent,
   isTreeSatisfyingContentModel,
@@ -55,20 +58,27 @@ import {
 import {
   type DroppableTarget,
   type InstanceSelector,
-  findLocalStyleSourcesWithinInstances,
   getReparentDropTargetMutable,
 } from "./tree";
 import {
+  createInstanceDeletePayload,
+  findChildReferenceIndex,
+} from "@webstudio-is/project-build/runtime/instances";
+import {
+  applyBuilderPatchPayloadMutable,
   canDeleteInstanceInContentMode,
   updateInstanceData,
   updateWebstudioData,
   type WebstudioInstanceData,
 } from "./data";
 import {
+  createPropDeletePayload,
+  createPropRenamePayload,
+} from "@webstudio-is/project-build/runtime/props";
+import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-} from "./fragment";
-import { deleteLocalStyleSourcesMutable } from "../style-source-utils";
+} from "@webstudio-is/project-build/runtime/fragment";
 
 const getSlotChildrenSignature = (instance: Instance) => {
   return JSON.stringify(instance.children);
@@ -188,17 +198,6 @@ const countInstanceChildReferences = (
   return count;
 };
 
-const createInstanceChild = (instanceId: Instance["id"]) =>
-  ({ type: "id", value: instanceId }) as const;
-
-const findChildReferenceIndex = (
-  children: Instance["children"],
-  instanceId: Instance["id"]
-) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
-
 const removeChildReferenceMutable = (
   children: Instance["children"],
   instanceId: Instance["id"]
@@ -274,10 +273,10 @@ const reorderInstanceWithinParentMutable = (
     return;
   }
   // When parent is the same, account for removal before reinserting.
-  let nextPosition = dropTarget.position;
-  if (prevPosition < nextPosition) {
-    nextPosition -= 1;
-  }
+  const nextPosition = getSameParentAdjustedInsertIndex({
+    currentIndex: prevPosition,
+    requestedIndex: dropTarget.position,
+  });
   parent.children.splice(nextPosition, 0, child);
 };
 
@@ -319,10 +318,7 @@ const moveInstanceToParentMutable = (
 const getDeleteTarget = (
   instances: Instances,
   instancePath: InstancePath
-): {
-  targetInstance: Instance;
-  parentInstance?: Instance;
-} => {
+): Instance => {
   let targetInstance = instancePath[0].instance;
   let parentInstance = instancePath[1]?.instance;
   const grandparentInstance = instancePath[2]?.instance;
@@ -339,7 +335,7 @@ const getDeleteTarget = (
     parentInstance = grandparentInstance;
   }
 
-  return { targetInstance, parentInstance };
+  return targetInstance;
 };
 
 export const deleteInstanceMutable = (
@@ -353,72 +349,22 @@ export const deleteInstanceMutable = (
     data.instances,
     instancePath
   );
-  const {
-    instances,
-    props,
-    styleSourceSelections,
-    styleSources,
-    styles,
-    dataSources,
-    resources,
-  } = data;
-  const { targetInstance, parentInstance } = getDeleteTarget(
-    instances,
-    instancePath
-  );
-
-  const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
-    instances,
-    targetInstance.id
-  );
-  const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
-    styleSources.values(),
-    styleSourceSelections.values(),
-    instanceIds
-  );
-
-  // mutate instances from data instead of instance path
-  const parentToMutate = data.instances.get(parentInstance?.id as string);
-  // may not exist when delete root
-  if (parentToMutate) {
-    removeChildReferenceMutable(parentToMutate.children, targetInstance.id);
-  }
-
-  for (const instanceId of instanceIds) {
-    instances.delete(instanceId);
-  }
-  // delete props, data sources and styles of deleted instance and its descendants
-  for (const prop of props.values()) {
-    if (instanceIds.has(prop.instanceId)) {
-      props.delete(prop.id);
-      if (prop.type === "resource") {
-        resources.delete(prop.value);
-      }
-    }
-  }
-  for (const dataSource of dataSources.values()) {
-    if (instanceIds.has(dataSource.scopeInstanceId ?? "")) {
-      dataSources.delete(dataSource.id);
-      if (dataSource.type === "resource") {
-        resources.delete(dataSource.resourceId);
-      }
-    }
-  }
-  for (const instanceId of instanceIds) {
-    styleSourceSelections.delete(instanceId);
-  }
-  deleteLocalStyleSourcesMutable({
-    localStyleSourceIds,
-    styleSources,
-    styles,
+  const targetInstance = getDeleteTarget(data.instances, instancePath);
+  const { errors, payload } = createInstanceDeletePayload({
+    instances: data.instances,
+    instanceIds: [targetInstance.id],
+    props: data.props.values(),
+    dataSources: data.dataSources.values(),
+    styleSources: data.styleSources.values(),
+    styleSourceSelections: data.styleSourceSelections.values(),
+    styles: data.styles.values(),
   });
+  if (errors.length > 0) {
+    return false;
+  }
+  applyBuilderPatchPayloadMutable(data, payload);
   return true;
 };
-
-const getIdChildIndex = (children: Instance["children"], instanceId: string) =>
-  children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
 
 const getInstancePathSiblingIndex = (instancePath: InstancePath) => {
   const selectedItem = instancePath[0];
@@ -426,7 +372,7 @@ const getInstancePathSiblingIndex = (instancePath: InstancePath) => {
   if (parentItem === undefined) {
     return -1;
   }
-  return getIdChildIndex(
+  return findChildReferenceIndex(
     parentItem.instance.children,
     selectedItem.instance.id
   );
@@ -1030,19 +976,38 @@ export const convertInstance = (component: string, tag?: string) => {
       if (tag || component === elementComponent) {
         instance.tag = tag ?? instanceTags.get(selectedInstance.id) ?? "div";
         // delete legacy tag prop if specified
-        for (const prop of data.props.values()) {
+        for (const prop of Array.from(data.props.values())) {
           if (prop.instanceId !== selectedInstance.id) {
             continue;
           }
           if (prop.name === "tag") {
-            data.props.delete(prop.id);
+            applyBuilderPatchPayloadMutable(
+              data,
+              createPropDeletePayload({
+                deletions: [
+                  { instanceId: selectedInstance.id, name: prop.name },
+                ],
+                instances: data.instances,
+                props: data.props.values(),
+              }).payload
+            );
             continue;
           }
           const newName = reactPropsToStandardAttributes[prop.name];
           if (newName) {
-            const newId = `${prop.instanceId}:${newName}`;
-            data.props.delete(prop.id);
-            data.props.set(newId, { ...prop, id: newId, name: newName });
+            applyBuilderPatchPayloadMutable(
+              data,
+              createPropRenamePayload({
+                props: data.props.values(),
+                renames: [
+                  {
+                    propId: prop.id,
+                    name: newName,
+                    propIdPrefix: prop.instanceId,
+                  },
+                ],
+              }).payload
+            );
           }
         }
       }

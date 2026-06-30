@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/design-system";
 import { useEffect, useRef } from "react";
 import { $canvasWidth } from "~/builder/shared/nano-states";
-import { minCanvasWidth } from "~/shared/breakpoints";
+import { minCanvasWidth } from "~/shared/breakpoints-utils";
 import { $isResizingCanvas, $selectedBreakpointId } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 

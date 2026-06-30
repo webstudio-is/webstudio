@@ -4,18 +4,8 @@ import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import {
-  getAllPages,
-  getMimeTypeByExtension,
-  IMAGE_MIME_TYPES,
-} from "@webstudio-is/sdk";
-import type { Asset, Pages, Props, Styles, Instance } from "@webstudio-is/sdk";
-import type {
-  ImageValue,
-  FontFamilyValue,
-  StyleValue,
-} from "@webstudio-is/css-engine";
-import { mapGetOrInsert } from "~/shared/shim";
+import { getMimeTypeByExtension, IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
+import type { Asset, Instance } from "@webstudio-is/sdk";
 import {
   Box,
   Button,
@@ -82,112 +72,10 @@ import {
 } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
-
-type AssetUsage =
-  | { type: "favicon" }
-  | { type: "socialImage"; pageId: string }
-  | { type: "marketplaceThumbnail"; pageId: string }
-  | { type: "prop"; propId: string }
-  | { type: "style"; styleDeclKey: string };
-
-const traverseStyleValue = (
-  styleValue: StyleValue,
-  callback: (value: ImageValue | FontFamilyValue) => void
-) => {
-  if (styleValue.type === "image") {
-    callback(styleValue);
-  }
-  if (styleValue.type === "fontFamily") {
-    callback(styleValue);
-  }
-  if (styleValue.type === "tuple") {
-    for (const item of styleValue.value) {
-      traverseStyleValue(item, callback);
-    }
-  }
-  if (styleValue.type === "layers") {
-    for (const item of styleValue.value) {
-      traverseStyleValue(item, callback);
-    }
-  }
-};
-
-export const calculateUsagesByAssetId = ({
-  pages,
-  props,
-  styles,
-  assets,
-}: {
-  pages: Pages | undefined;
-  props: Props;
-  styles: Styles;
-  assets: Map<Asset["id"], Asset>;
-}): Map<Asset["id"], AssetUsage[]> => {
-  const usagesByAsset = new Map<Asset["id"], AssetUsage[]>();
-
-  // Build font family to asset ID map once for O(1) lookups
-  const fontFamilyToAssetId = new Map<string, Asset["id"]>();
-  for (const asset of assets.values()) {
-    if (asset.type === "font") {
-      fontFamilyToAssetId.set(asset.meta.family, asset.id);
-    }
-  }
-
-  if (pages?.meta?.faviconAssetId) {
-    const usages = mapGetOrInsert(usagesByAsset, pages.meta.faviconAssetId, []);
-    usages.push({ type: "favicon" });
-  }
-  if (pages) {
-    for (const page of getAllPages(pages)) {
-      if (page.meta.socialImageAssetId) {
-        const usages = mapGetOrInsert(
-          usagesByAsset,
-          page.meta.socialImageAssetId,
-          []
-        );
-        usages.push({ type: "socialImage", pageId: page.id });
-      }
-      if (page.marketplace?.thumbnailAssetId) {
-        const usages = mapGetOrInsert(
-          usagesByAsset,
-          page.marketplace.thumbnailAssetId,
-          []
-        );
-        usages.push({ type: "marketplaceThumbnail", pageId: page.id });
-      }
-    }
-  }
-  for (const prop of props.values()) {
-    if (
-      prop.type === "asset" &&
-      // ignore width and height properties which are specific to size
-      prop.name !== "width" &&
-      prop.name !== "height"
-    ) {
-      const usages = mapGetOrInsert(usagesByAsset, prop.value, []);
-      usages.push({ type: "prop", propId: prop.id });
-    }
-  }
-  for (const [styleDeclKey, styleDecl] of styles) {
-    traverseStyleValue(styleDecl.value, (value) => {
-      if (value.type === "image" && value.value.type === "asset") {
-        const usages = mapGetOrInsert(usagesByAsset, value.value.value, []);
-        usages.push({ type: "style", styleDeclKey });
-      }
-      if (value.type === "fontFamily") {
-        // Match each font family name to its asset ID
-        for (const fontFamily of value.value) {
-          const assetId = fontFamilyToAssetId.get(fontFamily);
-          if (assetId !== undefined) {
-            const usages = mapGetOrInsert(usagesByAsset, assetId, []);
-            usages.push({ type: "style", styleDeclKey });
-          }
-        }
-      }
-    });
-  }
-  return usagesByAsset;
-};
+import {
+  calculateUsagesByAssetId,
+  type AssetUsage,
+} from "@webstudio-is/project-build/runtime/assets";
 
 const $usagesByAssetId = computed(
   [$pages, $props, $styles, $assets],
@@ -718,9 +606,4 @@ export const AssetInfo = ({ asset }: { asset: Asset }) => {
       )}
     </>
   );
-};
-
-export const __testing__ = {
-  traverseStyleValue,
-  calculateUsagesByAssetId,
 };

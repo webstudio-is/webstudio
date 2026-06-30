@@ -10,7 +10,6 @@ import {
   findParentFolderByChildId,
   getPagePath,
   getHomePage,
-  elementComponent,
   isLiteralExpression,
 } from "@webstudio-is/sdk";
 import { validateBasicAuth } from "@webstudio-is/wsauth";
@@ -39,17 +38,20 @@ import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { selectInstance } from "~/shared/nano-states";
+import { $pageRootScope, duplicatePage, nameToPath } from "../page-utils";
 import {
-  registerFolderChildMutable,
   cleanupChildRefsMutable,
-  $pageRootScope,
-  duplicatePage,
-  nameToPath,
-} from "../page-utils";
+  registerFolderChildMutable,
+} from "~/shared/page-utils/tree";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { Form } from "../form";
 import { findMatchingRedirect } from "~/shared/project-settings/utils";
 import { isContentModePagePath } from "@webstudio-is/project/content-mode-permissions";
+import {
+  createPageRootInstance,
+  createPageValue,
+} from "@webstudio-is/project-build/runtime/pages";
+import { updatePageFieldsMutable } from "~/shared/page-utils/meta";
 import { AuthSection, validateAuthSection } from "./section-auth";
 import {
   CustomMetadataSection,
@@ -545,21 +547,18 @@ const createPage = (pageId: Page["id"], values: Values) => {
         return;
       }
       const rootInstanceId = nanoid();
-      pages.pages.set(pageId, {
-        id: pageId,
-        name: values.name,
-        path: values.path,
-        title: values.title,
-        rootInstanceId,
-        meta: getInitialPageMeta(values),
-      });
-      instances.set(rootInstanceId, {
-        type: "instance",
-        id: rootInstanceId,
-        component: elementComponent,
-        tag: "body",
-        children: [],
-      });
+      pages.pages.set(
+        pageId,
+        createPageValue({
+          pageId,
+          name: values.name,
+          path: values.path,
+          title: values.title,
+          rootInstanceId,
+          meta: getInitialPageMeta(values),
+        })
+      );
+      instances.set(rootInstanceId, createPageRootInstance(rootInstanceId));
       registerFolderChildMutable(pages, pageId, values.parentFolderId);
       selectInstance(undefined);
     }
@@ -572,70 +571,13 @@ export const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
     values: Partial<Values>,
     pages: Pages
   ) => {
-    if (values.name !== undefined) {
-      page.name = values.name;
-    }
-    if (values.path !== undefined) {
-      page.path = page.id === pages.homePageId ? "" : values.path;
-    }
-    if (values.title !== undefined) {
-      page.title = values.title;
-    }
-
-    if (values.description !== undefined) {
-      page.meta.description = values.description;
-    }
-
-    if (values.excludePageFromSearch !== undefined) {
-      page.meta.excludePageFromSearch = values.excludePageFromSearch;
-    }
-
-    if (values.language !== undefined) {
-      page.meta.language =
-        values.language.length > 0 ? values.language : undefined;
-    }
-
-    if ("status" in values) {
-      page.meta.status = values.status;
-    }
-
-    if (values.redirect !== undefined) {
-      page.meta.redirect =
-        values.redirect.length > 0 ? values.redirect : undefined;
-    }
-
-    if (values.socialImageAssetId !== undefined) {
-      page.meta.socialImageAssetId =
-        values.socialImageAssetId.length > 0
-          ? values.socialImageAssetId
-          : undefined;
-    }
-    if (values.socialImageUrl !== undefined) {
-      page.meta.socialImageUrl =
-        values.socialImageUrl.length > 0 ? values.socialImageUrl : undefined;
-    }
-
-    if (values.customMetas !== undefined) {
-      page.meta.custom = values.customMetas;
-    }
-
-    if (values.documentType !== undefined) {
-      page.meta.documentType = values.documentType;
-    }
-
-    if (values.content !== undefined) {
-      page.meta.content = values.content;
-    }
+    updatePageFieldsMutable({ page, pages, values });
 
     if (values.auth !== undefined) {
       page.meta.auth = getAuthFromValues({
         ...toFormValues(page, pages, page.id === pages.homePageId),
         ...values,
       });
-    }
-
-    if (values.parentFolderId !== undefined) {
-      registerFolderChildMutable(pages, page.id, values.parentFolderId);
     }
 
     if (values.marketplace !== undefined) {

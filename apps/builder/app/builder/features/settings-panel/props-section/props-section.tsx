@@ -48,6 +48,8 @@ import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
 } from "../shared";
+import { applyBuilderPatchPayloadMutable } from "~/shared/instance-utils/data";
+import { createPropUpsertPayload } from "@webstudio-is/project-build/runtime/props";
 
 type Item = {
   name: string;
@@ -404,18 +406,14 @@ export const PropsSectionContainer = ({
     props: propsByInstanceId.get(instance.id) ?? [],
 
     updateProp: (update) => {
-      const { propsByInstanceId } = $propsIndex.get();
-      const instanceProps = propsByInstanceId.get(instance.id) ?? [];
-      // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
-      // see for details https://github.com/webstudio-is/webstudio/pull/2170
-      const duplicateProps = instanceProps
-        .filter((prop) => prop.id !== update.id)
-        .filter((prop) => prop.name === update.name);
       serverSyncStore.createTransaction([$props], (props) => {
-        for (const prop of duplicateProps) {
-          props.delete(prop.id);
-        }
-        props.set(update.id, update);
+        applyBuilderPatchPayloadMutable(
+          { props },
+          createPropUpsertPayload({
+            props: props.values(),
+            nextProps: [update],
+          }).payload
+        );
       });
     },
   });

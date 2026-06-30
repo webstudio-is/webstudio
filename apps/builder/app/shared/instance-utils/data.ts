@@ -1,7 +1,6 @@
 // Data utilities own access to Webstudio's instance-related stores and
 // transaction boundaries. Put generic store reads/writes and content-mode data
 // guards here, not tree-shape mutations.
-import { current, isDraft } from "immer";
 import { toast } from "@webstudio-is/design-system";
 import {
   type Instances,
@@ -9,6 +8,9 @@ import {
   blockTemplateComponent,
   isPageTemplate,
 } from "@webstudio-is/sdk";
+import type { BuilderPatchChange } from "@webstudio-is/project-build/contracts/patch";
+import type { BuilderState } from "@webstudio-is/project-build/state/builder-state";
+import * as builderStatePatch from "@webstudio-is/project-build/state/patch";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
 import { findBlockSelector } from "../nano-states";
 import { $canOpenPageTemplates, $selectedPage } from "../nano-states";
@@ -38,12 +40,31 @@ export type WebstudioInstanceData = Pick<
   | "resources"
 >;
 
-/**
- * structuredClone can be invoked on draft and throw error
- * extract current snapshot before cloning
- */
-export const unwrap = <Value>(value: Value) =>
-  isDraft(value) ? current(value) : value;
+type PatchableWebstudioData =
+  | BuilderState
+  | WebstudioData
+  | WebstudioInstanceData;
+
+const getPatchNamespaceData = (
+  data: PatchableWebstudioData,
+  namespace: BuilderPatchChange["namespace"]
+) => {
+  const namespaceData = data[namespace as keyof PatchableWebstudioData];
+  if (namespaceData !== undefined) {
+    return namespaceData;
+  }
+  throw Error(`Cannot apply patch for unavailable namespace "${namespace}"`);
+};
+
+export const applyBuilderPatchPayloadMutable = (
+  data: PatchableWebstudioData,
+  payload: BuilderPatchChange[]
+) => {
+  builderStatePatch.applyBuilderPatchPayloadMutable(
+    (namespace) => getPatchNamespaceData(data, namespace),
+    payload
+  );
+};
 
 export const canDeleteInstanceInContentMode = ({
   instanceSelector,

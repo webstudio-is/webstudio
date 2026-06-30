@@ -1,10 +1,10 @@
 import {
+  __testing__,
   detectFragmentTokenConflicts,
+  detectPageTokenConflicts,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-  detectPageTokenConflicts,
-} from "./fragment";
-import { __testing__ } from "./fragment";
+} from "@webstudio-is/project-build/runtime/fragment";
 import { getWebstudioData } from "./data";
 import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach } from "vitest";
@@ -47,9 +47,9 @@ import {
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "../sync/sync-stores";
 import { getInstancePath } from "../nano-states";
+import { isFragmentContentModeCopyableProp } from "../content-mode-copy-policy";
 
 const {
-  getFragmentContentModeCapabilities,
   getFragmentInstancesData,
   insertFragmentAssetsMutable,
   insertFragmentBreakpointsMutable,
@@ -286,14 +286,15 @@ describe("fragment copy helpers", () => {
       });
       const { fragmentInstances } = getFragmentInstancesData(fragment);
 
-      const capabilities = getFragmentContentModeCapabilities({
+      const isCopyable = isFragmentContentModeCopyableProp({
+        prop: fragment.props[0],
         fragment,
         fragmentInstances,
         styleSources: new Map(),
+        metas: $registeredComponentMetas.get(),
       });
 
-      expect(capabilities.contentRootIds).toEqual(new Set(["link"]));
-      expect(capabilities.editablePropIds.has("href-prop")).toBe(true);
+      expect(isCopyable).toBe(true);
     } finally {
       $registeredComponentMetas.set(registeredComponentMetas);
     }
@@ -793,7 +794,9 @@ describe("insert webstudio fragment copy", () => {
       fragment,
       availableVariables: [],
       projectId: "current_project",
+      metas: defaultMetasMap,
       contentMode: true,
+      contentModeCopyableProp: isFragmentContentModeCopyableProp,
     });
     const newInstanceId = newInstanceIds.get("templateBox");
 
@@ -880,7 +883,9 @@ describe("insert webstudio fragment copy", () => {
       fragment,
       availableVariables: [],
       projectId: "current_project",
+      metas: $registeredComponentMetas.get(),
       contentMode: true,
+      contentModeCopyableProp: isFragmentContentModeCopyableProp,
     });
     const newInstanceId = newInstanceIds.get("item");
 
@@ -934,7 +939,9 @@ describe("insert webstudio fragment copy", () => {
       fragment,
       availableVariables: [],
       projectId: "current_project",
+      metas: defaultMetasMap,
       contentMode: true,
+      contentModeCopyableProp: isFragmentContentModeCopyableProp,
     });
     const newInstanceId = newInstanceIds.get("image");
 
@@ -2258,6 +2265,10 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectFragmentTokenConflicts({
       fragment: extractWebstudioFragment(sourceData, "source-box"),
+      targetData: {
+        ...targetData,
+        pages: createDefaultPages({ rootInstanceId: "body" }),
+      },
     });
 
     expect(conflicts).toHaveLength(1);
@@ -2300,6 +2311,7 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectPageTokenConflicts({
       sourceData: sourceWebstudioData,
+      targetData: { ...targetData, pages },
       pageId: sourcePages.homePageId,
     });
 
@@ -2352,6 +2364,7 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectPageTokenConflicts({
       sourceData: sourceWebstudioData,
+      targetData: { ...targetData, pages },
       pageId: sourcePages.homePageId,
     });
 
@@ -2425,6 +2438,7 @@ describe("detectPageTokenConflicts", () => {
 
     const conflicts = detectPageTokenConflicts({
       sourceData: sourceWebstudioData,
+      targetData: { ...targetData, pages },
       pageId: sourcePages.homePageId,
     });
 
@@ -2449,6 +2463,7 @@ describe("detectPageTokenConflicts", () => {
     expect(() =>
       detectPageTokenConflicts({
         sourceData: sourceWebstudioData,
+        targetData: { ...targetData, pages },
         pageId: "non-existent-page-id",
       })
     ).toThrow("Page not found");

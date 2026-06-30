@@ -11,8 +11,8 @@ import {
   type Page,
   type PageTemplate,
 } from "@webstudio-is/sdk";
-import { $pages } from "~/shared/sync/data-stores";
-import { detectFragmentTokenConflicts } from "../instance-utils/fragment";
+import { $pages, $project } from "~/shared/sync/data-stores";
+import { detectFragmentTokenConflicts } from "@webstudio-is/project-build/runtime/fragment";
 import { builderApi } from "../builder-api";
 import {
   createFolderCopyData,
@@ -24,11 +24,11 @@ import {
   type FolderCopyData,
   type PageCopyData,
   type TemplateCopyData,
-} from "../page-utils";
+} from "@webstudio-is/project-build/runtime/page-copy";
 import { $selectedPage } from "../nano-states";
 import { getPageActionTarget } from "../page-action-target";
 import type { Plugin } from "./copy-paste";
-import { breakpointPasteLimitWarning } from "../breakpoints";
+import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
 
 const version = "@webstudio/page/v0.1";
 
@@ -214,9 +214,15 @@ export const handlePastePage = async (
   }
 
   try {
+    const targetData = getWebstudioData();
+    const projectId = $project.get()?.id;
+    if (projectId === undefined) {
+      return true;
+    }
     const conflicts = collectPageLikeItems(item).flatMap((item) =>
       detectFragmentTokenConflicts({
         fragment: mergeWebstudioFragments(item.rootFragment, item.bodyFragment),
+        targetData,
       })
     );
     const conflictResolution =
@@ -233,6 +239,7 @@ export const handlePastePage = async (
         newId = insertPageCopyFromFragmentsMutable({
           source: item,
           target: { data, folderId },
+          projectId,
           conflictResolution,
           onBreakpointLimitMerge,
         });
@@ -242,6 +249,7 @@ export const handlePastePage = async (
         newId = insertTemplateCopyFromFragmentsMutable({
           source: item,
           target: { data },
+          projectId,
           conflictResolution,
           onBreakpointLimitMerge,
         });
@@ -250,6 +258,7 @@ export const handlePastePage = async (
       newId = insertFolderCopyFromDataMutable({
         source: item,
         target: { data, parentFolderId: folderId },
+        projectId,
         conflictResolution,
         onBreakpointLimitMerge,
       });
