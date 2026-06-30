@@ -10,13 +10,10 @@ export default defineConfig({
       },
     ],
     conditions: ["webstudio", "browser", "development|production"],
-    // conditions: ["webstudio", ...defaultClientConditions],
   },
-  // resolve webstudio condition in tests
   ssr: {
     resolve: {
       conditions: ["webstudio", "node", "development|production"],
-      // conditions: ["webstudio", ...defaultServerConditions],
     },
   },
   test: {

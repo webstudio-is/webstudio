@@ -1,5 +1,5 @@
 import { defineConfig } from "vitest/config";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import fg from "fast-glob";
 
