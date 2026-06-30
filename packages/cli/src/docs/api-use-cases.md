@@ -68,6 +68,7 @@ Commands:
 - MCP tool: preview.status {}
 - MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900}}
 - MCP tool: screenshot.diff {"baselinePath":"before.png","currentPath":"current.png","outputDir":".webstudio/screenshots"}
+- MCP tool: vision.install-ocr {"confirm":true}
 
 Notes:
 
@@ -75,6 +76,7 @@ Notes:
 - For a fresh checkout, copied fixture, or newly generated app, run npm install or pnpm install in the generated project before preview.start or webstudio preview.
 - If preview fails with a missing generated-app command/package such as react-router or vite, install the generated app dependencies and retry.
 - When a baseline exists, use screenshot.diff to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches.
+- If screenshot.diff reports OCR unavailable and the user agrees to install it, call vision.install-ocr {"confirm":true}; otherwise continue with pixel diff and visual inspection.
 - Compare the PNG, OCR text evidence, and diff artifacts against the user's intent for layout, typography, colors, spacing, imagery, and responsive framing; then iterate with focused mutations.
 - Root CLI equivalent: webstudio preview --template ssg, then webstudio screenshot <url> --output current.png.
 

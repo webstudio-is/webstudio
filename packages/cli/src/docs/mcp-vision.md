@@ -16,7 +16,7 @@ For visual/design work, use preview.start and screenshot after generated project
 - {{dependency-notes}}
 - Call screenshot with { path: "/" } or the changed page path.
 - {{diff}} When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir.
-- {{diff}} Read screenshot.diff textAnalysis: it reports OCR status plus text that appeared, disappeared, moved, changed content, or changed font/style geometry. If OCR is unavailable, install the tesseract binary or rely on visual inspection.
+- {{diff}} Read screenshot.diff textAnalysis: it reports OCR status plus text that appeared, disappeared, moved, changed content, or changed font/style geometry. If OCR is unavailable, ask the user for permission to install Tesseract, then call vision.install-ocr with { "confirm": true }, or rely on visual inspection.
 - Inspect the PNG and any diff artifacts with vision, then compare layout, OCR text evidence, color, spacing, imagery, and responsive framing against the user intent.
 - If the screenshot does not match, apply another focused mutation and repeat screenshot verification.
 
@@ -37,4 +37,5 @@ Inside MCP, prefer preview.start plus screenshot({ path: "/" }) after generated 
 - Pixel evidence: total mismatch, changed regions, dominant color/luminance direction, diffPath, and contextDiffPath.
 - OCR evidence: textAnalysis.status, provider, and changes for appeared/disappeared/content_changed/moved/font_changed text.
 - OCR dependency: screenshot.diff uses the system tesseract binary when available. If missing, it returns ocr_unavailable_tesseract_not_found_or_failed and still returns pixel evidence.
+- OCR install: MCP cannot prompt. Ask the user first; if they agree, call vision.install-ocr with { "confirm": true }. If automatic install is unavailable, follow the returned installUrl.
 - Final judgment: OCR and pixel diff are evidence. A vision-capable model must still inspect screenshots/diff artifacts and compare the rendered result to user intent.

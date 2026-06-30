@@ -7,8 +7,10 @@ import {
   getChromiumInstallCommand,
   getNoBrowserFoundMessage,
   getScreenshotArgs,
+  installTesseractForOcr,
   resolveScreenshotBrowser,
   shouldOfferBrowserInstall,
+  tesseractInstallUrl,
   type ScreenshotDependencies,
 } from "./screenshot";
 
@@ -76,6 +78,74 @@ describe("resolveScreenshotBrowser", () => {
         "/usr/bin/chromium",
         "/opt/google/chrome",
       ]),
+    });
+  });
+});
+
+describe("OCR installation", () => {
+  test("does not install Tesseract when already available", async () => {
+    const dependencies = createDependencies({
+      which: vi.fn(async (command) =>
+        command === "tesseract" ? "/usr/bin/tesseract" : undefined
+      ),
+    });
+
+    await expect(installTesseractForOcr(dependencies)).resolves.toEqual({
+      installed: false,
+      alreadyAvailable: true,
+      command: undefined,
+      tesseractPath: "/usr/bin/tesseract",
+      installUrl: tesseractInstallUrl,
+      warnings: [],
+    });
+    expect(dependencies.installCommand).not.toHaveBeenCalled();
+  });
+
+  test("installs Tesseract and verifies availability", async () => {
+    let installed = false;
+    const dependencies = createDependencies({
+      which: vi.fn(async (command) => {
+        if (command === "apt" || command === "sudo") {
+          return `/usr/bin/${command}`;
+        }
+        if (command === "tesseract" && installed) {
+          return "/usr/bin/tesseract";
+        }
+        return undefined;
+      }),
+      installCommand: vi.fn(async () => {
+        installed = true;
+      }),
+    });
+
+    await expect(installTesseractForOcr(dependencies)).resolves.toEqual({
+      installed: true,
+      alreadyAvailable: false,
+      command: "sudo apt install -y tesseract-ocr",
+      tesseractPath: "/usr/bin/tesseract",
+      installUrl: tesseractInstallUrl,
+      warnings: [],
+    });
+    expect(dependencies.installCommand).toHaveBeenCalledWith("sudo", [
+      "apt",
+      "install",
+      "-y",
+      "tesseract-ocr",
+    ]);
+  });
+
+  test("returns actionable result when Tesseract cannot be installed automatically", async () => {
+    const dependencies = createDependencies({
+      which: vi.fn(async () => undefined),
+    });
+
+    await expect(installTesseractForOcr(dependencies)).resolves.toEqual({
+      installed: false,
+      alreadyAvailable: false,
+      command: undefined,
+      tesseractPath: undefined,
+      installUrl: tesseractInstallUrl,
+      warnings: ["ocr_install_unavailable_on_this_system"],
     });
   });
 });

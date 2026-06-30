@@ -95,6 +95,9 @@ export const chromiumDownloadUrl =
 
 export const chromeDownloadUrl = "https://www.google.com/chrome/";
 
+export const tesseractInstallUrl =
+  "https://tesseract-ocr.github.io/tessdoc/Installation.html";
+
 const pathCommandCandidates = [
   { command: "chromium", browser: "chromium" },
   { command: "chromium-browser", browser: "chromium" },
@@ -325,60 +328,133 @@ export const getNoBrowserFoundMessage = (checked: readonly string[]) =>
       : `Checked paths:\n${checked.map((path) => `- ${path}`).join("\n")}`,
   ].join("\n");
 
-export type ChromiumInstallCommand = {
+type InstallCommand = {
   command: string;
   args: readonly string[];
   label: string;
 };
 
-export const getChromiumInstallCommand = async (
+export type ChromiumInstallCommand = InstallCommand;
+
+const getHomebrewOrAptInstallCommand = async (
+  {
+    brewArgs,
+    aptPackage,
+  }: {
+    brewArgs: readonly string[];
+    aptPackage: string;
+  },
   dependencies = defaultScreenshotDependencies
-): Promise<ChromiumInstallCommand | undefined> => {
+): Promise<InstallCommand | undefined> => {
   if (dependencies.platform === "darwin") {
     if ((await dependencies.which("brew")) !== undefined) {
       return {
         command: "brew",
-        args: ["install", "--cask", "chromium"],
-        label: "brew install --cask chromium",
+        args: brewArgs,
+        label: `brew ${brewArgs.join(" ")}`,
       };
     }
     return undefined;
   }
 
-  if (dependencies.platform === "linux") {
-    const isRoot = dependencies.getuid() === 0;
-    const sudo = isRoot ? undefined : await dependencies.which("sudo");
-    const command = isRoot ? "apt" : "sudo";
-    const aptArgs = isRoot
-      ? ["install", "-y", "chromium"]
-      : ["apt", "install", "-y", "chromium"];
-    if (
-      (await dependencies.which("apt")) !== undefined &&
-      (isRoot || sudo !== undefined)
-    ) {
-      return {
-        command,
-        args: aptArgs,
-        label: `${command} ${aptArgs.join(" ")}`,
-      };
-    }
-    const aptGetCommand = isRoot ? "apt-get" : "sudo";
-    const aptGetArgs = isRoot
-      ? ["install", "-y", "chromium"]
-      : ["apt-get", "install", "-y", "chromium"];
-    if (
-      (await dependencies.which("apt-get")) !== undefined &&
-      (isRoot || sudo !== undefined)
-    ) {
-      return {
-        command: aptGetCommand,
-        args: aptGetArgs,
-        label: `${aptGetCommand} ${aptGetArgs.join(" ")}`,
-      };
-    }
+  if (dependencies.platform !== "linux") {
+    return undefined;
+  }
+
+  const isRoot = dependencies.getuid() === 0;
+  const sudo = isRoot ? undefined : await dependencies.which("sudo");
+  if (isRoot === false && sudo === undefined) {
+    return undefined;
+  }
+
+  const getLinuxCommand = (packageManager: "apt" | "apt-get") => {
+    const command = isRoot ? packageManager : "sudo";
+    const args = isRoot
+      ? ["install", "-y", aptPackage]
+      : [packageManager, "install", "-y", aptPackage];
+    return {
+      command,
+      args,
+      label: `${command} ${args.join(" ")}`,
+    };
+  };
+
+  if ((await dependencies.which("apt")) !== undefined) {
+    return getLinuxCommand("apt");
+  }
+
+  if ((await dependencies.which("apt-get")) !== undefined) {
+    return getLinuxCommand("apt-get");
   }
 
   return undefined;
+};
+
+export const getChromiumInstallCommand = async (
+  dependencies = defaultScreenshotDependencies
+): Promise<ChromiumInstallCommand | undefined> => {
+  return getHomebrewOrAptInstallCommand(
+    {
+      brewArgs: ["install", "--cask", "chromium"],
+      aptPackage: "chromium",
+    },
+    dependencies
+  );
+};
+
+const getTesseractInstallCommand = async (
+  dependencies = defaultScreenshotDependencies
+): Promise<InstallCommand | undefined> => {
+  return getHomebrewOrAptInstallCommand(
+    {
+      brewArgs: ["install", "tesseract"],
+      aptPackage: "tesseract-ocr",
+    },
+    dependencies
+  );
+};
+
+export const installTesseractForOcr = async (
+  dependencies = defaultScreenshotDependencies
+) => {
+  const existing = await dependencies.which("tesseract");
+  if (existing !== undefined) {
+    return {
+      installed: false,
+      alreadyAvailable: true,
+      command: undefined,
+      tesseractPath: existing,
+      installUrl: tesseractInstallUrl,
+      warnings: [] as string[],
+    };
+  }
+  const installCommand = await getTesseractInstallCommand(dependencies);
+  if (installCommand === undefined) {
+    return {
+      installed: false,
+      alreadyAvailable: false,
+      command: undefined,
+      tesseractPath: undefined,
+      installUrl: tesseractInstallUrl,
+      warnings: ["ocr_install_unavailable_on_this_system"],
+    };
+  }
+  await dependencies.installCommand(
+    installCommand.command,
+    installCommand.args
+  );
+  const tesseractPath = await dependencies.which("tesseract");
+  return {
+    installed: true,
+    alreadyAvailable: false,
+    command: installCommand.label,
+    tesseractPath,
+    installUrl: tesseractInstallUrl,
+    warnings:
+      tesseractPath === undefined
+        ? ["tesseract_not_found_after_install"]
+        : ([] as string[]),
+  };
 };
 
 export const shouldOfferBrowserInstall = ({

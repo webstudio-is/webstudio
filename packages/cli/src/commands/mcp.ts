@@ -10,7 +10,10 @@ import { getStableErrorCode } from "../error-codes";
 import { createCliProjectSession } from "../project-session";
 import { executeProjectSessionApiOperation } from "../project-session-api";
 import { createPreviewController } from "../preview-server";
-import { captureScreenshotWithBrowserInstall } from "../screenshot";
+import {
+  captureScreenshotWithBrowserInstall,
+  installTesseractForOcr,
+} from "../screenshot";
 import {
   getVisionVerificationLoop,
   getVisionWorkflowSummary,
@@ -99,6 +102,9 @@ export const mcp = async () => {
     },
     async diffScreenshots(input) {
       return diffPngFiles(input);
+    },
+    async installOcr() {
+      return installTesseractForOcr();
     },
     guidance: {
       visualVerificationRule,

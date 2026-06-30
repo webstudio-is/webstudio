@@ -99,6 +99,17 @@ type DiffScreenshots = (
   input: ProjectSessionScreenshotDiffInput
 ) => Promise<ScreenshotDiffResult>;
 
+export type ProjectSessionInstallOcrResult = {
+  installed: boolean;
+  alreadyAvailable: boolean;
+  command?: string;
+  tesseractPath?: string;
+  installUrl: string;
+  warnings: readonly string[];
+};
+
+type InstallOcr = () => Promise<ProjectSessionInstallOcrResult>;
+
 export type ProjectSessionPreviewInput = {
   host?: string;
   port?: number;
@@ -261,6 +272,20 @@ const screenshotDiffInputSchema = {
   required: ["baselinePath", "currentPath"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const installOcrInputSchema = {
+  ...emptyInputSchema,
+  description:
+    "Install the Tesseract OCR binary needed for screenshot.diff textAnalysis. MCP cannot prompt; ask the user first, then pass { confirm: true }.",
+  properties: {
+    confirm: {
+      type: "boolean",
+      description:
+        "Must be true after explicit user consent. The tool refuses to install without it.",
+    },
+  },
+  required: ["confirm"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
 const previewInputSchema = {
   ...emptyInputSchema,
   description:
@@ -379,6 +404,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       ignoreTopNormalizedY: 0,
     },
   ],
+  "vision.install-ocr": [{ confirm: true }],
 } as const;
 
 const getMcpExamples = (command: string): readonly unknown[] =>
@@ -544,7 +570,7 @@ const screenshotTool = {
 const screenshotDiffTool = {
   name: "screenshot.diff",
   description:
-    "Compare two PNG screenshots, write diff artifacts, and return changed pixel counts, changed regions, and a compact summary for visual verification.",
+    "Compare two PNG screenshots, write diff artifacts, and return pixel regions plus optional OCR textAnalysis for visual verification.",
   inputSchema: screenshotDiffInputSchema,
   mcpExamples: getMcpExamples("screenshot.diff"),
   annotations: {
@@ -559,6 +585,27 @@ const screenshotDiffTool = {
       "threshold",
       "ignoreTopNormalizedY",
     ],
+    localCapable: false,
+    serverOnly: true,
+    readNamespaces: [],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+} as const satisfies ProjectSessionMcpTool;
+
+const installOcrTool = {
+  name: "vision.install-ocr",
+  description:
+    "Install Tesseract OCR for screenshot.diff textAnalysis after explicit user consent. Use only when OCR is unavailable and the user agrees.",
+  inputSchema: installOcrInputSchema,
+  mcpExamples: getMcpExamples("vision.install-ocr"),
+  annotations: {
+    command: "vision.install-ocr",
+    operationId: "vision.install-ocr",
+    method: "session",
+    permit: "api",
+    inputFields: ["confirm"],
     localCapable: false,
     serverOnly: true,
     readNamespaces: [],
@@ -651,6 +698,7 @@ export const listProjectSessionMcpTools = (
   options: {
     includeScreenshot?: boolean;
     includeScreenshotDiff?: boolean;
+    includeInstallOcr?: boolean;
     includePreview?: boolean;
   } = {}
 ): ProjectSessionMcpTool[] => [
@@ -681,6 +729,7 @@ export const listProjectSessionMcpTools = (
   })),
   ...(options.includeScreenshot ? [screenshotTool] : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
+  ...(options.includeInstallOcr ? [installOcrTool] : []),
   ...(options.includePreview ? previewTools : []),
 ];
 
@@ -700,7 +749,13 @@ const capabilityAreas = [
   {
     area: "visual-verification",
     goal: "Let a vision-capable AI see the rendered result, compare it with the user's intent, and iterate.",
-    tools: ["preview.start", "preview.status", "screenshot", "screenshot.diff"],
+    tools: [
+      "preview.start",
+      "preview.status",
+      "screenshot",
+      "screenshot.diff",
+      "vision.install-ocr",
+    ],
   },
   {
     area: "discover",
@@ -1209,6 +1264,17 @@ const getScreenshotDiffInput = (
   };
 };
 
+const assertInstallOcrConfirmed = (input: unknown) => {
+  if (isRecord(input) === false) {
+    throw new Error("vision.install-ocr input must be an object.");
+  }
+  if (input.confirm !== true) {
+    throw new Error(
+      "vision.install-ocr requires confirm: true after explicit user consent."
+    );
+  }
+};
+
 const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
   if (isRecord(input) === false) {
     return {};
@@ -1236,6 +1302,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   executeOperation,
   captureScreenshot,
   diffScreenshots,
+  installOcr,
   startPreview,
   getPreviewStatus,
   guidance,
@@ -1245,6 +1312,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   executeOperation: ExecuteMcpOperation<Command>;
   captureScreenshot?: CaptureScreenshot;
   diffScreenshots?: DiffScreenshots;
+  installOcr?: InstallOcr;
   startPreview?: StartPreview;
   getPreviewStatus?: GetPreviewStatus;
   guidance?: ProjectSessionMcpGuidance;
@@ -1257,6 +1325,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
     listProjectSessionMcpTools(operations, {
       includeScreenshot: captureScreenshot !== undefined,
       includeScreenshotDiff: diffScreenshots !== undefined,
+      includeInstallOcr: installOcr !== undefined,
       includePreview:
         startPreview !== undefined && getPreviewStatus !== undefined,
     });
@@ -1347,6 +1416,10 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           await diffScreenshots(getScreenshotDiffInput(input))
         );
       }
+      if (name === "vision.install-ocr" && installOcr !== undefined) {
+        assertInstallOcrConfirmed(input);
+        return toMetaResult(await installOcr());
+      }
       if (name === "preview.start" && startPreview !== undefined) {
         return toMetaResult(await startPreview(getPreviewInput(input)));
       }
@@ -1416,6 +1489,7 @@ export const createProjectSessionMcpServer = async <
   executeOperation,
   captureScreenshot,
   diffScreenshots,
+  installOcr,
   startPreview,
   getPreviewStatus,
   guidance,
@@ -1426,6 +1500,7 @@ export const createProjectSessionMcpServer = async <
   executeOperation: ExecuteMcpOperation<Command>;
   captureScreenshot?: CaptureScreenshot;
   diffScreenshots?: DiffScreenshots;
+  installOcr?: InstallOcr;
   startPreview?: StartPreview;
   getPreviewStatus?: GetPreviewStatus;
   guidance?: ProjectSessionMcpGuidance;
@@ -1437,6 +1512,7 @@ export const createProjectSessionMcpServer = async <
     executeOperation,
     captureScreenshot,
     diffScreenshots,
+    installOcr,
     startPreview,
     getPreviewStatus,
     guidance,

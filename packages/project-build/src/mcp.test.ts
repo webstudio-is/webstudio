@@ -89,6 +89,9 @@ const testMcpGuidance: ProjectSessionMcpGuidance = {
       : "Visual workflow without screenshot diff.",
 };
 
+const tesseractInstallUrl =
+  "https://tesseract-ocr.github.io/tessdoc/Installation.html";
+
 const createEnvelope = (
   overrides: Partial<ProjectSessionEnvelope> & {
     operationId: string;
@@ -231,6 +234,17 @@ describe("project session mcp adapter", () => {
         }),
       ])
     );
+  });
+
+  test("lists OCR installer only when host provides installer", () => {
+    expect(
+      listProjectSessionMcpTools(publicMcpOperations).map((tool) => tool.name)
+    ).not.toContain("vision.install-ocr");
+    expect(
+      listProjectSessionMcpTools(publicMcpOperations, {
+        includeInstallOcr: true,
+      }).map((tool) => tool.name)
+    ).toContain("vision.install-ocr");
   });
 
   test("does not expose CLI-only required options as MCP tool schemas", () => {
@@ -721,6 +735,45 @@ describe("project session mcp adapter", () => {
     ).rejects.toThrow("screenshot.diff threshold must be between 0 and 1.");
   });
 
+  test("installs OCR only after explicit confirmation", async () => {
+    const installOcr = vi.fn(async () => ({
+      installed: true,
+      alreadyAvailable: false,
+      command: "sudo apt install -y tesseract-ocr",
+      tesseractPath: "/usr/bin/tesseract",
+      installUrl: tesseractInstallUrl,
+      warnings: [],
+    }));
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      installOcr,
+    });
+
+    await expect(
+      adapter.callTool({ name: "vision.install-ocr", input: {} })
+    ).rejects.toThrow(
+      "vision.install-ocr requires confirm: true after explicit user consent."
+    );
+    await expect(
+      adapter.callTool({
+        name: "vision.install-ocr",
+        input: { confirm: true },
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({
+        structuredContent: expect.objectContaining({
+          data: expect.objectContaining({
+            installed: true,
+            tesseractPath: "/usr/bin/tesseract",
+          }),
+        }),
+      })
+    );
+    expect(installOcr).toHaveBeenCalledOnce();
+  });
+
   test("exposes preview tools when preview runner is injected", async () => {
     const captureScreenshot = vi.fn(async () => ({
       output: "/tmp/current.png",
@@ -1070,6 +1123,13 @@ describe("project session mcp adapter", () => {
         },
         warnings: [],
       })),
+      installOcr: vi.fn(async () => ({
+        installed: false,
+        alreadyAvailable: true,
+        tesseractPath: "/usr/bin/tesseract",
+        installUrl: tesseractInstallUrl,
+        warnings: [],
+      })),
     });
     const { client, close } = await createConnectedClient(server);
 
@@ -1102,6 +1162,14 @@ describe("project session mcp adapter", () => {
           }),
           expect.objectContaining({
             name: "screenshot.diff",
+            annotations: expect.objectContaining({
+              readOnlyHint: false,
+              destructiveHint: false,
+              openWorldHint: true,
+            }),
+          }),
+          expect.objectContaining({
+            name: "vision.install-ocr",
             annotations: expect.objectContaining({
               readOnlyHint: false,
               destructiveHint: false,

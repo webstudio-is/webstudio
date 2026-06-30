@@ -17,11 +17,16 @@ test("documents generated app setup for visual verification", () => {
 });
 
 test("builds vision loop with optional screenshot diff guidance", () => {
+  const visionLoopWithDiff = getVisionVerificationLoop({ includeDiff: true });
+
   expect(getVisionVerificationLoop({ includeDiff: false })).not.toEqual(
     expect.arrayContaining([expect.stringContaining("screenshot.diff")])
   );
-  expect(getVisionVerificationLoop({ includeDiff: true })).toEqual(
+  expect(visionLoopWithDiff).toEqual(
     expect.arrayContaining([expect.stringContaining("screenshot.diff")])
+  );
+  expect(visionLoopWithDiff).toEqual(
+    expect.arrayContaining([expect.stringContaining("vision.install-ocr")])
   );
   expect(getVisionWorkflowSummary({ includeDiff: false })).not.toContain(
     "screenshot.diff"

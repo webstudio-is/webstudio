@@ -102,6 +102,7 @@ test("documents every MCP session and vision tool in use-case scenarios", () => 
       "preview.status",
       "screenshot",
       "screenshot.diff",
+      "vision.install-ocr",
     ])
   );
 });

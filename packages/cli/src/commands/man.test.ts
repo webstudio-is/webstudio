@@ -279,6 +279,7 @@ test("prints mcp manual with startup and JSON argument examples", () => {
   expect(output).toContain("## Vision Verification Loop");
   expect(output).toContain("screenshot.diff");
   expect(output).toContain("Read screenshot.diff textAnalysis");
+  expect(output).toContain("vision.install-ocr");
   expect(output).toContain('"parentInstanceId": "parent-id"');
 });
 
@@ -307,6 +308,10 @@ test("prints mcp manual as json", () => {
     "When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir."
   );
   expect(output.screenshotVerification).toContain("screenshot.diff");
+  expect(output.screenshotVerification).toContain("OCR textAnalysis");
+  expect(output.mcpArgumentExamples["vision.install-ocr"]).toEqual([
+    { confirm: true },
+  ]);
   expect(output.mcpArgumentExamples["screenshot.diff"]).toEqual([
     {
       baselinePath: "baseline.png",
