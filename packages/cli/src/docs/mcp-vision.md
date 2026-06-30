@@ -7,7 +7,7 @@
 
 ## Visual Verification Rule
 
-For visual/design work, use preview.start and screenshot after generated project files are current and generated app dependencies are installed so vision can inspect the rendered result before finishing.
+For visual/design work, use preview.start and screenshot after generated project files are current and generated app dependencies are installed so vision can inspect the rendered result before finishing. When a baseline exists, use screenshot.diff to get pixel regions, OCR text changes, and diff PNG artifacts.
 
 ## Vision Verification Loop
 
@@ -16,12 +16,13 @@ For visual/design work, use preview.start and screenshot after generated project
 - {{dependency-notes}}
 - Call screenshot with { path: "/" } or the changed page path.
 - {{diff}} When a baseline PNG exists, call screenshot.diff with baselinePath, currentPath, and outputDir.
-- Inspect the PNG and any diff artifacts with vision, then compare layout, text, color, spacing, imagery, and responsive framing against the user intent.
+- {{diff}} Read screenshot.diff textAnalysis: it reports OCR status plus text that appeared, disappeared, moved, changed content, or changed font/style geometry. If OCR is unavailable, install the tesseract binary or rely on visual inspection.
+- Inspect the PNG and any diff artifacts with vision, then compare layout, OCR text evidence, color, spacing, imagery, and responsive framing against the user intent.
 - If the screenshot does not match, apply another focused mutation and repeat screenshot verification.
 
 ## Workflow Summary With Diff
 
-For visual/design work, make sure generated project files are current and generated app dependencies are installed, call preview.start, then screenshot({ path }); use screenshot.diff when a baseline exists, and inspect the PNG/diff artifacts with vision before finishing.
+For visual/design work, make sure generated project files are current and generated app dependencies are installed, call preview.start, then screenshot({ path }); use screenshot.diff when a baseline exists, then inspect pixel regions, OCR textAnalysis, and PNG/diff artifacts with vision before finishing.
 
 ## Workflow Summary Without Diff
 
@@ -29,4 +30,11 @@ For visual/design work, make sure generated project files are current and genera
 
 ## Screenshot Verification Summary
 
-Inside MCP, prefer preview.start plus screenshot({ path: "/" }) after generated project files are current and generated app dependencies are installed, so the preview server stays running for fast repeated checks. When a baseline exists, use screenshot.diff for changed regions and diff artifacts. Outside MCP, use webstudio preview and webstudio screenshot <url> --output current.png.
+Inside MCP, prefer preview.start plus screenshot({ path: "/" }) after generated project files are current and generated app dependencies are installed, so the preview server stays running for fast repeated checks. When a baseline exists, use screenshot.diff for changed regions, OCR textAnalysis, and diff artifacts. Outside MCP, use webstudio preview and webstudio screenshot <url> --output current.png.
+
+## Screenshot Diff Evidence
+
+- Pixel evidence: total mismatch, changed regions, dominant color/luminance direction, diffPath, and contextDiffPath.
+- OCR evidence: textAnalysis.status, provider, and changes for appeared/disappeared/content_changed/moved/font_changed text.
+- OCR dependency: screenshot.diff uses the system tesseract binary when available. If missing, it returns ocr_unavailable_tesseract_not_found_or_failed and still returns pixel evidence.
+- Final judgment: OCR and pixel diff are evidence. A vision-capable model must still inspect screenshots/diff artifacts and compare the rendered result to user intent.

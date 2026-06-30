@@ -74,8 +74,8 @@ Notes:
 - Use this after page/content/style mutations and after generated project files are current so a vision-capable AI can see what was actually built.
 - For a fresh checkout, copied fixture, or newly generated app, run npm install or pnpm install in the generated project before preview.start or webstudio preview.
 - If preview fails with a missing generated-app command/package such as react-router or vite, install the generated app dependencies and retry.
-- When a baseline exists, use screenshot.diff to get changed regions and diff artifact paths before deciding whether the result matches.
-- Compare the PNG and diff artifacts against the user's intent for layout, typography, colors, spacing, imagery, and responsive framing; then iterate with focused mutations.
+- When a baseline exists, use screenshot.diff to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches.
+- Compare the PNG, OCR text evidence, and diff artifacts against the user's intent for layout, typography, colors, spacing, imagery, and responsive framing; then iterate with focused mutations.
 - Root CLI equivalent: webstudio preview --template ssg, then webstudio screenshot <url> --output current.png.
 
 ## List pages

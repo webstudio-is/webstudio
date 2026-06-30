@@ -231,7 +231,7 @@ const screenshotInputSchema = {
 const screenshotDiffInputSchema = {
   ...emptyInputSchema,
   description:
-    "Compare baseline/current PNG screenshots and return pixel-region diff evidence for AI vision review.",
+    "Compare baseline/current PNG screenshots and return pixel-region plus OCR text-change evidence for AI vision review. OCR uses the system tesseract binary when available.",
   properties: {
     baselinePath: {
       type: "string",
@@ -376,6 +376,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       currentPath: "current.png",
       outputDir: "visual-diff",
       threshold: 0.1,
+      ignoreTopNormalizedY: 0,
     },
   ],
 } as const;

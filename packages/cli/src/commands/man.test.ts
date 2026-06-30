@@ -278,9 +278,7 @@ test("prints mcp manual with startup and JSON argument examples", () => {
   expect(output).toContain("webstudio://project/tools");
   expect(output).toContain("## Vision Verification Loop");
   expect(output).toContain("screenshot.diff");
-  expect(output).toContain(
-    "Inspect the PNG and any diff artifacts with vision"
-  );
+  expect(output).toContain("Read screenshot.diff textAnalysis");
   expect(output).toContain('"parentInstanceId": "parent-id"');
 });
 
@@ -315,6 +313,7 @@ test("prints mcp manual as json", () => {
       currentPath: "current.png",
       outputDir: "visual-diff",
       threshold: 0.1,
+      ignoreTopNormalizedY: 0,
     },
   ]);
   expect(output.mcpArgumentExamples["update-text"]).toEqual([

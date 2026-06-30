@@ -1063,6 +1063,11 @@ describe("project session mcp adapter", () => {
         mismatchPercentage: 0,
         summary: "Screenshot diff summary",
         regions: [],
+        textAnalysis: {
+          status: "skipped" as const,
+          provider: "tesseract" as const,
+          changes: [],
+        },
         warnings: [],
       })),
     });

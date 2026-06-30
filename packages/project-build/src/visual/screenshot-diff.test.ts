@@ -75,6 +75,8 @@ test("normalizes same-aspect screenshots before comparing", async () => {
   expect(result.dimensionMismatch).toBeUndefined();
   expect(result.imageSize).toEqual({ width: 2, height: 2 });
   expect(result.differentPixels).toBe(0);
+  expect(result.textAnalysis.status).toBe("skipped");
+  expect(result.warnings).toEqual(["ocr_skipped_size_normalized"]);
   expect(result.summary).toContain("status: unchanged");
 });
 
@@ -97,6 +99,7 @@ test("reports dimension mismatch for different aspect ratios", async () => {
   });
   expect(result.diffPath).toBeUndefined();
   expect(result.regions).toEqual([]);
+  expect(result.textAnalysis.status).toBe("skipped");
   expect(result.summary).toContain("status: dimension_mismatch");
 });
 

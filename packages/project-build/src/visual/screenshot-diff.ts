@@ -12,6 +12,10 @@ import {
   resizeDecodedRgbaImage,
   type DecodedRgbaImage,
 } from "./screenshot-resize";
+import {
+  analyzeScreenshotTextChanges,
+  type ScreenshotTextAnalysis,
+} from "./screenshot-text-diff";
 
 export type ScreenshotDiffSize = {
   width: number;
@@ -59,6 +63,7 @@ export type ScreenshotDiffResult = {
     actual: ScreenshotDiffSize;
   };
   regions: ScreenshotDiffRegion[];
+  textAnalysis: ScreenshotTextAnalysis;
   warnings: readonly string[];
 };
 
@@ -130,6 +135,11 @@ export const diffPngFiles = async ({
         },
       },
       regions: [],
+      textAnalysis: {
+        status: "skipped",
+        provider: "tesseract",
+        changes: [],
+      },
       warnings: ["dimension_mismatch"],
     });
   }
@@ -158,6 +168,19 @@ export const diffPngFiles = async ({
     paths: artifactPaths,
     contextDiffScale: DEFAULT_CONTEXT_DIFF_SCALE,
   });
+  const canAnalyzeText =
+    decodedBaseline.width === decodedCurrent.width &&
+    decodedBaseline.height === decodedCurrent.height;
+  const textAnalysis: ScreenshotTextAnalysis = canAnalyzeText
+    ? await analyzeScreenshotTextChanges({
+        baselinePath,
+        currentPath,
+        hasPixelDiff: pixelDiff.differentPixels > 0,
+        baselineImage: baseline,
+        currentImage: current,
+        ignoreTopPixels: Math.ceil(baseline.height * ignoreTopNormalizedY),
+      })
+    : createSkippedTextAnalysis();
 
   return summarizeResult({
     totalPixels,
@@ -168,9 +191,32 @@ export const diffPngFiles = async ({
     diffPath: artifactPaths.diffPath,
     contextDiffPath: artifactPaths.contextDiffPath,
     regions,
-    warnings: ["ocr_not_implemented"],
+    textAnalysis,
+    warnings: getTextAnalysisWarnings({ canAnalyzeText, textAnalysis }),
   });
 };
+
+const getTextAnalysisWarnings = ({
+  canAnalyzeText,
+  textAnalysis,
+}: {
+  canAnalyzeText: boolean;
+  textAnalysis: ScreenshotTextAnalysis;
+}) => {
+  if (canAnalyzeText === false) {
+    return ["ocr_skipped_size_normalized"];
+  }
+  if (textAnalysis.status === "unavailable") {
+    return ["ocr_unavailable_tesseract_not_found_or_failed"];
+  }
+  return [];
+};
+
+const createSkippedTextAnalysis = (): ScreenshotTextAnalysis => ({
+  status: "skipped",
+  provider: "tesseract",
+  changes: [],
+});
 
 const summarizeResult = (
   result: Omit<ScreenshotDiffResult, "summary">
@@ -746,10 +792,37 @@ const formatScreenshotDiffSummary = (
   if (result.regions.length === 0) {
     lines.push("- None detected.");
   }
+  lines.push("", "Text OCR:");
+  lines.push(`- status: ${result.textAnalysis.status}`);
+  lines.push(`- provider: ${result.textAnalysis.provider}`);
+  lines.push(`- changes: ${result.textAnalysis.changes.length}`);
+  for (const [index, change] of result.textAnalysis.changes.entries()) {
+    lines.push(
+      `- Text ${index + 1}: ${change.kind} confidence=${formatNormalized(change.confidence)}${formatTextChange(change)}`
+    );
+  }
   if (result.warnings.length > 0) {
     lines.push("", `Warnings: ${result.warnings.join(", ")}`);
   }
   return lines.join("\n");
+};
+
+const formatTextChange = (
+  change: ScreenshotTextAnalysis["changes"][number]
+) => {
+  const text =
+    change.text ??
+    (change.baselineText === undefined || change.currentText === undefined
+      ? undefined
+      : `${change.baselineText} -> ${change.currentText}`);
+  const bounds = change.currentBounds ?? change.baselineBounds;
+  return [
+    text === undefined ? "" : ` text=${JSON.stringify(text)}`,
+    bounds === undefined ? "" : ` bounds=${formatBounds(bounds, undefined)}`,
+    change.reasonCodes.length === 0
+      ? ""
+      : ` reasons=${change.reasonCodes.join(",")}`,
+  ].join("");
 };
 
 const describeMismatch = ({
