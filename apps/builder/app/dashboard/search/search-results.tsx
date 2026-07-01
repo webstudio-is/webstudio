@@ -16,6 +16,22 @@ const initialSearchResults: SearchResults = {
   projects: [],
 } as const;
 
+const searchProjectKeys = [
+  "id",
+  "title",
+  "domain",
+  (project: DashboardProject) =>
+    project.domainsVirtual.map(({ domain }) => domain),
+  (project: DashboardProject) => project.latestBuildVirtual?.buildId ?? "",
+];
+
+export const searchProjects = (
+  projects: Array<DashboardProject>,
+  search: string
+) => {
+  return matchSorter(projects, search, { keys: searchProjectKeys });
+};
+
 export const SearchResults = (props: DashboardData) => {
   const [searchParams] = useSearchParams();
   const { projects, publisherHost } = props;
@@ -25,9 +41,8 @@ export const SearchResults = (props: DashboardData) => {
     if (!search || !projects) {
       return initialSearchResults;
     }
-    const keys = ["title", "domain"];
     return {
-      projects: matchSorter(projects, search, { keys }),
+      projects: searchProjects(projects, search),
     };
   }, [projects, search]);
 
