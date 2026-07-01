@@ -4,6 +4,7 @@ import { GLOBAL_CONFIG_FILE } from "./config";
 import { createFileIfNotExists } from "./fs-utils";
 import { link, linkOptions } from "./commands/link";
 import { sync, syncOptions } from "./commands/sync";
+import { importOptions, importProject } from "./commands/import";
 import { build, buildOptions } from "./commands/build";
 import { man, manOptions } from "./commands/man";
 import { mcp, mcpOptions } from "./commands/mcp";
@@ -75,6 +76,12 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
   );
   cmd.command(["link"], "Link the project with the cloud", linkOptions, link);
   cmd.command(["sync"], "Sync your project", syncOptions, sync);
+  cmd.command(
+    ["import"],
+    "Import the synced project bundle into another project",
+    importOptions,
+    importProject
+  );
   cmd.command(
     ["preview"],
     "Run the generated project dev server for visual verification",

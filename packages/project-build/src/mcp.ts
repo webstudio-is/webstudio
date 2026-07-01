@@ -136,6 +136,21 @@ type StartPreview = (
 ) => Promise<ProjectSessionPreviewResult>;
 type GetPreviewStatus = () => Promise<ProjectSessionPreviewResult>;
 
+export type ProjectSessionImportInput = {
+  to: string;
+  assetsDir?: string;
+  ignoreVersionCheck?: boolean;
+  skipAssets?: boolean;
+};
+
+export type ProjectSessionImportResult = {
+  imported: true;
+};
+
+type ImportProject = (
+  input: ProjectSessionImportInput
+) => Promise<ProjectSessionImportResult>;
+
 export type ProjectSessionMcpGuidance = {
   visualVerificationRule: string;
   getVisionVerificationLoop: (options: {
@@ -334,6 +349,34 @@ const previewInputSchema = {
   },
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const importInputSchema = {
+  ...emptyInputSchema,
+  description:
+    "Import local .webstudio/data.json into another project using a destination share link with build permissions.",
+  properties: {
+    to: {
+      type: "string",
+      description: "Destination Builder share link with build permissions.",
+    },
+    assetsDir: {
+      type: "string",
+      description:
+        "Directory containing local asset files referenced by the bundle.",
+    },
+    ignoreVersionCheck: {
+      type: "boolean",
+      description:
+        "Import even when local bundle version differs from the current CLI/API contract.",
+    },
+    skipAssets: {
+      type: "boolean",
+      description:
+        "Import project data without uploading or importing asset files.",
+    },
+  },
+  required: ["to"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
 export type ProjectSessionMcpTool = {
   name: string;
   description: string;
@@ -360,6 +403,11 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "meta.guide": [{ brief: "Create a pricing page and style the hero" }],
   "meta.get_more_tools": [{ brief: "update-styles" }],
   refresh: [{ namespaces: ["pages", "instances", "styles"] }],
+  import: [
+    {
+      to: "https://p-destination-project-id.wstd.dev/?authToken=destination-token",
+    },
+  ],
   "preview.start": [{ host: "127.0.0.1", port: 5173 }],
   "preview.status": [{}],
   "list-pages": [{ includeFolders: true }],
@@ -647,6 +695,27 @@ const installOcrTool = {
   },
 } as const satisfies ProjectSessionMcpTool;
 
+const importTool = {
+  name: "import",
+  description:
+    "Import the local synced project bundle into a destination project. Run sync first; pass a destination share link with build permissions.",
+  inputSchema: importInputSchema,
+  mcpExamples: getMcpExamples("import"),
+  annotations: {
+    command: "import",
+    operationId: "project.import",
+    method: "session",
+    permit: "build",
+    inputFields: ["to", "assetsDir", "ignoreVersionCheck", "skipAssets"],
+    localCapable: false,
+    serverOnly: true,
+    readNamespaces: [],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+} as const satisfies ProjectSessionMcpTool;
+
 const previewTools = [
   {
     name: "preview.start",
@@ -728,6 +797,7 @@ type SdkTool = {
 export const listProjectSessionMcpTools = (
   operations: readonly PublicMcpOperation[],
   options: {
+    includeImport?: boolean;
     includeScreenshot?: boolean;
     includeScreenshotDiff?: boolean;
     includeInstallOcr?: boolean;
@@ -759,6 +829,7 @@ export const listProjectSessionMcpTools = (
     ...tool,
     mcpExamples: getMcpExamples(tool.name),
   })),
+  ...(options.includeImport ? [importTool] : []),
   ...(options.includeScreenshot ? [screenshotTool] : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
   ...(options.includeInstallOcr ? [installOcrTool] : []),
@@ -801,6 +872,11 @@ const capabilityAreas = [
       "whoami",
       "inspect",
     ],
+  },
+  {
+    area: "project-lifecycle",
+    goal: "Refresh local project state and move synced project bundles between projects.",
+    tools: ["refresh", "reset-session", "import"],
   },
   {
     area: "pages",
@@ -1364,10 +1440,30 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
   };
 };
 
+const getImportInput = (input: unknown): ProjectSessionImportInput => {
+  if (isRecord(input) === false) {
+    throw new Error("import input must be an object.");
+  }
+  if (typeof input.to !== "string" || input.to.length === 0) {
+    throw new Error("import requires destination share link in to.");
+  }
+  const assetsDir =
+    typeof input.assetsDir === "string" && input.assetsDir.length > 0
+      ? input.assetsDir
+      : undefined;
+  return {
+    to: input.to,
+    assetsDir,
+    ignoreVersionCheck: input.ignoreVersionCheck === true,
+    skipAssets: input.skipAssets === true,
+  };
+};
+
 export const createProjectSessionMcpCore = <Command extends string = string>({
   operations,
   createProjectSession,
   executeOperation,
+  importProject,
   captureScreenshot,
   diffScreenshots,
   installOcr,
@@ -1378,6 +1474,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   operations: readonly (PublicMcpOperation & { command: Command })[];
   createProjectSession: CreateProjectSession;
   executeOperation: ExecuteMcpOperation<Command>;
+  importProject?: ImportProject;
   captureScreenshot?: CaptureScreenshot;
   diffScreenshots?: DiffScreenshots;
   installOcr?: InstallOcr;
@@ -1391,6 +1488,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   );
   const listTools = () =>
     listProjectSessionMcpTools(operations, {
+      includeImport: importProject !== undefined,
       includeScreenshot: captureScreenshot !== undefined,
       includeScreenshotDiff: diffScreenshots !== undefined,
       includeInstallOcr: installOcr !== undefined,
@@ -1476,6 +1574,9 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         const session = getSession();
         return toCallResult(await session.reset());
       }
+      if (name === "import" && importProject !== undefined) {
+        return toMetaResult(await importProject(getImportInput(input)));
+      }
       if (name === "screenshot" && captureScreenshot !== undefined) {
         return toMetaResult(await captureScreenshot(getScreenshotInput(input)));
       }
@@ -1555,6 +1656,7 @@ export const createProjectSessionMcpServer = async <
   operations,
   createProjectSession,
   executeOperation,
+  importProject,
   captureScreenshot,
   diffScreenshots,
   installOcr,
@@ -1566,6 +1668,7 @@ export const createProjectSessionMcpServer = async <
   operations: readonly (PublicMcpOperation & { command: Command })[];
   createProjectSession: CreateProjectSession;
   executeOperation: ExecuteMcpOperation<Command>;
+  importProject?: ImportProject;
   captureScreenshot?: CaptureScreenshot;
   diffScreenshots?: DiffScreenshots;
   installOcr?: InstallOcr;
@@ -1578,6 +1681,7 @@ export const createProjectSessionMcpServer = async <
     operations,
     createProjectSession,
     executeOperation,
+    importProject,
     captureScreenshot,
     diffScreenshots,
     installOcr,

@@ -82,6 +82,7 @@ test("prints api manual as json", () => {
     "init",
     "link",
     "sync",
+    "import",
     "build",
     "preview",
     "screenshot",
@@ -126,6 +127,7 @@ test("prints api manual as json", () => {
     output.useCaseScenarios.map(({ useCase }: { useCase: string }) => useCase)
   ).toEqual([
     "Link/configure one project",
+    "Import synced project bundle into another project",
     "Identify current token",
     "Check token permissions",
     "Inspect project/build/version",

@@ -92,6 +92,7 @@ describe("registerCommands", () => {
       expect.arrayContaining([
         "preview",
         "screenshot <url>",
+        "import",
         "permissions",
         "publish",
         "domains",
@@ -143,6 +144,7 @@ describe("registerCommands", () => {
   test("keeps grouped subcommands out of top-level help", async () => {
     const rootHelp = await getHelpOutput(["--help"]);
 
+    expect(rootHelp).toContain("webstudio import");
     expect(rootHelp).toContain("webstudio publish");
     expect(rootHelp).toContain("webstudio domains");
     expect(rootHelp).not.toContain("webstudio publish deploy");
