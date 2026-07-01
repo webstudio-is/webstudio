@@ -95,6 +95,7 @@ test("documents every MCP session and vision tool in use-case scenarios", () => 
       "meta.index",
       "meta.guide",
       "meta.get_more_tools",
+      "import",
       "status",
       "refresh",
       "reset-session",

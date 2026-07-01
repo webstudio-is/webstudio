@@ -247,6 +247,19 @@ describe("project session mcp adapter", () => {
     ).toContain("vision.install-ocr");
   });
 
+  test("lists import only when host provides importer", () => {
+    expect(
+      listProjectSessionMcpTools(publicMcpOperations).map((tool) => tool.name)
+    ).not.toContain("import");
+    const tools = listProjectSessionMcpTools(publicMcpOperations, {
+      includeImport: true,
+    });
+    const importTool = tools.find((tool) => tool.name === "import");
+    expect(importTool).toBeDefined();
+    expect(importTool?.annotations.invalidatesNamespaces).toEqual([]);
+    expect(tools.map((tool) => tool.name)).toContain("import");
+  });
+
   test("does not expose CLI-only required options as MCP tool schemas", () => {
     const operationWithCliOptions = {
       ...publicMcpOperations[0]!,
@@ -320,6 +333,67 @@ describe("project session mcp adapter", () => {
         }),
       },
     });
+  });
+
+  test("calls import through injected project importer", async () => {
+    const importProject = vi.fn(async () => ({ imported: true as const }));
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      importProject,
+    });
+
+    const result = await adapter.callTool({
+      name: "import",
+      input: {
+        to: "https://p-destination.wstd.dev/?authToken=token",
+        assetsDir: "assets",
+        ignoreVersionCheck: true,
+        skipAssets: true,
+      },
+    });
+
+    expect(importProject).toHaveBeenCalledWith({
+      to: "https://p-destination.wstd.dev/?authToken=token",
+      assetsDir: "assets",
+      ignoreVersionCheck: true,
+      skipAssets: true,
+    });
+    expect(result.structuredContent.data).toEqual({ imported: true });
+  });
+
+  test("includes import in capability index when importer is provided", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      importProject: vi.fn(async () => ({ imported: true as const })),
+    });
+
+    const index = await adapter.callTool({ name: "meta.index" });
+    const capabilities = (
+      index.structuredContent.data as {
+        capabilities: { tools: string[] }[];
+      }
+    ).capabilities;
+
+    expect(capabilities.flatMap((capability) => capability.tools)).toContain(
+      "import"
+    );
+  });
+
+  test("rejects import without destination share link", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      importProject: vi.fn(),
+    });
+
+    await expect(
+      adapter.callTool({ name: "import", input: {} })
+    ).rejects.toThrow("import requires destination share link in to.");
   });
 
   test("delegates catalog operation tools without creating core session", async () => {
@@ -1293,10 +1367,12 @@ describe("project session mcp adapter", () => {
         result: [{ id: "home" }],
       })
     );
+    const importProject = vi.fn(async () => ({ imported: true as const }));
     const server = await createProjectSessionMcpServer({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(session),
       executeOperation,
+      importProject,
     });
     const { client, close } = await createConnectedClient(server);
 
@@ -1327,6 +1403,26 @@ describe("project session mcp adapter", () => {
         command: "list-pages",
         input: { includeFolders: true },
         dryRun: false,
+      });
+      await expect(
+        client.callTool({
+          name: "import",
+          arguments: {
+            to: "https://p-destination.wstd.dev/?authToken=token",
+          },
+        })
+      ).resolves.toEqual(
+        expect.objectContaining({
+          structuredContent: expect.objectContaining({
+            data: { imported: true },
+          }),
+        })
+      );
+      expect(importProject).toHaveBeenCalledWith({
+        to: "https://p-destination.wstd.dev/?authToken=token",
+        assetsDir: undefined,
+        ignoreVersionCheck: false,
+        skipAssets: false,
       });
 
       await expect(
