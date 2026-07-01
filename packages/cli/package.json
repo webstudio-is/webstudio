@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "generate-docs": "node scripts/generate-docs.mjs",
+    "generate-docs": "tsx scripts/generate-docs.ts",
     "build": "pnpm generate-docs && rm -rf lib && vite build",
     "test": "vitest run"
   },
@@ -68,6 +68,7 @@
     "@remix-run/node": "^2.16.5",
     "@remix-run/react": "^2.16.5",
     "@remix-run/server-runtime": "^2.16.5",
+    "@types/mdast": "^4.0.4",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@types/yargs": "^17.0.33",
@@ -88,6 +89,10 @@
     "h3": "^1.15.1",
     "ipx": "^3.0.3",
     "isbot": "^5.1.25",
+    "mdast-util-directive": "^3.1.0",
+    "mdast-util-from-markdown": "^2.0.3",
+    "mdast-util-to-string": "^4.0.0",
+    "micromark-extension-directive": "^4.0.0",
     "prettier": "3.5.3",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",

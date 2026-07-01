@@ -24,6 +24,9 @@ test("documents MCP stdio startup and discovery tools", () => {
   expect(yargs.epilogue).toHaveBeenCalledWith(
     expect.stringContaining("current Builder dev build")
   );
+  expect(yargs.epilogue).toHaveBeenCalledWith(
+    expect.stringContaining("webstudio://project/guide")
+  );
 });
 
 test("marks cached namespaces stale before serving MCP tools", async () => {

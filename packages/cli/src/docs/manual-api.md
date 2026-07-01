@@ -5,9 +5,9 @@ The API commands operate on the single project configured by:
 - .webstudio/config.json: projectId
 - global Webstudio config: origin and token
 
-Rules:
+::doc-section{field="safetyRules"}
 
-- Always pass --json.
+- Pass --json to API/discovery commands that support it. Do not add --json to top-level commands unless their help/schema documents it.
 - Never pass a project id. Commands use configured project only.
 - Read ids before writing. Do not invent ids for existing records.
 - stdout is one JSON object. stderr is diagnostics.
@@ -207,6 +207,8 @@ Create a design token:
 ]
 }
 ]
+
+::doc-section{field="safetyRules"}
 
 ## Safety Rules
 

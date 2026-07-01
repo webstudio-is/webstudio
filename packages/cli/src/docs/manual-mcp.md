@@ -7,6 +7,7 @@
 1. Configure a project with `webstudio init --link <api-share-link> --json`.
 2. Check capabilities with `webstudio permissions --json`.
 3. Start the server with `webstudio mcp`.
+4. In the MCP client, read `webstudio://project/guide` before editing, or call `meta.index` and `meta.guide`.
 
 While the server is running, stdout is reserved for MCP JSON-RPC messages. Do not print human text from the server process.
 
@@ -26,8 +27,11 @@ Useful resources:
 - `webstudio://project/tools`: operation catalog
 - `webstudio://project/guide`: concise discovery guide
 
+::doc-section{field="rules"}
+
 ## Core Rules
 
+- stdout is reserved for MCP JSON-RPC while the server is running.
 - Operate on the configured project only.
 - Read ids before writing.
 - Prefer semantic tools over `apply-patch`.
