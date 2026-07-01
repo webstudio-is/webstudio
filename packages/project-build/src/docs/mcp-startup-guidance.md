@@ -1,0 +1,1 @@
+Before editing a Webstudio project, read `webstudio://project/guide` and `webstudio://project/tools`, or call `meta.index` and `meta.guide`. Follow the guide: read ids and Builder breakpoints first, prefer semantic tools over `apply-patch`, do not edit generated files for normal content/design changes, and use `preview.start` plus screenshot/vision for visual work.

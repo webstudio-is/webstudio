@@ -4,7 +4,7 @@ import type {
 } from "./yargs-types";
 import { buildPatchNamespaces } from "@webstudio-is/protocol";
 import { mcpArgumentExamples } from "@webstudio-is/project-build/mcp";
-import { readCliDoc } from "../docs";
+import { readCliDoc, readCliDocSections, readCliDocTitle } from "../docs";
 import {
   generatedAppDependencyNotes,
   getVisionVerificationLoop,
@@ -472,132 +472,139 @@ const apiManual = renderMarkdownTemplate(apiManualMarkdown, manualReplacements);
 const llmManual = renderMarkdownTemplate(llmManualMarkdown, manualReplacements);
 const mcpManual = renderMarkdownTemplate(mcpManualMarkdown, manualReplacements);
 
+const apiDocSections = readCliDocSections("manual-api");
+const llmDocSections = readCliDocSections("manual-llm");
+const mcpDocSections = readCliDocSections("manual-mcp");
+
+const mergeDocSections = <Json extends Record<string, unknown>>(
+  topic: string,
+  json: Json,
+  sections: Record<string, unknown>
+) => {
+  for (const fieldName of Object.keys(sections)) {
+    if (Object.hasOwn(json, fieldName)) {
+      throw new Error(
+        `Doc metadata field "${fieldName}" conflicts with ${topic} manual JSON`
+      );
+    }
+  }
+  return { ...json, ...sections };
+};
+
 const topics = {
   api: {
     manual: apiManual,
-    json: {
-      topic: "api",
-      title: "Webstudio API CLI Manual",
-      workflows: [
-        "webstudio init --link <api-share-link> --json",
-        "webstudio permissions --json",
-        "webstudio schema api --json",
-        "webstudio publish deploy --target production --json",
-        "webstudio domains list --json",
-        "webstudio mcp",
-      ],
-      taskRecipes,
-      useCaseScenarios,
-      knownGaps: knownCliGaps,
-      topLevelCommands: topLevelCommandCatalog,
-      apiCommandsByArea,
-      mcpOnlyCommands: mcpOnlyCommandCatalog,
-      inputFileShapes,
-      mcpArgumentExamples,
-      commands: commandCatalog,
-      readCommands,
-      writeCommands,
-      mutationNamespaces: buildPatchNamespaces,
-      sessionBehavior: {
-        localReads:
-          "Use compatible cached namespaces and fetch only missing or stale namespaces.",
-        localMutations:
-          "Build patches locally, commit with the cached build version, and update local state only after remote commit succeeds.",
-        serverOnly:
-          "Run remotely and invalidate/refetch namespaces declared by the public operation catalog.",
-        refreshFlag:
-          "Use --refresh to refresh required namespaces before local-capable commands.",
-        metadata:
-          "Successful command JSON includes meta.session with operationId, buildId, version, source, committed, compatibility, namespace metadata, and diagnostics.",
+    json: mergeDocSections(
+      "api",
+      {
+        topic: "api",
+        title: readCliDocTitle("manual-api"),
+        workflows: [
+          "webstudio init --link <api-share-link> --json",
+          "webstudio permissions --json",
+          "webstudio schema api --json",
+          "webstudio publish deploy --target production --json",
+          "webstudio domains list --json",
+          "webstudio mcp",
+        ],
+        taskRecipes,
+        useCaseScenarios,
+        knownGaps: knownCliGaps,
+        topLevelCommands: topLevelCommandCatalog,
+        apiCommandsByArea,
+        mcpOnlyCommands: mcpOnlyCommandCatalog,
+        inputFileShapes,
+        mcpArgumentExamples,
+        commands: commandCatalog,
+        readCommands,
+        writeCommands,
+        mutationNamespaces: buildPatchNamespaces,
+        sessionBehavior: {
+          localReads:
+            "Use compatible cached namespaces and fetch only missing or stale namespaces.",
+          localMutations:
+            "Build patches locally, commit with the cached build version, and update local state only after remote commit succeeds.",
+          serverOnly:
+            "Run remotely and invalidate/refetch namespaces declared by the public operation catalog.",
+          refreshFlag:
+            "Use --refresh to refresh required namespaces before local-capable commands.",
+          metadata:
+            "Successful command JSON includes meta.session with operationId, buildId, version, source, committed, compatibility, namespace metadata, and diagnostics.",
+        },
       },
-      safetyRules: [
-        "Always pass --json.",
-        "Never pass project ids; commands use the configured project.",
-        "Read ids before writing.",
-        "Prefer semantic MCP write tools over apply-patch.",
-        "For MCP apply-patch, read the latest version with MCP snapshot before writing.",
-        "Reuse ids from MCP snapshot output when updating existing records.",
-        "Generate new unique ids when adding records.",
-        "Regenerate the patch after a version conflict.",
-      ],
-    },
+      apiDocSections
+    ),
   },
   llm: {
     manual: llmManual,
-    json: {
-      topic: "llm",
-      title: "Webstudio CLI Manual for LLMs",
-      discovery: [
-        "webstudio schema api --json",
-        "webstudio permissions --json",
-        "webstudio mcp",
-        "MCP tool: status",
-        "MCP resource: webstudio://project/tools",
-      ],
-      taskRecipes,
-      useCaseScenarios,
-      knownGaps: knownCliGaps,
-      topLevelCommands: topLevelCommandCatalog,
-      apiCommandsByArea,
-      mcpOnlyCommands: mcpOnlyCommandCatalog,
-      inputFileShapes,
-      mcpArgumentExamples,
-      commands: commandCatalog,
-      readCommands,
-      writeCommands,
-      sessionBehavior: [
-        "Read meta.session.source and meta.session.namespaces to understand whether data came from local cache, remote refresh, dry-run, or server-only execution.",
-        "Use --refresh before a local-capable command when the cached snapshot may be stale.",
-        "A mutation is durable only when meta.session.committed is true.",
-      ],
-      writes: [
-        "Use MCP tools for fine-grained project edits.",
-        "Use top-level CLI only for link/sync/build/publish/domains/permissions/discovery workflows.",
-      ],
-      rules: [
-        "Always pass --json.",
-        "Never guess ids for existing records. Read them first.",
-        "Use the configured project only.",
-        "Regenerate patches after VERSION_CONFLICT.",
-        "Use stdout JSON as the contract.",
-      ],
-    },
+    json: mergeDocSections(
+      "llm",
+      {
+        topic: "llm",
+        title: readCliDocTitle("manual-llm"),
+        discovery: [
+          "webstudio schema api --json",
+          "webstudio permissions --json",
+          "webstudio mcp",
+          "MCP tool: status",
+          "MCP resource: webstudio://project/tools",
+        ],
+        taskRecipes,
+        useCaseScenarios,
+        knownGaps: knownCliGaps,
+        topLevelCommands: topLevelCommandCatalog,
+        apiCommandsByArea,
+        mcpOnlyCommands: mcpOnlyCommandCatalog,
+        inputFileShapes,
+        mcpArgumentExamples,
+        commands: commandCatalog,
+        readCommands,
+        writeCommands,
+        sessionBehavior: [
+          "Read meta.session.source and meta.session.namespaces to understand whether data came from local cache, remote refresh, dry-run, or server-only execution.",
+          "Use --refresh before a local-capable command when the cached snapshot may be stale.",
+          "A mutation is durable only when meta.session.committed is true.",
+        ],
+        writes: [
+          "Use MCP tools for fine-grained project edits.",
+          "Use top-level CLI only for link/sync/build/publish/domains/permissions/discovery workflows.",
+        ],
+        visionVerificationLoop: [...mcpVisionVerificationLoop],
+        screenshotVerification: screenshotVerificationSummary,
+      },
+      llmDocSections
+    ),
   },
   mcp: {
     manual: mcpManual,
-    json: {
-      topic: "mcp",
-      title: "Webstudio MCP Manual",
-      startup: [
-        "webstudio init --link <api-share-link> --json",
-        "webstudio permissions --json",
-        "webstudio mcp",
-      ],
-      discovery: [
-        "tools/list",
-        "resources/list",
-        "meta.index",
-        "meta.guide",
-        "meta.get_more_tools",
-      ],
-      resources: [
-        "webstudio://project/status",
-        "webstudio://project/tools",
-        "webstudio://project/guide",
-      ],
-      rules: [
-        "stdout is reserved for MCP JSON-RPC while the server is running.",
-        "Operate on the configured project only.",
-        "Read ids before writing.",
-        "Prefer semantic tools over apply-patch.",
-        "Use status and refresh when cached namespaces may be stale.",
-        "A mutation is durable only when meta.session.committed is true.",
-        "For visual/design work, verify the rendered result with vision before finishing.",
-      ],
-      visionVerificationLoop: [...mcpVisionVerificationLoop],
-      mcpArgumentExamples,
-      screenshotVerification: screenshotVerificationSummary,
-    },
+    json: mergeDocSections(
+      "mcp",
+      {
+        topic: "mcp",
+        title: readCliDocTitle("manual-mcp"),
+        startup: [
+          "webstudio init --link <api-share-link> --json",
+          "webstudio permissions --json",
+          "webstudio mcp",
+        ],
+        discovery: [
+          "tools/list",
+          "resources/list",
+          "meta.index",
+          "meta.guide",
+          "meta.get_more_tools",
+        ],
+        resources: [
+          "webstudio://project/status",
+          "webstudio://project/tools",
+          "webstudio://project/guide",
+        ],
+        visionVerificationLoop: [...mcpVisionVerificationLoop],
+        mcpArgumentExamples,
+        screenshotVerification: screenshotVerificationSummary,
+      },
+      mcpDocSections
+    ),
   },
 };
 

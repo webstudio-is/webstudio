@@ -504,6 +504,7 @@ describe("project session mcp adapter", () => {
     expect(session.initialize).not.toHaveBeenCalled();
     expect(index.structuredContent.data).toEqual(
       expect.objectContaining({
+        readThisFirst: expect.stringContaining("webstudio://project/guide"),
         startHere: expect.arrayContaining(["meta.guide"]),
         capabilities: expect.arrayContaining([
           expect.objectContaining({
@@ -1178,6 +1179,7 @@ describe("project session mcp adapter", () => {
     );
     expect(JSON.parse(guide.contents[0]?.text ?? "{}")).toEqual(
       expect.objectContaining({
+        readThisFirst: expect.stringContaining("webstudio://project/guide"),
         startHere: expect.arrayContaining(["meta.index"]),
       })
     );

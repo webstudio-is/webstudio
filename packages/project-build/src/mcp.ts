@@ -24,6 +24,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { readProjectBuildDoc } from "./docs";
 
 type PublicMcpOperationMethod = "query" | "mutation";
 type PublicMcpOperationPermit = "api" | "view" | "build" | "edit" | "admin";
@@ -1067,6 +1068,8 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
     .filter((capability) => capability.tools.length > 0);
 };
 
+const startupGuidance = readProjectBuildDoc("mcp-startup-guidance").trim();
+
 const getMetaIndex = (
   tools: readonly ProjectSessionMcpTool[],
   guidance: ProjectSessionMcpGuidance | undefined
@@ -1076,6 +1079,7 @@ const getMetaIndex = (
     names.has(tool)
   );
   return {
+    readThisFirst: startupGuidance,
     startHere: ["meta.index", "meta.guide", "status", "permissions"].filter(
       (tool) => names.has(tool)
     ),
@@ -1696,8 +1700,7 @@ export const createProjectSessionMcpServer = async <
         tools: {},
         resources: {},
       },
-      instructions:
-        "Use meta.index, meta.guide, and meta.get_more_tools to discover Webstudio project capabilities. Read ids before writing and prefer semantic tools over apply-patch.",
+      instructions: startupGuidance,
     }
   );
 
