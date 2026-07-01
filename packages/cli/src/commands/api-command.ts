@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import * as httpClient from "@webstudio-is/http-client";
 import { isFileExists } from "../fs-utils";
 import { HandledCliError } from "../errors";
-import { getLocalAssetPath, LOCAL_ASSETS_DIR } from "../asset-files";
+import { createLocalAssetDataReader, LOCAL_ASSETS_DIR } from "../asset-files";
 import { createCliProjectSession } from "../project-session";
 import { getStableErrorCode } from "../error-codes";
 import { printJson } from "../json-output";
@@ -1465,13 +1465,6 @@ const readInputArray = async <Value>(
   options: ApiCommandOptions
 ) => (await readJsonArray(dependencies, options.input, "--input")) as Value;
 
-const readAssetData =
-  (dependencies: ApiCommandDependencies, assetsDirectory?: string) =>
-  async (asset: { name: string }) =>
-    (await dependencies.readFile(
-      getLocalAssetPath(asset.name, assetsDirectory)
-    )) as unknown as ArrayBufferView<ArrayBuffer>;
-
 const parseVariableValue = (
   type: ApiCommandOptions["valueType"],
   value: string | undefined
@@ -2534,7 +2527,10 @@ const apiCommandHandlers = {
   "upload-asset": async (options, connection, dependencies) => {
     const input = {
       asset: await readInputObject<UploadAssetInput>(dependencies, options),
-      readAssetData: readAssetData(dependencies, options.assetsDir),
+      readAssetData: createLocalAssetDataReader(
+        dependencies.readFile,
+        options.assetsDir
+      ),
     };
     return runProjectSessionCommand(
       "upload-asset",
@@ -2546,7 +2542,10 @@ const apiCommandHandlers = {
   "upload-assets": async (options, connection, dependencies) => {
     const input = {
       assets: await readInputArray<UploadAssetsInput>(dependencies, options),
-      readAssetData: readAssetData(dependencies, options.assetsDir),
+      readAssetData: createLocalAssetDataReader(
+        dependencies.readFile,
+        options.assetsDir
+      ),
     };
     return runProjectSessionCommand(
       "upload-assets",

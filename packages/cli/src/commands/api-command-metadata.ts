@@ -55,6 +55,12 @@ export const topLevelCliCommandMetadata = [
     examples: ["webstudio sync"],
   },
   {
+    command: "import",
+    description:
+      "Import the synced .webstudio/data.json project bundle into a destination project",
+    examples: ["webstudio import --to <destination-share-link>"],
+  },
+  {
     command: "build",
     description: "Build the synced project with the selected template",
     examples: ["webstudio build --template ssg"],

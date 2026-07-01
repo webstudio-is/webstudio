@@ -58,6 +58,7 @@ test("describes root CLI commands once for help-oriented docs", () => {
     "init",
     "link",
     "sync",
+    "import",
     "build",
     "preview",
     "screenshot",

@@ -10,7 +10,11 @@ import {
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import type { Asset } from "@webstudio-is/sdk";
-import { getLocalAssetPath, materializeAssetFile } from "./asset-files";
+import {
+  createLocalAssetDataReader,
+  getLocalAssetPath,
+  materializeAssetFile,
+} from "./asset-files";
 
 const originalCwd = process.cwd();
 let tempDir: string;
@@ -44,6 +48,18 @@ test("rejects asset paths outside the asset directory", () => {
   expect(() => getLocalAssetPath("folder\\image.png")).toThrow(
     "Asset path escapes .webstudio/assets"
   );
+});
+
+test("creates a local asset data reader", async () => {
+  await mkdir(".webstudio/assets", { recursive: true });
+  await writeFile(".webstudio/assets/image.png", "asset", "utf8");
+
+  const readAssetData = createLocalAssetDataReader(readFile);
+  const data = await readAssetData({ name: "image.png" });
+
+  expect(
+    Buffer.from(data.buffer, data.byteOffset, data.byteLength).toString()
+  ).toBe("asset");
 });
 
 test("materializes asset files from the synced asset cache before fetching", async () => {

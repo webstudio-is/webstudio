@@ -10,6 +10,20 @@ Notes:
 
 - Writes local project id and global origin/token config.
 
+## Import synced project bundle into another project
+
+Commands:
+
+- webstudio sync
+- webstudio import --to <destination-share-link>
+- MCP tool: import {"to":"<destination-share-link>"}
+
+Notes:
+
+- Imports local `.webstudio/data.json` into the destination project.
+- Destination share link must allow build/import access.
+- Use `--skip-assets` only when asset rows and files should not be imported.
+
 ## Identify current token
 
 Commands:

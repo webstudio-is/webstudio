@@ -1,12 +1,16 @@
 import { stdin, stdout } from "node:process";
+import { readFile } from "node:fs/promises";
 import {
   connectProjectSessionMcpServer,
   createMcpStdioTransport,
 } from "@webstudio-is/project-build/mcp";
 import { diffPngFiles } from "@webstudio-is/project-build/visual/screenshot-diff";
 import { publicApiOperations } from "@webstudio-is/protocol";
+import { importProjectBundleWithAssets } from "@webstudio-is/http-client";
 import { resolveApiConnection } from "../api-connection";
 import { getStableErrorCode } from "../error-codes";
+import { isHandledCliError } from "../errors";
+import { loadJSONFile } from "../fs-utils";
 import { createCliProjectSession } from "../project-session";
 import { executeProjectSessionApiOperation } from "../project-session-api";
 import { createPreviewController } from "../preview-server";
@@ -20,6 +24,7 @@ import {
   visualVerificationRule,
 } from "../mcp-guidance";
 import { apiCompatibilityHeaders } from "./api";
+import { importProject as importProjectCommand } from "./import";
 import type { CommonYargsArgv } from "./yargs-types";
 
 export const mcpOptions = (yargs: CommonYargsArgv) =>
@@ -50,6 +55,16 @@ export const mcp = async () => {
     ...connection,
     headers: apiCompatibilityHeaders,
   };
+  let importErrorMessage = "Project import failed.";
+  const silentImportIndicator = {
+    start: () => undefined,
+    message: () => undefined,
+    stop: (message?: string) => {
+      if (message !== undefined) {
+        importErrorMessage = message;
+      }
+    },
+  };
   const session = createCliProjectSession({ connection: apiConnection });
   const preview = createPreviewController({ host: "127.0.0.1", port: 5173 });
   await connectProjectSessionMcpServer({
@@ -63,6 +78,36 @@ export const mcp = async () => {
         createProjectSession: () => session,
         dryRun,
       }),
+    async importProject(input) {
+      importErrorMessage = "Project import failed.";
+      try {
+        await importProjectCommand(
+          {
+            to: input.to,
+            assetsDir: input.assetsDir,
+            ignoreVersionCheck: input.ignoreVersionCheck,
+            skipAssets: input.skipAssets,
+          },
+          {
+            importProjectBundleWithAssets,
+            loadJSONFile,
+            readFile,
+            text: async () => {
+              throw new Error("MCP import requires to.");
+            },
+            isInteractive: false,
+            log: { info: () => undefined },
+            spinner: () => silentImportIndicator,
+          }
+        );
+      } catch (error) {
+        if (isHandledCliError(error)) {
+          throw new Error(importErrorMessage);
+        }
+        throw error;
+      }
+      return { imported: true };
+    },
     async startPreview(input) {
       return preview.startAndWait(input);
     },

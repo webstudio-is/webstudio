@@ -54,6 +54,13 @@ export const getLocalAssetPath = (
   throw new Error(`Asset path escapes ${assetsDirectory}: ${assetName}`);
 };
 
+export const createLocalAssetDataReader =
+  (readFile: (path: string) => Promise<unknown>, assetsDirectory?: string) =>
+  async (asset: { name: string }) =>
+    (await readFile(
+      getLocalAssetPath(asset.name, assetsDirectory)
+    )) as ArrayBufferView<ArrayBuffer>;
+
 const downloadUrlToFile = async (url: string, filePath: string) => {
   const tempFilePath = `${filePath}.tmp`;
 
