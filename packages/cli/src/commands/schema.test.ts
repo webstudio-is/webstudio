@@ -19,6 +19,7 @@ test("prints api command schema as json", () => {
     "init",
     "link",
     "sync",
+    "import",
     "build",
     "preview",
     "screenshot",
