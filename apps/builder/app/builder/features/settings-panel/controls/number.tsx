@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { InputField } from "@webstudio-is/design-system";
+import { InputField, Text } from "@webstudio-is/design-system";
 import {
   BindingControl,
   BindingPopover,
@@ -9,6 +9,7 @@ import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
   ResponsiveLayout,
+  HorizontalLayout,
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
@@ -51,8 +52,10 @@ export const NumberControl = ({
     prop?.type === "expression" ? prop.value : undefined
   );
 
+  const Layout = meta.suffix ? HorizontalLayout : ResponsiveLayout;
+
   return (
-    <ResponsiveLayout
+    <Layout
       label={
         <PropertyLabel name={propName} readOnly={overwritable === false} />
       }
@@ -64,6 +67,13 @@ export const NumberControl = ({
           type="number"
           value={localValue.value}
           color={isInvalid ? "error" : undefined}
+          suffix={
+            meta.suffix ? (
+              <Text variant="unit" color="subtle">
+                {meta.suffix}
+              </Text>
+            ) : undefined
+          }
           onChange={({ target: { valueAsNumber, value } }) => {
             localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber);
             setIsInvalid(false);
@@ -97,6 +107,6 @@ export const NumberControl = ({
           }}
         />
       </BindingControl>
-    </ResponsiveLayout>
+    </Layout>
   );
 };

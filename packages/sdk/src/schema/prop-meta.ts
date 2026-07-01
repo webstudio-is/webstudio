@@ -30,6 +30,7 @@ const Number = z.object({
   control: z.literal("number"),
   type: z.literal("number"),
   defaultValue: z.number().optional(),
+  suffix: z.string().optional(),
 });
 
 const Range = z.object({
