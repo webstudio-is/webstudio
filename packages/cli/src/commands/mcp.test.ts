@@ -1,5 +1,6 @@
 import { expect, test, vi } from "vitest";
-import { mcpOptions } from "./mcp";
+import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
+import { mcpOptions, prepareMcpProjectSession } from "./mcp";
 
 test("documents MCP stdio startup and discovery tools", () => {
   const yargs = {
@@ -20,4 +21,19 @@ test("documents MCP stdio startup and discovery tools", () => {
   expect(yargs.epilogue).toHaveBeenCalledWith(
     expect.stringContaining("tools/list")
   );
+  expect(yargs.epilogue).toHaveBeenCalledWith(
+    expect.stringContaining("current Builder dev build")
+  );
+});
+
+test("marks cached namespaces stale before serving MCP tools", async () => {
+  const session = {
+    initialize: vi.fn(async () => undefined),
+    markStale: vi.fn(async () => undefined),
+  };
+
+  await prepareMcpProjectSession(session);
+
+  expect(session.initialize).toHaveBeenCalled();
+  expect(session.markStale).toHaveBeenCalledWith(builderNamespaces);
 });

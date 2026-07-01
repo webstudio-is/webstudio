@@ -5,9 +5,11 @@ import {
   readdir,
   readFile,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import { bundleVersion } from "@webstudio-is/protocol";
 import { generateRedirectsModule, prebuild } from "./prebuild";
@@ -20,6 +22,35 @@ const rootFolderId = "root";
 const elementComponent = "ws:element";
 const slowPrebuildTestTimeout = 15_000;
 type Redirects = Array<{ old: string; new: string; status?: "301" | "302" }>;
+type GeneratedRouteModule = {
+  loader: (args: { request: Request }) => Response | Promise<Response>;
+};
+
+const importGeneratedRoute = async (path: string) => {
+  await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+  return (await import(
+    `${pathToFileURL(join(tempDir, path)).href}?test=${crypto.randomUUID()}`
+  )) as GeneratedRouteModule;
+};
+
+const expectGeneratedRedirectFallback = async (path: string) => {
+  const routeModule = await importGeneratedRoute(path);
+  const redirectResponse = await routeModule.loader({
+    request: new Request("https://example.com/dl.php?filename=file.pdf"),
+  });
+  expect(redirectResponse.status).toBe(301);
+  expect(redirectResponse.headers.get("Location")).toBe("/downloads/file.pdf");
+
+  try {
+    await routeModule.loader({
+      request: new Request("https://example.com/not-a-redirect"),
+    });
+    throw new Error("Expected unmatched request to throw a 404 response.");
+  } catch (error) {
+    expect(error).toBeInstanceOf(Response);
+    expect((error as Response).status).toBe(404);
+  }
+};
 
 const getFilePaths = async (dir: string): Promise<string[]> => {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -302,6 +333,7 @@ describe("prebuild", () => {
     expect(routeTemplate).toContain("../__generated__/_index.server");
     expect(routeTemplate).not.toContain("__CLIENT__");
     expect(routeTemplate).not.toContain("__SERVER__");
+    await expectGeneratedRedirectFallback("app/routes/$.tsx");
 
     await expect(
       readFile("app/__generated__/stale.ts", "utf8")

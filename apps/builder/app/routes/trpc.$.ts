@@ -5,6 +5,7 @@ import { appRouter } from "~/services/trcp-router.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { getTrpcResponseMeta } from "~/services/trpc-response-meta.server";
+import { isCliApiRequest } from "~/services/trpc-request.server";
 
 const isServiceRequest = (request: Request) => {
   return isServiceAuthorization(request.headers.get("Authorization"));
@@ -15,7 +16,10 @@ const isAuthTokenRequest = (request: Request) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  if (isServiceRequest(request) === false) {
+  if (
+    isServiceRequest(request) === false &&
+    isCliApiRequest(request) === false
+  ) {
     preventCrossOriginCookie(request);
     if (isAuthTokenRequest(request) === false) {
       await checkCsrf(request);

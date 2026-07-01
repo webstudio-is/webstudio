@@ -4,6 +4,10 @@ import {
   connectProjectSessionMcpServer,
   createMcpStdioTransport,
 } from "@webstudio-is/project-build/mcp";
+import {
+  builderNamespaces,
+  type BuilderNamespace,
+} from "@webstudio-is/project-build/contracts/namespaces";
 import { diffPngFiles } from "@webstudio-is/project-build/visual/screenshot-diff";
 import { publicApiOperations } from "@webstudio-is/protocol";
 import { importProjectBundleWithAssets } from "@webstudio-is/http-client";
@@ -27,6 +31,18 @@ import { apiCompatibilityHeaders } from "./api";
 import { importProject as importProjectCommand } from "./import";
 import type { CommonYargsArgv } from "./yargs-types";
 
+type StartableProjectSession = {
+  initialize: () => Promise<unknown>;
+  markStale: (namespaces: readonly BuilderNamespace[]) => Promise<unknown>;
+};
+
+export const prepareMcpProjectSession = async (
+  session: StartableProjectSession
+) => {
+  await session.initialize();
+  await session.markStale(builderNamespaces);
+};
+
 export const mcpOptions = (yargs: CommonYargsArgv) =>
   yargs
     .example(
@@ -44,6 +60,7 @@ export const mcpOptions = (yargs: CommonYargsArgv) =>
     .epilogue(
       [
         "Plain `webstudio mcp` starts the stdio MCP server.",
+        "Startup marks cached ProjectSession data stale so MCP tools read the current Builder dev build.",
         "After startup, MCP clients discover capabilities with tools/list, resources/list, meta.index, meta.guide, and meta.get_more_tools.",
         "stdout is reserved for MCP JSON-RPC messages while the server is running.",
       ].join("\n")
@@ -66,6 +83,7 @@ export const mcp = async () => {
     },
   };
   const session = createCliProjectSession({ connection: apiConnection });
+  await prepareMcpProjectSession(session);
   const preview = createPreviewController({ host: "127.0.0.1", port: 5173 });
   await connectProjectSessionMcpServer({
     operations: publicApiOperations,

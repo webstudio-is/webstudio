@@ -196,6 +196,28 @@ export const generateRedirectsModule = (pageRedirects: Pages["redirects"]) => {
     `;
 };
 
+const generateRedirectFallbackRoute = (runtime: "remix" | "react-router") => {
+  const loaderFunctionArgs =
+    runtime === "react-router" ? "react-router" : "@remix-run/server-runtime";
+
+  return `
+    import { type LoaderFunctionArgs } from ${JSON.stringify(loaderFunctionArgs)};
+    import { redirectRequest } from "../redirect-url";
+    // @todo think about how to make __generated__ typeable
+    // @ts-ignore
+    import { redirects } from "../__generated__/$resources.redirects";
+
+    export const loader = ({ request }: LoaderFunctionArgs) => {
+      const redirectResponse = redirectRequest(request, redirects);
+      if (redirectResponse !== undefined) {
+        return redirectResponse;
+      }
+
+      throw new Response("Not Found", { status: 404 });
+    };
+    `;
+};
+
 export const prebuild = async (options: {
   /**
    * Do we need download assets
@@ -731,6 +753,15 @@ export const prebuild = async (options: {
     join(generatedDir, "$resources.redirects.ts"),
     generateRedirectsModule(pages.redirects)
   );
+
+  if (pages.redirects !== undefined && pages.redirects.length > 0) {
+    await createFileIfNotExists(
+      join(routesDir, "$.tsx"),
+      generateRedirectFallbackRoute(
+        options.template.includes("react-router") ? "react-router" : "remix"
+      )
+    );
+  }
 
   if (options.assets === true && siteData.assets.length > 0) {
     const downloading = spinner();

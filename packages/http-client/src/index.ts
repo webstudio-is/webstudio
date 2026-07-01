@@ -571,12 +571,15 @@ export const loadProjectBundleByBuildId = async (
         serviceToken: string;
       }
     | { authToken: string }
+    | { authToken?: undefined; serviceToken?: undefined }
   )
 ): Promise<PublishedProjectBundle> => {
   const headers: RequestHeaders =
     "serviceToken" in params
       ? { Authorization: params.serviceToken }
-      : { "x-auth-token": params.authToken };
+      : "authToken" in params
+        ? { "x-auth-token": params.authToken }
+        : {};
 
   const data = await createTrpcClient(params.origin, {
     ...params.headers,
