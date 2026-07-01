@@ -139,7 +139,7 @@ test("downloads project bundle asset files into local project bundle", async () 
   expect(indicator.message).toHaveBeenCalledWith("Downloading 1 asset files");
 });
 
-test("does not send linked share token when synchronizing by build id", async () => {
+test("sends linked share token when synchronizing by build id", async () => {
   const resolveApiConnection = vi.fn(async () => ({
     authToken: "share-token",
     origin: "https://example.com",
@@ -158,6 +158,7 @@ test("does not send linked share token when synchronizing by build id", async ()
 
   expect(loadProjectBundleByBuildId).toHaveBeenCalledWith({
     buildId: "build-1",
+    authToken: "share-token",
     origin: "https://example.com",
     headers: apiCompatibilityHeaders,
   });
