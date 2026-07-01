@@ -120,7 +120,6 @@ export const sync = async (
         options.buildId !== undefined
           ? await dependencies.loadProjectBundleByBuildId({
               buildId: options.buildId,
-              authToken,
               origin,
               headers: apiCompatibilityHeaders,
             })

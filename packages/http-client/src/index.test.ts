@@ -70,6 +70,7 @@ import {
   listResources,
   listTexts,
   listVariables,
+  loadProjectBundleByBuildId,
   loadProjectBundleByProjectId,
   moveInstance,
   publish,
@@ -1009,6 +1010,35 @@ test("uploads assets as binary requests", async () => {
   expect((init.headers as Headers).get("x-auth-token")).toBe("token");
   expect((init.headers as Headers).get("content-type")).toBe(
     "application/octet-stream"
+  );
+});
+
+test("loads project bundle by build id without auth headers", async () => {
+  const project = createPublishedProjectBundleFixture();
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify([{ result: { data: project } }]), {
+      headers: {
+        "content-type": "application/json",
+      },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await loadProjectBundleByBuildId({
+    buildId: project.build.id,
+    origin: "https://p-090e6e14-ae50-4b2e-bd22-71733cec05bb.apps.webstudio.is",
+  });
+
+  expect(fetch).toHaveBeenCalledOnce();
+  const [_url, init] = fetch.mock.calls[0] as [URL, RequestInit];
+  expect(init.headers).toMatchObject({
+    "content-type": "application/json",
+  });
+  expect((init.headers as Record<string, string>)["x-auth-token"]).toBe(
+    undefined
+  );
+  expect((init.headers as Record<string, string>).authorization).toBe(
+    undefined
   );
 });
 

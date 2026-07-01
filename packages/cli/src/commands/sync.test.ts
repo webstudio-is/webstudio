@@ -10,6 +10,7 @@ import {
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import { resolveApiConnection } from "../api-connection";
 import { sync } from "./sync";
+import { apiCompatibilityHeaders } from "./api";
 
 const originalCwd = process.cwd();
 let tempDir: string;
@@ -136,6 +137,30 @@ test("downloads project bundle asset files into local project bundle", async () 
     origin: "https://example.com",
   });
   expect(indicator.message).toHaveBeenCalledWith("Downloading 1 asset files");
+});
+
+test("does not send linked share token when synchronizing by build id", async () => {
+  const resolveApiConnection = vi.fn(async () => ({
+    authToken: "share-token",
+    origin: "https://example.com",
+    projectId: "project-id",
+  }));
+
+  await sync(
+    {
+      buildId: "build-1",
+    },
+    {
+      ...dependencies,
+      resolveApiConnection,
+    }
+  );
+
+  expect(loadProjectBundleByBuildId).toHaveBeenCalledWith({
+    buildId: "build-1",
+    origin: "https://example.com",
+    headers: apiCompatibilityHeaders,
+  });
 });
 
 test("does not write local data when synchronized asset download fails", async () => {
