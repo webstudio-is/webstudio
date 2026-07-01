@@ -30,6 +30,7 @@ export { RadioButton } from "./radio-button";
 export { Checkbox } from "./checkbox";
 export { Vimeo } from "./vimeo";
 export { YouTube } from "./youtube";
+export { LottiePlayer } from "./lottie-player";
 export { VimeoPreviewImage } from "./vimeo-preview-image";
 export { VimeoPlayButton } from "./vimeo-play-button";
 export { VimeoSpinner } from "./vimeo-spinner";
