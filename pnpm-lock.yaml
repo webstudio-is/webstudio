@@ -1149,9 +1149,6 @@ importers:
       '@webstudio-is/http-client':
         specifier: workspace:*
         version: link:../http-client
-      '@webstudio-is/project-build':
-        specifier: workspace:*
-        version: link:../project-build
       '@webstudio-is/project-migrations':
         specifier: workspace:*
         version: link:../project-migrations
@@ -1264,6 +1261,9 @@ importers:
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../image
+      '@webstudio-is/project-build':
+        specifier: workspace:*
+        version: link:../project-build
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
