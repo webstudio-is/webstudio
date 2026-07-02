@@ -3663,6 +3663,41 @@ export const LockIcon: IconComponent = forwardRef(
 );
 LockIcon.displayName = "LockIcon";
 
+export const LottiePlayerIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <rect
+          x="1.5"
+          y="1.5"
+          width="13"
+          height="13"
+          rx="3.5"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12.5 4.5C10 4.5 9 6.5 7.5 8C6 9.5 5 11.5 3 11.5"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+);
+LottiePlayerIcon.displayName = "LottiePlayerIcon";
+
 export const MarkdownEmbedIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

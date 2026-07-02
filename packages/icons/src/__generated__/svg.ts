@@ -272,6 +272,8 @@ export const LoadingDotsIcon = `<svg xmlns="http://www.w3.org/2000/svg" id="cfdb
 
 export const LockIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.667 7.333V4.667a3.333 3.333 0 0 1 6.666 0v2.666m-8 0h9.334c.736 0 1.333.597 1.333 1.334v4.666c0 .737-.597 1.334-1.333 1.334H3.333A1.333 1.333 0 0 1 2 13.333V8.667c0-.737.597-1.334 1.333-1.334Z"/></svg>`;
 
+export const LottiePlayerIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><rect x="1.5" y="1.5" width="13" height="13" rx="3.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 4.5C10 4.5 9 6.5 7.5 8C6 9.5 5 11.5 3 11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
 export const MarkdownEmbedIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.667 5.333h4M4.667 8H10M14 8.75V3.5A1.5 1.5 0 0 0 12.5 2h-9A1.5 1.5 0 0 0 2 3.5v9.191c0 .725.588 1.313 1.313 1.313h4.691"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10 14.314v-4l2 2.03 2-2.03v4"/></svg>`;
 
 export const MaximizeIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10 2h4v4M6 14H2v-4M14 2 9.334 6.667M2 14l4.667-4.667"/></svg>`;
