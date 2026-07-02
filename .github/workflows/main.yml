@@ -172,14 +172,7 @@ jobs:
       name: development
 
     env:
-      AUTH_SECRET: test
-      DATABASE_URL: postgresql://user:pass@localhost:55432/webstudio
-      DIRECT_URL: postgresql://user:pass@localhost:55432/webstudio
-      E2E_PGPORT: 55432
-      E2E_POSTGREST_PORT: 55433
-      POSTGREST_API_KEY: ""
-      POSTGREST_URL: http://127.0.0.1:55433
-      TRPC_SERVER_API_TOKEN: e2e-service-token
+      BUILDER_E2E_COMPOSE_ARGS: "--env-file apps/builder/.env -f apps/builder/docker-compose.yaml -f apps/builder/docker-compose.e2e.yaml"
 
     steps:
       - uses: actions/checkout@v4
@@ -217,15 +210,15 @@ jobs:
           fi
 
           echo "::warning::Builder e2e failed on the first attempt. Restarting services and retrying once."
-          docker compose -f apps/builder/docker-compose.e2e.yaml logs || true
-          docker compose -f apps/builder/docker-compose.e2e.yaml down --volumes --remove-orphans || true
+          docker compose $BUILDER_E2E_COMPOSE_ARGS logs || true
+          docker compose $BUILDER_E2E_COMPOSE_ARGS down --volumes --remove-orphans || true
 
           E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=900 pnpm e2e:builder
 
       - name: Print e2e service logs
         if: failure()
-        run: docker compose -f apps/builder/docker-compose.e2e.yaml logs
+        run: docker compose $BUILDER_E2E_COMPOSE_ARGS logs
 
       - name: Stop e2e services
         if: always()
-        run: docker compose -f apps/builder/docker-compose.e2e.yaml down --volumes --remove-orphans
+        run: docker compose $BUILDER_E2E_COMPOSE_ARGS down --volumes --remove-orphans

@@ -6,10 +6,9 @@ import {
   type BrowserContext,
   type BrowserContextOptions,
 } from "playwright";
+import env from "../app/env/env.server";
 
-const builderPort =
-  process.env.E2E_BUILDER_PORT ??
-  String(20_000 + ((process.pid + Date.now()) % 40_000));
+const builderPort = process.env.PORT ?? "3000";
 
 export const builderUrl =
   process.env.E2E_BUILDER_URL ?? `https://127.0.0.1:${builderPort}`;
@@ -18,11 +17,7 @@ const builderUrlObject = new URL(builderUrl);
 
 export const dashboardUrl = `${builderUrlObject.protocol}//wstd.dev:${builderUrlObject.port}`;
 
-export const postgrestUrl =
-  process.env.POSTGREST_URL ?? "http://127.0.0.1:55433";
-
-export const serviceToken =
-  process.env.TRPC_SERVER_API_TOKEN ?? "e2e-service-token";
+export const postgrestUrl = env.POSTGREST_URL;
 
 export type Test = {
   name: string;
