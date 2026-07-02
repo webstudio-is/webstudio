@@ -6,6 +6,7 @@ import { UploadingAnimation } from "./uploading-animation";
 import { AssetInfo, assetInfoCssVars } from "./asset-info";
 import type { AssetContainer } from "~/builder/shared/assets";
 import { Image } from "./image";
+import { LottieThumbnail } from "./lottie-thumbnail";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { theme } from "@webstudio-is/design-system";
 import {
@@ -134,7 +135,7 @@ const Thumbnail = styled(Box, {
   justifyContent: "center",
 });
 
-const GenericFilePreview = ({
+export const GenericFilePreview = ({
   ext,
   format,
 }: {
@@ -232,6 +233,17 @@ export const AssetThumbnail = ({
                 ? assetContainer.objectURL
                 : wsVideoLoader({ src: asset.name })
             }
+          />
+        ) : asset.format === "json" ? (
+          // JSON files — render first frame of Lottie animation
+          <LottieThumbnail
+            src={
+              assetContainer.status === "uploading"
+                ? assetContainer.objectURL
+                : `/cgi/asset/${asset.name}?format=raw`
+            }
+            ext={ext}
+            format={asset.format}
           />
         ) : (
           // Other files - show icon based on category
