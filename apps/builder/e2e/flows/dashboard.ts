@@ -1,5 +1,6 @@
 import { dashboardUrl, getProjectIdFromBuilderUrl } from "../harness";
 import type { Page } from "playwright";
+import env from "../../app/env/env.server";
 
 const loginReadyTimeout = 30_000;
 
@@ -48,7 +49,10 @@ export const loginWithSecret = async ({
     return;
   }
   await loginWithSecretButton.click();
-  await page.getByPlaceholder("Auth secret").fill("test");
+  if (env.AUTH_SECRET === undefined) {
+    throw new Error("AUTH_SECRET must be set for e2e dev login");
+  }
+  await page.getByPlaceholder("Auth secret").fill(env.AUTH_SECRET);
   await page.getByPlaceholder("Email (optional)").fill(email);
   if (devPlan !== undefined) {
     await page.locator('select[name="devPlan"]').selectOption(devPlan);

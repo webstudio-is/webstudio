@@ -7,7 +7,7 @@
   "scripts": {
     "build": "pnpm -r --filter='!./fixtures/*' build",
     "dts": "pnpm -r dts",
-    "dev": "pnpm --filter='@webstudio-is/builder' dev",
+    "dev": "bash ./apps/builder/dev/run-local.sh",
     "lint": "oxlint --deny-warnings",
     "fixtures": "pnpm -r fixtures:link && pnpm -r fixtures:sync && pnpm -r fixtures:build",
     "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint && pnpm fixtures",

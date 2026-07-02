@@ -1,29 +1,4 @@
 services:
   db:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: webstudio
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-    ports:
-      - "${E2E_PGPORT:-55432}:5432"
     tmpfs:
       - /var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d webstudio"]
-      interval: 2s
-      timeout: 2s
-      retries: 30
-
-  postgrest:
-    image: postgrest/postgrest:v12.2.12
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      PGRST_DB_URI: postgres://user:pass@db:5432/webstudio
-      PGRST_DB_SCHEMAS: public
-      PGRST_DB_ANON_ROLE: user
-      PGRST_SERVER_PORT: 3000
-    ports:
-      - "${E2E_POSTGREST_PORT:-55433}:3000"
