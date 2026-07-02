@@ -27,6 +27,7 @@ import {
   getVisionWorkflowSummary,
   visualVerificationRule,
 } from "../mcp-guidance";
+import { readCliDoc } from "../docs";
 import { apiCompatibilityHeaders } from "./api";
 import { importProject as importProjectCommand } from "./import";
 import type { CommonYargsArgv } from "./yargs-types";
@@ -57,14 +58,7 @@ export const mcpOptions = (yargs: CommonYargsArgv) =>
       "MCP tool: meta.guide",
       "Ask for the recommended workflow and relevant tools"
     )
-    .epilogue(
-      [
-        "Plain `webstudio mcp` starts the stdio MCP server.",
-        "Startup marks cached ProjectSession data stale so MCP tools read the current Builder dev build.",
-        "After startup, MCP clients discover capabilities with tools/list, resources/list, meta.index, meta.guide, and meta.get_more_tools.",
-        "stdout is reserved for MCP JSON-RPC messages while the server is running.",
-      ].join("\n")
-    );
+    .epilogue(readCliDoc("mcp-startup-epilogue"));
 
 export const mcp = async () => {
   const connection = await resolveApiConnection();
