@@ -1,12 +1,10 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import {
-  builderUrl,
   dashboardUrl,
   getSuites,
   newPage,
   postgrestUrl,
-  serviceToken,
   startBrowser,
   stopBrowser,
 } from "./harness";
@@ -155,26 +153,13 @@ const runSuiteTests = async ({
   }
 };
 
-const getBuilderEnv = () => ({
-  ...process.env,
-  DEV_LOGIN: "true",
-  GITHUB_SHA: process.env.GITHUB_SHA ?? "local",
-  POSTGREST_URL: postgrestUrl,
-  PORT: new URL(builderUrl).port,
-  TRPC_SERVER_API_TOKEN: serviceToken,
-});
-
 const startBuiltBuilder = async () => {
   const child = spawn(
     "pnpm",
     ["exec", "tsx", "--conditions=webstudio", "./e2e/serve-built-remix.ts"],
     {
       cwd: new URL("..", import.meta.url),
-      env: {
-        ...getBuilderEnv(),
-        HOST: "127.0.0.1",
-        NODE_ENV: "production",
-      },
+      env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
     }
   );
