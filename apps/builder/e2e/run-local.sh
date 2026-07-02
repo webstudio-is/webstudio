@@ -64,27 +64,13 @@ bootstrap_database() {
   fi
 }
 
-has_playwright_chromium() {
-  (
-    cd "$ROOT_DIR/apps/builder"
-    node -e "const { chromium } = require('playwright'); const fs = require('fs'); process.exit(fs.existsSync(chromium.executablePath()) ? 0 : 1)"
-  )
-}
-
 install_playwright_chromium() {
   case "$E2E_INSTALL_PLAYWRIGHT" in
-    true)
+    true | auto)
       pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder exec playwright install --with-deps chromium
       ;;
     false)
       echo "Skipping Playwright Chromium install"
-      ;;
-    auto)
-      if has_playwright_chromium; then
-        echo "Skipping Playwright Chromium install; browser already exists"
-      else
-        pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder exec playwright install --with-deps chromium
-      fi
       ;;
     *)
       echo "Unknown E2E_INSTALL_PLAYWRIGHT value: $E2E_INSTALL_PLAYWRIGHT" >&2
