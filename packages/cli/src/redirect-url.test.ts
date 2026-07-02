@@ -85,6 +85,37 @@ describe("redirect-url fixture copies", () => {
       )
     );
   });
+
+  test("keeps react-router-cloudflare worker redirect handling synced with template", async () => {
+    await expect(
+      readFile(
+        join(repoRoot, "fixtures/react-router-cloudflare/workers/app.ts"),
+        "utf8"
+      )
+    ).resolves.toEqual(
+      await readFile(
+        join(cliRoot, "templates/react-router-cloudflare/workers/app.ts"),
+        "utf8"
+      )
+    );
+  });
+
+  test("keeps webstudio-cloudflare-template function redirect handling synced with template", async () => {
+    await expect(
+      readFile(
+        join(
+          repoRoot,
+          "fixtures/webstudio-cloudflare-template/functions/[[path]].ts"
+        ),
+        "utf8"
+      )
+    ).resolves.toEqual(
+      await readFile(
+        join(cliRoot, "templates/cloudflare/functions/[[path]].ts"),
+        "utf8"
+      )
+    );
+  });
 });
 
 for (const {
