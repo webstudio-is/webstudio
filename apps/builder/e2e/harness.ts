@@ -6,6 +6,7 @@ import {
   type BrowserContext,
   type BrowserContextOptions,
 } from "playwright";
+import env from "../app/env/env.server";
 
 const builderPort =
   process.env.E2E_BUILDER_PORT ??
@@ -18,17 +19,9 @@ const builderUrlObject = new URL(builderUrl);
 
 export const dashboardUrl = `${builderUrlObject.protocol}//wstd.dev:${builderUrlObject.port}`;
 
-const requiredEnv = (name: string) => {
-  const value = process.env[name];
-  if (value === undefined) {
-    throw new Error(`${name} must be set`);
-  }
-  return value;
-};
+export const postgrestUrl = env.POSTGREST_URL;
 
-export const postgrestUrl = requiredEnv("POSTGREST_URL");
-
-export const serviceToken = requiredEnv("TRPC_SERVER_API_TOKEN");
+export const serviceToken = env.TRPC_SERVER_API_TOKEN ?? "";
 
 export type Test = {
   name: string;

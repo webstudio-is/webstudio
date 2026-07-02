@@ -17,23 +17,12 @@ export E2E_BUILDER_BUILD_TIMEOUT_SECONDS="${E2E_BUILDER_BUILD_TIMEOUT_SECONDS:-6
 export E2E_TEST_COMMAND_TIMEOUT_SECONDS="${E2E_TEST_COMMAND_TIMEOUT_SECONDS:-900}"
 export E2E_WRITE_SCHEMA_SNAPSHOT="${E2E_WRITE_SCHEMA_SNAPSHOT:-false}"
 
-now_ms() {
-  node -e "console.log(Date.now())"
-}
-
-RUN_STARTED_AT="$(now_ms)"
-
 cleanup() {
   if [ "${E2E_SKIP_CLEANUP:-}" = "true" ]; then
     return
   fi
 
-  local started_at
-  started_at="$(now_ms)"
   builder_backend_down --volumes --remove-orphans
-  local duration_ms
-  duration_ms="$(($(now_ms) - started_at))"
-  echo "[e2e:perf] phase=cleanup duration=${duration_ms}ms"
 }
 
 trap cleanup EXIT
@@ -43,15 +32,13 @@ run_step() {
   local timeout_seconds="$2"
   shift 2
 
-  local started_at
-  started_at="$(now_ms)"
   echo "▶ $name"
   "$@" &
   local pid="$!"
   local timeout_at
-  timeout_at="$(($(now_ms) + timeout_seconds * 1000))"
+  timeout_at="$(($(date +%s) + timeout_seconds))"
   while kill -0 "$pid" 2>/dev/null; do
-    if [ "$(now_ms)" -ge "$timeout_at" ]; then
+    if [ "$(date +%s)" -ge "$timeout_at" ]; then
       echo "Timed out after ${timeout_seconds}s: $name" >&2
       kill "$pid" 2>/dev/null || true
       sleep 10
@@ -66,22 +53,7 @@ run_step() {
   if [ "$status" -ne 0 ]; then
     return "$status"
   fi
-  local duration_ms
-  duration_ms="$(($(now_ms) - started_at))"
   echo "✓ $name"
-  echo "[e2e:perf] phase=\"$name\" duration=${duration_ms}ms"
-}
-
-wait_for_step() {
-  local name="$1"
-  local pid="$2"
-  local status=0
-
-  wait "$pid" || status="$?"
-  if [ "$status" -ne 0 ]; then
-    echo "Step failed: $name" >&2
-    return "$status"
-  fi
 }
 
 bootstrap_database() {
@@ -125,18 +97,18 @@ build_builder_app() {
   pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder build
 }
 
+run_builder_e2e_tests() {
+  (
+    cd "$ROOT_DIR/apps/builder"
+    pnpm exec tsx --env-file .env --env-file-if-exists .env.development --conditions=webstudio ./e2e/run.ts
+  )
+}
+
 run_step "start e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
   builder_backend_start_db
 
 run_step "generate prisma client" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
-  builder_generate_prisma_client "$E2E_GENERATE_PRISMA" &
-generate_prisma_client_pid="$!"
-
-if [ "$E2E_RUN_TESTS" = "true" ]; then
-  run_step "install playwright chromium" "$E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS" \
-    install_playwright_chromium &
-  install_playwright_chromium_pid="$!"
-fi
+  builder_generate_prisma_client "$E2E_GENERATE_PRISMA"
 
 run_step "wait for e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
   builder_backend_wait_for_db "$E2E_DOCKER_TIMEOUT_SECONDS"
@@ -144,10 +116,9 @@ run_step "wait for e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
 run_step "bootstrap database schema" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
   bootstrap_database
 
-wait_for_step "generate prisma client" "$generate_prisma_client_pid"
-
 if [ "$E2E_RUN_TESTS" = "true" ]; then
-  wait_for_step "install playwright chromium" "$install_playwright_chromium_pid"
+  run_step "install playwright chromium" "$E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS" \
+    install_playwright_chromium
 
   run_step "start e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
     builder_backend_start_postgrest
@@ -158,8 +129,5 @@ if [ "$E2E_RUN_TESTS" = "true" ]; then
   fi
 
   run_step "run builder e2e tests" "$E2E_TEST_COMMAND_TIMEOUT_SECONDS" \
-    pnpm --dir "$ROOT_DIR/apps/builder" exec tsx --env-file .env --env-file .env.development --conditions=webstudio ./e2e/run.ts
+    run_builder_e2e_tests
 fi
-
-TOTAL_DURATION_MS="$(($(now_ms) - RUN_STARTED_AT))"
-echo "[e2e:perf] phase=total duration=${TOTAL_DURATION_MS}ms"

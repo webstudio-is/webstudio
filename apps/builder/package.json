@@ -13,7 +13,7 @@
     "start": "remix-serve build/server/index.js",
     "dev": "remix vite:dev",
     "dev:auth": "DEBUG=ws:* remix vite:dev",
-    "e2e:ci": "tsx --conditions=webstudio ./e2e/run.ts",
+    "e2e:ci": "tsx --env-file .env --env-file-if-exists .env.development --conditions=webstudio ./e2e/run.ts",
     "e2e:local": "bash ./e2e/run-local.sh",
     "typecheck": "tsgo --noEmit --emitDeclarationOnly false",
     "test": "vitest run"

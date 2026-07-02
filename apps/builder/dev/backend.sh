@@ -5,8 +5,10 @@ builder_backend_init() {
   SCHEMA_SNAPSHOT="${SCHEMA_SNAPSHOT:-$ROOT_DIR/apps/builder/e2e/schema/current.sql}"
   COMPOSE_ENV=(
     --env-file "$ROOT_DIR/apps/builder/.env"
-    --env-file "$ROOT_DIR/apps/builder/.env.development"
   )
+  if [ -f "$ROOT_DIR/apps/builder/.env.development" ]; then
+    COMPOSE_ENV+=(--env-file "$ROOT_DIR/apps/builder/.env.development")
+  fi
   COMPOSE_FILES=(
     -f "$ROOT_DIR/apps/builder/docker-compose.yaml"
     -f "$COMPOSE_OVERRIDE_FILE"

@@ -5,21 +5,10 @@ import {
   createClient,
   type Database,
 } from "@webstudio-is/postgrest/index.server";
+import env from "../app/env/env.server";
 
 const execFileAsync = promisify(execFile);
 
-const requiredEnv = (name: string) => {
-  const value = process.env[name];
-  if (value === undefined) {
-    throw new Error(`${name} must be set`);
-  }
-  return value;
-};
-
-const postgrestUrl = requiredEnv("POSTGREST_URL");
-const postgrestApiKey = requiredEnv("POSTGREST_API_KEY");
-const postgresUser = requiredEnv("POSTGRES_USER");
-const postgresDb = requiredEnv("POSTGRES_DB");
 const composeBaseFile = fileURLToPath(
   new URL("../docker-compose.yaml", import.meta.url)
 );
@@ -27,7 +16,7 @@ const composeFile = fileURLToPath(
   new URL("../docker-compose.e2e.yaml", import.meta.url)
 );
 
-const postgrest = createClient(postgrestUrl, postgrestApiKey);
+const postgrest = createClient(env.POSTGREST_URL, env.POSTGREST_API_KEY);
 
 const throwIfError = <Data>({
   error,
@@ -74,14 +63,10 @@ export const resetDatabase = async () => {
       "exec",
       "-T",
       "db",
-      "psql",
-      "-U",
-      postgresUser,
-      "-d",
-      postgresDb,
-      "-v",
-      "ON_ERROR_STOP=1",
+      "sh",
       "-c",
+      'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "$1"',
+      "sh",
       sql,
     ],
     { maxBuffer: 1024 * 1024 }
