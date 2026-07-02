@@ -8,8 +8,21 @@ import {
 
 const execFileAsync = promisify(execFile);
 
-const postgrestUrl = process.env.POSTGREST_URL ?? "http://127.0.0.1:55433";
-const postgrestApiKey = process.env.POSTGREST_API_KEY ?? "";
+const requiredEnv = (name: string) => {
+  const value = process.env[name];
+  if (value === undefined) {
+    throw new Error(`${name} must be set`);
+  }
+  return value;
+};
+
+const postgrestUrl = requiredEnv("POSTGREST_URL");
+const postgrestApiKey = requiredEnv("POSTGREST_API_KEY");
+const postgresUser = requiredEnv("POSTGRES_USER");
+const postgresDb = requiredEnv("POSTGRES_DB");
+const composeBaseFile = fileURLToPath(
+  new URL("../docker-compose.yaml", import.meta.url)
+);
 const composeFile = fileURLToPath(
   new URL("../docker-compose.e2e.yaml", import.meta.url)
 );
@@ -55,15 +68,17 @@ export const resetDatabase = async () => {
     [
       "compose",
       "-f",
+      composeBaseFile,
+      "-f",
       composeFile,
       "exec",
       "-T",
       "db",
       "psql",
       "-U",
-      "user",
+      postgresUser,
       "-d",
-      "webstudio",
+      postgresDb,
       "-v",
       "ON_ERROR_STOP=1",
       "-c",

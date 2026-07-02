@@ -39,6 +39,7 @@ yarn-error.log*
 
 # data
 /data
+.webstudio
 *.db
 *.db-journal
 

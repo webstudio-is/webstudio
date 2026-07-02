@@ -18,11 +18,17 @@ const builderUrlObject = new URL(builderUrl);
 
 export const dashboardUrl = `${builderUrlObject.protocol}//wstd.dev:${builderUrlObject.port}`;
 
-export const postgrestUrl =
-  process.env.POSTGREST_URL ?? "http://127.0.0.1:55433";
+const requiredEnv = (name: string) => {
+  const value = process.env[name];
+  if (value === undefined) {
+    throw new Error(`${name} must be set`);
+  }
+  return value;
+};
 
-export const serviceToken =
-  process.env.TRPC_SERVER_API_TOKEN ?? "e2e-service-token";
+export const postgrestUrl = requiredEnv("POSTGREST_URL");
+
+export const serviceToken = requiredEnv("TRPC_SERVER_API_TOKEN");
 
 export type Test = {
   name: string;
