@@ -47,7 +47,7 @@ builder_backend_wait_for_db() {
   done
 }
 
-builder_backend_has_schema() {
+builder_backend_schema_exists() {
   [ "$(
     builder_compose exec -T db \
       sh -c 'psql -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT to_regclass('\''public.\"Project\"'\'') IS NOT NULL"'
@@ -85,18 +85,19 @@ builder_backend_bootstrap() {
         builder_backend_migrate
       fi
       ;;
-    missing)
-      if builder_backend_has_schema; then
-        echo "Database schema already exists; skipping bootstrap"
-      else
-        builder_backend_bootstrap auto
-      fi
-      ;;
     *)
       echo "Unknown database bootstrap mode: $1" >&2
       exit 1
       ;;
   esac
+}
+
+builder_backend_bootstrap_if_empty() {
+  if builder_backend_schema_exists; then
+    echo "Database schema already exists; skipping bootstrap"
+  else
+    builder_backend_bootstrap auto
+  fi
 }
 
 builder_backend_write_schema_snapshot() {

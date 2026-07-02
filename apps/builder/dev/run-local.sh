@@ -26,7 +26,7 @@ fi
 
 builder_backend_start_db
 builder_backend_wait_for_db
-builder_backend_bootstrap missing
+builder_backend_bootstrap_if_empty
 builder_generate_prisma_client auto
 builder_backend_start_postgrest
 
