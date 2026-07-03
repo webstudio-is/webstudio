@@ -1,7 +1,6 @@
 import {
   elementComponent,
   getStyleDeclKey,
-  lintExpression,
   type DataSource,
   type Instance,
   type Instances,
@@ -17,6 +16,7 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
+import { getExpressionErrors } from "./expression-validation";
 import { createRuntimeMutation } from "./mutation";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
 import { createPropClonePatches } from "./props";
@@ -1060,9 +1060,7 @@ export const getTextContentErrors = ({
   if (type === "text") {
     return [];
   }
-  return lintExpression({ expression: value })
-    .filter((diagnostic) => diagnostic.severity === "error")
-    .map((diagnostic) => diagnostic.message);
+  return getExpressionErrors(value);
 };
 
 export const setTextContentMutable = (

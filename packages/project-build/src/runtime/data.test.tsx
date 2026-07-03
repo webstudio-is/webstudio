@@ -1514,6 +1514,23 @@ describe("createResourceValue", () => {
     ).toThrow();
   });
 
+  test("reject invalid resource expressions", () => {
+    expect(() =>
+      resourceFieldsInput.parse({
+        name: "Users",
+        method: "get",
+        url: "https://example.com/users",
+        searchParams: [],
+        headers: [],
+      })
+    ).toThrow();
+    expect(() =>
+      resourceFieldsUpdateInput.parse({
+        searchParams: [{ name: "page", value: "page value" }],
+      })
+    ).toThrow();
+  });
+
   test("creates resource values through the sdk schema", () => {
     expect(
       createResourceValue({

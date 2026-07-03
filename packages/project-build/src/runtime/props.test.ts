@@ -120,6 +120,23 @@ describe("prop input creators", () => {
         binding: { type: "string", value: "Label" },
       })
     ).toThrow();
+
+    expect(() =>
+      propValueInput.parse({
+        instanceId: "instance-id",
+        name: "label",
+        type: "expression",
+        value: "invalid {",
+      })
+    ).toThrow();
+
+    expect(() =>
+      propBindingInput.parse({
+        instanceId: "instance-id",
+        name: "value",
+        binding: { type: "expression", value: "invalid {" },
+      })
+    ).toThrow();
   });
 
   test("creates prop values and bindings from input", () => {

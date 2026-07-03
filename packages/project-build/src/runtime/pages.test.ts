@@ -31,6 +31,7 @@ import {
   getFolderDeletionTargets,
   getHomePageRootInstanceId,
   getParentFolderId,
+  getPageExpressionErrors,
   getSerializedPagePath,
   getSerializedPages,
   isPathAvailable,
@@ -40,6 +41,7 @@ import {
   serializePageDetails,
   serializePageDetailsByInput,
   serializePageSummary,
+  updatePage,
 } from "./pages";
 
 const createPages = () =>
@@ -94,7 +96,7 @@ test("creates a page with title defaulting to name", () => {
     id: "page",
     name: "Page",
     path: "/page",
-    title: "Page",
+    title: `"Page"`,
     rootInstanceId: "root",
     meta: {},
   });
@@ -510,32 +512,59 @@ describe("page input schemas", () => {
       pageFieldsInput.parse({
         name: "About",
         path: "/about",
-        title: "About",
+        title: `"About"`,
         parentFolderId: "folder",
         meta: {
-          description: "About us",
+          description: `"About us"`,
           excludePageFromSearch: true,
           documentType: "html",
-          custom: [{ property: "og:title", content: "About" }],
+          custom: [{ property: "og:title", content: `"About"` }],
         },
       })
     ).toEqual({
       name: "About",
       path: "/about",
-      title: "About",
+      title: `"About"`,
       parentFolderId: "folder",
       meta: {
-        description: "About us",
+        description: `"About us"`,
         excludePageFromSearch: true,
         documentType: "html",
-        custom: [{ property: "og:title", content: "About" }],
+        custom: [{ property: "og:title", content: `"About"` }],
       },
     });
   });
 
-  test("reject empty page names and invalid document types", () => {
+  test("reject empty page names, invalid document types, and invalid expressions", () => {
     expect(() => pageFieldsInput.parse({ name: "" })).toThrow();
     expect(() => pageMetaInput.parse({ documentType: "json" })).toThrow();
+    expect(() =>
+      pageFieldsInput.parse({
+        title: "About us",
+        meta: { description: "About us" },
+      })
+    ).toThrow();
+    expect(() =>
+      pageMetaInput.parse({
+        custom: [{ property: "og:title", content: "About us" }],
+      })
+    ).toThrow();
+  });
+
+  test("reports page expression errors", () => {
+    expect(
+      getPageExpressionErrors({
+        title: "About us",
+        meta: {
+          description: "About us",
+          custom: [{ property: "og:title", content: "About us" }],
+        },
+      })
+    ).toEqual([
+      expect.stringMatching(/^title:/),
+      expect.stringMatching(/^meta.description:/),
+      expect.stringMatching(/^meta.custom.0.content:/),
+    ]);
   });
 });
 
@@ -900,5 +929,61 @@ describe("getFolderDeletionTargets", () => {
       folderIds: [],
       pageIds: [],
     });
+  });
+});
+
+describe("updatePage", () => {
+  test("rejects invalid page metadata expressions before patching", () => {
+    const pages = createPages();
+
+    expect(() =>
+      updatePage(
+        { pages },
+        {
+          pageId: "page",
+          values: {
+            title: "Pricing Plans",
+            meta: {
+              description: "Plans for teams",
+            },
+          },
+        }
+      )
+    ).toThrow(/title:/);
+  });
+
+  test("accepts string literal page metadata expressions", () => {
+    const pages = createPages();
+
+    expect(
+      updatePage(
+        { pages },
+        {
+          pageId: "page",
+          values: {
+            title: `"Pricing Plans"`,
+            meta: {
+              description: `"Plans for teams"`,
+            },
+          },
+        }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "replace",
+            path: ["pages", "page", "title"],
+            value: `"Pricing Plans"`,
+          },
+          {
+            op: "add",
+            path: ["pages", "page", "meta", "description"],
+            value: `"Plans for teams"`,
+          },
+        ],
+      },
+    ]);
   });
 });

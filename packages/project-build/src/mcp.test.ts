@@ -506,6 +506,11 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         readThisFirst: expect.stringContaining("webstudio://project/guide"),
         startHere: expect.arrayContaining(["meta.guide"]),
+        rules: expect.arrayContaining([
+          expect.stringContaining(
+            "Use direct value tools for fixed text/props"
+          ),
+        ]),
         capabilities: expect.arrayContaining([
           expect.objectContaining({
             area: "publish",
@@ -549,8 +554,9 @@ describe("project session mcp adapter", () => {
             inputFields: ["target", "domains"],
             mcpExamples: [{ target: "production" }],
             cliExamples: [],
-            inputNote:
-              "MCP tool arguments are public API input objects. Examples show intent, but do not imply MCP flag names.",
+            inputNote: expect.stringContaining(
+              "Use direct value tools for fixed text/props"
+            ),
           }),
         ]),
       })
@@ -1181,6 +1187,11 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         readThisFirst: expect.stringContaining("webstudio://project/guide"),
         startHere: expect.arrayContaining(["meta.index"]),
+        rules: expect.arrayContaining([
+          expect.stringContaining(
+            "Use direct value tools for fixed text/props"
+          ),
+        ]),
       })
     );
   });

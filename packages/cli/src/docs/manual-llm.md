@@ -58,6 +58,19 @@ For responsive page work, use Builder breakpoints as the source of truth:
 - Generated files are build artifacts and may be overwritten by `webstudio build`.
 - If a task truly requires generated app customization, keep it outside `app/__generated__` where possible and explain that it is not editable Webstudio content.
 
+::doc-section{field="valuesVsBindings"}
+
+## Values vs Bindings
+
+- Use direct value tools for fixed content. For visible text, use `update-text` with plain `text`. For static props such as `aria-label`, `alt`, `id`, `class`, `href`, or button labels stored as props, use `update-props` with the prop's direct type/value.
+- Use `bind-props` only when the prop must stay dynamic: an expression, parameter, resource result, or action. Do not use `bind-props` just to set a fixed string.
+- Direct prop string example: `{"updates":[{"instanceId":"button-id","name":"aria-label","type":"string","value":"Open menu"}]}`.
+- Expression binding example: `{"bindings":[{"instanceId":"link-id","name":"href","binding":{"type":"expression","value":"currentPost.url"}}]}`.
+- Page metadata fields such as `title`, `description`, `language`, `redirect`, `status`, and custom meta content are expression-backed strings. For fixed text, pass a JavaScript string literal expression with JSON quoting, for example `JSON.stringify("Pricing | Acme")` in code or `"\"Pricing | Acme\""` in JSON. Never pass raw multi-word text such as `"Pricing | Acme"` as an expression.
+- Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"\"Pricing | Acme\"","meta":{"description":"\"Plans for teams\""}}}`.
+- Resource URL, header, search-param, and body fields are also expression-backed. For a fixed URL, use a string literal expression such as `"\"https://api.example.com/items\""`.
+- Resource update example: use `update-resource` with `{"resourceId":"resource-id","values":{"url":"\"https://api.example.com/items\""}}`.
+
 ## Pick Read Command
 
 {{readFirst}}
@@ -90,6 +103,8 @@ MCP tools receive JSON argument objects, not CLI flags. Use these shapes:
 - Treat stdout JSON as the API contract and stderr as diagnostics.
 - For visual/design work, verify the rendered result with vision before finishing.
 - Do not edit generated files for normal Webstudio content/design requests.
+- Use direct values for static strings and bindings only for dynamic expressions/resources/actions.
+- For expression-backed fields that need fixed text, encode the fixed text as a quoted JavaScript string literal expression.
 - Confirm destructive commands with --confirm only when user requested deletion/unpublish/replacement.
 - Use webstudio schema api --json for machine-readable command metadata.
 

@@ -1,12 +1,12 @@
 import { z } from "zod";
 import {
-  lintExpression,
   prop as propSchema,
   type Instance,
   type Prop,
 } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
+import { getExpressionErrors } from "./expression-validation";
 import { createRuntimeMutation } from "./mutation";
 
 export const findProp = (
@@ -64,49 +64,6 @@ export const createPropBindingFromInput = ({
     value: binding.value,
   });
 
-export const propValueInput = z.object({
-  propId: z.string().optional(),
-  instanceId: z.string(),
-  name: z.string(),
-  type: z.enum([
-    "number",
-    "string",
-    "boolean",
-    "json",
-    "asset",
-    "page",
-    "string[]",
-    "parameter",
-    "resource",
-    "expression",
-    "action",
-    "animationAction",
-  ]),
-  value: z.unknown(),
-  required: z.boolean().optional(),
-});
-
-export const propBindingInput = z.object({
-  propId: z.string().optional(),
-  instanceId: z.string(),
-  name: z.string(),
-  binding: z.discriminatedUnion("type", [
-    z.object({ type: z.literal("expression"), value: z.string() }),
-    z.object({ type: z.literal("parameter"), value: z.string() }),
-    z.object({ type: z.literal("resource"), value: z.string() }),
-    z.object({
-      type: z.literal("action"),
-      value: z.array(
-        z.object({
-          type: z.literal("execute"),
-          args: z.array(z.string()),
-          code: z.string(),
-        })
-      ),
-    }),
-  ]),
-});
-
 export const getPropValueErrors = ({
   type,
   value,
@@ -117,10 +74,80 @@ export const getPropValueErrors = ({
   if (type !== "expression") {
     return [];
   }
-  return lintExpression({ expression: String(value) })
-    .filter((diagnostic) => diagnostic.severity === "error")
-    .map((diagnostic) => diagnostic.message);
+  return getExpressionErrors(String(value));
 };
+
+const addExpressionIssues = (
+  context: z.RefinementCtx,
+  errors: readonly string[],
+  path: (string | number)[] = []
+) => {
+  for (const message of errors) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message,
+      path,
+    });
+  }
+};
+
+export const propValueInput = z
+  .object({
+    propId: z.string().optional(),
+    instanceId: z.string(),
+    name: z.string(),
+    type: z.enum([
+      "number",
+      "string",
+      "boolean",
+      "json",
+      "asset",
+      "page",
+      "string[]",
+      "parameter",
+      "resource",
+      "expression",
+      "action",
+      "animationAction",
+    ]),
+    value: z.unknown(),
+    required: z.boolean().optional(),
+  })
+  .superRefine((value, context) => {
+    addExpressionIssues(context, getPropValueErrors(value), ["value"]);
+  });
+
+export const propBindingInput = z
+  .object({
+    propId: z.string().optional(),
+    instanceId: z.string(),
+    name: z.string(),
+    binding: z.discriminatedUnion("type", [
+      z.object({ type: z.literal("expression"), value: z.string() }),
+      z.object({ type: z.literal("parameter"), value: z.string() }),
+      z.object({ type: z.literal("resource"), value: z.string() }),
+      z.object({
+        type: z.literal("action"),
+        value: z.array(
+          z.object({
+            type: z.literal("execute"),
+            args: z.array(z.string()),
+            code: z.string(),
+          })
+        ),
+      }),
+    ]),
+  })
+  .superRefine((value, context) => {
+    addExpressionIssues(
+      context,
+      getPropValueErrors({
+        type: value.binding.type,
+        value: value.binding.value,
+      }),
+      ["binding", "value"]
+    );
+  });
 
 type ValidatedPropInputResult =
   | { success: true; prop: Prop }

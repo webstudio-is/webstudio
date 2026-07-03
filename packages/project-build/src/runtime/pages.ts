@@ -18,6 +18,7 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
+import { getNamedExpressionErrors } from "./expression-validation";
 import {
   collectExclusiveInstanceIds,
   createInstanceCleanupPayload,
@@ -520,7 +521,7 @@ export const createPageValue = ({
   pageId,
   name,
   path,
-  title = name,
+  title = JSON.stringify(name),
   rootInstanceId,
   meta = {},
 }: {
@@ -547,6 +548,15 @@ const emptyStringRemovesMetaFields = new Set<keyof PageMeta>([
   "socialImageAssetId",
   "socialImageUrl",
 ]);
+
+const pageMetaExpressionFields = [
+  "description",
+  "language",
+  "redirect",
+  "socialImageUrl",
+  "status",
+  "content",
+] as const satisfies readonly (keyof PageMetaPatchInput)[];
 
 export const normalizePageMetaValue = <Name extends keyof PageMeta>(
   name: Name,
@@ -580,7 +590,19 @@ type PageFieldsPatchInput = Partial<{
   meta: PageMetaPatchInput;
 }>;
 
-export const pageMetaInput = z.object({
+const addExpressionIssues = (
+  context: z.RefinementCtx,
+  errors: readonly string[]
+) => {
+  for (const message of errors) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message,
+    });
+  }
+};
+
+const pageMetaInputBase = z.object({
   description: z.string().optional(),
   language: z.string().optional(),
   redirect: z.string().optional(),
@@ -596,13 +618,44 @@ export const pageMetaInput = z.object({
     .optional(),
 });
 
-export const pageFieldsInput = z.object({
-  name: z.string().min(1).optional(),
-  path: z.string().optional(),
-  title: z.string().optional(),
-  parentFolderId: z.string().optional(),
-  meta: pageMetaInput.optional(),
+export const getPageExpressionErrors = (input: PageFieldsPatchInput) => {
+  const errors: string[] = [];
+  errors.push(...getNamedExpressionErrors("title", input.title));
+  if (input.meta !== undefined) {
+    for (const name of pageMetaExpressionFields) {
+      const expression = input.meta[name];
+      if (expression === "" && emptyStringRemovesMetaFields.has(name)) {
+        continue;
+      }
+      errors.push(...getNamedExpressionErrors(`meta.${name}`, expression));
+    }
+    for (const [index, customMeta] of (input.meta.custom ?? []).entries()) {
+      errors.push(
+        ...getNamedExpressionErrors(
+          `meta.custom.${index}.content`,
+          customMeta.content
+        )
+      );
+    }
+  }
+  return errors;
+};
+
+export const pageMetaInput = pageMetaInputBase.superRefine((meta, context) => {
+  addExpressionIssues(context, getPageExpressionErrors({ meta }));
 });
+
+export const pageFieldsInput = z
+  .object({
+    name: z.string().min(1).optional(),
+    path: z.string().optional(),
+    title: z.string().optional(),
+    parentFolderId: z.string().optional(),
+    meta: pageMetaInputBase.optional(),
+  })
+  .superRefine((fields, context) => {
+    addExpressionIssues(context, getPageExpressionErrors(fields));
+  });
 
 export const pageMetaToPatchValue = (meta: PageMetaPatchInput) => {
   const result: Record<string, unknown> = {};
@@ -738,6 +791,10 @@ export const createPage = (
   const pages = getRequiredPages(state);
   const parentFolderId = input.parentFolderId ?? pages.rootFolderId;
   const parentFolder = getFolderOrThrow(pages, parentFolderId);
+  const expressionErrors = getPageExpressionErrors(input);
+  if (expressionErrors.length > 0) {
+    return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
+  }
   const pageId = input.pageId ?? context.createId();
   if (pages.pages.has(pageId)) {
     return throwBuilderRuntimeError("CONFLICT", "Page id already exists");
@@ -788,6 +845,10 @@ export const updatePage = (
   const page = findPage(pages, input.pageId);
   if (page === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
+  }
+  const expressionErrors = getPageExpressionErrors(input.values);
+  if (expressionErrors.length > 0) {
+    return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
   }
   if (
     (input.values.path !== undefined ||

@@ -267,6 +267,17 @@ test("prints llm manual with discovery rules", () => {
   expect(output).toContain("## LLM Implementation Process");
   expect(output).toContain("## Visual Design Workflow");
   expect(output).toContain("## Generated Files Guardrails");
+  expect(output).toContain("## Values vs Bindings");
+  expect(output).toContain(
+    "Use `bind-props` only when the prop must stay dynamic"
+  );
+  expect(output).toContain('"\\"Pricing | Acme\\""');
+  expect(output).toContain(
+    '{"pageId":"page-id","values":{"title":"\\"Pricing | Acme\\"","meta":{"description":"\\"Plans for teams\\""}}}'
+  );
+  expect(output).toContain(
+    '{"resourceId":"resource-id","values":{"url":"\\"https://api.example.com/items\\""}}'
+  );
   expect(output).toContain(
     "Make edits through Webstudio semantic commands/MCP tools"
   );
@@ -315,11 +326,26 @@ test("prints llm manual as json with implementation process", () => {
       expect.stringContaining("Generated files are build artifacts"),
     ])
   );
+  expect(output.valuesVsBindings).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining("Use direct value tools for fixed content"),
+      expect.stringContaining(
+        "Use bind-props only when the prop must stay dynamic"
+      ),
+      expect.stringContaining("Page metadata fields"),
+    ])
+  );
   expect(output.rules).toContain(
     "Pass --json only to commands whose help/schema documents it. Do not add --json to top-level commands such as sync unless supported."
   );
   expect(output.rules).toContain(
     "For visual/design work, verify the rendered result with vision before finishing."
+  );
+  expect(output.rules).toContain(
+    "Use direct values for static strings and bindings only for dynamic expressions/resources/actions."
+  );
+  expect(output.rules).toContain(
+    "For expression-backed fields that need fixed text, encode the fixed text as a quoted JavaScript string literal expression."
   );
   expect(output.visionVerificationLoop).toContain(
     getVisionVerificationLoop({ includeDiff: true })[1]
@@ -400,6 +426,29 @@ test("prints mcp manual as json", () => {
       instanceId: "instance-id",
       childIndex: 0,
       text: "Launch faster",
+    },
+  ]);
+  expect(output.mcpArgumentExamples["update-props"]).toEqual([
+    {
+      updates: [
+        {
+          instanceId: "button-id",
+          name: "aria-label",
+          type: "string",
+          value: "Open menu",
+        },
+      ],
+    },
+  ]);
+  expect(output.mcpArgumentExamples["bind-props"]).toEqual([
+    {
+      bindings: [
+        {
+          instanceId: "link-id",
+          name: "href",
+          binding: { type: "expression", value: "currentPost.url" },
+        },
+      ],
     },
   ]);
 });
