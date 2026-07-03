@@ -433,6 +433,53 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       text: "Launch faster",
     },
   ],
+  "update-page": [
+    {
+      pageId: "page-id",
+      values: {
+        title: '"Pricing"',
+        meta: {
+          description: '"Pricing plans"',
+        },
+      },
+    },
+  ],
+  "update-props": [
+    {
+      updates: [
+        {
+          instanceId: "button-id",
+          name: "aria-label",
+          type: "string",
+          value: "Open menu",
+        },
+      ],
+    },
+  ],
+  "bind-props": [
+    {
+      bindings: [
+        {
+          instanceId: "link-id",
+          name: "href",
+          binding: { type: "expression", value: "currentPost.url" },
+        },
+      ],
+    },
+  ],
+  "create-resource": [
+    {
+      name: "Posts",
+      method: "get",
+      url: '"https://api.example.com/posts"',
+    },
+  ],
+  "update-resource": [
+    {
+      resourceId: "resource-id",
+      values: { url: '"https://api.example.com/posts"' },
+    },
+  ],
   "update-styles": [
     {
       updates: [
@@ -1069,6 +1116,8 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
 };
 
 const startupGuidance = readProjectBuildDoc("mcp-startup-guidance").trim();
+const valuesVsBindingsRule =
+  'Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, parameters, resources, or actions. Expression-backed fixed strings such as page metadata and resource URLs must be quoted JavaScript string literal expressions, for example "\\"Pricing\\"". Page and resource updates put changed fields under values.';
 
 const getMetaIndex = (
   tools: readonly ProjectSessionMcpTool[],
@@ -1094,6 +1143,7 @@ const getMetaIndex = (
       "Operate on the configured project only.",
       "Read ids before writing.",
       "Prefer semantic tools over apply-patch.",
+      valuesVsBindingsRule,
       "Use status/refresh when cached data may be stale.",
       guidance?.visualVerificationRule,
     ].filter((rule): rule is string => rule !== undefined),
@@ -1129,6 +1179,7 @@ const getMetaGuide = (
         : undefined,
       "Use focused read tools to collect ids and current values.",
       "Use the smallest semantic mutation tool that matches the requested change.",
+      valuesVsBindingsRule,
       "Use apply-patch only when no semantic mutation tool fits.",
       canVerifyVisually && guidance !== undefined
         ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
@@ -1161,8 +1212,7 @@ const getMoreTools = (
     mcpExamples: tool.mcpExamples ?? [],
     cliRequiredOptions: tool.cliRequiredOptions ?? [],
     cliExamples: tool.cliExamples ?? [],
-    inputNote:
-      "MCP tool arguments are public API input objects. Examples show intent, but do not imply MCP flag names.",
+    inputNote: `MCP tool arguments are public API input objects. Examples show intent, but do not imply MCP flag names. ${valuesVsBindingsRule}`,
     annotations: tool.annotations,
   })),
 });

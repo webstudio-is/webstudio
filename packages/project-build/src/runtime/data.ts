@@ -11,7 +11,6 @@ import {
   getAllPages,
   getExpressionIdentifiers,
   getStyleDeclKey,
-  lintExpression,
   ROOT_INSTANCE_ID,
   resource,
   SYSTEM_VARIABLE_ID,
@@ -42,6 +41,7 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
+import { getNamedExpressionErrors } from "./expression-validation";
 import { createRuntimeMutation } from "./mutation";
 
 const getRequiredDataSources = (state: Pick<BuilderState, "dataSources">) => {
@@ -1149,11 +1149,33 @@ export const findResource = (
   }
 };
 
-export const resourceFieldsInput = resource
+const addExpressionIssues = (
+  context: z.RefinementCtx,
+  errors: readonly string[]
+) => {
+  for (const message of errors) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message,
+    });
+  }
+};
+
+const resourceFieldsInputBase = resource
   .omit({ id: true })
   .extend({ control: z.enum(["system", "graphql"]).optional() });
 
-export const resourceFieldsUpdateInput = resourceFieldsInput.partial();
+export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
+  (fields, context) => {
+    addExpressionIssues(context, getResourceExpressionErrors(fields));
+  }
+);
+
+export const resourceFieldsUpdateInput = resourceFieldsInputBase
+  .partial()
+  .superRefine((fields, context) => {
+    addExpressionIssues(context, getResourceExpressionErrors(fields));
+  });
 
 export const createResourceValue = ({
   id,
@@ -1190,14 +1212,7 @@ export const getResourceExpressionErrors = (
 ) => {
   const errors: string[] = [];
   const validate = (name: string, expression: string | undefined) => {
-    if (expression === undefined) {
-      return;
-    }
-    for (const diagnostic of lintExpression({ expression })) {
-      if (diagnostic.severity === "error") {
-        errors.push(`${name}: ${diagnostic.message}`);
-      }
-    }
+    errors.push(...getNamedExpressionErrors(name, expression));
   };
   validate("url", fields.url);
   validate("body", fields.body);
