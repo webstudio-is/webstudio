@@ -486,7 +486,7 @@ const throwPropErrors = (errors: string[]) =>
 
 export const updateProps = (
   state: Pick<BuilderState, "instances" | "props">,
-  input: { updates: Array<z.infer<typeof propValueInput>> },
+  input: z.infer<typeof propUpdatesInput>,
   context: { createId: () => string }
 ) => {
   const { instances, props } = getRequiredPropState(state);
@@ -515,7 +515,7 @@ export const updateProps = (
 
 export const bindProps = (
   state: Pick<BuilderState, "instances" | "props">,
-  input: { bindings: Array<z.infer<typeof propBindingInput>> },
+  input: z.infer<typeof propBindingsInput>,
   context: { createId: () => string }
 ) => {
   const { instances, props } = getRequiredPropState(state);
@@ -544,7 +544,7 @@ export const bindProps = (
 
 export const deleteProps = (
   state: Pick<BuilderState, "instances" | "props">,
-  input: { deletions: Array<{ instanceId: string; name: string }> }
+  input: z.infer<typeof propDeletionsInput>
 ) => {
   const { instances, props } = getRequiredPropState(state);
   const { missingInstanceId, payload, propIds } = createPropDeletePayload({

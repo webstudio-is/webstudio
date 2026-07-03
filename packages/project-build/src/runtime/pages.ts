@@ -469,12 +469,7 @@ const getParentFolderIdOrThrow = (pages: Pages, childId: string) => {
 
 export const createFolder = (
   state: Pick<BuilderState, "pages">,
-  input: {
-    folderId?: string;
-    name: string;
-    slug: string;
-    parentFolderId?: string;
-  },
+  input: z.infer<typeof folderCreateInput>,
   context: BuilderRuntimeContext
 ) => {
   const pages = getRequiredPages(state);
@@ -816,14 +811,7 @@ export const createPageUpdatePayload = (
 
 export const createPage = (
   state: Pick<BuilderState, "pages">,
-  input: {
-    pageId?: string;
-    name: string;
-    path: string;
-    title?: string;
-    parentFolderId?: string;
-    meta?: z.infer<typeof pageMetaInput>;
-  },
+  input: z.infer<typeof pageCreateInput>,
   context: BuilderRuntimeContext
 ) => {
   const pages = getRequiredPages(state);
@@ -877,7 +865,7 @@ export const createPage = (
 
 export const updatePage = (
   state: Pick<BuilderState, "pages">,
-  input: { pageId: string; values: z.infer<typeof pageFieldsInput> }
+  input: z.infer<typeof pageUpdateInput>
 ) => {
   const pages = getRequiredPages(state);
   const page = findPage(pages, input.pageId);
@@ -1006,7 +994,7 @@ export const createPageDeletePayload = ({
 
 export const deletePage = (
   state: DeletePayloadState,
-  input: { pageId: string }
+  input: z.infer<typeof pageDeleteInput>
 ) => {
   const deleteState = getRequiredDeleteState(state);
   const page = findPage(deleteState.pages, input.pageId);
@@ -1093,7 +1081,7 @@ export const createFolderDeletePayload = ({
 
 export const deleteFolder = (
   state: DeletePayloadState,
-  input: { folderId: string }
+  input: z.infer<typeof folderDeleteInput>
 ) => {
   const deleteState = getRequiredDeleteState(state);
   const folder = getFolderOrThrow(deleteState.pages, input.folderId);
@@ -1133,14 +1121,7 @@ export const deleteFolder = (
 
 export const updateFolder = (
   state: Pick<BuilderState, "pages">,
-  input: {
-    folderId: string;
-    values: {
-      name?: string;
-      slug?: string;
-      parentFolderId?: string;
-    };
-  }
+  input: z.infer<typeof folderUpdateInput>
 ) => {
   const pages = getRequiredPages(state);
   const folder = getFolderOrThrow(pages, input.folderId);

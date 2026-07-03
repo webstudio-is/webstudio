@@ -36,13 +36,11 @@ type AssetStyleValueReplacement = {
 export const assetReplaceInput = z.object({
   fromAssetId: z.string(),
   toAssetId: z.string(),
-  confirm: z.literal(true).optional(),
 });
 
 export const assetDeleteInput = z.object({
   assetIdsOrPrefixes: z.array(z.string()).min(1),
   force: z.boolean().optional(),
-  confirm: z.literal(true).optional(),
 });
 
 const traverseAssetStyleValue = (
@@ -631,7 +629,7 @@ export const replaceAsset = (
     BuilderState,
     "assets" | "pages" | "props" | "styles" | "resources" | "dataSources"
   >,
-  input: { fromAssetId: string; toAssetId: string }
+  input: z.infer<typeof assetReplaceInput>
 ) => {
   const assets = Array.from(getRequiredAssets(state).values());
   const fromAsset = findAsset(assets, input.fromAssetId);
@@ -670,10 +668,7 @@ export const deleteAssets = (
     BuilderState,
     "assets" | "pages" | "props" | "styles" | "resources" | "dataSources"
   >,
-  input: {
-    assetIdsOrPrefixes: string[];
-    force?: boolean;
-  }
+  input: z.infer<typeof assetDeleteInput>
 ) => {
   const assets = Array.from(getRequiredAssets(state).values());
   const selectedAssets = assets.filter((asset) =>

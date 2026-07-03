@@ -570,13 +570,7 @@ export const createPageDuplicatePayload = ({
 
 export const duplicatePage = (
   state: BuilderState,
-  input: {
-    projectId: string;
-    pageId: Page["id"];
-    parentFolderId?: Folder["id"];
-    name?: Page["name"];
-    path?: Page["path"];
-  },
+  input: z.infer<typeof pageDuplicateInput>,
   context: { createId: CreateId }
 ) => {
   const data = getRequiredWebstudioData(state);
@@ -657,13 +651,7 @@ export const listPageTemplates = (state: Pick<BuilderState, "pages">) => {
 
 export const createPageFromTemplate = (
   state: BuilderState,
-  input: {
-    projectId: string;
-    templateId: PageTemplate["id"];
-    parentFolderId?: Folder["id"];
-    name: Page["name"];
-    path: Page["path"];
-  },
+  input: z.infer<typeof pageTemplateCreatePageInput>,
   context: { createId: CreateId }
 ) => {
   const data = getRequiredWebstudioData(state);

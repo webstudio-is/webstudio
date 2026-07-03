@@ -203,6 +203,10 @@ const expectRuntimeValidationError = (operationId: string, input: unknown) => {
   throw new Error(`Expected ${operationId} to reject invalid input`);
 };
 
+const mutationOperationIds = runtimeOperationContracts
+  .filter((contract) => contract.kind === "mutation")
+  .map((contract) => contract.id);
+
 test("runtime operation registry implements every runtime contract", () => {
   const contractIds = runtimeOperationContracts.map((contract) => contract.id);
   const operationIds = builderRuntimeOperations.map(
@@ -519,7 +523,7 @@ describe("builder runtime registry", () => {
   });
 
   test("validates every mutation input at the runtime boundary", () => {
-    const invalidInputsByOperation = [
+    const invalidInputByOperation = new Map<string, unknown>([
       ["pages.create", {}],
       ["pages.update", {}],
       ["projectSettings.update", { meta: "invalid" }],
@@ -563,9 +567,13 @@ describe("builder runtime registry", () => {
       ["resources.delete", {}],
       ["assets.replace", {}],
       ["assets.delete", { assetIdsOrPrefixes: "asset" }],
-    ] as const;
+    ]);
 
-    for (const [operationId, input] of invalidInputsByOperation) {
+    expect(Array.from(invalidInputByOperation.keys())).toEqual(
+      mutationOperationIds
+    );
+
+    for (const [operationId, input] of invalidInputByOperation) {
       expectRuntimeValidationError(operationId, input);
     }
   });

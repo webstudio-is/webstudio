@@ -1062,12 +1062,7 @@ export const createDataVariableUpdatePayload = ({
 
 export const createDataVariable = (
   state: Pick<BuilderState, "dataSources">,
-  input: {
-    dataSourceId?: string;
-    scopeInstanceId: string;
-    name: string;
-    value: z.infer<typeof dataVariableValueInput>;
-  },
+  input: z.infer<typeof dataVariableCreateInput>,
   context: BuilderRuntimeContext
 ) => {
   const dataSources = getRequiredDataSources(state);
@@ -1098,14 +1093,7 @@ export const createDataVariable = (
 
 export const updateDataVariable = (
   state: Pick<BuilderState, "dataSources">,
-  input: {
-    dataSourceId: string;
-    values: Partial<{
-      scopeInstanceId: string;
-      name: string;
-      value: z.infer<typeof dataVariableValueInput>;
-    }>;
-  }
+  input: z.infer<typeof dataVariableUpdateInput>
 ) => {
   const dataSources = getRequiredDataSources(state);
   const variable = findDataVariable(dataSources.values(), input.dataSourceId);
@@ -1132,7 +1120,7 @@ export const deleteDataVariable = (
     BuilderState,
     "pages" | "instances" | "props" | "dataSources" | "resources"
   >,
-  input: { dataSourceId: string }
+  input: z.infer<typeof dataVariableDeleteInput>
 ) => {
   const { payload, deletedVariable } = createDataVariableDeletePayload({
     variableId: input.dataSourceId,
@@ -1803,13 +1791,7 @@ export const createResource = (
     | "styleSourceSelections"
     | "styles"
   >,
-  input: {
-    resourceId?: string;
-    resource: z.infer<typeof resourceFieldsInput>;
-    dataSourceId?: string;
-    scopeInstanceId?: string;
-    dataSourceName?: string;
-  },
+  input: z.infer<typeof resourceCreateInput>,
   context: BuilderRuntimeContext
 ) => {
   const expressionErrors = getResourceExpressionErrors(input.resource);
@@ -1887,12 +1869,7 @@ export const updateResource = (
     | "styleSourceSelections"
     | "styles"
   >,
-  input: {
-    resourceId: string;
-    values: z.infer<typeof resourceFieldsUpdateInput>;
-    dataSourceName?: string;
-    scopeInstanceId?: string;
-  }
+  input: z.infer<typeof resourceUpdateInput>
 ) => {
   const expressionErrors = getResourceExpressionErrors(input.values);
   if (expressionErrors.length > 0) {
@@ -1950,7 +1927,7 @@ export const updateResource = (
 
 export const deleteResource = (
   state: Pick<BuilderState, "dataSources" | "resources" | "props">,
-  input: { resourceId: string; force?: boolean }
+  input: z.infer<typeof resourceDeleteInput>
 ) => {
   const resource = findResource(
     getRequiredResources(state).values(),

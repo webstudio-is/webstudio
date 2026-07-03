@@ -35,14 +35,6 @@ type Settable<T> = {
   [Property in keyof T]?: T[Property] | null;
 };
 
-type ProjectMetaValues = Settable<
-  NonNullable<ReturnType<typeof getRequiredPages>["meta"]>
->;
-
-type CompilerValues = Settable<
-  NonNullable<ReturnType<typeof getRequiredPages>["compiler"]>
->;
-
 export const projectSettingsUpdateInput = z.object({
   meta: z.record(z.unknown()).optional(),
   compiler: z.record(z.unknown()).optional(),
@@ -133,10 +125,7 @@ const pushObjectFieldPatches = ({
 
 export const updateProjectSettings = (
   state: Pick<BuilderState, "pages">,
-  input: {
-    meta?: ProjectMetaValues;
-    compiler?: CompilerValues;
-  }
+  input: z.infer<typeof projectSettingsUpdateInput>
 ) => {
   const pages = getRequiredPages(state);
   const patches: BuilderPatchChange["patches"] = [];
@@ -209,7 +198,7 @@ const parseRedirect = (input: PageRedirect) => {
 
 export const createRedirect = (
   state: Pick<BuilderState, "pages">,
-  input: PageRedirect
+  input: z.infer<typeof redirectCreateInput>
 ) => {
   const pages = getRequiredPages(state);
   const value = parseRedirect(input);
@@ -235,10 +224,7 @@ export const createRedirect = (
 
 export const updateRedirect = (
   state: Pick<BuilderState, "pages">,
-  input: {
-    old: string;
-    values: { old?: string; new?: string; status?: "301" | "302" | null };
-  }
+  input: z.infer<typeof redirectUpdateInput>
 ) => {
   const pages = getRequiredPages(state);
   const redirects = pages.redirects ?? [];
@@ -287,7 +273,7 @@ export const updateRedirect = (
 
 export const deleteRedirect = (
   state: Pick<BuilderState, "pages">,
-  input: { old: string }
+  input: z.infer<typeof redirectDeleteInput>
 ) => {
   const redirects = getRequiredPages(state).redirects ?? [];
   const index = findRedirectIndex(redirects, input.old);
@@ -346,7 +332,7 @@ const parseBreakpoint = (input: Breakpoint) => {
 
 export const createBreakpoint = (
   state: Pick<BuilderState, "breakpoints">,
-  input: Breakpoint
+  input: z.infer<typeof breakpointCreateInput>
 ) => {
   const breakpoints = getRequiredBreakpoints(state);
   if (breakpoints.has(input.id)) {
@@ -389,10 +375,7 @@ export const createBreakpoint = (
 
 export const updateBreakpoint = (
   state: Pick<BuilderState, "breakpoints">,
-  input: {
-    breakpointId: string;
-    values: Settable<Omit<Breakpoint, "id">>;
-  }
+  input: z.infer<typeof breakpointUpdateInput>
 ) => {
   const breakpoints = getRequiredBreakpoints(state);
   const current = breakpoints.get(input.breakpointId);
@@ -436,7 +419,7 @@ export const updateBreakpoint = (
 
 export const deleteBreakpoint = (
   state: Pick<BuilderState, "breakpoints" | "styles">,
-  input: { breakpointId: string }
+  input: z.infer<typeof breakpointDeleteInput>
 ) => {
   const breakpoints = getRequiredBreakpoints(state);
   if (state.styles === undefined) {

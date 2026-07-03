@@ -341,7 +341,6 @@ export const cssVariableDefineInput = z.object({
 export const cssVariableDeleteInput = z.object({
   names: z.array(z.string()).min(1),
   force: z.boolean().optional(),
-  confirm: z.literal(true).optional(),
 });
 
 export const cssVariableRewriteRefsInput = z.object({
@@ -2490,7 +2489,7 @@ export const updateStyleDeclarations = (
     | "styleSources"
     | "styleSourceSelections"
   >,
-  input: { updates: Array<z.infer<typeof styleUpdateInput>> },
+  input: z.infer<typeof styleUpdateDeclarationsInput>,
   context: { createId: () => string }
 ) => {
   const styleState = getRequiredStyleMutationState(state);
@@ -2530,7 +2529,7 @@ export const deleteStyleDeclarations = (
     | "styleSources"
     | "styleSourceSelections"
   >,
-  input: { deletions: Array<z.infer<typeof styleDeleteInput>> }
+  input: z.infer<typeof styleDeleteDeclarationsInput>
 ) => {
   const styleState = getRequiredStyleMutationState(state);
   assertStyleInstances(
@@ -2643,10 +2642,7 @@ export const defineCssVariables = (
     | "styleSources"
     | "styleSourceSelections"
   >,
-  input: {
-    vars: Record<string, string | StyleValue>;
-    overwrite?: boolean;
-  },
+  input: z.infer<typeof cssVariableDefineInput>,
   context: { createId: () => string }
 ) => {
   const rootInstanceId =
@@ -2695,7 +2691,7 @@ export const deleteCssVariables = (
     BuilderState,
     "styles" | "props" | "styleSources" | "styleSourceSelections"
   >,
-  input: { names: string[]; force?: boolean }
+  input: z.infer<typeof cssVariableDeleteInput>
 ) => {
   for (const name of input.names) {
     assertCssVariableName(name);
@@ -2731,7 +2727,7 @@ export const rewriteCssVariableRefs = (
     BuilderState,
     "styles" | "props" | "styleSources" | "styleSourceSelections"
   >,
-  input: { map: Record<string, string>; scopeRegex?: string }
+  input: z.infer<typeof cssVariableRewriteRefsInput>
 ) => {
   for (const [fromName, toName] of Object.entries(input.map)) {
     assertCssVariableName(fromName);
@@ -2775,7 +2771,7 @@ export const createDesignTokens = (
     BuilderState,
     "breakpoints" | "styles" | "styleSources" | "styleSourceSelections"
   >,
-  input: { tokens: Array<z.infer<typeof designTokenCreateInput>> },
+  input: z.infer<typeof designTokenCreateManyInput>,
   context: { createId: () => string }
 ) => {
   const styleState = getRequiredStyleState(state);
@@ -2820,10 +2816,7 @@ export const updateDesignTokenStyles = (
     BuilderState,
     "breakpoints" | "styles" | "styleSources" | "styleSourceSelections"
   >,
-  input: {
-    designTokenId: string;
-    updates: Array<z.infer<typeof designTokenStyleInput>>;
-  }
+  input: z.infer<typeof designTokenStyleUpdatesInput>
 ) => {
   const styleState = getRequiredStyleState(state);
   getDesignTokenOrThrow(styleState.styleSources.values(), input.designTokenId);
@@ -2846,10 +2839,7 @@ export const deleteDesignTokenStyles = (
     BuilderState,
     "breakpoints" | "styles" | "styleSources" | "styleSourceSelections"
   >,
-  input: {
-    designTokenId: string;
-    deletions: Array<Omit<z.infer<typeof styleDeleteInput>, "instanceId">>;
-  }
+  input: z.infer<typeof designTokenStyleDeletionsInput>
 ) => {
   const styleState = getRequiredStyleState(state);
   getDesignTokenOrThrow(styleState.styleSources.values(), input.designTokenId);
@@ -2872,11 +2862,7 @@ export const attachDesignToken = (
     BuilderState,
     "instances" | "styles" | "styleSources" | "styleSourceSelections"
   >,
-  input: {
-    designTokenId: string;
-    instanceIds: string[];
-    position?: "before-local" | "after-local";
-  }
+  input: z.infer<typeof designTokenAttachInput>
 ) => {
   const styleState = getRequiredStyleMutationState(state);
   getDesignTokenOrThrow(styleState.styleSources.values(), input.designTokenId);
@@ -2900,7 +2886,7 @@ export const detachDesignToken = (
     BuilderState,
     "instances" | "styles" | "styleSources" | "styleSourceSelections"
   >,
-  input: { designTokenId: string; instanceIds: string[] }
+  input: z.infer<typeof designTokenDetachInput>
 ) => {
   const styleState = getRequiredStyleMutationState(state);
   getDesignTokenOrThrow(styleState.styleSources.values(), input.designTokenId);
@@ -2922,11 +2908,7 @@ export const extractDesignToken = (
     BuilderState,
     "instances" | "styles" | "styleSources" | "styleSourceSelections"
   >,
-  input: {
-    instanceIds: string[];
-    name: string;
-    removeLocalProps?: string[];
-  },
+  input: z.infer<typeof designTokenExtractInput>,
   context: { createId: () => string }
 ) => {
   const styleState = getRequiredStyleMutationState(state);

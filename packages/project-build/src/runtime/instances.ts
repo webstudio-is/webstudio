@@ -817,18 +817,7 @@ const treeInvalidates = [
 
 export const appendInstances = (
   state: TreeMutationState,
-  input: {
-    parentInstanceId: string;
-    mode?: "append" | "prepend" | "replace";
-    insertIndex?: number;
-    children: Array<{
-      instanceId?: string;
-      component?: string;
-      tag: string;
-      label?: string;
-      text?: string;
-    }>;
-  },
+  input: z.infer<typeof appendInstancesInput>,
   context: BuilderRuntimeContext
 ) => {
   const mutationState = getRequiredTreeMutationState(state);
@@ -890,13 +879,7 @@ export const appendInstances = (
 
 export const moveInstances = (
   state: Pick<BuilderState, "instances">,
-  input: {
-    moves: Array<{
-      instanceId: string;
-      parentInstanceId: string;
-      insertIndex?: number;
-    }>;
-  }
+  input: z.infer<typeof moveInstancesInput>
 ) => {
   const { errors, payload } = createInstanceMovePayload({
     instances: getRequiredInstances(state),
@@ -933,7 +916,7 @@ export const moveInstances = (
 
 export const deleteInstances = (
   state: TreeMutationState,
-  input: { instanceIds: string[] }
+  input: z.infer<typeof deleteInstancesInput>
 ) => {
   const mutationState = getRequiredTreeMutationState(state);
   const pageRootIds = new Set(
@@ -973,11 +956,7 @@ export const deleteInstances = (
 
 export const cloneInstance = (
   state: TreeMutationState,
-  input: {
-    sourceInstanceId: string;
-    targetParentInstanceId?: string;
-    insertIndex?: number;
-  },
+  input: z.infer<typeof cloneInstanceInput>,
   context: BuilderRuntimeContext
 ) => {
   const mutationState = getRequiredTreeMutationState(state);
@@ -1371,12 +1350,7 @@ export const inspectInstance = (
 
 export const updateTextInstance = (
   state: Pick<BuilderState, "instances">,
-  input: {
-    instanceId: string;
-    childIndex: number;
-    text: string;
-    mode?: "text" | "expression";
-  }
+  input: z.infer<typeof updateTextInstanceInput>
 ) => {
   const result = findTextContentChild(
     getRequiredInstances(state).values(),
