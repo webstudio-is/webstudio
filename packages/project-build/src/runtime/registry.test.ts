@@ -188,6 +188,21 @@ const state = {
   breakpoints: new Map(),
 } satisfies BuilderState;
 
+const expectRuntimeValidationError = (operationId: string, input: unknown) => {
+  try {
+    executeBuilderRuntimeOperation({
+      id: operationId,
+      state,
+      input,
+      context,
+    });
+  } catch (error) {
+    expect(error).toMatchObject({ name: "ZodError" });
+    return;
+  }
+  throw new Error(`Expected ${operationId} to reject invalid input`);
+};
+
 test("runtime operation registry implements every runtime contract", () => {
   const contractIds = runtimeOperationContracts.map((contract) => contract.id);
   const operationIds = builderRuntimeOperations.map(
@@ -381,6 +396,94 @@ describe("builder runtime read families", () => {
       resources: [{ id: "resource", dataSourceId: "resourceDataSource" }],
     });
   });
+
+  test("validates style mutation inputs through shared runtime schemas", () => {
+    const updates = [
+      {
+        instanceId: "heading",
+        property: "box-shadow",
+        value: { type: "keyword", value: "none" },
+      },
+    ];
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "styles.updateDeclarations",
+        state,
+        input: { updates: JSON.stringify(updates) },
+        context,
+      })
+    ).toMatchObject({
+      result: { styleKeys: expect.arrayContaining(["local:base:boxShadow:"]) },
+    });
+
+    const deletions = [{ instanceId: "heading", property: "color" }];
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "styles.deleteDeclarations",
+        state,
+        input: { deletions: JSON.stringify(deletions) },
+        context,
+      })
+    ).toMatchObject({
+      result: { styleKeys: ["local:base:color:"] },
+    });
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "styles.updateDeclarations",
+        state,
+        input: { updates: { instanceId: "heading" } },
+        context,
+      })
+    ).toThrow();
+
+    const tokenUpdates = [
+      {
+        property: "font-size",
+        value: { type: "unit", value: 16, unit: "px" },
+      },
+    ];
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "designTokens.updateStyles",
+        state,
+        input: {
+          designTokenId: "token",
+          updates: JSON.stringify(tokenUpdates),
+        },
+        context,
+      })
+    ).toMatchObject({
+      result: { designTokenId: "token", styleKeys: ["token:base:fontSize:"] },
+    });
+
+    const tokenDeletions = [{ property: "color" }];
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "designTokens.deleteStyles",
+        state,
+        input: {
+          designTokenId: "token",
+          deletions: JSON.stringify(tokenDeletions),
+        },
+        context,
+      })
+    ).toMatchObject({
+      result: { designTokenId: "token", styleKeys: ["token:base:color:"] },
+    });
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "designTokens.updateStyles",
+        state,
+        input: {
+          designTokenId: "token",
+          updates: { property: "color" },
+        },
+        context,
+      })
+    ).toThrow();
+  });
 });
 
 describe("builder runtime registry", () => {
@@ -413,5 +516,57 @@ describe("builder runtime registry", () => {
     expect(duplicateWithDeterministicIds()).toEqual(
       duplicateWithDeterministicIds()
     );
+  });
+
+  test("validates every mutation input at the runtime boundary", () => {
+    const invalidInputsByOperation = [
+      ["pages.create", {}],
+      ["pages.update", {}],
+      ["projectSettings.update", { meta: "invalid" }],
+      ["redirects.create", {}],
+      ["redirects.update", {}],
+      ["redirects.delete", {}],
+      ["breakpoints.create", {}],
+      ["breakpoints.update", {}],
+      ["breakpoints.delete", {}],
+      ["pages.delete", {}],
+      ["pages.duplicate", {}],
+      ["pageTemplates.createPage", {}],
+      ["folders.create", {}],
+      ["folders.update", {}],
+      ["folders.delete", {}],
+      ["instances.append", { parentInstanceId: "body", children: {} }],
+      ["instances.move", { moves: {} }],
+      ["instances.clone", {}],
+      ["instances.delete", { instanceIds: "heading" }],
+      ["instances.updateProps", { updates: {} }],
+      ["instances.deleteProps", { deletions: {} }],
+      ["instances.bindProps", { bindings: {} }],
+      ["instances.updateText", {}],
+      ["styles.updateDeclarations", { updates: {} }],
+      ["styles.deleteDeclarations", { deletions: {} }],
+      ["styles.replaceValues", {}],
+      ["designTokens.create", { tokens: {} }],
+      ["designTokens.updateStyles", { designTokenId: "token", updates: {} }],
+      ["designTokens.deleteStyles", { designTokenId: "token", deletions: {} }],
+      ["designTokens.attach", { designTokenId: "token", instanceIds: {} }],
+      ["designTokens.detach", { designTokenId: "token", instanceIds: {} }],
+      ["designTokens.extract", { instanceIds: {}, name: "Token" }],
+      ["cssVariables.define", { vars: [] }],
+      ["cssVariables.delete", { names: "--color" }],
+      ["cssVariables.rewriteRefs", { map: [] }],
+      ["variables.create", {}],
+      ["variables.update", {}],
+      ["variables.delete", {}],
+      ["resources.create", {}],
+      ["resources.update", {}],
+      ["resources.delete", {}],
+      ["assets.replace", {}],
+      ["assets.delete", { assetIdsOrPrefixes: "asset" }],
+    ] as const;
+
+    for (const [operationId, input] of invalidInputsByOperation) {
+      expectRuntimeValidationError(operationId, input);
+    }
   });
 });

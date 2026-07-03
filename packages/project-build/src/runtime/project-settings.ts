@@ -183,6 +183,17 @@ export const redirectUpdateFieldsInput = z.object({
   status: redirectStatusInput.nullable().optional(),
 });
 
+export const redirectCreateInput = redirectFieldsInput;
+
+export const redirectUpdateInput = z.object({
+  old: z.string(),
+  values: redirectUpdateFieldsInput,
+});
+
+export const redirectDeleteInput = z.object({
+  old: z.string(),
+});
+
 const findRedirectIndex = (
   redirects: NonNullable<ReturnType<typeof getRequiredPages>["redirects"]>,
   oldPath: string
@@ -312,6 +323,17 @@ export const breakpointUpdateFieldsInput = z.object({
   minWidth: z.number().nullable().optional(),
   maxWidth: z.number().nullable().optional(),
   condition: z.string().nullable().optional(),
+});
+
+export const breakpointCreateInput = breakpointFieldsInput;
+
+export const breakpointUpdateInput = z.object({
+  breakpointId: z.string(),
+  values: breakpointUpdateFieldsInput,
+});
+
+export const breakpointDeleteInput = z.object({
+  breakpointId: z.string(),
 });
 
 const parseBreakpoint = (input: Breakpoint) => {

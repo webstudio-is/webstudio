@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { constants } from "node:fs";
+import { tmpdir } from "node:os";
 import {
   BrowserNotFoundError,
   BrowserInstallUnavailableError,
@@ -224,6 +225,7 @@ test("formats actionable browser installation guidance", () => {
 describe("captureScreenshot", () => {
   test("captures with browser readiness defaults", async () => {
     const captureBrowserScreenshot = vi.fn(async () => undefined);
+    const output = `${tmpdir()}/webstudio-screenshot-123.png`;
     const dependencies = createDependencies({
       which: vi.fn(async (command) =>
         command === "chromium" ? "/usr/bin/chromium" : undefined
@@ -250,7 +252,7 @@ describe("captureScreenshot", () => {
     });
     expect(captureBrowserScreenshot).toHaveBeenCalledWith({
       browserPath: "/usr/bin/chromium",
-      output: "/tmp/webstudio-screenshot-123.png",
+      output,
       width: 1440,
       height: 900,
       url: "https://example.com",
@@ -260,7 +262,7 @@ describe("captureScreenshot", () => {
       waitForTimeout: 250,
       timeout: 30000,
     });
-    expect(dependencies.mkdir).toHaveBeenCalledWith("/tmp", {
+    expect(dependencies.mkdir).toHaveBeenCalledWith(tmpdir(), {
       recursive: true,
     });
   });

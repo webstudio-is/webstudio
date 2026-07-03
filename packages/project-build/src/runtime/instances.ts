@@ -24,6 +24,55 @@ import {
   createStyleClonePayload,
   serializeStyleDeclarations,
 } from "./style-utils";
+import { z } from "zod";
+
+const insertIndexInput = z.number().int().nonnegative();
+
+export const appendInstancesInput = z.object({
+  parentInstanceId: z.string(),
+  mode: z.enum(["append", "prepend", "replace"]).optional(),
+  insertIndex: insertIndexInput.optional(),
+  children: z
+    .array(
+      z.object({
+        instanceId: z.string().optional(),
+        component: z.string().optional(),
+        tag: z.string(),
+        label: z.string().optional(),
+        text: z.string().optional(),
+      })
+    )
+    .min(1),
+});
+
+export const moveInstancesInput = z.object({
+  moves: z
+    .array(
+      z.object({
+        instanceId: z.string(),
+        parentInstanceId: z.string(),
+        insertIndex: insertIndexInput.optional(),
+      })
+    )
+    .min(1),
+});
+
+export const cloneInstanceInput = z.object({
+  sourceInstanceId: z.string(),
+  targetParentInstanceId: z.string().optional(),
+  insertIndex: insertIndexInput.optional(),
+});
+
+export const deleteInstancesInput = z.object({
+  instanceIds: z.array(z.string()).min(1),
+});
+
+export const updateTextInstanceInput = z.object({
+  instanceId: z.string(),
+  childIndex: z.number().int().nonnegative(),
+  text: z.string(),
+  mode: z.enum(["text", "expression"]).optional(),
+});
 
 export type TextContentChild = Extract<
   Instance["children"][number],

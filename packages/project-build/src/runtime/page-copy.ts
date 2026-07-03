@@ -4,6 +4,7 @@ import {
   insertWebstudioFragmentCopy,
 } from "./fragment";
 import { nanoid } from "nanoid";
+import { z } from "zod";
 import {
   createWebstudioDataFromBuild,
   createWebstudioDataPatchPayload,
@@ -36,6 +37,22 @@ import { getRequiredPages, isPathAvailable } from "./pages";
 import { unwrap } from "./unwrap";
 
 type CreateId = () => string;
+
+export const pageDuplicateInput = z.object({
+  projectId: z.string(),
+  pageId: z.string(),
+  parentFolderId: z.string().optional(),
+  name: z.string().min(1).optional(),
+  path: z.string().optional(),
+});
+
+export const pageTemplateCreatePageInput = z.object({
+  projectId: z.string(),
+  templateId: z.string(),
+  parentFolderId: z.string().optional(),
+  name: z.string().min(1),
+  path: z.string(),
+});
 
 const contentModePageMetaFields = new Set([
   "description",

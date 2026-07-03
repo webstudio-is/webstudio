@@ -226,6 +226,28 @@ export const styleDeleteInput = z.object({
   state: z.string().optional(),
 });
 
+const jsonArrayStringInput = (value: unknown) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
+
+const jsonArrayInput = <Item extends z.ZodTypeAny>(item: Item) =>
+  z.preprocess(jsonArrayStringInput, z.array(item).min(1));
+
+export const styleUpdateDeclarationsInput = z.object({
+  updates: jsonArrayInput(styleUpdateInput),
+});
+
+export const styleDeleteDeclarationsInput = z.object({
+  deletions: jsonArrayInput(styleDeleteInput),
+});
+
 export const styleReplaceInput = z.object({
   property: z.string(),
   fromValue: z.unknown(),
@@ -310,6 +332,22 @@ export type CssVariableNameError =
   | { type: "duplicate"; message: string };
 
 export const cssVariableValueInput = z.union([z.string(), styleValue]);
+
+export const cssVariableDefineInput = z.object({
+  vars: z.record(cssVariableValueInput),
+  overwrite: z.boolean().optional(),
+});
+
+export const cssVariableDeleteInput = z.object({
+  names: z.array(z.string()).min(1),
+  force: z.boolean().optional(),
+  confirm: z.literal(true).optional(),
+});
+
+export const cssVariableRewriteRefsInput = z.object({
+  map: z.record(z.string()),
+  scopeRegex: z.string().optional(),
+});
 
 export const validateCssVariableNameWithStyles = ({
   name,
@@ -917,6 +955,37 @@ export const designTokenCreateInput = z.object({
   name: z.string().min(1),
   styles: z.record(z.unknown()).optional(),
   declarations: z.array(designTokenStyleInput).optional(),
+});
+
+export const designTokenCreateManyInput = z.object({
+  tokens: jsonArrayInput(designTokenCreateInput),
+});
+
+export const designTokenStyleUpdatesInput = z.object({
+  designTokenId: z.string(),
+  updates: jsonArrayInput(designTokenStyleInput),
+});
+
+export const designTokenStyleDeletionsInput = z.object({
+  designTokenId: z.string(),
+  deletions: jsonArrayInput(styleDeleteInput.omit({ instanceId: true })),
+});
+
+export const designTokenAttachInput = z.object({
+  designTokenId: z.string(),
+  instanceIds: z.array(z.string()).min(1),
+  position: z.enum(["before-local", "after-local"]).optional(),
+});
+
+export const designTokenDetachInput = z.object({
+  designTokenId: z.string(),
+  instanceIds: z.array(z.string()).min(1),
+});
+
+export const designTokenExtractInput = z.object({
+  instanceIds: z.array(z.string()).min(1),
+  name: z.string().min(1),
+  removeLocalProps: z.array(z.string()).optional(),
 });
 
 export const createTokenStyleSource = ({

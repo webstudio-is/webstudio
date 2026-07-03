@@ -657,6 +657,44 @@ export const pageFieldsInput = z
     addExpressionIssues(context, getPageExpressionErrors(fields));
   });
 
+export const pageCreateInput = z.object({
+  pageId: z.string().optional(),
+  name: z.string().min(1),
+  path: z.string(),
+  title: z.string().optional(),
+  parentFolderId: z.string().optional(),
+  meta: pageMetaInput.optional(),
+});
+
+export const pageUpdateInput = z.object({
+  pageId: z.string(),
+  values: pageFieldsInput,
+});
+
+export const pageDeleteInput = z.object({
+  pageId: z.string(),
+});
+
+export const folderCreateInput = z.object({
+  folderId: z.string().optional(),
+  name: z.string().min(1),
+  slug: z.string(),
+  parentFolderId: z.string().optional(),
+});
+
+export const folderUpdateInput = z.object({
+  folderId: z.string(),
+  values: z.object({
+    name: z.string().min(1).optional(),
+    slug: z.string().optional(),
+    parentFolderId: z.string().optional(),
+  }),
+});
+
+export const folderDeleteInput = z.object({
+  folderId: z.string(),
+});
+
 export const pageMetaToPatchValue = (meta: PageMetaPatchInput) => {
   const result: Record<string, unknown> = {};
   for (const [name, value] of Object.entries(meta)) {

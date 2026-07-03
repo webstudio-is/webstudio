@@ -36,6 +36,7 @@ export type PublicMcpOperation<Command extends string = string> = {
   permit: PublicMcpOperationPermit;
   description: string;
   inputFields: readonly string[];
+  inputFieldTypes?: Partial<Record<string, "array">>;
   requiredOptions?: readonly string[];
   examples?: readonly string[];
   localCapable: boolean;
@@ -209,7 +210,7 @@ const textInputSchema = (description: string) =>
   }) as const satisfies ProjectSessionMcpInputSchema;
 
 const getOperationInputSchema = (
-  operation: Pick<PublicMcpOperation, "inputFields">
+  operation: Pick<PublicMcpOperation, "inputFields" | "inputFieldTypes">
 ): ProjectSessionMcpInputSchema => {
   if (operation.inputFields.length === 0) {
     return emptyInputSchema;
@@ -219,12 +220,39 @@ const getOperationInputSchema = (
     properties: Object.fromEntries(
       operation.inputFields.map((field) => [
         field,
-        {
-          description: `Public API input field \`${field}\`.`,
-        },
+        getOperationInputFieldSchema(operation, field),
       ])
     ),
   };
+};
+
+const getOperationInputFieldSchema = (
+  operation: Pick<PublicMcpOperation, "inputFieldTypes">,
+  field: string
+) => {
+  const description = `Public API input field \`${field}\`.`;
+  if (operation.inputFieldTypes?.[field] === "array") {
+    return {
+      type: "array",
+      description,
+      items: {},
+    };
+  }
+  return { description };
+};
+
+const wrapMcpRootArrayInput = (
+  operation: Pick<PublicMcpOperation, "inputFields" | "inputFieldTypes">,
+  input: unknown
+) => {
+  if (Array.isArray(input) === false || operation.inputFields.length !== 1) {
+    return input;
+  }
+  const [field] = operation.inputFields;
+  if (field !== undefined && operation.inputFieldTypes?.[field] === "array") {
+    return { [field]: input };
+  }
+  return input;
 };
 
 const screenshotInputSchema = {
@@ -489,6 +517,11 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
           value: { type: "keyword", value: "red" },
         },
       ],
+    },
+  ],
+  "delete-styles": [
+    {
+      deletions: [{ instanceId: "instance-id", property: "box-shadow" }],
     },
   ],
   "apply-patch": [
@@ -1537,8 +1570,8 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   guidance?: ProjectSessionMcpGuidance;
 }) => {
   let session: ReturnType<CreateProjectSession> | undefined;
-  const operationCommands = new Set(
-    operations.map((operation) => operation.command)
+  const operationByCommand = new Map(
+    operations.map((operation) => [operation.command, operation])
   );
   const listTools = () =>
     listProjectSessionMcpTools(operations, {
@@ -1649,12 +1682,14 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "preview.status" && getPreviewStatus !== undefined) {
         return toMetaResult(await getPreviewStatus());
       }
-      if (operationCommands.has(name as Command) === false) {
+      const operation = operationByCommand.get(name as Command);
+      if (operation === undefined) {
         throw new Error(`Unknown MCP tool "${name}".`);
       }
+      const operationInput = wrapMcpRootArrayInput(operation, input);
       const envelope = await executeOperation({
         command: name as Command,
-        input,
+        input: operationInput,
         dryRun,
       });
       return toCallResult(envelope);

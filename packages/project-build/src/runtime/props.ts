@@ -149,6 +149,20 @@ export const propBindingInput = z
     );
   });
 
+export const propUpdatesInput = z.object({
+  updates: z.array(propValueInput).min(1),
+});
+
+export const propBindingsInput = z.object({
+  bindings: z.array(propBindingInput).min(1),
+});
+
+export const propDeletionsInput = z.object({
+  deletions: z
+    .array(z.object({ instanceId: z.string(), name: z.string() }))
+    .min(1),
+});
+
 type ValidatedPropInputResult =
   | { success: true; prop: Prop }
   | { success: false; errors: string[] };

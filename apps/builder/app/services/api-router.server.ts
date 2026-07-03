@@ -10,25 +10,46 @@ import {
 import { loadById } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import {
-  cssVariableValueInput,
-  designTokenCreateInput,
-  designTokenStyleInput,
-  styleDeleteInput,
+  cssVariableDefineInput as cssVariableRuntimeDefineInput,
+  cssVariableDeleteInput as cssVariableRuntimeDeleteInput,
+  cssVariableRewriteRefsInput as cssVariableRuntimeRewriteRefsInput,
+  designTokenAttachInput,
+  designTokenCreateManyInput,
+  designTokenDetachInput,
+  designTokenExtractInput,
+  designTokenStyleDeletionsInput,
+  designTokenStyleUpdatesInput,
+  styleDeleteDeclarationsInput,
+  styleUpdateDeclarationsInput,
   styleReplaceInput,
-  styleUpdateInput,
 } from "@webstudio-is/project-build/runtime/styles";
 import {
-  dataVariableValueInput,
-  resourceFieldsInput,
-  resourceFieldsUpdateInput,
+  dataVariableCreateInput,
+  dataVariableDeleteInput,
+  dataVariableUpdateInput,
+  resourceCreateInput,
+  resourceDeleteInput,
+  resourceUpdateInput,
 } from "@webstudio-is/project-build/runtime/data";
 import {
-  pageFieldsInput,
-  pageMetaInput,
+  folderCreateInput,
+  folderDeleteInput,
+  folderUpdateInput,
+  pageCreateInput,
+  pageDeleteInput,
+  pageUpdateInput,
 } from "@webstudio-is/project-build/runtime/pages";
 import {
-  propBindingInput,
-  propValueInput,
+  appendInstancesInput,
+  cloneInstanceInput,
+  deleteInstancesInput,
+  moveInstancesInput,
+  updateTextInstanceInput,
+} from "@webstudio-is/project-build/runtime/instances";
+import {
+  propBindingsInput,
+  propDeletionsInput,
+  propUpdatesInput,
 } from "@webstudio-is/project-build/runtime/props";
 import {
   createProjectDomain,
@@ -44,12 +65,22 @@ import {
   verifyProjectDomain,
 } from "@webstudio-is/domain/index.server";
 import {
-  breakpointFieldsInput,
-  breakpointUpdateFieldsInput,
+  breakpointCreateInput,
+  breakpointDeleteInput,
+  breakpointUpdateInput,
   projectSettingsUpdateInput as projectSettingsRuntimeUpdateInput,
-  redirectFieldsInput,
-  redirectUpdateFieldsInput,
+  redirectCreateInput,
+  redirectDeleteInput,
+  redirectUpdateInput,
 } from "@webstudio-is/project-build/runtime/project-settings";
+import {
+  pageDuplicateInput,
+  pageTemplateCreatePageInput,
+} from "@webstudio-is/project-build/runtime/page-copy";
+import {
+  assetDeleteInput as assetRuntimeDeleteInput,
+  assetReplaceInput as assetRuntimeReplaceInput,
+} from "@webstudio-is/project-build/runtime/assets";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { buildPatchTransaction } from "@webstudio-is/protocol";
 import {
@@ -324,21 +355,19 @@ const cssVariableListInput = projectIdInput.extend({
   withUsage: z.boolean().optional(),
 });
 
-const cssVariableDefineInput = projectIdInput.extend({
-  vars: z.record(cssVariableValueInput),
-  overwrite: z.boolean().optional(),
-});
+const cssVariableDefineInput = projectIdInput.merge(
+  cssVariableRuntimeDefineInput
+);
 
-const cssVariableDeleteInput = projectIdInput.extend({
-  names: z.array(z.string()).min(1),
-  force: z.boolean().optional(),
-  confirm: z.literal(true),
-});
+const cssVariableDeleteInput = projectIdInput
+  .merge(cssVariableRuntimeDeleteInput)
+  .extend({
+    confirm: z.literal(true),
+  });
 
-const cssVariableRewriteRefsInput = projectIdInput.extend({
-  map: z.record(z.string()),
-  scopeRegex: z.string().optional(),
-});
+const cssVariableRewriteRefsInput = projectIdInput.merge(
+  cssVariableRuntimeRewriteRefsInput
+);
 
 export const apiRouter = router({
   auth: router({
@@ -476,14 +505,7 @@ export const apiRouter = router({
     ),
 
     create: buildMutation(
-      projectIdInput.extend({
-        pageId: z.string().optional(),
-        name: z.string().min(1),
-        path: z.string(),
-        title: z.string().optional(),
-        parentFolderId: z.string().optional(),
-        meta: pageMetaInput.optional(),
-      }),
+      projectIdInput.merge(pageCreateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ pageId: string }>({
           id: "pages.create",
@@ -495,10 +517,7 @@ export const apiRouter = router({
     ),
 
     update: buildMutation(
-      projectIdInput.extend({
-        pageId: z.string(),
-        values: pageFieldsInput,
-      }),
+      projectIdInput.merge(pageUpdateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ pageId: string }>({
           id: "pages.update",
@@ -510,7 +529,7 @@ export const apiRouter = router({
     ),
 
     delete: buildMutation(
-      projectIdInput.extend({ pageId: z.string() }),
+      projectIdInput.merge(pageDeleteInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ pageId: string }>({
           id: "pages.delete",
@@ -522,12 +541,7 @@ export const apiRouter = router({
     ),
 
     duplicate: buildMutation(
-      projectIdInput.extend({
-        pageId: z.string(),
-        parentFolderId: z.string().optional(),
-        name: z.string().min(1).optional(),
-        path: z.string().optional(),
-      }),
+      projectIdInput.merge(pageDuplicateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ pageId: string }>({
           id: "pages.duplicate",
@@ -549,12 +563,7 @@ export const apiRouter = router({
     }),
 
     createPage: buildMutation(
-      projectIdInput.extend({
-        templateId: z.string(),
-        parentFolderId: z.string().optional(),
-        name: z.string().min(1),
-        path: z.string(),
-      }),
+      projectIdInput.merge(pageTemplateCreatePageInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ pageId: string }>({
           id: "pageTemplates.createPage",
@@ -598,7 +607,7 @@ export const apiRouter = router({
     }),
 
     create: buildMutation(
-      projectIdInput.merge(redirectFieldsInput),
+      projectIdInput.merge(redirectCreateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ old: string }>({
           id: "redirects.create",
@@ -610,10 +619,7 @@ export const apiRouter = router({
     ),
 
     update: buildMutation(
-      projectIdInput.extend({
-        old: z.string(),
-        values: redirectUpdateFieldsInput,
-      }),
+      projectIdInput.merge(redirectUpdateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ old: string }>({
           id: "redirects.update",
@@ -625,7 +631,7 @@ export const apiRouter = router({
     ),
 
     delete: buildMutation(
-      projectIdInput.extend({ old: z.string() }),
+      projectIdInput.merge(redirectDeleteInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ old: string }>({
           id: "redirects.delete",
@@ -647,7 +653,7 @@ export const apiRouter = router({
     }),
 
     create: buildMutation(
-      projectIdInput.merge(breakpointFieldsInput),
+      projectIdInput.merge(breakpointCreateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ breakpointId: string }>({
           id: "breakpoints.create",
@@ -659,10 +665,7 @@ export const apiRouter = router({
     ),
 
     update: buildMutation(
-      projectIdInput.extend({
-        breakpointId: z.string(),
-        values: breakpointUpdateFieldsInput,
-      }),
+      projectIdInput.merge(breakpointUpdateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ breakpointId: string }>({
           id: "breakpoints.update",
@@ -674,7 +677,7 @@ export const apiRouter = router({
     ),
 
     delete: buildMutation(
-      projectIdInput.extend({ breakpointId: z.string() }),
+      projectIdInput.merge(breakpointDeleteInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ breakpointId: string }>({
           id: "breakpoints.delete",
@@ -699,12 +702,7 @@ export const apiRouter = router({
     ),
 
     create: buildMutation(
-      projectIdInput.extend({
-        folderId: z.string().optional(),
-        name: z.string().min(1),
-        slug: z.string(),
-        parentFolderId: z.string().optional(),
-      }),
+      projectIdInput.merge(folderCreateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ folderId: string }>({
           id: "folders.create",
@@ -716,14 +714,7 @@ export const apiRouter = router({
     ),
 
     update: buildMutation(
-      projectIdInput.extend({
-        folderId: z.string(),
-        values: z.object({
-          name: z.string().min(1).optional(),
-          slug: z.string().optional(),
-          parentFolderId: z.string().optional(),
-        }),
-      }),
+      projectIdInput.merge(folderUpdateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ folderId: string }>({
           id: "folders.update",
@@ -735,7 +726,7 @@ export const apiRouter = router({
     ),
 
     delete: buildMutation(
-      projectIdInput.extend({ folderId: z.string() }),
+      projectIdInput.merge(folderDeleteInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           folderId: string;
@@ -790,22 +781,7 @@ export const apiRouter = router({
     ),
 
     append: buildMutation(
-      projectIdInput.extend({
-        parentInstanceId: z.string(),
-        mode: z.enum(["append", "prepend", "replace"]).optional(),
-        insertIndex: z.number().int().nonnegative().optional(),
-        children: z
-          .array(
-            z.object({
-              instanceId: z.string().optional(),
-              component: z.string().optional(),
-              tag: z.string(),
-              label: z.string().optional(),
-              text: z.string().optional(),
-            })
-          )
-          .min(1),
-      }),
+      projectIdInput.merge(appendInstancesInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           instanceIds: string[];
@@ -820,17 +796,7 @@ export const apiRouter = router({
     ),
 
     move: buildMutation(
-      projectIdInput.extend({
-        moves: z
-          .array(
-            z.object({
-              instanceId: z.string(),
-              parentInstanceId: z.string(),
-              insertIndex: z.number().int().nonnegative().optional(),
-            })
-          )
-          .min(1),
-      }),
+      projectIdInput.merge(moveInstancesInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ instanceIds: string[] }>({
           id: "instances.move",
@@ -842,11 +808,7 @@ export const apiRouter = router({
     ),
 
     clone: buildMutation(
-      projectIdInput.extend({
-        sourceInstanceId: z.string(),
-        targetParentInstanceId: z.string().optional(),
-        insertIndex: z.number().int().nonnegative().optional(),
-      }),
+      projectIdInput.merge(cloneInstanceInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           instanceId: string;
@@ -861,9 +823,7 @@ export const apiRouter = router({
     ),
 
     delete: buildMutation(
-      projectIdInput.extend({
-        instanceIds: z.array(z.string()).min(1),
-      }),
+      projectIdInput.merge(deleteInstancesInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ instanceIds: string[] }>({
           id: "instances.delete",
@@ -875,9 +835,7 @@ export const apiRouter = router({
     ),
 
     updateProps: contentOrBuildMutation(
-      projectIdInput.extend({
-        updates: z.array(propValueInput).min(1),
-      }),
+      projectIdInput.merge(propUpdatesInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ propIds: string[] }>({
           id: "instances.updateProps",
@@ -889,11 +847,7 @@ export const apiRouter = router({
     ),
 
     deleteProps: contentOrBuildMutation(
-      projectIdInput.extend({
-        deletions: z
-          .array(z.object({ instanceId: z.string(), name: z.string() }))
-          .min(1),
-      }),
+      projectIdInput.merge(propDeletionsInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ propIds: string[] }>({
           id: "instances.deleteProps",
@@ -905,9 +859,7 @@ export const apiRouter = router({
     ),
 
     bindProps: buildMutation(
-      projectIdInput.extend({
-        bindings: z.array(propBindingInput).min(1),
-      }),
+      projectIdInput.merge(propBindingsInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ propIds: string[] }>({
           id: "instances.bindProps",
@@ -937,12 +889,7 @@ export const apiRouter = router({
     ),
 
     updateText: contentOrBuildMutation(
-      projectIdInput.extend({
-        instanceId: z.string(),
-        childIndex: z.number().int().nonnegative(),
-        text: z.string(),
-        mode: z.enum(["text", "expression"]).optional(),
-      }),
+      projectIdInput.merge(updateTextInstanceInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           instanceId: string;
@@ -980,9 +927,7 @@ export const apiRouter = router({
     ),
 
     updateDeclarations: buildMutation(
-      projectIdInput.extend({
-        updates: z.array(styleUpdateInput).min(1),
-      }),
+      projectIdInput.merge(styleUpdateDeclarationsInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ styleKeys: string[] }>({
           id: "styles.updateDeclarations",
@@ -994,9 +939,7 @@ export const apiRouter = router({
     ),
 
     deleteDeclarations: buildMutation(
-      projectIdInput.extend({
-        deletions: z.array(styleDeleteInput).min(1),
-      }),
+      projectIdInput.merge(styleDeleteDeclarationsInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ styleKeys: string[] }>({
           id: "styles.deleteDeclarations",
@@ -1037,9 +980,7 @@ export const apiRouter = router({
     ),
 
     create: buildMutation(
-      projectIdInput.extend({
-        tokens: z.array(designTokenCreateInput).min(1),
-      }),
+      projectIdInput.merge(designTokenCreateManyInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ tokenIds: string[] }>({
           id: "designTokens.create",
@@ -1051,10 +992,7 @@ export const apiRouter = router({
     ),
 
     updateStyles: buildMutation(
-      projectIdInput.extend({
-        designTokenId: z.string(),
-        updates: z.array(designTokenStyleInput).min(1),
-      }),
+      projectIdInput.merge(designTokenStyleUpdatesInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           designTokenId: string;
@@ -1069,10 +1007,7 @@ export const apiRouter = router({
     ),
 
     deleteStyles: buildMutation(
-      projectIdInput.extend({
-        designTokenId: z.string(),
-        deletions: z.array(styleDeleteInput.omit({ instanceId: true })).min(1),
-      }),
+      projectIdInput.merge(designTokenStyleDeletionsInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           designTokenId: string;
@@ -1087,11 +1022,7 @@ export const apiRouter = router({
     ),
 
     attach: buildMutation(
-      projectIdInput.extend({
-        designTokenId: z.string(),
-        instanceIds: z.array(z.string()).min(1),
-        position: z.enum(["before-local", "after-local"]).optional(),
-      }),
+      projectIdInput.merge(designTokenAttachInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           designTokenId: string;
@@ -1105,10 +1036,7 @@ export const apiRouter = router({
     ),
 
     detach: buildMutation(
-      projectIdInput.extend({
-        designTokenId: z.string(),
-        instanceIds: z.array(z.string()).min(1),
-      }),
+      projectIdInput.merge(designTokenDetachInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           designTokenId: string;
@@ -1122,11 +1050,7 @@ export const apiRouter = router({
     ),
 
     extract: buildMutation(
-      projectIdInput.extend({
-        instanceIds: z.array(z.string()).min(1),
-        name: z.string().min(1),
-        removeLocalProps: z.array(z.string()).optional(),
-      }),
+      projectIdInput.merge(designTokenExtractInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           designTokenId: string;
@@ -1206,12 +1130,7 @@ export const apiRouter = router({
     ),
 
     create: buildMutation(
-      projectIdInput.extend({
-        dataSourceId: z.string().optional(),
-        scopeInstanceId: z.string(),
-        name: z.string(),
-        value: dataVariableValueInput,
-      }),
+      projectIdInput.merge(dataVariableCreateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ dataSourceId: string }>({
           id: "variables.create",
@@ -1223,14 +1142,7 @@ export const apiRouter = router({
     ),
 
     update: buildMutation(
-      projectIdInput.extend({
-        dataSourceId: z.string(),
-        values: z.object({
-          scopeInstanceId: z.string().optional(),
-          name: z.string().optional(),
-          value: dataVariableValueInput.optional(),
-        }),
-      }),
+      projectIdInput.merge(dataVariableUpdateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ dataSourceId: string }>({
           id: "variables.update",
@@ -1242,9 +1154,7 @@ export const apiRouter = router({
     ),
 
     delete: buildMutation(
-      projectIdInput.extend({
-        dataSourceId: z.string(),
-      }),
+      projectIdInput.merge(dataVariableDeleteInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ dataSourceId: string }>({
           id: "variables.delete",
@@ -1269,13 +1179,7 @@ export const apiRouter = router({
     ),
 
     create: buildMutation(
-      projectIdInput.extend({
-        resourceId: z.string().optional(),
-        resource: resourceFieldsInput,
-        dataSourceId: z.string().optional(),
-        scopeInstanceId: z.string().optional(),
-        dataSourceName: z.string().optional(),
-      }),
+      projectIdInput.merge(resourceCreateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           resourceId: string;
@@ -1290,12 +1194,7 @@ export const apiRouter = router({
     ),
 
     update: buildMutation(
-      projectIdInput.extend({
-        resourceId: z.string(),
-        values: resourceFieldsUpdateInput,
-        dataSourceName: z.string().optional(),
-        scopeInstanceId: z.string().optional(),
-      }),
+      projectIdInput.merge(resourceUpdateInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{ resourceId: string }>({
           id: "resources.update",
@@ -1307,10 +1206,7 @@ export const apiRouter = router({
     ),
 
     delete: buildMutation(
-      projectIdInput.extend({
-        resourceId: z.string(),
-        force: z.boolean().optional(),
-      }),
+      projectIdInput.merge(resourceDeleteInput),
       async ({ input, build, commit }) => {
         return await commitRuntimeMutation<{
           resourceId: string;
@@ -1478,9 +1374,7 @@ export const apiRouter = router({
     ),
 
     replace: buildMutation(
-      projectIdInput.extend({
-        fromAssetId: z.string(),
-        toAssetId: z.string(),
+      projectIdInput.merge(assetRuntimeReplaceInput).extend({
         confirm: z.literal(true),
       }),
       async ({ ctx, input, build, commit }) => {
@@ -1498,9 +1392,7 @@ export const apiRouter = router({
     ),
 
     delete: buildMutation(
-      projectIdInput.extend({
-        assetIdsOrPrefixes: z.array(z.string()).min(1),
-        force: z.boolean().optional(),
+      projectIdInput.merge(assetRuntimeDeleteInput).extend({
         confirm: z.literal(true),
       }),
       async ({ ctx, input, build, commit }) => {

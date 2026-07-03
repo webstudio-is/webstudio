@@ -167,6 +167,26 @@ export const listDataVariables = (
 
 export const dataVariableValueInput = dataSourceVariableValue;
 
+export const dataVariableCreateInput = z.object({
+  dataSourceId: z.string().optional(),
+  scopeInstanceId: z.string(),
+  name: z.string().min(1),
+  value: dataVariableValueInput,
+});
+
+export const dataVariableUpdateInput = z.object({
+  dataSourceId: z.string(),
+  values: z.object({
+    scopeInstanceId: z.string().optional(),
+    name: z.string().min(1).optional(),
+    value: dataVariableValueInput.optional(),
+  }),
+});
+
+export const dataVariableDeleteInput = z.object({
+  dataSourceId: z.string(),
+});
+
 type DataVariable = Extract<DataSource, { type: "variable" }>;
 
 export type DataVariableNameError = {
@@ -1176,6 +1196,26 @@ export const resourceFieldsUpdateInput = resourceFieldsInputBase
   .superRefine((fields, context) => {
     addExpressionIssues(context, getResourceExpressionErrors(fields));
   });
+
+export const resourceCreateInput = z.object({
+  resourceId: z.string().optional(),
+  resource: resourceFieldsInput,
+  dataSourceId: z.string().optional(),
+  scopeInstanceId: z.string().optional(),
+  dataSourceName: z.string().optional(),
+});
+
+export const resourceUpdateInput = z.object({
+  resourceId: z.string(),
+  values: resourceFieldsUpdateInput,
+  dataSourceName: z.string().optional(),
+  scopeInstanceId: z.string().optional(),
+});
+
+export const resourceDeleteInput = z.object({
+  resourceId: z.string(),
+  force: z.boolean().optional(),
+});
 
 export const createResourceValue = ({
   id,

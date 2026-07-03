@@ -1,5 +1,6 @@
 import type { StyleValue } from "@webstudio-is/css-engine";
 import deepEqual from "fast-deep-equal";
+import { z } from "zod";
 import {
   getAllPages,
   getStyleDeclKey,
@@ -31,6 +32,18 @@ type AssetStyleValueReplacement = {
   fromFontFamily?: string;
   toFontFamily?: string;
 };
+
+export const assetReplaceInput = z.object({
+  fromAssetId: z.string(),
+  toAssetId: z.string(),
+  confirm: z.literal(true).optional(),
+});
+
+export const assetDeleteInput = z.object({
+  assetIdsOrPrefixes: z.array(z.string()).min(1),
+  force: z.boolean().optional(),
+  confirm: z.literal(true).optional(),
+});
 
 const traverseAssetStyleValue = (
   value: StyleValue,
