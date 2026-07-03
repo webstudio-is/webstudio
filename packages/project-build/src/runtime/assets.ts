@@ -1,5 +1,6 @@
 import type { StyleValue } from "@webstudio-is/css-engine";
 import deepEqual from "fast-deep-equal";
+import { z } from "zod";
 import {
   getAllPages,
   getStyleDeclKey,
@@ -31,6 +32,16 @@ type AssetStyleValueReplacement = {
   fromFontFamily?: string;
   toFontFamily?: string;
 };
+
+export const assetReplaceInput = z.object({
+  fromAssetId: z.string(),
+  toAssetId: z.string(),
+});
+
+export const assetDeleteInput = z.object({
+  assetIdsOrPrefixes: z.array(z.string()).min(1),
+  force: z.boolean().optional(),
+});
 
 const traverseAssetStyleValue = (
   value: StyleValue,
@@ -618,7 +629,7 @@ export const replaceAsset = (
     BuilderState,
     "assets" | "pages" | "props" | "styles" | "resources" | "dataSources"
   >,
-  input: { fromAssetId: string; toAssetId: string }
+  input: z.infer<typeof assetReplaceInput>
 ) => {
   const assets = Array.from(getRequiredAssets(state).values());
   const fromAsset = findAsset(assets, input.fromAssetId);
@@ -657,10 +668,7 @@ export const deleteAssets = (
     BuilderState,
     "assets" | "pages" | "props" | "styles" | "resources" | "dataSources"
   >,
-  input: {
-    assetIdsOrPrefixes: string[];
-    force?: boolean;
-  }
+  input: z.infer<typeof assetDeleteInput>
 ) => {
   const assets = Array.from(getRequiredAssets(state).values());
   const selectedAssets = assets.filter((asset) =>

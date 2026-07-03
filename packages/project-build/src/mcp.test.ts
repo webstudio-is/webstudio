@@ -26,36 +26,61 @@ type ExecuteOperation = NonNullable<
 
 type TestSession = ReturnType<CreateProjectSession>;
 
+type TestPublicMcpOperation = Pick<
+  PublicMcpOperation,
+  "command" | "id" | "description" | "inputFields"
+> &
+  Partial<PublicMcpOperation>;
+
+const publicOperation = (
+  operation: TestPublicMcpOperation
+): PublicMcpOperation => ({
+  method: "query",
+  permit: "view",
+  localCapable: true,
+  serverOnly: false,
+  readNamespaces: [],
+  writeNamespaces: [],
+  invalidatesNamespaces: [],
+  retryOnConflict: false,
+  ...operation,
+});
+
+const styleOperation = (
+  operation: TestPublicMcpOperation & {
+    readNamespaces: PublicMcpOperation["readNamespaces"];
+  }
+): PublicMcpOperation => {
+  const arrayField = operation.inputFields.at(-1);
+  return publicOperation({
+    method: "mutation",
+    permit: "edit",
+    inputFieldTypes:
+      arrayField === undefined ? undefined : { [arrayField]: "array" },
+    writeNamespaces: ["styles"],
+    invalidatesNamespaces: ["styles"],
+    retryOnConflict: true,
+    ...operation,
+  });
+};
+
 const publicMcpOperations: readonly PublicMcpOperation[] = [
-  {
+  publicOperation({
     command: "list-pages",
     id: "pages.list",
-    method: "query",
-    permit: "view",
     description: "List pages",
     inputFields: ["includeFolders"],
-    localCapable: true,
-    serverOnly: false,
     readNamespaces: ["pages"],
-    writeNamespaces: [],
-    invalidatesNamespaces: [],
-    retryOnConflict: false,
-  },
-  {
+  }),
+  publicOperation({
     command: "whoami",
     id: "auth.me",
-    method: "query",
-    permit: "view",
     description: "Identify token",
     inputFields: [],
     localCapable: false,
     serverOnly: true,
-    readNamespaces: [],
-    writeNamespaces: [],
-    invalidatesNamespaces: [],
-    retryOnConflict: false,
-  },
-  {
+  }),
+  publicOperation({
     command: "publish",
     id: "build.publish",
     method: "mutation",
@@ -64,11 +89,46 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     inputFields: ["target", "domains"],
     localCapable: false,
     serverOnly: true,
-    readNamespaces: [],
-    writeNamespaces: [],
-    invalidatesNamespaces: [],
-    retryOnConflict: false,
-  },
+  }),
+  publicOperation({
+    command: "delete-instance",
+    id: "instances.delete",
+    method: "mutation",
+    permit: "edit",
+    description: "Delete instances",
+    inputFields: ["instanceIds"],
+    inputFieldTypes: { instanceIds: "array" },
+    writeNamespaces: ["instances"],
+    invalidatesNamespaces: ["instances"],
+  }),
+  styleOperation({
+    command: "update-styles",
+    id: "styles.updateDeclarations",
+    description: "Update styles",
+    inputFields: ["updates"],
+    readNamespaces: ["styles"],
+  }),
+  styleOperation({
+    command: "delete-styles",
+    id: "styles.deleteDeclarations",
+    description: "Delete styles",
+    inputFields: ["deletions"],
+    readNamespaces: ["styles"],
+  }),
+  styleOperation({
+    command: "update-design-token-styles",
+    id: "designTokens.updateStyles",
+    description: "Update design token styles",
+    inputFields: ["designTokenId", "updates"],
+    readNamespaces: ["styleSources", "styles"],
+  }),
+  styleOperation({
+    command: "delete-design-token-styles",
+    id: "designTokens.deleteStyles",
+    description: "Delete design token styles",
+    inputFields: ["designTokenId", "deletions"],
+    readNamespaces: ["styleSources", "styles"],
+  }),
 ];
 
 const testMcpGuidance: ProjectSessionMcpGuidance = {
@@ -234,6 +294,20 @@ describe("project session mcp adapter", () => {
         }),
       ])
     );
+
+    for (const [name, field] of [
+      ["delete-instance", "instanceIds"],
+      ["update-styles", "updates"],
+      ["delete-styles", "deletions"],
+      ["update-design-token-styles", "updates"],
+      ["delete-design-token-styles", "deletions"],
+    ]) {
+      expect(
+        tools.find((tool) => tool.name === name)?.inputSchema.properties?.[
+          field
+        ]
+      ).toMatchObject({ type: "array" });
+    }
   });
 
   test("lists OCR installer only when host provides installer", () => {
@@ -332,6 +406,64 @@ describe("project session mcp adapter", () => {
           source: "local",
         }),
       },
+    });
+  });
+
+  test("wraps bare array input for style operation tools", async () => {
+    const updates = [
+      {
+        instanceId: "instance-id",
+        property: "box-shadow",
+        value: { type: "keyword", value: "none" },
+      },
+    ];
+    const executeOperation: ExecuteOperation = vi.fn(async () =>
+      createEnvelope({
+        operationId: "styles.updateDeclarations",
+        result: { styleKeys: [] },
+      })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await adapter.callTool({
+      name: "update-styles",
+      input: updates,
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith({
+      command: "update-styles",
+      input: { updates },
+      dryRun: false,
+    });
+  });
+
+  test("wraps bare array input for single-array operation tools", async () => {
+    const instanceIds = ["instance-id"];
+    const executeOperation: ExecuteOperation = vi.fn(async () =>
+      createEnvelope({
+        operationId: "instances.delete",
+        result: { instanceIds },
+      })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await adapter.callTool({
+      name: "delete-instance",
+      input: instanceIds,
+    });
+
+    expect(executeOperation).toHaveBeenCalledWith({
+      command: "delete-instance",
+      input: { instanceIds },
+      dryRun: false,
     });
   });
 
@@ -504,7 +636,13 @@ describe("project session mcp adapter", () => {
     expect(session.initialize).not.toHaveBeenCalled();
     expect(index.structuredContent.data).toEqual(
       expect.objectContaining({
+        readThisFirst: expect.stringContaining("webstudio://project/guide"),
         startHere: expect.arrayContaining(["meta.guide"]),
+        rules: expect.arrayContaining([
+          expect.stringContaining(
+            "Use direct value tools for fixed text/props"
+          ),
+        ]),
         capabilities: expect.arrayContaining([
           expect.objectContaining({
             area: "publish",
@@ -548,8 +686,9 @@ describe("project session mcp adapter", () => {
             inputFields: ["target", "domains"],
             mcpExamples: [{ target: "production" }],
             cliExamples: [],
-            inputNote:
-              "MCP tool arguments are public API input objects. Examples show intent, but do not imply MCP flag names.",
+            inputNote: expect.stringContaining(
+              "Use direct value tools for fixed text/props"
+            ),
           }),
         ]),
       })
@@ -1178,7 +1317,13 @@ describe("project session mcp adapter", () => {
     );
     expect(JSON.parse(guide.contents[0]?.text ?? "{}")).toEqual(
       expect.objectContaining({
+        readThisFirst: expect.stringContaining("webstudio://project/guide"),
         startHere: expect.arrayContaining(["meta.index"]),
+        rules: expect.arrayContaining([
+          expect.stringContaining(
+            "Use direct value tools for fixed text/props"
+          ),
+        ]),
       })
     );
   });

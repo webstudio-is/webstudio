@@ -162,6 +162,7 @@
   },
   "sideEffects": false,
   "scripts": {
+    "generate-docs": "node scripts/generate-docs.mjs",
     "typecheck": "tsgo --noEmit",
     "test": "vitest run"
   },

@@ -38,14 +38,10 @@ export const builderRuntimeOperations = [
     )
   ),
   runtimeOperation("pages.create", ({ state, input, context }) =>
-    pages.createPage(
-      state,
-      input as Parameters<typeof pages.createPage>[1],
-      context
-    )
+    pages.createPage(state, pages.pageCreateInput.parse(input), context)
   ),
   runtimeOperation("pages.update", ({ state, input }) =>
-    pages.updatePage(state, input as Parameters<typeof pages.updatePage>[1])
+    pages.updatePage(state, pages.pageUpdateInput.parse(input))
   ),
   runtimeOperation("projectSettings.get", ({ state }) =>
     projectSettings.getProjectSettings(state)
@@ -53,7 +49,7 @@ export const builderRuntimeOperations = [
   runtimeOperation("projectSettings.update", ({ state, input }) =>
     projectSettings.updateProjectSettings(
       state,
-      input as Parameters<typeof projectSettings.updateProjectSettings>[1]
+      projectSettings.projectSettingsUpdateInput.parse(input)
     )
   ),
   runtimeOperation("redirects.list", ({ state }) =>
@@ -62,19 +58,19 @@ export const builderRuntimeOperations = [
   runtimeOperation("redirects.create", ({ state, input }) =>
     projectSettings.createRedirect(
       state,
-      input as Parameters<typeof projectSettings.createRedirect>[1]
+      projectSettings.redirectCreateInput.parse(input)
     )
   ),
   runtimeOperation("redirects.update", ({ state, input }) =>
     projectSettings.updateRedirect(
       state,
-      input as Parameters<typeof projectSettings.updateRedirect>[1]
+      projectSettings.redirectUpdateInput.parse(input)
     )
   ),
   runtimeOperation("redirects.delete", ({ state, input }) =>
     projectSettings.deleteRedirect(
       state,
-      input as Parameters<typeof projectSettings.deleteRedirect>[1]
+      projectSettings.redirectDeleteInput.parse(input)
     )
   ),
   runtimeOperation("breakpoints.list", ({ state }) =>
@@ -83,28 +79,28 @@ export const builderRuntimeOperations = [
   runtimeOperation("breakpoints.create", ({ state, input }) =>
     projectSettings.createBreakpoint(
       state,
-      input as Parameters<typeof projectSettings.createBreakpoint>[1]
+      projectSettings.breakpointCreateInput.parse(input)
     )
   ),
   runtimeOperation("breakpoints.update", ({ state, input }) =>
     projectSettings.updateBreakpoint(
       state,
-      input as Parameters<typeof projectSettings.updateBreakpoint>[1]
+      projectSettings.breakpointUpdateInput.parse(input)
     )
   ),
   runtimeOperation("breakpoints.delete", ({ state, input }) =>
     projectSettings.deleteBreakpoint(
       state,
-      input as Parameters<typeof projectSettings.deleteBreakpoint>[1]
+      projectSettings.breakpointDeleteInput.parse(input)
     )
   ),
   runtimeOperation("pages.delete", ({ state, input }) =>
-    pages.deletePage(state, input as Parameters<typeof pages.deletePage>[1])
+    pages.deletePage(state, pages.pageDeleteInput.parse(input))
   ),
   runtimeOperation("pages.duplicate", ({ state, input, context }) =>
     pageCopy.duplicatePage(
       state,
-      input as Parameters<typeof pageCopy.duplicatePage>[1],
+      pageCopy.pageDuplicateInput.parse(input),
       context
     )
   ),
@@ -114,7 +110,7 @@ export const builderRuntimeOperations = [
   runtimeOperation("pageTemplates.createPage", ({ state, input, context }) =>
     pageCopy.createPageFromTemplate(
       state,
-      input as Parameters<typeof pageCopy.createPageFromTemplate>[1],
+      pageCopy.pageTemplateCreatePageInput.parse(input),
       context
     )
   ),
@@ -122,17 +118,13 @@ export const builderRuntimeOperations = [
     pages.listFolders(state, input as Parameters<typeof pages.listFolders>[1])
   ),
   runtimeOperation("folders.create", ({ state, input, context }) =>
-    pages.createFolder(
-      state,
-      input as Parameters<typeof pages.createFolder>[1],
-      context
-    )
+    pages.createFolder(state, pages.folderCreateInput.parse(input), context)
   ),
   runtimeOperation("folders.update", ({ state, input }) =>
-    pages.updateFolder(state, input as Parameters<typeof pages.updateFolder>[1])
+    pages.updateFolder(state, pages.folderUpdateInput.parse(input))
   ),
   runtimeOperation("folders.delete", ({ state, input }) =>
-    pages.deleteFolder(state, input as Parameters<typeof pages.deleteFolder>[1])
+    pages.deleteFolder(state, pages.folderDeleteInput.parse(input))
   ),
   runtimeOperation("instances.list", ({ state, input }) =>
     instances.listInstances(
@@ -149,45 +141,34 @@ export const builderRuntimeOperations = [
   runtimeOperation("instances.append", ({ state, input, context }) =>
     instances.appendInstances(
       state,
-      input as Parameters<typeof instances.appendInstances>[1],
+      instances.appendInstancesInput.parse(input),
       context
     )
   ),
   runtimeOperation("instances.move", ({ state, input }) =>
-    instances.moveInstances(
-      state,
-      input as Parameters<typeof instances.moveInstances>[1]
-    )
+    instances.moveInstances(state, instances.moveInstancesInput.parse(input))
   ),
   runtimeOperation("instances.clone", ({ state, input, context }) =>
     instances.cloneInstance(
       state,
-      input as Parameters<typeof instances.cloneInstance>[1],
+      instances.cloneInstanceInput.parse(input),
       context
     )
   ),
   runtimeOperation("instances.delete", ({ state, input }) =>
     instances.deleteInstances(
       state,
-      input as Parameters<typeof instances.deleteInstances>[1]
+      instances.deleteInstancesInput.parse(input)
     )
   ),
   runtimeOperation("instances.updateProps", ({ state, input, context }) =>
-    props.updateProps(
-      state,
-      input as Parameters<typeof props.updateProps>[1],
-      context
-    )
+    props.updateProps(state, props.propUpdatesInput.parse(input), context)
   ),
   runtimeOperation("instances.deleteProps", ({ state, input }) =>
-    props.deleteProps(state, input as Parameters<typeof props.deleteProps>[1])
+    props.deleteProps(state, props.propDeletionsInput.parse(input))
   ),
   runtimeOperation("instances.bindProps", ({ state, input, context }) =>
-    props.bindProps(
-      state,
-      input as Parameters<typeof props.bindProps>[1],
-      context
-    )
+    props.bindProps(state, props.propBindingsInput.parse(input), context)
   ),
   runtimeOperation("instances.listTexts", ({ state, input }) =>
     instances.listTextInstances(
@@ -198,7 +179,7 @@ export const builderRuntimeOperations = [
   runtimeOperation("instances.updateText", ({ state, input }) =>
     instances.updateTextInstance(
       state,
-      input as Parameters<typeof instances.updateTextInstance>[1]
+      instances.updateTextInstanceInput.parse(input)
     )
   ),
   runtimeOperation("styles.getDeclarations", ({ state, input }) =>
@@ -210,21 +191,18 @@ export const builderRuntimeOperations = [
   runtimeOperation("styles.updateDeclarations", ({ state, input, context }) =>
     styles.updateStyleDeclarations(
       state,
-      input as Parameters<typeof styles.updateStyleDeclarations>[1],
+      styles.styleUpdateDeclarationsInput.parse(input),
       context
     )
   ),
   runtimeOperation("styles.deleteDeclarations", ({ state, input }) =>
     styles.deleteStyleDeclarations(
       state,
-      input as Parameters<typeof styles.deleteStyleDeclarations>[1]
+      styles.styleDeleteDeclarationsInput.parse(input)
     )
   ),
   runtimeOperation("styles.replaceValues", ({ state, input }) =>
-    styles.replaceStyleValues(
-      state,
-      input as Parameters<typeof styles.replaceStyleValues>[1]
-    )
+    styles.replaceStyleValues(state, styles.styleReplaceInput.parse(input))
   ),
   runtimeOperation("designTokens.list", ({ state, input }) =>
     styles.listDesignTokens(
@@ -235,38 +213,32 @@ export const builderRuntimeOperations = [
   runtimeOperation("designTokens.create", ({ state, input, context }) =>
     styles.createDesignTokens(
       state,
-      input as Parameters<typeof styles.createDesignTokens>[1],
+      styles.designTokenCreateManyInput.parse(input),
       context
     )
   ),
   runtimeOperation("designTokens.updateStyles", ({ state, input }) =>
     styles.updateDesignTokenStyles(
       state,
-      input as Parameters<typeof styles.updateDesignTokenStyles>[1]
+      styles.designTokenStyleUpdatesInput.parse(input)
     )
   ),
   runtimeOperation("designTokens.deleteStyles", ({ state, input }) =>
     styles.deleteDesignTokenStyles(
       state,
-      input as Parameters<typeof styles.deleteDesignTokenStyles>[1]
+      styles.designTokenStyleDeletionsInput.parse(input)
     )
   ),
   runtimeOperation("designTokens.attach", ({ state, input }) =>
-    styles.attachDesignToken(
-      state,
-      input as Parameters<typeof styles.attachDesignToken>[1]
-    )
+    styles.attachDesignToken(state, styles.designTokenAttachInput.parse(input))
   ),
   runtimeOperation("designTokens.detach", ({ state, input }) =>
-    styles.detachDesignToken(
-      state,
-      input as Parameters<typeof styles.detachDesignToken>[1]
-    )
+    styles.detachDesignToken(state, styles.designTokenDetachInput.parse(input))
   ),
   runtimeOperation("designTokens.extract", ({ state, input, context }) =>
     styles.extractDesignToken(
       state,
-      input as Parameters<typeof styles.extractDesignToken>[1],
+      styles.designTokenExtractInput.parse(input),
       context
     )
   ),
@@ -279,20 +251,17 @@ export const builderRuntimeOperations = [
   runtimeOperation("cssVariables.define", ({ state, input, context }) =>
     styles.defineCssVariables(
       state,
-      input as Parameters<typeof styles.defineCssVariables>[1],
+      styles.cssVariableDefineInput.parse(input),
       context
     )
   ),
   runtimeOperation("cssVariables.delete", ({ state, input }) =>
-    styles.deleteCssVariables(
-      state,
-      input as Parameters<typeof styles.deleteCssVariables>[1]
-    )
+    styles.deleteCssVariables(state, styles.cssVariableDeleteInput.parse(input))
   ),
   runtimeOperation("cssVariables.rewriteRefs", ({ state, input }) =>
     styles.rewriteCssVariableRefs(
       state,
-      input as Parameters<typeof styles.rewriteCssVariableRefs>[1]
+      styles.cssVariableRewriteRefsInput.parse(input)
     )
   ),
   runtimeOperation("variables.list", ({ state, input }) =>
@@ -304,43 +273,27 @@ export const builderRuntimeOperations = [
   runtimeOperation("variables.create", ({ state, input, context }) =>
     data.createDataVariable(
       state,
-      input as Parameters<typeof data.createDataVariable>[1],
+      data.dataVariableCreateInput.parse(input),
       context
     )
   ),
   runtimeOperation("variables.update", ({ state, input }) =>
-    data.updateDataVariable(
-      state,
-      input as Parameters<typeof data.updateDataVariable>[1]
-    )
+    data.updateDataVariable(state, data.dataVariableUpdateInput.parse(input))
   ),
   runtimeOperation("variables.delete", ({ state, input }) =>
-    data.deleteDataVariable(
-      state,
-      input as Parameters<typeof data.deleteDataVariable>[1]
-    )
+    data.deleteDataVariable(state, data.dataVariableDeleteInput.parse(input))
   ),
   runtimeOperation("resources.list", ({ state, input }) =>
     data.listResources(state, input as Parameters<typeof data.listResources>[1])
   ),
   runtimeOperation("resources.create", ({ state, input, context }) =>
-    data.createResource(
-      state,
-      input as Parameters<typeof data.createResource>[1],
-      context
-    )
+    data.createResource(state, data.resourceCreateInput.parse(input), context)
   ),
   runtimeOperation("resources.update", ({ state, input }) =>
-    data.updateResource(
-      state,
-      input as Parameters<typeof data.updateResource>[1]
-    )
+    data.updateResource(state, data.resourceUpdateInput.parse(input))
   ),
   runtimeOperation("resources.delete", ({ state, input }) =>
-    data.deleteResource(
-      state,
-      input as Parameters<typeof data.deleteResource>[1]
-    )
+    data.deleteResource(state, data.resourceDeleteInput.parse(input))
   ),
   runtimeOperation("assets.list", ({ state, input }) =>
     assets.listAssets(state, input as Parameters<typeof assets.listAssets>[1])
@@ -352,16 +305,10 @@ export const builderRuntimeOperations = [
     )
   ),
   runtimeOperation("assets.replace", ({ state, input }) =>
-    assets.replaceAsset(
-      state,
-      input as Parameters<typeof assets.replaceAsset>[1]
-    )
+    assets.replaceAsset(state, assets.assetReplaceInput.parse(input))
   ),
   runtimeOperation("assets.delete", ({ state, input }) =>
-    assets.deleteAssets(
-      state,
-      input as Parameters<typeof assets.deleteAssets>[1]
-    )
+    assets.deleteAssets(state, assets.assetDeleteInput.parse(input))
   ),
 ] as const satisfies readonly BuilderRuntimeOperation[];
 

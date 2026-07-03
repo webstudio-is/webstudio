@@ -7,7 +7,7 @@ source "$ROOT_DIR/apps/builder/dev/backend.sh"
 builder_backend_init
 
 cleanup() {
-  if [ "${LOCAL_DEV_CLEANUP:-false}" != "true" ]; then
+  if [ "${LOCAL_DEV_CLEANUP:-${LOCAL_DEV_START_BUILDER:-true}}" != "true" ]; then
     return
   fi
 
@@ -29,7 +29,8 @@ builder_backend_wait_for_db
 builder_backend_bootstrap_if_empty
 builder_generate_prisma_client auto
 builder_backend_start_postgrest
+builder_backend_wait_for_postgrest
 
 if [ "${LOCAL_DEV_START_BUILDER:-true}" = "true" ]; then
-  exec pnpm --dir "$ROOT_DIR" dev
+  pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder dev
 fi

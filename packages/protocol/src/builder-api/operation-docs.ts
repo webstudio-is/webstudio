@@ -70,7 +70,7 @@ export const publicApiOperationDocumentation: readonly PublicApiOperationDocumen
       description: "Update page settings and metadata",
       requiredOptions: ["page", "json"],
       examples: [
-        'webstudio update-page --page page-id --title Pricing --description "Pricing plans" --json',
+        'webstudio update-page --page page-id --title "\\"Pricing\\"" --description "\\"Pricing plans\\"" --json',
       ],
     },
     {
@@ -248,7 +248,7 @@ export const publicApiOperationDocumentation: readonly PublicApiOperationDocumen
     {
       command: "update-props",
       description:
-        "Create or update element props; editor tokens are limited to content-mode props",
+        "Create or update direct element prop values; use this for fixed strings, numbers, booleans, JSON, assets, pages, parameters, and resources. Editor tokens are limited to content-mode props",
       requiredOptions: ["input", "json"],
       examples: ["webstudio update-props --input props.json --json"],
     },
@@ -262,7 +262,7 @@ export const publicApiOperationDocumentation: readonly PublicApiOperationDocumen
     {
       command: "bind-props",
       description:
-        "Bind element props to expressions, parameters, resources, or actions",
+        "Bind element props to dynamic expressions, parameters, resources, or actions. Do not use for fixed string values; use update-props instead",
       requiredOptions: ["input", "json"],
       examples: ["webstudio bind-props --input bindings.json --json"],
     },

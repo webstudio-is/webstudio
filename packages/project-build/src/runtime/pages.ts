@@ -18,6 +18,7 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
+import { getNamedExpressionErrors } from "./expression-validation";
 import {
   collectExclusiveInstanceIds,
   createInstanceCleanupPayload,
@@ -468,12 +469,7 @@ const getParentFolderIdOrThrow = (pages: Pages, childId: string) => {
 
 export const createFolder = (
   state: Pick<BuilderState, "pages">,
-  input: {
-    folderId?: string;
-    name: string;
-    slug: string;
-    parentFolderId?: string;
-  },
+  input: z.infer<typeof folderCreateInput>,
   context: BuilderRuntimeContext
 ) => {
   const pages = getRequiredPages(state);
@@ -520,7 +516,7 @@ export const createPageValue = ({
   pageId,
   name,
   path,
-  title = name,
+  title = JSON.stringify(name),
   rootInstanceId,
   meta = {},
 }: {
@@ -547,6 +543,15 @@ const emptyStringRemovesMetaFields = new Set<keyof PageMeta>([
   "socialImageAssetId",
   "socialImageUrl",
 ]);
+
+const pageMetaExpressionFields = [
+  "description",
+  "language",
+  "redirect",
+  "socialImageUrl",
+  "status",
+  "content",
+] as const satisfies readonly (keyof PageMetaPatchInput)[];
 
 export const normalizePageMetaValue = <Name extends keyof PageMeta>(
   name: Name,
@@ -580,7 +585,19 @@ type PageFieldsPatchInput = Partial<{
   meta: PageMetaPatchInput;
 }>;
 
-export const pageMetaInput = z.object({
+const addExpressionIssues = (
+  context: z.RefinementCtx,
+  errors: readonly string[]
+) => {
+  for (const message of errors) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message,
+    });
+  }
+};
+
+const pageMetaInputBase = z.object({
   description: z.string().optional(),
   language: z.string().optional(),
   redirect: z.string().optional(),
@@ -596,12 +613,81 @@ export const pageMetaInput = z.object({
     .optional(),
 });
 
-export const pageFieldsInput = z.object({
-  name: z.string().min(1).optional(),
-  path: z.string().optional(),
+export const getPageExpressionErrors = (input: PageFieldsPatchInput) => {
+  const errors: string[] = [];
+  errors.push(...getNamedExpressionErrors("title", input.title));
+  if (input.meta !== undefined) {
+    for (const name of pageMetaExpressionFields) {
+      const expression = input.meta[name];
+      if (expression === "" && emptyStringRemovesMetaFields.has(name)) {
+        continue;
+      }
+      errors.push(...getNamedExpressionErrors(`meta.${name}`, expression));
+    }
+    for (const [index, customMeta] of (input.meta.custom ?? []).entries()) {
+      errors.push(
+        ...getNamedExpressionErrors(
+          `meta.custom.${index}.content`,
+          customMeta.content
+        )
+      );
+    }
+  }
+  return errors;
+};
+
+export const pageMetaInput = pageMetaInputBase.superRefine((meta, context) => {
+  addExpressionIssues(context, getPageExpressionErrors({ meta }));
+});
+
+export const pageFieldsInput = z
+  .object({
+    name: z.string().min(1).optional(),
+    path: z.string().optional(),
+    title: z.string().optional(),
+    parentFolderId: z.string().optional(),
+    meta: pageMetaInputBase.optional(),
+  })
+  .superRefine((fields, context) => {
+    addExpressionIssues(context, getPageExpressionErrors(fields));
+  });
+
+export const pageCreateInput = z.object({
+  pageId: z.string().optional(),
+  name: z.string().min(1),
+  path: z.string(),
   title: z.string().optional(),
   parentFolderId: z.string().optional(),
   meta: pageMetaInput.optional(),
+});
+
+export const pageUpdateInput = z.object({
+  pageId: z.string(),
+  values: pageFieldsInput,
+});
+
+export const pageDeleteInput = z.object({
+  pageId: z.string(),
+});
+
+export const folderCreateInput = z.object({
+  folderId: z.string().optional(),
+  name: z.string().min(1),
+  slug: z.string(),
+  parentFolderId: z.string().optional(),
+});
+
+export const folderUpdateInput = z.object({
+  folderId: z.string(),
+  values: z.object({
+    name: z.string().min(1).optional(),
+    slug: z.string().optional(),
+    parentFolderId: z.string().optional(),
+  }),
+});
+
+export const folderDeleteInput = z.object({
+  folderId: z.string(),
 });
 
 export const pageMetaToPatchValue = (meta: PageMetaPatchInput) => {
@@ -725,19 +811,16 @@ export const createPageUpdatePayload = (
 
 export const createPage = (
   state: Pick<BuilderState, "pages">,
-  input: {
-    pageId?: string;
-    name: string;
-    path: string;
-    title?: string;
-    parentFolderId?: string;
-    meta?: z.infer<typeof pageMetaInput>;
-  },
+  input: z.infer<typeof pageCreateInput>,
   context: BuilderRuntimeContext
 ) => {
   const pages = getRequiredPages(state);
   const parentFolderId = input.parentFolderId ?? pages.rootFolderId;
   const parentFolder = getFolderOrThrow(pages, parentFolderId);
+  const expressionErrors = getPageExpressionErrors(input);
+  if (expressionErrors.length > 0) {
+    return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
+  }
   const pageId = input.pageId ?? context.createId();
   if (pages.pages.has(pageId)) {
     return throwBuilderRuntimeError("CONFLICT", "Page id already exists");
@@ -782,12 +865,16 @@ export const createPage = (
 
 export const updatePage = (
   state: Pick<BuilderState, "pages">,
-  input: { pageId: string; values: z.infer<typeof pageFieldsInput> }
+  input: z.infer<typeof pageUpdateInput>
 ) => {
   const pages = getRequiredPages(state);
   const page = findPage(pages, input.pageId);
   if (page === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
+  }
+  const expressionErrors = getPageExpressionErrors(input.values);
+  if (expressionErrors.length > 0) {
+    return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
   }
   if (
     (input.values.path !== undefined ||
@@ -907,7 +994,7 @@ export const createPageDeletePayload = ({
 
 export const deletePage = (
   state: DeletePayloadState,
-  input: { pageId: string }
+  input: z.infer<typeof pageDeleteInput>
 ) => {
   const deleteState = getRequiredDeleteState(state);
   const page = findPage(deleteState.pages, input.pageId);
@@ -994,7 +1081,7 @@ export const createFolderDeletePayload = ({
 
 export const deleteFolder = (
   state: DeletePayloadState,
-  input: { folderId: string }
+  input: z.infer<typeof folderDeleteInput>
 ) => {
   const deleteState = getRequiredDeleteState(state);
   const folder = getFolderOrThrow(deleteState.pages, input.folderId);
@@ -1034,14 +1121,7 @@ export const deleteFolder = (
 
 export const updateFolder = (
   state: Pick<BuilderState, "pages">,
-  input: {
-    folderId: string;
-    values: {
-      name?: string;
-      slug?: string;
-      parentFolderId?: string;
-    };
-  }
+  input: z.infer<typeof folderUpdateInput>
 ) => {
   const pages = getRequiredPages(state);
   const folder = getFolderOrThrow(pages, input.folderId);

@@ -11,7 +11,6 @@ import {
   getAllPages,
   getExpressionIdentifiers,
   getStyleDeclKey,
-  lintExpression,
   ROOT_INSTANCE_ID,
   resource,
   SYSTEM_VARIABLE_ID,
@@ -42,6 +41,7 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
+import { getNamedExpressionErrors } from "./expression-validation";
 import { createRuntimeMutation } from "./mutation";
 
 const getRequiredDataSources = (state: Pick<BuilderState, "dataSources">) => {
@@ -166,6 +166,26 @@ export const listDataVariables = (
   });
 
 export const dataVariableValueInput = dataSourceVariableValue;
+
+export const dataVariableCreateInput = z.object({
+  dataSourceId: z.string().optional(),
+  scopeInstanceId: z.string(),
+  name: z.string().min(1),
+  value: dataVariableValueInput,
+});
+
+export const dataVariableUpdateInput = z.object({
+  dataSourceId: z.string(),
+  values: z.object({
+    scopeInstanceId: z.string().optional(),
+    name: z.string().min(1).optional(),
+    value: dataVariableValueInput.optional(),
+  }),
+});
+
+export const dataVariableDeleteInput = z.object({
+  dataSourceId: z.string(),
+});
 
 type DataVariable = Extract<DataSource, { type: "variable" }>;
 
@@ -1042,12 +1062,7 @@ export const createDataVariableUpdatePayload = ({
 
 export const createDataVariable = (
   state: Pick<BuilderState, "dataSources">,
-  input: {
-    dataSourceId?: string;
-    scopeInstanceId: string;
-    name: string;
-    value: z.infer<typeof dataVariableValueInput>;
-  },
+  input: z.infer<typeof dataVariableCreateInput>,
   context: BuilderRuntimeContext
 ) => {
   const dataSources = getRequiredDataSources(state);
@@ -1078,14 +1093,7 @@ export const createDataVariable = (
 
 export const updateDataVariable = (
   state: Pick<BuilderState, "dataSources">,
-  input: {
-    dataSourceId: string;
-    values: Partial<{
-      scopeInstanceId: string;
-      name: string;
-      value: z.infer<typeof dataVariableValueInput>;
-    }>;
-  }
+  input: z.infer<typeof dataVariableUpdateInput>
 ) => {
   const dataSources = getRequiredDataSources(state);
   const variable = findDataVariable(dataSources.values(), input.dataSourceId);
@@ -1112,7 +1120,7 @@ export const deleteDataVariable = (
     BuilderState,
     "pages" | "instances" | "props" | "dataSources" | "resources"
   >,
-  input: { dataSourceId: string }
+  input: z.infer<typeof dataVariableDeleteInput>
 ) => {
   const { payload, deletedVariable } = createDataVariableDeletePayload({
     variableId: input.dataSourceId,
@@ -1149,11 +1157,53 @@ export const findResource = (
   }
 };
 
-export const resourceFieldsInput = resource
+const addExpressionIssues = (
+  context: z.RefinementCtx,
+  errors: readonly string[]
+) => {
+  for (const message of errors) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message,
+    });
+  }
+};
+
+const resourceFieldsInputBase = resource
   .omit({ id: true })
   .extend({ control: z.enum(["system", "graphql"]).optional() });
 
-export const resourceFieldsUpdateInput = resourceFieldsInput.partial();
+export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
+  (fields, context) => {
+    addExpressionIssues(context, getResourceExpressionErrors(fields));
+  }
+);
+
+export const resourceFieldsUpdateInput = resourceFieldsInputBase
+  .partial()
+  .superRefine((fields, context) => {
+    addExpressionIssues(context, getResourceExpressionErrors(fields));
+  });
+
+export const resourceCreateInput = z.object({
+  resourceId: z.string().optional(),
+  resource: resourceFieldsInput,
+  dataSourceId: z.string().optional(),
+  scopeInstanceId: z.string().optional(),
+  dataSourceName: z.string().optional(),
+});
+
+export const resourceUpdateInput = z.object({
+  resourceId: z.string(),
+  values: resourceFieldsUpdateInput,
+  dataSourceName: z.string().optional(),
+  scopeInstanceId: z.string().optional(),
+});
+
+export const resourceDeleteInput = z.object({
+  resourceId: z.string(),
+  force: z.boolean().optional(),
+});
 
 export const createResourceValue = ({
   id,
@@ -1190,14 +1240,7 @@ export const getResourceExpressionErrors = (
 ) => {
   const errors: string[] = [];
   const validate = (name: string, expression: string | undefined) => {
-    if (expression === undefined) {
-      return;
-    }
-    for (const diagnostic of lintExpression({ expression })) {
-      if (diagnostic.severity === "error") {
-        errors.push(`${name}: ${diagnostic.message}`);
-      }
-    }
+    errors.push(...getNamedExpressionErrors(name, expression));
   };
   validate("url", fields.url);
   validate("body", fields.body);
@@ -1748,13 +1791,7 @@ export const createResource = (
     | "styleSourceSelections"
     | "styles"
   >,
-  input: {
-    resourceId?: string;
-    resource: z.infer<typeof resourceFieldsInput>;
-    dataSourceId?: string;
-    scopeInstanceId?: string;
-    dataSourceName?: string;
-  },
+  input: z.infer<typeof resourceCreateInput>,
   context: BuilderRuntimeContext
 ) => {
   const expressionErrors = getResourceExpressionErrors(input.resource);
@@ -1832,12 +1869,7 @@ export const updateResource = (
     | "styleSourceSelections"
     | "styles"
   >,
-  input: {
-    resourceId: string;
-    values: z.infer<typeof resourceFieldsUpdateInput>;
-    dataSourceName?: string;
-    scopeInstanceId?: string;
-  }
+  input: z.infer<typeof resourceUpdateInput>
 ) => {
   const expressionErrors = getResourceExpressionErrors(input.values);
   if (expressionErrors.length > 0) {
@@ -1895,7 +1927,7 @@ export const updateResource = (
 
 export const deleteResource = (
   state: Pick<BuilderState, "dataSources" | "resources" | "props">,
-  input: { resourceId: string; force?: boolean }
+  input: z.infer<typeof resourceDeleteInput>
 ) => {
   const resource = findResource(
     getRequiredResources(state).values(),

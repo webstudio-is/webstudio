@@ -24,6 +24,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { readProjectBuildDoc } from "./docs";
 
 type PublicMcpOperationMethod = "query" | "mutation";
 type PublicMcpOperationPermit = "api" | "view" | "build" | "edit" | "admin";
@@ -35,6 +36,7 @@ export type PublicMcpOperation<Command extends string = string> = {
   permit: PublicMcpOperationPermit;
   description: string;
   inputFields: readonly string[];
+  inputFieldTypes?: Partial<Record<string, "array">>;
   requiredOptions?: readonly string[];
   examples?: readonly string[];
   localCapable: boolean;
@@ -208,7 +210,7 @@ const textInputSchema = (description: string) =>
   }) as const satisfies ProjectSessionMcpInputSchema;
 
 const getOperationInputSchema = (
-  operation: Pick<PublicMcpOperation, "inputFields">
+  operation: Pick<PublicMcpOperation, "inputFields" | "inputFieldTypes">
 ): ProjectSessionMcpInputSchema => {
   if (operation.inputFields.length === 0) {
     return emptyInputSchema;
@@ -218,12 +220,39 @@ const getOperationInputSchema = (
     properties: Object.fromEntries(
       operation.inputFields.map((field) => [
         field,
-        {
-          description: `Public API input field \`${field}\`.`,
-        },
+        getOperationInputFieldSchema(operation, field),
       ])
     ),
   };
+};
+
+const getOperationInputFieldSchema = (
+  operation: Pick<PublicMcpOperation, "inputFieldTypes">,
+  field: string
+) => {
+  const description = `Public API input field \`${field}\`.`;
+  if (operation.inputFieldTypes?.[field] === "array") {
+    return {
+      type: "array",
+      description,
+      items: {},
+    };
+  }
+  return { description };
+};
+
+const wrapMcpRootArrayInput = (
+  operation: Pick<PublicMcpOperation, "inputFields" | "inputFieldTypes">,
+  input: unknown
+) => {
+  if (Array.isArray(input) === false || operation.inputFields.length !== 1) {
+    return input;
+  }
+  const [field] = operation.inputFields;
+  if (field !== undefined && operation.inputFieldTypes?.[field] === "array") {
+    return { [field]: input };
+  }
+  return input;
 };
 
 const screenshotInputSchema = {
@@ -432,6 +461,53 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       text: "Launch faster",
     },
   ],
+  "update-page": [
+    {
+      pageId: "page-id",
+      values: {
+        title: '"Pricing"',
+        meta: {
+          description: '"Pricing plans"',
+        },
+      },
+    },
+  ],
+  "update-props": [
+    {
+      updates: [
+        {
+          instanceId: "button-id",
+          name: "aria-label",
+          type: "string",
+          value: "Open menu",
+        },
+      ],
+    },
+  ],
+  "bind-props": [
+    {
+      bindings: [
+        {
+          instanceId: "link-id",
+          name: "href",
+          binding: { type: "expression", value: "currentPost.url" },
+        },
+      ],
+    },
+  ],
+  "create-resource": [
+    {
+      name: "Posts",
+      method: "get",
+      url: '"https://api.example.com/posts"',
+    },
+  ],
+  "update-resource": [
+    {
+      resourceId: "resource-id",
+      values: { url: '"https://api.example.com/posts"' },
+    },
+  ],
   "update-styles": [
     {
       updates: [
@@ -441,6 +517,11 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
           value: { type: "keyword", value: "red" },
         },
       ],
+    },
+  ],
+  "delete-styles": [
+    {
+      deletions: [{ instanceId: "instance-id", property: "box-shadow" }],
     },
   ],
   "apply-patch": [
@@ -1067,6 +1148,10 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
     .filter((capability) => capability.tools.length > 0);
 };
 
+const startupGuidance = readProjectBuildDoc("mcp-startup-guidance").trim();
+const valuesVsBindingsRule =
+  'Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, parameters, resources, or actions. Expression-backed fixed strings such as page metadata and resource URLs must be quoted JavaScript string literal expressions, for example "\\"Pricing\\"". Page and resource updates put changed fields under values.';
+
 const getMetaIndex = (
   tools: readonly ProjectSessionMcpTool[],
   guidance: ProjectSessionMcpGuidance | undefined
@@ -1076,6 +1161,7 @@ const getMetaIndex = (
     names.has(tool)
   );
   return {
+    readThisFirst: startupGuidance,
     startHere: ["meta.index", "meta.guide", "status", "permissions"].filter(
       (tool) => names.has(tool)
     ),
@@ -1090,6 +1176,7 @@ const getMetaIndex = (
       "Operate on the configured project only.",
       "Read ids before writing.",
       "Prefer semantic tools over apply-patch.",
+      valuesVsBindingsRule,
       "Use status/refresh when cached data may be stale.",
       guidance?.visualVerificationRule,
     ].filter((rule): rule is string => rule !== undefined),
@@ -1125,6 +1212,7 @@ const getMetaGuide = (
         : undefined,
       "Use focused read tools to collect ids and current values.",
       "Use the smallest semantic mutation tool that matches the requested change.",
+      valuesVsBindingsRule,
       "Use apply-patch only when no semantic mutation tool fits.",
       canVerifyVisually && guidance !== undefined
         ? guidance.getVisionWorkflowSummary({ includeDiff: canDiffScreenshots })
@@ -1157,8 +1245,7 @@ const getMoreTools = (
     mcpExamples: tool.mcpExamples ?? [],
     cliRequiredOptions: tool.cliRequiredOptions ?? [],
     cliExamples: tool.cliExamples ?? [],
-    inputNote:
-      "MCP tool arguments are public API input objects. Examples show intent, but do not imply MCP flag names.",
+    inputNote: `MCP tool arguments are public API input objects. Examples show intent, but do not imply MCP flag names. ${valuesVsBindingsRule}`,
     annotations: tool.annotations,
   })),
 });
@@ -1483,8 +1570,8 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   guidance?: ProjectSessionMcpGuidance;
 }) => {
   let session: ReturnType<CreateProjectSession> | undefined;
-  const operationCommands = new Set(
-    operations.map((operation) => operation.command)
+  const operationByCommand = new Map(
+    operations.map((operation) => [operation.command, operation])
   );
   const listTools = () =>
     listProjectSessionMcpTools(operations, {
@@ -1595,12 +1682,14 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "preview.status" && getPreviewStatus !== undefined) {
         return toMetaResult(await getPreviewStatus());
       }
-      if (operationCommands.has(name as Command) === false) {
+      const operation = operationByCommand.get(name as Command);
+      if (operation === undefined) {
         throw new Error(`Unknown MCP tool "${name}".`);
       }
+      const operationInput = wrapMcpRootArrayInput(operation, input);
       const envelope = await executeOperation({
         command: name as Command,
-        input,
+        input: operationInput,
         dryRun,
       });
       return toCallResult(envelope);
@@ -1696,8 +1785,7 @@ export const createProjectSessionMcpServer = async <
         tools: {},
         resources: {},
       },
-      instructions:
-        "Use meta.index, meta.guide, and meta.get_more_tools to discover Webstudio project capabilities. Read ids before writing and prefer semantic tools over apply-patch.",
+      instructions: startupGuidance,
     }
   );
 

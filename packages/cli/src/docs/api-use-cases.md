@@ -123,8 +123,12 @@ Commands:
 
 Commands:
 
-- MCP tool: update-page {"pageId":"<pageId>","title":"Pricing","description":"Plans","status":"200"}
-- MCP tool: update-page {"pageId":"<pageId>","auth":{"login":"<login>","password":"<password>"}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\"","status":"200"}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"login":"<login>","password":"<password>"}}}}
+
+Notes:
+
+- Page title and metadata text fields are expression-backed. For fixed text, send a quoted JavaScript string literal expression such as `"\"Pricing\""`.
 
 ## Read project settings
 
@@ -291,6 +295,11 @@ Commands:
 
 - MCP tool: update-props {"updates":"props.json contents"}
 
+Notes:
+
+- Use this for fixed prop values such as `aria-label`, `alt`, `id`, static `href`, and other direct string/number/boolean/json prop values.
+- Do not use bindings just to set static text.
+
 ## Delete props
 
 Commands:
@@ -302,6 +311,11 @@ Commands:
 Commands:
 
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
+
+Notes:
+
+- Use this only when the prop should remain dynamic: expression, parameter, resource, or action binding.
+- For a fixed string value, use `update-props` with `type:"string"` and a direct `value` instead.
 
 ## Read styles
 
@@ -427,13 +441,13 @@ Commands:
 
 Commands:
 
-- MCP tool: create-resource {"name":"Posts","method":"get","url":"https://api.example.com/posts"}
+- MCP tool: create-resource {"name":"Posts","method":"get","url":"\"https://api.example.com/posts\""}
 
 ## Update resource
 
 Commands:
 
-- MCP tool: update-resource {"resourceId":"<resourceId>","url":"https://api.example.com/posts"}
+- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
 
 ## Delete resource
 
@@ -577,8 +591,8 @@ Commands:
 - MCP tool: list-texts {"pagePath":"/"}
 - MCP tool: update-text {"instanceId":"<instanceId>","childIndex":0,"text":"Launch faster"}
 - MCP tool: update-props {"updates":"props.json contents"}
-- MCP tool: update-page {"pageId":"<pageId>","title":"Pricing","description":"Plans"}
-- MCP tool: update-resource {"resourceId":"<resourceId>","url":"https://api.example.com/posts"}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
+- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
 - MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>","confirm":true}
 - MCP tool: replace-styles {"replacements":"replace.json contents"}
 - MCP tool: rewrite-css-variable-refs {"variables":"variables.json contents"}
@@ -592,7 +606,7 @@ Notes:
 Commands:
 
 - MCP tool: list-pages {"includeFolders":true}
-- MCP tool: update-page {"pageId":"<pageId>","title":"Pricing","description":"Plans"}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: list-breakpoints {}
 - MCP tool: update-breakpoint {"breakpointId":"tablet","maxWidth":1023}
@@ -610,8 +624,8 @@ Notes:
 Commands:
 
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"title","value":{"type":"string","value":"Hello"}}
-- MCP tool: create-resource {"name":"Posts","method":"get","url":"https://api.example.com/posts"}
-- MCP tool: update-resource {"resourceId":"<resourceId>","url":"https://api.example.com/posts"}
+- MCP tool: create-resource {"name":"Posts","method":"get","url":"\"https://api.example.com/posts\""}
+- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
 - MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
 
@@ -626,7 +640,7 @@ Commands:
 - MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
-- MCP tool: create-resource {"name":"Seats","method":"get","url":"https://api.example.com/seats"}
+- MCP tool: create-resource {"name":"Seats","method":"get","url":"\"https://api.example.com/seats\""}
 - MCP tool: snapshot {"include":["instances","props","resources"]}
 - MCP tool: apply-patch {"baseVersion":"<version>","transactions":"patch.json contents"}
 
@@ -640,8 +654,8 @@ Notes:
 Commands:
 
 - MCP tool: create-page {"name":"Account","path":"/account"}
-- MCP tool: update-page {"pageId":"<pageId>","auth":{"login":"<login>","password":"<password>"}}
-- MCP tool: create-resource {"name":"Session","method":"get","url":"https://api.example.com/session"}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"login":"<login>","password":"<password>"}}}}
+- MCP tool: create-resource {"name":"Session","method":"get","url":"\"https://api.example.com/session\""}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"user","value":{"type":"json","value":{}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}

@@ -14,6 +14,8 @@ test("documents generated app setup for visual verification", () => {
   ]);
   expect(visualVerificationRule).toContain("generated app dependencies");
   expect(screenshotVerificationSummary).toContain("preview.start");
+  expect(screenshotVerificationSummary).toContain("list-breakpoints");
+  expect(screenshotVerificationSummary).toContain("viewport");
 });
 
 test("builds vision loop with optional screenshot diff guidance", () => {
@@ -27,6 +29,12 @@ test("builds vision loop with optional screenshot diff guidance", () => {
   );
   expect(visionLoopWithDiff).toEqual(
     expect.arrayContaining([expect.stringContaining("vision.install-ocr")])
+  );
+  expect(visionLoopWithDiff).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining("list-breakpoints"),
+      expect.stringContaining("viewport"),
+    ])
   );
   expect(getVisionWorkflowSummary({ includeDiff: false })).not.toContain(
     "screenshot.diff"

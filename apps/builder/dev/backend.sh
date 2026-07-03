@@ -31,6 +31,27 @@ builder_backend_start_postgrest() {
   builder_compose up -d postgrest
 }
 
+builder_backend_wait_for_postgrest() {
+  local timeout_seconds="${1:-60}"
+  local port
+  port="$(builder_compose port postgrest 3000)"
+  local url="http://127.0.0.1:${port##*:}/UserProduct?select=userId&limit=0"
+  local timeout_at
+  timeout_at="$(($(date +%s) + timeout_seconds))"
+
+  until {
+    local status
+    status="$(curl -s -o /dev/null -w "%{http_code}" "$url" || true)"
+    [ "$status" -ge 200 ] && [ "$status" -lt 500 ]
+  }; do
+    if [ "$(date +%s)" -ge "$timeout_at" ]; then
+      echo "Timed out waiting for PostgREST" >&2
+      return 1
+    fi
+    sleep 0.2
+  done
+}
+
 builder_backend_wait_for_db() {
   local timeout_seconds="${1:-60}"
   local timeout_at
