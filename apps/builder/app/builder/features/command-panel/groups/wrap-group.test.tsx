@@ -1,7 +1,5 @@
 import { describe, expect, test, beforeEach } from "vitest";
-import { coreMetas, elementComponent } from "@webstudio-is/sdk";
-import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
-import * as animationMetas from "@webstudio-is/sdk-components-animation/metas";
+import { elementComponent } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $, renderData } from "@webstudio-is/template";
 import { $registeredComponentMetas } from "~/shared/nano-states";
@@ -11,14 +9,16 @@ import { registerContainers } from "~/shared/sync/sync-stores";
 import { $selectedPageId } from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
 import { __testing__ } from "./wrap-group";
+import {
+  animationComponentMetas,
+  defaultComponentMetas,
+} from "~/shared/test-component-metas";
 
 const { canWrapInstance } = __testing__;
 
 registerContainers();
 
-const metas = new Map(
-  Object.entries({ ...coreMetas, ...baseMetas, ...animationMetas })
-);
+const metas = new Map([...defaultComponentMetas, ...animationComponentMetas]);
 
 beforeEach(() => {
   $registeredComponentMetas.set(metas);

@@ -1,8 +1,7 @@
 import type { Meta, StoryFn } from "@storybook/react";
 import { useEffect } from "react";
-import { initialBreakpoints, coreMetas } from "@webstudio-is/sdk";
+import { initialBreakpoints } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $pages } from "~/shared/sync/data-stores";
@@ -11,6 +10,7 @@ import { registerContainers } from "~/shared/sync/sync-stores";
 import { StorySection } from "@webstudio-is/design-system";
 import { CommandPanel as CommandPanelComponent } from "./command-panel";
 import { openCommandPanel } from "./command-state";
+import { defaultComponentMetas } from "~/shared/test-component-metas";
 
 const meta: Meta = {
   title: "Command Panel",
@@ -19,14 +19,7 @@ export default meta;
 
 registerContainers();
 
-$registeredComponentMetas.set(
-  new Map(
-    Object.entries({
-      ...coreMetas,
-      ...baseComponentMetas,
-    })
-  )
-);
+$registeredComponentMetas.set(defaultComponentMetas);
 
 $breakpoints.set(
   new Map(

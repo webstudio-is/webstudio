@@ -2,9 +2,14 @@ import { join } from "node:path";
 import { readFile, rm } from "node:fs/promises";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { generateRemixRoute } from "@webstudio-is/react-sdk";
-import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
-import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
+import baseComponentRegistry from "@webstudio-is/sdk-components-react/registry";
+import animationComponentRegistry from "@webstudio-is/sdk-components-animation/registry";
+import radixComponentRegistry from "@webstudio-is/sdk-components-react-radix/registry";
+import * as reactRouterComponents from "@webstudio-is/sdk-components-react-router";
+import {
+  addComponentOverridesFromExports,
+  addComponentsFromRegistry,
+} from "./component-registry";
 import type { Framework } from "./framework";
 
 export const createFramework = async (): Promise<Framework> => {
@@ -35,21 +40,31 @@ export const createFramework = async (): Promise<Framework> => {
   const animation = "@webstudio-is/sdk-components-animation";
   const components: Record<string, string> = {};
   const metas: Record<string, WsComponentMeta> = {};
-  for (const [name, meta] of Object.entries(baseComponentMetas)) {
-    components[name] = `${base}:${name}`;
-    metas[name] = meta;
-  }
-  for (const name of ["Body", "Link", "RichTextLink", "Form", "RemixForm"]) {
-    components[name] = `${reactRouter}:${name}`;
-  }
-  for (const [name, meta] of Object.entries(radixComponentMetas)) {
-    components[`${reactRadix}:${name}`] = `${reactRadix}:${name}`;
-    metas[`${reactRadix}:${name}`] = meta;
-  }
-  for (const [name, meta] of Object.entries(animationComponentMetas)) {
-    components[`${animation}:${name}`] = `${animation}:${name}`;
-    metas[`${animation}:${name}`] = meta;
-  }
+  addComponentsFromRegistry({
+    registry: baseComponentRegistry,
+    componentPackage: base,
+    components,
+    metas,
+  });
+  addComponentOverridesFromExports({
+    componentExports: reactRouterComponents,
+    componentPackage: reactRouter,
+    components,
+  });
+  addComponentsFromRegistry({
+    registry: radixComponentRegistry,
+    componentPackage: reactRadix,
+    components,
+    metas,
+    namespace: true,
+  });
+  addComponentsFromRegistry({
+    registry: animationComponentRegistry,
+    componentPackage: animation,
+    components,
+    metas,
+    namespace: true,
+  });
 
   return {
     metas,

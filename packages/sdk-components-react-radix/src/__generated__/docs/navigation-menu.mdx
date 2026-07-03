@@ -1,0 +1,81 @@
+---
+title: "Navigation menu"
+description: "Navigation menu Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "NavigationMenu"
+---
+
+# Navigation menu
+
+Navigation menu Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `navigation-menu`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `NavigationMenu` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `NavigationMenu`:
+
+```text
+NavigationMenu
+|-- NavigationMenuList
+|   `-- NavigationMenuItem
+|       |-- NavigationMenuTrigger
+|       |-- NavigationMenuContent
+|       |   `-- NavigationMenuLink
+|       `-- NavigationMenuLink
+`-- NavigationMenuViewport
+```
+
+## Examples
+
+Use the `NavigationMenu` template as the canonical starter. A collection of links for navigating websites.
+
+## API Reference
+
+### Props
+
+- `defaultValue`: type: `string`, control: `text`.
+- `delayDuration`: type: `number`, control: `number`. The duration from when the pointer enters the trigger until the tooltip gets opened.
+  @defaultValue 200
+- `dir`: type: `string`, control: `radio`. The text directionality of the element
+- `skipDelayDuration`: type: `number`, control: `number`. How much time a user has to enter another trigger without incurring a delay again.
+  @defaultValue 300
+- `value`: type: `string`, control: `text`. Current value of the element
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:NavigationMenuList`, `@webstudio-is/sdk-components-react-radix:NavigationMenuViewport`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+- [Radix Navigation menu documentation](https://www.radix-ui.com/primitives/docs/components/navigation-menu)

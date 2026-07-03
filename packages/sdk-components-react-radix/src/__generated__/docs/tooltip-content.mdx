@@ -1,0 +1,72 @@
+---
+title: "Tooltip content"
+description: "Tooltip content Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "TooltipContent"
+---
+
+# Tooltip content
+
+Tooltip content Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `tooltip-content`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use this component only as part of the `Tooltip` family. Follow the parent component's composition tree and content model when inserting or moving it.
+
+## Examples
+
+No canonical template is currently exported for this component.
+
+## API Reference
+
+### Props
+
+- `align`: type: `string`, control: `radio`.
+- `alignOffset`: type: `number`, control: `number`. The offset in pixels from the “start“ or “end“ alignment options.
+- `aria-label`: type: `string`, control: `text`. A more descriptive label for accessibility purpose
+- `arrowPadding`: type: `number`, control: `number`.
+- `avoidCollisions`: type: `boolean`, control: `boolean`.
+- `hideWhenDetached`: type: `boolean`, control: `boolean`, default: `true`.
+- `side`: type: `string`, control: `select`. The preferred alignment against the Trigger. May change when collisions occur.
+- `sideOffset`: type: `number`, control: `number`, default: `4`. The distance in pixels between the Content and the Trigger.
+- `sticky`: type: `string`, control: `radio`.
+- `updatePositionStrategy`: type: `string`, control: `radio`.
+
+### Content Model
+
+- Category: `none`
+- Direct children: `instance`
+
+### States
+
+- Closed: `[data-state="closed"]`
+- Delayed open: `[data-state="delayed-open"]`
+- Instant open: `[data-state="instant-open"]`
+
+## Accessibility
+
+- Provide an accessible label when the visible text does not describe the control.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- This component is part of the `Tooltip` family. Do not insert it without the required surrounding composition.
+
+## References
+
+- [Radix Tooltip documentation](https://www.radix-ui.com/primitives/docs/components/tooltip)

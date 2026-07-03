@@ -1,0 +1,78 @@
+---
+title: "Tabs"
+description: "Tabs Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "Tabs"
+---
+
+# Tabs
+
+Tabs Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `tabs`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `Tabs` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `Tabs`:
+
+```text
+Tabs
+|-- TabsList
+|   `-- TabsTrigger
+`-- TabsContent
+```
+
+## Examples
+
+Use the `Tabs` template as the canonical starter. A set of panels with content that are displayed one at a time. Duplicate both a tab trigger and tab content to add more tabs. Triggers and content are connected according to their order in the Navigator.
+
+## API Reference
+
+### Props
+
+- `activationMode`: type: `string`, control: `radio`. Whether a tab is activated automatically or manually.
+  @defaultValue automatic
+- `defaultValue`: type: `string`, control: `text`. The value of the tab to select by default, if uncontrolled
+- `dir`: type: `string`, control: `radio`. The direction of navigation between toolbar items.
+- `orientation`: type: `string`, control: `radio`. The orientation the tabs are layed out.
+  Mainly so arrow navigation is done accordingly (left & right vs. up & down)
+  @defaultValue horizontal
+- `value`: type: `string`, control: `text`. The value for the selected tab, if controlled
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:TabsList`, `@webstudio-is/sdk-components-react-radix:TabsContent`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+- [Radix Tabs documentation](https://www.radix-ui.com/primitives/docs/components/tabs)

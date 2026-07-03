@@ -1,0 +1,71 @@
+---
+title: "Switch"
+description: "Switch Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "Switch"
+---
+
+# Switch
+
+Switch Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `switch`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `Switch` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `Switch`:
+
+```text
+Switch
+`-- SwitchThumb
+```
+
+## Examples
+
+Use the `Switch` template as the canonical starter. A control that allows the user to toggle between checked and not checked.
+
+## API Reference
+
+### Props
+
+- `checked`: type: `boolean`, control: `boolean`. Whether the control is checked
+- `required`: type: `boolean`, control: `boolean`. Whether the control is required for form submission
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:SwitchThumb`
+
+### States
+
+- Checked: `[data-state="checked"]`
+- Unchecked: `[data-state="unchecked"]`
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+- [Radix Switch documentation](https://www.radix-ui.com/primitives/docs/components/switch)

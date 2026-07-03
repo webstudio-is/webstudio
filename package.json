@@ -11,6 +11,7 @@
     "lint": "oxlint --deny-warnings",
     "fixtures": "pnpm -r fixtures:link && pnpm -r fixtures:sync && pnpm -r fixtures:build",
     "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint && pnpm fixtures",
+    "check:registry": "pnpm -r --filter=@webstudio-is/sdk-components-react --filter=@webstudio-is/sdk-components-react-radix --filter=@webstudio-is/sdk-components-animation check:registry",
     "e2e:builder": "bash ./apps/builder/e2e/run-local.sh",
     "e2e:builder:update-schema": "E2E_DB_BOOTSTRAP=migrations E2E_WRITE_SCHEMA_SNAPSHOT=true E2E_RUN_TESTS=false bash ./apps/builder/e2e/run-local.sh",
     "playwright": "pnpm -r playwright-init",

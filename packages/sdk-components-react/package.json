@@ -10,6 +10,7 @@
   "sideEffects": false,
   "files": [
     "lib/*",
+    "src/__generated__/**",
     "!*.{test,stories}.*"
   ],
   "exports": {
@@ -37,11 +38,17 @@
       "webstudio": "./src/templates.ts",
       "types": "./lib/types/templates.d.ts",
       "import": "./lib/templates.js"
+    },
+    "./registry": {
+      "webstudio": "./src/__generated__/registry.json",
+      "import": "./src/__generated__/registry.json"
     }
   },
   "scripts": {
     "build": "vite build --config ../../vite.sdk-components.config.ts",
     "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.test.{ts,tsx} !./src/*.ws.ts !./src/*.ws.ts !./src/*.template.tsx' && prettier --write \"**/*.props.ts\"",
+    "build:registry": "webstudio-sdk generate-registry && prettier --write \"src/__generated__/registry.json\" \"src/__generated__/docs/*.mdx\"",
+    "check:registry": "webstudio-sdk validate-registry",
     "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",

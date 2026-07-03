@@ -1,0 +1,72 @@
+---
+title: "Tooltip"
+description: "Tooltip Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "Tooltip"
+---
+
+# Tooltip
+
+Tooltip Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `tooltip`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `Tooltip` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `Tooltip`:
+
+```text
+Tooltip
+|-- TooltipTrigger
+`-- TooltipContent
+```
+
+## Examples
+
+Use the `Tooltip` template as the canonical starter. Displays content that is related to the trigger, when the trigger is hovered with the mouse or focused with the keyboard. You are reading an example of a tooltip right now.
+
+## API Reference
+
+### Props
+
+- `delayDuration`: type: `number`, control: `number`. The delay before the Tooltip shows after the Trigger is hovered, in milliseconds. If no value is specified, the default is 700ms
+- `disableHoverableContent`: type: `boolean`, control: `boolean`. When toggled, prevents the Tooltip content from showing when the Trigger is hovered.
+- `open`: type: `boolean`, control: `boolean`. Show or hide the content of this component on the canvas. This will not affect the initial state of the component.
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:TooltipTrigger`, `@webstudio-is/sdk-components-react-radix:TooltipContent`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+- [Radix Tooltip documentation](https://www.radix-ui.com/primitives/docs/components/tooltip)

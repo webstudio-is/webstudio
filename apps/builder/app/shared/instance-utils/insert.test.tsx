@@ -21,13 +21,13 @@ import {
   renderData,
   token,
 } from "@webstudio-is/template";
-import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type { WebstudioData, WebstudioFragment } from "@webstudio-is/sdk";
-import { coreMetas, elementComponent } from "@webstudio-is/sdk";
+import { elementComponent } from "@webstudio-is/sdk";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
 } from "../nano-states";
+import { defaultComponentMetas } from "../test-component-metas";
 import { $assets } from "~/shared/sync/data-stores";
 import {
   $breakpoints,
@@ -53,10 +53,8 @@ registerContainers();
 
 $pages.set(createDefaultPages({ rootInstanceId: "" }));
 
-const defaultMetasMap = new Map(
-  Object.entries({ ...defaultMetas, ...coreMetas })
-);
-$registeredComponentMetas.set(defaultMetasMap);
+const defaultMetasMap = defaultComponentMetas;
+$registeredComponentMetas.set(defaultComponentMetas);
 
 const createFragment = (
   fragment: Partial<WebstudioFragment>

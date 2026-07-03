@@ -1,0 +1,112 @@
+---
+title: "You tube"
+description: "You tube Webstudio component."
+component: true
+base: "webstudio"
+sourcePackage: "@webstudio-is/sdk-components-react"
+sourceExport: "YouTube"
+---
+
+# You tube
+
+You tube Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `you-tube`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `YouTube` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `YouTube`:
+
+```text
+YouTube
+|-- VimeoSpinner
+|-- VimeoPlayButton
+`-- VimeoPreviewImage
+```
+
+## Examples
+
+Use the `YouTube` template as the canonical starter. Add a video to your page that is hosted on YouTube. Paste a YouTube URL and configure the video in the Settings tab.
+
+## API Reference
+
+### Props
+
+- `allowFullscreen`: type: `boolean`, control: `boolean`, default: `true`. Whether to allow fullscreen mode.
+  Original parameter: `fs`
+- `autoplay`: type: `boolean`, control: `boolean`, default: `false`. Whether the video should autoplay.
+  Some browsers require the `muted` parameter to be set to `true` for autoplay to work.
+- `captionLanguage`: type: `string`, control: `text`. Specifies the default language that the player will use to display captions.
+  The value is an ISO 639-1 two-letter language code.
+  Original parameter: `cc_lang_pref`
+- `color`: type: `string`, control: `radio`. Specifies the color that will be used in the player's video progress bar to highlight the amount of the video that the viewer has already seen.
+  Valid values are 'red' and 'white'.
+- `disableKeyboard`: type: `boolean`, control: `boolean`, default: `false`. Whether to disable keyboard controls.
+  Original parameter: `disablekb`
+- `endTime`: type: `number`, control: `number`. End time of the video in seconds.
+  Original parameter: `end`
+- `inline`: type: `boolean`, control: `boolean`, default: `false`. Whether to play inline on mobile (not fullscreen).
+- `keyboard`: type: `boolean`, control: `boolean`, default: `true`. Whether to enable keyboard controls.
+- `language`: type: `string`, control: `text`. Sets the player's interface language. The value is an ISO 639-1 two-letter language code or a fully specified locale.
+  Original parameter: `hl`
+- `listId`: type: `string`, control: `text`. ID of the playlist to load.
+  Original parameter: `list`
+- `listType`: type: `string`, control: `radio`. Type of playlist to load.
+- `loading`: type: `string`, control: `radio`, default: `"lazy"`. Loading strategy for iframe
+- `loop`: type: `boolean`, control: `boolean`, default: `false`. Whether the video should loop continuously.
+- `muted`: type: `boolean`, control: `boolean`, default: `false`. Whether the video should start muted.
+  Useful for enabling autoplay in browsers that require videos to be muted.
+  Original parameter: `mute`
+- `origin`: type: `string`, control: `text`. Your domain for API compliance (e.g., `https://yourdomain.com`).
+- `playlist`: type: `string`, control: `text`. This parameter specifies a comma-separated list of video IDs to play
+- `privacyEnhancedMode`: type: `boolean`, control: `boolean`, default: `true`. The Privacy Enhanced Mode of the YouTube embedded player prevents the use of views of embedded YouTube content from influencing the viewer’s browsing experience on YouTube.
+  https://support.google.com/youtube/answer/171780?hl=en#zippy=%2Cturn-on-privacy-enhanced-mode
+- `referrer`: type: `string`, control: `text`. Referrer URL for tracking purposes.
+  Original parameter: `widget_referrer`
+- `showAnnotations`: type: `boolean`, control: `boolean`, default: `true`. Whether to show annotations on the video.
+  Original parameter: `iv_load_policy`
+- `showCaptions`: type: `boolean`, control: `boolean`, default: `false`. Whether captions should be shown by default.
+  Original parameter: `cc_load_policy`
+- `showControls`: type: `boolean`, control: `boolean`, default: `true`. Whether to show player controls.
+- `showPreview`: type: `boolean`, control: `boolean`.
+- `showRelatedVideos`: type: `boolean`, control: `boolean`, default: `true`. Whether to show related videos at the end.
+  Original parameter: `rel`
+- `startTime`: type: `number`, control: `number`. Start time of the video in seconds.
+  Original parameter: `start`
+- `url`: type: `string`, control: `text`. The YouTube video URL or ID
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `instance`
+- Required descendants: `VimeoSpinner`, `VimeoPlayButton`, `VimeoPreviewImage`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+No external references are currently mapped for this component.

@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { coreMetas, type Prop, type Props } from "@webstudio-is/sdk";
-import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
+import { type Prop, type Props } from "@webstudio-is/sdk";
 import { $, expression, renderData, ws } from "@webstudio-is/template";
 import {
   findClosestContainer,
@@ -9,10 +8,9 @@ import {
   isRichTextTree,
   isTreeSatisfyingContentModel,
 } from "./content-model";
+import { defaultComponentMetas } from "./test-component-metas";
 
-const defaultMetas = new Map(
-  Object.entries({ ...coreMetas, ...baseComponentMetas })
-);
+const defaultMetas = defaultComponentMetas;
 
 test("support element with ws:tag", () => {
   expect(

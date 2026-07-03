@@ -1,0 +1,3846 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "webstudio-is-sdk-components-react",
+  "homepage": "https://webstudio.is",
+  "items": [
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "blockquote",
+      "title": "Blockquote",
+      "description": "Blockquote Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Blockquote",
+          "kind": "component"
+        },
+        "docs": "docs/blockquote.mdx",
+        "component": "Blockquote",
+        "presetStyle": {
+          "blockquote": [
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "unit",
+                "value": 0,
+                "unit": "number"
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "value": 0,
+                "unit": "number"
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "unit",
+                "value": 10,
+                "unit": "px"
+              }
+            },
+            {
+              "property": "margin-left",
+              "value": {
+                "type": "unit",
+                "value": 0,
+                "unit": "number"
+              }
+            },
+            {
+              "property": "padding-top",
+              "value": {
+                "type": "unit",
+                "value": 10,
+                "unit": "px"
+              }
+            },
+            {
+              "property": "padding-bottom",
+              "value": {
+                "type": "unit",
+                "value": 10,
+                "unit": "px"
+              }
+            },
+            {
+              "property": "padding-left",
+              "value": {
+                "type": "unit",
+                "value": 20,
+                "unit": "px"
+              }
+            },
+            {
+              "property": "padding-right",
+              "value": {
+                "type": "unit",
+                "value": 20,
+                "unit": "px"
+              }
+            },
+            {
+              "property": "border-left-width",
+              "value": {
+                "type": "unit",
+                "value": 5,
+                "unit": "px"
+              }
+            },
+            {
+              "property": "border-left-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-left-color",
+              "value": {
+                "type": "rgb",
+                "r": 226,
+                "g": 226,
+                "b": 226,
+                "alpha": 1
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class", "cite"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "body",
+      "title": "Body",
+      "description": "Body Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Body",
+          "kind": "component"
+        },
+        "docs": "docs/body.mdx",
+        "component": "Body",
+        "presetStyle": {
+          "body": [
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-left",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "-webkit-font-smoothing",
+              "value": {
+                "type": "keyword",
+                "value": "antialiased"
+              }
+            },
+            {
+              "property": "-moz-osx-font-smoothing",
+              "value": {
+                "type": "keyword",
+                "value": "grayscale"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "bold",
+      "title": "Bold Text",
+      "description": "Bold Text Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Bold",
+          "kind": "component"
+        },
+        "docs": "docs/bold.mdx",
+        "component": "Bold",
+        "label": "Bold Text",
+        "presetStyle": {
+          "b": [
+            {
+              "property": "font-weight",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 700
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "box",
+      "title": "Box",
+      "description": "Box Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Box",
+          "kind": "component"
+        },
+        "docs": "docs/box.mdx",
+        "component": "Box",
+        "presetStyle": {
+          "div": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "address": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "article": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "aside": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "figure": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "footer": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "header": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "main": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "nav": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "section": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": ["tag", "id", "class"],
+        "props": {
+          "tag": {
+            "required": true,
+            "control": "tag",
+            "type": "string",
+            "options": [
+              "div",
+              "header",
+              "footer",
+              "nav",
+              "main",
+              "section",
+              "article",
+              "aside",
+              "address",
+              "figure",
+              "span"
+            ]
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "button",
+      "title": "Button",
+      "description": "Button Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Button",
+          "kind": "component"
+        },
+        "docs": "docs/button.mdx",
+        "component": "Button",
+        "presetStyle": {
+          "button": [
+            {
+              "property": "font-family",
+              "value": {
+                "type": "keyword",
+                "value": "inherit"
+              }
+            },
+            {
+              "property": "font-size",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 100
+              }
+            },
+            {
+              "property": "line-height",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 1.15
+              }
+            },
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-left",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "border-top-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-right-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-bottom-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-left-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "text-transform",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class", "type", "aria-label"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "checkbox",
+      "title": "Checkbox",
+      "description": "Checkbox Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Checkbox",
+          "kind": "component"
+        },
+        "docs": "docs/checkbox.mdx",
+        "component": "Checkbox",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2Z\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m6 8.238 1.383 1.383L10.003 7\"/></svg>",
+        "presetStyle": {
+          "input": [
+            {
+              "property": "font-family",
+              "value": {
+                "type": "keyword",
+                "value": "inherit"
+              }
+            },
+            {
+              "property": "font-size",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 100
+              }
+            },
+            {
+              "property": "line-height",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 1.15
+              }
+            },
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-left",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "border-top-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "border-right-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "border-bottom-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "border-left-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "unit": "em",
+                "value": 0.5
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class", "name", "value", "required", "checked"],
+        "props": {
+          "value": {
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "description": "Value of the form control"
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "code-text",
+      "title": "Code text",
+      "description": "Code text Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "CodeText",
+          "kind": "component"
+        },
+        "docs": "docs/code-text.mdx",
+        "component": "CodeText",
+        "contentModel": {
+          "category": "instance",
+          "children": []
+        },
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M5.333 2h-.666a1.333 1.333 0 0 0-1.334 1.333v3.334A1.333 1.333 0 0 1 2 8a1.333 1.333 0 0 1 1.333 1.333v3.334c0 .733.6 1.333 1.334 1.333h.666M10.667 14h.666a1.333 1.333 0 0 0 1.334-1.333V9.333C12.667 8.6 13.267 8 14 8a1.333 1.333 0 0 1-1.333-1.333V3.333A1.333 1.333 0 0 0 11.333 2h-.666\"/></svg>",
+        "presetStyle": {
+          "code": [
+            {
+              "property": "font-family",
+              "value": {
+                "type": "fontFamily",
+                "value": [
+                  "ui-monospace",
+                  "SFMono-Regular",
+                  "Consolas",
+                  "Liberation Mono",
+                  "Menlo",
+                  "monospace"
+                ]
+              }
+            },
+            {
+              "property": "font-size",
+              "value": {
+                "type": "unit",
+                "unit": "em",
+                "value": 1
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "block"
+              }
+            },
+            {
+              "property": "white-space-collapse",
+              "value": {
+                "type": "keyword",
+                "value": "preserve"
+              }
+            },
+            {
+              "property": "text-wrap-mode",
+              "value": {
+                "type": "keyword",
+                "value": "wrap"
+              }
+            },
+            {
+              "property": "padding-left",
+              "value": {
+                "type": "unit",
+                "value": 0.2,
+                "unit": "em"
+              }
+            },
+            {
+              "property": "padding-right",
+              "value": {
+                "type": "unit",
+                "value": 0.2,
+                "unit": "em"
+              }
+            },
+            {
+              "property": "background-color",
+              "value": {
+                "type": "rgb",
+                "r": 238,
+                "g": 238,
+                "b": 238,
+                "alpha": 1
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class", "lang", "code"],
+        "props": {
+          "code": {
+            "required": true,
+            "control": "codetext",
+            "type": "string"
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "content-embed",
+      "title": "Content embed",
+      "description": "Content Embed allows styling of HTML, which can be provided via the Code property statically or loaded dynamically from any Resource, for example, from a CMS.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "ContentEmbed",
+          "kind": "template"
+        },
+        "docs": "docs/content-embed.mdx",
+        "template": {
+          "name": "ContentEmbed",
+          "category": "data",
+          "description": "Content Embed allows styling of HTML, which can be provided via the Code property statically or loaded dynamically from any Resource, for example, from a CMS."
+        }
+      },
+      "type": "registry:block"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "form",
+      "title": "Webhook Form",
+      "description": "Webhook Form Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Form",
+          "kind": "component"
+        },
+        "docs": "docs/form.mdx",
+        "component": "Form",
+        "label": "Webhook Form",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 11.32H8.007c-.734 0-1.3.627-1.654 1.267a2.666 2.666 0 0 1-5.02-1.254A2.62 2.62 0 0 1 1.713 10\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4 11.333 6.087 7.48c.353-.647.066-1.453-.334-2.067a2.667 2.667 0 1 1 4.594-2.706\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m8 4 2.087 3.82c.353.647 1.18.847 1.913.847A2.667 2.667 0 0 1 12 14\"/></svg>",
+        "presetStyle": {
+          "form": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class", "state", "action"],
+        "props": {
+          "state": {
+            "description": "Use this property to reveal the Success and Error states on the canvas so they can be styled. The Initial state is displayed when the page first opens. The Success and Error states are displayed depending on whether the Form submits successfully or unsuccessfully.",
+            "required": false,
+            "control": "radio",
+            "type": "string",
+            "defaultValue": "initial",
+            "options": ["initial", "success", "error"]
+          },
+          "action": {
+            "type": "resource",
+            "control": "resource",
+            "description": "The URI of a program that processes the information submitted via the form.",
+            "required": false
+          }
+        },
+        "states": [
+          {
+            "selector": "[data-state=error]",
+            "label": "Error"
+          },
+          {
+            "selector": "[data-state=success]",
+            "label": "Success"
+          }
+        ],
+        "template": {
+          "name": "Form",
+          "title": "Form",
+          "description": "Collect user data and send it to any webhook.",
+          "category": "data"
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "fragment",
+      "title": "Fragment",
+      "description": "Fragment Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Fragment",
+          "kind": "component"
+        },
+        "docs": "docs/fragment.mdx",
+        "component": "Fragment"
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "head-link",
+      "title": "Head link",
+      "description": "Head link Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "HeadLink",
+          "kind": "component"
+        },
+        "docs": "docs/head-link.mdx",
+        "component": "HeadLink",
+        "contentModel": {
+          "category": "none",
+          "children": []
+        },
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4.667 5.333h4M4.667 8H10M14 8.75V3.5A1.5 1.5 0 0 0 12.5 2h-9A1.5 1.5 0 0 0 2 3.5v9.252c0 .69.56 1.25 1.25 1.25v0H6\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M10.45 14.5h-.7a1.75 1.75 0 1 1 0-3.5h.7M12.55 11h.7a1.75 1.75 0 1 1 0 3.5h-.7M10.1 12.75h2.8\"/></svg>",
+        "initialProps": ["rel", "hrefLang", "href", "type", "as"],
+        "props": {},
+        "composition": {
+          "family": "HeadSlot",
+          "role": "part"
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "head-meta",
+      "title": "Head meta",
+      "description": "Head meta Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "HeadMeta",
+          "kind": "component"
+        },
+        "docs": "docs/head-meta.mdx",
+        "component": "HeadMeta",
+        "contentModel": {
+          "category": "none",
+          "children": []
+        },
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2ZM8 11.516V7.853\"/><rect width=\"1.4\" height=\"1.4\" x=\"7.3\" y=\"4.484\" fill=\"currentColor\" rx=\".7\"/></svg>",
+        "initialProps": ["name", "property", "content"],
+        "props": {},
+        "composition": {
+          "family": "HeadSlot",
+          "role": "part"
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "head-slot",
+      "title": "Head slot",
+      "description": "Inserts children into the head of the document",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "HeadSlot",
+          "kind": "component"
+        },
+        "docs": "docs/head-slot.mdx",
+        "component": "HeadSlot",
+        "contentModel": {
+          "category": "instance",
+          "children": ["HeadLink", "HeadMeta", "HeadTitle"]
+        },
+        "description": "Inserts children into the head of the document",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2ZM4 4h8\"/></svg>",
+        "props": {},
+        "composition": {
+          "family": "HeadSlot",
+          "role": "root",
+          "tree": "HeadSlot\n|-- HeadLink\n|-- HeadMeta\n`-- HeadTitle"
+        },
+        "template": {
+          "name": "HeadSlot",
+          "title": "Head slot",
+          "description": "The Head Slot component lets you customize page-specific head elements (like canonical URLs), which merge with your site's global head settings, with Head Slot definitions taking priority over Page Settings. For site-wide head changes, use project settings instead.",
+          "category": "general"
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "head-title",
+      "title": "Head title",
+      "description": "Head title Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "HeadTitle",
+          "kind": "component"
+        },
+        "docs": "docs/head-title.mdx",
+        "component": "HeadTitle",
+        "contentModel": {
+          "category": "none",
+          "children": ["text"]
+        },
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12.667 4H3.333C2.597 4 2 4.497 2 5.111v7.778C2 13.503 2.597 14 3.333 14h9.334c.736 0 1.333-.498 1.333-1.111V5.11C14 4.497 13.403 4 12.667 4ZM4 2h8\"/></svg>",
+        "props": {},
+        "composition": {
+          "family": "HeadSlot",
+          "role": "part"
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "heading",
+      "title": "Heading",
+      "description": "Heading Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Heading",
+          "kind": "component"
+        },
+        "docs": "docs/heading.mdx",
+        "component": "Heading",
+        "presetStyle": {
+          "h1": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "h2": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "h3": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "h4": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "h5": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ],
+          "h6": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": ["tag", "id", "class"],
+        "props": {
+          "tag": {
+            "required": true,
+            "control": "tag",
+            "type": "string",
+            "options": ["h1", "h2", "h3", "h4", "h5", "h6"]
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "html-embed",
+      "title": "HTML Embed",
+      "description": "Used to add HTML code to the page, such as an SVG or script.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "HtmlEmbed",
+          "kind": "component"
+        },
+        "docs": "docs/html-embed.mdx",
+        "component": "HtmlEmbed",
+        "category": "general",
+        "contentModel": {
+          "category": "instance",
+          "children": ["ws:descendant"]
+        },
+        "label": "HTML Embed",
+        "description": "Used to add HTML code to the page, such as an SVG or script.",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 10.667 14.667 8 12 5.333M4 5.333 1.333 8 4 10.667M9.667 2.667 6.333 13.333\"/></svg>",
+        "presetStyle": {
+          "div": [
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "contents"
+              }
+            },
+            {
+              "property": "white-space-collapse",
+              "value": {
+                "type": "keyword",
+                "value": "collapse"
+              }
+            }
+          ]
+        },
+        "order": 3,
+        "initialProps": ["class", "clientOnly", "executeScriptOnCanvas"],
+        "props": {
+          "className": {
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "description": ""
+          },
+          "clientOnly": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "description": "Activate it for any scripts that can mutate the DOM or introduce interactivity. This only affects the published site."
+          },
+          "code": {
+            "required": true,
+            "control": "code",
+            "language": "html",
+            "type": "string"
+          },
+          "executeScriptOnCanvas": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "label": "Run scripts on canvas",
+            "description": "Dangerously allow script execution on canvas without switching to preview mode. This only affects build mode, but may result in unwanted side effects inside builder!"
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "image",
+      "title": "Image",
+      "description": "Add an image asset to the page. Webstudio automatically converts images to WebP or AVIF format and makes them responsive for best performance.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Image",
+          "kind": "component"
+        },
+        "docs": "docs/image.mdx",
+        "component": "Image",
+        "category": "media",
+        "description": "Add an image asset to the page. Webstudio automatically converts images to WebP or AVIF format and makes them responsive for best performance.",
+        "presetStyle": {
+          "img": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "max-width",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 100
+              }
+            },
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "block"
+              }
+            },
+            {
+              "property": "height",
+              "value": {
+                "type": "keyword",
+                "value": "auto"
+              }
+            }
+          ]
+        },
+        "order": 0,
+        "initialProps": [
+          "id",
+          "class",
+          "src",
+          "width",
+          "height",
+          "alt",
+          "loading",
+          "optimize"
+        ],
+        "props": {
+          "optimize": {
+            "description": "Optimize the image for enhanced performance.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "quality": {
+            "required": false,
+            "control": "number",
+            "type": "number"
+          },
+          "src": {
+            "type": "string",
+            "control": "file",
+            "label": "Source",
+            "required": false,
+            "accept": "image/*",
+            "contentMode": true
+          },
+          "width": {
+            "type": "number",
+            "control": "number",
+            "required": false,
+            "contentMode": true
+          },
+          "height": {
+            "type": "number",
+            "control": "number",
+            "required": false,
+            "contentMode": true
+          },
+          "alt": {
+            "type": "string",
+            "control": "text",
+            "required": false,
+            "contentMode": true
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "input",
+      "title": "Text Input",
+      "description": "Text Input Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Input",
+          "kind": "component"
+        },
+        "docs": "docs/input.mdx",
+        "component": "Input",
+        "label": "Text Input",
+        "presetStyle": {
+          "input": [
+            {
+              "property": "font-family",
+              "value": {
+                "type": "keyword",
+                "value": "inherit"
+              }
+            },
+            {
+              "property": "font-size",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 100
+              }
+            },
+            {
+              "property": "line-height",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 1.15
+              }
+            },
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-left",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "border-top-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-right-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-bottom-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-left-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "block"
+              }
+            }
+          ]
+        },
+        "initialProps": [
+          "id",
+          "class",
+          "name",
+          "value",
+          "type",
+          "placeholder",
+          "required",
+          "autofocus"
+        ],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "italic",
+      "title": "Italic Text",
+      "description": "Italic Text Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Italic",
+          "kind": "component"
+        },
+        "docs": "docs/italic.mdx",
+        "component": "Italic",
+        "label": "Italic Text",
+        "presetStyle": {
+          "i": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "label",
+      "title": "Input Label",
+      "description": "Input Label Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Label",
+          "kind": "component"
+        },
+        "docs": "docs/label.mdx",
+        "component": "Label",
+        "label": "Input Label",
+        "presetStyle": {
+          "label": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "block"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class", "for"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "link",
+      "title": "Link",
+      "description": "Link Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Link",
+          "kind": "component"
+        },
+        "docs": "docs/link.mdx",
+        "component": "Link",
+        "presetStyle": {
+          "a": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "inline-block"
+              }
+            }
+          ]
+        },
+        "initialProps": [
+          "id",
+          "class",
+          "href",
+          "target",
+          "prefetch",
+          "download"
+        ],
+        "props": {
+          "download": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "description": "Whether to download the resource instead of navigating to it, and its filename if so"
+          },
+          "prefetch": {
+            "required": false,
+            "control": "select",
+            "type": "string",
+            "options": ["none", "intent", "render", "viewport"]
+          },
+          "preventScrollReset": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean"
+          },
+          "reloadDocument": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean"
+          },
+          "replace": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean"
+          },
+          "target": {
+            "required": false,
+            "control": "select",
+            "type": "string",
+            "options": ["_self", "_blank", "_parent", "_top"],
+            "description": "Navigable for form submission"
+          },
+          "href": {
+            "type": "string",
+            "control": "url",
+            "required": false,
+            "contentMode": true
+          }
+        },
+        "states": [
+          {
+            "label": "Current page",
+            "selector": "[aria-current=page]"
+          }
+        ]
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "list",
+      "title": "List",
+      "description": "List Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "List",
+          "kind": "component"
+        },
+        "docs": "docs/list.mdx",
+        "component": "List",
+        "presetStyle": {
+          "ol": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "keyword",
+                "value": "0"
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "keyword",
+                "value": "10px"
+              }
+            },
+            {
+              "property": "padding-left",
+              "value": {
+                "type": "keyword",
+                "value": "40px"
+              }
+            }
+          ],
+          "ul": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "keyword",
+                "value": "0"
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "keyword",
+                "value": "10px"
+              }
+            },
+            {
+              "property": "padding-left",
+              "value": {
+                "type": "keyword",
+                "value": "40px"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class", "ordered", "start", "reversed"],
+        "props": {
+          "ordered": {
+            "description": "Shows numbers instead of bullets when toggled. See the “List Style Type” property under the “List Item” section in the Style panel for more options.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "list-item",
+      "title": "List item",
+      "description": "List item Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "ListItem",
+          "kind": "component"
+        },
+        "docs": "docs/list-item.mdx",
+        "component": "ListItem",
+        "presetStyle": {
+          "li": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "markdown-embed",
+      "title": "Markdown embed",
+      "description": "Markdown embed Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "MarkdownEmbed",
+          "kind": "component"
+        },
+        "docs": "docs/markdown-embed.mdx",
+        "component": "MarkdownEmbed",
+        "contentModel": {
+          "category": "instance",
+          "children": ["ws:descendant"]
+        },
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4.667 5.333h4M4.667 8H10M14 8.75V3.5A1.5 1.5 0 0 0 12.5 2h-9A1.5 1.5 0 0 0 2 3.5v9.191c0 .725.588 1.313 1.313 1.313h4.691\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M10 14.314v-4l2 2.03 2-2.03v4\"/></svg>",
+        "presetStyle": {
+          "div": [
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "contents"
+              }
+            },
+            {
+              "property": "white-space-collapse",
+              "value": {
+                "type": "keyword",
+                "value": "collapse"
+              }
+            }
+          ]
+        },
+        "initialProps": ["class"],
+        "props": {
+          "code": {
+            "required": true,
+            "control": "code",
+            "language": "markdown",
+            "type": "string",
+            "contentMode": true
+          }
+        },
+        "template": {
+          "name": "MarkdownEmbed",
+          "title": "Markdown embed",
+          "description": "Used to add markdown code to the page",
+          "category": "data"
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "option",
+      "title": "Option",
+      "description": "An item within a drop-down menu that users can select as their chosen value.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Option",
+          "kind": "component"
+        },
+        "docs": "docs/option.mdx",
+        "component": "Option",
+        "category": "hidden",
+        "description": "An item within a drop-down menu that users can select as their chosen value.",
+        "presetStyle": {
+          "option": [
+            {
+              "property": "background-color",
+              "state": ":checked",
+              "value": {
+                "type": "rgb",
+                "alpha": 1,
+                "r": 209,
+                "g": 209,
+                "b": 209
+              }
+            }
+          ]
+        },
+        "initialProps": ["label", "value", "label", "disabled"],
+        "props": {},
+        "states": [
+          {
+            "selector": ":active",
+            "label": "Active"
+          },
+          {
+            "selector": ":checked",
+            "label": "Checked"
+          },
+          {
+            "selector": ":default",
+            "label": "Default"
+          },
+          {
+            "selector": ":hover",
+            "label": "Hover"
+          },
+          {
+            "selector": ":disabled",
+            "label": "Disabled"
+          }
+        ]
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "paragraph",
+      "title": "Paragraph",
+      "description": "Paragraph Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Paragraph",
+          "kind": "component"
+        },
+        "docs": "docs/paragraph.mdx",
+        "component": "Paragraph",
+        "presetStyle": {
+          "p": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "radio-button",
+      "title": "Radio",
+      "description": "Radio Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "RadioButton",
+          "kind": "component"
+        },
+        "docs": "docs/radio-button.mdx",
+        "component": "RadioButton",
+        "label": "Radio",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Z\"/><path fill=\"currentColor\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z\"/></svg>",
+        "presetStyle": {
+          "input": [
+            {
+              "property": "font-family",
+              "value": {
+                "type": "keyword",
+                "value": "inherit"
+              }
+            },
+            {
+              "property": "font-size",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 100
+              }
+            },
+            {
+              "property": "line-height",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 1.15
+              }
+            },
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-left",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "border-top-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "border-right-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "border-bottom-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "border-left-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "unit": "em",
+                "value": 0.5
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class", "name", "value", "required", "checked"],
+        "props": {
+          "value": {
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "description": "Value of the form control"
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "remix-form",
+      "title": "Form",
+      "description": "Form Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "RemixForm",
+          "kind": "component"
+        },
+        "docs": "docs/remix-form.mdx",
+        "component": "RemixForm",
+        "label": "Form",
+        "presetStyle": {
+          "form": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "min-height",
+              "value": {
+                "type": "unit",
+                "unit": "px",
+                "value": 20
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class", "action"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "rich-text-link",
+      "title": "Rich text link",
+      "description": "Rich text link Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "RichTextLink",
+          "kind": "component"
+        },
+        "docs": "docs/rich-text-link.mdx",
+        "component": "RichTextLink",
+        "presetStyle": {
+          "a": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "inline-block"
+              }
+            }
+          ]
+        },
+        "initialProps": [
+          "id",
+          "class",
+          "href",
+          "target",
+          "prefetch",
+          "download"
+        ],
+        "props": {
+          "download": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "description": "Whether to download the resource instead of navigating to it, and its filename if so"
+          },
+          "prefetch": {
+            "required": false,
+            "control": "select",
+            "type": "string",
+            "options": ["none", "intent", "render", "viewport"]
+          },
+          "preventScrollReset": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean"
+          },
+          "reloadDocument": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean"
+          },
+          "replace": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean"
+          },
+          "target": {
+            "required": false,
+            "control": "select",
+            "type": "string",
+            "options": ["_self", "_blank", "_parent", "_top"],
+            "description": "Navigable for form submission"
+          },
+          "href": {
+            "type": "string",
+            "control": "url",
+            "required": false,
+            "contentMode": true
+          }
+        },
+        "states": [
+          {
+            "label": "Current page",
+            "selector": "[aria-current=page]"
+          }
+        ]
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "select",
+      "title": "Select",
+      "description": "Select Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Select",
+          "kind": "component"
+        },
+        "docs": "docs/select.mdx",
+        "component": "Select",
+        "presetStyle": {
+          "select": [
+            {
+              "property": "font-family",
+              "value": {
+                "type": "keyword",
+                "value": "inherit"
+              }
+            },
+            {
+              "property": "font-size",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 100
+              }
+            },
+            {
+              "property": "line-height",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 1.15
+              }
+            },
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-left",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "border-top-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-right-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-bottom-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-left-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "text-transform",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "block"
+              }
+            }
+          ]
+        },
+        "initialProps": [
+          "id",
+          "class",
+          "name",
+          "value",
+          "multiple",
+          "required",
+          "autofocus"
+        ],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "separator",
+      "title": "Separator",
+      "description": "Separator Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Separator",
+          "kind": "component"
+        },
+        "docs": "docs/separator.mdx",
+        "component": "Separator",
+        "presetStyle": {
+          "hr": [
+            {
+              "property": "height",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "color",
+              "value": {
+                "type": "keyword",
+                "value": "inherit"
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "height",
+              "value": {
+                "type": "keyword",
+                "value": "1px"
+              }
+            },
+            {
+              "property": "background-color",
+              "value": {
+                "type": "keyword",
+                "value": "gray"
+              }
+            },
+            {
+              "property": "border-top-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "border-right-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "border-left-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "border-bottom-style",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "slot",
+      "title": "Slot",
+      "description": "Slot is a container for content that you want to reference across the project. Changes made to a Slot's children will be reflected in all other instances of that Slot.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Slot",
+          "kind": "component"
+        },
+        "docs": "docs/slot.mdx",
+        "component": "Slot",
+        "category": "general",
+        "description": "Slot is a container for content that you want to reference across the project. Changes made to a Slot's children will be reflected in all other instances of that Slot.",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4.5 2H3.333A1.333 1.333 0 0 0 2 3.333V4.5M14 4.5V3.333A1.333 1.333 0 0 0 12.667 2H11.5M14 12.667c0 .021 0 .042-.002.063M11.5 14h1.167a1.333 1.333 0 0 0 1.331-1.27m0 0V11.5M2 11.5v1.167A1.333 1.333 0 0 0 3.333 14H4.5M7 2h2M7 14h2M2 7v2M14 7v2\"/></svg>",
+        "order": 4
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "span",
+      "title": "Text",
+      "description": "Text Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Span",
+          "kind": "component"
+        },
+        "docs": "docs/span.mdx",
+        "component": "Span",
+        "label": "Text",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m6.04 7.933 5.38-5.373a1.9 1.9 0 1 1 2.687 2.687l-5.374 5.386M4.713 9.96c-1.106 0-2 .9-2 2.013 0 .887-1.666 1.014-1.333 1.347.72.733 1.66 1.347 2.667 1.347 1.466 0 2.666-1.2 2.666-2.694a2.007 2.007 0 0 0-2-2.013Z\"/></svg>",
+        "presetStyle": {
+          "span": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "subscript",
+      "title": "Subscript Text",
+      "description": "Subscript Text Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Subscript",
+          "kind": "component"
+        },
+        "docs": "docs/subscript.mdx",
+        "component": "Subscript",
+        "label": "Subscript Text",
+        "presetStyle": {
+          "sub": [
+            {
+              "property": "font-size",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 75
+              }
+            },
+            {
+              "property": "line-height",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "position",
+              "value": {
+                "type": "keyword",
+                "value": "relative"
+              }
+            },
+            {
+              "property": "vertical-align",
+              "value": {
+                "type": "keyword",
+                "value": "baseline"
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "bottom",
+              "value": {
+                "type": "unit",
+                "unit": "em",
+                "value": -0.25
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "superscript",
+      "title": "Superscript Text",
+      "description": "Superscript Text Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Superscript",
+          "kind": "component"
+        },
+        "docs": "docs/superscript.mdx",
+        "component": "Superscript",
+        "label": "Superscript Text",
+        "presetStyle": {
+          "sup": [
+            {
+              "property": "font-size",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 75
+              }
+            },
+            {
+              "property": "line-height",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "position",
+              "value": {
+                "type": "keyword",
+                "value": "relative"
+              }
+            },
+            {
+              "property": "vertical-align",
+              "value": {
+                "type": "keyword",
+                "value": "baseline"
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "top",
+              "value": {
+                "type": "unit",
+                "unit": "em",
+                "value": -0.5
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "text",
+      "title": "Text",
+      "description": "Text Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Text",
+          "kind": "component"
+        },
+        "docs": "docs/text.mdx",
+        "component": "Text",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M2.667 4.667v-2h10.666v2M6 13.333h4M8 2.667v10.666\"/></svg>",
+        "presetStyle": {
+          "div": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "min-height",
+              "value": {
+                "type": "unit",
+                "unit": "em",
+                "value": 1
+              }
+            }
+          ]
+        },
+        "initialProps": ["tag", "id", "class"],
+        "props": {
+          "tag": {
+            "required": true,
+            "control": "tag",
+            "type": "string",
+            "options": ["div", "cite", "figcaption", "span"]
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "textarea",
+      "title": "Text Area",
+      "description": "Text Area Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Textarea",
+          "kind": "component"
+        },
+        "docs": "docs/textarea.mdx",
+        "component": "Textarea",
+        "contentModel": {
+          "category": "instance",
+          "children": []
+        },
+        "label": "Text Area",
+        "presetStyle": {
+          "textarea": [
+            {
+              "property": "font-family",
+              "value": {
+                "type": "keyword",
+                "value": "inherit"
+              }
+            },
+            {
+              "property": "font-size",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 100
+              }
+            },
+            {
+              "property": "line-height",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 1.15
+              }
+            },
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-left",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "border-top-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-right-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-bottom-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-left-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "resize",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            },
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "block"
+              }
+            }
+          ]
+        },
+        "initialProps": [
+          "id",
+          "class",
+          "name",
+          "value",
+          "placeholder",
+          "required",
+          "autofocus"
+        ],
+        "props": {}
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "time",
+      "title": "Time",
+      "description": "Converts machine-readable date and time to a human-readable format.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Time",
+          "kind": "component"
+        },
+        "docs": "docs/time.mdx",
+        "component": "Time",
+        "category": "localization",
+        "contentModel": {
+          "category": "instance",
+          "children": []
+        },
+        "description": "Converts machine-readable date and time to a human-readable format.",
+        "presetStyle": {
+          "time": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": [
+          "datetime",
+          "language",
+          "country",
+          "dateStyle",
+          "timeStyle",
+          "timeZone",
+          "format"
+        ],
+        "props": {
+          "country": {
+            "required": false,
+            "control": "select",
+            "type": "string",
+            "defaultValue": "GB",
+            "options": [
+              "AF",
+              "AL",
+              "DZ",
+              "AS",
+              "AD",
+              "AO",
+              "AI",
+              "AQ",
+              "AG",
+              "AR",
+              "AM",
+              "AW",
+              "AU",
+              "AT",
+              "AZ",
+              "BS",
+              "BH",
+              "BD",
+              "BB",
+              "BY",
+              "BE",
+              "BZ",
+              "BJ",
+              "BM",
+              "BT",
+              "BO",
+              "BA",
+              "BW",
+              "BR",
+              "BN",
+              "BG",
+              "BF",
+              "BI",
+              "CV",
+              "KH",
+              "CM",
+              "CA",
+              "KY",
+              "CF",
+              "TD",
+              "CL",
+              "CN",
+              "CO",
+              "KM",
+              "CG",
+              "CD",
+              "CR",
+              "HR",
+              "CU",
+              "CY",
+              "CZ",
+              "DK",
+              "DJ",
+              "DM",
+              "DO",
+              "EC",
+              "EG",
+              "SV",
+              "GQ",
+              "ER",
+              "EE",
+              "SZ",
+              "ET",
+              "FJ",
+              "FI",
+              "FR",
+              "GA",
+              "GM",
+              "GE",
+              "DE",
+              "GH",
+              "GR",
+              "GD",
+              "GT",
+              "GN",
+              "GW",
+              "GY",
+              "HT",
+              "HN",
+              "HU",
+              "IS",
+              "IN",
+              "ID",
+              "IR",
+              "IQ",
+              "IE",
+              "IL",
+              "IT",
+              "JM",
+              "JP",
+              "JO",
+              "KZ",
+              "KE",
+              "KI",
+              "KP",
+              "KR",
+              "KW",
+              "KG",
+              "LA",
+              "LV",
+              "LB",
+              "LS",
+              "LR",
+              "LY",
+              "LI",
+              "LT",
+              "LU",
+              "MG",
+              "MW",
+              "MY",
+              "MV",
+              "ML",
+              "MT",
+              "MH",
+              "MR",
+              "MU",
+              "MX",
+              "FM",
+              "MD",
+              "MC",
+              "MN",
+              "ME",
+              "MA",
+              "MZ",
+              "MM",
+              "NA",
+              "NR",
+              "NP",
+              "NL",
+              "NZ",
+              "NI",
+              "NE",
+              "NG",
+              "NO",
+              "OM",
+              "PK",
+              "PW",
+              "PA",
+              "PG",
+              "PY",
+              "PE",
+              "PH",
+              "PL",
+              "PT",
+              "QA",
+              "RO",
+              "RU",
+              "RW",
+              "KN",
+              "LC",
+              "VC",
+              "WS",
+              "SM",
+              "ST",
+              "SA",
+              "SN",
+              "RS",
+              "SC",
+              "SL",
+              "SG",
+              "SK",
+              "SI",
+              "SB",
+              "SO",
+              "ZA",
+              "SS",
+              "ES",
+              "LK",
+              "SD",
+              "SR",
+              "SE",
+              "CH",
+              "SY",
+              "TW",
+              "TJ",
+              "TZ",
+              "TH",
+              "TL",
+              "TG",
+              "TO",
+              "TT",
+              "TN",
+              "TR",
+              "TM",
+              "TV",
+              "UG",
+              "UA",
+              "AE",
+              "GB",
+              "US",
+              "UY",
+              "UZ",
+              "VU",
+              "VA",
+              "VE",
+              "VN",
+              "YE",
+              "ZM",
+              "ZW"
+            ],
+            "contentMode": true
+          },
+          "dateStyle": {
+            "required": false,
+            "control": "select",
+            "type": "string",
+            "defaultValue": "medium",
+            "options": ["full", "long", "medium", "short", "none"],
+            "contentMode": true
+          },
+          "datetime": {
+            "type": "string",
+            "control": "text",
+            "required": false,
+            "contentMode": true
+          },
+          "format": {
+            "description": "Custom format template. Overrides Date Style and Time Style.\n\nTokens: YYYY/YY (year), MMMM/MMM/MM/M (month), DDDD/DDD/DD/D (day), HH/H (hours), mm/m (minutes), ss/s (seconds)\n\nExamples:\n- \"YYYY-MM-DD\" → 2025-11-03\n- \"DDDD, MMMM D\" → Monday, November 3\n- \"DDD, D. MMM YYYY\" → Mon, 3. Nov 2025\n\nDay and month names use the selected language.",
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "contentMode": true
+          },
+          "language": {
+            "required": false,
+            "control": "select",
+            "type": "string",
+            "defaultValue": "en",
+            "options": [
+              "hr",
+              "th",
+              "tr",
+              "id",
+              "is",
+              "cy",
+              "fr",
+              "af",
+              "am",
+              "ar",
+              "az",
+              "be",
+              "bg",
+              "bn",
+              "bs",
+              "ca",
+              "cs",
+              "da",
+              "de",
+              "el",
+              "en",
+              "es",
+              "et",
+              "eu",
+              "fa",
+              "fi",
+              "ga",
+              "gl",
+              "gu",
+              "he",
+              "hi",
+              "hu",
+              "hy",
+              "it",
+              "ja",
+              "ka",
+              "kk",
+              "km",
+              "kn",
+              "ko",
+              "ky",
+              "lb",
+              "lt",
+              "lv",
+              "mk",
+              "ml",
+              "mn",
+              "mr",
+              "ms",
+              "mt",
+              "nb",
+              "nl",
+              "nn",
+              "pl",
+              "pt",
+              "ro",
+              "ru",
+              "si",
+              "sk",
+              "sl",
+              "sq",
+              "sr",
+              "sv",
+              "sw",
+              "ta",
+              "te",
+              "uk",
+              "ur",
+              "uz",
+              "vi",
+              "zh"
+            ],
+            "contentMode": true
+          },
+          "timeStyle": {
+            "required": false,
+            "control": "select",
+            "type": "string",
+            "defaultValue": "none",
+            "options": ["full", "long", "medium", "short", "none"],
+            "contentMode": true
+          },
+          "timeZone": {
+            "required": false,
+            "control": "timeZone",
+            "type": "string",
+            "defaultValue": "UTC",
+            "options": ["UTC", "visitor"],
+            "description": "Timezone used to display the date. Use \"visitor\" to display each visitor’s browser timezone after the page loads, or select/type an IANA timezone like \"Europe/Berlin\".",
+            "contentMode": true
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "video",
+      "title": "Video",
+      "description": "Video Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Video",
+          "kind": "component"
+        },
+        "docs": "docs/video.mdx",
+        "component": "Video",
+        "contentModel": {
+          "category": "instance",
+          "children": []
+        },
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path fill=\"currentColor\" fill-rule=\"evenodd\" d=\"M1.833 5.333c0-.46.373-.833.834-.833h6.666c.46 0 .834.373.834.833v5.334c0 .46-.374.833-.834.833H2.667a.833.833 0 0 1-.834-.833V5.333ZM2.667 3.5C1.654 3.5.833 4.32.833 5.333v5.334c0 1.012.821 1.833 1.834 1.833h6.666c1.013 0 1.834-.82 1.834-1.833V9.6l2.704 1.803a.833.833 0 0 0 1.296-.693V5.247a.833.833 0 0 0-1.254-.72l-2.746 1.602v-.796c0-1.012-.821-1.833-1.834-1.833H2.667Zm8.5 3.787V8.4l3 2V5.537l-3 1.75Z\" clip-rule=\"evenodd\"/></svg>",
+        "presetStyle": {
+          "video": [
+            {
+              "property": "max-width",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 100
+              }
+            }
+          ]
+        },
+        "initialProps": [
+          "id",
+          "class",
+          "width",
+          "height",
+          "src",
+          "autoPlay",
+          "controls",
+          "loop",
+          "muted",
+          "preload",
+          "playsInline"
+        ],
+        "props": {
+          "src": {
+            "type": "string",
+            "control": "file",
+            "label": "Source",
+            "required": false,
+            "accept": ".mp4,.webm,.mpg,.mpeg,.mov",
+            "contentMode": true
+          },
+          "width": {
+            "type": "number",
+            "control": "number",
+            "required": false,
+            "contentMode": true
+          },
+          "height": {
+            "type": "number",
+            "control": "number",
+            "required": false,
+            "contentMode": true
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "vimeo",
+      "title": "Vimeo",
+      "description": "Vimeo Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "Vimeo",
+          "kind": "component"
+        },
+        "docs": "docs/vimeo.mdx",
+        "component": "Vimeo",
+        "contentModel": {
+          "category": "instance",
+          "children": ["instance"],
+          "descendants": [
+            "VimeoSpinner",
+            "VimeoPlayButton",
+            "VimeoPreviewImage"
+          ]
+        },
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M14.993 4.801c-.062 1.363-1.014 3.228-2.855 5.597-1.903 2.473-3.514 3.71-4.83 3.71-.817 0-1.508-.753-2.072-2.26l-1.13-4.143c-.419-1.506-.868-2.259-1.349-2.26a4.332 4.332 0 0 0-1.099.66L1 5.257c.69-.607 1.372-1.214 2.043-1.822.921-.796 1.613-1.215 2.074-1.257 1.09-.105 1.76.64 2.012 2.234.272 1.72.461 2.79.566 3.208.315 1.427.66 2.14 1.038 2.14.292 0 .733-.463 1.32-1.39.586-.925.9-1.63.942-2.113.084-.798-.23-1.198-.942-1.199-.357.005-.71.084-1.036.23.688-2.253 2.002-3.349 3.942-3.285 1.439.042 2.117.975 2.034 2.798Z\"/></svg>",
+        "presetStyle": {
+          "div": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": [
+          "id",
+          "className",
+          "url",
+          "title",
+          "quality",
+          "loading",
+          "showPreview",
+          "autoplay",
+          "doNotTrack",
+          "loop",
+          "muted",
+          "showPortrait",
+          "showByline",
+          "showTitle",
+          "showControls",
+          "controlsColor",
+          "playsinline"
+        ],
+        "props": {
+          "autopause": {
+            "description": "Whether to pause the current video when another Vimeo video on the same page starts to play. Set this value to false to permit simultaneous playback of all the videos on the page. This option has no effect if you've disabled cookies in your browser, either through browser settings or with an extension or plugin.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "autopip": {
+            "description": "Whether to enable the browser to enter picture-in-picture mode automatically when switching tabs or windows, where supported.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean"
+          },
+          "autoplay": {
+            "description": "Whether to start playback of the video automatically. This feature might not work on all devices.\nSome browsers require the `muted` parameter to be set to `true` for autoplay to work.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "backgroundMode": {
+            "description": "Whether the player is in background mode, which hides the playback controls, enables autoplay, and loops the video.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean"
+          },
+          "controlsColor": {
+            "description": "A color value of the playback controls, which is normally #00ADEF. The embed settings of the video might override this value.",
+            "required": false,
+            "control": "color",
+            "type": "string"
+          },
+          "doNotTrack": {
+            "description": "Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "interactiveParams": {
+            "description": "Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive.",
+            "required": false,
+            "control": "text",
+            "type": "string"
+          },
+          "keyboard": {
+            "description": "Whether to enable keyboard input to trigger player events. This setting doesn't affect tab control.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "loading": {
+            "description": "Not a Vimeo attribute: Loading attribute for the iframe allows to eager or lazy load the source",
+            "required": false,
+            "control": "radio",
+            "type": "string",
+            "defaultValue": "lazy",
+            "options": ["eager", "lazy"]
+          },
+          "loop": {
+            "description": "Whether to restart the video automatically after reaching the end.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "muted": {
+            "description": "Whether the video is muted upon loading. The true value is required for the autoplay behavior in some browsers.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "pip": {
+            "description": "Whether to include the picture-in-picture button among the player controls and enable the picture-in-picture API.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "playsinline": {
+            "description": "Whether the video plays inline on supported mobile devices. To force the device to play the video in fullscreen mode instead, set this value to false.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "quality": {
+            "description": "For videos on a Vimeo Plus account or higher: the playback quality of the video. Use auto for the best possible quality given available bandwidth and other factors. You can also specify 360p, 540p, 720p, 1080p, 2k, and 4k.",
+            "required": false,
+            "control": "select",
+            "type": "string",
+            "defaultValue": "auto",
+            "options": ["auto", "360p", "540p", "720p", "1080p", "2k", "4k"]
+          },
+          "responsive": {
+            "description": "Whether to return a responsive embed code, or one that provides intelligent adjustments based on viewing conditions. We recommend this option for mobile-optimized sites.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "showByline": {
+            "description": "Whether to display the video owner's name.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "showControls": {
+            "description": "Whether to display the player's interactive elements, including the play bar and sharing buttons. Set this option to false for a chromeless experience. To control playback when the play/pause button is hidden, set autoplay to true, use keyboard controls (which remain active), or implement our player SDK.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "showPortrait": {
+            "description": "Whether to display the video owner's portrait. Only works if either title or byline are also enabled",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "showPreview": {
+            "description": "Not a Vimeo attribute: Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "showTitle": {
+            "description": "Whether the player displays the title overlay.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "speed": {
+            "description": "Whether the player displays speed controls in the preferences menu and enables the playback rate API.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "texttrack": {
+            "description": "The text track to display with the video. Specify the text track by its language code (en), the language code and locale (en-US), or the language code and kind (en.captions). For this argument to work, the video must already have a text track of the given type; see our Help Center or Working with Text Track Uploads for more information.\nTo enable automatically generated closed captions instead, provide the value en-x-autogen. Please note that, at the present time, automatic captions are always in English.",
+            "required": false,
+            "control": "text",
+            "type": "string"
+          },
+          "transparent": {
+            "description": "Whether the responsive player and transparent background are enabled.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "url": {
+            "description": "The ID or the URL of the video on Vimeo. You must supply one of these values to identify the video. When the video's privacy setting is Private, you must use the URL, and the URL must include the h parameter. For more information, see Vimeo’s introductory guide.",
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "contentMode": true
+          }
+        },
+        "composition": {
+          "family": "Vimeo",
+          "role": "root",
+          "tree": "Vimeo\n|-- VimeoSpinner\n|-- VimeoPlayButton\n`-- VimeoPreviewImage"
+        },
+        "template": {
+          "name": "Vimeo",
+          "title": "Vimeo",
+          "description": "Add a video to your page that is hosted on Vimeo. Paste a Vimeo URL and configure the video in the Settings tab.",
+          "category": "media"
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "vimeo-play-button",
+      "title": "Play Button",
+      "description": "Play Button Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "VimeoPlayButton",
+          "kind": "component"
+        },
+        "docs": "docs/vimeo-play-button.mdx",
+        "component": "VimeoPlayButton",
+        "category": "hidden",
+        "contentModel": {
+          "category": "none",
+          "children": ["instance"]
+        },
+        "label": "Play Button",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path fill=\"currentColor\" fill-rule=\"evenodd\" d=\"M1.833 8a3.5 3.5 0 0 1 3.5-3.5h5.334a3.5 3.5 0 1 1 0 7H5.333a3.5 3.5 0 0 1-3.5-3.5Zm3.5-4.5a4.5 4.5 0 0 0 0 9h5.334a4.5 4.5 0 1 0 0-9H5.333ZM5.72 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM8 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm4.28-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z\" clip-rule=\"evenodd\"/></svg>",
+        "presetStyle": {
+          "button": [
+            {
+              "property": "font-family",
+              "value": {
+                "type": "keyword",
+                "value": "inherit"
+              }
+            },
+            {
+              "property": "font-size",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 100
+              }
+            },
+            {
+              "property": "line-height",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 1.15
+              }
+            },
+            {
+              "property": "margin-top",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-right",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-bottom",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "margin-left",
+              "value": {
+                "type": "unit",
+                "unit": "number",
+                "value": 0
+              }
+            },
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "border-top-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-right-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-bottom-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "border-left-style",
+              "value": {
+                "type": "keyword",
+                "value": "solid"
+              }
+            },
+            {
+              "property": "text-transform",
+              "value": {
+                "type": "keyword",
+                "value": "none"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {},
+        "composition": {
+          "family": "Vimeo",
+          "role": "part"
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "vimeo-preview-image",
+      "title": "Preview Image",
+      "description": "Add an image asset to the page. Webstudio automatically converts images to WebP or AVIF format and makes them responsive for best performance.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "VimeoPreviewImage",
+          "kind": "component"
+        },
+        "docs": "docs/vimeo-preview-image.mdx",
+        "component": "VimeoPreviewImage",
+        "category": "hidden",
+        "contentModel": {
+          "category": "none",
+          "children": []
+        },
+        "label": "Preview Image",
+        "description": "Add an image asset to the page. Webstudio automatically converts images to WebP or AVIF format and makes them responsive for best performance.",
+        "presetStyle": {
+          "img": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            },
+            {
+              "property": "max-width",
+              "value": {
+                "type": "unit",
+                "unit": "%",
+                "value": 100
+              }
+            },
+            {
+              "property": "display",
+              "value": {
+                "type": "keyword",
+                "value": "block"
+              }
+            },
+            {
+              "property": "height",
+              "value": {
+                "type": "keyword",
+                "value": "auto"
+              }
+            }
+          ]
+        },
+        "order": 0,
+        "initialProps": [
+          "id",
+          "class",
+          "src",
+          "width",
+          "height",
+          "alt",
+          "loading",
+          "optimize"
+        ],
+        "props": {
+          "optimize": {
+            "description": "Optimize the image for enhanced performance.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean"
+          },
+          "quality": {
+            "required": false,
+            "control": "number",
+            "type": "number"
+          },
+          "src": {
+            "type": "string",
+            "control": "file",
+            "label": "Source",
+            "required": false,
+            "contentMode": true
+          }
+        },
+        "composition": {
+          "family": "Vimeo",
+          "role": "part"
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "vimeo-spinner",
+      "title": "Spinner",
+      "description": "Spinner Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "VimeoSpinner",
+          "kind": "component"
+        },
+        "docs": "docs/vimeo-spinner.mdx",
+        "component": "VimeoSpinner",
+        "category": "hidden",
+        "contentModel": {
+          "category": "none",
+          "children": ["instance"]
+        },
+        "label": "Spinner",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2Z\"/></svg>",
+        "presetStyle": {
+          "div": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": ["id", "class"],
+        "props": {},
+        "composition": {
+          "family": "Vimeo",
+          "role": "part"
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "xml-node",
+      "title": "Xml node",
+      "description": "XML Node",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "XmlNode",
+          "kind": "component"
+        },
+        "docs": "docs/xml-node.mdx",
+        "component": "XmlNode",
+        "category": "xml",
+        "description": "XML Node",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12.163 9.02v-4L8.83 1.686h-5.5A1.333 1.333 0 0 0 1.997 3.02v6\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M8.164 2.186v1.667a1.333 1.333 0 0 0 1.333 1.333h2.667M1.997 11.314l3 3M4.997 11.314l-3 3M6.997 14.314v-3l1.5 1.523 1.5-1.523v3M12.163 11.314v3h1.84\"/></svg>",
+        "order": 6,
+        "initialProps": ["tag"],
+        "props": {
+          "href": {
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "description": "Address of the hyperlink"
+          },
+          "hreflang": {
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "description": "Language of the linked resource"
+          },
+          "rel": {
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "description": "Relationship between the location in the document containing the hyperlink and the destination resource"
+          },
+          "tag": {
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "defaultValue": ""
+          },
+          "xmlns": {
+            "required": false,
+            "control": "text",
+            "type": "string"
+          },
+          "xmlns:xhtml": {
+            "required": false,
+            "control": "text",
+            "type": "string"
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "xml-time",
+      "title": "Xml time",
+      "description": "Converts machine-readable date and time to ISO format.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "XmlTime",
+          "kind": "component"
+        },
+        "docs": "docs/xml-time.mdx",
+        "component": "XmlTime",
+        "category": "xml",
+        "description": "Converts machine-readable date and time to ISO format.",
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M7.333 9.333H8V12M10.667 1.333V4M2 6.667h12M5.333 1.333V4\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12.667 2.667H3.333C2.597 2.667 2 3.264 2 4v9.333c0 .737.597 1.334 1.333 1.334h9.334c.736 0 1.333-.597 1.333-1.334V4c0-.736-.597-1.333-1.333-1.333Z\"/></svg>",
+        "order": 7,
+        "initialProps": ["datetime", "dateStyle"],
+        "props": {
+          "dateStyle": {
+            "required": false,
+            "control": "radio",
+            "type": "string",
+            "defaultValue": "short",
+            "options": ["long", "short"]
+          },
+          "datetime": {
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "defaultValue": "dateTime attribute is not set",
+            "description": "Machine-readable value"
+          }
+        }
+      },
+      "type": "registry:ui"
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "you-tube",
+      "title": "You tube",
+      "description": "You tube Webstudio component.",
+      "meta": {
+        "source": {
+          "package": "@webstudio-is/sdk-components-react",
+          "export": "YouTube",
+          "kind": "component"
+        },
+        "docs": "docs/you-tube.mdx",
+        "component": "YouTube",
+        "contentModel": {
+          "category": "instance",
+          "children": ["instance"],
+          "descendants": [
+            "VimeoSpinner",
+            "VimeoPlayButton",
+            "VimeoPreviewImage"
+          ]
+        },
+        "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" viewBox=\"0 0 16 16\" width=\"100%\" height=\"100%\" style=\"display: block;\"><path d=\"M.892 11.528a18.047 18.047 0 0 1 0-7.482A1.496 1.496 0 0 1 1.94 3a37.082 37.082 0 0 1 12.12 0 1.497 1.497 0 0 1 1.048 1.047 18.046 18.046 0 0 1 0 7.482 1.497 1.497 0 0 1-1.048 1.048 37.077 37.077 0 0 1-12.12 0 1.497 1.497 0 0 1-1.048-1.048Z\"/><path d=\"m6.5 10.3 4-2.4-4-2.4v4.8Z\"/></svg>",
+        "presetStyle": {
+          "div": [
+            {
+              "property": "box-sizing",
+              "value": {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            }
+          ]
+        },
+        "initialProps": [
+          "id",
+          "className",
+          "url",
+          "privacyEnhancedMode",
+          "title",
+          "loading",
+          "showPreview",
+          "autoplay",
+          "showControls",
+          "showRelatedVideos",
+          "keyboard",
+          "loop",
+          "inline",
+          "allowFullscreen",
+          "showCaptions",
+          "showAnnotations",
+          "startTime",
+          "endTime",
+          "disableKeyboard",
+          "referrer",
+          "listType",
+          "listId",
+          "origin",
+          "captionLanguage",
+          "language",
+          "color",
+          "playlist"
+        ],
+        "props": {
+          "allowFullscreen": {
+            "description": "Whether to allow fullscreen mode.\nOriginal parameter: `fs`",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "autoplay": {
+            "description": "Whether the video should autoplay.\nSome browsers require the `muted` parameter to be set to `true` for autoplay to work.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "captionLanguage": {
+            "description": "Specifies the default language that the player will use to display captions.\nThe value is an ISO 639-1 two-letter language code.\nOriginal parameter: `cc_lang_pref`",
+            "required": false,
+            "control": "text",
+            "type": "string"
+          },
+          "color": {
+            "description": "Specifies the color that will be used in the player's video progress bar to highlight the amount of the video that the viewer has already seen.\nValid values are 'red' and 'white'.",
+            "required": false,
+            "control": "radio",
+            "type": "string",
+            "options": ["red", "white"]
+          },
+          "disableKeyboard": {
+            "description": "Whether to disable keyboard controls.\nOriginal parameter: `disablekb`",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "endTime": {
+            "description": "End time of the video in seconds.\nOriginal parameter: `end`",
+            "required": false,
+            "control": "number",
+            "type": "number"
+          },
+          "inline": {
+            "description": "Whether to play inline on mobile (not fullscreen).",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "keyboard": {
+            "description": "Whether to enable keyboard controls.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "language": {
+            "description": "Sets the player's interface language. The value is an ISO 639-1 two-letter language code or a fully specified locale.\nOriginal parameter: `hl`",
+            "required": false,
+            "control": "text",
+            "type": "string"
+          },
+          "listId": {
+            "description": "ID of the playlist to load.\nOriginal parameter: `list`",
+            "required": false,
+            "control": "text",
+            "type": "string"
+          },
+          "listType": {
+            "description": "Type of playlist to load.",
+            "required": false,
+            "control": "radio",
+            "type": "string",
+            "options": ["playlist", "user_uploads"]
+          },
+          "loading": {
+            "description": "Loading strategy for iframe",
+            "required": false,
+            "control": "radio",
+            "type": "string",
+            "defaultValue": "lazy",
+            "options": ["eager", "lazy"]
+          },
+          "loop": {
+            "description": "Whether the video should loop continuously.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "muted": {
+            "description": "Whether the video should start muted.\nUseful for enabling autoplay in browsers that require videos to be muted.\nOriginal parameter: `mute`",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "origin": {
+            "description": "Your domain for API compliance (e.g., `https://yourdomain.com`).",
+            "required": false,
+            "control": "text",
+            "type": "string"
+          },
+          "playlist": {
+            "description": "This parameter specifies a comma-separated list of video IDs to play",
+            "required": false,
+            "control": "text",
+            "type": "string"
+          },
+          "privacyEnhancedMode": {
+            "description": "The Privacy Enhanced Mode of the YouTube embedded player prevents the use of views of embedded YouTube content from influencing the viewer’s browsing experience on YouTube.\nhttps://support.google.com/youtube/answer/171780?hl=en#zippy=%2Cturn-on-privacy-enhanced-mode",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "referrer": {
+            "description": "Referrer URL for tracking purposes.\nOriginal parameter: `widget_referrer`",
+            "required": false,
+            "control": "text",
+            "type": "string"
+          },
+          "showAnnotations": {
+            "description": "Whether to show annotations on the video.\nOriginal parameter: `iv_load_policy`",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "showCaptions": {
+            "description": "Whether captions should be shown by default.\nOriginal parameter: `cc_load_policy`",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": false
+          },
+          "showControls": {
+            "description": "Whether to show player controls.",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "showPreview": {
+            "required": false,
+            "control": "boolean",
+            "type": "boolean"
+          },
+          "showRelatedVideos": {
+            "description": "Whether to show related videos at the end.\nOriginal parameter: `rel`",
+            "required": false,
+            "control": "boolean",
+            "type": "boolean",
+            "defaultValue": true
+          },
+          "startTime": {
+            "description": "Start time of the video in seconds.\nOriginal parameter: `start`",
+            "required": false,
+            "control": "number",
+            "type": "number"
+          },
+          "url": {
+            "description": "The YouTube video URL or ID",
+            "required": false,
+            "control": "text",
+            "type": "string",
+            "contentMode": true
+          }
+        },
+        "composition": {
+          "family": "YouTube",
+          "role": "root",
+          "tree": "YouTube\n|-- VimeoSpinner\n|-- VimeoPlayButton\n`-- VimeoPreviewImage"
+        },
+        "template": {
+          "name": "YouTube",
+          "title": "YouTube",
+          "description": "Add a video to your page that is hosted on YouTube. Paste a YouTube URL and configure the video in the Settings tab.",
+          "category": "media"
+        }
+      },
+      "type": "registry:ui"
+    }
+  ]
+}

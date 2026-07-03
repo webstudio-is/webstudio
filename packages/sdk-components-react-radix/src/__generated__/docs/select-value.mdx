@@ -1,0 +1,61 @@
+---
+title: "Value"
+description: "Value Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "SelectValue"
+---
+
+# Value
+
+Value Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `select-value`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use this component only as part of the `Select` family. Follow the parent component's composition tree and content model when inserting or moving it.
+
+## Examples
+
+No canonical template is currently exported for this component.
+
+## API Reference
+
+### Props
+
+- `placeholder`: type: `string`, control: `text`. User-visible label to be placed within the form control
+
+### Content Model
+
+- Category: `none`
+- Direct children:
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- This component is part of the `Select` family. Do not insert it without the required surrounding composition.
+
+## References
+
+- [Radix Select documentation](https://www.radix-ui.com/primitives/docs/components/select)

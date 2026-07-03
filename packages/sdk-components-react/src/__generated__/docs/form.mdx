@@ -1,0 +1,63 @@
+---
+title: "Webhook Form"
+description: "Webhook Form Webstudio component."
+component: true
+base: "webstudio"
+sourcePackage: "@webstudio-is/sdk-components-react"
+sourceExport: "Form"
+---
+
+# Webhook Form
+
+Webhook Form Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `form`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `Form` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+This component is used as a standalone component or follows its content model.
+
+## Examples
+
+Use the `Form` template as the canonical starter. Collect user data and send it to any webhook.
+
+## API Reference
+
+### Props
+
+- `state`: type: `string`, control: `radio`, default: `"initial"`. Use this property to reveal the Success and Error states on the canvas so they can be styled. The Initial state is displayed when the page first opens. The Success and Error states are displayed depending on whether the Form submits successfully or unsuccessfully.
+- `action`: type: `resource`, control: `resource`. The URI of a program that processes the information submitted via the form.
+
+### Content Model
+
+No explicit content model is defined.
+
+### States
+
+- Error: `[data-state=error]`
+- Success: `[data-state=success]`
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+
+## References
+
+No external references are currently mapped for this component.

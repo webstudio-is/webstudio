@@ -1,0 +1,83 @@
+---
+title: "Select"
+description: "Select Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "Select"
+---
+
+# Select
+
+Select Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `select`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `Select` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `Select`:
+
+```text
+Select
+|-- SelectTrigger
+|   `-- SelectValue
+`-- SelectContent
+    `-- SelectViewport
+        `-- SelectItem
+            |-- SelectItemIndicator
+            `-- SelectItemText
+```
+
+## Examples
+
+Use the `Select` template as the canonical starter. Use within a form to give your users a list of options to choose from.
+
+## API Reference
+
+### Props
+
+- `autoComplete`: type: `string`, control: `text`. Hint for form autofill feature
+- `defaultValue`: type: `string`, control: `text`.
+- `dir`: type: `string`, control: `radio`. The text directionality of the element
+- `disabled`: type: `boolean`, control: `boolean`. Whether the form control is disabled
+- `form`: type: `string`, control: `text`. Associates the element with a form element
+- `name`: type: `string`, control: `text`. Name of the element to use for form submission and in the form.elements API
+- `open`: type: `boolean`, control: `boolean`. Whether the dialog box is showing
+- `required`: type: `boolean`, control: `boolean`. Whether the control is required for form submission
+- `value`: type: `string`, control: `text`. Current value of the element
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:SelectTrigger`, `@webstudio-is/sdk-components-react-radix:SelectContent`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+- [Radix Select documentation](https://www.radix-ui.com/primitives/docs/components/select)

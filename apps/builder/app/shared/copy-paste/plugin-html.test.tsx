@@ -3,8 +3,6 @@ import { setEnv } from "@webstudio-is/feature-flags";
 import { renderData, ws } from "@webstudio-is/template";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
-import { coreMetas } from "@webstudio-is/sdk";
-import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import { registerContainers } from "../sync/sync-stores";
 import { $instances } from "~/shared/sync/data-stores";
 import { $pages, $project } from "~/shared/sync/data-stores";
@@ -14,12 +12,11 @@ import {
   selectInstance,
 } from "../nano-states";
 import { html } from "./plugin-html";
+import { defaultComponentMetas } from "../test-component-metas";
 
 setEnv("*");
 registerContainers();
-$registeredComponentMetas.set(
-  new Map(Object.entries({ ...defaultMetas, ...coreMetas }))
-);
+$registeredComponentMetas.set(defaultComponentMetas);
 
 test("paste html fragment", async () => {
   const data = renderData(

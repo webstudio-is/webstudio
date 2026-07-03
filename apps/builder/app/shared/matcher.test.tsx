@@ -1,10 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
 import { $, renderTemplate, renderData } from "@webstudio-is/template";
-import { coreMetas } from "@webstudio-is/sdk";
-import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import { findClosestInstanceMatchingFragment } from "./matcher";
+import { defaultComponentMetas } from "./test-component-metas";
 
-const metas = new Map(Object.entries({ ...coreMetas, ...baseMetas }));
+const metas = defaultComponentMetas;
 
 describe("find closest instance matching fragment", () => {
   test("finds closest list with list item fragment", () => {

@@ -1,0 +1,77 @@
+---
+title: "Radio group"
+description: "Radio group Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "RadioGroup"
+---
+
+# Radio group
+
+Radio group Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `radio-group`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `RadioGroup` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `RadioGroup`:
+
+```text
+RadioGroup
+`-- RadioGroupItem
+    `-- RadioGroupIndicator
+```
+
+## Examples
+
+Use the `RadioGroup` template as the canonical starter. A set of checkable buttons—known as radio buttons—where no more than one of the buttons can be checked at a time.
+
+## API Reference
+
+### Props
+
+- `defaultValue`: type: `string`, control: `text`.
+- `dir`: type: `string`, control: `radio`. The text directionality of the element
+- `disabled`: type: `boolean`, control: `boolean`. Whether the form control is disabled
+- `loop`: type: `boolean`, control: `boolean`. Whether to loop the media resource
+- `name`: type: `string`, control: `text`. Name of the element to use for form submission and in the form.elements API
+- `orientation`: type: `string`, control: `radio`.
+- `required`: type: `boolean`, control: `boolean`. Whether the control is required for form submission
+- `value`: type: `string`, control: `text`. Current value of the element
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:RadioGroupItem`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+- [Radix Radio group documentation](https://www.radix-ui.com/primitives/docs/components/radio-group)

@@ -1,0 +1,77 @@
+---
+title: "Time"
+description: "Converts machine-readable date and time to a human-readable format."
+component: true
+base: "webstudio"
+sourcePackage: "@webstudio-is/sdk-components-react"
+sourceExport: "Time"
+---
+
+# Time
+
+Converts machine-readable date and time to a human-readable format.
+
+## Installation
+
+Use the Webstudio component registry item `time`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+This component is used as a standalone component or follows its content model.
+
+## Examples
+
+No canonical template is currently exported for this component.
+
+## API Reference
+
+### Props
+
+- `country`: type: `string`, control: `select`, default: `"GB"`.
+- `dateStyle`: type: `string`, control: `select`, default: `"medium"`.
+- `datetime`: type: `string`, control: `text`.
+- `format`: type: `string`, control: `text`. Custom format template. Overrides Date Style and Time Style.
+
+Tokens: YYYY/YY (year), MMMM/MMM/MM/M (month), DDDD/DDD/DD/D (day), HH/H (hours), mm/m (minutes), ss/s (seconds)
+
+Examples:
+
+- "YYYY-MM-DD" → 2025-11-03
+- "DDDD, MMMM D" → Monday, November 3
+- "DDD, D. MMM YYYY" → Mon, 3. Nov 2025
+
+Day and month names use the selected language.
+
+- `language`: type: `string`, control: `select`, default: `"en"`.
+- `timeStyle`: type: `string`, control: `select`, default: `"none"`.
+- `timeZone`: type: `string`, control: `timeZone`, default: `"UTC"`. Timezone used to display the date. Use "visitor" to display each visitor’s browser timezone after the page loads, or select/type an IANA timezone like "Europe/Berlin".
+
+### Content Model
+
+- Category: `instance`
+- Direct children:
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+
+## References
+
+No external references are currently mapped for this component.

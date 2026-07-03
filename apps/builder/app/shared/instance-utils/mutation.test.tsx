@@ -23,8 +23,6 @@ import {
   renderData,
   ResourceValue,
 } from "@webstudio-is/template";
-import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
-import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type {
   DataSource,
   Instance,
@@ -34,11 +32,7 @@ import type {
   WebstudioData,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import {
-  coreMetas,
-  getStyleDeclKey,
-  elementComponent,
-} from "@webstudio-is/sdk";
+import { getStyleDeclKey, elementComponent } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import { deleteInstanceMutable } from "./mutation";
@@ -60,16 +54,18 @@ import {
   getSlotFragmentId,
 } from "../slot-test-utils";
 import type { DroppableTarget, InstanceSelector } from "./tree";
+import {
+  defaultComponentMetas,
+  radixComponentMetas,
+} from "../test-component-metas";
 
 enableMapSet();
 registerContainers();
 
 $pages.set(createDefaultPages({ rootInstanceId: "" }));
 
-const defaultMetasMap = new Map(
-  Object.entries({ ...defaultMetas, ...coreMetas })
-);
-$registeredComponentMetas.set(defaultMetasMap);
+const defaultMetasMap = defaultComponentMetas;
+$registeredComponentMetas.set(defaultComponentMetas);
 
 const createFakeComponentMetas = (
   itemMeta: Partial<WsComponentMeta>,
@@ -1778,7 +1774,7 @@ describe("reparent instance", () => {
       </$.Body>
     );
     $registeredComponentMetas.set(
-      new Map(Object.entries({ ...defaultMetas, ...radixMetas }))
+      new Map([...defaultComponentMetas, ...radixComponentMetas])
     );
     reparentInstanceMutable(data, ["trigger", "tooltip", "body"], {
       parentSelector: ["tooltip", "body"],

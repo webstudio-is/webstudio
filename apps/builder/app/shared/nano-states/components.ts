@@ -183,7 +183,9 @@ export const registerComponentLibrary = ({
   // simplify adding component libraries
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: Record<Instance["component"], ExoticComponent<any>>;
-  metas: Record<Instance["component"], WsComponentMeta>;
+  metas:
+    | Record<Instance["component"], WsComponentMeta>
+    | Map<Instance["component"], WsComponentMeta>;
   hooks?: Hook[];
   templates: Record<Instance["component"], TemplateMeta>;
 }) => {
@@ -198,7 +200,8 @@ export const registerComponentLibrary = ({
 
   const prevMetas = $registeredComponentMetas.get();
   const nextMetas = new Map(prevMetas);
-  for (const [componentName, meta] of Object.entries(metas)) {
+  const metaEntries = metas instanceof Map ? metas : Object.entries(metas);
+  for (const [componentName, meta] of metaEntries) {
     nextMetas.set(`${prefix}${componentName}`, meta);
   }
   $registeredComponentMetas.set(nextMetas);

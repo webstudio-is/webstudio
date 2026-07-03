@@ -11,13 +11,13 @@ import {
   type Instance,
 } from "@webstudio-is/sdk";
 import { $, renderData } from "@webstudio-is/template";
-import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import { __testing__ } from "./plugin-webflow";
 import { $registeredComponentMetas } from "../../nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $project, $styleSources, $styles } from "~/shared/sync/data-stores";
 import invariant from "tiny-invariant";
 import { wfData } from "./schema";
+import { baseComponentMetas } from "../../test-component-metas";
 
 const { toWebstudioFragment } = __testing__;
 
@@ -86,8 +86,7 @@ const toCss = (fragment: WebstudioFragment) => {
 };
 
 beforeEach(() => {
-  const defaultMetasMap = new Map(Object.entries(defaultMetas));
-  $registeredComponentMetas.set(defaultMetasMap);
+  $registeredComponentMetas.set(baseComponentMetas);
   $project.set({
     id: "test",
     createdAt: "",

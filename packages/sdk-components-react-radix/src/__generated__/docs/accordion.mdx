@@ -1,0 +1,79 @@
+---
+title: "Accordion"
+description: "Accordion Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "Accordion"
+---
+
+# Accordion
+
+Accordion Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `accordion`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `Accordion` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `Accordion`:
+
+```text
+Accordion
+`-- AccordionItem
+    |-- AccordionHeader
+    |   `-- AccordionTrigger
+    `-- AccordionContent
+```
+
+## Examples
+
+Use the `Accordion` template as the canonical starter. A vertically stacked set of interactive headings that each reveal an associated section of content. Clicking on the heading will open the item and close other items.
+
+## API Reference
+
+### Props
+
+- `collapsible`: type: `boolean`, control: `boolean`, default: `false`. Whether an accordion item can be collapsed after it has been opened.
+- `defaultValue`: type: `string`, control: `text`. The value of the item whose content is expanded when the accordion is initially rendered. Use
+  `defaultValue` if you do not need to control the state of an accordion.
+- `dir`: type: `string`, control: `radio`. The language read direction.
+- `disabled`: type: `boolean`, control: `boolean`. Whether or not an accordion is disabled from user interaction.
+  @defaultValue false
+- `orientation`: type: `string`, control: `radio`, default: `"vertical"`. The layout in which the Accordion operates.
+- `value`: type: `string`, control: `text`. The controlled stateful value of the accordion item whose content is expanded.
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:AccordionItem`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+- [Radix Accordion documentation](https://www.radix-ui.com/primitives/docs/components/accordion)

@@ -1,0 +1,62 @@
+---
+title: "Tabs list"
+description: "Tabs list Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "TabsList"
+---
+
+# Tabs list
+
+Tabs list Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `tabs-list`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use this component only as part of the `Tabs` family. Follow the parent component's composition tree and content model when inserting or moving it.
+
+## Examples
+
+No canonical template is currently exported for this component.
+
+## API Reference
+
+### Props
+
+- `loop`: type: `boolean`, control: `boolean`. Whether to loop the media resource
+
+### Content Model
+
+- Category: `none`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:TabsTrigger`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- This component is part of the `Tabs` family. Do not insert it without the required surrounding composition.
+
+## References
+
+- [Radix Tabs documentation](https://www.radix-ui.com/primitives/docs/components/tabs)

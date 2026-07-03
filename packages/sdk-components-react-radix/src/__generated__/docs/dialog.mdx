@@ -1,0 +1,74 @@
+---
+title: "Dialog"
+description: "Dialog Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "Dialog"
+---
+
+# Dialog
+
+Dialog Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `dialog`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `Dialog` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `Dialog`:
+
+```text
+Dialog
+|-- DialogTrigger
+`-- DialogOverlay
+    `-- DialogContent
+        |-- DialogTitle
+        |-- DialogDescription
+        `-- DialogClose
+```
+
+## Examples
+
+Use the `Dialog` template as the canonical starter. Displays content with an overlay that covers the window, triggered by a button. Clicking the overlay will close the dialog.
+
+## API Reference
+
+### Props
+
+- `open`: type: `boolean`, control: `boolean`. Show or hide the content of this component on the canvas. This will not affect the initial state of the component.
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:DialogTrigger`, `@webstudio-is/sdk-components-react-radix:DialogOverlay`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+- [Radix Dialog documentation](https://www.radix-ui.com/primitives/docs/components/dialog)

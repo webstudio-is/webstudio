@@ -1,0 +1,70 @@
+---
+title: "Head slot"
+description: "Inserts children into the head of the document"
+component: true
+base: "webstudio"
+sourcePackage: "@webstudio-is/sdk-components-react"
+sourceExport: "HeadSlot"
+---
+
+# Head slot
+
+Inserts children into the head of the document
+
+## Installation
+
+Use the Webstudio component registry item `head-slot`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `HeadSlot` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `HeadSlot`:
+
+```text
+HeadSlot
+|-- HeadLink
+|-- HeadMeta
+`-- HeadTitle
+```
+
+## Examples
+
+Use the `HeadSlot` template as the canonical starter. The Head Slot component lets you customize page-specific head elements (like canonical URLs), which merge with your site's global head settings, with Head Slot definitions taking priority over Page Settings. For site-wide head changes, use project settings instead.
+
+## API Reference
+
+### Props
+
+This component does not define public component props.
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `HeadLink`, `HeadMeta`, `HeadTitle`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+No external references are currently mapped for this component.

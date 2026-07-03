@@ -1,0 +1,66 @@
+---
+title: "Stagger Animation"
+description: "Stagger animation allows you to animate children elements with a sliding window."
+component: true
+base: "animation"
+sourcePackage: "@webstudio-is/sdk-components-animation"
+sourceExport: "StaggerAnimation"
+---
+
+# Stagger Animation
+
+Stagger animation allows you to animate children elements with a sliding window.
+
+## Installation
+
+Use the Webstudio component registry item `stagger-animation`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use this component only as part of the `AnimateChildren` family. Follow the parent component's composition tree and content model when inserting or moving it.
+
+## Examples
+
+No canonical template is currently exported for this component.
+
+## API Reference
+
+### Props
+
+- `className`: type: `string`, control: `text`. Classes to which the element belongs
+- `easing`: type: `string`, control: `select`, default: `"linear"`. Easing function applied within the sliding window.
+- `slidingWindow`: type: `number`, control: `number`, default: `1`. Size of the sliding window for the animation:
+- 0: Typewriter effect (no animation).
+- (0..1]: Animates one child at a time.
+- (1..n]: Animates multiple children within the sliding window.
+
+### Content Model
+
+- Category: `none`
+- Direct children: `instance`
+
+### States
+
+This component does not define custom visual states.
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- This component is part of the `AnimateChildren` family. Do not insert it without the required surrounding composition.
+
+## References
+
+No external references are currently mapped for this component.

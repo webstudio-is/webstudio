@@ -1,8 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { enableMapSet } from "immer";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { coreMetas, type Instance } from "@webstudio-is/sdk";
-import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
+import { type Instance } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
 import { initBuilderApi } from "../builder-api";
 import { registerContainers } from "../sync/sync-stores";
@@ -35,12 +34,11 @@ import {
   initCopyPaste,
   initCopyPasteForContentEditMode,
 } from "./copy-paste";
+import { defaultComponentMetas } from "../test-component-metas";
 
 enableMapSet();
 registerContainers();
-$registeredComponentMetas.set(
-  new Map(Object.entries({ ...baseComponentMetas, ...coreMetas }))
-);
+$registeredComponentMetas.set(defaultComponentMetas);
 
 const resetStores = () => {
   $authTokenPermissions.set({

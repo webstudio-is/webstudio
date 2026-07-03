@@ -11,7 +11,6 @@ import { describe, test, expect, beforeEach } from "vitest";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $, ws, css, renderData, token } from "@webstudio-is/template";
-import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type {
   Asset,
   Breakpoint,
@@ -24,7 +23,6 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
-  coreMetas,
   getStyleDeclKey,
   portalComponent,
   elementComponent,
@@ -48,6 +46,7 @@ import {
 import { registerContainers } from "../sync/sync-stores";
 import { getInstancePath } from "../nano-states";
 import { isFragmentContentModeCopyableProp } from "../content-mode-copy-policy";
+import { defaultComponentMetas } from "../test-component-metas";
 
 const {
   getFragmentInstancesData,
@@ -60,10 +59,8 @@ registerContainers();
 
 $pages.set(createDefaultPages({ rootInstanceId: "" }));
 
-const defaultMetasMap = new Map(
-  Object.entries({ ...defaultMetas, ...coreMetas })
-);
-$registeredComponentMetas.set(defaultMetasMap);
+const defaultMetasMap = defaultComponentMetas;
+$registeredComponentMetas.set(defaultComponentMetas);
 
 const createFragment = (
   fragment: Partial<WebstudioFragment>

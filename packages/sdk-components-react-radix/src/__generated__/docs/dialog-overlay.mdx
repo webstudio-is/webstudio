@@ -1,0 +1,63 @@
+---
+title: "Dialog overlay"
+description: "Dialog overlay Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "DialogOverlay"
+---
+
+# Dialog overlay
+
+Dialog overlay Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `dialog-overlay`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use this component only as part of the `Dialog` family. Follow the parent component's composition tree and content model when inserting or moving it.
+
+## Examples
+
+No canonical template is currently exported for this component.
+
+## API Reference
+
+### Props
+
+This component does not define public component props.
+
+### Content Model
+
+- Category: `none`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:DialogContent`
+
+### States
+
+- Open: `[data-state="open"]`
+- Closed: `[data-state="closed"]`
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- This component is part of the `Dialog` family. Do not insert it without the required surrounding composition.
+
+## References
+
+- [Radix Dialog documentation](https://www.radix-ui.com/primitives/docs/components/dialog)

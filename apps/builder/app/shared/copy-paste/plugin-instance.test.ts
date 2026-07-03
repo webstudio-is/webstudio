@@ -13,13 +13,11 @@ import type {
 import {
   encodeDataSourceVariable,
   collectionComponent,
-  coreMetas,
   elementComponent,
   blockTemplateComponent,
   portalComponent,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
-import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { registerContainers } from "../sync/sync-stores";
 import { $registeredComponentMetas } from "../nano-states";
 import { $instances } from "~/shared/sync/data-stores";
@@ -40,15 +38,14 @@ import {
   expectSlotTreeIntegrity,
   expectSlotsShareFragment,
 } from "../slot-test-utils";
+import { defaultComponentMetas } from "../test-component-metas";
 
 const expectString = expect.any(String) as unknown as string;
 
 enableMapSet();
 registerContainers();
 
-$registeredComponentMetas.set(
-  new Map(Object.entries({ ...baseComponentMetas, ...coreMetas }))
-);
+$registeredComponentMetas.set(defaultComponentMetas);
 $project.set({ id: "my-project" } as Project);
 $pages.set(
   createDefaultPages({

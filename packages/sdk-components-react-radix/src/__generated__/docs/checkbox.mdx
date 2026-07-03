@@ -1,0 +1,72 @@
+---
+title: "Checkbox"
+description: "Checkbox Webstudio component."
+component: true
+base: "radix"
+sourcePackage: "@webstudio-is/sdk-components-react-radix"
+sourceExport: "Checkbox"
+---
+
+# Checkbox
+
+Checkbox Webstudio component.
+
+## Installation
+
+Use the Webstudio component registry item `checkbox`.
+
+In Builder automation, resolve the item from the generated shadcn-compatible registry and use the Webstudio metadata in `meta` for insertion.
+
+Prefer the `Checkbox` template when creating a new instance from scratch.
+
+## Usage
+
+Use this component through Webstudio's instance, props, styles, resources, and data-source model.
+
+Inspect the registry metadata before creating or editing instances so content model, states, and composition stay valid.
+
+## Composition
+
+Use the following composition to build `Checkbox`:
+
+```text
+Checkbox
+`-- CheckboxIndicator
+```
+
+## Examples
+
+Use the `Checkbox` template as the canonical starter. Use within a form to allow your users to toggle between checked and not checked. Group checkboxes by matching their “Name” properties. Unlike radios, any number of checkboxes in a group can be checked.
+
+## API Reference
+
+### Props
+
+- `checked`: type: `boolean`, control: `boolean`. Whether the control is checked
+- `required`: type: `boolean`, control: `boolean`. Whether the control is required for form submission
+
+### Content Model
+
+- Category: `instance`
+- Direct children: `instance`
+- Required descendants: `@webstudio-is/sdk-components-react-radix:CheckboxIndicator`
+
+### States
+
+- Checked: `[data-state="checked"]`
+- Unchecked: `[data-state="unchecked"]`
+- Indeterminate: `[data-state="indeterminate"]`
+
+## Accessibility
+
+Follow Webstudio's semantic component model and preserve accessible labels, text, and relationships when editing.
+
+## LLM Guidance
+
+- Prefer semantic Webstudio components and templates over raw HTML embeds.
+- Preserve existing instance structure, props, styles, resources, and data bindings when editing.
+- Prefer inserting the complete template or composition tree instead of manually creating individual parts.
+
+## References
+
+- [Radix Checkbox documentation](https://www.radix-ui.com/primitives/docs/components/checkbox)
