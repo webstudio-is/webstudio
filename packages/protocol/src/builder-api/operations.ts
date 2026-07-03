@@ -23,6 +23,7 @@ type PublicApiOperationInput = {
   client: string;
   permit?: PublicApiOperationPermit;
   invalidatesNamespaces?: readonly PublicApiOperationNamespace[];
+  inputFieldTypes?: Partial<Record<string, "array">>;
 };
 
 export type PublicApiOperation<Command extends string = string> = Omit<
@@ -33,6 +34,7 @@ export type PublicApiOperation<Command extends string = string> = Omit<
   permit: PublicApiOperationPermit;
   description: string;
   inputFields: readonly string[];
+  inputFieldTypes: Partial<Record<string, "array">>;
   requiredOptions?: readonly string[];
   examples: readonly string[];
   localCapable: boolean;
@@ -190,6 +192,7 @@ const withDefaultPermit = <Operation extends PublicApiOperationInput>(
       operation.permit ?? (operation.method === "query" ? "view" : "build"),
     description: documentation.description,
     inputFields: inputFieldsLookup[operation.command] ?? [],
+    inputFieldTypes: operation.inputFieldTypes ?? {},
     requiredOptions: documentation.requiredOptions,
     examples: documentation.examples,
     localCapable: runtimeOperation !== undefined,
@@ -424,6 +427,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.instances.append",
     client: "appendInstance",
+    inputFieldTypes: { children: "array" },
   },
   {
     command: "move-instance",
@@ -431,6 +435,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.instances.move",
     client: "moveInstance",
+    inputFieldTypes: { moves: "array" },
   },
   {
     command: "clone-instance",
@@ -445,6 +450,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.instances.delete",
     client: "deleteInstance",
+    inputFieldTypes: { instanceIds: "array" },
   },
   {
     command: "update-props",
@@ -453,6 +459,7 @@ const publicApiOperationInputs = [
     path: "api.instances.updateProps",
     client: "updateProps",
     permit: "edit",
+    inputFieldTypes: { updates: "array" },
   },
   {
     command: "delete-props",
@@ -461,6 +468,7 @@ const publicApiOperationInputs = [
     path: "api.instances.deleteProps",
     client: "deleteProps",
     permit: "edit",
+    inputFieldTypes: { deletions: "array" },
   },
   {
     command: "bind-props",
@@ -468,6 +476,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.instances.bindProps",
     client: "bindProps",
+    inputFieldTypes: { bindings: "array" },
   },
   {
     command: "list-texts",
@@ -497,6 +506,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.styles.updateDeclarations",
     client: "updateStyleDeclarations",
+    inputFieldTypes: { updates: "array" },
   },
   {
     command: "delete-styles",
@@ -504,6 +514,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.styles.deleteDeclarations",
     client: "deleteStyleDeclarations",
+    inputFieldTypes: { deletions: "array" },
   },
   {
     command: "replace-styles",
@@ -525,6 +536,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.designTokens.create",
     client: "createDesignTokens",
+    inputFieldTypes: { tokens: "array" },
   },
   {
     command: "update-design-token-styles",
@@ -532,6 +544,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.designTokens.updateStyles",
     client: "updateDesignTokenStyles",
+    inputFieldTypes: { updates: "array" },
   },
   {
     command: "delete-design-token-styles",
@@ -539,6 +552,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.designTokens.deleteStyles",
     client: "deleteDesignTokenStyles",
+    inputFieldTypes: { deletions: "array" },
   },
   {
     command: "attach-design-token",
@@ -546,6 +560,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.designTokens.attach",
     client: "attachDesignToken",
+    inputFieldTypes: { instanceIds: "array" },
   },
   {
     command: "detach-design-token",
@@ -553,6 +568,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.designTokens.detach",
     client: "detachDesignToken",
+    inputFieldTypes: { instanceIds: "array" },
   },
   {
     command: "extract-design-token",
@@ -560,6 +576,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.designTokens.extract",
     client: "extractDesignToken",
+    inputFieldTypes: { instanceIds: "array", removeLocalProps: "array" },
   },
   {
     command: "list-css-variables",
@@ -581,6 +598,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.cssVariables.delete",
     client: "deleteCssVariables",
+    inputFieldTypes: { names: "array" },
   },
   {
     command: "rewrite-css-variable-refs",
@@ -755,6 +773,7 @@ const publicApiOperationInputs = [
     method: "mutation",
     path: "api.assets.delete",
     client: "deleteAssets",
+    inputFieldTypes: { assetIdsOrPrefixes: "array" },
   },
 ] as const satisfies readonly PublicApiOperationInput[];
 

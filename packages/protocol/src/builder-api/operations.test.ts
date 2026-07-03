@@ -46,6 +46,45 @@ describe("public api operation catalog", () => {
     expect(getPublicApiOperation("whoami").inputFields).toEqual([]);
   });
 
+  test("documents array input field types", () => {
+    const expectedArrayInputFieldTypes = {
+      "append-instance": { children: "array" },
+      "move-instance": { moves: "array" },
+      "delete-instance": { instanceIds: "array" },
+      "update-props": { updates: "array" },
+      "delete-props": { deletions: "array" },
+      "bind-props": { bindings: "array" },
+      "update-styles": { updates: "array" },
+      "delete-styles": { deletions: "array" },
+      "create-design-token": { tokens: "array" },
+      "update-design-token-styles": { updates: "array" },
+      "delete-design-token-styles": { deletions: "array" },
+      "attach-design-token": { instanceIds: "array" },
+      "detach-design-token": { instanceIds: "array" },
+      "extract-design-token": {
+        instanceIds: "array",
+        removeLocalProps: "array",
+      },
+      "delete-css-variable": { names: "array" },
+      "delete-asset": { assetIdsOrPrefixes: "array" },
+    } as const;
+
+    const expectedEntries = Object.entries(
+      expectedArrayInputFieldTypes
+    ) as Array<
+      [
+        keyof typeof expectedArrayInputFieldTypes,
+        (typeof expectedArrayInputFieldTypes)[keyof typeof expectedArrayInputFieldTypes],
+      ]
+    >;
+
+    for (const [command, inputFieldTypes] of expectedEntries) {
+      expect(getPublicApiOperation(command).inputFieldTypes).toEqual(
+        inputFieldTypes
+      );
+    }
+  });
+
   test("derives local-capable namespace metadata from runtime contracts", () => {
     const runtimeContractsById = new Map(
       publicRuntimeOperationContracts.map((contract) => [contract.id, contract])
