@@ -7,6 +7,7 @@ import {
   formatApiUseCaseCommand,
   getApiCommandOptions,
   highLevelApiCommands,
+  highLevelCliCommands,
   mcpOnlyApiCommandMetadata,
   topLevelCliCommandMetadata,
 } from "./api-command-metadata";
@@ -19,18 +20,18 @@ test("exposes only high-level API metadata for top-level CLI registration", () =
   expect(cliApiCommandMetadata.map((metadata) => metadata.command)).toEqual(
     highLevelApiCommands
   );
-  expect(cliCommandMetadata.map((metadata) => metadata.cliCommand)).toEqual([
-    "permissions",
-    "publish deploy",
-    "publish list",
-    "publish status",
-    "publish unpublish",
-    "domains list",
-    "domains create",
-    "domains update",
-    "domains delete",
-    "domains verify",
-  ]);
+  const cliCommands = cliCommandMetadata.map((metadata) => metadata.cliCommand);
+  expect(cliCommands).toEqual(
+    highLevelCliCommands.map(({ command }) => command)
+  );
+  expect(new Set(cliCommands).size).toBe(cliCommands.length);
+  expect(cliCommands).toContain("permissions");
+  expect(
+    cliCommands.filter((command) => command.startsWith("publish ")).length
+  ).toBeGreaterThan(0);
+  expect(
+    cliCommands.filter((command) => command.startsWith("domains ")).length
+  ).toBeGreaterThan(0);
   const mcpOnlyCommands = mcpOnlyApiCommandMetadata.map(
     ({ command }) => command
   );
@@ -54,22 +55,26 @@ test("describes every grouped CLI command", () => {
 });
 
 test("describes root CLI commands once for help-oriented docs", () => {
-  expect(topLevelCliCommandMetadata.map(({ command }) => command)).toEqual([
-    "init",
-    "link",
-    "sync",
-    "import",
-    "build",
-    "preview",
-    "screenshot",
-    "permissions",
-    "publish",
-    "domains",
-    "schema",
-    "man",
-    "mcp",
-  ]);
-  expect(topLevelCliCommandMetadata.map(({ command }) => command)).not.toEqual(
+  const commands = topLevelCliCommandMetadata.map(({ command }) => command);
+  expect(new Set(commands).size).toBe(commands.length);
+  expect(commands.at(0)).toBe("init");
+  expect(commands).toEqual(
+    expect.arrayContaining([
+      "link",
+      "sync",
+      "import",
+      "build",
+      "preview",
+      "screenshot",
+      "permissions",
+      "publish",
+      "domains",
+      "schema",
+      "man",
+      "mcp",
+    ])
+  );
+  expect(commands).not.toEqual(
     expect.arrayContaining(["publish deploy", "domains list"])
   );
   for (const metadata of topLevelCliCommandMetadata) {

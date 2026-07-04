@@ -28,8 +28,8 @@ import {
   publishedProjectBundle,
 } from "@webstudio-is/protocol";
 import {
-  loadPublishedProjectBundleByBuildId,
-  loadPublishedProjectBundleByProjectId,
+  loadProjectBundleByBuildId,
+  loadProjectBundleByProjectId,
 } from "~/shared/db";
 import {
   assertProjectBuildPermit,
@@ -195,13 +195,13 @@ export const buildRouter = router({
   loadProjectBundleByBuildId: procedure
     .input(z.object({ buildId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return await loadPublishedProjectBundleByBuildId(input.buildId, ctx);
+      return await loadProjectBundleByBuildId(input.buildId, ctx);
     }),
 
   loadProjectBundleByProjectId: procedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return await loadPublishedProjectBundleByProjectId(input.projectId, ctx);
+      return await loadProjectBundleByProjectId(input.projectId, ctx);
     }),
 
   checkProjectBuildPermission: procedure

@@ -1,5 +1,5 @@
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
-import { createUploadName } from "@webstudio-is/asset-uploader/index.server";
+import { createUploadTicket } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
@@ -24,28 +24,25 @@ export const action = async (props: ActionFunctionArgs) => {
 
     if (request.method === "POST") {
       const formData = await request.formData();
-      const assetId = formData.get("assetId");
       const projectId = formData.get("projectId");
       const type = formData.get("type");
       const filename = formData.get("filename");
       if (
-        typeof assetId !== "string" ||
         typeof projectId !== "string" ||
         typeof type !== "string" ||
         typeof filename !== "string"
       ) {
-        throw Error("Project id, asset id or filename are missing");
+        throw Error("Project id, type or filename are missing");
       }
-      const name = await createUploadName(
+      const ticket = await createUploadTicket(
         {
-          assetId,
           projectId,
           type,
           filename,
         },
         context
       );
-      return json({ name }, { headers: privateNoStoreResponseHeaders });
+      return json(ticket, { headers: privateNoStoreResponseHeaders });
     }
 
     return json(

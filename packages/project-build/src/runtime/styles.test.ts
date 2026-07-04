@@ -82,6 +82,15 @@ import {
   validateAndRenameStyleSource,
 } from "./styles";
 
+test("rejects client-supplied design token ids", () => {
+  expect(
+    designTokenCreateInput.safeParse({
+      tokenId: "client-token-id",
+      name: "Primary",
+    }).success
+  ).toBe(false);
+});
+
 const localStyleSource: StyleSource = {
   type: "local",
   id: "local-style-source",
@@ -785,7 +794,6 @@ describe("runtime style operations", () => {
       {
         tokens: [
           {
-            tokenId: "token",
             name: "Primary",
             styles: { color: { type: "keyword", value: "red" } },
           },
@@ -798,8 +806,8 @@ describe("runtime style operations", () => {
       patches: [
         {
           op: "add",
-          path: ["token:desktop:color:"],
-          value: createStyleDecl("token", "desktop", "color", {
+          path: ["new-id:desktop:color:"],
+          value: createStyleDecl("new-id", "desktop", "color", {
             type: "keyword",
             value: "red",
           }),

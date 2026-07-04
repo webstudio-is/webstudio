@@ -42,6 +42,7 @@ import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
 import { getNamedExpressionErrors } from "./expression-validation";
+import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
 
 const getRequiredDataSources = (state: Pick<BuilderState, "dataSources">) => {
@@ -168,7 +169,7 @@ export const listDataVariables = (
 export const dataVariableValueInput = dataSourceVariableValue;
 
 export const dataVariableCreateInput = z.object({
-  dataSourceId: z.string().optional(),
+  dataSourceId: runtimeGeneratedIdInput,
   scopeInstanceId: z.string(),
   name: z.string().min(1),
   value: dataVariableValueInput,
@@ -1066,7 +1067,7 @@ export const createDataVariable = (
   context: BuilderRuntimeContext
 ) => {
   const dataSources = getRequiredDataSources(state);
-  const dataSourceId = input.dataSourceId ?? context.createId();
+  const dataSourceId = context.createId();
   const { payload, errors } = createDataVariableCreatePayload({
     dataSourceId,
     scopeInstanceId: input.scopeInstanceId,
@@ -1186,9 +1187,9 @@ export const resourceFieldsUpdateInput = resourceFieldsInputBase
   });
 
 export const resourceCreateInput = z.object({
-  resourceId: z.string().optional(),
+  resourceId: runtimeGeneratedIdInput,
   resource: resourceFieldsInput,
-  dataSourceId: z.string().optional(),
+  dataSourceId: runtimeGeneratedIdInput,
   scopeInstanceId: z.string().optional(),
   dataSourceName: z.string().optional(),
 });
@@ -1799,11 +1800,9 @@ export const createResource = (
     return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
   }
   const build = getRequiredBuildData(state);
-  const resourceId = input.resourceId ?? context.createId();
+  const resourceId = context.createId();
   const dataSourceId =
-    input.scopeInstanceId === undefined
-      ? undefined
-      : (input.dataSourceId ?? context.createId());
+    input.scopeInstanceId === undefined ? undefined : context.createId();
   const resultPayload = createResourceCreatePayload({
     resourceId,
     resource: input.resource,

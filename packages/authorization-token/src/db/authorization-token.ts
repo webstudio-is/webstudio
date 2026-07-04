@@ -1,10 +1,11 @@
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   type AppContext,
-  type AuthPermit,
   authorizeProject,
   AuthorizationError,
   PlanRequiredError,
+  projectPermits,
+  type ProjectPermit,
 } from "@webstudio-is/trpc-interface/index.server";
 
 type AuthorizationToken =
@@ -97,15 +98,21 @@ export const tokenDefaultPermissions = {
 };
 
 export type TokenPermissions = typeof tokenDefaultPermissions;
+export type TokenProjectPermit = ProjectPermit;
+
+const getProjectPermitsThrough = (
+  permit: TokenProjectPermit
+): TokenProjectPermit[] =>
+  projectPermits.slice(0, projectPermits.indexOf(permit) + 1);
 
 export const tokenProjectPermits: Record<
   AuthorizationToken["relation"],
-  AuthPermit[]
+  TokenProjectPermit[]
 > = {
-  viewers: ["view"],
-  editors: ["view", "edit"],
-  builders: ["view", "edit", "build"],
-  administrators: ["view", "edit", "build", "admin"],
+  viewers: getProjectPermitsThrough("view"),
+  editors: getProjectPermitsThrough("edit"),
+  builders: getProjectPermitsThrough("build"),
+  administrators: getProjectPermitsThrough("admin"),
 };
 
 export const getTokenProjectPermits = (

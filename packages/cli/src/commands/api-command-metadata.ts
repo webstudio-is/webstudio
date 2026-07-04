@@ -14,6 +14,9 @@ type ApiCommandMetadata = {
   description: string;
   method: PublicApiOperationMethod;
   permit: PublicApiOperationPermit;
+  inputFields: readonly string[];
+  requiredInputFields: readonly string[];
+  inputFieldTypes: Partial<Record<string, "array">>;
   requiredOptions?: readonly string[];
   examples: readonly string[];
 };
@@ -68,8 +71,8 @@ export const topLevelCliCommandMetadata = [
   {
     command: "preview",
     description:
-      "Regenerate project files and run the generated project dev server for visual verification; dependencies must already be installed",
-    examples: ["webstudio preview --template ssg --port 5173"],
+      "Regenerate project files, build them, and run the generated project production preview server for visual verification; dependencies must already be installed",
+    examples: ["webstudio preview --port 5173"],
   },
   {
     command: "screenshot",
@@ -93,8 +96,11 @@ export const topLevelCliCommandMetadata = [
   },
   {
     command: "man",
-    description: "Print human and LLM manuals for CLI/API/MCP workflows",
+    description:
+      "Print the complete human and LLM manual for CLI/API/MCP workflows, or a focused manual topic",
     examples: [
+      "webstudio man",
+      "webstudio man --json",
       "webstudio man api",
       "webstudio man llm --json",
       "webstudio man mcp",
@@ -191,6 +197,9 @@ export const apiCommandMetadata = publicApiOperations.map((operation) => ({
   description: operation.description,
   method: operation.method,
   permit: operation.permit,
+  inputFields: operation.inputFields,
+  requiredInputFields: operation.requiredInputFields,
+  inputFieldTypes: operation.inputFieldTypes,
   requiredOptions: operation.requiredOptions,
   examples: operation.examples,
 })) satisfies ApiCommandMetadata[];

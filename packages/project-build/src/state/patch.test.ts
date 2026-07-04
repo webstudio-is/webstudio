@@ -76,6 +76,48 @@ test("applies patch payloads mutably through namespace resolver", () => {
   });
 });
 
+test("fails when replacing a missing patch target", () => {
+  expect(() =>
+    applyBuilderNamespacePatches<Props>(new Map(build.props), [
+      {
+        op: "replace",
+        path: ["client-created-prop"],
+        value: {
+          id: "client-created-prop",
+          instanceId: "instance-root",
+          name: "Title",
+          type: "string",
+          value: "Title",
+        },
+      },
+    ])
+  ).toThrow('Cannot replace missing patch path "client-created-prop"');
+
+  const props = new Map<string, unknown>(build.props);
+  expect(() =>
+    applyBuilderPatchPayloadMutable(
+      (namespace) => {
+        if (namespace !== "props") {
+          throw new Error("Unexpected namespace");
+        }
+        return props;
+      },
+      [
+        {
+          namespace: "props",
+          patches: [
+            {
+              op: "replace",
+              path: ["prop-title", "missing"],
+              value: "Title",
+            },
+          ],
+        },
+      ]
+    )
+  ).toThrow('Cannot replace missing patch path "missing"');
+});
+
 test("applies transactions without mutating the input state object", () => {
   const state: BuilderState = {
     props: new Map(build.props),

@@ -19,7 +19,7 @@ import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { downloadAssetFiles } from "../asset-files";
 import { resolveApiConnection } from "../api-connection";
 
-type SyncDependencies = {
+export type SyncDependencies = {
   createFileIfNotExists: typeof createFileIfNotExists;
   downloadAssetFiles: typeof downloadAssetFiles;
   isFileExists: typeof isFileExists;
@@ -31,7 +31,7 @@ type SyncDependencies = {
   writeFile: typeof writeFile;
 };
 
-const defaultDependencies: SyncDependencies = {
+export const defaultSyncDependencies: SyncDependencies = {
   createFileIfNotExists,
   downloadAssetFiles,
   isFileExists,
@@ -62,7 +62,7 @@ type SyncOptions = Partial<StrictYargsOptionsToInterface<typeof syncOptions>>;
 
 export const sync = async (
   options: SyncOptions,
-  dependencies = defaultDependencies
+  dependencies = defaultSyncDependencies
 ) => {
   const syncing = dependencies.spinner();
 

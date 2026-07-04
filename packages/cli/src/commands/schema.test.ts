@@ -1,5 +1,9 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { apiCommandMetadata, cliCommandMetadata } from "./api-command-metadata";
+import {
+  apiCommandMetadata,
+  cliCommandMetadata,
+  topLevelCliCommandMetadata,
+} from "./api-command-metadata";
 import { schema } from "./schema";
 
 afterEach(() => {
@@ -15,21 +19,7 @@ test("prints api command schema as json", () => {
   expect(output.projectScope).toContain("single project");
   expect(
     output.topLevelCommands.map((command: { name: string }) => command.name)
-  ).toEqual([
-    "init",
-    "link",
-    "sync",
-    "import",
-    "build",
-    "preview",
-    "screenshot",
-    "permissions",
-    "publish",
-    "domains",
-    "schema",
-    "man",
-    "mcp",
-  ]);
+  ).toEqual(topLevelCliCommandMetadata.map(({ command }) => command));
   expect(
     output.topLevelCommands.map((command: { name: string }) => command.name)
   ).not.toEqual(expect.arrayContaining(["publish deploy", "domains list"]));
@@ -77,6 +67,19 @@ test("prints api command schema as json", () => {
   expect(output.mcp.toolCount).toBe(apiCommandMetadata.length);
   expect(output.mcp.discovery).toContain("meta.get_more_tools");
   expect(output.mcp.resources).toContain("webstudio://project/tools");
+  expect(output.mcp.commands).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        name: "create-page",
+        inputFields: expect.arrayContaining(["name", "path"]),
+        requiredInputFields: ["name", "path"],
+      }),
+      expect.objectContaining({
+        name: "upload-asset",
+        requiredInputFields: ["asset"],
+      }),
+    ])
+  );
   expect(output.mcp.argumentExamples["update-styles"]).toEqual([
     {
       updates: [
@@ -105,7 +108,7 @@ test("prints api command schema as json", () => {
       }),
       expect.objectContaining({
         useCase: "Discover CLI/API capabilities",
-        commands: expect.arrayContaining(["webstudio man mcp --json"]),
+        commands: expect.arrayContaining(["webstudio man --json"]),
       }),
       expect.objectContaining({
         useCase: "Manage marketplace metadata",

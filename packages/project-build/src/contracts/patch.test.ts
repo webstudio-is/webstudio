@@ -5,6 +5,7 @@ import {
   builderPatchTransactionSchema,
   compactBuilderPatchPayload,
 } from "./patch";
+import { builderNamespaces } from "./namespaces";
 
 describe("builder patch contracts", () => {
   test("requires values for add and replace patches", () => {
@@ -29,18 +30,12 @@ describe("builder patch contracts", () => {
       id: "tx-1",
       payload: [
         {
-          namespace: "props",
+          namespace: "pages",
           patches: [
             {
-              op: "add",
-              path: ["prop-subtitle"],
-              value: {
-                id: "prop-subtitle",
-                instanceId: "instance-root",
-                name: "Subtitle",
-                type: "string",
-                value: "Subtitle",
-              },
+              op: "replace",
+              path: ["meta", "siteName"],
+              value: "Acme",
             },
           ],
         },
@@ -48,7 +43,173 @@ describe("builder patch contracts", () => {
     });
 
     expect(transaction.payload.map((change) => change.namespace)).toEqual([
-      "props",
+      "pages",
+    ]);
+  });
+
+  test("rejects raw patches that create or replace generated records", () => {
+    const generatedRecordNamespaceChanges = builderNamespaces.flatMap(
+      (namespace) =>
+        namespace === "pages" || namespace === "marketplaceProduct"
+          ? []
+          : [
+              {
+                namespace,
+                patches: [
+                  {
+                    op: "add" as const,
+                    path: [],
+                    value: {},
+                  },
+                  {
+                    op: "replace" as const,
+                    path: [],
+                    value: {},
+                  },
+                  {
+                    op: "add" as const,
+                    path: ["client-record-id"],
+                    value: {},
+                  },
+                  {
+                    op: "replace" as const,
+                    path: ["existing-record-id"],
+                    value: { id: "client-record-id" },
+                  },
+                ],
+              },
+            ]
+    );
+    const result = builderPatchTransactionSchema.safeParse({
+      id: "tx-1",
+      payload: [
+        {
+          namespace: "pages",
+          patches: [
+            {
+              op: "add",
+              path: [],
+              value: {},
+            },
+            {
+              op: "replace",
+              path: [],
+              value: {},
+            },
+            {
+              op: "add",
+              path: ["pages"],
+              value: {},
+            },
+            {
+              op: "replace",
+              path: ["pages"],
+              value: {},
+            },
+            {
+              op: "add",
+              path: ["folders"],
+              value: {},
+            },
+            {
+              op: "replace",
+              path: ["folders"],
+              value: {},
+            },
+            {
+              op: "add",
+              path: ["pages", "client-page-id"],
+              value: {},
+            },
+            {
+              op: "replace",
+              path: ["pages", "existing-page-id"],
+              value: { id: "client-page-id" },
+            },
+            {
+              op: "add",
+              path: ["folders", "client-folder-id"],
+              value: {},
+            },
+            {
+              op: "replace",
+              path: ["folders", "existing-folder-id"],
+              value: { id: "client-folder-id" },
+            },
+          ],
+        },
+        ...generatedRecordNamespaceChanges,
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([
+      ["payload", 0, "patches", 0, "path"],
+      ["payload", 0, "patches", 1, "path"],
+      ["payload", 0, "patches", 2, "path"],
+      ["payload", 0, "patches", 3, "path"],
+      ["payload", 0, "patches", 4, "path"],
+      ["payload", 0, "patches", 5, "path"],
+      ["payload", 0, "patches", 6, "path"],
+      ["payload", 0, "patches", 7, "path"],
+      ["payload", 0, "patches", 8, "path"],
+      ["payload", 0, "patches", 9, "path"],
+      ...generatedRecordNamespaceChanges.flatMap((_, index) => [
+        ["payload", index + 1, "patches", 0, "path"],
+        ["payload", index + 1, "patches", 1, "path"],
+        ["payload", index + 1, "patches", 2, "path"],
+        ["payload", index + 1, "patches", 3, "path"],
+      ]),
+    ]);
+  });
+
+  test("rejects raw patches that mutate generated record id fields", () => {
+    const generatedRecordNamespaceChanges = builderNamespaces.flatMap(
+      (namespace) =>
+        namespace === "pages" || namespace === "marketplaceProduct"
+          ? []
+          : [
+              {
+                namespace,
+                patches: [
+                  {
+                    op: "replace" as const,
+                    path: ["record-id", "id"],
+                    value: "other-id",
+                  },
+                ],
+              },
+            ]
+    );
+    const result = builderPatchTransactionSchema.safeParse({
+      id: "tx-1",
+      payload: [
+        {
+          namespace: "pages",
+          patches: [
+            {
+              op: "replace",
+              path: ["pages", "page-id", "id"],
+              value: "other-page-id",
+            },
+            { op: "remove", path: ["folders", "folder-id", "id"] },
+          ],
+        },
+        ...generatedRecordNamespaceChanges,
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([
+      ["payload", 0, "patches", 0, "path"],
+      ["payload", 0, "patches", 1, "path"],
+      ...generatedRecordNamespaceChanges.map((_, index) => [
+        "payload",
+        index + 1,
+        "patches",
+        0,
+        "path",
+      ]),
     ]);
   });
 

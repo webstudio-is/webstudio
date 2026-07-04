@@ -22,10 +22,20 @@
       "import": "./src/contracts/builder-runtime.ts",
       "default": "./src/contracts/builder-runtime.ts"
     },
+    "./contracts/input-schema": {
+      "webstudio": "./src/contracts/input-schema.ts",
+      "import": "./src/contracts/input-schema.ts",
+      "default": "./src/contracts/input-schema.ts"
+    },
     "./contracts/namespaces": {
       "webstudio": "./src/contracts/namespaces.ts",
       "import": "./src/contracts/namespaces.ts",
       "default": "./src/contracts/namespaces.ts"
+    },
+    "./contracts/permissions": {
+      "webstudio": "./src/contracts/permissions.ts",
+      "import": "./src/contracts/permissions.ts",
+      "default": "./src/contracts/permissions.ts"
     },
     "./contracts/patch": {
       "webstudio": "./src/contracts/patch.ts",
@@ -132,6 +142,11 @@
       "import": "./src/runtime/registry.ts",
       "default": "./src/runtime/registry.ts"
     },
+    "./runtime/context": {
+      "webstudio": "./src/runtime/context.ts",
+      "import": "./src/runtime/context.ts",
+      "default": "./src/runtime/context.ts"
+    },
     "./runtime/style-copy": {
       "webstudio": "./src/runtime/style-copy.ts",
       "import": "./src/runtime/style-copy.ts",
@@ -163,6 +178,7 @@
   "sideEffects": false,
   "scripts": {
     "generate-docs": "node scripts/generate-docs.mjs",
+    "generate-runtime-operation-contracts": "tsx --conditions=webstudio scripts/generate-runtime-operation-contracts.ts",
     "typecheck": "tsgo --noEmit",
     "test": "vitest run"
   },
@@ -184,6 +200,7 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
+    "prettier": "3.5.3",
     "vitest": "^3.1.2"
   }
 }

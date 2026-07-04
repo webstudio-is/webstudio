@@ -201,6 +201,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "font",
       objectURL: "blob:test",
     });
@@ -221,6 +223,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "font",
       objectURL: "blob:test",
     });
@@ -241,6 +245,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "image",
       objectURL: "blob:test",
     });
@@ -261,6 +267,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "video",
       objectURL: "blob:test",
     });
@@ -281,6 +289,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "file",
       objectURL: "blob:test",
     });
@@ -301,6 +311,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "font",
       objectURL: "blob:test",
     });
@@ -321,6 +333,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      fingerprintId: "test-fingerprint",
+      uploadName: "test-upload-name",
       type: "file",
       objectURL: "blob:test",
     });

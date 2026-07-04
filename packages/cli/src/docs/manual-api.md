@@ -70,7 +70,7 @@ apply-patch accepts either BuildPatchTransaction[] or { "transactions": BuildPat
 Each transaction has:
 
 {
-"id": "unique-client-transaction-id",
+"id": "patch-transaction-label",
 "payload": [
 {
 "namespace": "pages",
@@ -80,6 +80,10 @@ Each transaction has:
 }
 ]
 }
+
+The transaction id is a patch label used for optimistic synchronization. It is
+not a Builder record id. Do not invent ids for pages, instances, props,
+breakpoints, resources, variables, folders, assets, or other project records.
 
 Patch paths are JSON-patch-like paths into Builder store data. Map-like namespaces use ids as the first path item.
 
@@ -107,7 +111,7 @@ Rename the site:
 
 [
 {
-"id": "tx-site-name",
+"id": "patch-site-name",
 "payload": [
 {
 "namespace": "pages",
@@ -123,7 +127,7 @@ Update page title metadata:
 
 [
 {
-"id": "tx-page-title",
+"id": "patch-page-title",
 "payload": [
 {
 "namespace": "pages",
@@ -139,7 +143,7 @@ Update a text child on an element:
 
 [
 {
-"id": "tx-text",
+"id": "patch-text",
 "payload": [
 {
 "namespace": "instances",
@@ -151,62 +155,12 @@ Update a text child on an element:
 }
 ]
 
-Create a data variable:
-
-[
-{
-"id": "tx-variable",
-"payload": [
-{
-"namespace": "dataSources",
-"patches": [
-{
-"op": "add",
-"path": ["variable-id"],
-"value": {
-"type": "variable",
-"id": "variable-id",
-"scopeInstanceId": "instance-id",
-"name": "headline",
-"value": { "type": "string", "value": "Launch faster" }
-}
-}
-]
-}
-]
-}
-]
-
-Create a design token:
-
-[
-{
-"id": "tx-token",
-"payload": [
-{
-"namespace": "styleSources",
-"patches": [
-{ "op": "add", "path": ["token-id"], "value": { "type": "token", "id": "token-id", "name": "Brand Primary" } }
-]
-},
-{
-"namespace": "styles",
-"patches": [
-{
-"op": "add",
-"path": ["token-id:base:color:"],
-"value": {
-"styleSourceId": "token-id",
-"breakpointId": "base",
-"property": "color",
-"value": { "type": "keyword", "value": "red" }
-}
-}
-]
-}
-]
-}
-]
+Create records with semantic operations such as create-variable,
+create-resource, create-design-token, create-page, create-folder,
+append-instance, and create-breakpoint. Raw patch rejects generated record
+collection creation/replacement, top-level record creation/replacement, and
+record id field mutations in id-keyed namespaces because Webstudio must generate
+and preserve record ids.
 
 ::doc-section{field="safetyRules"}
 
@@ -214,7 +168,7 @@ Create a design token:
 
 - For MCP apply-patch, read the latest version with MCP snapshot before writing.
 - Reuse ids from MCP snapshot output when updating existing records.
-- Generate new unique ids when adding records.
+- Do not create or replace generated record collections or records, or mutate record id fields, with raw patch. Use semantic create operations so Webstudio generates ids.
 - If apply-patch reports a version conflict, read the latest build and regenerate the patch.
 - Prefer semantic MCP read tools for discovery, then use MCP snapshot for exact patch paths.
 

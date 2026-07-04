@@ -35,6 +35,26 @@ const prop = (name: string, overrides: Partial<Prop> = {}): Prop =>
     ...overrides,
   }) as Prop;
 
+test("rejects client-supplied prop ids on prop upsert inputs", () => {
+  expect(
+    propValueInput.safeParse({
+      propId: "client-prop-id",
+      instanceId: "instance-id",
+      name: "title",
+      type: "string",
+      value: "Title",
+    }).success
+  ).toBe(false);
+  expect(
+    propBindingInput.safeParse({
+      propId: "client-prop-id",
+      instanceId: "instance-id",
+      name: "title",
+      binding: { type: "expression", value: "title" },
+    }).success
+  ).toBe(false);
+});
+
 describe("findProp", () => {
   test("finds a prop by instance id and name", () => {
     expect(findProp([prop("src")], image.id, "src")?.id).toBe("src-id");

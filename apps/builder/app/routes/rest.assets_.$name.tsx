@@ -1,6 +1,6 @@
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import {
-  createUploadName,
+  createUploadTicket,
   uploadFile,
   type UploadErrorCleanup,
 } from "@webstudio-is/asset-uploader/index.server";
@@ -102,10 +102,6 @@ export const action = async (props: ActionFunctionArgs) => {
       if (projectId === null) {
         throw new Error("Project id is required");
       }
-      const assetId = url.searchParams.get("assetId");
-      if (assetId === null) {
-        throw new Error("Asset id is required");
-      }
       if (assetType === undefined) {
         throw new Error("Asset type is invalid");
       }
@@ -119,9 +115,8 @@ export const action = async (props: ActionFunctionArgs) => {
 
       const context = await createContext(request);
       await assertApiProjectPermit(context, projectId, "build");
-      const uploadName = await createUploadName(
+      const ticket = await createUploadTicket(
         {
-          assetId,
           projectId,
           type: assetType,
           filename: params.name,
@@ -131,9 +126,9 @@ export const action = async (props: ActionFunctionArgs) => {
       return await createAssetUploadResponse({
         body: request.body,
         context,
-        name: uploadName,
+        name: ticket.name,
         assetInfoFallback,
-        onUploadError: createApiUploadErrorCleanup(assetId, projectId),
+        onUploadError: createApiUploadErrorCleanup(ticket.assetId, projectId),
       });
     }
 

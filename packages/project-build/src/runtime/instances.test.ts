@@ -8,6 +8,8 @@ import {
   type StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import {
+  appendInstances,
+  appendInstancesInput,
   collectExclusiveInstanceIds,
   cloneInstanceSubtree,
   cloneInstanceWithNewIds,
@@ -77,6 +79,43 @@ const createStyleSourceSelection = (
     values,
   };
 };
+
+test("rejects client-supplied instance ids when appending instances", () => {
+  expect(
+    appendInstancesInput.safeParse({
+      parentInstanceId: "parent",
+      children: [{ instanceId: "client-instance-id", tag: "div" }],
+    }).success
+  ).toBe(false);
+});
+
+test("rejects generated instance id collisions when appending instances", () => {
+  const parent = createInstance("parent", elementComponent);
+
+  expect(() =>
+    appendInstances(
+      {
+        instances: new Map([
+          [parent.id, parent],
+          ["existing", createInstance("existing", elementComponent)],
+        ]),
+        props: new Map(),
+        dataSources: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+        styles: new Map(),
+      },
+      {
+        parentInstanceId: parent.id,
+        children: [{ tag: "div" }],
+      },
+      {
+        createId: () => "existing",
+        now: () => new Date("2024-01-01T00:00:00.000Z"),
+      }
+    )
+  ).toThrow("Instance id already exists");
+});
 
 test("collects root-owned instance ids without deleting shared child subtrees", () => {
   const instances = new Map<Instance["id"], Instance>([

@@ -7,6 +7,7 @@ import {
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
 import { getExpressionErrors } from "./expression-validation";
+import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
 
 export const findProp = (
@@ -93,7 +94,7 @@ const addExpressionIssues = (
 
 export const propValueInput = z
   .object({
-    propId: z.string().optional(),
+    propId: runtimeGeneratedIdInput,
     instanceId: z.string(),
     name: z.string(),
     type: z.enum([
@@ -119,7 +120,7 @@ export const propValueInput = z
 
 export const propBindingInput = z
   .object({
-    propId: z.string().optional(),
+    propId: runtimeGeneratedIdInput,
     instanceId: z.string(),
     name: z.string(),
     binding: z.discriminatedUnion("type", [
@@ -167,12 +168,23 @@ type ValidatedPropInputResult =
   | { success: true; prop: Prop }
   | { success: false; errors: string[] };
 
+type PropValueInputWithId = Omit<z.infer<typeof propValueInput>, "propId"> & {
+  propId?: Prop["id"];
+};
+
+type PropBindingInputWithId = Omit<
+  z.infer<typeof propBindingInput>,
+  "propId"
+> & {
+  propId?: Prop["id"];
+};
+
 const createMissingId = (): Prop["id"] => {
   throw new Error("createId is required when propId is not provided.");
 };
 
 export const createValidatedPropValueFromInput = (
-  value: z.infer<typeof propValueInput>,
+  value: PropValueInputWithId,
   createId: () => Prop["id"] = createMissingId
 ): ValidatedPropInputResult => {
   const errors = getPropValueErrors(value);
@@ -193,7 +205,7 @@ export const createValidatedPropValueFromInput = (
 };
 
 export const createValidatedPropBindingFromInput = (
-  binding: z.infer<typeof propBindingInput>,
+  binding: PropBindingInputWithId,
   createId: () => Prop["id"] = createMissingId
 ): ValidatedPropInputResult => {
   const errors = getPropValueErrors({

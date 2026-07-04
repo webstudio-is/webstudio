@@ -10,7 +10,7 @@ import {
 test("documents generated app setup for visual verification", () => {
   expect(generatedAppDependencyNotes).toEqual([
     expect.stringContaining("npm install or pnpm install"),
-    expect.stringContaining("react-router or vite"),
+    expect.stringContaining("react-router-serve"),
   ]);
   expect(visualVerificationRule).toContain("generated app dependencies");
   expect(screenshotVerificationSummary).toContain("preview.start");

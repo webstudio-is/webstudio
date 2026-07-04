@@ -30,14 +30,6 @@ const enableImmerPatchPlugins = () => {
   areImmerPatchPluginsEnabled = true;
 };
 
-export const applyBuilderNamespacePatches = <State>(
-  state: State,
-  patches: readonly BuilderPatch[]
-): State => {
-  enableImmerPatchPlugins();
-  return applyPatches(state as never, patches as Patch[]) as State;
-};
-
 const getPathValue = (target: unknown, segment: string | number): unknown => {
   if (target instanceof Map) {
     return target.get(segment);
@@ -50,12 +42,29 @@ const getPathValue = (target: unknown, segment: string | number): unknown => {
   }
 };
 
+const hasPathValue = (target: unknown, segment: string | number): boolean => {
+  if (target instanceof Map) {
+    return target.has(segment);
+  }
+  if (Array.isArray(target)) {
+    const index = Number(segment);
+    return Number.isInteger(index) && index >= 0 && index < target.length;
+  }
+  if (typeof target === "object" && target !== null) {
+    return Object.hasOwn(target, String(segment));
+  }
+  return false;
+};
+
 const setPathValue = (
   target: unknown,
   segment: string | number,
   value: unknown,
   operation: "add" | "replace"
 ) => {
+  if (operation === "replace" && hasPathValue(target, segment) === false) {
+    throw Error(`Cannot replace missing patch path "${String(segment)}"`);
+  }
   if (target instanceof Map) {
     target.set(segment, value);
     return;
@@ -108,6 +117,30 @@ const getPatchParent = (
     }
   }
   return { parent, key };
+};
+
+const assertReplacePatchTargetsExistingPath = (
+  namespaceData: unknown,
+  patch: BuilderPatch
+) => {
+  if (patch.op !== "replace") {
+    return;
+  }
+  const { parent, key } = getPatchParent(namespaceData, patch);
+  if (hasPathValue(parent, key) === false) {
+    throw Error(`Cannot replace missing patch path "${String(key)}"`);
+  }
+};
+
+export const applyBuilderNamespacePatches = <State>(
+  state: State,
+  patches: readonly BuilderPatch[]
+): State => {
+  enableImmerPatchPlugins();
+  for (const patch of patches) {
+    assertReplacePatchTargetsExistingPath(state, patch);
+  }
+  return applyPatches(state as never, patches as Patch[]) as State;
 };
 
 export const applyBuilderPatchPayloadMutable = (

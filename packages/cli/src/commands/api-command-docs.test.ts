@@ -1,32 +1,16 @@
 import { expect, test } from "vitest";
 import { createProjectSessionMcpCore } from "@webstudio-is/project-build/mcp";
+import { getRuntimeGeneratedInputPaths } from "@webstudio-is/project-build/contracts/input-schema";
+import { builderRuntimeOperations } from "@webstudio-is/project-build/runtime/registry";
 import { publicApiOperations } from "@webstudio-is/protocol";
 import {
   apiCommandMetadata,
   highLevelCliCommands,
+  mcpOnlyApiCommandMetadata,
   topLevelCliCommandMetadata,
 } from "./api-command-metadata";
 import { useCaseScenarios } from "./api-command-docs";
 import { readCliDoc } from "../docs";
-
-const removedShellCommands = [
-  "whoami",
-  "inspect",
-  "snapshot",
-  "apply-patch",
-  "list-pages",
-  "get-page",
-  "get-page-by-path",
-  "create-page",
-  "update-page",
-  "delete-page",
-  "list-assets",
-  "upload-asset",
-  "replace-asset",
-  "delete-asset",
-  "list-domains",
-  "create-domain",
-] as const;
 
 const getDocumentedCommands = () => {
   const knownCliCommands = [
@@ -65,9 +49,9 @@ test("documents executable use-case scenarios with current CLI or MCP commands",
     expect(scenario.commands.length).toBeGreaterThan(0);
     for (const command of scenario.commands) {
       expect(command).toMatch(/^(webstudio |MCP tool: )/);
-      for (const removedCommand of removedShellCommands) {
+      for (const { command: mcpOnlyCommand } of mcpOnlyApiCommandMetadata) {
         expect(command).not.toMatch(
-          new RegExp(`^webstudio ${removedCommand}(?:\\\\s|$)`)
+          new RegExp(`^webstudio ${mcpOnlyCommand}(?:\\\\s|$)`)
         );
       }
     }
@@ -117,6 +101,118 @@ test("documents MCP use cases with JSON inputs instead of CLI flags", () => {
     const match = line.match(/^- MCP tool: [a-z0-9._-]+ (.+)$/);
     expect(match, line).not.toBeNull();
     expect(() => JSON.parse(match?.[1] ?? "")).not.toThrow();
+  }
+});
+
+test("documents MCP examples with current tool input fields", () => {
+  const adapter = createProjectSessionMcpCore({
+    operations: publicApiOperations,
+    createProjectSession: () => {
+      throw new Error("listTools must not initialize a ProjectSession.");
+    },
+    executeOperation: async () => {
+      throw new Error("listTools must not execute operations.");
+    },
+    importProject: async () => ({ imported: true }),
+    captureScreenshot: async () => ({
+      output: "current.png",
+      browserPath: "/browser",
+      browser: "chromium",
+      viewport: { width: 1440, height: 900 },
+      elapsedMs: 0,
+      url: "http://localhost",
+      warnings: [],
+    }),
+    diffScreenshots: async () => ({
+      totalPixels: 0,
+      differentPixels: 0,
+      mismatchPercentage: 0,
+      summary: "No visual changes.",
+      regions: [],
+      output: "diff.png",
+      textAnalysis: {
+        status: "skipped",
+        provider: "tesseract",
+        changes: [],
+      },
+      warnings: [],
+    }),
+    installOcr: async () => ({
+      installed: false,
+      alreadyAvailable: true,
+      installUrl: "",
+      warnings: [],
+    }),
+    startPreview: async () => ({ url: "http://localhost:5173", running: true }),
+    getPreviewStatus: async () => ({
+      url: "http://localhost:5173",
+      running: true,
+    }),
+  });
+  const toolInputFields = new Map(
+    adapter
+      .listTools()
+      .map((tool) => [tool.name, new Set(tool.annotations.inputFields)])
+  );
+  const toolRequiredInputFields = new Map(
+    adapter
+      .listTools()
+      .map((tool) => [tool.name, tool.annotations.requiredInputFields])
+  );
+  const apiUseCases = readCliDoc("api-use-cases");
+
+  for (const line of apiUseCases.match(/^- MCP tool: .+$/gm) ?? []) {
+    const match = line.match(/^- MCP tool: ([a-z0-9._-]+) (.+)$/);
+    expect(match, line).not.toBeNull();
+    const [, name = "", rawInput = "{}"] = match ?? [];
+    const fields = toolInputFields.get(name);
+    expect(fields, line).toBeDefined();
+    const input = JSON.parse(rawInput);
+    if (
+      input !== null &&
+      typeof input === "object" &&
+      Array.isArray(input) === false
+    ) {
+      for (const field of Object.keys(input)) {
+        expect(fields?.has(field), line).toBe(true);
+      }
+      for (const field of toolRequiredInputFields.get(name) ?? []) {
+        expect(Object.hasOwn(input, field), line).toBe(true);
+      }
+    }
+  }
+});
+
+test("does not document client-supplied generated ids for create operations", () => {
+  const forbiddenGeneratedIdFieldsByCommand = new Map(
+    builderRuntimeOperations.flatMap((operation) => {
+      const fields = [
+        ...new Set(
+          getRuntimeGeneratedInputPaths(operation.inputSchema).flatMap(
+            (path) => {
+              const field = path.filter((segment) => segment !== "*").at(-1);
+              return field === undefined ? [] : [field];
+            }
+          )
+        ),
+      ];
+      return fields.length === 0 ? [] : [[operation.command, fields] as const];
+    })
+  );
+  const apiUseCases = readCliDoc("api-use-cases");
+
+  for (const line of apiUseCases.match(/^- MCP tool: .+$/gm) ?? []) {
+    const match = line.match(/^- MCP tool: ([a-z0-9._-]+) (.+)$/);
+    const [, name = "", rawInput = "{}"] = match ?? [];
+    const forbiddenFields = forbiddenGeneratedIdFieldsByCommand.get(name);
+    if (forbiddenFields === undefined) {
+      continue;
+    }
+    const input = JSON.parse(rawInput);
+    const serializedInput = JSON.stringify(input);
+    for (const field of forbiddenFields) {
+      expect(serializedInput, line).not.toContain(`"${field}"`);
+    }
   }
 });
 

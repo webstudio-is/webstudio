@@ -14,6 +14,10 @@ import {
   type ProjectSessionStorage,
   type ProjectSessionTransport,
 } from "@webstudio-is/project-build/project-session";
+import {
+  createBuilderRuntimeContext,
+  createBuilderRuntimeId,
+} from "@webstudio-is/project-build/runtime/context";
 import type { BuilderNamespace } from "@webstudio-is/project-build/contracts/namespaces";
 import {
   createBuilderStateFromBuildData,
@@ -280,13 +284,17 @@ export const createCliProjectSessionTransport = ({
       )) as Result),
 });
 
+export const createCliRuntimeId = createBuilderRuntimeId;
+
+const defaultCliRuntimeContext = createBuilderRuntimeContext();
+
 export const createCliProjectSession = ({
   connection,
   storage = createCliProjectSessionStorage(),
   executeServerOperation,
   getPermissions,
-  createId = () => crypto.randomUUID(),
-  now = () => new Date(),
+  createId = defaultCliRuntimeContext.createId,
+  now = defaultCliRuntimeContext.now,
 }: {
   connection: ApiConnection;
   storage?: ProjectSessionStorage;

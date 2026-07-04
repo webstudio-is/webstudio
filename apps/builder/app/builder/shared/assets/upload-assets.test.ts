@@ -1,9 +1,49 @@
-import { describe, test, expect } from "vitest";
+import { beforeEach, describe, test, expect, vi } from "vitest";
+import { fetch } from "~/shared/fetch.client";
 import { __testing__ } from "./upload-assets";
 
-const { deduplicateAssetName } = __testing__;
+vi.mock("~/shared/fetch.client", () => ({
+  fetch: vi.fn(),
+}));
+
+const { createUploadTicket, deduplicateAssetName } = __testing__;
+const fetchMock = vi.mocked(fetch);
 
 describe("upload-assets", () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+  });
+
+  test("requests upload tickets without client-supplied asset ids", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ assetId: "server-asset-id", name: "upload-name" })
+      )
+    );
+
+    await expect(
+      createUploadTicket({
+        authToken: "token",
+        projectId: "project-id",
+        fileOrUrl: new File(["content"], "image.png", { type: "image/png" }),
+        assetType: "image",
+      })
+    ).resolves.toEqual({
+      assetId: "server-asset-id",
+      name: "upload-name",
+    });
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [_url, init] = fetchMock.mock.calls[0] as [
+      string,
+      { body: FormData; headers: Headers },
+    ];
+    expect(init.body.has("assetId")).toBe(false);
+    expect(init.body.get("projectId")).toBe("project-id");
+    expect(init.body.get("type")).toBe("image");
+    expect(init.headers.get("x-auth-token")).toBe("token");
+  });
+
   describe("deduplicateAssetName", () => {
     test("returns original name when no duplicates exist", () => {
       const existingNames = new Set(["other-file.png", "another-file.jpg"]);

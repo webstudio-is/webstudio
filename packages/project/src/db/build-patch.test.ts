@@ -496,7 +496,7 @@ describe("patchBuild", () => {
               namespace: "instances",
               patches: [
                 {
-                  op: "replace",
+                  op: "add",
                   path: ["body-1", "label"],
                   value: "Body label",
                 },

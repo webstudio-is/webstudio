@@ -26,6 +26,7 @@ import {
 } from "./pages";
 import { getInstanceDepths } from "./instances";
 import { throwBuilderRuntimeError } from "./errors";
+import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
 import { serializeStyleDeclarations } from "./style-utils";
 import { createPropValue } from "./props";
@@ -950,7 +951,7 @@ export const designTokenStyleInput = z.object({
 });
 
 export const designTokenCreateInput = z.object({
-  tokenId: z.string().optional(),
+  tokenId: runtimeGeneratedIdInput,
   name: z.string().min(1),
   styles: z.record(z.unknown()).optional(),
   declarations: z.array(designTokenStyleInput).optional(),
@@ -959,6 +960,13 @@ export const designTokenCreateInput = z.object({
 export const designTokenCreateManyInput = z.object({
   tokens: jsonArrayInput(designTokenCreateInput),
 });
+
+type DesignTokenCreatePayloadInput = Omit<
+  z.infer<typeof designTokenCreateInput>,
+  "tokenId"
+> & {
+  tokenId?: StyleSource["id"];
+};
 
 export const designTokenStyleUpdatesInput = z.object({
   designTokenId: z.string(),
@@ -1872,7 +1880,7 @@ export const createDesignTokenCreatePayload = ({
   styleSources,
   createId,
 }: {
-  tokens: Array<z.infer<typeof designTokenCreateInput>>;
+  tokens: DesignTokenCreatePayloadInput[];
   styleSources: StyleSources;
   createId: () => StyleSource["id"];
 }) => {

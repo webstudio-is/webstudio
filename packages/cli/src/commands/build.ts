@@ -2,7 +2,11 @@ import { access } from "node:fs/promises";
 import { exit } from "node:process";
 import { log } from "@clack/prompts";
 import { prebuild } from "../prebuild";
-import { LOCAL_DATA_FILE, PROJECT_TEMPLATES } from "../config";
+import {
+  getAvailableTemplateNames,
+  LOCAL_DATA_FILE,
+  PROJECT_TEMPLATES,
+} from "../config";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -23,9 +27,9 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
 
       coerce: mapToTemplatesFromOptions,
 
-      describe: `Template to use for the build [choices: ${PROJECT_TEMPLATES.map(
+      describe: `Template alias or template folder to use for the build [aliases: ${PROJECT_TEMPLATES.map(
         (item) => item.value
-      ).join(", ")}]`,
+      ).join(", ")}; folders: ${getAvailableTemplateNames().join(", ")}]`,
     });
 
 // @todo: use options.assets to define if we need to download assets

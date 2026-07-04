@@ -3,6 +3,7 @@ import type { DataSources } from "./schema/data-sources";
 import type { Page } from "./schema/pages";
 import { type Scope, createScope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
+import { parseExpressionAt } from "acorn";
 
 export type PageMeta = {
   title: string;
@@ -15,6 +16,31 @@ export type PageMeta = {
   redirect?: string;
   content?: string;
   custom: Array<{ property: string; content: string }>;
+};
+
+const normalizeStringExpression = (expression: string) => {
+  const trimmedExpression = expression.trim();
+  try {
+    const parsedExpression = parseExpressionAt(trimmedExpression, 0, {
+      ecmaVersion: "latest",
+    });
+    if (parsedExpression.end === trimmedExpression.length) {
+      if (
+        parsedExpression.type === "Identifier" &&
+        trimmedExpression !== "undefined" &&
+        trimmedExpression.includes("$ws$") === false
+      ) {
+        return JSON.stringify(expression);
+      }
+      return expression;
+    }
+  } catch {
+    // Plain text from older synced bundles is not a valid expression.
+  }
+  if (trimmedExpression.includes("$ws$")) {
+    return expression;
+  }
+  return JSON.stringify(expression);
 };
 
 export const generatePageMeta = ({
@@ -32,13 +58,13 @@ export const generatePageMeta = ({
   const localScope = createScope(["system", "resources"]);
   const usedDataSources: DataSources = new Map();
   const titleExpression = generateExpression({
-    expression: page.title,
+    expression: normalizeStringExpression(page.title),
     dataSources,
     usedDataSources,
     scope: localScope,
   });
   const descriptionExpression = generateExpression({
-    expression: page.meta.description ?? "undefined",
+    expression: normalizeStringExpression(page.meta.description ?? "undefined"),
     dataSources,
     usedDataSources,
     scope: localScope,
@@ -50,7 +76,7 @@ export const generatePageMeta = ({
     scope: localScope,
   });
   const languageExpression = generateExpression({
-    expression: page.meta.language ?? "undefined",
+    expression: normalizeStringExpression(page.meta.language ?? "undefined"),
     dataSources,
     usedDataSources,
     scope: localScope,
@@ -61,7 +87,9 @@ export const generatePageMeta = ({
       : undefined
   );
   const socialImageUrlExpression = generateExpression({
-    expression: page.meta.socialImageUrl ?? "undefined",
+    expression: normalizeStringExpression(
+      page.meta.socialImageUrl ?? "undefined"
+    ),
     dataSources,
     usedDataSources,
     scope: localScope,
@@ -73,13 +101,13 @@ export const generatePageMeta = ({
     scope: localScope,
   });
   const redirectExpression = generateExpression({
-    expression: page.meta.redirect ?? "undefined",
+    expression: normalizeStringExpression(page.meta.redirect ?? "undefined"),
     dataSources,
     usedDataSources,
     scope: localScope,
   });
   const contentExpression = generateExpression({
-    expression: page.meta.content ?? "undefined",
+    expression: normalizeStringExpression(page.meta.content ?? "undefined"),
     dataSources,
     usedDataSources,
     scope: localScope,
@@ -92,7 +120,7 @@ export const generatePageMeta = ({
     }
     const propertyExpression = JSON.stringify(customMeta.property);
     const contentExpression = generateExpression({
-      expression: customMeta.content,
+      expression: normalizeStringExpression(customMeta.content),
       dataSources,
       usedDataSources,
       scope: localScope,

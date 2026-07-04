@@ -5,6 +5,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { createBuilderStateFromSnapshot } from "@webstudio-is/project-build/state/adapters";
 import { createBuilderStateFreshness } from "@webstudio-is/project-build/state/freshness";
 import {
+  createCliRuntimeId,
   createCliProjectSessionStorage,
   createCliProjectSessionTransport,
 } from "./project-session";
@@ -27,6 +28,10 @@ afterEach(async () => {
 });
 
 describe("cli project session storage", () => {
+  test("uses Webstudio runtime id format for local mutations", () => {
+    expect(createCliRuntimeId()).toMatch(/^[A-Za-z0-9_-]{21}$/);
+  });
+
   test("persists builder state snapshots as JSON and checks revisions", async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, ".webstudio", "project-session.json");

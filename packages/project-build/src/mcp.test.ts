@@ -42,6 +42,7 @@ const publicOperation = (
   readNamespaces: [],
   writeNamespaces: [],
   invalidatesNamespaces: [],
+  requiredInputFields: [],
   retryOnConflict: false,
   ...operation,
 });
@@ -97,6 +98,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     permit: "edit",
     description: "Delete instances",
     inputFields: ["instanceIds"],
+    requiredInputFields: ["instanceIds"],
     inputFieldTypes: { instanceIds: "array" },
     writeNamespaces: ["instances"],
     invalidatesNamespaces: ["instances"],
@@ -243,6 +245,7 @@ describe("project session mcp adapter", () => {
         expect.objectContaining({
           name: "list-pages",
           inputSchema: expect.objectContaining({
+            required: [],
             properties: {
               includeFolders: {
                 description: "Public API input field `includeFolders`.",
@@ -252,6 +255,7 @@ describe("project session mcp adapter", () => {
           annotations: expect.objectContaining({
             operationId: "pages.list",
             inputFields: ["includeFolders"],
+            requiredInputFields: [],
             localCapable: true,
             serverOnly: false,
             readNamespaces: ["pages"],
@@ -283,6 +287,7 @@ describe("project session mcp adapter", () => {
           }),
           annotations: expect.objectContaining({
             operationId: "project-session.refresh",
+            requiredInputFields: [],
             localCapable: true,
           }),
         }),
@@ -308,6 +313,15 @@ describe("project session mcp adapter", () => {
         ]
       ).toMatchObject({ type: "array" });
     }
+
+    expect(
+      tools.find((tool) => tool.name === "delete-instance")?.inputSchema
+        .required
+    ).toEqual(["instanceIds"]);
+    expect(
+      tools.find((tool) => tool.name === "delete-instance")?.annotations
+        .requiredInputFields
+    ).toEqual(["instanceIds"]);
   });
 
   test("lists OCR installer only when host provides installer", () => {
@@ -334,6 +348,43 @@ describe("project session mcp adapter", () => {
     expect(tools.map((tool) => tool.name)).toContain("import");
   });
 
+  test("keeps MCP input schemas and required annotations aligned", () => {
+    const tools = listProjectSessionMcpTools(publicMcpOperations, {
+      includeImport: true,
+      includeScreenshot: true,
+      includeScreenshotDiff: true,
+      includeInstallOcr: true,
+      includePreview: true,
+    });
+
+    for (const tool of tools) {
+      expect(tool.inputSchema.required ?? [], tool.name).toEqual(
+        tool.annotations.requiredInputFields
+      );
+    }
+
+    expect(tools.find((tool) => tool.name === "meta.guide")).toMatchObject({
+      inputSchema: expect.objectContaining({ required: ["brief"] }),
+      annotations: expect.objectContaining({ requiredInputFields: ["brief"] }),
+    });
+    expect(
+      tools.find((tool) => tool.name === "meta.get_more_tools")
+    ).toMatchObject({
+      inputSchema: expect.objectContaining({ required: ["brief"] }),
+      annotations: expect.objectContaining({ requiredInputFields: ["brief"] }),
+    });
+    expect(tools.find((tool) => tool.name === "screenshot.diff")).toMatchObject(
+      {
+        inputSchema: expect.objectContaining({
+          required: ["baselinePath", "currentPath"],
+        }),
+        annotations: expect.objectContaining({
+          requiredInputFields: ["baselinePath", "currentPath"],
+        }),
+      }
+    );
+  });
+
   test("does not expose CLI-only required options as MCP tool schemas", () => {
     const operationWithCliOptions = {
       ...publicMcpOperations[0]!,
@@ -349,6 +400,7 @@ describe("project session mcp adapter", () => {
             description:
               "Pass the public API input object for this tool. Use meta.get_more_tools for examples and required fields.",
             additionalProperties: true,
+            required: [],
             properties: {
               includeFolders: {
                 description: "Public API input field `includeFolders`.",

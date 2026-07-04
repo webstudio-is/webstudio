@@ -16,7 +16,7 @@ Use this order. Stop only when a command returns ok:false.
 
 Use this process for user requests that change Webstudio content, layout, styles, assets, pages, redirects, resources, or publishing state:
 
-1. Discover capabilities with `webstudio man llm --json`, `webstudio schema api --json`, and MCP `meta.index` or `webstudio://project/tools`.
+1. Discover capabilities with `webstudio man --json`, `webstudio schema api --json`, and MCP `meta.index` or `webstudio://project/tools`. Use focused topics such as `webstudio man llm --json` only after the complete manual is too large for the current context.
 2. Inspect current project state with semantic reads such as `list-pages`, `get-page-by-path`, `list-instances`, `inspect-instance`, `get-styles`, `list-assets`, `list-breakpoints`, and `snapshot` only when needed.
 3. Mutate the Webstudio project with semantic MCP write tools first. Prefer `append-instance`, `update-text`, `update-props`, `update-styles`, `upload-asset`, `create-page`, and page/project settings tools over raw patches.
 4. Use `apply-patch` only when no semantic tool covers the required change, and only after reading the latest snapshot/version.

@@ -23,6 +23,7 @@ import {
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   computeExpression,
+  dataVariableCreateInput,
   createDataVariableCreatePayload,
   createDataVariableDeletePayload,
   createDataVariableUpdatePayload,
@@ -42,6 +43,7 @@ import {
   rebindTreeVariablesMutable,
   replaceDataSourcesInExpression,
   restoreExpressionVariables,
+  resourceCreateInput,
   resourceFieldsInput,
   resourceFieldsUpdateInput,
   serializeDataVariables,
@@ -50,6 +52,29 @@ import {
   upsertResourceMutable,
   validateDataVariableNameWithSources,
 } from "./data";
+
+test("rejects client-supplied ids on data create inputs", () => {
+  expect(
+    dataVariableCreateInput.safeParse({
+      dataSourceId: "client-variable-id",
+      scopeInstanceId: "instance-id",
+      name: "title",
+      value: { type: "string", value: "Title" },
+    }).success
+  ).toBe(false);
+  expect(
+    resourceCreateInput.safeParse({
+      resourceId: "client-resource-id",
+      dataSourceId: "client-data-source-id",
+      resource: {
+        name: "Posts",
+        method: "get",
+        url: '"https://api.example.com/posts"',
+      },
+      scopeInstanceId: "instance-id",
+    }).success
+  ).toBe(false);
+});
 
 test("encode data variable name when necessary", () => {
   expect(encodeDataVariableName("formState")).toEqual("formState");

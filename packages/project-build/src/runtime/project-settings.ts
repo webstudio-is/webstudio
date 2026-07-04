@@ -17,7 +17,9 @@ import {
 } from "../contracts/patch";
 import type { BuilderState } from "../state/builder-state";
 import { hasReachedBreakpointLimit, isBaseBreakpoint } from "./breakpoints";
+import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
+import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
 import { getRequiredPages } from "./pages";
 
@@ -297,7 +299,7 @@ export const listBreakpoints = (state: Pick<BuilderState, "breakpoints">) => ({
 });
 
 export const breakpointFieldsInput = z.object({
-  id: z.string(),
+  id: runtimeGeneratedIdInput,
   label: z.string(),
   minWidth: z.number().optional(),
   maxWidth: z.number().optional(),
@@ -332,13 +334,15 @@ const parseBreakpoint = (input: Breakpoint) => {
 
 export const createBreakpoint = (
   state: Pick<BuilderState, "breakpoints">,
-  input: z.infer<typeof breakpointCreateInput>
+  input: z.infer<typeof breakpointCreateInput>,
+  context: BuilderRuntimeContext
 ) => {
   const breakpoints = getRequiredBreakpoints(state);
-  if (breakpoints.has(input.id)) {
+  const breakpointId = context.createId();
+  if (breakpoints.has(breakpointId)) {
     return throwBuilderRuntimeError("CONFLICT", "Breakpoint already exists");
   }
-  const value = parseBreakpoint(input);
+  const value = parseBreakpoint({ ...input, id: breakpointId });
   const canHaveOnlyOneBaseBreakpoint =
     value.condition === undefined && isBaseBreakpoint(value);
   if (
@@ -365,10 +369,10 @@ export const createBreakpoint = (
     payload: [
       {
         namespace: "breakpoints",
-        patches: [{ op: "add", path: [value.id], value }],
+        patches: [{ op: "add", path: [breakpointId], value }],
       },
     ],
-    result: { breakpointId: value.id },
+    result: { breakpointId },
     invalidatesNamespaces: ["breakpoints"],
   });
 };

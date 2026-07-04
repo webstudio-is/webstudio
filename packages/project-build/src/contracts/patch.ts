@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { builderNamespaces } from "./namespaces";
+import { builderNamespaces, type BuilderNamespace } from "./namespaces";
 
 const builderPatchPath = z.array(z.union([z.string(), z.number()]));
 
@@ -50,14 +50,119 @@ export const builderPatchSchema: z.ZodType<
   ])
   .transform((patch): BuilderPatch => patch as BuilderPatch);
 
+const pageGeneratedRecordPaths = new Set(["pages", "folders"]);
+const generatedRecordNamespaces = new Set<BuilderNamespace>(
+  builderNamespaces.filter(
+    (namespace) => namespace !== "pages" && namespace !== "marketplaceProduct"
+  )
+);
+
+const isGeneratedRecordCreatePatch = (
+  namespace: BuilderNamespace,
+  patch: BuilderPatch
+): boolean => {
+  if (patch.op !== "add") {
+    return false;
+  }
+  if (generatedRecordNamespaces.has(namespace)) {
+    return patch.path.length <= 1;
+  }
+  if (namespace !== "pages") {
+    return false;
+  }
+  return (
+    patch.path.length === 0 ||
+    (patch.path.length <= 2 &&
+      typeof patch.path[0] === "string" &&
+      pageGeneratedRecordPaths.has(patch.path[0]))
+  );
+};
+
+const isGeneratedRecordContainerReplacePatch = (
+  namespace: BuilderNamespace,
+  patch: BuilderPatch
+): boolean => {
+  if (patch.op !== "replace") {
+    return false;
+  }
+  if (generatedRecordNamespaces.has(namespace)) {
+    return patch.path.length <= 1;
+  }
+  if (namespace !== "pages") {
+    return false;
+  }
+  return (
+    patch.path.length === 0 ||
+    (patch.path.length <= 2 &&
+      typeof patch.path[0] === "string" &&
+      pageGeneratedRecordPaths.has(patch.path[0]))
+  );
+};
+
+const isGeneratedRecordWritePatch = (
+  namespace: BuilderNamespace,
+  patch: BuilderPatch
+): boolean => {
+  if (patch.op === "add") {
+    return isGeneratedRecordCreatePatch(namespace, patch);
+  }
+  return isGeneratedRecordContainerReplacePatch(namespace, patch);
+};
+
+const isGeneratedRecordIdFieldPatch = (
+  namespace: BuilderNamespace,
+  patch: BuilderPatch
+) => {
+  if (patch.op !== "add" && patch.op !== "replace" && patch.op !== "remove") {
+    return false;
+  }
+  if (generatedRecordNamespaces.has(namespace)) {
+    return patch.path.length === 2 && patch.path[1] === "id";
+  }
+  if (namespace !== "pages") {
+    return false;
+  }
+  return (
+    patch.path.length === 3 &&
+    typeof patch.path[0] === "string" &&
+    pageGeneratedRecordPaths.has(patch.path[0]) &&
+    patch.path[2] === "id"
+  );
+};
+
 export const builderPatchChangeSchema: z.ZodType<
   BuilderPatchChange,
   z.ZodTypeDef,
   unknown
-> = z.object({
-  namespace: z.enum(builderNamespaces),
-  patches: z.array(builderPatchSchema),
-});
+> = z
+  .object({
+    namespace: z.enum(builderNamespaces),
+    patches: z.array(builderPatchSchema),
+  })
+  .superRefine((change, context) => {
+    for (const [index, patch] of change.patches.entries()) {
+      if (isGeneratedRecordWritePatch(change.namespace, patch)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["patches", index, "path"],
+          message:
+            `Raw patches cannot create or replace generated record collections or records in ` +
+            `namespace "${change.namespace}". Use semantic operations so Webstudio generates and preserves runtime ids.`,
+        });
+        continue;
+      }
+      if (isGeneratedRecordIdFieldPatch(change.namespace, patch) === false) {
+        continue;
+      }
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["patches", index, "path"],
+        message:
+          `Raw patches cannot change record id fields in namespace ` +
+          `"${change.namespace}". Use semantic operations so Webstudio preserves system ids.`,
+      });
+    }
+  });
 
 export const builderPatchTransactionSchema: z.ZodType<
   BuilderPatchTransaction,
@@ -77,6 +182,15 @@ export type BuilderPatchTransaction = {
   id: string;
   payload: BuilderPatchChange[];
 };
+
+export const hasGeneratedRecordCreatePatch = (
+  payload: readonly BuilderPatchChange[]
+) =>
+  payload.some((change) =>
+    change.patches.some((patch) =>
+      isGeneratedRecordCreatePatch(change.namespace, patch)
+    )
+  );
 
 export const compactBuilderPatchPayload = (
   payload: BuilderPatchChange[]

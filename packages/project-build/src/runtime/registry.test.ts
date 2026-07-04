@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
+import { z } from "zod";
 import { runtimeOperationContracts } from "../contracts/builder-runtime";
+import {
+  getRuntimeGeneratedInputPaths,
+  isRuntimeGeneratedIdInput,
+} from "../contracts/input-schema";
 import { builderRuntimeCutoverManifests } from "./cutover";
 import {
   builderRuntimeOperations,
@@ -203,17 +208,70 @@ const expectRuntimeValidationError = (operationId: string, input: unknown) => {
   throw new Error(`Expected ${operationId} to reject invalid input`);
 };
 
+const unwrapSchema = (schema: z.ZodTypeAny): z.ZodTypeAny => {
+  if (schema instanceof z.ZodOptional || schema instanceof z.ZodNullable) {
+    return unwrapSchema(schema.unwrap());
+  }
+  if (
+    schema instanceof z.ZodDefault ||
+    schema instanceof z.ZodCatch ||
+    schema instanceof z.ZodReadonly
+  ) {
+    return unwrapSchema(schema._def.innerType);
+  }
+  if (schema instanceof z.ZodEffects) {
+    return unwrapSchema(schema._def.schema);
+  }
+  return schema;
+};
+
+const getSchemaShape = (schema: z.ZodTypeAny) => {
+  const unwrapped = unwrapSchema(schema);
+  if (unwrapped instanceof z.ZodObject) {
+    return unwrapped.shape;
+  }
+};
+
 const mutationOperationIds = runtimeOperationContracts
   .filter((contract) => contract.kind === "mutation")
   .map((contract) => contract.id);
 
-test("runtime operation registry implements every runtime contract", () => {
-  const contractIds = runtimeOperationContracts.map((contract) => contract.id);
-  const operationIds = builderRuntimeOperations.map(
-    (operation) => operation.id
+test("keeps generated runtime contracts in sync with the registry", () => {
+  expect(runtimeOperationContracts).toEqual(
+    builderRuntimeOperations.map(
+      ({
+        id,
+        command,
+        client,
+        permit,
+        kind,
+        inputFields,
+        requiredInputFields,
+        inputFieldTypes,
+        readNamespaces,
+        writeNamespaces,
+        invalidatesNamespaces,
+        retryOnConflict,
+        requiresAssets,
+        requiresConfirm,
+      }) => ({
+        id,
+        command,
+        client,
+        permit,
+        kind,
+        inputFields,
+        requiredInputFields,
+        inputFieldTypes,
+        readNamespaces,
+        writeNamespaces,
+        invalidatesNamespaces,
+        retryOnConflict,
+        requiresAssets,
+        requiresConfirm,
+      })
+    )
   );
-
-  expect(operationIds).toEqual(contractIds);
 });
 
 describe("builder runtime pages", () => {
@@ -491,6 +549,86 @@ describe("builder runtime read families", () => {
 });
 
 describe("builder runtime registry", () => {
+  test("exposes complete metadata from executable runtime operations", () => {
+    for (const operation of builderRuntimeOperations) {
+      expect(operation.id).toMatch(/^[a-z]+[A-Za-z]*\.[a-z]+[A-Za-z]*$/);
+      expect(operation.command).toMatch(/^[a-z][a-z-]+$/);
+      expect(operation.client).toMatch(/^[a-z][A-Za-z]+$/);
+      expect(operation.inputFields).not.toContain("projectId");
+      for (const field of Object.keys(operation.inputFieldTypes)) {
+        expect(operation.inputFields).toContain(field);
+      }
+
+      if (operation.kind === "read") {
+        expect(operation.writeNamespaces).toEqual([]);
+        expect(operation.invalidatesNamespaces).toEqual([]);
+        expect(operation.requiresConfirm).toBe(false);
+      }
+
+      if (operation.kind === "mutation") {
+        expect(
+          operation.writeNamespaces.length +
+            operation.invalidatesNamespaces.length
+        ).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  test("keeps router adapter policy in runtime metadata", () => {
+    expect(
+      builderRuntimeOperations
+        .filter((operation) => operation.requiresAssets)
+        .map((operation) => operation.id)
+    ).toEqual([
+      "assets.list",
+      "assets.findUsage",
+      "assets.replace",
+      "assets.delete",
+    ]);
+    expect(
+      builderRuntimeOperations
+        .filter((operation) => operation.requiresConfirm)
+        .map((operation) => operation.id)
+    ).toEqual(["cssVariables.delete"]);
+  });
+
+  test("rejects client-supplied generated ids and hides top-level generated id fields", () => {
+    let generatedIdFieldCount = 0;
+
+    for (const operation of builderRuntimeOperations) {
+      const generatedIdPaths = getRuntimeGeneratedInputPaths(
+        operation.inputSchema
+      );
+      if (generatedIdPaths.length === 0) {
+        continue;
+      }
+
+      for (const path of generatedIdPaths) {
+        generatedIdFieldCount += 1;
+        let schema = operation.inputSchema;
+        for (const segment of path) {
+          if (segment === "*") {
+            schema = unwrapSchema(schema);
+            expect(schema).toBeInstanceOf(z.ZodArray);
+            schema = (schema as z.ZodArray<z.ZodTypeAny>).element;
+            continue;
+          }
+          const shape = getSchemaShape(schema);
+          expect(shape).toBeDefined();
+          schema = shape?.[segment] as z.ZodTypeAny;
+        }
+
+        expect(isRuntimeGeneratedIdInput(schema)).toBe(true);
+        expect(schema.safeParse("client-created-id").success).toBe(false);
+        if (path.length === 1) {
+          expect(operation.inputFields).not.toContain(path[0]);
+        }
+      }
+    }
+
+    expect(generatedIdFieldCount).toBeGreaterThan(0);
+  });
+
   test("implements every cutover operation", () => {
     for (const manifest of builderRuntimeCutoverManifests) {
       for (const operationId of manifest.operationIds) {

@@ -78,6 +78,18 @@ jobs:
         run: |
           pnpm lint
 
+      - name: Package boundaries
+        run: |
+          pnpm check:package-boundaries
+
+      - name: Generated API contracts
+        run: |
+          pnpm check:generated-api
+
+      - name: Generated CLI docs
+        run: |
+          pnpm check:generated-docs
+
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:

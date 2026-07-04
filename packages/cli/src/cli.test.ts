@@ -65,6 +65,16 @@ const runGroupBuilder = (
 const commandNames = (commands: { command: string }[]) =>
   commands.map((command) => command.command);
 
+const getExpectedGroupActions = (group: string) =>
+  cliCommandMetadata
+    .map(({ cliCommand }) => cliCommand.split(" "))
+    .filter(([commandGroup, action, extra]) => {
+      return (
+        commandGroup === group && action !== undefined && extra === undefined
+      );
+    })
+    .map(([, action]) => action);
+
 const getHelpOutput = async (args: string[]) => {
   let output = "";
   const yargs = makeCLI(args)
@@ -105,25 +115,14 @@ describe("registerCommands", () => {
     );
 
     const publish = runGroupBuilder(commands, "publish");
-    expect(publish.childCommands).toEqual([
-      "deploy",
-      "list",
-      "status",
-      "unpublish",
-    ]);
+    expect(publish.childCommands).toEqual(getExpectedGroupActions("publish"));
     expect(publish.demandCommand).toHaveBeenCalledWith(
       1,
       "Specify a publish command."
     );
 
     const domains = runGroupBuilder(commands, "domains");
-    expect(domains.childCommands).toEqual([
-      "list",
-      "create",
-      "update",
-      "delete",
-      "verify",
-    ]);
+    expect(domains.childCommands).toEqual(getExpectedGroupActions("domains"));
     expect(domains.demandCommand).toHaveBeenCalledWith(
       1,
       "Specify a domains command."

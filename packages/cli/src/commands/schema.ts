@@ -50,6 +50,17 @@ const cliCommands = cliCommandMetadata.map((command) => ({
   examples: (command.examples ?? []).map(formatApiUseCaseCommand),
 }));
 
+const mcpCommands = apiCommandMetadata.map((command) => ({
+  name: command.command,
+  summary: command.description,
+  method: command.method,
+  permit: command.permit,
+  inputFields: command.inputFields,
+  requiredInputFields: command.requiredInputFields,
+  inputFieldTypes: command.inputFieldTypes,
+  examples: command.examples,
+}));
+
 const commandGroups = cliCommandGroupMetadata.map(
   ({ command, description }) => ({
     name: command,
@@ -85,6 +96,7 @@ const apiSchema = {
       "webstudio://project/tools",
       "webstudio://project/guide",
     ],
+    commands: mcpCommands,
     argumentExamples: mcpArgumentExamples,
   },
   session: {

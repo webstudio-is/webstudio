@@ -36,6 +36,8 @@ import {
   getSerializedPages,
   isPathAvailable,
   isSlugAvailable,
+  folderCreateInput,
+  pageCreateInput,
   pageFieldsInput,
   pageMetaInput,
   serializePageDetails,
@@ -102,6 +104,23 @@ test("creates a page with title defaulting to name", () => {
   });
 });
 
+test("rejects client-supplied generated ids on create inputs", () => {
+  expect(
+    pageCreateInput.safeParse({
+      pageId: "client-page-id",
+      name: "Page",
+      path: "/page",
+    }).success
+  ).toBe(false);
+  expect(
+    folderCreateInput.safeParse({
+      folderId: "client-folder-id",
+      name: "Folder",
+      slug: "folder",
+    }).success
+  ).toBe(false);
+});
+
 test("creates page insertion payload", () => {
   const root = createPageRootInstance("root");
   const page = createPageValue({
@@ -138,6 +157,51 @@ test("creates page insertion payload", () => {
 });
 
 describe("serialized page helpers", () => {
+  test("resolves exact page paths before catch-all paths", () => {
+    const pages = migratePages({
+      meta: {},
+      homePage: {
+        id: "home",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "homeBody",
+      },
+      pages: [
+        {
+          id: "pricing",
+          name: "Pricing",
+          path: "/pricing",
+          title: `"Pricing"`,
+          meta: {},
+          rootInstanceId: "pricingBody",
+        },
+        {
+          id: "not-found",
+          name: "404",
+          path: "/*",
+          title: `"404"`,
+          meta: { status: "404" },
+          rootInstanceId: "notFoundBody",
+        },
+      ],
+      folders: [createRootFolder(["home", "pricing", "not-found"])],
+    });
+    const serializedPages = getSerializedPages({ pages });
+
+    expect(
+      findSerializedPageByInput(serializedPages, {
+        pagePath: "/pricing",
+      })?.id
+    ).toBe("pricing");
+    expect(
+      findSerializedPageByInput(serializedPages, {
+        pagePath: "/missing",
+      })?.id
+    ).toBe("not-found");
+  });
+
   test("serializes page summary and details with parent folder", () => {
     const pages = createDefaultPages({
       rootInstanceId: "root",

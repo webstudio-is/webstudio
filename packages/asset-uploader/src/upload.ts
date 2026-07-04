@@ -4,6 +4,7 @@ import {
   AuthorizationError,
   getProjectPlanFeatures,
 } from "@webstudio-is/trpc-interface/index.server";
+import { nanoid } from "nanoid";
 import type { Asset } from "@webstudio-is/sdk";
 import type { AssetClient } from "./client";
 import { getUniqueFilename } from "./utils/get-unique-filename";
@@ -11,24 +12,30 @@ import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
 
 type UploadData = {
-  assetId: Asset["id"];
   projectId: string;
   type: string;
   filename: string;
 };
 
+export type UploadTicket = {
+  assetId: Asset["id"];
+  name: string;
+};
+
 const UPLOADING_STALE_TIMEOUT = 1000 * 60 * 30; // 30 minutes
+const maxCreateUploadTicketAttempts = 3;
 
 export type UploadErrorCleanup = (
   name: string,
   context: AppContext
 ) => Promise<void>;
 
-export const createUploadName = async (
+export const createUploadTicket = async (
   data: UploadData,
-  context: AppContext
-): Promise<string> => {
-  const { assetId, projectId, type, filename } = data;
+  context: AppContext,
+  createId: () => Asset["id"] = nanoid
+): Promise<UploadTicket> => {
+  const { projectId, type, filename } = data;
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
     context
@@ -37,45 +44,6 @@ export const createUploadName = async (
     throw new AuthorizationError(
       "You don't have access to create this project assets"
     );
-  }
-
-  const existingUpload = await context.postgrest.client
-    .from("Asset")
-    .select(
-      `
-        name,
-        file:File!inner(status)
-      `
-    )
-    .eq("id", assetId)
-    .eq("projectId", projectId)
-    .eq("file.status", "UPLOADING")
-    .eq("file.isDeleted", false)
-    .eq("file.uploaderProjectId", projectId)
-    .maybeSingle();
-  if (existingUpload.error) {
-    throw new Error(existingUpload.error.message);
-  }
-
-  if (existingUpload.data !== null) {
-    const fileUpdate = await context.postgrest.client
-      .from("File")
-      .update({
-        // uploadFile uses createdAt as the reservation expiration timestamp
-        createdAt: new Date().toISOString(),
-      })
-      .eq("name", existingUpload.data.name)
-      .eq("status", "UPLOADING")
-      .eq("isDeleted", false)
-      .eq("uploaderProjectId", projectId)
-      .select("name")
-      .maybeSingle();
-    if (fileUpdate.error) {
-      throw new Error(fileUpdate.error.message);
-    }
-    if (fileUpdate.data !== null) {
-      return fileUpdate.data.name;
-    }
   }
 
   const { maxAssetsPerProject } = await getProjectPlanFeatures(
@@ -128,31 +96,46 @@ export const createUploadName = async (
    * Also no locking exists in Prisma, and no raw query locking like
    * "SELECT id FROM "Project" where id=? FOR UPDATE;" is shareable between sqlite and postgres.
    **/
-  const name = getUniqueFilename(sanitizeS3Key(filename));
+  for (
+    let attempt = 1;
+    attempt <= maxCreateUploadTicketAttempts;
+    attempt += 1
+  ) {
+    const assetId = createId();
+    const name = getUniqueFilename(sanitizeS3Key(filename));
 
-  const fileInsert = await context.postgrest.client.from("File").insert({
-    name,
-    status: "UPLOADING",
-    // store content type in related field
-    format: type,
-    size: 0,
-    uploaderProjectId: projectId,
-  });
-  if (fileInsert.error) {
-    throw new Error(fileInsert.error.message);
+    const fileInsert = await context.postgrest.client.from("File").insert({
+      name,
+      status: "UPLOADING",
+      // store content type in related field
+      format: type,
+      size: 0,
+      uploaderProjectId: projectId,
+    });
+    if (fileInsert.error) {
+      throw new Error(fileInsert.error.message);
+    }
+
+    const assetInsert = await context.postgrest.client.from("Asset").insert({
+      id: assetId,
+      projectId,
+      name,
+    });
+    if (assetInsert.error) {
+      await context.postgrest.client.from("File").delete().eq("name", name);
+      if (
+        assetInsert.error.code === "23505" &&
+        attempt < maxCreateUploadTicketAttempts
+      ) {
+        continue;
+      }
+      throw new Error(assetInsert.error.message);
+    }
+
+    return { assetId, name };
   }
 
-  const assetInsert = await context.postgrest.client.from("Asset").insert({
-    id: assetId,
-    projectId,
-    name,
-  });
-  if (assetInsert.error) {
-    await context.postgrest.client.from("File").delete().eq("name", name);
-    throw new Error(assetInsert.error.message);
-  }
-
-  return name;
+  throw new Error("Unable to reserve asset upload.");
 };
 
 export const uploadFile = async (
@@ -202,11 +185,27 @@ export const uploadFile = async (
     if (file.data === null) {
       throw Error("File not found");
     }
+    const projectId = file.data.uploaderProjectId;
+    if (typeof projectId !== "string") {
+      throw Error("File uploader project is missing");
+    }
+    const asset = await context.postgrest.client
+      .from("Asset")
+      .select("id, projectId, filename, description")
+      .eq("name", name)
+      .eq("projectId", projectId)
+      .single();
+    if (asset.error) {
+      throw asset.error;
+    }
+    if (asset.data === null) {
+      throw Error("Asset not found");
+    }
     return formatAsset({
-      assetId: "",
-      projectId: file.data.uploaderProjectId as string,
-      filename: null,
-      description: null,
+      assetId: asset.data.id,
+      projectId: asset.data.projectId,
+      filename: asset.data.filename,
+      description: asset.data.description,
       file: file.data,
     });
   } catch (error) {

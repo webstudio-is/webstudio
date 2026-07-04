@@ -443,7 +443,6 @@ test("wraps project api trpc calls in named functions", async () => {
     await listBreakpoints(params);
     await createBreakpoint({
       ...params,
-      id: "tablet",
       label: "Tablet",
       maxWidth: 991,
     });
@@ -1002,7 +1001,7 @@ test("uploads assets as binary requests", async () => {
   expect(fetch).toHaveBeenCalledOnce();
   const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
   expect(url.href).toBe(
-    "https://apps.webstudio.is/rest/assets/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&assetId=asset-id&width=10&height=20&format=png"
+    "https://apps.webstudio.is/rest/assets/image.png?projectId=090e6e14-ae50-4b2e-bd22-71733cec05bb&type=image&width=10&height=20&format=png"
   );
   expect(init.method).toBe("POST");
   expect(init.body).toBe(file);
@@ -1183,6 +1182,12 @@ test("uploads project asset descriptors with local data readers", async () => {
       readAssetData: async () => new Uint8Array([1, 2, 3]),
     })
   ).resolves.toEqual({ uploaded: [uploadedAsset] });
+
+  const calls = fetch.mock.calls as unknown as Array<[URL]>;
+  for (const [request] of calls) {
+    const url = new URL(request.toString());
+    expect(url.searchParams.has("assetId")).toBe(false);
+  }
 });
 
 test("normalizes synced project bundles for local storage", () => {
@@ -1291,6 +1296,7 @@ test("imports project bundle with assets and retries missing asset uploads", asy
   const asset = createImageAssetFixture({ name: "image.png" });
   const bundle = createPublishedProjectBundleFixture({ assets: [asset] });
   const calls: string[] = [];
+  const uploadUrls: string[] = [];
   const uploadOffsets = new Map<string, number>();
   let importAttempts = 0;
   let uploadAttempts = 0;
@@ -1313,9 +1319,19 @@ test("imports project bundle with assets and retries missing asset uploads", asy
       url.pathname === "/rest/assets/image.png"
     ) {
       uploadAttempts += 1;
+      uploadUrls.push(url.href);
       await readRequestBody(request);
       response.writeHead(200, { "content-type": "application/json" });
-      response.end(JSON.stringify({ ok: true }));
+      response.end(
+        JSON.stringify({
+          uploadedAssets: [
+            createImageAssetFixture({
+              id: `server-generated-asset-${uploadAttempts}`,
+              name: "image.png",
+            }),
+          ],
+        })
+      );
       return;
     }
 
@@ -1409,6 +1425,9 @@ test("imports project bundle with assets and retries missing asset uploads", asy
   expect(calls).toContain("GET /trpc/build.checkProjectBuildPermission");
   expect(importAttempts).toBe(2);
   expect(uploadAttempts).toBe(2);
+  expect(uploadUrls.every((url) => url.includes("assetId=") === false)).toBe(
+    true
+  );
   expect(uploadOffsets.size).toBe(2);
   expect(importAttemptMessages).toEqual(["attempt", "attempt"]);
   expect(missingAssetMessages).toEqual(["image.png"]);

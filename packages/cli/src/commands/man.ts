@@ -27,8 +27,8 @@ export const manOptions = (yargs: CommonYargsArgv) =>
   yargs
     .positional("topic", {
       type: "string",
-      describe: "Manual topic to print",
-      default: "api",
+      describe: "Manual topic to print: all, api, llm, or mcp",
+      default: "all",
     })
     .option("json", {
       type: "boolean",
@@ -36,7 +36,10 @@ export const manOptions = (yargs: CommonYargsArgv) =>
       default: false,
     });
 
-type ManOptions = StrictYargsOptionsToInterface<typeof manOptions> & {
+type ManOptions = Omit<
+  StrictYargsOptionsToInterface<typeof manOptions>,
+  "topic"
+> & {
   topic?: string;
 };
 
@@ -288,7 +291,7 @@ const inputFileShapes = {
   "domain.json": { domain: "www.example.com" },
   "patch.json": [
     {
-      id: "transaction-id",
+      id: "patch-transaction-label",
       payload: [
         {
           namespace: "pages",
@@ -398,19 +401,16 @@ const readFirstUseCases = [
 ] as const;
 
 const apiCommandsByArea = {
-  setupAndDiscovery: ["permissions"],
-  publishAndDomains: [
-    "publish deploy",
-    "publish list",
-    "publish status",
-    "publish unpublish",
-    "domains list",
-    "domains create",
-    "domains update",
-    "domains delete",
-    "domains verify",
-  ],
-} as const;
+  setupAndDiscovery: cliCommandMetadata
+    .filter(({ cliCommand }) => cliCommand === "permissions")
+    .map(({ cliCommand }) => cliCommand),
+  publishAndDomains: cliCommandMetadata
+    .filter(
+      ({ cliCommand }) =>
+        cliCommand.startsWith("publish ") || cliCommand.startsWith("domains ")
+    )
+    .map(({ cliCommand }) => cliCommand),
+};
 
 const mcpOnlyCommandIndex = mcpOnlyCommandCatalog
   .map((command) => `- ${command.command}: ${command.use}`)
@@ -471,6 +471,17 @@ const manualReplacements = {
 const apiManual = renderMarkdownTemplate(apiManualMarkdown, manualReplacements);
 const llmManual = renderMarkdownTemplate(llmManualMarkdown, manualReplacements);
 const mcpManual = renderMarkdownTemplate(mcpManualMarkdown, manualReplacements);
+const allManual = [
+  "# Webstudio Complete CLI Manual",
+  "",
+  "This is the default `webstudio man` output. It includes every manual topic so agents do not need to guess which topic to request.",
+  "",
+  "Available focused topics: `api`, `llm`, `mcp`.",
+  "",
+  apiManual,
+  llmManual,
+  mcpManual,
+].join("\n");
 
 const apiDocSections = readCliDocSections("manual-api");
 const llmDocSections = readCliDocSections("manual-llm");
@@ -492,6 +503,20 @@ const mergeDocSections = <Json extends Record<string, unknown>>(
 };
 
 const topics = {
+  all: {
+    manual: allManual,
+    get json() {
+      return {
+        topic: "all",
+        title: "Webstudio Complete CLI Manual",
+        topics: {
+          api: topics.api.json,
+          llm: topics.llm.json,
+          mcp: topics.mcp.json,
+        },
+      };
+    },
+  },
   api: {
     manual: apiManual,
     json: mergeDocSections(
@@ -609,7 +634,7 @@ const topics = {
 };
 
 export const man = (options: ManOptions) => {
-  const topic = options.topic ?? "api";
+  const topic = options.topic ?? "all";
   const entry = topics[topic as keyof typeof topics];
   if (entry === undefined) {
     console.info(`Unknown manual topic "${topic}".

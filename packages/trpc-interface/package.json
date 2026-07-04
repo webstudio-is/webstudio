@@ -35,6 +35,10 @@
     "./authorize": {
       "webstudio": "./src/authorize/role.ts",
       "import": "./src/authorize/role.ts"
+    },
+    "./authorize/project-permits": {
+      "webstudio": "./src/authorize/project-permits.ts",
+      "import": "./src/authorize/project-permits.ts"
     }
   },
   "license": "AGPL-3.0-or-later",

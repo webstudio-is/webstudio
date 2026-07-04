@@ -2,6 +2,7 @@ import {
   builderNamespaces,
   type BuilderNamespace,
 } from "./contracts/namespaces";
+import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
 import type { ProjectSessionEnvelope } from "./project-session";
 import {
@@ -27,7 +28,7 @@ import {
 import { readProjectBuildDoc } from "./docs";
 
 type PublicMcpOperationMethod = "query" | "mutation";
-type PublicMcpOperationPermit = "api" | "view" | "build" | "edit" | "admin";
+type PublicMcpOperationPermit = BuilderApiCapability;
 
 export type PublicMcpOperation<Command extends string = string> = {
   command: Command;
@@ -36,6 +37,7 @@ export type PublicMcpOperation<Command extends string = string> = {
   permit: PublicMcpOperationPermit;
   description: string;
   inputFields: readonly string[];
+  requiredInputFields: readonly string[];
   inputFieldTypes?: Partial<Record<string, "array">>;
   requiredOptions?: readonly string[];
   examples?: readonly string[];
@@ -207,16 +209,21 @@ const textInputSchema = (description: string) =>
         description,
       },
     },
+    required: ["brief"],
   }) as const satisfies ProjectSessionMcpInputSchema;
 
 const getOperationInputSchema = (
-  operation: Pick<PublicMcpOperation, "inputFields" | "inputFieldTypes">
+  operation: Pick<
+    PublicMcpOperation,
+    "inputFields" | "requiredInputFields" | "inputFieldTypes"
+  >
 ): ProjectSessionMcpInputSchema => {
   if (operation.inputFields.length === 0) {
     return emptyInputSchema;
   }
   return {
     ...emptyInputSchema,
+    required: operation.requiredInputFields,
     properties: Object.fromEntries(
       operation.inputFields.map((field) => [
         field,
@@ -258,7 +265,7 @@ const wrapMcpRootArrayInput = (
 const screenshotInputSchema = {
   ...emptyInputSchema,
   description:
-    "Capture a visual screenshot for AI vision review. Pass { url } for any URL or { path } after preview.start.",
+    "Capture a visual screenshot for AI vision review. Pass { url } for any URL or { path } after preview.start. Use repeated { path } captures to verify multiple generated-site pages.",
   properties: {
     url: {
       type: "string",
@@ -267,7 +274,7 @@ const screenshotInputSchema = {
     path: {
       type: "string",
       description:
-        "Generated-site path to capture through the active MCP preview server.",
+        "Generated-site path to capture through the active MCP preview server, for example /, /pricing, or /about.",
     },
     output: {
       type: "string",
@@ -313,12 +320,13 @@ const screenshotInputSchema = {
       description: "Maximum milliseconds to wait for page readiness.",
     },
   },
+  required: ["viewport"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
 const screenshotDiffInputSchema = {
   ...emptyInputSchema,
   description:
-    "Compare baseline/current PNG screenshots and return pixel-region plus OCR text-change evidence for AI vision review. OCR uses the system tesseract binary when available.",
+    "Compare one baseline/current PNG screenshot pair and return pixel-region plus OCR text-change evidence for AI vision review. Run once per page or viewport pair. OCR uses the system tesseract binary when available.",
   properties: {
     baselinePath: {
       type: "string",
@@ -365,7 +373,7 @@ const installOcrInputSchema = {
 const previewInputSchema = {
   ...emptyInputSchema,
   description:
-    "Start or inspect a long-lived generated-site preview server for visual verification. This serves already generated local project files; generate project files first when they are missing or stale.",
+    "Regenerate local project files when needed, build them, and start or inspect a long-lived production-like generated-site preview server for visual verification.",
   properties: {
     host: {
       type: "string",
@@ -419,6 +427,7 @@ export type ProjectSessionMcpTool = {
     method: PublicMcpOperation["method"] | "session";
     permit: PublicMcpOperation["permit"];
     inputFields: readonly string[];
+    requiredInputFields: readonly string[];
     localCapable: boolean;
     serverOnly: boolean;
     readNamespaces: readonly string[];
@@ -529,7 +538,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       baseVersion: 12,
       transactions: [
         {
-          id: "transaction-id",
+          id: "patch-transaction-label",
           payload: [
             {
               namespace: "pages",
@@ -549,6 +558,20 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   publish: [{ target: "production" }],
   "create-domain": [{ domain: "www.example.com" }],
   screenshot: [
+    {
+      path: "/",
+      output: "screenshots/home.png",
+      viewport: { width: 1440, height: 900 },
+      waitUntil: "load",
+      waitForTimeout: 250,
+    },
+    {
+      path: "/pricing",
+      output: "screenshots/pricing.png",
+      viewport: { width: 1440, height: 900 },
+      waitUntil: "load",
+      waitForTimeout: 250,
+    },
     {
       url: "https://example.com",
       output: "current.png",
@@ -583,6 +606,7 @@ const sessionTools = [
       method: "session",
       permit: "api",
       inputFields: [],
+      requiredInputFields: [],
       localCapable: true,
       serverOnly: false,
       readNamespaces: [],
@@ -604,6 +628,7 @@ const sessionTools = [
       method: "session",
       permit: "api",
       inputFields: ["brief"],
+      requiredInputFields: ["brief"],
       localCapable: true,
       serverOnly: false,
       readNamespaces: [],
@@ -625,6 +650,7 @@ const sessionTools = [
       method: "session",
       permit: "api",
       inputFields: ["brief"],
+      requiredInputFields: ["brief"],
       localCapable: true,
       serverOnly: false,
       readNamespaces: [],
@@ -643,6 +669,7 @@ const sessionTools = [
       method: "session",
       permit: "api",
       inputFields: [],
+      requiredInputFields: [],
       localCapable: true,
       serverOnly: false,
       readNamespaces: [],
@@ -672,6 +699,7 @@ const sessionTools = [
       method: "session",
       permit: "api",
       inputFields: ["namespaces"],
+      requiredInputFields: [],
       localCapable: true,
       serverOnly: false,
       readNamespaces: builderNamespaces,
@@ -690,6 +718,7 @@ const sessionTools = [
       method: "session",
       permit: "api",
       inputFields: [],
+      requiredInputFields: [],
       localCapable: true,
       serverOnly: false,
       readNamespaces: [],
@@ -718,7 +747,12 @@ const screenshotTool = {
       "viewport",
       "browser",
       "browserPath",
+      "waitUntil",
+      "waitForSelector",
+      "waitForTimeout",
+      "timeout",
     ],
+    requiredInputFields: ["viewport"],
     localCapable: false,
     serverOnly: true,
     readNamespaces: [],
@@ -746,6 +780,7 @@ const screenshotDiffTool = {
       "threshold",
       "ignoreTopNormalizedY",
     ],
+    requiredInputFields: ["baselinePath", "currentPath"],
     localCapable: false,
     serverOnly: true,
     readNamespaces: [],
@@ -767,6 +802,7 @@ const installOcrTool = {
     method: "session",
     permit: "api",
     inputFields: ["confirm"],
+    requiredInputFields: ["confirm"],
     localCapable: false,
     serverOnly: true,
     readNamespaces: [],
@@ -788,6 +824,7 @@ const importTool = {
     method: "session",
     permit: "build",
     inputFields: ["to", "assetsDir", "ignoreVersionCheck", "skipAssets"],
+    requiredInputFields: ["to"],
     localCapable: false,
     serverOnly: true,
     readNamespaces: [],
@@ -801,7 +838,7 @@ const previewTools = [
   {
     name: "preview.start",
     description:
-      "Start or reuse a generated-site preview server for fast visual verification while MCP is running. The server serves existing generated project files and does not regenerate them.",
+      "Regenerate local project files when needed, build them, then start or restart a production-like generated-site preview server for fast visual verification while MCP is running.",
     inputSchema: previewInputSchema,
     mcpExamples: getMcpExamples("preview.start"),
     annotations: {
@@ -810,6 +847,7 @@ const previewTools = [
       method: "session",
       permit: "api",
       inputFields: ["host", "port"],
+      requiredInputFields: [],
       localCapable: false,
       serverOnly: true,
       readNamespaces: [],
@@ -830,6 +868,7 @@ const previewTools = [
       method: "session",
       permit: "api",
       inputFields: [],
+      requiredInputFields: [],
       localCapable: false,
       serverOnly: true,
       readNamespaces: [],
@@ -898,6 +937,7 @@ export const listProjectSessionMcpTools = (
       method: operation.method,
       permit: operation.permit,
       inputFields: operation.inputFields,
+      requiredInputFields: operation.requiredInputFields,
       localCapable: operation.localCapable,
       serverOnly: operation.serverOnly,
       readNamespaces: operation.readNamespaces,
@@ -1224,6 +1264,7 @@ const getMetaGuide = (
       method: tool.annotations.method,
       permit: tool.annotations.permit,
       inputFields: tool.annotations.inputFields,
+      requiredInputFields: tool.annotations.requiredInputFields,
       mcpExamples: tool.mcpExamples ?? [],
       cliRequiredOptions: tool.cliRequiredOptions ?? [],
       cliExamples: tool.cliExamples ?? [],
@@ -1242,6 +1283,7 @@ const getMoreTools = (
     description: tool.description,
     inputSchema: tool.inputSchema,
     inputFields: tool.annotations.inputFields,
+    requiredInputFields: tool.annotations.requiredInputFields,
     mcpExamples: tool.mcpExamples ?? [],
     cliRequiredOptions: tool.cliRequiredOptions ?? [],
     cliExamples: tool.cliExamples ?? [],

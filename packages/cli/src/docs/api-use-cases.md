@@ -48,9 +48,8 @@ Commands:
 Commands:
 
 - webstudio schema api --json
-- webstudio man api --json
+- webstudio man --json
 - webstudio man llm --json
-- webstudio man mcp --json
 - MCP tool: meta.index {}
 - MCP tool: meta.guide {"brief":"Create a pricing page"}
 - MCP tool: meta.get_more_tools {"brief":"update-styles"}
@@ -80,20 +79,24 @@ Commands:
 
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
 - MCP tool: preview.status {}
-- MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
-- MCP tool: screenshot.diff {"baselinePath":"before.png","currentPath":"current.png","outputDir":".webstudio/screenshots"}
+- MCP tool: screenshot {"path":"/","output":".webstudio/screenshots/home-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot {"path":"/pricing","output":".webstudio/screenshots/pricing-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot.diff {"baselinePath":".webstudio/screenshots/home-before.png","currentPath":".webstudio/screenshots/home-current.png","outputDir":".webstudio/screenshots/diff"}
+- MCP tool: screenshot.diff {"baselinePath":".webstudio/screenshots/pricing-before.png","currentPath":".webstudio/screenshots/pricing-current.png","outputDir":".webstudio/screenshots/diff"}
 - MCP tool: vision.install-ocr {"confirm":true}
 
 Notes:
 
-- Use this after page/content/style mutations and after generated project files are current so a vision-capable AI can see what was actually built.
+- Use this after page/content/style mutations and after generated project files are current so a vision-capable AI can see the production-like generated site.
+- For multi-page work, capture every changed page by `path` through the same preview server; no click navigation is required.
+- After MCP mutations, path screenshots regenerate/restart preview as needed before capture; when preview is fresh, repeated path screenshots reuse the running server.
 - Use waitForSelector when the rendered app has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
 - For a fresh checkout, copied fixture, or newly generated app, run npm install or pnpm install in the generated project before preview.start or webstudio preview.
-- If preview fails with a missing generated-app command/package such as react-router or vite, install the generated app dependencies and retry.
-- When a baseline exists, use screenshot.diff to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches.
+- If preview fails with a missing generated-app command/package such as react-router, react-router-serve, or vite, install the generated app dependencies and retry.
+- When a baseline exists, use screenshot.diff once per baseline/current page or viewport pair to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches.
 - If screenshot.diff reports OCR unavailable and the user agrees to install it, call vision.install-ocr {"confirm":true}; otherwise continue with pixel diff and visual inspection.
 - Compare the PNG, OCR text evidence, and diff artifacts against the user's intent for layout, typography, colors, spacing, imagery, and responsive framing; then iterate with focused mutations.
-- Root CLI equivalent: webstudio preview --template ssg, then webstudio screenshot <url> --output current.png.
+- Root CLI equivalent: webstudio preview, then webstudio screenshot <url> --output current.png.
 
 ## List pages
 
@@ -140,7 +143,7 @@ Commands:
 
 Commands:
 
-- MCP tool: update-project-settings {"settings":"project-settings.json contents"}
+- MCP tool: update-project-settings {"meta":{"siteName":"Acme"}}
 
 ## List redirects
 
@@ -152,20 +155,20 @@ Commands:
 
 Commands:
 
-- MCP tool: create-redirect {"oldPath":"/old","newPath":"/new","status":301}
+- MCP tool: create-redirect {"old":"/old","new":"/new","status":301}
 
 ## Update redirect
 
 Commands:
 
-- MCP tool: update-redirect {"oldPath":"/old","newPath":"/newer","status":302}
-- MCP tool: update-redirect {"oldPath":"/old","status":null}
+- MCP tool: update-redirect {"old":"/old","values":{"new":"/newer","status":302}}
+- MCP tool: update-redirect {"old":"/old","values":{"status":null}}
 
 ## Delete redirect
 
 Commands:
 
-- MCP tool: delete-redirect {"oldPath":"/old"}
+- MCP tool: delete-redirect {"old":"/old"}
 
 ## List breakpoints
 
@@ -177,21 +180,21 @@ Commands:
 
 Commands:
 
-- MCP tool: create-breakpoint {"breakpointId":"tablet","label":"Tablet","maxWidth":991}
+- MCP tool: create-breakpoint {"label":"Tablet","maxWidth":991}
 
 ## Update breakpoint
 
 Commands:
 
-- MCP tool: update-breakpoint {"breakpointId":"tablet","label":"Tablet","maxWidth":1023}
-- MCP tool: update-breakpoint {"breakpointId":"tablet","condition":null,"minWidth":768}
-- MCP tool: update-breakpoint {"breakpointId":"tablet","minWidth":null,"maxWidth":null,"condition":"(hover: hover)"}
+- MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"label":"Tablet","maxWidth":1023}}
+- MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"condition":null,"minWidth":768}}
+- MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"minWidth":null,"maxWidth":null,"condition":"(hover: hover)"}}
 
 ## Delete breakpoint
 
 Commands:
 
-- MCP tool: delete-breakpoint {"breakpointId":"tablet","confirm":true}
+- MCP tool: delete-breakpoint {"breakpointId":"tablet"}
 
 ## Duplicate page
 
@@ -233,7 +236,7 @@ Commands:
 
 Commands:
 
-- MCP tool: update-folder {"folderId":"<folderId>","name":"Blog","slug":"blog"}
+- MCP tool: update-folder {"folderId":"<folderId>","values":{"name":"Blog","slug":"blog"}}
 
 ## Delete folder
 
@@ -269,13 +272,13 @@ Commands:
 
 Commands:
 
-- MCP tool: clone-instance {"sourceInstanceId":"<instanceId>","parentInstanceId":"<targetParentId>"}
+- MCP tool: clone-instance {"sourceInstanceId":"<instanceId>","targetParentInstanceId":"<targetParentId>"}
 
 ## Delete element subtree
 
 Commands:
 
-- MCP tool: delete-instance {"instanceId":"<instanceId>"}
+- MCP tool: delete-instance {"instanceIds":["<instanceId>"]}
 
 ## List text/expression children
 
@@ -321,7 +324,7 @@ Notes:
 
 Commands:
 
-- MCP tool: get-styles {"instanceId":"<instanceId>","includeTokens":true}
+- MCP tool: get-styles {"instanceIds":["<instanceId>"],"includeTokens":true}
 
 ## Update local styles
 
@@ -339,7 +342,7 @@ Commands:
 
 Commands:
 
-- MCP tool: replace-styles {"replacements":"replace.json contents"}
+- MCP tool: replace-styles {"property":"color","fromValue":{"type":"keyword","value":"red"},"toValue":{"type":"keyword","value":"blue"}}
 
 ## List design tokens
 
@@ -357,31 +360,31 @@ Commands:
 
 Commands:
 
-- MCP tool: update-design-token-styles {"styleSourceId":"<tokenId>","updates":"styles.json contents"}
+- MCP tool: update-design-token-styles {"designTokenId":"<tokenId>","updates":"styles.json contents"}
 
 ## Delete design token styles
 
 Commands:
 
-- MCP tool: delete-design-token-styles {"styleSourceId":"<tokenId>","deletions":"styles.json contents"}
+- MCP tool: delete-design-token-styles {"designTokenId":"<tokenId>","deletions":"styles.json contents"}
 
 ## Attach design token to instances
 
 Commands:
 
-- MCP tool: attach-design-token {"styleSourceId":"<tokenId>","instanceIds":"instances.json contents"}
+- MCP tool: attach-design-token {"designTokenId":"<tokenId>","instanceIds":"instances.json contents"}
 
 ## Detach design token from instances
 
 Commands:
 
-- MCP tool: detach-design-token {"styleSourceId":"<tokenId>","instanceIds":"instances.json contents"}
+- MCP tool: detach-design-token {"designTokenId":"<tokenId>","instanceIds":"instances.json contents"}
 
 ## Extract design token from local styles
 
 Commands:
 
-- MCP tool: extract-design-token {"token":"token.json contents"}
+- MCP tool: extract-design-token {"instanceIds":["<instanceId>"],"name":"Brand Primary","removeLocalProps":["color"]}
 
 ## List CSS variables
 
@@ -393,19 +396,19 @@ Commands:
 
 Commands:
 
-- MCP tool: define-css-variable {"variables":"vars.json contents"}
+- MCP tool: define-css-variable {"vars":"vars.json contents"}
 
 ## Delete CSS variables
 
 Commands:
 
-- MCP tool: delete-css-variable {"names":"names.json contents","confirm":true}
+- MCP tool: delete-css-variable {"names":"names.json contents","force":true}
 
 ## Rewrite CSS variable references
 
 Commands:
 
-- MCP tool: rewrite-css-variable-refs {"variables":"variables.json contents"}
+- MCP tool: rewrite-css-variable-refs {"map":"variables.json contents"}
 
 ## List data variables
 
@@ -423,13 +426,13 @@ Commands:
 
 Commands:
 
-- MCP tool: update-variable {"variableId":"<variableId>","value":{"type":"json","value":{"count":1}}}
+- MCP tool: update-variable {"dataSourceId":"<variableId>","values":{"value":{"type":"json","value":{"count":1}}}}
 
 ## Delete data variable
 
 Commands:
 
-- MCP tool: delete-variable {"variableId":"<variableId>"}
+- MCP tool: delete-variable {"dataSourceId":"<variableId>"}
 
 ## List resources
 
@@ -441,7 +444,7 @@ Commands:
 
 Commands:
 
-- MCP tool: create-resource {"name":"Posts","method":"get","url":"\"https://api.example.com/posts\""}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","headers":[]}}
 
 ## Update resource
 
@@ -465,13 +468,13 @@ Commands:
 
 Commands:
 
-- MCP tool: upload-asset {"asset":"asset.json contents","assetsDir":".webstudio/assets"}
+- MCP tool: upload-asset {"asset":{"name":"image.png","type":"image","format":"png","meta":{"width":1200,"height":630}},"assetsDir":".webstudio/assets"}
 
 ## Upload asset batch
 
 Commands:
 
-- MCP tool: upload-assets {"assets":"assets.json contents","assetsDir":".webstudio/assets"}
+- MCP tool: upload-assets {"assets":[{"name":"image.png","type":"image","format":"png","meta":{"width":1200,"height":630}}],"assetsDir":".webstudio/assets"}
 
 ## Find asset usage
 
@@ -483,13 +486,13 @@ Commands:
 
 Commands:
 
-- MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>","confirm":true}
+- MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>"}
 
 ## Delete assets
 
 Commands:
 
-- MCP tool: delete-asset {"assetId":"<assetId>","confirm":true}
+- MCP tool: delete-asset {"assetIdsOrPrefixes":["<assetId>"],"force":true}
 
 ## Publish project
 
@@ -593,9 +596,9 @@ Commands:
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
-- MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>","confirm":true}
-- MCP tool: replace-styles {"replacements":"replace.json contents"}
-- MCP tool: rewrite-css-variable-refs {"variables":"variables.json contents"}
+- MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>"}
+- MCP tool: replace-styles {"property":"color","fromValue":{"type":"keyword","value":"red"},"toValue":{"type":"keyword","value":"blue"}}
+- MCP tool: rewrite-css-variable-refs {"map":"variables.json contents"}
 
 Notes:
 
@@ -609,11 +612,11 @@ Commands:
 - MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: list-breakpoints {}
-- MCP tool: update-breakpoint {"breakpointId":"tablet","maxWidth":1023}
-- MCP tool: get-styles {"instanceId":"<instanceId>","includeTokens":true}
+- MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"maxWidth":1023}}
+- MCP tool: get-styles {"instanceIds":["<instanceId>"],"includeTokens":true}
 - MCP tool: update-styles {"updates":"styles.json contents"}
-- MCP tool: attach-design-token {"styleSourceId":"<tokenId>","instanceIds":"instances.json contents"}
-- MCP tool: update-project-settings {"settings":"project-settings.json contents"}
+- MCP tool: attach-design-token {"designTokenId":"<tokenId>","instanceIds":"instances.json contents"}
+- MCP tool: update-project-settings {"meta":{"siteName":"Acme"}}
 
 Notes:
 
@@ -624,7 +627,7 @@ Notes:
 Commands:
 
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"title","value":{"type":"string","value":"Hello"}}
-- MCP tool: create-resource {"name":"Posts","method":"get","url":"\"https://api.example.com/posts\""}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","headers":[]}}
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
 - MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
@@ -640,7 +643,7 @@ Commands:
 - MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
-- MCP tool: create-resource {"name":"Seats","method":"get","url":"\"https://api.example.com/seats\""}
+- MCP tool: create-resource {"resource":{"name":"Seats","method":"get","url":"\"https://api.example.com/seats\"","headers":[]}}
 - MCP tool: snapshot {"include":["instances","props","resources"]}
 - MCP tool: apply-patch {"baseVersion":"<version>","transactions":"patch.json contents"}
 
@@ -655,7 +658,7 @@ Commands:
 
 - MCP tool: create-page {"name":"Account","path":"/account"}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"login":"<login>","password":"<password>"}}}}
-- MCP tool: create-resource {"name":"Session","method":"get","url":"\"https://api.example.com/session\""}
+- MCP tool: create-resource {"resource":{"name":"Session","method":"get","url":"\"https://api.example.com/session\"","headers":[]}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"user","value":{"type":"json","value":{}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
@@ -670,7 +673,7 @@ Commands:
 
 - MCP tool: create-page {"name":"Landing","path":"/landing"}
 - MCP tool: create-design-token {"tokens":"tokens.json contents"}
-- MCP tool: define-css-variable {"variables":"vars.json contents"}
+- MCP tool: define-css-variable {"vars":"vars.json contents"}
 - MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
 - MCP tool: update-styles {"updates":"styles.json contents"}
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}

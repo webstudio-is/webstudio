@@ -23,6 +23,10 @@ import {
   installTesseractForOcr,
 } from "../screenshot";
 import {
+  createLocalUploadAssetInput,
+  createLocalUploadAssetsInput,
+} from "../asset-files";
+import {
   getVisionVerificationLoop,
   getVisionWorkflowSummary,
   visualVerificationRule,
@@ -30,6 +34,11 @@ import {
 import { readCliDoc } from "../docs";
 import { apiCompatibilityHeaders } from "./api";
 import { importProject as importProjectCommand } from "./import";
+import {
+  preparePreviewProject,
+  previewDefaultTemplate,
+  validatePreviewServerOptions,
+} from "./preview";
 import type { CommonYargsArgv } from "./yargs-types";
 
 type StartableProjectSession = {
@@ -37,11 +46,165 @@ type StartableProjectSession = {
   markStale: (namespaces: readonly BuilderNamespace[]) => Promise<unknown>;
 };
 
+type McpPreviewController = Pick<
+  ReturnType<typeof createPreviewController>,
+  "startAndWait" | "status" | "resolveUrl"
+>;
+
+type McpPreviewInput = {
+  host?: string;
+  port?: number;
+};
+
+type CaptureScreenshotInput = Parameters<
+  typeof captureScreenshotWithBrowserInstall
+>[0];
+
+type McpScreenshotInput = {
+  url?: string;
+  path?: string;
+  output?: string;
+  viewport: { width: number; height: number };
+  browser?: CaptureScreenshotInput["browser"];
+  browserPath?: string;
+  waitUntil?: CaptureScreenshotInput["waitUntil"];
+  waitForSelector?: string;
+  waitForTimeout?: number;
+  timeout?: number;
+};
+
 export const prepareMcpProjectSession = async (
   session: StartableProjectSession
 ) => {
   await session.initialize();
   await session.markStale(builderNamespaces);
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && Array.isArray(value) === false;
+
+const hasAssetName = (value: unknown): value is { name: string } =>
+  isRecord(value) && typeof value.name === "string";
+
+const getMcpUploadAssetInput = (input: unknown) => {
+  if (isRecord(input) === false || hasAssetName(input.asset) === false) {
+    throw new Error("upload-asset requires an asset object.");
+  }
+  return createLocalUploadAssetInput({
+    asset: input.asset,
+    assetsDir:
+      typeof input.assetsDir === "string" ? input.assetsDir : undefined,
+    readFile,
+  });
+};
+
+const getMcpUploadAssetsInput = (input: unknown) => {
+  if (
+    isRecord(input) === false ||
+    Array.isArray(input.assets) === false ||
+    input.assets.every(hasAssetName) === false
+  ) {
+    throw new Error("upload-assets requires an assets array.");
+  }
+  return createLocalUploadAssetsInput({
+    assets: input.assets,
+    assetsDir:
+      typeof input.assetsDir === "string" ? input.assetsDir : undefined,
+    readFile,
+  });
+};
+
+const getMcpOperationInput = (command: string, input: unknown) => {
+  if (command === "upload-asset") {
+    return getMcpUploadAssetInput(input);
+  }
+  if (command === "upload-assets") {
+    return getMcpUploadAssetsInput(input);
+  }
+  return input;
+};
+
+const publicApiOperationByCommand = new Map<
+  string,
+  (typeof publicApiOperations)[number]
+>(publicApiOperations.map((operation) => [operation.command, operation]));
+
+const shouldInvalidatePreview = (command: string) =>
+  publicApiOperationByCommand.get(command)?.method === "mutation";
+
+const prepareDefaultPreviewProject = () =>
+  preparePreviewProject({
+    assets: true,
+    template: [...previewDefaultTemplate],
+    generate: true,
+    syncIfMissing: true,
+  });
+
+const createMcpPreviewHandlers = ({
+  preview,
+  isStale = () => true,
+  markFresh = () => undefined,
+  preparePreview = prepareDefaultPreviewProject,
+  captureScreenshot = captureScreenshotWithBrowserInstall,
+}: {
+  preview: McpPreviewController;
+  isStale?: () => boolean;
+  markFresh?: () => void;
+  preparePreview?: typeof prepareDefaultPreviewProject;
+  captureScreenshot?: typeof captureScreenshotWithBrowserInstall;
+}) => ({
+  async startPreview(input: McpPreviewInput) {
+    validatePreviewServerOptions({
+      host: input.host ?? "127.0.0.1",
+      port: input.port ?? 5173,
+    });
+    const previewProject = await preparePreview();
+    const result = await preview.startAndWait({
+      ...input,
+      cwd: previewProject.cwd,
+      restart: true,
+    });
+    markFresh();
+    return result;
+  },
+  async captureScreenshot(input: McpScreenshotInput) {
+    let url = input.url;
+    if (url === undefined) {
+      if (input.path === undefined) {
+        throw new Error("MCP screenshot requires url or path.");
+      }
+      if (preview.status().running === false || isStale()) {
+        const previewProject = await preparePreview();
+        await preview.startAndWait({
+          cwd: previewProject.cwd,
+          restart: true,
+        });
+        markFresh();
+      }
+      url = preview.resolveUrl(input.path);
+    }
+    return await captureScreenshot({
+      url,
+      output: input.output,
+      width: input.viewport.width,
+      height: input.viewport.height,
+      browser: input.browser ?? "auto",
+      browserPath: input.browserPath,
+      waitUntil: input.waitUntil,
+      waitForSelector: input.waitForSelector,
+      waitForTimeout: input.waitForTimeout,
+      timeout: input.timeout,
+      isJson: false,
+      isMcp: true,
+      isInteractive: false,
+      confirmInstall: async () => false,
+    });
+  },
+});
+
+export const __testing__ = {
+  createMcpPreviewHandlers,
+  getMcpOperationInput,
 };
 
 export const mcpOptions = (yargs: CommonYargsArgv) =>
@@ -79,17 +242,33 @@ export const mcp = async () => {
   const session = createCliProjectSession({ connection: apiConnection });
   await prepareMcpProjectSession(session);
   const preview = createPreviewController({ host: "127.0.0.1", port: 5173 });
+  let isPreviewStale = true;
+  const markPreviewStale = () => {
+    isPreviewStale = true;
+  };
+  const previewHandlers = createMcpPreviewHandlers({
+    preview,
+    isStale: () => isPreviewStale,
+    markFresh: () => {
+      isPreviewStale = false;
+    },
+  });
   await connectProjectSessionMcpServer({
     operations: publicApiOperations,
     createProjectSession: () => session,
-    executeOperation: ({ command, input, dryRun }) =>
-      executeProjectSessionApiOperation({
+    executeOperation: async ({ command, input, dryRun }) => {
+      const result = await executeProjectSessionApiOperation({
         command,
-        input,
+        input: getMcpOperationInput(command, input),
         connection: apiConnection,
         createProjectSession: () => session,
         dryRun,
-      }),
+      });
+      if (dryRun !== true && shouldInvalidatePreview(command)) {
+        markPreviewStale();
+      }
+      return result;
+    },
     async importProject(input) {
       importErrorMessage = "Project import failed.";
       try {
@@ -118,40 +297,15 @@ export const mcp = async () => {
         }
         throw error;
       }
+      markPreviewStale();
       return { imported: true };
     },
-    async startPreview(input) {
-      return preview.startAndWait(input);
-    },
+    startPreview: previewHandlers.startPreview,
     async getPreviewStatus() {
       return preview.status();
     },
     async captureScreenshot(input) {
-      const url =
-        input.url ??
-        (input.path === undefined ? undefined : preview.resolveUrl(input.path));
-      if (url === undefined) {
-        throw new Error("MCP screenshot requires url or path.");
-      }
-      if (input.path !== undefined) {
-        await preview.startAndWait();
-      }
-      const result = await captureScreenshotWithBrowserInstall({
-        url,
-        output: input.output,
-        width: input.viewport.width,
-        height: input.viewport.height,
-        browser: input.browser,
-        browserPath: input.browserPath,
-        waitUntil: input.waitUntil,
-        waitForSelector: input.waitForSelector,
-        waitForTimeout: input.waitForTimeout,
-        timeout: input.timeout,
-        isJson: false,
-        isMcp: true,
-        isInteractive: false,
-        confirmInstall: async () => false,
-      });
+      const result = await previewHandlers.captureScreenshot(input);
       return {
         output: result.output,
         browserPath: result.browser.path,

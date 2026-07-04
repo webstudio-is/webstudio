@@ -1,5 +1,6 @@
-import { nanoid } from "nanoid";
 import type { CompactBuild } from "@webstudio-is/project-build";
+import type { RuntimeOperationId } from "@webstudio-is/project-build/contracts/builder-runtime";
+import { createBuilderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
 import { executeBuilderRuntimeOperation } from "@webstudio-is/project-build/runtime/registry";
 import { BuilderRuntimeError } from "@webstudio-is/project-build/runtime/errors";
 import { type BuilderRuntimeMutation } from "@webstudio-is/project-build/runtime/mutation";
@@ -8,10 +9,7 @@ import { createBuilderStateFromCompactBuild } from "@webstudio-is/project-build/
 import { type Asset } from "@webstudio-is/sdk";
 import { throwApiError } from "./api-errors.server";
 
-const defaultBuilderRuntimeContext = {
-  createId: nanoid,
-  now: () => new Date(),
-};
+const defaultBuilderRuntimeContext = createBuilderRuntimeContext();
 
 export const createBuilderRuntimeState = (
   build: CompactBuild,
@@ -24,7 +22,7 @@ export const executeApiRuntimeOperation = <Result>({
   assets,
   input,
 }: {
-  id: string;
+  id: RuntimeOperationId;
   build: CompactBuild;
   assets?: Asset[];
   input: unknown;
@@ -47,7 +45,7 @@ export const executeApiRuntimeOperation = <Result>({
 export const executeApiRuntimeMutation = <
   Result extends Record<string, unknown> = Record<string, unknown>,
 >(args: {
-  id: string;
+  id: RuntimeOperationId;
   build: CompactBuild;
   assets?: Asset[];
   input: unknown;

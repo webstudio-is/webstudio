@@ -26,11 +26,32 @@ describe("builder runtime operation contracts", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  test("has unique public api commands and clients", () => {
+    const commands = runtimeOperationContracts.map(
+      (contract) => contract.command
+    );
+    const clients = runtimeOperationContracts.map(
+      (contract) => contract.client
+    );
+
+    expect(new Set(commands).size).toBe(commands.length);
+    expect(new Set(clients).size).toBe(clients.length);
+  });
+
+  test("marks content-mode operations with edit permit", () => {
+    expect(getContract("instances.updateProps").permit).toBe("edit");
+    expect(getContract("instances.deleteProps").permit).toBe("edit");
+    expect(getContract("instances.updateText").permit).toBe("edit");
+  });
+
   test("describes reads and mutations with namespace metadata", () => {
     for (const contract of runtimeOperationContracts) {
       expect(contract.readNamespaces).toBeDefined();
       expect(contract.writeNamespaces).toBeDefined();
       expect(contract.invalidatesNamespaces).toBeDefined();
+      for (const field of contract.requiredInputFields) {
+        expect(contract.inputFields).toContain(field);
+      }
 
       if (contract.kind === "read") {
         expect(contract.writeNamespaces).toEqual([]);
@@ -51,6 +72,20 @@ describe("builder runtime operation contracts", () => {
       runtimeOperationContracts.find((contract) => contract.id === "pages.list")
         ?.readNamespaces
     ).toEqual(["pages"]);
+  });
+
+  test("derives required public input fields without generated ids", () => {
+    expect(getContract("pages.create").requiredInputFields).toEqual([
+      "name",
+      "path",
+    ]);
+    expect(getContract("folders.create").requiredInputFields).toEqual([
+      "name",
+      "slug",
+    ]);
+    expect(getContract("pages.create").requiredInputFields).not.toContain(
+      "pageId"
+    );
   });
 
   test("loads full tree namespaces for mutations that can remove referenced records", () => {

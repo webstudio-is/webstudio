@@ -155,6 +155,42 @@ const expectConnection = (extra = {}) =>
     ...extra,
   });
 
+const connectionFieldNames = new Set([
+  "origin",
+  "authToken",
+  "projectId",
+  "headers",
+]);
+
+const cliAdapterInputFieldsByCommand: Partial<
+  Record<Parameters<typeof apiCommand>[0]["command"], readonly string[]>
+> = {
+  "upload-asset": ["readAssetData"],
+  "upload-assets": ["readAssetData"],
+};
+
+const expectCallUsesDocumentedInputFields = (
+  call: ReturnType<typeof vi.fn>,
+  command: Parameters<typeof apiCommand>[0]["command"]
+) => {
+  const operation = getPublicApiOperation(command);
+  const actual = call.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+  const inputFields = Object.keys(actual).filter(
+    (key) => connectionFieldNames.has(key) === false
+  );
+  const allowedFields = new Set([
+    ...operation.inputFields,
+    ...(cliAdapterInputFieldsByCommand[command] ?? []),
+  ]);
+  const unknownFields = inputFields.filter(
+    (field) => !allowedFields.has(field)
+  );
+  expect(unknownFields).toEqual([]);
+  for (const field of operation.requiredInputFields) {
+    expect(inputFields).toContain(field);
+  }
+};
+
 const expectCommandCall = async ({
   options,
   call,
@@ -174,6 +210,7 @@ const expectCommandCall = async ({
   await apiCommand({ ...options, json: true }, dependencies);
 
   expect(call).toHaveBeenCalledWith(expectConnection(connection));
+  expectCallUsesDocumentedInputFields(call, options.command);
   expectJsonOutput(options.command);
 };
 
@@ -394,7 +431,6 @@ test("passes dry-run to local-capable mutations", async () => {
     "folders.create",
     {
       projectId: "project-1",
-      folderId: undefined,
       name: "Draft",
       slug: "draft",
       parentFolderId: undefined,
@@ -514,7 +550,6 @@ test("creates folder with settings", async () => {
     },
     call: apiCalls.createFolder,
     connection: {
-      folderId: undefined,
       name: "Blog",
       slug: "blog",
       parentFolderId: "root-folder",
@@ -555,7 +590,6 @@ test("creates page with settings", async () => {
     },
     call: apiCalls.createPage,
     connection: {
-      pageId: undefined,
       name: "Pricing",
       path: "/pricing",
       title: "Pricing",
@@ -693,13 +727,11 @@ test("creates breakpoint", async () => {
   await expectCommandCall({
     options: {
       command: "create-breakpoint",
-      breakpoint: "tablet",
       label: "Tablet",
       maxWidth: 991,
     },
     call: apiCalls.createBreakpoint,
     connection: {
-      id: "tablet",
       label: "Tablet",
       minWidth: undefined,
       maxWidth: 991,
@@ -1095,7 +1127,6 @@ test("creates variable with parsed value", async () => {
     },
     call: apiCalls.createVariable,
     connection: {
-      dataSourceId: undefined,
       scopeInstanceId: "body-id",
       name: "items",
       value: { type: "string[]", value: ["a", "b"] },
@@ -1152,7 +1183,6 @@ test("creates resource from options and exposes data source", async () => {
     },
     call: apiCalls.createResource,
     connection: {
-      resourceId: undefined,
       resource: {
         name: "Posts",
         method: "get",
@@ -1160,7 +1190,6 @@ test("creates resource from options and exposes data source", async () => {
         body: undefined,
         headers: [],
       },
-      dataSourceId: undefined,
       scopeInstanceId: "body-id",
       dataSourceName: "posts",
     },

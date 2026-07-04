@@ -89,10 +89,12 @@ const createTransport = (
 ): ProjectSessionTransport & {
   loadedNamespaces: BuilderNamespace[][];
   commits: BuilderPatchTransaction[][];
+  serverOperations: Array<{ operationId: string; input: unknown }>;
   permissionReads: number;
 } => ({
   loadedNamespaces: [],
   commits: [],
+  serverOperations: [],
   permissionReads: 0,
   async fetchNamespaces(input) {
     this.loadedNamespaces.push([...input.namespaces]);
@@ -119,6 +121,7 @@ const createTransport = (
     operationId: string;
     input: unknown;
   }) {
+    this.serverOperations.push(input);
     return { operationId: input.operationId } as unknown as Result;
   },
 });
@@ -210,19 +213,43 @@ describe("project session", () => {
     const session = createSession({ storage, transport });
 
     await session.initialize();
-    const result = await session.mutate("folders.create", {
-      name: "New",
-      slug: "new",
+    const result = await session.mutate("pages.update", {
+      pageId: "page-home",
+      values: { name: "New Home" },
     });
 
     expect(result.source).toBe("remote");
     expect(result.state.committed).toBe(true);
     expect(result.version).toBe(2);
     expect(transport.commits).toHaveLength(1);
+    expect(transport.serverOperations).toEqual([]);
     expect(storage.saved.at(-1)?.version).toBe(2);
-    expect(storage.saved.at(-1)?.state.pages?.folders.has("generated-id")).toBe(
-      true
-    );
+    expect(
+      storage.saved.at(-1)?.state.pages?.pages.get("page-home")?.name
+    ).toBe("New Home");
+  });
+
+  test("runs generated-record create mutations on the server", async () => {
+    const storage = createStorage(createPersistedSnapshot());
+    const transport = createTransport();
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("folders.create", {
+      name: "New",
+      slug: "new",
+    });
+
+    expect(result.source).toBe("server");
+    expect(result.state.committed).toBe(true);
+    expect(transport.commits).toEqual([]);
+    expect(transport.serverOperations).toEqual([
+      {
+        operationId: "folders.create",
+        input: { name: "New", slug: "new" },
+      },
+    ]);
+    expect(transport.loadedNamespaces.at(-1)).toEqual(["pages"]);
   });
 
   test("refreshes required namespaces and returns conflict diagnostic", async () => {
@@ -236,9 +263,15 @@ describe("project session", () => {
     const session = createSession({ storage, transport });
 
     await session.initialize();
-    const result = await session.mutate("folders.create", {
-      name: "New",
-      slug: "new",
+    const result = await session.mutate("instances.updateProps", {
+      updates: [
+        {
+          instanceId: "instance-root",
+          name: "Title",
+          type: "string",
+          value: "Conflict",
+        },
+      ],
     });
 
     expect(result.state.committed).toBe(false);
@@ -246,7 +279,7 @@ describe("project session", () => {
       expect.objectContaining({ code: "CONFLICT" }),
       expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
     ]);
-    expect(transport.loadedNamespaces).toEqual([["pages"]]);
+    expect(transport.loadedNamespaces).toEqual([["instances", "props"]]);
   });
 
   test("retries retry-safe mutations once after conflict refresh", async () => {
@@ -289,13 +322,31 @@ describe("project session", () => {
 
     await session.initialize();
     await session.mutate(
-      "folders.create",
-      { name: "First", slug: "first" },
+      "instances.updateProps",
+      {
+        updates: [
+          {
+            instanceId: "instance-root",
+            name: "Title",
+            type: "string",
+            value: "First",
+          },
+        ],
+      },
       { permit: "build" }
     );
     await session.mutate(
-      "folders.create",
-      { name: "Second", slug: "second" },
+      "instances.updateProps",
+      {
+        updates: [
+          {
+            instanceId: "instance-root",
+            name: "Title",
+            type: "string",
+            value: "Second",
+          },
+        ],
+      },
       { permit: "build" }
     );
 
@@ -351,13 +402,31 @@ describe("project session", () => {
 
     await session.initialize();
     await session.mutate(
-      "folders.create",
-      { name: "First", slug: "first" },
+      "instances.updateProps",
+      {
+        updates: [
+          {
+            instanceId: "instance-root",
+            name: "Title",
+            type: "string",
+            value: "First",
+          },
+        ],
+      },
       { permit: "build" }
     );
     await session.mutate(
-      "folders.create",
-      { name: "Second", slug: "second" },
+      "instances.updateProps",
+      {
+        updates: [
+          {
+            instanceId: "instance-root",
+            name: "Title",
+            type: "string",
+            value: "Second",
+          },
+        ],
+      },
       { permit: "build" }
     );
 

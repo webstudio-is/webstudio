@@ -1,10 +1,13 @@
 import type {
   RuntimeOperationContract,
   RuntimeOperationId,
+  RuntimeOperationStateContract,
 } from "./contracts/builder-runtime";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
+import { hasGeneratedRecordCreatePatch } from "./contracts/patch";
+import type { BuilderApiCapability } from "./contracts/permissions";
 import type { BuilderRuntimeContext } from "./runtime/context";
 import { BuilderRuntimeError } from "./runtime/errors";
 import type { BuilderRuntimeMutation } from "./runtime/mutation";
@@ -55,7 +58,7 @@ export type ProjectSessionCommitResult = {
   version: number;
 };
 
-export type ProjectSessionPermit = "api" | "view" | "build" | "edit" | "admin";
+export type ProjectSessionPermit = BuilderApiCapability;
 
 export type ProjectSessionPermissions = {
   canView: boolean;
@@ -763,6 +766,16 @@ export class ProjectSession {
         ],
       });
     }
+    if (hasGeneratedRecordCreatePatch(mutation.payload)) {
+      return await this.executeServerOperation<Result>(
+        {
+          id: operationId,
+          invalidatesNamespaces: mutation.invalidatesNamespaces,
+          refetchInvalidatedNamespaces: true,
+        },
+        input
+      );
+    }
     const commit = await this.#options.transport.commitPatch({
       projectId: snapshot.projectId,
       buildId: snapshot.buildId,
@@ -887,13 +900,18 @@ export class ProjectSession {
   }
 }
 
-const emptyContract: RuntimeOperationContract = {
+const emptyContract: RuntimeOperationStateContract = {
   id: "project-session.status",
   kind: "read",
+  inputFields: [],
+  requiredInputFields: [],
+  inputFieldTypes: {},
   readNamespaces: [],
   writeNamespaces: [],
   invalidatesNamespaces: [],
   retryOnConflict: false,
+  requiresAssets: false,
+  requiresConfirm: false,
 };
 
 export const createProjectSession = (options: ProjectSessionOptions) =>

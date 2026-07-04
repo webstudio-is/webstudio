@@ -84,13 +84,8 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
   );
   cmd.command(
     ["preview"],
-    "Run the generated project dev server for visual verification",
-    (yargs: CommonYargsArgv) => {
-      return previewOptions(yargs).demandOption(
-        "template",
-        "Please specify a template to use for the preview"
-      );
-    },
+    "Build and run the generated project production preview server for visual verification",
+    previewOptions,
     preview
   );
   cmd.command(

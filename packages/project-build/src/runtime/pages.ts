@@ -19,6 +19,7 @@ import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
 import { getNamedExpressionErrors } from "./expression-validation";
+import { runtimeGeneratedIdInput } from "./generated-id-input";
 import {
   collectExclusiveInstanceIds,
   createInstanceCleanupPayload,
@@ -120,6 +121,41 @@ export const getSerializedPagePath = (
 export const normalizeSerializedPagePath = (path: string) =>
   path === "/" ? "" : path;
 
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const isSerializedPagePathMatch = (pattern: string, path: string) => {
+  if (pattern === path) {
+    return true;
+  }
+  const segments = pattern.split("/");
+  const pathSegments = path.split("/");
+  const regexParts = segments.map((segment, index) => {
+    if (segment === "*") {
+      return index === segments.length - 1 ? ".*" : "[^/]+";
+    }
+    const param = segment.match(/^:(\w+)([?*]?)$/);
+    if (param === null) {
+      return escapeRegExp(segment);
+    }
+    const modifier = param[2];
+    if (modifier === "?") {
+      return "[^/]*";
+    }
+    if (modifier === "*") {
+      return index === segments.length - 1 ? ".*" : "[^/]+";
+    }
+    return "[^/]+";
+  });
+  if (
+    segments.length !== pathSegments.length &&
+    pattern.endsWith("*") === false
+  ) {
+    return false;
+  }
+  return new RegExp(`^${regexParts.join("/")}$`).test(path);
+};
+
 export const serializePageSummary = (
   pages: SerializedPages,
   page: SerializedPage
@@ -166,8 +202,14 @@ export const findSerializedPageByInput = (
   }
   if (input.pagePath !== undefined) {
     const pagePath = normalizeSerializedPagePath(input.pagePath);
-    return pages.pages.find(
+    const exactPage = pages.pages.find(
       (page) => getSerializedPagePath(pages, page) === pagePath
+    );
+    return (
+      exactPage ??
+      pages.pages.find((page) =>
+        isSerializedPagePathMatch(getSerializedPagePath(pages, page), pagePath)
+      )
     );
   }
 };
@@ -475,7 +517,7 @@ export const createFolder = (
   const pages = getRequiredPages(state);
   const parentFolderId = input.parentFolderId ?? pages.rootFolderId;
   const parentFolder = getFolderOrThrow(pages, parentFolderId);
-  const folderId = input.folderId ?? context.createId();
+  const folderId = context.createId();
   if (pages.folders.has(folderId)) {
     return throwBuilderRuntimeError("CONFLICT", "Folder id already exists");
   }
@@ -653,7 +695,7 @@ export const pageFieldsInput = z
   });
 
 export const pageCreateInput = z.object({
-  pageId: z.string().optional(),
+  pageId: runtimeGeneratedIdInput,
   name: z.string().min(1),
   path: z.string(),
   title: z.string().optional(),
@@ -671,7 +713,7 @@ export const pageDeleteInput = z.object({
 });
 
 export const folderCreateInput = z.object({
-  folderId: z.string().optional(),
+  folderId: runtimeGeneratedIdInput,
   name: z.string().min(1),
   slug: z.string(),
   parentFolderId: z.string().optional(),
@@ -821,7 +863,7 @@ export const createPage = (
   if (expressionErrors.length > 0) {
     return throwBuilderRuntimeError("BAD_REQUEST", expressionErrors.join("\n"));
   }
-  const pageId = input.pageId ?? context.createId();
+  const pageId = context.createId();
   if (pages.pages.has(pageId)) {
     return throwBuilderRuntimeError("CONFLICT", "Page id already exists");
   }

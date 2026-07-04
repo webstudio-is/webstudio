@@ -53,6 +53,11 @@ const createState = (): BuilderState =>
     ]),
   }) as BuilderState;
 
+const context = {
+  createId: () => "generated-id",
+  now: () => new Date("2024-01-01T00:00:00.000Z"),
+};
+
 describe("project settings runtime", () => {
   test("exports reusable input contracts for router adapters", () => {
     expect(
@@ -74,9 +79,12 @@ describe("project settings runtime", () => {
     expect(redirectUpdateFieldsInput.parse({ status: null })).toMatchObject({
       status: null,
     });
+    expect(breakpointFieldsInput.parse({ label: "Tablet" })).toEqual({
+      label: "Tablet",
+    });
     expect(
-      breakpointFieldsInput.parse({ id: "tablet", label: "Tablet" })
-    ).toEqual({ id: "tablet", label: "Tablet" });
+      breakpointFieldsInput.safeParse({ id: "tablet", label: "Tablet" }).success
+    ).toBe(false);
     expect(breakpointUpdateFieldsInput.parse({ condition: null })).toEqual({
       condition: null,
     });
@@ -246,24 +254,31 @@ describe("breakpoint runtime", () => {
 
   test("creates breakpoint", () => {
     expect(
-      createBreakpoint(createState(), {
-        id: "tablet",
-        label: "Tablet",
-        maxWidth: 991,
-      })
+      createBreakpoint(
+        createState(),
+        {
+          label: "Tablet",
+          maxWidth: 991,
+        },
+        context
+      )
     ).toEqual({
       kind: "mutation",
       invalidatesNamespaces: ["breakpoints"],
       noop: false,
-      result: { breakpointId: "tablet" },
+      result: { breakpointId: "generated-id" },
       payload: [
         {
           namespace: "breakpoints",
           patches: [
             {
               op: "add",
-              path: ["tablet"],
-              value: { id: "tablet", label: "Tablet", maxWidth: 991 },
+              path: ["generated-id"],
+              value: {
+                id: "generated-id",
+                label: "Tablet",
+                maxWidth: 991,
+              },
             },
           ],
         },
@@ -286,20 +301,26 @@ describe("breakpoint runtime", () => {
     }
 
     expect(() =>
-      createBreakpoint(state, {
-        id: "overflow",
-        label: "Overflow",
-        minWidth: 1200,
-      })
+      createBreakpoint(
+        state,
+        {
+          label: "Overflow",
+          minWidth: 1200,
+        },
+        context
+      )
     ).toThrow("Breakpoint limit reached");
   });
 
   test("rejects creating a second base breakpoint", () => {
     expect(() =>
-      createBreakpoint(createState(), {
-        id: "second-base",
-        label: "Second base",
-      })
+      createBreakpoint(
+        createState(),
+        {
+          label: "Second base",
+        },
+        context
+      )
     ).toThrow("Base breakpoint already exists");
   });
 

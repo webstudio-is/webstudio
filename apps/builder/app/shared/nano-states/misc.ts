@@ -126,6 +126,8 @@ export type UploadingFileData = Simplify<
   {
     // common props
     assetId: string;
+    fingerprintId: string;
+    uploadName: string;
     type: AssetType;
     objectURL: string;
   } & (

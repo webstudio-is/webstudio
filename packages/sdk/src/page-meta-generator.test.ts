@@ -122,6 +122,75 @@ test("generate complete static page meta factory", () => {
   `);
 });
 
+test("quotes static page meta text stored without expression quotes", () => {
+  expect(
+    generatePageMeta({
+      globalScope: createScope(),
+      page: {
+        id: "",
+        name: "",
+        path: "",
+        rootInstanceId: "",
+        title: "Certification Pricing",
+        meta: {
+          description:
+            "Choose a V2P certification plan, from free to agency-grade.",
+          custom: [{ property: "og:title", content: "Certification Pricing" }],
+        },
+      },
+      dataSources: new Map(),
+      assets: new Map(),
+    })
+  ).toMatchInlineSnapshot(`
+    "export const getPageMeta = ({
+      system,
+      resources,
+    }: {
+      system: System;
+      resources: Record<string, any>;
+    }): PageMeta => {
+      return {
+        title: "Certification Pricing",
+        description: "Choose a V2P certification plan, from free to agency-grade.",
+        excludePageFromSearch: undefined,
+        language: undefined,
+        socialImageAssetName: undefined,
+        socialImageUrl: undefined,
+        status: undefined,
+        redirect: undefined,
+        content: undefined,
+        custom: [
+          {
+            property: "og:title",
+            content: "Certification Pricing",
+          },
+        ],
+      };
+    };
+    "
+  `);
+});
+
+test("preserves valid static page meta expressions", () => {
+  expect(
+    generatePageMeta({
+      globalScope: createScope(),
+      page: {
+        id: "",
+        name: "",
+        path: "",
+        rootInstanceId: "",
+        title: `"Certification" + " Pricing"`,
+        meta: {
+          description: '`Choose ${"V2P"}`',
+        },
+      },
+      dataSources: new Map(),
+      assets: new Map(),
+    })
+  ).toContain('title: "Certification" + " Pricing"');
+});
+
 test("generate asset url instead of id", () => {
   expect(
     generatePageMeta({

@@ -296,7 +296,6 @@ type AssetUpload = {
 };
 
 type AssetUploadDescriptor = {
-  id?: string;
   name: string;
   type: Asset["type"];
   format?: string;
@@ -308,29 +307,6 @@ type AssetUploadResult = { uploadedAssets?: Asset[] };
 type AssetUploadBatchResult =
   | { status: "fulfilled"; uploadedAssets: Asset[] }
   | { status: "rejected"; asset: Asset; error: unknown };
-
-const toArrayBuffer = async (data: BinaryAssetData) => {
-  if (data instanceof Blob) {
-    return data.arrayBuffer();
-  }
-  if (ArrayBuffer.isView(data)) {
-    return data.buffer.slice(
-      data.byteOffset,
-      data.byteOffset + data.byteLength
-    );
-  }
-  return data;
-};
-
-const getSha256Hash = async (data: BinaryAssetData) => {
-  const hashBuffer = await crypto.subtle.digest(
-    "SHA-256",
-    await toArrayBuffer(data)
-  );
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-};
 
 const formatError = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -359,7 +335,6 @@ const getAssetUploadUrl = ({
   );
   url.searchParams.set("projectId", projectId);
   url.searchParams.set("type", asset.type);
-  url.searchParams.set("assetId", asset.id);
   if (asset.type === "image") {
     url.searchParams.set("width", String(asset.meta.width));
     url.searchParams.set("height", String(asset.meta.height));
@@ -404,10 +379,7 @@ export const uploadAsset = async (
     throw new Error(result.errors);
   }
   return "uploadedAssets" in result && Array.isArray(result.uploadedAssets)
-    ? result.uploadedAssets.map((asset) => ({
-        ...asset,
-        id: asset.id || upload.asset.id,
-      }))
+    ? result.uploadedAssets
     : [];
 };
 
@@ -422,17 +394,13 @@ export const uploadAssets = async (
       try {
         const uploadedAssets = await retryOnce(async () => {
           const data = await params.readAssetData(asset);
-          const assetWithId = {
-            ...asset,
-            id: asset.id || (await getSha256Hash(data)),
-          };
           return await uploadAsset({
             authToken: params.authToken,
             headers: params.headers,
             origin: params.origin,
             projectId: params.projectId,
             upload: {
-              asset: assetWithId,
+              asset,
               data,
             },
           });
@@ -469,7 +437,7 @@ const toUploadAsset = ({
   projectId: string;
 }): Asset => {
   const base = {
-    id: descriptor.id ?? "",
+    id: "",
     projectId,
     name: descriptor.name,
     filename: descriptor.name,
@@ -761,7 +729,6 @@ export const getPageByPath = projectQueryInput<
 
 export const createPage = projectMutationInput<
   AuthProjectParams & {
-    pageId?: string;
     name: string;
     path: string;
     title?: string;
@@ -839,13 +806,14 @@ type BreakpointInput = {
   condition?: string;
 };
 
+type BreakpointCreateInput = Omit<BreakpointInput, "id">;
 type BreakpointUpdateInput = Partial<Omit<BreakpointInput, "id">>;
 type NullableBreakpointUpdateInput = {
   [Key in keyof BreakpointUpdateInput]?: BreakpointUpdateInput[Key] | null;
 };
 
 export const createBreakpoint = projectMutationInput<
-  AuthProjectParams & BreakpointInput
+  AuthProjectParams & BreakpointCreateInput
 >("create-breakpoint");
 
 export const updateBreakpoint = projectMutationInput<
@@ -897,7 +865,6 @@ export const listFolders = projectQueryInput<
 
 export const createFolder = projectMutationInput<
   AuthProjectParams & {
-    folderId?: string;
     name: string;
     slug: string;
     parentFolderId?: string;
@@ -948,7 +915,6 @@ export const appendInstance = projectMutationInput<
     mode?: "append" | "prepend" | "replace";
     insertIndex?: number;
     children: Array<{
-      instanceId?: string;
       component?: string;
       tag: string;
       label?: string;
@@ -982,7 +948,6 @@ export const deleteInstance = projectMutationInput<
 >("delete-instance");
 
 type PropValueInput = {
-  propId?: string;
   instanceId: string;
   name: string;
   type:
@@ -1003,7 +968,6 @@ type PropValueInput = {
 };
 
 type PropBindingInput = {
-  propId?: string;
   instanceId: string;
   name: string;
   binding:
@@ -1123,7 +1087,6 @@ type DesignTokenStyleInput = {
 export const createDesignTokens = projectMutationInput<
   AuthProjectParams & {
     tokens: Array<{
-      tokenId?: string;
       name: string;
       styles?: Record<string, unknown>;
       declarations?: DesignTokenStyleInput[];
@@ -1211,7 +1174,6 @@ export const listVariables = projectQueryInput<
 
 export const createVariable = projectMutationInput<
   AuthProjectParams & {
-    dataSourceId?: string;
     scopeInstanceId: string;
     name: string;
     value: VariableValueInput;
@@ -1253,9 +1215,7 @@ export const listResources = projectQueryInput<
 
 export const createResource = projectMutationInput<
   AuthProjectParams & {
-    resourceId?: string;
     resource: ResourceFieldsInput;
-    dataSourceId?: string;
     scopeInstanceId?: string;
     dataSourceName?: string;
   }

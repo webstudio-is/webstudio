@@ -25,6 +25,7 @@ import {
   serializeStyleDeclarations,
 } from "./style-utils";
 import { z } from "zod";
+import { runtimeGeneratedIdInput } from "./generated-id-input";
 
 const insertIndexInput = z.number().int().nonnegative();
 
@@ -35,7 +36,7 @@ export const appendInstancesInput = z.object({
   children: z
     .array(
       z.object({
-        instanceId: z.string().optional(),
+        instanceId: runtimeGeneratedIdInput,
         component: z.string().optional(),
         tag: z.string(),
         label: z.string().optional(),
@@ -839,7 +840,7 @@ export const appendInstances = (
     );
   }
   const createdInstances = input.children.map((child) => {
-    const instanceId = child.instanceId ?? context.createId();
+    const instanceId = context.createId();
     if (mutationState.instances.has(instanceId)) {
       return throwBuilderRuntimeError("CONFLICT", "Instance id already exists");
     }
