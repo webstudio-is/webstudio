@@ -6,7 +6,7 @@ Use this order. Stop only when a command returns ok:false.
 
 1. webstudio permissions --json
 2. webstudio mcp
-3. Read MCP resource webstudio://project/tools.
+3. Read MCP resources webstudio://project/tools and webstudio://project/components.
 4. Pick focused MCP read tool.
 5. Pick semantic MCP write tool.
 
@@ -16,7 +16,7 @@ Use this order. Stop only when a command returns ok:false.
 
 Use this process for user requests that change Webstudio content, layout, styles, assets, pages, redirects, resources, or publishing state:
 
-1. Discover capabilities with `webstudio man --json`, `webstudio schema api --json`, and MCP `meta.index` or `webstudio://project/tools`. Use focused topics such as `webstudio man llm --json` only after the complete manual is too large for the current context.
+1. Discover capabilities with `webstudio man --json`, `webstudio schema api --json`, MCP `meta.index`, `webstudio://project/tools`, and `webstudio://project/components`. Use focused topics such as `webstudio man llm --json` only after the complete manual is too large for the current context.
 2. Inspect current project state with semantic reads such as `list-pages`, `get-page-by-path`, `list-instances`, `inspect-instance`, `get-styles`, `list-assets`, `list-breakpoints`, and `snapshot` only when needed.
 3. Mutate the Webstudio project with semantic MCP write tools first. Prefer `append-instance`, `update-text`, `update-props`, `update-styles`, `upload-asset`, `create-page`, and page/project settings tools over raw patches.
 4. Use `apply-patch` only when no semantic tool covers the required change, and only after reading the latest snapshot/version.

@@ -57,7 +57,7 @@ Commands:
 Notes:
 
 - Use `tools/list` for machine-readable MCP tool schemas.
-- Use `resources/list` and `resources/read` for longer MCP resources such as `webstudio://project/tools` and `webstudio://project/guide`.
+- Use `resources/list` and `resources/read` for longer MCP resources such as `webstudio://project/tools`, `webstudio://project/components`, and `webstudio://project/guide`.
 
 ## Inspect and refresh MCP session cache
 

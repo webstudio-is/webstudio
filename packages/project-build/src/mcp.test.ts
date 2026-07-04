@@ -412,10 +412,11 @@ describe("project session mcp adapter", () => {
     );
   });
 
-  test("lists MCP resources for project status and tool catalog", () => {
+  test("lists MCP resources for project status, tools, and components", () => {
     expect(listProjectSessionMcpResources()).toEqual([
       expect.objectContaining({ uri: "webstudio://project/status" }),
       expect.objectContaining({ uri: "webstudio://project/tools" }),
+      expect.objectContaining({ uri: "webstudio://project/components" }),
       expect.objectContaining({ uri: "webstudio://project/guide" }),
     ]);
   });
@@ -1353,6 +1354,9 @@ describe("project session mcp adapter", () => {
     const guide = await adapter.readResource({
       uri: "webstudio://project/guide",
     });
+    const components = await adapter.readResource({
+      uri: "webstudio://project/components",
+    });
 
     expect(JSON.parse(status.contents[0]?.text ?? "{}")).toEqual(
       expect.objectContaining({
@@ -1371,10 +1375,36 @@ describe("project session mcp adapter", () => {
       expect.objectContaining({
         readThisFirst: expect.stringContaining("webstudio://project/guide"),
         startHere: expect.arrayContaining(["meta.index"]),
+        discovery: expect.objectContaining({
+          components: expect.stringContaining("webstudio://project/components"),
+        }),
         rules: expect.arrayContaining([
           expect.stringContaining(
             "Use direct value tools for fixed text/props"
           ),
+        ]),
+      })
+    );
+    expect(JSON.parse(components.contents[0]?.text ?? "{}")).toEqual(
+      expect.objectContaining({
+        source: "@webstudio-is/sdk-components-registry/metas",
+        components: expect.arrayContaining([
+          expect.objectContaining({
+            component: "@webstudio-is/sdk-components-react-radix:Accordion",
+            namespace: "@webstudio-is/sdk-components-react-radix",
+            exportName: "Accordion",
+            contentModel: expect.objectContaining({
+              children: expect.arrayContaining(["instance"]),
+              descendants: expect.arrayContaining([
+                "@webstudio-is/sdk-components-react-radix:AccordionItem",
+              ]),
+            }),
+            initialProps: expect.arrayContaining(["value", "collapsible"]),
+            props: expect.objectContaining({
+              value: expect.any(Object),
+              collapsible: expect.any(Object),
+            }),
+          }),
         ]),
       })
     );
@@ -1446,6 +1476,9 @@ describe("project session mcp adapter", () => {
         resources: expect.arrayContaining([
           expect.objectContaining({ uri: "webstudio://project/status" }),
           expect.objectContaining({ uri: "webstudio://project/tools" }),
+          expect.objectContaining({
+            uri: "webstudio://project/components",
+          }),
         ]),
       });
     } finally {

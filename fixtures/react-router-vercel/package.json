@@ -8,7 +8,8 @@
     "fixtures:build": "pnpm cli build --template vercel --template .template && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
     "build": "react-router build",
     "dev": "react-router dev",
-    "deploy": "npx vercel deploy"
+    "deploy": "npx vercel deploy",
+    "start": "react-router-serve ./build/server/index.js"
   },
   "dependencies": {
     "@react-router/dev": "^7.5.3",
@@ -28,7 +29,8 @@
     "react-router": "^7.5.3",
     "vite": "^6.3.4",
     "webstudio": "workspace:*",
-    "@webstudio-is/wsauth": "workspace:*"
+    "@webstudio-is/wsauth": "workspace:*",
+    "@react-router/serve": "^7.5.3"
   },
   "private": true,
   "type": "module",

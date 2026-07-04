@@ -38,6 +38,7 @@
     "@webstudio-is/http-client": "workspace:*",
     "@webstudio-is/project-migrations": "workspace:*",
     "@webstudio-is/protocol": "workspace:*",
+    "@webstudio-is/sdk-components-registry": "workspace:*",
     "acorn": "^8.14.1",
     "acorn-walk": "^8.3.4",
     "change-case": "^5.4.4",

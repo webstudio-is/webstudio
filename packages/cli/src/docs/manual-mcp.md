@@ -25,6 +25,7 @@ Useful resources:
 
 - `webstudio://project/status`: current ProjectSession status
 - `webstudio://project/tools`: operation catalog
+- `webstudio://project/components`: SDK component catalog with props, states, and content model composition constraints
 - `webstudio://project/guide`: concise discovery guide
 
 ::doc-section{field="rules"}

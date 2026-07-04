@@ -10,7 +10,8 @@
     "dev": "react-router dev",
     "typegen": "wrangler types",
     "preview": "react-router build && vite preview",
-    "deploy": "react-router build && wrangler deploy"
+    "deploy": "react-router build && wrangler deploy",
+    "start": "react-router-serve ./build/server/index.js"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.1.0",
@@ -30,7 +31,9 @@
     "vite": "^6.3.4",
     "webstudio": "workspace:*",
     "wrangler": "^4.14.1",
-    "@webstudio-is/wsauth": "workspace:*"
+    "@webstudio-is/wsauth": "workspace:*",
+    "@react-router/node": "^7.5.3",
+    "@react-router/serve": "^7.5.3"
   },
   "type": "module",
   "private": true,

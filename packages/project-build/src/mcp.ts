@@ -25,6 +25,8 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { parseComponentName } from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { readProjectBuildDoc } from "./docs";
 
 type PublicMcpOperationMethod = "query" | "mutation";
@@ -1192,6 +1194,30 @@ const startupGuidance = readProjectBuildDoc("mcp-startup-guidance").trim();
 const valuesVsBindingsRule =
   'Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, parameters, resources, or actions. Expression-backed fixed strings such as page metadata and resource URLs must be quoted JavaScript string literal expressions, for example "\\"Pricing\\"". Page and resource updates put changed fields under values.';
 
+const getComponentCatalog = () => ({
+  source: "@webstudio-is/sdk-components-registry/metas",
+  usage:
+    "Use component ids exactly as listed. Composition comes from contentModel. Props are the available public props and attributes for each component.",
+  components: [...componentMetas.entries()]
+    .map(([component, meta]) => {
+      const [namespace, exportName] = parseComponentName(component);
+      return {
+        component,
+        exportName,
+        namespace,
+        label: meta.label,
+        description: meta.description,
+        category: meta.category,
+        contentModel: meta.contentModel,
+        initialProps: meta.initialProps ?? [],
+        props: meta.props ?? {},
+        states: meta.states ?? [],
+        indexWithinAncestor: meta.indexWithinAncestor,
+      };
+    })
+    .sort((left, right) => left.component.localeCompare(right.component)),
+});
+
 const getMetaIndex = (
   tools: readonly ProjectSessionMcpTool[],
   guidance: ProjectSessionMcpGuidance | undefined
@@ -1208,6 +1234,8 @@ const getMetaIndex = (
     discovery: {
       tools: "Use MCP tools/list for machine-readable tool schemas.",
       resources: "Use MCP resources/list for longer JSON resources.",
+      components:
+        "Read webstudio://project/components for the component catalog, props, and content model.",
       guide: "Use meta.guide({ brief }) for a goal-specific workflow.",
       details:
         "Use meta.get_more_tools({ brief }) for matching params and examples.",
@@ -1336,6 +1364,13 @@ export const listProjectSessionMcpResources =
       uri: "webstudio://project/tools",
       name: "Webstudio operation tools",
       description: "Catalog-derived MCP tools available for the project.",
+      mimeType: "application/json",
+    },
+    {
+      uri: "webstudio://project/components",
+      name: "Webstudio SDK components",
+      description:
+        "Registry-derived SDK component catalog with props, states, and content model composition constraints.",
       mimeType: "application/json",
     },
     {
@@ -1639,6 +1674,17 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
               uri,
               mimeType: "application/json",
               text: JSON.stringify({ tools: listTools() }),
+            },
+          ],
+        };
+      }
+      if (uri === "webstudio://project/components") {
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(getComponentCatalog()),
             },
           ],
         };

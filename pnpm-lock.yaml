@@ -301,6 +301,9 @@ importers:
       '@webstudio-is/sdk-components-react-radix':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-radix
+      '@webstudio-is/sdk-components-registry':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-registry
       '@webstudio-is/sync-client':
         specifier: workspace:*
         version: link:../../packages/sync-client
@@ -1155,6 +1158,9 @@ importers:
       '@webstudio-is/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@webstudio-is/sdk-components-registry':
+        specifier: workspace:*
+        version: link:../sdk-components-registry
       acorn:
         specifier: ^8.14.1
         version: 8.14.1
@@ -1957,6 +1963,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@webstudio-is/sdk-components-registry':
+        specifier: workspace:*
+        version: link:../sdk-components-registry
       '@webstudio-is/template':
         specifier: workspace:*
         version: link:../template
@@ -2456,6 +2465,40 @@ importers:
       react-router:
         specifier: ^7.5.3
         version: 7.5.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+    devDependencies:
+      '@types/react':
+        specifier: ^18.2.70
+        version: 18.2.79
+      '@types/react-dom':
+        specifier: ^18.2.25
+        version: 18.2.25
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      react:
+        specifier: 18.3.0-canary-14898b6a9-20240318
+        version: 18.3.0-canary-14898b6a9-20240318
+      react-dom:
+        specifier: 18.3.0-canary-14898b6a9-20240318
+        version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.1.2)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.13.2(@types/node@22.13.10)(typescript@5.8.2))(tsx@4.19.3)
+
+  packages/sdk-components-registry:
+    dependencies:
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../sdk-components-animation
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../sdk-components-react
+      '@webstudio-is/sdk-components-react-radix':
+        specifier: workspace:*
+        version: link:../sdk-components-react-radix
     devDependencies:
       '@types/react':
         specifier: ^18.2.70

@@ -2,7 +2,7 @@
 // Edit markdown files in src/docs instead.
 export const projectBuildDocs = {
   "mcp-startup-guidance":
-    "Before editing a Webstudio project, read `webstudio://project/guide` and `webstudio://project/tools`, or call `meta.index` and `meta.guide`. Follow the guide: read ids and Builder breakpoints first, prefer semantic tools over `apply-patch`, use direct value tools for fixed text/props, use bindings only for dynamic expressions/resources/actions, quote fixed text for expression-backed fields such as page metadata and resource URLs, put page/resource update fields under `values`, do not edit generated files for normal content/design changes, and use `preview.start` plus screenshot/vision for visual work.\n",
+    "Before editing a Webstudio project, read `webstudio://project/guide`, `webstudio://project/tools`, and `webstudio://project/components`, or call `meta.index` and `meta.guide`. Follow the guide: read ids and Builder breakpoints first, use the component catalog for component ids, props, and content model composition, prefer semantic tools over `apply-patch`, use direct value tools for fixed text/props, use bindings only for dynamic expressions/resources/actions, quote fixed text for expression-backed fields such as page metadata and resource URLs, put page/resource update fields under `values`, do not edit generated files for normal content/design changes, and use `preview.start` plus screenshot/vision for visual work.\n",
 } as const;
 
 export type ProjectBuildDocName = keyof typeof projectBuildDocs;

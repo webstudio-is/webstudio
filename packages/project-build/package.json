@@ -190,6 +190,7 @@
     "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/project-migrations": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-registry": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "fast-deep-equal": "^3.1.3",
