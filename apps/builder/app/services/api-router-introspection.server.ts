@@ -39,31 +39,29 @@ const getProcedureInputSchemas = (procedure: unknown) => {
   );
 };
 
-export const getProcedureInputFields = (procedure: unknown) =>
-  getProcedureInputSchemas(procedure).flatMap(
-    (schema) =>
-      getInputSchemaMetadata(schema, {
+export const getProcedureInputSchemaMetadata = (procedure: unknown) =>
+  getProcedureInputSchemas(procedure).reduce(
+    (metadata, schema) => {
+      const schemaMetadata = getInputSchemaMetadata(schema, {
         isHiddenField: isHiddenPublicApiInputField,
-      }).inputFields
-  );
-
-export const getProcedureRequiredInputFields = (procedure: unknown) =>
-  getProcedureInputSchemas(procedure).flatMap(
-    (schema) =>
-      getInputSchemaMetadata(schema, {
-        isHiddenField: isHiddenPublicApiInputField,
-      }).requiredInputFields
-  );
-
-export const getProcedureInputFieldTypes = (procedure: unknown) =>
-  Object.assign(
-    {},
-    ...getProcedureInputSchemas(procedure).map(
-      (schema) =>
-        getInputSchemaMetadata(schema, {
-          isHiddenField: isHiddenPublicApiInputField,
-        }).inputFieldTypes
-    )
+      });
+      return {
+        inputFields: [...metadata.inputFields, ...schemaMetadata.inputFields],
+        requiredInputFields: [
+          ...metadata.requiredInputFields,
+          ...schemaMetadata.requiredInputFields,
+        ],
+        inputFieldTypes: {
+          ...metadata.inputFieldTypes,
+          ...schemaMetadata.inputFieldTypes,
+        },
+      };
+    },
+    {
+      inputFields: [] as string[],
+      requiredInputFields: [] as string[],
+      inputFieldTypes: {} as Partial<Record<string, "array">>,
+    }
   );
 
 export const getProcedurePublicApiPermit = (procedure: unknown) =>

@@ -158,7 +158,7 @@ Update a text child on an element:
 Create records with semantic operations such as create-variable,
 create-resource, create-design-token, create-page, create-folder,
 append-instance, and create-breakpoint. Raw patch rejects generated record
-collection creation/replacement, top-level record creation/replacement, and
+creation, collection replacement, record replacement with a different `id`, and
 record id field mutations in id-keyed namespaces because Webstudio must generate
 and preserve record ids.
 
@@ -168,7 +168,7 @@ and preserve record ids.
 
 - For MCP apply-patch, read the latest version with MCP snapshot before writing.
 - Reuse ids from MCP snapshot output when updating existing records.
-- Do not create or replace generated record collections or records, or mutate record id fields, with raw patch. Use semantic create operations so Webstudio generates ids.
+- Do not create generated records, replace generated record collections, replace records with different ids, or mutate record id fields with raw patch. Use semantic create operations so Webstudio generates ids.
 - If apply-patch reports a version conflict, read the latest build and regenerate the patch.
 - Prefer semantic MCP read tools for discovery, then use MCP snapshot for exact patch paths.
 

@@ -135,7 +135,6 @@ const runtimeOperationInputByCommand: Map<string, PublicApiOperationInput> =
         path: "api." + operation.id,
         client: operation.client,
         permit: operation.permit,
-        requiredInputFields: operation.requiredInputFields,
       } satisfies PublicApiOperationInput;
       return [operation.command, input];
     })

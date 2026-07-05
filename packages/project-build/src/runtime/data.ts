@@ -28,7 +28,7 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import { z } from "zod";
-import deepEqual from "fast-deep-equal";
+import deepEqual from "fast-deep-equal/es6";
 import {
   createJsonStringifyProxy,
   isPlainObject,

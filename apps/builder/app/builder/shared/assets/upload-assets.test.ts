@@ -6,7 +6,7 @@ vi.mock("~/shared/fetch.client", () => ({
   fetch: vi.fn(),
 }));
 
-const { createUploadTicket, deduplicateAssetName } = __testing__;
+const { createUploadTicket, deduplicateAssetName, uploadAsset } = __testing__;
 const fetchMock = vi.mocked(fetch);
 
 describe("upload-assets", () => {
@@ -44,6 +44,23 @@ describe("upload-assets", () => {
     expect(init.headers.get("x-auth-token")).toBe("token");
   });
 
+  test("reports non-error upload failures", async () => {
+    fetchMock.mockRejectedValue("network down");
+    const onCompleted = vi.fn();
+    const onError = vi.fn();
+
+    await uploadAsset({
+      authToken: undefined,
+      uploadName: "upload-name",
+      fileOrUrl: new URL("https://example.com/image.png"),
+      onCompleted,
+      onError,
+    });
+
+    expect(onCompleted).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledWith("network down");
+  });
+
   describe("deduplicateAssetName", () => {
     test("returns original name when no duplicates exist", () => {
       const existingNames = new Set(["other-file.png", "another-file.jpg"]);
@@ -67,6 +84,12 @@ describe("upload-assets", () => {
       const existingNames = new Set<string>();
       const result = deduplicateAssetName("no-extension", existingNames);
       expect(result).toBe("no-extension");
+    });
+
+    test("adds suffix to duplicate names without extension", () => {
+      const existingNames = new Set(["no-extension"]);
+      const result = deduplicateAssetName("no-extension", existingNames);
+      expect(result).toBe("no-extension_1");
     });
 
     test("handles empty existing names set", () => {

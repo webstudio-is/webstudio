@@ -5,6 +5,7 @@ import {
   baseComponentImportSource,
   createFrameworkComponentRegistry,
 } from "@webstudio-is/sdk-components-registry/framework";
+import * as reactRouterComponents from "@webstudio-is/sdk-components-react-router";
 import type { Framework } from "./framework";
 
 export const createFramework = async (): Promise<Framework> => {
@@ -31,6 +32,7 @@ export const createFramework = async (): Promise<Framework> => {
 
   const reactRouter = "@webstudio-is/sdk-components-react-router";
   const { components, metas } = createFrameworkComponentRegistry({
+    routerComponents: reactRouterComponents,
     routerComponentPackage: reactRouter,
   });
 

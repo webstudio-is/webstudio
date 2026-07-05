@@ -5,12 +5,10 @@ import { format } from "prettier";
 import * as React from "react";
 import {
   getApiRouterProcedures,
-  getProcedureInputFields,
-  getProcedureInputFieldTypes,
+  getProcedureInputSchemaMetadata,
   getProcedureMethod,
   getProcedurePublicApiOperation,
   getProcedurePublicApiPermit,
-  getProcedureRequiredInputFields,
 } from "../app/services/api-router-introspection.server";
 
 (globalThis as { React?: typeof React }).React = React;
@@ -47,6 +45,7 @@ const metadata = Object.fromEntries(
     if (typeof permit !== "string") {
       throw new Error(`Missing public API permit for api.${path}.`);
     }
+    const inputSchemaMetadata = getProcedureInputSchemaMetadata(procedure);
     return [
       [
         id,
@@ -61,9 +60,9 @@ const metadata = Object.fromEntries(
             "invalidatesNamespaces" in operation
               ? operation.invalidatesNamespaces
               : undefined,
-          inputFields: getProcedureInputFields(procedure),
-          requiredInputFields: getProcedureRequiredInputFields(procedure),
-          inputFieldTypes: getProcedureInputFieldTypes(procedure),
+          inputFields: inputSchemaMetadata.inputFields,
+          requiredInputFields: inputSchemaMetadata.requiredInputFields,
+          inputFieldTypes: inputSchemaMetadata.inputFieldTypes,
         },
       ],
     ];

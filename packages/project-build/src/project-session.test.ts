@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { encodeDataVariableId } from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import {
@@ -140,7 +141,6 @@ const createSession = ({
     compatibilityVersion,
     runtimeContext: {
       createId: () => "generated-id",
-      now: () => new Date("2024-01-01T00:00:00.000Z"),
     },
   });
 
@@ -250,6 +250,48 @@ describe("project session", () => {
       },
     ]);
     expect(transport.loadedNamespaces.at(-1)).toEqual(["pages"]);
+  });
+
+  test("runs generated-record replacement mutations on the server", async () => {
+    const variableId = "variable-title";
+    const state = createBuilderStateFromSnapshot(build);
+    const homePage = state.pages?.pages.get("page-home");
+    if (homePage === undefined || state.dataSources === undefined) {
+      throw new Error("Expected project session test fixture state.");
+    }
+    homePage.title = encodeDataVariableId(variableId);
+    state.dataSources.set(variableId, {
+      id: variableId,
+      scopeInstanceId: "instance-root",
+      name: "pageTitle",
+      type: "variable",
+      value: { type: "string", value: "Home" },
+    });
+    const storage = createStorage(createPersistedSnapshot({ state }));
+    const transport = createTransport();
+    const session = createSession({ storage, transport });
+
+    await session.initialize();
+    const result = await session.mutate("variables.delete", {
+      dataSourceId: variableId,
+    });
+
+    expect(result.source).toBe("server");
+    expect(result.state.committed).toBe(true);
+    expect(transport.commits).toEqual([]);
+    expect(transport.serverOperations).toEqual([
+      {
+        operationId: "variables.delete",
+        input: { dataSourceId: variableId },
+      },
+    ]);
+    expect(transport.loadedNamespaces.at(-1)).toEqual([
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+    ]);
   });
 
   test("refreshes required namespaces and returns conflict diagnostic", async () => {

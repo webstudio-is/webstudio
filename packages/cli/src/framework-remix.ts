@@ -5,6 +5,7 @@ import {
   baseComponentImportSource,
   createFrameworkComponentRegistry,
 } from "@webstudio-is/sdk-components-registry/framework";
+import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
 import type { Framework } from "./framework";
 
 export const createFramework = async (): Promise<Framework> => {
@@ -31,6 +32,7 @@ export const createFramework = async (): Promise<Framework> => {
 
   const remix = "@webstudio-is/sdk-components-react-remix";
   const { components, metas } = createFrameworkComponentRegistry({
+    routerComponents: remixComponents,
     routerComponentPackage: remix,
   });
 

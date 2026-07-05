@@ -6,9 +6,12 @@ import type {
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
-import { hasGeneratedRecordCreatePatch } from "./contracts/patch";
+import { hasGeneratedRecordWritePatch } from "./contracts/patch";
 import type { BuilderApiCapability } from "./contracts/permissions";
-import type { BuilderRuntimeContext } from "./runtime/context";
+import {
+  builderRuntimeContext,
+  type BuilderRuntimeContext,
+} from "./runtime/context";
 import { BuilderRuntimeError } from "./runtime/errors";
 import type { BuilderRuntimeMutation } from "./runtime/mutation";
 import { executeBuilderRuntimeOperation } from "./runtime/registry";
@@ -111,8 +114,16 @@ export type ProjectSessionOptions = {
   projectId: string;
   transport: ProjectSessionTransport;
   storage: ProjectSessionStorage;
-  runtimeContext: BuilderRuntimeContext;
+  runtimeContext?: BuilderRuntimeContext;
   compatibilityVersion?: string;
+};
+
+type ResolvedProjectSessionOptions = Omit<
+  ProjectSessionOptions,
+  "runtimeContext" | "compatibilityVersion"
+> & {
+  runtimeContext: BuilderRuntimeContext;
+  compatibilityVersion: string;
 };
 
 export type ProjectSessionEnvelope<Result = unknown> = {
@@ -386,14 +397,14 @@ export class ProjectSession {
   #revision: string | undefined;
   #permissions: ProjectSessionPermissions | undefined;
   #mutationQueue: Promise<unknown> = Promise.resolve();
-  #options: Required<Pick<ProjectSessionOptions, "compatibilityVersion">> &
-    ProjectSessionOptions;
+  #options: ResolvedProjectSessionOptions;
 
   constructor(options: ProjectSessionOptions) {
     this.#options = {
       ...options,
       compatibilityVersion:
         options.compatibilityVersion ?? defaultCompatibilityVersion,
+      runtimeContext: options.runtimeContext ?? builderRuntimeContext,
     };
   }
 
@@ -766,7 +777,7 @@ export class ProjectSession {
         ],
       });
     }
-    if (hasGeneratedRecordCreatePatch(mutation.payload)) {
+    if (hasGeneratedRecordWritePatch(mutation.payload)) {
       return await this.executeServerOperation<Result>(
         {
           id: operationId,

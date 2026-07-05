@@ -19,10 +19,8 @@ import { blockComponent } from "@webstudio-is/sdk";
 import { apiRouter, __testing__ } from "./api-router.server";
 import {
   getApiRouterProcedures,
-  getProcedureInputFieldTypes,
-  getProcedureInputFields,
+  getProcedureInputSchemaMetadata,
   getProcedurePublicApiPermit,
-  getProcedureRequiredInputFields,
 } from "./api-router-introspection.server";
 import {
   assertApiProjectPermit,
@@ -111,13 +109,12 @@ describe("api router build operation adapters", () => {
         continue;
       }
       const procedure = procedures[operation.path.replace(/^api\./, "")];
-      expect(getProcedureInputFields(procedure)).toEqual(operation.inputFields);
-      expect(getProcedureRequiredInputFields(procedure)).toEqual(
+      const metadata = getProcedureInputSchemaMetadata(procedure);
+      expect(metadata.inputFields).toEqual(operation.inputFields);
+      expect(metadata.requiredInputFields).toEqual(
         operation.requiredInputFields
       );
-      expect(getProcedureInputFieldTypes(procedure)).toEqual(
-        operation.inputFieldTypes
-      );
+      expect(metadata.inputFieldTypes).toEqual(operation.inputFieldTypes);
     }
   });
 

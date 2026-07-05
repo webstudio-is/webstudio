@@ -3,7 +3,6 @@ import {
   baseComponentImportSource,
   componentMetaLibraries,
   getComponentName,
-  routerComponentNames,
 } from "./shared";
 
 export type FrameworkComponentRegistry = {
@@ -12,8 +11,10 @@ export type FrameworkComponentRegistry = {
 };
 
 export const createFrameworkComponentRegistry = ({
+  routerComponents,
   routerComponentPackage,
 }: {
+  routerComponents?: Record<string, unknown>;
   routerComponentPackage?: string;
 } = {}): FrameworkComponentRegistry => {
   const components: Record<string, string> = {};
@@ -27,8 +28,11 @@ export const createFrameworkComponentRegistry = ({
     }
   }
 
-  if (routerComponentPackage !== undefined) {
-    for (const name of routerComponentNames) {
+  if (routerComponentPackage !== undefined && routerComponents !== undefined) {
+    for (const name of Object.keys(routerComponents)) {
+      if (components[name] === undefined) {
+        continue;
+      }
       components[name] = `${routerComponentPackage}:${name}`;
     }
   }

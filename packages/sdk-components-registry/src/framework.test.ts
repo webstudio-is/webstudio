@@ -24,9 +24,12 @@ test("overrides router components only when a framework provides them", () => {
     `${baseComponentImportSource}:Link`
   );
 
-  expect(
-    createFrameworkComponentRegistry({
-      routerComponentPackage: "@webstudio-is/sdk-components-react-router",
-    }).components.Link
-  ).toBe("@webstudio-is/sdk-components-react-router:Link");
+  const registry = createFrameworkComponentRegistry({
+    routerComponents: { Link: {}, routeHelper: {} },
+    routerComponentPackage: "@webstudio-is/sdk-components-react-router",
+  });
+  expect(registry.components.Link).toBe(
+    "@webstudio-is/sdk-components-react-router:Link"
+  );
+  expect(registry.components.routeHelper).toBeUndefined();
 });

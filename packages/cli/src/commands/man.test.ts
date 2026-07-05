@@ -72,7 +72,7 @@ test("prints api manual with patch workflow and examples", () => {
   expect(output).toContain("Manage marketplace metadata");
   expect(output).toContain("Create records with semantic operations");
   expect(output).toContain(
-    "Do not create or replace generated record collections or records, or mutate record id fields, with raw patch"
+    "Do not create generated records, replace generated record collections, replace records with different ids, or mutate record id fields with raw patch"
   );
   for (const { cliCommand } of cliCommandMetadata) {
     expect(output).toContain(`### ${cliCommand}`);

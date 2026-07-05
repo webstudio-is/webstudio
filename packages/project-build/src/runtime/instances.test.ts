@@ -111,7 +111,6 @@ test("rejects generated instance id collisions when appending instances", () => 
       },
       {
         createId: () => "existing",
-        now: () => new Date("2024-01-01T00:00:00.000Z"),
       }
     )
   ).toThrow("Instance id already exists");

@@ -134,11 +134,8 @@ const deduplicateAssetName = (name: string, existingNames: Set<string>) => {
   for (let index = 0; true; index += 1) {
     const suffix = index === 0 ? "" : `_${index}`;
     const lastDotAt = name.lastIndexOf(".");
-    if (lastDotAt === -1) {
-      return name;
-    }
-    const basename = name.slice(0, lastDotAt);
-    const ext = name.slice(lastDotAt);
+    const basename = lastDotAt === -1 ? name : name.slice(0, lastDotAt);
+    const ext = lastDotAt === -1 ? "" : name.slice(lastDotAt);
     const nameWithSuffix = basename + suffix + ext;
     if (!existingNames.has(nameWithSuffix)) {
       return nameWithSuffix;
@@ -208,9 +205,7 @@ const uploadAsset = async ({
 
     onCompleted(uploadData);
   } catch (error) {
-    if (error instanceof Error) {
-      onError(error.message);
-    }
+    onError(error instanceof Error ? error.message : String(error));
   }
 };
 
@@ -464,4 +459,5 @@ export const uploadAssets = async <T extends File | URL>(
 export const __testing__ = {
   createUploadTicket,
   deduplicateAssetName,
+  uploadAsset,
 };

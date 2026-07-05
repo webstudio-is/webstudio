@@ -25,7 +25,6 @@ import type { BuilderState } from "../state/builder-state";
 
 const context: BuilderRuntimeContext = {
   createId: () => "id",
-  now: () => new Date("2026-01-01T00:00:00.000Z"),
 };
 
 const state = {
@@ -658,6 +657,25 @@ describe("builder runtime registry", () => {
     expect(duplicateWithDeterministicIds()).toEqual(
       duplicateWithDeterministicIds()
     );
+  });
+
+  test("uses the default runtime context when none is provided", () => {
+    const result = executeBuilderRuntimeOperation({
+      id: "pages.create",
+      state,
+      input: {
+        projectId: "project-1",
+        name: "Generated Page",
+        path: "/generated",
+      },
+    });
+
+    expect(result).toMatchObject({
+      kind: "mutation",
+      payload: expect.arrayContaining([
+        expect.objectContaining({ namespace: "pages" }),
+      ]),
+    });
   });
 
   test("validates every mutation input at the runtime boundary", () => {

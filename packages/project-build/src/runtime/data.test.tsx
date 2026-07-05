@@ -1020,16 +1020,33 @@ test("delete data variable payload reuses mutable cleanup semantics", () => {
     </$.Body>
   );
   const [bodyVariableId] = data.dataSources.keys();
+  const pages = createDefaultPages({ rootInstanceId: "bodyId" });
+  getHomePage(pages).title = encodeDataVariableId(bodyVariableId);
 
   const { payload, deletedVariable } = createDataVariableDeletePayload({
     variableId: bodyVariableId,
     ...data,
+    pages,
   });
 
   expect(deletedVariable).toEqual(
     expect.objectContaining({ name: "bodyVariable" })
   );
+  const pageChange = payload.find((change) => change.namespace === "pages");
+  expect(pageChange?.patches).toEqual([
+    { op: "replace", path: [], value: expect.any(Object) },
+  ]);
+  if (pageChange?.patches[0]?.op !== "replace") {
+    throw new Error("Expected page replacement patch");
+  }
+  expect(getHomePage(pageChange.patches[0].value as typeof pages).title).toBe(
+    "bodyVariable"
+  );
   expect(payload).toEqual([
+    expect.objectContaining({
+      namespace: "pages",
+      patches: [{ op: "replace", path: [], value: expect.any(Object) }],
+    }),
     {
       namespace: "instances",
       patches: [

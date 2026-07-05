@@ -9,13 +9,6 @@ export const radixComponentNamespace =
   "@webstudio-is/sdk-components-react-radix";
 export const animationComponentNamespace =
   "@webstudio-is/sdk-components-animation";
-export const routerComponentNames = [
-  "Body",
-  "Link",
-  "RichTextLink",
-  "Form",
-  "RemixForm",
-] as const;
 
 export type ComponentMetaLibrary = {
   namespace?: string;

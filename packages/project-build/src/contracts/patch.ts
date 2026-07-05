@@ -78,6 +78,19 @@ const isGeneratedRecordCreatePatch = (
   );
 };
 
+const getPreservedGeneratedRecordId = (patch: BuilderPatch) => {
+  if (
+    patch.op !== "replace" ||
+    typeof patch.value !== "object" ||
+    patch.value === null ||
+    Array.isArray(patch.value)
+  ) {
+    return;
+  }
+  const id = (patch.value as { id?: unknown }).id;
+  return typeof id === "string" ? id : undefined;
+};
+
 const isGeneratedRecordContainerReplacePatch = (
   namespace: BuilderNamespace,
   patch: BuilderPatch
@@ -86,16 +99,33 @@ const isGeneratedRecordContainerReplacePatch = (
     return false;
   }
   if (generatedRecordNamespaces.has(namespace)) {
-    return patch.path.length <= 1;
+    if (patch.path.length === 0) {
+      return true;
+    }
+    const [recordId] = patch.path;
+    if (patch.path.length === 1 && typeof recordId === "string") {
+      return getPreservedGeneratedRecordId(patch) !== recordId;
+    }
+    return false;
   }
   if (namespace !== "pages") {
     return false;
   }
+  if (patch.path.length === 0) {
+    return true;
+  }
+  if (
+    patch.path.length === 2 &&
+    typeof patch.path[0] === "string" &&
+    pageGeneratedRecordPaths.has(patch.path[0]) &&
+    typeof patch.path[1] === "string"
+  ) {
+    return getPreservedGeneratedRecordId(patch) !== patch.path[1];
+  }
   return (
-    patch.path.length === 0 ||
-    (patch.path.length <= 2 &&
-      typeof patch.path[0] === "string" &&
-      pageGeneratedRecordPaths.has(patch.path[0]))
+    patch.path.length === 1 &&
+    typeof patch.path[0] === "string" &&
+    pageGeneratedRecordPaths.has(patch.path[0])
   );
 };
 
@@ -183,12 +213,12 @@ export type BuilderPatchTransaction = {
   payload: BuilderPatchChange[];
 };
 
-export const hasGeneratedRecordCreatePatch = (
+export const hasGeneratedRecordWritePatch = (
   payload: readonly BuilderPatchChange[]
 ) =>
   payload.some((change) =>
     change.patches.some((patch) =>
-      isGeneratedRecordCreatePatch(change.namespace, patch)
+      isGeneratedRecordWritePatch(change.namespace, patch)
     )
   );
 

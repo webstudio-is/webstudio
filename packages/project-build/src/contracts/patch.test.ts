@@ -4,6 +4,7 @@ import {
   builderPatchSchema,
   builderPatchTransactionSchema,
   compactBuilderPatchPayload,
+  hasGeneratedRecordWritePatch,
 } from "./patch";
 import { builderNamespaces } from "./namespaces";
 
@@ -161,6 +162,89 @@ describe("builder patch contracts", () => {
         ["payload", index + 1, "patches", 3, "path"],
       ]),
     ]);
+  });
+
+  test("detects generated record writes in patch payloads", () => {
+    expect(
+      hasGeneratedRecordWritePatch([
+        {
+          namespace: "pages",
+          patches: [{ op: "replace", path: [], value: {} }],
+        },
+      ])
+    ).toBe(true);
+    expect(
+      hasGeneratedRecordWritePatch([
+        {
+          namespace: "pages",
+          patches: [
+            {
+              op: "replace",
+              path: ["pages", "page-id", "name"],
+              value: "Home",
+            },
+          ],
+        },
+      ])
+    ).toBe(false);
+    expect(
+      hasGeneratedRecordWritePatch([
+        {
+          namespace: "props",
+          patches: [
+            {
+              op: "replace",
+              path: ["prop-id"],
+              value: { id: "prop-id", name: "Title" },
+            },
+          ],
+        },
+      ])
+    ).toBe(false);
+    expect(
+      hasGeneratedRecordWritePatch([
+        {
+          namespace: "props",
+          patches: [
+            {
+              op: "replace",
+              path: ["prop-id"],
+              value: { id: "other-prop-id", name: "Title" },
+            },
+          ],
+        },
+      ])
+    ).toBe(true);
+  });
+
+  test("allows replacing generated records when the record id is preserved", () => {
+    expect(
+      builderPatchTransactionSchema.safeParse({
+        id: "tx-1",
+        payload: [
+          {
+            namespace: "pages",
+            patches: [
+              {
+                op: "replace",
+                path: ["pages", "page-id"],
+                value: { id: "page-id", name: "Home" },
+              },
+            ],
+          },
+          {
+            namespace: "props",
+            patches: [
+              {
+                op: "replace",
+                path: ["prop-id"],
+                value: { id: "prop-id", name: "Title" },
+              },
+            ],
+          },
+        ],
+      }).success
+    ).toBe(true);
   });
 
   test("rejects raw patches that mutate generated record id fields", () => {

@@ -5,7 +5,7 @@ import {
   getInputSchemaMetadata,
   isHiddenPublicApiInputField,
 } from "../contracts/input-schema";
-import type { BuilderRuntimeContext } from "./context";
+import { builderRuntimeContext, type BuilderRuntimeContext } from "./context";
 import { z } from "zod";
 import * as assets from "./assets";
 import * as data from "./data";
@@ -860,12 +860,12 @@ export const executeBuilderRuntimeOperation = <Result = unknown>({
   id,
   state,
   input,
-  context,
+  context = builderRuntimeContext,
 }: {
   id: string;
   state: BuilderState;
   input: unknown;
-  context: BuilderRuntimeContext;
+  context?: BuilderRuntimeContext;
 }): Result => {
   return getBuilderRuntimeOperation(id).execute({
     state,

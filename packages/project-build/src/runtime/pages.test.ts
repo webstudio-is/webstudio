@@ -202,6 +202,43 @@ describe("serialized page helpers", () => {
     ).toBe("not-found");
   });
 
+  test("resolves dynamic page patterns by requested path", () => {
+    const pages = migratePages({
+      meta: {},
+      homePage: {
+        id: "home",
+        name: "Home",
+        path: "",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "homeBody",
+      },
+      pages: [
+        {
+          id: "post",
+          name: "Post",
+          path: "/blog/:slug",
+          title: `"Post"`,
+          meta: {},
+          rootInstanceId: "postBody",
+        },
+      ],
+      folders: [createRootFolder(["home", "post"])],
+    });
+    const serializedPages = getSerializedPages({ pages });
+
+    expect(
+      findSerializedPageByInput(serializedPages, {
+        pagePath: "/blog/first-post",
+      })?.id
+    ).toBe("post");
+    expect(
+      findSerializedPageByInput(serializedPages, {
+        pagePath: "/blog/first-post/comments",
+      })
+    ).toBeUndefined();
+  });
+
   test("serializes page summary and details with parent folder", () => {
     const pages = createDefaultPages({
       rootInstanceId: "root",
