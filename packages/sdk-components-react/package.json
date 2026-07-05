@@ -58,6 +58,7 @@
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "await-interaction-response": "^0.0.2",
+    "lottie-web": "^5.12.2",
     "colord": "^2.9.3",
     "micromark": "^4.0.2",
     "micromark-extension-gfm-table": "^2.1.1"
