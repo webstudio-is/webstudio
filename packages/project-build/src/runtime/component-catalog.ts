@@ -40,6 +40,44 @@ export type ComponentCatalogItem = {
   firstInstance: { component: string; tag?: string };
 };
 
+export type ComponentRegistryItem = {
+  name: string;
+  title: string;
+  description?: string;
+  type: "registry:ui";
+  docs?: string;
+  dependencies: readonly string[];
+  registryDependencies: readonly string[];
+  files: readonly {
+    path: string;
+    type: "registry:component" | "registry:file";
+    target?: string;
+    content?: string;
+  }[];
+  meta: {
+    catalogId: string;
+    source: ComponentCatalogItem["source"];
+    component: Instance["component"];
+    category: string;
+    label: string;
+    order?: number;
+    icon?: string;
+    insert: {
+      component: Instance["component"];
+      template: boolean;
+      firstInstance: { component: string; tag?: string };
+    };
+    examples: readonly {
+      name: string;
+      description: string;
+      tool: "insert-component";
+      input: {
+        component: Instance["component"];
+      };
+    }[];
+  };
+};
+
 export type BuilderComponentPanelItem = {
   name: Instance["component"];
   category: string;
@@ -157,6 +195,74 @@ export const compareComponentCatalogItems = (
   );
 };
 
+export const getComponentRegistryItemName = (
+  item: Pick<ComponentCatalogItem, "source" | "name">
+) => `${item.source === "meta" ? "component" : "template"}:${item.name}`;
+
+export const getComponentRegistryTemplateFilePath = (
+  component: Instance["component"]
+) => `webstudio/components/${encodeURIComponent(component)}.template.json`;
+
+export const toComponentRegistryItem = (
+  item: ComponentCatalogItem,
+  template?: ComponentCatalogTemplate
+): ComponentRegistryItem => {
+  const templateFilePath = getComponentRegistryTemplateFilePath(item.name);
+  return {
+    name: getComponentRegistryItemName(item),
+    title: item.label,
+    description: item.description,
+    type: "registry:ui",
+    docs: `webstudio://project/components/${encodeURIComponent(item.name)}`,
+    dependencies: [],
+    registryDependencies: [],
+    files:
+      item.source === "template"
+        ? [
+            {
+              path: templateFilePath,
+              type: "registry:file",
+              target: templateFilePath,
+              content:
+                template?.template === undefined
+                  ? undefined
+                  : `${JSON.stringify(template.template, null, 2)}\n`,
+            },
+          ]
+        : [],
+    meta: {
+      catalogId: item.catalogId,
+      source: item.source,
+      component: item.name,
+      category: item.category,
+      label: item.label,
+      order: item.order,
+      icon: item.icon,
+      insert: {
+        component: item.name,
+        template: item.source === "template",
+        firstInstance: item.firstInstance,
+      },
+      examples: [
+        {
+          name:
+            item.source === "template"
+              ? "insert-registered-template"
+              : "insert-component-instance",
+          description:
+            item.source === "template"
+              ? "Insert this item with its registered Webstudio template and required child structure."
+              : "Insert this visible component as a single Webstudio instance.",
+          tool: "insert-component",
+          input: {
+            component: item.name,
+          },
+        },
+      ],
+    },
+  };
+};
+
 export const listComponentCatalogItems = ({
   metas,
   templates,
@@ -257,6 +363,35 @@ export const listComponentCatalogItems = ({
 
   return items.sort(compareComponentCatalogItems);
 };
+
+export const listComponentRegistryItems = (
+  options: Parameters<typeof listComponentCatalogItems>[0]
+) =>
+  listComponentCatalogItems(options).map((item) =>
+    toComponentRegistryItem(item, options.templates.get(item.name))
+  );
+
+export type ComponentRegistry = {
+  $schema: string;
+  name: string;
+  homepage: string;
+  items: readonly ComponentRegistryItem[];
+};
+
+export const createComponentRegistry = ({
+  items,
+  name = "webstudio",
+  homepage = "https://webstudio.is",
+}: {
+  items: readonly ComponentRegistryItem[];
+  name?: string;
+  homepage?: string;
+}): ComponentRegistry => ({
+  $schema: "https://ui.shadcn.com/schema/registry.json",
+  name,
+  homepage,
+  items,
+});
 
 export const listComponentCatalogAvailableComponents = ({
   metas,

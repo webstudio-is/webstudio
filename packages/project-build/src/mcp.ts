@@ -49,6 +49,8 @@ import {
   isComponentAvailableForDocumentType,
   isComponentHiddenFromCatalog,
   isComponentMetaUnavailableInCatalog,
+  listComponentRegistryItems,
+  type ComponentRegistryItem,
 } from "./runtime/component-catalog";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import { webstudioJsxFragmentInputDescription } from "./runtime/jsx/bindings";
@@ -295,6 +297,58 @@ const componentFindInputSchema = {
     },
   },
   required: ["brief"],
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const registryListInputSchema = {
+  ...emptyInputSchema,
+  additionalProperties: false,
+  properties: {
+    source: {
+      type: "string",
+      enum: ["all", "component", "template"],
+      description:
+        'Registry item source filter. Defaults to "all" for components.list and "template" for templates.list.',
+    },
+    documentType: {
+      type: "string",
+      enum: ["html", "xml", "text"],
+      description:
+        'Target page document type. Defaults to "html"; XML-only items are included only for "xml".',
+    },
+    limit: {
+      type: "number",
+      description:
+        "Maximum registry items to return. Defaults to 50 and is capped at 100.",
+    },
+    offset: {
+      type: "number",
+      description: "Zero-based pagination offset for additional items.",
+    },
+  },
+  required: [],
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const templateInputSchema = {
+  ...emptyInputSchema,
+  additionalProperties: false,
+  properties: {
+    template: {
+      type: "string",
+      description:
+        "Template registry item name or component id, for example template:@webstudio-is/sdk-components-react-radix:Select or @webstudio-is/sdk-components-react-radix:Select.",
+    },
+    component: {
+      type: "string",
+      description:
+        "Template component id, for example @webstudio-is/sdk-components-react-radix:Select.",
+    },
+    name: {
+      type: "string",
+      description:
+        "Template registry item name, for example template:@webstudio-is/sdk-components-react-radix:Select.",
+    },
+  },
+  required: [],
 } as const satisfies ProjectSessionMcpInputSchema;
 
 const workflowPhaseNames = [
@@ -887,6 +941,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     { brief: "update-styles" },
   ],
   "components.summary": [{}],
+  "components.list": [{ source: "all", documentType: "html" }],
   "components.coverage-plan": [
     {},
     { documentType: "html" },
@@ -897,7 +952,12 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   ],
   "components.coverage-status": [{ pagePath: "/design-system" }],
   "components.find": [{ brief: "radix tabs dialog select" }],
+  "components.search": [{ brief: "radix tabs dialog select" }],
   "components.get": [
+    { component: "@webstudio-is/sdk-components-react-radix:Select" },
+  ],
+  "templates.list": [{ documentType: "html" }],
+  "templates.get": [
     { component: "@webstudio-is/sdk-components-react-radix:Select" },
   ],
   refresh: [{ namespaces: ["pages", "instances", "styles"] }],
@@ -1213,6 +1273,24 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
     },
   }),
   createProjectSessionMcpTool({
+    name: "components.list",
+    description:
+      "Return shadcn-compatible Webstudio registry items for insertable components and templates. Use this when you need the shared Builder/MCP component list shape.",
+    inputSchema: registryListInputSchema,
+    annotations: {
+      command: "components.list",
+      operationId: "components.list",
+      method: "session",
+      permit: "api",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
     name: "components.coverage-plan",
     description:
       'Return a paged plan for using every known component. Default is compact; pass detail:"full", detail:"roots", or detail:"parts" for more.',
@@ -1299,6 +1377,24 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
     },
   }),
   createProjectSessionMcpTool({
+    name: "components.search",
+    description:
+      'Search shadcn-compatible Webstudio component/template registry items by id, namespace, label, category, or content model. Pass a string brief, for example {"brief":"radix tabs dialog select"}.',
+    inputSchema: componentFindInputSchema,
+    annotations: {
+      command: "components.search",
+      operationId: "components.search",
+      method: "session",
+      permit: "api",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
     name: "components.get",
     description:
       "Return full metadata for one known component id, including insertability, props, states, and content model.",
@@ -1306,6 +1402,42 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
     annotations: {
       command: "components.get",
       operationId: "components.get",
+      method: "session",
+      permit: "api",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
+    name: "templates.list",
+    description:
+      "Return shadcn-compatible Webstudio registry items for registered templates only, including explicit registry:file payload metadata.",
+    inputSchema: registryListInputSchema,
+    annotations: {
+      command: "templates.list",
+      operationId: "templates.list",
+      method: "session",
+      permit: "api",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
+    name: "templates.get",
+    description:
+      "Return one shadcn-compatible Webstudio template registry item and its insertion payload metadata.",
+    inputSchema: templateInputSchema,
+    annotations: {
+      command: "templates.get",
+      operationId: "templates.get",
       method: "session",
       permit: "api",
       localCapable: true,
@@ -1838,6 +1970,64 @@ const getToolNamesInput = (input: unknown) => {
 const getComponentInput = (input: unknown) =>
   getRequiredStringInput(input, "component", "components.get");
 
+const registryListSources = ["all", "component", "template"] as const;
+type RegistryListSource = (typeof registryListSources)[number];
+
+const getRegistryListInput = (
+  input: unknown,
+  toolName: "components.list" | "templates.list",
+  defaultSource: RegistryListSource
+) => {
+  const source =
+    getOptionalStringInput(input, "source", toolName) || defaultSource;
+  if (registryListSources.includes(source as RegistryListSource) === false) {
+    throw new Error(
+      `${toolName} input.source must be one of all, component, template.`
+    );
+  }
+  const documentType =
+    getOptionalStringInput(input, "documentType", toolName) || "html";
+  if (
+    coveragePlanDocumentTypes.includes(
+      documentType as CoveragePlanDocumentType
+    ) === false
+  ) {
+    throw new Error(
+      `${toolName} input.documentType must be one of html, xml, text.`
+    );
+  }
+  const limit = Math.min(
+    100,
+    Math.max(
+      1,
+      Math.floor(getOptionalNumberInput(input, "limit", toolName) ?? 50)
+    )
+  );
+  const offset = Math.max(
+    0,
+    Math.floor(getOptionalNumberInput(input, "offset", toolName) ?? 0)
+  );
+  return {
+    source: source as RegistryListSource,
+    documentType: documentType as CoveragePlanDocumentType,
+    limit,
+    offset,
+  };
+};
+
+const getTemplateInput = (input: unknown) => {
+  const template = getOptionalStringInput(input, "template", "templates.get");
+  const component = getOptionalStringInput(input, "component", "templates.get");
+  const name = getOptionalStringInput(input, "name", "templates.get");
+  const value = template || component || name;
+  if (value === "") {
+    throw new Error(
+      "templates.get requires input.template, input.component, or input.name."
+    );
+  }
+  return value;
+};
+
 const getInsertFragmentInput = async (input: unknown) => {
   if (isPlainRecord(input) === false) {
     throw new Error(
@@ -2228,6 +2418,9 @@ const scoreTool = (tool: ProjectSessionMcpTool, brief: string) => {
   ) {
     score += 80;
   }
+  if (hasFindIntent && tool.name === "components.search") {
+    score += 120;
+  }
   if (hasFindIntent && tool.name === "components.find") {
     score += 100;
   }
@@ -2366,7 +2559,7 @@ const valuesVsBindingsRule =
 const getComponentCatalog = () => ({
   source: "@webstudio-is/sdk-components-registry/metas",
   usage:
-    'Full component catalog. Prefer components.summary, components.find({"brief":"radix select"}), and components.get({"component":"Box"}) for normal component discovery. Prefer insert-fragment for authored/styled sections. Use insert-component only when you want exactly one component template inserted automatically. Known components with contentModel.category "none" are not standalone-insertable; insert their root component template instead so required providers/parents are included.',
+    'Full component catalog. Prefer components.list({"source":"all"}), templates.list({}), components.search({"brief":"radix select"}), components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}), and templates.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for normal component discovery. Prefer insert-fragment for authored/styled sections. Use insert-component only when you want exactly one component template inserted automatically. Known components with contentModel.category "none" are not standalone-insertable; insert their root component template instead so required providers/parents are included.',
   components: [...componentMetas.entries()]
     .filter(
       ([_component, meta]) =>
@@ -2417,7 +2610,7 @@ const getComponentCatalogOverview = () => {
   return {
     source: "@webstudio-is/sdk-components-registry/metas",
     usage:
-      'Short component overview. Prefer MCP tools components.summary, components.find({"brief":"radix select"}), and components.get({"component":"Box"}) for structured discovery. Read webstudio://project/components only when you need the full catalog.',
+      'Short component overview. Prefer MCP tools components.list({"source":"all"}), templates.list({}), components.search({"brief":"radix select"}), and components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for structured discovery. Read webstudio://project/components only when you need the full catalog.',
     count: components.length,
     namespaces: Object.fromEntries([...namespaces.entries()].sort()),
     categories: Object.fromEntries([...categories.entries()].sort()),
@@ -2535,7 +2728,7 @@ const getComponentSummary = () => {
   }
   return {
     usage:
-      "Use this structured summary before reading full component resources. Do not dump/parse webstudio://project/components for common discovery. Use components.find for search and components.get for one component's full metadata.",
+      "Use this structured summary before reading full component resources. Do not dump/parse webstudio://project/components for common discovery. Use components.list for shadcn-compatible registry items, components.search for search, templates.list for templates, and components.get/templates.get for one item.",
     total: entries.length,
     namespaceCounts: Object.fromEntries([...namespaces.entries()].sort()),
     templateComponents: entries
@@ -2548,6 +2741,97 @@ const getComponentSummary = () => {
       .filter((entry) => entry.standaloneInsertable === false)
       .map((entry) => entry.component),
     components: entries,
+  };
+};
+
+const getComponentRegistryItems = () =>
+  listComponentRegistryItems({
+    metas: componentMetas,
+    templates: getComponentTemplates(),
+  });
+
+const filterRegistryItemsBySource = (
+  items: readonly ComponentRegistryItem[],
+  source: RegistryListSource
+) => {
+  if (source === "all") {
+    return items;
+  }
+  return items.filter((item) =>
+    source === "template"
+      ? item.meta.source === "template"
+      : item.meta.source === "meta"
+  );
+};
+
+const listRegistryItems = ({
+  input,
+  toolName,
+  defaultSource,
+}: {
+  input: unknown;
+  toolName: "components.list" | "templates.list";
+  defaultSource: RegistryListSource;
+}) => {
+  const { source, documentType, limit, offset } = getRegistryListInput(
+    input,
+    toolName,
+    defaultSource
+  );
+  const allItems = filterRegistryItemsBySource(
+    getComponentRegistryItems().filter((item) =>
+      isComponentAvailableForDocumentType({
+        component: item.meta.component,
+        category: item.meta.category,
+        documentType,
+      })
+    ),
+    source
+  );
+  const items = allItems.slice(offset, offset + limit);
+  return {
+    usage:
+      "Registry items use the shadcn-compatible shape plus Webstudio insertion metadata in meta. Use meta.insert.component with insert-component for automatic templates, or use insert-fragment for authored/styled JSX sections.",
+    source,
+    documentType,
+    count: items.length,
+    totalCount: allItems.length,
+    omittedCount: Math.max(0, allItems.length - offset - items.length),
+    pagination: {
+      offset,
+      limit,
+      nextOffset: offset + limit < allItems.length ? offset + limit : undefined,
+    },
+    items,
+  };
+};
+
+const getTemplateDetails = (input: unknown) => {
+  const requested = getTemplateInput(input);
+  const templateName = requested.startsWith("template:")
+    ? requested
+    : `template:${requested}`;
+  const item = getComponentRegistryItems().find(
+    (candidate) =>
+      candidate.meta.source === "template" &&
+      (candidate.name === requested ||
+        candidate.name === templateName ||
+        candidate.meta.component === requested)
+  );
+  if (item === undefined) {
+    return {
+      found: false,
+      requested,
+      usage:
+        'Template was not found in the shared registry. Use templates.list or components.list with source:"template" to discover exact template ids.',
+    };
+  }
+  const template = getComponentTemplates().get(item.meta.component);
+  return {
+    found: true,
+    ...item,
+    template: template?.template,
+    usage: `Use insert-component with component "${item.meta.insert.component}" when you want Webstudio to insert this registered template automatically. The files entry is the shadcn-compatible registry:file representation of the same template payload.`,
   };
 };
 
@@ -2847,22 +3131,23 @@ const getComponentCoverageStatus = async ({
   };
 };
 
-const getComponentFindInput = (input: unknown) => {
+const getComponentFindInput = (
+  input: unknown,
+  toolName: "components.find" | "components.search"
+) => {
   const limit = Math.min(
     25,
     Math.max(
       1,
-      Math.floor(
-        getOptionalNumberInput(input, "limit", "components.find") ?? 12
-      )
+      Math.floor(getOptionalNumberInput(input, "limit", toolName) ?? 12)
     )
   );
   const offset = Math.max(
     0,
-    Math.floor(getOptionalNumberInput(input, "offset", "components.find") ?? 0)
+    Math.floor(getOptionalNumberInput(input, "offset", toolName) ?? 0)
   );
   return {
-    brief: getRequiredStringInput(input, "brief", "components.find"),
+    brief: getRequiredStringInput(input, "brief", toolName),
     limit,
     offset,
   };
@@ -2882,8 +3167,11 @@ const compactComponentSearchEntry = (
   );
 };
 
-const findComponents = async (input: unknown) => {
-  const { brief, limit, offset } = getComponentFindInput(input);
+const findComponents = async (
+  input: unknown,
+  toolName: "components.find" | "components.search" = "components.find"
+) => {
+  const { brief, limit, offset } = getComponentFindInput(input, toolName);
   const summary = getComponentSummary();
   const normalizedBrief = normalize(brief);
   const tokens = normalizedBrief
@@ -3011,6 +3299,7 @@ const getMetaIndex = (
       "meta.index",
       "meta.guide",
       "workflow.next",
+      "components.list",
       "components.summary",
       "status",
       "permissions",
@@ -3025,7 +3314,7 @@ const getMetaIndex = (
       resources:
         "Use MCP resources/list to discover overview and full resources.",
       components:
-        'Use components.summary first, components.coverage-plan for design-system/all-component tasks, components.coverage-status({"pagePath":"/design-system"}) to verify progress, components.find({"brief":"radix select"}) to search, and components.get({"component":"Box"}) for one component. Do not dump or parse webstudio://project/components unless those focused tools are insufficient.',
+        'Use components.list({"source":"all"}) for shadcn-compatible registry items, templates.list({}) for templates, components.summary for a compact catalog, components.coverage-plan for design-system/all-component tasks, components.coverage-status({"pagePath":"/design-system"}) to verify progress, components.search({"brief":"radix select"}) to search, and components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) or templates.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for one item. Do not dump or parse webstudio://project/components unless those focused tools are insufficient.',
       guide:
         'Use meta.guide({"brief":"Create a design system page using every component"}) for a goal-specific workflow.',
       workflow:
@@ -3269,9 +3558,13 @@ const readOnlySessionTools = new Set([
   "workflow.next",
   "status",
   "components.summary",
+  "components.list",
   "components.coverage-plan",
   "components.find",
+  "components.search",
   "components.get",
+  "templates.list",
+  "templates.get",
   "preview.status",
   "preview.stop",
 ]);
@@ -3814,6 +4107,15 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "components.summary") {
         return toMetaResult(getComponentSummary());
       }
+      if (name === "components.list") {
+        return toMetaResult(
+          listRegistryItems({
+            input,
+            toolName: "components.list",
+            defaultSource: "all",
+          })
+        );
+      }
       if (name === "components.coverage-plan") {
         const coveragePlan = await getComponentCoveragePlan(input);
         pendingCheckpoint = {
@@ -3835,8 +4137,23 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       if (name === "components.find") {
         return toMetaResult(await findComponents(input));
       }
+      if (name === "components.search") {
+        return toMetaResult(await findComponents(input, "components.search"));
+      }
       if (name === "components.get") {
         return toMetaResult(getComponentDetails(getComponentInput(input)));
+      }
+      if (name === "templates.list") {
+        return toMetaResult(
+          listRegistryItems({
+            input,
+            toolName: "templates.list",
+            defaultSource: "template",
+          })
+        );
+      }
+      if (name === "templates.get") {
+        return toMetaResult(getTemplateDetails(input));
       }
       if (name === "status") {
         const session = getSession();

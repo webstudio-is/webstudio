@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 import { spawn } from "node:child_process";
+import { dirname, resolve } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { validateRegistry } from "./validate-registry";
 
@@ -27,6 +28,7 @@ describe("validateRegistry", () => {
     mockProcess(0);
 
     await validateRegistry();
+    const registryPath = resolve("src/__generated__/registry/registry.json");
 
     expect(spawnMock).toHaveBeenCalledWith(
       process.execPath,
@@ -34,9 +36,10 @@ describe("validateRegistry", () => {
         expect.stringContaining("shadcn"),
         "registry",
         "validate",
-        "src/__generated__/registry.json",
+        "registry.json",
       ],
       expect.objectContaining({
+        cwd: dirname(registryPath),
         env: expect.not.objectContaining({ NODE_OPTIONS: expect.anything() }),
         stdio: "inherit",
       })
@@ -47,7 +50,7 @@ describe("validateRegistry", () => {
   test("preserves shadcn failure exit code", async () => {
     mockProcess(7);
 
-    await validateRegistry("registry.json");
+    await validateRegistry("generated/registry.json");
 
     expect(spawnMock).toHaveBeenCalledWith(
       process.execPath,
@@ -57,7 +60,10 @@ describe("validateRegistry", () => {
         "validate",
         "registry.json",
       ],
-      expect.objectContaining({ stdio: "inherit" })
+      expect.objectContaining({
+        cwd: resolve("generated"),
+        stdio: "inherit",
+      })
     );
     expect(process.exitCode).toBe(7);
   });

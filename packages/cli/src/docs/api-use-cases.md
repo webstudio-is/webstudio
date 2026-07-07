@@ -58,7 +58,7 @@ Commands:
 Notes:
 
 - Use `webstudio schema mcp` for a tiny machine-readable MCP tool overview. Use `webstudio schema mcp --detail summary` for all tool descriptions, and `webstudio schema mcp --detail full` or focused `meta.get_more_tools` calls only when exact input schemas are needed.
-- Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.summary`, `components.find`, and `components.get`. Use `resources/list` and `resources/read` for overview resources and read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused discovery is insufficient.
+- Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get`. Use `resources/list` and `resources/read` for overview resources and read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused discovery is insufficient.
 - From a shell, call one MCP tool with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio components.summary`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
 
 ## Inspect and refresh MCP session cache
@@ -287,7 +287,7 @@ Notes:
 - Plain prop values must be JSON-compatible: `null`, strings, booleans, finite numbers, arrays, and plain objects. Do not pass `undefined`, `Symbol`, `BigInt`, `NaN`, `Infinity`, `Date`, `Map`, `Set`, class instances, or circular objects; omit the prop, use plain data, or use `expression`/`ActionValue` when the value is dynamic.
 - Template-backed components used in JSX must include required child/part components explicitly under the same parent structure as the template, for example `<radix.Switch><radix.SwitchThumb /></radix.Switch>`.
 - Webstudio applies a registered template automatically when using `insert-component`, so composed components such as Switch include required child parts and styles.
-- Use `components.summary`, `components.find`, and `components.get` to discover known component ids, props, templates, insertability, and content model. Read `webstudio://project/components` only when those focused tools are insufficient.
+- Use `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get` to discover known registry items, component ids, props, templates, insertability, and content model. Read `webstudio://project/components` only when those focused tools are insufficient.
 - Known components with `contentModel.category: "none"` are not standalone-insertable; insert their root component template instead so required providers/parents are included.
 - Unknown component ids fall back to a single-element instance when no template exists.
 

@@ -72,7 +72,7 @@ test("documents MCP stdio startup and discovery tools", () => {
     "Print the concise MCP tool catalog"
   );
   expect(yargs.example).toHaveBeenCalledWith(
-    '$0 mcp run \'[{"tool":"components.find","input":{"brief":"button"}}]\'',
+    '$0 mcp run \'[{"tool":"components.search","input":{"brief":"button"}}]\'',
     "Run a small multi-step MCP workflow from inline JSON"
   );
   expect(yargs.example).toHaveBeenCalledWith(

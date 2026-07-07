@@ -1,19 +1,24 @@
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
+import { basename, dirname, resolve } from "node:path";
 
 const require = createRequire(import.meta.url);
 
 export const validateRegistry = async (
-  registry = "src/__generated__/registry.json"
+  registry = "src/__generated__/registry/registry.json",
+  { stdio = "inherit" }: { stdio?: "inherit" | "ignore" } = {}
 ) => {
   const shadcnBinPath = require.resolve("shadcn");
   const { NODE_OPTIONS: _nodeOptions, ...env } = process.env;
+  const registryPath = resolve(registry);
+  const registryFile = basename(registryPath);
   const child = spawn(
     process.execPath,
-    [shadcnBinPath, "registry", "validate", registry],
+    [shadcnBinPath, "registry", "validate", registryFile],
     {
+      cwd: dirname(registryPath),
       env,
-      stdio: "inherit",
+      stdio,
     }
   );
   const exitCode = await new Promise<number>((resolve, reject) => {

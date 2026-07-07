@@ -113,7 +113,8 @@ export const topLevelCliCommandMetadata = [
     examples: [
       "webstudio mcp",
       "webstudio mcp single-op-call meta.index",
-      'webstudio mcp single-op-call components.find \'{"brief":"radix select"}\'',
+      'webstudio mcp single-op-call components.list \'{"source":"all"}\'',
+      'webstudio mcp single-op-call components.search \'{"brief":"radix select"}\'',
     ],
   },
 ] as const;

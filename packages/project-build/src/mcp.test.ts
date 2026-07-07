@@ -466,10 +466,14 @@ describe("project session mcp adapter", () => {
       "meta.get_more_tools",
       "checkpoint.ack",
       "components.summary",
+      "components.list",
       "components.coverage-plan",
       "components.coverage-status",
       "components.find",
+      "components.search",
       "components.get",
+      "templates.list",
+      "templates.get",
       "status",
       "refresh",
       "reset-session",
@@ -2405,8 +2409,8 @@ describe("project session mcp adapter", () => {
         tools: { name: string }[];
       }
     ).tools.map((tool) => tool.name);
-    if (findComponentToolNames.includes("components.find")) {
-      expect(findComponentToolNames[0]).toBe("components.find");
+    if (findComponentToolNames.includes("components.search")) {
+      expect(findComponentToolNames[0]).toBe("components.search");
     }
 
     const getComponentDetails = await adapter.callTool({
@@ -2510,6 +2514,14 @@ describe("project session mcp adapter", () => {
     });
 
     const summary = await adapter.callTool({ name: "components.summary" });
+    const componentRegistry = await adapter.callTool({
+      name: "components.list",
+      input: { source: "all", limit: 200 },
+    });
+    const templateRegistry = await adapter.callTool({
+      name: "templates.list",
+      input: { limit: 200 },
+    });
     const coveragePlan = await adapter.callTool({
       name: "components.coverage-plan",
     });
@@ -2572,6 +2584,10 @@ describe("project session mcp adapter", () => {
       name: "components.find",
       input: { brief: "radix select indicator" },
     });
+    const search = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "radix select indicator" },
+    });
     const bodyFind = await adapter.callTool({
       name: "components.find",
       input: { brief: "body" },
@@ -2597,6 +2613,10 @@ describe("project session mcp adapter", () => {
     });
     const selectDetails = await adapter.callTool({
       name: "components.get",
+      input: { component: "@webstudio-is/sdk-components-react-radix:Select" },
+    });
+    const selectTemplateDetails = await adapter.callTool({
+      name: "templates.get",
       input: { component: "@webstudio-is/sdk-components-react-radix:Select" },
     });
     const buttonDetails = await adapter.callTool({
@@ -2644,6 +2664,64 @@ describe("project session mcp adapter", () => {
             jsxElement: "<radix.SelectItemIndicator />",
             standaloneInsertable: false,
           }),
+        ]),
+      })
+    );
+    expect(componentRegistry.structuredContent.data).toEqual(
+      expect.objectContaining({
+        usage: expect.stringContaining("shadcn-compatible"),
+        source: "all",
+        documentType: "html",
+        items: expect.arrayContaining([
+          expect.objectContaining({
+            name: "component:HtmlEmbed",
+            type: "registry:ui",
+            files: [],
+            meta: expect.objectContaining({
+              source: "meta",
+              component: "HtmlEmbed",
+              insert: expect.objectContaining({
+                component: "HtmlEmbed",
+                template: false,
+              }),
+            }),
+          }),
+          expect.objectContaining({
+            name: "template:@webstudio-is/sdk-components-react-radix:Select",
+            type: "registry:ui",
+            files: [
+              expect.objectContaining({
+                type: "registry:file",
+                target:
+                  "webstudio/components/%40webstudio-is%2Fsdk-components-react-radix%3ASelect.template.json",
+              }),
+            ],
+            meta: expect.objectContaining({
+              source: "template",
+              component: "@webstudio-is/sdk-components-react-radix:Select",
+              insert: expect.objectContaining({
+                component: "@webstudio-is/sdk-components-react-radix:Select",
+                template: true,
+              }),
+            }),
+          }),
+        ]),
+      })
+    );
+    expect(templateRegistry.structuredContent.data).toEqual(
+      expect.objectContaining({
+        source: "template",
+        items: expect.arrayContaining([
+          expect.objectContaining({
+            name: "template:@webstudio-is/sdk-components-react-radix:Select",
+          }),
+        ]),
+      })
+    );
+    expect(templateRegistry.structuredContent.data).not.toEqual(
+      expect.objectContaining({
+        items: expect.arrayContaining([
+          expect.objectContaining({ name: "component:HtmlEmbed" }),
         ]),
       })
     );
@@ -2805,6 +2883,17 @@ describe("project session mcp adapter", () => {
         ]),
       })
     );
+    expect(search.structuredContent.data).toEqual(
+      expect.objectContaining({
+        query: "radix select indicator",
+        components: expect.arrayContaining([
+          expect.objectContaining({
+            component:
+              "@webstudio-is/sdk-components-react-radix:SelectItemIndicator",
+          }),
+        ]),
+      })
+    );
     expect(bodyFind.structuredContent.data).toEqual(
       expect.objectContaining({
         count: 0,
@@ -2926,6 +3015,22 @@ describe("project session mcp adapter", () => {
         usage: expect.stringContaining(
           "nest them according to templateRequiredEdges"
         ),
+      })
+    );
+    expect(selectTemplateDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        found: true,
+        name: "template:@webstudio-is/sdk-components-react-radix:Select",
+        type: "registry:ui",
+        template: expect.objectContaining({
+          instances: expect.any(Array),
+        }),
+        meta: expect.objectContaining({
+          insert: expect.objectContaining({
+            component: "@webstudio-is/sdk-components-react-radix:Select",
+            template: true,
+          }),
+        }),
       })
     );
   });
@@ -3850,7 +3955,7 @@ describe("project session mcp adapter", () => {
     );
     expect(componentOverviewData).toEqual(
       expect.objectContaining({
-        usage: expect.stringContaining("components.summary"),
+        usage: expect.stringContaining("components.list"),
         count: expect.any(Number),
         namespaces: expect.objectContaining({
           "@webstudio-is/sdk-components-react-radix": expect.any(Number),

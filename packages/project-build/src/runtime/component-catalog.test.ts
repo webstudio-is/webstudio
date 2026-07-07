@@ -3,13 +3,16 @@ import { collectionComponent } from "@webstudio-is/sdk";
 import {
   type ComponentCatalogMeta,
   type ComponentCatalogTemplate,
+  createComponentRegistry,
   getComponentCatalogSortScore,
+  getComponentRegistryTemplateFilePath,
   compareComponentCatalogItems,
   isComponentAvailableForDocumentType,
   isComponentHiddenFromCatalog,
   listBuilderComponentPanelItems,
   listComponentCatalogAvailableComponents,
   listComponentCatalogItems,
+  listComponentRegistryItems,
 } from "./component-catalog";
 import { createEmptyWebstudioFragment } from "./component-template";
 
@@ -152,6 +155,116 @@ describe("component catalog", () => {
       ])
     );
     expect(items).toHaveLength(2);
+  });
+
+  test("exposes components and templates as shadcn-compatible registry items", () => {
+    const items = listComponentRegistryItems({
+      metas: new Map([
+        [
+          "Button",
+          {
+            category: "general",
+            label: "Button",
+            description: "Clickable action",
+            contentModel: { category: "instance", children: ["text"] },
+          },
+        ],
+      ]),
+      templates: new Map<string, ComponentCatalogTemplate>([
+        [
+          "LocalTemplateOnly",
+          {
+            category: "general",
+            label: "Local Template",
+            description: "Template without a React component export",
+            template: {
+              ...createEmptyWebstudioFragment(),
+              instances: [
+                {
+                  type: "instance",
+                  id: "section",
+                  component: "ws:element",
+                  tag: "section",
+                  children: [],
+                },
+              ],
+              children: [],
+            },
+          },
+        ],
+      ]),
+    });
+    const templateFilePath =
+      getComponentRegistryTemplateFilePath("LocalTemplateOnly");
+
+    expect(items).toEqual([
+      expect.objectContaining({
+        name: "component:Button",
+        title: "Button",
+        type: "registry:ui",
+        files: [],
+        meta: expect.objectContaining({
+          catalogId: "meta:Button",
+          source: "meta",
+          component: "Button",
+          insert: expect.objectContaining({
+            component: "Button",
+            template: false,
+          }),
+          examples: [
+            {
+              name: "insert-component-instance",
+              description:
+                "Insert this visible component as a single Webstudio instance.",
+              tool: "insert-component",
+              input: { component: "Button" },
+            },
+          ],
+        }),
+      }),
+      expect.objectContaining({
+        name: "template:LocalTemplateOnly",
+        title: "Local Template",
+        description: "Template without a React component export",
+        type: "registry:ui",
+        files: [
+          {
+            path: templateFilePath,
+            target: templateFilePath,
+            type: "registry:file",
+            content: expect.stringContaining('"component": "ws:element"'),
+          },
+        ],
+        meta: expect.objectContaining({
+          catalogId: "template:LocalTemplateOnly",
+          source: "template",
+          component: "LocalTemplateOnly",
+          insert: expect.objectContaining({
+            component: "LocalTemplateOnly",
+            template: true,
+            firstInstance: expect.objectContaining({
+              component: "ws:element",
+              tag: "section",
+            }),
+          }),
+          examples: [
+            {
+              name: "insert-registered-template",
+              description:
+                "Insert this item with its registered Webstudio template and required child structure.",
+              tool: "insert-component",
+              input: { component: "LocalTemplateOnly" },
+            },
+          ],
+        }),
+      }),
+    ]);
+    expect(createComponentRegistry({ items })).toEqual({
+      $schema: "https://ui.shadcn.com/schema/registry.json",
+      name: "webstudio",
+      homepage: "https://webstudio.is",
+      items,
+    });
   });
 
   test("allows callers to preserve their own meta display labels and icons", () => {

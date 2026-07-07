@@ -26,9 +26,12 @@ Examples:
 webstudio mcp single-op-call meta.index
 webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'
 webstudio mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'
+webstudio mcp single-op-call components.list '{"source":"all"}'
 webstudio mcp single-op-call components.coverage-plan
-webstudio mcp single-op-call components.find '{"brief":"radix select"}'
+webstudio mcp single-op-call components.search '{"brief":"radix select"}'
 webstudio mcp single-op-call components.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'
+webstudio mcp single-op-call templates.list
+webstudio mcp single-op-call templates.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'
 webstudio mcp single-op-call insert-fragment --input-file .temp/insert-fragment.json
 ```
 
@@ -38,9 +41,12 @@ Shortcut equivalents:
 webstudio meta.index
 webstudio meta.guide '{"brief":"Create a design system page using every component"}'
 webstudio meta.get_more_tools '{"tools":["insert-fragment"]}'
+webstudio components.list '{"source":"all"}'
 webstudio components.coverage-plan
-webstudio components.find '{"brief":"radix select"}'
+webstudio components.search '{"brief":"radix select"}'
 webstudio components.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'
+webstudio templates.list
+webstudio templates.get '{"component":"@webstudio-is/sdk-components-react-radix:Select"}'
 webstudio insert-fragment --input-file .temp/insert-fragment.json
 ```
 
@@ -103,11 +109,15 @@ Use MCP itself after startup, or call the same tools with `webstudio mcp single-
 - `meta.index`: concise capability catalog
 - `meta.guide`: workflow for a user goal; call with a string brief such as `{"brief":"Create a pricing page"}`
 - `meta.get_more_tools`: detailed params, examples, namespaces, and local/server behavior; prefer exact names such as `{"tools":["insert-fragment"]}` when you know them
+- `components.list`: shadcn-compatible registry items for visible components and templates
 - `components.summary`: compact structured component catalog with insertability and template hints
 - `components.coverage-plan`: compact paged plan for design-system coverage tasks that need every component; default returns counts plus the first root page, use `{"detail":"roots"}`, `{"detail":"parts"}`, or `{"detail":"full"}` for more
 - `components.coverage-status`: page-specific covered/missing component report with `missingRoots` and `missingParts`
-- `components.find`: focused component search by id, namespace, label, category, or content model
+- `components.search`: focused component/template search by id, namespace, label, category, or content model
+- `components.find`: compatibility alias for focused component search
 - `components.get`: full metadata for one component id
+- `templates.list`: shadcn-compatible registry items for template-backed insertions only
+- `templates.get`: full registry item and payload metadata for one template
 
 Prefer the focused `components.*` tools over dumping `webstudio://project/components`. Do not write local scripts to parse full MCP discovery JSON for common component lookup.
 For “use every component” or design-system pages, start with compact `components.coverage-plan`, checkpoint, then page through roots/parts instead of dumping the full catalog.

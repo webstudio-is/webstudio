@@ -438,7 +438,7 @@ export const mcpOptions = (yargs: CommonYargsArgv) =>
     )
     .example("$0 mcp list-tools", "Print the concise MCP tool catalog")
     .example(
-      '$0 mcp run \'[{"tool":"components.find","input":{"brief":"button"}}]\'',
+      '$0 mcp run \'[{"tool":"components.search","input":{"brief":"button"}}]\'',
       "Run a small multi-step MCP workflow from inline JSON"
     )
     .example(
@@ -446,7 +446,7 @@ export const mcpOptions = (yargs: CommonYargsArgv) =>
       "Run a larger bounded multi-step MCP workflow from a file"
     )
     .example(
-      '$0 mcp single-op-call components.find \'{"brief":"radix select"}\'',
+      '$0 mcp single-op-call components.search \'{"brief":"radix select"}\'',
       "Pass a JSON argument object to one MCP tool"
     )
     .example(
