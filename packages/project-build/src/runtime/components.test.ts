@@ -1047,6 +1047,24 @@ test("rejects hidden components in webstudio jsx fragments", async () => {
   );
 });
 
+test("rejects deprecated components in webstudio jsx fragments", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(`<$.Box />`);
+
+  expect(() =>
+    insertFragment(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        fragment,
+      },
+      {
+        createId: createIdFactory(),
+      }
+    )
+  ).toThrow('Component "Box" is deprecated and cannot be inserted directly');
+});
+
 test("rejects hidden components even when a visible template exists", async () => {
   const component = "test:ConcealedWidget";
   const previousMeta = componentMetas.get(component);
@@ -1381,6 +1399,23 @@ test("rejects known hidden components", async () => {
   ).toThrow(
     'Component "Body" is hidden/internal and cannot be inserted directly'
   );
+});
+
+test("rejects known deprecated components", async () => {
+  const parent = createParent();
+
+  expect(() =>
+    insertComponent(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        component: "Box",
+      },
+      {
+        createId: createIdFactory(),
+      }
+    )
+  ).toThrow('Component "Box" is deprecated and cannot be inserted directly');
 });
 
 test("rejects xml components outside xml documents", async () => {

@@ -91,6 +91,23 @@ export const isComponentMetaUnavailableInCatalog = (
   return false;
 };
 
+export const getUnavailableComponentCatalogReason = ({
+  component,
+  meta,
+  category = meta.category,
+}: {
+  component: Instance["component"];
+  meta: ComponentCatalogMeta;
+  category?: ComponentCatalogMeta["category"];
+}) => {
+  if (isComponentDeprecatedInCatalog(meta)) {
+    return `Component "${component}" is deprecated and cannot be inserted directly. Use an available component from components.summary or components.find instead.`;
+  }
+  if (isComponentHiddenFromCatalog(meta, category)) {
+    return `Component "${component}" is hidden/internal and cannot be inserted directly. Use an available component from components.summary or components.find instead.`;
+  }
+};
+
 export const isComponentAvailableForDocumentType = ({
   component,
   category,

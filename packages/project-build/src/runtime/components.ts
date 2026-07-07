@@ -31,8 +31,8 @@ import {
   type ComponentTemplateRegistry,
 } from "./component-template";
 import {
+  getUnavailableComponentCatalogReason,
   isComponentAvailableForDocumentType,
-  isComponentHiddenFromCatalog,
 } from "./component-catalog";
 import type { BuilderRuntimeContext } from "./context";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
@@ -136,8 +136,8 @@ const canContainDescendant = (
 const getStandaloneInsertError = (component: Instance["component"]) => {
   const meta = componentMetas.get(component);
   if (meta?.contentModel?.category !== "none") {
-    if (meta !== undefined && isComponentHiddenFromCatalog(meta)) {
-      return `Component "${component}" is hidden/internal and cannot be inserted directly. Use an available component from components.summary or components.find instead.`;
+    if (meta !== undefined) {
+      return getUnavailableComponentCatalogReason({ component, meta });
     }
     return;
   }
@@ -497,15 +497,16 @@ const validateFragmentComponent = ({
   if (meta === undefined && insertCategory === undefined) {
     return;
   }
-  if (
-    meta?.contentModel?.category !== "none" &&
-    meta !== undefined &&
-    isComponentHiddenFromCatalog(meta, insertCategory)
-  ) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      `Component "${component}" is hidden/internal and cannot be inserted directly. Use an available component from components.summary or components.find instead.`
-    );
+  const unavailableReason =
+    meta?.contentModel?.category !== "none" && meta !== undefined
+      ? getUnavailableComponentCatalogReason({
+          component,
+          meta,
+          category: insertCategory,
+        })
+      : undefined;
+  if (unavailableReason !== undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", unavailableReason);
   }
   const requiredStructure = getTemplateRequiredStructure(component, templates);
   if (requiredStructure.parts.length > 0) {
@@ -871,15 +872,16 @@ export const insertComponent = (
       `Component "${input.component}" is not available for pages with document type "${page.meta.documentType ?? "html"}". Change the page document type in page settings or choose an available component.`
     );
   }
-  if (
-    meta !== undefined &&
-    meta.contentModel?.category !== "none" &&
-    isComponentHiddenFromCatalog(meta, insertCategory)
-  ) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      `Component "${input.component}" is hidden/internal and cannot be inserted directly. Use an available component from components.summary or components.find instead.`
-    );
+  const unavailableReason =
+    meta !== undefined && meta.contentModel?.category !== "none"
+      ? getUnavailableComponentCatalogReason({
+          component: input.component,
+          meta,
+          category: insertCategory,
+        })
+      : undefined;
+  if (unavailableReason !== undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", unavailableReason);
   }
   if (input.component === elementComponent && input.tag === undefined) {
     return throwBuilderRuntimeError(
