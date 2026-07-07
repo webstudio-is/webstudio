@@ -66,4 +66,19 @@ describe("project-build state entry point boundaries", () => {
       }
     }
   });
+
+  test("does not use dynamic module imports in shared runtime entry points", async () => {
+    const files = (
+      await Promise.all(checkedDirectories.map(readTypeScriptFiles))
+    )
+      .flat()
+      .concat(checkedFiles);
+
+    for (const file of files) {
+      const source = await readFile(file, "utf8");
+      expect(source, `${file} uses await import()`).not.toContain(
+        "await import("
+      );
+    }
+  });
 });
