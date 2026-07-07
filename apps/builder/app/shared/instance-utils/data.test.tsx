@@ -137,15 +137,32 @@ describe("data store helpers", () => {
 
   test("keeps runtime bridge internals private to data utilities", () => {
     const allowedFiles = new Set(["app/shared/instance-utils/data.ts"]);
-    const bridgeBypassPattern =
-      /\b(updateWebstudioData|serverSyncStore\.createTransaction\w*)\s*\(/;
+    const removedBridgePattern = /\bupdateWebstudioData\s*\(/;
+    const directTransactionPattern =
+      /\bserverSyncStore\.createTransaction\s*\(/;
+    const transactionAdapterPattern =
+      /\bserverSyncStore\.createTransactionFromChanges\s*\(/;
     const violations = getAppSourceFiles().flatMap((file) => {
       const source = readFileSync(file, "utf8");
       const relativePath = relative(process.cwd(), file);
-      if (allowedFiles.has(relativePath)) {
-        return [];
+      const fileViolations: string[] = [];
+      if (removedBridgePattern.test(source)) {
+        fileViolations.push(`${relativePath}: updateWebstudioData()`);
       }
-      return bridgeBypassPattern.test(source) ? [relativePath] : [];
+      if (directTransactionPattern.test(source)) {
+        fileViolations.push(
+          `${relativePath}: serverSyncStore.createTransaction()`
+        );
+      }
+      if (
+        allowedFiles.has(relativePath) === false &&
+        transactionAdapterPattern.test(source)
+      ) {
+        fileViolations.push(
+          `${relativePath}: serverSyncStore.createTransactionFromChanges()`
+        );
+      }
+      return fileViolations;
     });
 
     expect(violations).toEqual([]);
@@ -490,7 +507,8 @@ describe("data store helpers", () => {
       id: "instances.insertComponent",
       input: {
         parentInstanceId: "body",
-        component: "Box",
+        component: "ws:element",
+        tag: "div",
       },
     });
 
@@ -502,7 +520,8 @@ describe("data store helpers", () => {
       { type: "id", value: rootInstanceId },
     ]);
     expect($instances.get().get(rootInstanceId)).toMatchObject({
-      component: "Box",
+      component: "ws:element",
+      tag: "div",
     });
   });
 
