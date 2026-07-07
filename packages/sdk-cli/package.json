@@ -9,6 +9,9 @@
   "bin": {
     "webstudio-sdk": "./src/bin.ts"
   },
+  "exports": {
+    "./generate-stories": "./src/generate-stories.ts"
+  },
   "files": [
     "src/*",
     "!*.{test,stories}.*"

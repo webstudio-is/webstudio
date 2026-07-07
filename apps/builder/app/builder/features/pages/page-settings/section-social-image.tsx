@@ -1,6 +1,5 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
-import { z } from "zod";
 import {
   Button,
   Grid,
@@ -13,27 +12,17 @@ import {
   BindingPopover,
 } from "~/builder/shared/binding-popover";
 import { computeExpression } from "@webstudio-is/project-build/runtime/data";
+import type {
+  PageSettingsErrors,
+  PageSettingsValues,
+} from "@webstudio-is/project-build/runtime/pages";
 import { ImageControl } from "~/shared/project-settings";
 import { $assets } from "~/shared/sync/data-stores";
 import { isLiteralExpression } from "@webstudio-is/sdk";
 import { $pageRootScope } from "../page-utils";
 import { ImageInfo } from "../image-info";
 import { SocialPreview } from "../social-preview";
-import { usePageUrl, type Errors, type OnChange, type Values } from "./shared";
-
-const socialImageValues = z.object({
-  socialImageUrl: z.string().optional(),
-});
-
-export const validateSocialImageSection = (
-  values: Values,
-  variableValues: Map<string, unknown>
-): Errors => {
-  const parsedResult = socialImageValues.safeParse({
-    socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
-  });
-  return parsedResult.success ? {} : parsedResult.error.formErrors.fieldErrors;
-};
+import { usePageUrl, type OnChange } from "./shared";
 
 export const SocialImageSection = ({
   values,
@@ -42,8 +31,8 @@ export const SocialImageSection = ({
   showBindingControls = true,
   onChange,
 }: {
-  values: Values;
-  errors: Errors;
+  values: PageSettingsValues;
+  errors: PageSettingsErrors;
   disabled?: boolean;
   showBindingControls?: boolean;
   onChange: OnChange;

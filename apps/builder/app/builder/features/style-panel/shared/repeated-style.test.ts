@@ -6,6 +6,8 @@ import {
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import { parseCssValue } from "@webstudio-is/css-data";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import type { Project } from "@webstudio-is/project";
 import {
   addRepeatedStyleItem,
   deleteRepeatedStyleItem,
@@ -22,6 +24,8 @@ import { $selectedBreakpointId } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import {
   $instances,
+  $pages,
+  $project,
   $styles,
   $styleSources,
   $styleSourceSelections,
@@ -35,9 +39,12 @@ setEnv("*");
 registerContainers();
 
 beforeEach(() => {
+  const pages = createDefaultPages({ rootInstanceId: "box" });
+  $pages.set(pages);
+  $project.set({ id: "projectId" } as Project);
   $breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
   $selectedBreakpointId.set("base");
-  $selectedPageId.set("");
+  $selectedPageId.set(pages.homePageId);
   selectInstance(["box"]);
   $instances.set(
     new Map([

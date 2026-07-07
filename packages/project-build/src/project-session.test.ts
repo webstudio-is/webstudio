@@ -3,10 +3,13 @@ import { encodeDataVariableId } from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import {
+  createDefaultProjectSessionCompatibility,
   createProjectSession,
   hasProjectSessionPermit,
+  projectSessionBusyMessage,
   redactProjectSessionValue,
 } from "./project-session";
+import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import type {
   ProjectSessionCompatibility,
   ProjectSessionPersistedSnapshot,
@@ -145,6 +148,23 @@ const createSession = ({
   });
 
 describe("project session", () => {
+  test("derives default compatibility from the full runtime contract shape", () => {
+    const compatibility =
+      createDefaultProjectSessionCompatibility("test-session");
+    const runtimeIdsVersion = `runtime-contracts:${runtimeOperationContracts
+      .map((contract) => contract.id)
+      .join(",")}`;
+
+    expect(compatibility.runtimeContractVersion).toMatch(
+      /^runtime-contracts:[a-z0-9]+$/
+    );
+    expect(compatibility.runtimeContractVersion).not.toBe(runtimeIdsVersion);
+    expect(compatibility.runtimeContractVersion).toBe(
+      createDefaultProjectSessionCompatibility("test-session")
+        .runtimeContractVersion
+    );
+  });
+
   test("initializes from compatible persisted state and serves reads locally", async () => {
     const storage = createStorage(createPersistedSnapshot());
     const transport = createTransport();
@@ -186,6 +206,74 @@ describe("project session", () => {
     expect(result.source).toBe("local");
     expect(transport.loadedNamespaces).toEqual([["pages"]]);
     expect(storage.saved).toHaveLength(1);
+  });
+
+  test("retries namespace refresh once when local snapshot changes on disk", async () => {
+    const remote = createSnapshot();
+    let current: ProjectSessionPersistedSnapshot | undefined;
+    let revision: string | undefined;
+    let saveAttempts = 0;
+    const storage: ProjectSessionStorage & {
+      saved: ProjectSessionPersistedSnapshot[];
+    } = {
+      saved: [],
+      async load() {
+        return current;
+      },
+      async save(snapshot, options) {
+        saveAttempts += 1;
+        if (saveAttempts === 1) {
+          current = createPersistedSnapshot({
+            ...remote,
+            revision: "rev-concurrent",
+          });
+          revision = current.revision;
+          throw new Error("Project session snapshot changed on disk.");
+        }
+        expect(options.expectedRevision).toBe(revision);
+        revision = "rev-retry";
+        current = { ...snapshot, revision };
+        this.saved.push(current);
+        return { revision };
+      },
+      async clear() {
+        current = undefined;
+        revision = undefined;
+      },
+    };
+    const transport = createTransport(remote);
+    const session = createSession({ storage, transport });
+
+    const result = await session.read("breakpoints.list", {});
+
+    expect(result.source).toBe("local");
+    expect(result.diagnostics).toEqual([]);
+    expect(saveAttempts).toBe(2);
+    expect(transport.loadedNamespaces).toEqual([
+      ["breakpoints"],
+      ["breakpoints"],
+    ]);
+    expect(storage.saved).toHaveLength(1);
+  });
+
+  test("reports persistent session write conflicts as transient busy errors", async () => {
+    const storage: ProjectSessionStorage = {
+      async load() {
+        return createPersistedSnapshot({ revision: "rev-concurrent" });
+      },
+      async save() {
+        throw new Error("Project session snapshot changed on disk.");
+      },
+      async clear() {},
+    };
+    const session = createSession({ storage });
+
+    await session.initialize();
+    await expect(session.markStale(["breakpoints"])).rejects.toMatchObject({
+      name: "PROJECT_SESSION_BUSY",
+      code: "PROJECT_SESSION_BUSY",
+      message: projectSessionBusyMessage,
+    });
   });
 
   test("does not update local state during dry-run mutations", async () => {

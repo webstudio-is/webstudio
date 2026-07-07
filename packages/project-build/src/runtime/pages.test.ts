@@ -16,34 +16,69 @@ import {
   createFolderDeletePayload,
   createFolderUpdatePayload,
   createFolderValue,
+  createPage,
+  createPageAuthFromCredentials,
   createPageCreatePayload,
   createPageDeletePayload,
   createPageRootInstance,
   createPageUpdatePatches,
   createPageUpdatePayload,
   createPageValue,
+  canDropPageTarget,
   findFolder,
   findPage,
   findParentFolderId,
   findSerializedPageByInput,
   getAllChildrenAndSelf,
   getFolderChildReparentPlan,
+  getFolderSettingsValues,
+  getNewFolderSettingsValues,
+  getOrderedFolderChildReparentPlan,
   getFolderDeletionTargets,
   getHomePageRootInstanceId,
+  getStoredPageDropTarget,
+  computePageSettingsPath,
   getParentFolderId,
   getPageExpressionErrors,
+  getInitialPageSettingsMeta,
+  getPageSettingsAuthFromValues,
+  getPageSettingsUpdateData,
+  getPageSettingsValues,
   getSerializedPagePath,
   getSerializedPages,
+  homePageGeneralSettingsInput,
   isPathAvailable,
   isSlugAvailable,
   folderCreateInput,
+  folderSettingsDefaultValues,
+  folderSettingsInput,
+  folderUpdateInput,
+  nameToSlug,
+  nameToPath,
   pageCreateInput,
+  pageCustomMetadataSettingsInput,
   pageFieldsInput,
+  pageGeneralSettingsInput,
   pageMetaInput,
+  pageSearchSettingsInput,
+  pageSocialImageSettingsInput,
+  pageTemplateSettingsInput,
+  pageTextContentSettingsInput,
+  pageSettingsDefaultValues,
+  reparentOrphans,
+  reparentOrphansMutable,
+  savePagePathInHistory,
   serializePageDetails,
   serializePageDetailsByInput,
   serializePageSummary,
+  setHomePage,
+  movePageTreeItem,
   updatePage,
+  updatePageSettings,
+  updatePageMarketplace,
+  validateFolderSettings,
+  validatePageSettings,
+  type PageSettingsValues,
 } from "./pages";
 
 const createPages = () =>
@@ -76,6 +111,238 @@ const createPages = () =>
     ],
   });
 
+const createRuntimePageSettingsValues = (
+  values: Partial<PageSettingsValues> = {}
+): PageSettingsValues => ({
+  ...pageSettingsDefaultValues,
+  auth: { ...pageSettingsDefaultValues.auth },
+  customMetas: [...pageSettingsDefaultValues.customMetas],
+  marketplace: { ...pageSettingsDefaultValues.marketplace },
+  ...values,
+});
+
+describe("page settings values", () => {
+  test("serializes valid auth and omits empty or invalid auth", () => {
+    expect(
+      getPageSettingsAuthFromValues(createRuntimePageSettingsValues())
+    ).toBeUndefined();
+    expect(
+      getPageSettingsAuthFromValues(
+        createRuntimePageSettingsValues({
+          auth: {
+            login: "admin",
+            password: "secret",
+          },
+        })
+      )
+    ).toEqual({
+      method: "basic",
+      login: "admin",
+      password: "secret",
+    });
+    expect(
+      getPageSettingsAuthFromValues(
+        createRuntimePageSettingsValues({
+          auth: {
+            login: "admin:root",
+            password: "secret",
+          },
+        })
+      )
+    ).toBeUndefined();
+  });
+
+  test("omits auth key from initial page meta when auth is empty", () => {
+    expect(
+      getInitialPageSettingsMeta(createRuntimePageSettingsValues())
+    ).toEqual({});
+    expect(
+      getInitialPageSettingsMeta(
+        createRuntimePageSettingsValues({
+          auth: {
+            login: "admin",
+            password: "secret",
+          },
+        })
+      )
+    ).toEqual({
+      auth: {
+        method: "basic",
+        login: "admin",
+        password: "secret",
+      },
+    });
+  });
+
+  test("maps page metadata into settings values", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page")!;
+    page.meta = {
+      ...page.meta,
+      auth: {
+        method: "basic",
+        login: "admin",
+        password: "secret",
+      },
+      content: "Hello",
+    };
+
+    expect(
+      getPageSettingsValues({ page, pages, isHomePage: false }).auth
+    ).toEqual({
+      login: "admin",
+      password: "secret",
+    });
+    expect(
+      getPageSettingsValues({ page, pages, isHomePage: false }).content
+    ).toBe("Hello");
+  });
+
+  test("creates page update, marketplace, and home intents from settings values", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page")!;
+    const result = getPageSettingsUpdateData({
+      page,
+      pages,
+      values: {
+        name: "Landing",
+        description: '"Welcome"',
+        customMetas: [{ property: "og:type", content: '"website"' }],
+        auth: { login: "admin", password: "secret" },
+        marketplace: {
+          include: true,
+          category: "Marketing",
+          thumbnailAssetId: "asset-id",
+        },
+        isHomePage: true,
+      },
+    });
+
+    expect(result).toEqual({
+      pageValues: {
+        name: "Landing",
+        meta: {
+          description: '"Welcome"',
+          custom: [{ property: "og:type", content: '"website"' }],
+          auth: {
+            method: "basic",
+            login: "admin",
+            password: "secret",
+          },
+        },
+      },
+      marketplace: {
+        include: true,
+        category: "Marketing",
+        thumbnailAssetId: "asset-id",
+      },
+      shouldSetHomePage: true,
+    });
+  });
+});
+
+describe("page drop targets", () => {
+  test("resolves stored drop target from tree selector levels", () => {
+    const pages = createPages();
+    pages.folders.set("folder1", {
+      id: "folder1",
+      name: "Folder",
+      slug: "folder",
+      children: ["page1", "page2"],
+    });
+
+    expect(
+      getStoredPageDropTarget({
+        selector: ["page1", "folder1", ROOT_FOLDER_ID],
+        dropTarget: { parentLevel: 1, beforeLevel: 1 },
+        pages,
+      })
+    ).toEqual({
+      parentId: "folder1",
+      beforeId: "folder1",
+      afterId: undefined,
+      indexWithinChildren: 0,
+    });
+    expect(
+      getStoredPageDropTarget({
+        selector: ["page2", "folder1", ROOT_FOLDER_ID],
+        dropTarget: { parentLevel: 1, beforeLevel: 0 },
+        pages,
+      })?.indexWithinChildren
+    ).toBe(0);
+    expect(
+      getStoredPageDropTarget({
+        selector: ["page1", "folder1", ROOT_FOLDER_ID],
+        dropTarget: { parentLevel: 1, afterLevel: 0 },
+        pages,
+      })?.indexWithinChildren
+    ).toBe(0);
+    expect(
+      getStoredPageDropTarget({
+        selector: ["page1"],
+        dropTarget: { parentLevel: 5 },
+        pages,
+      })
+    ).toBeUndefined();
+  });
+
+  test("allows drops only inside folders and never before root home page", () => {
+    const pages = createPages();
+    pages.pages.set("page1", {
+      id: "page1",
+      name: "Page",
+      path: "/page",
+      title: `"Page"`,
+      meta: {},
+      rootInstanceId: "pageBody",
+    });
+    pages.folders.set("folder1", {
+      id: "folder1",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    });
+
+    expect(
+      canDropPageTarget({ parentId: "folder1", indexWithinChildren: 1 }, pages)
+    ).toBe(true);
+    expect(
+      canDropPageTarget({ parentId: "page1", indexWithinChildren: 0 }, pages)
+    ).toBe(false);
+    expect(
+      canDropPageTarget(
+        { parentId: ROOT_FOLDER_ID, indexWithinChildren: 0 },
+        pages
+      )
+    ).toBe(false);
+    expect(
+      canDropPageTarget(
+        { parentId: ROOT_FOLDER_ID, indexWithinChildren: 1 },
+        pages
+      )
+    ).toBe(true);
+
+    pages.rootFolderId = "customRoot";
+    pages.folders.set("customRoot", {
+      id: "customRoot",
+      name: "Root",
+      slug: "",
+      children: [],
+    });
+    expect(
+      canDropPageTarget(
+        { parentId: "customRoot", indexWithinChildren: 0 },
+        pages
+      )
+    ).toBe(false);
+  });
+});
+
+const createIdFactory = () => {
+  const ids = ["page-id", "root-instance-id"];
+  return () => ids.shift() ?? "extra-id";
+};
+
 test("creates the default page root instance", () => {
   expect(createPageRootInstance("root")).toEqual({
     type: "instance",
@@ -104,6 +371,19 @@ test("creates a page with title defaulting to name", () => {
   });
 });
 
+test("creates page auth from credentials", () => {
+  expect(
+    createPageAuthFromCredentials({ login: "admin", password: "secret" })
+  ).toEqual({
+    method: "basic",
+    login: "admin",
+    password: "secret",
+  });
+  expect(
+    createPageAuthFromCredentials({ login: "admin:root", password: "secret" })
+  ).toBeUndefined();
+});
+
 test("rejects client-supplied generated ids on create inputs", () => {
   expect(
     pageCreateInput.safeParse({
@@ -117,6 +397,233 @@ test("rejects client-supplied generated ids on create inputs", () => {
       folderId: "client-folder-id",
       name: "Folder",
       slug: "folder",
+    }).success
+  ).toBe(false);
+});
+
+test("validates folder slug inputs with the shared folder schema", () => {
+  expect(
+    folderSettingsInput.safeParse({
+      name: "Folder",
+      slug: "valid-folder-1",
+      parentFolderId: "root",
+    }).success
+  ).toBe(true);
+  expect(
+    folderSettingsInput.safeParse({
+      name: "Folder",
+      slug: "valid-folder-1",
+    }).success
+  ).toBe(false);
+  expect(
+    folderCreateInput.safeParse({
+      name: "Folder",
+      slug: "valid-folder-1",
+    }).success
+  ).toBe(true);
+  expect(
+    folderCreateInput.safeParse({
+      name: "Folder",
+      slug: "Invalid Folder",
+    }).success
+  ).toBe(false);
+  expect(
+    folderUpdateInput.safeParse({
+      folderId: "folder",
+      values: { slug: "invalid/folder" },
+    }).success
+  ).toBe(false);
+});
+
+test("maps folder settings values from pages and defaults", () => {
+  const pages = createPages();
+
+  expect(nameToSlug("Team Updates")).toBe("team-updates");
+  expect(nameToSlug("")).toBe("");
+  expect(getNewFolderSettingsValues(undefined)).toEqual(
+    folderSettingsDefaultValues
+  );
+  expect(getNewFolderSettingsValues(pages)).toEqual({
+    ...folderSettingsDefaultValues,
+    parentFolderId: pages.rootFolderId,
+  });
+  expect(
+    getFolderSettingsValues({
+      folderId: "folder",
+      pages,
+    })
+  ).toEqual({
+    name: "Folder",
+    slug: "folder",
+    parentFolderId: pages.rootFolderId,
+  });
+});
+
+test("validates page metadata section inputs", () => {
+  expect(pageTextContentSettingsInput.parse({ content: "Plain text" })).toEqual(
+    {
+      content: "Plain text",
+    }
+  );
+  expect(pageSocialImageSettingsInput.parse({ socialImageUrl: "" })).toEqual({
+    socialImageUrl: "",
+  });
+  expect(
+    pageCustomMetadataSettingsInput.parse({
+      customMetas: [{ property: "og:title", content: "Title" }],
+    })
+  ).toEqual({
+    customMetas: [{ property: "og:title", content: "Title" }],
+  });
+  expect(
+    pageCustomMetadataSettingsInput.safeParse({
+      customMetas: [{ property: "og:title", content: 42 }],
+    }).success
+  ).toBe(false);
+});
+
+test("validates folder settings with sibling slug conflicts", () => {
+  const pages = createDefaultPages({ rootInstanceId: "body" });
+  const rootFolder = pages.folders.get(ROOT_FOLDER_ID)!;
+  const existingFolder: Folder = {
+    id: "existing-folder",
+    name: "Existing",
+    slug: "existing",
+    children: [],
+  };
+  pages.folders.set(ROOT_FOLDER_ID, {
+    ...rootFolder,
+    children: [...rootFolder.children, existingFolder.id],
+  });
+  pages.folders.set(existingFolder.id, existingFolder);
+
+  expect(
+    validateFolderSettings({
+      pages,
+      values: {
+        name: "New",
+        slug: "existing",
+        parentFolderId: ROOT_FOLDER_ID,
+      },
+    })
+  ).toEqual({ slug: ['Slug "existing" is already in use'] });
+
+  expect(
+    validateFolderSettings({
+      pages,
+      folderId: existingFolder.id,
+      values: {
+        name: "Existing",
+        slug: "existing",
+        parentFolderId: ROOT_FOLDER_ID,
+      },
+    })
+  ).toEqual({});
+
+  expect(
+    validateFolderSettings({
+      pages,
+      values: {
+        name: "",
+        slug: "Invalid Slug",
+        parentFolderId: ROOT_FOLDER_ID,
+      },
+    })
+  ).toMatchObject({
+    name: expect.arrayContaining([expect.any(String)]),
+    slug: expect.arrayContaining([expect.any(String)]),
+  });
+});
+
+test("validates page general settings inputs", () => {
+  expect(
+    pageGeneralSettingsInput.parse({
+      name: "Pricing",
+      path: "/pricing",
+      status: 200,
+      redirect: "",
+      documentType: "html",
+    })
+  ).toEqual({
+    name: "Pricing",
+    path: "/pricing",
+    status: 200,
+    redirect: "",
+    documentType: "html",
+  });
+  expect(
+    pageGeneralSettingsInput.safeParse({
+      name: "Pricing",
+      path: "/pricing",
+      status: 999,
+    }).success
+  ).toBe(false);
+  expect(
+    pageGeneralSettingsInput.safeParse({
+      name: "Pricing",
+      path: "/",
+    }).success
+  ).toBe(false);
+  expect(
+    homePageGeneralSettingsInput.parse({
+      name: "Home",
+      path: "",
+    })
+  ).toEqual({
+    name: "Home",
+    path: "",
+  });
+});
+
+test("validates page search settings inputs", () => {
+  expect(
+    pageSearchSettingsInput.parse({
+      title: "Docs",
+      description: "Documentation",
+      excludePageFromSearch: false,
+      language: "en-US",
+    })
+  ).toEqual({
+    title: "Docs",
+    description: "Documentation",
+    excludePageFromSearch: false,
+    language: "en-US",
+  });
+  expect(
+    pageSearchSettingsInput.parse({ title: "Docs", language: "" })
+  ).toEqual({
+    title: "Docs",
+    language: "",
+  });
+  expect(
+    pageSearchSettingsInput.safeParse({ title: "D", language: "en-US" }).success
+  ).toBe(false);
+  expect(
+    pageSearchSettingsInput.safeParse({ title: "Docs", language: "not locale" })
+      .success
+  ).toBe(false);
+});
+
+test("validates page template settings inputs", () => {
+  expect(
+    pageTemplateSettingsInput.parse({
+      name: "Landing Page",
+      title: "Landing Page",
+    })
+  ).toEqual({
+    name: "Landing Page",
+    title: "Landing Page",
+  });
+  expect(
+    pageTemplateSettingsInput.safeParse({
+      name: "",
+      title: "Landing Page",
+    }).success
+  ).toBe(false);
+  expect(
+    pageTemplateSettingsInput.safeParse({
+      name: "Landing Page",
+      title: "L",
     }).success
   ).toBe(false);
 });
@@ -636,20 +1143,9 @@ describe("page input schemas", () => {
     });
   });
 
-  test("reject empty page names, invalid document types, and invalid expressions", () => {
+  test("reject empty page names and invalid document types", () => {
     expect(() => pageFieldsInput.parse({ name: "" })).toThrow();
     expect(() => pageMetaInput.parse({ documentType: "json" })).toThrow();
-    expect(() =>
-      pageFieldsInput.parse({
-        title: "About us",
-        meta: { description: "About us" },
-      })
-    ).toThrow();
-    expect(() =>
-      pageMetaInput.parse({
-        custom: [{ property: "og:title", content: "About us" }],
-      })
-    ).toThrow();
   });
 
   test("reports page expression errors", () => {
@@ -662,9 +1158,15 @@ describe("page input schemas", () => {
         },
       })
     ).toEqual([
-      expect.stringMatching(/^title:/),
-      expect.stringMatching(/^meta.description:/),
-      expect.stringMatching(/^meta.custom.0.content:/),
+      expect.stringMatching(
+        /^title: .*For fixed text, pass a string literal expression/
+      ),
+      expect.stringMatching(
+        /^meta.description: .*For fixed text, pass a string literal expression/
+      ),
+      expect.stringMatching(
+        /^meta.custom.0.content: .*For fixed text, pass a string literal expression/
+      ),
     ]);
   });
 });
@@ -880,6 +1382,95 @@ describe("folder child parent helpers", () => {
       getFolderChildReparentPlan(pages.folders, page.id, "folder")
     ).toBeUndefined();
   });
+
+  test("plans same-folder reorder", () => {
+    const { pages, f, p, register } = createRuntimePages();
+    const page = p("page", "/page");
+    const nextPage = p("next", "/next");
+    register([f("folder", [page, nextPage])]);
+
+    expect(
+      getOrderedFolderChildReparentPlan(pages.folders, page.id, "folder", 2)
+    ).toEqual({
+      currentFolderId: "folder",
+      currentIndex: 0,
+      nextFolderId: "folder",
+      nextIndex: 1,
+    });
+  });
+
+  test("moves page tree item at explicit position", () => {
+    const { pages, f, p, register } = createRuntimePages();
+    const page = p("page", "/page");
+    const first = p("first", "/first");
+    register([f("source", [page]), f("target", [first])]);
+
+    const result = movePageTreeItem(
+      { pages },
+      { childId: page.id, parentFolderId: "target", position: 0 }
+    );
+
+    expect(result.payload).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "remove",
+            path: ["folders", "source", "children", 0],
+          },
+          {
+            op: "add",
+            path: ["folders", "target", "children", 0],
+            value: page.id,
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("rejects moving folders into descendants", () => {
+    const { pages, f, register } = createRuntimePages();
+    register([f("folder", [f("child")])]);
+
+    expect(() =>
+      movePageTreeItem(
+        { pages },
+        { childId: "folder", parentFolderId: "child", position: 0 }
+      )
+    ).toThrow("Folder cannot be moved into itself or a descendant");
+  });
+
+  test("reparents orphaned pages and folders to the root", () => {
+    const { pages, f, p, register } = createRuntimePages();
+    const page = p("page", "/page");
+    const orphanPage = p("orphan", "/orphan");
+    register([page]);
+    pages.pages.set(orphanPage.id, orphanPage);
+    pages.folders.set("orphan-folder", f("orphan-folder"));
+
+    reparentOrphansMutable(pages);
+
+    expect(pages.folders.get(pages.rootFolderId)?.children).toEqual([
+      "homePageId",
+      "orphan-folder",
+      "page",
+      "orphan",
+    ]);
+  });
+
+  test("runtime orphan repair emits pages replacement payload", () => {
+    const { pages, p } = createRuntimePages();
+    pages.pages.set("orphan", p("orphan", "/orphan"));
+
+    const result = reparentOrphans({ pages });
+
+    expect(result.payload).toEqual([
+      {
+        namespace: "pages",
+        patches: [{ op: "replace", path: [], value: expect.any(Object) }],
+      },
+    ]);
+  });
 });
 
 describe("isSlugAvailable", () => {
@@ -1033,8 +1624,181 @@ describe("getFolderDeletionTargets", () => {
   });
 });
 
+describe("createPage", () => {
+  test("requires non-home create paths to start with slash", () => {
+    const result = pageCreateInput.safeParse({
+      name: "Healthcare Operations Design System",
+      path: "healthcare-operations-design-system",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: ["path"],
+          message: "Must start with a / or a full URL e.g. https://website.org",
+        }),
+      ])
+    );
+  });
+
+  test("explains expression-backed title must be a string, not a prop object", () => {
+    const result = pageCreateInput.safeParse({
+      name: "Healthcare Operations Design System",
+      path: "/healthcare-operations-design-system",
+      title: {
+        type: "string",
+        value: "Healthcare Operations Design System",
+      },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: ["title"],
+          message: expect.stringContaining(
+            'Pass it as a string, not as a prop value object like {"type":"string","value":"..."}'
+          ),
+        }),
+      ])
+    );
+  });
+
+  test("rejects page paths with unsupported URL pattern syntax", () => {
+    expect(() =>
+      createPage(
+        { pages: createPages() },
+        {
+          name: "Broken Pattern",
+          path: "/prefix-:id",
+        },
+        { createId: createIdFactory() }
+      )
+    ).toThrow("Static parts cannot be mixed with dynamic parameters");
+  });
+
+  test("accepts fixed page metadata text and stores expression string literals", () => {
+    const pages = createPages();
+    const mutation = createPage(
+      { pages },
+      {
+        name: "Atlas Ops Design System",
+        path: "/atlas-ops-design-system",
+        title: "Atlas Ops Design System",
+        meta: {
+          description: "Reusable interface examples for operations teams.",
+          socialImageUrl: "https://assets.example.com/atlas-og.png",
+          custom: [{ property: "og:title", content: "Atlas Ops" }],
+        },
+      },
+      { createId: createIdFactory() }
+    );
+
+    expect(mutation.result).toEqual({
+      pageId: "page-id",
+      rootInstanceId: "root-instance-id",
+    });
+    expect(mutation.payload).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "add",
+            path: ["pages", "page-id"],
+            value: expect.objectContaining({
+              id: "page-id",
+              name: "Atlas Ops Design System",
+              path: "/atlas-ops-design-system",
+              title: `"Atlas Ops Design System"`,
+              meta: expect.objectContaining({
+                description: `"Reusable interface examples for operations teams."`,
+                socialImageUrl: `"https://assets.example.com/atlas-og.png"`,
+                custom: [{ property: "og:title", content: `"Atlas Ops"` }],
+              }),
+              rootInstanceId: "root-instance-id",
+            }),
+          },
+          {
+            op: "add",
+            path: ["folders", "root", "children", 3],
+            value: "page-id",
+          },
+        ],
+      },
+      {
+        namespace: "instances",
+        patches: [
+          {
+            op: "add",
+            path: ["root-instance-id"],
+            value: createPageRootInstance("root-instance-id"),
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("still rejects invalid JavaScript-looking page metadata expressions", () => {
+    const pages = createPages();
+
+    expect(() =>
+      createPage(
+        { pages },
+        {
+          name: "Broken",
+          path: "/broken",
+          title: "pageTitle ??",
+        },
+        { createId: createIdFactory() }
+      )
+    ).toThrow(/title: .*stores JavaScript expression source/);
+  });
+});
+
 describe("updatePage", () => {
-  test("rejects invalid page metadata expressions before patching", () => {
+  test("accepts fixed page metadata text and stores expression string literals", () => {
+    const pages = createPages();
+
+    expect(
+      updatePage(
+        { pages },
+        {
+          pageId: "page",
+          values: {
+            title: "Pricing Plans",
+            meta: {
+              description: "Plans for teams.",
+              socialImageUrl: "https://assets.example.com/pricing-og.png",
+            },
+          },
+        }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "replace",
+            path: ["pages", "page", "title"],
+            value: `"Pricing Plans"`,
+          },
+          {
+            op: "add",
+            path: ["pages", "page", "meta", "description"],
+            value: `"Plans for teams."`,
+          },
+          {
+            op: "add",
+            path: ["pages", "page", "meta", "socialImageUrl"],
+            value: `"https://assets.example.com/pricing-og.png"`,
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("rejects invalid JavaScript-looking page metadata expressions before patching", () => {
     const pages = createPages();
 
     expect(() =>
@@ -1043,14 +1807,25 @@ describe("updatePage", () => {
         {
           pageId: "page",
           values: {
-            title: "Pricing Plans",
-            meta: {
-              description: "Plans for teams",
-            },
+            title: "pageTitle ??",
           },
         }
       )
-    ).toThrow(/title:/);
+    ).toThrow(/title: .*stores JavaScript expression source/);
+  });
+
+  test("rejects updated page paths with unsupported URL pattern syntax", () => {
+    expect(() =>
+      updatePage(
+        { pages: createPages() },
+        {
+          pageId: "page",
+          values: {
+            path: "/blog-*",
+          },
+        }
+      )
+    ).toThrow("Static parts cannot be mixed with dynamic parameters");
   });
 
   test("accepts string literal page metadata expressions", () => {
@@ -1086,5 +1861,353 @@ describe("updatePage", () => {
         ],
       },
     ]);
+  });
+});
+
+describe("updatePageMarketplace", () => {
+  test("updates settings, marketplace, and home page in one mutation", () => {
+    const pages = createPages();
+    const result = updatePageSettings(
+      { pages },
+      {
+        pageId: "page",
+        values: {
+          title: "Landing",
+          description: "Welcome",
+          marketplace: {
+            include: true,
+            category: "Marketing",
+            thumbnailAssetId: "asset-id",
+          },
+          isHomePage: true,
+        },
+      }
+    );
+
+    expect(result.result).toEqual({ pageId: "page" });
+    expect(result.invalidatesNamespaces).toEqual(["pages"]);
+    expect(result.payload.flatMap((change) => change.patches)).toEqual(
+      expect.arrayContaining([
+        {
+          op: "replace",
+          path: ["pages", "page", "title"],
+          value: `"Landing"`,
+        },
+        {
+          op: "add",
+          path: ["pages", "page", "meta", "description"],
+          value: `"Welcome"`,
+        },
+        {
+          op: "add",
+          path: ["pages", "page", "marketplace"],
+          value: {
+            include: true,
+            category: "Marketing",
+            thumbnailAssetId: "asset-id",
+          },
+        },
+        { op: "replace", path: ["homePageId"], value: "page" },
+      ])
+    );
+  });
+
+  test("normalizes empty optional marketplace fields", () => {
+    const pages = createPages();
+
+    expect(
+      updatePageMarketplace(
+        { pages },
+        {
+          pageId: "page",
+          marketplace: {
+            include: true,
+            category: "",
+            thumbnailAssetId: "",
+          },
+        }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "add",
+            path: ["pages", "page", "marketplace"],
+            value: {
+              include: true,
+              category: undefined,
+              thumbnailAssetId: undefined,
+            },
+          },
+        ],
+      },
+    ]);
+  });
+});
+
+describe("savePagePathInHistory", () => {
+  test("adds latest path first and removes duplicates", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page");
+    page!.history = ["/old", "/dynamic/1"];
+
+    expect(
+      savePagePathInHistory(
+        { pages },
+        {
+          pageId: "page",
+          path: "/dynamic/1",
+        }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "replace",
+            path: ["pages", "page", "history"],
+            value: ["/dynamic/1", "/old"],
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("falls back to page path and caps history", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page");
+    page!.history = Array.from({ length: 20 }, (_, index) => `/old-${index}`);
+
+    expect(
+      savePagePathInHistory(
+        { pages },
+        {
+          pageId: "page",
+          path: "",
+        }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "replace",
+            path: ["pages", "page", "history"],
+            value: ["/page", ...page!.history.slice(0, 19)],
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("returns empty payload when latest path is already stored", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page");
+    page!.history = ["/dynamic/1", "/old"];
+
+    expect(
+      savePagePathInHistory(
+        { pages },
+        {
+          pageId: "page",
+          path: "/dynamic/1",
+        }
+      ).payload
+    ).toEqual([]);
+  });
+
+  test("rejects missing page", () => {
+    const pages = createPages();
+
+    expect(() =>
+      savePagePathInHistory(
+        { pages },
+        {
+          pageId: "missing",
+          path: "/dynamic/1",
+        }
+      )
+    ).toThrow("Page not found");
+  });
+});
+
+describe("setHomePage", () => {
+  test("sets home page and keeps a single root folder reference", () => {
+    const pages = createPages();
+    const rootFolder = pages.folders.get(ROOT_FOLDER_ID);
+    rootFolder?.children.push("page");
+
+    expect(setHomePage({ pages }, { pageId: "page" }).payload).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          { op: "replace", path: ["homePageId"], value: "page" },
+          { op: "replace", path: ["pages", "page", "path"], value: "" },
+          { op: "replace", path: ["pages", "page", "name"], value: "Home" },
+          {
+            op: "replace",
+            path: ["pages", "home", "name"],
+            value: "Old Home",
+          },
+          {
+            op: "replace",
+            path: ["pages", "home", "path"],
+            value: "/old-home",
+          },
+          {
+            op: "replace",
+            path: ["folders", ROOT_FOLDER_ID, "children"],
+            value: ["page", "home", "folder"],
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("does not mutate current home page", () => {
+    const result = setHomePage({ pages: createPages() }, { pageId: "home" });
+
+    expect(result.noop).toEqual(true);
+    expect(result.payload).toEqual([]);
+  });
+});
+
+describe("nameToPath", () => {
+  test("uses a numeric suffix when slug path is already used", () => {
+    const pages = createPages();
+
+    expect(nameToPath(pages, "Page")).toEqual("/page1");
+  });
+});
+
+const createPageSettingsValues = (
+  values: Partial<PageSettingsValues> = {}
+): PageSettingsValues => ({
+  ...pageSettingsDefaultValues,
+  auth: { ...pageSettingsDefaultValues.auth },
+  customMetas: [...pageSettingsDefaultValues.customMetas],
+  marketplace: { ...pageSettingsDefaultValues.marketplace },
+  ...values,
+});
+
+describe("page settings validation", () => {
+  test("computes page settings path from parent folder and home page state", () => {
+    const pages = createPages();
+    expect(
+      computePageSettingsPath(
+        createPageSettingsValues({ isHomePage: true }),
+        pages
+      )
+    ).toBe("/");
+    expect(
+      computePageSettingsPath(
+        createPageSettingsValues({
+          parentFolderId: "folder",
+          path: "/post",
+        }),
+        pages
+      )
+    ).toBe("/folder/post");
+  });
+
+  test("accumulates duplicate path errors from the general section", () => {
+    const pages = createPages();
+    const errors = validatePageSettings({
+      pages,
+      pageId: undefined,
+      values: createPageSettingsValues({ path: "/page" }),
+      variableValues: new Map(),
+    });
+
+    expect(errors.path).toEqual(["All paths must be unique"]);
+  });
+
+  test("accumulates auth errors with other field errors", () => {
+    const errors = validatePageSettings({
+      pages: createPages(),
+      pageId: undefined,
+      values: createPageSettingsValues({
+        path: "missing-leading-slash",
+        auth: {
+          login: "admin:root",
+          password: "secret phrase",
+        },
+      }),
+      variableValues: new Map(),
+    });
+
+    expect(errors.path).toEqual(
+      expect.arrayContaining([
+        "Must start with a / or a full URL e.g. https://website.org",
+      ])
+    );
+    expect(errors.auth).toEqual({
+      login: ["Login can't contain a colon"],
+      password: ["Password can't contain whitespace"],
+    });
+  });
+
+  test("does not require auth when both credentials are empty", () => {
+    expect(
+      validatePageSettings({
+        pages: createPages(),
+        pageId: undefined,
+        values: createPageSettingsValues(),
+        variableValues: new Map(),
+      }).auth
+    ).toBeUndefined();
+  });
+
+  test("validates only visible document type sections", () => {
+    const invalidHtmlMetadata = {
+      title: `""`,
+      language: `"not a locale"`,
+    };
+
+    const textErrors = validatePageSettings({
+      pages: createPages(),
+      pageId: undefined,
+      values: createPageSettingsValues({
+        ...invalidHtmlMetadata,
+        documentType: "text",
+        content: "42",
+      }),
+      variableValues: new Map(),
+    });
+
+    expect(textErrors.title).toBeUndefined();
+    expect(textErrors.language).toBeUndefined();
+    expect(textErrors.content).toBeDefined();
+
+    const xmlErrors = validatePageSettings({
+      pages: createPages(),
+      pageId: undefined,
+      values: createPageSettingsValues({
+        ...invalidHtmlMetadata,
+        documentType: "xml",
+        content: "42",
+      }),
+      variableValues: new Map(),
+    });
+
+    expect(xmlErrors.title).toBeUndefined();
+    expect(xmlErrors.language).toBeUndefined();
+    expect(xmlErrors.content).toBeUndefined();
+  });
+
+  test("allows redirect on the home page", () => {
+    const errors = validatePageSettings({
+      pages: createPages(),
+      pageId: "home",
+      values: createPageSettingsValues({
+        isHomePage: true,
+        path: "/",
+        redirect: `"/test"`,
+      }),
+      variableValues: new Map(),
+    });
+
+    expect(errors.redirect).toBeUndefined();
   });
 });

@@ -58,8 +58,7 @@ import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
 import { initBuilderApi } from "~/shared/builder-api";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
-import { migrateWebstudioDataMutable } from "@webstudio-is/project-migrations";
+import { migrateLoadedWebstudioData } from "~/shared/instance-utils/data";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
 import { CommandPanel } from "./features/command-panel";
@@ -295,9 +294,7 @@ export const Builder = (props: BuilderProps) => {
       authToken,
       signal: controller.signal,
       onReady() {
-        updateWebstudioData((data) => {
-          migrateWebstudioDataMutable(data);
-        });
+        migrateLoadedWebstudioData();
 
         // render canvas only after all data is loaded
         // so builder is started listening for connect event

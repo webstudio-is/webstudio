@@ -1,3 +1,4 @@
+import hash from "@emotion/hash";
 import { z } from "zod";
 
 type ContractFunction = ((...args: never[]) => unknown) & {
@@ -18,6 +19,44 @@ const getFunctionContract = (value: unknown) => {
   return { contract: "unversioned-function" };
 };
 
+type ZodDefinition = z.ZodTypeAny["def"] & Record<string, unknown>;
+type ZodCheck = {
+  _zod?: {
+    def?: unknown;
+    check?: unknown;
+  };
+};
+
+const getDefinition = (schema: z.ZodTypeAny) => schema.def as ZodDefinition;
+
+const isZodSchema = (value: unknown): value is z.ZodTypeAny =>
+  typeof value === "object" &&
+  value !== null &&
+  "_zod" in value &&
+  "def" in value;
+
+const getSchemaContractOrUndefined = (
+  value: unknown,
+  seen: Map<z.ZodTypeAny, number>
+) => (isZodSchema(value) ? getSchemaContract(value, seen) : undefined);
+
+const getChecksContract = (checks: unknown) =>
+  Array.isArray(checks)
+    ? checks.map((check) => {
+        const internal = (check as ZodCheck)._zod;
+        return {
+          definition: internal?.def,
+          source: getFunctionContract(
+            typeof internal?.def === "object" &&
+              internal.def !== null &&
+              "fn" in internal.def
+              ? internal.def.fn
+              : internal?.check
+          ),
+        };
+      })
+    : undefined;
+
 const getSchemaContract = (
   schema: z.ZodTypeAny,
   seen = new Map<z.ZodTypeAny, number>()
@@ -28,95 +67,105 @@ const getSchemaContract = (
   }
   seen.set(schema, seen.size);
 
-  const definition = schema._def;
-  switch (definition.typeName) {
-    case z.ZodFirstPartyTypeKind.ZodArray:
+  const definition = getDefinition(schema);
+  switch (definition.type) {
+    case "array":
       return {
         type: "array",
-        value: getSchemaContract(definition.type, seen),
-        checks: {
-          exactLength: definition.exactLength,
-          maxLength: definition.maxLength,
-          minLength: definition.minLength,
-        },
+        value: getSchemaContractOrUndefined(definition.element, seen),
+        checks: getChecksContract(definition.checks),
       };
-    case z.ZodFirstPartyTypeKind.ZodBoolean:
+    case "bigint":
+      return {
+        type: "bigint",
+        checks: getChecksContract(definition.checks),
+      };
+    case "boolean":
       return {
         type: "boolean",
       };
-    case z.ZodFirstPartyTypeKind.ZodDefault:
+    case "catch":
+    case "default":
+    case "prefault":
       return {
-        type: "default",
-        value: getSchemaContract(definition.innerType, seen),
+        type: definition.type,
+        value: getSchemaContractOrUndefined(definition.innerType, seen),
       };
-    case z.ZodFirstPartyTypeKind.ZodDiscriminatedUnion:
+    case "date":
       return {
-        type: "discriminatedUnion",
-        discriminator: definition.discriminator,
-        options: definition.options.map((option: z.ZodTypeAny) =>
-          getSchemaContract(option, seen)
-        ),
+        type: "date",
+        checks: getChecksContract(definition.checks),
       };
-    case z.ZodFirstPartyTypeKind.ZodEffects:
-      return {
-        type: "effects",
-        effect: definition.effect.type,
-        source: getFunctionContract(
-          definition.effect.refinement ?? definition.effect.transform
-        ),
-        value: getSchemaContract(definition.schema, seen),
-      };
-    case z.ZodFirstPartyTypeKind.ZodEnum:
+    case "enum":
       return {
         type: "enum",
-        values: definition.values,
+        entries: definition.entries,
       };
-    case z.ZodFirstPartyTypeKind.ZodLiteral:
+    case "intersection":
+      return {
+        type: "intersection",
+        left: getSchemaContractOrUndefined(definition.left, seen),
+        right: getSchemaContractOrUndefined(definition.right, seen),
+      };
+    case "int":
+      return {
+        type: "int",
+        checks: getChecksContract(definition.checks),
+      };
+    case "literal":
       return {
         type: "literal",
-        value: definition.value,
-      };
-    case z.ZodFirstPartyTypeKind.ZodLazy:
-      return {
-        type: "lazy",
-        value: getSchemaContract(definition.getter(), seen),
-      };
-    case z.ZodFirstPartyTypeKind.ZodMap:
-      return {
-        type: "map",
-        key: getSchemaContract(definition.keyType, seen),
-        value: getSchemaContract(definition.valueType, seen),
-      };
-    case z.ZodFirstPartyTypeKind.ZodNativeEnum:
-      return {
-        type: "nativeEnum",
         values: definition.values,
       };
-    case z.ZodFirstPartyTypeKind.ZodNever:
+    case "lazy":
+      return {
+        type: "lazy",
+        value:
+          typeof definition.getter === "function"
+            ? getSchemaContract(definition.getter(), seen)
+            : undefined,
+      };
+    case "map":
+      return {
+        type: "map",
+        key: getSchemaContractOrUndefined(definition.keyType, seen),
+        value: getSchemaContractOrUndefined(definition.valueType, seen),
+      };
+    case "nan":
+      return {
+        type: "nan",
+      };
+    case "never":
       return {
         type: "never",
       };
-    case z.ZodFirstPartyTypeKind.ZodNull:
+    case "nonoptional":
+    case "nullable":
+    case "optional":
+    case "readonly":
+      return {
+        type: definition.type,
+        value: getSchemaContractOrUndefined(definition.innerType, seen),
+      };
+    case "null":
       return {
         type: "null",
       };
-    case z.ZodFirstPartyTypeKind.ZodNullable:
-      return {
-        type: "nullable",
-        value: getSchemaContract(definition.innerType, seen),
-      };
-    case z.ZodFirstPartyTypeKind.ZodNumber:
+    case "number":
       return {
         type: "number",
-        checks: definition.checks,
+        checks: getChecksContract(definition.checks),
       };
-    case z.ZodFirstPartyTypeKind.ZodObject:
+    case "object":
       return {
         type: "object",
-        unknownKeys: definition.unknownKeys,
-        catchall: getSchemaContract(definition.catchall, seen),
+        catchall: getSchemaContractOrUndefined(definition.catchall, seen),
         shape: Object.fromEntries(
-          Object.entries(definition.shape())
+          Object.entries(
+            typeof definition.shape === "function"
+              ? definition.shape()
+              : (definition.shape as object)
+          )
             .sort(([left], [right]) => left.localeCompare(right))
             .map(([key, value]) => [
               key,
@@ -124,52 +173,76 @@ const getSchemaContract = (
             ])
         ),
       };
-    case z.ZodFirstPartyTypeKind.ZodOptional:
+    case "pipe":
       return {
-        type: "optional",
-        value: getSchemaContract(definition.innerType, seen),
+        type: "pipe",
+        in: getSchemaContractOrUndefined(definition.in, seen),
+        out: getSchemaContractOrUndefined(definition.out, seen),
       };
-    case z.ZodFirstPartyTypeKind.ZodRecord:
+    case "promise":
+      return {
+        type: "promise",
+        value: getSchemaContractOrUndefined(definition.innerType, seen),
+      };
+    case "record":
       return {
         type: "record",
-        key: getSchemaContract(definition.keyType, seen),
-        value: getSchemaContract(definition.valueType, seen),
+        key: getSchemaContractOrUndefined(definition.keyType, seen),
+        value: getSchemaContractOrUndefined(definition.valueType, seen),
       };
-    case z.ZodFirstPartyTypeKind.ZodString:
+    case "set":
+      return {
+        type: "set",
+        value: getSchemaContractOrUndefined(definition.valueType, seen),
+        checks: getChecksContract(definition.checks),
+      };
+    case "string":
       return {
         type: "string",
-        checks: definition.checks,
+        checks: getChecksContract(definition.checks),
       };
-    case z.ZodFirstPartyTypeKind.ZodTuple:
+    case "transform":
+      return {
+        type: "transform",
+        source: getFunctionContract(definition.transform),
+      };
+    case "tuple":
       return {
         type: "tuple",
-        items: definition.items.map((item: z.ZodTypeAny) =>
-          getSchemaContract(item, seen)
-        ),
-        rest:
-          definition.rest === null
-            ? undefined
-            : getSchemaContract(definition.rest, seen),
+        items: Array.isArray(definition.items)
+          ? definition.items.map((item) =>
+              getSchemaContractOrUndefined(item, seen)
+            )
+          : undefined,
+        rest: getSchemaContractOrUndefined(definition.rest, seen),
       };
-    case z.ZodFirstPartyTypeKind.ZodUndefined:
+    case "undefined":
       return {
         type: "undefined",
       };
-    case z.ZodFirstPartyTypeKind.ZodUnknown:
+    case "union":
+      return {
+        type:
+          typeof definition.discriminator === "string"
+            ? "discriminatedUnion"
+            : "union",
+        discriminator: definition.discriminator,
+        options: Array.isArray(definition.options)
+          ? definition.options.map((option) =>
+              getSchemaContractOrUndefined(option, seen)
+            )
+          : undefined,
+      };
+    case "unknown":
       return {
         type: "unknown",
       };
-    case z.ZodFirstPartyTypeKind.ZodUnion:
+    case "void":
       return {
-        type: "union",
-        options: definition.options.map((option: z.ZodTypeAny) =>
-          getSchemaContract(option, seen)
-        ),
+        type: "void",
       };
     default:
-      throw new Error(
-        `Unsupported schema contract type: ${definition.typeName}`
-      );
+      throw new Error(`Unsupported schema contract type: ${definition.type}`);
   }
 };
 
@@ -182,6 +255,9 @@ const stableStringify = (value: unknown): string => {
       source: value.source,
       flags: value.flags,
     });
+  }
+  if (typeof value === "function") {
+    return stableStringify(getFunctionContract(value));
   }
   if (Array.isArray(value)) {
     return `[${value.map(stableStringify).join(",")}]`;
@@ -199,15 +275,12 @@ export const createContractVersion = (
   schema: z.ZodTypeAny,
   additionalSchemas: z.ZodTypeAny[] = []
 ) => {
-  let hash = 0x811c9dc5;
-  for (const char of stableStringify({
-    additionalSchemas: additionalSchemas.map((schema) =>
-      getSchemaContract(schema)
-    ),
-    schema: getSchemaContract(schema),
-  })) {
-    hash ^= char.charCodeAt(0);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return `bundle-${(hash >>> 0).toString(16).padStart(8, "0")}` as const;
+  return `bundle-${hash(
+    stableStringify({
+      additionalSchemas: additionalSchemas.map((schema) =>
+        getSchemaContract(schema)
+      ),
+      schema: getSchemaContract(schema),
+    })
+  )}` as const;
 };

@@ -7,7 +7,7 @@ import { acceptToMimeCategories } from "@webstudio-is/sdk";
 import { $assets } from "~/shared/sync/data-stores";
 import { AssetManager } from "~/builder/shared/asset-manager";
 import { type ControlProps } from "../shared";
-import { formatAssetName } from "~/builder/shared/assets/asset-utils";
+import { formatAssetName } from "@webstudio-is/project-build/runtime/assets";
 import { AssetUpload } from "~/builder/shared/assets";
 
 // tests whether we can use AssetManager for the given "accept" value

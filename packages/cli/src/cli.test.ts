@@ -4,7 +4,12 @@ import {
   apiCommandMetadata,
   cliCommandMetadata,
 } from "./commands/api-command-metadata";
-import { registerCommands } from "./cli";
+import {
+  getTopLevelMcpToolForwardArgs,
+  getTopLevelMcpToolHint,
+  registerCommands,
+  rootCliEpilogue,
+} from "./cli";
 import type { CommonYargsArgv } from "./commands/yargs-types";
 
 type CommandBuilder = (yargs: CommonYargsArgv) => CommonYargsArgv;
@@ -81,6 +86,7 @@ const getHelpOutput = async (args: string[]) => {
     .scriptName("webstudio")
     .exitProcess(false)
     .wrap(null)
+    .epilogue(rootCliEpilogue)
     .fail((message, error) => {
       throw error ?? new Error(message);
     });
@@ -93,6 +99,64 @@ const getHelpOutput = async (args: string[]) => {
 };
 
 describe("registerCommands", () => {
+  test("forwards top-level mcp tool shortcuts to single-op-call", () => {
+    expect(getTopLevelMcpToolForwardArgs(["meta.index"])).toEqual([
+      "mcp",
+      "single-op-call",
+      "meta.index",
+    ]);
+    expect(
+      getTopLevelMcpToolForwardArgs([
+        "insert-fragment",
+        '{"parentInstanceId":"parent-id","fragment":"<$.Box />"}',
+        "--dry-run",
+      ])
+    ).toEqual([
+      "mcp",
+      "single-op-call",
+      "insert-fragment",
+      '{"parentInstanceId":"parent-id","fragment":"<$.Box />"}',
+      "--dry-run",
+    ]);
+    expect(getTopLevelMcpToolForwardArgs(["permissions"])).toBeUndefined();
+    expect(getTopLevelMcpToolForwardArgs(["unknown-command"])).toBeUndefined();
+  });
+
+  test("suggests mcp single-op-call for top-level dotted tool names", () => {
+    expect(getTopLevelMcpToolHint(["meta.index"])).toContain(
+      "webstudio meta.index"
+    );
+    expect(getTopLevelMcpToolHint(["meta.index"])).toContain(
+      "webstudio mcp single-op-call meta.index"
+    );
+    expect(getTopLevelMcpToolHint(["meta.index"])).toContain(
+      "node packages/cli/local.js meta.index"
+    );
+    expect(getTopLevelMcpToolHint(["meta.index"])).toContain(
+      "node packages/cli/local.js mcp single-op-call meta.index"
+    );
+    expect(getTopLevelMcpToolHint(["insert-fragment"])).toContain(
+      "webstudio mcp single-op-call insert-fragment"
+    );
+    expect(getTopLevelMcpToolHint(["permissions"])).toBeUndefined();
+    expect(getTopLevelMcpToolHint(["unknown-command"])).toBeUndefined();
+  });
+
+  test("root help points low-context agents to mcp meta.index first", async () => {
+    const output = await getHelpOutput(["--help"]);
+
+    expect(output).toContain("Project editing / LLM quick start");
+    expect(output).toContain("webstudio man project-editing");
+    expect(output).toContain("webstudio meta.index");
+    expect(output).toContain("webstudio insert-fragment");
+    expect(output).toContain("webstudio mcp single-op-call meta.index");
+    expect(output).toContain(
+      "webstudio mcp single-op-call meta.get_more_tools"
+    );
+    expect(output).toContain("insert-fragment");
+    expect(output).toContain("node packages/cli/local.js");
+  });
+
   test("registers high-level API commands and mcp command", () => {
     const { yargs, commands } = createYargs();
 
@@ -146,6 +210,9 @@ describe("registerCommands", () => {
     expect(rootHelp).toContain("webstudio import");
     expect(rootHelp).toContain("webstudio publish");
     expect(rootHelp).toContain("webstudio domains");
+    expect(rootHelp).toContain("webstudio schema [topic]");
+    expect(rootHelp).toContain("webstudio mcp");
+    expect(rootHelp).toContain("call MCP tools from the shell");
     expect(rootHelp).not.toContain("webstudio publish deploy");
     expect(rootHelp).not.toContain("webstudio domains list");
 

@@ -6,6 +6,7 @@ import { chdir, cwd } from "node:process";
 import { expect, test, vi } from "vitest";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import {
+  ensurePreviewDependencies,
   getPreviewProjectDir,
   preparePreviewProject,
   preview,
@@ -22,6 +23,7 @@ test("rejects empty preview host", async () => {
       generate: false,
       assets: true,
       template: [],
+      source: "local",
     })
   ).rejects.toThrow("--host must not be empty.");
 });
@@ -104,6 +106,102 @@ test("generates preview project in isolated directory", async () => {
   });
 });
 
+test("links generated preview dependencies from the cli package", async () => {
+  const symlink = vi.fn(async () => undefined);
+  const access = vi
+    .fn()
+    .mockRejectedValueOnce(
+      Object.assign(new Error("missing"), { code: "ENOENT" })
+    )
+    .mockResolvedValueOnce(undefined);
+
+  await ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
+    access,
+    symlink,
+    platform: "linux",
+  });
+
+  expect(symlink).toHaveBeenCalledWith(
+    expect.stringContaining("packages/cli/node_modules"),
+    "/tmp/project/.webstudio/preview/node_modules",
+    "dir"
+  );
+});
+
+test("does not relink generated preview dependencies when already present", async () => {
+  const symlink = vi.fn(async () => undefined);
+  const access = vi.fn().mockResolvedValueOnce(undefined);
+
+  await ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
+    access,
+    symlink,
+    platform: "linux",
+  });
+
+  expect(symlink).not.toHaveBeenCalled();
+});
+
+test("uses junctions for generated preview dependencies on windows", async () => {
+  const symlink = vi.fn(async () => undefined);
+  const access = vi
+    .fn()
+    .mockRejectedValueOnce(
+      Object.assign(new Error("missing"), { code: "ENOENT" })
+    )
+    .mockResolvedValueOnce(undefined);
+
+  await ensurePreviewDependencies("C:/project/.webstudio/preview", {
+    access,
+    symlink,
+    platform: "win32",
+  });
+
+  expect(symlink).toHaveBeenCalledWith(
+    expect.stringContaining("packages/cli/node_modules"),
+    "C:/project/.webstudio/preview/node_modules",
+    "junction"
+  );
+});
+
+test("materializes session data before previewing from session source", async () => {
+  const previousDirectory = cwd();
+  const projectDir = join(tmpdir(), `webstudio-preview-test-${randomUUID()}`);
+  let expectedPreviewProjectDir = "";
+  const prepareSessionDataFile = vi.fn(async () => {
+    await mkdir(join(projectDir, ".webstudio"), { recursive: true });
+    await writeFile(join(projectDir, ".webstudio", "data.json"), "{}");
+    await writeFile(join(projectDir, ".webstudio", "config.json"), "{}");
+  });
+  const prebuildProject = vi.fn(async () => {
+    expect(cwd()).toBe(expectedPreviewProjectDir);
+  });
+
+  await mkdir(projectDir, { recursive: true });
+  chdir(projectDir);
+  expectedPreviewProjectDir = getPreviewProjectDir();
+  try {
+    await expect(
+      preparePreviewProject({
+        assets: true,
+        template: [],
+        generate: true,
+        source: "session",
+        prepareSessionDataFile,
+        prebuildProject,
+      })
+    ).resolves.toEqual({ cwd: expectedPreviewProjectDir });
+  } finally {
+    chdir(previousDirectory);
+    await rm(projectDir, { recursive: true, force: true });
+  }
+
+  expect(prepareSessionDataFile).toHaveBeenCalledOnce();
+  expect(prebuildProject).toHaveBeenCalledWith({
+    assets: true,
+    template: ["defaults", "react-router"],
+  });
+});
+
 test("uses current project directory when generation is disabled", async () => {
   const previousDirectory = cwd();
   const projectDir = join(tmpdir(), `webstudio-preview-test-${randomUUID()}`);
@@ -138,6 +236,7 @@ test("adds defaults when previewing the direct React Router template", async () 
     template: ["react-router"],
     generate: true,
     prebuildProject,
+    accessLocalDataFile: vi.fn(async () => undefined),
   });
 
   expect(prebuildProject).toHaveBeenCalledWith({
@@ -159,7 +258,7 @@ test("documents generated app dependency setup", () => {
 
   previewOptions(yargs);
 
-  expect(epilogueText).toContain("does not install app dependencies");
-  expect(epilogueText).toContain("npm install or pnpm install");
+  expect(epilogueText).toContain("isolated under .webstudio/preview");
+  expect(epilogueText).toContain("Do not add generated-preview dependencies");
   expect(epilogueText).toContain("react-router-serve");
 });

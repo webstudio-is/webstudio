@@ -17,7 +17,7 @@ import { $registeredComponentMetas } from "../../nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $project, $styleSources, $styles } from "~/shared/sync/data-stores";
 import invariant from "tiny-invariant";
-import { wfData } from "./schema";
+import { wfData } from "@webstudio-is/project-build/runtime/webflow/schema";
 
 const { toWebstudioFragment } = __testing__;
 
@@ -152,6 +152,60 @@ test("Heading", async () => {
       }
     }"
   `);
+});
+
+test("uses supplied id generator for instances, props, and breakpoints", async () => {
+  let nextId = 0;
+  const createId = () => `runtime-id-${++nextId}`;
+
+  const fragment = await toWebstudioFragment(
+    {
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "root",
+            type: "Block",
+            tag: "div",
+            children: [],
+            classes: ["class"],
+            data: {
+              attr: { id: "from-webflow" },
+              xattr: [{ name: "data-kind", value: "hero" }],
+            },
+          },
+        ],
+        styles: [
+          {
+            _id: "class",
+            fake: false,
+            type: "class",
+            name: "Card",
+            namespace: "",
+            comb: "",
+            styleLess: "color: red;",
+            variants: {
+              medium: {
+                styleLess: "color: blue;",
+              },
+            },
+          },
+        ],
+        assets: [],
+      },
+    },
+    createId
+  );
+
+  expect(fragment.children).toEqual([{ type: "id", value: "runtime-id-1" }]);
+  expect(fragment.props.map((prop) => prop.id)).toEqual([
+    "runtime-id-2",
+    "runtime-id-3",
+  ]);
+  expect(fragment.breakpoints.map((breakpoint) => breakpoint.id)).toEqual([
+    "runtime-id-4",
+    "runtime-id-5",
+  ]);
 });
 
 test("Link Block, Button, Text Link", async () => {

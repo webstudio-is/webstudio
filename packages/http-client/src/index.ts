@@ -35,6 +35,19 @@ export type {
 
 const maxResponsePreviewLength = 500;
 
+type WebstudioFragmentPayload = {
+  children: unknown[];
+  instances: unknown[];
+  assets: unknown[];
+  dataSources: unknown[];
+  resources: unknown[];
+  props: unknown[];
+  breakpoints: unknown[];
+  styleSourceSelections: unknown[];
+  styleSources: unknown[];
+  styles: unknown[];
+};
+
 const getResponsePreview = async (response: Response) => {
   try {
     const text = await response.clone().text();
@@ -261,8 +274,12 @@ const projectMutationInput = <
   const operation = getPublicApiOperation(command);
   return projectMutation<Params, Result>(
     getPublicApiOperationPath(command),
-    (params) =>
-      pickInput(params, operation.inputFields as readonly (keyof Params)[])
+    (params) => ({
+      ...pickInput(params, operation.inputFields as readonly (keyof Params)[]),
+      ...(operation.requiresAssets || operation.requiresConfirm
+        ? { confirm: true }
+        : {}),
+    })
   );
 };
 
@@ -281,6 +298,12 @@ const projectConfirmedMutationInput = <
     })
   );
 };
+
+type RuntimeOperationParams = AuthProjectParams & Record<string, unknown>;
+
+const runtimeProjectMutation = <Command extends PublicApiCommand>(
+  command: Command
+) => projectMutationInput<RuntimeOperationParams>(command);
 
 const stagedUploadChunkSize = 3 * 1024 * 1024;
 
@@ -608,11 +631,11 @@ export const checkProjectBuildPermission = async (
 };
 
 const formatSchemaIssues = (
-  issues: Array<{ path: Array<string | number>; message: string }>
+  issues: Array<{ path: PropertyKey[]; message: string }>
 ) =>
   issues
     .map((issue) => {
-      const path = issue.path.join(".");
+      const path = issue.path.map(String).join(".");
       return path === "" ? issue.message : `${path}: ${issue.message}`;
     })
     .join(", ");
@@ -743,6 +766,136 @@ export const updatePage = projectMutationInput<
     values: PageFieldsInput;
   }
 >("update-page");
+
+export const updatePageSettings = runtimeProjectMutation(
+  "update-page-settings"
+);
+
+export const updatePageMarketplace = runtimeProjectMutation(
+  "update-page-marketplace"
+);
+
+export const savePagePathInHistory = runtimeProjectMutation(
+  "save-page-path-history"
+);
+
+export const setHomePage = runtimeProjectMutation("set-home-page");
+
+export const updateMarketplaceProduct = runtimeProjectMutation(
+  "update-marketplace-product"
+);
+
+export const setRedirects = runtimeProjectMutation("set-redirects");
+
+export const copyPage = runtimeProjectMutation("copy-page");
+
+export const createPageTemplate = runtimeProjectMutation(
+  "create-page-template"
+);
+
+export const updatePageTemplate = runtimeProjectMutation(
+  "update-page-template"
+);
+
+export const deletePageTemplate = runtimeProjectMutation(
+  "delete-page-template"
+);
+
+export const duplicatePageTemplate = runtimeProjectMutation(
+  "duplicate-page-template"
+);
+
+export const reorderPageTemplate = runtimeProjectMutation(
+  "reorder-page-template"
+);
+
+export const duplicateFolder = runtimeProjectMutation("duplicate-folder");
+
+export const pastePageClipboardItem = runtimeProjectMutation(
+  "paste-page-clipboard-item"
+);
+
+export const movePageTreeItem = runtimeProjectMutation("move-page-tree-item");
+
+export const reparentPageTreeOrphans = runtimeProjectMutation(
+  "reparent-page-tree-orphans"
+);
+
+export const reparentInstance = runtimeProjectMutation("reparent-instance");
+
+export const fillGrid = runtimeProjectMutation("fill-grid");
+
+export const wrapInstance = runtimeProjectMutation("wrap-instance");
+
+export const convertInstance = runtimeProjectMutation("convert-instance");
+
+export const unwrapInstance = runtimeProjectMutation("unwrap-instance");
+
+export const duplicateInstance = runtimeProjectMutation("duplicate-instance");
+
+export const deleteInstanceBySelector = runtimeProjectMutation(
+  "delete-instance-by-selector"
+);
+
+export const setTextContent = runtimeProjectMutation("set-text-content");
+
+export const updateTextTree = runtimeProjectMutation("update-text-tree");
+
+export const setInstanceTag = runtimeProjectMutation("set-instance-tag");
+
+export const setInstanceLabel = runtimeProjectMutation("set-instance-label");
+
+export const updateSelectedStyleDeclarations = runtimeProjectMutation(
+  "update-selected-styles"
+);
+
+export const deleteSelectedStyleDeclarations = runtimeProjectMutation(
+  "delete-selected-styles"
+);
+
+export const createAttachedDesignTokens = runtimeProjectMutation(
+  "create-attached-design-token"
+);
+
+export const renameStyleSource = runtimeProjectMutation("rename-style-source");
+
+export const deleteStyleSources = runtimeProjectMutation("delete-style-source");
+
+export const setStyleSourceLock = runtimeProjectMutation(
+  "set-style-source-lock"
+);
+
+export const reorderStyleSources = runtimeProjectMutation(
+  "reorder-style-sources"
+);
+
+export const clearStyleSourceStyles = runtimeProjectMutation(
+  "clear-style-source-styles"
+);
+
+export const duplicateStyleSource = runtimeProjectMutation(
+  "duplicate-style-source"
+);
+
+export const convertLocalStyleSourceToToken = runtimeProjectMutation(
+  "convert-local-style-source-to-token"
+);
+
+export const renameCssVariable = runtimeProjectMutation("rename-css-variable");
+
+export const deleteUnusedVariables = runtimeProjectMutation(
+  "delete-unused-variables"
+);
+
+export const upsertResource = runtimeProjectMutation("upsert-resource");
+
+export const upsertResourceProp = runtimeProjectMutation(
+  "upsert-resource-prop"
+);
+
+export const updateAsset = runtimeProjectMutation("update-asset");
+
+export const addAsset = runtimeProjectMutation("add-asset");
 
 type ProjectSettingsInput = {
   meta?: {
@@ -909,19 +1062,23 @@ export const inspectInstance = projectQueryInput<
   }
 >("inspect-instance");
 
-export const appendInstance = projectMutationInput<
+export const insertComponent = projectMutationInput<
   AuthProjectParams & {
     parentInstanceId: string;
+    component: string;
     mode?: "append" | "prepend" | "replace";
     insertIndex?: number;
-    children: Array<{
-      component?: string;
-      tag: string;
-      label?: string;
-      text?: string;
-    }>;
   }
->("append-instance");
+>("insert-component");
+
+export const insertFragment = projectMutationInput<
+  AuthProjectParams & {
+    parentInstanceId: string;
+    fragment: WebstudioFragmentPayload;
+    mode?: "append" | "prepend" | "replace";
+    insertIndex?: number;
+  }
+>("insert-fragment");
 
 export const moveInstance = projectMutationInput<
   AuthProjectParams & {

@@ -1,61 +1,24 @@
 import { useStore } from "@nanostores/react";
-import { getPagePath, type Page } from "@webstudio-is/sdk";
+import { getPagePath } from "@webstudio-is/sdk";
+import type { PageSettingsValues } from "@webstudio-is/project-build/runtime/pages";
 import {
   compilePathnamePattern,
   tokenizePathnamePattern,
-} from "~/builder/shared/url-pattern";
+} from "@webstudio-is/project-build/runtime/url-pattern";
 import { $publishedOrigin } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import { $currentSystem } from "~/shared/system";
 
-export type Values = {
-  name: string;
-  parentFolderId: string;
-  path: string;
-  isHomePage: boolean;
-  title: string;
-  description: string;
-  excludePageFromSearch: string;
-  language: string;
-  socialImageUrl: string;
-  socialImageAssetId: string;
-  status: string | undefined;
-  redirect: string;
-  documentType: NonNullable<Page["meta"]["documentType"]>;
-  content: string;
-  auth: {
-    login: string;
-    password: string;
-  };
-  customMetas: { property: string; content: string }[];
-  marketplace: {
-    include: boolean;
-    category: string;
-    thumbnailAssetId: string;
-  };
-};
-
-export type FieldName = keyof Values;
-
 export type OnChange = (
   event: {
-    [K in keyof Values]: {
+    [K in keyof PageSettingsValues]: {
       field: K;
-      value: Values[K];
+      value: PageSettingsValues[K];
     };
-  }[keyof Values]
+  }[keyof PageSettingsValues]
 ) => void;
 
-export type Errors = {
-  [fieldName in Exclude<FieldName, "auth">]?: string[];
-} & {
-  auth?: {
-    login?: string[];
-    password?: string[];
-  };
-};
-
-export const usePageUrl = (values: Values) => {
+export const usePageUrl = (values: PageSettingsValues) => {
   const pages = useStore($pages);
   let path = "";
   if (pages !== undefined) {

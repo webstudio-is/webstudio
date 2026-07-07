@@ -7,6 +7,7 @@ import {
   loadBuildById,
   loadDevBuildByProjectId,
 } from "@webstudio-is/project-build/index.server";
+import { collectFontFamiliesFromStyleDecls } from "@webstudio-is/project-build/runtime/style-utils";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
@@ -40,22 +41,14 @@ const serializeProjectBundle = ({
     throw new Error(`Page / not found`);
   }
 
-  // Find all fonts referenced in styles
-  const fontFamilySet = new Set<string>();
-  for (const { value } of build.styles) {
-    if (value.type === "fontFamily") {
-      for (const fontFamily of value.value) {
-        fontFamilySet.add(fontFamily);
-      }
-    }
-  }
+  const fontFamilies = collectFontFamiliesFromStyleDecls(build.styles);
 
   // Filter unused font assets but include all other asset types (images, videos, audio, documents)
   const usedAssets = assets.filter(
     (asset) =>
       asset.type === "image" ||
       asset.type === "file" ||
-      (asset.type === "font" && fontFamilySet.has(asset.meta.family))
+      (asset.type === "font" && fontFamilies.has(asset.meta.family))
   );
 
   return {

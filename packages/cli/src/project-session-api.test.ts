@@ -175,6 +175,27 @@ describe("project session api adapter", () => {
     expect(session.refresh).toHaveBeenCalledWith(["pages"]);
   });
 
+  test("explains dry-run is only for local-capable mutations", async () => {
+    const createProjectSession = vi.fn() as unknown as CreateProjectSession;
+
+    await expect(
+      executeProjectSessionApiOperation({
+        command: "list-pages",
+        input: {},
+        connection: {
+          projectId: "project-1",
+          origin: "https://example.com",
+          authToken: "token",
+        },
+        createProjectSession,
+        dryRun: true,
+      })
+    ).rejects.toThrow(
+      "list-pages does not support --dry-run. Use --dry-run only with local-capable mutation tools; omit it for read or server-only tools."
+    );
+    expect(createProjectSession).not.toHaveBeenCalled();
+  });
+
   test("preserves project session diagnostic code on operation errors", async () => {
     const session = {
       initialize: vi.fn(async () => undefined),

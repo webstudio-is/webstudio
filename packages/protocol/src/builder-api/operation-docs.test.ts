@@ -34,3 +34,47 @@ test("documents every public API command with examples", () => {
     expect(item.examples.length).toBeGreaterThan(0);
   }
 });
+
+test("documents update-text mode without suggesting replace", () => {
+  const docs = publicApiOperationDocumentation.find(
+    ({ command }) => command === "update-text"
+  );
+
+  expect(docs).toEqual(
+    expect.objectContaining({
+      description: expect.stringContaining(
+        'mode must be "text" or "expression"'
+      ),
+      examples: [
+        expect.stringContaining("--mode text"),
+        expect.stringContaining("--mode expression"),
+      ],
+    })
+  );
+  expect(`${docs?.description}\n${docs?.examples.join("\n")}`).not.toContain(
+    "--mode replace"
+  );
+});
+
+test("documents direct string props for update-props", () => {
+  const docs = publicApiOperationDocumentation.find(
+    ({ command }) => command === "update-props"
+  );
+
+  expect(docs?.description).toContain('"name": "placeholder"');
+  expect(docs?.description).toContain('"type": "string"');
+});
+
+test("documents JSX insertion through the fragment field", () => {
+  const docs = publicApiOperationDocumentation.find(
+    ({ command }) => command === "insert-fragment"
+  );
+  const text = `${docs?.description}\n${docs?.examples.join("\n")}`;
+
+  expect(text).toContain("Webstudio JSX");
+  expect(text).toContain("CLI converts the JSX string");
+  expect(text).toContain('"fragment":"<$.Box />"');
+  expect(text).not.toContain("Internal low-level");
+  expect(text).not.toContain("structured Webstudio fragment");
+  expect(text).not.toContain('"jsx"');
+});

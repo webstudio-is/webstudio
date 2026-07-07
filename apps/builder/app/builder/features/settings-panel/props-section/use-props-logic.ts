@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
@@ -6,7 +5,7 @@ import { descendantComponent } from "@webstudio-is/sdk";
 import {
   getContentModeCapabilities,
   type ContentModeCapabilities,
-} from "@webstudio-is/project/content-mode-permissions";
+} from "@webstudio-is/project-build/runtime/content-mode-permissions";
 import {
   reactPropsToStandardAttributes,
   showAttribute,
@@ -20,15 +19,21 @@ import {
 import { $instances } from "~/shared/sync/data-stores";
 import { $props } from "~/shared/sync/data-stores";
 import { $styleSources } from "~/shared/sync/data-stores";
-import { isRichText, isRichTextTree } from "~/shared/content-model";
+import {
+  isRichText,
+  isRichTextTree,
+} from "@webstudio-is/project-build/runtime/content-model";
+import {
+  createStartingPropValueFromMeta,
+  getDefaultPropMetaForType,
+  showAttributeMeta,
+} from "@webstudio-is/project-build/runtime/props";
 import { $selectedInstancePath } from "~/shared/nano-states";
 import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
-  showAttributeMeta,
   type PropValue,
 } from "../shared";
-import { createPropValue } from "@webstudio-is/project-build/runtime/props";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -77,107 +82,16 @@ const isPropVisibleInContentMode = ({
   return propMeta?.contentMode === true;
 };
 
-// The value we set prop to when it's added
-//
-// If undefined is returned,
-// we will not add a prop in storage until we get an onChange from control.
-//
-// User may have this experience:
-//   - they added a prop but didn't touch the control
-//   - they closed props panel
-//   - when they open props panel again, the prop is not there
-//
-// We want to avoid this if possible, but for some types like "asset" we can't
-const getStartingValue = (
-  meta: PropMeta,
-  defaultBooleanValue: boolean
-): PropValue | undefined => {
-  if (meta.type === "string" && meta.control !== "file") {
-    return {
-      type: "string",
-      value: meta.defaultValue ?? "",
-    };
-  }
-
-  if (meta.type === "number") {
-    return {
-      type: "number",
-      value: meta.defaultValue ?? 0,
-    };
-  }
-
-  if (meta.type === "boolean") {
-    return {
-      type: "boolean",
-      value: meta.defaultValue ?? defaultBooleanValue,
-    };
-  }
-
-  if (meta.type === "string[]") {
-    return {
-      type: "string[]",
-      value: meta.defaultValue ?? [],
-    };
-  }
-
-  if (meta.type === "action") {
-    return {
-      type: "action",
-      value: [],
-    };
-  }
-};
-
-const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
-  switch (type) {
-    case "action":
-      return { type: "action", control: "action", required: false };
-    case "string":
-      return { type: "string", control: "text", required: false };
-    case "number":
-      return { type: "number", control: "number", required: false };
-    case "boolean":
-      return { type: "boolean", control: "boolean", required: false };
-    case "asset":
-      return { type: "string", control: "file", required: false };
-    case "page":
-      return { type: "string", control: "url", required: false };
-    case "string[]":
-      throw new Error(
-        "A prop with type string[] must have a meta, we can't provide a default one because we need a list of options"
-      );
-
-    case "animationAction":
-      return {
-        type: "animationAction",
-        control: "animationAction",
-        required: false,
-      };
-    case "json":
-      throw new Error(
-        "A prop with type json must have a meta, we can't provide a default one because we need a list of options"
-      );
-    case "expression":
-      throw new Error(
-        "A prop with type expression must have a meta, we can't provide a default one because we need a list of options"
-      );
-    case "parameter":
-      throw new Error(
-        "A prop with type parameter must have a meta, we can't provide a default one because we need a list of options"
-      );
-    case "resource":
-      throw new Error(
-        "A prop with type resource must have a meta, we can't provide a default one because we need a list of options"
-      );
-    default:
-      throw new Error(`Unsupported data type: ${type satisfies never}`);
-  }
-};
-
 type UsePropsLogicInput = {
   instance: Instance;
   props: Prop[];
-  updateProp: (update: Prop) => void;
+  updateProp: (
+    update: PropValue & {
+      instanceId: Instance["id"];
+      name: Prop["name"];
+      required?: boolean;
+    }
+  ) => void;
 };
 
 const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
@@ -188,8 +102,6 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
 
 export const __testing__ = {
   isPropVisibleInContentMode,
-  getStartingValue,
-  getDefaultMetaForType,
   getAndDelete,
 };
 
@@ -368,14 +280,6 @@ export const usePropsLogic = ({
     //   - where 0 is a fallback when no default is available
     //   - they think that width is set to 0, but it's actually not set at all
     //
-    if (prop === undefined && propMeta.defaultValue !== undefined) {
-      // initial properties are not defined but suggested to default so default boolean is false
-      const value = getStartingValue(propMeta, false);
-      if (value) {
-        prop = { id: nanoid(), instanceId: instance.id, name, ...value };
-      }
-    }
-
     initialProps.push({
       prop,
       propName: name,
@@ -397,7 +301,7 @@ export const usePropsLogic = ({
       propMeta = propsMetas.get(name);
     }
     prop = { ...prop, name };
-    propMeta ??= getDefaultMetaForType(
+    propMeta ??= getDefaultPropMetaForType(
       prop.type === "asset" ? "asset" : "string"
     );
 
@@ -411,11 +315,10 @@ export const usePropsLogic = ({
   const handleAdd = (propName: string) => {
     // In case of custom property/attribute we get a string.
     const propMeta =
-      propsMetas.get(propName) ?? getDefaultMetaForType("string");
-    const value = getStartingValue(propMeta, true);
+      propsMetas.get(propName) ?? getDefaultPropMetaForType("string");
+    const value = createStartingPropValueFromMeta(propMeta, true);
     if (value) {
       updateProp({
-        id: nanoid(),
         instanceId: instance.id,
         name: propName,
         ...value,
@@ -424,29 +327,23 @@ export const usePropsLogic = ({
   };
 
   const handleChange = ({ prop, propName }: PropOrName, value: PropValue) => {
-    updateProp(
-      createPropValue({
-        id: prop?.id ?? nanoid(),
-        instanceId: instance.id,
-        name: propName,
-        required: prop?.required,
-        ...value,
-      })
-    );
+    updateProp({
+      instanceId: instance.id,
+      name: propName,
+      required: prop?.required,
+      ...value,
+    });
   };
 
   const handleChangeByPropName = (propName: string, value: PropValue) => {
     const prop = props.find((prop) => prop.name === propName);
 
-    updateProp(
-      createPropValue({
-        id: prop?.id ?? nanoid(),
-        instanceId: instance.id,
-        name: propName,
-        required: prop?.required,
-        ...value,
-      })
-    );
+    updateProp({
+      instanceId: instance.id,
+      name: propName,
+      required: prop?.required,
+      ...value,
+    });
   };
 
   return {

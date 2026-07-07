@@ -16,18 +16,10 @@ import { $instances } from "~/shared/sync/data-stores";
 import {
   BindingControl,
   BindingPopover,
-  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime/props";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
-import {
-  applyBuilderPatchPayloadMutable,
-  updateWebstudioData,
-} from "~/shared/instance-utils/data";
-import {
-  createTextContentChild,
-  createTextContentResetPayload,
-  createTextContentUpdatePayload,
-} from "@webstudio-is/project-build/runtime/instances";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { CodeEditor } from "~/shared/code-editor";
 import {
   type ControlProps,
@@ -50,18 +42,14 @@ const updateChildren = (
   type: "text" | "expression",
   value: string
 ) => {
-  updateWebstudioData((data) => {
-    const instance = data.instances.get(instanceId);
-    if (instance) {
-      applyBuilderPatchPayloadMutable(
-        data,
-        createTextContentUpdatePayload({
-          instanceId,
-          childIndex: 0,
-          child: createTextContentChild({ type, value }),
-        })
-      );
-    }
+  executeRuntimeMutation({
+    id: "instances.setTextContent",
+    input: {
+      operation: "set",
+      instanceId,
+      mode: type,
+      text: value,
+    },
   });
 };
 
@@ -122,14 +110,12 @@ export const TextContent = ({
           resettable={hasChildren}
           resetDisabled={isResetDisabled}
           onReset={() => {
-            updateWebstudioData((data) => {
-              const instance = data.instances.get(instanceId);
-              if (instance) {
-                applyBuilderPatchPayloadMutable(
-                  data,
-                  createTextContentResetPayload({ instanceId })
-                );
-              }
+            executeRuntimeMutation({
+              id: "instances.setTextContent",
+              input: {
+                operation: "reset",
+                instanceId,
+              },
             });
           }}
         >

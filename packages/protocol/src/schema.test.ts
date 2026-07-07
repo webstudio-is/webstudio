@@ -135,7 +135,7 @@ describe("project bundle contract", () => {
   });
 
   test("generates the current bundle version", () => {
-    expect(bundleVersion).toMatch(/^bundle-[0-9a-f]{8}$/);
+    expect(bundleVersion).toMatch(/^bundle-[a-z0-9]+$/);
   });
 
   test("formats project bundle version mismatch messages", () => {

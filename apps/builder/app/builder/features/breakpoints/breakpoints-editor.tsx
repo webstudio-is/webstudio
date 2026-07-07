@@ -27,11 +27,11 @@ import {
   hasReachedBreakpointLimit,
   isBaseBreakpoint,
 } from "@webstudio-is/project-build/runtime/breakpoints";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { ConditionInput } from "./condition-input";
 import { CssValueInput } from "~/builder/features/style-panel/shared/css-value-input";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { buildBreakpointFromEditorState } from "./breakpoint-editor-utils";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -245,9 +245,34 @@ export const BreakpointsEditor = ({
   );
 
   const handleChangeComplete = (breakpoint: Breakpoint) => {
-    serverSyncStore.createTransaction([$breakpoints], (breakpoints) => {
-      breakpoints.set(breakpoint.id, breakpoint);
+    if (breakpoints.has(breakpoint.id)) {
+      executeRuntimeMutation({
+        id: "breakpoints.update",
+        input: {
+          breakpointId: breakpoint.id,
+          values: {
+            label: breakpoint.label,
+            condition: breakpoint.condition ?? null,
+            minWidth: breakpoint.minWidth ?? null,
+            maxWidth: breakpoint.maxWidth ?? null,
+          },
+        },
+      });
+      return;
+    }
+
+    executeRuntimeMutation({
+      id: "breakpoints.create",
+      input: {
+        label: breakpoint.label,
+        condition: breakpoint.condition,
+        minWidth: breakpoint.minWidth,
+        maxWidth: breakpoint.maxWidth,
+      },
     });
+    setAddedBreakpoints((breakpoints) =>
+      breakpoints.filter((item) => item.id !== breakpoint.id)
+    );
   };
 
   const handleOpenChange = (newOpen: boolean) => {

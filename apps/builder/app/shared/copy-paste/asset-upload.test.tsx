@@ -2,6 +2,7 @@ import { expect, test, vi } from "vitest";
 import { $, AssetValue, renderTemplate } from "@webstudio-is/template";
 import type { StyleDecl, WebstudioFragment } from "@webstudio-is/sdk";
 import { denormalizeSrcProps } from "./asset-upload";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
 
 test("extractSrcProps works well", async () => {
   const data = renderTemplate(
@@ -149,4 +150,36 @@ test("upload raw inception images", async () => {
   expect(uploadImages).toBeCalledWith([
     "https://preview.webstudio.ai/cgi/image/dev/5036ed5c3dfce99eaac566a06bc3729620354a364357907a523f1feb2d6fb819.png?format=raw",
   ]);
+});
+
+test("uses runtime id generator for generated asset size props by default", async () => {
+  const data = renderTemplate(
+    <$.Body ws:id="box">
+      <$.Image ws:id="image" src="https://src/"></$.Image>
+    </$.Body>
+  );
+  const uploadImages = async (srcs: string[]) => {
+    return new Map(srcs.map((src) => [src, "asset-id"]));
+  };
+  let nextId = 0;
+  const createId = vi
+    .spyOn(builderRuntimeContext, "createId")
+    .mockImplementation(() => `runtime-id-${++nextId}`);
+
+  try {
+    const denormalizedData = await denormalizeSrcProps(data, uploadImages);
+
+    expect(createId).toHaveBeenCalledTimes(2);
+    expect(
+      denormalizedData.props.filter(
+        (prop) => prop.instanceId === "image" && prop.type === "asset"
+      )
+    ).toEqual([
+      expect.objectContaining({ name: "src", value: "asset-id" }),
+      expect.objectContaining({ id: "runtime-id-1", name: "width" }),
+      expect.objectContaining({ id: "runtime-id-2", name: "height" }),
+    ]);
+  } finally {
+    createId.mockRestore();
+  }
 });

@@ -5,9 +5,14 @@ import {
   $selectedBreakpointId,
   $selectedStyleSources,
 } from "~/shared/nano-states";
-import { $breakpoints } from "~/shared/sync/data-stores";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { $breakpoints, $pages } from "~/shared/sync/data-stores";
 import {
+  $assets,
+  $dataSources,
   $instances,
+  $props,
+  $resources,
   $styleSourceSelections,
   $styleSources,
   $styles,
@@ -19,12 +24,10 @@ import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 enableMapSet();
 registerContainers();
 
-const setupSelection = (styleSource: {
-  id: string;
-  type: "token";
-  name: string;
-  locked?: true;
-}) => {
+const setupBaseStores = () => {
+  const pages = createDefaultPages({ rootInstanceId: "body" });
+  $pages.set(pages);
+  $selectedPageId.set(pages.homePageId);
   $instances.set(
     new Map([
       [
@@ -33,10 +36,23 @@ const setupSelection = (styleSource: {
       ],
     ])
   );
-  $selectedPageId.set("");
+  $props.set(new Map());
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  $assets.set(new Map());
   selectInstance(["body"]);
   $breakpoints.set(new Map([["base", { id: "base", label: "Base" }]]));
   $selectedBreakpointId.set("base");
+  $styles.set(new Map());
+};
+
+const setupSelection = (styleSource: {
+  id: string;
+  type: "token";
+  name: string;
+  locked?: true;
+}) => {
+  setupBaseStores();
   $styleSources.set(new Map([[styleSource.id, styleSource]]));
   $styleSourceSelections.set(
     new Map([
@@ -50,7 +66,6 @@ const setupSelection = (styleSource: {
     ])
   );
   $selectedStyleSources.set(new Map([["body", styleSource.id]]));
-  $styles.set(new Map());
 };
 
 describe("use-style-data", () => {
@@ -101,6 +116,38 @@ describe("use-style-data", () => {
       {
         breakpointId: "base",
         styleSourceId: "token1",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+        listed: undefined,
+        state: undefined,
+      },
+    ]);
+  });
+
+  test("writes styles for implicit local source through runtime generated ids", () => {
+    setupBaseStores();
+    $styleSources.set(new Map());
+    $styleSourceSelections.set(new Map());
+    $selectedStyleSources.set(new Map());
+
+    setProperty("color")({ type: "keyword", value: "red" });
+
+    const styleSources = Array.from($styleSources.get().values());
+    expect(styleSources).toEqual([
+      expect.objectContaining({
+        type: "local",
+        id: expect.any(String),
+      }),
+    ]);
+    const localStyleSourceId = styleSources[0]?.id;
+    expect($styleSourceSelections.get().get("body")).toEqual({
+      instanceId: "body",
+      values: [localStyleSourceId],
+    });
+    expect(Array.from($styles.get().values())).toEqual([
+      {
+        breakpointId: "base",
+        styleSourceId: localStyleSourceId,
         property: "color",
         value: { type: "keyword", value: "red" },
         listed: undefined,

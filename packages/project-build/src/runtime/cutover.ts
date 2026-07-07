@@ -6,7 +6,14 @@ export const builderRuntimeCutoverManifests = [
   },
   {
     family: "page-create-update-mutations",
-    operationIds: ["pages.create", "pages.update"] as const,
+    operationIds: [
+      "pages.create",
+      "pages.update",
+      "pages.updateSettings",
+      "pages.updateMarketplace",
+      "pages.savePathInHistory",
+      "pages.setHome",
+    ] as const,
     callers: ["appRouter.api.pages", "Builder pages UI"] as const,
   },
   {
@@ -25,12 +32,24 @@ export const builderRuntimeCutoverManifests = [
   },
   {
     family: "page-template-operations",
-    operationIds: ["pageTemplates.list", "pageTemplates.createPage"] as const,
+    operationIds: [
+      "pageTemplates.list",
+      "pageTemplates.create",
+      "pageTemplates.update",
+      "pageTemplates.delete",
+      "pageTemplates.duplicate",
+      "pageTemplates.reorder",
+      "pageTemplates.createPage",
+    ] as const,
     callers: ["appRouter.api.pageTemplates", "Builder pages UI"] as const,
   },
   {
     family: "project-settings-operations",
-    operationIds: ["projectSettings.get", "projectSettings.update"] as const,
+    operationIds: [
+      "projectSettings.get",
+      "projectSettings.update",
+      "projectSettings.updateMarketplaceProduct",
+    ] as const,
     callers: ["appRouter.api.projectSettings"] as const,
   },
   {
@@ -40,6 +59,7 @@ export const builderRuntimeCutoverManifests = [
       "redirects.create",
       "redirects.update",
       "redirects.delete",
+      "redirects.setAll",
     ] as const,
     callers: ["appRouter.api.redirects"] as const,
   },
@@ -63,7 +83,11 @@ export const builderRuntimeCutoverManifests = [
   },
   {
     family: "folder-create-update-mutations",
-    operationIds: ["folders.create", "folders.update"] as const,
+    operationIds: [
+      "folders.create",
+      "folders.update",
+      "folders.duplicate",
+    ] as const,
     callers: ["appRouter.api.folders", "Builder pages UI"] as const,
   },
   {
@@ -83,16 +107,37 @@ export const builderRuntimeCutoverManifests = [
   {
     family: "instance-structural-api-mutations",
     operationIds: [
-      "instances.append",
       "instances.move",
       "instances.clone",
       "instances.delete",
+      "instances.reparent",
+      "instances.wrap",
+      "instances.convert",
+      "instances.unwrap",
+      "instances.duplicateAfterItself",
+      "instances.deleteBySelector",
     ] as const,
     callers: ["appRouter.api.instances"] as const,
   },
   {
+    family: "component-insert-mutations",
+    operationIds: [
+      "instances.insertComponent",
+      "instances.insertFragment",
+    ] as const,
+    callers: [
+      "appRouter.api.instances",
+      "MCP insert-fragment",
+      "Builder components panel",
+    ] as const,
+  },
+  {
     family: "text-content-mutations",
-    operationIds: ["instances.updateText"] as const,
+    operationIds: [
+      "instances.updateText",
+      "instances.setTextContent",
+      "instances.updateTextTree",
+    ] as const,
     callers: [
       "appRouter.api.instances",
       "Builder text-content controls",
@@ -113,6 +158,16 @@ export const builderRuntimeCutoverManifests = [
     ] as const,
   },
   {
+    family: "instance-metadata-mutations",
+    operationIds: ["instances.setTag", "instances.setLabel"] as const,
+    callers: ["Builder settings panel", "Builder navigator"] as const,
+  },
+  {
+    family: "instance-layout-mutations",
+    operationIds: ["instances.fillGrid"] as const,
+    callers: ["Builder layout panel"] as const,
+  },
+  {
     family: "style-reads",
     operationIds: ["styles.getDeclarations", "designTokens.list"] as const,
     callers: ["appRouter.api.styles", "appRouter.api.designTokens"] as const,
@@ -123,6 +178,8 @@ export const builderRuntimeCutoverManifests = [
       "styles.updateDeclarations",
       "styles.deleteDeclarations",
       "styles.replaceValues",
+      "styles.updateSelectedDeclarations",
+      "styles.deleteSelectedDeclarations",
     ] as const,
     callers: ["appRouter.api.styles"] as const,
   },
@@ -135,8 +192,22 @@ export const builderRuntimeCutoverManifests = [
       "designTokens.attach",
       "designTokens.detach",
       "designTokens.extract",
+      "designTokens.createAttached",
     ] as const,
     callers: ["appRouter.api.designTokens"] as const,
+  },
+  {
+    family: "style-source-mutations",
+    operationIds: [
+      "styleSources.rename",
+      "styleSources.delete",
+      "styleSources.setLock",
+      "styleSources.reorder",
+      "styleSources.clearStyles",
+      "styleSources.duplicate",
+      "styleSources.convertLocalToToken",
+    ] as const,
+    callers: ["Builder style source controls"] as const,
   },
   {
     family: "css-variable-operations",
@@ -145,6 +216,7 @@ export const builderRuntimeCutoverManifests = [
       "cssVariables.define",
       "cssVariables.delete",
       "cssVariables.rewriteRefs",
+      "cssVariables.rename",
     ] as const,
     callers: [
       "appRouter.api.cssVariables",
@@ -162,6 +234,8 @@ export const builderRuntimeCutoverManifests = [
       "resources.create",
       "resources.update",
       "resources.delete",
+      "resources.upsert",
+      "resources.upsertProp",
     ] as const,
     callers: ["appRouter.api.resources"] as const,
   },
@@ -170,6 +244,8 @@ export const builderRuntimeCutoverManifests = [
     operationIds: [
       "assets.list",
       "assets.findUsage",
+      "assets.update",
+      "assets.add",
       "assets.replace",
       "assets.delete",
     ] as const,
@@ -185,7 +261,18 @@ export const builderRuntimeCutoverManifests = [
       "variables.create",
       "variables.update",
       "variables.delete",
+      "variables.deleteUnused",
     ] as const,
     callers: ["appRouter.api.variables"] as const,
+  },
+  {
+    family: "page-tree-and-clipboard-mutations",
+    operationIds: [
+      "pages.copy",
+      "pageClipboard.paste",
+      "pageTree.move",
+      "pageTree.reparentOrphans",
+    ] as const,
+    callers: ["Builder pages UI", "Builder copy/paste"] as const,
   },
 ] as const;

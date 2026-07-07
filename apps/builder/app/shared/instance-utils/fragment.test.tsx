@@ -46,8 +46,8 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "../sync/sync-stores";
-import { getInstancePath } from "../nano-states";
-import { isFragmentContentModeCopyableProp } from "../content-mode-copy-policy";
+import { getInstancePath } from "@webstudio-is/project-build/runtime/lookup";
+import { isFragmentContentModeCopyableProp } from "@webstudio-is/project-build/runtime/content-mode-copy-policy";
 
 const {
   getFragmentInstancesData,
@@ -234,7 +234,7 @@ describe("fragment copy helpers", () => {
     ]);
     let didMergeDueToLimit = false;
 
-    const mergedBreakpointIds = insertFragmentBreakpointsMutable({
+    const { mergedBreakpointIds } = insertFragmentBreakpointsMutable({
       fragment: createFragment({
         breakpoints: [
           baseBreakpoint,

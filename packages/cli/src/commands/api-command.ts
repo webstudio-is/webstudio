@@ -498,25 +498,28 @@ export const instanceInspectCommandOptions = (yargs: CommonYargsArgv) =>
       describe: "When including children, maximum descendant depth to return",
     });
 
-export const appendInstanceCommandOptions = (yargs: CommonYargsArgv) =>
-  requiredInputOption(
-    apiCommandOptions(yargs)
-      .option("parent", {
-        type: "string",
-        describe: "Required parent instance id where new children are inserted",
-        demandOption: true,
-      })
-      .option("mode", {
-        choices: ["append", "prepend", "replace"] as const,
-        describe:
-          "Append, prepend, or replace parent children before inserting new instances",
-      })
-      .option("insert-index", {
-        type: "number",
-        describe: "Zero-based child index for insertion",
-      }),
-    "Required JSON file containing an array of children with tag, optional component, label, and text"
-  );
+export const insertComponentCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs)
+    .option("parent", {
+      type: "string",
+      describe: "Required parent instance id where the component is inserted",
+      demandOption: true,
+    })
+    .option("component", {
+      type: "string",
+      describe:
+        "Required component id to insert. Template composition is applied automatically if a template is registered for that component.",
+      demandOption: true,
+    })
+    .option("mode", {
+      choices: ["append", "prepend", "replace"] as const,
+      describe:
+        "Append, prepend, or replace parent children before inserting the component",
+    })
+    .option("insert-index", {
+      type: "number",
+      describe: "Zero-based child index for insertion",
+    });
 
 export const moveInstanceCommandOptions = (yargs: CommonYargsArgv) =>
   requiredInputOption(
@@ -616,7 +619,7 @@ export const textUpdateCommandOptions = (yargs: CommonYargsArgv) =>
     .option("mode", {
       choices: ["text", "expression"] as const,
       describe:
-        "Optional expected child type; use expression to validate expression syntax",
+        'Optional expected child type: "text" for plain visible text, "expression" for JavaScript expression children. There is no "replace" mode.',
     });
 
 export const stylesCommandOptions = (yargs: CommonYargsArgv) =>
@@ -1210,9 +1213,6 @@ type BreakpointUpdateInput = Parameters<
 type VariableValueInput = Parameters<
   typeof httpClient.createVariable
 >[0]["value"];
-type AppendInstanceChildrenInput = Parameters<
-  typeof httpClient.appendInstance
->[0]["children"];
 type MoveInstanceInput = Parameters<typeof httpClient.moveInstance>[0]["moves"];
 type PropUpdatesInput = Parameters<typeof httpClient.updateProps>[0]["updates"];
 type PropDeletionsInput = Parameters<
@@ -1386,14 +1386,10 @@ const textListModeOption = (
 ): "text" | "expression" | "all" | undefined =>
   optionalChoice(value, ["text", "expression", "all"], "text list mode");
 
-const appendInstanceModeOption = (
+const instanceInsertModeOption = (
   value: ApiCommandOptions["mode"]
 ): "append" | "prepend" | "replace" | undefined =>
-  optionalChoice(
-    value,
-    ["append", "prepend", "replace"],
-    "append instance mode"
-  );
+  optionalChoice(value, ["append", "prepend", "replace"], "instance mode");
 
 const readJsonFile = async (
   dependencies: ApiCommandDependencies,
@@ -1617,7 +1613,7 @@ type ApiCommandHandler = (
   dependencies: ApiCommandDependencies
 ) => Promise<unknown>;
 
-const apiCommandHandlers = {
+const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
   whoami: async (_options, connection, dependencies) =>
     runProjectSessionCommand("whoami", {}, connection, dependencies),
   permissions: async (_options, connection, dependencies) =>
@@ -1967,18 +1963,15 @@ const apiCommandHandlers = {
       dependencies
     );
   },
-  "append-instance": async (options, connection, dependencies) => {
+  "insert-component": async (options, connection, dependencies) => {
     const input = {
       parentInstanceId: requireOption(options.parent, "--parent"),
-      mode: appendInstanceModeOption(options.mode),
+      component: requireOption(options.component, "--component"),
+      mode: instanceInsertModeOption(options.mode),
       insertIndex: options.insertIndex,
-      children: await readInputArray<AppendInstanceChildrenInput>(
-        dependencies,
-        options
-      ),
     };
     return runProjectSessionCommand(
-      "append-instance",
+      "insert-component",
       input,
       connection,
       dependencies
@@ -2555,7 +2548,7 @@ const apiCommandHandlers = {
       dependencies
     );
   },
-} satisfies Record<ApiCommandName, ApiCommandHandler>;
+};
 
 export const apiCommand = async (
   options: ApiCommandOptions,
@@ -2576,6 +2569,11 @@ export const apiCommand = async (
     };
 
     const query = apiCommandHandlers[options.command];
+    if (query === undefined) {
+      throw new Error(
+        `${options.command} is an MCP project-editing tool, not a high-level CLI API command. Use the MCP shortcut, for example: webstudio insert-fragment '{...}', or the explicit form: webstudio mcp single-op-call insert-fragment '{...}'.`
+      );
+    }
     const previousDryRun = activeApiCommandDryRun;
     const previousRefresh = activeApiCommandRefresh;
     activeApiCommandDryRun = options.dryRun === true;

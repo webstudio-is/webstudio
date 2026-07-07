@@ -76,15 +76,9 @@ export const getPreviewUrl = ({
 
 export const getPreviewBuildArgs = () => ["run", "build"];
 
-export const getPreviewStartArgs = ({ host, port }: PreviewServerOptions) => [
+export const getPreviewStartArgs = (_options: PreviewServerOptions) => [
   "run",
   "start",
-  "--",
-  "--host",
-  host,
-  "--port",
-  String(port),
-  "--strictPort",
 ];
 
 export const getPreviewCommand = (
@@ -194,6 +188,21 @@ export const waitForPreviewReady = async (
   throw new Error(`Preview server did not become ready at ${url}.`);
 };
 
+const formatPreviewServerStartupError = ({
+  message,
+  output,
+  url,
+}: {
+  message: string;
+  output: string;
+  url: string;
+}) => {
+  const portHint = output.includes("EADDRINUSE")
+    ? `\n\nPort is already in use. Stop the existing preview server for ${url}, or start preview with a different port.`
+    : "";
+  return `${message}\n\nPreview server output:\n${output}${portHint}`;
+};
+
 export const createPreviewController = (
   defaults: PreviewServerOptions,
   dependencies = defaultPreviewServerDependencies
@@ -201,6 +210,10 @@ export const createPreviewController = (
   let server: PreviewServerResult | undefined;
   let currentOptions = defaults;
   let currentCwd = defaults.cwd;
+  let serverOutput = "";
+  const appendServerOutput = (chunk: unknown) => {
+    serverOutput = `${serverOutput}${String(chunk)}`.slice(-4000);
+  };
   const isRunning = () =>
     server !== undefined &&
     server.process.killed === false &&
@@ -259,13 +272,16 @@ export const createPreviewController = (
     currentOptions = nextOptions;
     currentCwd = nextOptions.cwd;
     await runPreviewBuild(dependencies, currentCwd);
+    serverOutput = "";
     server = startPreviewServer(
       {
         ...nextOptions,
-        stdio: ["ignore", "ignore", "ignore"],
+        stdio: ["ignore", "pipe", "pipe"],
       },
       dependencies
     );
+    server.process.stdout?.on("data", appendServerOutput);
+    server.process.stderr?.on("data", appendServerOutput);
     server.process.once("exit", () => {
       server = undefined;
     });
@@ -277,8 +293,26 @@ export const createPreviewController = (
       options: PreviewControllerStartOptions = {}
     ): Promise<PreviewControllerResult> {
       const result = await start(options);
-      await waitForPreviewReady(result.url, { isRunning }, dependencies);
+      try {
+        await waitForPreviewReady(result.url, { isRunning }, dependencies);
+      } catch (error) {
+        const output = serverOutput.trim();
+        if (output !== "" && error instanceof Error) {
+          throw new Error(
+            formatPreviewServerStartupError({
+              message: error.message,
+              output,
+              url: result.url,
+            })
+          );
+        }
+        throw error;
+      }
       return result;
+    },
+    async stop(): Promise<PreviewControllerResult> {
+      await stop();
+      return getStatus();
     },
     status: getStatus,
     resolveUrl(path = "/") {

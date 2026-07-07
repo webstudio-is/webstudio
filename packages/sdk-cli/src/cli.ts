@@ -1,5 +1,4 @@
 import { parseArgs } from "node:util";
-import { generateStories } from "./generate-stories";
 import { validateRegistry } from "./validate-registry";
 
 export const runCli = async (args: string[]) => {
@@ -11,7 +10,9 @@ export const runCli = async (args: string[]) => {
   const [command, registry] = positionals;
 
   if (command === "generate-stories") {
-    await generateStories();
+    throw Error(
+      "generate-stories must be run from a package-local static entrypoint such as tsx src/generate-stories.ts"
+    );
     return;
   }
 

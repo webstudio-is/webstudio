@@ -1,8 +1,10 @@
 import { serverOnlyRouterOperationMetadata } from "./__generated__/server-only-router-operation-metadata";
 import { localOnlyOperationInputs } from "./local-operation-inputs";
 import { publicApiOperationDocumentation } from "./operation-docs";
+import { getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
 import {
   publicRuntimeOperationContracts,
+  type InputJsonSchema,
   type PublicApiOperationNamespace,
   type PublicApiOperationPermit,
   type PublicRuntimeOperationId,
@@ -25,9 +27,7 @@ type PublicApiOperationInput<Command extends string = string> = {
   client: string;
   permit?: PublicApiOperationPermit;
   invalidatesNamespaces?: readonly PublicApiOperationNamespace[];
-  inputFields?: readonly string[];
-  requiredInputFields?: readonly string[];
-  inputFieldTypes?: Partial<Record<string, "array">>;
+  inputSchema?: InputJsonSchema;
 };
 
 export type PublicApiOperation<Command extends string = string> = Omit<
@@ -40,6 +40,7 @@ export type PublicApiOperation<Command extends string = string> = Omit<
   inputFields: readonly string[];
   requiredInputFields: readonly string[];
   inputFieldTypes: Partial<Record<string, "array">>;
+  inputSchema: InputJsonSchema;
   requiredOptions?: readonly string[];
   examples: readonly string[];
   localCapable: boolean;
@@ -49,6 +50,8 @@ export type PublicApiOperation<Command extends string = string> = Omit<
   writeNamespaces: readonly PublicApiOperationNamespace[];
   invalidatesNamespaces: readonly PublicApiOperationNamespace[];
   retryOnConflict: boolean;
+  requiresAssets: boolean;
+  requiresConfirm: boolean;
 };
 
 const runtimeOperationById = new Map(
@@ -64,9 +67,6 @@ const documentationByCommand: Map<
   ])
 );
 
-const isRuntimeOperationId = (id: string): id is PublicRuntimeOperationId =>
-  runtimeOperationById.has(id as PublicRuntimeOperationId);
-
 const withDefaultPermit = <Operation extends PublicApiOperationInput>(
   operation: Operation
 ): PublicApiOperation<Operation["command"]> => {
@@ -76,25 +76,26 @@ const withDefaultPermit = <Operation extends PublicApiOperationInput>(
       `Missing public API operation documentation for "${operation.command}".`
     );
   }
-  const runtimeOperationId = isRuntimeOperationId(operation.id)
-    ? operation.id
-    : undefined;
-  const runtimeOperation =
-    runtimeOperationId === undefined
-      ? undefined
-      : runtimeOperationById.get(runtimeOperationId);
+  const runtimeOperation = runtimeOperationById.get(
+    operation.id as PublicRuntimeOperationId
+  );
+  const inputSchema = operation.inputSchema ?? runtimeOperation?.inputSchema;
+  if (inputSchema === undefined) {
+    throw new Error(
+      `Missing public API input schema for "${operation.command}".`
+    );
+  }
+  const { inputFields, requiredInputFields, inputFieldTypes } =
+    getInputJsonSchemaMetadata(inputSchema);
   return {
     ...operation,
     permit:
       operation.permit ?? (operation.method === "query" ? "view" : "build"),
     description: documentation.description,
-    inputFields: operation.inputFields ?? runtimeOperation?.inputFields ?? [],
-    requiredInputFields:
-      operation.requiredInputFields ??
-      runtimeOperation?.requiredInputFields ??
-      [],
-    inputFieldTypes:
-      operation.inputFieldTypes ?? runtimeOperation?.inputFieldTypes ?? {},
+    inputFields,
+    requiredInputFields,
+    inputFieldTypes,
+    inputSchema,
     requiredOptions:
       "requiredOptions" in documentation
         ? documentation.requiredOptions
@@ -102,7 +103,7 @@ const withDefaultPermit = <Operation extends PublicApiOperationInput>(
     examples: documentation.examples,
     localCapable: runtimeOperation !== undefined,
     serverOnly: runtimeOperation === undefined,
-    runtimeOperationId,
+    runtimeOperationId: runtimeOperation?.id,
     readNamespaces: runtimeOperation?.readNamespaces ?? [],
     writeNamespaces: runtimeOperation?.writeNamespaces ?? [],
     invalidatesNamespaces:
@@ -110,42 +111,43 @@ const withDefaultPermit = <Operation extends PublicApiOperationInput>(
       operation.invalidatesNamespaces ??
       [],
     retryOnConflict: runtimeOperation?.retryOnConflict ?? false,
+    requiresAssets: runtimeOperation?.requiresAssets ?? false,
+    requiresConfirm: runtimeOperation?.requiresConfirm ?? false,
   };
 };
 
-const serverOnlyOperationInputs = [
+const nonRuntimeOperationInputs = [
   ...Object.values(serverOnlyRouterOperationMetadata),
   ...localOnlyOperationInputs,
 ] satisfies readonly PublicApiOperationInput[];
 
-const serverOnlyOperationInputByCommand: Map<string, PublicApiOperationInput> =
-  new Map(
-    serverOnlyOperationInputs.map((operation) => [operation.command, operation])
-  );
-const runtimeOperationInputByCommand: Map<string, PublicApiOperationInput> =
-  new Map(
-    publicRuntimeOperationContracts.map((operation) => {
-      const input = {
-        command: operation.command,
-        id: operation.id,
-        method:
-          operation.kind === "read"
-            ? ("query" as const)
-            : ("mutation" as const),
-        path: "api." + operation.id,
-        client: operation.client,
-        permit: operation.permit,
-      } satisfies PublicApiOperationInput;
-      return [operation.command, input];
-    })
-  );
+const runtimeOperationInputs = publicRuntimeOperationContracts.map(
+  (operation) =>
+    ({
+      command: operation.command,
+      id: operation.id,
+      method: operation.kind === "read" ? "query" : "mutation",
+      path: "api." + operation.id,
+      client: operation.client,
+      permit: operation.permit,
+    }) satisfies PublicApiOperationInput
+);
+
+const operationInputByCommand = new Map<string, PublicApiOperationInput>();
+for (const operation of [
+  ...nonRuntimeOperationInputs,
+  ...runtimeOperationInputs,
+]) {
+  if (operationInputByCommand.has(operation.command)) {
+    throw new Error(`Duplicate public API command "${operation.command}".`);
+  }
+  operationInputByCommand.set(operation.command, operation);
+}
 
 const getOperationInputByCommand = <Command extends PublicApiCommand>(
   command: Command
 ): PublicApiOperationInput<Command> => {
-  const operation =
-    serverOnlyOperationInputByCommand.get(command) ??
-    runtimeOperationInputByCommand.get(command);
+  const operation = operationInputByCommand.get(command);
   if (operation === undefined) {
     throw new Error(
       'Missing public API operation input for "' + command + '".'
@@ -172,7 +174,7 @@ export const getPublicApiOperation = (command: PublicApiCommand) => {
 
 export const getPublicApiOperationPath = (command: PublicApiCommand) => {
   const operation = getPublicApiOperation(command);
-  const path = "path" in operation ? operation.path : undefined;
+  const path = operation.path;
   if (path === undefined) {
     throw new Error(`Public API operation "${command}" has no tRPC path.`);
   }

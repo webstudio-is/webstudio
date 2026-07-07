@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { computed } from "nanostores";
-import { nanoid } from "nanoid";
 import {
   forwardRef,
   useEffect,
@@ -67,61 +66,16 @@ import {
   $selectedInstancePathWithRoot,
   $selectedPage,
   getInstanceKey,
-  type InstancePath,
 } from "~/shared/nano-states";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import type { InstancePath } from "@webstudio-is/project-build/runtime/lookup";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
-  createResourceValue,
-  upsertResourceMutable,
+  createResourceFieldsFromFormData,
+  validateResourceBodyExpression,
+  validateResourceUrlExpression,
+  type ResourceBodyInputType,
 } from "@webstudio-is/project-build/runtime/data";
 import { parseCurl, type CurlRequest } from "./curl";
-
-export const parseResource = ({
-  id,
-  control,
-  name,
-  formData,
-}: {
-  id: string;
-  control?: string;
-  name?: string;
-  formData: FormData;
-}) => {
-  const searchParamNames = formData.getAll("search-param-name") as string[];
-  const searchParamValues = formData.getAll("search-param-value") as string[];
-  const headerNames = formData.getAll("header-name") as string[];
-  const headerValues = formData.getAll("header-value") as string[];
-  return createResourceValue({
-    id,
-    control,
-    name: name ?? formData.get("name"),
-    url: formData.get("url"),
-    searchParams: searchParamNames
-      .map((name, index) => ({ name, value: searchParamValues[index] }))
-      .filter((item) => item.name.trim()),
-    method: formData.get("method"),
-    headers: headerNames
-      .map((name, index) => ({ name, value: headerValues[index] }))
-      .filter((item) => item.name.trim()),
-    body: formData.get("body") || undefined,
-  });
-};
-
-const validateUrl = (value: string, scope: Record<string, unknown>) => {
-  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-  if (typeof evaluatedValue !== "string") {
-    return "URL expects a string";
-  }
-  if (evaluatedValue.length === 0) {
-    return "URL is required";
-  }
-  try {
-    new URL(evaluatedValue);
-  } catch {
-    return "URL is invalid";
-  }
-  return "";
-};
 
 export const UrlField = ({
   scope,
@@ -145,7 +99,7 @@ export const UrlField = ({
   // revalidate and hide error message
   // until validity is checks again
   useEffect(() => {
-    ref.current?.setCustomValidity(validateUrl(value, scope));
+    ref.current?.setCustomValidity(validateResourceUrlExpression(value, scope));
     setError("");
   }, [value, scope]);
   return (
@@ -645,26 +599,7 @@ type PanelApi = {
   save: (formData: FormData) => void;
 };
 
-type BodyType = undefined | "text" | "json";
-
-const validateBody = (
-  value: string,
-  bodyType: BodyType,
-  scope: Record<string, unknown>
-) => {
-  // skip empty expressions
-  if (value === "") {
-    return "";
-  }
-  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-  if (bodyType === "json") {
-    return typeof evaluatedValue === "object" && evaluatedValue !== null
-      ? ""
-      : "Expected valid JSON object in body";
-  } else {
-    return typeof evaluatedValue === "string" ? "" : "Expected string in body";
-  }
-};
+type BodyType = ResourceBodyInputType;
 
 const toMime = (bodyType: BodyType) => {
   if (bodyType === "json") {
@@ -694,7 +629,9 @@ const BodyField = ({
   const [bodyError, setBodyError] = useState("");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    bodyRef.current?.setCustomValidity(validateBody(value, bodyType, scope));
+    bodyRef.current?.setCustomValidity(
+      validateResourceBodyExpression(value, bodyType, scope)
+    );
     setBodyError("");
   }, [value, bodyType, scope]);
   const updateBody = (newBody: string) => {
@@ -867,25 +804,16 @@ export const ResourceForm = forwardRef<
       if (scopeInstanceId === undefined) {
         return;
       }
-      const newResource = parseResource({
-        id: resource?.id ?? nanoid(),
-        formData,
-      });
-      const newVariable: DataSource = {
-        id: variable?.id ?? nanoid(),
-        scopeInstanceId,
-        name: newResource.name,
-        type: "resource",
-        resourceId: newResource.id,
-      };
-      updateWebstudioData((data) => {
-        upsertResourceMutable({
-          data,
-          resource: newResource,
-          dataSourceId: newVariable.id,
+      const resourceFields = createResourceFieldsFromFormData({ formData });
+      executeRuntimeMutation({
+        id: "resources.upsert",
+        input: {
+          resourceId: resource?.id,
+          resource: resourceFields,
+          dataSourceId: variable?.id,
           scopeInstanceId,
-          dataSourceName: newVariable.name,
-        });
+          dataSourceName: resourceFields.name,
+        },
       });
     },
   }));
@@ -1026,26 +954,19 @@ export const SystemResourceForm = forwardRef<
       if (scopeInstanceId === undefined) {
         return;
       }
-      const newResource: Resource = parseResource({
-        id: resource?.id ?? nanoid(),
+      const resourceFields = createResourceFieldsFromFormData({
         control: "system",
         formData,
       });
-      const newVariable: DataSource = {
-        id: variable?.id ?? nanoid(),
-        scopeInstanceId,
-        name: newResource.name,
-        type: "resource",
-        resourceId: newResource.id,
-      };
-      updateWebstudioData((data) => {
-        upsertResourceMutable({
-          data,
-          resource: newResource,
-          dataSourceId: newVariable.id,
+      executeRuntimeMutation({
+        id: "resources.upsert",
+        input: {
+          resourceId: resource?.id,
+          resource: resourceFields,
+          dataSourceId: variable?.id,
           scopeInstanceId,
-          dataSourceName: newVariable.name,
-        });
+          dataSourceName: resourceFields.name,
+        },
       });
     },
   }));
@@ -1080,7 +1001,7 @@ SystemResourceForm.displayName = "SystemResourceForm";
 
 const zGraphqlBody = z.object({
   query: z.string(),
-  variables: z.optional(z.record(z.unknown())),
+  variables: z.optional(z.record(z.string(), z.unknown())),
 });
 
 export const GraphqlResourceForm = forwardRef<
@@ -1135,26 +1056,19 @@ export const GraphqlResourceForm = forwardRef<
       if (scopeInstanceId === undefined) {
         return;
       }
-      const newResource = parseResource({
-        id: resource?.id ?? nanoid(),
+      const resourceFields = createResourceFieldsFromFormData({
         control: "graphql",
         formData,
       });
-      const newVariable: DataSource = {
-        id: variable?.id ?? nanoid(),
-        scopeInstanceId,
-        name: newResource.name,
-        type: "resource",
-        resourceId: newResource.id,
-      };
-      updateWebstudioData((data) => {
-        upsertResourceMutable({
-          data,
-          resource: newResource,
-          dataSourceId: newVariable.id,
+      executeRuntimeMutation({
+        id: "resources.upsert",
+        input: {
+          resourceId: resource?.id,
+          resource: resourceFields,
+          dataSourceId: variable?.id,
           scopeInstanceId,
-          dataSourceName: newVariable.name,
-        });
+          dataSourceName: resourceFields.name,
+        },
       });
     },
   }));

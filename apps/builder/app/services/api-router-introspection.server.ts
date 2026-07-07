@@ -1,7 +1,10 @@
 import { z } from "zod";
 import {
+  emptyInputSchemaMetadata,
   getInputSchemaMetadata,
   isHiddenPublicApiInputField,
+  mergeInputSchemaMetadata,
+  type InputSchemaMetadata,
 } from "@webstudio-is/project-build/contracts/input-schema";
 
 export type ApiRouterProcedure = {
@@ -23,68 +26,40 @@ export const getApiRouterProcedures = (apiRouter: unknown) =>
     }
   )._def.procedures;
 
+const getProcedureDefinition = (procedure: unknown) =>
+  (typeof procedure === "object" || typeof procedure === "function") &&
+  procedure !== null &&
+  "_def" in procedure
+    ? (procedure as ApiRouterProcedure)._def
+    : undefined;
+
 const getProcedureInputSchemas = (procedure: unknown) => {
-  const inputs =
-    (typeof procedure === "object" || typeof procedure === "function") &&
-    procedure !== null &&
-    "_def" in procedure
-      ? (procedure as ApiRouterProcedure)._def?.inputs
-      : undefined;
+  const inputs = getProcedureDefinition(procedure)?.inputs;
   return (inputs ?? []).filter(
-    (input): input is z.ZodTypeAny =>
-      typeof input === "object" &&
-      input !== null &&
-      "_def" in input &&
-      "parse" in input
+    (input): input is z.ZodTypeAny => input instanceof z.ZodType
   );
 };
 
 export const getProcedureInputSchemaMetadata = (procedure: unknown) =>
-  getProcedureInputSchemas(procedure).reduce(
-    (metadata, schema) => {
-      const schemaMetadata = getInputSchemaMetadata(schema, {
-        isHiddenField: isHiddenPublicApiInputField,
-      });
-      return {
-        inputFields: [...metadata.inputFields, ...schemaMetadata.inputFields],
-        requiredInputFields: [
-          ...metadata.requiredInputFields,
-          ...schemaMetadata.requiredInputFields,
-        ],
-        inputFieldTypes: {
-          ...metadata.inputFieldTypes,
-          ...schemaMetadata.inputFieldTypes,
-        },
-      };
-    },
-    {
-      inputFields: [] as string[],
-      requiredInputFields: [] as string[],
-      inputFieldTypes: {} as Partial<Record<string, "array">>,
-    }
+  getProcedureInputSchemas(procedure).reduce<InputSchemaMetadata>(
+    (metadata, schema) =>
+      mergeInputSchemaMetadata(
+        metadata,
+        getInputSchemaMetadata(schema, {
+          isHiddenField: isHiddenPublicApiInputField,
+        })
+      ),
+    emptyInputSchemaMetadata
   );
 
 export const getProcedurePublicApiPermit = (procedure: unknown) =>
-  (typeof procedure === "object" || typeof procedure === "function") &&
-  procedure !== null &&
-  "_def" in procedure
-    ? (procedure as ApiRouterProcedure)._def?.meta?.publicApiPermit
-    : undefined;
+  getProcedureDefinition(procedure)?.meta?.publicApiPermit;
 
 export const getProcedurePublicApiOperation = (procedure: unknown) =>
-  (typeof procedure === "object" || typeof procedure === "function") &&
-  procedure !== null &&
-  "_def" in procedure
-    ? (procedure as ApiRouterProcedure)._def?.meta?.publicApiOperation
-    : undefined;
+  getProcedureDefinition(procedure)?.meta?.publicApiOperation;
 
 export const getProcedureMethod = (procedure: unknown) => {
-  const definition =
-    (typeof procedure === "object" || typeof procedure === "function") &&
-    procedure !== null &&
-    "_def" in procedure
-      ? (procedure as ApiRouterProcedure)._def
-      : undefined;
+  const definition = getProcedureDefinition(procedure);
   if (definition?.query === true) {
     return "query" as const;
   }

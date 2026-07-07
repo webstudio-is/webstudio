@@ -1,13 +1,20 @@
 import {
   elementComponent,
+  findTreeInstanceIds,
+  getHtmlTagsFromProps,
   getStyleDeclKey,
+  instance as instanceInput,
+  tags,
   type DataSource,
   type Instance,
   type Instances,
   type Prop,
+  type Props,
   type StyleDecl,
   type StyleSource,
   type StyleSourceSelection,
+  type WebstudioData,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   compactBuilderPatchPayload,
@@ -19,32 +26,43 @@ import { throwBuilderRuntimeError } from "./errors";
 import { getExpressionErrors } from "./expression-validation";
 import { createRuntimeMutation } from "./mutation";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
-import { createPropClonePatches } from "./props";
+import {
+  createPropClonePatches,
+  createPropDeletePayload,
+  createPropRenamePayload,
+} from "./props";
+import {
+  createTreeVariableRebindPayload,
+  createWebstudioDataPatchPayload,
+} from "./data";
+import { applyBuilderPatchPayloadMutable } from "../state/patch";
+import {
+  isRichTextContent,
+  isTreeSatisfyingContentModel,
+} from "./content-model";
+import {
+  countInstanceChildReferences,
+  detachSharedSlotChildrenMutable,
+  getDirectSharedSlotChildBoundary,
+  getSlotFragmentDropTargetMutable,
+  normalizeLegacySlotInstancePathMutable,
+  normalizeLegacySlotParentInSelectorMutable,
+  prepareSlotReparentMutable,
+  replaceChildReferenceMutable,
+  type InstancePath,
+} from "./slot";
+import { getReparentDropTargetMutable, type DroppableTarget } from "./tree";
 import {
   createStyleClonePayload,
   serializeStyleDeclarations,
 } from "./style-utils";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk/standard-attributes";
+import equal from "fast-deep-equal";
 import { z } from "zod";
-import { runtimeGeneratedIdInput } from "./generated-id-input";
 
-const insertIndexInput = z.number().int().nonnegative();
-
-export const appendInstancesInput = z.object({
-  parentInstanceId: z.string(),
-  mode: z.enum(["append", "prepend", "replace"]).optional(),
-  insertIndex: insertIndexInput.optional(),
-  children: z
-    .array(
-      z.object({
-        instanceId: runtimeGeneratedIdInput,
-        component: z.string().optional(),
-        tag: z.string(),
-        label: z.string().optional(),
-        text: z.string().optional(),
-      })
-    )
-    .min(1),
-});
+export const insertIndexInput = z.number().int().nonnegative();
+export const instanceInsertModeInput = z.enum(["append", "prepend", "replace"]);
 
 export const moveInstancesInput = z.object({
   moves: z
@@ -58,6 +76,14 @@ export const moveInstancesInput = z.object({
     .min(1),
 });
 
+export const reparentInstanceInput = z.object({
+  sourceInstanceSelector: z.array(z.string()).min(2),
+  dropTarget: z.object({
+    parentSelector: z.array(z.string()).min(1),
+    position: z.union([insertIndexInput, z.literal("end")]),
+  }),
+});
+
 export const cloneInstanceInput = z.object({
   sourceInstanceId: z.string(),
   targetParentInstanceId: z.string().optional(),
@@ -68,17 +94,328 @@ export const deleteInstancesInput = z.object({
   instanceIds: z.array(z.string()).min(1),
 });
 
-export const updateTextInstanceInput = z.object({
+export const deleteInstanceBySelectorInput = z.object({
+  instanceSelector: z.array(z.string()).min(2),
+});
+
+export const fillGridInput = z.object({
+  parentInstanceId: z.string(),
+  totalCells: z.number().int().nonnegative(),
+  breakpointId: z.string(),
+});
+
+export const wrapInstanceInput = z.object({
+  instanceSelector: z
+    .array(z.string())
+    .min(2)
+    .describe(
+      "Selected instance selector, starting with the instance to wrap."
+    ),
+  component: instanceInput.shape.component,
+  tag: z.string().min(1).optional(),
+});
+
+export const convertInstanceInput = z.object({
+  instanceSelector: z
+    .array(z.string())
+    .min(2)
+    .describe(
+      "Selected instance selector, starting with the instance to convert."
+    ),
+  component: instanceInput.shape.component,
+  tag: z.string().min(1).optional(),
+  currentTag: z.string().min(1).optional(),
+});
+
+export const unwrapInstanceInput = z.object({
+  instanceSelector: z
+    .array(z.string())
+    .min(3)
+    .describe(
+      "Selected instance selector, starting with the instance to unwrap."
+    ),
+});
+
+export const setInstanceTagInput = z.object({
   instanceId: z.string(),
-  childIndex: z.number().int().nonnegative(),
-  text: z.string(),
-  mode: z.enum(["text", "expression"]).optional(),
+  tag: z.string(),
+  legacyPropName: z.string().optional(),
+});
+
+export const setInstanceLabelInput = z.object({
+  instanceId: z.string(),
+  label: z.string(),
+});
+
+export const updateTextInstanceInput = z.object({
+  instanceId: z
+    .string()
+    .describe("Instance id containing the child to update."),
+  childIndex: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Zero-based child index from list-texts or inspect-instance."),
+  text: z
+    .string()
+    .describe(
+      "Replacement visible text when mode is text, or JavaScript expression source when mode is expression."
+    ),
+  mode: z
+    .enum(["text", "expression"])
+    .optional()
+    .describe(
+      'Optional expected child type. Use "text" for plain visible text and "expression" for JavaScript expression children. There is no "replace" mode.'
+    ),
+});
+
+export const setTextContentInput = z.discriminatedUnion("operation", [
+  z.object({
+    operation: z.literal("set"),
+    instanceId: z.string().describe("Instance id to receive text content."),
+    text: z.string().describe("Visible text or JavaScript expression source."),
+    mode: z
+      .enum(["text", "expression"])
+      .default("text")
+      .describe(
+        'Use "text" for plain visible text and "expression" for JavaScript expression children.'
+      ),
+  }),
+  z.object({
+    operation: z.literal("reset"),
+    instanceId: z.string().describe("Instance id to reset to no text content."),
+  }),
+]);
+
+export const updateTextTreeInput = z.object({
+  rootInstanceId: z.string(),
+  instances: z
+    .array(instanceInput)
+    .min(1)
+    .describe(
+      "Updated rich text tree. Existing instance ids inside the edited tree are preserved. New instance ids are treated as temporary client references and remapped to runtime-generated ids."
+    ),
 });
 
 export type TextContentChild = Extract<
   Instance["children"][number],
   { type: "text" | "expression" }
 >;
+
+export const canUnwrapInstancePath = ({
+  instancePath,
+  rootInstanceId,
+  instances,
+  props,
+  metas,
+}: {
+  instancePath: InstancePath;
+  rootInstanceId?: Instance["id"];
+  instances: Instances;
+  props: Props;
+  metas: Map<string, WsComponentMeta>;
+}) => {
+  if (instancePath.length < 3) {
+    return false;
+  }
+  const [selectedItem, parentItem] = instancePath;
+  if (selectedItem === undefined || parentItem === undefined) {
+    return false;
+  }
+  if (
+    rootInstanceId !== undefined &&
+    parentItem.instance.id === rootInstanceId
+  ) {
+    return false;
+  }
+  if (parentItem.instance.component === "Slot") {
+    return true;
+  }
+  return !isRichTextContent({
+    instanceSelector: selectedItem.instanceSelector,
+    instances,
+    props,
+    metas,
+  });
+};
+
+const createSimulationInstanceId = (instances: Instances) => {
+  let index = 0;
+  let id = "__webstudio_simulated_instance__";
+  while (instances.has(id)) {
+    index += 1;
+    id = `__webstudio_simulated_instance_${index}__`;
+  }
+  return id;
+};
+
+export const getValidTagsForInstance = ({
+  instanceId,
+  instanceSelector,
+  instances,
+  props,
+  metas,
+  htmlTagsByInstanceId,
+  availableTags = tags,
+}: {
+  instanceId: Instance["id"];
+  instanceSelector: Instance["id"][];
+  instances: Instances;
+  props: Props;
+  metas: Map<Instance["component"], WsComponentMeta>;
+  htmlTagsByInstanceId?: Map<Instance["id"], string>;
+  availableTags?: readonly string[];
+}) => {
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return [];
+  }
+  const nextInstances = new Map(instances);
+  const validTags: string[] = [];
+  for (const tag of availableTags) {
+    nextInstances.set(instance.id, { ...instance, tag });
+    if (
+      isTreeSatisfyingContentModel({
+        instances: nextInstances,
+        props,
+        metas,
+        htmlTagsByInstanceId,
+        instanceSelector,
+      })
+    ) {
+      validTags.push(tag);
+    }
+  }
+  return validTags;
+};
+
+export const getValidElementChildTags = ({
+  parentInstanceId,
+  parentInstanceSelector,
+  instances,
+  props,
+  metas,
+  htmlTagsByInstanceId,
+  availableTags = tags,
+}: {
+  parentInstanceId: Instance["id"];
+  parentInstanceSelector: Instance["id"][];
+  instances: Instances;
+  props: Props;
+  metas: Map<Instance["component"], WsComponentMeta>;
+  htmlTagsByInstanceId?: Map<Instance["id"], string>;
+  availableTags?: readonly string[];
+}) => {
+  const parentInstance = instances.get(parentInstanceId);
+  if (parentInstance === undefined) {
+    return [];
+  }
+  const childInstance: Instance = {
+    type: "instance",
+    id: createSimulationInstanceId(instances),
+    component: elementComponent,
+    children: [],
+  };
+  const nextInstances = new Map(instances);
+  nextInstances.set(childInstance.id, childInstance);
+  nextInstances.set(parentInstance.id, {
+    ...parentInstance,
+    children: [{ type: "id", value: childInstance.id }],
+  });
+  const validTags: string[] = [];
+  for (const tag of availableTags) {
+    childInstance.tag = tag;
+    if (
+      isTreeSatisfyingContentModel({
+        instances: nextInstances,
+        props,
+        metas,
+        htmlTagsByInstanceId,
+        instanceSelector: parentInstanceSelector,
+      })
+    ) {
+      validTags.push(tag);
+    }
+  }
+  return validTags;
+};
+
+export const canWrapInstance = (
+  selectedInstanceId: Instance["id"],
+  selectedInstanceSelector: Instance["id"][],
+  parentInstanceId: Instance["id"],
+  component: Instance["component"],
+  tag: string | undefined,
+  instances: Instances,
+  props: Props,
+  metas: Map<Instance["component"], WsComponentMeta>,
+  htmlTagsByInstanceId: Map<Instance["id"], string> = getHtmlTagsFromProps(
+    props
+  )
+): boolean => {
+  const selectedInstance = instances.get(selectedInstanceId);
+  const parentInstance = instances.get(parentInstanceId);
+  if (selectedInstance === undefined || parentInstance === undefined) {
+    return false;
+  }
+
+  const wrapperInstance: Instance = {
+    type: "instance",
+    id: createSimulationInstanceId(instances),
+    component,
+    children: [{ type: "id", value: selectedInstanceId }],
+  };
+
+  if (tag !== undefined || component === elementComponent) {
+    wrapperInstance.tag = tag ?? "div";
+  } else {
+    const meta = metas.get(component);
+    const defaultTag = Object.keys(
+      (meta as { presetStyle?: Record<string, unknown> })?.presetStyle ?? {}
+    ).at(0);
+    if (defaultTag !== undefined) {
+      wrapperInstance.tag = defaultTag;
+    }
+  }
+
+  const nextInstances = new Map(instances);
+  nextInstances.set(wrapperInstance.id, wrapperInstance);
+  nextInstances.set(parentInstance.id, {
+    ...parentInstance,
+    children: parentInstance.children.map((child) =>
+      child.type === "id" && child.value === selectedInstanceId
+        ? { type: "id", value: wrapperInstance.id }
+        : child
+    ),
+  });
+
+  if (
+    isTreeSatisfyingContentModel({
+      instances: nextInstances,
+      props,
+      metas,
+      htmlTagsByInstanceId,
+      instanceSelector: [
+        wrapperInstance.id,
+        ...selectedInstanceSelector.slice(1),
+      ],
+    }) === false
+  ) {
+    return false;
+  }
+
+  return isTreeSatisfyingContentModel({
+    instances: nextInstances,
+    props,
+    metas,
+    htmlTagsByInstanceId,
+    instanceSelector: [
+      selectedInstanceId,
+      wrapperInstance.id,
+      ...selectedInstanceSelector.slice(1),
+    ],
+  });
+};
 
 const getRequiredInstances = (
   state: Pick<BuilderState, "instances">
@@ -102,6 +439,184 @@ export const findChildReferenceIndex = (
 
 export const createInstanceChild = (instanceId: Instance["id"]) =>
   ({ type: "id", value: instanceId }) as const;
+
+const removeChildReferenceMutable = (
+  children: Instance["children"],
+  instanceId: Instance["id"]
+) => {
+  const childIndex = findChildReferenceIndex(children, instanceId);
+  if (childIndex !== -1) {
+    children.splice(childIndex, 1);
+  }
+};
+
+const getSlotChildrenSignature = (instance: Instance) =>
+  JSON.stringify(instance.children);
+
+const cloneInstances = (instances: Instances) =>
+  new Map(
+    Array.from(
+      instances,
+      ([id, instance]) => [id, structuredClone(instance)] as const
+    )
+  );
+
+const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
+  new Map(
+    Array.from(map, ([key, value]) => [key, structuredClone(value)] as const)
+  );
+
+type FullInstanceMutationState = Pick<
+  BuilderState,
+  | "pages"
+  | "instances"
+  | "props"
+  | "dataSources"
+  | "resources"
+  | "styleSources"
+  | "styleSourceSelections"
+  | "styles"
+  | "breakpoints"
+  | "assets"
+>;
+
+const getRequiredFullInstanceMutationData = (
+  state: Partial<FullInstanceMutationState>
+): WebstudioData => {
+  const {
+    pages,
+    instances,
+    props,
+    dataSources,
+    resources,
+    styleSources,
+    styleSourceSelections,
+    styles,
+    breakpoints,
+    assets,
+  } = state;
+  if (
+    pages === undefined ||
+    instances === undefined ||
+    props === undefined ||
+    dataSources === undefined ||
+    resources === undefined ||
+    styleSources === undefined ||
+    styleSourceSelections === undefined ||
+    styles === undefined ||
+    breakpoints === undefined ||
+    assets === undefined
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Complete Webstudio data is required"
+    );
+  }
+  return {
+    pages,
+    instances,
+    props,
+    dataSources,
+    resources,
+    styleSources,
+    styleSourceSelections,
+    styles,
+    breakpoints,
+    assets,
+  };
+};
+
+const cloneWebstudioData = (data: WebstudioData): WebstudioData => ({
+  pages: data.pages,
+  instances: cloneMap(data.instances),
+  props: cloneMap(data.props),
+  dataSources: cloneMap(data.dataSources),
+  resources: cloneMap(data.resources),
+  styleSources: cloneMap(data.styleSources),
+  styleSourceSelections: cloneMap(data.styleSourceSelections),
+  styles: cloneMap(data.styles),
+  breakpoints: cloneMap(data.breakpoints),
+  assets: cloneMap(data.assets),
+});
+
+const getWebstudioDataNamespace = (
+  data: WebstudioData,
+  namespace: BuilderPatchChange["namespace"]
+) => {
+  if (namespace === "marketplaceProduct") {
+    return;
+  }
+  return data[namespace];
+};
+
+const createInstancesMapPayload = ({
+  before,
+  after,
+}: {
+  before: Instances;
+  after: Instances;
+}): BuilderPatchChange[] => {
+  const patches: BuilderPatchChange["patches"] = [];
+  for (const [id, instance] of before) {
+    if (after.has(id) === false) {
+      patches.push({ op: "remove", path: [id] });
+    } else {
+      const nextInstance = after.get(id);
+      if (
+        nextInstance !== undefined &&
+        equal(instance, nextInstance) === false
+      ) {
+        patches.push({ op: "replace", path: [id], value: nextInstance });
+      }
+    }
+  }
+  for (const [id, instance] of after) {
+    if (before.has(id) === false) {
+      patches.push({ op: "add", path: [id], value: instance });
+    }
+  }
+  return patches.length === 0 ? [] : [{ namespace: "instances", patches }];
+};
+
+const getInstancePathFromSelector = (
+  instanceSelector: Instance["id"][],
+  instances: Instances
+): undefined | InstancePath => {
+  const instancePath: InstancePath = [];
+  for (let index = 0; index < instanceSelector.length; index += 1) {
+    const instanceId = instanceSelector[index];
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      continue;
+    }
+    instancePath.push({
+      instance,
+      instanceSelector: instanceSelector.slice(index),
+    });
+  }
+  if (instancePath.length === 0) {
+    return;
+  }
+  return instancePath;
+};
+
+const createLocalStyleSource = (id: StyleSource["id"]): StyleSource => ({
+  type: "local",
+  id,
+});
+
+const createStyleDecl = ({
+  styleSourceId,
+  breakpointId,
+  property,
+  value,
+}: Pick<StyleDecl, "styleSourceId" | "breakpointId" | "property" | "value">) =>
+  ({
+    styleSourceId,
+    breakpointId,
+    property,
+    value,
+  }) satisfies StyleDecl;
 
 export const getSameParentAdjustedInsertIndex = ({
   currentIndex,
@@ -542,23 +1057,42 @@ export const createInstanceAppendPayload = ({
   styleSourceSelections: Iterable<StyleSourceSelection>;
   styles: Iterable<StyleDecl>;
 }) => {
+  const parentChildren = parent.children ?? [];
   const replacedInstanceIds =
     mode === "replace"
       ? new Set(
-          parent.children.flatMap((child) =>
+          parentChildren.flatMap((child) =>
             child.type === "id"
               ? collectInstanceIds(instances, child.value)
               : []
           )
         )
       : new Set<Instance["id"]>();
+  const childInsertPatches =
+    createdInstances.length === 0
+      ? []
+      : parentChildren.length === 0 && insertIndex === 0
+        ? [
+            {
+              op: "add" as const,
+              path: [parent.id, "children"],
+              value: createdInstances.map((instance) =>
+                createInstanceChild(instance.id)
+              ),
+            },
+          ]
+        : createdInstances.map((instance, index) => ({
+            op: "add" as const,
+            path: [parent.id, "children", insertIndex + index],
+            value: createInstanceChild(instance.id),
+          }));
   const payload: BuilderPatchChange[] = [
     {
       namespace: "instances",
       patches: [
         ...(mode === "replace"
           ? sortChildRemovalPatches(
-              parent.children.map((_child, index) => ({
+              parentChildren.map((_child, index) => ({
                 op: "remove" as const,
                 path: [parent.id, "children", index] as [
                   string,
@@ -573,11 +1107,7 @@ export const createInstanceAppendPayload = ({
           path: [instance.id],
           value: instance,
         })),
-        ...createdInstances.map((instance, index) => ({
-          op: "add" as const,
-          path: [parent.id, "children", insertIndex + index],
-          value: createInstanceChild(instance.id),
-        })),
+        ...childInsertPatches,
       ],
     },
   ];
@@ -676,6 +1206,146 @@ export const createInstanceDeletePayload = ({
   }
 
   return { errors, payload, instanceIds: Array.from(deletedInstanceIds) };
+};
+
+type TextTreeUpdateError =
+  | { type: "root-not-found"; rootInstanceId: Instance["id"] }
+  | { type: "root-update-missing"; rootInstanceId: Instance["id"] }
+  | { type: "duplicate-update"; instanceId: Instance["id"] }
+  | { type: "id-collision"; instanceId: Instance["id"] }
+  | {
+      type: "dangling-child";
+      instanceId: Instance["id"];
+      childId: Instance["id"];
+    };
+
+export const createTextTreeUpdatePayload = ({
+  instances,
+  rootInstanceId,
+  updates,
+}: {
+  instances: Instances;
+  rootInstanceId: Instance["id"];
+  updates: Instance[];
+}): {
+  errors: TextTreeUpdateError[];
+  payload: BuilderPatchChange[];
+} => {
+  if (instances.has(rootInstanceId) === false) {
+    return {
+      errors: [{ type: "root-not-found", rootInstanceId }],
+      payload: [],
+    };
+  }
+  const oldTreeIds = findTreeInstanceIds(instances, rootInstanceId);
+  const updateIds = new Set<Instance["id"]>();
+  const errors: TextTreeUpdateError[] = [];
+  for (const instance of updates) {
+    if (updateIds.has(instance.id)) {
+      errors.push({ type: "duplicate-update", instanceId: instance.id });
+      continue;
+    }
+    updateIds.add(instance.id);
+    if (oldTreeIds.has(instance.id) === false && instances.has(instance.id)) {
+      errors.push({ type: "id-collision", instanceId: instance.id });
+    }
+  }
+  if (updateIds.has(rootInstanceId) === false) {
+    errors.push({ type: "root-update-missing", rootInstanceId });
+  }
+  for (const instance of updates) {
+    for (const child of instance.children) {
+      if (child.type === "id" && updateIds.has(child.value) === false) {
+        errors.push({
+          type: "dangling-child",
+          instanceId: instance.id,
+          childId: child.value,
+        });
+      }
+    }
+  }
+  if (errors.length > 0) {
+    return { errors, payload: [] };
+  }
+
+  const patches: BuilderPatchChange["patches"] = [];
+  for (const instance of updates) {
+    patches.push({
+      op: instances.has(instance.id) ? "replace" : "add",
+      path: [instance.id],
+      value: instance,
+    });
+  }
+  for (const instanceId of oldTreeIds) {
+    if (updateIds.has(instanceId) === false) {
+      patches.push({ op: "remove", path: [instanceId] });
+    }
+  }
+  return {
+    errors: [],
+    payload: compactBuilderPatchPayload([{ namespace: "instances", patches }]),
+  };
+};
+
+const createUniqueTextTreeInstanceId = ({
+  existingIds,
+  remappedIds,
+  createId,
+}: {
+  existingIds: Set<Instance["id"]>;
+  remappedIds: Set<Instance["id"]>;
+  createId: () => Instance["id"];
+}) => {
+  for (let attempts = 0; attempts < 100; attempts += 1) {
+    const id = createId();
+    if (existingIds.has(id) === false && remappedIds.has(id) === false) {
+      return id;
+    }
+  }
+  return throwBuilderRuntimeError(
+    "CONFLICT",
+    "Could not generate a unique text tree instance id"
+  );
+};
+
+const remapTextTreeTemporaryIds = ({
+  instances,
+  rootInstanceId,
+  updates,
+  createId,
+}: {
+  instances: Instances;
+  rootInstanceId: Instance["id"];
+  updates: Instance[];
+  createId: () => Instance["id"];
+}) => {
+  const oldTreeIds = findTreeInstanceIds(instances, rootInstanceId);
+  const idMap = new Map<Instance["id"], Instance["id"]>();
+  const remappedIds = new Set<Instance["id"]>();
+  for (const instance of updates) {
+    if (oldTreeIds.has(instance.id)) {
+      remappedIds.add(instance.id);
+      continue;
+    }
+    const id = createUniqueTextTreeInstanceId({
+      existingIds: new Set(instances.keys()),
+      remappedIds,
+      createId,
+    });
+    idMap.set(instance.id, id);
+    remappedIds.add(id);
+  }
+  const remapId = (id: Instance["id"]) => idMap.get(id) ?? id;
+  return {
+    idMap,
+    updates: updates.map((instance) => ({
+      ...instance,
+      id: remapId(instance.id),
+      children: instance.children.map((child) =>
+        child.type === "id" ? { ...child, value: remapId(child.value) } : child
+      ),
+    })),
+  };
 };
 
 export const createInstanceClonePayload = ({
@@ -816,74 +1486,58 @@ const treeInvalidates = [
   "styles",
 ] as const;
 
-export const appendInstances = (
-  state: TreeMutationState,
-  input: z.infer<typeof appendInstancesInput>,
-  context: BuilderRuntimeContext
-) => {
-  const mutationState = getRequiredTreeMutationState(state);
-  const parent = mutationState.instances.get(input.parentInstanceId);
-  if (parent === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+const getDeleteTarget = (
+  instances: Instances,
+  instancePath: InstancePath
+): Instance => {
+  let targetInstance = instancePath[0].instance;
+  const parentInstance = instancePath[1]?.instance;
+  const grandparentInstance = instancePath[2]?.instance;
+
+  if (
+    parentInstance?.component === "Fragment" &&
+    parentInstance.children.length === 1 &&
+    grandparentInstance !== undefined &&
+    countInstanceChildReferences(instances, parentInstance.id) < 2
+  ) {
+    targetInstance = parentInstance;
   }
-  const mode = input.mode ?? "append";
-  const insertIndex =
-    mode === "replace"
-      ? 0
-      : mode === "prepend"
-        ? 0
-        : (input.insertIndex ?? parent.children.length);
-  if (insertIndex > parent.children.length) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Insert index is outside parent children"
-    );
+
+  return targetInstance;
+};
+
+const getNextSelectorAfterDelete = (
+  instancePath: InstancePath
+): undefined | Instance["id"][] => {
+  const [selectedItem, parentItem] = instancePath;
+  if (parentItem === undefined) {
+    return;
   }
-  const createdInstances = input.children.map((child) => {
-    const instanceId = context.createId();
-    if (mutationState.instances.has(instanceId)) {
-      return throwBuilderRuntimeError("CONFLICT", "Instance id already exists");
-    }
-    return {
-      type: "instance" as const,
-      id: instanceId,
-      component: child.component ?? elementComponent,
-      tag: child.tag,
-      label: child.label,
-      children:
-        child.text === undefined
-          ? []
-          : [createTextContentChild({ type: "text", value: child.text })],
-    };
-  });
-  const { payload, replacedInstanceIds } = createInstanceAppendPayload({
-    parent,
-    instances: mutationState.instances,
-    createdInstances,
-    insertIndex,
-    mode,
-    props: mutationState.props.values(),
-    dataSources: mutationState.dataSources.values(),
-    styleSources: mutationState.styleSources.values(),
-    styleSourceSelections: mutationState.styleSourceSelections.values(),
-    styles: mutationState.styles.values(),
-  });
-  return createRuntimeMutation({
-    payload,
-    result: {
-      instanceIds: createdInstances.map((instance) => instance.id),
-      removedInstanceIds: replacedInstanceIds,
-    },
-    invalidatesNamespaces: treeInvalidates,
-  });
+  const parentInstanceSelector = parentItem.instanceSelector;
+  const siblingIds = parentItem.instance.children
+    .filter((child) => child.type === "id")
+    .map((child) => child.value);
+  const position = siblingIds.indexOf(selectedItem.instance.id);
+  const siblingId = siblingIds[position + 1] ?? siblingIds[position - 1];
+  if (siblingId !== undefined) {
+    return [siblingId, ...parentInstanceSelector];
+  }
+  const grandparentItem = instancePath[2];
+  return getDirectSharedSlotChildBoundary(instancePath)
+    ? grandparentItem?.instanceSelector
+    : parentInstanceSelector;
 };
 
 export const moveInstances = (
-  state: Pick<BuilderState, "instances">,
+  state: Pick<
+    BuilderState,
+    "instances" | "pages" | "props" | "dataSources" | "resources"
+  >,
   input: z.infer<typeof moveInstancesInput>
 ) => {
-  const { errors, payload } = createInstanceMovePayload({
-    instances: getRequiredInstances(state),
+  const instances = getRequiredInstances(state);
+  const { errors, payload: movePayload } = createInstanceMovePayload({
+    instances,
     moves: input.moves,
   });
   const error = errors.at(0);
@@ -908,9 +1562,1311 @@ export const moveInstances = (
       "Insert index is outside parent children"
     );
   }
+  const movedInstances = new Map(
+    Array.from(instances, ([id, instance]) => [id, structuredClone(instance)])
+  );
+  applyBuilderPatchPayloadMutable((namespace) => {
+    if (namespace === "instances") {
+      return movedInstances;
+    }
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      `Unexpected move patch namespace "${namespace}"`
+    );
+  }, movePayload);
+  const rebindPayload =
+    state.props === undefined ||
+    state.dataSources === undefined ||
+    state.resources === undefined
+      ? []
+      : createTreeVariableRebindPayload({
+          startingInstanceIds: input.moves.map((move) => move.instanceId),
+          pages: state.pages,
+          beforeInstances: instances,
+          instances: movedInstances,
+          props: state.props,
+          dataSources: state.dataSources,
+          resources: state.resources,
+        });
+  const payload = rebindPayload.length === 0 ? movePayload : rebindPayload;
   return createRuntimeMutation({
     payload,
     result: { instanceIds: input.moves.map((move) => move.instanceId) },
+    invalidatesNamespaces: [
+      "instances",
+      "pages",
+      "props",
+      "dataSources",
+      "resources",
+    ],
+  });
+};
+
+const removeMovedInstanceFromParentMutable = (
+  data: Pick<WebstudioData, "instances">,
+  instancePath: InstancePath
+) => {
+  const targetInstance = instancePath[0]?.instance;
+  const parentItem = instancePath[1];
+  const grandparentItem = instancePath[2];
+  if (targetInstance === undefined || parentItem === undefined) {
+    return;
+  }
+  const parentInstance = data.instances.get(parentItem.instance.id);
+  if (parentInstance === undefined) {
+    return;
+  }
+  removeChildReferenceMutable(parentInstance.children, targetInstance.id);
+  if (
+    parentInstance.component === "Fragment" &&
+    parentInstance.children.length === 0 &&
+    grandparentItem !== undefined &&
+    countInstanceChildReferences(data.instances, parentInstance.id) < 2
+  ) {
+    const grandparentInstance = data.instances.get(grandparentItem.instance.id);
+    removeChildReferenceMutable(
+      grandparentInstance?.children ?? [],
+      parentInstance.id
+    );
+    data.instances.delete(parentInstance.id);
+  }
+};
+
+const reorderInstanceWithinParentMutable = (
+  data: Pick<WebstudioData, "instances">,
+  rootInstanceId: Instance["id"],
+  dropTarget: DroppableTarget
+) => {
+  const [parentId] = dropTarget.parentSelector;
+  const parent = data.instances.get(parentId);
+  if (parent === undefined) {
+    return;
+  }
+  const prevPosition = findChildReferenceIndex(parent.children, rootInstanceId);
+  const child = parent.children[prevPosition];
+  if (child === undefined) {
+    return;
+  }
+  parent.children.splice(prevPosition, 1);
+  if (dropTarget.position === "end") {
+    parent.children.push(child);
+    return;
+  }
+  parent.children.splice(
+    getSameParentAdjustedInsertIndex({
+      currentIndex: prevPosition,
+      requestedIndex: dropTarget.position,
+    }),
+    0,
+    child
+  );
+};
+
+const moveInstanceToParentMutable = (
+  data: Omit<WebstudioData, "pages">,
+  rootInstanceId: Instance["id"],
+  sourceInstancePath: InstancePath,
+  dropTarget: DroppableTarget,
+  createId: () => string
+) => {
+  dropTarget =
+    getReparentDropTargetMutable(
+      data.instances,
+      data.props,
+      componentMetas,
+      dropTarget,
+      createId
+    ) ?? dropTarget;
+  removeMovedInstanceFromParentMutable(data, sourceInstancePath);
+  const [newParentId] = dropTarget.parentSelector;
+  const newParent = data.instances.get(newParentId);
+  const newChild = createInstanceChild(rootInstanceId);
+  if (dropTarget.position === "end") {
+    newParent?.children.push(newChild);
+  } else {
+    newParent?.children.splice(dropTarget.position, 0, newChild);
+  }
+  applyBuilderPatchPayloadMutable(
+    (namespace) => getWebstudioDataNamespace(data as WebstudioData, namespace),
+    createTreeVariableRebindPayload({
+      startingInstanceId: rootInstanceId,
+      pages: undefined,
+      instances: data.instances,
+      props: data.props,
+      dataSources: data.dataSources,
+      resources: data.resources,
+    })
+  );
+  return [rootInstanceId, ...dropTarget.parentSelector];
+};
+
+export const reparentInstanceMutable = ({
+  data,
+  sourceInstanceSelector,
+  dropTarget,
+  createId,
+}: {
+  data: Omit<WebstudioData, "pages">;
+  sourceInstanceSelector: Instance["id"][];
+  dropTarget: DroppableTarget;
+  createId: () => string;
+}) => {
+  sourceInstanceSelector = normalizeLegacySlotParentInSelectorMutable(
+    data.instances,
+    sourceInstanceSelector,
+    createId
+  );
+  const initialSourceInstancePath = getInstancePathFromSelector(
+    sourceInstanceSelector,
+    data.instances
+  );
+  const reparentSource = prepareSlotReparentMutable({
+    instancePath: initialSourceInstancePath ?? [],
+    dropTarget,
+  });
+  const sourceInstancePath = reparentSource.instancePath;
+  dropTarget = reparentSource.dropTarget;
+  sourceInstanceSelector = sourceInstancePath[0]?.instanceSelector;
+  if (sourceInstanceSelector === undefined) {
+    return;
+  }
+  const [rootInstanceId] = sourceInstanceSelector;
+  const instanceDescendants = findTreeInstanceIds(
+    data.instances,
+    rootInstanceId
+  );
+  for (const instanceId of instanceDescendants) {
+    if (dropTarget.parentSelector.includes(instanceId)) {
+      return;
+    }
+  }
+  dropTarget =
+    getSlotFragmentDropTargetMutable(data.instances, dropTarget, createId) ??
+    dropTarget;
+  if (sourceInstanceSelector[1] === dropTarget.parentSelector[0]) {
+    reorderInstanceWithinParentMutable(data, rootInstanceId, dropTarget);
+    return sourceInstanceSelector;
+  }
+  return moveInstanceToParentMutable(
+    data,
+    rootInstanceId,
+    sourceInstancePath,
+    dropTarget,
+    createId
+  );
+};
+
+export const reparentInstance = (
+  state: Partial<FullInstanceMutationState>,
+  input: z.infer<typeof reparentInstanceInput>,
+  context: BuilderRuntimeContext
+) => {
+  const beforeData = getRequiredFullInstanceMutationData(state);
+  const nextData = cloneWebstudioData(beforeData);
+  const instanceSelector = reparentInstanceMutable({
+    data: nextData,
+    sourceInstanceSelector: input.sourceInstanceSelector,
+    dropTarget: input.dropTarget,
+    createId: context.createId,
+  });
+  return createRuntimeMutation({
+    payload: createWebstudioDataPatchPayload({
+      before: beforeData,
+      after: nextData,
+    }),
+    result: { instanceSelector },
+    invalidatesNamespaces: [
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSourceSelections",
+      "styleSources",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+  });
+};
+
+export const wrapInstance = (
+  state: Pick<BuilderState, "instances" | "props">,
+  input: z.infer<typeof wrapInstanceInput>,
+  context: { createId: () => string }
+) => {
+  const instances = getRequiredInstances(state);
+  if (state.props === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Props namespace is missing"
+    );
+  }
+  const [instanceId, parentInstanceId] = input.instanceSelector;
+  if (instanceId === undefined || parentInstanceId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Instance selector must include instance and parent"
+    );
+  }
+  const hasSlotInPath = input.instanceSelector.some(
+    (selectorInstanceId) =>
+      instances.get(selectorInstanceId)?.component === "Slot"
+  );
+  if (hasSlotInPath) {
+    const instancePath = getInstancePathFromSelector(
+      input.instanceSelector,
+      instances
+    );
+    if (instancePath === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+    }
+    const nextInstances = cloneInstances(instances);
+    const nextInstancePath = normalizeLegacySlotInstancePathMutable(
+      nextInstances,
+      instancePath,
+      context.createId
+    );
+    const [selectedItem, parentItem] = nextInstancePath;
+    if (parentItem === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
+    }
+    if (
+      isRichTextContent({
+        instanceSelector: selectedItem.instanceSelector,
+        instances: nextInstances,
+        props: state.props,
+        metas: componentMetas,
+      })
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Cannot wrap textual content"
+      );
+    }
+    const wrapperInstanceId = context.createId();
+    const wrapperInstance: Instance = {
+      type: "instance",
+      id: wrapperInstanceId,
+      component: input.component,
+      children: [createInstanceChild(selectedItem.instance.id)],
+    };
+    if (input.tag !== undefined || input.component === elementComponent) {
+      wrapperInstance.tag = input.tag ?? "div";
+    }
+    const parentInstance = nextInstances.get(parentItem.instance.id);
+    if (parentInstance === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
+    }
+    nextInstances.set(wrapperInstanceId, wrapperInstance);
+    replaceChildReferenceMutable(
+      parentInstance,
+      selectedItem.instance.id,
+      wrapperInstanceId
+    );
+    const wrapperSelector = [wrapperInstanceId, ...parentItem.instanceSelector];
+    const isSatisfying = isTreeSatisfyingContentModel({
+      instances: nextInstances,
+      props: state.props,
+      metas: componentMetas,
+      instanceSelector: wrapperSelector,
+    });
+    if (isSatisfying === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Wrapped tree violates content model"
+      );
+    }
+    return createRuntimeMutation({
+      payload: createInstancesMapPayload({
+        before: instances,
+        after: nextInstances,
+      }),
+      result: { instanceSelector: wrapperSelector },
+      invalidatesNamespaces: ["instances"],
+    });
+  }
+  const selectedInstance = instances.get(instanceId);
+  if (selectedInstance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const parentInstance = instances.get(parentInstanceId);
+  if (parentInstance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
+  }
+  const childIndex = findChildReferenceIndex(
+    parentInstance.children,
+    instanceId
+  );
+  if (childIndex === -1) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Parent does not contain selected instance"
+    );
+  }
+  if (
+    isRichTextContent({
+      instanceSelector: input.instanceSelector,
+      instances,
+      props: state.props,
+      metas: componentMetas,
+    })
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Cannot wrap textual content"
+    );
+  }
+
+  const wrapperInstanceId = context.createId();
+  const wrapperInstance: Instance = {
+    type: "instance",
+    id: wrapperInstanceId,
+    component: input.component,
+    children: [createInstanceChild(instanceId)],
+  };
+  if (input.tag !== undefined || input.component === elementComponent) {
+    wrapperInstance.tag = input.tag ?? "div";
+  }
+  const nextInstances = new Map(instances);
+  const nextParentInstance: Instance = {
+    ...parentInstance,
+    children: [...parentInstance.children],
+  };
+  nextParentInstance.children[childIndex] =
+    createInstanceChild(wrapperInstanceId);
+  nextInstances.set(parentInstanceId, nextParentInstance);
+  nextInstances.set(wrapperInstanceId, wrapperInstance);
+  const wrapperSelector = [
+    wrapperInstanceId,
+    ...input.instanceSelector.slice(1),
+  ];
+  const isSatisfying = isTreeSatisfyingContentModel({
+    instances: nextInstances,
+    props: state.props,
+    metas: componentMetas,
+    instanceSelector: wrapperSelector,
+  });
+  if (isSatisfying === false) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Wrapped tree violates content model"
+    );
+  }
+
+  return createRuntimeMutation({
+    payload: compactBuilderPatchPayload([
+      {
+        namespace: "instances",
+        patches: [
+          { op: "add", path: [wrapperInstanceId], value: wrapperInstance },
+          {
+            op: "replace",
+            path: [parentInstanceId, "children", childIndex],
+            value: createInstanceChild(wrapperInstanceId),
+          },
+        ],
+      },
+    ]),
+    result: { instanceSelector: wrapperSelector },
+    invalidatesNamespaces: ["instances"],
+  });
+};
+
+const getPresetDefaultTag = (component: Instance["component"]) => {
+  const meta = componentMetas.get(component);
+  return Object.keys(
+    (meta as { presetStyle?: Record<string, unknown> } | undefined)
+      ?.presetStyle ?? {}
+  ).at(0);
+};
+
+export const canConvertInstance = ({
+  instanceId,
+  instanceSelector,
+  component,
+  tag,
+  currentTag,
+  instances,
+  props,
+  metas,
+}: {
+  instanceId: Instance["id"];
+  instanceSelector: Instance["id"][];
+  component: Instance["component"];
+  tag?: Instance["tag"];
+  currentTag?: Instance["tag"];
+  instances: Instances;
+  props: Props;
+  metas: Map<Instance["component"], WsComponentMeta>;
+}) => {
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return false;
+  }
+
+  const nextInstance: Instance = {
+    ...instance,
+    component,
+  };
+  if (tag !== undefined || component === elementComponent) {
+    nextInstance.tag = tag ?? currentTag ?? "div";
+  } else {
+    const meta = metas.get(component);
+    const defaultTag = Object.keys(
+      (meta as { presetStyle?: Record<string, unknown> } | undefined)
+        ?.presetStyle ?? {}
+    ).at(0);
+    if (defaultTag !== undefined) {
+      nextInstance.tag = defaultTag;
+    }
+  }
+
+  const nextInstances = new Map(instances);
+  nextInstances.set(instanceId, nextInstance);
+  return isTreeSatisfyingContentModel({
+    instances: nextInstances,
+    props,
+    metas,
+    instanceSelector,
+  });
+};
+
+const getUnwrappedInstanceSelector = ({
+  selectedItem,
+  parentItem,
+}: {
+  selectedItem: { instance: { id: Instance["id"] } };
+  parentItem: { instanceSelector: Instance["id"][] };
+}) => [selectedItem.instance.id, ...parentItem.instanceSelector.slice(1)];
+
+const validateUnwrappedInstance = ({
+  instances,
+  props,
+  selectedItem,
+  parentItem,
+}: {
+  instances: Instances;
+  props: NonNullable<BuilderState["props"]>;
+  selectedItem: { instance: { id: Instance["id"] } };
+  parentItem: { instanceSelector: Instance["id"][] };
+}) =>
+  isTreeSatisfyingContentModel({
+    instances,
+    props,
+    metas: componentMetas,
+    instanceSelector: getUnwrappedInstanceSelector({
+      selectedItem,
+      parentItem,
+    }),
+  });
+
+const unwrapInstanceMutable = ({
+  instances,
+  props,
+  selectedItem,
+  parentItem,
+}: {
+  instances: Instances;
+  props: NonNullable<BuilderState["props"]>;
+  selectedItem: {
+    instanceSelector: Instance["id"][];
+    instance: { id: Instance["id"] };
+  };
+  parentItem: {
+    instanceSelector: Instance["id"][];
+    instance: { id: Instance["id"] };
+  };
+}) => {
+  if (
+    isRichTextContent({
+      instanceSelector: selectedItem.instanceSelector,
+      instances,
+      props,
+      metas: componentMetas,
+    })
+  ) {
+    return { success: false, error: "Cannot unwrap textual instance" };
+  }
+
+  const parentInstance = instances.get(parentItem.instance.id);
+  const selectedInstance = instances.get(selectedItem.instance.id);
+  if (parentInstance === undefined || selectedInstance === undefined) {
+    return { success: false, error: "Instance not found" };
+  }
+
+  const grandparentId = parentItem.instanceSelector[1];
+  if (grandparentId === undefined) {
+    return { success: false, error: "Cannot unwrap instance at root level" };
+  }
+  const grandparentInstance = instances.get(grandparentId);
+  if (grandparentInstance === undefined) {
+    return { success: false, error: "Grandparent instance not found" };
+  }
+
+  const selectedParentId = selectedItem.instanceSelector[1];
+  const selectedParentInstance = instances.get(selectedParentId);
+  if (
+    parentInstance.component === "Slot" &&
+    selectedParentInstance?.component === "Fragment" &&
+    selectedItem.instanceSelector[2] === parentItem.instance.id &&
+    selectedParentInstance.children.length === 1 &&
+    selectedParentInstance.children[0]?.type === "id" &&
+    selectedParentInstance.children[0].value === selectedItem.instance.id
+  ) {
+    removeChildReferenceMutable(
+      selectedParentInstance.children,
+      selectedItem.instance.id
+    );
+    replaceChildReferenceMutable(
+      grandparentInstance,
+      parentItem.instance.id,
+      selectedItem.instance.id
+    );
+    if (countInstanceChildReferences(instances, parentItem.instance.id) === 0) {
+      instances.delete(parentItem.instance.id);
+    }
+    if (
+      countInstanceChildReferences(instances, selectedParentInstance.id) === 0
+    ) {
+      instances.delete(selectedParentInstance.id);
+    }
+    return validateUnwrappedInstance({
+      instances,
+      props,
+      selectedItem,
+      parentItem,
+    })
+      ? { success: true }
+      : { success: false, error: "Cannot unwrap instance" };
+  }
+
+  if (instances.get(parentItem.instanceSelector[1])?.component === "Slot") {
+    replaceChildReferenceMutable(
+      grandparentInstance,
+      parentItem.instance.id,
+      selectedItem.instance.id
+    );
+    return validateUnwrappedInstance({
+      instances,
+      props,
+      selectedItem,
+      parentItem,
+    })
+      ? { success: true }
+      : { success: false, error: "Cannot unwrap instance" };
+  }
+
+  removeChildReferenceMutable(
+    parentInstance.children,
+    selectedItem.instance.id
+  );
+  if (parentInstance.children.length === 0) {
+    instances.delete(parentItem.instance.id);
+  }
+
+  const parentIndex = findChildReferenceIndex(
+    grandparentInstance.children,
+    parentItem.instance.id
+  );
+  if (parentIndex !== -1) {
+    if (parentInstance.children.length === 0) {
+      replaceChildReferenceMutable(
+        grandparentInstance,
+        parentItem.instance.id,
+        selectedItem.instance.id
+      );
+    } else {
+      grandparentInstance.children.splice(
+        parentIndex + 1,
+        0,
+        createInstanceChild(selectedItem.instance.id)
+      );
+    }
+  }
+
+  return validateUnwrappedInstance({
+    instances,
+    props,
+    selectedItem,
+    parentItem,
+  })
+    ? { success: true }
+    : { success: false, error: "Cannot unwrap instance" };
+};
+
+export const convertInstance = (
+  state: Pick<BuilderState, "instances" | "props"> &
+    Partial<FullInstanceMutationState>,
+  input: z.infer<typeof convertInstanceInput>,
+  context: BuilderRuntimeContext
+) => {
+  const instances = getRequiredInstances(state);
+  if (state.props === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Props namespace is missing"
+    );
+  }
+  const hasSlotInPath = input.instanceSelector.some(
+    (selectorInstanceId) =>
+      instances.get(selectorInstanceId)?.component === "Slot"
+  );
+  if (hasSlotInPath) {
+    const beforeData = getRequiredFullInstanceMutationData(state);
+    const nextData = cloneWebstudioData(beforeData);
+    const instancePath = getInstancePathFromSelector(
+      input.instanceSelector,
+      nextData.instances
+    );
+    if (instancePath === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+    }
+    const [initialSelectedItem] = instancePath;
+    if (initialSelectedItem.instance.component === "Slot") {
+      getSlotFragmentDropTargetMutable(
+        nextData.instances,
+        {
+          parentSelector: initialSelectedItem.instanceSelector,
+          position: "end",
+        },
+        context.createId
+      );
+    }
+    const nextInstancePath = normalizeLegacySlotInstancePathMutable(
+      nextData.instances,
+      instancePath,
+      context.createId
+    );
+    const [selectedItem] = nextInstancePath;
+    const selectedInstance = selectedItem.instance;
+    if (selectedInstance.component === "Slot" && input.component !== "Slot") {
+      detachSharedSlotChildrenMutable({
+        data: nextData,
+        slotId: selectedInstance.id,
+        projectId: context.projectId ?? "",
+        createId: context.createId,
+      });
+    }
+    const nextInstance = nextData.instances.get(selectedInstance.id);
+    if (nextInstance === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+    }
+    nextInstance.component = input.component;
+    if (input.tag !== undefined || input.component === elementComponent) {
+      nextInstance.tag = input.tag ?? input.currentTag ?? "div";
+      applyBuilderPatchPayloadMutable(
+        (namespace) => getWebstudioDataNamespace(nextData, namespace),
+        createPropDeletePayload({
+          deletions: [{ instanceId: selectedInstance.id, name: "tag" }],
+          instances: nextData.instances,
+          props: nextData.props.values(),
+        }).payload
+      );
+      const renames = Array.from(nextData.props.values()).flatMap((prop) => {
+        if (prop.instanceId !== selectedInstance.id) {
+          return [];
+        }
+        const name = reactPropsToStandardAttributes[prop.name];
+        return name === undefined
+          ? []
+          : [{ propId: prop.id, name, propIdPrefix: prop.instanceId }];
+      });
+      if (renames.length > 0) {
+        applyBuilderPatchPayloadMutable(
+          (namespace) => getWebstudioDataNamespace(nextData, namespace),
+          createPropRenamePayload({
+            props: nextData.props.values(),
+            renames,
+          }).payload
+        );
+      }
+    } else {
+      const defaultTag = getPresetDefaultTag(input.component);
+      if (defaultTag !== undefined) {
+        nextInstance.tag = defaultTag;
+      }
+    }
+    const isSatisfying = isTreeSatisfyingContentModel({
+      instances: nextData.instances,
+      props: nextData.props,
+      metas: componentMetas,
+      instanceSelector: selectedItem.instanceSelector,
+    });
+    if (isSatisfying === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Converted tree violates content model"
+      );
+    }
+    return createRuntimeMutation({
+      payload: createWebstudioDataPatchPayload({
+        before: beforeData,
+        after: nextData,
+      }),
+      result: { instanceId: selectedInstance.id },
+      invalidatesNamespaces: [
+        "instances",
+        "props",
+        "dataSources",
+        "resources",
+        "styleSourceSelections",
+        "styleSources",
+        "styles",
+        "breakpoints",
+        "assets",
+      ],
+    });
+  }
+  const [instanceId] = input.instanceSelector;
+  if (instanceId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Instance selector is empty"
+    );
+  }
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+
+  const payload: BuilderPatchChange[] = [];
+  const instancePatches: BuilderPatchChange["patches"] = [];
+  const nextInstance: Instance = {
+    ...instance,
+    component: input.component,
+  };
+
+  instancePatches.push({
+    op: "replace",
+    path: [instanceId, "component"],
+    value: input.component,
+  });
+
+  if (input.tag !== undefined || input.component === elementComponent) {
+    const tag = input.tag ?? input.currentTag ?? "div";
+    nextInstance.tag = tag;
+    if (instance.tag !== tag) {
+      instancePatches.push({
+        op: instance.tag === undefined ? "add" : "replace",
+        path: [instanceId, "tag"],
+        value: tag,
+      });
+    }
+    payload.push(
+      ...createPropDeletePayload({
+        deletions: [{ instanceId, name: "tag" }],
+        instances,
+        props: state.props.values(),
+      }).payload
+    );
+    const renames = Array.from(state.props.values()).flatMap((prop) => {
+      if (prop.instanceId !== instanceId) {
+        return [];
+      }
+      const name = reactPropsToStandardAttributes[prop.name];
+      return name === undefined
+        ? []
+        : [{ propId: prop.id, name, propIdPrefix: prop.instanceId }];
+    });
+    if (renames.length > 0) {
+      payload.push(
+        ...createPropRenamePayload({
+          props: state.props.values(),
+          renames,
+        }).payload
+      );
+    }
+  } else {
+    const defaultTag = getPresetDefaultTag(input.component);
+    if (defaultTag !== undefined) {
+      nextInstance.tag = defaultTag;
+      if (instance.tag !== defaultTag) {
+        instancePatches.push({
+          op: instance.tag === undefined ? "add" : "replace",
+          path: [instanceId, "tag"],
+          value: defaultTag,
+        });
+      }
+    } else {
+      delete nextInstance.tag;
+      if (instance.tag !== undefined) {
+        instancePatches.push({
+          op: "remove",
+          path: [instanceId, "tag"],
+        });
+      }
+    }
+  }
+
+  const isSatisfying = canConvertInstance({
+    instanceId,
+    instanceSelector: input.instanceSelector,
+    component: input.component,
+    tag: input.tag,
+    currentTag: input.currentTag,
+    instances,
+    props: state.props,
+    metas: componentMetas,
+  });
+  if (isSatisfying === false) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Converted tree violates content model"
+    );
+  }
+
+  payload.push({ namespace: "instances", patches: instancePatches });
+  return createRuntimeMutation({
+    payload: compactBuilderPatchPayload(payload),
+    result: { instanceId },
+    invalidatesNamespaces: ["instances", "props"],
+  });
+};
+
+export const unwrapInstance = (
+  state: Pick<BuilderState, "instances" | "props">,
+  input: z.infer<typeof unwrapInstanceInput>,
+  context: BuilderRuntimeContext
+) => {
+  const instances = getRequiredInstances(state);
+  if (state.props === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Props namespace is missing"
+    );
+  }
+  const [instanceId, parentInstanceId, grandparentInstanceId] =
+    input.instanceSelector;
+  if (
+    instanceId === undefined ||
+    parentInstanceId === undefined ||
+    grandparentInstanceId === undefined
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Instance selector must include instance, parent, and grandparent"
+    );
+  }
+  const selectedInstance = instances.get(instanceId);
+  const parentInstance = instances.get(parentInstanceId);
+  const grandparentInstance = instances.get(grandparentInstanceId);
+  if (
+    selectedInstance === undefined ||
+    parentInstance === undefined ||
+    grandparentInstance === undefined
+  ) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  if (
+    input.instanceSelector.some(
+      (selectorInstanceId) =>
+        instances.get(selectorInstanceId)?.component === "Slot"
+    )
+  ) {
+    const nextInstances = cloneInstances(instances);
+    const instancePath = getInstancePathFromSelector(
+      input.instanceSelector,
+      nextInstances
+    );
+    if (instancePath === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+    }
+    const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
+      nextInstances,
+      instancePath,
+      context.createId
+    );
+    const directSlotBoundary = getDirectSharedSlotChildBoundary(
+      normalizedInstancePath
+    );
+    const [selectedItem, defaultParentItem] = normalizedInstancePath;
+    const parentItem = directSlotBoundary?.slotItem ?? defaultParentItem;
+    if (parentItem === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
+    }
+    if (
+      directSlotBoundary !== undefined &&
+      directSlotBoundary.fragmentItem.instance.children.length > 1
+    ) {
+      const slotParentId = directSlotBoundary.slotItem.instanceSelector[1];
+      const slotParent = nextInstances.get(slotParentId);
+      if (slotParent === undefined) {
+        return throwBuilderRuntimeError(
+          "NOT_FOUND",
+          "Slot parent instance not found"
+        );
+      }
+      removeChildReferenceMutable(
+        directSlotBoundary.fragmentItem.instance.children,
+        selectedItem.instance.id
+      );
+      const slotPosition = findChildReferenceIndex(
+        slotParent.children,
+        directSlotBoundary.slotItem.instance.id
+      );
+      if (slotPosition === -1) {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          "Slot parent does not contain Slot"
+        );
+      }
+      slotParent.children.splice(
+        slotPosition + 1,
+        0,
+        createInstanceChild(selectedItem.instance.id)
+      );
+      const instanceSelector = [
+        selectedItem.instance.id,
+        ...directSlotBoundary.slotItem.instanceSelector.slice(1),
+      ];
+      const matches = isTreeSatisfyingContentModel({
+        instances: nextInstances,
+        props: state.props,
+        metas: componentMetas,
+        instanceSelector,
+      });
+      if (matches === false) {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          "Cannot unwrap instance"
+        );
+      }
+      return createRuntimeMutation({
+        payload: createInstancesMapPayload({
+          before: instances,
+          after: nextInstances,
+        }),
+        result: { instanceSelector },
+        invalidatesNamespaces: ["instances"],
+      });
+    }
+    const result = unwrapInstanceMutable({
+      instances: nextInstances,
+      props: state.props,
+      selectedItem,
+      parentItem,
+    });
+    if (result.success === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        result.error ?? "Cannot unwrap instance"
+      );
+    }
+    return createRuntimeMutation({
+      payload: createInstancesMapPayload({
+        before: instances,
+        after: nextInstances,
+      }),
+      result: {
+        instanceSelector: getUnwrappedInstanceSelector({
+          selectedItem,
+          parentItem,
+        }),
+      },
+      invalidatesNamespaces: ["instances"],
+    });
+  }
+  if (
+    isRichTextContent({
+      instanceSelector: input.instanceSelector,
+      instances,
+      props: state.props,
+      metas: componentMetas,
+    })
+  ) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Cannot unwrap textual instance"
+    );
+  }
+  const selectedIndexInParent = findChildReferenceIndex(
+    parentInstance.children,
+    instanceId
+  );
+  if (selectedIndexInParent === -1) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Parent does not contain selected instance"
+    );
+  }
+  const parentIndexInGrandparent = findChildReferenceIndex(
+    grandparentInstance.children,
+    parentInstanceId
+  );
+  if (parentIndexInGrandparent === -1) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Grandparent does not contain parent instance"
+    );
+  }
+
+  const nextInstances = new Map(instances);
+  const nextParentInstance: Instance = {
+    ...parentInstance,
+    children: [...parentInstance.children],
+  };
+  nextParentInstance.children.splice(selectedIndexInParent, 1);
+  const nextGrandparentInstance: Instance = {
+    ...grandparentInstance,
+    children: [...grandparentInstance.children],
+  };
+  if (nextParentInstance.children.length === 0) {
+    nextInstances.delete(parentInstanceId);
+    nextGrandparentInstance.children[parentIndexInGrandparent] =
+      createInstanceChild(instanceId);
+  } else {
+    nextInstances.set(parentInstanceId, nextParentInstance);
+    nextGrandparentInstance.children.splice(
+      parentIndexInGrandparent + 1,
+      0,
+      createInstanceChild(instanceId)
+    );
+  }
+  nextInstances.set(grandparentInstanceId, nextGrandparentInstance);
+  const nextInstanceSelector = [instanceId, ...input.instanceSelector.slice(2)];
+  const isSatisfying = isTreeSatisfyingContentModel({
+    instances: nextInstances,
+    props: state.props,
+    metas: componentMetas,
+    instanceSelector: nextInstanceSelector,
+  });
+  if (isSatisfying === false) {
+    return throwBuilderRuntimeError("BAD_REQUEST", "Cannot unwrap instance");
+  }
+
+  const patches: BuilderPatchChange["patches"] = [];
+  if (nextParentInstance.children.length === 0) {
+    patches.push({ op: "remove", path: [parentInstanceId] });
+  } else {
+    patches.push({
+      op: "remove",
+      path: [parentInstanceId, "children", selectedIndexInParent],
+    });
+  }
+  if (nextParentInstance.children.length === 0) {
+    patches.push({
+      op: "replace",
+      path: [grandparentInstanceId, "children", parentIndexInGrandparent],
+      value: createInstanceChild(instanceId),
+    });
+  } else {
+    patches.push({
+      op: "add",
+      path: [grandparentInstanceId, "children", parentIndexInGrandparent + 1],
+      value: createInstanceChild(instanceId),
+    });
+  }
+
+  return createRuntimeMutation({
+    payload: compactBuilderPatchPayload([{ namespace: "instances", patches }]),
+    result: { instanceSelector: nextInstanceSelector },
+    invalidatesNamespaces: ["instances"],
+  });
+};
+
+export const fillGrid = (
+  state: TreeMutationState,
+  input: z.infer<typeof fillGridInput>,
+  context: { createId: () => string }
+) => {
+  const mutationState = getRequiredTreeMutationState(state);
+  const parentInstance = mutationState.instances.get(input.parentInstanceId);
+  if (parentInstance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
+  }
+  const existingChildCount = parentInstance.children.filter(
+    (child) => child.type === "id"
+  ).length;
+  const cellsToAdd = input.totalCells - existingChildCount;
+  if (cellsToAdd <= 0) {
+    return createRuntimeMutation({
+      payload: [],
+      result: { instanceIds: [], styleSourceIds: [] },
+      invalidatesNamespaces: ["instances"],
+    });
+  }
+
+  const instancePatches: BuilderPatchChange["patches"] = [];
+  const styleSourcePatches: BuilderPatchChange["patches"] = [];
+  const styleSourceSelectionPatches: BuilderPatchChange["patches"] = [];
+  const stylePatches: BuilderPatchChange["patches"] = [];
+  const instanceIds: Instance["id"][] = [];
+  const styleSourceIds: StyleSource["id"][] = [];
+
+  for (let index = 0; index < cellsToAdd; index += 1) {
+    const instanceId = context.createId();
+    const styleSourceId = context.createId();
+    const instance: Instance = {
+      type: "instance",
+      id: instanceId,
+      component: "Box",
+      children: [],
+    };
+    const styleSource = createLocalStyleSource(styleSourceId);
+    const displayStyle = createStyleDecl({
+      styleSourceId,
+      breakpointId: input.breakpointId,
+      property: "display",
+      value: { type: "keyword", value: "flex" },
+    });
+    const flexDirectionStyle = createStyleDecl({
+      styleSourceId,
+      breakpointId: input.breakpointId,
+      property: "flexDirection",
+      value: { type: "keyword", value: "column" },
+    });
+
+    instanceIds.push(instanceId);
+    styleSourceIds.push(styleSourceId);
+    instancePatches.push({
+      op: "add",
+      path: [instanceId],
+      value: instance,
+    });
+    instancePatches.push({
+      op: "add",
+      path: [
+        input.parentInstanceId,
+        "children",
+        parentInstance.children.length + index,
+      ],
+      value: createInstanceChild(instanceId),
+    });
+    styleSourcePatches.push({
+      op: "add",
+      path: [styleSourceId],
+      value: styleSource,
+    });
+    styleSourceSelectionPatches.push({
+      op: "add",
+      path: [instanceId],
+      value: {
+        instanceId,
+        values: [styleSourceId],
+      } satisfies StyleSourceSelection,
+    });
+    stylePatches.push({
+      op: "add",
+      path: [getStyleDeclKey(displayStyle)],
+      value: displayStyle,
+    });
+    stylePatches.push({
+      op: "add",
+      path: [getStyleDeclKey(flexDirectionStyle)],
+      value: flexDirectionStyle,
+    });
+  }
+
+  return createRuntimeMutation({
+    payload: compactBuilderPatchPayload([
+      { namespace: "instances", patches: instancePatches },
+      { namespace: "styleSources", patches: styleSourcePatches },
+      {
+        namespace: "styleSourceSelections",
+        patches: styleSourceSelectionPatches,
+      },
+      { namespace: "styles", patches: stylePatches },
+    ]),
+    result: { instanceIds, styleSourceIds },
+    invalidatesNamespaces: [
+      "instances",
+      "styleSourceSelections",
+      "styleSources",
+      "styles",
+    ],
+  });
+};
+
+export const setInstanceTag = (
+  state: Pick<BuilderState, "instances" | "props">,
+  input: z.infer<typeof setInstanceTagInput>
+) => {
+  const instances = getRequiredInstances(state);
+  if (state.props === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Props namespace is missing"
+    );
+  }
+  const instance = instances.get(input.instanceId);
+  if (instance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+
+  const payload: BuilderPatchChange[] = [];
+  if (input.legacyPropName !== undefined) {
+    payload.push(
+      ...createPropDeletePayload({
+        deletions: [
+          {
+            instanceId: input.instanceId,
+            name: input.legacyPropName,
+          },
+        ],
+        instances,
+        props: state.props.values(),
+      }).payload
+    );
+  }
+  if (instance.tag !== input.tag) {
+    payload.push({
+      namespace: "instances",
+      patches: [
+        {
+          op: "replace",
+          path: [input.instanceId, "tag"],
+          value: input.tag,
+        },
+      ],
+    });
+  }
+
+  return createRuntimeMutation({
+    payload: compactBuilderPatchPayload(payload),
+    result: { instanceId: input.instanceId, tag: input.tag },
+    invalidatesNamespaces: ["instances", "props"],
+  });
+};
+
+export const setInstanceLabel = (
+  state: Pick<BuilderState, "instances">,
+  input: z.infer<typeof setInstanceLabelInput>
+) => {
+  const instances = getRequiredInstances(state);
+  const instance = instances.get(input.instanceId);
+  if (instance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+
+  const label = input.label.trim();
+  const targetInstances =
+    instance.component === "Slot"
+      ? Array.from(instances.values()).filter(
+          (currentInstance) =>
+            currentInstance.component === "Slot" &&
+            getSlotChildrenSignature(currentInstance) ===
+              getSlotChildrenSignature(instance)
+        )
+      : [instance];
+
+  const patches: BuilderPatchChange["patches"] = [];
+  for (const targetInstance of targetInstances) {
+    if (targetInstance.label === label) {
+      continue;
+    }
+    patches.push({
+      op: targetInstance.label === undefined ? "add" : "replace",
+      path: [targetInstance.id, "label"],
+      value: label,
+    });
+  }
+
+  return createRuntimeMutation({
+    payload: compactBuilderPatchPayload([{ namespace: "instances", patches }]),
+    result: {
+      instanceIds: targetInstances.map((targetInstance) => targetInstance.id),
+      label,
+    },
     invalidatesNamespaces: ["instances"],
   });
 };
@@ -952,6 +2908,138 @@ export const deleteInstances = (
     payload,
     result: { instanceIds },
     invalidatesNamespaces: treeInvalidates,
+  });
+};
+
+export const deleteInstanceBySelector = (
+  state: Partial<FullInstanceMutationState>,
+  input: z.infer<typeof deleteInstanceBySelectorInput>,
+  context: BuilderRuntimeContext
+) => {
+  const beforeData = getRequiredFullInstanceMutationData(state);
+  const nextData = cloneWebstudioData(beforeData);
+  const instancePath = getInstancePathFromSelector(
+    input.instanceSelector,
+    nextData.instances
+  );
+  if (instancePath === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
+    nextData.instances,
+    instancePath,
+    context.createId
+  );
+  const nextInstanceSelector = getNextSelectorAfterDelete(
+    normalizedInstancePath
+  );
+  const targetInstance = getDeleteTarget(
+    nextData.instances,
+    normalizedInstancePath
+  );
+  const pageRootIds = new Set(
+    Array.from(nextData.pages.pages.values()).map((page) => page.rootInstanceId)
+  );
+  const { errors, payload, instanceIds } = createInstanceDeletePayload({
+    instances: nextData.instances,
+    instanceIds: [targetInstance.id],
+    pageRootIds,
+    props: nextData.props.values(),
+    dataSources: nextData.dataSources.values(),
+    styleSources: nextData.styleSources.values(),
+    styleSourceSelections: nextData.styleSourceSelections.values(),
+    styles: nextData.styles.values(),
+  });
+  const error = errors.at(0);
+  if (error?.type === "page-root") {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Page root instance cannot be deleted"
+    );
+  }
+  if (error?.type === "instance-not-found") {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  if (error?.type === "parent-not-found") {
+    return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
+  }
+  applyBuilderPatchPayloadMutable(
+    (namespace) => getWebstudioDataNamespace(nextData, namespace),
+    payload
+  );
+  return createRuntimeMutation({
+    payload: createWebstudioDataPatchPayload({
+      before: beforeData,
+      after: nextData,
+    }),
+    result: { instanceIds, instanceSelector: nextInstanceSelector },
+    invalidatesNamespaces: [
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "styleSourceSelections",
+      "styleSources",
+      "styles",
+      "breakpoints",
+      "assets",
+    ],
+  });
+};
+
+export const updateTextTree = (
+  state: Pick<BuilderState, "instances">,
+  input: z.infer<typeof updateTextTreeInput>,
+  context: BuilderRuntimeContext
+) => {
+  const instances = getRequiredInstances(state);
+  const remapped = remapTextTreeTemporaryIds({
+    instances,
+    rootInstanceId: input.rootInstanceId,
+    updates: input.instances,
+    createId: context.createId,
+  });
+  const { errors, payload } = createTextTreeUpdatePayload({
+    instances,
+    rootInstanceId: input.rootInstanceId,
+    updates: remapped.updates,
+  });
+  const error = errors.at(0);
+  if (error?.type === "root-not-found") {
+    return throwBuilderRuntimeError("NOT_FOUND", "Root instance not found");
+  }
+  if (error?.type === "root-update-missing") {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Updated text tree must include the root instance"
+    );
+  }
+  if (error?.type === "duplicate-update") {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      `Updated text tree contains duplicate instance "${error.instanceId}"`
+    );
+  }
+  if (error?.type === "id-collision") {
+    return throwBuilderRuntimeError(
+      "CONFLICT",
+      `Updated text tree instance "${error.instanceId}" already exists outside the edited tree`
+    );
+  }
+  if (error?.type === "dangling-child") {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      `Updated text tree instance "${error.instanceId}" references missing child "${error.childId}"`
+    );
+  }
+  return createRuntimeMutation({
+    payload,
+    result: {
+      rootInstanceId: input.rootInstanceId,
+      instanceIds: remapped.updates.map((instance) => instance.id),
+      idMap: Object.fromEntries(remapped.idMap),
+    },
+    invalidatesNamespaces: ["instances"],
   });
 };
 
@@ -1040,14 +3128,12 @@ export const findTextContentChild = (
   input: {
     instanceId: Instance["id"];
     childIndex: number;
-    mode?: TextContentChild["type"];
   }
 ):
   | { status: "found"; child: TextContentChild }
   | { status: "instance-not-found" }
   | { status: "child-not-found" }
-  | { status: "not-text-content" }
-  | { status: "mode-mismatch"; actual: TextContentChild["type"] } => {
+  | { status: "not-text-content" } => {
   let instance: Instance | undefined;
   for (const item of instances) {
     if (item.id === input.instanceId) {
@@ -1064,9 +3150,6 @@ export const findTextContentChild = (
   const child = getTextContentChild(instance, input.childIndex);
   if (child === undefined) {
     return { status: "not-text-content" };
-  }
-  if (input.mode !== undefined && child.type !== input.mode) {
-    return { status: "mode-mismatch", actual: child.type };
   }
   return { status: "found", child };
 };
@@ -1133,6 +3216,25 @@ export const createTextContentResetPayload = ({
         op: "replace" as const,
         path: [instanceId, "children"],
         value: [],
+      },
+    ],
+  },
+];
+
+export const createTextContentSetPayload = ({
+  instanceId,
+  child,
+}: {
+  instanceId: Instance["id"];
+  child: TextContentChild;
+}) => [
+  {
+    namespace: "instances" as const,
+    patches: [
+      {
+        op: "replace" as const,
+        path: [instanceId, "children"],
+        value: [child],
       },
     ],
   },
@@ -1225,9 +3327,9 @@ export const listInstances = (
       : [input.rootInstanceId];
   const depths = getInstanceDepths(instances, rootInstanceIds);
   const results = [];
-  for (const instance of instances.values()) {
-    const depth = depths.get(instance.id);
-    if (depth === undefined) {
+  for (const [instanceId, depth] of depths) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
       continue;
     }
     if (input.maxDepth !== undefined && depth > input.maxDepth) {
@@ -1369,14 +3471,7 @@ export const updateTextInstance = (
       "Child is not text or expression"
     );
   }
-  if (result.status === "mode-mismatch") {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      `Child is ${result.actual}, not ${input.mode}`
-    );
-  }
-
-  const mode = input.mode ?? result.child.type;
+  const mode = input.mode ?? "text";
   const errors = getTextContentErrors({ type: mode, value: input.text });
   if (errors.length > 0) {
     return throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
@@ -1400,6 +3495,61 @@ export const updateTextInstance = (
       child: createTextContentChild({ type: mode, value: input.text }),
     }),
     result: mutationResult,
+    invalidatesNamespaces: ["instances"],
+  });
+};
+
+export const setTextContent = (
+  state: Pick<BuilderState, "instances">,
+  input: z.infer<typeof setTextContentInput>
+) => {
+  const instances = getRequiredInstances(state);
+  const instance = instances.get(input.instanceId);
+  if (instance === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+
+  if (input.operation === "reset") {
+    return createRuntimeMutation({
+      payload:
+        instance.children.length === 0
+          ? []
+          : createTextContentResetPayload({ instanceId: input.instanceId }),
+      result: {
+        instanceId: input.instanceId,
+        operation: input.operation,
+      },
+      invalidatesNamespaces: ["instances"],
+    });
+  }
+
+  const errors = getTextContentErrors({
+    type: input.mode,
+    value: input.text,
+  });
+  if (errors.length > 0) {
+    return throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
+  }
+
+  const child = createTextContentChild({
+    type: input.mode,
+    value: input.text,
+  });
+  return createRuntimeMutation({
+    payload:
+      instance.children.length === 1 &&
+      instance.children[0]?.type === child.type &&
+      instance.children[0].value === child.value
+        ? []
+        : createTextContentSetPayload({
+            instanceId: input.instanceId,
+            child,
+          }),
+    result: {
+      instanceId: input.instanceId,
+      operation: input.operation,
+      mode: input.mode,
+    },
     invalidatesNamespaces: ["instances"],
   });
 };

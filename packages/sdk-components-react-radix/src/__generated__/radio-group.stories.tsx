@@ -12,55 +12,55 @@ import {
 
 const Component = () => {
   return (
-    <Box className={"w-box"}>
-      <RadioGroup className={"w-radio-group w-radio-group-1"}>
-        <Label className={"w-label w-label-1"}>
+    <Box className={`w-box`}>
+      <RadioGroup className={`w-radio-group w-radio-group-1`}>
+        <Label className={`w-label w-label-1`}>
           <RadioGroupItem
             value={"default"}
-            className={"w-radio-group-item w-radio-group-item-1"}
+            className={`w-radio-group-item w-radio-group-item-1`}
           >
-            <RadioGroupIndicator className={"w-radio-group-indicator"}>
+            <RadioGroupIndicator className={`w-radio-group-indicator`}>
               <HtmlEmbed
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>'
                 }
-                className={"w-html-embed"}
+                className={`w-html-embed w-indicator-icon`}
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text className={"w-text"}>{"Default"}</Text>
+          <Text className={`w-text`}>{"Default"}</Text>
         </Label>
-        <Label className={"w-label w-label-2"}>
+        <Label className={`w-label w-label-2`}>
           <RadioGroupItem
             value={"comfortable"}
-            className={"w-radio-group-item w-radio-group-item-2"}
+            className={`w-radio-group-item w-radio-group-item-2`}
           >
-            <RadioGroupIndicator className={"w-radio-group-indicator"}>
+            <RadioGroupIndicator className={`w-radio-group-indicator`}>
               <HtmlEmbed
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>'
                 }
-                className={"w-html-embed"}
+                className={`w-html-embed w-indicator-icon-1`}
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text className={"w-text"}>{"Comfortable"}</Text>
+          <Text className={`w-text`}>{"Comfortable"}</Text>
         </Label>
-        <Label className={"w-label w-label-3"}>
+        <Label className={`w-label w-label-3`}>
           <RadioGroupItem
             value={"compact"}
-            className={"w-radio-group-item w-radio-group-item-3"}
+            className={`w-radio-group-item w-radio-group-item-3`}
           >
-            <RadioGroupIndicator className={"w-radio-group-indicator"}>
+            <RadioGroupIndicator className={`w-radio-group-indicator`}>
               <HtmlEmbed
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>'
                 }
-                className={"w-html-embed"}
+                className={`w-html-embed w-indicator-icon-2`}
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text className={"w-text"}>{"Compact"}</Text>
+          <Text className={`w-text`}>{"Compact"}</Text>
         </Label>
       </RadioGroup>
     </Box>
@@ -68,7 +68,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Radio Group",
+  title: "Components/RadioGroup",
 };
 
 const Story = {
@@ -77,126 +77,29 @@ const Story = {
       <>
         <style>
           {`
-@media all {
-  :where(div.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+@layer presets {
+  div.w-box {
+    box-sizing: border-box
   }
-  :where(address.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(article.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(aside.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(figure.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(footer.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(header.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(main.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(nav.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(section.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(div.w-html-embed) {
+  div.w-html-embed {
     display: contents;
     white-space: normal;
     white-space-collapse: collapse
   }
-  :where(div.w-text) {
+  div.w-text {
     box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
     min-height: 1em
   }
-  :where(label.w-label) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+  label.w-label {
+    box-sizing: border-box
   }
-  :where(div.w-radio-group) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+  div.w-radio-group {
+    box-sizing: border-box
   }
-  :where(span.w-radio-group-indicator) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+  span.w-radio-group-indicator {
+    box-sizing: border-box
   }
-  :where(button.w-radio-group-item) {
+  button.w-radio-group-item {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
@@ -204,7 +107,7 @@ const Story = {
     text-transform: none;
     background-color: transparent;
     background-image: none;
-    border: 0px solid rgba(226, 232, 240, 1);
+    border: 0px solid rgb(226 232 240 / 1);
     margin: 0;
     padding: 0px
   }
@@ -230,16 +133,22 @@ const Story = {
     border-top-right-radius: 9999px;
     border-bottom-right-radius: 9999px;
     border-bottom-left-radius: 9999px;
-    color: rgba(15, 23, 42, 1);
-    border: 1px solid rgba(15, 23, 42, 1)
+    color: rgb(15 23 42 / 1);
+    border: 1px solid rgb(15 23 42 / 1)
   }
   .w-radio-group-item-1:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
   .w-radio-group-item-1:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 1), 0 0 0 calc(2px + 2px) rgb(148,163,184);
     outline: medium none currentcolor
+  }
+  .w-indicator-icon {
+    display: block;
+    width: 100%;
+    height: 100%;
+    line-height: 0
   }
   .w-label-2 {
     display: flex;
@@ -255,16 +164,22 @@ const Story = {
     border-top-right-radius: 9999px;
     border-bottom-right-radius: 9999px;
     border-bottom-left-radius: 9999px;
-    color: rgba(15, 23, 42, 1);
-    border: 1px solid rgba(15, 23, 42, 1)
+    color: rgb(15 23 42 / 1);
+    border: 1px solid rgb(15 23 42 / 1)
   }
   .w-radio-group-item-2:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
   .w-radio-group-item-2:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 1), 0 0 0 calc(2px + 2px) rgb(148,163,184);
     outline: medium none currentcolor
+  }
+  .w-indicator-icon-1 {
+    display: block;
+    width: 100%;
+    height: 100%;
+    line-height: 0
   }
   .w-label-3 {
     display: flex;
@@ -280,16 +195,22 @@ const Story = {
     border-top-right-radius: 9999px;
     border-bottom-right-radius: 9999px;
     border-bottom-left-radius: 9999px;
-    color: rgba(15, 23, 42, 1);
-    border: 1px solid rgba(15, 23, 42, 1)
+    color: rgb(15 23 42 / 1);
+    border: 1px solid rgb(15 23 42 / 1)
   }
   .w-radio-group-item-3:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
   .w-radio-group-item-3:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 1), 0 0 0 calc(2px + 2px) rgb(148,163,184);
     outline: medium none currentcolor
+  }
+  .w-indicator-icon-2 {
+    display: block;
+    width: 100%;
+    height: 100%;
+    line-height: 0
   }
 }
       `}

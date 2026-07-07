@@ -1070,6 +1070,12 @@ describe("deleteInstanceBuilder", () => {
         },
       ],
     ]);
+    $pages.set(
+      createDefaultPages({
+        homePageId: "page-id",
+        rootInstanceId: "body",
+      })
+    );
     $instances.set(instances);
     selectInstances([
       ["box1", "body"],
@@ -1118,6 +1124,12 @@ describe("deleteInstanceBuilder", () => {
         },
       ],
     ]);
+    $pages.set(
+      createDefaultPages({
+        homePageId: "page-id",
+        rootInstanceId: "body",
+      })
+    );
     $instances.set(instances);
     selectInstances([
       ["template", "body"],

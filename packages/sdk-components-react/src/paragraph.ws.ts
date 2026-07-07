@@ -3,6 +3,7 @@ import { p } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/paragraph.props";
 
 export const meta: WsComponentMeta = {
+  deprecated: true,
   presetStyle: { p },
   initialProps: ["id", "class"],
   props,

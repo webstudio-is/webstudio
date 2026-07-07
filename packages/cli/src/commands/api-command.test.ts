@@ -277,6 +277,27 @@ test("requires json output flag", async () => {
   );
 });
 
+test("explains mcp-only editing commands should use shortcut or single-op-call", async () => {
+  mockConfig();
+
+  await expect(
+    apiCommand(
+      {
+        command: "insert-fragment",
+        json: true,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expectJsonErrorOutput({
+    command: "insert-fragment",
+    code: "API_COMMAND_FAILED",
+    message:
+      "insert-fragment is an MCP project-editing tool, not a high-level CLI API command. Use the MCP shortcut, for example: webstudio insert-fragment '{...}', or the explicit form: webstudio mcp single-op-call insert-fragment '{...}'.",
+  });
+});
+
 test("documents every executable api command", () => {
   expect(apiCommandMetadata.map(({ command }) => command)).toEqual(
     publicApiOperations.map(({ command }) => command)
@@ -933,21 +954,21 @@ test("inspects instance details", async () => {
   });
 });
 
-test("appends instances from input file", async () => {
+test("inserts component with registered template", async () => {
   await expectCommandCall({
     options: {
-      command: "append-instance",
+      command: "insert-component",
       parent: "parent-id",
-      input: "children.json",
+      component: "@webstudio-is/sdk-components-react-radix:Switch",
       mode: "prepend",
+      insertIndex: 1,
     },
-    call: apiCalls.appendInstance,
-    inputJson: [{ tag: "div", label: "Hero", text: "Hello" }],
+    call: apiCalls.insertComponent,
     connection: {
       parentInstanceId: "parent-id",
+      component: "@webstudio-is/sdk-components-react-radix:Switch",
       mode: "prepend",
-      insertIndex: undefined,
-      children: [{ tag: "div", label: "Hero", text: "Hello" }],
+      insertIndex: 1,
     },
   });
 });

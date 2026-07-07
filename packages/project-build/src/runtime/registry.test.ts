@@ -1,18 +1,24 @@
 import { describe, expect, test } from "vitest";
-import { z } from "zod";
-import { runtimeOperationContracts } from "../contracts/builder-runtime";
 import {
-  getRuntimeGeneratedInputPaths,
-  isRuntimeGeneratedIdInput,
-} from "../contracts/input-schema";
+  getInputJsonSchemaMetadata,
+  toInputJsonSchemaObject,
+  type InputJsonSchema,
+} from "@webstudio-is/sdk";
+import { runtimeOperationContracts } from "../contracts/builder-runtime";
+import { getRuntimeGeneratedInputPaths } from "../contracts/input-schema";
 import { builderRuntimeCutoverManifests } from "./cutover";
 import {
   builderRuntimeOperations,
   executeBuilderRuntimeOperation,
   getBuilderRuntimeOperation,
 } from "./registry";
+import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { getPage, listFolders, listPages } from "./pages";
-import { getStyleDeclarations, listDesignTokens } from "./styles";
+import {
+  getStyleDeclarations,
+  listCssVariables,
+  listDesignTokens,
+} from "./styles";
 import {
   inspectInstance,
   listTextInstances,
@@ -27,10 +33,36 @@ const context: BuilderRuntimeContext = {
   createId: () => "id",
 };
 
+const hasDirectInputProperty = (
+  schema: InputJsonSchema | undefined,
+  property: string
+): boolean => {
+  const schemaObject = toInputJsonSchemaObject(schema);
+  if (schemaObject === undefined) {
+    return false;
+  }
+  if (Object.hasOwn(schemaObject.properties ?? {}, property)) {
+    return true;
+  }
+  return (
+    schemaObject.oneOf?.some((branch) =>
+      hasDirectInputProperty(toInputJsonSchemaObject(branch), property)
+    ) ??
+    schemaObject.anyOf?.some((branch) =>
+      hasDirectInputProperty(toInputJsonSchemaObject(branch), property)
+    ) ??
+    schemaObject.allOf?.some((branch) =>
+      hasDirectInputProperty(toInputJsonSchemaObject(branch), property)
+    ) ??
+    false
+  );
+};
+
 const state = {
   pages: {
     homePageId: "home",
     rootFolderId: "root",
+    redirects: [{ old: "/old", new: "/new", status: "301" }],
     pages: new Map([
       [
         "home",
@@ -114,6 +146,16 @@ const state = {
       },
     ],
     [
+      "labelProp",
+      {
+        id: "labelProp",
+        instanceId: "heading",
+        name: "aria-label",
+        type: "string",
+        value: "Heading label",
+      },
+    ],
+    [
       "resourceProp",
       {
         id: "resourceProp",
@@ -139,6 +181,16 @@ const state = {
         breakpointId: "base",
         state: undefined,
         property: "color",
+        value: { type: "unparsed", value: "var(--brand-color)" },
+      },
+    ],
+    [
+      "local:base::--brand-color",
+      {
+        styleSourceId: "local",
+        breakpointId: "base",
+        state: undefined,
+        property: "--brand-color",
         value: { type: "keyword", value: "red" },
       },
     ],
@@ -188,8 +240,41 @@ const state = {
       },
     ],
   ]),
-  assets: new Map(),
-  breakpoints: new Map(),
+  assets: new Map([
+    [
+      "asset",
+      {
+        id: "asset",
+        projectId: "project",
+        name: "asset.png",
+        type: "image",
+        size: 1,
+        format: "png",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        description: null,
+        meta: { width: 100, height: 100 },
+      },
+    ],
+    [
+      "next",
+      {
+        id: "next",
+        projectId: "project",
+        name: "next.png",
+        type: "image",
+        size: 1,
+        format: "png",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        filename: "Hero",
+        description: null,
+        meta: { width: 100, height: 100 },
+      },
+    ],
+  ]),
+  breakpoints: new Map([
+    ["base", { id: "base", label: "Base" }],
+    ["desktop", { id: "desktop", label: "Desktop", minWidth: 1024 }],
+  ]),
 } satisfies BuilderState;
 
 const expectRuntimeValidationError = (operationId: string, input: unknown) => {
@@ -207,30 +292,6 @@ const expectRuntimeValidationError = (operationId: string, input: unknown) => {
   throw new Error(`Expected ${operationId} to reject invalid input`);
 };
 
-const unwrapSchema = (schema: z.ZodTypeAny): z.ZodTypeAny => {
-  if (schema instanceof z.ZodOptional || schema instanceof z.ZodNullable) {
-    return unwrapSchema(schema.unwrap());
-  }
-  if (
-    schema instanceof z.ZodDefault ||
-    schema instanceof z.ZodCatch ||
-    schema instanceof z.ZodReadonly
-  ) {
-    return unwrapSchema(schema._def.innerType);
-  }
-  if (schema instanceof z.ZodEffects) {
-    return unwrapSchema(schema._def.schema);
-  }
-  return schema;
-};
-
-const getSchemaShape = (schema: z.ZodTypeAny) => {
-  const unwrapped = unwrapSchema(schema);
-  if (unwrapped instanceof z.ZodObject) {
-    return unwrapped.shape;
-  }
-};
-
 const mutationOperationIds = runtimeOperationContracts
   .filter((contract) => contract.kind === "mutation")
   .map((contract) => contract.id);
@@ -244,9 +305,7 @@ test("keeps generated runtime contracts in sync with the registry", () => {
         client,
         permit,
         kind,
-        inputFields,
-        requiredInputFields,
-        inputFieldTypes,
+        inputJsonSchema,
         readNamespaces,
         writeNamespaces,
         invalidatesNamespaces,
@@ -259,9 +318,7 @@ test("keeps generated runtime contracts in sync with the registry", () => {
         client,
         permit,
         kind,
-        inputFields,
-        requiredInputFields,
-        inputFieldTypes,
+        inputSchema: inputJsonSchema,
         readNamespaces,
         writeNamespaces,
         invalidatesNamespaces,
@@ -315,6 +372,56 @@ describe("builder runtime pages", () => {
       })
     ).toMatchObject({ id: "post" });
   });
+
+  test("validates page and folder mutations through public operations", () => {
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "pages.create",
+        state,
+        input: {
+          name: "Broken",
+          path: "/prefix-:id",
+        },
+        context,
+      })
+    ).toThrow();
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "pages.update",
+        state,
+        input: {
+          pageId: "post",
+          values: { path: "/blog-*" },
+        },
+        context,
+      })
+    ).toThrow();
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "folders.create",
+        state,
+        input: {
+          name: "Invalid Folder",
+          slug: "Invalid Folder",
+        },
+        context,
+      })
+    ).toThrow();
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "folders.update",
+        state,
+        input: {
+          folderId: "blog",
+          values: { slug: "invalid/folder" },
+        },
+        context,
+      })
+    ).toThrow();
+  });
 });
 
 describe("builder runtime read families", () => {
@@ -339,9 +446,13 @@ describe("builder runtime read families", () => {
     });
     expect(inspectedInstance).toMatchObject({
       id: "heading",
-      styles: [{ instanceId: "heading", property: "color" }],
       sources: ["token", "local"],
     });
+    expect(inspectedInstance.styles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ instanceId: "heading", property: "color" }),
+      ])
+    );
     expect(inspectedInstance.props).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: "prop" })])
     );
@@ -441,14 +552,47 @@ describe("builder runtime read families", () => {
     });
   });
 
-  test("reads styles, tokens, variables, and resources", () => {
+  test("deletes multiple props through the public runtime operation", () => {
     expect(
-      getStyleDeclarations(state, { instanceIds: ["heading"] })
+      executeBuilderRuntimeOperation({
+        id: "instances.deleteProps",
+        state,
+        input: {
+          deletions: [
+            { instanceId: "heading", name: "title" },
+            { instanceId: "heading", name: "aria-label" },
+          ],
+        },
+        context,
+      })
     ).toMatchObject({
-      declarations: [{ instanceId: "heading", property: "color" }],
+      result: { propIds: ["prop", "labelProp"] },
+      payload: [
+        {
+          namespace: "props",
+          patches: [
+            { op: "remove", path: ["prop"] },
+            { op: "remove", path: ["labelProp"] },
+          ],
+        },
+      ],
     });
+  });
+
+  test("reads styles, tokens, variables, and resources", () => {
+    const declarations = getStyleDeclarations(state, {
+      instanceIds: ["heading"],
+    });
+    expect(declarations.declarations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ instanceId: "heading", property: "color" }),
+      ])
+    );
     expect(listDesignTokens(state, { withUsage: true })).toMatchObject({
       tokens: [{ id: "token", usageCount: 1 }],
+    });
+    expect(listCssVariables(state, { withUsage: true })).toMatchObject({
+      vars: [{ name: "--brand-color", scope: "heading", usageCount: 1 }],
     });
     expect(listDataVariables(state)).toMatchObject({
       variables: [{ id: "variable", scopeInstanceId: "heading" }],
@@ -456,6 +600,50 @@ describe("builder runtime read families", () => {
     expect(listResources(state)).toMatchObject({
       resources: [{ id: "resource", dataSourceId: "resourceDataSource" }],
     });
+  });
+
+  test("validates data variable mutations through public operations", () => {
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "variables.create",
+        state,
+        input: {
+          scopeInstanceId: "heading",
+          name: "Subtitle",
+          value: { type: "string", value: "Hello" },
+        },
+        context,
+      })
+    ).toMatchObject({
+      kind: "mutation",
+      result: { dataSourceId: "id" },
+      payload: [{ namespace: "dataSources" }],
+    });
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "variables.create",
+        state,
+        input: {
+          scopeInstanceId: "heading",
+          name: "Title",
+          value: { type: "string", value: "Hello" },
+        },
+        context,
+      })
+    ).toThrow("Name is already used by another variable on this instance");
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "variables.update",
+        state,
+        input: {
+          dataSourceId: "variable",
+          values: { name: "" },
+        },
+        context,
+      })
+    ).toThrow();
   });
 
   test("validates style mutation inputs through shared runtime schemas", () => {
@@ -545,6 +733,228 @@ describe("builder runtime read families", () => {
       })
     ).toThrow();
   });
+
+  test("validates asset update mutations through the public runtime operation", () => {
+    expect(
+      executeBuilderRuntimeOperation({
+        id: "assets.update",
+        state,
+        input: {
+          assetId: "asset",
+          values: {
+            filename: "Updated",
+            description: "Updated description",
+          },
+        },
+        context,
+      })
+    ).toMatchObject({
+      kind: "mutation",
+      result: { assetId: "asset" },
+      payload: [
+        {
+          namespace: "assets",
+          patches: [
+            { op: "add", path: ["asset", "filename"], value: "Updated" },
+            {
+              op: "replace",
+              path: ["asset", "description"],
+              value: "Updated description",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "assets.update",
+        state,
+        input: {
+          assetId: "asset",
+          values: { filename: "bad/name" },
+        },
+        context,
+      })
+    ).toThrow("Invalid filename");
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "assets.update",
+        state,
+        input: {
+          assetId: "asset",
+          values: { filename: "Hero" },
+        },
+        context,
+      })
+    ).toThrow("Filename already used");
+  });
+
+  test("validates resource URL mutations through the public runtime operation", () => {
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "resources.create",
+        state,
+        input: {
+          scopeInstanceId: "heading",
+          resource: {
+            name: "Users",
+            method: "get",
+            url: `"not-a-url"`,
+            headers: [],
+          },
+        },
+        context,
+      })
+    ).toThrow("url: URL is invalid");
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "resources.update",
+        state,
+        input: {
+          resourceId: "resource",
+          values: { url: `""` },
+        },
+        context,
+      })
+    ).toThrow("url: URL is required");
+
+    const dynamicUrlResult = executeBuilderRuntimeOperation({
+      id: "resources.upsert",
+      state,
+      input: {
+        scopeInstanceId: "heading",
+        resource: {
+          name: "Users",
+          method: "get",
+          url: "apiUrl",
+          headers: [],
+        },
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = ["resource-id", "data-source-id"];
+          return () => ids.shift() ?? "id";
+        })(),
+      },
+    });
+
+    expect(dynamicUrlResult).toMatchObject({
+      kind: "mutation",
+      result: { resourceId: "resource-id", dataSourceId: "data-source-id" },
+    });
+  });
+
+  test("validates project settings and redirects through public operations", () => {
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "projectSettings.update",
+        state,
+        input: {
+          meta: { contactEmail: "not-an-email" },
+        },
+        context,
+      })
+    ).toThrow("Contact email is invalid.");
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "projectSettings.update",
+        state,
+        input: {
+          meta: {
+            auth: JSON.stringify({
+              version: 1,
+              routes: {
+                private: {
+                  method: "basic",
+                  login: "admin",
+                  password: "secret",
+                },
+              },
+            }),
+          },
+        },
+        context,
+      })
+    ).toThrow('routes."private": Route must start with "/"');
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "redirects.create",
+        state,
+        input: {
+          old: "/old#fragment",
+          new: "/other",
+        },
+        context,
+      })
+    ).toThrow("Redirect already exists");
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "redirects.setAll",
+        state,
+        input: {
+          redirects: [
+            { old: "/über", new: "/one" },
+            { old: "/%C3%BCber", new: "/two" },
+          ],
+        },
+        context,
+      })
+    ).toThrow('Duplicate redirect source "/%C3%BCber"');
+  });
+
+  test("validates breakpoint mutations through public operations", () => {
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "breakpoints.create",
+        state,
+        input: {
+          label: "Broken",
+          minWidth: -1,
+        },
+        context,
+      })
+    ).toThrow();
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "breakpoints.update",
+        state,
+        input: {
+          breakpointId: "base",
+          values: { label: "New base" },
+        },
+        context,
+      })
+    ).toThrow("Base breakpoint cannot be updated");
+
+    const breakpoints = new Map(state.breakpoints);
+    for (let index = 0; index < 7; index += 1) {
+      breakpoints.set(`extra-${index}`, {
+        id: `extra-${index}`,
+        label: `Extra ${index}`,
+        minWidth: index + 1,
+      });
+    }
+
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "breakpoints.create",
+        state: { ...state, breakpoints },
+        input: {
+          label: "Overflow",
+          minWidth: 1200,
+        },
+        context,
+      })
+    ).toThrow("Breakpoint limit reached");
+  });
 });
 
 describe("builder runtime registry", () => {
@@ -553,9 +963,10 @@ describe("builder runtime registry", () => {
       expect(operation.id).toMatch(/^[a-z]+[A-Za-z]*\.[a-z]+[A-Za-z]*$/);
       expect(operation.command).toMatch(/^[a-z][a-z-]+$/);
       expect(operation.client).toMatch(/^[a-z][A-Za-z]+$/);
-      expect(operation.inputFields).not.toContain("projectId");
-      for (const field of Object.keys(operation.inputFieldTypes)) {
-        expect(operation.inputFields).toContain(field);
+      const metadata = getInputJsonSchemaMetadata(operation.inputJsonSchema);
+      expect(metadata.inputFields).not.toContain("projectId");
+      for (const field of Object.keys(metadata.inputFieldTypes)) {
+        expect(metadata.inputFields).toContain(field);
       }
 
       if (operation.kind === "read") {
@@ -574,16 +985,12 @@ describe("builder runtime registry", () => {
   });
 
   test("keeps router adapter policy in runtime metadata", () => {
-    expect(
-      builderRuntimeOperations
-        .filter((operation) => operation.requiresAssets)
-        .map((operation) => operation.id)
-    ).toEqual([
-      "assets.list",
-      "assets.findUsage",
-      "assets.replace",
-      "assets.delete",
-    ]);
+    for (const operation of builderRuntimeOperations) {
+      expect(operation.requiresAssets).toBe(
+        operation.readNamespaces.includes("assets") ||
+          operation.writeNamespaces.includes("assets")
+      );
+    }
     expect(
       builderRuntimeOperations
         .filter((operation) => operation.requiresConfirm)
@@ -591,7 +998,12 @@ describe("builder runtime registry", () => {
     ).toEqual(["cssVariables.delete"]);
   });
 
-  test("rejects client-supplied generated ids and hides top-level generated id fields", () => {
+  test("rejects client-supplied generated ids and hides generated id fields", () => {
+    expect(runtimeGeneratedIdInput.safeParse(undefined).success).toBe(true);
+    expect(runtimeGeneratedIdInput.safeParse("client-created-id").success).toBe(
+      false
+    );
+
     let generatedIdFieldCount = 0;
 
     for (const operation of builderRuntimeOperations) {
@@ -604,23 +1016,28 @@ describe("builder runtime registry", () => {
 
       for (const path of generatedIdPaths) {
         generatedIdFieldCount += 1;
-        let schema = operation.inputSchema;
-        for (const segment of path) {
-          if (segment === "*") {
-            schema = unwrapSchema(schema);
-            expect(schema).toBeInstanceOf(z.ZodArray);
-            schema = (schema as z.ZodArray<z.ZodTypeAny>).element;
-            continue;
-          }
-          const shape = getSchemaShape(schema);
-          expect(shape).toBeDefined();
-          schema = shape?.[segment] as z.ZodTypeAny;
-        }
-
-        expect(isRuntimeGeneratedIdInput(schema)).toBe(true);
-        expect(schema.safeParse("client-created-id").success).toBe(false);
         if (path.length === 1) {
-          expect(operation.inputFields).not.toContain(path[0]);
+          expect(
+            getInputJsonSchemaMetadata(operation.inputJsonSchema).inputFields
+          ).not.toContain(path[0]);
+        }
+        let inputJsonSchema = operation.inputJsonSchema;
+        for (const segment of path.slice(0, -1)) {
+          const prefixItems = Array.isArray(inputJsonSchema.prefixItems)
+            ? inputJsonSchema.prefixItems
+            : undefined;
+          inputJsonSchema =
+            toInputJsonSchemaObject(
+              segment === "*"
+                ? (prefixItems?.[0] ?? inputJsonSchema.items)
+                : inputJsonSchema.properties?.[segment]
+            ) ?? {};
+        }
+        const hiddenField = path.at(-1);
+        if (hiddenField !== undefined && hiddenField !== "*") {
+          expect(hasDirectInputProperty(inputJsonSchema, hiddenField)).toBe(
+            false
+          );
         }
       }
     }
@@ -682,45 +1099,89 @@ describe("builder runtime registry", () => {
     const invalidInputByOperation = new Map<string, unknown>([
       ["pages.create", {}],
       ["pages.update", {}],
+      ["pages.updateSettings", {}],
+      ["pages.updateMarketplace", {}],
+      ["pages.savePathInHistory", {}],
+      ["pages.setHome", {}],
       ["projectSettings.update", { meta: "invalid" }],
+      ["projectSettings.updateMarketplaceProduct", {}],
       ["redirects.create", {}],
       ["redirects.update", {}],
       ["redirects.delete", {}],
+      ["redirects.setAll", { redirects: {} }],
       ["breakpoints.create", {}],
       ["breakpoints.update", {}],
       ["breakpoints.delete", {}],
       ["pages.delete", {}],
       ["pages.duplicate", {}],
+      ["pages.copy", {}],
+      ["pageTemplates.create", {}],
+      ["pageTemplates.update", {}],
+      ["pageTemplates.delete", {}],
+      ["pageTemplates.duplicate", {}],
+      ["pageTemplates.reorder", {}],
       ["pageTemplates.createPage", {}],
       ["folders.create", {}],
       ["folders.update", {}],
       ["folders.delete", {}],
-      ["instances.append", { parentInstanceId: "body", children: {} }],
+      ["folders.duplicate", {}],
+      ["pageClipboard.paste", {}],
+      ["pageTree.move", {}],
+      ["pageTree.reparentOrphans", "invalid"],
+      ["instances.insertComponent", { parentInstanceId: "body" }],
+      ["instances.insertFragment", { parentInstanceId: "body" }],
       ["instances.move", { moves: {} }],
+      ["instances.reparent", {}],
+      ["instances.fillGrid", {}],
+      ["instances.wrap", {}],
+      ["instances.convert", {}],
+      ["instances.unwrap", {}],
       ["instances.clone", {}],
+      ["instances.duplicateAfterItself", {}],
       ["instances.delete", { instanceIds: "heading" }],
+      ["instances.deleteBySelector", {}],
       ["instances.updateProps", { updates: {} }],
       ["instances.deleteProps", { deletions: {} }],
       ["instances.bindProps", { bindings: {} }],
       ["instances.updateText", {}],
+      ["instances.setTextContent", { operation: "unknown" }],
+      ["instances.updateTextTree", {}],
+      ["instances.setTag", {}],
+      ["instances.setLabel", {}],
       ["styles.updateDeclarations", { updates: {} }],
       ["styles.deleteDeclarations", { deletions: {} }],
+      ["styles.updateSelectedDeclarations", { updates: {} }],
+      ["styles.deleteSelectedDeclarations", { deletions: {} }],
       ["styles.replaceValues", {}],
       ["designTokens.create", { tokens: {} }],
+      ["designTokens.createAttached", { tokens: {}, instanceIds: [] }],
       ["designTokens.updateStyles", { designTokenId: "token", updates: {} }],
       ["designTokens.deleteStyles", { designTokenId: "token", deletions: {} }],
       ["designTokens.attach", { designTokenId: "token", instanceIds: {} }],
       ["designTokens.detach", { designTokenId: "token", instanceIds: {} }],
       ["designTokens.extract", { instanceIds: {}, name: "Token" }],
+      ["styleSources.rename", {}],
+      ["styleSources.delete", {}],
+      ["styleSources.setLock", {}],
+      ["styleSources.reorder", {}],
+      ["styleSources.clearStyles", {}],
+      ["styleSources.duplicate", {}],
+      ["styleSources.convertLocalToToken", {}],
       ["cssVariables.define", { vars: [] }],
       ["cssVariables.delete", { names: "--color" }],
       ["cssVariables.rewriteRefs", { map: [] }],
+      ["cssVariables.rename", {}],
       ["variables.create", {}],
       ["variables.update", {}],
       ["variables.delete", {}],
+      ["variables.deleteUnused", []],
       ["resources.create", {}],
       ["resources.update", {}],
+      ["resources.upsert", {}],
+      ["resources.upsertProp", {}],
       ["resources.delete", {}],
+      ["assets.update", {}],
+      ["assets.add", {}],
       ["assets.replace", {}],
       ["assets.delete", { assetIdsOrPrefixes: "asset" }],
     ]);
@@ -732,5 +1193,19 @@ describe("builder runtime registry", () => {
     for (const [operationId, input] of invalidInputByOperation) {
       expectRuntimeValidationError(operationId, input);
     }
+  });
+
+  test("validates internal runtime operation inputs without exposing them publicly", () => {
+    expect(
+      builderRuntimeOperations.map((operation) => operation.id)
+    ).not.toContain("system.migrateLoadedData");
+    expect(() =>
+      executeBuilderRuntimeOperation({
+        id: "system.migrateLoadedData",
+        state,
+        input: { unexpected: true },
+        context,
+      })
+    ).toThrow(/unexpected/);
   });
 });

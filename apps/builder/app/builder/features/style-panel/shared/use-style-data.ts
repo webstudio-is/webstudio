@@ -5,20 +5,10 @@ import {
   $selectedOrLastStyleSourceSelector,
   $selectedStyleSource,
 } from "~/shared/nano-states";
-import {
-  $styleSourceSelections,
-  $styleSources,
-  $styles,
-} from "~/shared/sync/data-stores";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $selectedInstance } from "~/shared/nano-states";
-import {
-  createSelectedStyleDeclarationDeletePayload,
-  createSelectedStyleDeclarationUpdatePayload,
-  isStyleSourceLocked,
-} from "@webstudio-is/project-build/runtime/styles";
-import { applyBuilderPatchPayloadMutable } from "~/shared/instance-utils/data";
+import { isStyleSourceLocked } from "@webstudio-is/project-build/runtime/styles";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 type StyleUpdate =
   | {
@@ -100,54 +90,63 @@ const publishUpdates = (
   }
 
   $ephemeralStyles.set([]);
-  serverSyncStore.createTransaction(
-    [$styleSourceSelections, $styleSources, $styles],
-    (styleSourceSelections, styleSources, styles) => {
-      const instanceId = selectedInstance.id;
-      const breakpointId = selectedBreakpoint.id;
-      for (const update of updates) {
-        if (update.operation === "set") {
-          applyBuilderPatchPayloadMutable(
-            { styleSourceSelections, styleSources, styles },
-            createSelectedStyleDeclarationUpdatePayload({
-              updates: [
-                {
-                  instanceId,
-                  styleSource: selectedStyleSource,
-                  styleSourceId: styleSourceSelector.styleSourceId,
-                  breakpoint: breakpointId,
-                  state: styleSourceSelector.state,
-                  property: camelCaseProperty(update.property),
-                  value: update.value,
-                  listed: options.listed,
-                },
-              ],
-              styleSources,
-              styleSourceSelections: styleSourceSelections.values(),
-              styles: styles.values(),
-            }).payload
-          );
-        }
-
-        if (update.operation === "delete") {
-          applyBuilderPatchPayloadMutable(
-            { styles },
-            createSelectedStyleDeclarationDeletePayload({
-              deletions: [
-                {
-                  styleSourceId: styleSourceSelector.styleSourceId,
-                  breakpoint: breakpointId,
-                  state: styleSourceSelector.state,
-                  property: camelCaseProperty(update.property),
-                },
-              ],
-              styles: styles.values(),
-            }).payload
-          );
-        }
-      }
-    }
+  const instanceId = selectedInstance.id;
+  const breakpoint = selectedBreakpoint.id;
+  const state = styleSourceSelector.state;
+  const setUpdates = updates.filter((update) => update.operation === "set");
+  const deleteUpdates = updates.filter(
+    (update) => update.operation === "delete"
   );
+
+  if (setUpdates.length > 0) {
+    const inputUpdates = setUpdates.map((update) => ({
+      instanceId,
+      breakpoint,
+      state,
+      property: camelCaseProperty(update.property),
+      value: update.value,
+      listed: options.listed,
+    }));
+    executeRuntimeMutation({
+      id:
+        selectedStyleSource.type === "local"
+          ? "styles.updateDeclarations"
+          : "styles.updateSelectedDeclarations",
+      input: {
+        updates:
+          selectedStyleSource.type === "local"
+            ? inputUpdates
+            : inputUpdates.map((update) => ({
+                ...update,
+                styleSourceId: selectedStyleSource.id,
+              })),
+      },
+    });
+  }
+
+  if (deleteUpdates.length > 0) {
+    const inputDeletions = deleteUpdates.map((update) => ({
+      instanceId,
+      breakpoint,
+      state,
+      property: camelCaseProperty(update.property),
+    }));
+    executeRuntimeMutation({
+      id:
+        selectedStyleSource.type === "local"
+          ? "styles.deleteDeclarations"
+          : "styles.deleteSelectedDeclarations",
+      input: {
+        deletions:
+          selectedStyleSource.type === "local"
+            ? inputDeletions
+            : inputDeletions.map((deletion) => ({
+                ...deletion,
+                styleSourceId: selectedStyleSource.id,
+              })),
+      },
+    });
+  }
 };
 
 export const setProperty: SetProperty = (property) => {

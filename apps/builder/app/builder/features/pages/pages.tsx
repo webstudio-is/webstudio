@@ -55,27 +55,17 @@ import {
   $templateIdToDelete,
 } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
-import { getAllChildrenAndSelf } from "@webstudio-is/project-build/runtime/pages";
 import {
-  reparentOrphansMutable,
-  reparentPageOrFolderMutable,
-} from "~/shared/page-utils/tree";
-import {
-  deletePageMutable,
-  deleteFolderWithChildrenMutable,
-  duplicateFolder,
-  isFolder,
-  getStoredDropTarget,
-  canDrop,
-  deleteTemplateMutable,
-  reorderTemplatesMutable,
-} from "./page-utils";
+  canDropPageTarget,
+  getAllChildrenAndSelf,
+  getStoredPageDropTarget,
+} from "@webstudio-is/project-build/runtime/pages";
+import { duplicateFolder, isFolder } from "./page-utils";
 import {
   FolderSettings,
   NewFolderSettings,
   newFolderId,
 } from "./folder-settings";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import {
   type Folder,
@@ -85,8 +75,8 @@ import {
   getFolderById,
 } from "@webstudio-is/sdk";
 import { atom, computed } from "nanostores";
-import { isPathnamePattern } from "~/builder/shared/url-pattern";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import { isPathnamePattern } from "@webstudio-is/project-build/runtime/url-pattern";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { $selectedPage } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
 
@@ -156,11 +146,9 @@ const useReparentOrphans = () => {
     if ($pages.get() === undefined) {
       return;
     }
-    serverSyncStore.createTransaction([$pages], (pages) => {
-      if (pages === undefined) {
-        return;
-      }
-      reparentOrphansMutable(pages);
+    executeRuntimeMutation({
+      id: "pageTree.reparentOrphans",
+      input: {},
     });
   });
 };
@@ -359,11 +347,15 @@ const PagesTree = ({
               dropTarget={item.dropTarget}
               onDropTargetChange={(dropTarget) => {
                 if (dropTarget) {
-                  const storedDropTarget = getStoredDropTarget(
-                    item.selector,
-                    dropTarget
-                  );
-                  if (storedDropTarget && canDrop(storedDropTarget, pages)) {
+                  const storedDropTarget = getStoredPageDropTarget({
+                    selector: item.selector,
+                    dropTarget,
+                    pages,
+                  });
+                  if (
+                    storedDropTarget &&
+                    canDropPageTarget(storedDropTarget, pages)
+                  ) {
                     $dropTarget.set(storedDropTarget);
                   }
                 } else {
@@ -374,13 +366,13 @@ const PagesTree = ({
                 if (dropTarget === undefined) {
                   return;
                 }
-                updateWebstudioData((data) => {
-                  reparentPageOrFolderMutable(
-                    data.pages.folders,
-                    item.id,
-                    dropTarget.parentId,
-                    dropTarget.indexWithinChildren
-                  );
+                executeRuntimeMutation({
+                  id: "pageTree.move",
+                  input: {
+                    childId: item.id,
+                    parentFolderId: dropTarget.parentId,
+                    position: dropTarget.indexWithinChildren,
+                  },
                 });
                 $dropTarget.set(undefined);
               }}
@@ -621,8 +613,11 @@ const PageEditor = ({
 
   const handleDelete = () => {
     if (pageIdToDelete) {
-      updateWebstudioData((data) => {
-        deletePageMutable(pageIdToDelete, data);
+      executeRuntimeMutation({
+        id: "pages.delete",
+        input: {
+          pageId: pageIdToDelete,
+        },
       });
     }
     onClose();
@@ -695,14 +690,11 @@ const FolderEditor = ({
 
   const handleDelete = () => {
     if (folderIdToDelete) {
-      updateWebstudioData((data) => {
-        const { pageIds } = deleteFolderWithChildrenMutable(
-          folderIdToDelete,
-          data.pages
-        );
-        pageIds.forEach((pageId) => {
-          deletePageMutable(pageId, data);
-        });
+      executeRuntimeMutation({
+        id: "folders.delete",
+        input: {
+          folderId: folderIdToDelete,
+        },
       });
     }
     onClose();
@@ -899,15 +891,16 @@ const TemplatesSection = ({
             if (info === undefined) {
               return;
             }
-            updateWebstudioData((data) => {
-              reorderTemplatesMutable(
-                draggedTemplate.id,
-                template.id,
-                info.treeDropTarget.beforeLevel !== undefined
-                  ? "before"
-                  : "after",
-                data
-              );
+            executeRuntimeMutation({
+              id: "pageTemplates.reorder",
+              input: {
+                sourceTemplateId: draggedTemplate.id,
+                targetTemplateId: template.id,
+                position:
+                  info.treeDropTarget.beforeLevel !== undefined
+                    ? "before"
+                    : "after",
+              },
             });
             $templateDropInfo.set(undefined);
           }}
@@ -972,8 +965,11 @@ const TemplateEditor = ({
           template={template}
           onClose={() => setConfirmingDelete(false)}
           onConfirm={() => {
-            updateWebstudioData((data) => {
-              deleteTemplateMutable(editingTemplateId, data);
+            executeRuntimeMutation({
+              id: "pageTemplates.delete",
+              input: {
+                templateId: editingTemplateId,
+              },
             });
             if (currentPage?.id === editingTemplateId && pages) {
               selectPage(pages.homePageId);
@@ -1027,8 +1023,11 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
 
   const handlePageDeleteConfirm = () => {
     if (pageIdToDelete) {
-      updateWebstudioData((data) => {
-        deletePageMutable(pageIdToDelete, data);
+      executeRuntimeMutation({
+        id: "pages.delete",
+        input: {
+          pageId: pageIdToDelete,
+        },
       });
       if (editingItemId === pageIdToDelete) {
         $editingPageId.set(undefined);
@@ -1039,14 +1038,11 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
 
   const handleDeleteFolderConfirm = () => {
     if (folderIdToDelete) {
-      updateWebstudioData((data) => {
-        const { pageIds } = deleteFolderWithChildrenMutable(
-          folderIdToDelete,
-          data.pages
-        );
-        pageIds.forEach((pageId) => {
-          deletePageMutable(pageId, data);
-        });
+      executeRuntimeMutation({
+        id: "folders.delete",
+        input: {
+          folderId: folderIdToDelete,
+        },
       });
       if (editingItemId === folderIdToDelete) {
         $editingPageId.set(undefined);
@@ -1057,8 +1053,11 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
 
   const handleTemplateDeleteConfirm = () => {
     if (templateIdToDelete) {
-      updateWebstudioData((data) => {
-        deleteTemplateMutable(templateIdToDelete, data);
+      executeRuntimeMutation({
+        id: "pageTemplates.delete",
+        input: {
+          templateId: templateIdToDelete,
+        },
       });
       if (editingTemplateItemId === templateIdToDelete) {
         $editingTemplateId.set(undefined);

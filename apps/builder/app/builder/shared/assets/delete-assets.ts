@@ -1,14 +1,12 @@
 import type { Asset } from "@webstudio-is/sdk";
-import { $assets } from "~/shared/sync/data-stores";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
-  serverSyncStore.createTransaction([$assets], (assets) => {
-    for (const assetId of assetIds) {
-      assets.delete(assetId);
-    }
+  executeRuntimeMutation({
+    id: "assets.delete",
+    input: { assetIdsOrPrefixes: assetIds, force: true },
   });
 
   // Wait for server to confirm transaction, then invalidate cache

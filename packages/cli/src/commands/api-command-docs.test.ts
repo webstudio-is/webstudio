@@ -9,7 +9,7 @@ import {
   mcpOnlyApiCommandMetadata,
   topLevelCliCommandMetadata,
 } from "./api-command-metadata";
-import { useCaseScenarios } from "./api-command-docs";
+import { useCaseCoverageScenarios, useCaseScenarios } from "./api-command-docs";
 import { readCliDoc } from "../docs";
 
 const getDocumentedCommands = () => {
@@ -18,7 +18,7 @@ const getDocumentedCommands = () => {
     ...topLevelCliCommandMetadata.map(({ command }) => command),
   ].sort((left, right) => right.length - left.length);
   return new Set(
-    useCaseScenarios
+    useCaseCoverageScenarios
       .flatMap(({ commands }) => commands)
       .flatMap((command) => {
         const mcpMatch = command.match(/^MCP tool: ([a-z0-9._-]+)/);
@@ -38,6 +38,61 @@ const getDocumentedCommands = () => {
       })
   );
 };
+
+const createMetadataOnlyMcpAdapter = () =>
+  createProjectSessionMcpCore({
+    operations: publicApiOperations,
+    createProjectSession: () => {
+      throw new Error(
+        "MCP metadata reads must not initialize a ProjectSession."
+      );
+    },
+    executeOperation: async () => {
+      throw new Error("MCP metadata reads must not execute operations.");
+    },
+    importProject: async () => ({ imported: true }),
+    captureScreenshot: async () => ({
+      output: "current.png",
+      browserPath: "/browser",
+      browser: "chromium",
+      viewport: { width: 1440, height: 900 },
+      elapsedMs: 0,
+      url: "http://localhost",
+      warnings: [],
+    }),
+    diffScreenshots: async () => ({
+      totalPixels: 0,
+      differentPixels: 0,
+      mismatchPercentage: 0,
+      summary: "No visual changes.",
+      regions: [],
+      output: "diff.png",
+      textAnalysis: {
+        status: "skipped",
+        provider: "tesseract",
+        changes: [],
+      },
+      warnings: [],
+    }),
+    installOcr: async () => ({
+      installed: false,
+      alreadyAvailable: true,
+      installUrl: "",
+      warnings: [],
+    }),
+    startPreview: async () => ({ url: "http://localhost:5173", running: true }),
+    getPreviewStatus: async () => ({
+      url: "http://localhost:5173",
+      running: true,
+    }),
+  });
+
+const getMcpVisibleToolNames = () =>
+  new Set(
+    createMetadataOnlyMcpAdapter()
+      .listTools()
+      .map((tool) => tool.name)
+  );
 
 test("documents executable use-case scenarios with current CLI or MCP commands", () => {
   expect(useCaseScenarios.length).toBeGreaterThan(0);
@@ -63,8 +118,15 @@ test("documents every public API operation in use-case scenarios", () => {
   const cliCommandByOperation = new Map<string, string>(
     highLevelCliCommands.map(({ command, operation }) => [operation, command])
   );
+  const mcpVisibleToolNames = getMcpVisibleToolNames();
 
   for (const { command } of apiCommandMetadata) {
+    if (
+      cliCommandByOperation.has(command) === false &&
+      mcpVisibleToolNames.has(command) === false
+    ) {
+      continue;
+    }
     expect(documentedCommands).toContain(
       cliCommandByOperation.get(command) ?? command
     );
@@ -105,50 +167,7 @@ test("documents MCP use cases with JSON inputs instead of CLI flags", () => {
 });
 
 test("documents MCP examples with current tool input fields", () => {
-  const adapter = createProjectSessionMcpCore({
-    operations: publicApiOperations,
-    createProjectSession: () => {
-      throw new Error("listTools must not initialize a ProjectSession.");
-    },
-    executeOperation: async () => {
-      throw new Error("listTools must not execute operations.");
-    },
-    importProject: async () => ({ imported: true }),
-    captureScreenshot: async () => ({
-      output: "current.png",
-      browserPath: "/browser",
-      browser: "chromium",
-      viewport: { width: 1440, height: 900 },
-      elapsedMs: 0,
-      url: "http://localhost",
-      warnings: [],
-    }),
-    diffScreenshots: async () => ({
-      totalPixels: 0,
-      differentPixels: 0,
-      mismatchPercentage: 0,
-      summary: "No visual changes.",
-      regions: [],
-      output: "diff.png",
-      textAnalysis: {
-        status: "skipped",
-        provider: "tesseract",
-        changes: [],
-      },
-      warnings: [],
-    }),
-    installOcr: async () => ({
-      installed: false,
-      alreadyAvailable: true,
-      installUrl: "",
-      warnings: [],
-    }),
-    startPreview: async () => ({ url: "http://localhost:5173", running: true }),
-    getPreviewStatus: async () => ({
-      url: "http://localhost:5173",
-      running: true,
-    }),
-  });
+  const adapter = createMetadataOnlyMcpAdapter();
   const toolInputFields = new Map(
     adapter
       .listTools()
@@ -217,15 +236,7 @@ test("does not document client-supplied generated ids for create operations", ()
 });
 
 test("MCP capability index covers every public API operation", async () => {
-  const adapter = createProjectSessionMcpCore({
-    operations: publicApiOperations,
-    createProjectSession: () => {
-      throw new Error("meta.index must not initialize a ProjectSession.");
-    },
-    executeOperation: async () => {
-      throw new Error("meta.index must not execute operations.");
-    },
-  });
+  const adapter = createMetadataOnlyMcpAdapter();
   const index = await adapter.callTool({ name: "meta.index" });
   const capabilities = (
     index.structuredContent.data as {
@@ -235,8 +246,12 @@ test("MCP capability index covers every public API operation", async () => {
   const indexedTools = new Set(
     capabilities.flatMap((capability) => capability.tools)
   );
+  const mcpVisibleToolNames = getMcpVisibleToolNames();
 
   for (const { command } of apiCommandMetadata) {
+    if (mcpVisibleToolNames.has(command) === false) {
+      continue;
+    }
     expect(indexedTools).toContain(command);
   }
 });

@@ -31,6 +31,7 @@ export default defineConfig({
     },
   },
   build: {
+    target: "node22",
     minify: false,
     lib: {
       entry: ["src/cli.ts"],

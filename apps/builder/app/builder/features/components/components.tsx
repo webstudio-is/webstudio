@@ -1,17 +1,14 @@
-import { insertWebstudioElementAt } from "~/shared/instance-utils/insert";
-import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
+import { insertWebstudioComponentAt } from "~/shared/instance-utils/insert";
 import { useState } from "react";
 import { matchSorter } from "match-sorter";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
-  type WsComponentMeta,
-  componentCategories,
-  collectionComponent,
-  documentTypes,
-  elementComponent,
-} from "@webstudio-is/sdk";
+  type BuilderComponentPanelItem,
+  listBuilderComponentPanelItems,
+  listComponentCatalogAvailableComponents,
+} from "@webstudio-is/project-build/runtime/component-catalog";
 import {
   theme,
   Flex,
@@ -33,120 +30,52 @@ import {
   $registeredComponentMetas,
   $registeredTemplates,
 } from "~/shared/nano-states";
-import { getComponentTemplateData } from "~/shared/instance-utils/insert";
 import type { Publish } from "~/shared/pubsub";
 import { $selectedPage } from "~/shared/nano-states";
-import { mapGroupBy } from "~/shared/shim";
 import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
 import { titleCase } from "title-case";
 
-type Meta = {
-  name: string;
-  category: string;
-  order: undefined | number;
-  label: string;
-  description: undefined | string;
-  icon?: string;
-  firstInstance: { component: string; tag?: string };
-};
+type Meta = BuilderComponentPanelItem;
 
 const $metas = computed(
-  [$registeredComponentMetas, $registeredTemplates],
-  (componentMetas, templates) => {
-    const availableComponents = new Set<string>();
-    const metas: Meta[] = [];
-    for (const [name, componentMeta] of componentMetas) {
-      // only set available components from component meta
-      availableComponents.add(name);
-      metas.push({
-        name,
-        category: componentMeta.category ?? "hidden",
-        order: componentMeta.order,
-        label: getInstanceLabel({ component: name }),
-        description: componentMeta.description,
-        firstInstance: { component: name },
-      });
-    }
-    for (const [name, templateMeta] of templates) {
-      const componentMeta = componentMetas.get(name);
-      availableComponents.add(name);
-      metas.push({
-        name,
-        category: templateMeta.category ?? "hidden",
-        order: templateMeta.order,
-        label:
-          templateMeta.label ??
-          componentMeta?.label ??
-          getInstanceLabel({ component: name }),
-        description: templateMeta.description,
-        icon: templateMeta.icon,
-        firstInstance: templateMeta.template.instances[0],
-      });
-    }
-    const metasByCategory = mapGroupBy(metas, (meta) => meta.category);
-    for (const meta of metasByCategory.values()) {
-      meta.sort((metaA, metaB) => {
-        return (
-          (metaA.order ?? Number.MAX_SAFE_INTEGER) -
-          (metaB.order ?? Number.MAX_SAFE_INTEGER)
-        );
-      });
-    }
+  [$registeredComponentMetas, $registeredTemplates, $selectedPage],
+  (componentMetas, templates, selectedPage) => {
+    const metasByCategory = listBuilderComponentPanelItems({
+      metas: componentMetas,
+      templates,
+      documentType: selectedPage?.meta.documentType ?? "html",
+      showInternal: isFeatureEnabled("internalComponents"),
+      getFallbackLabel: (component) => getInstanceLabel({ component }),
+      getMetaLabel: (component) => getInstanceLabel({ component }),
+      getTemplateIcon: (_component, template) => template.icon,
+    });
+    const availableComponents = listComponentCatalogAvailableComponents({
+      metas: componentMetas,
+      templates,
+    });
     return { metasByCategory, availableComponents };
   }
 );
 
 type Groups = Array<{
-  category: Exclude<WsComponentMeta["category"], undefined> | "found";
+  category: string;
   metas: Array<Meta>;
 }>;
 
 const filterAndGroupComponents = ({
-  documentType = "html",
   metasByCategory,
   search,
 }: {
-  documentType?: (typeof documentTypes)[number];
   metasByCategory: Map<string, Array<Meta>>;
   search: string;
 }): Groups => {
-  const categories = componentCategories.filter((category) => {
-    if (category === "hidden") {
-      return false;
-    }
-
-    // Only xml category is allowed for xml document type
-    if (documentType === "xml") {
-      return category === "xml" || category === "data";
-    }
-    // Hide xml category for non-xml document types
-    if (category === "xml") {
-      return false;
-    }
-
-    if (
-      isFeatureEnabled("internalComponents") === false &&
-      category === "internal"
-    ) {
-      return false;
-    }
-
-    return true;
-  });
-
-  let groups: Groups = categories.map((category) => {
-    const metas = (metasByCategory.get(category) ?? []).filter((meta) => {
-      if (documentType === "xml" && meta.category === "data") {
-        return meta.name === collectionComponent;
-      }
-      return true;
-    });
-
-    return { category, metas };
-  });
+  let groups: Groups = Array.from(metasByCategory, ([category, metas]) => ({
+    category,
+    metas,
+  }));
 
   if (search.length > 0) {
     const metas = groups.map((group) => group.metas).flat();
@@ -184,18 +113,10 @@ export const ComponentsPanel = ({
   publish: Publish;
   onClose: () => void;
 }) => {
-  const selectedPage = useStore($selectedPage);
   const [selectedComponent, setSelectedComponent] = useState<string>();
 
-  const handleInsert = (component: string) => {
-    if (component === elementComponent) {
-      insertWebstudioElementAt();
-    } else {
-      const fragment = getComponentTemplateData(component);
-      if (fragment) {
-        insertWebstudioFragmentAt(fragment);
-      }
-    }
+  const handleInsert = async (component: string) => {
+    await insertWebstudioComponentAt(component);
     onClose();
   };
 
@@ -242,7 +163,6 @@ export const ComponentsPanel = ({
   });
 
   const groups = filterAndGroupComponents({
-    documentType: selectedPage?.meta.documentType,
     metasByCategory,
     search: searchFieldProps.value,
   });

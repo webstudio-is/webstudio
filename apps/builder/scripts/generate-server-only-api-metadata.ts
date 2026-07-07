@@ -2,7 +2,6 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { format } from "prettier";
-import * as React from "react";
 import {
   getApiRouterProcedures,
   getProcedureInputSchemaMetadata,
@@ -10,10 +9,7 @@ import {
   getProcedurePublicApiOperation,
   getProcedurePublicApiPermit,
 } from "../app/services/api-router-introspection.server";
-
-(globalThis as { React?: typeof React }).React = React;
-
-const { apiRouter } = await import("../app/services/api-router.server");
+import { apiRouter } from "../app/services/api-router.server";
 
 const generatedFile = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -60,9 +56,7 @@ const metadata = Object.fromEntries(
             "invalidatesNamespaces" in operation
               ? operation.invalidatesNamespaces
               : undefined,
-          inputFields: inputSchemaMetadata.inputFields,
-          requiredInputFields: inputSchemaMetadata.requiredInputFields,
-          inputFieldTypes: inputSchemaMetadata.inputFieldTypes,
+          inputSchema: inputSchemaMetadata.inputJsonSchema,
         },
       ],
     ];
@@ -78,6 +72,7 @@ await writeFile(
 // Do not edit manually.
 
 import type {
+  InputJsonSchema,
   PublicApiOperationNamespace,
   PublicApiOperationPermit,
 } from "../runtime-contracts";
@@ -96,9 +91,7 @@ export const serverOnlyRouterOperationMetadata = ${JSON.stringify(
     client: string;
     permit: PublicApiOperationPermit;
     invalidatesNamespaces?: readonly PublicApiOperationNamespace[];
-    inputFields: readonly string[];
-    requiredInputFields: readonly string[];
-    inputFieldTypes: Partial<Record<string, "array">>;
+    inputSchema: InputJsonSchema;
   }
 >;
 `,

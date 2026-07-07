@@ -21,7 +21,6 @@ import {
 } from "@webstudio-is/design-system";
 import { EllipsesIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
-import { findPageByIdOrPath } from "@webstudio-is/sdk";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
 import {
@@ -41,13 +40,14 @@ import {
   $selectedInstanceKeyWithRoot,
   $selectedPage,
 } from "~/shared/nano-states";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
-  deleteVariableMutable,
   findAvailableVariables,
   findUsedVariables,
 } from "@webstudio-is/project-build/runtime/data";
-import { DeleteDataVariableDialog } from "~/builder/shared/data-variable-utils";
+import {
+  DeleteDataVariableDialog,
+  deleteDataVariable,
+} from "~/builder/shared/data-variable-utils";
 
 /**
  * find variables defined specifically on this selected instance
@@ -201,14 +201,7 @@ const VariablesItem = ({
                     variable.id === selectedPage?.systemDataSourceId && (
                       <DropdownMenuItem
                         onSelect={() => {
-                          updateWebstudioData((data) => {
-                            const page = findPageByIdOrPath(
-                              selectedPage.id,
-                              data.pages
-                            );
-                            delete page?.systemDataSourceId;
-                            deleteVariableMutable(data, variable.id);
-                          });
+                          deleteDataVariable(variable.id);
                         }}
                       >
                         Delete
@@ -224,9 +217,7 @@ const VariablesItem = ({
                 setVariableToDelete(undefined);
               }}
               onConfirm={(variableId) => {
-                updateWebstudioData((data) => {
-                  deleteVariableMutable(data, variableId);
-                });
+                deleteDataVariable(variableId);
                 setVariableToDelete(undefined);
               }}
             />

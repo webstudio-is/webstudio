@@ -1,5 +1,4 @@
-import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
-import { updateInstanceData } from "~/shared/instance-utils/data";
+import { findAllEditableInstanceSelector } from "@webstudio-is/project-build/runtime/lookup";
 import { color } from "@webstudio-is/css-engine";
 import {
   useState,
@@ -62,11 +61,12 @@ import {
 import {
   isDescendantOrSelf,
   type InstanceSelector,
-} from "~/shared/instance-utils/tree";
+} from "@webstudio-is/project-build/runtime/tree";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { deleteInstanceMutable } from "~/shared/instance-utils/mutation";
+import { deleteInstanceBySelector } from "~/shared/instance-utils/mutation";
 import {
   $blockChildOutline,
   $hoveredInstanceOutline,
@@ -75,10 +75,12 @@ import {
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   execTextEditorContextMenuCommand,
-  findBlockChildSelector,
-  findTemplates,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
+import {
+  findBlockChildSelector,
+  findBlockTemplates,
+} from "@webstudio-is/project-build/runtime/block";
 import {
   getElementByInstanceSelector,
   getVisibleElementsByInstanceSelector,
@@ -89,7 +91,6 @@ import {
   $selectedInstanceSelector,
   $selectedPage,
   addTemporaryInstance,
-  getInstancePath,
 } from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
 import { shallowEqual } from "shallow-equal";
@@ -97,7 +98,7 @@ import {
   insertListItemAt,
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
-import { richTextPlaceholders } from "~/shared/content-model";
+import { richTextPlaceholders } from "@webstudio-is/project-build/runtime/content-model";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -309,7 +310,7 @@ const LinkSelectionPlugin = ({
             }
 
             // Register new link
-            const instanceId = nanoid();
+            const instanceId = builderRuntimeContext.createId();
 
             newLink.setAttribute(idAttribute, instanceId);
             // We set id + root selector here, for simplicity
@@ -1019,7 +1020,10 @@ type RichTextContentPluginProps = {
 
 const RichTextContentPlugin = (props: RichTextContentPluginProps) => {
   const [templates] = useState(() =>
-    findTemplates(props.rootInstanceSelector, $instances.get())
+    findBlockTemplates({
+      anchor: props.rootInstanceSelector,
+      instances: $instances.get(),
+    })
   );
 
   if (templates === undefined) {
@@ -1097,16 +1101,13 @@ const RichTextContentPluginInternal = ({
 
         // Delete current
         if ($getRoot().getTextContentSize() === 0) {
-          const blockChildSelector =
-            findBlockChildSelector(rootInstanceSelector);
+          const blockChildSelector = findBlockChildSelector({
+            instanceSelector: rootInstanceSelector,
+            instances: $instances.get(),
+          });
 
           if (blockChildSelector) {
-            updateInstanceData((data) => {
-              deleteInstanceMutable(
-                data,
-                getInstancePath(rootInstanceSelector, data.instances)
-              );
-            });
+            deleteInstanceBySelector(rootInstanceSelector);
           }
         }
       }
@@ -1165,31 +1166,22 @@ const RichTextContentPluginInternal = ({
                 .get()
                 .get(parentInstanceSelector[0]);
               const isLastChild = parentInstance?.children.length === 1;
-              updateInstanceData((data) => {
-                deleteInstanceMutable(
-                  data,
-                  getInstancePath(
-                    isLastChild ? parentInstanceSelector : rootInstanceSelector,
-                    data.instances
-                  )
-                );
-              });
+              deleteInstanceBySelector(
+                isLastChild ? parentInstanceSelector : rootInstanceSelector
+              );
               event.preventDefault();
               return true;
             }
 
-            const blockChildSelector =
-              findBlockChildSelector(rootInstanceSelector);
+            const blockChildSelector = findBlockChildSelector({
+              instanceSelector: rootInstanceSelector,
+              instances: $instances.get(),
+            });
 
             if (blockChildSelector) {
               onNext(editor.getEditorState(), { reason: "left" });
 
-              updateInstanceData((data) => {
-                deleteInstanceMutable(
-                  data,
-                  getInstancePath(blockChildSelector, data.instances)
-                );
-              });
+              deleteInstanceBySelector(blockChildSelector);
 
               event.preventDefault();
               return true;
@@ -1266,17 +1258,9 @@ const RichTextContentPluginInternal = ({
                 const isLastChild = parentInstance?.children.length === 1;
 
                 // Pressing Enter within an empty list item deletes the empty item
-                updateInstanceData((data) => {
-                  deleteInstanceMutable(
-                    data,
-                    getInstancePath(
-                      isLastChild
-                        ? parentInstanceSelector
-                        : rootInstanceSelector,
-                      data.instances
-                    )
-                  );
-                });
+                deleteInstanceBySelector(
+                  isLastChild ? parentInstanceSelector : rootInstanceSelector
+                );
               }
 
               event.preventDefault();
@@ -1441,7 +1425,7 @@ type TextEditorProps = {
   props: Props;
   contentEditable: JSX.Element;
   editable?: boolean;
-  onChange: (instancesList: Instance[]) => void;
+  onChange: (instancesList: Instance[]) => void | Record<string, string>;
   onSelectInstance: (instanceId: Instance["id"]) => void;
 };
 
@@ -1543,9 +1527,19 @@ export const TextEditor = ({
             return;
           }
 
-          onChange(
-            $convertToUpdates(treeRootInstance, refs, newLinkKeyToInstanceId)
+          const idMap = onChange(
+            $convertToUpdates(
+              treeRootInstance,
+              refs,
+              newLinkKeyToInstanceId,
+              builderRuntimeContext.createId
+            )
           );
+          if (idMap !== undefined) {
+            for (const [key, instanceId] of refs) {
+              refs.set(key, idMap[instanceId] ?? instanceId);
+            }
+          }
           newLinkKeyToInstanceId.clear();
           lastSavedStateJsonRef.current = jsonState;
         }

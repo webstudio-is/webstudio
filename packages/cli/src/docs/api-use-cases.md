@@ -47,7 +47,8 @@ Commands:
 
 Commands:
 
-- webstudio schema api --json
+- webstudio schema api
+- webstudio schema mcp
 - webstudio man --json
 - webstudio man llm --json
 - MCP tool: meta.index {}
@@ -56,8 +57,9 @@ Commands:
 
 Notes:
 
-- Use `tools/list` for machine-readable MCP tool schemas.
-- Use `resources/list` and `resources/read` for longer MCP resources such as `webstudio://project/tools`, `webstudio://project/components`, and `webstudio://project/guide`.
+- Use `webstudio schema mcp` for a tiny machine-readable MCP tool overview. Use `webstudio schema mcp --detail summary` for all tool descriptions, and `webstudio schema mcp --detail full` or focused `meta.get_more_tools` calls only when exact input schemas are needed.
+- Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.summary`, `components.find`, and `components.get`. Use `resources/list` and `resources/read` for overview resources and read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused discovery is insufficient.
+- From a shell, call one MCP tool with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio components.summary`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
 
 ## Inspect and refresh MCP session cache
 
@@ -79,8 +81,10 @@ Commands:
 
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
 - MCP tool: preview.status {}
+- MCP tool: preview.stop {}
 - MCP tool: screenshot {"path":"/","output":".webstudio/screenshots/home-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot {"path":"/pricing","output":".webstudio/screenshots/pricing-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot {"baseUrl":"http://127.0.0.1:5177","path":"/pricing","output":".webstudio/screenshots/pricing-current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 - MCP tool: screenshot.diff {"baselinePath":".webstudio/screenshots/home-before.png","currentPath":".webstudio/screenshots/home-current.png","outputDir":".webstudio/screenshots/diff"}
 - MCP tool: screenshot.diff {"baselinePath":".webstudio/screenshots/pricing-before.png","currentPath":".webstudio/screenshots/pricing-current.png","outputDir":".webstudio/screenshots/diff"}
 - MCP tool: vision.install-ocr {"confirm":true}
@@ -90,9 +94,12 @@ Notes:
 - Use this after page/content/style mutations and after generated project files are current so a vision-capable AI can see the production-like generated site.
 - For multi-page work, capture every changed page by `path` through the same preview server; no click navigation is required.
 - After MCP mutations, path screenshots regenerate/restart preview as needed before capture; when preview is fresh, repeated path screenshots reuse the running server.
+- From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running preview/site without generating, building, starting, or restarting preview.
+- Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview. A separate one-shot `single-op-call` process does not own another process's preview controller.
 - Use waitForSelector when the rendered app has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
-- For a fresh checkout, copied fixture, or newly generated app, run npm install or pnpm install in the generated project before preview.start or webstudio preview.
-- If preview fails with a missing generated-app command/package such as react-router, react-router-serve, or vite, install the generated app dependencies and retry.
+- Preview isolates generated app dependencies under `.webstudio/preview` by linking to the CLI package dependency tree.
+- Do not add generated-preview dependencies to the repository root `package.json` or `pnpm-lock.yaml`.
+- If preview fails with a missing generated-app command/package such as react-router, react-router-serve, or vite, install dependencies for the CLI package and retry.
 - When a baseline exists, use screenshot.diff once per baseline/current page or viewport pair to get changed regions, OCR textAnalysis, and diff artifact paths before deciding whether the result matches.
 - If screenshot.diff reports OCR unavailable and the user agrees to install it, call vision.install-ocr {"confirm":true}; otherwise continue with pixel diff and visual inspection.
 - Compare the PNG, OCR text evidence, and diff artifacts against the user's intent for layout, typography, colors, spacing, imagery, and responsive framing; then iterate with focused mutations.
@@ -121,6 +128,12 @@ Commands:
 Commands:
 
 - MCP tool: create-page {"name":"Pricing","path":"/pricing"}
+- MCP tool: create-page {"name":"Pricing","path":"/pricing","title":"\"Pricing\"","meta":{"description":"\"Plans for teams\""}}
+
+Notes:
+
+- `name` and `path` are plain values.
+- Page `title` and metadata text fields store JavaScript expression source. For fixed text, send a string literal expression such as `"\"Pricing\""`. For computed values, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
 
 ## Update page settings/metadata
 
@@ -131,7 +144,7 @@ Commands:
 
 Notes:
 
-- Page title and metadata text fields are expression-backed. For fixed text, send a quoted JavaScript string literal expression such as `"\"Pricing\""`.
+- Page `title` and metadata text fields store JavaScript expression source. For fixed text, send a string literal expression such as `"\"Pricing\""`. For computed values, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
 
 ## Read project settings
 
@@ -256,11 +269,27 @@ Commands:
 
 - MCP tool: inspect-instance {"instanceId":"<instanceId>","include":["props","styles","children"]}
 
-## Append/prepend/replace child elements
+## Insert authored JSX or one component template
 
 Commands:
 
-- MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<$.Box ws:style={css`padding: 32px;`}><$.Heading>Product OS</$.Heading><radix.Switch><radix.SwitchThumb /></radix.Switch></$.Box>"}
+- MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"@webstudio-is/sdk-components-react-radix:Switch"}
+
+Notes:
+
+- Use MCP `insert-fragment` as the default way to author styled component trees. It converts JSX to a structured fragment before mutation.
+- MCP receives JSX as a JSON string because MCP arguments are JSON. The CLI converts it locally before the runtime mutation, so the project session receives structured Webstudio data, not JSX source.
+- In `insert-fragment` JSX, use `ws:style={css\`...\`}`for Webstudio-native CSS, or use React-style object syntax such as`style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
+- Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`.
+- Use Webstudio prop names such as `class` and `for`; do not use React aliases `className` or `htmlFor`.
+- Use Webstudio actions for event/action props, for example `onClick={new ActionValue(["event"], expression\`console.log(event)\`)}`. Do not pass JavaScript functions such as `onClick={() => ...}`.
+- Plain prop values must be JSON-compatible: `null`, strings, booleans, finite numbers, arrays, and plain objects. Do not pass `undefined`, `Symbol`, `BigInt`, `NaN`, `Infinity`, `Date`, `Map`, `Set`, class instances, or circular objects; omit the prop, use plain data, or use `expression`/`ActionValue` when the value is dynamic.
+- Template-backed components used in JSX must include required child/part components explicitly under the same parent structure as the template, for example `<radix.Switch><radix.SwitchThumb /></radix.Switch>`.
+- Webstudio applies a registered template automatically when using `insert-component`, so composed components such as Switch include required child parts and styles.
+- Use `components.summary`, `components.find`, and `components.get` to discover known component ids, props, templates, insertability, and content model. Read `webstudio://project/components` only when those focused tools are insufficient.
+- Known components with `contentModel.category: "none"` are not standalone-insertable; insert their root component template instead so required providers/parents are included.
+- Unknown component ids fall back to a single-element instance when no template exists.
 
 ## Move elements
 
@@ -630,7 +659,7 @@ Commands:
 - MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","headers":[]}}
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
-- MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.collection>{/_ collection content _/}</ws.collection>"}
 
 Notes:
 
@@ -640,7 +669,6 @@ Notes:
 
 Commands:
 
-- MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
 - MCP tool: create-resource {"resource":{"name":"Seats","method":"get","url":"\"https://api.example.com/seats\"","headers":[]}}
@@ -674,10 +702,11 @@ Commands:
 - MCP tool: create-page {"name":"Landing","path":"/landing"}
 - MCP tool: create-design-token {"tokens":"tokens.json contents"}
 - MCP tool: define-css-variable {"vars":"vars.json contents"}
-- MCP tool: append-instance {"parentInstanceId":"<instanceId>","children":"children.json contents"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<$.Box><$.Paragraph>Section copy</$.Paragraph></$.Box>"}
 - MCP tool: update-styles {"updates":"styles.json contents"}
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
 - MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
+- MCP tool: screenshot {"baseUrl":"http://127.0.0.1:5177","path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
 
 Notes:
 
@@ -756,7 +785,7 @@ Missing:
 CLI can manipulate props/resources/embeds, but has no semantic workflow for converting script-generated UI into editable Webstudio structures.
 
 Current fallback:
-Use MCP append-instance, props, resources, and raw patch where necessary.
+Use MCP props, resources, and raw patch where necessary.
 
 Suggested commands:
 

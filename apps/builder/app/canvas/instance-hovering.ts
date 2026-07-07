@@ -3,7 +3,6 @@ import {
   $blockChildOutline,
   $hoveredInstanceSelector,
   $textEditingInstanceSelector,
-  findBlockChildSelector,
 } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import { $hoveredInstanceOutline } from "~/shared/nano-states";
@@ -16,7 +15,8 @@ import { subscribeScrollState } from "./shared/scroll-state";
 import {
   isDescendantOrSelf,
   type InstanceSelector,
-} from "~/shared/instance-utils/tree";
+} from "@webstudio-is/project-build/runtime/tree";
+import { findBlockChildSelector } from "@webstudio-is/project-build/runtime/block";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;
@@ -122,7 +122,10 @@ export const subscribeInstanceHovering = ({
       return;
     }
 
-    const blockChildSelector = findBlockChildSelector(instanceSelector);
+    const blockChildSelector = findBlockChildSelector({
+      instanceSelector,
+      instances: $instances.get(),
+    });
 
     if (blockChildSelector === undefined) {
       $blockChildOutline.set(undefined);

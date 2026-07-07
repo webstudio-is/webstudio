@@ -1,0 +1,16 @@
+{
+  "extends": "@webstudio-is/tsconfig/base.json",
+  "include": [
+    "../../@types/**/*.d.ts",
+    "../../apps/**/*.ts",
+    "../../apps/**/*.tsx",
+    "../../packages/**/*.ts",
+    "../../packages/**/*.tsx"
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "jsx": "react-jsx",
+    "noEmit": true
+  }
+}

@@ -1,5 +1,5 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
-import { generateFragmentFromHtml } from "../html";
+import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime/html";
 import { insertWebstudioFragmentAt } from "../instance-utils/insert";
 import { generateFragmentFromTailwind } from "../tailwind/tailwind";
 import { denormalizeSrcProps } from "./asset-upload";
@@ -17,11 +17,16 @@ const handlePasteHtml = async (html: string) => {
   if (html.includes(inceptionMark)) {
     fragment = await generateFragmentFromTailwind(fragment);
   }
-  const result = insertWebstudioFragmentAt(fragment, undefined, undefined, {
-    onBreakpointLimitMerge: () => {
-      builderApi.toast.warn(breakpointPasteLimitWarning);
-    },
-  });
+  const result = await insertWebstudioFragmentAt(
+    fragment,
+    undefined,
+    undefined,
+    {
+      onBreakpointLimitMerge: () => {
+        builderApi.toast.warn(breakpointPasteLimitWarning);
+      },
+    }
+  );
   if (skippedSelectors.length > 0) {
     builderApi.toast.info(
       `Skipped nested selectors (no matching elements): ${skippedSelectors.join(", ")}`

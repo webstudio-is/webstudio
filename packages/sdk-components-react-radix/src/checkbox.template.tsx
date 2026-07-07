@@ -16,6 +16,7 @@ import {
   spacing,
   width,
 } from "./shared/theme";
+import { iconEmbedStyle } from "./shared/styles";
 
 export const meta: TemplateMeta = {
   category: "radix",
@@ -66,7 +67,11 @@ export const meta: TemplateMeta = {
             color: currentColor;
           `}
         >
-          <$.HtmlEmbed ws:label="Indicator Icon" code={CheckMarkIcon} />
+          <$.HtmlEmbed
+            ws:label="Indicator Icon"
+            ws:style={iconEmbedStyle}
+            code={CheckMarkIcon}
+          />
         </radix.CheckboxIndicator>
       </radix.Checkbox>
       <$.Text ws:label="Checkbox Label" ws:tag="span">

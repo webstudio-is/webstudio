@@ -1,15 +1,10 @@
 import {
   unwrapInstance,
-  deleteInstanceMutable,
   deleteSelectedInstance,
   reparentInstance,
-  sortInstancePathsForChildMutation,
 } from "~/shared/instance-utils/mutation";
+import { sortInstancePathsForChildMutation } from "@webstudio-is/project-build/runtime/tree";
 import { toggleInstanceShow } from "~/shared/instance-utils/mutation";
-import {
-  extractWebstudioFragment,
-  insertWebstudioFragmentCopy,
-} from "@webstudio-is/project-build/runtime/fragment";
 import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { toast } from "@webstudio-is/design-system";
 import {
@@ -17,11 +12,6 @@ import {
   isComponentDetachable,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
-import type { Project } from "@webstudio-is/project";
-import {
-  isAutoGridPlacement,
-  resetGridChildPlacement,
-} from "~/builder/features/style-panel/sections/layout/shared/grid-utils";
 import {
   duplicateFolder,
   duplicatePage,
@@ -39,7 +29,7 @@ import {
   $templateIdToDelete,
   toggleBuilderMode,
 } from "~/shared/nano-states";
-import { $instances, $project } from "~/shared/sync/data-stores";
+import { $instances } from "~/shared/sync/data-stores";
 
 // Declare command for type safety
 declare module "~/shared/pubsub" {
@@ -52,11 +42,8 @@ import {
   $breakpointsMenuView,
   selectBreakpointByOrder,
 } from "~/shared/breakpoints";
-import {
-  updateInstanceData,
-  updateWebstudioData,
-} from "~/shared/instance-utils/data";
-import { canDeleteInstanceInContentMode } from "~/shared/instance-utils/data";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime/block";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $publisher } from "~/shared/pubsub";
 import {
@@ -70,19 +57,20 @@ import {
   $allSelectedInstanceSelectors,
   $selectedInstancePath,
   clearInstanceSelection,
-  getInstancePath,
   selectInstance,
   selectInstances,
   selectPage,
-  type InstancePath,
 } from "~/shared/nano-states";
+import {
+  getInstancePath,
+  type InstancePath,
+} from "@webstudio-is/project-build/runtime/lookup";
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
 import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";
 import { builderApi } from "~/shared/builder-api";
 import { getSetting, setSetting } from "./client-settings";
-import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
-import { generateFragmentFromHtml } from "~/shared/html";
+import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
 import { isSyncIdle } from "~/shared/sync/project-queue";
@@ -103,12 +91,9 @@ import {
   getDeletablePageActionTarget,
   getPageActionTarget,
 } from "~/shared/page-action-target";
-import {
-  getDirectSharedSlotChildBoundary,
-  normalizeLegacySlotInstancePathMutable,
-} from "~/shared/instance-utils/slot";
-import type { InstanceSelector } from "~/shared/instance-utils/tree";
-import { areInstanceSelectorsEqual } from "~/shared/instance-utils/tree";
+import { getDirectSharedSlotChildBoundary } from "~/shared/instance-utils/slot";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
+import { areInstanceSelectorsEqual } from "@webstudio-is/project-build/runtime/tree";
 import { findChildReferenceIndex } from "@webstudio-is/project-build/runtime/instances";
 
 const makeBreakpointCommand = <CommandName extends string>(
@@ -361,6 +346,40 @@ const reportSkippedSelectedInstances = (
   builderApi.toast.info(`Some selected instances could not be ${operation}.`);
 };
 
+const duplicateInstanceAfterItself = ({
+  instancePath,
+}: {
+  instancePath: InstancePath;
+}): InstanceSelector | undefined => {
+  const [selectedItem, parentItem] = instancePath;
+  if (parentItem === undefined) {
+    return;
+  }
+  const result = executeRuntimeMutation({
+    id: "instances.duplicateAfterItself",
+    input: {
+      sourceInstanceId: selectedItem.instance.id,
+      parentInstanceId: parentItem.instance.id,
+    },
+  });
+  const newRootInstanceId = result?.result.instanceId;
+  if (newRootInstanceId === undefined) {
+    return;
+  }
+  const newParentInstanceId = result?.result.parentInstanceId;
+  if (
+    newParentInstanceId === undefined ||
+    newParentInstanceId === parentItem.instance.id
+  ) {
+    return [newRootInstanceId, ...parentItem.instanceSelector];
+  }
+  return [
+    newRootInstanceId,
+    newParentInstanceId,
+    ...parentItem.instanceSelector,
+  ];
+};
+
 const deleteSelectedInstances = () => {
   if ($isPreviewMode.get()) {
     return false;
@@ -384,18 +403,19 @@ const deleteSelectedInstances = () => {
     reportSkippedSelectedInstances("deleted");
   }
 
-  updateInstanceData((data) => {
-    for (const { instancePath } of sortInstancePathsForChildMutation(
-      actionableInstancePaths
-    )) {
-      deleteInstanceMutable(data, instancePath);
-    }
-    clearInstanceSelection();
+  executeRuntimeMutation({
+    id: "instances.delete",
+    input: {
+      instanceIds: sortInstancePathsForChildMutation(
+        actionableInstancePaths
+      ).map(({ instancePath }) => instancePath[0].instance.id),
+    },
   });
+  clearInstanceSelection();
   return true;
 };
 
-const duplicateSelectedInstances = (project: Project) => {
+const duplicateSelectedInstances = () => {
   const selectedInstancePaths = getAllSelectedInstancePaths();
   if (selectedInstancePaths.length < 2) {
     return false;
@@ -412,70 +432,14 @@ const duplicateSelectedInstances = (project: Project) => {
   }
   const newInstanceSelectors = new Map<number, InstanceSelector>();
 
-  updateWebstudioData((data) => {
-    for (const { index, instancePath } of sortInstancePathsForChildMutation(
-      actionableInstancePaths
-    )) {
-      const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
-        data.instances,
-        instancePath
-      );
-      const [selectedItem, parentItem] = normalizedInstancePath;
-      if (parentItem === undefined) {
-        continue;
-      }
-      const fragment = extractWebstudioFragment(data, selectedItem.instance.id);
-      const { newInstanceIds } = insertWebstudioFragmentCopy({
-        data,
-        fragment,
-        availableVariables: findAvailableVariables({
-          ...data,
-          startingInstanceId: parentItem.instanceSelector[0],
-        }),
-        projectId: project.id,
-      });
-      const newRootInstanceId = newInstanceIds.get(selectedItem.instance.id);
-      if (newRootInstanceId === undefined) {
-        continue;
-      }
-
-      if (
-        isAutoGridPlacement({
-          styles: data.styles,
-          styleSources: data.styleSources,
-          styleSourceSelections: data.styleSourceSelections,
-          instanceId: selectedItem.instance.id,
-        })
-      ) {
-        resetGridChildPlacement({
-          styles: data.styles,
-          styleSources: data.styleSources,
-          styleSourceSelections: data.styleSourceSelections,
-          instanceId: newRootInstanceId,
-        });
-      }
-
-      const parentInstance = data.instances.get(parentItem.instance.id);
-      if (parentInstance === undefined) {
-        continue;
-      }
-      const indexWithinChildren = findChildReferenceIndex(
-        parentInstance.children,
-        selectedItem.instance.id
-      );
-      if (indexWithinChildren === -1) {
-        continue;
-      }
-      parentInstance.children.splice(indexWithinChildren + 1, 0, {
-        type: "id",
-        value: newRootInstanceId,
-      });
-      newInstanceSelectors.set(index, [
-        newRootInstanceId,
-        ...parentItem.instanceSelector,
-      ]);
+  for (const { index, instancePath } of sortInstancePathsForChildMutation(
+    actionableInstancePaths
+  )) {
+    const newInstanceSelector = duplicateInstanceAfterItself({ instancePath });
+    if (newInstanceSelector !== undefined) {
+      newInstanceSelectors.set(index, newInstanceSelector);
     }
-  });
+  }
 
   const sortedNewInstanceSelectors = [...newInstanceSelectors]
     .sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
@@ -995,10 +959,6 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       category: "Navigator",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
-        const project = $project.get();
-        if (project === undefined) {
-          return;
-        }
         if (
           guardDesignModeCommand({
             isDesignMode: $isDesignMode.get(),
@@ -1007,7 +967,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         ) {
           return;
         }
-        if (duplicateSelectedInstances(project)) {
+        if (duplicateSelectedInstances()) {
           return;
         }
         if (duplicatePageActionTarget()) {
@@ -1019,71 +979,10 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
 
-        updateWebstudioData((data) => {
-          const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
-            data.instances,
-            instancePath
-          );
-          const [selectedItem, parentItem] = normalizedInstancePath;
-          if (parentItem === undefined) {
-            return;
-          }
-          const fragment = extractWebstudioFragment(
-            data,
-            selectedItem.instance.id
-          );
-          const { newInstanceIds } = insertWebstudioFragmentCopy({
-            data,
-            fragment,
-            availableVariables: findAvailableVariables({
-              ...data,
-              startingInstanceId: parentItem.instanceSelector[0],
-            }),
-            projectId: project.id,
-          });
-          const newRootInstanceId = newInstanceIds.get(
-            selectedItem.instance.id
-          );
-          if (newRootInstanceId === undefined) {
-            return;
-          }
-
-          // When the original child is auto-placed in a grid, ensure the
-          // duplicate is also auto-placed to prevent overlapping items.
-          // Manually positioned children keep their exact grid position.
-          if (
-            isAutoGridPlacement({
-              styles: data.styles,
-              styleSources: data.styleSources,
-              styleSourceSelections: data.styleSourceSelections,
-              instanceId: selectedItem.instance.id,
-            })
-          ) {
-            resetGridChildPlacement({
-              styles: data.styles,
-              styleSources: data.styleSources,
-              styleSourceSelections: data.styleSourceSelections,
-              instanceId: newRootInstanceId,
-            });
-          }
-
-          const parentInstance = data.instances.get(parentItem.instance.id);
-          if (parentInstance === undefined) {
-            return;
-          }
-          // put after current instance
-          const indexWithinChildren = parentInstance.children.findIndex(
-            (child) =>
-              child.type === "id" && child.value === selectedItem.instance.id
-          );
-          const position = indexWithinChildren + 1;
-          parentInstance.children.splice(position, 0, {
-            type: "id",
-            value: newRootInstanceId,
-          });
-          // select new instance
-          selectInstance([newRootInstanceId, ...parentItem.instanceSelector]);
+        const newInstanceSelector = duplicateInstanceAfterItself({
+          instancePath,
         });
+        selectInstance(newInstanceSelector);
       },
     },
     {
@@ -1193,7 +1092,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         let fragment: WebstudioFragment = parseResult;
         fragment = await denormalizeSrcProps(fragment);
         fragment = await generateFragmentFromTailwind(fragment);
-        const result = insertWebstudioFragmentAt(fragment);
+        const result = await insertWebstudioFragmentAt(fragment);
         if (skippedSelectors.length > 0) {
           builderApi.toast.info(
             `Skipped nested selectors (no matching elements): ${skippedSelectors.join(", ")}`

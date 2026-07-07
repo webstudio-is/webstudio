@@ -1,5 +1,4 @@
-import { insertWebstudioElementAt } from "~/shared/instance-utils/insert";
-import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
+import { insertWebstudioComponentAt } from "~/shared/instance-utils/insert";
 import {
   CommandGroup,
   CommandGroupHeading,
@@ -9,13 +8,15 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { computed } from "nanostores";
-import type { TemplateMeta } from "@webstudio-is/template";
-import { collectionComponent, elementComponent } from "@webstudio-is/sdk";
+import {
+  flattenBuilderComponentPanelItems,
+  listBuilderComponentPanelItems,
+  type BuilderComponentPanelItem,
+} from "@webstudio-is/project-build/runtime/component-catalog";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
 } from "~/shared/nano-states";
-import { getComponentTemplateData } from "~/shared/instance-utils/insert";
 import { humanizeString } from "~/shared/string-utils";
 import { $selectedPage } from "~/shared/nano-states";
 import {
@@ -24,20 +25,12 @@ import {
 } from "~/builder/shared/instance-label";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
-import {
-  shouldFilterCategory,
-  getComponentScore,
-} from "../shared/component-utils";
 
 export type ComponentOption = BaseOption & {
   type: "component";
   component: string;
-  label: string;
-  category: TemplateMeta["category"];
-  icon: undefined | string;
-  order: undefined | number;
-  firstInstance: { component: string };
-};
+  catalogId: string;
+} & BuilderComponentPanelItem;
 
 export const $componentOptions = computed(
   [
@@ -47,98 +40,29 @@ export const $componentOptions = computed(
     $selectedPage,
   ],
   (isOpen, metas, templates, selectedPage) => {
-    const componentOptions: ComponentOption[] = [];
     if (!isOpen) {
-      return componentOptions;
+      return [];
     }
-
-    const addComponentOption = ({
-      name,
-      category,
-      label,
-      icon,
-      order,
-      firstInstance,
-    }: {
-      name: string;
-      category: TemplateMeta["category"];
-      label: string;
-      icon?: string;
-      order?: number;
-      firstInstance: { component: string };
-    }) => {
-      const documentType = selectedPage?.meta.documentType;
-      // text pages serve plain text content and accept no insertions
-      if (documentType === "text") {
-        return;
-      }
-      // show only xml category and collection component in xml documents
-      if (documentType === "xml") {
-        if (category !== "xml" && name !== collectionComponent) {
-          return;
-        }
-      } else {
-        // show everything except xml category in html documents
-        if (category === "xml") {
-          return;
-        }
-      }
-
-      componentOptions.push({
-        terms: ["components", label, category],
+    if (selectedPage?.meta.documentType === "text") {
+      return [];
+    }
+    const itemsByCategory = listBuilderComponentPanelItems({
+      metas,
+      templates,
+      documentType: selectedPage?.meta.documentType ?? "html",
+      getFallbackLabel: (component) => getInstanceLabel({ component }),
+      getTemplateIcon: (_component, template, meta) =>
+        template.icon ?? meta?.icon,
+    });
+    return flattenBuilderComponentPanelItems(itemsByCategory).map(
+      (item, index): ComponentOption => ({
+        ...item,
+        catalogId: `${item.name}:${index}`,
+        terms: ["components", item.label, item.category],
         type: "component",
-        component: name,
-        label,
-        category,
-        icon,
-        order,
-        firstInstance,
-      });
-    };
-
-    for (const [name, meta] of metas) {
-      if (shouldFilterCategory(meta.category)) {
-        continue;
-      }
-      const category = meta.category ?? "hidden";
-      const label = meta.label ?? getInstanceLabel({ component: name });
-
-      addComponentOption({
-        name,
-        category,
-        label,
-        icon: meta.icon,
-        order: meta.order,
-        firstInstance: { component: name },
-      });
-    }
-
-    for (const [name, meta] of templates) {
-      if (shouldFilterCategory(meta.category)) {
-        continue;
-      }
-
-      const componentMeta = metas.get(name);
-      const label =
-        meta.label ??
-        componentMeta?.label ??
-        getInstanceLabel({ component: name });
-
-      addComponentOption({
-        name,
-        category: meta.category,
-        label,
-        icon: meta.icon ?? componentMeta?.icon,
-        order: meta.order,
-        firstInstance: meta.template.instances[0],
-      });
-    }
-
-    componentOptions.sort(
-      (leftOption, rightOption) =>
-        getComponentScore(leftOption) - getComponentScore(rightOption)
+        component: item.name,
+      })
     );
-    return componentOptions;
   }
 );
 
@@ -155,38 +79,33 @@ export const ComponentsGroup = ({
       }
       actions={[{ name: "add", label: "Add" }]}
     >
-      {options.map(({ component, label, category, icon, firstInstance }) => {
-        return (
-          <CommandItem
-            key={component}
-            // preserve selected state when rerender
-            value={component}
-            onSelect={() => {
-              closeCommandPanel();
-              if (component === elementComponent) {
-                insertWebstudioElementAt();
-              } else {
-                const fragment = getComponentTemplateData(component);
-                if (fragment) {
-                  insertWebstudioFragmentAt(fragment);
-                }
-              }
-            }}
-          >
-            <Flex gap={2}>
-              <CommandIcon>
-                <InstanceIcon instance={firstInstance} icon={icon} />
-              </CommandIcon>
-              <Text>
-                {label}{" "}
-                <Text as="span" color="moreSubtle">
-                  {humanizeString(category)}
+      {options.map(
+        ({ catalogId, component, label, category, icon, firstInstance }) => {
+          return (
+            <CommandItem
+              key={catalogId}
+              // preserve selected state when rerender
+              value={catalogId}
+              onSelect={() => {
+                closeCommandPanel();
+                void insertWebstudioComponentAt(component);
+              }}
+            >
+              <Flex gap={2}>
+                <CommandIcon>
+                  <InstanceIcon instance={firstInstance} icon={icon} />
+                </CommandIcon>
+                <Text>
+                  {label}{" "}
+                  <Text as="span" color="moreSubtle">
+                    {humanizeString(category)}
+                  </Text>
                 </Text>
-              </Text>
-            </Flex>
-          </CommandItem>
-        );
-      })}
+              </Flex>
+            </CommandItem>
+          );
+        }
+      )}
     </CommandGroup>
   );
 };

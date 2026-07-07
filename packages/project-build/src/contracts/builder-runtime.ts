@@ -1,4 +1,5 @@
 import { runtimeOperationContractData } from "./__generated__/runtime-operation-contracts";
+import type { InputJsonSchema } from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "./namespaces";
 import type { BuilderApiCapability } from "./permissions";
 
@@ -15,9 +16,7 @@ export type RuntimeOperationPublicApi = {
 export type RuntimeOperationStateContract = {
   id: string;
   kind: RuntimeOperationKind;
-  inputFields: readonly string[];
-  requiredInputFields: readonly string[];
-  inputFieldTypes: Partial<Record<string, "array">>;
+  inputSchema: InputJsonSchema;
   readNamespaces: readonly BuilderNamespace[];
   writeNamespaces: readonly BuilderNamespace[];
   invalidatesNamespaces: readonly BuilderNamespace[];

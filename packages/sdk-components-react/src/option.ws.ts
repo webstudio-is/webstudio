@@ -19,6 +19,10 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "hidden",
+  contentModel: {
+    category: "none",
+    children: [],
+  },
   description:
     "An item within a drop-down menu that users can select as their chosen value.",
   presetStyle,

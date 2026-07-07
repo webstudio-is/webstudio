@@ -41,9 +41,9 @@ The API commands operate on the single project configured by:
 
 {{apiCapabilityIndex}}
 
-### MCP-Only Operations
+### MCP Tool Operations
 
-These are intentionally exposed through `webstudio mcp`, not as top-level shell commands:
+These are MCP tools. From a shell, call them with the shortcut form `webstudio <tool> '<json>'` or with the explicit form `webstudio mcp single-op-call <tool> '<json>'`:
 
 {{mcpOnlyCommandIndex}}
 
@@ -157,7 +157,7 @@ Update a text child on an element:
 
 Create records with semantic operations such as create-variable,
 create-resource, create-design-token, create-page, create-folder,
-append-instance, and create-breakpoint. Raw patch rejects generated record
+and create-breakpoint. Raw patch rejects generated record
 creation, collection replacement, record replacement with a different `id`, and
 record id field mutations in id-keyed namespaces because Webstudio must generate
 and preserve record ids.

@@ -7,7 +7,7 @@ import {
   type TemplateMeta,
 } from "@webstudio-is/template";
 import { radix } from "./shared/proxy";
-import { getButtonStyle } from "./shared/styles";
+import { getButtonStyle, iconEmbedStyle } from "./shared/styles";
 import {
   borderRadius,
   borderWidth,
@@ -211,7 +211,11 @@ const createMenuItem = (title: string, content: ReactNode) => {
               transition-duration: 200ms;
             `}
           >
-            <$.HtmlEmbed ws:label="Chevron Icon" code={ChevronDownIcon} />
+            <$.HtmlEmbed
+              ws:label="Chevron Icon"
+              ws:style={iconEmbedStyle}
+              code={ChevronDownIcon}
+            />
           </$.Box>
         </$.Button>
       </radix.NavigationMenuTrigger>

@@ -23,6 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@emotion/hash": "^0.9.2",
     "@webstudio-is/multiplayer-protocol": "workspace:*",
     "nanostores": "^0.11.3",
     "nanoid": "^5.1.5",

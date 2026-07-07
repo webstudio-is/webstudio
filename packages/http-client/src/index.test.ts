@@ -12,7 +12,6 @@ import {
 } from "@webstudio-is/protocol/fixtures";
 import {
   applyBuildPatch,
-  appendInstance,
   attachDesignToken,
   bindProps,
   cloneInstance,
@@ -54,6 +53,8 @@ import {
   getProjectSettings,
   getStyleDeclarations,
   inspectInstance,
+  insertComponent,
+  insertFragment,
   importProjectBundle,
   importProjectBundleWithAssets,
   listAssets,
@@ -541,10 +542,26 @@ test("wraps project api trpc calls in named functions", async () => {
       resourceId: "resource-id",
       force: true,
     });
-    await appendInstance({
+    await insertComponent({
       ...params,
       parentInstanceId: "parent-id",
-      children: [{ tag: "div", text: "Hello" }],
+      component: "@webstudio-is/sdk-components-react-radix:Switch",
+    });
+    await insertFragment({
+      ...params,
+      parentInstanceId: "parent-id",
+      fragment: {
+        children: [],
+        instances: [],
+        assets: [],
+        dataSources: [],
+        resources: [],
+        props: [],
+        breakpoints: [],
+        styleSourceSelections: [],
+        styleSources: [],
+        styles: [],
+      },
     });
     await moveInstance({
       ...params,
@@ -818,8 +835,12 @@ test("wraps project api trpc calls in named functions", async () => {
     ),
     expectBodyRequest("/trpc/api.resources.delete", '"force":true'),
     expectBodyRequest(
-      "/trpc/api.instances.append",
-      '"parentInstanceId":"parent-id"'
+      "/trpc/api.instances.insertComponent",
+      '"component":"@webstudio-is/sdk-components-react-radix:Switch"'
+    ),
+    expectBodyRequest(
+      "/trpc/api.instances.insertFragment",
+      '"fragment":{"children":[]'
     ),
     expectBodyRequest("/trpc/api.instances.move", '"instanceId":"instance-id"'),
     expectBodyRequest(

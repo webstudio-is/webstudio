@@ -2,6 +2,7 @@
 // Do not edit manually.
 
 import type {
+  InputJsonSchema,
   PublicApiOperationNamespace,
   PublicApiOperationPermit,
 } from "../runtime-contracts";
@@ -14,9 +15,12 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.auth.me",
     client: "getApiTokenInfo",
     permit: "view",
-    inputFields: [],
-    requiredInputFields: [],
-    inputFieldTypes: {},
+    inputSchema: {
+      type: "object",
+      additionalProperties: true,
+      properties: {},
+      required: [],
+    },
   },
   "projects.permissions": {
     id: "projects.permissions",
@@ -25,9 +29,12 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.projects.permissions",
     client: "getProjectPermissions",
     permit: "view",
-    inputFields: [],
-    requiredInputFields: [],
-    inputFieldTypes: {},
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: true,
+    },
   },
   "projects.get": {
     id: "projects.get",
@@ -36,9 +43,12 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.projects.get",
     client: "getProjectInfo",
     permit: "view",
-    inputFields: [],
-    requiredInputFields: [],
-    inputFieldTypes: {},
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: true,
+    },
   },
   "build.get": {
     id: "build.get",
@@ -47,10 +57,37 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.build.get",
     client: "getBuildSnapshot",
     permit: "view",
-    inputFields: ["include", "version"],
-    requiredInputFields: [],
-    inputFieldTypes: {
-      include: "array",
+    inputSchema: {
+      type: "object",
+      properties: {
+        include: {
+          type: "array",
+          items: {
+            type: "string",
+            enum: [
+              "pages",
+              "folders",
+              "instances",
+              "props",
+              "styles",
+              "styleSources",
+              "styleSourceSelections",
+              "designTokens",
+              "assets",
+              "resources",
+              "variables",
+              "breakpoints",
+              "marketplaceProduct",
+            ],
+          },
+        },
+        version: {
+          type: "integer",
+          minimum: -9007199254740991,
+          maximum: 9007199254740991,
+        },
+      },
+      required: [],
     },
   },
   "build.patch": {
@@ -73,10 +110,133 @@ export const serverOnlyRouterOperationMetadata = {
       "breakpoints",
       "marketplaceProduct",
     ],
-    inputFields: ["baseVersion", "transactions"],
-    requiredInputFields: ["baseVersion", "transactions"],
-    inputFieldTypes: {
-      transactions: "array",
+    inputSchema: {
+      type: "object",
+      properties: {
+        baseVersion: {
+          type: "integer",
+          minimum: -9007199254740991,
+          maximum: 9007199254740991,
+        },
+        transactions: {
+          minItems: 1,
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+                minLength: 1,
+              },
+              payload: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    namespace: {
+                      type: "string",
+                      enum: [
+                        "pages",
+                        "instances",
+                        "props",
+                        "styles",
+                        "styleSources",
+                        "styleSourceSelections",
+                        "dataSources",
+                        "resources",
+                        "assets",
+                        "breakpoints",
+                        "marketplaceProduct",
+                      ],
+                    },
+                    patches: {
+                      type: "array",
+                      items: {
+                        anyOf: [
+                          {
+                            type: "object",
+                            properties: {
+                              op: {
+                                type: "string",
+                                const: "add",
+                              },
+                              path: {
+                                type: "array",
+                                items: {
+                                  anyOf: [
+                                    {
+                                      type: "string",
+                                    },
+                                    {
+                                      type: "number",
+                                    },
+                                  ],
+                                },
+                              },
+                              value: {},
+                            },
+                            required: ["op", "path"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              op: {
+                                type: "string",
+                                const: "replace",
+                              },
+                              path: {
+                                type: "array",
+                                items: {
+                                  anyOf: [
+                                    {
+                                      type: "string",
+                                    },
+                                    {
+                                      type: "number",
+                                    },
+                                  ],
+                                },
+                              },
+                              value: {},
+                            },
+                            required: ["op", "path"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              op: {
+                                type: "string",
+                                const: "remove",
+                              },
+                              path: {
+                                type: "array",
+                                items: {
+                                  anyOf: [
+                                    {
+                                      type: "string",
+                                    },
+                                    {
+                                      type: "number",
+                                    },
+                                  ],
+                                },
+                              },
+                            },
+                            required: ["op", "path"],
+                          },
+                        ],
+                      },
+                    },
+                  },
+                  required: ["namespace", "patches"],
+                },
+              },
+            },
+            required: ["id", "payload"],
+          },
+        },
+      },
+      required: ["baseVersion", "transactions"],
     },
   },
   "publish.list": {
@@ -86,9 +246,12 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.publish.list",
     client: "listPublishes",
     permit: "view",
-    inputFields: [],
-    requiredInputFields: [],
-    inputFieldTypes: {},
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: true,
+    },
   },
   "publish.create": {
     id: "publish.create",
@@ -97,10 +260,27 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.publish.create",
     client: "publish",
     permit: "edit",
-    inputFields: ["target", "domains", "message", "idempotencyKey"],
-    requiredInputFields: ["target"],
-    inputFieldTypes: {
-      domains: "array",
+    inputSchema: {
+      type: "object",
+      properties: {
+        target: {
+          type: "string",
+          enum: ["staging", "production"],
+        },
+        domains: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        message: {
+          type: "string",
+        },
+        idempotencyKey: {
+          type: "string",
+        },
+      },
+      required: ["target"],
     },
   },
   "publish.getJob": {
@@ -110,9 +290,15 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.publish.getJob",
     client: "getPublishJob",
     permit: "view",
-    inputFields: ["jobId"],
-    requiredInputFields: ["jobId"],
-    inputFieldTypes: {},
+    inputSchema: {
+      type: "object",
+      properties: {
+        jobId: {
+          type: "string",
+        },
+      },
+      required: ["jobId"],
+    },
   },
   "publish.unpublish": {
     id: "publish.unpublish",
@@ -121,10 +307,27 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.publish.unpublish",
     client: "unpublish",
     permit: "edit",
-    inputFields: ["target", "domains", "message", "idempotencyKey"],
-    requiredInputFields: ["target"],
-    inputFieldTypes: {
-      domains: "array",
+    inputSchema: {
+      type: "object",
+      properties: {
+        target: {
+          type: "string",
+          enum: ["staging", "production"],
+        },
+        domains: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        message: {
+          type: "string",
+        },
+        idempotencyKey: {
+          type: "string",
+        },
+      },
+      required: ["target"],
     },
   },
   "domains.list": {
@@ -134,9 +337,12 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.domains.list",
     client: "listDomains",
     permit: "view",
-    inputFields: [],
-    requiredInputFields: [],
-    inputFieldTypes: {},
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: true,
+    },
   },
   "domains.create": {
     id: "domains.create",
@@ -145,9 +351,15 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.domains.create",
     client: "createDomain",
     permit: "admin",
-    inputFields: ["domain"],
-    requiredInputFields: ["domain"],
-    inputFieldTypes: {},
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: {
+          type: "string",
+        },
+      },
+      required: ["domain"],
+    },
   },
   "domains.update": {
     id: "domains.update",
@@ -156,9 +368,24 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.domains.update",
     client: "updateDomain",
     permit: "admin",
-    inputFields: ["domainId", "updates"],
-    requiredInputFields: ["domainId", "updates"],
-    inputFieldTypes: {},
+    inputSchema: {
+      type: "object",
+      properties: {
+        domainId: {
+          type: "string",
+        },
+        updates: {
+          type: "object",
+          properties: {
+            domain: {
+              type: "string",
+            },
+          },
+          required: [],
+        },
+      },
+      required: ["domainId", "updates"],
+    },
   },
   "domains.delete": {
     id: "domains.delete",
@@ -167,9 +394,15 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.domains.delete",
     client: "deleteDomain",
     permit: "admin",
-    inputFields: ["domainId"],
-    requiredInputFields: ["domainId"],
-    inputFieldTypes: {},
+    inputSchema: {
+      type: "object",
+      properties: {
+        domainId: {
+          type: "string",
+        },
+      },
+      required: ["domainId"],
+    },
   },
   "domains.verify": {
     id: "domains.verify",
@@ -178,9 +411,15 @@ export const serverOnlyRouterOperationMetadata = {
     path: "api.domains.verify",
     client: "verifyDomain",
     permit: "admin",
-    inputFields: ["domainId"],
-    requiredInputFields: ["domainId"],
-    inputFieldTypes: {},
+    inputSchema: {
+      type: "object",
+      properties: {
+        domainId: {
+          type: "string",
+        },
+      },
+      required: ["domainId"],
+    },
   },
 } as const satisfies Record<
   string,
@@ -192,8 +431,6 @@ export const serverOnlyRouterOperationMetadata = {
     client: string;
     permit: PublicApiOperationPermit;
     invalidatesNamespaces?: readonly PublicApiOperationNamespace[];
-    inputFields: readonly string[];
-    requiredInputFields: readonly string[];
-    inputFieldTypes: Partial<Record<string, "array">>;
+    inputSchema: InputJsonSchema;
   }
 >;

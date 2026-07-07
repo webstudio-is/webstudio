@@ -91,8 +91,8 @@ export const topLevelCliCommandMetadata = [
   ...cliCommandGroupMetadata,
   {
     command: "schema",
-    description: "Print machine-readable API command and patch schemas",
-    examples: ["webstudio schema api --json"],
+    description: "Print machine-readable CLI API or MCP tool schemas",
+    examples: ["webstudio schema api", "webstudio schema mcp"],
   },
   {
     command: "man",
@@ -108,8 +108,13 @@ export const topLevelCliCommandMetadata = [
   },
   {
     command: "mcp",
-    description: "Run an MCP server over stdio for the configured project",
-    examples: ["webstudio mcp"],
+    description:
+      "Run an MCP server over stdio, or call one MCP tool as a bounded shell command",
+    examples: [
+      "webstudio mcp",
+      "webstudio mcp single-op-call meta.index",
+      'webstudio mcp single-op-call components.find \'{"brief":"radix select"}\'',
+    ],
   },
 ] as const;
 
@@ -143,7 +148,7 @@ const apiCommandOptionsByCommand: Partial<
   "delete-folder": apiCommand.deleteFolderCommandOptions,
   "list-instances": apiCommand.instanceListCommandOptions,
   "inspect-instance": apiCommand.instanceInspectCommandOptions,
-  "append-instance": apiCommand.appendInstanceCommandOptions,
+  "insert-component": apiCommand.insertComponentCommandOptions,
   "move-instance": apiCommand.moveInstanceCommandOptions,
   "clone-instance": apiCommand.cloneInstanceCommandOptions,
   "delete-instance": apiCommand.deleteInstanceCommandOptions,
@@ -237,9 +242,13 @@ const highLevelCliCommandSet = new Set<string>(
   highLevelCliCommands.map(({ command }) => command)
 );
 
-export const cliApiCommandMetadata = apiCommandMetadata.filter((metadata) =>
-  highLevelApiCommandSet.has(metadata.command)
-);
+export const cliApiCommandMetadata = highLevelApiCommands.map((command) => {
+  const metadata = apiCommandMetadata.find((item) => item.command === command);
+  if (metadata === undefined) {
+    throw new Error(`Missing API command metadata for "${command}".`);
+  }
+  return metadata;
+});
 
 export const cliCommandMetadata = highLevelCliCommands.map(
   ({ command, operation }) => {

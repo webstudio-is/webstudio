@@ -21,11 +21,13 @@ import {
   $isContentMode,
   $isDesignMode,
   $propValuesByInstanceSelector,
-  getInstancePath,
   getInstanceKey,
-  type InstancePath,
 } from "~/shared/nano-states";
-import { canDeleteInstanceInContentMode } from "~/shared/instance-utils/data";
+import {
+  getInstancePath,
+  type InstancePath,
+} from "@webstudio-is/project-build/runtime/lookup";
+import { canDeleteInstanceInContentMode } from "@webstudio-is/project-build/runtime/block";
 import { $instances } from "~/shared/sync/data-stores";
 import {
   isComponentDetachable,

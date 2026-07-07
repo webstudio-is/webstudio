@@ -1,6 +1,9 @@
 import { runtimeOperationContracts } from "@webstudio-is/project-build/contracts/builder-runtime";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
 import { builderApiCapabilities } from "@webstudio-is/project-build/contracts/permissions";
+import type { InputJsonSchema } from "@webstudio-is/sdk";
+
+export type { InputJsonSchema };
 
 export const publicApiOperationNamespaces = builderNamespaces;
 export type PublicApiOperationNamespace =
@@ -10,7 +13,8 @@ export const publicApiOperationPermits = builderApiCapabilities;
 export type PublicApiOperationPermit =
   (typeof publicApiOperationPermits)[number];
 export type PublicApiOperationKind = "read" | "mutation";
-export type PublicRuntimeOperationId = string;
+export type PublicRuntimeOperationId =
+  (typeof runtimeOperationContracts)[number]["id"];
 
 export type PublicRuntimeOperationContract = {
   id: PublicRuntimeOperationId;
@@ -18,9 +22,7 @@ export type PublicRuntimeOperationContract = {
   client: string;
   permit?: PublicApiOperationPermit;
   kind: PublicApiOperationKind;
-  inputFields: readonly string[];
-  requiredInputFields: readonly string[];
-  inputFieldTypes: Partial<Record<string, "array">>;
+  inputSchema: InputJsonSchema;
   readNamespaces: readonly PublicApiOperationNamespace[];
   writeNamespaces: readonly PublicApiOperationNamespace[];
   invalidatesNamespaces: readonly PublicApiOperationNamespace[];
@@ -37,9 +39,7 @@ export const publicRuntimeOperationContracts: readonly PublicRuntimeOperationCon
       client,
       permit,
       kind,
-      inputFields,
-      requiredInputFields,
-      inputFieldTypes,
+      inputSchema,
       readNamespaces,
       writeNamespaces,
       invalidatesNamespaces,
@@ -52,9 +52,7 @@ export const publicRuntimeOperationContracts: readonly PublicRuntimeOperationCon
       client,
       permit,
       kind,
-      inputFields,
-      requiredInputFields,
-      inputFieldTypes,
+      inputSchema,
       readNamespaces,
       writeNamespaces,
       invalidatesNamespaces,

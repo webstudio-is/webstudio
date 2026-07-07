@@ -1,15 +1,25 @@
-import { Box as Box, Blockquote as Blockquote } from "../components";
+import {
+  Box as Box,
+  Blockquote as Blockquote,
+  Text as Text,
+} from "../components";
 
 const Component = () => {
   return (
-    <Box className={"w-box"}>
-      <Blockquote className={"w-blockquote"} />
+    <Box className={`w-box`}>
+      <Blockquote className={`w-blockquote`}>
+        <Text className={`w-text`}>
+          {
+            "Operations teams need interfaces that make the next action obvious."
+          }
+        </Text>
+      </Blockquote>
     </Box>
   );
 };
 
 export default {
-  title: "Blockquote",
+  title: "Components/Blockquote",
 };
 
 const Story = {
@@ -18,8 +28,8 @@ const Story = {
       <>
         <style>
           {`
-@media all {
-  :where(blockquote.w-blockquote) {
+@layer presets {
+  blockquote.w-blockquote {
     margin-top: 0;
     margin-right: 0;
     margin-bottom: 10px;
@@ -28,87 +38,14 @@ const Story = {
     padding-bottom: 10px;
     padding-left: 20px;
     padding-right: 20px;
-    border-left: 5px solid rgba(226, 226, 226, 1)
+    border-left: 5px solid rgb(226 226 226 / 1)
   }
-  :where(div.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+  div.w-box {
+    box-sizing: border-box
   }
-  :where(address.w-box) {
+  div.w-text {
     box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(article.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(aside.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(figure.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(footer.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(header.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(main.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(nav.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(section.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+    min-height: 1em
   }
 }
 

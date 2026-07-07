@@ -1,12 +1,16 @@
 import { describe, expect, test } from "vitest";
-import { fieldDefaultValues } from "./page-settings/page-settings";
 import { __testing__ } from "./template-settings";
-import type { Values } from "./page-settings/shared";
+import {
+  pageSettingsDefaultValues,
+  type PageSettingsValues,
+} from "@webstudio-is/project-build/runtime/pages";
 
 const { getEditorCreatePageValues } = __testing__;
 
-const createValues = (values: Partial<Values>): Values => ({
-  ...fieldDefaultValues,
+const createValues = (
+  values: Partial<PageSettingsValues>
+): PageSettingsValues => ({
+  ...pageSettingsDefaultValues,
   ...values,
 });
 

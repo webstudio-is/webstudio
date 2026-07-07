@@ -243,8 +243,13 @@ export const generateJsxElement = ({
       }
       continue;
     }
-    // We need to merge atomic classes with user-defined className prop.
-    if (name === "className" && propValue !== undefined) {
+    // We need to merge atomic classes with user-defined className props.
+    // Webstudio JSX stores className as "class"; keep explicit component APIs
+    // without tag metadata intact so their "class" prop is not rewritten.
+    if (
+      (name === "className" || (name === "class" && meta === undefined)) &&
+      propValue !== undefined
+    ) {
       classNameValue = propValue;
       continue;
     }
@@ -302,7 +307,7 @@ export const generateJsxElement = ({
   } else {
     let componentVariable;
     if (instance.component === elementComponent) {
-      componentVariable = instance.tag ?? "div";
+      componentVariable = instance.tag === "" ? "div" : (instance.tag ?? "div");
       // replace html tag with component if available
       const componentDescriptor = tagsOverrides?.[componentVariable];
       if (componentDescriptor !== undefined) {

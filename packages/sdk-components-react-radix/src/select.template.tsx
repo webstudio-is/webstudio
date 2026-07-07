@@ -19,6 +19,7 @@ import {
   zIndex,
 } from "./shared/theme";
 import { CheckMarkIcon } from "@webstudio-is/icons/svg";
+import { iconEmbedStyle } from "./shared/styles";
 
 const createSelectItem = (value: string, label: string) => {
   return (
@@ -61,7 +62,11 @@ const createSelectItem = (value: string, label: string) => {
           justify-content: center;
         `}
       >
-        <$.HtmlEmbed ws:label="Indicator Icon" code={CheckMarkIcon} />
+        <$.HtmlEmbed
+          ws:label="Indicator Icon"
+          ws:style={iconEmbedStyle}
+          code={CheckMarkIcon}
+        />
       </radix.SelectItemIndicator>
       <radix.SelectItemText>{new PlaceholderValue(label)}</radix.SelectItemText>
     </radix.SelectItem>
@@ -85,7 +90,7 @@ export const meta: TemplateMeta = {
           height: ${height[10]};
           width: ${width.full};
           align-items: center;
-          justify-content: between;
+          justify-content: space-between;
           border-radius: ${borderRadius.md};
           border: ${borderWidth.DEFAULT} solid ${colors.input};
           background-color: ${colors.background};

@@ -1,6 +1,6 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { builderApi } from "../builder-api";
-import { nanoid } from "nanoid";
+import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
 import { produce, enablePatches, type Patch, applyPatches } from "immer";
 
 enablePatches();
@@ -103,7 +103,8 @@ const extractUrlProps = (data: WebstudioFragment) => {
 export const denormalizeSrcProps = async (
   data: WebstudioFragment,
   uploadImages = builderApi.uploadImages,
-  generateId: (instanceId: string, propName: string) => string = () => nanoid()
+  generateId: (instanceId: string, propName: string) => string = () =>
+    builderRuntimeContext.createId()
 ): Promise<WebstudioFragment> => {
   const srcProps = extractSrcProps(data);
   const { urls, applyUrlToIdChanges } = extractUrlProps(data);

@@ -3,7 +3,7 @@ import {
   areInstanceSelectorsEqual,
   isDescendantOrSelf,
   type InstanceSelector,
-} from "./tree";
+} from "@webstudio-is/project-build/runtime/tree";
 
 export const areSelectorListsEqual = (
   left: InstanceSelector[],

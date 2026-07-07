@@ -1,4 +1,9 @@
 import { afterEach, expect, test, vi } from "vitest";
+import { publicApiOperations } from "@webstudio-is/protocol";
+import {
+  hiddenMcpOperationCommands,
+  listProjectSessionMcpTools,
+} from "@webstudio-is/project-build/mcp";
 import {
   apiCommandMetadata,
   cliCommandMetadata,
@@ -14,6 +19,14 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const mcpVisibleToolNames = new Set(
+  listProjectSessionMcpTools(publicApiOperations).map((tool) => tool.name)
+);
+
+const visibleMcpOnlyApiCommandMetadata = mcpOnlyApiCommandMetadata.filter(
+  (command) => mcpVisibleToolNames.has(command.command)
+);
+
 test("prints complete manual by default", () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
 
@@ -21,10 +34,13 @@ test("prints complete manual by default", () => {
 
   const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
   expect(output).toContain("# Webstudio Complete CLI Manual");
-  expect(output).toContain("# Webstudio API CLI Manual");
-  expect(output).toContain("# Webstudio CLI Manual for LLMs");
-  expect(output).toContain("# Webstudio MCP Manual");
-  expect(output).toContain("Available focused topics: `api`, `llm`, `mcp`.");
+  expect(output).toContain("## Top-Level Commands");
+  expect(output).toContain("## MCP Capabilities");
+  expect(output).toContain("webstudio://project/tools");
+  expect(output).toContain("webstudio insert-fragment '<json>'");
+  expect(output).toContain("webstudio mcp single-op-call insert-fragment");
+  expect(output).not.toContain("## MCP Argument Examples");
+  expect(output).not.toContain("### insert-component");
 });
 
 test("prints complete manual as json by default", () => {
@@ -34,13 +50,17 @@ test("prints complete manual as json by default", () => {
 
   const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
   expect(output.topic).toBe("all");
-  expect(output.topics.api.topic).toBe("api");
-  expect(output.topics.llm.topic).toBe("llm");
-  expect(output.topics.mcp.topic).toBe("mcp");
-  expect(output.topics.llm.implementationProcess).toEqual(
-    expect.arrayContaining([expect.stringContaining("Discover capabilities")])
+  expect(output.focusedTopics).toEqual(["api", "llm", "mcp"]);
+  expect(output.mcp.discovery).toContain("meta.index");
+  expect(output.mcp.resources).toContain("webstudio://project/components");
+  expect(output.mcp.capabilities).toEqual(
+    expect.arrayContaining([expect.stringContaining("Instances/components")])
   );
-  expect(output.topics.mcp.discovery).toContain("meta.index");
+  expect(output.mcp.boundary).toContain("webstudio insert-fragment");
+  expect(output.mcp.boundary).toContain("webstudio mcp single-op-call");
+  expect(output).not.toHaveProperty("topics");
+  expect(output.mcp).not.toHaveProperty("commands");
+  expect(output.mcp).not.toHaveProperty("argumentExamples");
 });
 
 test("prints api manual with patch workflow and examples", () => {
@@ -58,7 +78,7 @@ test("prints api manual with patch workflow and examples", () => {
   expect(output).toContain("Generate from design input");
   expect(output).toContain("### Top-Level Commands");
   expect(output).toContain("### High-Level API Commands By Area");
-  expect(output).toContain("### MCP-Only Operations");
+  expect(output).toContain("### MCP Tool Operations");
   expect(output).toContain("webstudio mcp");
   expect(output).toContain("## Project Session Cache");
   expect(output).toContain("Use --refresh");
@@ -81,6 +101,8 @@ test("prints api manual with patch workflow and examples", () => {
   expect(output).toContain("Operation: list-domains");
   expect(output).not.toContain("### update-props\n");
   expect(output).toContain("- update-props:");
+  expect(output).not.toContain("append-instance");
+  expect(output).not.toContain("children.json contents");
 });
 
 test("prints api manual as json", () => {
@@ -138,7 +160,33 @@ test("prints api manual as json", () => {
     output.mcpOnlyCommands.map(
       (command: { command: string }) => command.command
     )
-  ).toEqual(mcpOnlyApiCommandMetadata.map(({ command }) => command));
+  ).toEqual(visibleMcpOnlyApiCommandMetadata.map(({ command }) => command));
+  expect(
+    output.mcpOnlyCommands.map(
+      (command: { command: string }) => command.command
+    )
+  ).not.toContain("append-instance");
+  if (hiddenMcpOperationCommands.size > 0) {
+    expect(
+      output.mcpOnlyCommands.map(
+        (command: { command: string }) => command.command
+      )
+    ).toEqual(
+      expect.not.arrayContaining(Array.from(hiddenMcpOperationCommands))
+    );
+  }
+  expect(output.mcpOnlyCommands).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        command: "list-pages",
+        inputFields: expect.any(Array),
+        requiredInputFields: expect.any(Array),
+      }),
+    ])
+  );
+  for (const command of output.mcpOnlyCommands) {
+    expect(command).not.toHaveProperty("required");
+  }
   expect(output.taskRecipes.pages).toContain(
     'MCP tool: list-pages {"includeFolders":true}'
   );
@@ -152,9 +200,6 @@ test("prints api manual as json", () => {
       }),
     ])
   );
-  expect(output.inputFileShapes["children.json"]).toEqual([
-    { tag: "div", label: "Hero", text: "Launch faster" },
-  ]);
   const useCaseTitles = output.useCaseScenarios.map(
     ({ useCase }: { useCase: string }) => useCase
   );
@@ -165,7 +210,7 @@ test("prints api manual as json", () => {
     expect.arrayContaining([
       "Visually verify rendered work with AI vision",
       "Create page",
-      "Append/prepend/replace child elements",
+      "Insert authored JSX or one component template",
       "Create resource",
       "Upload one asset",
       "Publish project",
@@ -178,6 +223,10 @@ test("prints api manual as json", () => {
       (command: { operation?: string; command: string }) =>
         command.operation ?? command.command
     ),
+    ...output.mcpOnlyCommands.map(
+      (command: { operation?: string; command: string }) =>
+        command.operation ?? command.command
+    ),
     ...output.useCaseScenarios
       .flatMap(({ commands }: { commands: string[] }) => commands)
       .flatMap((command: string) => {
@@ -185,7 +234,7 @@ test("prints api manual as json", () => {
         if (match !== null) {
           return [match[1]];
         }
-        const mcpMatch = command.match(/^MCP tool: ([a-z-]+)/);
+        const mcpMatch = command.match(/^MCP tool: ([a-z0-9._-]+)/);
         return mcpMatch === null ? [] : [mcpMatch[1]];
       }),
   ]);
@@ -197,14 +246,36 @@ test("prints api manual as json", () => {
         if (match !== null) {
           return [match[1]];
         }
-        const mcpMatch = command.match(/^MCP tool: ([a-z-]+)/);
+        const mcpMatch = command.match(/^MCP tool: ([a-z0-9._-]+)/);
         return mcpMatch === null ? [] : [mcpMatch[1]];
       })
   );
+  const documentedApiOperationNames = new Set([
+    ...output.commands.map(
+      (command: { operation?: string; command: string }) =>
+        command.operation ?? command.command
+    ),
+    ...output.mcpOnlyCommands.map(
+      (command: { operation?: string; command: string }) =>
+        command.operation ?? command.command
+    ),
+  ]);
+  if (hiddenMcpOperationCommands.size > 0) {
+    expect(documentedApiOperationNames).toEqual(
+      expect.not.arrayContaining(Array.from(hiddenMcpOperationCommands))
+    );
+  }
   for (const { command } of apiCommandMetadata) {
+    if (
+      documentedApiOperationNames.has(command) === false &&
+      mcpVisibleToolNames.has(command) === false
+    ) {
+      continue;
+    }
     expect(documentedCommands).toContain(command);
   }
   expect(documentedVisibleCommands).not.toContain("validate-patch");
+  expect(documentedVisibleCommands).not.toContain("append-instance");
 });
 
 test("prints llm manual with discovery rules", () => {
@@ -213,10 +284,12 @@ test("prints llm manual with discovery rules", () => {
   man({ topic: "llm", json: false });
 
   const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
-  expect(output).toContain("webstudio schema api --json");
+  expect(output).toContain("webstudio schema api");
   expect(output).toContain("webstudio man --json");
   expect(output).toContain("webstudio permissions --json");
   expect(output).toContain("## MCP Argument Examples");
+  expect(output).not.toContain("append-instance");
+  expect(output).not.toContain("children.json contents");
   expect(output).toContain('"updates"');
   expect(output).toContain('"instanceId": "instance-id"');
   expect(output).toContain("Never guess ids");
@@ -225,6 +298,25 @@ test("prints llm manual with discovery rules", () => {
   expect(output).toContain("## Visual Design Workflow");
   expect(output).toContain("## Generated Files Guardrails");
   expect(output).toContain("## Values vs Bindings");
+  expect(output).toContain("Use `ws:style={css\\`...\\`}`");
+  expect(output).toContain("style={{ padding: 24 }}");
+  expect(output).toContain("Use Webstudio prop names in JSX");
+  expect(output).toContain("Do not wrap the CLI call in `pwd && ...`");
+  expect(output).toContain("`node packages/cli/local.js ...`");
+  expect(output).toContain(
+    "Do not take a broad task such as creating a full design-system page as one execution unit"
+  );
+  expect(output).toContain('workflow.next {"goal":"design-system-page"}');
+  expect(output).toContain("one dry-run JSX section");
+  expect(output).toContain("one coverage batch");
+  expect(output).toContain("Phase commands do not include nextPhase");
+  expect(output).toContain("`className` or `htmlFor`");
+  expect(output).toContain(
+    "<radix.Switch><radix.SwitchThumb /></radix.Switch>"
+  );
+  expect(output).toContain("Use `insert-component` when you want");
+  expect(output).toContain("Do not pass `detail` to `list-pages`");
+  expect(output).toContain("components.coverage-plan");
   expect(output).toContain(
     "Use `bind-props` only when the prop must stay dynamic"
   );
@@ -247,6 +339,33 @@ test("prints llm manual with discovery rules", () => {
   );
   expect(output).toContain("## Known Gaps");
   expect(output).toContain("Provider-specific authenticated pages");
+});
+
+test("prints project-editing manual as llm alias", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  man({ topic: "project-editing", json: false });
+
+  const output = vi.mocked(console.info).mock.calls.at(-1)?.[0];
+  expect(output).toContain("## LLM Implementation Process");
+  expect(output).toContain('workflow.next {"goal":"design-system-page"}');
+  expect(output).toContain("Use `ws:style={css\\`...\\`}`");
+});
+
+test("prints project-editing manual as json alias", () => {
+  vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+  man({ topic: "project-editing", json: true });
+
+  const output = JSON.parse(vi.mocked(console.info).mock.calls.at(-1)?.[0]);
+  expect(output.topic).toBe("project-editing");
+  expect(output.aliasOf).toBe("llm");
+  expect(output.implementationProcess).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining("webstudio man --json"),
+      expect.stringContaining("inspect it with vision"),
+    ])
+  );
 });
 
 test("prints llm manual as json with implementation process", () => {
@@ -327,11 +446,27 @@ test("prints mcp manual with startup and JSON argument examples", () => {
   expect(output).toContain("stdout is reserved for MCP JSON-RPC");
   expect(output).toContain("meta.get_more_tools");
   expect(output).toContain("webstudio://project/tools");
+  expect(output).toContain("## MCP SDK Client Imports");
+  expect(output).toContain(
+    'import { Client } from "@modelcontextprotocol/sdk/client/index.js";'
+  );
+  expect(output).toContain(
+    'import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";'
+  );
+  expect(output).toContain(
+    'import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";'
+  );
+  expect(output).toContain('args: ["packages/cli/local.js", "mcp"]');
+  expect(output).toContain("Use `node packages/cli/local.js mcp`");
   expect(output).toContain("## Vision Verification Loop");
   expect(output).toContain("screenshot.diff");
   expect(output).toContain("Read screenshot.diff textAnalysis");
   expect(output).toContain("vision.install-ocr");
   expect(output).toContain('"parentInstanceId": "parent-id"');
+  expect(output).toContain(
+    "Copying a `.webstudio` folder is not an isolated project clone"
+  );
+  expect(output).toContain("Use `--dry-run` with local-capable mutation tools");
 });
 
 test("prints mcp manual as json", () => {
@@ -383,6 +518,13 @@ test("prints mcp manual as json", () => {
       instanceId: "instance-id",
       childIndex: 0,
       text: "Launch faster",
+      mode: "text",
+    },
+    {
+      instanceId: "instance-id",
+      childIndex: 0,
+      text: "user.name",
+      mode: "expression",
     },
   ]);
   expect(output.mcpArgumentExamples["update-props"]).toEqual([
@@ -393,6 +535,12 @@ test("prints mcp manual as json", () => {
           name: "aria-label",
           type: "string",
           value: "Open menu",
+        },
+        {
+          instanceId: "textarea-id",
+          name: "placeholder",
+          type: "string",
+          value: "Describe your project",
         },
       ],
     },

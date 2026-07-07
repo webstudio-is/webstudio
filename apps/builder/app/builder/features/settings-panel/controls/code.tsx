@@ -18,8 +18,12 @@ import { CodeEditor } from "~/shared/code-editor";
 import {
   BindingControl,
   BindingPopover,
-  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import {
+  validateHtmlEmbedCode,
+  type HtmlEmbedCodeError,
+} from "@webstudio-is/project-build/runtime/html";
+import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime/props";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
@@ -35,7 +39,7 @@ const ErrorInfo = ({
   error,
   onAutoFix,
 }: {
-  error?: Error;
+  error?: HtmlEmbedCodeError;
   onAutoFix: () => void;
 }) => {
   if (error === undefined) {
@@ -68,74 +72,6 @@ const ErrorInfo = ({
   );
 };
 
-type Error = { message: string; value: string; expected?: string };
-
-/**
- * Use DOMParser in xml mode to parse potential svg
- */
-const parseSvg = (value: string) => {
-  const doc = new DOMParser().parseFromString(value, "application/xml");
-  const errorNode = doc.querySelector("parsererror");
-  if (errorNode) {
-    return "";
-  }
-  return doc.documentElement.outerHTML;
-};
-
-const parseHtml = (value: string) => {
-  const div = document.createElement("div");
-  div.innerHTML = value;
-  return div.innerHTML;
-};
-
-// The problem is to identify broken HTML and because browser is flexible and always tries to fix it we never
-// know if something is actually broken.
-// 1. Parse potential SVG with XML parser and serialize
-// 2. Compare the original SVG with resulting value
-// 3. Parse the HTML using DOM parser and serialize
-// 4. Compare the original HTML with resulting value
-// 5. We try to minimize the amount of false positives by removing
-//    - different amount of whitespace
-//    - unifying `boolean=""` is the same as `boolean`
-//    - xmlns attirbute which is always reordered first
-const validateHtml = (value: string): Error | undefined => {
-  const maxChars = 50_000;
-  if (value.length > maxChars) {
-    return {
-      message: `The HTML Embed code exceeds ${maxChars} character limit.`,
-      value,
-      expected: "",
-    };
-  }
-  const clean = (value: string) => {
-    return (
-      value
-        // Compare without whitespace to avoid false positives
-        .replaceAll(/\s/g, "")
-        // normalize boolean attributes by turning `boolean=""` into `boolean`
-        .replaceAll('=""', "")
-        // namespace attribute is always reordered first
-        .replaceAll('xmlns="http://www.w3.org/2000/svg"', "")
-    );
-  };
-  // in many cases svg is valid xml so serialize in xml mode first
-  // to avoid false positive of auto closing svg tags, for example
-  // <path /> -> <path></path>
-  const xml = parseSvg(value);
-  if (clean(xml) === clean(value)) {
-    return;
-  }
-  const html = parseHtml(value);
-  if (clean(html) === clean(value)) {
-    return;
-  }
-  return {
-    message: "Entered HTML has a validation error.",
-    value,
-    expected: html ?? "",
-  };
-};
-
 export const CodeControl = ({
   meta,
   prop,
@@ -143,7 +79,7 @@ export const CodeControl = ({
   computedValue,
   onChange,
 }: ControlProps<"code"> | ControlProps<"codetext">) => {
-  const [error, setError] = useState<Error>();
+  const [error, setError] = useState<HtmlEmbedCodeError>();
   const metaOverride = {
     ...meta,
     control: "text" as const,
@@ -151,7 +87,7 @@ export const CodeControl = ({
   const lang = meta.control === "code" ? meta.language : undefined;
   const localValue = useDraftValue(String(computedValue ?? ""), (value) => {
     if (lang === "html") {
-      const error = validateHtml(value);
+      const error = validateHtmlEmbedCode(value);
       setError(error);
 
       if (error) {

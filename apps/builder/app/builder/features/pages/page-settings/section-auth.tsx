@@ -15,26 +15,15 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import { validateBasicAuth } from "@webstudio-is/wsauth";
-import type { Errors, OnChange, Values } from "./shared";
+import type {
+  PageSettingsErrors,
+  PageSettingsValues,
+} from "@webstudio-is/project-build/runtime/pages";
+import type { OnChange } from "./shared";
 
-const emptyAuth: Values["auth"] = {
+const emptyAuth: PageSettingsValues["auth"] = {
   login: "",
   password: "",
-};
-
-export const validateAuthSection = (values: Values): Errors => {
-  const hasAuth = values.auth.login !== "" || values.auth.password !== "";
-  const authErrors = hasAuth
-    ? validateBasicAuth({
-        login: values.auth.login,
-        password: values.auth.password,
-      }).errors
-    : undefined;
-  if (authErrors === undefined) {
-    return {};
-  }
-  return { auth: authErrors };
 };
 
 export const AuthSection = ({
@@ -44,8 +33,8 @@ export const AuthSection = ({
   showUpgrade = false,
   showErrors = false,
 }: {
-  values: Values;
-  errors: Errors;
+  values: PageSettingsValues;
+  errors: PageSettingsErrors;
   onChange: OnChange;
   showUpgrade?: boolean;
   showErrors?: boolean;

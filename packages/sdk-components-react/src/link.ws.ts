@@ -14,6 +14,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
+  deprecated: true,
   presetStyle,
   states: [{ label: "Current page", selector: "[aria-current=page]" }],
   initialProps: ["id", "class", "href", "target", "prefetch", "download"],

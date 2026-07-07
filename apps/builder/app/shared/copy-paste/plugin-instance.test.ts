@@ -58,6 +58,16 @@ $pages.set(
 );
 $selectedPageId.set("home-page");
 
+const setPageRoot = (rootInstanceId: Instance["id"]) => {
+  $pages.set(
+    createDefaultPages({
+      homePageId: "home-page",
+      rootInstanceId,
+    })
+  );
+  $selectedPageId.set("home-page");
+};
+
 const createInstance = (
   id: Instance["id"],
   component: string,
@@ -1282,6 +1292,7 @@ describe("data sources", () => {
   });
 
   test("copy parameter prop with new data source", async () => {
+    setPageRoot("body");
     const instances: Instances = toMap([
       createInstance("body", "Body", [{ type: "id", value: "list" }]),
       createInstance("list", collectionComponent, []),
@@ -1364,6 +1375,7 @@ describe("data sources", () => {
 });
 
 test("when paste into copied instance insert after it", async () => {
+  setPageRoot("body");
   $instances.set(
     toMap([
       createInstance("body", "Body", [{ type: "id", value: "box" }]),
@@ -1426,6 +1438,7 @@ test("prevent pasting portal into copy of it", async () => {
 });
 
 test("insert portal into its sibling", async () => {
+  setPageRoot("body");
   $instances.set(
     toMap([
       createInstance("body", "Body", [
@@ -1463,6 +1476,7 @@ test("insert portal into its sibling", async () => {
 });
 
 test("inserts multi-root clipboard into descendant of copied non-portal root", async () => {
+  setPageRoot("body");
   $instances.set(
     toMap([
       createInstance("body", "Body", [
@@ -1501,6 +1515,7 @@ test("inserts multi-root clipboard into descendant of copied non-portal root", a
 });
 
 test("insert into portal fragment when portal is a target", async () => {
+  setPageRoot("body");
   $instances.set(
     toMap([
       createInstance("body", "Body", [
@@ -1518,10 +1533,16 @@ test("insert into portal fragment when portal is a target", async () => {
   // fragment not exists
   const prevInstances = $instances.get();
   await instanceText.onPaste?.(clipboardData);
-  const [boxId, fragmentId] = getMapDifference(
-    prevInstances,
-    $instances.get()
-  ).keys();
+  const newInstances = getMapDifference(prevInstances, $instances.get());
+  const boxId = Array.from(newInstances.values()).find(
+    (instance) => instance.component === "Box"
+  )?.id;
+  const fragmentId = Array.from(newInstances.values()).find(
+    (instance) => instance.component === "Fragment"
+  )?.id;
+  if (boxId === undefined || fragmentId === undefined) {
+    throw Error("Expected pasted Box and Fragment instances");
+  }
   expect($instances.get()).toEqual(
     toMap([
       createInstance("body", "Body", [

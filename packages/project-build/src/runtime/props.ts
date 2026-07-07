@@ -3,12 +3,24 @@ import {
   prop as propSchema,
   type Instance,
   type Prop,
+  type PropMeta,
 } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
 import { getExpressionErrors } from "./expression-validation";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
+import { validateHtmlEmbedCode } from "./html";
 import { createRuntimeMutation } from "./mutation";
+
+export const showAttributeMeta: PropMeta = {
+  label: "Show",
+  required: false,
+  control: "boolean",
+  type: "boolean",
+  defaultValue: true,
+  description:
+    "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
+};
 
 export const findProp = (
   props: Iterable<Prop>,
@@ -78,6 +90,20 @@ export const getPropValueErrors = ({
   return getExpressionErrors(String(value));
 };
 
+export const isPrimitiveValue = (value: unknown) => {
+  if (value === null || value === undefined) {
+    return true;
+  }
+  const type = typeof value;
+  return type === "string" || type === "number" || type === "boolean";
+};
+
+export const validatePrimitiveValue = (value: unknown, label: string) => {
+  if (isPrimitiveValue(value) === false) {
+    return `${label} expects a primitive value (string, number, boolean, null, or undefined), not an object, array, or function`;
+  }
+};
+
 const addExpressionIssues = (
   context: z.RefinementCtx,
   errors: readonly string[],
@@ -92,28 +118,95 @@ const addExpressionIssues = (
   }
 };
 
-export const propValueInput = z
-  .object({
-    propId: runtimeGeneratedIdInput,
-    instanceId: z.string(),
-    name: z.string(),
-    type: z.enum([
-      "number",
-      "string",
-      "boolean",
-      "json",
-      "asset",
-      "page",
-      "string[]",
-      "parameter",
-      "resource",
-      "expression",
-      "action",
-      "animationAction",
-    ]),
+const propValueBaseInput = {
+  propId: runtimeGeneratedIdInput,
+  instanceId: z.string().describe("Instance id that owns the prop."),
+  name: z.string().describe("Prop or HTML attribute name."),
+  required: z.boolean().optional(),
+};
+
+const propValueInputVariants = [
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("number"),
+    value: z.number(),
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("string"),
+    value: z.string(),
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("boolean"),
+    value: z.boolean(),
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("json"),
     value: z.unknown(),
-    required: z.boolean().optional(),
-  })
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("asset"),
+    value: z.string().describe("Asset id."),
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("page"),
+    value: z.union([
+      z.string().describe("Page id."),
+      z.object({
+        pageId: z.string(),
+        instanceId: z.string(),
+      }),
+    ]),
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("string[]"),
+    value: z.array(z.string()),
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("parameter"),
+    value: z.string().describe("Data source id."),
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("resource"),
+    value: z.string().describe("Resource id."),
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("expression"),
+    value: z.string().describe("JavaScript expression source."),
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("action"),
+    value: z.array(
+      z.object({
+        type: z.literal("execute"),
+        args: z.array(z.string()),
+        code: z.string(),
+      })
+    ),
+  }),
+  z.object({
+    ...propValueBaseInput,
+    type: z.literal("animationAction"),
+    value: z
+      .unknown()
+      .describe("Animation action payload. Prefer existing animation tools."),
+  }),
+] as const;
+
+export const propValueInput = z
+  .discriminatedUnion("type", propValueInputVariants)
+  .describe(
+    'Direct prop value update. Match value to type: use type "string" for fixed text attributes such as placeholder, aria-label, alt, id, class, href, and title; use bind-props for dynamic expressions/resources/actions.'
+  )
   .superRefine((value, context) => {
     addExpressionIssues(context, getPropValueErrors(value), ["value"]);
   });
@@ -151,8 +244,137 @@ export const propBindingInput = z
   });
 
 export const propUpdatesInput = z.object({
-  updates: z.array(propValueInput).min(1),
+  updates: z
+    .array(propValueInput)
+    .min(1)
+    .describe(
+      'Atomic batch of direct prop updates. Every item must be valid or the batch is rejected; split unrelated updates into smaller batches if you want easier recovery. For textarea placeholder use { "name": "placeholder", "type": "string", "value": "..." }.'
+    ),
 });
+
+export type PropValueInput = z.infer<typeof propValueInput>;
+export type PropValueUpdate =
+  | Pick<Extract<Prop, { type: "number" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "string" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "boolean" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "json" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "string[]" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "expression" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "asset" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "page" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "action" }>, "type" | "value">
+  | Pick<Extract<Prop, { type: "animationAction" }>, "type" | "value">;
+
+export const createStartingPropValueFromMeta = (
+  meta: PropMeta,
+  defaultBooleanValue: boolean
+): PropValueUpdate | undefined => {
+  if (meta.type === "string" && meta.control !== "file") {
+    return {
+      type: "string",
+      value: meta.defaultValue ?? "",
+    };
+  }
+
+  if (meta.type === "number") {
+    return {
+      type: "number",
+      value: meta.defaultValue ?? 0,
+    };
+  }
+
+  if (meta.type === "boolean") {
+    return {
+      type: "boolean",
+      value: meta.defaultValue ?? defaultBooleanValue,
+    };
+  }
+
+  if (meta.type === "string[]") {
+    return {
+      type: "string[]",
+      value: meta.defaultValue ?? [],
+    };
+  }
+
+  if (meta.type === "action") {
+    return {
+      type: "action",
+      value: [],
+    };
+  }
+};
+
+export const getDefaultPropMetaForType = (type: Prop["type"]): PropMeta => {
+  switch (type) {
+    case "action":
+      return { type: "action", control: "action", required: false };
+    case "string":
+      return { type: "string", control: "text", required: false };
+    case "number":
+      return { type: "number", control: "number", required: false };
+    case "boolean":
+      return { type: "boolean", control: "boolean", required: false };
+    case "asset":
+      return { type: "string", control: "file", required: false };
+    case "page":
+      return { type: "string", control: "url", required: false };
+    case "animationAction":
+      return {
+        type: "animationAction",
+        control: "animationAction",
+        required: false,
+      };
+    case "string[]":
+    case "json":
+    case "expression":
+    case "parameter":
+    case "resource":
+      throw new Error(
+        `A prop with type ${type} must have a meta, we can't provide a default one because we need a list of options`
+      );
+    default:
+      const unsupportedType: never = type;
+      throw new Error(`Unsupported prop type: ${unsupportedType}`);
+  }
+};
+
+export const createPropValueInputFromProp = (prop: Prop): PropValueInput => {
+  const base = {
+    instanceId: prop.instanceId,
+    name: prop.name,
+    required: prop.required,
+  };
+  switch (prop.type) {
+    case "number":
+      return { ...base, type: prop.type, value: prop.value };
+    case "string":
+      return { ...base, type: prop.type, value: prop.value };
+    case "boolean":
+      return { ...base, type: prop.type, value: prop.value };
+    case "json":
+      return { ...base, type: prop.type, value: prop.value };
+    case "asset":
+      return { ...base, type: prop.type, value: prop.value };
+    case "page":
+      return { ...base, type: prop.type, value: prop.value };
+    case "string[]":
+      return { ...base, type: prop.type, value: prop.value };
+    case "parameter":
+      return { ...base, type: prop.type, value: prop.value };
+    case "resource":
+      return { ...base, type: prop.type, value: prop.value };
+    case "expression":
+      return { ...base, type: prop.type, value: prop.value };
+    case "action":
+      return { ...base, type: prop.type, value: prop.value };
+    case "animationAction":
+      return { ...base, type: prop.type, value: prop.value };
+    default:
+      prop satisfies never;
+      throw new Error("Unsupported prop type");
+  }
+};
 
 export const propBindingsInput = z.object({
   bindings: z.array(propBindingInput).min(1),
@@ -380,6 +602,7 @@ export const createPropDeletePayload = ({
   instances: Map<Instance["id"], Instance>;
   props: Iterable<Prop>;
 }) => {
+  const propList = Array.from(props);
   const propIds = new Set<string>();
   const resourceIds = new Set<string>();
   for (const deletion of deletions) {
@@ -394,7 +617,7 @@ export const createPropDeletePayload = ({
     }
     const plan = getPropDeletePlan({
       instance,
-      props,
+      props: propList,
       propName: deletion.name,
     });
     for (const propId of plan.propIds) {
@@ -496,6 +719,18 @@ const assertRuntimeInstance = (
 const throwPropErrors = (errors: string[]) =>
   throwBuilderRuntimeError("BAD_REQUEST", errors.join("\n"));
 
+const getHtmlEmbedCodeErrors = (instance: Instance, update: PropValueInput) => {
+  if (
+    instance.component !== "HtmlEmbed" ||
+    update.name !== "code" ||
+    update.type !== "string"
+  ) {
+    return [];
+  }
+  const error = validateHtmlEmbedCode(update.value);
+  return error === undefined ? [] : [error.message];
+};
+
 export const updateProps = (
   state: Pick<BuilderState, "instances" | "props">,
   input: z.infer<typeof propUpdatesInput>,
@@ -504,6 +739,11 @@ export const updateProps = (
   const { instances, props } = getRequiredPropState(state);
   const nextProps = input.updates.map((update) => {
     assertRuntimeInstance(instances, update.instanceId);
+    const instance = instances.get(update.instanceId)!;
+    const htmlEmbedCodeErrors = getHtmlEmbedCodeErrors(instance, update);
+    if (htmlEmbedCodeErrors.length > 0) {
+      return throwPropErrors(htmlEmbedCodeErrors);
+    }
     const existing = findProp(props.values(), update.instanceId, update.name);
     const nextProp = createValidatedPropValueFromInput(
       { ...update, propId: update.propId ?? existing?.id },

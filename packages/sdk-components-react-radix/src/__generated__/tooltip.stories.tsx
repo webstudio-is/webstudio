@@ -11,13 +11,13 @@ import {
 
 const Component = () => {
   return (
-    <Box className={"w-box"}>
+    <Box className={`w-box`}>
       <Tooltip>
         <TooltipTrigger>
-          <Button className={"w-button w-button-1"}>{"Button"}</Button>
+          <Button className={`w-button w-button-1`}>{"Button"}</Button>
         </TooltipTrigger>
-        <TooltipContent className={"w-tooltip-content w-tooltip-content-1"}>
-          <Text className={"w-text"}>{"The text you can edit"}</Text>
+        <TooltipContent className={`w-tooltip-content w-tooltip-content-1`}>
+          <Text className={`w-text`}>{"The text you can edit"}</Text>
         </TooltipContent>
       </Tooltip>
     </Box>
@@ -25,7 +25,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Tooltip",
+  title: "Components/Tooltip",
 };
 
 const Story = {
@@ -34,96 +34,15 @@ const Story = {
       <>
         <style>
           {`
-@media all {
-  :where(div.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+@layer presets {
+  div.w-box {
+    box-sizing: border-box
   }
-  :where(address.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(article.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(aside.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(figure.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(footer.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(header.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(main.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(nav.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(section.w-box) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
-  :where(button.w-button) {
+  button.w-button {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
     box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
     border-top-style: solid;
     border-right-style: solid;
     border-bottom-style: solid;
@@ -131,22 +50,12 @@ const Story = {
     text-transform: none;
     margin: 0
   }
-  :where(div.w-text) {
+  div.w-text {
     box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
     min-height: 1em
   }
-  :where(div.w-tooltip-content) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
+  div.w-tooltip-content {
+    box-sizing: border-box
   }
 }
 @media all {
@@ -154,7 +63,7 @@ const Story = {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 255, 255, 1);
+    background-color: rgb(255 255 255 / 1);
     border-top-left-radius: 0.375rem;
     border-top-right-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
@@ -167,7 +76,7 @@ const Story = {
     padding-right: 1rem;
     padding-bottom: 0.5rem;
     padding-left: 1rem;
-    border: 1px solid rgba(226, 232, 240, 1)
+    border: 1px solid rgb(226 232 240 / 1)
   }
   .w-button-1:disabled {
     pointer-events: none;
@@ -175,12 +84,12 @@ const Story = {
   }
   .w-button-1:focus-visible {
     outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 1), 0 0 0 calc(2px + 2px) rgb(148,163,184);
     outline: 2px solid transparent
   }
   .w-button-1:hover {
-    background-color: rgba(241, 245, 249, 1);
-    color: rgba(15, 23, 42, 1)
+    background-color: rgb(241 245 249 / 1);
+    color: rgb(15 23 42 / 1)
   }
   .w-tooltip-content-1 {
     z-index: 50;
@@ -190,15 +99,15 @@ const Story = {
     border-top-right-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
     border-bottom-left-radius: 0.375rem;
-    background-color: rgba(255, 255, 255, 1);
+    background-color: rgb(255 255 255 / 1);
     padding-top: 0.375rem;
     padding-right: 0.75rem;
     padding-bottom: 0.375rem;
     padding-left: 0.75rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
-    color: rgba(2, 8, 23, 1);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)
+    color: rgb(2 8 23 / 1);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)
   }
 }
       `}

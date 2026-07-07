@@ -5,7 +5,7 @@ import {
   detectPageTokenConflicts,
   extractWebstudioFragment,
 } from "@webstudio-is/project-build/runtime/fragment";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { useMemo } from "react";
 import {
   Button,
@@ -34,7 +34,6 @@ import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { builderUrl } from "~/shared/router-utils";
 import { getWebstudioData } from "~/shared/instance-utils/data";
 import { builderApi } from "~/shared/builder-api";
-import { insertPageCopyMutable } from "@webstudio-is/project-build/runtime/page-copy";
 import { $project } from "~/shared/sync/data-stores";
 import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
@@ -80,7 +79,7 @@ const insertSection = async ({
       conflicts.length > 0
         ? await builderApi.showTokenConflictDialog(conflicts)
         : "theirs";
-    insertWebstudioFragmentAt(fragment, insertable, conflictResolution);
+    await insertWebstudioFragmentAt(fragment, insertable, conflictResolution);
   }
 };
 
@@ -100,19 +99,21 @@ const insertPage = async ({
     conflicts.length > 0
       ? await builderApi.showTokenConflictDialog(conflicts)
       : "theirs";
-  let newPageId: undefined | Page["id"];
   const projectId = $project.get()?.id;
   if (projectId === undefined) {
     return;
   }
-  updateWebstudioData((targetData) => {
-    newPageId = insertPageCopyMutable({
-      source: { data: sourceData, pageId },
-      target: { data: targetData, folderId: ROOT_FOLDER_ID },
+  const result = executeRuntimeMutation({
+    id: "pages.copy",
+    input: {
+      sourceData,
+      pageId,
+      parentFolderId: ROOT_FOLDER_ID,
       projectId,
       conflictResolution,
-    });
+    },
   });
+  const newPageId = result?.result.pageId;
   if (newPageId) {
     selectPage(newPageId);
   }

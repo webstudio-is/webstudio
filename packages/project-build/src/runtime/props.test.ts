@@ -5,17 +5,24 @@ import {
   createPropDeletePayload,
   createPropBindingFromInput,
   createPropClonePatches,
+  createStartingPropValueFromMeta,
   createPropRenamePayload,
   createPropUpsertPayload,
   createValidatedPropBindingFromInput,
   createValidatedPropValueFromInput,
   createPropValue,
   findProp,
+  getDefaultPropMetaForType,
   getPropDeletePlan,
   getPropIdsToDelete,
   getPropValueErrors,
+  isPrimitiveValue,
   propBindingInput,
+  propUpdatesInput,
   propValueInput,
+  showAttributeMeta,
+  updateProps,
+  validatePrimitiveValue,
 } from "./props";
 
 const image: Instance = {
@@ -62,6 +69,18 @@ describe("findProp", () => {
   });
 });
 
+test("defines show attribute metadata in runtime", () => {
+  expect(showAttributeMeta).toEqual({
+    label: "Show",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
+    description:
+      "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
+  });
+});
+
 describe("createPropValue", () => {
   test("creates props through the sdk schema", () => {
     expect(
@@ -91,6 +110,30 @@ describe("createPropValue", () => {
         value: "not boolean",
       })
     ).toThrow();
+  });
+});
+
+describe("primitive expression results", () => {
+  test("accepts values that can be saved into primitive controls", () => {
+    expect(isPrimitiveValue("text")).toBe(true);
+    expect(isPrimitiveValue(1)).toBe(true);
+    expect(isPrimitiveValue(false)).toBe(true);
+    expect(isPrimitiveValue(null)).toBe(true);
+    expect(isPrimitiveValue(undefined)).toBe(true);
+  });
+
+  test("rejects values that cannot be saved into primitive controls", () => {
+    expect(isPrimitiveValue({})).toBe(false);
+    expect(isPrimitiveValue([])).toBe(false);
+    expect(isPrimitiveValue(() => undefined)).toBe(false);
+    expect(isPrimitiveValue(Symbol("value"))).toBe(false);
+  });
+
+  test("formats a field-specific validation message", () => {
+    expect(validatePrimitiveValue({}, "Title")).toBe(
+      "Title expects a primitive value (string, number, boolean, null, or undefined), not an object, array, or function"
+    );
+    expect(validatePrimitiveValue("ok", "Title")).toBeUndefined();
   });
 });
 
@@ -157,6 +200,47 @@ describe("prop input creators", () => {
         binding: { type: "expression", value: "invalid {" },
       })
     ).toThrow();
+  });
+
+  test("reports malformed prop update batch items by index", () => {
+    const result = propUpdatesInput.safeParse({
+      updates: [
+        {
+          instanceId: "textarea-1",
+          name: "placeholder",
+          type: "string",
+          value: "Describe your project",
+        },
+        {
+          instanceId: "textarea-2",
+          name: "placeholder",
+          type: "string",
+          value: { text: "Describe your project" },
+        },
+        {
+          instanceId: "textarea-3",
+          name: "placeholder",
+          type: "boolean",
+          value: "Describe your project",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success === false) {
+      expect(result.error.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: ["updates", 1, "value"],
+            message: expect.stringContaining("expected string"),
+          }),
+          expect.objectContaining({
+            path: ["updates", 2, "value"],
+            message: expect.stringContaining("expected boolean"),
+          }),
+        ])
+      );
+    }
   });
 
   test("creates prop values and bindings from input", () => {
@@ -346,6 +430,83 @@ describe("createPropUpsertPayload", () => {
   });
 });
 
+describe("updateProps", () => {
+  test("rejects invalid HtmlEmbed code updates", () => {
+    const htmlEmbed: Instance = {
+      type: "instance",
+      id: "embed-id",
+      component: "HtmlEmbed",
+      children: [],
+    };
+
+    expect(() =>
+      updateProps(
+        {
+          instances: new Map([[htmlEmbed.id, htmlEmbed]]),
+          props: new Map(),
+        },
+        {
+          updates: [
+            {
+              instanceId: htmlEmbed.id,
+              name: "code",
+              type: "string",
+              value: '<section></section attribute="value">',
+            },
+          ],
+        },
+        { createId: () => "code-prop-id" }
+      )
+    ).toThrow("Entered HTML has a validation error.");
+  });
+
+  test("allows non-html code props to use plain strings", () => {
+    const codeText: Instance = {
+      type: "instance",
+      id: "code-text-id",
+      component: "CodeText",
+      children: [],
+    };
+
+    expect(
+      updateProps(
+        {
+          instances: new Map([[codeText.id, codeText]]),
+          props: new Map(),
+        },
+        {
+          updates: [
+            {
+              instanceId: codeText.id,
+              name: "code",
+              type: "string",
+              value: '<section></section attribute="value">',
+            },
+          ],
+        },
+        { createId: () => "code-prop-id" }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "props",
+        patches: [
+          {
+            op: "add",
+            path: ["code-prop-id"],
+            value: {
+              id: "code-prop-id",
+              instanceId: codeText.id,
+              name: "code",
+              type: "string",
+              value: '<section></section attribute="value">',
+            },
+          },
+        ],
+      },
+    ]);
+  });
+});
+
 describe("createPropRenamePayload", () => {
   test("creates remove and add patches for renamed props", () => {
     const classNameProp = prop("className", {
@@ -384,6 +545,134 @@ describe("createPropRenamePayload", () => {
         },
       ],
     });
+  });
+});
+
+describe("createStartingPropValueFromMeta", () => {
+  test("returns defaults for primitive editable prop metas", () => {
+    expect(
+      createStartingPropValueFromMeta(
+        {
+          type: "string",
+          control: "text",
+          required: false,
+          defaultValue: "Text",
+        },
+        false
+      )
+    ).toEqual({ type: "string", value: "Text" });
+    expect(
+      createStartingPropValueFromMeta(
+        {
+          type: "number",
+          control: "number",
+          required: false,
+          defaultValue: 12,
+        },
+        false
+      )
+    ).toEqual({ type: "number", value: 12 });
+    expect(
+      createStartingPropValueFromMeta(
+        {
+          type: "boolean",
+          control: "boolean",
+          required: false,
+        },
+        true
+      )
+    ).toEqual({ type: "boolean", value: true });
+  });
+
+  test("returns defaults for list and action metas", () => {
+    expect(
+      createStartingPropValueFromMeta(
+        {
+          type: "string[]",
+          control: "multi-select",
+          required: false,
+          options: ["a", "b"],
+        },
+        false
+      )
+    ).toEqual({ type: "string[]", value: [] });
+    expect(
+      createStartingPropValueFromMeta(
+        {
+          type: "action",
+          control: "action",
+          required: false,
+        },
+        false
+      )
+    ).toEqual({ type: "action", value: [] });
+  });
+
+  test("does not create a starting value for file controls", () => {
+    expect(
+      createStartingPropValueFromMeta(
+        {
+          type: "string",
+          control: "file",
+          required: false,
+        },
+        false
+      )
+    ).toBeUndefined();
+  });
+});
+
+describe("getDefaultPropMetaForType", () => {
+  test("returns fallback meta for primitive prop types", () => {
+    expect(getDefaultPropMetaForType("string")).toEqual({
+      type: "string",
+      control: "text",
+      required: false,
+    });
+    expect(getDefaultPropMetaForType("number")).toEqual({
+      type: "number",
+      control: "number",
+      required: false,
+    });
+    expect(getDefaultPropMetaForType("boolean")).toEqual({
+      type: "boolean",
+      control: "boolean",
+      required: false,
+    });
+  });
+
+  test("returns fallback meta for known special prop types", () => {
+    expect(getDefaultPropMetaForType("asset")).toEqual({
+      type: "string",
+      control: "file",
+      required: false,
+    });
+    expect(getDefaultPropMetaForType("page")).toEqual({
+      type: "string",
+      control: "url",
+      required: false,
+    });
+    expect(getDefaultPropMetaForType("action")).toEqual({
+      type: "action",
+      control: "action",
+      required: false,
+    });
+  });
+
+  test("throws for prop types that require explicit metadata", () => {
+    expect(() => getDefaultPropMetaForType("string[]")).toThrow(
+      "must have a meta"
+    );
+    expect(() => getDefaultPropMetaForType("json")).toThrow("must have a meta");
+    expect(() => getDefaultPropMetaForType("expression")).toThrow(
+      "must have a meta"
+    );
+    expect(() => getDefaultPropMetaForType("parameter")).toThrow(
+      "must have a meta"
+    );
+    expect(() => getDefaultPropMetaForType("resource")).toThrow(
+      "must have a meta"
+    );
   });
 });
 

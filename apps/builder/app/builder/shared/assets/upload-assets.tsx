@@ -15,11 +15,11 @@ import {
 } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
 import { $project } from "~/shared/sync/data-stores";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { onNextTransactionComplete } from "~/shared/sync/project-queue";
 import { invalidateAssets } from "~/shared/resources";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { formatAssetName } from "@webstudio-is/project-build/runtime/assets";
 import {
-  formatAssetName,
   getFileName,
   getMimeType,
   getSha256Hash,
@@ -35,10 +35,9 @@ const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
     return;
   }
 
-  serverSyncStore.createTransaction([$assets], (assets) => {
-    for (const assetId of assetIds) {
-      assets.delete(assetId);
-    }
+  executeRuntimeMutation({
+    id: "assets.delete",
+    input: { assetIdsOrPrefixes: assetIds, force: true },
   });
 
   onNextTransactionComplete(() => {
@@ -55,8 +54,9 @@ const safeSetAsset = (asset: Asset, projectId: string) => {
     return;
   }
 
-  serverSyncStore.createTransaction([$assets], (assets) => {
-    assets.set(asset.id, asset);
+  executeRuntimeMutation({
+    id: "assets.add",
+    input: { asset },
   });
 
   onNextTransactionComplete(() => {

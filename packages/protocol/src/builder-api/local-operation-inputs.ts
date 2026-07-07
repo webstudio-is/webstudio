@@ -1,19 +1,14 @@
 import { z } from "zod";
 import { getInputSchemaMetadata } from "@webstudio-is/project-build/contracts/input-schema";
+import type { InputJsonSchema } from "@webstudio-is/sdk";
 import type { PublicApiOperationNamespace } from "./runtime-contracts";
-
-type LocalInputSchemaMetadata = {
-  inputFields: readonly string[];
-  requiredInputFields: readonly string[];
-  inputFieldTypes: Partial<Record<string, "array">>;
-};
 
 const assetUploadDescriptor = z.object({
   name: z.string(),
   type: z.enum(["image", "font", "file"]),
   format: z.string().optional(),
   description: z.string().optional(),
-  meta: z.record(z.unknown()).optional(),
+  meta: z.record(z.string(), z.unknown()).optional(),
 });
 
 const localUploadAssetInput = z.object({
@@ -37,9 +32,9 @@ const localOperation = <
 >(
   operation: Operation,
   inputSchema: z.ZodTypeAny
-): Operation & LocalInputSchemaMetadata => ({
+): Operation & { inputSchema: InputJsonSchema } => ({
   ...operation,
-  ...getInputSchemaMetadata(inputSchema),
+  inputSchema: getInputSchemaMetadata(inputSchema).inputJsonSchema,
 });
 
 export const localOnlyOperationInputs = [

@@ -1,3 +1,7 @@
+import { serverOnlyRouterOperationMetadata } from "./__generated__/server-only-router-operation-metadata";
+import { localOnlyOperationInputs } from "./local-operation-inputs";
+import { publicRuntimeOperationContracts } from "./runtime-contracts";
+
 export type PublicApiOperationDocumentation = {
   command: string;
   description: string;
@@ -5,7 +9,7 @@ export type PublicApiOperationDocumentation = {
   examples: readonly string[];
 };
 
-export const publicApiOperationDocumentation = [
+const curatedPublicApiOperationDocumentation = [
   {
     command: "whoami",
     description: "Identify the configured API share-link token",
@@ -215,18 +219,27 @@ export const publicApiOperationDocumentation = [
     ],
   },
   {
-    command: "append-instance",
-    description: "Append, prepend, or replace child element instances",
-    requiredOptions: ["parent", "input", "json"],
+    command: "insert-component",
+    description:
+      "Insert a component by id; Webstudio uses its registered template automatically when available.",
     examples: [
-      "webstudio append-instance --parent parent-id --input children.json --json",
+      'MCP tool: insert-component {"parentInstanceId":"parent-id","component":"Box"}',
+    ],
+  },
+  {
+    command: "insert-fragment",
+    description:
+      "Insert authored/styled Webstudio JSX with components, text, props, tokens, and styles. The CLI converts the JSX string to structured Webstudio data before mutation.",
+    examples: [
+      'MCP tool: insert-fragment {"parentInstanceId":"parent-id","fragment":"<$.Box />"}',
     ],
   },
   {
     command: "move-instance",
     description: "Move element instances to another parent or position",
-    requiredOptions: ["input", "json"],
-    examples: ["webstudio move-instance --input moves.json --json"],
+    examples: [
+      'MCP tool: move-instance {"moves":[{"instanceId":"instance-id","parentInstanceId":"parent-id","insertIndex":0}]}',
+    ],
   },
   {
     command: "clone-instance",
@@ -245,7 +258,7 @@ export const publicApiOperationDocumentation = [
   {
     command: "update-props",
     description:
-      "Create or update direct element prop values; use this for fixed strings, numbers, booleans, JSON, assets, pages, parameters, and resources. Editor tokens are limited to content-mode props",
+      'Create or update direct element prop values; match value to type, for example textarea placeholder uses { "name": "placeholder", "type": "string", "value": "..." }. Use this for fixed strings, numbers, booleans, JSON, assets, pages, parameters, and resources. Editor tokens are limited to content-mode props',
     requiredOptions: ["input", "json"],
     examples: ["webstudio update-props --input props.json --json"],
   },
@@ -271,10 +284,11 @@ export const publicApiOperationDocumentation = [
   {
     command: "update-text",
     description:
-      "Update a text or expression child on an element instance; editor tokens are limited to content-mode text",
+      'Update a text or expression child on an element instance; mode must be "text" or "expression" when provided, never "replace"; editor tokens are limited to content-mode text',
     requiredOptions: ["instance", "child-index", "text", "json"],
     examples: [
-      'webstudio update-text --instance instance-id --child-index 0 --text "Launch faster" --json',
+      'webstudio update-text --instance instance-id --child-index 0 --text "Launch faster" --mode text --json',
+      'webstudio update-text --instance instance-id --child-index 0 --text "user.name" --mode expression --json',
     ],
   },
   {
@@ -536,3 +550,48 @@ export const publicApiOperationDocumentation = [
     examples: ["webstudio delete-asset --asset asset-id --confirm --json"],
   },
 ] as const satisfies readonly PublicApiOperationDocumentation[];
+
+const getSourceOperationCommands = () => [
+  ...Object.values(serverOnlyRouterOperationMetadata).map(
+    ({ command }) => command
+  ),
+  ...publicRuntimeOperationContracts.map(({ command }) => command),
+  ...localOnlyOperationInputs.map(({ command }) => command),
+];
+
+const documentationByCommand = new Map<
+  string,
+  PublicApiOperationDocumentation
+>();
+for (const documentation of curatedPublicApiOperationDocumentation) {
+  if (documentationByCommand.has(documentation.command)) {
+    throw new Error(
+      `Duplicate public API operation documentation for "${documentation.command}".`
+    );
+  }
+  documentationByCommand.set(documentation.command, documentation);
+}
+
+const createDefaultDocumentation = (
+  command: string
+): PublicApiOperationDocumentation => ({
+  command,
+  description: `Run the "${command}" MCP/public API operation. Use the operation input schema for valid JSON fields.`,
+  examples: [
+    `MCP/API: call "${command}" with JSON input matching its operation schema.`,
+  ],
+});
+
+const documentedCommands = new Set<string>();
+
+export const publicApiOperationDocumentation = getSourceOperationCommands().map(
+  (command) => {
+    if (documentedCommands.has(command)) {
+      throw new Error(`Duplicate public API command "${command}".`);
+    }
+    documentedCommands.add(command);
+    return (
+      documentationByCommand.get(command) ?? createDefaultDocumentation(command)
+    );
+  }
+) satisfies readonly PublicApiOperationDocumentation[];

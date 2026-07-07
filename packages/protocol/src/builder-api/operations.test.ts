@@ -1,10 +1,14 @@
 import { describe, expect, test } from "vitest";
+import { getInputJsonSchemaMetadata } from "@webstudio-is/sdk";
 import * as protocol from "../index";
 import {
   getPublicApiOperation,
   getPublicApiOperationPath,
   publicApiOperations,
 } from "./operations";
+import { serverOnlyRouterOperationMetadata } from "./__generated__/server-only-router-operation-metadata";
+import { localOnlyOperationInputs } from "./local-operation-inputs";
+import { publicApiOperationDocumentation } from "./operation-docs";
 import { publicApiOperationNamespaces } from "./runtime-contracts";
 import { publicRuntimeOperationContracts } from "./runtime-contracts";
 
@@ -28,6 +32,21 @@ describe("public api operation catalog", () => {
       expect(operation.examples.length).toBeGreaterThan(0);
       expect(Array.isArray(operation.inputFields)).toBe(true);
     }
+  });
+
+  test("keeps documentation in sync with implemented commands", () => {
+    const implementedCommands = [
+      ...publicRuntimeOperationContracts.map((operation) => operation.command),
+      ...Object.values(serverOnlyRouterOperationMetadata).map(
+        (operation) => operation.command
+      ),
+      ...localOnlyOperationInputs.map((operation) => operation.command),
+    ].sort();
+    const documentedCommands = publicApiOperationDocumentation
+      .map((operation) => operation.command)
+      .sort();
+
+    expect(documentedCommands).toEqual(implementedCommands);
   });
 
   test("documents public API input field names", () => {
@@ -63,6 +82,92 @@ describe("public api operation catalog", () => {
     }
   });
 
+  test("documents rich MCP input schemas for structured editing operations", () => {
+    const pageUpdateValuesSchema =
+      getPublicApiOperation("update-page").inputSchema?.properties?.values;
+    expect(pageUpdateValuesSchema).toEqual(expect.any(Object));
+    if (
+      pageUpdateValuesSchema === undefined ||
+      typeof pageUpdateValuesSchema !== "object"
+    ) {
+      throw Error("Expected update-page values schema object");
+    }
+    expect(pageUpdateValuesSchema.type).toBe("object");
+    expect(pageUpdateValuesSchema.properties?.title).toMatchObject({
+      type: "string",
+    });
+    expect(pageUpdateValuesSchema.properties?.meta).toMatchObject({
+      type: "object",
+    });
+    expect(
+      getPublicApiOperation("move-instance").inputSchema?.properties?.moves
+    ).toMatchObject({
+      type: "array",
+      items: expect.objectContaining({
+        type: "object",
+        properties: expect.objectContaining({
+          instanceId: { type: "string" },
+          parentInstanceId: { type: "string" },
+        }),
+      }),
+    });
+    expect(
+      getPublicApiOperation("update-props").inputSchema?.properties?.updates
+    ).toMatchObject({
+      type: "array",
+      items: expect.objectContaining({
+        oneOf: expect.arrayContaining([
+          expect.objectContaining({
+            type: "object",
+            properties: expect.objectContaining({
+              instanceId: expect.objectContaining({ type: "string" }),
+              name: expect.objectContaining({ type: "string" }),
+              type: expect.objectContaining({ const: "string" }),
+              value: expect.objectContaining({ type: "string" }),
+            }),
+            required: expect.arrayContaining([
+              "instanceId",
+              "name",
+              "type",
+              "value",
+            ]),
+          }),
+        ]),
+      }),
+    });
+    expect(
+      getPublicApiOperation("update-text").inputSchema?.properties?.mode
+    ).toMatchObject({
+      type: "string",
+      enum: ["text", "expression"],
+      description: expect.stringContaining('There is no "replace" mode.'),
+    });
+    expect(
+      getPublicApiOperation("update-styles").inputSchema?.properties?.updates
+    ).toMatchObject({
+      type: "array",
+      items: expect.objectContaining({
+        type: "object",
+        properties: expect.objectContaining({
+          instanceId: { type: "string" },
+          property: { type: "string" },
+        }),
+      }),
+    });
+    expect(
+      getPublicApiOperation("apply-patch").inputSchema?.properties?.transactions
+    ).toMatchObject({
+      type: "array",
+      items: expect.objectContaining({
+        type: "object",
+        properties: expect.objectContaining({
+          id: expect.objectContaining({ type: "string" }),
+          payload: expect.objectContaining({ type: "array" }),
+        }),
+      }),
+    });
+  });
+
   test("derives local-capable namespace metadata from runtime contracts", () => {
     const runtimeContractsById = new Map(
       publicRuntimeOperationContracts.map((contract) => [contract.id, contract])
@@ -86,11 +191,17 @@ describe("public api operation catalog", () => {
       expect(operation.serverOnly).toBe(contract === undefined);
       expect(operation.runtimeOperationId).toBe(contract?.id);
       if (contract !== undefined) {
-        expect(operation.inputFields).toEqual(contract.inputFields);
-        expect(operation.requiredInputFields).toEqual(
-          contract.requiredInputFields
+        const inputSchemaMetadata = getInputJsonSchemaMetadata(
+          contract.inputSchema
         );
-        expect(operation.inputFieldTypes).toEqual(contract.inputFieldTypes);
+        expect(operation.inputFields).toEqual(inputSchemaMetadata.inputFields);
+        expect(operation.requiredInputFields).toEqual(
+          inputSchemaMetadata.requiredInputFields
+        );
+        expect(operation.inputFieldTypes).toEqual(
+          inputSchemaMetadata.inputFieldTypes
+        );
+        expect(operation.inputSchema).toEqual(contract.inputSchema);
       }
       expect(operation.readNamespaces).toEqual(contract?.readNamespaces ?? []);
       expect(operation.writeNamespaces).toEqual(

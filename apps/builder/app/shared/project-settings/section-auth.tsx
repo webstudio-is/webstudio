@@ -23,65 +23,28 @@ import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import {
   createBasicAuthRoute,
-  parseWsAuth,
   serializeWsAuth,
-  validateBasicAuth,
   type WsAuthRoute,
 } from "@webstudio-is/wsauth";
+import { validateBasicAuthCredentials } from "@webstudio-is/project-build/runtime/auth";
 import { $permissions } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
-
-const parseAuthRoutes = (auth: string | undefined) => {
-  return parseWsAuth(auth ?? "");
-};
-
-const validateRouteSyntax = (route: string) => {
-  const result = parseWsAuth(
-    JSON.stringify({
-      version: 1,
-      routes: {
-        [route]: {
-          method: "basic",
-          login: "login",
-          password: "password",
-        },
-      },
-    })
-  );
-  return result.errors.find((error) =>
-    error.path.startsWith(`routes.${JSON.stringify(route)}`)
-  )?.message;
-};
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import {
+  parseProjectAuthRoutes,
+  validateProjectAuthRoute,
+} from "@webstudio-is/project-build/runtime/project-settings";
 
 const saveAuthRoutes = (authRoutes: WsAuthRoute[]) => {
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    if (pages.meta === undefined) {
-      pages.meta = {};
-    }
-    pages.meta.auth =
-      authRoutes.length === 0 ? undefined : serializeWsAuth(authRoutes);
+  executeRuntimeMutation({
+    id: "projectSettings.update",
+    input: {
+      meta: {
+        auth: authRoutes.length === 0 ? null : serializeWsAuth(authRoutes),
+      },
+    },
   });
-};
-
-const validateRoute = (route: string, authRoutes: WsAuthRoute[]) => {
-  const errors: string[] = [];
-  if (route === "") {
-    errors.push("Route is required");
-    return errors;
-  }
-  const routeError = validateRouteSyntax(route);
-  if (routeError !== undefined) {
-    errors.push(routeError);
-  }
-  if (authRoutes.some((authRoute) => authRoute.route === route)) {
-    errors.push("This route already requires authentication");
-  }
-  return errors;
 };
 
 export const SectionAuth = () => {
@@ -89,7 +52,7 @@ export const SectionAuth = () => {
   const pages = useStore($pages);
   const routeRef = useRef<HTMLInputElement>(null);
   const [authRoutes, setAuthRoutes] = useState(() => {
-    return parseAuthRoutes($pages.get()?.meta?.auth).routes;
+    return parseProjectAuthRoutes($pages.get()?.meta?.auth).routes;
   });
   const [route, setRoute] = useState("");
   const [login, setLogin] = useState("");
@@ -101,7 +64,7 @@ export const SectionAuth = () => {
 
   const authContent = pages?.meta?.auth;
   const parseResult = useMemo(() => {
-    return parseAuthRoutes(authContent);
+    return parseProjectAuthRoutes(authContent);
   }, [authContent]);
   const parseErrors = parseResult.errors;
 
@@ -123,7 +86,7 @@ export const SectionAuth = () => {
 
   const handleRouteChange = (value: string) => {
     setRoute(value);
-    setRouteErrors(validateRoute(value.trim(), authRoutes));
+    setRouteErrors(validateProjectAuthRoute(value.trim(), authRoutes));
   };
 
   const handleSave = (nextAuthRoutes: WsAuthRoute[]) => {
@@ -133,13 +96,13 @@ export const SectionAuth = () => {
 
   const handleAddAuthRoute = () => {
     const nextRoute = route.trim();
-    const nextRouteErrors = validateRoute(nextRoute, authRoutes);
-    const basicAuthValidation = validateBasicAuth({
+    const nextRouteErrors = validateProjectAuthRoute(nextRoute, authRoutes);
+    const basicAuthErrors = validateBasicAuthCredentials({
       login,
       password,
     });
-    const nextLoginErrors = basicAuthValidation.errors?.login ?? [];
-    const nextPasswordErrors = basicAuthValidation.errors?.password ?? [];
+    const nextLoginErrors = basicAuthErrors?.login ?? [];
+    const nextPasswordErrors = basicAuthErrors?.password ?? [];
 
     setRouteErrors(nextRouteErrors);
     setLoginErrors(nextLoginErrors);
@@ -390,9 +353,4 @@ export const SectionAuth = () => {
       ) : null}
     </Grid>
   );
-};
-
-export const __testing__ = {
-  parseAuthRoutes,
-  validateRoute,
 };

@@ -11,9 +11,12 @@ import { throwApiError } from "./api-errors.server";
 export const createBuilderRuntimeState = (
   build: CompactBuild,
   assets?: Asset[]
-): BuilderState => createBuilderStateFromCompactBuild({ ...build, assets });
+): BuilderState =>
+  createBuilderStateFromCompactBuild(
+    assets === undefined ? build : { ...build, assets }
+  );
 
-export const executeApiRuntimeOperation = <Result>({
+export const executeApiRuntimeOperation = async <Result>({
   id,
   build,
   assets,
@@ -23,9 +26,9 @@ export const executeApiRuntimeOperation = <Result>({
   build: CompactBuild;
   assets?: Asset[];
   input: unknown;
-}): Result => {
+}): Promise<Result> => {
   try {
-    return executeBuilderRuntimeOperation<Result>({
+    return await executeBuilderRuntimeOperation<Result>({
       id,
       state: createBuilderRuntimeState(build, assets),
       input,

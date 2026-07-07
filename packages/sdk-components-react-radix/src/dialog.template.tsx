@@ -23,7 +23,7 @@ import {
   width,
   zIndex,
 } from "./shared/theme";
-import { getButtonStyle } from "./shared/styles";
+import { getButtonStyle, iconEmbedStyle } from "./shared/styles";
 
 /**
  * Styles source without animations:
@@ -150,7 +150,11 @@ export const meta: TemplateMeta = {
               }
             `}
           >
-            <$.HtmlEmbed ws:label="Close Icon" code={LargeXIcon} />
+            <$.HtmlEmbed
+              ws:label="Close Icon"
+              ws:style={iconEmbedStyle}
+              code={LargeXIcon}
+            />
           </radix.DialogClose>
         </radix.DialogContent>
       </radix.DialogOverlay>

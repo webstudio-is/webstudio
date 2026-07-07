@@ -35,11 +35,10 @@ import { type Asset } from "@webstudio-is/sdk";
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
-} from "@webstudio-is/project/content-mode-permissions";
+} from "@webstudio-is/project-build/runtime/content-mode-permissions";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import {
   runtimeOperationContracts,
-  type RuntimeOperationContract,
   type RuntimeOperationId,
 } from "@webstudio-is/project-build/contracts/builder-runtime";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
@@ -268,7 +267,7 @@ const commitRuntimeMutation = async <
   input: unknown;
   commit: BuildCommit;
 }) => {
-  const mutation = executeApiRuntimeMutation<Result>({
+  const mutation = await executeApiRuntimeMutation<Result>({
     id,
     build,
     assets,
@@ -414,19 +413,14 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
     }
   );
 
-const isRuntimeOperationId = (id: string): id is RuntimeOperationId =>
-  runtimeOperationContracts.some((operation) => operation.id === id);
-
 type RuntimeOperationRouteTree = Record<string, unknown>;
 type RouterRecord = Parameters<typeof router>[0];
+type RuntimeOperation = (typeof runtimeOperationContracts)[number];
 
 const addRuntimeOperationRoute = (
   tree: RuntimeOperationRouteTree,
-  operation: RuntimeOperationContract
+  operation: RuntimeOperation
 ) => {
-  if (isRuntimeOperationId(operation.id) === false) {
-    throw new Error(`Unknown runtime operation "${operation.id}".`);
-  }
   const path = operation.id.split(".");
   const routeName = path.at(-1);
   if (routeName === undefined || path.length < 2) {
@@ -443,16 +437,11 @@ const addRuntimeOperationRoute = (
   if (namespace[routeName] !== undefined) {
     throw new Error(`Duplicate runtime operation route "${operation.id}".`);
   }
-  namespace[routeName] = createRuntimeOperationProcedure(operation.id);
+  namespace[routeName] = createRuntimeOperationProcedure(operation);
 };
 
-const createRuntimeOperationProcedure = (id: RuntimeOperationId) => {
-  const operation = runtimeOperationContracts.find(
-    (operation) => operation.id === id
-  );
-  if (operation === undefined) {
-    throw new Error(`Unknown runtime operation "${id}".`);
-  }
+const createRuntimeOperationProcedure = (operation: RuntimeOperation) => {
+  const { id } = operation;
   if (operation.requiresAssets) {
     return operation.kind === "read"
       ? runtimeAssetsQuery(id)

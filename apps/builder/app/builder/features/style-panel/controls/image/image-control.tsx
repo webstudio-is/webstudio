@@ -14,7 +14,7 @@ import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
-import { formatAssetName } from "~/builder/shared/assets/asset-utils";
+import { formatAssetName } from "@webstudio-is/project-build/runtime/assets";
 import { AssetUpload } from "~/builder/shared/assets";
 
 const isValidURL = (value: string) => {

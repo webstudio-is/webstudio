@@ -16,10 +16,10 @@ import { assertApiProjectPermit } from "~/services/api-permits.server";
 import {
   getAssetInfoFallback,
   getBrowserAssetFormat,
-  getBrowserUploadBody,
   parseAssetType,
   type AssetInfoFallback,
-} from "~/services/asset-upload.server";
+} from "@webstudio-is/project-build/runtime/assets";
+import { getBrowserUploadBody } from "~/services/asset-upload.server";
 
 const createAssetUploadResponse = async ({
   body,

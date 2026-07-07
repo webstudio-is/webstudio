@@ -31,110 +31,27 @@ import {
   UploadIcon,
 } from "@webstudio-is/icons";
 import { ImportRedirectsDialog } from "./import-redirects-dialog";
-import { redirectSourcePath, projectNewRedirectPath } from "@webstudio-is/sdk";
 import type { PageRedirect } from "@webstudio-is/sdk";
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { $pages } from "~/shared/sync/data-stores";
 import { $publishedOrigin } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
-import {
-  doesRedirectSourceOverridePagePath,
-  getExistingRoutePaths,
-  sectionSpacing,
-} from "./utils";
+import { getExistingRoutePaths, sectionSpacing } from "./utils";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   LOOP_ERROR,
   wouldCreateLoop,
-} from "~/shared/redirects/redirect-loop-detection";
+} from "@webstudio-is/project-build/runtime/redirect-loop-detection";
 import {
-  hasInvalidLocalTargetParams,
-  hasNamedSplat,
-  normalizeRedirectSource,
-  stripRedirectSourceFragment,
-} from "~/shared/redirects/redirect-source";
+  validateRedirectSource,
+  validateRedirectTarget,
+} from "@webstudio-is/project-build/runtime/project-settings";
 
 const statusCodeOptions = ["301", "302"] as const;
 
 const statusCodeDescriptions: Record<string, string> = {
   "301": "Moved permanently. SEO ranking transfers to new URL.",
   "302": "Moved temporarily. SEO ranking stays with original URL.",
-};
-
-type ValidationResult = {
-  errors: string[];
-  warnings: string[];
-};
-
-const validateFromPath = (
-  fromPath: string,
-  redirects: Array<PageRedirect>,
-  existingPaths: Set<string>
-): ValidationResult => {
-  const fromPathValidationResult = redirectSourcePath.safeParse(fromPath);
-
-  if (fromPathValidationResult.success) {
-    if (hasNamedSplat(fromPath)) {
-      return {
-        errors: ["Named splats are not supported; use * instead"],
-        warnings: [],
-      };
-    }
-
-    const sourceWithoutFragment = stripRedirectSourceFragment(fromPath);
-    const sourcePath = normalizeRedirectSource(fromPath);
-    const warnings =
-      sourceWithoutFragment === fromPath
-        ? []
-        : ["Source fragments are ignored because browsers do not send them"];
-
-    // Check for duplicate redirect first (error takes precedence)
-    if (
-      redirects.some(
-        (redirect) => normalizeRedirectSource(redirect.old) === sourcePath
-      )
-    ) {
-      return {
-        errors: ["This path is already being redirected"],
-        warnings,
-      };
-    }
-
-    // Show warning if redirecting from an existing page path.
-    // The redirect will take precedence over the page when published.
-    if (
-      Array.from(existingPaths).some((pagePath) =>
-        doesRedirectSourceOverridePagePath(sourcePath, pagePath)
-      )
-    ) {
-      return {
-        errors: [],
-        warnings: [...warnings, "This redirect will override an existing page"],
-      };
-    }
-    return { errors: [], warnings };
-  }
-
-  return {
-    errors: fromPathValidationResult.error.format()?._errors,
-    warnings: [],
-  };
-};
-
-const unsupportedTargetParamMessage =
-  "Target route params must match params from the source path";
-
-const validateToPath = (toPath: string, fromPath?: string): string[] => {
-  const toPathValidationResult = projectNewRedirectPath.safeParse(toPath);
-  if (toPathValidationResult.success === false) {
-    return toPathValidationResult.error.format()._errors;
-  }
-
-  if (hasInvalidLocalTargetParams(toPath, fromPath)) {
-    return [unsupportedTargetParamMessage];
-  }
-
-  return [];
 };
 
 const deleteRedirect = (
@@ -147,8 +64,6 @@ const deleteRedirect = (
 // Exported for testing
 export const __testing__ = {
   deleteRedirect,
-  validateFromPath,
-  validateToPath,
 };
 
 export const SectionRedirects = () => {
@@ -188,40 +103,48 @@ export const SectionRedirects = () => {
 
   const handleFromPathChange = (value: string) => {
     setFromPath(value);
-    const { errors, warnings } = validateFromPath(
-      value,
+    const { errors, warnings } = validateRedirectSource({
+      source: value,
       redirects,
-      existingPaths
-    );
+      existingPaths,
+    });
     setFromPathErrors(errors);
     setFromPathWarnings(warnings);
     if (toPath !== "") {
-      setToPathErrors(validateToPath(toPath, value));
+      setToPathErrors(
+        validateRedirectTarget({ target: toPath, source: value })
+      );
     }
   };
 
   const handleToPathChange = (value: string) => {
     setToPath(value);
-    setToPathErrors(validateToPath(value, fromPath));
+    setToPathErrors(
+      validateRedirectTarget({ target: value, source: fromPath })
+    );
   };
 
   const handleSave = (redirects: Array<PageRedirect>) => {
     setRedirects(redirects);
-    serverSyncStore.createTransaction([$pages], (pages) => {
-      if (pages === undefined) {
-        return;
-      }
-      pages.redirects = redirects;
+    executeRuntimeMutation({
+      id: "redirects.setAll",
+      input: {
+        redirects,
+      },
     });
   };
 
   const handleAddRedirect = () => {
-    const { errors: fromPathValidationErrors, warnings } = validateFromPath(
-      fromPath,
-      redirects,
-      existingPaths
-    );
-    const toPathValidationErrors = validateToPath(toPath, fromPath);
+    const { errors: fromPathValidationErrors, warnings } =
+      validateRedirectSource({
+        source: fromPath,
+        redirects,
+        existingPaths,
+      });
+    const toPathValidationErrors = validateRedirectTarget({
+      target: toPath,
+      source: fromPath,
+    });
     const hasLoop = wouldCreateLoop(fromPath, toPath, redirects);
 
     // Update error state so user sees what went wrong

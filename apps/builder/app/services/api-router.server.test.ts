@@ -115,6 +115,7 @@ describe("api router build operation adapters", () => {
         operation.requiredInputFields
       );
       expect(metadata.inputFieldTypes).toEqual(operation.inputFieldTypes);
+      expect(metadata.inputJsonSchema).toEqual(operation.inputSchema);
     }
   });
 

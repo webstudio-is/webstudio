@@ -1,6 +1,5 @@
 import {
   reparentInstance,
-  setInstanceLabelMutable,
   toggleInstanceShow,
 } from "~/shared/instance-utils/mutation";
 import { useEffect, useMemo, useRef } from "react";
@@ -35,6 +34,7 @@ import {
   type Instance,
 } from "@webstudio-is/sdk";
 import { animationCanPlayOnCanvasProperty } from "@webstudio-is/sdk/runtime";
+import { showAttributeMeta } from "@webstudio-is/project-build/runtime/props";
 import {
   EyeClosedIcon,
   EyeOpenIcon,
@@ -68,17 +68,14 @@ import { $instances, $props } from "~/shared/sync/data-stores";
 import { suppressCommandsForEvent } from "~/shared/commands-emitter";
 import {
   areInstanceSelectorsEqual,
+  canDropInstanceSelector,
   isDescendantOrSelf,
   type InstanceSelector,
-} from "~/shared/instance-utils/tree";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
+} from "@webstudio-is/project-build/runtime/tree";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
-import {
-  findClosestContainer,
-  isRichTextContent,
-  isTreeSatisfyingContentModel,
-} from "~/shared/content-model";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { isRichTextContent } from "@webstudio-is/project-build/runtime/content-model";
 import {
   getInstanceLabel,
   InstanceIcon,
@@ -454,11 +451,9 @@ const ShowToggle = ({
 
   return (
     <Tooltip
-      // If you are changing it, change the other one too
       content={
         <Text>
-          Removes the instance from the DOM. Breakpoints have no effect on this
-          setting.
+          {showAttributeMeta.description}
           {isAnimating && value && (
             <>
               <br />
@@ -527,9 +522,9 @@ const TreeNodeContent = ({
     isEditable: true,
     isEditing,
     onChangeValue: (value: string) => {
-      const instanceId = instance.id;
-      serverSyncStore.createTransaction([$instances], (instances) => {
-        setInstanceLabelMutable(instances, instanceId, value);
+      executeRuntimeMutation({
+        id: "instances.setLabel",
+        input: { instanceId: instance.id, label: value },
       });
       editableRef.current?.closest("button")?.focus();
     },
@@ -641,42 +636,15 @@ const canDrop = (
   dropTarget: ItemDropTarget
 ) => {
   const dropSelector = dropTarget.itemSelector;
-  const instances = $instances.get();
-  const props = $props.get();
-  const metas = $registeredComponentMetas.get();
-  const { htmlTagsByInstanceId } = $propsIndex.get();
-  // in content mode allow drop only within same block
-  if ($isContentMode.get()) {
-    const parentInstance = instances.get(dropSelector[0]);
-    if (parentInstance?.component !== blockComponent) {
-      return false;
-    }
-    // parent of dragging item should be the same as drop target
-    if (dropSelector[0] !== dragSelector[1]) {
-      return false;
-    }
-  }
-  // prevent dropping into non-container instances
-  const containerSelector = findClosestContainer({
-    metas,
-    props,
-    instances,
-    instanceSelector: dropSelector,
-    htmlTagsByInstanceId,
+  return canDropInstanceSelector({
+    dragSelector,
+    dropSelector,
+    instances: $instances.get(),
+    props: $props.get(),
+    metas: $registeredComponentMetas.get(),
+    htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
+    contentMode: $isContentMode.get(),
   });
-  if (dropSelector.length !== containerSelector.length) {
-    return false;
-  }
-  // make sure dragging tree can be put inside of drop instance
-  const containerInstanceSelector = [dragSelector[0], ...dropSelector];
-  const matches = isTreeSatisfyingContentModel({
-    instances,
-    metas,
-    props,
-    instanceSelector: containerInstanceSelector,
-    htmlTagsByInstanceId,
-  });
-  return matches;
 };
 
 export const NavigatorTree = () => {

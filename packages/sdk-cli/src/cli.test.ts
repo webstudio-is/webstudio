@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { runCli } from "./cli";
-import { generateStories } from "./generate-stories";
 import { validateRegistry } from "./validate-registry";
-
-vi.mock("./generate-stories", () => ({
-  generateStories: vi.fn(),
-}));
 
 vi.mock("./validate-registry", () => ({
   validateRegistry: vi.fn(),
@@ -16,10 +11,10 @@ beforeEach(() => {
 });
 
 describe("runCli", () => {
-  test("runs story generation", async () => {
-    await runCli(["generate-stories"]);
-
-    expect(generateStories).toHaveBeenCalledOnce();
+  test("points story generation to package-local static entrypoints", async () => {
+    await expect(runCli(["generate-stories"])).rejects.toThrow(
+      "generate-stories must be run from a package-local static entrypoint"
+    );
   });
 
   test("runs registry validation", async () => {

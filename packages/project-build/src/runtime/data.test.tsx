@@ -23,22 +23,32 @@ import {
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   computeExpression,
+  computeExpressionWithinScope,
+  createDataVariable,
   dataVariableCreateInput,
   createDataVariableCreatePayload,
   createDataVariableDeletePayload,
+  createUnusedDataVariablesDeletePayload,
   createDataVariableUpdatePayload,
+  createDataVariableValueFromInput,
+  createResourceFieldsFromResource,
   createResourceCreatePayload,
   createResourceDeletePayload,
+  createResourceFieldsFromFormData,
   createResourceUpdatePayload,
   createResourceUpsertPatchPayload,
   createResourceValue,
+  createResourceValueFromFormData,
   decodeDataVariableName,
   deleteVariableMutable,
+  deleteUnusedDataVariables,
   encodeDataVariableName,
   findAvailableVariables,
   findResource,
+  findUnusedDataVariableIds,
   findUnsetVariableNames,
   findVariableUsagesByInstance,
+  getDataVariableJsonExpressionErrors,
   getResourceExpressionErrors,
   rebindTreeVariablesMutable,
   replaceDataSourcesInExpression,
@@ -49,8 +59,16 @@ import {
   serializeDataVariables,
   serializeResources,
   unsetExpressionVariables,
+  updateDataVariable,
+  updateResource,
+  upsertResource,
+  upsertResourceProp,
   upsertResourceMutable,
+  validateDataVariableJsonValue,
   validateDataVariableNameWithSources,
+  validateDataVariableNumberValue,
+  validateResourceBodyExpression,
+  validateResourceUrlExpression,
 } from "./data";
 
 test("rejects client-supplied ids on data create inputs", () => {
@@ -145,6 +163,84 @@ test("validate data variable name", () => {
       scopeInstanceId: "instance-1",
     })
   ).toBeUndefined();
+  expect(
+    validateDataVariableNameWithSources({
+      dataSources: [
+        ...dataSources,
+        {
+          id: "variable-2",
+          scopeInstanceId: "instance-1",
+          name: "otherVariable",
+          type: "variable",
+          value: { type: "string", value: "" },
+        },
+      ],
+      name: "existingVariable",
+      variableId: "variable-2",
+      scopeInstanceId: "instance-1",
+    })
+  ).toEqual({
+    type: "duplicate",
+    message: "Name is already used by another variable on this instance",
+  });
+  expect(
+    validateDataVariableNameWithSources({
+      dataSources,
+      name: "existingVariable",
+      variableId: "variable-1",
+      scopeInstanceId: "instance-1",
+    })
+  ).toBeUndefined();
+  expect(
+    validateDataVariableNameWithSources({
+      dataSources: [
+        {
+          id: "variable-1",
+          name: "globalVariable",
+          type: "variable",
+          value: { type: "string", value: "" },
+        },
+      ],
+      name: "globalVariable",
+    })
+  ).toEqual({
+    type: "duplicate",
+    message: "Name is already used by another variable on this instance",
+  });
+});
+
+test("creates data variable values from form input values", () => {
+  expect(
+    createDataVariableValueFromInput({ type: "string", value: null })
+  ).toEqual({ type: "string", value: "" });
+  expect(
+    createDataVariableValueFromInput({ type: "number", value: "42" })
+  ).toEqual({ type: "number", value: 42 });
+  expect(
+    createDataVariableValueFromInput({ type: "boolean", value: "on" })
+  ).toEqual({ type: "boolean", value: true });
+  expect(
+    createDataVariableValueFromInput({ type: "boolean", value: null })
+  ).toEqual({ type: "boolean", value: false });
+  expect(
+    createDataVariableValueFromInput({
+      type: "json",
+      value: '{ "enabled": true }',
+    })
+  ).toEqual({ type: "json", value: { enabled: true } });
+});
+
+test("validates data variable number values", () => {
+  expect(validateDataVariableNumberValue("")).toBe("Value expects a number");
+  expect(validateDataVariableNumberValue("abc")).toBe("Invalid number");
+  expect(validateDataVariableNumberValue("12")).toBe("");
+});
+
+test("reports data variable json expression errors", () => {
+  expect(getDataVariableJsonExpressionErrors("{").length).toBeGreaterThan(0);
+  expect(getDataVariableJsonExpressionErrors("{ ok: true }")).toEqual([]);
+  expect(validateDataVariableJsonValue("{")).toBe("error");
+  expect(validateDataVariableJsonValue("{ ok: true }")).toBe("");
 });
 
 test("serialize data variables filters by scope", () => {
@@ -313,6 +409,148 @@ test("update data variable payload validates renamed variables", () => {
     type: "duplicate",
     message: "Name is already used by another variable on this instance",
   });
+});
+
+test("create data variable rebinds expressions through runtime operation", () => {
+  const body: Instance = {
+    type: "instance",
+    id: "body",
+    component: "Body",
+    children: [
+      { type: "id", value: "box" },
+      { type: "expression", value: "title" },
+    ],
+  };
+  const box: Instance = {
+    type: "instance",
+    id: "box",
+    component: "Box",
+    children: [],
+  };
+
+  expect(
+    createDataVariable(
+      {
+        pages: createDefaultPages({ rootInstanceId: "body" }),
+        instances: new Map([
+          [body.id, body],
+          [box.id, box],
+        ]),
+        props: new Map(),
+        dataSources: new Map(),
+        resources: new Map(),
+      },
+      {
+        scopeInstanceId: "body",
+        name: "title",
+        value: { type: "string", value: "Hello" },
+      },
+      { createId: () => "title-id" }
+    ).payload
+  ).toEqual([
+    {
+      namespace: "instances",
+      patches: [
+        {
+          op: "replace",
+          path: ["body"],
+          value: {
+            ...body,
+            children: [
+              { type: "id", value: "box" },
+              {
+                type: "expression",
+                value: encodeDataVariableId("title-id"),
+              },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      namespace: "dataSources",
+      patches: [
+        {
+          op: "add",
+          path: ["title-id"],
+          value: {
+            id: "title-id",
+            scopeInstanceId: "body",
+            name: "title",
+            type: "variable",
+            value: { type: "string", value: "Hello" },
+          },
+        },
+      ],
+    },
+  ]);
+});
+
+test("update data variable converts resource data source and deletes resource", () => {
+  const dataSource: DataSource = {
+    id: "data-source-id",
+    scopeInstanceId: "body",
+    name: "resourceName",
+    type: "resource",
+    resourceId: "resource-id",
+  };
+  const resource: Resource = {
+    id: "resource-id",
+    name: "resourceName",
+    method: "get",
+    url: `"https://example.com"`,
+    headers: [],
+  };
+
+  expect(
+    updateDataVariable(
+      {
+        pages: createDefaultPages({ rootInstanceId: "body" }),
+        instances: new Map([
+          [
+            "body",
+            {
+              type: "instance",
+              id: "body",
+              component: "Body",
+              children: [],
+            },
+          ],
+        ]),
+        props: new Map(),
+        dataSources: new Map([[dataSource.id, dataSource]]),
+        resources: new Map([[resource.id, resource]]),
+      },
+      {
+        dataSourceId: dataSource.id,
+        values: {
+          name: "title",
+          value: { type: "string", value: "Hello" },
+        },
+      }
+    ).payload
+  ).toEqual([
+    {
+      namespace: "dataSources",
+      patches: [
+        {
+          op: "replace",
+          path: ["data-source-id"],
+          value: {
+            id: "data-source-id",
+            scopeInstanceId: "body",
+            name: "title",
+            type: "variable",
+            value: { type: "string", value: "Hello" },
+          },
+        },
+      ],
+    },
+    {
+      namespace: "resources",
+      patches: [{ op: "remove", path: ["resource-id"] }],
+    },
+  ]);
 });
 
 test("dencode data variable name with dollar sign", () => {
@@ -1021,7 +1259,9 @@ test("delete data variable payload reuses mutable cleanup semantics", () => {
   );
   const [bodyVariableId] = data.dataSources.keys();
   const pages = createDefaultPages({ rootInstanceId: "bodyId" });
-  getHomePage(pages).title = encodeDataVariableId(bodyVariableId);
+  const homePage = getHomePage(pages);
+  homePage.title = encodeDataVariableId(bodyVariableId);
+  homePage.systemDataSourceId = bodyVariableId;
 
   const { payload, deletedVariable } = createDataVariableDeletePayload({
     variableId: bodyVariableId,
@@ -1042,6 +1282,9 @@ test("delete data variable payload reuses mutable cleanup semantics", () => {
   expect(getHomePage(pageChange.patches[0].value as typeof pages).title).toBe(
     "bodyVariable"
   );
+  expect(
+    getHomePage(pageChange.patches[0].value as typeof pages).systemDataSourceId
+  ).toBeUndefined();
   expect(payload).toEqual([
     expect.objectContaining({
       namespace: "pages",
@@ -1518,6 +1761,70 @@ test("find variable usages counts unique instances not expressions", () => {
   expect(usagesByInstance.get(bodyVariableId)?.size).toBe(1);
 });
 
+test("finds and deletes unused data variables in one runtime mutation", () => {
+  const usedVariable = new Variable("usedVariable", "");
+  const unusedVariable = new Variable("unusedVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...renderData(
+      <$.Body
+        ws:id="bodyId"
+        vars={expression`${usedVariable};${unusedVariable}`}
+        data-prop={expression`${usedVariable}`}
+      ></$.Body>
+    ),
+  };
+  const usedVariableId = [...data.dataSources.values()].find(
+    (dataSource) => dataSource.name === "usedVariable"
+  )!.id;
+  const unusedVariableId = [...data.dataSources.values()].find(
+    (dataSource) => dataSource.name === "unusedVariable"
+  )!.id;
+
+  expect(findUnusedDataVariableIds(data)).toEqual([unusedVariableId]);
+  const { payload, deletedVariableIds } =
+    createUnusedDataVariablesDeletePayload(data);
+
+  expect(deletedVariableIds).toEqual([unusedVariableId]);
+  expect(payload).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        namespace: "dataSources",
+        patches: expect.arrayContaining([
+          { op: "remove", path: [unusedVariableId] },
+        ]),
+      }),
+    ])
+  );
+  expect(deleteUnusedDataVariables(data, {}).result).toEqual({
+    dataSourceIds: [unusedVariableId],
+    deletedCount: 1,
+  });
+  expect(findUnusedDataVariableIds(data)).toEqual([unusedVariableId]);
+  expect(data.dataSources.has(usedVariableId)).toBe(true);
+  expect(data.dataSources.has(unusedVariableId)).toBe(true);
+});
+
+test("delete unused data variables is a noop when all variables are used", () => {
+  const usedVariable = new Variable("usedVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...renderData(
+      <$.Body
+        ws:id="bodyId"
+        vars={expression`${usedVariable}`}
+        data-prop={expression`${usedVariable}`}
+      ></$.Body>
+    ),
+  };
+
+  expect(deleteUnusedDataVariables(data, {})).toMatchObject({
+    payload: [],
+    result: { dataSourceIds: [], deletedCount: 0 },
+    invalidatesNamespaces: [],
+  });
+});
+
 describe("createResourceValue", () => {
   test("parse resource create and update inputs used by the API", () => {
     expect(
@@ -1573,6 +1880,32 @@ describe("createResourceValue", () => {
     ).toThrow();
   });
 
+  test("reject invalid literal resource urls", () => {
+    expect(() =>
+      resourceFieldsInput.parse({
+        name: "Users",
+        method: "get",
+        url: '""',
+        searchParams: [],
+        headers: [],
+      })
+    ).toThrow("url: URL is required");
+    expect(() =>
+      resourceFieldsUpdateInput.parse({
+        url: '"not a url"',
+      })
+    ).toThrow("url: URL is invalid");
+    expect(() =>
+      resourceFieldsInput.parse({
+        name: "Users",
+        method: "get",
+        url: "123",
+        searchParams: [],
+        headers: [],
+      })
+    ).toThrow("url: URL expects a string");
+  });
+
   test("creates resource values through the sdk schema", () => {
     expect(
       createResourceValue({
@@ -1592,6 +1925,66 @@ describe("createResourceValue", () => {
       searchParams: [{ name: "page", value: '"1"' }],
       headers: [{ name: "Authorization", value: '"Bearer token"' }],
       body: '"body"',
+    });
+  });
+
+  test("creates resource fields from resource values", () => {
+    expect(
+      createResourceFieldsFromResource({
+        id: "resource-id",
+        name: "Users",
+        method: "post",
+        url: '"https://example.com/users"',
+        searchParams: [{ name: "page", value: '"1"' }],
+        headers: [{ name: "Authorization", value: '"Bearer token"' }],
+        body: '"body"',
+      })
+    ).toEqual({
+      name: "Users",
+      method: "post",
+      url: '"https://example.com/users"',
+      searchParams: [{ name: "page", value: '"1"' }],
+      headers: [{ name: "Authorization", value: '"Bearer token"' }],
+      body: '"body"',
+    });
+  });
+
+  test("creates resource fields and values from form data", () => {
+    const formData = {
+      get: (name: string) =>
+        new Map<string, unknown>([
+          ["name", "Users"],
+          ["url", '"https://example.com/users"'],
+          ["method", "post"],
+          ["body", ""],
+        ]).get(name),
+      getAll: (name: string) =>
+        new Map<string, unknown[]>([
+          ["search-param-name", ["q", ""]],
+          ["search-param-value", ["search", "ignored"]],
+          ["header-name", ["Content-Type"]],
+          ["header-value", ['"application/json"']],
+        ]).get(name) ?? [],
+    };
+
+    expect(createResourceFieldsFromFormData({ formData })).toEqual({
+      name: "Users",
+      method: "post",
+      url: '"https://example.com/users"',
+      searchParams: [{ name: "q", value: "search" }],
+      headers: [{ name: "Content-Type", value: '"application/json"' }],
+      body: undefined,
+    });
+    expect(
+      createResourceValueFromFormData({ id: "resource-id", formData })
+    ).toEqual({
+      id: "resource-id",
+      name: "Users",
+      method: "post",
+      url: '"https://example.com/users"',
+      searchParams: [{ name: "q", value: "search" }],
+      headers: [{ name: "Content-Type", value: '"application/json"' }],
+      body: undefined,
     });
   });
 
@@ -1925,6 +2318,310 @@ describe("resource patch helpers", () => {
     });
   });
 
+  test("upserts resource and preserves existing data source id", () => {
+    const body: Instance = {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "box" }],
+    };
+    const box: Instance = {
+      type: "instance",
+      id: "box",
+      component: "Box",
+      children: [
+        { type: "expression", value: encodeDataVariableId("variable-id") },
+      ],
+    };
+
+    const result = upsertResource(
+      {
+        pages: createDefaultPages({ rootInstanceId: "body" }),
+        instances: new Map([
+          [body.id, body],
+          [box.id, box],
+        ]),
+        props: new Map(),
+        dataSources: new Map<DataSource["id"], DataSource>([
+          [
+            "variable-id",
+            {
+              id: "variable-id",
+              scopeInstanceId: "box",
+              name: "Users",
+              type: "variable",
+              value: { type: "string", value: "fallback" },
+            },
+          ],
+        ]),
+        resources: new Map(),
+        breakpoints: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+        styles: new Map(),
+      },
+      {
+        scopeInstanceId: "box",
+        dataSourceId: "variable-id",
+        resource: {
+          name: "Users",
+          method: "get",
+          url: `"https://example.com/users"`,
+          headers: [],
+        },
+      },
+      { createId: () => "resource-id" }
+    );
+
+    expect(result.result).toEqual({
+      resourceId: "resource-id",
+      dataSourceId: "variable-id",
+    });
+    expect(result.payload).toEqual([
+      {
+        namespace: "dataSources",
+        patches: [
+          {
+            op: "replace",
+            path: ["variable-id"],
+            value: {
+              id: "variable-id",
+              scopeInstanceId: "box",
+              name: "Users",
+              type: "resource",
+              resourceId: "resource-id",
+            },
+          },
+        ],
+      },
+      {
+        namespace: "resources",
+        patches: [
+          {
+            op: "add",
+            path: ["resource-id"],
+            value: {
+              id: "resource-id",
+              name: "Users",
+              control: undefined,
+              method: "get",
+              url: `"https://example.com/users"`,
+              searchParams: undefined,
+              headers: [],
+              body: undefined,
+            },
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("rejects unknown explicit resource and data source ids", () => {
+    const state = {
+      pages: createDefaultPages({ rootInstanceId: "body" }),
+      instances: new Map(),
+      props: new Map(),
+      dataSources: new Map(),
+      resources: new Map(),
+      breakpoints: new Map(),
+      styleSources: new Map(),
+      styleSourceSelections: new Map(),
+      styles: new Map(),
+    };
+    const input = {
+      scopeInstanceId: "box",
+      resource: {
+        name: "Users",
+        method: "get" as const,
+        url: `"https://example.com/users"`,
+        headers: [],
+      },
+    };
+
+    expect(() =>
+      upsertResource(
+        state,
+        { ...input, resourceId: "missing-resource" },
+        { createId: () => "id" }
+      )
+    ).toThrow("Resource not found");
+    expect(() =>
+      upsertResource(
+        state,
+        { ...input, dataSourceId: "missing-data-source" },
+        { createId: () => "id" }
+      )
+    ).toThrow("Data source not found");
+  });
+
+  test("rejects invalid static resource URLs and allows dynamic URL expressions", () => {
+    const state = {
+      pages: createDefaultPages({ rootInstanceId: "body" }),
+      instances: new Map(),
+      props: new Map(),
+      dataSources: new Map(),
+      resources: new Map(),
+      breakpoints: new Map(),
+      styleSources: new Map(),
+      styleSourceSelections: new Map(),
+      styles: new Map(),
+    };
+
+    expect(() =>
+      upsertResource(
+        state,
+        {
+          scopeInstanceId: "box",
+          resource: {
+            name: "Users",
+            method: "get",
+            url: `""`,
+            headers: [],
+          },
+        },
+        { createId: () => "id" }
+      )
+    ).toThrow("url: URL is required");
+
+    expect(() =>
+      upsertResource(
+        state,
+        {
+          scopeInstanceId: "box",
+          resource: {
+            name: "Users",
+            method: "get",
+            url: `"not-a-url"`,
+            headers: [],
+          },
+        },
+        { createId: () => "id" }
+      )
+    ).toThrow("url: URL is invalid");
+
+    expect(
+      upsertResource(
+        state,
+        {
+          scopeInstanceId: "box",
+          resource: {
+            name: "Users",
+            method: "get",
+            url: `apiUrl`,
+            headers: [],
+          },
+        },
+        { createId: () => "resource-id" }
+      ).result
+    ).toEqual({ resourceId: "resource-id", dataSourceId: "resource-id" });
+  });
+
+  test("upserts resource and binds instance prop atomically", () => {
+    const body: Instance = {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "box" }],
+    };
+    const box: Instance = {
+      type: "instance",
+      id: "box",
+      component: "Box",
+      children: [],
+    };
+    const ids = ["resource-id", "prop-id", "data-source-id"];
+    const result = upsertResourceProp(
+      {
+        pages: createDefaultPages({ rootInstanceId: "body" }),
+        instances: new Map([
+          [body.id, body],
+          [box.id, box],
+        ]),
+        props: new Map(),
+        dataSources: new Map(),
+        resources: new Map(),
+        breakpoints: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+        styles: new Map(),
+      },
+      {
+        instanceId: "box",
+        propName: "data",
+        resource: {
+          name: "Users",
+          method: "get",
+          url: '"https://example.com/users"',
+          headers: [],
+        },
+      },
+      { createId: () => ids.shift() ?? "extra-id" }
+    );
+
+    expect(result.result).toEqual({
+      resourceId: "resource-id",
+      dataSourceId: "data-source-id",
+      propIds: ["prop-id"],
+    });
+    expect(result.payload).toContainEqual({
+      namespace: "props",
+      patches: [
+        {
+          op: "add",
+          path: ["prop-id"],
+          value: {
+            id: "prop-id",
+            instanceId: "box",
+            name: "data",
+            type: "resource",
+            value: "resource-id",
+            required: undefined,
+          },
+        },
+      ],
+    });
+    expect(result.payload).toContainEqual({
+      namespace: "resources",
+      patches: [
+        {
+          op: "add",
+          path: ["resource-id"],
+          value: {
+            id: "resource-id",
+            name: "Users",
+            control: undefined,
+            method: "get",
+            url: '"https://example.com/users"',
+            searchParams: undefined,
+            headers: [],
+            body: undefined,
+          },
+        },
+      ],
+    });
+  });
+
+  test("rejects invalid static resource URL updates", () => {
+    const state = {
+      pages: createDefaultPages({ rootInstanceId: "body" }),
+      instances: new Map(),
+      props: new Map(),
+      dataSources: new Map(),
+      resources: new Map([["resource", resource]]),
+      breakpoints: new Map(),
+      styleSources: new Map(),
+      styleSourceSelections: new Map(),
+      styles: new Map(),
+    };
+
+    expect(() =>
+      updateResource(state, {
+        resourceId: "resource",
+        values: { url: `"not-a-url"` },
+      })
+    ).toThrow("url: URL is invalid");
+  });
+
   test("reports resource create id conflicts", () => {
     expect(
       createResourceCreatePayload({
@@ -2041,6 +2738,47 @@ describe("resource patch helpers", () => {
       propIds: ["prop"],
       isUsed: false,
     });
+  });
+});
+
+describe("resource expression form validation", () => {
+  const scope = {
+    [encodeDataVariableId("apiUrl")]: "https://example.com/users",
+    [encodeDataVariableId("emptyUrl")]: "",
+    [encodeDataVariableId("bodyText")]: "hello",
+    [encodeDataVariableId("bodyJson")]: { ok: true },
+  };
+
+  test("computes expressions against encoded variable scope names", () => {
+    expect(computeExpressionWithinScope("apiUrl", scope)).toBe(
+      "https://example.com/users"
+    );
+    expect(computeExpressionWithinScope("   ", scope)).toBeUndefined();
+  });
+
+  test("validates evaluated resource urls", () => {
+    expect(validateResourceUrlExpression("apiUrl", scope)).toBe("");
+    expect(validateResourceUrlExpression("bodyJson", scope)).toBe(
+      "URL expects a string"
+    );
+    expect(validateResourceUrlExpression("emptyUrl", scope)).toBe(
+      "URL is required"
+    );
+    expect(validateResourceUrlExpression('"not a url"', scope)).toBe(
+      "URL is invalid"
+    );
+  });
+
+  test("validates evaluated resource body by body type", () => {
+    expect(validateResourceBodyExpression("", "json", scope)).toBe("");
+    expect(validateResourceBodyExpression("bodyJson", "json", scope)).toBe("");
+    expect(validateResourceBodyExpression("bodyText", "json", scope)).toBe(
+      "Expected valid JSON object in body"
+    );
+    expect(validateResourceBodyExpression("bodyText", "text", scope)).toBe("");
+    expect(validateResourceBodyExpression("bodyJson", "text", scope)).toBe(
+      "Expected string in body"
+    );
   });
 });
 

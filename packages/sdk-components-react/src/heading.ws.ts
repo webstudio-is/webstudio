@@ -3,6 +3,7 @@ import { h1, h2, h3, h4, h5, h6 } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/heading.props";
 
 export const meta: WsComponentMeta = {
+  deprecated: true,
   presetStyle: {
     h1,
     h2,

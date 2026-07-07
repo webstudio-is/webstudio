@@ -9,8 +9,8 @@ import {
 import type { CompilerSettings } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
 import { useIds } from "~/shared/form-utils";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { sectionSpacing } from "./utils";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 const defaultPublishSettings: CompilerSettings = {
   atomicStyles: true,
@@ -23,11 +23,9 @@ export const SectionPublish = () => {
   );
 
   const handleSave = (settings: CompilerSettings) => {
-    serverSyncStore.createTransaction([$pages], (pages) => {
-      if (pages === undefined) {
-        return;
-      }
-      pages.compiler = settings;
+    executeRuntimeMutation({
+      id: "projectSettings.update",
+      input: { compiler: settings },
     });
   };
 

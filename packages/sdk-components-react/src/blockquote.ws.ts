@@ -54,6 +54,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
+  deprecated: true,
   presetStyle,
   initialProps: ["id", "class", "cite"],
   props,

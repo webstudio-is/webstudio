@@ -12,7 +12,7 @@ import {
   ImageIcon,
 } from "@webstudio-is/icons";
 import type { ImageAsset } from "@webstudio-is/sdk";
-import { formatAssetName } from "~/builder/shared/assets/asset-utils";
+import { formatAssetName } from "@webstudio-is/project-build/runtime/assets";
 import { getFormattedAspectRatio } from "~/builder/shared/asset-manager";
 
 type ImageInfoProps = {

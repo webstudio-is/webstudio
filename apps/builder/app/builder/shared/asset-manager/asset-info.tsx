@@ -55,9 +55,9 @@ import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { $styles } from "~/shared/sync/data-stores";
 import { selectInstance } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
-import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
+import { findPageAndSelectorByInstanceId } from "@webstudio-is/project-build/runtime/lookup";
 import { $selectedPageId } from "~/shared/nano-states";
-import { updateWebstudioData } from "~/shared/instance-utils/data";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { deleteAssets, replaceAsset } from "~/builder/shared/assets";
 import { validateFiles } from "~/builder/shared/assets/asset-upload";
 import {
@@ -68,8 +68,8 @@ import { $instances, $pages, $props } from "~/shared/sync/data-stores";
 import {
   formatAssetName,
   parseAssetName,
-  getAssetUrl,
-} from "~/builder/shared/assets/asset-utils";
+} from "@webstudio-is/project-build/runtime/assets";
+import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import {
@@ -308,11 +308,12 @@ const AssetInfoContent = ({
           }
         }
       }
-      updateWebstudioData((data) => {
-        const asset = data.assets.get(assetId);
-        if (asset) {
-          asset.filename = newFilename;
-        }
+      executeRuntimeMutation({
+        id: "assets.update",
+        input: {
+          assetId,
+          values: { filename: newFilename },
+        },
       });
     }
   );
@@ -320,11 +321,12 @@ const AssetInfoContent = ({
     asset.description ?? "",
     (newDescription) => {
       const assetId = asset.id;
-      updateWebstudioData((data) => {
-        const asset = data.assets.get(assetId);
-        if (asset) {
-          asset.description = newDescription;
-        }
+      executeRuntimeMutation({
+        id: "assets.update",
+        input: {
+          assetId,
+          values: { description: newDescription },
+        },
       });
     }
   );

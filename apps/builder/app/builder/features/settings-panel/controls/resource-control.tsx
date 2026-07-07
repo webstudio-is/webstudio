@@ -1,9 +1,7 @@
-import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import {
   forwardRef,
   useId,
-  useMemo,
   useRef,
   useState,
   type ComponentProps,
@@ -19,26 +17,22 @@ import {
   NestedInputButton,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  isLiteralExpression,
-  type Resource,
-  type Prop,
-} from "@webstudio-is/sdk";
+import { isLiteralExpression, type Resource } from "@webstudio-is/sdk";
 import {
   BindingControl,
   BindingPopover,
-  validatePrimitiveValue,
   type BindingVariant,
 } from "~/builder/shared/binding-popover";
+import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime/props";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
 import { $props, $resources } from "~/shared/sync/data-stores";
-import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import {
-  applyBuilderPatchPayloadMutable,
-  updateWebstudioData,
-} from "~/shared/instance-utils/data";
-import { createPropUpsertPayload } from "@webstudio-is/project-build/runtime/props";
+  computeExpression,
+  createResourceFieldsFromResource,
+  createResourceValueFromFormData,
+} from "@webstudio-is/project-build/runtime/data";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
@@ -48,7 +42,6 @@ import {
   UrlField,
   MethodField,
   Headers,
-  parseResource,
   getResourceScopeForInstance,
 } from "../resource-panel";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
@@ -193,8 +186,8 @@ const ResourceControlPanel = ({
             event.preventDefault();
             if (event.currentTarget.checkValidity()) {
               const formData = new FormData(event.currentTarget);
-              const newResource = parseResource({
-                id: resource?.id ?? nanoid(),
+              const newResource = createResourceValueFromFormData({
+                id: resource?.id ?? "",
                 name: resource?.name ?? propName,
                 formData,
               });
@@ -262,10 +255,8 @@ export const ResourceControl = ({
       urlExpression = resource.url;
     }
   }
-  // create temporary resource
-  const resourceId = useMemo(() => resource?.id ?? nanoid(), [resource]);
   resource ??= {
-    id: resourceId,
+    id: "",
     name: propName,
     url: urlExpression,
     method: methodPropValue,
@@ -273,26 +264,16 @@ export const ResourceControl = ({
   };
 
   const updateResource = (newResource: Resource) => {
-    updateWebstudioData((data) => {
-      if (prop?.type === "resource") {
-        data.resources.set(newResource.id, newResource);
-      } else {
-        const newProp: Prop = {
-          id: prop?.id ?? nanoid(),
-          instanceId,
-          name: propName,
-          type: "resource",
-          value: newResource.id,
-        };
-        applyBuilderPatchPayloadMutable(
-          data,
-          createPropUpsertPayload({
-            props: data.props.values(),
-            nextProps: [newProp],
-          }).payload
-        );
-        data.resources.set(newResource.id, newResource);
-      }
+    executeRuntimeMutation({
+      id: "resources.upsertProp",
+      input: {
+        resourceId: prop?.type === "resource" ? newResource.id : undefined,
+        resource: createResourceFieldsFromResource(newResource),
+        instanceId,
+        propName,
+        scopeInstanceId: instanceId,
+        dataSourceName: newResource.name,
+      },
     });
   };
 

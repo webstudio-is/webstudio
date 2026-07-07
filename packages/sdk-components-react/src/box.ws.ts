@@ -14,6 +14,7 @@ import {
 import { props } from "./__generated__/box.props";
 
 export const meta: WsComponentMeta = {
+  deprecated: true,
   presetStyle: {
     div,
     address,

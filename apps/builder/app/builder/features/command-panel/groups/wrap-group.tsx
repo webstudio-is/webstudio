@@ -12,17 +12,7 @@ import {
 } from "@webstudio-is/design-system";
 import { matchSorter } from "match-sorter";
 import { computed } from "nanostores";
-import {
-  elementComponent,
-  getHtmlTagsFromProps,
-  tags,
-} from "@webstudio-is/sdk";
-import type {
-  Instance,
-  Instances,
-  Props,
-  WsComponentMeta,
-} from "@webstudio-is/sdk";
+import { elementComponent, tags } from "@webstudio-is/sdk";
 import {
   $propsIndex,
   $registeredComponentMetas,
@@ -35,7 +25,7 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
-import { isTreeSatisfyingContentModel } from "~/shared/content-model";
+import { canWrapInstance } from "@webstudio-is/project-build/runtime/instances";
 import {
   $commandContent,
   $isCommandPanelOpen,
@@ -66,92 +56,6 @@ const wrapperComponentNames = [
   "VideoAnimation",
   "Form",
 ];
-
-// Check if an instance can be wrapped with a specific component or tag
-const canWrapInstance = (
-  selectedInstanceId: string,
-  selectedInstanceSelector: string[],
-  parentInstanceId: string,
-  component: string,
-  tag: string | undefined,
-  instances: Instances,
-  props: Props,
-  metas: Map<Instance["component"], WsComponentMeta>,
-  htmlTagsByInstanceId: Map<Instance["id"], string> = getHtmlTagsFromProps(
-    props
-  )
-): boolean => {
-  const selectedInstance = instances.get(selectedInstanceId);
-  const parentInstance = instances.get(parentInstanceId);
-
-  if (!selectedInstance || !parentInstance) {
-    return false;
-  }
-
-  const wrapperInstance: Instance = {
-    type: "instance",
-    id: "wrapper_instance",
-    component,
-    children: [{ type: "id", value: selectedInstanceId }],
-  };
-
-  if (tag || component === elementComponent) {
-    wrapperInstance.tag = tag ?? "div";
-  } else {
-    // For components with presetStyle (like Heading, Box), infer default tag
-    const meta = metas.get(component);
-    const defaultTag = Object.keys(
-      (meta as { presetStyle?: Record<string, unknown> })?.presetStyle ?? {}
-    ).at(0);
-    if (defaultTag) {
-      wrapperInstance.tag = defaultTag;
-    }
-  }
-
-  const newInstances = new Map(instances);
-  newInstances.set(wrapperInstance.id, wrapperInstance);
-
-  // Update parent to point to wrapper
-  const newParentInstance = { ...parentInstance };
-  newParentInstance.children = parentInstance.children.map((child) => {
-    if (child.type === "id" && child.value === selectedInstanceId) {
-      return { type: "id", value: wrapperInstance.id };
-    }
-    return child;
-  });
-  newInstances.set(parentInstance.id, newParentInstance);
-
-  // Validate the wrapper in the parent
-  const wrapperValid = isTreeSatisfyingContentModel({
-    instances: newInstances,
-    props,
-    metas,
-    htmlTagsByInstanceId,
-    instanceSelector: [
-      wrapperInstance.id,
-      ...selectedInstanceSelector.slice(1),
-    ],
-  });
-
-  if (!wrapperValid) {
-    return false;
-  }
-
-  // Validate the selected instance inside the wrapper
-  const childValid = isTreeSatisfyingContentModel({
-    instances: newInstances,
-    props,
-    metas,
-    htmlTagsByInstanceId,
-    instanceSelector: [
-      selectedInstanceId,
-      wrapperInstance.id,
-      ...selectedInstanceSelector.slice(1),
-    ],
-  });
-
-  return childValid;
-};
 
 const $wrapOptions = computed(
   [
@@ -331,8 +235,4 @@ const WrapComponentsList = () => {
 export const showWrapComponentsList = () => {
   openCommandPanel();
   $commandContent.set(<WrapComponentsList />);
-};
-
-export const __testing__ = {
-  canWrapInstance,
 };

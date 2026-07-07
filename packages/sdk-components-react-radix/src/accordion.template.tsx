@@ -17,6 +17,7 @@ import {
   width,
 } from "./shared/theme";
 import { ChevronDownIcon } from "@webstudio-is/icons/svg";
+import { iconEmbedStyle } from "./shared/styles";
 
 const createAccordionItem = (triggerText: string, contentText: string) => {
   return (
@@ -38,7 +39,7 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
             display: flex;
             flex: 1 1 0;
             align-items: center;
-            justify-content: between;
+            justify-content: space-between;
             padding: ${spacing[4]} 0;
             font-weight: ${weights.medium};
             --accordion-trigger-icon-transform: 0deg;
@@ -63,7 +64,11 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
               transition-duration: 200ms;
             `}
           >
-            <$.HtmlEmbed ws:label="Chevron Icon" code={ChevronDownIcon} />
+            <$.HtmlEmbed
+              ws:label="Chevron Icon"
+              ws:style={iconEmbedStyle}
+              code={ChevronDownIcon}
+            />
           </$.Box>
         </radix.AccordionTrigger>
       </radix.AccordionHeader>

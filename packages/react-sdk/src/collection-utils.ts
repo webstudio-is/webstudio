@@ -30,6 +30,15 @@ export const getCollectionEntries = (
   return entries;
 };
 
+const isStaticCollectionExpression = (expression: string) => {
+  const trimmedExpression = expression.trim();
+  return (
+    (trimmedExpression.startsWith("[") && trimmedExpression.endsWith("]")) ||
+    (trimmedExpression.startsWith("{") && trimmedExpression.endsWith("}")) ||
+    (trimmedExpression.startsWith("({") && trimmedExpression.endsWith("})"))
+  );
+};
+
 /**
  * Template for generated code that iterates over collections.
  * Used by component-generator.ts to ensure consistency.
@@ -43,9 +52,12 @@ export const generateCollectionIterationCode = ({
   keyVariable: string;
   itemVariable: string;
 }) => {
+  const safeDataExpression = isStaticCollectionExpression(dataExpression)
+    ? dataExpression
+    : `${dataExpression} ?? {}`;
   return `Object.entries(
   // @ts-ignore
-  ${dataExpression} ?? {}
+  ${safeDataExpression}
 ).map(([_key, ${itemVariable}]: any) => {
   const ${keyVariable} = Array.isArray(${dataExpression}) ? Number(_key) : _key;
   return`;

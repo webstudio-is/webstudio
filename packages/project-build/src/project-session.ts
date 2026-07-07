@@ -1,3 +1,4 @@
+import hash from "@emotion/hash";
 import type {
   RuntimeOperationContract,
   RuntimeOperationId,
@@ -8,6 +9,7 @@ import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import { hasGeneratedRecordWritePatch } from "./contracts/patch";
 import type { BuilderApiCapability } from "./contracts/permissions";
+import { emptyInputJsonSchema } from "./contracts/input-schema";
 import {
   builderRuntimeContext,
   type BuilderRuntimeContext,
@@ -60,8 +62,6 @@ export type ProjectSessionRemoteSnapshot = {
 export type ProjectSessionCommitResult = {
   version: number;
 };
-
-export type ProjectSessionPermit = BuilderApiCapability;
 
 export type ProjectSessionPermissions = {
   canView: boolean;
@@ -150,11 +150,11 @@ export type ProjectSessionEnvelope<Result = unknown> = {
 
 export type ProjectSessionMutationOptions = {
   dryRun?: boolean;
-  permit?: ProjectSessionPermit;
+  permit?: BuilderApiCapability;
 };
 
 export type ProjectSessionReadOptions = {
-  permit?: ProjectSessionPermit;
+  permit?: BuilderApiCapability;
 };
 
 export type ProjectSessionServerOperationDescriptor = {
@@ -164,10 +164,27 @@ export type ProjectSessionServerOperationDescriptor = {
 };
 
 const defaultCompatibilityVersion = "project-session-v1";
-const defaultRuntimeContractVersion = `runtime-contracts:${runtimeOperationContracts
-  .map((contract) => contract.id)
-  .join(",")}`;
+const defaultRuntimeContractVersion = `runtime-contracts:${hash(
+  JSON.stringify(runtimeOperationContracts)
+)}`;
 const defaultProjectSchemaVersion = "builder-state-v1";
+export const projectSessionBusyMessage =
+  "Another Webstudio CLI/MCP operation is updating the local project session. Wait a moment and retry this command. Run `webstudio mcp single-op-call` commands sequentially against the same `.webstudio` folder.";
+const projectSessionBusyRetryDelays = [100, 300, 700] as const;
+
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+class ProjectSessionBusyError extends Error {
+  code = "PROJECT_SESSION_BUSY";
+
+  constructor(options: { cause?: unknown } = {}) {
+    super(projectSessionBusyMessage, options);
+    this.name = "PROJECT_SESSION_BUSY";
+  }
+}
 
 export const createDefaultProjectSessionCompatibility = (
   sessionVersion: string
@@ -370,9 +387,15 @@ const shouldRefreshPermissionsAfterError = (error: unknown) => {
 const isVersionConflictError = (error: unknown) =>
   getProjectSessionErrorCode(error) === "CONFLICT";
 
+const isProjectSessionBusyError = (error: unknown) =>
+  getProjectSessionErrorCode(error) === "PROJECT_SESSION_BUSY";
+
+const createProjectSessionBusyError = (cause: unknown) =>
+  new ProjectSessionBusyError({ cause });
+
 export const hasProjectSessionPermit = (
   permissions: ProjectSessionPermissions,
-  permit: ProjectSessionPermit
+  permit: BuilderApiCapability
 ) => {
   if (permit === "api") {
     return permissions.canUseApi;
@@ -400,11 +423,15 @@ export class ProjectSession {
   #options: ResolvedProjectSessionOptions;
 
   constructor(options: ProjectSessionOptions) {
+    const runtimeContext = options.runtimeContext ?? builderRuntimeContext;
     this.#options = {
       ...options,
       compatibilityVersion:
         options.compatibilityVersion ?? defaultCompatibilityVersion,
-      runtimeContext: options.runtimeContext ?? builderRuntimeContext,
+      runtimeContext: {
+        ...runtimeContext,
+        projectId: runtimeContext.projectId ?? options.projectId,
+      },
     };
   }
 
@@ -500,7 +527,7 @@ export class ProjectSession {
     const snapshot = await this.ensureNamespaces(contract.readNamespaces);
     try {
       await this.assertPermit(options.permit);
-      const result = executeBuilderRuntimeOperation<Result>({
+      const result = await executeBuilderRuntimeOperation<Result>({
         id: operationId,
         state: snapshot.state,
         input,
@@ -583,18 +610,31 @@ export class ProjectSession {
   }
 
   async markStale(namespaces: readonly BuilderNamespace[]) {
-    if (this.#snapshot === undefined) {
-      return this.status(["Project session has no snapshot to mark stale."]);
+    for (const delay of [...projectSessionBusyRetryDelays, undefined]) {
+      if (this.#snapshot === undefined) {
+        return this.status(["Project session has no snapshot to mark stale."]);
+      }
+      this.#snapshot = {
+        ...this.#snapshot,
+        freshness: markBuilderStateNamespacesStale(
+          this.#snapshot.freshness,
+          namespaces
+        ),
+      };
+      try {
+        await this.saveSnapshot(this.#snapshot);
+        return this.status(["Project session namespaces were marked stale."]);
+      } catch (error) {
+        if (delay === undefined || isProjectSessionBusyError(error) === false) {
+          throw isProjectSessionBusyError(error)
+            ? createProjectSessionBusyError(error)
+            : error;
+        }
+        await wait(delay);
+        await this.#reloadLocalSnapshot();
+      }
     }
-    this.#snapshot = {
-      ...this.#snapshot,
-      freshness: markBuilderStateNamespacesStale(
-        this.#snapshot.freshness,
-        namespaces
-      ),
-    };
-    await this.saveSnapshot(this.#snapshot);
-    return this.status(["Project session namespaces were marked stale."]);
+    throw createProjectSessionBusyError(undefined);
   }
 
   async #loadLocalSnapshot() {
@@ -615,6 +655,12 @@ export class ProjectSession {
     return this.#snapshot;
   }
 
+  async #reloadLocalSnapshot() {
+    this.#snapshot = undefined;
+    this.#revision = undefined;
+    return await this.#loadLocalSnapshot();
+  }
+
   async ensureNamespaces(namespaces: readonly BuilderNamespace[]) {
     const snapshot = await this.#loadLocalSnapshot();
     const missing = getNamespacesNeedingRemote(snapshot, namespaces);
@@ -624,7 +670,10 @@ export class ProjectSession {
     return await this.fetchAndSave(missing.length === 0 ? namespaces : missing);
   }
 
-  async fetchAndSave(namespaces: readonly BuilderNamespace[]) {
+  async fetchAndSave(
+    namespaces: readonly BuilderNamespace[],
+    options: { retryOnBusy?: boolean; attempt?: number } = {}
+  ): Promise<ProjectSessionSnapshot> {
     const current = await this.#loadLocalSnapshot();
     const compatibility = await this.getCompatibility();
     const remote = await this.#options.transport.fetchNamespaces({
@@ -638,7 +687,27 @@ export class ProjectSession {
       compatibilityVersion: this.#options.compatibilityVersion,
       compatibility,
     });
-    await this.saveSnapshot(snapshot);
+    try {
+      await this.saveSnapshot(snapshot);
+    } catch (error) {
+      const attempt = options.attempt ?? 0;
+      const retryDelay = projectSessionBusyRetryDelays[attempt];
+      if (
+        options.retryOnBusy === false ||
+        isProjectSessionBusyError(error) === false ||
+        retryDelay === undefined
+      ) {
+        throw isProjectSessionBusyError(error)
+          ? createProjectSessionBusyError(error)
+          : error;
+      }
+      await wait(retryDelay);
+      await this.#reloadLocalSnapshot();
+      return await this.fetchAndSave(namespaces, {
+        retryOnBusy: true,
+        attempt: attempt + 1,
+      });
+    }
     return snapshot;
   }
 
@@ -737,7 +806,7 @@ export class ProjectSession {
     snapshot: ProjectSessionSnapshot;
     diagnostics?: ProjectSessionDiagnostic[];
   }) {
-    const mutation = executeBuilderRuntimeOperation<
+    const mutation = await executeBuilderRuntimeOperation<
       BuilderRuntimeMutation<Result>
     >({
       id: operationId,
@@ -843,7 +912,7 @@ export class ProjectSession {
     return this.#permissions;
   }
 
-  async assertPermit(permit: ProjectSessionPermit | undefined) {
+  async assertPermit(permit: BuilderApiCapability | undefined) {
     if (permit === undefined) {
       return;
     }
@@ -914,9 +983,7 @@ export class ProjectSession {
 const emptyContract: RuntimeOperationStateContract = {
   id: "project-session.status",
   kind: "read",
-  inputFields: [],
-  requiredInputFields: [],
-  inputFieldTypes: {},
+  inputSchema: emptyInputJsonSchema,
   readNamespaces: [],
   writeNamespaces: [],
   invalidatesNamespaces: [],

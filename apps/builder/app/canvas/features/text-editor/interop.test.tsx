@@ -1,6 +1,7 @@
 import { test, expect } from "vitest";
 import { createHeadlessEditor } from "@lexical/headless";
 import { LinkNode } from "@lexical/link";
+import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 import { $, renderData, renderTemplate, ws } from "@webstudio-is/template";
 import { $convertToLexical, $convertToUpdates, type Refs } from "./interop";
 
@@ -138,6 +139,8 @@ test("convert element instances to lexical", async () => {
 
 test("convert lexical to element instances updates", async () => {
   const refs: Refs = new Map();
+  let nextId = 0;
+  const createId = () => `generated-${++nextId}`;
   const editor = createHeadlessEditor({
     nodes: [LinkNode],
   });
@@ -154,7 +157,7 @@ test("convert lexical to element instances updates", async () => {
     throw Error("Tree root instance should be in test data");
   }
   const updates = editor.getEditorState().read(() => {
-    return $convertToUpdates(treeRootInstance, refs, new Map());
+    return $convertToUpdates(treeRootInstance, refs, new Map(), createId);
   });
   expect(updates).toEqual(
     renderTemplate(
@@ -174,6 +177,48 @@ test("convert lexical to element instances updates", async () => {
           other realms
         </ws.element>
       </ws.element>
+    ).instances
+  );
+});
+
+test("convert lexical to instances uses supplied id generator for new formatting instances", async () => {
+  const editor = createHeadlessEditor({
+    nodes: [LinkNode],
+  });
+  await new Promise<void>((resolve) => {
+    editor.update(
+      () => {
+        const root = $getRoot();
+        const paragraph = $createParagraphNode();
+        const text = $createTextNode("Generated");
+        text.toggleFormat("bold");
+        paragraph.append(text);
+        root.append(paragraph);
+      },
+      { onUpdate: resolve }
+    );
+  });
+  const treeRootInstance = instances.get("emptyBoxId");
+  if (treeRootInstance === undefined) {
+    throw Error("Tree root instance should be in test data");
+  }
+
+  const updates = editor.getEditorState().read(() => {
+    return $convertToUpdates(
+      treeRootInstance,
+      new Map(),
+      new Map(),
+      () => "generated-bold"
+    );
+  });
+
+  expect(updates).toEqual(
+    renderTemplate(
+      <$.Box ws:id="emptyBoxId">
+        <ws.element ws:tag="b" ws:id="generated-bold">
+          Generated
+        </ws.element>
+      </$.Box>
     ).instances
   );
 });

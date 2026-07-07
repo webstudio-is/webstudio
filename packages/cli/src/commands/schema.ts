@@ -1,5 +1,11 @@
-import { buildPatchNamespaces } from "@webstudio-is/protocol";
-import { mcpArgumentExamples } from "@webstudio-is/project-build/mcp";
+import {
+  buildPatchNamespaces,
+  publicApiOperations,
+} from "@webstudio-is/protocol";
+import {
+  listProjectSessionMcpResources,
+  listProjectSessionMcpTools,
+} from "@webstudio-is/project-build/mcp";
 import { HandledCliError } from "../errors";
 import { printJson } from "../json-output";
 import { useCaseScenarios } from "./api-command-docs";
@@ -19,17 +25,37 @@ export const schemaOptions = (yargs: CommonYargsArgv) =>
   yargs
     .positional("topic", {
       type: "string",
-      describe: "Schema topic to print",
+      describe:
+        "Schema topic to print: api for top-level CLI, mcp for MCP tools, or a specific MCP tool name",
       default: "api",
     })
     .option("json", {
       type: "boolean",
-      describe: "Required. Print a machine-readable JSON schema to stdout",
+      describe:
+        "Accepted for compatibility. Schema output is always machine-readable JSON",
       default: false,
+    })
+    .option("detail", {
+      type: "string",
+      choices: ["overview", "summary", "full"] as const,
+      describe:
+        "Schema detail. For mcp, overview is tiny, summary lists tools, full includes every input schema.",
+    })
+    .option("tool", {
+      type: "string",
+      describe:
+        "Focus MCP schema on one or more comma-separated tool names, for example insert-fragment",
     });
 
-type SchemaOptions = StrictYargsOptionsToInterface<typeof schemaOptions> & {
+type SchemaDetail = "overview" | "summary" | "full";
+
+type SchemaOptions = Omit<
+  StrictYargsOptionsToInterface<typeof schemaOptions>,
+  "topic" | "detail" | "tool"
+> & {
   topic?: string;
+  detail?: string;
+  tool?: string;
 };
 
 const topLevelCommands = topLevelCliCommandMetadata.map(
@@ -50,17 +76,6 @@ const cliCommands = cliCommandMetadata.map((command) => ({
   examples: (command.examples ?? []).map(formatApiUseCaseCommand),
 }));
 
-const mcpCommands = apiCommandMetadata.map((command) => ({
-  name: command.command,
-  summary: command.description,
-  method: command.method,
-  permit: command.permit,
-  inputFields: command.inputFields,
-  requiredInputFields: command.requiredInputFields,
-  inputFieldTypes: command.inputFieldTypes,
-  examples: command.examples,
-}));
-
 const commandGroups = cliCommandGroupMetadata.map(
   ({ command, description }) => ({
     name: command,
@@ -69,13 +84,135 @@ const commandGroups = cliCommandGroupMetadata.map(
   })
 );
 
+const topLevelUseCases = useCaseScenarios.filter((scenario) =>
+  scenario.commands.every((command) => command.startsWith("webstudio "))
+);
+
+const availableSchemaTopics = ["api", "mcp"] as const;
+
+const mcpToolSchema = listProjectSessionMcpTools(publicApiOperations, {
+  includeImport: true,
+  includeScreenshot: true,
+  includeScreenshotDiff: true,
+  includeInstallOcr: true,
+  includePreview: true,
+}).map((tool) => ({
+  name: tool.name,
+  description: tool.description,
+  inputSchema: tool.inputSchema,
+  examples: tool.mcpExamples ?? [],
+  annotations: tool.annotations,
+}));
+
+const mcpToolSummary = mcpToolSchema.map(
+  ({ name, description, examples, annotations }) => ({
+    name,
+    description,
+    requiredInputFields: annotations.requiredInputFields,
+    inputFields: annotations.inputFields,
+    examples,
+    operationId: annotations.operationId,
+    method: annotations.method,
+    localCapable: annotations.localCapable,
+    serverOnly: annotations.serverOnly,
+  })
+);
+
+const getSchemaDetail = (
+  detail: string | undefined,
+  hasToolFilter = false
+): SchemaDetail => {
+  if (
+    detail === undefined ||
+    detail === "overview" ||
+    detail === "summary" ||
+    detail === "full"
+  ) {
+    return detail ?? (hasToolFilter ? "full" : "overview");
+  }
+  throw new Error(
+    `Unknown schema detail "${detail}". Available details: overview, summary, full`
+  );
+};
+
+const getSelectedMcpToolSchemas = (toolFilter: string | undefined) => {
+  if (toolFilter === undefined || toolFilter.trim() === "") {
+    return;
+  }
+  const toolNames = toolFilter
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+  const toolSchemaByName = new Map(
+    mcpToolSchema.map((tool) => [tool.name, tool])
+  );
+  const selectedTools = toolNames.map((toolName) => {
+    const tool = toolSchemaByName.get(toolName);
+    if (tool === undefined) {
+      throw new Error(
+        `Unknown MCP tool "${toolName}". Use webstudio schema mcp for tool names, or webstudio meta.get_more_tools '{"tools":["insert-fragment"]}' for focused discovery.`
+      );
+    }
+    return tool;
+  });
+  return selectedTools;
+};
+
+const getMcpSchemaTools = (
+  detail: SchemaDetail,
+  tools: typeof mcpToolSchema
+) => {
+  if (detail === "full") {
+    return tools;
+  }
+  if (detail === "summary") {
+    const selectedToolNames = new Set(tools.map((tool) => tool.name));
+    return mcpToolSummary.filter((tool) => selectedToolNames.has(tool.name));
+  }
+  return tools.map(({ name }) => name);
+};
+
+const createMcpSchema = (
+  detail: SchemaDetail,
+  selectedTools: typeof mcpToolSchema = mcpToolSchema
+) => ({
+  name: "webstudio-mcp",
+  version: 1,
+  command: "webstudio mcp",
+  singleOpCallCommand: "webstudio mcp single-op-call <tool> '<json>'",
+  focusedToolNames:
+    selectedTools.length === mcpToolSchema.length
+      ? undefined
+      : selectedTools.map(({ name }) => name),
+  detail,
+  usage:
+    selectedTools.length !== mcpToolSchema.length
+      ? "Focused MCP tool schema. Use this when you know the tool name and need exact input fields."
+      : detail === "full"
+        ? "Full MCP tool schema. This output is large; prefer summary detail plus focused meta.get_more_tools/components.* calls for normal LLM workflows."
+        : detail === "summary"
+          ? 'MCP tool summary. Use this to inspect all tool descriptions and fields without full schemas. For exact tool schemas use webstudio schema mcp --detail full, or prefer focused webstudio mcp single-op-call meta.get_more_tools \'{"tools":["insert-fragment"]}\'.'
+          : "Tiny MCP overview. Use this first to discover tool names. For all descriptions use --detail summary; for exact schemas use --detail full or --tool <name>; for normal LLM workflows prefer focused meta.get_more_tools and components.* calls.",
+  discovery: [
+    "webstudio mcp single-op-call meta.index",
+    `webstudio mcp single-op-call meta.guide '{"brief":"Create a design system page using every component"}'`,
+    `webstudio mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'`,
+    "webstudio mcp single-op-call components.coverage-plan",
+    `webstudio mcp single-op-call components.find '{"brief":"radix select"}'`,
+    `webstudio mcp single-op-call components.get '{"component":"Box"}'`,
+  ],
+  resources: listProjectSessionMcpResources(),
+  toolCount: selectedTools.length,
+  tools: getMcpSchemaTools(detail, selectedTools),
+});
+
 const apiSchema = {
   name: "webstudio-cli",
   version: 1,
   projectScope:
     "All high-level API commands operate on the single project configured by webstudio link or webstudio init --link.",
   requiredOutputMode:
-    "Use --json. Successful responses are { ok: true, data, meta }. Failures are { ok: false, error, meta }.",
+    "Schema output is always JSON. Successful API command responses are { ok: true, data, meta }. Failures are { ok: false, error, meta }.",
   topLevelCommands,
   commandGroups,
   commands: cliCommands,
@@ -94,10 +231,18 @@ const apiSchema = {
     resources: [
       "webstudio://project/status",
       "webstudio://project/tools",
+      "webstudio://project/components",
       "webstudio://project/guide",
     ],
-    commands: mcpCommands,
-    argumentExamples: mcpArgumentExamples,
+    capabilities: [
+      "Project discovery and session status",
+      "Pages, folders, redirects, and project settings",
+      "Instances/components, text, props, and bindings",
+      "Styles, design tokens, CSS variables, and breakpoints",
+      "Data variables, resources, assets, publishing, domains, screenshots, and visual diffing",
+    ],
+    boundary:
+      "Builder project data manipulation is MCP-level. Use tools/list, meta.index, meta.get_more_tools, and webstudio://project/tools for exact MCP tool schemas.",
   },
   session: {
     stateFile: ".webstudio/project-session.json",
@@ -112,7 +257,7 @@ const apiSchema = {
     resultMetadata:
       "Successful command JSON includes meta.session with operationId, buildId, version, source, committed, compatibility, namespace metadata, and diagnostics.",
   },
-  useCases: useCaseScenarios,
+  useCases: topLevelUseCases,
   patch: {
     validationCommand:
       "No top-level CLI validation command. Prefer semantic MCP tools; use MCP apply-patch only for known-valid BuildPatchTransaction[] payloads.",
@@ -131,15 +276,31 @@ const apiSchema = {
 
 export const schema = (options: SchemaOptions) => {
   try {
-    if (options.json !== true) {
-      throw new Error("schema currently requires --json.");
+    const topic = options.topic ?? "api";
+    if (topic === "api") {
+      printJson(apiSchema);
+      return;
     }
-    if ((options.topic ?? "api") !== "api") {
+    if (topic === "mcp") {
+      const selectedTools = getSelectedMcpToolSchemas(options.tool);
+      printJson(
+        createMcpSchema(
+          getSchemaDetail(options.detail, selectedTools !== undefined),
+          selectedTools
+        )
+      );
+      return;
+    }
+    const focusedTool = getSelectedMcpToolSchemas(topic);
+    if (focusedTool !== undefined) {
+      printJson(createMcpSchema("full", focusedTool));
+      return;
+    }
+    if (availableSchemaTopics.includes(topic as never) === false) {
       throw new Error(
-        `Unknown schema topic "${options.topic}". Available topics: api`
+        `Unknown schema topic "${topic}". Available topics: ${availableSchemaTopics.join(", ")}, or pass a specific MCP tool name such as insert-fragment.`
       );
     }
-    printJson(apiSchema);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     throw new HandledCliError();

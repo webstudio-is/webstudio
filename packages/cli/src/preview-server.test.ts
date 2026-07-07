@@ -58,17 +58,11 @@ test("builds preview urls", () => {
   ).toBe("http://127.0.0.1:5173/pricing");
 });
 
-test("builds npm production preview args with host and port", () => {
+test("builds npm production preview args", () => {
   expect(getPreviewBuildArgs()).toEqual(["run", "build"]);
   expect(getPreviewStartArgs({ host: "127.0.0.1", port: 5173 })).toEqual([
     "run",
     "start",
-    "--",
-    "--host",
-    "127.0.0.1",
-    "--port",
-    "5173",
-    "--strictPort",
   ]);
 });
 
@@ -108,28 +102,15 @@ test("starts generated project production server with inherited stdio", () => {
     url: "http://127.0.0.1:5173/",
     process,
   });
-  expect(spawn).toHaveBeenCalledWith(
-    "npm",
-    [
-      "run",
-      "start",
-      "--",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "5173",
-      "--strictPort",
-    ],
-    {
-      cwd: "/tmp/preview",
-      stdio: "inherit",
-      env: expect.objectContaining({
-        HOST: "127.0.0.1",
-        PORT: "5173",
-        NODE_ENV: "production",
-      }),
-    }
-  );
+  expect(spawn).toHaveBeenCalledWith("npm", ["run", "start"], {
+    cwd: "/tmp/preview",
+    stdio: "inherit",
+    env: expect.objectContaining({
+      HOST: "127.0.0.1",
+      PORT: "5173",
+      NODE_ENV: "production",
+    }),
+  });
 });
 
 test("preview controller builds once and reuses a running server", async () => {
@@ -158,28 +139,15 @@ test("preview controller builds once and reuses a running server", async () => {
     "http://127.0.0.1:5173/pricing"
   );
   expect(spawn).toHaveBeenCalledTimes(2);
-  expect(spawn).toHaveBeenLastCalledWith(
-    "npm",
-    [
-      "run",
-      "start",
-      "--",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "5173",
-      "--strictPort",
-    ],
-    {
-      cwd: "/tmp/preview",
-      stdio: ["ignore", "ignore", "ignore"],
-      env: expect.objectContaining({
-        HOST: "127.0.0.1",
-        PORT: "5173",
-        NODE_ENV: "production",
-      }),
-    }
-  );
+  expect(spawn).toHaveBeenLastCalledWith("npm", ["run", "start"], {
+    cwd: "/tmp/preview",
+    stdio: ["ignore", "pipe", "pipe"],
+    env: expect.objectContaining({
+      HOST: "127.0.0.1",
+      PORT: "5173",
+      NODE_ENV: "production",
+    }),
+  });
 });
 
 test("preview controller rejects incompatible start options while running", async () => {
@@ -204,6 +172,48 @@ test("preview controller rejects incompatible start options while running", asyn
   await expect(controller.start({ cwd: "/tmp/other-preview" })).rejects.toThrow(
     "Preview server is already running at http://127.0.0.1:5173/"
   );
+});
+
+test("preview controller stops the running server", async () => {
+  const process = createPreviewProcess();
+  const buildProcess = createPreviewProcess();
+  const controller = createPreviewController(
+    { host: "127.0.0.1", port: 5173, cwd: "/tmp/preview" },
+    createDependencies({
+      spawn: vi
+        .fn()
+        .mockReturnValueOnce(buildProcess)
+        .mockReturnValueOnce(process) as never,
+    })
+  );
+  resolveProcessExit(buildProcess);
+  let exitListener: (() => void) | undefined;
+  vi.mocked(
+    process.once as (event: string, callback: unknown) => unknown
+  ).mockImplementation((event, callback) => {
+    if (event === "exit" && typeof callback === "function") {
+      exitListener = callback as () => void;
+    }
+    return process;
+  });
+  vi.mocked(process.kill).mockImplementation(() => {
+    exitListener?.();
+    return true;
+  });
+
+  await controller.start();
+
+  await expect(controller.stop()).resolves.toEqual({
+    url: "http://127.0.0.1:5173/",
+    pid: undefined,
+    running: false,
+  });
+  expect(process.kill).toHaveBeenCalledOnce();
+  await expect(controller.stop()).resolves.toEqual({
+    url: "http://127.0.0.1:5173/",
+    pid: undefined,
+    running: false,
+  });
 });
 
 test("preview controller reuses custom running options when start has no options", async () => {
@@ -312,7 +322,21 @@ test("preview controller waits when starting through startAndWait", async () => 
 });
 
 test("preview controller fails immediately when the dev server exits before readiness", async () => {
-  const process = createPreviewProcess({ exitCode: 1 });
+  const process = createPreviewProcess({
+    exitCode: 1,
+    stderr: {
+      on: vi.fn((event: string, handler: (chunk: Buffer) => void) => {
+        if (event === "data") {
+          handler(
+            Buffer.from(
+              "Error: listen EADDRINUSE: address already in use 127.0.0.1:5173"
+            )
+          );
+        }
+        return process.stderr;
+      }),
+    } as never,
+  });
   const buildProcess = createPreviewProcess();
   const fetch = vi.fn(async () => new Response("", { status: 200 }));
   resolveProcessExit(buildProcess);
@@ -326,9 +350,15 @@ test("preview controller fails immediately when the dev server exits before read
       fetch,
     })
   );
-
   await expect(controller.startAndWait()).rejects.toThrow(
-    "Preview server exited before it became ready at http://127.0.0.1:5173/."
+    [
+      "Preview server exited before it became ready at http://127.0.0.1:5173/.",
+      "",
+      "Preview server output:",
+      "Error: listen EADDRINUSE: address already in use 127.0.0.1:5173",
+      "",
+      "Port is already in use. Stop the existing preview server for http://127.0.0.1:5173/, or start preview with a different port.",
+    ].join("\n")
   );
   expect(fetch).not.toHaveBeenCalled();
 });

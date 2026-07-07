@@ -23,11 +23,7 @@ const requireBuilderPatchValue = (
   }
 };
 
-export const builderPatchSchema: z.ZodType<
-  BuilderPatch,
-  z.ZodTypeDef,
-  unknown
-> = z
+export const builderPatchSchema: z.ZodType<BuilderPatch, unknown> = z
   .union([
     z
       .object({
@@ -50,7 +46,7 @@ export const builderPatchSchema: z.ZodType<
   ])
   .transform((patch): BuilderPatch => patch as BuilderPatch);
 
-const pageGeneratedRecordPaths = new Set(["pages", "folders"]);
+const pageGeneratedRecordPaths = new Set(["pages", "folders", "pageTemplates"]);
 const generatedRecordNamespaces = new Set<BuilderNamespace>(
   builderNamespaces.filter(
     (namespace) => namespace !== "pages" && namespace !== "marketplaceProduct"
@@ -160,43 +156,39 @@ const isGeneratedRecordIdFieldPatch = (
   );
 };
 
-export const builderPatchChangeSchema: z.ZodType<
-  BuilderPatchChange,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    namespace: z.enum(builderNamespaces),
-    patches: z.array(builderPatchSchema),
-  })
-  .superRefine((change, context) => {
-    for (const [index, patch] of change.patches.entries()) {
-      if (isGeneratedRecordWritePatch(change.namespace, patch)) {
+export const builderPatchChangeSchema: z.ZodType<BuilderPatchChange, unknown> =
+  z
+    .object({
+      namespace: z.enum(builderNamespaces),
+      patches: z.array(builderPatchSchema),
+    })
+    .superRefine((change, context) => {
+      for (const [index, patch] of change.patches.entries()) {
+        if (isGeneratedRecordWritePatch(change.namespace, patch)) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["patches", index, "path"],
+            message:
+              `Raw patches cannot create or replace generated record collections or records in ` +
+              `namespace "${change.namespace}". Use semantic operations so Webstudio generates and preserves runtime ids.`,
+          });
+          continue;
+        }
+        if (isGeneratedRecordIdFieldPatch(change.namespace, patch) === false) {
+          continue;
+        }
         context.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["patches", index, "path"],
           message:
-            `Raw patches cannot create or replace generated record collections or records in ` +
-            `namespace "${change.namespace}". Use semantic operations so Webstudio generates and preserves runtime ids.`,
+            `Raw patches cannot change record id fields in namespace ` +
+            `"${change.namespace}". Use semantic operations so Webstudio preserves system ids.`,
         });
-        continue;
       }
-      if (isGeneratedRecordIdFieldPatch(change.namespace, patch) === false) {
-        continue;
-      }
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["patches", index, "path"],
-        message:
-          `Raw patches cannot change record id fields in namespace ` +
-          `"${change.namespace}". Use semantic operations so Webstudio preserves system ids.`,
-      });
-    }
-  });
+    });
 
 export const builderPatchTransactionSchema: z.ZodType<
   BuilderPatchTransaction,
-  z.ZodTypeDef,
   unknown
 > = z.object({
   id: z.string().min(1),

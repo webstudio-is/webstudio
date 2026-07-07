@@ -114,13 +114,10 @@ export type BuildPatchTransaction = {
   id: string;
   payload: BuildPatchChange[];
 };
-export const buildPatch: z.ZodType<BuildPatch, z.ZodTypeDef, unknown> =
+export const buildPatch: z.ZodType<BuildPatch, unknown> =
   internalBuilderPatchSchema;
-export const buildPatchTransaction: z.ZodType<
-  BuildPatchTransaction,
-  z.ZodTypeDef,
-  unknown
-> = internalBuilderPatchTransactionSchema;
+export const buildPatchTransaction: z.ZodType<BuildPatchTransaction, unknown> =
+  internalBuilderPatchTransactionSchema;
 
 export const bundleVersion = createContractVersion(publishedProjectBundle, [
   wsAuthConfig,

@@ -24,6 +24,7 @@ export const jsonToLocalConfig = (json: unknown) => {
 };
 
 const zGlobalConfig = z.record(
+  z.string(),
   z
     .union([
       z.object({

@@ -3,8 +3,8 @@ import { Grid, Switch, theme } from "@webstudio-is/design-system";
 import {
   BindingControl,
   BindingPopover,
-  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { validatePrimitiveValue } from "@webstudio-is/project-build/runtime/props";
 import {
   type ControlProps,
   $selectedInstanceScope,

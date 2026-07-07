@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { useId, useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -20,14 +19,15 @@ import {
 import { CopyIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { Image, wsImageLoader } from "@webstudio-is/image";
 import type { ProjectMeta } from "@webstudio-is/sdk";
+import { validateContactEmail } from "@webstudio-is/project-build/runtime/project-settings";
 import { ImageControl } from "./image-control";
 import { $assets, $project } from "~/shared/sync/data-stores";
 import { $permissions } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { sectionSpacing } from "./utils";
 import { CodeEditor } from "~/shared/code-editor";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 const imgStyle = css({
   objectFit: "contain",
@@ -46,42 +46,13 @@ const defaultMetaSettings: ProjectMeta = {
   code: "",
 };
 
-const emailAddress = z.string().email();
-
-const validateContactEmail = (
-  contactEmail: string,
-  maxContactEmailsPerProject: number
-) => {
-  contactEmail = contactEmail.trim();
-  if (contactEmail.length === 0) {
-    return;
-  }
-  const emails = contactEmail.split(/\s*,\s*/);
-  if (emails.length > maxContactEmailsPerProject) {
-    if (maxContactEmailsPerProject === 0) {
-      return `Upgrade to PRO to customize the contact email.`;
-    }
-    return `Only ${maxContactEmailsPerProject} emails are allowed.`;
-  }
-  if (
-    emails.every((email) => emailAddress.safeParse(email).success) === false
-  ) {
-    return "Contact email is invalid.";
-  }
-};
-
 const saveSetting = <Name extends keyof ProjectMeta>(
   name: keyof ProjectMeta,
   value: ProjectMeta[Name]
 ) => {
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    if (pages.meta === undefined) {
-      pages.meta = {};
-    }
-    pages.meta[name] = value;
+  executeRuntimeMutation({
+    id: "projectSettings.update",
+    input: { meta: { [name]: value } },
   });
 };
 

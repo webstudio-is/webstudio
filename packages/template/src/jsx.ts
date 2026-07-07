@@ -1,4 +1,5 @@
 import { Fragment, type JSX, type ReactNode } from "react";
+import { hyphenateProperty } from "@webstudio-is/css-engine";
 import { encodeDataSourceVariable, getStyleDeclKey } from "@webstudio-is/sdk";
 import type {
   Breakpoint,
@@ -13,7 +14,7 @@ import type {
   WebstudioFragment,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import type { TemplateStyleDecl } from "./css";
+import { parseTemplateCss, type TemplateStyleDecl } from "./css";
 import { camelCaseProperty, parseMediaQuery } from "@webstudio-is/css-data";
 
 export class Token {
@@ -26,6 +27,21 @@ export class Token {
 }
 
 export const token = (name: string, styles: TemplateStyleDecl[]): Token => {
+  if (typeof name !== "string" || name.length === 0) {
+    throw new Error(
+      'token() requires a non-empty string name, for example token("brand", css`color: red;`).'
+    );
+  }
+  if (Array.isArray(styles) === false) {
+    throw new Error(
+      'token() styles must come from css`...`, for example token("brand", css`color: red;`).'
+    );
+  }
+  if (styles.length === 0) {
+    throw new Error(
+      'token() styles must include at least one valid CSS declaration from css`...`, for example token("brand", css`color: red;`).'
+    );
+  }
   return new Token(name, styles);
 };
 
@@ -134,10 +150,191 @@ const getElementChildren = (element: JSX.Element): JSX.Element[] => {
   return [];
 };
 
+const findUnsupportedSerializableValue = (
+  value: unknown,
+  path: string[] = [],
+  ancestors = new WeakSet<object>()
+):
+  | {
+      path: string[];
+      message: string;
+    }
+  | undefined => {
+  if (typeof value === "function") {
+    return {
+      path,
+      message:
+        "Do not pass JavaScript functions. Use Webstudio actions instead",
+    };
+  }
+  if (value === undefined) {
+    return {
+      path,
+      message: "Do not pass undefined. Omit the prop or use null instead",
+    };
+  }
+  if (typeof value === "bigint") {
+    return {
+      path,
+      message:
+        "Do not pass BigInt values. Use a string, finite number, or expression instead",
+    };
+  }
+  if (typeof value === "symbol") {
+    return {
+      path,
+      message:
+        "Do not pass Symbol values. Use a string, finite number, or expression instead",
+    };
+  }
+  if (typeof value === "number" && Number.isFinite(value) === false) {
+    return {
+      path,
+      message: "Do not pass NaN or Infinity. Use a finite number instead",
+    };
+  }
+  if (typeof value !== "object" || value === null) {
+    return;
+  }
+  if (Array.isArray(value)) {
+    if (ancestors.has(value)) {
+      return {
+        path,
+        message:
+          "Do not pass circular objects. Use plain JSON-compatible values instead",
+      };
+    }
+    ancestors.add(value);
+    for (const [index, item] of value.entries()) {
+      const unsupportedValue = findUnsupportedSerializableValue(
+        item,
+        [...path, String(index)],
+        ancestors
+      );
+      if (unsupportedValue !== undefined) {
+        return unsupportedValue;
+      }
+    }
+    ancestors.delete(value);
+    return;
+  }
+  const objectType = Object.prototype.toString.call(value);
+  if (objectType !== "[object Object]") {
+    return {
+      path,
+      message: `Do not pass ${objectType.slice(8, -1)} objects. Use plain JSON-compatible values instead`,
+    };
+  }
+  const prototype = Object.getPrototypeOf(value);
+  const constructorName =
+    prototype === null
+      ? "Object"
+      : typeof prototype.constructor === "function"
+        ? prototype.constructor.name
+        : undefined;
+  if (constructorName !== "Object") {
+    return {
+      path,
+      message: `Do not pass ${constructorName ?? "custom"} objects. Use plain JSON-compatible values instead`,
+    };
+  }
+  if (ancestors.has(value)) {
+    return {
+      path,
+      message:
+        "Do not pass circular objects. Use plain JSON-compatible values instead",
+    };
+  }
+  ancestors.add(value);
+  for (const [key, item] of Object.entries(value)) {
+    const unsupportedValue = findUnsupportedSerializableValue(
+      item,
+      [...path, key],
+      ancestors
+    );
+    if (unsupportedValue !== undefined) {
+      return unsupportedValue;
+    }
+  }
+  ancestors.delete(value);
+};
+
+const validateSerializablePropValue = (name: string, value: unknown) => {
+  const unsupportedValue = findUnsupportedSerializableValue(value);
+  if (unsupportedValue === undefined) {
+    return;
+  }
+  const nestedPath =
+    unsupportedValue.path.length === 0
+      ? ""
+      : ` at "${unsupportedValue.path.join(".")}"`;
+  const actionHint = unsupportedValue.message.includes("functions")
+    ? ` For actions, use ${name}={new ActionValue(["event"], expression\`console.log(event)\`)}.`
+    : "";
+  throw new Error(
+    `Invalid JSX prop "${name}"${nestedPath}. ${unsupportedValue.message}.${actionHint}`
+  );
+};
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" &&
+  value !== null &&
+  Array.isArray(value) === false &&
+  Object.prototype.toString.call(value) === "[object Object]";
+
+const getReactStyleProperty = (name: string) =>
+  name.startsWith("--") ? name : hyphenateProperty(name);
+
+const parseReactStyleDeclaration = (property: string, value: string) =>
+  parseTemplateCss(`${property}: ${value};`);
+
+const hasInvalidStyleValue = (styles: TemplateStyleDecl[]) =>
+  styles.some((style) => style.value.type === "invalid");
+
+const convertReactStyleObject = (value: unknown): TemplateStyleDecl[] => {
+  if (isPlainObject(value) === false) {
+    throw new Error(
+      "style prop must be a plain object, for example style={{ padding: 24 }}."
+    );
+  }
+  const styles: TemplateStyleDecl[] = [];
+  for (const [name, styleValue] of Object.entries(value)) {
+    if (styleValue === undefined || styleValue === null) {
+      continue;
+    }
+    const property = getReactStyleProperty(name);
+    if (typeof styleValue === "number") {
+      if (Number.isFinite(styleValue) === false) {
+        throw new Error(
+          `Invalid style prop "${name}". Use a finite number or string value.`
+        );
+      }
+      const stringValue = String(styleValue);
+      const parsedStyles = parseReactStyleDeclaration(property, stringValue);
+      styles.push(
+        ...((parsedStyles.length === 0 || hasInvalidStyleValue(parsedStyles)) &&
+        styleValue !== 0
+          ? parseReactStyleDeclaration(property, `${stringValue}px`)
+          : parsedStyles)
+      );
+      continue;
+    }
+    if (typeof styleValue === "string") {
+      styles.push(...parseReactStyleDeclaration(property, styleValue));
+      continue;
+    }
+    throw new Error(
+      `Invalid style prop "${name}". Use a string, finite number, null, or undefined value.`
+    );
+  }
+  return styles;
+};
+
 export const renderTemplate = (
   root: JSX.Element,
   generateId?: () => string,
-  initialBreakpoints: Breakpoint[] = []
+  initialBreakpoints: Breakpoint[] = [],
+  options: { allowManualIds?: boolean } = {}
 ): WebstudioFragment => {
   const instances: Instance[] = [];
   const props: Prop[] = [];
@@ -281,6 +478,18 @@ export const renderTemplate = (
     Instance["id"],
     TemplateStyleDecl[]
   >();
+  const addLocalStyles = (
+    instanceId: Instance["id"],
+    localStyles: TemplateStyleDecl[]
+  ) => {
+    if (localStyles.length === 0) {
+      return;
+    }
+    localStylesByInstanceId.set(instanceId, [
+      ...(localStylesByInstanceId.get(instanceId) ?? []),
+      ...localStyles,
+    ]);
+  };
   const tokensByInstanceId = new Map<Instance["id"], Token[]>();
   const tokenIdByToken = new Map<Token, string>();
   const getTokenId = (token: Token) => {
@@ -294,6 +503,24 @@ export const renderTemplate = (
   const convertElementToInstance = (
     element: JSX.Element
   ): Instance["children"][number] => {
+    if (element.type === Fragment) {
+      throw new Error(
+        "Do not use React fragment shorthand <>...</> inside Webstudio JSX. Pass sibling Webstudio components directly at the top level, or wrap text in a component such as <$.Box><$.Paragraph>Text</$.Paragraph></$.Box>."
+      );
+    }
+    if (typeof element.type === "string") {
+      throw new Error(
+        `Do not use raw HTML tag <${element.type}> in Webstudio JSX. Use Webstudio components such as <$.Box>...</$.Box>, or use <ws.element ws:tag="${element.type}">...</ws.element> when a specific HTML tag is required.`
+      );
+    }
+    if (
+      options.allowManualIds === false &&
+      element.props?.["ws:id"] !== undefined
+    ) {
+      throw new Error(
+        "Do not set ws:id in JSX fragments. Webstudio runtime generates system ids automatically."
+      );
+    }
     const instanceId = element.props?.["ws:id"] ?? getIdByKey(element);
     let tag: string | undefined;
     for (const entry of Object.entries({ ...element.props })) {
@@ -302,18 +529,46 @@ export const renderTemplate = (
       if (name === "ws:id" || name === "ws:label" || name === "children") {
         continue;
       }
+      if (name === "className") {
+        name = "class";
+      }
+      if (name === "htmlFor") {
+        name = "for";
+      }
       if (name === "ws:tag") {
         tag = value as string;
         continue;
       }
       if (name === "ws:style") {
         const localStyles = value as TemplateStyleDecl[];
+        if (Array.isArray(localStyles) === false) {
+          throw new Error(
+            "ws:style must come from css`...`, for example ws:style={css`padding: 24px;`}."
+          );
+        }
+        if (localStyles.length === 0) {
+          throw new Error(
+            "ws:style must include at least one valid CSS declaration from css`...`, for example ws:style={css`padding: 24px;`}."
+          );
+        }
         // create styles with breakpoints later to ensure more stable ids
-        localStylesByInstanceId.set(instanceId, localStyles);
+        addLocalStyles(instanceId, localStyles);
+        continue;
+      }
+      if (name === "style") {
+        addLocalStyles(instanceId, convertReactStyleObject(value));
         continue;
       }
       if (name === "ws:tokens") {
-        const tokens = value as Token[];
+        if (
+          Array.isArray(value) === false ||
+          value.every((token) => token instanceof Token) === false
+        ) {
+          throw new Error(
+            'ws:tokens must be an array of token(...) values, for example ws:tokens={[token("brand", css`color: red;`)]}.'
+          );
+        }
+        const tokens = value;
         // create tokens with breakpoints later to ensure more stable ids
         tokensByInstanceId.set(instanceId, tokens);
         continue;
@@ -363,6 +618,7 @@ export const renderTemplate = (
         continue;
       }
       if (typeof value === "number") {
+        validateSerializablePropValue(name, value);
         props.push({ ...base, type: "number", value });
         continue;
       }
@@ -370,9 +626,15 @@ export const renderTemplate = (
         props.push({ ...base, type: "boolean", value });
         continue;
       }
+      validateSerializablePropValue(name, value);
       props.push({ ...base, type: "json", value });
     }
     const component = element.type.displayName;
+    if (typeof component !== "string") {
+      throw new Error(
+        "Invalid JSX component in Webstudio JSX. Use Webstudio component helpers such as <$.Box>...</$.Box>."
+      );
+    }
     const instance: Instance = {
       type: "instance",
       id: instanceId,
@@ -383,7 +645,7 @@ export const renderTemplate = (
     if (element.props?.["ws:label"]) {
       instance.label = element.props?.["ws:label"];
     }
-    if (tag) {
+    if (tag !== undefined) {
       instance.tag = tag;
     }
     instance.children = getElementChildren(element).map(
@@ -413,6 +675,14 @@ export const renderTemplate = (
     }
   } else {
     children.push(convertElementToInstance(root));
+  }
+  if (
+    options.allowManualIds === false &&
+    (children.length === 0 || instances.length === 0)
+  ) {
+    throw new Error(
+      "JSX fragment must contain at least one Webstudio component, for example <$.Box><$.Paragraph>Text</$.Paragraph></$.Box>."
+    );
   }
   for (const [instanceId, localStyles] of localStylesByInstanceId) {
     const styleSourceId = `${instanceId}:ws:style`;
@@ -533,6 +803,7 @@ type ComponentProps = Record<string, unknown> &
     "ws:label"?: string;
     "ws:tag"?: string;
     "ws:style"?: TemplateStyleDecl[];
+    style?: Record<string, string | number | null | undefined>;
     "ws:show"?: boolean | Expression;
     children?: ReactNode | Expression | PlaceholderValue;
   };

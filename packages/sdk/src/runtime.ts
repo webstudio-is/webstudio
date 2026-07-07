@@ -7,7 +7,8 @@ export const tagProperty = "data-ws-tag";
 export const getTagFromProps = (
   props: Record<string, unknown>
 ): string | undefined => {
-  return props[tagProperty] as string | undefined;
+  const tag = props[tagProperty];
+  return typeof tag === "string" && tag.length > 0 ? tag : undefined;
 };
 
 export const indexProperty = "data-ws-index";

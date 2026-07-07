@@ -23,7 +23,7 @@ import {
   width,
   zIndex,
 } from "./shared/theme";
-import { getButtonStyle } from "./shared/styles";
+import { getButtonStyle, iconEmbedStyle } from "./shared/styles";
 
 /**
  * Styles source without animations:
@@ -43,7 +43,11 @@ export const meta: TemplateMeta = {
     <radix.Dialog ws:label="Sheet">
       <radix.DialogTrigger ws:label="Sheet Trigger">
         <$.Button ws:style={getButtonStyle("ghost", "icon")}>
-          <$.HtmlEmbed ws:label="Hamburger Menu Svg" code={MenuIcon} />
+          <$.HtmlEmbed
+            ws:label="Hamburger Menu Svg"
+            ws:style={iconEmbedStyle}
+            code={MenuIcon}
+          />
         </$.Button>
       </radix.DialogTrigger>
       <radix.DialogOverlay
@@ -160,7 +164,11 @@ export const meta: TemplateMeta = {
               }
             `}
           >
-            <$.HtmlEmbed ws:label="Close Icon" code={LargeXIcon} />
+            <$.HtmlEmbed
+              ws:label="Close Icon"
+              ws:style={iconEmbedStyle}
+              code={LargeXIcon}
+            />
           </radix.DialogClose>
         </radix.DialogContent>
       </radix.DialogOverlay>

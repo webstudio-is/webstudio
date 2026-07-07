@@ -13,7 +13,7 @@ import {
   type Instance,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
-import type { InstanceSelector } from "../instance-utils/tree";
+import type { InstanceSelector } from "@webstudio-is/project-build/runtime/tree";
 import { $props, $instances } from "../sync/data-stores";
 import { $memoryProps } from "./misc";
 import { $selectedPage } from "./pages";

@@ -94,7 +94,9 @@ export const executeProjectSessionApiOperation = async ({
     dryRun === true &&
     (runtimeOperationId === undefined || operation.method !== "mutation")
   ) {
-    throw new Error(`${command} does not support --dry-run.`);
+    throw new Error(
+      `${command} does not support --dry-run. Use --dry-run only with local-capable mutation tools; omit it for read or server-only tools.`
+    );
   }
   const session = createProjectSession({ connection });
   await session.initialize();

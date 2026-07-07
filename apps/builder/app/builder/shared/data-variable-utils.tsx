@@ -15,7 +15,6 @@ import {
   InputField,
 } from "@webstudio-is/design-system";
 import type { DataSource, Instance } from "@webstudio-is/sdk";
-import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/sync/data-stores";
 import {
   $instances,
@@ -23,12 +22,12 @@ import {
   $dataSources,
   $resources,
 } from "~/shared/sync/data-stores";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
 import {
-  findVariableUsagesByInstance,
+  findUnusedDataVariableIds,
   validateDataVariableNameWithSources,
 } from "@webstudio-is/project-build/runtime/data";
 import { type DataVariableNameError } from "@webstudio-is/project-build/runtime/data";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 
 const $isDeleteUnusedDataVariablesDialogOpen = atom(false);
 
@@ -37,17 +36,6 @@ export const openDeleteUnusedDataVariablesDialog = () => {
 };
 
 export type DataVariableError = DataVariableNameError;
-
-const getUsedVariablesInInstances = () => {
-  return findVariableUsagesByInstance({
-    startingInstanceId: ROOT_INSTANCE_ID,
-    pages: $pages.get(),
-    instances: $instances.get(),
-    props: $props.get(),
-    dataSources: $dataSources.get(),
-    resources: $resources.get(),
-  });
-};
 
 type DeleteDataVariableDialogProps = {
   variable?: { id: DataSource["id"]; name: string; usages: number };
@@ -105,30 +93,20 @@ export const DeleteDataVariableDialog = ({
 };
 
 export const deleteUnusedDataVariables = () => {
-  const dataSources = $dataSources.get();
-  const usedVariablesInInstances = getUsedVariablesInInstances();
-  const unusedVariableIds: DataSource["id"][] = [];
-
-  for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "variable") {
-      const usages = usedVariablesInInstances.get(dataSource.id);
-      if (usages === undefined || usages.size === 0) {
-        unusedVariableIds.push(dataSource.id);
-      }
-    }
-  }
-
-  if (unusedVariableIds.length === 0) {
-    return 0;
-  }
-
-  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-    for (const variableId of unusedVariableIds) {
-      dataSources.delete(variableId);
-    }
+  const result = executeRuntimeMutation({
+    id: "variables.deleteUnused",
+    input: {},
   });
+  return result?.result.deletedCount ?? 0;
+};
 
-  return unusedVariableIds.length;
+export const deleteDataVariable = (variableId: DataSource["id"]) => {
+  executeRuntimeMutation({
+    id: "variables.delete",
+    input: {
+      dataSourceId: variableId,
+    },
+  });
 };
 
 export const validateDataVariableName = (
@@ -160,11 +138,14 @@ export const renameDataVariable = (
     return validationError;
   }
 
-  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-    const dataSource = dataSources.get(id);
-    if (dataSource?.type === "variable") {
-      dataSource.name = name;
-    }
+  executeRuntimeMutation({
+    id: "variables.update",
+    input: {
+      dataSourceId: id,
+      values: {
+        name,
+      },
+    },
   });
 };
 
@@ -259,13 +240,16 @@ export const DeleteUnusedDataVariablesDialog = () => {
 
   const unusedVariables: Array<{ id: string; name: string }> = [];
   if (open) {
-    const usedVariablesInInstances = getUsedVariablesInInstances();
-    for (const dataSource of dataSources.values()) {
-      if (dataSource.type === "variable") {
-        const usages = usedVariablesInInstances.get(dataSource.id);
-        if (usages === undefined || usages.size === 0) {
-          unusedVariables.push({ id: dataSource.id, name: dataSource.name });
-        }
+    for (const dataSourceId of findUnusedDataVariableIds({
+      pages: $pages.get(),
+      instances: $instances.get(),
+      props: $props.get(),
+      dataSources,
+      resources: $resources.get(),
+    })) {
+      const dataSource = dataSources.get(dataSourceId);
+      if (dataSource?.type === "variable") {
+        unusedVariables.push({ id: dataSource.id, name: dataSource.name });
       }
     }
   }

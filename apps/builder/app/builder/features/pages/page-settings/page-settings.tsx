@@ -1,18 +1,10 @@
-import { nanoid } from "nanoid";
 import { useState, useEffect, type JSX } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  ROOT_FOLDER_ID,
-  documentTypes,
   type Page,
-  type Pages,
   findPageByIdOrPath,
-  findParentFolderByChildId,
-  getPagePath,
-  getHomePage,
   isLiteralExpression,
 } from "@webstudio-is/sdk";
-import { validateBasicAuth } from "@webstudio-is/wsauth";
 import {
   theme,
   Button,
@@ -35,200 +27,36 @@ import {
 } from "~/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
-import { $instances, $pages } from "~/shared/sync/data-stores";
-import { serverSyncStore } from "~/shared/sync/sync-stores";
-import { selectInstance } from "~/shared/nano-states";
-import { $pageRootScope, duplicatePage, nameToPath } from "../page-utils";
+import { $pages } from "~/shared/sync/data-stores";
+import { $pageRootScope, duplicatePage } from "../page-utils";
 import {
-  cleanupChildRefsMutable,
-  registerFolderChildMutable,
-} from "~/shared/page-utils/tree";
+  computePageSettingsPath,
+  getInitialPageSettingsMeta,
+  getPageSettingsValues,
+  nameToPath,
+  pageSettingsDefaultValues,
+  validatePageSettings,
+  type PageSettingsErrors,
+  type PageSettingsValues,
+} from "@webstudio-is/project-build/runtime/pages";
+import { findMatchingRedirect } from "@webstudio-is/project-build/runtime/redirect-source";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { Form } from "../form";
-import { findMatchingRedirect } from "~/shared/project-settings/utils";
-import { isContentModePagePath } from "@webstudio-is/project/content-mode-permissions";
-import {
-  createPageRootInstance,
-  createPageValue,
-} from "@webstudio-is/project-build/runtime/pages";
-import { updatePageFieldsMutable } from "~/shared/page-utils/meta";
-import { AuthSection, validateAuthSection } from "./section-auth";
-import {
-  CustomMetadataSection,
-  validateCustomMetadataSection,
-} from "./section-custom-metadata";
-import { GeneralSection, validateGeneralSection } from "./section-general";
+import { isContentModePagePath } from "@webstudio-is/project-build/runtime/content-mode-permissions";
+import { executeRuntimeMutation } from "~/shared/instance-utils/data";
+import { AuthSection } from "./section-auth";
+import { CustomMetadataSection } from "./section-custom-metadata";
+import { GeneralSection } from "./section-general";
 import { MarketplaceSection } from "./section-marketplace";
-import { SearchSection, validateSearchSection } from "./section-search";
-import {
-  SocialImageSection,
-  validateSocialImageSection,
-} from "./section-social-image";
-import {
-  TextContentSection,
-  validateTextContentSection,
-} from "./section-text-content";
-import {
-  type Errors,
-  type FieldName,
-  type OnChange,
-  type Values,
-} from "./shared";
+import { SearchSection } from "./section-search";
+import { SocialImageSection } from "./section-social-image";
+import { TextContentSection } from "./section-text-content";
+import { type OnChange } from "./shared";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { copyPage } from "~/shared/copy-paste/copy-paste";
 import { PageItemActionsDropdown } from "../page-item-actions";
 
-export type { Values } from "./shared";
-
-export const fieldDefaultValues: Values = {
-  name: "Untitled",
-  parentFolderId: ROOT_FOLDER_ID,
-  path: "/untitled",
-  isHomePage: false,
-  title: `"Untitled"`,
-  description: `""`,
-  excludePageFromSearch: `true`,
-  language: `""`,
-  socialImageUrl: `""`,
-  socialImageAssetId: "",
-  status: undefined,
-  redirect: `""`,
-  documentType: "html" as (typeof documentTypes)[number],
-  content: `""`,
-  auth: {
-    login: "",
-    password: "",
-  },
-  customMetas: [{ property: "", content: `""` }],
-  marketplace: {
-    include: false,
-    category: "",
-    thumbnailAssetId: "",
-  },
-};
-
-const emptyUnsavedValues: Partial<Values> = {};
-
-const computePagePath = (values: Values, pages: Pages): string => {
-  if (values.isHomePage) {
-    return "/";
-  }
-  const foldersPath = getPagePath(values.parentFolderId, pages);
-  return [foldersPath, values.path]
-    .filter(Boolean)
-    .join("/")
-    .replace(/\/+/g, "/");
-};
-
-const nonAuthFieldNames = Object.keys(fieldDefaultValues).filter(
-  (fieldName): fieldName is Exclude<FieldName, "auth"> => fieldName !== "auth"
-);
-
-export const validateValues = (
-  pages: undefined | Pages,
-  // undefined page id means new page
-  pageId: undefined | Page["id"],
-  values: Values,
-  variableValues: Map<string, unknown>
-): Errors => {
-  const errors: Errors = {};
-  const sectionErrors = [
-    validateGeneralSection({ pages, pageId, values, variableValues }),
-    validateAuthSection(values),
-  ];
-  if (values.documentType === "html") {
-    sectionErrors.push(
-      validateSearchSection(values, variableValues),
-      validateSocialImageSection(values, variableValues),
-      validateCustomMetadataSection(values, variableValues)
-    );
-  }
-  if (values.documentType === "text") {
-    sectionErrors.push(validateTextContentSection(values, variableValues));
-  }
-  for (const sectionError of sectionErrors) {
-    if (sectionError.auth) {
-      errors.auth = { ...errors.auth, ...sectionError.auth };
-    }
-    for (const fieldName of nonAuthFieldNames) {
-      const messages = sectionError[fieldName];
-      if (messages === undefined) {
-        continue;
-      }
-      errors[fieldName] = [...(errors[fieldName] ?? []), ...messages];
-    }
-  }
-  return errors;
-};
-
-const toFormValues = (
-  page: Page,
-  pages: Pages,
-  isHomePage: boolean
-): Values => {
-  const parentFolder = findParentFolderByChildId(page.id, pages.folders);
-  return {
-    name: page.name,
-    parentFolderId: parentFolder?.id ?? pages.rootFolderId,
-    path: page.path,
-    title: page.title,
-    description: page.meta.description ?? fieldDefaultValues.description,
-    socialImageUrl:
-      page.meta.socialImageUrl ?? fieldDefaultValues.socialImageUrl,
-    socialImageAssetId:
-      page.meta.socialImageAssetId ?? fieldDefaultValues.socialImageAssetId,
-    excludePageFromSearch:
-      page.meta.excludePageFromSearch ??
-      fieldDefaultValues.excludePageFromSearch,
-    language: page.meta.language ?? fieldDefaultValues.language,
-    status: page.meta.status ?? fieldDefaultValues.status,
-    redirect: page.meta.redirect ?? fieldDefaultValues.redirect,
-    documentType: page.meta.documentType ?? fieldDefaultValues.documentType,
-    content: page.meta.content ?? fieldDefaultValues.content,
-    auth: {
-      login: page.meta.auth?.login ?? fieldDefaultValues.auth.login,
-      password: page.meta.auth?.password ?? fieldDefaultValues.auth.password,
-    },
-    isHomePage,
-    customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
-    marketplace: {
-      include:
-        page.marketplace?.include ?? fieldDefaultValues.marketplace.include,
-      category:
-        page.marketplace?.category ?? fieldDefaultValues.marketplace.category,
-      thumbnailAssetId:
-        page.marketplace?.thumbnailAssetId ??
-        fieldDefaultValues.marketplace.thumbnailAssetId,
-    },
-  };
-};
-
-const getAuthFromValues = (values: Values): Page["meta"]["auth"] => {
-  if (values.auth.login === "" && values.auth.password === "") {
-    return;
-  }
-  const auth = validateBasicAuth({
-    login: values.auth.login,
-    password: values.auth.password,
-  }).auth;
-  if (auth === undefined) {
-    return;
-  }
-  return {
-    method: auth.method,
-    login: auth.login,
-    password: auth.password,
-  };
-};
-
-const getInitialPageMeta = (values: Values): Page["meta"] => {
-  const meta: Page["meta"] = {};
-  const auth = getAuthFromValues(values);
-  if (auth !== undefined) {
-    meta.auth = auth;
-  }
-  return meta;
-};
+const emptyUnsavedValues: Partial<PageSettingsValues> = {};
 
 export const canEditPagePathInMode = ({
   isDesignMode,
@@ -247,7 +75,7 @@ export const addContentModePathError = ({
   isContentMode,
   path,
 }: {
-  errors: Errors;
+  errors: PageSettingsErrors;
   isContentMode: boolean;
   path: string;
 }) => {
@@ -259,13 +87,9 @@ export const addContentModePathError = ({
 
 export const __testing__ = {
   addContentModePathError,
-  computePagePath,
+  computePageSettingsPath,
   canEditPagePathInMode,
-  fieldDefaultValues,
-  getAuthFromValues,
-  getInitialPageMeta,
-  toFormValues,
-  validateValues,
+  validatePageSettings,
 };
 
 export const FormFields = ({
@@ -289,8 +113,8 @@ export const FormFields = ({
   showMarketplaceSection = isEditorContext === false,
 }: {
   autoSelect?: boolean;
-  errors: Errors;
-  values: Values;
+  errors: PageSettingsErrors;
+  values: PageSettingsValues;
   onChange: OnChange;
   showAuthErrors?: boolean;
   isEditorContext?: boolean;
@@ -318,7 +142,7 @@ export const FormFields = ({
 
   const matchingRedirect = showRedirectWarning
     ? findMatchingRedirect(
-        computePagePath(values, pages),
+        computePageSettingsPath(values, pages),
         pages.redirects ?? []
       )
     : undefined;
@@ -461,22 +285,29 @@ export const NewPageSettings = ({
 }) => {
   const pages = useStore($pages);
 
-  const [values, setValues] = useState<Values>({
-    ...fieldDefaultValues,
-    parentFolderId: pages?.rootFolderId ?? fieldDefaultValues.parentFolderId,
-    path: nameToPath(pages, fieldDefaultValues.name),
+  const [values, setValues] = useState<PageSettingsValues>({
+    ...pageSettingsDefaultValues,
+    parentFolderId:
+      pages?.rootFolderId ?? pageSettingsDefaultValues.parentFolderId,
+    path: nameToPath(pages, pageSettingsDefaultValues.name),
   });
   const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
   const { variableValues } = useStore($pageRootScope);
-  const errors = validateValues(pages, undefined, values, variableValues);
+  const errors = validatePageSettings({
+    pages,
+    pageId: undefined,
+    values,
+    variableValues,
+  });
 
   const handleSubmit = () => {
     setIsSubmitAttempted(true);
     if (Object.keys(errors).length === 0) {
-      const pageId = nanoid();
-      createPage(pageId, values);
-      updatePage(pageId, values);
-      onSuccess(pageId);
+      const pageId = createPage(values);
+      if (pageId !== undefined) {
+        updatePage(pageId, values);
+        onSuccess(pageId);
+      }
     }
   };
 
@@ -539,97 +370,27 @@ const NewPageSettingsView = ({
   );
 };
 
-const createPage = (pageId: Page["id"], values: Values) => {
-  serverSyncStore.createTransaction(
-    [$pages, $instances],
-    (pages, instances) => {
-      if (pages === undefined) {
-        return;
-      }
-      const rootInstanceId = nanoid();
-      pages.pages.set(
-        pageId,
-        createPageValue({
-          pageId,
-          name: values.name,
-          path: values.path,
-          title: values.title,
-          rootInstanceId,
-          meta: getInitialPageMeta(values),
-        })
-      );
-      instances.set(rootInstanceId, createPageRootInstance(rootInstanceId));
-      registerFolderChildMutable(pages, pageId, values.parentFolderId);
-      selectInstance(undefined);
-    }
-  );
+const createPage = (values: PageSettingsValues) => {
+  const result = executeRuntimeMutation({
+    id: "pages.create",
+    input: {
+      name: values.name,
+      path: values.path,
+      title: values.title,
+      parentFolderId: values.parentFolderId,
+      meta: getInitialPageSettingsMeta(values),
+    },
+  });
+  return result?.result.pageId as Page["id"] | undefined;
 };
 
-export const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
-  const updatePageMutable = (
-    page: Page,
-    values: Partial<Values>,
-    pages: Pages
-  ) => {
-    updatePageFieldsMutable({ page, pages, values });
-
-    if (values.auth !== undefined) {
-      page.meta.auth = getAuthFromValues({
-        ...toFormValues(page, pages, page.id === pages.homePageId),
-        ...values,
-      });
-    }
-
-    if (values.marketplace !== undefined) {
-      page.marketplace ??= {};
-      page.marketplace.include = values.marketplace.include;
-      page.marketplace.category =
-        values.marketplace.category.length > 0
-          ? values.marketplace.category
-          : undefined;
-      page.marketplace.thumbnailAssetId =
-        values.marketplace.thumbnailAssetId.length > 0
-          ? values.marketplace.thumbnailAssetId
-          : undefined;
-    }
-  };
-
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-
-    const pageToUpdate = pages.pages.get(pageId);
-
-    if (pageToUpdate !== undefined) {
-      updatePageMutable(pageToUpdate, values, pages);
-    }
-
-    // swap home page
-    if (values.isHomePage && pages.homePageId !== pageId) {
-      const newHomePage = pages.pages.get(pageId);
-      const oldHomePage = getHomePage(pages);
-      if (newHomePage === undefined) {
-        throw new Error(`Page with id ${pageId} not found`);
-      }
-
-      pages.homePageId = newHomePage.id;
-      newHomePage.path = "";
-      newHomePage.name = "Home";
-
-      // For simplicity skip logic in case of names are same i.e. Old Home 1, Old Home 2
-      oldHomePage.name = "Old Home";
-      oldHomePage.path = nameToPath(pages, oldHomePage.name);
-
-      const rootFolder = pages.folders.get(pages.rootFolderId);
-
-      if (rootFolder === undefined) {
-        throw new Error("Root folder not found");
-      }
-
-      cleanupChildRefsMutable(newHomePage.id, pages.folders);
-      rootFolder.children.unshift(newHomePage.id);
-    }
+export const updatePage = (
+  pageId: Page["id"],
+  values: Partial<PageSettingsValues>
+) => {
+  executeRuntimeMutation({
+    id: "pages.updateSettings",
+    input: { pageId, values },
   });
 };
 
@@ -652,12 +413,12 @@ export const PageSettings = ({
   const isHomePage = page?.id === pages?.homePageId;
 
   const [refreshDebounce, setRefreshDebounce] = useState(0);
-  let errors: Errors = {};
+  let errors: PageSettingsErrors = {};
   const {
     value: unsavedValues,
     set: setUnsavedValues,
     flush: flushSave,
-  } = useDraftValue<Partial<Values>>(
+  } = useDraftValue<Partial<PageSettingsValues>>(
     emptyUnsavedValues,
     (values) => {
       updatePage(pageId, values);
@@ -678,13 +439,15 @@ export const PageSettings = ({
     }
   };
 
-  const values: Values = {
-    ...(page ? toFormValues(page, pages, isHomePage) : fieldDefaultValues),
+  const values: PageSettingsValues = {
+    ...(page
+      ? getPageSettingsValues({ page, pages, isHomePage })
+      : pageSettingsDefaultValues),
     ...unsavedValues,
   };
 
   const { variableValues } = useStore($pageRootScope);
-  errors = validateValues(pages, pageId, values, variableValues);
+  errors = validatePageSettings({ pages, pageId, values, variableValues });
   if (unsavedValues.path !== undefined) {
     addContentModePathError({
       errors,
