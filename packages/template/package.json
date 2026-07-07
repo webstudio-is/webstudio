@@ -12,7 +12,7 @@
   },
   "sideEffects": false,
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit",
     "test": "vitest run"
   },
   "dependencies": {

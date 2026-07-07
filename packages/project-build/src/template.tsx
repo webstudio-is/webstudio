@@ -99,28 +99,38 @@ export const createPages = (): WebstudioData => {
   );
 
   const pages: Pages = {
-    homePage: {
-      id: homePageId,
-      name: "Home",
-      path: "",
-      title: `"Home"`,
-      meta: {},
-      rootInstanceId: homeBodyId,
-    },
-    pages: [
-      {
-        id: notFoundPageId,
-        name: "404",
-        path: "/*",
-        title: `"Page not found"`,
-        meta: {
-          status: `404`,
-          excludePageFromSearch: "false",
+    homePageId,
+    rootFolderId: "root",
+    pages: new Map([
+      [
+        homePageId,
+        {
+          id: homePageId,
+          name: "Home",
+          path: "",
+          title: `"Home"`,
+          meta: {},
+          rootInstanceId: homeBodyId,
         },
-        rootInstanceId: notFoundBodyId,
-      },
-    ],
-    folders: [createRootFolder([homePageId, notFoundPageId])],
+      ],
+      [
+        notFoundPageId,
+        {
+          id: notFoundPageId,
+          name: "404",
+          path: "/*",
+          title: `"Page not found"`,
+          meta: {
+            status: `404`,
+            excludePageFromSearch: "false",
+          },
+          rootInstanceId: notFoundBodyId,
+        },
+      ],
+    ]),
+    folders: new Map([
+      ["root", createRootFolder([homePageId, notFoundPageId])],
+    ]),
   };
 
   return { ...data, pages };

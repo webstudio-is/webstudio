@@ -32,7 +32,7 @@ export const createFramework = async (): Promise<Framework> => {
   // cleanup route templates after reading to not bloat generated code
   await rm(routeTemplatesDir, { recursive: true, force: true });
 
-  const base = "@webstudio-is/sdk-components-react";
+  const base = "@webstudio-is/sdk-components-react/components";
   const reactRadix = "@webstudio-is/sdk-components-react-radix";
   const animation = "@webstudio-is/sdk-components-animation";
   const components: Record<string, string> = {};
@@ -57,6 +57,7 @@ export const createFramework = async (): Promise<Framework> => {
       textarea: `${base}:Textarea`,
       input: `${base}:Input`,
       select: `${base}:Select`,
+      a: `${base}:Link`,
     },
     html: ({ pagePath }: { pagePath: string }) => {
       // ignore dynamic pages in static export
@@ -79,7 +80,7 @@ export const createFramework = async (): Promise<Framework> => {
       ];
     },
     xml: () => [],
-    redirect: () => [],
+    text: () => [],
     defaultSitemap: () => [],
   };
 };

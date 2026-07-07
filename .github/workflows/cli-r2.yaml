@@ -40,7 +40,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       # TRY FIX cloudlare incident
@@ -100,7 +100,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Copy atrifact via http
         run: curl -o cloudflare-template.tar.zst ${{ secrets.ARTEFACT_BUCKET_URL }}/public/cloudflare-template/${{ github.ref_name }}.tar.zst

@@ -4,9 +4,10 @@ import {
   type ParsedLinearGradient,
 } from "@webstudio-is/css-data";
 import { useState } from "react";
-import { GradientPicker } from "./gradient-picker";
+import { GradientPicker as GradientPickerComponent } from "./gradient-picker";
 import { Flex } from "./flex";
 import { Text } from "./text";
+import { StorySection } from "./storybook";
 
 export default {
   title: "Gradient Picker",
@@ -22,23 +23,24 @@ const parseLinearGradientOrThrow = (
   return parsed;
 };
 
-export const GradientWithoutAngle = () => {
-  const gradientString = "linear-gradient(90deg, black 0%, white 100%)";
+const GradientVariant = ({
+  label,
+  initial,
+}: {
+  label: string;
+  initial: string;
+}) => {
   const [gradient, setGradient] = useState<ParsedLinearGradient>(() =>
-    parseLinearGradientOrThrow(gradientString)
+    parseLinearGradientOrThrow(initial)
   );
-
   return (
-    <Flex direction="column" gap="4">
-      <GradientPicker
+    <Flex direction="column" gap="2">
+      <Text variant="labels">{label}</Text>
+      <GradientPickerComponent
         gradient={gradient}
         backgroundImage={formatLinearGradient(gradient)}
-        onChange={(value) => {
-          setGradient(value);
-        }}
-        onChangeComplete={(value) => {
-          setGradient(value);
-        }}
+        onChange={setGradient}
+        onChangeComplete={setGradient}
         onThumbSelect={() => {}}
       />
       <Text>{formatLinearGradient(gradient)}</Text>
@@ -46,51 +48,45 @@ export const GradientWithoutAngle = () => {
   );
 };
 
-export const GradientWithAngleAndHints = () => {
-  const gradientString =
-    "linear-gradient(145deg, #ff00fa 0%, #00f497 34% 34%, #ffa800 56% 56%, #00eaff 100%)";
+export const GradientPicker = () => {
   const [gradient, setGradient] = useState<ParsedLinearGradient>(() =>
-    parseLinearGradientOrThrow(gradientString)
+    parseLinearGradientOrThrow(
+      "linear-gradient(90deg, red 0%, green 50%, blue 100%)"
+    )
   );
-
   return (
-    <Flex direction="column" gap="4">
-      <GradientPicker
-        gradient={gradient}
-        backgroundImage={formatLinearGradient(gradient)}
-        onChange={(value) => {
-          setGradient(value);
-        }}
-        onChangeComplete={(value) => {
-          setGradient(value);
-        }}
-        onThumbSelect={() => {}}
-      />
-      <Text>{formatLinearGradient(gradient)}</Text>
-    </Flex>
-  );
-};
+    <>
+      <StorySection title="Variants">
+        <Flex direction="column" gap="6">
+          <GradientVariant
+            label="Simple (90deg)"
+            initial="linear-gradient(90deg, black 0%, white 100%)"
+          />
+          <GradientVariant
+            label="Angle + Hints"
+            initial="linear-gradient(145deg, #ff00fa 0%, #00f497 34% 34%, #ffa800 56% 56%, #00eaff 100%)"
+          />
+          <GradientVariant
+            label="Side or Corner"
+            initial="linear-gradient(to left top, blue 0%, red 100%)"
+          />
+        </Flex>
+      </StorySection>
 
-export const GradientWithSideOrCorner = () => {
-  const gradientString = "linear-gradient(to left top, blue 0%, red 100%)";
-  const [gradient, setGradient] = useState<ParsedLinearGradient>(() =>
-    parseLinearGradientOrThrow(gradientString)
-  );
-
-  return (
-    <Flex direction="column" gap="4">
-      <GradientPicker
-        gradient={gradient}
-        backgroundImage={formatLinearGradient(gradient)}
-        onChange={(value) => {
-          setGradient(value);
-        }}
-        onChangeComplete={(value) => {
-          setGradient(value);
-        }}
-        onThumbSelect={() => {}}
-      />
-      <Text>{formatLinearGradient(gradient)}</Text>
-    </Flex>
+      <StorySection title="With selected stop">
+        <Flex direction="column" gap="2">
+          <Text variant="labels">Pre-selected middle stop (index 1)</Text>
+          <GradientPickerComponent
+            gradient={gradient}
+            backgroundImage={formatLinearGradient(gradient)}
+            onChange={setGradient}
+            onChangeComplete={setGradient}
+            onThumbSelect={() => {}}
+            selectedStopIndex={1}
+          />
+          <Text>{formatLinearGradient(gradient)}</Text>
+        </Flex>
+      </StorySection>
+    </>
   );
 };

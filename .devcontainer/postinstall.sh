@@ -42,5 +42,11 @@ alias gitclean="(git remote | xargs git remote prune) && git branch -vv | egrep 
 alias gitrebase="git rebase --interactive main"
 EOF
 
+# Symlink workspace GitHub instructions to mounted user instructions (for Copilot)
+if [ -d "/home/node/.github/instructions" ]; then
+  mkdir -p /workspaces/webstudio/.github
+  ln -sfn /home/node/.github/instructions /workspaces/webstudio/.github/instructions
+fi
+
 
 echo "postinstall.sh finished"

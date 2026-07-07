@@ -14,7 +14,8 @@ import {
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
 import { useComputedStyleDecl } from "../../shared/model";
-import { InputErrorsTooltip } from "@webstudio-is/design-system";
+import { InputErrorsTooltip, toast } from "@webstudio-is/design-system";
+import { useReadonly } from "../../shared/readonly";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -39,6 +40,7 @@ export const BackgroundCodeEditor = ({
   index,
   onValidate,
 }: BackgroundCodeEditorProps) => {
+  const readonly = useReadonly();
   const styleDecl = useComputedStyleDecl("background-image");
   let styleValue = styleDecl.cascadedValue;
   if (styleValue.type === "layers") {
@@ -65,10 +67,13 @@ export const BackgroundCodeEditor = ({
         value,
       });
 
-      const parsed = parseCssFragment(value, [
+      const { styles: parsed, errors } = parseCssFragment(value, [
         "background-image",
         "background",
       ]);
+      for (const error of errors) {
+        toast.error(error);
+      }
       const newValue = parsed.get("background-image");
 
       if (newValue === undefined || newValue?.type === "invalid") {
@@ -103,10 +108,13 @@ export const BackgroundCodeEditor = ({
       return;
     }
 
-    const parsed = parseCssFragment(intermediateValue.value, [
-      "background-image",
-      "background",
-    ]);
+    const { styles: parsed, errors } = parseCssFragment(
+      intermediateValue.value,
+      ["background-image", "background"]
+    );
+    for (const error of errors) {
+      toast.error(error);
+    }
     const backgroundImage = parsed.get("background-image");
     const backgroundColor = parsed.get("background-color");
 
@@ -152,6 +160,7 @@ export const BackgroundCodeEditor = ({
           css={getCodeEditorCssVars({ minHeight: "4lh", maxHeight: "4lh" })}
           content={
             <CssFragmentEditorContent
+              readOnly={readonly}
               invalid={intermediateValue?.type === "invalid"}
               autoFocus={styleValue.type === "var"}
               value={textAreaValue ?? ""}

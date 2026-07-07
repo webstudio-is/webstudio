@@ -1,3 +1,6 @@
+import { insertWebstudioElementAt } from "~/shared/instance-utils/insert";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
+import { reparentInstance } from "~/shared/instance-utils/mutation";
 import { useLayoutEffect, useRef } from "react";
 import { elementComponent, type Instance } from "@webstudio-is/sdk";
 import {
@@ -9,18 +12,13 @@ import {
 } from "@webstudio-is/design-system";
 import {
   $dragAndDropState,
-  $instances,
-  $props,
+  $propsIndex,
   $registeredComponentMetas,
   type ItemDropTarget,
 } from "~/shared/nano-states";
+import { $instances, $props } from "~/shared/sync/data-stores";
 import { publish, useSubscribe } from "~/shared/pubsub";
-import {
-  getComponentTemplateData,
-  insertWebstudioElementAt,
-  insertWebstudioFragmentAt,
-  reparentInstance,
-} from "~/shared/instance-utils";
+import { getComponentTemplateData } from "~/shared/instance-utils/insert";
 import {
   getElementByInstanceSelector,
   getInstanceIdFromElement,
@@ -29,7 +27,7 @@ import {
 import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
-} from "~/shared/tree-utils";
+} from "~/shared/instance-utils/tree";
 import { findClosestInstanceMatchingFragment } from "~/shared/matcher";
 import {
   findClosestContainer,
@@ -70,6 +68,7 @@ const findClosestDroppableInstanceSelector = (
   const instances = $instances.get();
   const props = $props.get();
   const metas = $registeredComponentMetas.get();
+  const { htmlTagsByInstanceId } = $propsIndex.get();
 
   // prevent dropping anything into non containers like image
   instanceSelector = findClosestContainer({
@@ -77,6 +76,7 @@ const findClosestDroppableInstanceSelector = (
     props,
     instances,
     instanceSelector,
+    htmlTagsByInstanceId,
   });
   let droppableIndex = -1;
   if (dragPayload?.type === "insert") {
@@ -106,6 +106,7 @@ const findClosestDroppableInstanceSelector = (
       props,
       metas,
       instanceSelector: dropInstanceSelector,
+      htmlTagsByInstanceId,
     });
     droppableIndex = matches ? 0 : -1;
   }
@@ -231,6 +232,7 @@ export const useDragAndDrop = () => {
           instances: $instances.get(),
           props: $props.get(),
           metas: $registeredComponentMetas.get(),
+          htmlTagsByInstanceId: $propsIndex.get().htmlTagsByInstanceId,
         }) ?? instanceSelector
       );
     },

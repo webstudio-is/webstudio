@@ -218,7 +218,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         candidate: PartialDropTarget<Data> | null | undefined
       ) => {
         if (candidate == null || pointerCoordinates === undefined) {
-          return undefined;
+          return;
         }
         return {
           ...candidate,
@@ -316,7 +316,7 @@ const findClosestDropTarget = <Data>({
 }): PartialDropTarget<Data> | undefined => {
   // The element we get from elementFromPoint() might not be inside the root
   if (initialElement === undefined || root.contains(initialElement) === false) {
-    return undefined;
+    return;
   }
 
   let currentElement = initialElement;

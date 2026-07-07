@@ -16,6 +16,7 @@ import {
   setProperty,
 } from "../../shared/use-style-data";
 import { $availableUnitVariables, useComputedStyles } from "../../shared/model";
+import { useReadonly } from "../../shared/readonly";
 
 export const BorderProperty = ({
   individualModeIcon,
@@ -30,6 +31,7 @@ export const BorderProperty = ({
   label: string;
   description: string;
 }) => {
+  const readonly = useReadonly();
   const borderProperties = Object.keys(borderPropertyOptions) as [
     CssProperty,
     ...CssProperty[],
@@ -76,6 +78,7 @@ export const BorderProperty = ({
           }}
         >
           <CssValueInputContainer
+            disabled={readonly}
             property={firstPropertyName}
             styleSource={styleValueSourceColor}
             getOptions={() => [
@@ -105,6 +108,7 @@ export const BorderProperty = ({
 
         {individualModeIcon && (
           <ToggleButton
+            disabled={readonly}
             pressed={showIndividualMode}
             onPressedChange={setShowIndividualMode}
           >
@@ -117,6 +121,7 @@ export const BorderProperty = ({
           {styles.map((styleDecl) => (
             <CssValueInputContainer
               key={styleDecl.property}
+              disabled={readonly}
               icon={borderPropertyOptions[styleDecl.property]?.icon}
               property={styleDecl.property}
               styleSource={styleDecl.source.name}

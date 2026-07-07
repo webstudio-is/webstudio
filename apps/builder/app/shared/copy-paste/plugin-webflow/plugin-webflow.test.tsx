@@ -13,15 +13,11 @@ import {
 import { $, renderData } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import { __testing__ } from "./plugin-webflow";
-import {
-  $breakpoints,
-  $project,
-  $registeredComponentMetas,
-  $styleSources,
-  $styles,
-} from "../../nano-states";
+import { $registeredComponentMetas } from "../../nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $project, $styleSources, $styles } from "~/shared/sync/data-stores";
 import invariant from "tiny-invariant";
-import { WfData } from "./schema";
+import { wfData } from "./schema";
 
 const { toWebstudioFragment } = __testing__;
 
@@ -106,6 +102,7 @@ beforeEach(() => {
     latestBuildVirtual: null,
     previewImageAssetId: null,
     tags: [],
+    workspaceId: null,
   });
 
   $breakpoints.set(
@@ -3028,7 +3025,7 @@ describe("Styles", () => {
   });
 
   test("background images", async () => {
-    const input = WfData.parse({
+    const input = wfData.parse({
       type: "@webflow/XscpData",
       payload: {
         nodes: [
@@ -3186,7 +3183,7 @@ describe("Styles", () => {
   });
 
   test("@raw webflow custom properties", async () => {
-    const input = WfData.parse({
+    const input = wfData.parse({
       type: "@webflow/XscpData",
       payload: {
         nodes: [
@@ -3229,7 +3226,7 @@ describe("Styles", () => {
   });
 
   test("append transparent color when background-clip is used", async () => {
-    const input = WfData.parse({
+    const input = wfData.parse({
       type: "@webflow/XscpData",
       payload: {
         nodes: [
@@ -3291,6 +3288,7 @@ describe("Styles", () => {
           background-image: linear-gradient(350deg,hsl(256.3636363636363 72.13% 23.92%/0.00),hsl(256.2162162162162 72.55% 80.00%/1.00) 49%,#bba7f1);
           -webkit-background-clip: text;
           background-clip: text;
+          -webkit-text-fill-color: transparent;
           color: transparent
         }
       }"

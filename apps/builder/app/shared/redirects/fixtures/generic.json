@@ -1,0 +1,102 @@
+[
+  {
+    "$comment": "Generic JSON array - various key naming conventions",
+    "$sources": "WordPress Redirection plugin exports, custom tools, manual exports"
+  },
+
+  {
+    "$comment": "from/to naming (common generic format)",
+    "from": "/legacy/endpoint",
+    "to": "/modern/endpoint",
+    "status": 301
+  },
+  {
+    "from": "/old-api",
+    "to": "/api/v2",
+    "status": 302
+  },
+
+  {
+    "$comment": "source/destination naming (Vercel-style)",
+    "source": "/v1/users",
+    "destination": "/api/v2/users",
+    "code": 301
+  },
+  {
+    "source": "/v1/posts",
+    "destination": "/api/v2/posts",
+    "code": 308
+  },
+
+  {
+    "$comment": "source/target naming (alternative)",
+    "source": "/redirect-permanent",
+    "target": "/destination",
+    "permanent": true
+  },
+  {
+    "source": "/redirect-temporary",
+    "target": "/landing",
+    "permanent": false
+  },
+
+  {
+    "$comment": "old/new naming (Webstudio native format)",
+    "old": "/deprecated",
+    "new": "/current",
+    "status": 302
+  },
+
+  {
+    "$comment": "No status (defaults to 301)",
+    "source": "/no-status",
+    "target": "/should-default-301"
+  },
+
+  {
+    "$comment": "External URLs",
+    "source": "/external",
+    "target": "https://external.example.com/page"
+  },
+
+  {
+    "$comment": "INVALID ENTRIES (skipped with reason)",
+    "source": "invalid-no-slash",
+    "target": "/valid",
+    "status": 301
+  },
+  {
+    "$comment": "Missing source field",
+    "target": "/missing-source",
+    "status": 301
+  },
+  {
+    "$comment": "Missing target field",
+    "source": "/missing-target",
+    "status": 301
+  },
+  {
+    "$comment": "Invalid status code",
+    "source": "/invalid-status",
+    "target": "/destination",
+    "status": 999
+  },
+  {
+    "$comment": "Rewrite status (skipped)",
+    "source": "/rewrite-status",
+    "target": "/proxy",
+    "status": 200
+  },
+
+  {
+    "$comment": "Status code conversion",
+    "source": "/status-307",
+    "target": "/temp",
+    "status": 307
+  },
+  {
+    "source": "/status-308",
+    "target": "/perm",
+    "status": 308
+  }
+]

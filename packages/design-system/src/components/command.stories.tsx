@@ -1,6 +1,10 @@
+import { useState } from "react";
 import type { Meta, StoryFn } from "@storybook/react";
+import { StorySection } from "./storybook";
 import {
   Command as CommandComponent,
+  CommandDialog,
+  CommandBackButton,
   CommandFooter,
   CommandGroup,
   CommandGroupHeading,
@@ -28,14 +32,18 @@ const CommandContent = () => {
         <CommandGroup
           heading={<CommandGroupHeading>Suggestions</CommandGroupHeading>}
           name="suggestions"
-          actions={["select", "edit", "delete"]}
+          actions={[
+            { name: "select", label: "Select" },
+            { name: "edit", label: "Edit" },
+            { name: "delete", label: "Delete" },
+          ]}
         >
           <CommandItem>
             <Flex gap={2}>
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Calendar</Text>
+              <Text variant="labels">Calendar</Text>
             </Flex>
           </CommandItem>
           <CommandItem>
@@ -43,7 +51,7 @@ const CommandContent = () => {
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Search Emoji</Text>
+              <Text variant="labels">Search Emoji</Text>
             </Flex>
           </CommandItem>
           <CommandItem>
@@ -51,21 +59,21 @@ const CommandContent = () => {
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Calculator</Text>
+              <Text variant="labels">Calculator</Text>
             </Flex>
           </CommandItem>
         </CommandGroup>
         <CommandGroup
           heading={<CommandGroupHeading>Settings</CommandGroupHeading>}
           name="settings"
-          actions={["open"]}
+          actions={[{ name: "open", label: "Open" }]}
         >
           <CommandItem>
             <Flex gap={2}>
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Profile</Text>
+              <Text variant="labels">Profile</Text>
             </Flex>
             <Kbd value={["meta", "p"]} />
           </CommandItem>
@@ -74,7 +82,7 @@ const CommandContent = () => {
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Billing</Text>
+              <Text variant="labels">Billing</Text>
             </Flex>
             <Kbd value={["meta", "b"]} />
           </CommandItem>
@@ -83,7 +91,7 @@ const CommandContent = () => {
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Settings</Text>
+              <Text variant="labels">Settings</Text>
             </Flex>
             <Kbd value={["meta", "s"]} />
           </CommandItem>
@@ -97,8 +105,66 @@ const CommandContent = () => {
 
 export const Command: StoryFn = () => {
   return (
-    <CommandComponent>
-      <CommandContent />
-    </CommandComponent>
+    <StorySection title="Command">
+      <CommandComponent>
+        <CommandContent />
+      </CommandComponent>
+    </StorySection>
+  );
+};
+
+export const InDialog: StoryFn = () => {
+  const [open, setOpen] = useState(true);
+  return (
+    <StorySection title="In dialog">
+      <CommandDialog open={open} onOpenChange={setOpen}>
+        <CommandComponent>
+          <CommandContent />
+        </CommandComponent>
+      </CommandDialog>
+    </StorySection>
+  );
+};
+
+export const WithBackNavigation: StoryFn = () => {
+  const [value, setValue] = useState("");
+  return (
+    <StorySection title="With back navigation">
+      <CommandComponent>
+        <CommandInput
+          value={value}
+          onValueChange={setValue}
+          prefix={<CommandBackButton onClick={() => setValue("")} />}
+          onBack={() => setValue("")}
+          placeholder="Search with back button..."
+        />
+        <CommandList>
+          <CommandGroup
+            heading={<CommandGroupHeading>Results</CommandGroupHeading>}
+            name="results"
+            actions={[{ name: "select", label: "Select" }]}
+          >
+            <CommandItem>
+              <Flex gap={2}>
+                <CommandIcon>
+                  <InfoCircleIcon />
+                </CommandIcon>
+                <Text variant="labels">Result one</Text>
+              </Flex>
+            </CommandItem>
+            <CommandItem>
+              <Flex gap={2}>
+                <CommandIcon>
+                  <InfoCircleIcon />
+                </CommandIcon>
+                <Text variant="labels">Result two</Text>
+              </Flex>
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+        <Separator />
+        <CommandFooter />
+      </CommandComponent>
+    </StorySection>
   );
 };

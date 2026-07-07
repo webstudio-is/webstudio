@@ -16,6 +16,19 @@ import { showAttribute } from "@webstudio-is/react-sdk";
 import type { TemplateStyleDecl } from "./css";
 import { camelCaseProperty, parseMediaQuery } from "@webstudio-is/css-data";
 
+export class Token {
+  name: string;
+  styles: TemplateStyleDecl[];
+  constructor(name: string, styles: TemplateStyleDecl[]) {
+    this.name = name;
+    this.styles = styles;
+  }
+}
+
+export const token = (name: string, styles: TemplateStyleDecl[]): Token => {
+  return new Token(name, styles);
+};
+
 export class Variable {
   name: string;
   initialValue: unknown;
@@ -268,6 +281,16 @@ export const renderTemplate = (
     Instance["id"],
     TemplateStyleDecl[]
   >();
+  const tokensByInstanceId = new Map<Instance["id"], Token[]>();
+  const tokenIdByToken = new Map<Token, string>();
+  const getTokenId = (token: Token) => {
+    let id = tokenIdByToken.get(token);
+    if (id === undefined) {
+      id = getIdByKey(token);
+      tokenIdByToken.set(token, id);
+    }
+    return id;
+  };
   const convertElementToInstance = (
     element: JSX.Element
   ): Instance["children"][number] => {
@@ -287,6 +310,12 @@ export const renderTemplate = (
         const localStyles = value as TemplateStyleDecl[];
         // create styles with breakpoints later to ensure more stable ids
         localStylesByInstanceId.set(instanceId, localStyles);
+        continue;
+      }
+      if (name === "ws:tokens") {
+        const tokens = value as Token[];
+        // create tokens with breakpoints later to ensure more stable ids
+        tokensByInstanceId.set(instanceId, tokens);
         continue;
       }
       if (name === "ws:show") {
@@ -406,6 +435,50 @@ export const renderTemplate = (
         state,
         property: camelCaseProperty(property),
         value,
+      });
+    }
+  }
+  // process tokens and add them to style sources
+  const processedTokens = new Set<Token>();
+  for (const [instanceId, tokens] of tokensByInstanceId) {
+    const tokenIds: string[] = [];
+    for (const token of tokens) {
+      const tokenId = getTokenId(token);
+      tokenIds.push(tokenId);
+      // only create style source and styles once per token
+      if (processedTokens.has(token)) {
+        continue;
+      }
+      processedTokens.add(token);
+      styleSources.push({
+        type: "token",
+        id: tokenId,
+        name: token.name,
+      });
+      for (const { breakpoint, state, property, value } of token.styles) {
+        const breakpointId = getBreakpointId(breakpoint);
+        if (breakpointId === undefined) {
+          continue;
+        }
+        styles.push({
+          breakpointId,
+          styleSourceId: tokenId,
+          state,
+          property: camelCaseProperty(property),
+          value,
+        });
+      }
+    }
+    // merge tokens with existing selection (from ws:style) or create new selection
+    const existingSelection = styleSourceSelections.find(
+      (sel) => sel.instanceId === instanceId
+    );
+    if (existingSelection) {
+      existingSelection.values.push(...tokenIds);
+    } else {
+      styleSourceSelections.push({
+        instanceId,
+        values: tokenIds,
       });
     }
   }

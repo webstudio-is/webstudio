@@ -28,7 +28,13 @@ import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
 import { nanoid } from "nanoid";
 import { EllipsesIcon, SpinnerIcon } from "@webstudio-is/icons";
-import { colors } from "./colors";
+
+const tagColorPalette = Array.from({ length: 50 }, (_, index) => {
+  const lightness = 55 + (index % 3) * 3;
+  const chroma = 0.14 + (index % 2) * 0.02;
+  const hue = (index * 137.5) % 360;
+  return `oklch(${lightness}% ${chroma.toFixed(2)} ${hue.toFixed(1)})`;
+});
 
 type DeleteConfirmationDialogProps = {
   onClose: () => void;
@@ -53,22 +59,23 @@ const DeleteConfirmationDialog = ({
       <DialogContent>
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Text>{question}</Text>
-          <Flex direction="rowReverse" gap="2">
-            <DialogClose>
-              <Button
-                color="destructive"
-                onClick={() => {
-                  onConfirm();
-                }}
-              >
-                Delete
-              </Button>
-            </DialogClose>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          <DialogClose>
+            <Button
+              autoFocus
+              color="destructive"
+              onClick={() => {
+                onConfirm();
+              }}
+            >
+              Delete
+            </Button>
+          </DialogClose>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
         <DialogTitle>Delete confirmation</DialogTitle>
       </DialogContent>
     </Dialog>
@@ -340,7 +347,7 @@ export const Tag = ({
 >) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTagsIds = searchParams.getAll("tag");
-  const color = colors[index] ?? theme.colors.backgroundNeutralDark;
+  const color = tagColorPalette[index] ?? theme.colors.backgroundNeutralDark;
   return (
     <Button
       color="neutral"

@@ -1,8 +1,10 @@
-import type { Database } from "@webstudio-is/postrest/index.server";
+import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   type AppContext,
+  type AuthPermit,
   authorizeProject,
   AuthorizationError,
+  PlanRequiredError,
 } from "@webstudio-is/trpc-interface/index.server";
 
 type AuthorizationToken =
@@ -14,7 +16,16 @@ const applyTokenPermissions = (
   let result = token;
 
   // @todo: fix this on SQL level
-  if (token.relation !== "viewers") {
+  if (token.relation === "editors") {
+    result = {
+      ...result,
+      canClone: false,
+      canCopy: true,
+    };
+  }
+
+  // @todo: fix this on SQL level
+  if (token.relation === "builders" || token.relation === "administrators") {
     result = {
       ...result,
       canClone: true,
@@ -87,6 +98,32 @@ export const tokenDefaultPermissions = {
 
 export type TokenPermissions = typeof tokenDefaultPermissions;
 
+export const tokenProjectPermits: Record<
+  AuthorizationToken["relation"],
+  AuthPermit[]
+> = {
+  viewers: ["view"],
+  editors: ["view", "edit"],
+  builders: ["view", "edit", "build"],
+  administrators: ["view", "edit", "build", "admin"],
+};
+
+export const getTokenProjectPermits = (
+  token: Pick<AuthorizationToken, "relation">
+) => tokenProjectPermits[token.relation];
+
+const assertCanEnableApi = (
+  canUseApi: boolean | undefined,
+  context: AppContext
+) => {
+  if (
+    canUseApi === true &&
+    context.planFeatures.allowAdditionalPermissions !== true
+  ) {
+    throw new PlanRequiredError("API permission requires an upgrade.");
+  }
+};
+
 export const getTokenInfo = async (
   token: AuthorizationToken["token"],
   context: AppContext
@@ -126,6 +163,7 @@ export const create = async (
     projectId: string;
     relation: AuthorizationToken["relation"];
     name: string;
+    canUseApi?: boolean;
   },
   context: AppContext
 ) => {
@@ -142,6 +180,7 @@ export const create = async (
       "You don't have access to create this project authorization tokens"
     );
   }
+  assertCanEnableApi(props.canUseApi, context);
 
   const dbToken = await context.postgrest.client
     .from("AuthorizationToken")
@@ -150,6 +189,7 @@ export const create = async (
       relation: props.relation,
       token: tokenId,
       name: props.name,
+      canUseApi: props.canUseApi,
     })
     .select();
   if (dbToken.error) {
@@ -189,6 +229,9 @@ export const update = async (
   if (previousToken.data === null) {
     throw new AuthorizationError("Authorization token not found");
   }
+  if (previousToken.data.canUseApi !== true) {
+    assertCanEnableApi(props.canUseApi, context);
+  }
 
   const dbToken = await context.postgrest.client
     .from("AuthorizationToken")
@@ -198,6 +241,7 @@ export const update = async (
       canClone: props.canClone,
       canCopy: props.canCopy,
       canPublish: props.canPublish,
+      canUseApi: props.canUseApi,
     })
     .eq("projectId", projectId)
     .eq("token", props.token)
@@ -242,3 +286,5 @@ export const remove = async (
 
   return dbToken.data;
 };
+
+export const __testing__ = { applyTokenPermissions };

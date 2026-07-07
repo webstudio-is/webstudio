@@ -1,11 +1,12 @@
 import type { JSX } from "react";
 import type { StoryFn } from "@storybook/react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { Login } from "./login";
+import { StorySection } from "@webstudio-is/design-system";
+import { Login as LoginComponent } from "./login";
 
 export default {
-  title: "Auth/Login",
-  component: Login,
+  title: "Auth",
+  component: LoginComponent,
 };
 
 const createRouter = (element: JSX.Element) =>
@@ -17,9 +18,13 @@ const createRouter = (element: JSX.Element) =>
     },
   ]);
 
-export const Basic: StoryFn<typeof Login> = () => {
+export const Auth: StoryFn<typeof LoginComponent> = () => {
   const router = createRouter(
-    <Login isGoogleEnabled={false} isSecretLoginEnabled />
+    <LoginComponent isGoogleEnabled={false} isSecretLoginEnabled />
   );
-  return <RouterProvider router={router} />;
+  return (
+    <StorySection title="Auth">
+      <RouterProvider router={router} />
+    </StorySection>
+  );
 };

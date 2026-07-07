@@ -32,7 +32,7 @@ import {
 
 const property: CssProperty = "scale";
 
-export const ScalePanelContent = () => {
+export const ScalePanelContent = ({ disabled }: { disabled?: boolean }) => {
   const styleDecl = useComputedStyleDecl(property);
   const tuple =
     styleDecl.cascadedValue.type === "tuple"
@@ -98,6 +98,7 @@ export const ScalePanelContent = () => {
             description={propertySyntaxes.scaleX}
           />
           <CssValueInput
+            disabled={disabled}
             styleSource="local"
             property={property}
             getOptions={() => $availableUnitVariables.get()}
@@ -142,6 +143,7 @@ export const ScalePanelContent = () => {
             description={propertySyntaxes.scaleY}
           />
           <CssValueInput
+            disabled={disabled}
             styleSource="local"
             property={property}
             getOptions={() => $availableUnitVariables.get()}
@@ -186,6 +188,7 @@ export const ScalePanelContent = () => {
             description={propertySyntaxes.scaleZ}
           />
           <CssValueInput
+            disabled={disabled}
             styleSource="local"
             property={property}
             getOptions={() => $availableUnitVariables.get()}
@@ -235,6 +238,7 @@ export const ScalePanelContent = () => {
             css={{ rotate: "90deg" }}
             pressed={isScalingLocked}
             onPressedChange={toggleScaling}
+            disabled={disabled}
             variant="normal"
             icon={isScalingLocked ? <Link2Icon /> : <Link2UnlinkedIcon />}
           />

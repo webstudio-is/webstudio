@@ -6,9 +6,11 @@ import {
   useSelectedAction,
 } from "@webstudio-is/design-system";
 import { computed } from "nanostores";
-import type { Page } from "@webstudio-is/sdk";
-import { $pages, $editingPageId } from "~/shared/nano-states";
-import { $selectedPage, selectPage } from "~/shared/awareness";
+import { getAllPages, type Page } from "@webstudio-is/sdk";
+import { $pages } from "~/shared/sync/data-stores";
+import { $editingPageId } from "~/shared/nano-states";
+import { $selectedPage } from "~/shared/nano-states";
+import { selectPage } from "~/shared/nano-states";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
@@ -26,7 +28,7 @@ export const $pageOptions = computed(
     }
     const pageOptions: PageOption[] = [];
     if (pages) {
-      for (const page of [pages.homePage, ...pages.pages]) {
+      for (const page of getAllPages(pages)) {
         if (page.id === selectedPage?.id) {
           continue;
         }
@@ -46,8 +48,13 @@ export const PagesGroup = ({ options }: { options: PageOption[] }) => {
   return (
     <CommandGroup
       name="page"
-      heading={<CommandGroupHeading>Pages</CommandGroupHeading>}
-      actions={["select", "settings"]}
+      heading={
+        <CommandGroupHeading>Pages ({options.length})</CommandGroupHeading>
+      }
+      actions={[
+        { name: "select", label: "Select" },
+        { name: "settings", label: "Settings" },
+      ]}
     >
       {options.map(({ page }) => (
         <CommandItem
@@ -56,19 +63,19 @@ export const PagesGroup = ({ options }: { options: PageOption[] }) => {
           value={page.id}
           onSelect={() => {
             closeCommandPanel();
-            if (action === "select") {
+            if (action?.name === "select") {
               selectPage(page.id);
               setActiveSidebarPanel("auto");
               $editingPageId.set(undefined);
             }
-            if (action === "settings") {
+            if (action?.name === "settings") {
               selectPage(page.id);
               setActiveSidebarPanel("pages");
               $editingPageId.set(page.id);
             }
           }}
         >
-          <Text variant="labelsTitleCase">{page.name}</Text>
+          <Text>{page.name}</Text>
         </CommandItem>
       ))}
     </CommandGroup>

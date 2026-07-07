@@ -7,6 +7,7 @@ import { useScrub } from "../shared/scrub";
 import { ValueText } from "../shared/value-text";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
+import { useReadonly } from "../../shared/readonly";
 import { InputPopover } from "../shared/input-popover";
 import { InsetLayout, type InsetProperty } from "./inset-layout";
 import { getInsetModifiersGroup, InsetTooltip } from "./inset-tooltip";
@@ -68,16 +69,24 @@ type HoverTarget = {
 };
 
 export const InsetControl = () => {
+  const readonly = useReadonly();
   const styles = useComputedStyles(["top", "right", "bottom", "left"]);
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
+  const styleValue = styles.find(
+    (styleDecl) => styleDecl.property === hoverTarget?.property
+  );
 
   const scrubStatus = useScrub({
-    value: styles.find(
-      (styleDecl) => styleDecl.property === hoverTarget?.property
-    )?.usedValue,
-    target: hoverTarget,
+    value: styleValue?.usedValue,
+    target:
+      readonly || styleValue?.cascadedValue.type !== "unit"
+        ? undefined
+        : hoverTarget,
     getModifiersGroup: getInsetModifiersGroup,
     onChange: (values, options) => {
+      if (readonly) {
+        return;
+      }
       const batch = createBatchUpdate();
       for (const property of ["top", "right", "bottom", "left"] as const) {
         const value = values[property];
@@ -131,7 +140,8 @@ export const InsetControl = () => {
   return (
     <Grid
       ref={layoutRef}
-      tabIndex={0}
+      tabIndex={readonly ? -1 : 0}
+      aria-disabled={readonly || undefined}
       css={{
         // Create stacking context to prevent z-index issues with internal z-indexes
         zIndex: 0,
@@ -144,28 +154,34 @@ export const InsetControl = () => {
           outline: `1px solid ${theme.colors.backgroundPrimary}`,
           outlineOffset: -1,
         },
+        ...(readonly ? { opacity: 0.5, pointerEvents: "none" } : undefined),
       }}
-      onFocus={keyboardNavigation.handleFocus}
-      onBlur={keyboardNavigation.handleBlur}
-      onKeyDown={keyboardNavigation.handleKeyDown}
-      onMouseMove={keyboardNavigation.handleMouseMove}
-      onMouseLeave={keyboardNavigation.handleMouseLeave}
-      onClick={(event) => {
-        const property = hoverTarget?.property;
-        const styleValueSource = styles.find(
-          (styleDecl) => styleDecl.property === property
-        )?.source.name;
-        if (
-          event.altKey &&
-          property &&
-          // reset when the value is set and after try to edit two sides
-          (styleValueSource === "local" || styleValueSource === "overwritten")
-        ) {
-          deleteProperty(property);
-          return;
-        }
-        handleOpenProperty(property);
-      }}
+      onFocus={readonly ? undefined : keyboardNavigation.handleFocus}
+      onBlur={readonly ? undefined : keyboardNavigation.handleBlur}
+      onKeyDown={readonly ? undefined : keyboardNavigation.handleKeyDown}
+      onMouseMove={readonly ? undefined : keyboardNavigation.handleMouseMove}
+      onMouseLeave={readonly ? undefined : keyboardNavigation.handleMouseLeave}
+      onClick={
+        readonly
+          ? undefined
+          : (event) => {
+              const property = hoverTarget?.property;
+              const styleValueSource = styles.find(
+                (styleDecl) => styleDecl.property === property
+              )?.source.name;
+              if (
+                event.altKey &&
+                property &&
+                // reset when the value is set and after try to edit two sides
+                (styleValueSource === "local" ||
+                  styleValueSource === "overwritten")
+              ) {
+                deleteProperty(property);
+                return;
+              }
+              handleOpenProperty(property);
+            }
+      }
     >
       <InsetLayout
         getActiveProperties={getActiveProperties}

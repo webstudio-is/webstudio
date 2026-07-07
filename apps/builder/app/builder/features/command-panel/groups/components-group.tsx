@@ -1,3 +1,5 @@
+import { insertWebstudioElementAt } from "~/shared/instance-utils/insert";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import {
   CommandGroup,
   CommandGroupHeading,
@@ -13,13 +15,9 @@ import {
   $registeredComponentMetas,
   $registeredTemplates,
 } from "~/shared/nano-states";
-import {
-  getComponentTemplateData,
-  insertWebstudioElementAt,
-  insertWebstudioFragmentAt,
-} from "~/shared/instance-utils";
+import { getComponentTemplateData } from "~/shared/instance-utils/insert";
 import { humanizeString } from "~/shared/string-utils";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage } from "~/shared/nano-states";
 import {
   getInstanceLabel,
   InstanceIcon,
@@ -69,8 +67,13 @@ export const $componentOptions = computed(
       order?: number;
       firstInstance: { component: string };
     }) => {
+      const documentType = selectedPage?.meta.documentType;
+      // text pages serve plain text content and accept no insertions
+      if (documentType === "text") {
+        return;
+      }
       // show only xml category and collection component in xml documents
-      if (selectedPage?.meta.documentType === "xml") {
+      if (documentType === "xml") {
         if (category !== "xml" && name !== collectionComponent) {
           return;
         }
@@ -147,8 +150,10 @@ export const ComponentsGroup = ({
   return (
     <CommandGroup
       name="component"
-      heading={<CommandGroupHeading>Components</CommandGroupHeading>}
-      actions={["add"]}
+      heading={
+        <CommandGroupHeading>Components ({options.length})</CommandGroupHeading>
+      }
+      actions={[{ name: "add", label: "Add" }]}
     >
       {options.map(({ component, label, category, icon, firstInstance }) => {
         return (
@@ -172,7 +177,7 @@ export const ComponentsGroup = ({
               <CommandIcon>
                 <InstanceIcon instance={firstInstance} icon={icon} />
               </CommandIcon>
-              <Text variant="labelsTitleCase">
+              <Text>
                 {label}{" "}
                 <Text as="span" color="moreSubtle">
                   {humanizeString(category)}

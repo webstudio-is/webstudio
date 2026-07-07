@@ -10,6 +10,7 @@ import {
   type ParsedRadialGradient,
   type GradientStop,
   formatLinearGradient,
+  keywordValues,
 } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -44,10 +45,11 @@ import {
 } from "@webstudio-is/icons";
 import {
   useComputedStyleDecl,
+  $availableColorVariables,
   $availableUnitVariables,
 } from "../../shared/model";
 import { setRepeatedStyleItem } from "../../shared/repeated-style";
-import { useLocalValue } from "../../../settings-panel/shared";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { PropertyInlineLabel } from "../../property-label";
 import {
@@ -86,6 +88,7 @@ import {
 } from "./gradient-utils";
 import { BackgroundPositionControl } from "./background-position";
 import { BackgroundCodeEditor } from "./background-code-editor";
+import { useReadonly } from "../../shared/readonly";
 import type {
   GradientType,
   IntermediateColorValue,
@@ -130,6 +133,13 @@ type GradientEditorApplyFn = (
 ) => void;
 
 const getAvailableUnitVariables = () => $availableUnitVariables.get();
+const getAvailableColorOptions = () => [
+  ...(keywordValues.color ?? []).map((item) => ({
+    type: "keyword" as const,
+    value: item,
+  })),
+  ...$availableColorVariables.get(),
+];
 
 export const BackgroundGradient = ({
   index,
@@ -140,6 +150,7 @@ export const BackgroundGradient = ({
   type?: GradientType;
   variant?: "default" | "solid";
 }) => {
+  const readonly = useReadonly();
   const styleDecl = useComputedStyleDecl("background-image");
   let styleValue = styleDecl.cascadedValue;
   let computedStyleValue = styleDecl.computedValue;
@@ -185,7 +196,7 @@ export const BackgroundGradient = ({
     value: gradient,
     set: setLocalGradient,
     save: saveLocalGradient,
-  } = useLocalValue<ParsedGradient>(parsedGradient, handleGradientSave, {
+  } = useDraftValue<ParsedGradient>(parsedGradient, handleGradientSave, {
     autoSave: false,
   });
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);
@@ -256,6 +267,7 @@ export const BackgroundGradient = ({
       {isSolidVariant ? (
         <Box css={{ padding: theme.panel.padding }}>
           <SolidColorControls
+            disabled={readonly}
             gradient={gradient}
             applyGradient={applyGradient}
           />
@@ -263,6 +275,7 @@ export const BackgroundGradient = ({
       ) : (
         <>
           <GradientPickerSection
+            disabled={readonly}
             gradient={gradient}
             computedGradient={computedParsedGradient}
             gradientType={gradientType}
@@ -275,6 +288,7 @@ export const BackgroundGradient = ({
           <Separator />
           <Box css={{ paddingInline: theme.panel.paddingInline }}>
             <OtherGradientPropertiesSection
+              disabled={readonly}
               gradient={gradient}
               applyGradient={applyGradient}
               isRepeating={isRepeating}
@@ -283,6 +297,7 @@ export const BackgroundGradient = ({
           </Box>
           <Box css={{ paddingInline: theme.panel.paddingInline }}>
             <GradientPositionControls
+              disabled={readonly}
               gradient={gradient}
               applyGradient={applyGradient}
             />
@@ -302,6 +317,7 @@ export const BackgroundGradient = ({
 };
 
 type GradientPickerSectionProps = {
+  disabled?: boolean;
   gradient: ParsedGradient;
   computedGradient: ParsedGradient;
   gradientType: GradientType;
@@ -313,6 +329,7 @@ type GradientPickerSectionProps = {
 };
 
 const GradientPickerSection = ({
+  disabled,
   gradient,
   computedGradient,
   gradientType,
@@ -368,6 +385,7 @@ const GradientPickerSection = ({
       css={{ padding: theme.panel.padding }}
     >
       <GradientPicker
+        disabled={disabled}
         gradient={computedGradientForPicker}
         backgroundImage={formatLinearGradient(previewGradientForTrack)}
         type={gradientType}
@@ -377,6 +395,7 @@ const GradientPickerSection = ({
         selectedStopIndex={selectedStopIndex}
       />
       <GradientStopControls
+        disabled={disabled}
         gradient={gradient}
         computedGradient={computedGradient}
         selectedStopIndex={selectedStopIndex}
@@ -390,6 +409,7 @@ const GradientPickerSection = ({
 };
 
 type OtherGradientPropertiesSectionProps = {
+  disabled?: boolean;
   gradient: ParsedGradient;
   applyGradient: GradientEditorApplyFn;
   isRepeating: boolean;
@@ -397,6 +417,7 @@ type OtherGradientPropertiesSectionProps = {
 };
 
 const OtherGradientPropertiesSection = ({
+  disabled,
   gradient,
   applyGradient,
   isRepeating,
@@ -549,6 +570,7 @@ const OtherGradientPropertiesSection = ({
               description="Direction of the gradient line. 0deg is up, 90deg is right, 180deg is down, 270deg is left."
             />
             <CssValueInputContainer
+              disabled={disabled}
               property="rotate"
               styleSource="default"
               getOptions={getAvailableUnitVariables}
@@ -566,6 +588,7 @@ const OtherGradientPropertiesSection = ({
               description="Radial gradient size determining how far the gradient extends from its center."
             />
             <Select
+              disabled={disabled}
               options={radialSizeOptions}
               value={radialSizeValue}
               fullWidth
@@ -581,6 +604,7 @@ const OtherGradientPropertiesSection = ({
               description="Radial gradient ending shape."
             />
             <ToggleGroup
+              disabled={disabled}
               type="single"
               value={radialShapeValue}
               aria-label="Radial ending shape"
@@ -611,6 +635,7 @@ const OtherGradientPropertiesSection = ({
             description="Whether to repeat the gradient pattern."
           />
           <ToggleGroup
+            disabled={disabled}
             type="single"
             value={isRepeating ? "repeat" : "no-repeat"}
             aria-label="Gradient repeat"
@@ -640,11 +665,13 @@ const OtherGradientPropertiesSection = ({
 };
 
 type SolidColorControlsProps = {
+  disabled?: boolean;
   gradient: ParsedGradient;
   applyGradient: GradientEditorApplyFn;
 };
 
 const SolidColorControls = ({
+  disabled,
   gradient,
   applyGradient,
 }: SolidColorControlsProps) => {
@@ -689,9 +716,11 @@ const SolidColorControls = ({
       />
       <Flex css={{ gridColumn: "span 2" }}>
         <ColorPickerControl
+          disabled={disabled}
           property="color"
           value={solidColor}
           currentColor={solidColor}
+          getOptions={getAvailableColorOptions}
           onChange={handleColorChange}
           onChangeComplete={handleColorChangeComplete}
           onAbort={() => {}}
@@ -703,6 +732,7 @@ const SolidColorControls = ({
 };
 
 type GradientStopControlsProps = {
+  disabled?: boolean;
   gradient: ParsedGradient;
   computedGradient: ParsedGradient;
   selectedStopIndex: number;
@@ -713,6 +743,7 @@ type GradientStopControlsProps = {
 };
 
 const GradientStopControls = ({
+  disabled,
   gradient,
   computedGradient,
   selectedStopIndex,
@@ -806,13 +837,17 @@ const GradientStopControls = ({
             <IconButton
               aria-label="Reverse gradient stops"
               onClick={handleReverseStops}
-              disabled={reverseDisabled}
+              disabled={disabled || reverseDisabled}
             >
               <ArrowRightLeftIcon />
             </IconButton>
           </Tooltip>
           <Tooltip content="Add gradient stop" variant="wrapped">
-            <IconButton aria-label="Add stop" onClick={handleAddStop}>
+            <IconButton
+              aria-label="Add stop"
+              disabled={disabled}
+              onClick={handleAddStop}
+            >
               <PlusIcon />
             </IconButton>
           </Tooltip>
@@ -978,6 +1013,7 @@ const GradientStopControls = ({
               >
                 <Box>
                   <CssValueInputContainer
+                    disabled={disabled}
                     property={"background-position-x"}
                     styleSource="default"
                     getOptions={getAvailableUnitVariables}
@@ -994,6 +1030,7 @@ const GradientStopControls = ({
               >
                 <Box>
                   <CssValueInputContainer
+                    disabled={disabled}
                     property={"background-position-x"}
                     styleSource="default"
                     getOptions={getAvailableUnitVariables}
@@ -1007,9 +1044,11 @@ const GradientStopControls = ({
               <Tooltip content="Color of this gradient stop." variant="wrapped">
                 <Box>
                   <ColorPickerControl
+                    disabled={disabled}
                     property="color"
                     value={stopColor}
                     currentColor={currentColor}
+                    getOptions={getAvailableColorOptions}
                     onChange={handleStopColorChange}
                     onChangeComplete={handleStopColorChangeComplete}
                     onAbort={() => {}}
@@ -1022,7 +1061,7 @@ const GradientStopControls = ({
               <IconButton
                 aria-label="Delete stop"
                 onClick={() => handleDeleteStop(stopIndex)}
-                disabled={gradient.stops.length <= 2}
+                disabled={disabled || gradient.stops.length <= 2}
               >
                 <MinusIcon />
               </IconButton>
@@ -1035,11 +1074,13 @@ const GradientStopControls = ({
 };
 
 type GradientPositionControlsProps = {
+  disabled?: boolean;
   gradient: ParsedGradient;
   applyGradient: GradientEditorApplyFn;
 };
 
 const GradientPositionControls = ({
+  disabled,
   gradient,
   applyGradient,
 }: GradientPositionControlsProps) => {
@@ -1125,6 +1166,7 @@ const GradientPositionControls = ({
 
   return (
     <BackgroundPositionControl
+      disabled={disabled}
       label="Position"
       xAxis={{
         label: "Left",

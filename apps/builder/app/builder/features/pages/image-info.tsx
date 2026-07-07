@@ -13,14 +13,19 @@ import {
 } from "@webstudio-is/icons";
 import type { ImageAsset } from "@webstudio-is/sdk";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
-import { getFormattedAspectRatio } from "~/builder/shared/image-manager/utils";
+import { getFormattedAspectRatio } from "~/builder/shared/asset-manager";
 
 type ImageInfoProps = {
   asset: ImageAsset;
   onDelete: () => void;
+  disabled?: boolean;
 };
 
-export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
+export const ImageInfo = ({
+  asset,
+  onDelete,
+  disabled = false,
+}: ImageInfoProps) => {
   return (
     <Grid gap={1} flow={"column"} align={"center"} justify={"between"}>
       <Grid
@@ -49,27 +54,27 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
             css={{ gridTemplateColumns: "max-content 1fr" }}
           >
             <ImageIcon />
-            <Text truncate variant={"labelsSentenceCase"}>
+            <Text truncate variant={"labels"}>
               {formatAssetName(asset)}
             </Text>
           </Grid>
           <Grid columns={2} gap={1} align={"center"}>
             <Flex gap={1}>
               <DimensionsIcon />
-              <Text variant={"labelsTitleCase"}>
+              <Text variant={"labels"}>
                 {asset.meta.width} x {asset.meta.height} Px
               </Text>
             </Flex>
             <Flex gap={1}>
               <AspectRatioIcon />
-              <Text variant={"labelsTitleCase"}>
+              <Text variant={"labels"}>
                 {getFormattedAspectRatio(asset.meta)}
               </Text>
             </Flex>
           </Grid>
         </Grid>
       </Grid>
-      <IconButton onClick={onDelete}>
+      <IconButton onClick={onDelete} disabled={disabled}>
         <TrashIcon />
       </IconButton>
     </Grid>

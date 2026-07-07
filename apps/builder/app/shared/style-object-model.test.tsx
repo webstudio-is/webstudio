@@ -12,6 +12,7 @@ import {
 import { $, renderData } from "@webstudio-is/template";
 import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import type {
+  ColorValue,
   CssProperty,
   LayersValue,
   ShadowValue,
@@ -52,7 +53,7 @@ const createModel = ({
   matchingStates?: Set<string>;
 }): StyleObjectModel => {
   const instanceTags = new Map<Instance["id"], HtmlTags>();
-  const parsedStyles = parseCss(css);
+  const { styles: parsedStyles } = parseCss(css, new Map());
   const styles: Styles = new Map();
   for (const { breakpoint, selector, state, property, value } of parsedStyles) {
     const styleDecl: StyleDecl = {
@@ -81,7 +82,7 @@ const createModel = ({
   }
   const presetStyles = new Map<string, StyleValue>();
   for (const [componentName, css] of Object.entries(presets ?? {})) {
-    const parsedStyles = parseCss(css);
+    const { styles: parsedStyles } = parseCss(css, new Map());
     for (const styleDecl of parsedStyles) {
       const key = getPresetStyleDeclKey({
         component: componentName,
@@ -440,12 +441,45 @@ test("compute custom properties in shadows", () => {
         blur: { type: "unit", value: 30, unit: "px" },
         color: {
           type: "color",
-          colorSpace: "srgb",
+          colorSpace: "hex",
           components: [1, 0, 0],
           alpha: 1,
         },
       },
     ],
+  });
+});
+
+test("resolve custom property in color alpha channel", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --tw-opacity: 0.5;
+        color: #ff0000;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
+  // Mutate the color value to have a VarValue alpha, simulating parsed
+  // Tailwind output like `rgb(28 25 23 / var(--tw-opacity))`
+  const colorDecl = model.styles.get("bodyLocal:base:color:")!;
+  const colorValue = colorDecl.value as ColorValue;
+  colorValue.alpha = {
+    type: "var",
+    value: "tw-opacity",
+    fallback: { type: "unit", unit: "number", value: 1 },
+  };
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "color",
+    }).computedValue
+  ).toEqual({
+    type: "color",
+    colorSpace: "hex",
+    components: [1, 0, 0],
+    alpha: 0.5,
   });
 });
 
@@ -1727,5 +1761,441 @@ describe("style value source", () => {
       breakpointId: "base",
       styleSourceId: "boxLocal",
     });
+  });
+});
+
+describe("pseudo-element inheritance", () => {
+  test("pseudo-elements do not cascade non-inherited properties", () => {
+    const model = createModel({
+      css: `
+        boxLocal {
+          width: 100px;
+          height: 50px;
+          display: flex;
+        }
+        boxLocal::before {
+          content: "test";
+        }
+      `,
+      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+    });
+    const instanceSelector = ["box"];
+
+    // Non-inherited properties should NOT cascade to pseudo-element
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "width",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "auto" });
+
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "height",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "auto" });
+
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "display",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "inline" });
+
+    // Directly set property on pseudo-element should work
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "content",
+      }).usedValue
+    ).toEqual({ type: "unparsed", value: '"test"' });
+  });
+
+  test("pseudo-elements inherit inherited properties", () => {
+    const model = createModel({
+      css: `
+        boxLocal {
+          color: red;
+          font-size: 16px;
+          font-family: Arial;
+        }
+        boxLocal::before {
+          content: "test";
+        }
+      `,
+      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+    });
+    const instanceSelector = ["box"];
+
+    // Inherited properties should be inherited by pseudo-element
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "font-size",
+      }).usedValue
+    ).toEqual({ type: "unit", unit: "px", value: 16 });
+
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "font-family",
+      }).usedValue
+    ).toEqual({ type: "fontFamily", value: ["Arial"] });
+  });
+
+  test("pseudo-elements can override inherited properties", () => {
+    const model = createModel({
+      css: `
+        boxLocal {
+          color: red;
+          font-size: 16px;
+        }
+        boxLocal::before {
+          color: blue;
+          font-size: 20px;
+        }
+      `,
+      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+    });
+    const instanceSelector = ["box"];
+
+    // Pseudo-element can override inherited properties
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "blue" });
+
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "font-size",
+      }).usedValue
+    ).toEqual({ type: "unit", unit: "px", value: 20 });
+  });
+
+  test("pseudo-elements support inherit keyword", () => {
+    const model = createModel({
+      css: `
+        boxLocal {
+          width: 100px;
+          color: red;
+        }
+        boxLocal::before {
+          width: inherit;
+          color: inherit;
+        }
+      `,
+      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+    });
+    const instanceSelector = ["box"];
+
+    // Explicit inherit should work for non-inherited properties
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "width",
+      }).usedValue
+    ).toEqual({ type: "unit", unit: "px", value: 100 });
+
+    // Explicit inherit should work for inherited properties
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+  });
+
+  test("pseudo-elements support initial keyword", () => {
+    const model = createModel({
+      css: `
+        boxLocal {
+          color: red;
+        }
+        boxLocal::before {
+          color: initial;
+        }
+      `,
+      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+    });
+    const instanceSelector = ["box"];
+
+    // Initial keyword should reset to initial value
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "black" });
+  });
+
+  test("pseudo-elements support unset keyword", () => {
+    const model = createModel({
+      css: `
+        boxLocal {
+          color: red;
+          width: 100px;
+        }
+        boxLocal::before {
+          color: unset;
+          width: unset;
+        }
+      `,
+      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+    });
+    const instanceSelector = ["box"];
+
+    // Unset on inherited property should inherit
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "red" });
+
+    // Unset on non-inherited property should use initial value
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "width",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "auto" });
+  });
+
+  test("multiple pseudo-elements on same instance", () => {
+    const model = createModel({
+      css: `
+        boxLocal {
+          color: red;
+          width: 100px;
+        }
+        boxLocal::before {
+          content: "before";
+          color: blue;
+        }
+        boxLocal::after {
+          content: "after";
+          color: green;
+        }
+      `,
+      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+    });
+    const instanceSelector = ["box"];
+
+    // ::before should have its own color
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "blue" });
+
+    // ::before should not cascade width
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "width",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "auto" });
+
+    // ::after should have its own color
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::after",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "green" });
+
+    // ::after should not cascade width
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::after",
+        property: "width",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "auto" });
+  });
+
+  test("pseudo-elements with custom properties", () => {
+    const model = createModel({
+      css: `
+        boxLocal {
+          --my-color: red;
+          --my-size: 100px;
+          color: var(--my-color);
+        }
+        boxLocal::before {
+          color: var(--my-color);
+          width: var(--my-size);
+        }
+      `,
+      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+    });
+    const instanceSelector = ["box"];
+
+    // Custom properties are always inherited
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "--my-color",
+      }).computedValue
+    ).toEqual({ type: "unparsed", value: "red" });
+
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "--my-size",
+      }).computedValue
+    ).toEqual({ type: "unit", unit: "px", value: 100 });
+
+    // Pseudo-element should be able to use inherited custom properties
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "unparsed", value: "red" });
+
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::before",
+        property: "width",
+      }).usedValue
+    ).toEqual({ type: "unit", unit: "px", value: 100 });
+  });
+
+  test("pseudo-classes still cascade properties (not pseudo-elements)", () => {
+    const model = createModel({
+      css: `
+        boxLocal {
+          width: 100px;
+          color: red;
+        }
+        boxLocal:hover {
+          color: blue;
+        }
+      `,
+      jsx: <$.Box ws:id="box" class="boxLocal"></$.Box>,
+      matchingStates: new Set([":hover"]),
+    });
+    const instanceSelector = ["box"];
+
+    // Pseudo-classes should still cascade properties (original behavior)
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: ":hover",
+        property: "width",
+      }).usedValue
+    ).toEqual({ type: "unit", unit: "px", value: 100 });
+
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: ":hover",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "blue" });
+  });
+
+  test("pseudo-element ::placeholder", () => {
+    const model = createModel({
+      css: `
+        inputLocal {
+          color: black;
+          font-size: 16px;
+          width: 200px;
+        }
+        inputLocal::placeholder {
+          color: gray;
+        }
+      `,
+      jsx: <$.Input ws:id="input" ws:tag="input" class="inputLocal"></$.Input>,
+    });
+    const instanceSelector = ["input"];
+
+    // ::placeholder should inherit font-size but not width
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::placeholder",
+        property: "font-size",
+      }).usedValue
+    ).toEqual({ type: "unit", unit: "px", value: 16 });
+
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::placeholder",
+        property: "width",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "auto" });
+
+    // ::placeholder should have its own color
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: "::placeholder",
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "gray" });
   });
 });

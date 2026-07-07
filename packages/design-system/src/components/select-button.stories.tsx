@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { NestedIconLabel } from "./nested-icon-label";
-import { SelectButton } from "./select-button";
+import { SelectButton as SelectButtonComponent } from "./select-button";
 import { GapVerticalIcon } from "@webstudio-is/icons";
 import { StorySection, StoryGrid } from "./storybook";
 
@@ -13,39 +14,66 @@ const iconLabel = (
   </NestedIconLabel>
 );
 
-export const Demo = () => {
+const InteractiveDemo = () => {
+  const [clicked, setClicked] = useState(false);
+  return (
+    <StoryGrid horizontal>
+      <SelectButtonComponent onClick={() => setClicked(!clicked)}>
+        {clicked ? "Clicked!" : "Click me"}
+      </SelectButtonComponent>
+      <SelectButtonComponent
+        prefix={iconLabel}
+        onClick={() => setClicked(!clicked)}
+      >
+        {clicked ? "Clicked!" : "With prefix"}
+      </SelectButtonComponent>
+    </StoryGrid>
+  );
+};
+
+export const SelectButton = () => {
   return (
     <>
       <StorySection title="Closed">
         <StoryGrid horizontal>
-          <SelectButton data-placeholder>No value</SelectButton>
-          <SelectButton prefix={iconLabel} data-placeholder>
+          <SelectButtonComponent data-placeholder>
             No value
-          </SelectButton>
-          <SelectButton>With value</SelectButton>
-          <SelectButton prefix={iconLabel}>With value</SelectButton>
+          </SelectButtonComponent>
+          <SelectButtonComponent prefix={iconLabel} data-placeholder>
+            No value
+          </SelectButtonComponent>
+          <SelectButtonComponent>With value</SelectButtonComponent>
+          <SelectButtonComponent prefix={iconLabel}>
+            With value
+          </SelectButtonComponent>
         </StoryGrid>
       </StorySection>
       <StorySection title="Open">
         <StoryGrid horizontal>
-          <SelectButton data-placeholder data-state="open">
+          <SelectButtonComponent data-placeholder data-state="open">
             No value
-          </SelectButton>
-          <SelectButton prefix={iconLabel} data-placeholder data-state="open">
+          </SelectButtonComponent>
+          <SelectButtonComponent
+            prefix={iconLabel}
+            data-placeholder
+            data-state="open"
+          >
             No value
-          </SelectButton>
-          <SelectButton data-state="open">With value</SelectButton>
-          <SelectButton prefix={iconLabel} data-state="open">
+          </SelectButtonComponent>
+          <SelectButtonComponent data-state="open">
             With value
-          </SelectButton>
+          </SelectButtonComponent>
+          <SelectButtonComponent prefix={iconLabel} data-state="open">
+            With value
+          </SelectButtonComponent>
         </StoryGrid>
       </StorySection>
       <StorySection title="Disabled">
         <StoryGrid horizontal>
-          <SelectButton disabled data-placeholder>
+          <SelectButtonComponent disabled data-placeholder>
             No value
-          </SelectButton>
-          <SelectButton
+          </SelectButtonComponent>
+          <SelectButtonComponent
             disabled
             prefix={
               <NestedIconLabel color="local" disabled>
@@ -55,9 +83,9 @@ export const Demo = () => {
             data-placeholder
           >
             No value
-          </SelectButton>
-          <SelectButton disabled>With value</SelectButton>
-          <SelectButton
+          </SelectButtonComponent>
+          <SelectButtonComponent disabled>With value</SelectButtonComponent>
+          <SelectButtonComponent
             disabled
             prefix={
               <NestedIconLabel color="local" disabled>
@@ -66,29 +94,33 @@ export const Demo = () => {
             }
           >
             With value
-          </SelectButton>
+          </SelectButtonComponent>
         </StoryGrid>
       </StorySection>
       <StorySection title="Full width">
         <StoryGrid css={{ width: 120 }}>
-          <SelectButton fullWidth>Some very long text</SelectButton>
-          <SelectButton fullWidth prefix={iconLabel}>
+          <SelectButtonComponent fullWidth>
             Some very long text
-          </SelectButton>
-          <SelectButton fullWidth>Short</SelectButton>
-          <SelectButton fullWidth prefix={iconLabel}>
+          </SelectButtonComponent>
+          <SelectButtonComponent fullWidth prefix={iconLabel}>
+            Some very long text
+          </SelectButtonComponent>
+          <SelectButtonComponent fullWidth>Short</SelectButtonComponent>
+          <SelectButtonComponent fullWidth prefix={iconLabel}>
             Short
-          </SelectButton>
+          </SelectButtonComponent>
         </StoryGrid>
       </StorySection>
       <StorySection title="Focused (initialy)">
         <StoryGrid horizontal>
-          <SelectButton prefix={iconLabel} autoFocus>
+          <SelectButtonComponent prefix={iconLabel} autoFocus>
             With value
-          </SelectButton>
+          </SelectButtonComponent>
         </StoryGrid>
+      </StorySection>
+      <StorySection title="Interactive">
+        <InteractiveDemo />
       </StorySection>
     </>
   );
 };
-Demo.storyName = "Select Button";

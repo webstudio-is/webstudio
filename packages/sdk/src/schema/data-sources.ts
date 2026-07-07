@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-const DataSourceId = z.string();
+const dataSourceId = z.string();
 
-export const DataSourceVariableValue = z.union([
+export const dataSourceVariableValue = z.union([
   z.object({
     type: z.literal("number"),
     // initial value of variable store
@@ -26,10 +26,10 @@ export const DataSourceVariableValue = z.union([
   }),
 ]);
 
-export const DataSource = z.union([
+export const dataSource = z.union([
   z.object({
     type: z.literal("variable"),
-    id: DataSourceId,
+    id: dataSourceId,
     // The instance should always be specified for variables,
     // however, there was a bug in the embed template
     // which produced variables without an instance
@@ -37,25 +37,25 @@ export const DataSource = z.union([
     // if we make it required
     scopeInstanceId: z.string().optional(),
     name: z.string(),
-    value: DataSourceVariableValue,
+    value: dataSourceVariableValue,
   }),
   z.object({
     type: z.literal("parameter"),
-    id: DataSourceId,
+    id: dataSourceId,
     scopeInstanceId: z.string().optional(),
     name: z.string(),
   }),
   z.object({
     type: z.literal("resource"),
-    id: DataSourceId,
+    id: dataSourceId,
     scopeInstanceId: z.string().optional(),
     name: z.string(),
     resourceId: z.string(),
   }),
 ]);
 
-export type DataSource = z.infer<typeof DataSource>;
+export type DataSource = z.infer<typeof dataSource>;
 
-export const DataSources = z.map(DataSourceId, DataSource);
+export const dataSources = z.map(dataSourceId, dataSource);
 
-export type DataSources = z.infer<typeof DataSources>;
+export type DataSources = z.infer<typeof dataSources>;

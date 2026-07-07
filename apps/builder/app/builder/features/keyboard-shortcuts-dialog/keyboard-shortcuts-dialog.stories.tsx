@@ -1,8 +1,9 @@
 import type { Meta } from "@storybook/react";
 import { useEffect } from "react";
+import { StorySection } from "@webstudio-is/design-system";
 import { subscribeCommands } from "~/builder/shared/commands";
 import {
-  KeyboardShortcutsDialog,
+  KeyboardShortcutsDialog as KeyboardShortcutsDialogComponent,
   openKeyboardShortcutsDialog,
 } from "./keyboard-shortcuts-dialog";
 
@@ -10,10 +11,14 @@ import {
 subscribeCommands();
 
 export default {
-  title: "Keyboard Shortcuts Dialog",
+  title: "Keyboard shortcuts dialog",
 } satisfies Meta;
 
 export const KeyboardShortcuts = () => {
   useEffect(openKeyboardShortcutsDialog, []);
-  return <KeyboardShortcutsDialog />;
+  return (
+    <StorySection title="Keyboard Shortcuts">
+      <KeyboardShortcutsDialogComponent />
+    </StorySection>
+  );
 };

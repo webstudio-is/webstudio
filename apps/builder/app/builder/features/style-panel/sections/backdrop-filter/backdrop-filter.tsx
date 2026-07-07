@@ -21,7 +21,7 @@ export const properties = ["backdrop-filter"] satisfies [
   ...CssProperty[],
 ];
 
-const label = "Backdrop Filters";
+const label = "Backdrop filters";
 const initialBackdropFilter = "blur(0px)";
 
 const getItemProps = (_index: number, value: StyleValue) => {
@@ -43,7 +43,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialBackdropFilter, ["backdrop-filter"])
+          parseCssFragment(initialBackdropFilter, ["backdrop-filter"]).styles
         );
       }}
     >

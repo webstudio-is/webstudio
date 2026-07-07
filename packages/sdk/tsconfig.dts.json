@@ -1,8 +1,11 @@
 {
   "extends": "./tsconfig.json",
   "include": [
+    "../../@types/**/*.d.ts",
     "src/index.ts",
     "src/runtime.ts",
+    "src/link-utils.ts",
+    "src/schema.ts",
     "src/__generated__/normalize.css.ts"
   ],
   "compilerOptions": {

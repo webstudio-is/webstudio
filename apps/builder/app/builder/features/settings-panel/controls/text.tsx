@@ -4,10 +4,11 @@ import { TextArea } from "@webstudio-is/design-system";
 import {
   BindingControl,
   BindingPopover,
+  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
-  useLocalValue,
   ResponsiveLayout,
   updateExpressionValue,
   $selectedInstanceScope,
@@ -23,7 +24,7 @@ export const TextControl = ({
   computedValue,
   onChange,
 }: ControlProps<"text">) => {
-  const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
+  const localValue = useDraftValue(String(computedValue ?? ""), (value) => {
     if (prop?.type === "expression") {
       updateExpressionValue(prop.value, value);
     } else {
@@ -57,11 +58,7 @@ export const TextControl = ({
       <BindingPopover
         scope={scope}
         aliases={aliases}
-        validate={(value) => {
-          if (value !== undefined && typeof value !== "string") {
-            return `${label} expects a string value`;
-          }
-        }}
+        validate={(value) => validatePrimitiveValue(value, label)}
         variant={variant}
         value={expression}
         onChange={(newExpression) =>

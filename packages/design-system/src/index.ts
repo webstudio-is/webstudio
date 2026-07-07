@@ -52,14 +52,13 @@ export * from "./components/component-card";
 export * from "./components/input-field";
 export * from "./components/nested-input-button";
 export * from "./components/panel-tabs";
-export * from "./components/ai-command-bar";
 export * from "./components/link";
 export * from "./components/panel-banner";
 export * from "./components/focus-ring";
 export * from "./components/tree";
 export * from "./components/command";
 export * from "./components/gradient-picker";
-export * from "./components/color-picker";
+export { ColorThumb, ColorPicker } from "./components/color-picker";
 
 // Not aligned
 
@@ -67,7 +66,6 @@ export * from "./components/toast";
 export * as Collapsible from "@radix-ui/react-collapsible";
 export { AccessibleIcon } from "@radix-ui/react-accessible-icon";
 export * from "./components/toggle-group";
-export * from "./components/progress-radial";
 export * from "./components/progress";
 export { SearchField, useSearchFieldKeys } from "./components/search-field";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";

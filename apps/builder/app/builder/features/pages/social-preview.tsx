@@ -33,7 +33,7 @@ export const SocialPreview = ({
 }: SocialPreviewProps) => {
   return (
     <Grid gap={1}>
-      <Label>Social Sharing Preview</Label>
+      <Label>Social sharing preview</Label>
 
       <Grid
         gap={1}
@@ -44,6 +44,7 @@ export const SocialPreview = ({
         }}
       >
         <Image
+          alt="Social sharing preview image"
           src={ogImageUrl}
           loader={wsImageLoader}
           className={imgStyle({

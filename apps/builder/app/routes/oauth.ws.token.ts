@@ -6,13 +6,13 @@ import { fromError } from "zod-validation-error";
 import env from "~/env/env.server";
 import {
   createAccessToken,
-  readAccessToken,
   readCodeToken,
   verifyChallenge,
 } from "~/services/token.server";
 import { isUserAuthorizedForProject } from "~/services/builder-access.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { isDashboard } from "~/shared/router-utils";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 
 /**
  * OAuth 2.0 Token Request
@@ -21,7 +21,7 @@ import { isDashboard } from "~/shared/router-utils";
  *
  * https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3
  */
-const TokenRequest = z.object({
+const tokenRequest = z.object({
   // Check that the grant_type parameter is present and is one of the supported values
   grant_type: z.literal("authorization_code"),
   code: z.string(),
@@ -49,8 +49,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // CSRF token checks are not necessary for dashboard-only pages.
   // All POST requests from the builder or canvas app are safeguarded by preventCrossOriginCookie
 
-  debug("Token request received");
-
   const authorizationHeader = request.headers.get("Authorization");
 
   if (authorizationHeader === null) {
@@ -60,7 +58,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         error_description: "missing client credentials",
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 401 }
+      { status: 401, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -78,21 +76,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     clientId !== env.AUTH_WS_CLIENT_ID ||
     clientSecret !== env.AUTH_WS_CLIENT_SECRET
   ) {
-    debug("client_id and client_secret do not match", clientId, clientSecret);
+    debug("client_id and client_secret do not match", clientId);
     return json(
       {
         error: "invalid_client",
         error_description: "invalid client credentials",
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 401 }
+      { status: 401, headers: privateNoStoreResponseHeaders }
     );
   }
 
   const jsonBody = Object.fromEntries((await request.formData()).entries());
-  debug("Token request received", jsonBody);
 
-  const parsedBody = TokenRequest.safeParse(jsonBody);
+  const parsedBody = tokenRequest.safeParse(jsonBody);
 
   if (false === parsedBody.success) {
     debug(fromError(parsedBody.error).toString());
@@ -103,7 +100,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         error_description: fromError(parsedBody.error).toString(),
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 400 }
+      { status: 400, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -113,14 +110,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const codeToken = await readCodeToken(body.code, env.AUTH_WS_CLIENT_SECRET);
 
   if (codeToken === undefined) {
-    debug("Code can not be read", body.code);
+    debug("Code can not be read");
     return json(
       {
         error: "invalid_grant",
         error_description: "invalid code",
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 400 }
+      { status: 400, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -130,18 +127,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     codeToken.codeChallenge
   );
   if (false === isChallengeVerified) {
-    debug(
-      "Code verifier does not match",
-      body.code_verifier,
-      codeToken.codeChallenge
-    );
+    debug("Code verifier does not match");
     return json(
       {
         error: "invalid_grant",
         error_description: "invalid code_verifier",
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 400 }
+      { status: 400, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -150,14 +143,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const isAuthorized = await isUserAuthorizedForProject(userId, projectId);
 
   if (false === isAuthorized) {
-    debug("User does not have access to the project", userId, projectId);
+    debug("User does not have access to the project");
     return json(
       {
         error: "invalid_grant",
         error_description: "user does not have access to the project",
         error_uri: "https://tools.ietf.org/html/rfc6749#section-5.2",
       },
-      { status: 400 }
+      { status: 400, headers: privateNoStoreResponseHeaders }
     );
   }
 
@@ -172,19 +165,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   );
 
-  debug("Token created", accessToken);
-
-  debug(
-    "readAccessToken",
-    await readAccessToken(accessToken, env.AUTH_WS_CLIENT_SECRET)
-  );
-
   return json(
     {
       access_token: accessToken,
       token_type: "Bearer",
       expires_in: Date.now() + maxAge,
     },
-    { status: 200 }
+    { status: 200, headers: privateNoStoreResponseHeaders }
   );
 };

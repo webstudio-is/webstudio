@@ -1,6 +1,7 @@
 export * from "./remix";
 export * from "./components/components-utils";
 export * from "./props";
+export * from "./collection-utils";
 export type * from "./context";
 export type * from "./hook";
 export {

@@ -13,6 +13,12 @@ export type Params = {
    */
   renderer?: "canvas" | "preview";
   /**
+   * Safe mode prevents external JavaScript execution in HTML embeds.
+   * When enabled, all HTML embeds act as if "run scripts on canvas" is false,
+   * regardless of their actual settings.
+   */
+  isSafeMode?: boolean;
+  /**
    * Base url or base path for any asset with ending slash.
    * Used to load assets like fonts or images in styles
    * Concatinated with "name".
@@ -58,4 +64,8 @@ export const useResource = (name: string) => {
   );
 
   return resourceMemozied;
+};
+
+export const renderText = (value: unknown) => {
+  return typeof value === "string" || typeof value === "number" ? value : "";
 };

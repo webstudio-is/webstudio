@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { StorySection } from "@webstudio-is/design-system";
 import { ExpressionEditor as ExpressionEditorComponent } from "./expression-editor";
 import { useState } from "react";
 
@@ -53,11 +54,11 @@ const ExpressionStory = () => {
 
 export const ExpressionEditor: StoryObj = {
   render: () => (
-    <>
+    <StorySection title="Expression Editor">
       <p>
         {`Start typing "h" or "o" or press "Tab" to start variables completion`}
       </p>
       <ExpressionStory />
-    </>
+    </StorySection>
   ),
 };

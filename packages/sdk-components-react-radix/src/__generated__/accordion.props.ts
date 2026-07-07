@@ -63,4 +63,12 @@ export const propsAccordionItem: Record<string, PropMeta> = {
 };
 export const propsAccordionHeader: Record<string, PropMeta> = {};
 export const propsAccordionTrigger: Record<string, PropMeta> = {};
-export const propsAccordionContent: Record<string, PropMeta> = {};
+export const propsAccordionContent: Record<string, PropMeta> = {
+  forceMount: {
+    description:
+      "Used to force mounting when more control is needed. Useful when controlling animation with React animation libraries or keeping content available in the DOM.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+  },
+};

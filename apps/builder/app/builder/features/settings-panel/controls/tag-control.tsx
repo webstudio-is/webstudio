@@ -4,14 +4,16 @@ import { useStore } from "@nanostores/react";
 import { Box, Combobox, Select, theme } from "@webstudio-is/design-system";
 import { elementsByTag } from "@webstudio-is/html-data";
 import { tags } from "@webstudio-is/sdk";
-import { $selectedInstance, $selectedInstancePath } from "~/shared/awareness";
-import { updateWebstudioData } from "~/shared/instance-utils";
-import { isTreeSatisfyingContentModel } from "~/shared/content-model";
+import { $selectedInstance, $selectedInstancePath } from "~/shared/nano-states";
 import {
-  $instances,
-  $props,
-  $registeredComponentMetas,
-} from "~/shared/nano-states";
+  applyBuilderPatchPayloadMutable,
+  updateWebstudioData,
+} from "~/shared/instance-utils/data";
+import { createPropDeletePayload } from "@webstudio-is/project-build/runtime/props";
+import { isTreeSatisfyingContentModel } from "~/shared/content-model";
+import { $registeredComponentMetas } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import { $props } from "~/shared/sync/data-stores";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { FieldLabel } from "../property-label";
 
@@ -61,7 +63,14 @@ export const TagControl = ({ meta, prop }: ControlProps<"tag">) => {
     updateWebstudioData((data) => {
       // clean legacy <Box tag> and <Text tag>
       if (prop) {
-        data.props.delete(prop.id);
+        applyBuilderPatchPayloadMutable(
+          data,
+          createPropDeletePayload({
+            deletions: [{ instanceId, name: prop.name }],
+            instances: data.instances,
+            props: data.props.values(),
+          }).payload
+        );
       }
       const instance = data.instances.get(instanceId);
       if (instance) {

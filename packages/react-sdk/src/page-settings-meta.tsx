@@ -69,8 +69,8 @@ export const PageSettingsMeta = ({
   assetBaseUrl,
 }: {
   url?: string;
-  host: string;
-  siteName: string;
+  host?: string;
+  siteName?: string;
   pageMeta: PageMeta;
   imageLoader: ImageLoader;
   assetBaseUrl: string;
@@ -120,9 +120,10 @@ export const PageSettingsMeta = ({
   }
 
   if (pageMeta.socialImageAssetName) {
+    const origin = host ? `https://${host}` : "";
     metas.push({
       property: "og:image",
-      content: `https://${host}${imageLoader({
+      content: `${origin}${imageLoader({
         src: `${assetBaseUrl}${pageMeta.socialImageAssetName}`,
         // Do not transform social image (not enough information do we need to do this)
         format: "raw",

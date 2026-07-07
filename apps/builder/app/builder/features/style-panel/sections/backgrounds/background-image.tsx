@@ -5,17 +5,16 @@ import { ImageControl } from "../../controls";
 import { PropertyInlineLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { BackgroundCodeEditor } from "./background-code-editor";
-import { $assets } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
+import { isAbsoluteUrl } from "@webstudio-is/sdk";
 
-const isAbsoluteURL = (value: string) => {
-  try {
-    return Boolean(new URL(value));
-  } catch {
-    return false;
-  }
-};
-
-export const BackgroundImage = ({ index }: { index: number }) => {
+export const BackgroundImage = ({
+  index,
+  disabled,
+}: {
+  index: number;
+  disabled?: boolean;
+}) => {
   const elementRef = useRef<HTMLDivElement>(null);
 
   const handleValidate = useCallback(
@@ -23,21 +22,21 @@ export const BackgroundImage = ({ index }: { index: number }) => {
       const newValue = parsed.get("background-image");
 
       if (newValue === undefined || newValue?.type === "invalid") {
-        return undefined;
+        return;
       }
 
       const [layer] = newValue.type === "layers" ? newValue.value : [newValue];
 
       // Only validate image URLs, not keywords or other types
       if (layer?.type !== "image" || layer.value.type !== "url") {
-        return undefined;
+        return;
       }
 
       const url = layer.value.url;
 
       // If it's an absolute URL, no validation needed
-      if (isAbsoluteURL(url)) {
-        return undefined;
+      if (isAbsoluteUrl(url)) {
+        return;
       }
 
       // Check if the asset exists in the project
@@ -49,7 +48,7 @@ export const BackgroundImage = ({ index }: { index: number }) => {
         return [`Asset ${url} is not found in project`];
       }
 
-      return undefined;
+      return;
     },
     []
   );
@@ -71,7 +70,11 @@ export const BackgroundImage = ({ index }: { index: number }) => {
           ref={elementRef}
           data-floating-panel-container
         >
-          <ImageControl property="background-image" index={index} />
+          <ImageControl
+            property="background-image"
+            index={index}
+            disabled={disabled}
+          />
         </Box>
       </Grid>
       <BackgroundCodeEditor index={index} onValidate={handleValidate} />

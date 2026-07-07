@@ -39,7 +39,7 @@
     "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.ts !./src/*.template.tsx !./src/*.test.{ts,tsx}' -e asChild -e modal -e defaultOpen -e defaultChecked && prettier --write \"**/*.props.ts\"",
     "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsc"
+    "typecheck": "tsgo --noEmit"
   },
   "peerDependencies": {
     "react": "18.3.0-canary-14898b6a9-20240318",

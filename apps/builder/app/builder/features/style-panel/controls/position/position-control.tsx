@@ -4,8 +4,9 @@ import {
   propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
-  TupleValue,
-  TupleValueItem,
+  type TupleValue,
+  tupleValue,
+  tupleValueItem,
   type StyleValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
@@ -18,6 +19,7 @@ import {
   type SetValue,
 } from "../../shared/use-style-data";
 import { PropertyInlineLabel } from "../../property-label";
+import { useReadonly } from "../../shared/readonly";
 
 const toPosition = (value: TupleValue) => {
   // Should never actually happen, just for TS
@@ -36,15 +38,15 @@ const toTuple = (
   valueX?: StyleValue | string,
   valueY?: StyleValue | string
 ) => {
-  const parsedValue = TupleValue.safeParse(valueX);
+  const parsedValue = tupleValue.safeParse(valueX);
   if (parsedValue.success) {
     return parsedValue.data;
   }
 
   const parsedValueX = valueX
-    ? TupleValueItem.parse(valueX)
+    ? tupleValueItem.parse(valueX)
     : ({ type: "unit", value: 0, unit: "px" } as const);
-  const parsedValueY = valueY ? TupleValueItem.parse(valueY) : parsedValueX;
+  const parsedValueY = valueY ? tupleValueItem.parse(valueY) : parsedValueX;
 
   return {
     type: "tuple" as const,
@@ -59,6 +61,7 @@ export const PositionControl = ({
   property: CssProperty;
   styleDecl: ComputedStyleDecl;
 }) => {
+  const readonly = useReadonly();
   const value = toTuple(styleDecl.cascadedValue);
   const keywords = (keywordValues[property] ?? []).map((value) => ({
     type: "keyword" as const,
@@ -86,6 +89,7 @@ export const PositionControl = ({
       />
       <Flex gap="6">
         <PositionGrid
+          disabled={readonly}
           selectedPosition={toPosition(value)}
           onSelect={({ x, y }) => {
             setValue({
@@ -108,6 +112,7 @@ export const PositionControl = ({
             properties={[property]}
           />
           <CssValueInputContainer
+            disabled={readonly}
             property={property}
             styleSource={styleDecl.source.name}
             getOptions={() => keywords}
@@ -121,6 +126,7 @@ export const PositionControl = ({
             properties={[property]}
           />
           <CssValueInputContainer
+            disabled={readonly}
             property={property}
             styleSource={styleDecl.source.name}
             getOptions={() => keywords}

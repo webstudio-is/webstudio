@@ -20,19 +20,23 @@ import {
   PageIcon,
   PhoneIcon,
 } from "@webstudio-is/icons";
-import type { Folder, Instance, Page } from "@webstudio-is/sdk";
 import {
   findParentFolderByChildId,
   findTreeInstanceIds,
+  getAllPages,
+  type Folder,
+  type Instance,
+  type Page,
 } from "@webstudio-is/sdk";
-import { $instances, $pages, $props } from "~/shared/nano-states";
+import { $instances, $pages, $props } from "~/shared/sync/data-stores";
 import {
   BindingControl,
   BindingPopover,
+  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
-  useLocalValue,
   VerticalLayout,
   Label,
   updateExpressionValue,
@@ -93,7 +97,7 @@ const addHttpsIfMissing = (url: string) => {
 };
 
 const BaseUrl = ({ readOnly, prop, value, onChange, id }: BaseControlProps) => {
-  const localValue = useLocalValue(value, (value) => {
+  const localValue = useDraftValue(value, (value) => {
     if (prop?.type === "expression") {
       updateExpressionValue(prop.value, value);
     } else {
@@ -137,7 +141,7 @@ const BasePhone = ({
   onChange,
   id,
 }: BaseControlProps) => {
-  const localValue = useLocalValue(
+  const localValue = useDraftValue(
     value.startsWith("tel:") ? value.slice(4) : "",
     (value) => {
       if (prop?.type === "expression") {
@@ -169,7 +173,12 @@ const BasePhone = ({
   );
 };
 
-const propToEmail = (value: string) => {
+type EmailValue = {
+  email: string;
+  subject: string;
+};
+
+const propToEmail = (value: string): EmailValue => {
   let url;
   try {
     url = new URL(value);
@@ -187,6 +196,23 @@ const propToEmail = (value: string) => {
   };
 };
 
+const emailToProp = ({ email, subject }: EmailValue) => {
+  if (email === "" && subject === "") {
+    return "";
+  }
+
+  const url = new URL(`mailto:${email}`);
+  if (subject !== "") {
+    url.searchParams.set("subject", subject);
+  }
+  return url.toString();
+};
+
+export const __testing__ = {
+  emailToProp,
+  propToEmail,
+};
+
 const BaseEmail = ({
   readOnly,
   prop,
@@ -194,20 +220,8 @@ const BaseEmail = ({
   onChange,
   id,
 }: BaseControlProps) => {
-  const localValue = useLocalValue(propToEmail(value), ({ email, subject }) => {
-    if (email === "") {
-      if (prop?.type === "expression") {
-        updateExpressionValue(prop.value, "");
-      } else {
-        onChange({ type: "string", value: "" });
-      }
-      return;
-    }
-    const url = new URL(`mailto:${email}`);
-    if (subject !== "") {
-      url.searchParams.set("subject", subject);
-    }
-    const value = url.toString();
+  const localValue = useDraftValue(propToEmail(value), ({ email, subject }) => {
+    const value = emailToProp({ email, subject });
     if (prop?.type === "expression") {
       updateExpressionValue(prop.value, value);
     } else {
@@ -265,7 +279,7 @@ const BaseEmail = ({
 const instancesPerPageStore = computed(
   [$instances, $pages],
   (instances, pages) =>
-    (pages ? [pages.homePage, ...pages.pages] : []).map((page) => ({
+    (pages ? getAllPages(pages) : []).map((page) => ({
       pageId: page.id,
       instancesIds: findTreeInstanceIds(instances, page.rootInstanceId),
     }))
@@ -309,7 +323,7 @@ const getInstanceId = (data: { instanceId: string }) => data.instanceId;
 const BasePage = ({ prop, onChange }: BaseControlProps) => {
   const pages = useStore($pages);
   const { allPages, pageSelectOptions } = useMemo(() => {
-    const allPages = pages ? [pages.homePage, ...pages.pages] : [];
+    const allPages = pages ? getAllPages(pages) : [];
     const rootFolder = createRootFolder();
     const pageSelectOptions = new Map<
       Folder["id"],
@@ -463,7 +477,7 @@ export const UrlControl = ({
   onChange,
 }: UrlControlProps) => {
   const value = String(computedValue ?? "");
-  const { value: mode, set: setMode } = useLocalValue<Mode>(
+  const { value: mode, set: setMode } = useDraftValue<Mode>(
     propToMode(prop, value),
     () => {}
   );
@@ -521,11 +535,7 @@ export const UrlControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
-          validate={(value) => {
-            if (value !== undefined && typeof value !== "string") {
-              return `${label} expects a string value, page or file`;
-            }
-          }}
+          validate={(value) => validatePrimitiveValue(value, label)}
           variant={variant}
           value={expression}
           onChange={(newExpression) =>

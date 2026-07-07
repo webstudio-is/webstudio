@@ -8,7 +8,7 @@ import {
   type MediaRuleOptions,
 } from "./rules";
 import { compareMedia } from "./compare-media";
-import { StyleElement } from "./style-element";
+import { StyleElement, FakeStyleElement } from "./style-element";
 import type { TransformValue } from "./to-value";
 
 export class StyleSheet {
@@ -19,8 +19,8 @@ export class StyleSheet {
   nestingRules: Map<string, NestingRule> = new Map();
   #fontFaceRules: Array<FontFaceRule> = [];
   #transformValue?: TransformValue;
-  #element: StyleElement;
-  constructor(element: StyleElement) {
+  #element: StyleElement | FakeStyleElement;
+  constructor(element: StyleElement | FakeStyleElement) {
     this.#element = element;
   }
   setTransformer(transformValue: TransformValue) {

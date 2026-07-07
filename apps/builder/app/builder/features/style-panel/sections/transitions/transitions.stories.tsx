@@ -1,22 +1,17 @@
-import { styled, theme } from "@webstudio-is/design-system";
-import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
+import { Box, StorySection, theme } from "@webstudio-is/design-system";
+import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
+import { $selectedBreakpointId } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 import {
-  $breakpoints,
   $pages,
-  $selectedBreakpointId,
   $styles,
   $styleSources,
   $styleSourceSelections,
-} from "~/shared/nano-states";
-import { registerContainers } from "~/shared/sync";
+} from "~/shared/sync/data-stores";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import { Section } from "./transitions";
-import { $awareness } from "~/shared/awareness";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { createDefaultPages } from "@webstudio-is/project-build";
-
-const Panel = styled("div", {
-  width: theme.spacing[30],
-  boxShadow: theme.shadows.panelSectionDropShadow,
-});
 
 const transitionProperty: StyleDecl = {
   breakpointId: "base",
@@ -58,20 +53,18 @@ $pages.set(
     rootInstanceId: "box",
   })
 );
-$awareness.set({
-  pageId: "homePageId",
-  instanceSelector: ["box"],
-});
+$selectedPageId.set("homePageId");
+selectInstance(["box"]);
 
-export const Transitions = () => {
-  return (
-    <Panel>
+export const Transitions = () => (
+  <StorySection title="Transitions">
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
       <Section />
-    </Panel>
-  );
-};
+    </Box>
+  </StorySection>
+);
 
 export default {
-  title: "Style Panel/Transitions",
+  title: "Style panel/Transitions",
   component: Transitions,
 };

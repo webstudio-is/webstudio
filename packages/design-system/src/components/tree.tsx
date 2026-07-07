@@ -1,10 +1,13 @@
 import {
+  createContext,
   useEffect,
   useInsertionEffect,
+  useContext,
   useRef,
   useState,
   type ComponentPropsWithoutRef,
   type KeyboardEvent,
+  type MutableRefObject,
   type ReactNode,
 } from "react";
 import { FocusScope, useFocusManager } from "@react-aria/focus";
@@ -31,8 +34,33 @@ const treeNodeLevel = "--tree-node-level";
 const treeNodeOutline = "--tree-node-outline";
 const treeNodeBackgroundColor = "--tree-node-background-color";
 const treeActionOpacity = "--tree-action-opacity";
-const treeDepthBarsVisibility = "--tree-depth-bars-visibility";
-const treeDepthBarsColor = "--tree-depth-bars-color";
+
+const TreeFocusRestoreContext = createContext<
+  | undefined
+  | {
+      shouldRestoreFocusRef: MutableRefObject<boolean>;
+    }
+>(undefined);
+
+type TreeSelectionState = "none" | "selected" | "selected-descendant";
+
+const getTreeSelectionState = ({
+  isSelected,
+  isSelectedDescendant,
+}: {
+  isSelected: boolean;
+  isSelectedDescendant: boolean;
+}): TreeSelectionState => {
+  if (isSelected) {
+    return "selected";
+  }
+
+  if (isSelectedDescendant) {
+    return "selected-descendant";
+  }
+
+  return "none";
+};
 
 const ITEM_PADDING_LEFT = 8;
 // extra padding on the right to make sure scrollbar doesn't obscure anything
@@ -42,45 +70,52 @@ const EXPAND_WIDTH = 24;
 
 const TreeContainer = ({ children }: { children: ReactNode }) => {
   const focusManager = useFocusManager();
+  const shouldRestoreFocusRef = useRef(false);
   return (
-    <Box
-      css={{
-        "&:hover": {
-          [treeDepthBarsVisibility]: "visible",
-        },
-      }}
-      onKeyDown={(event) => {
-        if (event.defaultPrevented) {
-          return;
-        }
-        if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
-          focusManager?.focusPrevious({
-            accept: (node) => node.hasAttribute("data-tree-button"),
-          });
-          // prevent scrolling
-          event.preventDefault();
-        }
-        if (event.key === "ArrowDown") {
-          focusManager?.focusNext({
-            accept: (node) => node.hasAttribute("data-tree-button"),
-          });
-          // prevent scrolling
-          event.preventDefault();
-        }
-        if (event.key === "ArrowRight") {
-          focusManager?.focusNext({
-            accept: (node) =>
-              node.hasAttribute("data-tree-button") ||
-              // try to focus button inside action
-              node.closest("[data-tree-action]") !== null,
-          });
-          // prevent scrolling
-          event.preventDefault();
-        }
-      }}
-    >
-      {children}
-    </Box>
+    <TreeFocusRestoreContext.Provider value={{ shouldRestoreFocusRef }}>
+      <Box
+        onKeyDown={(event) => {
+          if (event.defaultPrevented) {
+            return;
+          }
+          if (event.metaKey || event.ctrlKey) {
+            if (event.key.startsWith("Arrow")) {
+              shouldRestoreFocusRef.current = true;
+              window.setTimeout(() => {
+                shouldRestoreFocusRef.current = false;
+              }, 1000);
+            }
+            return;
+          }
+          if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+            focusManager?.focusPrevious({
+              accept: (node) => node.hasAttribute("data-tree-button"),
+            });
+            // prevent scrolling
+            event.preventDefault();
+          }
+          if (event.key === "ArrowDown") {
+            focusManager?.focusNext({
+              accept: (node) => node.hasAttribute("data-tree-button"),
+            });
+            // prevent scrolling
+            event.preventDefault();
+          }
+          if (event.key === "ArrowRight") {
+            focusManager?.focusNext({
+              accept: (node) =>
+                node.hasAttribute("data-tree-button") ||
+                // try to focus button inside action
+                node.closest("[data-tree-action]") !== null,
+            });
+            // prevent scrolling
+            event.preventDefault();
+          }
+        }}
+      >
+        {children}
+      </Box>
+    </TreeFocusRestoreContext.Provider>
   );
 };
 
@@ -100,27 +135,14 @@ const NodeContainer = styled("div", {
     backgroundColor: `var(${treeNodeBackgroundColor})`,
     [treeActionOpacity]: 1,
   },
-  "&:has([aria-selected=true])": {
+  '&[data-selection-state="selected-descendant"]': {
+    [treeNodeBackgroundColor]: theme.colors.backgroundItemCurrentChild,
+    backgroundColor: `var(${treeNodeBackgroundColor})`,
+  },
+  '&[data-selection-state="selected"]': {
     [treeNodeBackgroundColor]: theme.colors.backgroundItemCurrent,
     backgroundColor: `var(${treeNodeBackgroundColor})`,
-    [treeDepthBarsColor]: theme.colors.borderItemChildLineCurrent,
   },
-});
-
-const DepthBars = styled("div", {
-  visibility: `var(${treeDepthBarsVisibility}, hidden)`,
-  position: "absolute",
-  top: 0,
-  left: 0,
-  width: `calc((var(${treeNodeLevel}) - 1) * ${BARS_GAP}px)`,
-  height: "100%",
-  backgroundImage: `repeating-linear-gradient(
-    to right,
-    transparent,
-    transparent ${BARS_GAP - 1}px,
-    var(${treeDepthBarsColor}, ${theme.colors.borderItemChildLine}) ${BARS_GAP - 1}px,
-    var(${treeDepthBarsColor}, ${theme.colors.borderItemChildLine}) ${BARS_GAP}px
-  )`,
 });
 
 const NodeButton = styled("button", {
@@ -404,6 +426,7 @@ export const TreeNode = ({
   level,
   tabbable,
   isSelected,
+  isSelectedDescendant = false,
   isHighlighted,
   isExpanded,
   isActionVisible,
@@ -411,11 +434,13 @@ export const TreeNode = ({
   nodeProps,
   buttonProps,
   action,
+  actionCount = 1,
   children,
 }: {
   level: number;
   tabbable?: boolean;
   isSelected: boolean;
+  isSelectedDescendant?: boolean;
   isHighlighted?: boolean;
   isExpanded?: undefined | boolean;
   isActionVisible?: boolean;
@@ -423,9 +448,15 @@ export const TreeNode = ({
   nodeProps?: ComponentPropsWithoutRef<"div">;
   buttonProps: ComponentPropsWithoutRef<"button">;
   action: ReactNode;
+  actionCount?: number;
   children: ReactNode;
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const focusRestoreContext = useContext(TreeFocusRestoreContext);
+  const selectionState = getTreeSelectionState({
+    isSelected,
+    isSelectedDescendant,
+  });
   // scroll the selected button into view when selected from canvas.
   useEffect(() => {
     if (isSelected) {
@@ -436,11 +467,21 @@ export const TreeNode = ({
       });
     }
   }, [isSelected]);
+  useEffect(() => {
+    const shouldRestoreFocusRef = focusRestoreContext?.shouldRestoreFocusRef;
+    if (isSelected && shouldRestoreFocusRef?.current === true) {
+      buttonRef.current?.focus({ preventScroll: true });
+      shouldRestoreFocusRef.current = false;
+    }
+  }, [focusRestoreContext, isSelected]);
 
   const handleKeydown = (event: KeyboardEvent<HTMLDivElement>) => {
     nodeProps?.onKeyDown?.(event);
 
     if (event.defaultPrevented) {
+      return;
+    }
+    if (event.metaKey || event.ctrlKey) {
       return;
     }
     if (event.key === "ArrowLeft" && isExpanded === true) {
@@ -463,13 +504,13 @@ export const TreeNode = ({
   return (
     <NodeContainer
       {...nodeProps}
+      data-selection-state={selectionState}
       css={{
         [treeNodeLevel]: level,
         ...(isActionVisible && { [treeActionOpacity]: 1 }),
       }}
       onKeyDown={handleKeydown}
     >
-      <DepthBars />
       <NodeButton
         {...buttonProps}
         ref={buttonRef}
@@ -492,7 +533,12 @@ export const TreeNode = ({
           )}
         </ExpandButton>
       )}
-      <ActionContainer data-tree-action>{action}</ActionContainer>
+      <ActionContainer
+        data-tree-action
+        css={actionCount > 1 ? { translate: `-50% -100%` } : undefined}
+      >
+        {action}
+      </ActionContainer>
     </NodeContainer>
   );
 };
@@ -509,7 +555,7 @@ export const TreeNodeLabel = ({
     <>
       {prefix}
       <Text
-        variant="labelsSentenceCase"
+        variant="labels"
         truncate
         css={{
           marginLeft: prefix ? theme.spacing[3] : 0,

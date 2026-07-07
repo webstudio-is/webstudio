@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit -p tsconfig.typecheck.json",
     "build:elements": "tsx --conditions=webstudio ./bin/elements.ts && prettier --write ./src/__generated__",
     "build:attributes": "tsx --conditions=webstudio ./bin/attributes.ts && prettier --write ./src/__generated__ ../react-sdk/src/__generated__",
     "build:aria": "tsx --conditions=webstudio ./bin/aria.ts && prettier --write ./src/__generated__"

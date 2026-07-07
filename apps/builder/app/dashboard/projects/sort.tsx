@@ -14,6 +14,7 @@ import {
   CalendarIcon,
   UploadIcon,
   ArrowDownAZIcon,
+  ArrowDownZAIcon,
 } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 
@@ -105,7 +106,11 @@ export const SortSelect = ({ value, onValueChange }: SortSelectProps) => {
     sortBy === "createdAt" ? (
       <CalendarIcon />
     ) : sortBy === "title" ? (
-      <ArrowDownAZIcon />
+      order === "asc" ? (
+        <ArrowDownAZIcon />
+      ) : (
+        <ArrowDownZAIcon />
+      )
     ) : sortBy === "publishedAt" ? (
       <UploadIcon />
     ) : (

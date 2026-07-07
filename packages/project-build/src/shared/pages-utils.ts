@@ -3,8 +3,8 @@ import {
   type Pages,
   type Folder,
   ROOT_FOLDER_ID,
-  Instance,
-  DataSource,
+  type Instance,
+  type DataSource,
 } from "@webstudio-is/sdk";
 
 export const createRootFolder = (
@@ -27,18 +27,20 @@ export const createDefaultPages = ({
 }): Pages => {
   // This is a root folder that nobody can delete or going to be able to see.
   const rootFolder = createRootFolder([homePageId]);
+  const homePage = {
+    id: homePageId,
+    name: "Home",
+    path: "",
+    title: `"Home"`,
+    meta: {},
+    rootInstanceId,
+    systemDataSourceId,
+  };
   return {
     meta: {},
-    homePage: {
-      id: homePageId,
-      name: "Home",
-      path: "",
-      title: `"Home"`,
-      meta: {},
-      rootInstanceId,
-      systemDataSourceId,
-    },
-    pages: [],
-    folders: [rootFolder],
+    homePageId,
+    rootFolderId: ROOT_FOLDER_ID,
+    pages: new Map([[homePageId, homePage]]),
+    folders: new Map([[rootFolder.id, rootFolder]]),
   };
 };

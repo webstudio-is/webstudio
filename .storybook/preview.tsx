@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { setEnv } from "../packages/feature-flags/src/index";
 import { theme, globalCss } from "../packages/design-system/src/index";
-import { color } from "../packages/design-system/src/__generated__/figma-design-tokens";
+import { color } from "../packages/design-system/src/design-tokens";
 
 // this adds <style> tags to the <head> of the document
 import "@fontsource-variable/inter";

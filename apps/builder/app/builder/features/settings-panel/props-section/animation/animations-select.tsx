@@ -35,8 +35,8 @@ import {
   PlusIcon,
 } from "@webstudio-is/icons";
 import {
-  scrollAnimationSchema,
-  viewAnimationSchema,
+  scrollAnimation,
+  viewAnimation,
   type AnimationAction,
   type ScrollAnimation,
   type ViewAnimation,
@@ -79,7 +79,7 @@ const serialize = (animations: (ScrollAnimation | ViewAnimation)[]) => {
 const parseViewAnimations = (text: string): ViewAnimation[] => {
   const data = JSON.parse(text);
   const parsed = z
-    .object({ [clipboardNamespace]: z.array(viewAnimationSchema) })
+    .object({ [clipboardNamespace]: z.array(viewAnimation) })
     .parse(data);
   return parsed[clipboardNamespace];
 };
@@ -87,7 +87,7 @@ const parseViewAnimations = (text: string): ViewAnimation[] => {
 const parseScrollAnimations = (text: string): ScrollAnimation[] => {
   const data = JSON.parse(text);
   const parsed = z
-    .object({ [clipboardNamespace]: z.array(scrollAnimationSchema) })
+    .object({ [clipboardNamespace]: z.array(scrollAnimation) })
     .parse(data);
   return parsed[clipboardNamespace];
 };

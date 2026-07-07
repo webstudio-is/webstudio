@@ -2,7 +2,7 @@ import { computed } from "nanostores";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { $settings } from "~/builder/shared/client-settings";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/nano-states";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { $computedStyleDeclarations } from "../../shared/model";
 import { sections } from "../sections";

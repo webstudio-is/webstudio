@@ -10,16 +10,19 @@ import { computed } from "nanostores";
 import { elementComponent, tags } from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
 import {
-  $instances,
-  $props,
+  $propsIndex,
   $registeredComponentMetas,
+  $selectedInstancePath,
+  $selectedPage,
 } from "~/shared/nano-states";
-import { insertWebstudioFragmentAt } from "~/shared/instance-utils";
-import { $selectedInstancePath } from "~/shared/awareness";
+import { $instances } from "~/shared/sync/data-stores";
+import { $props } from "~/shared/sync/data-stores";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { InstanceIcon } from "~/builder/shared/instance-label";
 import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
+import { allowsHtmlMutations } from "../shared/document-utils";
 
 export type TagOption = BaseOption & {
   type: "tag";
@@ -32,14 +35,27 @@ export const $tagOptions = computed(
     $selectedInstancePath,
     $instances,
     $props,
+    $propsIndex,
     $registeredComponentMetas,
+    $selectedPage,
   ],
-  (isOpen, instancePath, instances, props, metas) => {
+  (
+    isCommandPanelOpen,
+    instancePath,
+    instances,
+    props,
+    propsIndex,
+    metas,
+    selectedPage
+  ) => {
     const tagOptions: TagOption[] = [];
-    if (!isOpen) {
+    if (isCommandPanelOpen === false) {
       return tagOptions;
     }
     if (instancePath === undefined) {
+      return tagOptions;
+    }
+    if (!allowsHtmlMutations(selectedPage)) {
       return tagOptions;
     }
     const [{ instance, instanceSelector }] = instancePath;
@@ -63,6 +79,7 @@ export const $tagOptions = computed(
         instances: newInstances,
         props,
         metas,
+        htmlTagsByInstanceId: propsIndex.htmlTagsByInstanceId,
         instanceSelector,
       });
       if (isSatisfying) {
@@ -81,8 +98,10 @@ export const TagsGroup = ({ options }: { options: TagOption[] }) => {
   return (
     <CommandGroup
       name="tag"
-      heading={<CommandGroupHeading>Tags</CommandGroupHeading>}
-      actions={["add"]}
+      heading={
+        <CommandGroupHeading>Tags ({options.length})</CommandGroupHeading>
+      }
+      actions={[{ name: "add", label: "Add" }]}
     >
       {options.map(({ tag }) => {
         return (
@@ -117,7 +136,7 @@ export const TagsGroup = ({ options }: { options: TagOption[] }) => {
               <CommandIcon>
                 <InstanceIcon instance={{ component: elementComponent, tag }} />
               </CommandIcon>
-              <Text variant="labelsSentenceCase">{`<${tag}>`}</Text>
+              <Text>{`<${tag}>`}</Text>
             </Flex>
           </CommandItem>
         );

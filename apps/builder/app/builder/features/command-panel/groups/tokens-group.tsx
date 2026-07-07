@@ -11,13 +11,14 @@ import {
   useResetActionIndex,
 } from "@webstudio-is/design-system";
 import type { Instance, StyleSource } from "@webstudio-is/sdk";
-import { $selectedStyleSources, $styleSources } from "~/shared/nano-states";
+import { $styleSources } from "~/shared/sync/data-stores";
+import { $selectedStyleSources } from "~/shared/nano-states";
 import {
   deleteStyleSource,
   DeleteStyleSourceDialog,
   RenameStyleSourceDialog,
   $styleSourceUsages,
-} from "~/builder/shared/style-source-utils";
+} from "~/builder/shared/style-source-actions";
 import { InstanceList, showInstance } from "../shared/instance-list";
 import {
   $commandContent,
@@ -96,8 +97,14 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
     <>
       <CommandGroup
         name="token"
-        heading={<CommandGroupHeading>Tokens</CommandGroupHeading>}
-        actions={["find", "rename", "delete"]}
+        heading={
+          <CommandGroupHeading>Tokens ({options.length})</CommandGroupHeading>
+        }
+        actions={[
+          { name: "showInstances", label: "Show instances" },
+          { name: "rename", label: "Rename" },
+          { name: "delete", label: "Delete" },
+        ]}
       >
         {options.map(({ token, usages }) => (
           <CommandItem
@@ -105,18 +112,22 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
             // preserve selected state when rerender
             value={token.id}
             onSelect={() => {
-              if (action === "find") {
+              if (
+                action?.name === "showInstances" ||
+                action?.name === "findInstances" ||
+                action?.name === "find"
+              ) {
                 $commandContent.set(<TokenInstances tokenId={token.id} />);
               }
-              if (action === "rename") {
+              if (action?.name === "rename") {
                 setTokenDialog({ ...token, action: "rename" });
               }
-              if (action === "delete") {
+              if (action?.name === "delete") {
                 setTokenDialog({ ...token, action: "delete" });
               }
             }}
           >
-            <Text variant="labelsTitleCase">
+            <Text>
               {token.name}{" "}
               <Text as="span" color="moreSubtle">
                 {formatUsageCount(usages)}

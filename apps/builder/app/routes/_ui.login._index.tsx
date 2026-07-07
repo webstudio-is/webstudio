@@ -8,6 +8,7 @@ import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env/env.server";
 import type { LoginProps } from "~/auth/index.client";
+import { parsePlansEnv } from "@webstudio-is/plans";
 import { useLoginErrorMessage } from "~/shared/session";
 import {
   comparePathnames,
@@ -20,6 +21,7 @@ import { lazy } from "react";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
 import { allowedDestinations } from "~/services/destinations.server";
+import { createPrivateNoStoreHeaders } from "~/services/cache-control.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 export const links: LinksFunction = () => {
@@ -79,13 +81,15 @@ export const loader = async ({
     throw redirect(returnTo);
   }
 
-  const headers = new Headers();
+  const headers = createPrivateNoStoreHeaders();
 
   headers.append("Set-Cookie", await returnToCookie.serialize(returnTo));
 
   return json(
     {
       isSecretLoginEnabled: env.DEV_LOGIN === "true",
+      devPlanNames:
+        env.DEV_LOGIN === "true" ? [...parsePlansEnv(env.PLANS).keys()] : [],
       isGithubEnabled: Boolean(env.GH_CLIENT_ID && env.GH_CLIENT_SECRET),
       isGoogleEnabled: Boolean(
         env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET

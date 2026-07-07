@@ -1,4 +1,5 @@
 import { createRegularStyleSheet } from "./create-style-sheet";
+import { StorySection } from "@webstudio-is/design-system";
 
 export default {
   title: "CSS Engine",
@@ -8,7 +9,7 @@ export default {
 const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId = "0";
 
-export const Basic = () => {
+export const CSSEngine = () => {
   const sheet = createRegularStyleSheet();
   sheet.addMediaRule(mediaId, mediaRuleOptions0);
   const rule = sheet.addNestingRule(".test");
@@ -20,7 +21,7 @@ export const Basic = () => {
   });
   sheet.render();
   return (
-    <>
+    <StorySection title="CSS Engine">
       <div className="test">Should be red</div>
       <button
         onClick={() => {
@@ -49,6 +50,6 @@ export const Basic = () => {
       >
         Add rule with yellow background
       </button>
-    </>
+    </StorySection>
   );
 };

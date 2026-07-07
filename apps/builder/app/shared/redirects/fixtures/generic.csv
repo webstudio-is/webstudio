@@ -1,0 +1,56 @@
+source,target,status
+# CSV Redirects - Comprehensive Test Fixture
+# Columns: source,target,status (generic naming)
+# Other supported column names shown in sections below
+
+# -----------------------------------------------------------------
+# BASIC REDIRECTS (supported)
+# -----------------------------------------------------------------
+/page1,/newpage1,301
+/page2,/newpage2,302
+/temp-page,/landing,307
+/perm-page,/destination,308
+
+# -----------------------------------------------------------------
+# TEXT STATUS VALUES
+# -----------------------------------------------------------------
+/text-permanent,/target1,permanent
+/text-temporary,/target2,temporary
+
+# -----------------------------------------------------------------
+# NO STATUS (defaults to 301)
+# -----------------------------------------------------------------
+/no-status,/default-301,
+
+# -----------------------------------------------------------------
+# EXTERNAL URLS
+# -----------------------------------------------------------------
+/external,https://example.com/external,301
+/github,https://github.com/example,301
+
+# -----------------------------------------------------------------
+# SPECIAL CHARACTERS
+# -----------------------------------------------------------------
+/path-with-query?ref=old,/path-with-query?ref=new,301
+/url%20encoded,/url-encoded,301
+"/path,with,commas","/new-path",301
+"/path ""with quotes""","/target",301
+
+# -----------------------------------------------------------------
+# TRAILING SLASH (normalized)
+# -----------------------------------------------------------------
+/trailing/,/trailing-new,301
+
+# -----------------------------------------------------------------
+# ROOT PATH
+# -----------------------------------------------------------------
+/,/home,301
+
+# -----------------------------------------------------------------
+# INVALID ENTRIES (skipped)
+# -----------------------------------------------------------------
+invalid-no-slash,/valid,301
+,/missing-source,301
+/missing-target,,301
+/invalid-status,/target,999
+/rewrite,/proxy,200

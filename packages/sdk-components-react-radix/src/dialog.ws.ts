@@ -21,13 +21,16 @@ import {
 } from "./__generated__/dialog.props";
 import { buttonReset } from "./shared/preset-styles";
 
-// @todo add [data-state] to button and link
 export const metaDialogTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   contentModel: {
     category: "none",
     children: ["instance"],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   props: propsDialogTrigger,
 };
 
@@ -38,6 +41,10 @@ export const metaDialogOverlay: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.DialogContent],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: { div },
   props: propsDialogOverlay,
 };
@@ -53,6 +60,10 @@ export const metaDialogContent: WsComponentMeta = {
       radix.DialogClose,
     ],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: { div },
   props: propsDialogContent,
 };

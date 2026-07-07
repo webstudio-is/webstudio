@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Label } from "./label";
-import { RadioGroup, Radio, RadioAndLabel } from "./radio";
+import { RadioGroup, Radio as RadioComponent, RadioAndLabel } from "./radio";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
@@ -10,14 +11,15 @@ export default {
   },
 };
 
-export const Demo = () => {
+export const Radio = () => {
+  const [value, setValue] = useState("A");
   return (
     <>
       <StorySection title="Enabled">
         <RadioGroup defaultValue="A">
           <StoryGrid horizontal>
-            <Radio value="A" />
-            <Radio value="B" />
+            <RadioComponent value="A" />
+            <RadioComponent value="B" />
           </StoryGrid>
         </RadioGroup>
       </StorySection>
@@ -27,8 +29,8 @@ export const Demo = () => {
                    Because when items are disabled the group as whole is still focusable. */}
         <RadioGroup defaultValue="A" /* disabled */>
           <StoryGrid horizontal>
-            <Radio value="A" disabled />
-            <Radio value="B" disabled />
+            <RadioComponent value="A" disabled />
+            <RadioComponent value="B" disabled />
           </StoryGrid>
         </RadioGroup>
       </StorySection>
@@ -36,7 +38,7 @@ export const Demo = () => {
       <StorySection title="Focussed (initially)">
         <RadioGroup defaultValue="A">
           <StoryGrid horizontal>
-            <Radio value="A" autoFocus />
+            <RadioComponent value="A" autoFocus />
           </StoryGrid>
         </RadioGroup>
       </StorySection>
@@ -44,16 +46,33 @@ export const Demo = () => {
       <StorySection title="With lables">
         <RadioGroup defaultValue="A">
           <RadioAndLabel>
-            <Radio value="A" id="A" />
+            <RadioComponent value="A" id="A" />
             <Label htmlFor="A">Label A</Label>
           </RadioAndLabel>
           <RadioAndLabel>
-            <Radio value="B" id="B" />
+            <RadioComponent value="B" id="B" />
             <Label htmlFor="B">Label B</Label>
           </RadioAndLabel>
         </RadioGroup>
       </StorySection>
+
+      <StorySection title="Controlled">
+        <RadioGroup value={value} onValueChange={setValue}>
+          <RadioAndLabel>
+            <RadioComponent value="A" id="ctrl-A" />
+            <Label htmlFor="ctrl-A">Option A</Label>
+          </RadioAndLabel>
+          <RadioAndLabel>
+            <RadioComponent value="B" id="ctrl-B" />
+            <Label htmlFor="ctrl-B">Option B</Label>
+          </RadioAndLabel>
+          <RadioAndLabel>
+            <RadioComponent value="C" id="ctrl-C" />
+            <Label htmlFor="ctrl-C">Option C</Label>
+          </RadioAndLabel>
+        </RadioGroup>
+        <Label>Selected: {value}</Label>
+      </StorySection>
     </>
   );
 };
-Demo.storyName = "Radio";

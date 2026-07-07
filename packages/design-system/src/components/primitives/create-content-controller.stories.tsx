@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, type RefObject } from "react";
 import { createContentController } from "./create-content-controller";
+import { StorySection } from "../storybook";
 
 const useContentController = ({
   ref,
@@ -48,23 +49,27 @@ const ExampleContentController = () => {
     write: (target, value) => (target.value = value),
   });
   return (
-    <form style={{ fontFamily: "sans-serif" }}>
-      <fieldset>
-        <input
-          defaultValue="100px 20% fit-content calc(0.2px, -99em)"
-          ref={ref}
-          style={{ width: "50%" }}
-        />
-      </fieldset>
-      <fieldset>
-        <h1>Currently on: {content.name}</h1>
-        <h1>With a value of: {content.value}</h1>
-      </fieldset>
-    </form>
+    <StorySection title="Create content controller">
+      <form style={{ fontFamily: "sans-serif" }}>
+        <fieldset>
+          <input
+            defaultValue="100px 20% fit-content calc(0.2px, -99em)"
+            ref={ref}
+            style={{ width: "50%" }}
+          />
+        </fieldset>
+        <fieldset>
+          <h1>Currently on: {content.name}</h1>
+          <h1>With a value of: {content.value}</h1>
+        </fieldset>
+      </form>
+    </StorySection>
   );
 };
 
-export const DetectInput = Object.assign(ExampleContentController.bind({}));
+export const CreateContentController = Object.assign(
+  ExampleContentController.bind({})
+);
 
 export default {
   title: "Primitives/Create Content Controller",

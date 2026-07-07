@@ -11,7 +11,12 @@ export const Form = forwardRef<
         event.preventDefault();
         onSubmit();
       }}
-      style={{ overflow: "auto" }}
+      style={{
+        overflow: "auto",
+        flexGrow: 1,
+        display: "flex",
+        flexDirection: "column",
+      }}
     >
       {children}
       <input type="submit" hidden />

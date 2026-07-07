@@ -23,6 +23,7 @@ import {
 } from "@webstudio-is/design-system";
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { useReadonly } from "./readonly";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
 
 const isRepeatedValue = (
@@ -42,11 +43,31 @@ export const getComputedRepeatedItem = (
 ) => {
   const value = reparseComputedValue(styleDecl);
   const items = isRepeatedValue(value) ? value.value : [];
-  if (
-    isRepeatedValue(styleDecl.cascadedValue) &&
-    styleDecl.cascadedValue.value.length !== items.length
-  ) {
+  if (items.length === 0) {
     return;
+  }
+  if (isRepeatedValue(styleDecl.cascadedValue)) {
+    const cascadedItems = styleDecl.cascadedValue.value;
+    if (cascadedItems.length !== items.length) {
+      const item = cascadedItems[index];
+      // Hidden repeated items are omitted from serialized computed CSS,
+      // so remap the requested cascaded index onto the remaining visible items.
+      const visibleItems = cascadedItems.filter((item) => item.hidden !== true);
+      if (visibleItems.length !== items.length) {
+        return;
+      }
+      if (
+        item?.hidden === true &&
+        item.type !== "var" &&
+        item.type !== "unparsed"
+      ) {
+        return item;
+      }
+      const hiddenItems = cascadedItems
+        .slice(0, index)
+        .filter((item) => item.hidden === true).length;
+      return items[index - hiddenItems];
+    }
   }
   return items[index % items.length];
 };
@@ -364,6 +385,7 @@ export const RepeatedStyle = (props: {
     renderItemButtons,
     renderPanelTitleSuffix,
   } = props;
+  const readonly = useReadonly();
   // first property should describe the amount of layers or tuple items
   const primaryValue = styles[0].cascadedValue;
   let primaryItems: StyleValue[] = [];
@@ -388,8 +410,12 @@ export const RepeatedStyle = (props: {
 
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
     items: sortableItems,
-    onSort: (newIndex, oldIndex) =>
-      swapRepeatedStyleItems(styles, oldIndex, newIndex),
+    onSort: (newIndex, oldIndex) => {
+      if (readonly) {
+        return;
+      }
+      swapRepeatedStyleItems(styles, oldIndex, newIndex);
+    },
   });
 
   if (primaryItems.length === 0) {
@@ -410,27 +436,31 @@ export const RepeatedStyle = (props: {
             styles[0].cascadedValue.type === "var" ? index === 0 : true;
           const customButtons = renderItemButtons?.(index, primaryItem, {
             isHidden,
-            canBeChanged,
+            canBeChanged: canBeChanged && readonly === false,
           });
           const panelTitleSuffix = renderPanelTitleSuffix?.(
             index,
             primaryItem,
             {
               isHidden,
-              canBeChanged,
+              canBeChanged: canBeChanged && readonly === false,
             }
           );
           return (
             <FloatingPanel
               key={index}
               title={label}
-              content={renderItemContent(index, primaryItem)}
+              content={
+                <Flex direction="column">
+                  {renderItemContent(index, primaryItem)}
+                </Flex>
+              }
               titleSuffix={panelTitleSuffix}
               offset={floatingPanelOffset}
             >
               <CssValueListItem
                 id={id}
-                draggable
+                draggable={readonly === false}
                 active={dragItemId === id}
                 index={index}
                 label={<Label truncate>{itemLabel}</Label>}
@@ -445,7 +475,7 @@ export const RepeatedStyle = (props: {
                     <SmallToggleButton
                       variant="normal"
                       pressed={isHidden}
-                      disabled={false === canBeChanged}
+                      disabled={false === canBeChanged || readonly}
                       tabIndex={-1}
                       icon={isHidden ? <EyeClosedIcon /> : <EyeOpenIcon />}
                       onPressedChange={() =>
@@ -454,7 +484,7 @@ export const RepeatedStyle = (props: {
                     />
                     <SmallIconButton
                       variant="destructive"
-                      disabled={false === canBeChanged}
+                      disabled={false === canBeChanged || readonly}
                       tabIndex={-1}
                       icon={<MinusIcon />}
                       onClick={() => deleteRepeatedStyleItem(styles, index)}

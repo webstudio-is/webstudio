@@ -28,6 +28,7 @@ export const meta: WsComponentMeta = {
       control: "code",
       language: "markdown",
       type: "string",
+      contentMode: true,
     },
   },
 };

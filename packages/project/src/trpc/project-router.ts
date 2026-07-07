@@ -6,14 +6,16 @@ import {
   AuthorizationError,
   authorizeProject,
   createErrorResponse,
+  getProjectOwnerId,
 } from "@webstudio-is/trpc-interface/index.server";
-import { MarketplaceApprovalStatus, Title } from "../shared/schema";
+import { projectTitle } from "../shared/project-schema";
+import { marketplaceApprovalStatus } from "../shared/marketplace-schema";
 
 export const projectRouter = router({
   rename: procedure
     .input(
       z.object({
-        title: Title,
+        title: projectTitle,
         projectId: z.string(),
       })
     )
@@ -45,7 +47,9 @@ export const projectRouter = router({
     }),
 
   create: procedure
-    .input(z.object({ title: Title }))
+    .input(
+      z.object({ title: projectTitle, workspaceId: z.string().optional() })
+    )
     .mutation(async ({ input, ctx }) => {
       return await projectApi.create(input, ctx);
     }),
@@ -54,7 +58,7 @@ export const projectRouter = router({
     .input(
       z.object({
         projectId: z.string(),
-        marketplaceApprovalStatus: MarketplaceApprovalStatus,
+        marketplaceApprovalStatus: marketplaceApprovalStatus,
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -83,34 +87,54 @@ export const projectRouter = router({
     return projectIds.map((project) => project.id);
   }),
 
-  userPublishCount: procedure.query(async ({ ctx }) => {
-    try {
-      if (
-        ctx.authorization.type !== "user" &&
-        ctx.authorization.type !== "token"
-      ) {
-        throw new Error("Not authorized");
+  userPublishCount: procedure
+    .input(z.object({ projectId: z.string() }).optional())
+    .query(async ({ input, ctx }) => {
+      try {
+        if (
+          ctx.authorization.type !== "user" &&
+          ctx.authorization.type !== "token"
+        ) {
+          throw new Error("Not authorized");
+        }
+        const userId =
+          ctx.authorization.type === "user"
+            ? ctx.authorization.userId
+            : ctx.authorization.ownerId;
+
+        let ownerId = userId;
+
+        if (input?.projectId !== undefined) {
+          const canView = await authorizeProject.hasProjectPermit(
+            { projectId: input.projectId, permit: "view" },
+            ctx
+          );
+
+          if (canView === false) {
+            throw new AuthorizationError(
+              "Not authorized to access this project"
+            );
+          }
+
+          ownerId = await getProjectOwnerId(input.projectId, ctx);
+        }
+
+        const result = await ctx.postgrest.client
+          .from("user_publish_count")
+          .select("count")
+          .eq("user_id", ownerId)
+          .maybeSingle();
+        if (result.error) {
+          throw result.error;
+        }
+        return {
+          success: true,
+          data: result.data?.count ?? 0,
+        };
+      } catch (error) {
+        return createErrorResponse(error);
       }
-      const userId =
-        ctx.authorization.type === "user"
-          ? ctx.authorization.userId
-          : ctx.authorization.ownerId;
-      const result = await ctx.postgrest.client
-        .from("user_publish_count")
-        .select("count")
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (result.error) {
-        throw result.error;
-      }
-      return {
-        success: true,
-        data: result.data?.count ?? 0,
-      };
-    } catch (error) {
-      return createErrorResponse(error);
-    }
-  }),
+    }),
 
   publishedBuilds: procedure
     .input(
@@ -124,7 +148,17 @@ export const projectRouter = router({
           ctx.authorization.type !== "user" &&
           ctx.authorization.type !== "token"
         ) {
-          throw new Error("Not authorized");
+          throw new AuthorizationError("Not authorized");
+        }
+        const permit = await authorizeProject.getProjectPermit(
+          {
+            projectId: input.projectId,
+            permits: ["view", "build", "admin"],
+          },
+          ctx
+        );
+        if (permit === undefined) {
+          throw new AuthorizationError("Not authorized to access this project");
         }
         const publishedBuilds = await ctx.postgrest.client
           .from("published_builds")

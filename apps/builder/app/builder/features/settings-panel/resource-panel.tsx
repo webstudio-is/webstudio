@@ -12,10 +12,11 @@ import {
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  DataSources,
-  Resource,
+  type DataSources,
+  type Resource,
   type DataSource,
   type Page,
+  type PageTemplate,
 } from "@webstudio-is/sdk";
 import {
   encodeDataVariableId,
@@ -29,6 +30,7 @@ import {
   serializeValue,
   sitemapResourceUrl,
   currentDateResourceUrl,
+  assetsResourceUrl,
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
@@ -46,11 +48,9 @@ import {
 } from "@webstudio-is/design-system";
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
-import {
-  $dataSources,
-  $resources,
-  $variableValuesByInstanceSelector,
-} from "~/shared/nano-states";
+import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
+import { $resources } from "~/shared/sync/data-stores";
 import {
   BindingControl,
   BindingPopover,
@@ -61,16 +61,19 @@ import {
   EditorDialog,
   EditorDialogButton,
   EditorDialogControl,
-} from "~/builder/shared/code-editor-base";
+} from "~/shared/code-editor-base";
 import {
   $selectedInstance,
   $selectedInstancePathWithRoot,
   $selectedPage,
   getInstanceKey,
   type InstancePath,
-} from "~/shared/awareness";
-import { updateWebstudioData } from "~/shared/instance-utils";
-import { rebindTreeVariablesMutable } from "~/shared/data-variables";
+} from "~/shared/nano-states";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
+import {
+  createResourceValue,
+  upsertResourceMutable,
+} from "@webstudio-is/project-build/runtime/data";
 import { parseCurl, type CurlRequest } from "./curl";
 
 export const parseResource = ({
@@ -88,7 +91,7 @@ export const parseResource = ({
   const searchParamValues = formData.getAll("search-param-value") as string[];
   const headerNames = formData.getAll("header-name") as string[];
   const headerValues = formData.getAll("header-value") as string[];
-  return Resource.parse({
+  return createResourceValue({
     id,
     control,
     name: name ?? formData.get("name"),
@@ -100,7 +103,6 @@ export const parseResource = ({
     headers: headerNames
       .map((name, index) => ({ name, value: headerValues[index] }))
       .filter((item) => item.name.trim()),
-    // use undefined instead of empty string
     body: formData.get("body") || undefined,
   });
 };
@@ -320,7 +322,7 @@ export const SearchParams = ({
   return (
     <Grid gap={1}>
       <Flex justify="between" align="center">
-        <Label>Search Params</Label>
+        <Label>Search params</Label>
         <SmallIconButton
           aria-label="Add another search param"
           icon={<PlusIcon />}
@@ -494,7 +496,7 @@ const CacheMaxAge = ({
 }) => {
   return (
     <Grid gap={1}>
-      <Label htmlFor="resource-panel-max-age">Cache Max Age</Label>
+      <Label htmlFor="resource-panel-max-age">Cache max age</Label>
       <InputField
         id="resource-panel-max-age"
         suffix={
@@ -525,7 +527,7 @@ export const getResourceScopeForInstance = ({
   dataSources,
   variableValuesByInstanceSelector,
 }: {
-  page: undefined | Page;
+  page: undefined | Page | PageTemplate;
   instanceKey: undefined | string;
   dataSources: DataSources;
   variableValuesByInstanceSelector: Map<string, Map<string, unknown>>;
@@ -877,11 +879,12 @@ export const ResourceForm = forwardRef<
         resourceId: newResource.id,
       };
       updateWebstudioData((data) => {
-        data.dataSources.set(newVariable.id, newVariable);
-        data.resources.set(newResource.id, newResource);
-        rebindTreeVariablesMutable({
-          startingInstanceId: scopeInstanceId,
-          ...data,
+        upsertResourceMutable({
+          data,
+          resource: newResource,
+          dataSourceId: newVariable.id,
+          scopeInstanceId,
+          dataSourceName: newVariable.name,
         });
       });
     },
@@ -999,6 +1002,12 @@ export const SystemResourceForm = forwardRef<
       description:
         "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
     },
+    {
+      label: "Assets",
+      value: JSON.stringify(assetsResourceUrl),
+      description:
+        "Resource that loads the list of assets of the current project.",
+    },
   ];
 
   const [localResource, setLocalResource] = useState(() => {
@@ -1030,11 +1039,12 @@ export const SystemResourceForm = forwardRef<
         resourceId: newResource.id,
       };
       updateWebstudioData((data) => {
-        data.dataSources.set(newVariable.id, newVariable);
-        data.resources.set(newResource.id, newResource);
-        rebindTreeVariablesMutable({
-          startingInstanceId: scopeInstanceId,
-          ...data,
+        upsertResourceMutable({
+          data,
+          resource: newResource,
+          dataSourceId: newVariable.id,
+          scopeInstanceId,
+          dataSourceName: newVariable.name,
         });
       });
     },
@@ -1138,11 +1148,12 @@ export const GraphqlResourceForm = forwardRef<
         resourceId: newResource.id,
       };
       updateWebstudioData((data) => {
-        data.dataSources.set(newVariable.id, newVariable);
-        data.resources.set(newResource.id, newResource);
-        rebindTreeVariablesMutable({
-          startingInstanceId: scopeInstanceId,
-          ...data,
+        upsertResourceMutable({
+          data,
+          resource: newResource,
+          dataSourceId: newVariable.id,
+          scopeInstanceId,
+          dataSourceName: newVariable.name,
         });
       });
     },
@@ -1218,7 +1229,7 @@ export const GraphqlResourceForm = forwardRef<
       </Grid>
 
       <Grid gap={1}>
-        <Label>GraphQL Variables</Label>
+        <Label>GraphQL variables</Label>
         {/* use invisible text input to reflect expression editor in form
             type=hidden does not emit invalid event */}
         <input

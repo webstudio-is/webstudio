@@ -2,6 +2,7 @@ import { atom } from "nanostores";
 
 export type SectionName =
   | "general"
+  | "auth"
   | "redirects"
   | "publish"
   | "marketplace"

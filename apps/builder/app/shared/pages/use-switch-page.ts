@@ -1,18 +1,19 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
+import { $pages, $project } from "~/shared/sync/data-stores";
 import {
   $authToken,
-  $pages,
-  $project,
+  $canOpenPageTemplates,
   $selectedPageHash,
   $builderMode,
   isBuilderMode,
   setBuilderMode,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
-import { $selectedPage, selectPage } from "../awareness";
-import { findPageByIdOrPath } from "@webstudio-is/sdk";
+import { $selectedPage } from "../nano-states";
+import { selectPage } from "../nano-states";
+import { findPageByIdOrPath, isPageTemplate } from "@webstudio-is/sdk";
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -32,9 +33,12 @@ const setPageStateFromUrl = () => {
 
   // check the page actually exists
   // to avoid confusing the user with broken state
+  const requestedPageId = searchParams.get("pageId") ?? "";
   const pageId =
-    findPageByIdOrPath(searchParams.get("pageId") ?? "", pages)?.id ??
-    pages.homePage.id;
+    ($canOpenPageTemplates.get()
+      ? findPageByIdOrPath(requestedPageId, pages, { includeTemplates: true })
+      : findPageByIdOrPath(requestedPageId, pages)
+    )?.id ?? pages.homePageId;
 
   $selectedPageHash.set({ hash: searchParams.get("pageHash") ?? "" });
   selectPage(pageId);
@@ -54,6 +58,7 @@ export const useSyncPageUrl = () => {
   const page = useStore($selectedPage);
   const pageHash = useStore($selectedPageHash);
   const builderMode = useStore($builderMode);
+  const canOpenPageTemplate = useStore($canOpenPageTemplates);
 
   // Get pageId and pageHash from URL
   // once pages are loaded
@@ -84,14 +89,15 @@ export const useSyncPageUrl = () => {
 
     const searchParams = new URLSearchParams(window.location.search);
 
-    const searchParamsPageId = searchParams.get("pageId") ?? pages.homePage.id;
+    const searchParamsPageId = searchParams.get("pageId") ?? pages.homePageId;
     const searchParamsPageHash = searchParams.get("pageHash") ?? "";
     const searParamsModeRaw = searchParams.get("mode");
     const searParamsMode = isBuilderMode(searParamsModeRaw)
       ? searParamsModeRaw
       : undefined;
+    const searchParamsSafemode = searchParams.get("safemode");
 
-    // Do not navigate on popstate change
+    // Do not navigate on popstate change or if params match
     if (
       searchParamsPageId === page.id &&
       searchParamsPageHash === pageHash.hash &&
@@ -102,23 +108,39 @@ export const useSyncPageUrl = () => {
 
     navigate(
       builderPath({
-        pageId: page.id === pages.homePage.id ? undefined : page.id,
+        pageId: page.id === pages.homePageId ? undefined : page.id,
         authToken: $authToken.get(),
         pageHash: pageHash.hash === "" ? undefined : pageHash.hash,
         mode: builderMode === "design" ? undefined : builderMode,
+        safemode: searchParamsSafemode === "true",
       })
     );
   }, [builderMode, navigate, page, pageHash]);
 
   useEffect(() => {
+    const pages = $pages.get();
+    if (pages === undefined || page === undefined) {
+      return;
+    }
+    if (isPageTemplate(page) && canOpenPageTemplate === false) {
+      selectPage(pages.homePageId);
+    }
+  }, [canOpenPageTemplate, page]);
+
+  useEffect(() => {
     return $selectedPage.subscribe((page) => {
       // switch to home page when current one does not exist
       // possible when undo creating page
+      const pages = $pages.get();
+      if (pages === undefined) {
+        return;
+      }
       if (page === undefined) {
-        const pages = $pages.get();
-        if (pages) {
-          selectPage(pages.homePage.id);
-        }
+        selectPage(pages.homePageId);
+        return;
+      }
+      if (isPageTemplate(page) && $canOpenPageTemplates.get() === false) {
+        selectPage(pages.homePageId);
       }
     });
   });

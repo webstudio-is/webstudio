@@ -3,13 +3,14 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { Button, Flex, Text, FloatingPanel } from "@webstudio-is/design-system";
 import type { Prop } from "@webstudio-is/sdk";
-import { $assets } from "~/shared/nano-states";
-import { ImageManager } from "~/builder/shared/image-manager";
+import { acceptToMimeCategories } from "@webstudio-is/sdk";
+import { $assets } from "~/shared/sync/data-stores";
+import { AssetManager } from "~/builder/shared/asset-manager";
 import { type ControlProps } from "../shared";
-import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
+import { AssetUpload } from "~/builder/shared/assets";
 
-// tests whether we can use ImageManager for the given "accept" value
+// tests whether we can use AssetManager for the given "accept" value
 const isImageAccept = (accept?: string) => {
   const acceptCategories = acceptToMimeCategories(accept || "");
   return (
@@ -45,8 +46,9 @@ export const SelectAsset = ({ prop, onChange, accept }: Props) => {
     <Flex gap={2} css={{ flex: 1 }} align="center">
       <FloatingPanel
         title="Images"
+        titleSuffix={<AssetUpload type="image" accept={accept} />}
         content={
-          <ImageManager
+          <AssetManager
             onChange={(assetId) => onChange({ type: "asset", value: assetId })}
             accept={accept}
           />

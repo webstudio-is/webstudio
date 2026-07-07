@@ -13,8 +13,10 @@ import { mergeRefs } from "@react-aria/utils";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { executeDomEvents, patchDomEvents } from "./html-embed-patchers";
 
+const scriptTestIdPrefix = "client-";
+
 export const __testing__ = {
-  scriptTestIdPrefix: "client-",
+  scriptTestIdPrefix,
 };
 
 const insertScript = (sourceScript: HTMLScriptElement): Promise<void> => {
@@ -32,7 +34,7 @@ const insertScript = (sourceScript: HTMLScriptElement): Promise<void> => {
 
     // For testing purposes, we add a prefix to the testid to differentiate between server and client rendered scripts.
     if (script.dataset.testid !== undefined) {
-      script.dataset.testid = `${__testing__.scriptTestIdPrefix}${script.dataset.testid}`;
+      script.dataset.testid = `${scriptTestIdPrefix}${script.dataset.testid}`;
     }
 
     if (hasSrc) {
@@ -224,7 +226,7 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
   (props, ref) => {
     const { code, executeScriptOnCanvas, clientOnly, children, ...rest } =
       props;
-    const { renderer } = useContext(ReactSdkContext);
+    const { renderer, isSafeMode } = useContext(ReactSdkContext);
 
     const isServer = useIsServer();
 
@@ -249,6 +251,19 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       );
     }
     // We are or on canvas | preview | published site after client routing
+
+    // In safe mode, never execute scripts regardless of other settings
+    if (isSafeMode) {
+      return (
+        <ClientOnly>
+          <ClientEmbedWithNonExecutableScripts
+            innerRef={ref}
+            code={code}
+            {...rest}
+          />
+        </ClientOnly>
+      );
+    }
 
     // The only case we need to prevent script execution if it's explicitly disabled on the canvas
     if (renderer === "canvas" && executeScriptOnCanvas !== true) {

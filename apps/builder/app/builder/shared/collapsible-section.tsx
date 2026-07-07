@@ -135,7 +135,7 @@ export const CollapsibleSectionRoot = ({
       <Collapsible.Trigger asChild>
         {trigger ?? (
           <SectionTitle>
-            <SectionTitleLabel>{label}</SectionTitleLabel>
+            <SectionTitleLabel>{label ?? ""}</SectionTitleLabel>
           </SectionTitle>
         )}
       </Collapsible.Trigger>

@@ -3,7 +3,8 @@ import { useStore } from "@nanostores/react";
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import { theme, Button, Flex, Text } from "@webstudio-is/design-system";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
-import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
+import { $selectedInstancePath } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 export const Breadcrumbs = () => {

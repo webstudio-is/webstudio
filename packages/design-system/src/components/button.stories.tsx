@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { EllipsesIcon, XIcon, TrashIcon } from "@webstudio-is/icons";
+import { TrashIcon } from "@webstudio-is/icons";
 import { Button as ButtonComponent } from "./button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Text } from "./text";
@@ -9,13 +9,6 @@ import { theme } from "../stitches.config";
 export default {
   title: "Button",
 };
-
-const iconsMap = {
-  undefined: undefined,
-  "<EllipsesIcon>": <EllipsesIcon />,
-  "<XIcon>": <XIcon />,
-  "<TrashIcon>": <TrashIcon />,
-} as const;
 
 const colors: ReadonlyArray<ComponentProps<typeof ButtonComponent>["color"]> = [
   "primary",
@@ -37,23 +30,8 @@ const states: ReadonlyArray<ComponentProps<typeof ButtonComponent>["state"]> = [
   "pending",
 ];
 
-export const Button = ({
-  prefix,
-  suffix,
-  ...rest
-}: Omit<ComponentProps<typeof ButtonComponent>, "prefix" | "suffix"> & {
-  prefix?: keyof typeof iconsMap;
-  suffix?: keyof typeof iconsMap;
-}) => (
+export const Button = () => (
   <>
-    <StorySection title="Configurable">
-      <ButtonComponent
-        prefix={prefix && iconsMap[prefix]}
-        suffix={suffix && iconsMap[suffix]}
-        {...rest}
-      />
-    </StorySection>
-
     <StorySection title="Colors & States">
       <StoryGrid>
         {colors.map((color) => (
@@ -120,23 +98,23 @@ export const Button = ({
         </PopoverContent>
       </Popover>
     </StorySection>
+
+    <StorySection title="Text only">
+      <StoryGrid horizontal>
+        {colors.map((color) => (
+          <ButtonComponent key={color} color={color}>
+            {color}
+          </ButtonComponent>
+        ))}
+      </StoryGrid>
+    </StorySection>
+
+    <StorySection title="Icon only">
+      <StoryGrid horizontal>
+        {colors.map((color) => (
+          <ButtonComponent key={color} prefix={<TrashIcon />} color={color} />
+        ))}
+      </StoryGrid>
+    </StorySection>
   </>
 );
-
-Button.argTypes = {
-  children: { control: "text" },
-  color: { control: "inline-radio", options: colors },
-  prefix: { control: "inline-radio", options: Object.keys(iconsMap) },
-  suffix: { control: "inline-radio", options: Object.keys(iconsMap) },
-  disabled: { control: "boolean" },
-  state: { control: "inline-radio", options: states },
-};
-
-Button.args = {
-  children: "Button",
-  color: "primary",
-  prefix: "undefined",
-  suffix: "undefined",
-  disabled: false,
-  state: "auto",
-};

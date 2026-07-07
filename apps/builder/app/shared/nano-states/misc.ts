@@ -1,51 +1,53 @@
 import type { Simplify } from "type-fest";
 import { atom, computed, onSet } from "nanostores";
+import {
+  $workspaceRole,
+  $workspaces,
+} from "~/dashboard/workspace/workspace-stores";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
+import {
+  defaultPlanFeatures,
+  type PlanFeatures,
+  type Purchase,
+} from "@webstudio-is/plans";
+import type { Role } from "@webstudio-is/project";
+import type { User } from "~/shared/db/user.server";
 import { toast, type Placement } from "@webstudio-is/design-system";
 import type {
-  Assets,
-  DataSources,
   Instance,
   Prop,
   Props,
-  Resource,
   StyleDecl,
-  Styles,
   StyleSource,
-  StyleSources,
-  StyleSourceSelections,
 } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
-import type { Project } from "@webstudio-is/project";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
-import { type InstanceSelector } from "../tree-utils";
-import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
-import { $awareness, $selectedInstance } from "../awareness";
-import type { UserPlanFeatures } from "../db/user-plan-features.server";
-
-export const $project = atom<Project | undefined>();
-
-export const $publisherHost = atom<string>("wstd.work");
+import { type InstanceSelector } from "../instance-utils/tree";
+import type { ChildrenOrientation } from "@webstudio-is/design-system";
+import { $selectedInstance, $selectedInstanceSelector } from "./instances";
+import { getPermissions } from "../permissions";
+import {
+  $project,
+  $publisherHost,
+  $props,
+  $styles,
+  $styleSources,
+  $styleSourceSelections,
+} from "../sync/data-stores";
 
 export const $publishedOrigin = computed(
   [$project, $publisherHost],
   (project, publisherHost) => `https://${project?.domain}.${publisherHost}`
 );
 
-export const $dataSources = atom<DataSources>(new Map());
-
-export const $resources = atom(new Map<Resource["id"], Resource>());
-
-export const $props = atom<Props>(new Map());
-
 export const $memoryProps = atom<Map<string, Props>>(new Map());
 
 export const $propsIndex = computed($props, (props) => {
   const propsByInstanceId = new Map<Instance["id"], Prop[]>();
+  const htmlTagsByInstanceId = new Map<Instance["id"], string>();
   for (const prop of props.values()) {
     const { instanceId } = prop;
     let instanceProps = propsByInstanceId.get(instanceId);
@@ -54,32 +56,15 @@ export const $propsIndex = computed($props, (props) => {
       propsByInstanceId.set(instanceId, instanceProps);
     }
     instanceProps.push(prop);
+    if (prop.type === "string" && prop.name === "tag") {
+      htmlTagsByInstanceId.set(instanceId, prop.value);
+    }
   }
   return {
     propsByInstanceId,
+    htmlTagsByInstanceId,
   };
 });
-
-/**
- * $styles contains actual styling rules
- * (breakpointId, styleSourceId, property, value, listed), tied to styleSourceIds
- * $styles.styleSourceId -> $styleSources.id
- */
-export const $styles = atom<Styles>(new Map());
-
-/**
- * styleSources defines where styles come from (local or token).
- *
- * $styles contains actual styling rules, tied to styleSourceIds.
- * $styles.styleSourceId -> $styleSources.id
- */
-export const $styleSources = atom<StyleSources>(new Map());
-
-/**
- * This is a list of connections between instances (instanceIds) and styleSources.
- * $styleSourceSelections.values[] -> $styleSources.id[]
- */
-export const $styleSourceSelections = atom<StyleSourceSelections>(new Map());
 
 export type StyleSourceSelector = {
   styleSourceId: StyleSource["id"];
@@ -91,7 +76,7 @@ export const $selectedStyleSources = atom(
 );
 export const $selectedStyleState = atom<StyleDecl["state"]>();
 // reset style state whenever selected instance change
-onSet($awareness, () => {
+onSet($selectedInstanceSelector, () => {
   $selectedStyleState.set(undefined);
 });
 
@@ -136,8 +121,6 @@ export const $stylesIndex = computed(
     };
   }
 );
-
-export const $assets = atom<Assets>(new Map());
 
 export type UploadingFileData = Simplify<
   {
@@ -310,16 +293,26 @@ export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
 );
 
-// keep in sync with user-plan-features.server
-export const $userPlanFeatures = atom<UserPlanFeatures>({
-  allowShareAdminLinks: false,
-  allowDynamicData: false,
-  maxContactEmails: 0,
-  maxDomainsAllowedPerUser: 0,
-  maxPublishesAllowedPerUser: 1,
-  hasSubscription: false,
-  hasProPlan: false,
-});
+export const $planFeatures = atom<PlanFeatures>(defaultPlanFeatures);
+
+export { $workspaceRole, $workspaces };
+export const $purchases = atom<Array<Purchase>>([]);
+
+export const $user = atom<User | undefined>();
+
+/**
+ * Set stores shared between builder and dashboard.
+ * Keep in sync with the atoms above.
+ */
+export const setSharedStores = (data: {
+  planFeatures: PlanFeatures;
+  purchases: Array<Purchase>;
+  role: Role | "own";
+}) => {
+  $planFeatures.set(data.planFeatures);
+  $purchases.set(data.purchases);
+  $workspaceRole.set(data.role);
+};
 
 const builderModes = ["design", "preview", "content"] as const;
 export type BuilderMode = (typeof builderModes)[number];
@@ -341,6 +334,19 @@ export const $isDesignMode = computed(
 );
 
 export const $authPermit = atom<AuthPermit>("view");
+
+export const $canOpenPageTemplates = computed(
+  [$builderMode, $authPermit],
+  (builderMode, authPermit) => {
+    if (builderMode !== "design") {
+      return false;
+    }
+    return (
+      authPermit === "build" || authPermit === "admin" || authPermit === "own"
+    );
+  }
+);
+
 export const $authTokenPermissions = atom<TokenPermissions>({
   canClone: true,
   canCopy: true,
@@ -349,17 +355,23 @@ export const $authTokenPermissions = atom<TokenPermissions>({
 
 export const $authToken = atom<string | undefined>(undefined);
 
-export const $isContentModeAllowed = computed(
-  [$authToken, $userPlanFeatures],
-  (token, userPlanFeatures) => {
-    // In own projects, everyone can edit content
-    if (token === undefined) {
-      return true;
-    }
+export const $stagingUsername = atom<string | undefined>();
+export const $stagingPassword = atom<string | undefined>();
 
-    // In shared projects, only Pro users can share editable links, so check the plan features of the user who shared the link
-    return userPlanFeatures.hasProPlan === true;
-  }
+export const $permissions = computed(
+  [$planFeatures, $authPermit, $workspaceRole, $workspaces],
+  (planFeatures, authPermit, role, workspaces) =>
+    getPermissions({
+      role,
+      planFeatures,
+      authPermit,
+      workspaces,
+    })
+);
+
+export const $isContentModeAllowed = computed(
+  $permissions,
+  (permissions) => permissions.allowContentMode
 );
 
 export const $isDesignModeAllowed = computed([$authPermit], (authPermit) => {
@@ -486,7 +498,5 @@ export type DragAndDropState = {
 export const $dragAndDropState = atom<DragAndDropState>({
   isDragging: false,
 });
-
-export const $marketplaceProduct = atom<undefined | MarketplaceProduct>();
 
 export const $canvasToolsVisible = atom<boolean>(true);

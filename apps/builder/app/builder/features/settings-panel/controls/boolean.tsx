@@ -3,6 +3,7 @@ import { Grid, Switch, theme } from "@webstudio-is/design-system";
 import {
   BindingControl,
   BindingPopover,
+  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
@@ -54,11 +55,7 @@ export const BooleanControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
-          validate={(value) => {
-            if (value !== undefined && typeof value !== "boolean") {
-              return `${label} expects a boolean value`;
-            }
-          }}
+          validate={(value) => validatePrimitiveValue(value, label)}
           variant={variant}
           value={expression}
           onChange={(newExpression) =>

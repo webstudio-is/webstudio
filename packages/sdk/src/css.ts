@@ -15,7 +15,12 @@ import type { Styles } from "./schema/styles";
 import type { StyleSourceSelections } from "./schema/style-source-selections";
 import type { WsComponentMeta } from "./schema/component-meta";
 import { createScope } from "./scope";
-import { parseComponentName, ROOT_INSTANCE_ID } from "./instances-utils";
+import {
+  getHtmlTagsFromProps,
+  getHtmlTagFromInstance,
+  parseComponentName,
+  ROOT_INSTANCE_ID,
+} from "./instances-utils";
 import { descendantComponent, rootComponent } from "./core-metas";
 
 export const addFontRules = ({
@@ -101,22 +106,19 @@ export const generateCss = ({
 
   const tagsByComponent = new Map<Instance["component"], Set<string>>();
   tagsByComponent.set(rootComponent, new Set(["html"]));
-  const tagByInstanceId = new Map<Instance["id"], string>();
-  for (const prop of props.values()) {
-    if (prop.type === "string" && prop.name === "tag") {
-      tagByInstanceId.set(prop.instanceId, prop.value);
-    }
-  }
+  const htmlTagsByInstanceId = getHtmlTagsFromProps(props);
   for (const instance of instances.values()) {
-    const propTag = tagByInstanceId.get(instance.id);
-    const meta = componentMetas.get(instance.component);
-    const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
     let componentTags = tagsByComponent.get(instance.component);
     if (componentTags === undefined) {
       componentTags = new Set();
       tagsByComponent.set(instance.component, componentTags);
     }
-    const tag = instance.tag ?? propTag ?? metaTag;
+    const tag = getHtmlTagFromInstance({
+      instance,
+      metas: componentMetas,
+      props,
+      htmlTagsByInstanceId,
+    });
     if (tag) {
       componentTags.add(tag);
     }

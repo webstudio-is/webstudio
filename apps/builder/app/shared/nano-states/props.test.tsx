@@ -3,23 +3,29 @@ import { cleanStores } from "nanostores";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { setEnv } from "@webstudio-is/feature-flags";
 import {
-  DataSource,
+  type DataSource,
   type Instance,
   ROOT_INSTANCE_ID,
-  Resource,
+  type Resource,
   SYSTEM_VARIABLE_ID,
   collectionComponent,
 } from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
-import { $instances } from "./instances";
+import {
+  $instances,
+  $pages,
+  $assets,
+  $dataSources,
+  $props,
+  $resources,
+} from "../sync/data-stores";
 import {
   $propValuesByInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "./props";
-import { $pages } from "./pages";
-import { $assets, $dataSources, $props, $resources } from "./misc";
 import { $dataSourceVariables } from "./variables";
-import { $awareness, getInstanceKey } from "../awareness";
+import { $selectedPageId } from "./pages";
+import { getInstanceKey } from "../nano-states";
 import {
   $,
   expression,
@@ -30,7 +36,7 @@ import {
   ws,
 } from "@webstudio-is/template";
 import { $systemDataByPage, updateCurrentSystem } from "../system";
-import { registerContainers } from "../sync";
+import { registerContainers } from "../sync/sync-stores";
 import { $resourcesCache, getResourceKey } from "../resources";
 
 const initialSystem = {
@@ -65,7 +71,7 @@ const selectPageRoot = (
     systemDataSourceId,
   });
   $pages.set(defaultPages);
-  $awareness.set({ pageId: defaultPages.homePage.id });
+  $selectedPageId.set(defaultPages.homePageId);
 };
 
 beforeEach(() => {
@@ -368,6 +374,129 @@ test("compute expression from collection items", () => {
       [
         getInstanceKey(["item", "list[2]", "list"]),
         new Map<string, unknown>([["ariaLabel", "banana"]]),
+      ],
+    ])
+  );
+
+  cleanStores($propValuesByInstanceSelector);
+});
+
+test("compute expression from object collection items", () => {
+  const dataVariable = new Variable("dataVariable", {
+    first: "orange",
+    second: "apple",
+    third: "banana",
+  });
+  const collectionItem = new Parameter("Collection Item");
+  const data = renderData(
+    <$.Body ws:id="bodyId">
+      <ws.collection
+        ws:id="collectionId"
+        data={expression`${dataVariable}`}
+        item={collectionItem}
+      >
+        <$.Box ws:id="boxId" ariaLabel={expression`${collectionItem}`}></$.Box>
+      </ws.collection>
+    </$.Body>
+  );
+  $instances.set(data.instances);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  selectPageRoot("bodyId");
+  $dataSourceVariables.set(new Map([]));
+
+  expect($propValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [getInstanceKey(["bodyId"]), new Map<string, unknown>([])],
+      [
+        getInstanceKey(["collectionId", "bodyId"]),
+        new Map<string, unknown>([
+          ["data", { first: "orange", second: "apple", third: "banana" }],
+        ]),
+      ],
+      [
+        getInstanceKey([
+          "boxId",
+          "collectionId[first]",
+          "collectionId",
+          "bodyId",
+        ]),
+        new Map<string, unknown>([["ariaLabel", "orange"]]),
+      ],
+      [
+        getInstanceKey([
+          "boxId",
+          "collectionId[second]",
+          "collectionId",
+          "bodyId",
+        ]),
+        new Map<string, unknown>([["ariaLabel", "apple"]]),
+      ],
+      [
+        getInstanceKey([
+          "boxId",
+          "collectionId[third]",
+          "collectionId",
+          "bodyId",
+        ]),
+        new Map<string, unknown>([["ariaLabel", "banana"]]),
+      ],
+    ])
+  );
+
+  cleanStores($propValuesByInstanceSelector);
+});
+
+test("compute prop values inside collection without item parameter", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "list",
+        type: "instance",
+        component: collectionComponent,
+        children: [{ type: "id", value: "item" }],
+      },
+      {
+        id: "item",
+        type: "instance",
+        component: "Box",
+        children: [],
+      },
+    ])
+  );
+  selectPageRoot("list");
+  $dataSources.set(new Map());
+  $props.set(
+    toMap([
+      {
+        id: "prop1",
+        name: "data",
+        instanceId: "list",
+        type: "json",
+        value: ["orange", "apple"],
+      },
+      {
+        id: "prop2",
+        name: "ariaLabel",
+        instanceId: "item",
+        type: "string",
+        value: "collection item",
+      },
+    ])
+  );
+  expect($propValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        getInstanceKey(["list"]),
+        new Map<string, unknown>([["data", ["orange", "apple"]]]),
+      ],
+      [
+        getInstanceKey(["item", "list[0]", "list"]),
+        new Map<string, unknown>([["ariaLabel", "collection item"]]),
+      ],
+      [
+        getInstanceKey(["item", "list[1]", "list"]),
+        new Map<string, unknown>([["ariaLabel", "collection item"]]),
       ],
     ])
   );
@@ -792,6 +921,173 @@ test("compute item values for collection", () => {
       )
       ?.get(itemParameterId)
   ).toEqual("orange");
+});
+
+test("compute item values for collection with object data", () => {
+  const dataVariable = new Variable("dataVariable", {
+    first: "apple",
+    second: "banana",
+    third: "orange",
+  });
+  const collectionItem = new Parameter("Collection Item");
+  const data = renderData(
+    <$.Body ws:id="bodyId">
+      <ws.collection
+        ws:id="collectionId"
+        data={expression`${dataVariable}`}
+        item={collectionItem}
+      >
+        <$.Box ws:id="boxId"></$.Box>
+      </ws.collection>
+    </$.Body>
+  );
+  $instances.set(data.instances);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  const [_dataVariableId, itemParameterId] = data.dataSources.keys();
+  selectPageRoot("bodyId");
+  $dataSourceVariables.set(new Map([]));
+  const values = $variableValuesByInstanceSelector.get();
+  expect(
+    values
+      .get(
+        getInstanceKey([
+          "boxId",
+          "collectionId[first]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ])
+      )
+      ?.get(itemParameterId)
+  ).toEqual("apple");
+  expect(
+    values
+      .get(
+        getInstanceKey([
+          "boxId",
+          "collectionId[second]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ])
+      )
+      ?.get(itemParameterId)
+  ).toEqual("banana");
+  expect(
+    values
+      .get(
+        getInstanceKey([
+          "boxId",
+          "collectionId[third]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ])
+      )
+      ?.get(itemParameterId)
+  ).toEqual("orange");
+});
+
+test("compute item values for collection with nested object data", () => {
+  const dataVariable = new Variable("dataVariable", {
+    user1: { name: "Alice", age: 30 },
+    user2: { name: "Bob", age: 25 },
+  });
+  const collectionItem = new Parameter("Collection Item");
+  const data = renderData(
+    <$.Body ws:id="bodyId">
+      <ws.collection
+        ws:id="collectionId"
+        data={expression`${dataVariable}`}
+        item={collectionItem}
+      >
+        <$.Box ws:id="boxId"></$.Box>
+      </ws.collection>
+    </$.Body>
+  );
+  $instances.set(data.instances);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  const [_dataVariableId, itemParameterId] = data.dataSources.keys();
+  selectPageRoot("bodyId");
+  $dataSourceVariables.set(new Map([]));
+  const values = $variableValuesByInstanceSelector.get();
+  expect(
+    values
+      .get(
+        getInstanceKey([
+          "boxId",
+          "collectionId[user1]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ])
+      )
+      ?.get(itemParameterId)
+  ).toEqual({ name: "Alice", age: 30 });
+  expect(
+    values
+      .get(
+        getInstanceKey([
+          "boxId",
+          "collectionId[user2]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ])
+      )
+      ?.get(itemParameterId)
+  ).toEqual({ name: "Bob", age: 25 });
+});
+
+test("compute inherited item values inside collection without item parameter", () => {
+  const dataVariable = new Variable("dataVariable", [
+    { items: ["apple", "banana"] },
+  ]);
+  const outerItem = new Parameter("Outer Item");
+  const data = renderData(
+    <$.Body ws:id="bodyId">
+      <ws.collection
+        ws:id="outerCollectionId"
+        data={expression`${dataVariable}`}
+        item={outerItem}
+      >
+        <ws.collection
+          ws:id="innerCollectionId"
+          data={expression`${outerItem}.items`}
+        >
+          <$.Box ws:id="boxId"></$.Box>
+        </ws.collection>
+      </ws.collection>
+    </$.Body>
+  );
+  $instances.set(data.instances);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  const outerItemParameterId = Array.from(data.dataSources.values()).find(
+    (dataSource) => dataSource.name === "Outer Item"
+  )?.id;
+  selectPageRoot("bodyId");
+  $dataSourceVariables.set(new Map([]));
+  const values = $variableValuesByInstanceSelector.get();
+  expect(
+    values
+      .get(
+        getInstanceKey([
+          "boxId",
+          "innerCollectionId[0]",
+          "innerCollectionId",
+          "outerCollectionId[0]",
+          "outerCollectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ])
+      )
+      ?.get(outerItemParameterId ?? "")
+  ).toEqual({
+    items: ["apple", "banana"],
+  });
 });
 
 test("compute resource variable values", () => {

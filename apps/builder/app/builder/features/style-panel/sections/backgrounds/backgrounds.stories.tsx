@@ -1,15 +1,22 @@
+import { useEffect } from "react";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
-import { styled, theme } from "@webstudio-is/design-system";
-import { registerContainers } from "~/shared/sync";
 import {
-  $breakpoints,
+  Box,
+  Flex,
+  StorySection,
+  Text,
+  theme,
+} from "@webstudio-is/design-system";
+import { registerContainers } from "~/shared/sync/sync-stores";
+import { $selectedBreakpointId } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import {
   $instances,
-  $selectedBreakpointId,
   $styles,
   $styleSourceSelections,
-} from "~/shared/nano-states";
-import { Section } from "./backgrounds";
-import { $awareness } from "~/shared/awareness";
+} from "~/shared/sync/data-stores";
+import { Section as SectionComponent } from "./backgrounds";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 
 const backgroundImage: StyleDecl = {
   breakpointId: "base",
@@ -46,24 +53,69 @@ $instances.set(
     ["box", { type: "instance", id: "box", component: "Box", children: [] }],
   ])
 );
-$awareness.set({
-  pageId: "",
-  instanceSelector: ["box"],
-});
+$selectedPageId.set("");
+selectInstance(["box"]);
 
-const Panel = styled("div", {
-  width: theme.spacing[30],
-});
-
-export const Backgrounds = () => {
+const SingleLayerVariant = () => {
+  useEffect(() => {
+    const singleBackground: StyleDecl = {
+      breakpointId: "base",
+      styleSourceId: "local",
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "unparsed",
+            value: "linear-gradient(to right, red, orange)",
+          },
+        ],
+      },
+    };
+    $styles.set(
+      new Map([[getStyleDeclKey(singleBackground), singleBackground]])
+    );
+  }, []);
   return (
-    <Panel>
-      <Section />
-    </Panel>
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <SectionComponent />
+    </Box>
   );
 };
 
+const EmptyBackgroundsVariant = () => {
+  useEffect(() => {
+    $styles.set(new Map());
+  }, []);
+  return (
+    <Box css={{ width: theme.sizes.sidebarWidth }}>
+      <SectionComponent />
+    </Box>
+  );
+};
+
+export const Backgrounds = () => (
+  <StorySection title="Backgrounds">
+    <Flex direction="column" gap="5">
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Default (multiple layers)</Text>
+        <Box css={{ width: theme.sizes.sidebarWidth }}>
+          <SectionComponent />
+        </Box>
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Single layer</Text>
+        <SingleLayerVariant />
+      </Flex>
+      <Flex direction="column" gap="5">
+        <Text variant="labels">Empty backgrounds</Text>
+        <EmptyBackgroundsVariant />
+      </Flex>
+    </Flex>
+  </StorySection>
+);
+
 export default {
-  title: "Style Panel/Backgrounds/Section",
-  component: Section,
+  title: "Style panel/Backgrounds/Section",
+  component: SectionComponent,
 };

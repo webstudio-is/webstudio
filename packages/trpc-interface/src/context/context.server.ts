@@ -1,5 +1,7 @@
 import type { TrpcInterfaceClient } from "../shared/shared-router";
-import type { Client } from "@webstudio-is/postrest/index.server";
+import type { Client } from "@webstudio-is/postgrest/index.server";
+import type { PlanFeatures, Purchase } from "@webstudio-is/plans";
+import type { ApiClient } from "../api-compatibility";
 
 /**
  * All necessary parameters for Authorization
@@ -60,29 +62,9 @@ type DeploymentContext = {
     BUILDER_ORIGIN: string;
     GITHUB_REF_NAME: string;
     GITHUB_SHA: string | undefined;
+    PUBLISHER_HOST: string;
   };
 };
-
-type UserPlanFeatures = {
-  allowShareAdminLinks: boolean;
-  allowDynamicData: boolean;
-  maxContactEmails: number;
-  maxDomainsAllowedPerUser: number;
-  maxPublishesAllowedPerUser: number;
-  hasSubscription: boolean;
-} & (
-  | {
-      hasProPlan: true;
-      planName: string;
-    }
-  | { hasProPlan: false }
-);
-
-// No strings except planName - no secrets
-({}) as Omit<UserPlanFeatures, "planName"> satisfies Record<
-  string,
-  boolean | number
->;
 
 type TrpcCache = {
   setMaxAge: (path: string, value: number) => void;
@@ -92,6 +74,16 @@ type TrpcCache = {
 type PostgrestContext = {
   client: Client;
 };
+
+type ApiClientContext =
+  | {
+      type: ApiClient;
+      version: string | undefined;
+    }
+  | {
+      type: "unknown";
+      version: undefined;
+    };
 
 /**
  * AppContext is a global context that is passed to all trpc/api queries/mutations
@@ -103,8 +95,16 @@ export type AppContext = {
   domain: DomainContext;
   deployment: DeploymentContext;
   entri: EntriContext;
-  userPlanFeatures: UserPlanFeatures | undefined;
+  planFeatures: PlanFeatures;
+  purchases: Array<Purchase>;
+  apiClient: ApiClientContext;
   trpcCache: TrpcCache;
   postgrest: PostgrestContext;
   createTokenContext: (token: string) => Promise<AppContext>;
+  /**
+   * Resolves plan features for a given user ID.
+   * Use the shared plan helper when possible so repeated lookups are cached
+   * consistently within the request.
+   */
+  getOwnerPlanFeatures: (userId: string) => Promise<PlanFeatures>;
 };

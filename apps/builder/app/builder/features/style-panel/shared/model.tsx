@@ -6,12 +6,14 @@ import { propertiesData } from "@webstudio-is/css-data";
 import {
   compareMedia,
   hyphenateProperty,
+  toValue,
   toVarFallback,
   type CssProperty,
   type StyleValue,
   type VarValue,
 } from "@webstudio-is/css-engine";
 import {
+  getHtmlTagFromInstance,
   ROOT_INSTANCE_ID,
   type Styles,
   type StyleSourceSelections,
@@ -21,15 +23,14 @@ import {
 } from "@webstudio-is/sdk";
 import { rootComponent } from "@webstudio-is/sdk";
 import {
-  $breakpoints,
-  $props,
   $registeredComponentMetas,
+  $propsIndex,
   $selectedBreakpoint,
   $selectedInstanceStates,
   $selectedOrLastStyleSourceSelector,
-  $styles,
-  $styleSourceSelections,
 } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $styles, $styleSourceSelections } from "~/shared/sync/data-stores";
 import {
   getComputedStyleDecl,
   getPresetStyleDeclKey,
@@ -39,8 +40,10 @@ import {
 import {
   $selectedInstancePathWithRoot,
   type InstancePath,
-} from "~/shared/awareness";
-import type { InstanceSelector } from "~/shared/tree-utils";
+} from "~/shared/nano-states";
+import type { InstanceSelector } from "~/shared/instance-utils/tree";
+
+const propertyNameCollator = new Intl.Collator();
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();
@@ -60,30 +63,20 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
   return presetStyles;
 });
 
-const $tagByInstanceId = computed($props, (props) => {
-  const tagByInstanceId = new Map<Instance["id"], string>();
-  for (const prop of props.values()) {
-    if (prop.type === "string" && prop.name === "tag") {
-      tagByInstanceId.set(prop.instanceId, prop.value);
-    }
-  }
-  return tagByInstanceId;
-});
-
 export const $instanceTags = computed(
-  [$registeredComponentMetas, $selectedInstancePathWithRoot, $tagByInstanceId],
-  (metas, instancePath, tagByInstanceId) => {
+  [$registeredComponentMetas, $propsIndex, $selectedInstancePathWithRoot],
+  (metas, propsIndex, instancePath) => {
     const instanceTags = new Map<Instance["id"], HtmlTags>();
     if (instancePath === undefined) {
       return instanceTags;
     }
     for (const { instance } of instancePath) {
-      const meta = metas.get(instance.component);
-      const tags = Object.keys(meta?.presetStyle ?? {});
-      if (tags.length > 0) {
-        const metaTag = tags[0];
-        const propTag = tagByInstanceId.get(instance.id);
-        const tag = instance.tag ?? propTag ?? metaTag;
+      const tag = getHtmlTagFromInstance({
+        instance,
+        metas,
+        htmlTagsByInstanceId: propsIndex.htmlTagsByInstanceId,
+      });
+      if (tag !== undefined) {
         instanceTags.set(instance.id, tag as HtmlTags);
       }
     }
@@ -198,7 +191,7 @@ const getDefinedStyles = ({
 
   // We are sorting by alphabet within each group.
   const sortByProperty = (a: { property: string }, b: { property: string }) => {
-    return Intl.Collator().compare(a.property, b.property);
+    return propertyNameCollator.compare(a.property, b.property);
   };
 
   return [
@@ -314,6 +307,24 @@ export const $availableVariables = computed(
       }
     }
     return availableVariables;
+  }
+);
+
+/**
+ * Resolved CSS custom properties for the currently selected element,
+ * keyed by full property name (e.g. "--clr-red" → "#f00").
+ * Used to substitute var() references when parsing shorthand CSS input.
+ */
+export const $cssVarsMap = computed(
+  $computedStyleDeclarations,
+  (computedStyles): Map<string, string> => {
+    const map = new Map<string, string>();
+    for (const styleDecl of computedStyles) {
+      if (styleDecl.property.startsWith("--")) {
+        map.set(styleDecl.property, toValue(styleDecl.computedValue));
+      }
+    }
+    return map;
   }
 );
 

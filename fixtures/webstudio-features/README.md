@@ -1,20 +1,3 @@
-# Fixture to test/play with webstudio-cli
+# Webstudio Features Fixture
 
-## How to develop
-
-```bash
-# Terminal 1
-cd packages/webstudio-cli
-pnpm dev
-```
-
-```bash
-# Terminal 2
-pnpm fixtures:link
-
-pnpm fixtures:sync
-# data.json generated
-
-pnpm fixtures:build
-# exec `pnpm run dev` to see result
-```
+See the [main fixtures README](../README.md) for complete documentation on how to use and update fixtures.

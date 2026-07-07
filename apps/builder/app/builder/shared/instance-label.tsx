@@ -31,7 +31,8 @@ import {
   ROOT_INSTANCE_ID,
   type Instance,
 } from "@webstudio-is/sdk";
-import { $registeredComponentMetas, $instances } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
+import { $registeredComponentMetas } from "~/shared/nano-states";
 import { humanizeString } from "~/shared/string-utils";
 
 const htmlIcons: Record<string, undefined | string> = {

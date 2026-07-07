@@ -130,7 +130,7 @@ export const buttonStyle = css({
   },
 });
 
-const TextContainer = styled("span", textVariants.labelsSentenceCase, {
+const TextContainer = styled("span", textVariants.labels, {
   padding: `0 ${theme.spacing[2]}`,
   overflow: "hidden",
   textOverflow: "ellipsis",

@@ -1,5 +1,5 @@
 import { useState, type ComponentProps, type ReactNode } from "react";
-import { css, styled, theme } from "../stitches.config";
+import { styled, theme } from "../stitches.config";
 import {
   CssValueListArrowFocus,
   CssValueListItem,
@@ -9,22 +9,14 @@ import { Label, labelColors } from "./label";
 import { SmallToggleButton } from "./small-toggle-button";
 import { EyeOpenIcon, EyeClosedIcon, MinusIcon } from "@webstudio-is/icons";
 import { SmallIconButton } from "./small-icon-button";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
   component: CssValueListItem,
-  args: { hidden: false, labelColor: "default", focused: false },
-  argTypes: {
-    hidden: { control: "boolean" },
-    focused: { control: "boolean" },
-    labelColor: {
-      options: labelColors,
-      type: "inline-radio",
-    },
-  },
   title: "CSS Value List Item",
 };
+
+const { listItemAttributes } = __testing__;
 
 const Thumbnail = styled("div", {
   width: theme.spacing[10],
@@ -79,59 +71,14 @@ const ListItem = (props: {
           />
         </>
       }
-      {...__testing__.listItemAttributes}
+      {...listItemAttributes}
     />
   );
 };
 
-export const Declarative = (props: {
-  hidden: boolean;
-  focused: boolean;
-  labelColor: "default";
-}) => {
-  const [pressed, onPressedChange] = useState(false);
-
+export const CSSValueListItem = () => {
   return (
     <Panel>
-      <StorySection title="Configurable">
-        <Popover>
-          <PopoverTrigger asChild>
-            <CssValueListItem
-              id="0"
-              index={0}
-              label={
-                <Label disabled={props.hidden} color={props.labelColor}>
-                  Image
-                </Label>
-              }
-              thumbnail={<Thumbnail />}
-              hidden={props.hidden}
-              focused={props.focused}
-              buttons={
-                <>
-                  <SmallToggleButton
-                    pressed={pressed}
-                    onPressedChange={onPressedChange}
-                    variant="normal"
-                    tabIndex={-1}
-                    icon={pressed ? <EyeClosedIcon /> : <EyeOpenIcon />}
-                  />
-
-                  <SmallIconButton
-                    variant="destructive"
-                    tabIndex={-1}
-                    icon={<MinusIcon />}
-                  />
-                </>
-              }
-            />
-          </PopoverTrigger>
-          <PopoverContent>
-            <div className={css({ p: theme.spacing[10] })()}>Content</div>
-          </PopoverContent>
-        </Popover>
-      </StorySection>
-
       <StorySection title="Overflows">
         <StoryGrid>
           <>
@@ -234,7 +181,77 @@ export const Declarative = (props: {
           </CssValueListArrowFocus>
         </StoryGrid>
       </StorySection>
+
+      <StorySection title="No thumbnail">
+        <CssValueListArrowFocus>
+          <CssValueListItem
+            id="no-thumb-0"
+            index={0}
+            label={<Label>Text only item</Label>}
+            hidden={false}
+            buttons={
+              <SmallIconButton
+                variant="destructive"
+                tabIndex={-1}
+                icon={<MinusIcon />}
+              />
+            }
+            {...listItemAttributes}
+          />
+          <CssValueListItem
+            id="no-thumb-1"
+            index={1}
+            label={<Label>Another text item</Label>}
+            hidden={false}
+            buttons={
+              <SmallIconButton
+                variant="destructive"
+                tabIndex={-1}
+                icon={<MinusIcon />}
+              />
+            }
+            {...listItemAttributes}
+          />
+        </CssValueListArrowFocus>
+      </StorySection>
+
+      <StorySection title="Disabled state">
+        <CssValueListArrowFocus>
+          <CssValueListItem
+            id="disabled-0"
+            index={0}
+            label={<Label>Disabled item</Label>}
+            thumbnail={<Thumbnail />}
+            hidden={false}
+            disabled
+            {...listItemAttributes}
+          />
+          <CssValueListItem
+            id="disabled-1"
+            index={1}
+            label={<Label>Enabled item</Label>}
+            thumbnail={<Thumbnail />}
+            hidden={false}
+            {...listItemAttributes}
+          />
+        </CssValueListArrowFocus>
+      </StorySection>
+
+      <StorySection title="Arrow focus with drag item">
+        <CssValueListArrowFocus dragItemId="drag-1">
+          {labelColors.map((labelColor, index) => (
+            <ListItem
+              key={labelColor}
+              index={index}
+              hidden={false}
+              active={index === 1}
+              labelColor={labelColor}
+              state={undefined}
+              focused={false}
+            />
+          ))}
+        </CssValueListArrowFocus>
+      </StorySection>
     </Panel>
   );
 };
-Declarative.storyName = "CSS Value List Item";

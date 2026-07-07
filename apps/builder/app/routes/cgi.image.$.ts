@@ -4,11 +4,12 @@ import { z } from "zod";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { wsImageLoader } from "@webstudio-is/image";
+import { decodePathFragment } from "@webstudio-is/sdk";
 import env from "~/env/env.server";
 import { getImageNameAndType } from "~/builder/shared/assets/asset-utils";
 import { fileUploadPath } from "~/shared/asset-client";
 
-const ImageParams = z.object({
+const imageParams = z.object({
   width: z.string().transform((value) => Math.round(parseFloat(value))),
   height: z.optional(
     z.string().transform((value) => Math.round(parseFloat(value)))
@@ -28,10 +29,6 @@ const ImageParams = z.object({
     z.literal("raw"),
   ]),
 });
-
-const decodePathFragment = (fragment: string) => {
-  return decodeURIComponent(fragment);
-};
 
 // this route used as proxy for images to cloudflare endpoint
 // https://developers.cloudflare.com/fundamentals/get-started/reference/cdn-cgi-endpoint/
@@ -61,7 +58,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     rawParameters.fit = fit;
   }
 
-  const imageParameters = ImageParams.parse(rawParameters);
+  const imageParameters = imageParams.parse(rawParameters);
 
   // Allow direct image access, and from the same origin
   const refererRawUrl = request.headers.get("referer");

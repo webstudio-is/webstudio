@@ -1,18 +1,29 @@
 import type { Meta } from "@storybook/react";
-import { Box } from "@webstudio-is/design-system";
-import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
+import { Box, StorySection, theme } from "@webstudio-is/design-system";
+import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { InsetControl } from "./inset-control";
-import { registerContainers } from "~/shared/sync";
+import { registerContainers } from "~/shared/sync/sync-stores";
+import { $selectedBreakpointId } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 import {
-  $breakpoints,
   $pages,
-  $selectedBreakpointId,
   $styles,
   $styleSources,
   $styleSourceSelections,
-} from "~/shared/nano-states";
-import { $awareness } from "~/shared/awareness";
+} from "~/shared/sync/data-stores";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
+
+const top: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "top",
+  value: {
+    type: "unit",
+    value: 0,
+    unit: "px",
+  },
+};
 
 const right: StyleDecl = {
   breakpointId: "base",
@@ -22,6 +33,27 @@ const right: StyleDecl = {
     type: "unit",
     value: 123.27,
     unit: "rem",
+  },
+};
+
+const bottom: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "bottom",
+  value: {
+    type: "keyword",
+    value: "auto",
+  },
+};
+
+const left: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "left",
+  value: {
+    type: "unit",
+    value: -20,
+    unit: "%",
   },
 };
 
@@ -39,7 +71,14 @@ $styleSources.set(
     ],
   ])
 );
-$styles.set(new Map([[getStyleDeclKey(right), right]]));
+$styles.set(
+  new Map([
+    [getStyleDeclKey(top), top],
+    [getStyleDeclKey(right), right],
+    [getStyleDeclKey(bottom), bottom],
+    [getStyleDeclKey(left), left],
+  ])
+);
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
@@ -49,20 +88,20 @@ $pages.set(
     rootInstanceId: "box",
   })
 );
-$awareness.set({
-  pageId: "homePageId",
-  instanceSelector: ["box"],
-});
+$selectedPageId.set("homePageId");
+selectInstance(["box"]);
 
-export const InsetControlComponent = () => {
+export const Inset = () => {
   return (
-    <Box css={{ marginLeft: 100 }}>
-      <InsetControl />
-    </Box>
+    <StorySection title="Inset control">
+      <Box css={{ width: theme.sizes.sidebarWidth }}>
+        <InsetControl />
+      </Box>
+    </StorySection>
   );
 };
 
 export default {
-  title: "Style Panel/Inset",
-  component: InsetControlComponent,
-} as Meta<typeof InsetControlComponent>;
+  title: "Style panel/Inset",
+  component: Inset,
+} as Meta<typeof Inset>;

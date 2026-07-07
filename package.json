@@ -7,26 +7,28 @@
   "scripts": {
     "build": "pnpm -r --filter='!./fixtures/*' build",
     "dts": "pnpm -r dts",
-    "dev": "pnpm --filter='@webstudio-is/builder' dev",
-    "lint": "eslint \"**/*.{ts,tsx}\" --max-warnings 0",
-    "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint",
+    "dev": "bash ./apps/builder/dev/run-local.sh",
+    "lint": "oxlint --deny-warnings",
+    "fixtures": "pnpm -r fixtures:link && pnpm -r fixtures:sync && pnpm -r fixtures:build",
+    "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint && pnpm fixtures",
+    "e2e:builder": "bash ./apps/builder/e2e/run-local.sh",
+    "e2e:builder:update-schema": "E2E_DB_BOOTSTRAP=migrations E2E_WRITE_SCHEMA_SNAPSHOT=true E2E_RUN_TESTS=false bash ./apps/builder/e2e/run-local.sh",
     "playwright": "pnpm -r playwright-init",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "storybook:dev": "storybook dev -p 6006",
     "storybook:build": "storybook build",
     "migrations": "pnpm --filter=@webstudio-is/prisma-client generate && pnpm --filter=./packages/prisma-client migrations --dev --cwd ../../apps/builder",
-    "build-figma-tokens": "cd packages/design-system && pnpm build-figma-tokens",
     "prepare": "which git && git config core.hooksPath .git/hooks/ && simple-git-hooks || echo git not installed",
     "local:version-snapshot": "pnpm -r exec pnpm version prepatch --preid $(cat /dev/urandom | LC_ALL=C tr -dc 'a-z' | fold -w 8 | head -n 1)",
     "local:publish-snapshot": "pnpm -r publish --access public --no-git-checks --registry http://localhost:4873",
     "local:dangerously-undo-version-snapshot": "git restore --source=$(git branch --show-current) '**/*/package.json'",
-    "local:release": "pnpm build && pnpm dts && pnpm local:version-snapshot && pnpm local:publish-snapshot && pnpm local:dangerously-undo-version-snapshot && echo \"now execute\npnpm up -r -L '@webstudio-is/*' --registry http://localhost:4873\""
+    "local:release": "pnpm build && pnpm dts && pnpm local:version-snapshot && pnpm local:publish-snapshot && pnpm local:dangerously-undo-version-snapshot && echo \"now execute\npnpm up -r -L '@webstudio-is/*' --registry http://localhost:4873\"",
+    "clean:deep": "bash ./cleanup.sh"
   },
   "simple-git-hooks": {
     "pre-commit": "./node_modules/.bin/nano-staged"
   },
   "devDependencies": {
-    "@eslint/js": "^9.22.0",
     "@fontsource-variable/inter": "^5.0.20",
     "@fontsource-variable/manrope": "^5.0.20",
     "@fontsource/roboto-mono": "^5.0.18",
@@ -38,11 +40,10 @@
     "@storybook/react-vite": "^8.6.4",
     "@types/node": "^22.13.10",
     "@types/react": "^18.2.70",
+    "@typescript/native-preview": "7.0.0-dev.20260120.1",
     "esbuild": "^0.25.3",
-    "eslint": "^9.22.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-unicorn": "^57.0.0",
     "nano-staged": "^0.8.0",
+    "oxlint": "^1.56.0",
     "prettier": "3.5.3",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
@@ -50,11 +51,10 @@
     "storybook": "^8.6.4",
     "tsx": "^4.19.3",
     "typescript": "5.8.2",
-    "typescript-eslint": "^8.26.1",
     "vite": "^6.3.4"
   },
   "engines": {
-    "node": "20",
+    "node": "22",
     "pnpm": "^9.14.0",
     "yarn": "This project is configured to use pnpm"
   },

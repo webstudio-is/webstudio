@@ -19,7 +19,46 @@ export const meta: WsComponentMeta = {
     "country",
     "dateStyle",
     "timeStyle",
+    "timeZone",
     "format",
   ],
-  props,
+  props: {
+    ...props,
+    datetime: {
+      type: "string",
+      control: "text",
+      required: false,
+      contentMode: true,
+    },
+    language: {
+      ...props.language,
+      contentMode: true,
+    },
+    country: {
+      ...props.country,
+      contentMode: true,
+    },
+    dateStyle: {
+      ...props.dateStyle,
+      contentMode: true,
+    },
+    timeStyle: {
+      ...props.timeStyle,
+      contentMode: true,
+    },
+    timeZone: {
+      required: false,
+      control: "timeZone",
+      type: "string",
+      defaultValue: "UTC",
+      options: ["UTC", "visitor"],
+      description:
+        'Timezone used to display the date. Use "visitor" to display each visitor’s browser timezone after the page loads, or select/type an IANA timezone like "Europe/Berlin".',
+      contentMode: true,
+    },
+    format: {
+      ...props.format,
+      contentMode: true,
+    },
+  },
 };

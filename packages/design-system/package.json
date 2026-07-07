@@ -6,8 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run"
   },
   "devDependencies": {
@@ -63,18 +62,23 @@
     "@webstudio-is/icons": "workspace:*",
     "change-case": "^5.4.4",
     "cmdk": "^1.1.1",
-    "colorjs.io": "^0.5.2",
     "downshift": "^6.1.7",
+    "hdr-color-input": "^0.4.0",
     "match-sorter": "^8.0.0",
     "react-colorful": "^5.6.1",
     "react-hot-toast": "^2.5.1",
-    "token-transformer": "^0.0.28",
     "type-fest": "^4.37.0",
     "use-debounce": "^10.0.4",
     "warn-once": "^0.1.1"
   },
   "exports": {
-    "webstudio": "./src/index.ts"
+    ".": {
+      "webstudio": "./src/index.ts"
+    },
+    "./colors": {
+      "webstudio": "./src/colors.ts"
+    },
+    "./test-setup": "./src/test-setup.ts"
   },
   "license": "AGPL-3.0-or-later",
   "private": true,

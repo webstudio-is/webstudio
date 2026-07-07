@@ -684,7 +684,7 @@ export const DialogTitleActions = ({ children }: { children: ReactNode }) => {
 export const DialogActions = ({ children }: { children: ReactNode }) => {
   return (
     <Flex
-      gap="1"
+      gap="2"
       css={{
         padding: theme.panel.padding,
         // Making sure the tab order is the last item first.
@@ -709,7 +709,6 @@ const contentStyle = css(panelStyle, {
   width: "min-content",
   height: "min-content",
   minWidth: theme.sizes.sidebarWidth,
-  minHeight: theme.spacing[22],
   maxWidth: `calc(100vw - ${theme.spacing[15]})`,
   maxHeight: `calc(100vh - ${theme.spacing[15]})`,
   userSelect: "none",

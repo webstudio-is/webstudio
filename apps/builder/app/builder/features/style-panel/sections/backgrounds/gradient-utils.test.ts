@@ -638,7 +638,7 @@ describe("styleValueToColor", () => {
     };
     expect(styleValueToColor(style)).toEqual({
       type: "color",
-      colorSpace: "srgb",
+      colorSpace: "hex",
       components: [0, 0, 1],
       alpha: 1,
     });

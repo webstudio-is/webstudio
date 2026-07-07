@@ -244,6 +244,7 @@ const getPath = (property: SpaceStyleProperty) => {
 };
 
 type LayoutProps = {
+  disabled?: boolean;
   onFocus?: ComponentProps<"div">["onFocus"];
   onBlur?: ComponentProps<"div">["onBlur"];
   onKeyDown?: ComponentProps<"div">["onKeyDown"];
@@ -258,6 +259,7 @@ type LayoutProps = {
 export const SpaceLayout = forwardRef(
   (
     {
+      disabled = false,
       onFocus,
       onBlur,
       onKeyDown,
@@ -277,11 +279,14 @@ export const SpaceLayout = forwardRef(
       <ValueArea
         side={getSide(property)}
         d={getPath(property)}
-        onMouseEnter={(event) =>
-          onHover({ element: event.currentTarget, property })
+        onMouseEnter={
+          disabled
+            ? undefined
+            : (event) => onHover({ element: event.currentTarget, property })
         }
-        onMouseLeave={() => onHover(undefined)}
+        onMouseLeave={disabled ? undefined : () => onHover(undefined)}
         isActive={activeProperties?.includes(property)}
+        css={disabled ? { cursor: "default" } : undefined}
       />
     );
 
@@ -293,7 +298,8 @@ export const SpaceLayout = forwardRef(
         onKeyDown={onKeyDown}
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
-        tabIndex={0}
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled}
         ref={ref}
       >
         <svg

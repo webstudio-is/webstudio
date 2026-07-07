@@ -27,19 +27,26 @@ import {
   MenuList,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, CopyIcon, DynamicPageIcon } from "@webstudio-is/icons";
-import { $publishedOrigin } from "~/shared/nano-states";
 import {
   compilePathnamePattern,
   isPathnamePattern,
   matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
-import { $selectedPage, $selectedPagePath } from "~/shared/awareness";
-import { $currentSystem, updateCurrentSystem } from "~/shared/system";
-
-const $selectedPageHistory = computed(
+import {
   $selectedPage,
-  (page) => page?.history ?? []
+  $selectedPagePath,
+  $stagingPassword,
+  $stagingUsername,
+} from "~/shared/nano-states";
+import { $currentSystem, updateCurrentSystem } from "~/shared/system";
+import { $project, $publisherHost } from "~/shared/sync/data-stores";
+import { getPublishUrl } from "./publish/publish-url";
+
+const $selectedPageHistory = computed($selectedPage, (page): string[] =>
+  page !== undefined && "history" in page && Array.isArray(page.history)
+    ? page.history
+    : []
 );
 
 const useCopyUrl = (pageUrl: string) => {
@@ -74,6 +81,24 @@ const useCopyUrl = (pageUrl: string) => {
       children: copyIcon,
     } satisfies Partial<ComponentProps<"button">>,
   };
+};
+
+const usePublishedPageUrl = (pathname: string) => {
+  const project = useStore($project);
+  const publisherHost = useStore($publisherHost);
+  const stagingUsername = useStore($stagingUsername);
+  const stagingPassword = useStore($stagingPassword);
+
+  if (project === undefined) {
+    return "";
+  }
+
+  return getPublishUrl({
+    domain: `${project.domain}.${publisherHost}`,
+    pathname,
+    username: stagingUsername,
+    password: stagingPassword,
+  }).toString();
 };
 
 const moveSelection = (menu: HTMLElement, diff: number) => {
@@ -233,7 +258,6 @@ const AddressBar = forwardRef<
     onSubmit: () => void;
   }
 >(({ onSubmit }, ref) => {
-  const publishedOrigin = useStore($publishedOrigin);
   const path = useStore($selectedPagePath);
   let history = useStore($selectedPageHistory);
   history = useMemo(() => {
@@ -244,9 +268,8 @@ const AddressBar = forwardRef<
   );
   const tokens = tokenizePathnamePattern(path);
   const compiledPath = compilePathnamePattern(tokens, pathParams);
-  const { tooltipProps, buttonProps } = useCopyUrl(
-    `${publishedOrigin}${compiledPath}`
-  );
+  const pageUrl = usePublishedPageUrl(compiledPath);
+  const { tooltipProps, buttonProps } = useCopyUrl(pageUrl);
 
   const errors = new Map<string, string>();
   for (const token of tokens) {
@@ -338,8 +361,8 @@ const AddressBar = forwardRef<
 export const AddressBarPopover = () => {
   const [isOpen, setIsOpen] = useState(false);
   const path = useStore($selectedPagePath);
-  const publishedOrigin = useStore($publishedOrigin);
-  const { tooltipProps, buttonProps } = useCopyUrl(`${publishedOrigin}${path}`);
+  const pageUrl = usePublishedPageUrl(path);
+  const { tooltipProps, buttonProps } = useCopyUrl(pageUrl);
   const formRef = useRef<HTMLFormElement>(null);
 
   // show only copy button when path is static

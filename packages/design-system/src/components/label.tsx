@@ -109,7 +109,7 @@ const StyledLabel = styled(RadixLabel, {
     },
     text: {
       title: textVariants.titles,
-      sentence: textVariants.labelsSentenceCase,
+      sentence: textVariants.labels,
       mono: textVariants.mono,
     },
   },

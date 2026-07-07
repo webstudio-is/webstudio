@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { computed } from "nanostores";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import {
   CommandGroup,
   CommandGroupHeading,
@@ -9,7 +10,13 @@ import {
   useSelectedAction,
   useResetActionIndex,
 } from "@webstudio-is/design-system";
-import { $dataSources } from "~/shared/nano-states";
+import {
+  $dataSources,
+  $instances,
+  $pages,
+  $props,
+  $resources,
+} from "~/shared/sync/data-stores";
 import {
   $commandContent,
   $isCommandPanelOpen,
@@ -17,16 +24,16 @@ import {
   focusCommandPanel,
 } from "../command-state";
 import { InstanceList, showInstance } from "../shared/instance-list";
-import { deleteVariableMutable } from "~/shared/data-variables";
-import { updateWebstudioData } from "~/shared/instance-utils";
+import { deleteVariableMutable } from "@webstudio-is/project-build/runtime/data";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import {
   DeleteDataVariableDialog,
   RenameDataVariableDialog,
-  $usedVariablesInInstances,
 } from "~/builder/shared/data-variable-utils";
 import type { BaseOption } from "../shared/types";
 import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { findVariableUsagesByInstance } from "@webstudio-is/project-build/runtime/data";
 
 export type DataVariableOption = BaseOption & {
   type: "dataVariable";
@@ -36,11 +43,28 @@ export type DataVariableOption = BaseOption & {
   usages: number;
 };
 
+const $usedVariablesInInstances = computed(
+  [$isCommandPanelOpen, $pages, $instances, $props, $dataSources, $resources],
+  (isCommandPanelOpen, pages, instances, props, dataSources, resources) => {
+    if (isCommandPanelOpen === false) {
+      return new Map();
+    }
+    return findVariableUsagesByInstance({
+      startingInstanceId: ROOT_INSTANCE_ID,
+      pages,
+      instances,
+      props,
+      dataSources,
+      resources,
+    });
+  }
+);
+
 export const $dataVariableOptions = computed(
   [$isCommandPanelOpen, $dataSources, $usedVariablesInInstances],
-  (isOpen, dataSources, usedInInstances) => {
+  (isCommandPanelOpen, dataSources, usedInInstances) => {
     const dataVariableOptions: DataVariableOption[] = [];
-    if (!isOpen) {
+    if (!isCommandPanelOpen) {
       return dataVariableOptions;
     }
 
@@ -102,8 +126,17 @@ export const DataVariablesGroup = ({
     <>
       <CommandGroup
         name="dataVariable"
-        heading={<CommandGroupHeading>Data variables</CommandGroupHeading>}
-        actions={["select", "find usages", "rename", "delete"]}
+        heading={
+          <CommandGroupHeading>
+            Data variables ({options.length})
+          </CommandGroupHeading>
+        }
+        actions={[
+          { name: "select", label: "Select" },
+          { name: "findUsages", label: "Find usages" },
+          { name: "rename", label: "Rename" },
+          { name: "delete", label: "Delete" },
+        ]}
       >
         {options.map((option) => {
           return (
@@ -112,24 +145,24 @@ export const DataVariablesGroup = ({
               key={option.id}
               value={option.id}
               onSelect={() => {
-                if (action === "select") {
+                if (action?.name === "select") {
                   showInstance(option.instanceId, "settings");
                   closeCommandPanel();
                 }
-                if (action === "find usages") {
+                if (action?.name === "findUsages") {
                   $commandContent.set(
                     <DataVariableInstances variableId={option.id} />
                   );
                 }
-                if (action === "rename") {
+                if (action?.name === "rename") {
                   setVariableDialog({ ...option, action: "rename" });
                 }
-                if (action === "delete") {
+                if (action?.name === "delete") {
                   setVariableDialog({ ...option, action: "delete" });
                 }
               }}
             >
-              <Text variant="labelsSentenceCase">
+              <Text>
                 {option.name}{" "}
                 <Text as="span" color="moreSubtle">
                   {formatUsageCount(option.usages)}

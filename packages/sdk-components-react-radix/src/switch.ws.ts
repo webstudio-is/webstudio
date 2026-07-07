@@ -13,8 +13,8 @@ export const metaSwitch: WsComponentMeta = {
     descendants: [radix.SwitchThumb],
   },
   states: [
-    { label: "Checked", selector: "[data-state=checked]" },
-    { label: "Unchecked", selector: "[data-state=unchecked]" },
+    { label: "Checked", selector: '[data-state="checked"]' },
+    { label: "Unchecked", selector: '[data-state="unchecked"]' },
   ],
   presetStyle: {
     button: [button, buttonReset].flat(),
@@ -30,8 +30,8 @@ export const metaSwitchThumb: WsComponentMeta = {
     children: ["instance"],
   },
   states: [
-    { label: "Checked", selector: "[data-state=checked]" },
-    { label: "Unchecked", selector: "[data-state=unchecked]" },
+    { label: "Checked", selector: '[data-state="checked"]' },
+    { label: "Unchecked", selector: '[data-state="unchecked"]' },
   ],
   presetStyle: {
     span,

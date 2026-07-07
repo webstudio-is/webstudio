@@ -22,7 +22,7 @@
   "scripts": {
     "build": "rm -rf lib && esbuild src/components.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsc"
+    "typecheck": "tsgo --noEmit"
   },
   "peerDependencies": {
     "@remix-run/react": "^2.9.2",

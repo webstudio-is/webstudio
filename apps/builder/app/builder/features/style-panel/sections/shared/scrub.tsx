@@ -81,14 +81,6 @@ export const useScrub = <P extends CssProperty>(props: {
       return;
     }
 
-    // Don't activate scrub for non-numeric intermediate values
-    const numericValue = Number.parseFloat(
-      finalTarget.element.textContent ?? ""
-    );
-    if (Number.isNaN(numericValue)) {
-      return;
-    }
-
     const property = finalTarget.property;
 
     const handleChange = (event: { value: number }, isEphemeral: boolean) => {

@@ -26,15 +26,19 @@ import {
 import {
   $propValuesByInstanceSelector,
   $propsIndex,
-  $props,
   $isDesignMode,
   $isContentMode,
   $memoryProps,
   $selectedBreakpoint,
 } from "~/shared/nano-states";
+import { $props } from "~/shared/sync/data-stores";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
-import { serverSyncStore } from "~/shared/sync";
-import { $selectedInstance, $selectedInstanceKey } from "~/shared/awareness";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
+import {
+  $selectedInstance,
+  $selectedInstanceKey,
+  getInstanceKey,
+} from "~/shared/nano-states";
 import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { AnimationSection } from "./animation/animation-section";
@@ -44,6 +48,8 @@ import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
 } from "../shared";
+import { applyBuilderPatchPayloadMutable } from "~/shared/instance-utils/data";
+import { createPropUpsertPayload } from "@webstudio-is/project-build/runtime/props";
 
 type Item = {
   name: string;
@@ -76,28 +82,87 @@ const matchOrSuggestToCreate = (
   return matched;
 };
 
+const shouldShowPropertiesSection = ({
+  isDesignMode,
+  isContentMode,
+  hasProperties,
+}: {
+  isDesignMode: boolean;
+  isContentMode: boolean;
+  hasProperties: boolean;
+}) => {
+  return isDesignMode || (isContentMode && hasProperties);
+};
+
+const shouldRenderPropsSectionContainer = ({
+  component,
+  propsMetasSize,
+  hasVisibleProps,
+  isContentMode,
+}: {
+  component: Instance["component"];
+  propsMetasSize: number;
+  hasVisibleProps: boolean;
+  isContentMode: boolean;
+}) => {
+  if (component === rootComponent) {
+    return false;
+  }
+  return propsMetasSize > 0 || (isContentMode && hasVisibleProps);
+};
+
+const shouldSyncMediaAssetProps = ({
+  component,
+  propName,
+  propValue,
+}: {
+  component: Instance["component"];
+  propName: string;
+  propValue: { type: string };
+}) =>
+  (component === "Image" || component === "Video") &&
+  propName === "src" &&
+  propValue.type === "asset";
+
 const renderProperty = (
-  { propsLogic: logic, propValues, component, instanceId }: PropsSectionProps,
-  { prop, propName, meta }: PropAndMeta
-) =>
-  renderControl({
-    key: propName,
+  {
+    propsLogic: logic,
+    propValues,
+    propValuesByInstanceSelector,
+    component,
     instanceId,
+  }: PropsSectionProps,
+  item: PropAndMeta
+) => {
+  const { prop, propName, meta } = item;
+  const targetInstanceId = item.instanceId ?? instanceId;
+  const targetPropValues =
+    item.instanceSelector === undefined
+      ? propValues
+      : (propValuesByInstanceSelector.get(
+          getInstanceKey(item.instanceSelector)
+        ) ?? propValues);
+
+  return renderControl({
+    key: propName,
+    instanceId: targetInstanceId,
     meta,
     prop,
     computedValue:
-      propValues.get(propName) ??
+      targetPropValues.get(propName) ??
       // support legacy html props with react names
-      propValues.get(standardAttributesToReactProps[propName]) ??
+      targetPropValues.get(standardAttributesToReactProps[propName]) ??
       meta.defaultValue,
     propName,
     onChange: (propValue) => {
       logic.handleChange({ prop, propName }, propValue);
 
       if (
-        (component === "Image" || component === "Video") &&
-        propName === "src" &&
-        propValue.type === "asset"
+        shouldSyncMediaAssetProps({
+          component,
+          propName,
+          propValue,
+        })
       ) {
         logic.handleChangeByPropName("width", propValue);
         logic.handleChangeByPropName("height", propValue);
@@ -105,6 +170,7 @@ const renderProperty = (
       }
     },
   });
+};
 
 const forbiddenProperties = new Set(["style"]);
 
@@ -155,7 +221,6 @@ const AddPropertyOrAttribute = ({
       justify="center"
     >
       <Combobox<Item>
-        defaultHighlightedIndex={0}
         autoFocus
         color={isValid ? undefined : "error"}
         placeholder="Select or create"
@@ -193,6 +258,7 @@ const AddPropertyOrAttribute = ({
 type PropsSectionProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;
   propValues: Map<string, unknown>;
+  propValuesByInstanceSelector: Map<string, Map<string, unknown>>;
   component: Instance["component"];
   instanceId: string;
   selectedInstanceKey: string;
@@ -209,8 +275,9 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   const matchMediaValue = matchMediaBreakpoints(matchingBreakpoints);
 
-  const hasItems =
-    logic.addedProps.length > 0 || addingProp || logic.initialProps.length > 0;
+  const hasProperties =
+    logic.addedProps.length > 0 || logic.initialProps.length > 0;
+  const hasItems = hasProperties || (isDesignMode && addingProp);
 
   const animationAction = logic.initialProps.find(
     (prop) => prop.meta.type === "animationAction"
@@ -218,8 +285,11 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   const hasAnimation = animationAction !== undefined;
 
-  const showPropertiesSection =
-    isDesignMode || (isContentMode && logic.initialProps.length > 0);
+  const showPropertiesSection = shouldShowPropertiesSection({
+    isDesignMode,
+    isContentMode,
+    hasProperties,
+  });
 
   return hasAnimation && selectedBreakpoint?.id !== undefined ? (
     <>
@@ -286,12 +356,12 @@ export const PropsSection = (props: PropsSectionProps) => {
       <Separator />
       {showPropertiesSection && (
         <CollapsibleSectionWithAddButton
-          label="Properties & Attributes"
+          label="Properties & attributes"
           onAdd={isDesignMode ? () => setAddingProp(true) : undefined}
           hasItems={hasItems}
         >
           <Flex gap="1" direction="column">
-            {addingProp && (
+            {isDesignMode && addingProp && (
               <AddPropertyOrAttribute
                 onPropSelected={(propName) => {
                   setAddingProp(false);
@@ -306,6 +376,12 @@ export const PropsSection = (props: PropsSectionProps) => {
       )}
     </>
   );
+};
+
+export const __testing__ = {
+  shouldShowPropertiesSection,
+  shouldRenderPropsSectionContainer,
+  shouldSyncMediaAssetProps,
 };
 
 const $propValues = computed(
@@ -323,30 +399,39 @@ export const PropsSectionContainer = ({
 }) => {
   const { propsByInstanceId } = useStore($propsIndex);
   const propValues = useStore($propValues);
+  const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
 
   const logic = usePropsLogic({
     instance,
     props: propsByInstanceId.get(instance.id) ?? [],
 
     updateProp: (update) => {
-      const { propsByInstanceId } = $propsIndex.get();
-      const instanceProps = propsByInstanceId.get(instance.id) ?? [];
-      // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
-      // see for details https://github.com/webstudio-is/webstudio/pull/2170
-      const duplicateProps = instanceProps
-        .filter((prop) => prop.id !== update.id)
-        .filter((prop) => prop.name === update.name);
       serverSyncStore.createTransaction([$props], (props) => {
-        for (const prop of duplicateProps) {
-          props.delete(prop.id);
-        }
-        props.set(update.id, update);
+        applyBuilderPatchPayloadMutable(
+          { props },
+          createPropUpsertPayload({
+            props: props.values(),
+            nextProps: [update],
+          }).payload
+        );
       });
     },
   });
 
   const propsMetas = useStore($selectedInstancePropsMetas);
-  if (propsMetas.size === 0 || instance.component === rootComponent) {
+  const isContentMode = useStore($isContentMode);
+  const hasVisibleProps =
+    logic.systemProps.length > 0 ||
+    logic.initialProps.length > 0 ||
+    logic.addedProps.length > 0;
+  if (
+    shouldRenderPropsSectionContainer({
+      component: instance.component,
+      propsMetasSize: propsMetas.size,
+      hasVisibleProps,
+      isContentMode,
+    }) === false
+  ) {
     return;
   }
 
@@ -358,6 +443,7 @@ export const PropsSectionContainer = ({
       <PropsSection
         propsLogic={logic}
         propValues={propValues ?? new Map()}
+        propValuesByInstanceSelector={propValuesByInstanceSelector}
         component={instance.component}
         instanceId={instance.id}
         selectedInstanceKey={selectedInstanceKey}

@@ -52,6 +52,26 @@ export const meta: WsComponentMeta = {
       control: "file",
       label: "Source",
       required: false,
+      accept: "image/*",
+      contentMode: true,
+    },
+    width: {
+      type: "number",
+      control: "number",
+      required: false,
+      contentMode: true,
+    },
+    height: {
+      type: "number",
+      control: "number",
+      required: false,
+      contentMode: true,
+    },
+    alt: {
+      type: "string",
+      control: "text",
+      required: false,
+      contentMode: true,
     },
   },
 };

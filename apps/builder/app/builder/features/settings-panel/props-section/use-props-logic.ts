@@ -4,26 +4,31 @@ import { useStore } from "@nanostores/react";
 import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
 import { descendantComponent } from "@webstudio-is/sdk";
 import {
+  getContentModeCapabilities,
+  type ContentModeCapabilities,
+} from "@webstudio-is/project/content-mode-permissions";
+import {
   reactPropsToStandardAttributes,
   showAttribute,
   standardAttributesToReactProps,
   textContentAttribute,
 } from "@webstudio-is/react-sdk";
 import {
-  $instances,
   $isContentMode,
-  $props,
   $registeredComponentMetas,
 } from "~/shared/nano-states";
-import { isRichText } from "~/shared/content-model";
-import { $selectedInstance, $selectedInstancePath } from "~/shared/awareness";
+import { $instances } from "~/shared/sync/data-stores";
+import { $props } from "~/shared/sync/data-stores";
+import { $styleSources } from "~/shared/sync/data-stores";
+import { isRichText, isRichTextTree } from "~/shared/content-model";
+import { $selectedInstancePath } from "~/shared/nano-states";
 import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
   showAttributeMeta,
   type PropValue,
 } from "../shared";
-import { $instanceTags } from "../../style-panel/shared/model";
+import { createPropValue } from "@webstudio-is/project-build/runtime/props";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -31,6 +36,45 @@ export type PropAndMeta = {
   prop?: Prop;
   propName: string;
   meta: PropMeta;
+  instanceId?: Instance["id"];
+  instanceSelector?: Instance["id"][];
+};
+
+const isPropVisibleInContentMode = ({
+  propName,
+  props,
+  propsMetas,
+  selectedInstanceSelector,
+  capabilities,
+}: {
+  propName: string;
+  props: Prop[];
+  propsMetas: Map<string, PropMeta>;
+  selectedInstanceSelector: undefined | Instance["id"][];
+  capabilities: ContentModeCapabilities;
+}) => {
+  if (
+    selectedInstanceSelector === undefined ||
+    capabilities.editableInstanceIds.has(selectedInstanceSelector[0]) === false
+  ) {
+    return false;
+  }
+  if (propName === textContentAttribute) {
+    return true;
+  }
+  if (
+    props.some(
+      (prop) =>
+        prop.name === propName && capabilities.editablePropIds.has(prop.id)
+    )
+  ) {
+    return true;
+  }
+  const propMeta = propsMetas.get(propName);
+  if (propMeta?.type === "string" && propMeta.control === "file") {
+    return true;
+  }
+  return propMeta?.contentMode === true;
 };
 
 // The value we set prop to when it's added
@@ -126,7 +170,7 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
         "A prop with type resource must have a meta, we can't provide a default one because we need a list of options"
       );
     default:
-      throw new Error(`Usupported data type: ${type satisfies never}`);
+      throw new Error(`Unsupported data type: ${type satisfies never}`);
   }
 };
 
@@ -142,34 +186,40 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
   return value;
 };
 
+export const __testing__ = {
+  isPropVisibleInContentMode,
+  getStartingValue,
+  getDefaultMetaForType,
+  getAndDelete,
+};
+
 const $canHaveTextContent = computed(
-  [$instances, $props, $registeredComponentMetas, $selectedInstancePath],
-  (instances, props, metas, instancePath) => {
+  [
+    $instances,
+    $props,
+    $registeredComponentMetas,
+    $selectedInstancePath,
+    $isContentMode,
+  ],
+  (instances, props, metas, instancePath, isContentMode) => {
     if (instancePath === undefined) {
       return false;
     }
     const [{ instanceSelector }] = instancePath;
+    if (isContentMode) {
+      return isRichTextTree({
+        instanceId: instanceSelector[0],
+        instances,
+        props,
+        metas,
+      });
+    }
     return isRichText({
       instances,
       props,
       metas,
       instanceSelector,
     });
-  }
-);
-
-const contentModePropertiesByTag: Partial<Record<string, string[]>> = {
-  img: ["src", "width", "height", "alt"],
-  a: ["href"],
-};
-
-const $selectedInstanceTag = computed(
-  [$selectedInstance, $instanceTags],
-  (selectedInstance, instanceTags) => {
-    if (selectedInstance === undefined) {
-      return;
-    }
-    return instanceTags.get(selectedInstance.id);
   }
 );
 
@@ -180,27 +230,45 @@ export const usePropsLogic = ({
   updateProp,
 }: UsePropsLogicInput) => {
   const isContentMode = useStore($isContentMode);
-  const selectedInstanceTag = useStore($selectedInstanceTag);
+  const propsMetas = useStore($selectedInstancePropsMetas);
+  const instances = useStore($instances);
+  const allProps = useStore($props);
+  const styleSources = useStore($styleSources);
+  const metas = useStore($registeredComponentMetas);
+  const selectedInstancePath = useStore($selectedInstancePath);
+  const contentModeCapabilities = isContentMode
+    ? getContentModeCapabilities({
+        instances,
+        metas,
+        props: allProps,
+        styleSources,
+      })
+    : undefined;
 
   /**
-   * In content edit mode we show only Image and Link props
+   * In content edit mode we show only props marked with contentMode: true
    * In the future I hope the only thing we will show will be Components
    */
   const isPropVisible = (propName: string) => {
     if (!isContentMode) {
       return true;
     }
-    const allowedProperties =
-      contentModePropertiesByTag[selectedInstanceTag ?? ""] ?? [];
-    return allowedProperties.includes(propName);
+    if (contentModeCapabilities === undefined) {
+      return false;
+    }
+    return isPropVisibleInContentMode({
+      propName,
+      props,
+      propsMetas,
+      selectedInstanceSelector: selectedInstancePath?.[0].instanceSelector,
+      capabilities: contentModeCapabilities,
+    });
   };
 
   const savedProps = props;
 
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
-
-  const propsMetas = useStore($selectedInstancePropsMetas);
 
   const initialPropNames = useStore($selectedInstanceInitialPropNames);
 
@@ -217,19 +285,54 @@ export const usePropsLogic = ({
   }
 
   const canHaveTextContent = useStore($canHaveTextContent);
+  const getTextContentTarget = () => {
+    const canEditChildren = (target: Instance) => {
+      const hasNoChildren = target.children.length === 0;
+      const hasOnlyTextChild =
+        target.children.length === 1 && target.children[0].type === "text";
+      const hasOnlyExpressionChild =
+        target.children.length === 1 &&
+        target.children[0].type === "expression";
+      return hasNoChildren || hasOnlyTextChild || hasOnlyExpressionChild;
+    };
 
-  const hasNoChildren = instance.children.length === 0;
-  const hasOnlyTextChild =
-    instance.children.length === 1 && instance.children[0].type === "text";
-  const hasOnlyExpressionChild =
-    instance.children.length === 1 &&
-    instance.children[0].type === "expression";
-  if (
-    canHaveTextContent &&
-    (hasNoChildren || hasOnlyTextChild || hasOnlyExpressionChild)
-  ) {
+    if (canHaveTextContent && canEditChildren(instance)) {
+      return {
+        instanceId: instance.id,
+        instanceSelector: selectedInstancePath?.[0].instanceSelector,
+      };
+    }
+
+    if (isContentMode && instance.component === "Link") {
+      const [child] = instance.children;
+      if (child?.type === "id") {
+        const childInstance = instances.get(child.value);
+        if (
+          childInstance?.component === "Text" &&
+          canEditChildren(childInstance)
+        ) {
+          return {
+            instanceId: childInstance.id,
+            instanceSelector:
+              selectedInstancePath === undefined
+                ? undefined
+                : [
+                    childInstance.id,
+                    ...selectedInstancePath[0].instanceSelector,
+                  ],
+          };
+        }
+      }
+    }
+  };
+
+  const textContentTarget = getTextContentTarget();
+
+  if (textContentTarget) {
     systemProps.push({
       propName: textContentAttribute,
+      instanceId: textContentTarget.instanceId,
+      instanceSelector: textContentTarget.instanceSelector,
       meta: {
         required: false,
         control: "textContent",
@@ -258,8 +361,8 @@ export const usePropsLogic = ({
 
     // For initial props, if prop is not saved, we want to show default value if available.
     //
-    // Important to not use infer stating value if default is not available
-    // beacuse user may have this experience:
+    // Important to not infer starting value if default is not available
+    // because user may have this experience:
     //   - they open props panel of an Image
     //   - they see 0 in the control for "width"
     //   - where 0 is a fallback when no default is available
@@ -294,7 +397,9 @@ export const usePropsLogic = ({
       propMeta = propsMetas.get(name);
     }
     prop = { ...prop, name };
-    propMeta ??= getDefaultMetaForType("string");
+    propMeta ??= getDefaultMetaForType(
+      prop.type === "asset" ? "asset" : "string"
+    );
 
     addedProps.push({
       prop,
@@ -320,9 +425,13 @@ export const usePropsLogic = ({
 
   const handleChange = ({ prop, propName }: PropOrName, value: PropValue) => {
     updateProp(
-      prop === undefined
-        ? { id: nanoid(), instanceId: instance.id, name: propName, ...value }
-        : { ...prop, ...value }
+      createPropValue({
+        id: prop?.id ?? nanoid(),
+        instanceId: instance.id,
+        name: propName,
+        required: prop?.required,
+        ...value,
+      })
     );
   };
 
@@ -330,9 +439,13 @@ export const usePropsLogic = ({
     const prop = props.find((prop) => prop.name === propName);
 
     updateProp(
-      prop === undefined
-        ? { id: nanoid(), instanceId: instance.id, name: propName, ...value }
-        : { ...prop, ...value }
+      createPropValue({
+        id: prop?.id ?? nanoid(),
+        instanceId: instance.id,
+        name: propName,
+        required: prop?.required,
+        ...value,
+      })
     );
   };
 
@@ -341,7 +454,7 @@ export const usePropsLogic = ({
     handleChange,
     handleChangeByPropName,
     /** Similar to Initial, but displayed as a separate group in UI etc.
-     * Currentrly used only for the ID prop. */
+     * Currently used only for the ID prop. */
     systemProps: systemProps.filter(({ propName }) => isPropVisible(propName)),
     /** Initial (not deletable) props */
     initialProps: initialProps.filter(({ propName }) =>

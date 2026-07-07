@@ -5,11 +5,13 @@ import {
   type SharedRouter,
 } from "./shared-router";
 import { callerLink } from "../trpc-caller-link";
+import { apiClientHeader, apiClientVersionHeader } from "../api-compatibility";
 
 type SharedClientOptions = {
   url: string;
   token: string;
   branchName: string | undefined;
+  clientVersion: string | undefined;
 };
 
 export const createTrpcProxyServiceClient = (
@@ -24,6 +26,8 @@ export const createTrpcProxyServiceClient = (
             Authorization: options.token,
             // We use this header for SaaS preview service discovery proxy
             "x-branch-name": options.branchName,
+            [apiClientHeader]: "service",
+            [apiClientVersionHeader]: options.clientVersion,
           }),
         }),
       ],

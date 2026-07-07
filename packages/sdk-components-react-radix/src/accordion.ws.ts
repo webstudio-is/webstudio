@@ -38,6 +38,10 @@ export const metaAccordionItem: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.AccordionHeader, radix.AccordionContent],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: { div },
   initialProps: ["value"],
   props: propsAccordionItem,
@@ -51,6 +55,10 @@ export const metaAccordionHeader: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.AccordionTrigger],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: {
     h3: [
       ...h3,
@@ -74,7 +82,10 @@ export const metaAccordionTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  states: [{ label: "Open", selector: "[data-state=open]" }],
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: {
     button: [button, buttonReset].flat(),
   },
@@ -88,6 +99,10 @@ export const metaAccordionContent: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: {
     div,
   },

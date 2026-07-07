@@ -17,20 +17,18 @@ import {
   IconLink,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import {
-  $breakpoints,
-  $instances,
-  $registeredComponentMetas,
-  $styleSources,
-} from "~/shared/nano-states";
+import { $registeredComponentMetas } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $instances, $styleSources } from "~/shared/sync/data-stores";
 import type {
   ComputedStyleDecl,
   StyleValueSourceColor,
 } from "~/shared/style-object-model";
 import { useComputedStyles } from "./shared/model";
+import { useReadonly } from "./shared/readonly";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
-import { $virtualInstances } from "~/shared/awareness";
+import { $virtualInstances } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 const $isAltPressed = atom(false);
@@ -78,6 +76,7 @@ export const PropertyInfo = ({
   onReset: () => void;
   resetType?: "reset" | "delete";
 }) => {
+  const readonly = useReadonly();
   const breakpoints = useStore($breakpoints);
   const instances = useStore($instances);
   const virtualInstances = useStore($virtualInstances);
@@ -188,7 +187,7 @@ export const PropertyInfo = ({
           </Flex>
         </Flex>
       )}
-      {resettable && (
+      {resettable && readonly === false && (
         <Button
           color="dark"
           prefix={
@@ -238,9 +237,13 @@ export const PropertyLabel = ({
   disabled?: boolean;
 }) => {
   const styles = useComputedStyles(properties);
+  const readonly = useReadonly();
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
+    if (readonly) {
+      return;
+    }
     const batch = createBatchUpdate();
     for (const property of properties) {
       batch.deleteProperty(property);
@@ -255,6 +258,9 @@ export const PropertyLabel = ({
         onOpenChange={setIsOpen}
         triggerProps={{
           onClick: (event) => {
+            if (readonly) {
+              return;
+            }
             if (event.altKey) {
               event.preventDefault();
               // If not, when mixed with ToogleGroupControl.
@@ -300,9 +306,13 @@ export const PropertySectionLabel = ({
   properties: [CssProperty, ...CssProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
+  const readonly = useReadonly();
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
+    if (readonly) {
+      return;
+    }
     const batch = createBatchUpdate();
     for (const property of properties) {
       batch.deleteProperty(property);
@@ -319,6 +329,9 @@ export const PropertySectionLabel = ({
         onPointerDown={(event) => event.preventDefault()}
         triggerProps={{
           onClick: (event) => {
+            if (readonly) {
+              return;
+            }
             if (event.altKey) {
               event.preventDefault();
               resetProperty();
@@ -427,8 +440,12 @@ export const PropertyValueTooltip = ({
   children: ReactNode;
 }) => {
   const styles = useComputedStyles(properties);
+  const readonly = useReadonly();
   const [isOpen, setIsOpen] = useState(false);
   const resetProperty = () => {
+    if (readonly) {
+      return;
+    }
     const batch = createBatchUpdate();
     for (const property of properties) {
       batch.deleteProperty(property);
@@ -444,6 +461,9 @@ export const PropertyValueTooltip = ({
       onPointerDown={(event) => event.preventDefault()}
       triggerProps={{
         onClick: (event) => {
+          if (readonly) {
+            return;
+          }
           if (event.altKey) {
             event.preventDefault();
             resetProperty();

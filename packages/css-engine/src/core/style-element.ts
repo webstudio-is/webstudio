@@ -36,3 +36,20 @@ export class StyleElement {
     }
   }
 }
+
+/**
+ * A fake style element that does nothing.
+ * Useful for testing stylesheets without DOM.
+ */
+export class FakeStyleElement {
+  get isMounted() {
+    return false;
+  }
+  mount() {}
+  unmount() {}
+  render(_cssText: string) {}
+  setAttribute(_name: string, _value: string) {}
+  getAttribute(_name: string) {
+    return;
+  }
+}

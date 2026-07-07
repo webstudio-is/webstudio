@@ -16,8 +16,9 @@ import {
 } from "./combobox";
 import { Flex } from "./flex";
 import { InputField } from "./input-field";
+import { StorySection } from "./storybook";
 
-export const Basic = () => {
+const BasicDemo = () => {
   const [value, setValue] = useState("");
   return (
     <Combobox<string>
@@ -32,7 +33,7 @@ export const Basic = () => {
   );
 };
 
-export const Complex = () => {
+const ComplexDemo = () => {
   const [value, setValue] = useState("");
 
   const stateReducer = useCallback(
@@ -106,7 +107,95 @@ export const Complex = () => {
   );
 };
 
+const WithPlaceholderDemo = () => {
+  const [value, setValue] = useState("");
+  return (
+    <Combobox<string>
+      value={value}
+      itemToString={(item) => item ?? ""}
+      getItems={() => ["Apple", "Banana", "Orange"]}
+      onItemSelect={setValue}
+      onChange={(value) => setValue(value ?? "")}
+      placeholder="Search fruits…"
+    />
+  );
+};
+
+const WithAutoFocusDemo = () => {
+  const [value, setValue] = useState("");
+  return (
+    <Combobox<string>
+      value={value}
+      itemToString={(item) => item ?? ""}
+      getItems={() => ["Apple", "Banana", "Orange"]}
+      onItemSelect={setValue}
+      onChange={(value) => setValue(value ?? "")}
+      autoFocus
+      placeholder="Focused on mount"
+    />
+  );
+};
+
+const WithErrorColorDemo = () => {
+  const [value, setValue] = useState("");
+  return (
+    <Combobox<string>
+      value={value}
+      itemToString={(item) => item ?? ""}
+      getItems={() => ["Apple", "Banana", "Orange"]}
+      onItemSelect={setValue}
+      onChange={(value) => setValue(value ?? "")}
+      color="error"
+      placeholder="Error state"
+    />
+  );
+};
+
+const fruitDescriptions: Record<string, string> = {
+  Apple: "A red or green fruit",
+  Banana: "A yellow tropical fruit",
+  Orange: "A citrus fruit",
+} as const;
+
+const WithDescriptionDemo = () => {
+  const [value, setValue] = useState("");
+  return (
+    <Combobox<string>
+      value={value}
+      itemToString={(item) => item ?? ""}
+      getItems={() => ["Apple", "Banana", "Orange"]}
+      getDescription={(item) => (item ? fruitDescriptions[item] : undefined)}
+      onItemSelect={setValue}
+      onChange={(value) => setValue(value ?? "")}
+      placeholder="Pick a fruit…"
+    />
+  );
+};
+
+export const ComboboxStory = () => (
+  <>
+    <StorySection title="Basic">
+      <BasicDemo />
+    </StorySection>
+    <StorySection title="Complex">
+      <ComplexDemo />
+    </StorySection>
+    <StorySection title="With placeholder">
+      <WithPlaceholderDemo />
+    </StorySection>
+    <StorySection title="With auto focus">
+      <WithAutoFocusDemo />
+    </StorySection>
+    <StorySection title="With error color">
+      <WithErrorColorDemo />
+    </StorySection>
+    <StorySection title="With description">
+      <WithDescriptionDemo />
+    </StorySection>
+  </>
+);
+
 export default {
   title: "Combobox",
-  component: Complex,
+  component: ComboboxStory,
 };

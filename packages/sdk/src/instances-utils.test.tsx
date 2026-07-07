@@ -3,11 +3,14 @@ import { $, renderData, ws } from "@webstudio-is/template";
 import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
+  getHtmlTagsFromProps,
+  getHtmlTagFromInstance,
   getIndexesWithinAncestors,
   parseComponentName,
 } from "./instances-utils";
 import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance } from "./schema/instances";
+import type { Prop, Props } from "./schema/props";
 
 test("find all tree instances", () => {
   const { instances } = renderData(
@@ -51,6 +54,157 @@ test("include not existing/virtual instance", () => {
 test("extract short name and namespace from component name", () => {
   expect(parseComponentName("Box")).toEqual([undefined, "Box"]);
   expect(parseComponentName("radix:Box")).toEqual(["radix", "Box"]);
+});
+
+test("get html tag from instance", () => {
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    ["Box", { presetStyle: { section: [] } }],
+    ["XmlNode", { presetStyle: { div: [] } }],
+  ]);
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <$.Box ws:id="meta"></$.Box>
+      <$.Box ws:id="prop" ws:tag="article"></$.Box>
+      <$.Box ws:id="instance" ws:tag="nav"></$.Box>
+      <$.XmlNode ws:id="xml" tag="svg"></$.XmlNode>
+    </$.Body>
+  );
+
+  expect(
+    getHtmlTagFromInstance({
+      instance: instances.get("meta") as Instance,
+      metas,
+      props,
+    })
+  ).toEqual("section");
+  expect(
+    getHtmlTagFromInstance({
+      instance: instances.get("prop") as Instance,
+      metas,
+      props,
+      htmlTagsByInstanceId: getHtmlTagsFromProps(props),
+    })
+  ).toEqual("article");
+  expect(
+    getHtmlTagFromInstance({
+      instance: {
+        ...(instances.get("instance") as Instance),
+        tag: "nav",
+      },
+      metas,
+      props,
+    })
+  ).toEqual("nav");
+  expect(
+    getHtmlTagFromInstance({
+      instance: instances.get("xml") as Instance,
+      metas,
+      props,
+    })
+  ).toBeUndefined();
+});
+
+test("gets html tags from props", () => {
+  const { props } = renderData(
+    <$.Body ws:id="body">
+      <$.XmlNode ws:id="xml" tag="svg"></$.XmlNode>
+    </$.Body>
+  );
+  props.set("tag-prop", {
+    id: "tag-prop",
+    instanceId: "box",
+    name: "tag",
+    type: "string",
+    value: "article",
+  });
+
+  expect(getHtmlTagsFromProps(props)).toEqual(
+    new Map([
+      ["box", "article"],
+      ["xml", "svg"],
+    ])
+  );
+});
+
+test("get html tag from instance reads mutable props maps", () => {
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    ["Box", { presetStyle: { section: [] } }],
+  ]);
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <$.Box ws:id="box"></$.Box>
+    </$.Body>
+  );
+  const instance = instances.get("box") as Instance;
+  props.set("tag-prop", {
+    id: "tag-prop",
+    instanceId: "box",
+    name: "tag",
+    type: "string",
+    value: "article",
+  });
+
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toEqual("article");
+
+  props.set("tag-prop", {
+    id: "tag-prop",
+    instanceId: "box",
+    name: "tag",
+    type: "string",
+    value: "aside",
+  });
+
+  expect(getHtmlTagFromInstance({ instance, metas, props })).toEqual("aside");
+});
+
+test("get html tag from instance skips props when instance tag is set", () => {
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    ["Box", { presetStyle: { section: [] } }],
+  ]);
+  const props = new (class extends Map<string, Prop> {
+    values(): MapIterator<Prop> {
+      throw new Error("props should not be scanned");
+    }
+  })() as Props;
+
+  expect(
+    getHtmlTagFromInstance({
+      instance: {
+        id: "box",
+        type: "instance",
+        component: "Box",
+        tag: "nav",
+        children: [],
+      },
+      metas,
+      props,
+    })
+  ).toEqual("nav");
+});
+
+test("get html tag from instance skips props when provided tag map has no tag", () => {
+  const metas = new Map<Instance["component"], WsComponentMeta>([
+    ["Box", { presetStyle: { section: [] } }],
+  ]);
+  const props = new (class extends Map<string, Prop> {
+    values(): MapIterator<Prop> {
+      throw new Error("props should not be scanned");
+    }
+  })() as Props;
+
+  expect(
+    getHtmlTagFromInstance({
+      instance: {
+        id: "box",
+        type: "instance",
+        component: "Box",
+        children: [],
+      },
+      metas,
+      props,
+      htmlTagsByInstanceId: new Map(),
+    })
+  ).toEqual("section");
 });
 
 test("get indexes within ancestors", () => {

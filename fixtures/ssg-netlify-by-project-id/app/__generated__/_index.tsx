@@ -2,15 +2,21 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+import {
+  renderText,
+  useResource,
+  useVariableState,
+} from "@webstudio-is/react-sdk/runtime";
 import {
   Body as Body,
   Heading as Heading,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 
 export const projectId = "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e";
 
-export const lastPublished = "2024-09-03T04:32:12.506Z";
+export const projectDomain = "fixture-client-do-not-touch-wsmel";
+
+export const lastPublished = "2026-01-04T10:46:48.415Z";
 
 export const siteName = undefined;
 

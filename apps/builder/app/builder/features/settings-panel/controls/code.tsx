@@ -14,13 +14,14 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import { CodeEditor } from "~/builder/shared/code-editor";
+import { CodeEditor } from "~/shared/code-editor";
 import {
   BindingControl,
   BindingPopover,
+  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
-  useLocalValue,
   type ControlProps,
   VerticalLayout,
   updateExpressionValue,
@@ -148,7 +149,7 @@ export const CodeControl = ({
     control: "text" as const,
   };
   const lang = meta.control === "code" ? meta.language : undefined;
-  const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
+  const localValue = useDraftValue(String(computedValue ?? ""), (value) => {
     if (lang === "html") {
       const error = validateHtml(value);
       setError(error);
@@ -207,7 +208,7 @@ export const CodeControl = ({
               }
             >
               <Flex gap="1" align="center">
-                <Text variant="labelsTitleCase">Code Editor</Text>
+                <Text variant="labels">Code editor</Text>
                 {errorInfo}
               </Flex>
             </DialogTitle>
@@ -224,11 +225,7 @@ export const CodeControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
-          validate={(value) => {
-            if (value !== undefined && typeof value !== "string") {
-              return `${label} expects a string value`;
-            }
-          }}
+          validate={(value) => validatePrimitiveValue(value, label)}
           variant={variant}
           value={expression}
           onChange={(newExpression) =>

@@ -163,3 +163,16 @@ export const useDebounceEffect = () => {
     setUpdateCallback(() => callback);
   }, []);
 };
+
+/**
+ * Radix may steal focus back to the previously focused element
+ * when opening popovers/dropdowns. This ensures the newly opened UI gets focus.
+ */
+export const focusFirstCollectionItem = (container: HTMLElement) => {
+  requestAnimationFrame(() => {
+    const firstItem = container.querySelector("[data-radix-collection-item]");
+    if (firstItem instanceof HTMLElement) {
+      firstItem.focus();
+    }
+  });
+};

@@ -2,20 +2,20 @@ import { useStore } from "@nanostores/react";
 import { styled } from "@webstudio-is/design-system";
 
 import {
-  $instances,
   $modifierKeys,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   $textEditorContextMenuCommand,
   findTemplates,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import { applyScale } from "./outline";
 import { $scale } from "~/builder/shared/nano-states";
 import { TemplatesMenu } from "./outline/block-instance-outline";
 import { insertTemplateAt } from "./outline/block-utils";
 import { useCallback, useEffect, useState } from "react";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import type { InstanceSelector } from "~/shared/instance-utils/tree";
 import type { Instance } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
 
@@ -45,7 +45,7 @@ const InertController = ({
     return () => {
       clearTimeout(timeout);
     };
-  }, [handleChange]);
+  }, []);
 
   return null;
 };

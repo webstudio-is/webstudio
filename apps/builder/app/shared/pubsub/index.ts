@@ -1,10 +1,20 @@
 import { atom } from "nanostores";
 import { createPubsub } from "./create";
 
-export interface PubsubMap {
+// Allow commands to declare their types
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface CommandRegistry {}
+
+// Generate namespaced command types from CommandRegistry
+type NamespacedCommands = {
+  [K in keyof CommandRegistry as `command:${K & string}`]: CommandRegistry[K];
+};
+
+export interface PubsubMap extends NamespacedCommands {
   command: {
     source: string;
     name: string;
+    [key: string]: unknown;
   };
 }
 

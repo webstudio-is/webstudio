@@ -2,8 +2,8 @@ import { z } from "zod";
 import { router, procedure } from "./trpc";
 
 // Has corresponding type in saas
-export const PublishInput = z.object({
-  // used to load build data from the builder see routes/rest.build.$buildId.ts
+export const publishInput = z.object({
+  // used to load build data from the builder with build.loadProjectBundleByBuildId
   buildId: z.string(),
   builderOrigin: z.string(),
   githubSha: z.string().optional(),
@@ -15,7 +15,11 @@ export const PublishInput = z.object({
   logProjectName: z.string(),
 });
 
-export const Output = z.discriminatedUnion("success", [
+export const unpublishInput = z.object({
+  domain: z.string(),
+});
+
+export const output = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
   }),
@@ -31,8 +35,17 @@ export const Output = z.discriminatedUnion("success", [
  **/
 export const deploymentRouter = router({
   publish: procedure
-    .input(PublishInput)
-    .output(Output)
+    .input(publishInput)
+    .output(output)
+    .mutation(() => {
+      return {
+        success: false,
+        error: "NOT_IMPLEMENTED",
+      };
+    }),
+  unpublish: procedure
+    .input(unpublishInput)
+    .output(output)
     .mutation(() => {
       return {
         success: false,

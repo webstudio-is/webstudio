@@ -1,5 +1,6 @@
 import {
   Box,
+  Text,
   useCombobox,
   ComboboxRoot,
   ComboboxContent,
@@ -16,7 +17,6 @@ import {
   theme,
   Flex,
   styled,
-  Text,
   ColorThumb,
 } from "@webstudio-is/design-system";
 import type {
@@ -45,6 +45,7 @@ import {
   camelCaseProperty,
   declarationDescriptions,
   isValidDeclaration,
+  parseColor,
 } from "@webstudio-is/css-data";
 import { $selectedInstanceSizes } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
@@ -85,6 +86,7 @@ const useScrub = ({
   intermediateValue,
   defaultUnit,
   property,
+  disabled,
   onChange,
   onChangeComplete,
   onAbort,
@@ -94,6 +96,7 @@ const useScrub = ({
   value: CssValueInputValue;
   intermediateValue: CssValueInputValue | undefined;
   property: CssProperty;
+  disabled: boolean | undefined;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
   onAbort: () => void;
@@ -132,6 +135,10 @@ const useScrub = ({
 
     // Support only auto keyword to be scrubbable
     if (inputRefCurrent === null || scrubRefCurrent === null) {
+      return;
+    }
+
+    if (disabled) {
       return;
     }
 
@@ -259,12 +266,16 @@ const useScrub = ({
       },
       shouldHandleEvent,
     });
+    // value.type and value.unit are intentionally in the dependency array
+    // to re-setup scrub when the value type changes (e.g., from keyword to unit)
   }, [
     shouldHandleEvent,
     property,
-    updateIntermediateValue,
-    onAbortStable,
     defaultUnit,
+    disabled,
+    value.type,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    "unit" in value ? value.unit : undefined,
   ]);
 
   return [scrubRef, inputRef];
@@ -345,8 +356,7 @@ const itemToString = (item: CssValueInputValue | null) => {
     return "";
   }
   if (item.type === "var") {
-    // Use toValue to include fallback when present
-    return toValue(item as StyleValue);
+    return `--${item.value}`;
   }
   if (item.type === "keyword") {
     // E.g. we want currentcolor to be lower case
@@ -359,6 +369,20 @@ const itemToString = (item: CssValueInputValue | null) => {
 };
 
 const Description = styled(Box, { width: theme.spacing[27] });
+
+// Returns the CSS color string to show as a color swatch for a dropdown item,
+// or undefined if the item has no meaningful color preview.
+const getItemColor = (item: CssValueInputValue): string | undefined => {
+  let colorString: string | undefined;
+  if (item.type === "var" && item.fallback !== undefined) {
+    colorString = toValue(item.fallback);
+  } else if (item.type === "keyword") {
+    colorString = item.value;
+  }
+  if (colorString !== undefined && parseColor(colorString) !== undefined) {
+    return colorString;
+  }
+};
 
 /**
  * Common:
@@ -533,6 +557,7 @@ export const CssValueInput = ({
     options: unitOptions,
     property,
     value,
+    disabled,
     onChange: (unitOrKeyword) => {
       if (unitOrKeyword.type === "keyword") {
         onChangeComplete({ value: unitOrKeyword, type: "unit-select" });
@@ -625,6 +650,7 @@ export const CssValueInput = ({
     defaultUnit,
     value,
     property,
+    disabled,
     intermediateValue: props.intermediateValue,
     onChange: props.onChange,
     onChangeComplete: (value) => onChangeComplete({ value, type: "scrub-end" }),
@@ -678,7 +704,8 @@ export const CssValueInput = ({
   const keywordButtonElement =
     value.type === "keyword" && items.length !== 0 ? (
       <NestedInputButton
-        {...getToggleButtonProps()}
+        {...(disabled ? {} : getToggleButtonProps())}
+        disabled={disabled}
         data-state={isOpen ? "open" : "closed"}
         tabIndex={-1}
       />
@@ -760,7 +787,12 @@ export const CssValueInput = ({
         unit: value.unit,
       };
 
-      onChangeComplete({ value: newValue, ...meta, type: "delta" });
+      onChangeComplete({
+        value: newValue,
+        ...meta,
+        type: "delta",
+        close: false,
+      });
       event.preventDefault();
     }
   };
@@ -897,7 +929,10 @@ export const CssValueInput = ({
               if (event.target instanceof HTMLInputElement) {
                 // We are setting the value on focus because we might have removed the var() from the value,
                 // but once focused, we need to show the full value
-                event.target.value = itemToString(value);
+                event.target.value =
+                  value.type === "var"
+                    ? toValue(value as StyleValue)
+                    : itemToString(value);
               }
             }}
             autoFocus={autoFocus}
@@ -935,22 +970,24 @@ export const CssValueInput = ({
                     {...getItemProps({ item, index })}
                     key={index}
                   >
-                    {item.type === "var" ? (
-                      <Flex justify="between" align="center" grow gap={2}>
-                        <Box>--{item.value}</Box>
-                        {item.fallback?.type === "unit" && (
-                          <Text variant="small" color="subtle">
-                            {toValue(item.fallback)}
-                          </Text>
-                        )}
-                        {(item.fallback?.type === "rgb" ||
-                          item.fallback?.type === "color") && (
-                          <ColorThumb color={toValue(item.fallback)} />
-                        )}
-                      </Flex>
-                    ) : (
-                      itemToString(item)
-                    )}
+                    {(() => {
+                      const label = itemToString(item);
+                      const colorValue = getItemColor(item);
+                      const labelElement = (
+                        <Text truncate css={{ maxWidth: theme.spacing[30] }}>
+                          {label}
+                        </Text>
+                      );
+                      if (colorValue === undefined) {
+                        return labelElement;
+                      }
+                      return (
+                        <Flex justify="between" align="center" grow gap={2}>
+                          {labelElement}
+                          <ColorThumb color={colorValue} />
+                        </Flex>
+                      );
+                    })()}
                   </ComboboxListboxItem>
                 ))}
               </ComboboxScrollArea>
@@ -966,3 +1003,5 @@ export const CssValueInput = ({
     </ComboboxRoot>
   );
 };
+
+export const __testing__ = { getItemColor };

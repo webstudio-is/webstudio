@@ -2,17 +2,18 @@ import { atom } from "nanostores";
 import { z } from "zod";
 import { sidebarPanelNames } from "~/builder/sidebar-left/types";
 
-const Settings = z.object({
+const userSettings = z.object({
   navigatorLayout: z.enum(["docked", "undocked"]).default("undocked"),
   stylePanelMode: z.enum(["default", "focus", "advanced"]).default("default"),
   sidebarPanelWidths: z
     .record(z.enum(sidebarPanelNames), z.number())
     .default({}),
+  lastDashboardSearch: z.string().default(""),
 });
 
-export type Settings = z.infer<typeof Settings>;
+export type Settings = z.infer<typeof userSettings>;
 
-const defaultSettings = Settings.parse({});
+const defaultSettings = userSettings.parse({});
 
 const namespace = "__webstudio_user_settings__";
 
@@ -29,7 +30,7 @@ const read = (): Settings => {
   }
 
   try {
-    return Settings.parse(JSON.parse(settingsString));
+    return userSettings.parse(JSON.parse(settingsString));
   } catch (error) {
     if (error instanceof Error) {
       console.error({

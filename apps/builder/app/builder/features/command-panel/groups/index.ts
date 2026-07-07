@@ -18,6 +18,10 @@ import {
 } from "./commands-group";
 import { $tokenOptions, TokensGroup, type TokenOption } from "./tokens-group";
 import {
+  DuplicateTokensGroup,
+  type DuplicateTokenOption,
+} from "./duplicate-tokens-group";
+import {
   $dataVariableOptions,
   DataVariablesGroup,
   type DataVariableOption,
@@ -27,6 +31,11 @@ import {
   CssVariablesGroup,
   type CssVariableOption,
 } from "./css-variables-group";
+import {
+  $instanceOptions,
+  InstancesGroup,
+  type InstanceOption,
+} from "./instances-group";
 
 export type Option =
   | ComponentOption
@@ -35,8 +44,10 @@ export type Option =
   | PageOption
   | CommandOption
   | TokenOption
+  | DuplicateTokenOption
   | DataVariableOption
-  | CssVariableOption;
+  | CssVariableOption
+  | InstanceOption;
 
 export type OptionByType<T extends Option["type"]> = Extract<
   Option,
@@ -53,6 +64,7 @@ export const $allOptions = computed(
     $tokenOptions,
     $dataVariableOptions,
     $cssVariableOptions,
+    $instanceOptions,
   ],
   (
     componentOptions,
@@ -62,16 +74,18 @@ export const $allOptions = computed(
     commandOptions,
     tokenOptions,
     dataVariableOptions,
-    cssVariableOptions
+    cssVariableOptions,
+    instanceOptions
   ) => [
-    ...componentOptions,
-    ...tagOptions,
-    ...breakpointOptions,
-    ...pageOptions,
     ...commandOptions,
+    ...componentOptions,
+    ...pageOptions,
+    ...breakpointOptions,
+    ...tagOptions,
     ...tokenOptions,
     ...dataVariableOptions,
     ...cssVariableOptions,
+    ...instanceOptions,
   ]
 );
 
@@ -88,8 +102,10 @@ export const groups: {
   page: PagesGroup,
   command: CommandsGroup,
   token: TokensGroup,
+  duplicateToken: DuplicateTokensGroup,
   dataVariable: DataVariablesGroup,
   cssVariable: CssVariablesGroup,
+  instance: InstancesGroup,
 };
 
 export type {
@@ -99,8 +115,10 @@ export type {
   PageOption,
   CommandOption,
   TokenOption,
+  DuplicateTokenOption,
   DataVariableOption,
   CssVariableOption,
+  InstanceOption,
 };
 
 export {
@@ -110,6 +128,8 @@ export {
   PagesGroup,
   CommandsGroup,
   TokensGroup,
+  DuplicateTokensGroup,
   DataVariablesGroup,
   CssVariablesGroup,
+  InstancesGroup,
 };

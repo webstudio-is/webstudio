@@ -1,85 +1,28 @@
-import { nanoid } from "nanoid";
 import { StorySection } from "@webstudio-is/design-system";
-import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
-import { BreakpointsSelector } from "./breakpoints-selector";
+import { BreakpointsSelector as BreakpointsSelectorComponent } from "./breakpoints-selector";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $selectedBreakpointId } from "~/shared/nano-states/breakpoints";
 
-const createBreakpoints = (breakpoints: Array<Breakpoint>): Breakpoints => {
-  const breakpointsMap: [Breakpoint["id"], Breakpoint][] = breakpoints.map(
-    (breakpoint) => {
-      const id = nanoid();
-      return [
-        id,
-        {
-          ...breakpoint,
-          id,
-        },
-      ];
-    }
-  );
-  return new Map(breakpointsMap);
-};
+const breakpointsMap = new Map([
+  ["1", { id: "1", label: "Mobile", maxWidth: 479 }],
+  ["2", { id: "2", label: "Tablet", maxWidth: 991 }],
+  ["3", { id: "3", label: "" }],
+  ["4", { id: "4", label: "Desktop", minWidth: 1280 }],
+  ["5", { id: "5", label: "Wide", minWidth: 1440 }],
+]);
 
-export const Story = () => {
-  const mixed = createBreakpoints([
-    { id: "placeholder", label: "Extra Large", minWidth: 1440 },
-    { id: "placeholder", label: "Large", minWidth: 1280 },
-    { id: "placeholder", label: "Base" },
-    { id: "placeholder", label: "Tablet", maxWidth: 991 },
-    { id: "placeholder", label: "Mobile landscape", maxWidth: 767 },
-    { id: "placeholder", label: "Mobile portrait", maxWidth: 479 },
-  ]);
-  const selectedBreakpointMixed = Array.from(mixed.values()).at(2);
+$breakpoints.set(breakpointsMap);
+$selectedBreakpointId.set("3");
 
-  const max = createBreakpoints([
-    { id: "placeholder", label: "Base" },
-    { id: "placeholder", label: "Tablet", maxWidth: 991 },
-    { id: "placeholder", label: "Mobile landscape", maxWidth: 767 },
-    { id: "placeholder", label: "Mobile portrait", maxWidth: 479 },
-  ]);
-  const selectedBreakpointMax = Array.from(max.values()).at(0);
-
-  const min = createBreakpoints([
-    { id: "placeholder", label: "Extra Large", minWidth: 1440 },
-    { id: "placeholder", label: "Large", minWidth: 1280 },
-    { id: "placeholder", label: "Base" },
-  ]);
-  const selectedBreakpointMin = Array.from(min.values()).at(2);
-
-  if (
-    selectedBreakpointMixed === undefined ||
-    selectedBreakpointMax === undefined ||
-    selectedBreakpointMin === undefined
-  ) {
-    return null;
-  }
-
+export const BreakpointsSelector = () => {
   return (
-    <>
-      <StorySection title="All">
-        <BreakpointsSelector
-          breakpoints={mixed}
-          selectedBreakpoint={selectedBreakpointMixed}
-        />
-      </StorySection>
-      <StorySection title="Max-width">
-        <BreakpointsSelector
-          breakpoints={max}
-          selectedBreakpoint={selectedBreakpointMax}
-        />
-      </StorySection>
-      <StorySection title="Min-width">
-        <BreakpointsSelector
-          breakpoints={min}
-          selectedBreakpoint={selectedBreakpointMin}
-        />
-      </StorySection>
-    </>
+    <StorySection title="Breakpoints selector">
+      <BreakpointsSelectorComponent />
+    </StorySection>
   );
 };
-
-Story.storyName = "breakpoints-selector";
 
 export default {
-  title: "Breakpoints Selector",
-  component: Story,
+  title: "Breakpoints selector",
+  component: BreakpointsSelector,
 };

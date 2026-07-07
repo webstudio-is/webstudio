@@ -11,7 +11,8 @@ import {
   useScrub,
   handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
-import { $breakpoints, $isResizingCanvas } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $isResizingCanvas } from "~/shared/nano-states";
 import {
   $selectedBreakpointId,
   $selectedBreakpoint,

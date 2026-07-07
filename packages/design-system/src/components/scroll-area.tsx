@@ -71,6 +71,10 @@ type ScrollAreaProps = {
   className?: string;
 } & Pick<ComponentProps<"div">, "onScroll" | "children">;
 
+/**
+ * @deprecated Use ScrollAreaNative instead. Native scrolling avoids interaction
+ * bugs from the custom Radix scroll area implementation.
+ */
 export const ScrollArea = forwardRef(
   (
     {
@@ -106,3 +110,9 @@ export const ScrollArea = forwardRef(
   }
 );
 ScrollArea.displayName = "ScrollArea";
+
+export const ScrollAreaNative = styled("div", {
+  overflow: "auto",
+  scrollbarWidth: "thin",
+  scrollbarColor: `${theme.colors.foregroundScrollBar} transparent`,
+});

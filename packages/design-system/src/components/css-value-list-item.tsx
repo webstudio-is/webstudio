@@ -146,7 +146,11 @@ export const CssValueListItem = forwardRef(
     }: Props,
     ref: Ref<HTMLButtonElement>
   ) => {
-    const buttonsCount = Children.count(buttons?.props.children);
+    const buttonsCount = buttons
+      ? // When children is a single element, count results in 0
+        Children.count(buttons.props.children) || 1
+      : 0;
+
     const fakeButtons = useMemo(
       () => (
         <>
@@ -184,7 +188,7 @@ export const CssValueListItem = forwardRef(
             >
               <DragHandleIconStyled />
 
-              <Flex shrink align="center">
+              <Flex shrink align="center" css={{ overflow: "hidden" }}>
                 {thumbnail ? <ThumbHolder>{thumbnail}</ThumbHolder> : null}
                 {label}
               </Flex>

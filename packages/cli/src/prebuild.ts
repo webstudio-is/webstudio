@@ -1,18 +1,8 @@
 import { basename, dirname, join, normalize, relative } from "node:path";
-import { createWriteStream, existsSync } from "node:fs";
-import {
-  rm,
-  access,
-  rename,
-  cp,
-  readFile,
-  writeFile,
-  readdir,
-} from "node:fs/promises";
-import { pipeline } from "node:stream/promises";
+import { existsSync } from "node:fs";
+import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import pLimit from "p-limit";
 import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import {
@@ -31,11 +21,13 @@ import type {
   Asset,
   Resource,
   WsComponentMeta,
+  Pages,
 } from "@webstudio-is/sdk";
 import {
   createScope,
   findTreeInstanceIds,
   getPagePath,
+  getAllPages,
   generateResources,
   generatePageMeta,
   getStaticSiteMapXml,
@@ -46,22 +38,30 @@ import {
   generateCss,
   ROOT_INSTANCE_ID,
   elementComponent,
+  toRuntimeAsset,
 } from "@webstudio-is/sdk";
-import type { Data } from "@webstudio-is/http-client";
+import { migratePages } from "@webstudio-is/project-migrations/pages";
+import { publishedProjectBundle } from "@webstudio-is/protocol";
+import { createAuthConfigResources, LOCAL_AUTH_FILE } from "./auth-config";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
   createFolderIfNotExists,
   loadJSONFile,
 } from "./fs-utils";
-import type * as sharedConstants from "../templates/defaults/app/constants.mjs";
 import { htmlToJsx } from "./html-to-jsx";
-import { createFramework as createRemixFramework } from "./framework-remix";
-import { createFramework as createReactRouterFramework } from "./framework-react-router";
-import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
 import { compareMedia } from "@webstudio-is/css-engine";
+import { materializeAssetFiles } from "./asset-files";
+import { formatZodIssues } from "./zod-utils";
 
-const limit = pLimit(10);
+const createRemixFramework = async () =>
+  (await import("./framework-remix")).createFramework();
+
+const createReactRouterFramework = async () =>
+  (await import("./framework-react-router")).createFramework();
+
+const createVikeSsgFramework = async () =>
+  (await import("./framework-vike-ssg")).createFramework();
 
 type SiteDataByPage = {
   [id: Page["id"]]: {
@@ -77,45 +77,6 @@ type SiteDataByPage = {
     params?: Params;
     pages: Array<Page>;
   };
-};
-
-export const downloadAsset = async (
-  url: string,
-  name: string,
-  assetBaseUrl: string
-) => {
-  const assetPath = join("public", assetBaseUrl, name);
-  // fs.rename cannot be used to move a file to a different mount point or drive
-  // Error: EXDEV: cross-device link not permitted
-  const tempAssetPath = `${assetPath}.tmp`;
-
-  try {
-    await access(assetPath);
-  } catch {
-    await createFolderIfNotExists(dirname(assetPath));
-
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
-      }
-
-      const writableStream = createWriteStream(tempAssetPath);
-      /*
-        We need to cast the response body to a NodeJS.ReadableStream.
-        Since the node typings for `@types/node` doesn't add typings for fetch.
-        And it inherits types from lib.dom.d.ts
-      */
-      await pipeline(
-        response.body as unknown as NodeJS.ReadableStream,
-        writableStream
-      );
-
-      await rename(tempAssetPath, assetPath);
-    } catch (error) {
-      console.error(`Error in downloading file ${name} \n ${error}`);
-    }
-  }
 };
 
 const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
@@ -142,6 +103,16 @@ const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
   );
 
   await writeFile(destinationPath, content, "utf8");
+};
+
+const writeWsAuthResources = async (generatedDir: string, pages: Pages) => {
+  const { content, module } = createAuthConfigResources(pages);
+  await createFolderIfNotExists(dirname(LOCAL_AUTH_FILE));
+  await writeFile(LOCAL_AUTH_FILE, content);
+  await createFileIfNotExists(
+    join(generatedDir, "$resources.wsauth.server.ts"),
+    module
+  );
 };
 
 /**
@@ -212,6 +183,41 @@ audit=false
 fund=false
 `;
 
+export const generateRedirectsModule = (pageRedirects: Pages["redirects"]) => {
+  const redirects =
+    pageRedirects?.map((redirect) => ({
+      old: redirect.old,
+      new: redirect.new,
+      status: redirect.status ?? 301,
+    })) ?? [];
+
+  return `
+    export const redirects = ${JSON.stringify(redirects, null, 2)};
+    `;
+};
+
+const generateRedirectFallbackRoute = (runtime: "remix" | "react-router") => {
+  const loaderFunctionArgs =
+    runtime === "react-router" ? "react-router" : "@remix-run/server-runtime";
+
+  return `
+    import { type LoaderFunctionArgs } from ${JSON.stringify(loaderFunctionArgs)};
+    import { redirectRequest } from "../redirect-url";
+    // @todo think about how to make __generated__ typeable
+    // @ts-ignore
+    import { redirects } from "../__generated__/$resources.redirects";
+
+    export const loader = ({ request }: LoaderFunctionArgs) => {
+      const redirectResponse = redirectRequest(request, redirects);
+      if (redirectResponse !== undefined) {
+        return redirectResponse;
+      }
+
+      throw new Response("Not Found", { status: 404 });
+    };
+    `;
+};
+
 export const prebuild = async (options: {
   /**
    * Do we need download assets
@@ -269,25 +275,32 @@ export const prebuild = async (options: {
     framework = await createRemixFramework();
   }
 
-  const constants: typeof sharedConstants = await import(
-    pathToFileURL(join(cwd(), "app/constants.mjs")).href
-  );
+  const constants: typeof import("../templates/defaults/app/constants.mjs") =
+    await import(pathToFileURL(join(cwd(), "app/constants.mjs")).href);
 
   const { assetBaseUrl } = constants;
 
-  const siteData = await loadJSONFile<
-    Data & { user?: { email: string | null } }
-  >(LOCAL_DATA_FILE);
+  const loadedSiteData = await loadJSONFile<unknown>(LOCAL_DATA_FILE);
 
-  if (siteData === null) {
+  if (loadedSiteData === null) {
     throw new Error(
-      `Project data is missing, please make sure you the project is synced.`
+      `Project bundle is missing, please make sure the project is synced.`
     );
   }
+  const parsedSiteData = publishedProjectBundle.safeParse(loadedSiteData);
+  if (parsedSiteData.success === false) {
+    throw new Error(
+      `Project bundle is invalid, please make sure the project is synced. Invalid fields: ${formatZodIssues(parsedSiteData.error.issues)}`
+    );
+  }
+  const siteData = parsedSiteData.data;
 
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
   );
+  const pages = migratePages(siteData.build.pages);
+  const allPages = getAllPages(pages);
+  await writeWsAuthResources(generatedDir, pages);
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], string[]> = {};
   const backgroundImageAssetsByPage: Record<Page["id"], string[]> = {};
@@ -298,11 +311,11 @@ export const prebuild = async (options: {
     assetBaseUrl,
     assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
     uploadingImageAssets: [],
-    pages: siteData.build.pages,
+    pages,
     source: "prebuild",
   });
 
-  for (const page of Object.values(siteData.pages)) {
+  for (const page of allPages) {
     const instanceMap = new Map(siteData.build.instances);
     const pageInstanceSet = findTreeInstanceIds(
       instanceMap,
@@ -358,7 +371,7 @@ export const prebuild = async (options: {
         dataSources,
         resources,
       },
-      pages: siteData.pages,
+      pages: allPages,
       page,
       assets: siteData.assets,
     };
@@ -422,35 +435,11 @@ export const prebuild = async (options: {
     backgroundImageAssetsByPage[page.id] = backgroundImageAssets;
   }
 
-  const assetsToDownload: Promise<void>[] = [];
-
   if (options.assets === true) {
     const assetOrigin = siteData.origin;
 
-    for (const asset of siteData.assets) {
-      if (asset.type === "image") {
-        assetsToDownload.push(
-          limit(() =>
-            downloadAsset(
-              `${assetOrigin}/cgi/image/${asset.name}?format=raw`,
-              asset.name,
-              assetBaseUrl
-            )
-          )
-        );
-      }
-
-      if (asset.type === "font") {
-        assetsToDownload.push(
-          limit(() =>
-            downloadAsset(
-              `${assetOrigin}/cgi/asset/${asset.name}`,
-              asset.name,
-              assetBaseUrl
-            )
-          )
-        );
-      }
+    if (!assetOrigin) {
+      console.warn("Warning: Asset origin is not defined in project bundle.");
     }
   }
 
@@ -466,12 +455,12 @@ export const prebuild = async (options: {
     // pass only used metas to not generate unused preset styles
     componentMetas: usedMetas,
     assetBaseUrl,
-    atomic: siteData.build.pages.compiler?.atomicStyles ?? true,
+    atomic: pages.compiler?.atomicStyles ?? true,
   });
 
   await createFileIfNotExists(join(generatedDir, "index.css"), cssText);
 
-  for (const page of Object.values(siteData.pages)) {
+  for (const page of allPages) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "useState",
@@ -579,13 +568,13 @@ export const prebuild = async (options: {
       tagsOverrides: framework.tags,
     });
 
-    const projectMeta = siteData.build.pages.meta;
+    const projectMeta = pages.meta;
     const contactEmail: undefined | string =
       // fallback to user email when contact email is empty string
       projectMeta?.contactEmail || siteData.user?.email || undefined;
     const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "")?.name;
 
-    const pagePath = getPagePath(page.id, siteData.build.pages);
+    const pagePath = getPagePath(page.id, pages);
 
     const breakpoints = siteData.build.breakpoints
       .map(([_, value]) => ({
@@ -600,10 +589,12 @@ export const prebuild = async (options: {
       /* This is a auto generated file for building the project */ \n
 
       import { Fragment, useState } from "react";
-      import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+      import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
       ${importsString}
 
       export const projectId = "${siteData.build.projectId}";
+
+      export const projectDomain = ${JSON.stringify(siteData.projectDomain)};
 
       export const lastPublished = "${new Date(siteData.build.createdAt).toISOString()}";
 
@@ -689,14 +680,21 @@ export const prebuild = async (options: {
     const serverFile = join(generatedDir, `${generatedBasename}.server.tsx`);
     await createFileIfNotExists(serverFile, serverExports);
 
-    const getTemplates =
-      documentType === "html" ? framework.html : framework.xml;
+    const getTemplates = framework[documentType];
     for (const { file, template } of getTemplates({ pagePath })) {
       const content = template
         .replaceAll("__CONSTANTS__", importFrom("./app/constants.mjs", file))
         .replaceAll(
           "__SITEMAP__",
           importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
+        )
+        .replaceAll(
+          "__ASSETS__",
+          importFrom(`./app/__generated__/$resources.assets`, file)
+        )
+        .replaceAll(
+          "__AUTH__",
+          importFrom(`./app/__generated__/$resources.wsauth.server`, file)
         )
         .replaceAll(
           "__CLIENT__",
@@ -727,41 +725,53 @@ export const prebuild = async (options: {
     join(generatedDir, "$resources.sitemap.xml.ts"),
     `
       export const sitemap = ${JSON.stringify(
-        getStaticSiteMapXml(siteData.build.pages, siteData.build.updatedAt),
+        getStaticSiteMapXml(pages, siteData.build.updatedAt),
         null,
         2
       )};
     `
   );
 
-  const redirects = siteData.build.pages?.redirects;
-  if (redirects !== undefined && redirects.length > 0) {
-    for (const redirect of redirects) {
-      const generatedBasename = generateRemixRoute(redirect.old);
-      await createFileIfNotExists(
-        join(generatedDir, `${generatedBasename}.ts`),
-        `
-        export const url = "${redirect.new}";
-        export const status = ${redirect.status ?? 301};
-        `
-      );
+  // Generate assets resource file
+  // Assets use /cgi/ endpoints on both builder and published sites
+  // Use a placeholder origin for URL construction, result will be relative paths
+  const assetsById = Object.fromEntries(
+    siteData.assets.map((asset) => [
+      asset.id,
+      toRuntimeAsset(asset, "https://placeholder.local"),
+    ])
+  );
 
-      for (const { file, template } of framework.redirect({
-        pagePath: redirect.old,
-      })) {
-        const content = template.replaceAll(
-          "__REDIRECT__",
-          importFrom(`./app/__generated__/${generatedBasename}`, file)
-        );
-        await createFileIfNotExists(file, content);
-      }
-    }
+  await createFileIfNotExists(
+    join(generatedDir, "$resources.assets.ts"),
+    `
+    export const assets = ${JSON.stringify(assetsById, null, 2)};
+    `
+  );
+
+  await createFileIfNotExists(
+    join(generatedDir, "$resources.redirects.ts"),
+    generateRedirectsModule(pages.redirects)
+  );
+
+  if (pages.redirects !== undefined && pages.redirects.length > 0) {
+    await createFileIfNotExists(
+      join(routesDir, "$.tsx"),
+      generateRedirectFallbackRoute(
+        options.template.includes("react-router") ? "react-router" : "remix"
+      )
+    );
   }
 
-  if (assetsToDownload.length > 0) {
+  if (options.assets === true && siteData.assets.length > 0) {
     const downloading = spinner();
     downloading.start("Downloading fonts and images");
-    await Promise.all(assetsToDownload);
+    await materializeAssetFiles({
+      assets: siteData.assets,
+      continueOnError: true,
+      origin: siteData.origin || "",
+      targetAssetsDirectory: join("public", assetBaseUrl),
+    });
     downloading.stop("Downloaded fonts and images");
   }
 

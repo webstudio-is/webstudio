@@ -1,27 +1,33 @@
 {
   "name": "@webstudio-is/http-client",
   "version": "0.0.0-webstudio-version",
-  "description": "Webstudio HTTP Client",
+  "description": "Function-call client for Webstudio HTTP and TRPC APIs",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
     "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "@webstudio-is/sdk": "workspace:*"
+    "@trpc/client": "^10.45.2",
+    "@webstudio-is/protocol": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
+    "tus-js-client": "^4.3.1"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
     "vitest": "^3.1.2"
   },
   "exports": {
-    "webstudio": "./src/index.ts",
-    "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js"
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./src/index.ts"
+    }
   },
   "files": [
     "lib/*",

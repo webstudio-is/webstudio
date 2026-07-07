@@ -13,6 +13,7 @@ export * from "./schema/webstudio";
 export * from "./schema/prop-meta";
 export * from "./schema/component-meta";
 
+export * from "./assets";
 export * from "./core-metas";
 export * from "./instances-utils";
 export * from "./page-utils";
@@ -21,6 +22,7 @@ export * from "./expression";
 export * from "./resources-generator";
 export * from "./page-meta-generator";
 export * from "./url-pattern";
+export * from "./link-utils";
 export * from "./css";
 export * from "./__generated__/tags";
 
@@ -45,12 +47,12 @@ export type {
 } from "./schema/animation-schema";
 
 export {
-  animationActionSchema,
-  scrollAnimationSchema,
-  viewAnimationSchema,
-  rangeUnitValueSchema,
-  animationKeyframeSchema,
-  insetUnitValueSchema,
-  durationUnitValueSchema,
+  animationAction,
+  scrollAnimation,
+  viewAnimation,
+  rangeUnitValue,
+  animationKeyframe,
+  insetUnitValue,
+  durationUnitValue,
   RANGE_UNITS,
 } from "./schema/animation-schema";

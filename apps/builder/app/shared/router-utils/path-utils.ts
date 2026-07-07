@@ -1,5 +1,4 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
-import { publicStaticEnv } from "~/env/env.static";
 import { getAuthorizationServerOrigin } from "./origins";
 import type { BuilderMode } from "../nano-states/misc";
 
@@ -19,17 +18,20 @@ export const builderPath = ({
   authToken,
   pageHash,
   mode,
+  safemode = false,
 }: {
   pageId?: string;
   authToken?: string;
   pageHash?: string;
   mode?: "preview" | "content";
-}) => {
+  safemode?: boolean;
+} = {}) => {
   return `/${searchParams({
     pageId,
     authToken,
     pageHash,
     mode,
+    safemode: safemode ? "true" : undefined,
   })}`;
 };
 
@@ -39,11 +41,16 @@ export const builderUrl = (props: {
   origin: string;
   authToken?: string;
   mode?: BuilderMode;
+  safemode?: boolean;
 }) => {
   const authServerOrigin = getAuthorizationServerOrigin(props.origin);
 
   const url = new URL(
-    builderPath({ pageId: props.pageId, authToken: props.authToken }),
+    builderPath({
+      pageId: props.pageId,
+      authToken: props.authToken,
+      safemode: props.safemode,
+    }),
     authServerOrigin
   );
 
@@ -100,11 +107,14 @@ export const loginPath = (params: {
 export const logoutPath = () => "/logout";
 export const restLogoutPath = () => "/dashboard-logout";
 
-export const userPlanSubscriptionPath = () => {
+export const planSubscriptionPath = (subscriptionId?: string) => {
   const urlSearchParams = new URLSearchParams();
   urlSearchParams.set("return_url", window.location.href);
+  if (subscriptionId) {
+    urlSearchParams.set("subscription", subscriptionId);
+  }
 
-  return `/n8n/billing_portal/sessions?${urlSearchParams.toString()}`;
+  return `/builder-payments/billing-portal/sessions?${urlSearchParams.toString()}`;
 };
 
 export const authCallbackPath = ({
@@ -145,18 +155,6 @@ export const restAssetsUploadPath = ({
   }
 
   return `/rest/assets/${name}`;
-};
-
-export const restPatchPath = () => {
-  const urlSearchParams = new URLSearchParams();
-
-  urlSearchParams.set("client-version", publicStaticEnv.VERSION);
-
-  const urlSearchParamsString = urlSearchParams.toString();
-
-  return `/rest/patch${
-    urlSearchParamsString ? `?${urlSearchParamsString}` : ""
-  }`;
 };
 
 export const getCanvasUrl = () => {

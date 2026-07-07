@@ -1,3 +1,5 @@
+import { insertWebstudioElementAt } from "~/shared/instance-utils/insert";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import { useState } from "react";
 import { matchSorter } from "match-sorter";
 import { computed } from "nanostores";
@@ -7,6 +9,7 @@ import {
   type WsComponentMeta,
   componentCategories,
   collectionComponent,
+  documentTypes,
   elementComponent,
 } from "@webstudio-is/sdk";
 import {
@@ -30,18 +33,15 @@ import {
   $registeredComponentMetas,
   $registeredTemplates,
 } from "~/shared/nano-states";
-import {
-  getComponentTemplateData,
-  insertWebstudioElementAt,
-  insertWebstudioFragmentAt,
-} from "~/shared/instance-utils";
+import { getComponentTemplateData } from "~/shared/instance-utils/insert";
 import type { Publish } from "~/shared/pubsub";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage } from "~/shared/nano-states";
 import { mapGroupBy } from "~/shared/shim";
 import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
+import { titleCase } from "title-case";
 
 type Meta = {
   name: string;
@@ -109,7 +109,7 @@ const filterAndGroupComponents = ({
   metasByCategory,
   search,
 }: {
-  documentType?: "html" | "xml";
+  documentType?: (typeof documentTypes)[number];
   metasByCategory: Map<string, Array<Meta>>;
   search: string;
 }): Groups => {
@@ -264,7 +264,7 @@ export const ComponentsPanel = ({
       <ScrollArea ref={draggableContainerRef}>
         {groups.map((group) => (
           <CollapsibleSection
-            label={group.category}
+            label={titleCase(group.category)}
             key={group.category}
             fullWidth
           >

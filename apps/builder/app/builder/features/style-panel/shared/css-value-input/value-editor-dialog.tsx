@@ -10,7 +10,7 @@ import type {
   InvalidValue,
   StyleValue,
 } from "@webstudio-is/css-engine";
-import { EditorDialog } from "~/builder/shared/code-editor-base";
+import { EditorDialog } from "~/shared/code-editor-base";
 import { CssFragmentEditorContent } from "../css-fragment";
 import type {
   CssValueInputValue,

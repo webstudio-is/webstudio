@@ -6,7 +6,7 @@ import {
   elementComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
-  WsComponentMeta,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   $,
@@ -41,7 +41,7 @@ const isValidJSX = (code: string): boolean => {
         ts.ScriptKind.TSX
       );
     }
-    return undefined;
+    return;
   };
 
   const program = ts.createProgram(
@@ -381,7 +381,7 @@ test("generate jsx children with expression", () => {
   ).toEqual(
     validateJSX(
       clear(`
-      {'Hello ' + myvar}
+      {renderText('Hello ' + myvar)}
     `)
     )
   );
@@ -462,13 +462,67 @@ test("generate collection component as map", () => {
   ).toEqual(
     validateJSX(
       clear(`
-    {data?.map?.((element: any, index: number) =>
+    {Object.entries(
+      // @ts-ignore
+      data ?? {}
+    ).map(([_key, element]: any) => {
+      const index = Array.isArray(data) ? Number(_key) : _key;
+      return (
     <Fragment key={index}>
     <Label />
     <Button
     aria-label={element} />
     </Fragment>
-    )}
+    )
+    })
+    }
+    `)
+    )
+  );
+});
+
+test("generate collection component with itemKey", () => {
+  const data = new Variable("data", { a: "apple", b: "orange" });
+  const element = new Parameter("element");
+  const key = new Parameter("key");
+  expect(
+    generateJsxChildren({
+      scope: createScope(),
+      metas: new Map(),
+      children: [{ type: "id", value: "list" }],
+      usedDataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      ...renderData(
+        <ws.collection
+          ws:id="list"
+          data={expression`${data}`}
+          item={element}
+          itemKey={key}
+        >
+          <$.Label>{expression`${key}`}</$.Label>
+          <$.Button aria-label={expression`${element}`}></$.Button>
+        </ws.collection>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+    {Object.entries(
+      // @ts-ignore
+      data ?? {}
+    ).map(([_key, element]: any) => {
+      const key = Array.isArray(data) ? Number(_key) : _key;
+      return (
+    <Fragment key={key}>
+    <Label>
+    {renderText(key)}
+    </Label>
+    <Button
+    aria-label={element} />
+    </Fragment>
+    )
+    })
+    }
     `)
     )
   );
@@ -640,10 +694,17 @@ test("avoid generating collection parameter variable as state", () => {
     const Page = () => {
     let [data, set$data] = useVariableState<any>(["apple","orange","mango"])
     return <Body>
-    {data?.map?.((element: any, index: number) =>
+    {Object.entries(
+      // @ts-ignore
+      data ?? {}
+    ).map(([_key, element]: any) => {
+      const index = Array.isArray(data) ? Number(_key) : _key;
+      return (
     <Fragment key={index}>
     </Fragment>
-    )}
+    )
+    })
+    }
     </Body>
     }
     `)
@@ -839,21 +900,28 @@ test("generate conditional collection", () => {
       ),
     })
   ).toMatchInlineSnapshot(`
-"const Page = () => {
-let [condition, set$condition] = useVariableState<any>(false)
-return <Body>
-{(condition) &&
-<>
-{[]?.map?.((collectionItem: any, index: number) =>
-<Fragment key={index}>
-</Fragment>
-)}
-</>
-}
-</Body>
-}
-"
-`);
+    "const Page = () => {
+    let [condition, set$condition] = useVariableState<any>(false)
+    return <Body>
+    {(condition) &&
+    <>
+    {Object.entries(
+      // @ts-ignore
+      [] ?? {}
+    ).map(([_key, collectionItem]: any) => {
+      const index = Array.isArray([]) ? Number(_key) : _key;
+      return (
+    <Fragment key={index}>
+    </Fragment>
+    )
+    })
+    }
+    </>
+    }
+    </Body>
+    }
+    "
+  `);
 });
 
 test("generate conditional body", () => {
@@ -1080,13 +1148,13 @@ test("generate unset variables as undefined", () => {
   ).toEqual(
     validateJSX(
       clear(`
-      const Page = () => {
-      return <Body>
-      <Box>
-      {undefined + undefined}
-      </Box>
-      </Body>
-      }
+    const Page = () => {
+    return <Body>
+    <Box>
+    {renderText(undefined + undefined)}
+    </Box>
+    </Body>
+    }
     `)
     )
   );
@@ -1119,7 +1187,7 @@ test("generate global variables", () => {
       let [rootVariable, set$rootVariable] = useVariableState<any>("root")
       return <Body>
       <Box>
-      {rootVariable}
+      {renderText(rootVariable)}
       </Box>
       </Body>
       }

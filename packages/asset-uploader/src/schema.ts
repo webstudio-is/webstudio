@@ -2,7 +2,7 @@ import { z } from "zod";
 import { MAX_UPLOAD_SIZE } from "./constants";
 import { toBytes } from "./utils/to-bytes";
 
-export const MaxSize: z.ZodEffects<
+export const maxSize: z.ZodEffects<
   z.ZodDefault<z.ZodString>,
   number,
   string | undefined
@@ -12,7 +12,7 @@ export const MaxSize: z.ZodEffects<
   // user inputs the max value in mb and we transform it to bytes
   .transform(toBytes);
 
-export const MaxAssets: z.ZodEffects<
+export const maxAssets: z.ZodEffects<
   z.ZodDefault<z.ZodString>,
   number,
   string | undefined

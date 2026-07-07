@@ -32,6 +32,7 @@ import {
   lintExpression,
   allowedStringMethods,
   allowedArrayMethods,
+  getExpressionValueKind,
 } from "@webstudio-is/sdk";
 import {
   EditorContent,
@@ -39,18 +40,22 @@ import {
   EditorDialogButton,
   EditorDialogControl,
   type EditorApi,
-} from "./code-editor-base";
+  normalizeEditorValue,
+} from "~/shared/code-editor-base";
 import {
   decodeDataVariableName,
   encodeDataVariableName,
   restoreExpressionVariables,
   unsetExpressionVariables,
-} from "~/shared/data-variables";
+} from "@webstudio-is/project-build/runtime/data";
 
 export type { EditorApi };
 
-export const formatValue = (value: unknown) => {
+export const formatValue = (value: unknown): string => {
   try {
+    if (value === undefined) {
+      return "";
+    }
     if (Array.isArray(value)) {
       // format arrays as multiline
       return JSON.stringify(value, null, 2);
@@ -60,7 +65,7 @@ export const formatValue = (value: unknown) => {
       // syntax highlighting as expression instead of block
       return `(${JSON.stringify(value, null, 2)})`;
     }
-    return JSON.stringify(value);
+    return JSON.stringify(value) ?? "";
   } catch {
     // show nothing when value is invalid
     return "";
@@ -103,11 +108,50 @@ const VariablesData = Facet.define<{
 
 const Identifier = /^[\p{L}$][\p{L}\p{N}$]*$/u;
 
+type ExpressionCompletionOption = {
+  label: string;
+  displayLabel?: string;
+  detail: string;
+  type?: "method" | "property";
+  insertText?: string;
+};
+
+type CompletionPath =
+  | { path: string[]; name: string; expression?: undefined }
+  | { path: []; name: string; expression: string };
+
+const createMethodCompletionOptions = ({
+  methods,
+  pathName,
+  detail,
+}: {
+  methods: ReadonlySet<string>;
+  pathName: string;
+  detail: string;
+}): Array<ExpressionCompletionOption> => {
+  const query = pathName.toLowerCase();
+  const options: Array<ExpressionCompletionOption> = [];
+
+  for (const method of methods) {
+    if (method.toLowerCase().includes(query)) {
+      options.push({
+        label: method,
+        displayLabel: `${method}()`,
+        detail,
+        type: "method",
+        insertText: `${method}()`,
+      });
+    }
+  }
+
+  return options;
+};
+
 const pathFor = (
   read: (node: SyntaxNode) => string,
   member: SyntaxNode,
   name: string
-) => {
+): CompletionPath | undefined => {
   const path: string[] = [];
   // traverse from current node to the root variable
   for (;;) {
@@ -152,12 +196,22 @@ const pathFor = (
 /// it will return `{path: [], name: "x"}`. When not in a property or
 /// name, it will return undefined if `context.explicit` is false, and
 /// `{path: [], name: ""}` otherwise.
-const completionPath = (
+export const completionPath = (
   context: CompletionContext
-): { path: string[]; name: string } | undefined => {
+): CompletionPath | undefined => {
   const read = (node: SyntaxNode) =>
     context.state.doc.sliceString(node.from, node.to);
   const inner = syntaxTree(context.state).resolveInner(context.pos, -1);
+  const pathForMemberExpression = (member: SyntaxNode, name: string) => {
+    const path = pathFor(read, member, name);
+    if (path) {
+      return path;
+    }
+    const object = member.firstChild;
+    if (object) {
+      return { path: [] as [], name, expression: read(object) };
+    }
+  };
   // suggest global variable name when user start completion explicitly
   if (inner.name === "Script") {
     if (context.explicit) {
@@ -171,16 +225,150 @@ const completionPath = (
   }
   // suggest property name when enter `object.`
   if (inner.name === "." && inner.parent?.name === "MemberExpression") {
-    return pathFor(read, inner.parent, "");
+    return pathForMemberExpression(inner.parent, "");
   }
   // complete property when enter "object.prope"
   if (
     inner.name === "PropertyName" &&
     inner.parent?.name === "MemberExpression"
   ) {
-    return pathFor(read, inner.parent, read(inner));
+    return pathForMemberExpression(inner.parent, read(inner));
   }
   return;
+};
+
+export const getCompletionTarget = ({
+  expression,
+  path,
+  scope,
+}: CompletionPath & {
+  scope: Scope;
+}) => {
+  if (expression) {
+    const valueKind = getExpressionValueKind({
+      expression,
+      variableValues: scope,
+    });
+    if (valueKind === "array") {
+      return [];
+    }
+    if (valueKind === "string") {
+      return "";
+    }
+    return;
+  }
+
+  let target: unknown = scope;
+  for (const step of path) {
+    target = (target as Record<string, unknown> | undefined)?.[step];
+    if (target == null) {
+      return;
+    }
+  }
+  return target;
+};
+
+/**
+ * Generate completion options for object properties and array/string methods.
+ * Exported for testing.
+ */
+export const generateCompletionOptions = ({
+  target,
+  pathName,
+  pathLength,
+}: {
+  target: unknown;
+  pathName: string;
+  pathLength: number;
+}): Array<ExpressionCompletionOption> => {
+  const options: Array<ExpressionCompletionOption> = [];
+
+  // Add object properties
+  if (typeof target === "object" && target !== null) {
+    for (const [name, value] of Object.entries(target)) {
+      options.push({
+        label: name,
+        detail: formatValuePreview(value),
+      });
+    }
+  }
+
+  // Add string/array methods and properties for nested paths
+  if (pathLength > 0) {
+    const isString = typeof target === "string";
+    const isArray = Array.isArray(target);
+
+    if (isString) {
+      options.push(
+        ...createMethodCompletionOptions({
+          methods: allowedStringMethods,
+          pathName,
+          detail: "string method",
+        })
+      );
+    }
+
+    if (isArray) {
+      // Add length property
+      if ("length".toLowerCase().includes(pathName.toLowerCase())) {
+        options.push({
+          label: "length",
+          detail: `${target.length}`,
+          type: "property",
+        });
+      }
+
+      options.push(
+        ...createMethodCompletionOptions({
+          methods: allowedArrayMethods,
+          pathName,
+          detail: "array method",
+        })
+      );
+    }
+  }
+
+  return options;
+};
+
+export const getCompletionReplacement = ({
+  label,
+  insertText,
+  type,
+  pathLength,
+  from,
+  to,
+}: {
+  label: string;
+  insertText?: string;
+  type?: ExpressionCompletionOption["type"];
+  pathLength: number;
+  from: number;
+  to: number;
+}) => {
+  if (type === "method") {
+    const textToInsert =
+      insertText ?? (label.endsWith("()") ? label : `${label}()`);
+    return { text: textToInsert, from, to };
+  }
+
+  const textToInsert = insertText ?? label;
+
+  // complete valid js identifier or top level variable without quotes
+  if (Identifier.test(textToInsert) || pathLength === 0) {
+    return { text: textToInsert, from, to };
+  }
+
+  return {
+    // `param with spaces` -> ["param with spaces"]
+    // `0` -> [0]
+    text: `[${/^\d+$/.test(textToInsert) ? textToInsert : JSON.stringify(textToInsert)}]`,
+    // remove dot when autocomplete computed member expression
+    // variable.
+    // variable["name"]
+    from: from - 1,
+    to,
+  };
 };
 
 // Defines a completion source that completes from the given scope
@@ -192,47 +380,50 @@ const scopeCompletionSource: CompletionSource = (context) => {
   if (path === undefined) {
     return null;
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let target: any = scope;
-  for (const step of path.path) {
-    target = target?.[step];
-    if (target == null) {
-      return null;
-    }
+  const target = getCompletionTarget({ ...path, scope });
+  if (target === undefined) {
+    return null;
   }
-  let options: Completion[] = [];
-  if (typeof target === "object" && target !== null) {
-    options = Object.entries(target).map(([name, value]) => ({
+
+  // Generate base completion options using exported function
+  const baseOptions = generateCompletionOptions({
+    target,
+    pathName: path.name,
+    pathLength: path.expression ? 1 : path.path.length,
+  });
+
+  // Convert to CodeMirror Completion format with apply functions
+  let options: Completion[] = baseOptions.map((option) => {
+    const name = option.label;
+    return {
       label: name,
-      displayLabel: decodeDataVariableName(name),
-      detail: formatValuePreview(value),
+      displayLabel: option.displayLabel ?? decodeDataVariableName(name),
+      detail: option.detail,
+      type: option.type,
       apply: (view, completion, from, to) => {
-        // complete valid js identifier or top level variable without quotes
-        if (Identifier.test(name) || path.path.length === 0) {
-          // complete with dot
-          view.dispatch({
-            ...insertCompletionText(view.state, name, from, to),
-            annotations: pickedCompletion.of(completion),
-          });
-        } else {
-          // complete with computed member expression
-          view.dispatch({
-            ...insertCompletionText(
-              view.state,
-              // `param with spaces` -> ["param with spaces"]
-              // `0` -> [0]
-              `[${/^\d+$/.test(name) ? name : JSON.stringify(name)}]`,
-              // remove dot when autocomplete computed member expression
-              // variable.
-              // variable["name"]
-              from - 1,
-              to
-            ),
-            annotations: pickedCompletion.of(completion),
-          });
-        }
+        const replacement = getCompletionReplacement({
+          label: name,
+          insertText: option.insertText,
+          type: option.type,
+          pathLength: path.expression ? 1 : path.path.length,
+          from,
+          to,
+        });
+        view.dispatch({
+          ...insertCompletionText(
+            view.state,
+            replacement.text,
+            replacement.from,
+            replacement.to
+          ),
+          annotations: pickedCompletion.of(completion),
+        });
       },
-    }));
+    };
+  });
+
+  // Sort options if target is an object
+  if (typeof target === "object" && target !== null) {
     options = matchSorter(options, path.name, {
       keys: [(option) => option.displayLabel ?? option.label],
       baseSort: (left, right) => {
@@ -248,55 +439,6 @@ const scopeCompletionSource: CompletionSource = (context) => {
         return leftIndex - rightIndex;
       },
     });
-  }
-
-  // Add safe string and array method completions
-  if (path.path.length > 0) {
-    const methodOptions: Completion[] = [];
-
-    // Determine if target is likely a string or array based on its value
-    const isString = typeof target === "string";
-    const isArray = Array.isArray(target);
-
-    // Add string methods only if target is a string
-    if (isString) {
-      for (const method of allowedStringMethods) {
-        if (method.toLowerCase().includes(path.name.toLowerCase())) {
-          methodOptions.push({
-            label: `${method}()`,
-            detail: "string method",
-            type: "method",
-            apply: (view, completion, from, to) => {
-              view.dispatch({
-                ...insertCompletionText(view.state, `${method}()`, from, to),
-                annotations: pickedCompletion.of(completion),
-              });
-            },
-          });
-        }
-      }
-    }
-
-    // Add array methods if target is an array
-    if (isArray) {
-      for (const method of allowedArrayMethods) {
-        if (method.toLowerCase().includes(path.name.toLowerCase())) {
-          methodOptions.push({
-            label: `${method}()`,
-            detail: "array method",
-            type: "method",
-            apply: (view, completion, from, to) => {
-              view.dispatch({
-                ...insertCompletionText(view.state, `${method}()`, from, to),
-                annotations: pickedCompletion.of(completion),
-              });
-            },
-          });
-        }
-      }
-    }
-
-    options = [...options, ...methodOptions];
   }
 
   return {
@@ -409,6 +551,7 @@ const expressionLinter = linter((view) => {
   return lintExpression({
     expression: view.state.doc.toString(),
     availableVariables: new Set(Object.keys(scope)),
+    variableValues: scope,
   });
 });
 
@@ -435,10 +578,11 @@ export const ExpressionEditor = ({
   color?: "error";
   autoFocus?: boolean;
   readOnly?: boolean;
-  value: string;
+  value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
 }) => {
+  const normalizedValue = normalizeEditorValue(value);
   const { nameById, idByName } = useMemo(() => {
     const nameById = new Map();
     const idByName = new Map();
@@ -453,10 +597,10 @@ export const ExpressionEditor = ({
   }, [aliases]);
   const expressionWithUnsetVariables = useMemo(() => {
     return unsetExpressionVariables({
-      expression: value,
+      expression: normalizedValue,
       unsetNameById: nameById,
     });
-  }, [value, nameById]);
+  }, [normalizedValue, nameById]);
   const scopeWithUnsetVariables = useMemo(() => {
     const newScope: typeof scope = {};
     for (const [identifier, value] of Object.entries(scope)) {
@@ -525,14 +669,14 @@ export const ExpressionEditor = ({
       readOnly={readOnly}
       autoFocus={autoFocus}
       value={expressionWithUnsetVariables}
-      onChange={(newValue) => {
+      onChange={(newValue: string) => {
         const expressionWithRestoredVariables = restoreExpressionVariables({
           expression: newValue,
           maskedIdByName: idByName,
         });
         onChange(expressionWithRestoredVariables);
       }}
-      onChangeComplete={(newValue) => {
+      onChangeComplete={(newValue: string) => {
         const expressionWithRestoredVariables = restoreExpressionVariables({
           expression: newValue,
           maskedIdByName: idByName,

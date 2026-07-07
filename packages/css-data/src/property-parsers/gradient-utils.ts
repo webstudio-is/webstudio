@@ -122,6 +122,42 @@ export const getColor = (
 export const isColorStop = (node: csstree.CssNode): boolean =>
   getColor(node) !== undefined;
 
+export const withoutWhitespaceNodes = (
+  nodes: csstree.CssNode[]
+): csstree.CssNode[] => {
+  return nodes.filter((node) => node.type !== "WhiteSpace");
+};
+
+export const parseGradientStopFromParts = (
+  nodes: csstree.CssNode[]
+): GradientStop | undefined => {
+  const colorNode = nodes.find(isColorStop);
+  if (colorNode === undefined) {
+    return;
+  }
+
+  const color = getColor(colorNode);
+  if (color === undefined) {
+    return;
+  }
+
+  const colorIndex = nodes.indexOf(colorNode);
+  const positionNode = nodes[colorIndex + 1];
+  const hintNode = nodes[colorIndex + 2];
+
+  return {
+    color,
+    position: mapLengthPercentageOrVar(positionNode),
+    hint: mapLengthPercentageOrVar(hintNode),
+  };
+};
+
+export const parseGradientHintFromParts = (
+  nodes: csstree.CssNode[]
+): GradientStop["hint"] | undefined => {
+  return mapLengthPercentageOrVar(nodes[0]);
+};
+
 export const formatGradientStops = (stops: GradientStop[]): string =>
   stops
     .map((stop) => {

@@ -3,13 +3,12 @@ import { useEffect } from "react";
 import { initialBreakpoints, coreMetas } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import {
-  $breakpoints,
-  $pages,
-  $registeredComponentMetas,
-} from "~/shared/nano-states";
-import { $awareness } from "~/shared/awareness";
-import { registerContainers } from "~/shared/sync";
+import { $registeredComponentMetas } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $pages } from "~/shared/sync/data-stores";
+import { $selectedPageId } from "~/shared/nano-states";
+import { registerContainers } from "~/shared/sync/sync-stores";
+import { StorySection } from "@webstudio-is/design-system";
 import { CommandPanel as CommandPanelComponent } from "./command-panel";
 import { openCommandPanel } from "./command-state";
 
@@ -39,7 +38,7 @@ $breakpoints.set(
 );
 
 const pages = createDefaultPages({ rootInstanceId: "" });
-pages.pages.push({
+pages.pages.set("page2", {
   id: "page2",
   path: "",
   name: "Second Page",
@@ -47,7 +46,7 @@ pages.pages.push({
   title: "",
   meta: {},
 });
-pages.pages.push({
+pages.pages.set("page3", {
   id: "page3",
   path: "",
   name: "Thrid Page",
@@ -56,33 +55,15 @@ pages.pages.push({
   meta: {},
 });
 $pages.set(pages);
-$awareness.set({ pageId: pages.homePage.id });
+$selectedPageId.set(pages.homePageId);
 
 export const CommandPanel: StoryFn = () => {
   useEffect(() => {
-    const controller = new AbortController();
-    addEventListener(
-      "keydown",
-      (event) => {
-        if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-          openCommandPanel();
-        }
-      },
-      { signal: controller.signal }
-    );
-    return () => {
-      controller.abort();
-    };
+    openCommandPanel();
   }, []);
   return (
-    <>
-      <button onClick={openCommandPanel}>Open command panel</button>
-      <br />
-      <input
-        defaultValue="Press meta+k to open command panel"
-        style={{ width: 300 }}
-      />
+    <StorySection title="Command Panel">
       <CommandPanelComponent />
-    </>
+    </StorySection>
   );
 };

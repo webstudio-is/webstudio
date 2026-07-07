@@ -11,6 +11,7 @@ import { canvasApi } from "~/shared/canvas-api";
 import { $detectedFontsWeights } from "~/shared/nano-states";
 import { useComputedStyles } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 
 const allFontWeights = Object.keys(fontWeights) as Array<FontWeight>;
 
@@ -22,6 +23,7 @@ const labels = new Map(
 );
 
 export const FontWeightControl = () => {
+  const readonly = useReadonly();
   // We need the font family to determine which font weights are available
   const [fontWeight, fontFamily] = useComputedStyles([
     "font-weight",
@@ -50,6 +52,7 @@ export const FontWeightControl = () => {
 
   return (
     <Select
+      disabled={readonly}
       // show empty field instead of radix placeholder
       // like css value input does
       placeholder=""

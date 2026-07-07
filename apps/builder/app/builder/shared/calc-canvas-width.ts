@@ -4,14 +4,11 @@ import type { Breakpoint } from "@webstudio-is/sdk";
 import {
   groupBreakpoints,
   isBaseBreakpoint,
-  minCanvasWidth,
-} from "~/shared/breakpoints";
+} from "@webstudio-is/project-build/runtime/breakpoints";
+import { minCanvasWidth } from "~/shared/breakpoints-utils";
 import { $workspaceRect, $canvasWidth } from "~/builder/shared/nano-states";
-import {
-  $breakpoints,
-  $isPreviewMode,
-  $selectedBreakpoint,
-} from "~/shared/nano-states";
+import { $isPreviewMode, $selectedBreakpoint } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 
 const defaultWidth = 320;
 
@@ -65,6 +62,12 @@ export const calcCanvasWidth = ({
   workspaceWidth: number;
   canvasWidth?: number;
 }) => {
+  // Condition-based breakpoints (e.g., orientation:portrait, hover:hover) don't have width ranges
+  // Return undefined so the width will be defined by current canvas width
+  if (selectedBreakpoint.condition !== undefined) {
+    return;
+  }
+
   // When user has resized the canvas to a custom value, we want to keep it.
   if (isCustomCanvasWidth(breakpoints, selectedBreakpoint, canvasWidth)) {
     return canvasWidth;
@@ -79,26 +82,26 @@ export const calcCanvasWidth = ({
       return workspaceWidth;
     }
 
-    const grouped = groupBreakpoints(breakpoints).filter(
-      ({ minWidth, maxWidth }) => {
-        // We don't want to grow the canvas beyond the workspace width.
-        if (minWidth && minWidth < workspaceWidth) {
-          return true;
-        }
-        // Max width can not be smaller than the minimum canvas width.
-        if (maxWidth && maxWidth > minCanvasWidth) {
-          return true;
-        }
+    const grouped = groupBreakpoints(breakpoints);
+    // Only consider width-based breakpoints for canvas sizing
+    const filtered = grouped.widthBased.filter(({ minWidth, maxWidth }) => {
+      // We don't want to grow the canvas beyond the workspace width.
+      if (minWidth && minWidth < workspaceWidth) {
+        return true;
       }
-    );
-    let lowestMinWidth = grouped
+      // Max width can not be smaller than the minimum canvas width.
+      if (maxWidth && maxWidth > minCanvasWidth) {
+        return true;
+      }
+    });
+    let lowestMinWidth = filtered
       .filter(({ minWidth }) => minWidth !== undefined)
       .at(-1)?.minWidth;
 
     lowestMinWidth =
       lowestMinWidth === undefined ? workspaceWidth : lowestMinWidth - 1;
 
-    let highestMaxWidth = grouped
+    let highestMaxWidth = filtered
       .filter(({ maxWidth }) => maxWidth !== undefined)
       .at(0)?.maxWidth;
 

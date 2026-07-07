@@ -6,6 +6,13 @@ export const AuthorizationError = customErrorFactory(
   }
 );
 
+export const PlanRequiredError = customErrorFactory(function PlanRequiredError(
+  message: string
+) {
+  this.message = message;
+  this.code = "PLAN_REQUIRED";
+});
+
 /**
  * Standard response for any client-server communication with an error.
  */

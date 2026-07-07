@@ -5,7 +5,8 @@ import {
   type WebstudioComponentSystemProps,
 } from "@webstudio-is/react-sdk";
 import * as React from "react";
-import { $isDesignMode, $selectedInstanceSelector } from "~/shared/nano-states";
+import { $isDesignMode } from "~/shared/nano-states";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
 
 export const BlockTemplate = React.forwardRef<
   HTMLDivElement,

@@ -5,7 +5,7 @@ import { tags } from "@webstudio-is/sdk";
 
 const cssFile = new URL("./preflight.css", import.meta.url);
 const css = await readFile(cssFile, "utf8");
-const parsed = parseCss(css);
+const { styles: parsed } = parseCss(css, new Map());
 const result: Record<string, { property: CssProperty; value: StyleValue }[]> =
   {};
 for (const { selector, breakpoint, ...styleDecl } of parsed) {

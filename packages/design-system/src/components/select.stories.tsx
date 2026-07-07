@@ -1,128 +1,166 @@
-import type { StoryFn } from "@storybook/react";
 import { GapVerticalIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { NestedIconLabel } from "./nested-icon-label";
-import { Select, type SelectOption } from "./select";
+import { Select as SelectComponent, type SelectOption } from "./select";
+import { Flex } from "./flex";
+import { Text } from "./text";
+import { StorySection } from "./storybook";
 
 export default {
   title: "Select",
-  component: Select,
+  component: SelectComponent,
 };
 
-export const Simple: StoryFn<typeof Select> = () => {
-  const options = ["Apple", "Banana", "Orange"];
-  const [value, setValue] = useState(options[0]);
-  return (
-    <Select name="fruit" options={options} value={value} onChange={setValue} />
+const fruits = ["Apple", "Banana", "Orange"];
+
+const emojiItems = {
+  apple: { icon: "🍎" },
+  banana: { icon: "🍌" },
+  orange: { icon: "🍊" },
+  pear: { icon: "🍐" },
+  grape: { icon: "🍇" },
+} as const;
+
+const descriptionOptions = [
+  { label: "Apple", description: "An apple fruit" },
+  { label: "Banana", description: "A banana fruit" },
+  {
+    label: "Orange",
+    description:
+      "An orange fruit An orange fruit An orange fruit An orange fruit",
+  },
+  { label: "Pear", description: "A pear fruit" },
+  { label: "Grape", description: "A grape fruit" },
+];
+
+export const Select = () => {
+  const [simple, setSimple] = useState(fruits[0]);
+  const emojiOptions = Object.keys(emojiItems);
+  const [emoji, setEmoji] = useState(emojiOptions[0]);
+  const [desc, setDesc] = useState<(typeof descriptionOptions)[number]>(
+    descriptionOptions[0]
   );
-};
-
-export const Placeholder: StoryFn<typeof Select> = () => {
-  return (
-    <Select
-      placeholder="Select fruit"
-      options={["Apple", "Banana", "Orange"]}
-    />
-  );
-};
-
-export const Disabled: StoryFn<typeof Select> = () => {
-  return <Select disabled options={["Apple", "Banana", "Orange"]} />;
-};
-
-export const FullWidth: StoryFn<typeof Select> = () => {
-  return (
-    <div style={{ width: 200 }}>
-      <Select
-        name="fruit"
-        options={["Apple", "Banana", "Orange Orange Orange Orange Orange"]}
-        defaultValue="Apple"
-        fullWidth
-      />
-    </div>
-  );
-};
-
-export const WithNestedLabelIcon: StoryFn<typeof Select> = () => {
-  return (
-    <Select
-      prefix={
-        <NestedIconLabel>
-          <GapVerticalIcon />
-        </NestedIconLabel>
-      }
-      name="fruit"
-      options={["Apple", "Banana", "Orange"]}
-      defaultValue="Apple"
-    />
-  );
-};
-
-export const WithComplexItems: StoryFn<typeof Select> = () => {
-  const items = {
-    apple: { icon: "🍎" },
-    banana: { icon: "🍌" },
-    orange: { icon: "🍊" },
-    pear: { icon: "🍐" },
-    grape: { icon: "🍇" },
-  } as const;
-  const options = Object.keys(items);
-  const [value, setValue] = useState(options[0]);
-  const getLabel = (option: SelectOption) =>
-    value && option in items
-      ? `${items[option as keyof typeof items]?.icon} ${option}`
-      : "No fruit selected";
-  return (
-    <Select
-      name="fruit"
-      options={options}
-      value={value}
-      onChange={setValue}
-      getLabel={getLabel}
-    />
-  );
-};
-
-export const WithDescriptions: StoryFn<typeof Select> = () => {
-  const options = [
-    { label: "Apple", description: "An apple fruit" },
-    { label: "Banana", description: "A banana fruit" },
-    {
-      label: "Orange",
-      description:
-        "An orange fruit An orange fruit An orange fruit An orange fruit",
-    },
-    { label: "Pear", description: "A pear fruit" },
-    { label: "Grape", description: "A grape fruit" },
-  ];
-  const [value, setValue] = useState<(typeof options)[number]>(options[0]);
-
-  return (
-    <>
-      <div style={{ height: "300px" }}></div>
-      <Select
-        name="fruit"
-        options={options}
-        value={value}
-        getValue={(value) => value.label}
-        onChange={setValue}
-        getLabel={(option) => {
-          return option.label;
-        }}
-        getDescription={(option) => {
-          return <div style={{ width: "150px" }}>{option.description}</div>;
-        }}
-      />
-    </>
-  );
-};
-
-export const Boundaries: StoryFn<typeof Select> = () => {
-  const items = Array(100)
+  const manyItems = Array(100)
     .fill(0)
-    .map((_, index) => `Item ${index}`);
-  const [value, setValue] = useState(items[0]);
+    .map((_, i) => `Item ${i}`);
+  const [boundary, setBoundary] = useState(manyItems[0]);
+
+  const getEmojiLabel = (option: SelectOption) =>
+    emoji && option in emojiItems
+      ? `${emojiItems[option as keyof typeof emojiItems]?.icon} ${option}`
+      : "No fruit selected";
+
   return (
-    <Select name="fruit" options={items} value={value} onChange={setValue} />
+    <StorySection title="Select">
+      <Flex direction="column" gap="5" css={{ maxWidth: 300 }}>
+        <Flex direction="column" gap="1">
+          <Text variant="labels">Simple</Text>
+          <SelectComponent
+            name="fruit"
+            options={fruits}
+            value={simple}
+            onChange={setSimple}
+          />
+        </Flex>
+        <Flex direction="column" gap="1">
+          <Text variant="labels">Placeholder</Text>
+          <SelectComponent placeholder="Select fruit" options={fruits} />
+        </Flex>
+        <Flex direction="column" gap="1">
+          <Text variant="labels">Disabled</Text>
+          <SelectComponent disabled options={fruits} />
+        </Flex>
+        <Flex direction="column" gap="1">
+          <Text variant="labels">Full width</Text>
+          <SelectComponent
+            name="fruit"
+            options={["Apple", "Banana", "Orange Orange Orange Orange Orange"]}
+            defaultValue="Apple"
+            fullWidth
+          />
+        </Flex>
+        <Flex direction="column" gap="1">
+          <Text variant="labels">With icon prefix</Text>
+          <SelectComponent
+            prefix={
+              <NestedIconLabel>
+                <GapVerticalIcon />
+              </NestedIconLabel>
+            }
+            name="fruit"
+            options={fruits}
+            defaultValue="Apple"
+          />
+        </Flex>
+        <Flex direction="column" gap="1">
+          <Text variant="labels">Complex items (emoji)</Text>
+          <SelectComponent
+            name="fruit"
+            options={emojiOptions}
+            value={emoji}
+            onChange={setEmoji}
+            getLabel={getEmojiLabel}
+          />
+        </Flex>
+        <Flex direction="column" gap="1">
+          <Text variant="labels">With descriptions</Text>
+          <SelectComponent
+            name="fruit"
+            options={descriptionOptions}
+            value={desc}
+            getValue={(v) => v.label}
+            onChange={setDesc}
+            getLabel={(o) => o.label}
+            getDescription={(o) => (
+              <div style={{ width: 150 }}>{o.description}</div>
+            )}
+          />
+        </Flex>
+        <Flex direction="column" gap="1">
+          <Text variant="labels">Many items (100)</Text>
+          <SelectComponent
+            name="fruit"
+            options={manyItems}
+            value={boundary}
+            onChange={setBoundary}
+          />
+        </Flex>
+      </Flex>
+    </StorySection>
+  );
+};
+
+export const WithItemHighlight = () => {
+  const [value, setValue] = useState(fruits[0]);
+  const [highlighted, setHighlighted] = useState<string | undefined>();
+  return (
+    <StorySection title="With item highlight">
+      <Flex direction="column" gap="2" style={{ maxWidth: 300 }}>
+        <Text variant="labels">Highlighted: {highlighted ?? "none"}</Text>
+        <SelectComponent
+          options={fruits}
+          value={value}
+          onChange={setValue}
+          onItemHighlight={setHighlighted}
+        />
+      </Flex>
+    </StorySection>
+  );
+};
+
+export const ControlledOpen = () => {
+  const [open, setOpen] = useState(false);
+  return (
+    <StorySection title="Controlled open">
+      <Flex direction="column" gap="2" style={{ maxWidth: 300 }}>
+        <Text variant="labels">Open: {String(open)}</Text>
+        <SelectComponent
+          options={fruits}
+          defaultValue="Apple"
+          open={open}
+          onOpenChange={setOpen}
+        />
+      </Flex>
+    </StorySection>
   );
 };

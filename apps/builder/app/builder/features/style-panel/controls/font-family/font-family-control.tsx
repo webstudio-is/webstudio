@@ -11,10 +11,11 @@ import { toValue } from "@webstudio-is/css-engine";
 import { UploadIcon } from "@webstudio-is/icons";
 import { keywordValues, parseCssValue } from "@webstudio-is/css-data";
 import { FontsManager } from "~/builder/shared/fonts-manager";
-import { useAssets } from "~/builder/shared/assets";
+import { useAssets, AssetUpload } from "~/builder/shared/assets";
 import { toItems } from "~/builder/shared/fonts-manager";
 import { useComputedStyleDecl } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 
 type Item = { value: string; label?: string };
 
@@ -41,6 +42,7 @@ const matchOrSuggestToCreate = (
 };
 
 export const FontFamilyControl = () => {
+  const readonly = useReadonly();
   const fontFamily = useComputedStyleDecl("font-family");
   const value = fontFamily.cascadedValue;
   const setValue = setProperty("font-family");
@@ -65,10 +67,12 @@ export const FontFamilyControl = () => {
   return (
     <Flex>
       <Combobox<Item>
+        disabled={readonly}
         suffix={
           <FloatingPanel
             placement="left-start"
             title="Fonts"
+            titleSuffix={readonly ? undefined : <AssetUpload type="font" />}
             onOpenChange={setIsFontMangerOpen}
             content={
               <FontsManager
@@ -79,10 +83,9 @@ export const FontFamilyControl = () => {
               />
             }
           >
-            <FontsManagerButton />
+            <FontsManagerButton disabled={readonly} />
           </FloatingPanel>
         }
-        defaultHighlightedIndex={0}
         getItems={() => items}
         itemToString={(item) => item?.label ?? item?.value ?? ""}
         onItemHighlight={(item) => {

@@ -17,7 +17,7 @@ import { generateWebstudioComponent } from "@webstudio-is/react-sdk";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
 
 const WS_NAMESPACE = "ws";
-const BASE_NAMESPACE = "@webstudio-is/sdk-components-react";
+const BASE_NAMESPACE = "@webstudio-is/sdk-components-react/components";
 
 const generateComponentImports = ({
   scope,

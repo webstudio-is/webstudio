@@ -1,14 +1,23 @@
 import { createRecursiveProxy } from "@trpc/server/shared";
 import invariant from "tiny-invariant";
 import { toast } from "@webstudio-is/design-system";
-import { uploadAssets } from "~/builder/shared/assets/use-assets";
+import { uploadAssets } from "~/builder/shared/assets/upload-assets";
+import { showTokenConflictDialog } from "./token-conflict-dialog";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
 
 type ToastHandler = (message: string) => void;
 
+const isSafeMode = (() => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return new URLSearchParams(window.location.search).get("safemode") === "true";
+})();
+
 const _builderApi = {
   isInitialized: () => true,
+  isSafeMode: () => isSafeMode,
   toast: {
     info: toast.info as ToastHandler,
     warn: toast.warn as ToastHandler,
@@ -23,6 +32,7 @@ const _builderApi = {
 
     return new Map([...urlToIds.entries()].map(([url, id]) => [url.href, id]));
   },
+  showTokenConflictDialog,
 };
 
 declare global {

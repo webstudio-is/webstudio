@@ -1,28 +1,16 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-} from "@remix-run/server-runtime";
-import type { Asset } from "@webstudio-is/sdk";
-import { MaxAssets } from "@webstudio-is/asset-uploader";
-import {
-  loadAssetsByProject,
-  createUploadName,
-} from "@webstudio-is/asset-uploader/index.server";
+import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
+import { createUploadName } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
-import env from "~/env/env.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { parseError } from "~/shared/error/error-parse";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 
-export const loader = async ({
-  params,
-  request,
-}: LoaderFunctionArgs): Promise<Array<Asset>> => {
-  if (params.projectId === undefined) {
-    throw new Error("Project id undefined");
-  }
-  const context = await createContext(request);
-  return await loadAssetsByProject(params.projectId, context);
+export const loader = async () => {
+  return json(
+    { errors: "Method not allowed" },
+    { status: 405, headers: privateNoStoreResponseHeaders }
+  );
 };
 
 export const action = async (props: ActionFunctionArgs) => {
@@ -36,30 +24,40 @@ export const action = async (props: ActionFunctionArgs) => {
 
     if (request.method === "POST") {
       const formData = await request.formData();
-      const projectId = formData.get("projectId") as string;
-      const type = formData.get("type") as string;
-      const filename = formData.get("filename") as string;
-      if (projectId === null || type === null || filename === null) {
+      const assetId = formData.get("assetId");
+      const projectId = formData.get("projectId");
+      const type = formData.get("type");
+      const filename = formData.get("filename");
+      if (
+        typeof assetId !== "string" ||
+        typeof projectId !== "string" ||
+        typeof type !== "string" ||
+        typeof filename !== "string"
+      ) {
         throw Error("Project id, asset id or filename are missing");
       }
       const name = await createUploadName(
         {
+          assetId,
           projectId,
           type,
           filename,
-          maxAssetsPerProject: MaxAssets.parse(env.MAX_ASSETS_PER_PROJECT),
         },
         context
       );
-      return {
-        name,
-      };
+      return json({ name }, { headers: privateNoStoreResponseHeaders });
     }
+
+    return json(
+      { errors: "Method not allowed" },
+      { status: 405, headers: privateNoStoreResponseHeaders }
+    );
   } catch (error) {
     console.error(error);
 
-    return {
-      errors: parseError(error).message,
-    };
+    return json(
+      { errors: parseError(error).message },
+      { headers: privateNoStoreResponseHeaders }
+    );
   }
 };

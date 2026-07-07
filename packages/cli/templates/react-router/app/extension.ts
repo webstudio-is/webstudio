@@ -1,4 +1,4 @@
-import { ResourceRequest } from "@webstudio-is/sdk";
+import type { ResourceRequest } from "@webstudio-is/sdk";
 
 declare module "react-router" {
   interface AppLoadContext {

@@ -41,6 +41,15 @@
    - Change any style
    - See if it is applied
 
+1. Repeated shadow labels
+
+   - Select an instance
+   - Add at least 3 `box-shadow` layers in the style panel
+   - Hide the first layer
+   - Check that all `box-shadow` rows keep their full labels and only the hidden row is visually muted
+   - Repeat the same flow with at least 3 `text-shadow` layers
+   - Check that all `text-shadow` rows keep their full labels after hiding one layer
+
 1. Content editable components
 
    - Add any contenteditable component (heading, paragraph, text ...)
@@ -98,6 +107,13 @@
    - Upload an image
    - Check it loads and shows a progress bar
    - Delete an asset by clicking on the `x` icon and then the delete button in the tooltip
+   - Click on an image asset to open asset details
+   - Click the replace (reverse) icon button next to the download button
+   - Select a new image file from the file picker
+   - Check that the asset is replaced and the new image is shown
+   - Check that all usages of the old asset (image `src` props, background image styles, favicon, social image) now reference the new file
+   - Check that the original asset's filename is preserved on the new asset
+   - Verify the replace button is absent for non-image assets (e.g. fonts)
 
 1. Navigator view settings
 
@@ -177,3 +193,12 @@
    - The name should change in the pages list as well (with a small delay)
    - Change the page path
    - Reload browser tab and open the page settings again and make sure your changes are persisted
+
+1. Preview mode
+
+   - Enter preview mode from the top bar
+   - Press `escape` while focus is outside the canvas
+   - Check that preview mode exits and the builder UI is shown
+   - Enter preview mode again
+   - Press `escape` while interacting with the canvas
+   - Check that preview mode stays active and the canvas handles the key press

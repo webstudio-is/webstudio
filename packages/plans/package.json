@@ -1,0 +1,32 @@
+{
+  "name": "@webstudio-is/plans",
+  "version": "0.0.0-webstudio-version",
+  "description": "Plan features and billing logic for Webstudio",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@webstudio-is/postgrest": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "vitest": "^3.1.2"
+  },
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./index.server": {
+      "webstudio": "./src/index.server.ts",
+      "import": "./src/index.server.ts"
+    }
+  },
+  "sideEffects": false
+}

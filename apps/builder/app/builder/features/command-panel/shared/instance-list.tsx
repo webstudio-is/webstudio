@@ -2,37 +2,50 @@ import { useState } from "react";
 import { matchSorter } from "match-sorter";
 import {
   CommandGroup,
-  CommandGroupFooter,
+  CommandFooter,
   CommandInput,
   CommandItem,
   CommandList,
+  CommandBackButton,
   Flex,
   ScrollArea,
   Text,
+  useSelectedAction,
+  useCommandState,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
-import { $instances, $pages } from "~/shared/nano-states";
+import { getPageById, type Instance } from "@webstudio-is/sdk";
+import { $instances, $pages } from "~/shared/sync/data-stores";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { $awareness, findAwarenessByInstanceId } from "~/shared/awareness";
-import { buildInstancePath } from "~/shared/instance-utils";
-import { $commandContent } from "../command-state";
+import { buildInstancePath } from "~/shared/instance-utils/lookup";
+import { $commandContent } from "~/builder/features/command-panel/command-state";
+import { findPageAndSelectorByInstanceId } from "~/shared/instance-utils/lookup";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
-import { BackButton } from "./back-button";
+import { $selectedPageId, selectInstance } from "~/shared/nano-states";
+import { useAutoSelectFirstItem } from "./auto-select";
+import { InstancePathFooter } from "./instance-path-footer";
 
 export type InstanceOption = {
   label: string;
   id: string;
   path: string[];
+  pageName: string;
 };
 
 type InstanceListProps = {
   instanceIds: Set<Instance["id"]>;
   onSelect: (instanceId: Instance["id"]) => void;
+  onBack?: () => void;
 };
 
-export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
+export const InstanceList = ({
+  instanceIds,
+  onSelect,
+  onBack,
+}: InstanceListProps) => {
   const instances = $instances.get();
   const pages = $pages.get();
+  const action = useSelectedAction();
+  const highlightedValue = useCommandState((state) => state.value);
   const usedInInstances: InstanceOption[] = [];
   for (const instanceId of instanceIds) {
     const instance = instances.get(instanceId);
@@ -40,16 +53,29 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
       continue;
     }
     const path = buildInstancePath(instanceId, pages, instances);
+    const awareness = findPageAndSelectorByInstanceId(
+      pages,
+      instances,
+      instanceId
+    );
+    const page = getPageById(pages, awareness.pageId);
     usedInInstances.push({
       label: getInstanceLabel(instance),
       id: instance.id,
       path,
+      pageName: page?.name ?? "",
     });
   }
   const [search, setSearch] = useState("");
 
+  const listRef = useAutoSelectFirstItem(search);
+
   const goBack = () => {
-    $commandContent.set(undefined);
+    if (onBack) {
+      onBack();
+    } else {
+      $commandContent.set(undefined);
+    }
   };
 
   let matches = usedInInstances;
@@ -63,45 +89,50 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
     }
   }
 
+  const selectedInstance = usedInInstances.find(
+    (instance) => instance.id === highlightedValue
+  );
+
   return (
     <>
       <CommandInput
-        action="select"
+        action={{ name: "select", label: "Select" }}
         placeholder="Search instances..."
         value={search}
         onValueChange={setSearch}
-        onKeyDown={(event) => {
-          if (event.key === "Backspace" && search === "") {
-            event.preventDefault();
-            goBack();
-          }
-        }}
+        prefix={<CommandBackButton onClick={goBack} />}
+        onBack={goBack}
       />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
-          <CommandList>
-            <CommandGroup name="instance" actions={["select"]}>
+          <CommandList ref={listRef}>
+            <CommandGroup
+              name="instance"
+              actions={[
+                { name: "select", label: "Select" },
+                { name: "settings", label: "Settings" },
+              ]}
+            >
               {matches.length === 0 ? (
                 <Flex justify="center" align="center" css={{ minHeight: 100 }}>
                   <Text color="subtle">No instances found</Text>
                 </Flex>
               ) : (
-                matches.map(({ id, label, path }) => (
+                matches.map(({ id, label, pageName }) => (
                   <CommandItem
                     key={id}
                     value={id}
                     onSelect={() => {
-                      onSelect(id);
+                      if (action?.name === "select" || !action) {
+                        onSelect(id);
+                      }
+                      if (action?.name === "settings") {
+                        showInstance(id, "settings");
+                      }
                     }}
                   >
-                    <Text variant="labelsTitleCase">{label}</Text>
-                    <Text
-                      color="moreSubtle"
-                      truncate
-                      css={{ maxWidth: "30ch" }}
-                    >
-                      /{path.join("/")}
-                    </Text>
+                    <Text>{label}</Text>
+                    <Text color="moreSubtle">{pageName}</Text>
                   </CommandItem>
                 ))
               )}
@@ -109,11 +140,11 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
           </CommandList>
         </ScrollArea>
       </Flex>
-      <CommandGroupFooter>
-        <Flex grow>
-          <BackButton />
-        </Flex>
-      </CommandGroupFooter>
+      <CommandFooter>
+        {selectedInstance && (
+          <InstancePathFooter instanceId={selectedInstance.id} />
+        )}
+      </CommandFooter>
     </>
   );
 };
@@ -127,8 +158,13 @@ export const showInstance = (
   if (pagesData === undefined) {
     return;
   }
-  const awareness = findAwarenessByInstanceId(pagesData, instances, instanceId);
-  $awareness.set(awareness);
+  const { pageId, instanceSelector } = findPageAndSelectorByInstanceId(
+    pagesData,
+    instances,
+    instanceId
+  );
+  $selectedPageId.set(pageId);
+  selectInstance(instanceSelector);
   if (panel !== undefined) {
     $activeInspectorPanel.set(panel);
   }

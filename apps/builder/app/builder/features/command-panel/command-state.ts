@@ -41,6 +41,9 @@ export const closeCommandPanel = ({
 
 export const $commandContent = atom<ReactNode>();
 
+// Counter to force Command component remount when content changes
+export const $commandContentKey = atom(0);
+
 export const $commandSearch = atom("");
 
 export const focusCommandPanel = () => {

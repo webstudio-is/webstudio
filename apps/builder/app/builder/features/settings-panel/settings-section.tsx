@@ -2,29 +2,28 @@ import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
 import { InputField } from "@webstudio-is/design-system";
-import { $instances } from "~/shared/nano-states";
-import { HorizontalLayout, Label, Row, useLocalValue } from "./shared";
-import { serverSyncStore } from "~/shared/sync";
-import { $selectedInstance } from "~/shared/awareness";
+import { $instances } from "~/shared/sync/data-stores";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
+import { HorizontalLayout, Label, Row } from "./shared";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
+import { $selectedInstance } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { setInstanceLabelMutable } from "~/shared/instance-utils/mutation";
 
 const saveLabel = (label: string, selectedInstance: Instance) => {
   serverSyncStore.createTransaction([$instances], (instances) => {
-    const instance = instances.get(selectedInstance.id);
-    if (instance !== undefined) {
-      instance.label = label;
-    }
+    setInstanceLabelMutable(instances, selectedInstance.id, label.trim());
   });
 };
 
 export const SettingsSection = () => {
   const selectedInstance = useStore($selectedInstance);
   const id = useId();
-  const localValue = useLocalValue(selectedInstance?.label ?? "", (value) => {
-    if (selectedInstance) {
-      saveLabel(value, selectedInstance);
-    }
-  });
+  const localValue = useDraftValue(
+    selectedInstance?.label ?? "",
+    (value) => selectedInstance && saveLabel(value, selectedInstance),
+    { autoSave: false }
+  );
 
   if (selectedInstance === undefined) {
     return;
@@ -41,7 +40,7 @@ export const SettingsSection = () => {
           key={selectedInstance.id}
           placeholder={placeholder}
           value={localValue.value}
-          onChange={(event) => localValue.set(event.target.value.trim())}
+          onChange={(event) => localValue.set(event.target.value)}
           onBlur={localValue.save}
         />
       </HorizontalLayout>

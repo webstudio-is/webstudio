@@ -1,9 +1,12 @@
-import type { StoryFn } from "@storybook/react";
 import { useState } from "react";
 import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
-import { ColorPicker, ColorPickerPopover } from "./color-picker";
+import {
+  ColorPicker as ColorPickerComponent,
+  ColorThumb,
+} from "./color-picker";
 import { Flex } from "./flex";
 import { Text } from "./text";
+import { StorySection } from "./storybook";
 
 export default {
   title: "Color Picker",
@@ -17,50 +20,37 @@ const initialColor: RgbValue = {
   alpha: 1,
 };
 
-const formatValue = (value: StyleValue) => JSON.stringify(value);
-
-const createHandlers = (setValue: (value: StyleValue) => void) => {
-  const handleChange = (value?: StyleValue) => {
-    if (value !== undefined) {
-      setValue(value);
-    }
-  };
-
-  const handleChangeComplete = (value: StyleValue) => {
-    setValue(value);
-  };
-
-  return { handleChange, handleChangeComplete };
-};
-
-export const Inline: StoryFn<typeof ColorPicker> = () => {
+export const ColorPicker = () => {
   const [value, setValue] = useState<StyleValue>(initialColor);
-  const { handleChange, handleChangeComplete } = createHandlers(setValue);
+  const [open, setOpen] = useState(true);
 
   return (
-    <Flex direction="column" gap="4">
-      <ColorPicker
-        value={value}
-        onChange={handleChange}
-        onChangeComplete={handleChangeComplete}
-      />
-      <Text>{formatValue(value)}</Text>
-    </Flex>
-  );
-};
+    <>
+      <StorySection title="Color Picker">
+        <Flex direction="column" gap="2">
+          <ColorPickerComponent
+            value={value}
+            open={open}
+            onOpenChange={setOpen}
+            onChange={(val) => {
+              if (val !== undefined) {
+                setValue(val);
+              }
+            }}
+            onChangeComplete={setValue}
+          />
+          <Text>{JSON.stringify(value)}</Text>
+        </Flex>
+      </StorySection>
 
-export const WithPopover: StoryFn<typeof ColorPickerPopover> = () => {
-  const [value, setValue] = useState<StyleValue>(initialColor);
-  const { handleChange, handleChangeComplete } = createHandlers(setValue);
-
-  return (
-    <Flex direction="column" gap="4">
-      <ColorPickerPopover
-        value={value}
-        onChange={handleChange}
-        onChangeComplete={handleChangeComplete}
-      />
-      <Text>{formatValue(value)}</Text>
-    </Flex>
+      <StorySection title="Thumb">
+        <Flex gap="3" align="center">
+          <ColorThumb color="rgb(255, 0, 0)" />
+          <ColorThumb color="rgba(0, 128, 255, 0.5)" />
+          <ColorThumb color="transparent" />
+          <ColorThumb color="#00FF00" interactive />
+        </Flex>
+      </StorySection>
+    </>
   );
 };

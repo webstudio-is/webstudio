@@ -12,22 +12,31 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { AlertIcon } from "@webstudio-is/icons";
-import { $instances } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import {
   BindingControl,
   BindingPopover,
+  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
-import { updateWebstudioData } from "~/shared/instance-utils";
-import { CodeEditor } from "~/builder/shared/code-editor";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
+import {
+  applyBuilderPatchPayloadMutable,
+  updateWebstudioData,
+} from "~/shared/instance-utils/data";
+import {
+  createTextContentChild,
+  createTextContentResetPayload,
+  createTextContentUpdatePayload,
+} from "@webstudio-is/project-build/runtime/instances";
+import { CodeEditor } from "~/shared/code-editor";
 import {
   type ControlProps,
-  useLocalValue,
   VerticalLayout,
   $selectedInstanceScope,
   updateExpressionValue,
   useBindingState,
 } from "../shared";
-import { FieldLabel } from "../property-label";
+import { FieldLabel, useIsBindingResetForbidden } from "../property-label";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -44,7 +53,14 @@ const updateChildren = (
   updateWebstudioData((data) => {
     const instance = data.instances.get(instanceId);
     if (instance) {
-      instance.children = [{ type, value }];
+      applyBuilderPatchPayloadMutable(
+        data,
+        createTextContentUpdatePayload({
+          instanceId,
+          childIndex: 0,
+          child: createTextContentChild({ type, value }),
+        })
+      );
     }
   });
 };
@@ -57,7 +73,7 @@ export const TextContent = ({
   const hasChildren = (instance?.children.length ?? 0) > 0;
   // text content control is rendered only when empty or single child are present
   const child = instance?.children?.[0] ?? { type: "text", value: "" };
-  const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
+  const localValue = useDraftValue(String(computedValue ?? ""), (value) => {
     if (child.type === "expression") {
       updateExpressionValue(child.value, value);
     } else {
@@ -77,6 +93,9 @@ export const TextContent = ({
   const { overwritable, variant } = useBindingState(
     child.type === "expression" ? child.value : undefined
   );
+  const isBindingResetForbidden = useIsBindingResetForbidden();
+  const isResetDisabled =
+    child.type === "expression" && isBindingResetForbidden;
 
   return (
     <VerticalLayout
@@ -101,11 +120,15 @@ export const TextContent = ({
             </>
           }
           resettable={hasChildren}
+          resetDisabled={isResetDisabled}
           onReset={() => {
             updateWebstudioData((data) => {
               const instance = data.instances.get(instanceId);
               if (instance) {
-                instance.children = [];
+                applyBuilderPatchPayloadMutable(
+                  data,
+                  createTextContentResetPayload({ instanceId })
+                );
               }
             });
           }}
@@ -125,7 +148,7 @@ export const TextContent = ({
                 </DialogTitleActions>
               }
             >
-              <Text variant="labelsTitleCase">Text Content</Text>
+              <Text variant="labels">Text content</Text>
             </DialogTitle>
           }
           size="small"
@@ -138,11 +161,7 @@ export const TextContent = ({
           <BindingPopover
             scope={scope}
             aliases={aliases}
-            validate={(value) => {
-              if (value !== undefined && typeof value !== "string") {
-                return `Text Content expects a string value`;
-              }
-            }}
+            validate={(value) => validatePrimitiveValue(value, "Text Content")}
             variant={variant}
             value={expression}
             onChange={(newExpression) => {

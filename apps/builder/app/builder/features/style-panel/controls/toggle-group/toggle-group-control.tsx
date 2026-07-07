@@ -19,6 +19,7 @@ import {
   getPriorityStyleValueSource,
   PropertyInfo,
 } from "../../property-label";
+import { useReadonly } from "../../shared/readonly";
 
 export const ToggleGroupTooltip = ({
   isOpen,
@@ -105,6 +106,7 @@ export const ToggleGroupControl = ({
     description?: string;
   }>;
 }) => {
+  const readonly = useReadonly();
   const styles = useComputedStyles(properties);
   const styleValueSource = getPriorityStyleValueSource(styles);
   const selectedValue = toValue(styles[0].cascadedValue);
@@ -122,6 +124,7 @@ export const ToggleGroupControl = ({
   const [activeTooltip, setActiveTooltip] = useState<undefined | string>();
   return (
     <ToggleGroup
+      disabled={readonly}
       color={styleValueSource}
       type="single"
       // trigger value change when value is advanced

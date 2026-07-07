@@ -5,6 +5,8 @@ on:
     branches:
       - main
   pull_request:
+  pull_request_target:
+    types: [labeled]
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
@@ -16,6 +18,12 @@ permissions:
 
 jobs:
   lost-pixel:
+    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+    
     timeout-minutes: 20
     runs-on: ubuntu-latest
     env:
@@ -23,8 +31,8 @@ jobs:
       AUTH_SECRET: test
     steps:
       - uses: actions/checkout@v4
-        #with:
-        #ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
 
       - uses: ./.github/actions/ci-setup
 

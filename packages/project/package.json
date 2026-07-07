@@ -6,21 +6,30 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@trpc/server": "^10.45.2",
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
+    "@webstudio-is/feature-flags": "workspace:*",
+    "@webstudio-is/plans": "workspace:*",
+    "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
+    "@webstudio-is/project-migrations": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
+    "immer": "^10.1.1",
     "nanoid": "^5.1.5",
     "slugify": "^1.6.6",
     "type-fest": "^4.37.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:*"
+    "@webstudio-is/tsconfig": "workspace:*",
+    "msw": "^2.13.2",
+    "vitest": "^3.1.2"
   },
   "exports": {
     ".": {
@@ -28,6 +37,14 @@
     },
     "./index.server": {
       "webstudio": "./src/index.server.ts"
+    },
+    "./build-patch-core.server": {
+      "webstudio": "./src/db/build-patch-core.ts",
+      "import": "./src/db/build-patch-core.ts"
+    },
+    "./content-mode-permissions": {
+      "webstudio": "./src/content-mode-permissions.ts",
+      "import": "./src/content-mode-permissions.ts"
     }
   },
   "license": "AGPL-3.0-or-later",

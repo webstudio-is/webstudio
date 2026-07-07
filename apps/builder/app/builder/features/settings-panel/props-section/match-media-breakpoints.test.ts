@@ -1,16 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { describe, test, expect } from "vitest";
 import { matchMediaBreakpoints } from "./match-media-breakpoints";
 import type { IsEqual } from "type-fest";
 
 describe("matchMediaBreakpoints", () => {
-  it("returns undefined when values array is undefined", () => {
+  test("returns undefined when values array is undefined", () => {
     const matchingBreakpointIds = ["mobile", "tablet", "desktop"];
     const matcher = matchMediaBreakpoints(matchingBreakpointIds);
 
     expect(matcher(undefined)).toBeUndefined();
   });
 
-  it("returns undefined when no matching breakpoints are found", () => {
+  test("returns undefined when no matching breakpoints are found", () => {
     const matchingBreakpointIds = ["mobile", "tablet", "desktop"];
     const values: Array<[string, number]> = [
       ["other-breakpoint", 100],
@@ -22,7 +22,7 @@ describe("matchMediaBreakpoints", () => {
     expect(matcher(values)).toBeUndefined();
   });
 
-  it("returns the value of the last matching breakpoint", () => {
+  test("returns the value of the last matching breakpoint", () => {
     const matchingBreakpointIds = ["mobile", "tablet"];
     const values: Array<[string, number]> = [
       ["mobile", 320],
@@ -35,7 +35,7 @@ describe("matchMediaBreakpoints", () => {
     expect(matcher(values)).toBe(768);
   });
 
-  it("preserves the value type", () => {
+  test("preserves the value type", () => {
     const matchingBreakpointIds = ["mobile", "tablet", "desktop"];
 
     const stringValues: Array<[string, string]> = [["mobile", "small"]];

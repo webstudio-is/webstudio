@@ -26,6 +26,7 @@ import {
   FloatingPanel,
   Label,
   ScrollArea,
+  ScrollAreaNative,
   SmallIconButton,
   Text,
   Tooltip,
@@ -34,23 +35,55 @@ import {
 import {
   decodeDataSourceVariable,
   getExpressionIdentifiers,
-  lintExpression,
 } from "@webstudio-is/sdk";
+import { getExpressionErrorMessages } from "~/shared/expression-validation";
 import { $dataSourceVariables, $isDesignMode } from "~/shared/nano-states";
 import {
   computeExpression,
   encodeDataVariableName,
-} from "~/shared/data-variables";
+} from "@webstudio-is/project-build/runtime/data";
 import {
   ExpressionEditor,
   formatValuePreview,
   type EditorApi,
 } from "./expression-editor";
+import { normalizeEditorValue } from "~/shared/code-editor-base";
+
+/**
+ * Check if a value is a primitive that can be safely stringified.
+ * Allows: string, number, boolean, null, undefined
+ * Rejects: object, array, function, symbol
+ */
+export const isPrimitiveValue = (value: unknown): boolean => {
+  if (value === null || value === undefined) {
+    return true;
+  }
+  const type = typeof value;
+  return type === "string" || type === "number" || type === "boolean";
+};
+
+/**
+ * Generate a validation error message for non-primitive values.
+ * @param label - The control label (e.g., "Title", "URL")
+ * @returns Error message or undefined if value is valid
+ */
+export const validatePrimitiveValue = (
+  value: unknown,
+  label: string
+): string | undefined => {
+  if (!isPrimitiveValue(value)) {
+    return `${label} expects a primitive value (string, number, boolean, null, or undefined), not an object, array, or function`;
+  }
+};
 
 export const evaluateExpressionWithinScope = (
   expression: string,
   scope: Record<string, unknown>
 ) => {
+  if (expression.trim() === "") {
+    return;
+  }
+
   const variables = new Map<string, unknown>();
   for (const [name, value] of Object.entries(scope)) {
     const decodedName = decodeDataSourceVariable(name);
@@ -73,27 +106,26 @@ const BindingPanel = ({
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
   valueError?: string;
-  value: string;
+  value?: string;
   onChange: () => void;
   onSave: (value: string, invalid: boolean) => void;
 }) => {
   const editorApiRef = useRef<undefined | EditorApi>(undefined);
-  const [expression, setExpression] = useState(value);
+  const normalizedValue = normalizeEditorValue(value);
+  const [expression, setExpression] = useState(normalizedValue);
   const usedIdentifiers = useMemo(
-    () => getExpressionIdentifiers(value),
-    [value]
+    () => getExpressionIdentifiers(normalizedValue),
+    [normalizedValue]
   );
   const [errorsCount, setErrorsCount] = useState<number>(0);
   const [touched, setTouched] = useState(false);
   const scopeEntries = Object.entries(scope);
 
   const validate = (expression: string) => {
-    const diagnostics = lintExpression({
+    const errors = getExpressionErrorMessages({
       expression,
       availableVariables: new Set(aliases.keys()),
     });
-    // prevent saving expression only with syntax error
-    const errors = diagnostics.filter((item) => item.severity === "error");
     setErrorsCount(errors.length);
   };
 
@@ -113,7 +145,7 @@ const BindingPanel = ({
     >
       <Box css={{ paddingBottom: theme.spacing[5] }}>
         <Flex gap="1" css={{ padding: theme.panel.padding }}>
-          <Text variant="labelsSentenceCase">Variables</Text>
+          <Text variant="labels">Variables</Text>
           <Tooltip
             variant="wrapped"
             content={
@@ -125,46 +157,48 @@ const BindingPanel = ({
         </Flex>
         {scopeEntries.length === 0 && (
           <Flex justify="center" align="center" css={{ py: theme.spacing[5] }}>
-            <Text variant="labelsSentenceCase" align="center">
+            <Text variant="labels" align="center">
               No variables available
             </Text>
           </Flex>
         )}
-        <CssValueListArrowFocus>
-          {scopeEntries.map(([identifier, value], index) => {
-            const name = aliases.get(identifier);
-            const label =
-              value === undefined
-                ? name
-                : `${name}: ${formatValuePreview(value)}`;
-            return (
-              <CssValueListItem
-                key={identifier}
-                id={identifier}
-                index={index}
-                label={<Label truncate>{label}</Label>}
-                // mark all variables used in expression as selected
-                active={usedIdentifiers.has(identifier)}
-                // convert variable to expression
-                onClick={() => {
-                  if (name) {
-                    const nameIdentifier = encodeDataVariableName(name);
-                    editorApiRef.current?.replaceSelection(nameIdentifier);
-                  }
-                }}
-                // expression editor blur is fired after pointer down even
-                // preventing it allows to not trigger validation
-                // and flickering error tooltip
-                onPointerDown={(event) => {
-                  event.preventDefault();
-                }}
-              />
-            );
-          })}
-        </CssValueListArrowFocus>
+        <ScrollAreaNative css={{ maxHeight: theme.spacing[25] }}>
+          <CssValueListArrowFocus>
+            {scopeEntries.map(([identifier, value], index) => {
+              const name = aliases.get(identifier);
+              const label =
+                value === undefined
+                  ? name
+                  : `${name}: ${formatValuePreview(value)}`;
+              return (
+                <CssValueListItem
+                  key={identifier}
+                  id={identifier}
+                  index={index}
+                  label={<Label truncate>{label}</Label>}
+                  // mark all variables used in expression as selected
+                  active={usedIdentifiers.has(identifier)}
+                  // convert variable to expression
+                  onClick={() => {
+                    if (name) {
+                      const nameIdentifier = encodeDataVariableName(name);
+                      editorApiRef.current?.replaceSelection(nameIdentifier);
+                    }
+                  }}
+                  // expression editor blur is fired after pointer down even
+                  // preventing it allows to not trigger validation
+                  // and flickering error tooltip
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                  }}
+                />
+              );
+            })}
+          </CssValueListArrowFocus>
+        </ScrollAreaNative>
       </Box>
       <Flex gap="1" css={{ padding: theme.panel.padding }}>
-        <Text variant="labelsSentenceCase">Expression Editor</Text>
+        <Text variant="labels">Expression editor</Text>
         <Tooltip
           variant="wrapped"
           content={
@@ -300,12 +334,12 @@ const BindingButton = forwardRef<
               width: 12,
               height: 12,
               borderRadius: "50%",
-              backgroundColor: theme.colors.backgroundStyleSourceToken,
+              backgroundColor: theme.colors.backgroundStyleSourceSelected,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               "&[data-variant=bound]": {
-                backgroundColor: theme.colors.backgroundStyleSourceLocal,
+                backgroundColor: theme.colors.backgroundStyleSourceSelected,
               },
               "&[data-variant=overwritten]": {
                 backgroundColor: theme.colors.borderOverwrittenMain,
@@ -345,7 +379,7 @@ export const BindingPopover = ({
   aliases: Map<string, string>;
   variant: BindingVariant;
   validate?: (value: unknown) => undefined | string;
-  value: string;
+  value?: string;
   onChange: (newValue: string) => void;
   onRemove: (evaluatedValue: unknown) => void;
 }) => {
@@ -358,7 +392,10 @@ export const BindingPopover = ({
     return;
   }
 
-  const valueError = validate?.(evaluateExpressionWithinScope(value, scope));
+  const normalizedValue = normalizeEditorValue(value);
+  const valueError = validate?.(
+    evaluateExpressionWithinScope(normalizedValue, scope)
+  );
   return (
     <FloatingPanel
       placement="left-start"
@@ -392,7 +429,7 @@ export const BindingPopover = ({
                       event.preventDefault();
                       // inline variables and close dialog
                       const evaluatedValue = evaluateExpressionWithinScope(
-                        value,
+                        normalizedValue,
                         scope
                       );
 
@@ -416,7 +453,7 @@ export const BindingPopover = ({
           scope={scope}
           aliases={aliases}
           valueError={valueError}
-          value={value}
+          value={normalizedValue}
           onChange={() => {
             hasUnsavedChange.current = true;
           }}
@@ -440,7 +477,11 @@ export const BindingPopover = ({
         />
       }
     >
-      <BindingButton variant={variant} error={valueError} value={value} />
+      <BindingButton
+        variant={variant}
+        error={valueError}
+        value={normalizedValue}
+      />
     </FloatingPanel>
   );
 };

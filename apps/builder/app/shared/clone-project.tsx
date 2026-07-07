@@ -14,11 +14,11 @@ import {
   DialogActions,
   toast,
 } from "@webstudio-is/design-system";
-import { Title, type Project } from "@webstudio-is/project";
+import { projectTitle, type Project } from "@webstudio-is/project";
 import { nativeClient } from "./trpc/trpc-client";
 import { useEffectEvent } from "./hook-utils/effect-event";
 
-const useCloneProject = ({
+const useCloneProjectWithDialog = ({
   projectId,
   onCreate,
   authToken,
@@ -31,7 +31,7 @@ const useCloneProject = ({
   const [errors, setErrors] = useState<string>();
 
   const handleSubmit = async ({ title }: { title: string }) => {
-    const parsed = Title.safeParse(title);
+    const parsed = projectTitle.safeParse(title);
     const errors =
       "error" in parsed
         ? parsed.error?.issues.map((issue) => issue.message).join("\n")
@@ -124,7 +124,7 @@ const CloneProjectView = ({
             </DialogClose>
           </DialogActions>
         </form>
-        <DialogTitle>Clone Project</DialogTitle>
+        <DialogTitle>Clone project</DialogTitle>
       </DialogContent>
     </Dialog>
   );
@@ -148,7 +148,7 @@ export const CloneProjectDialog = ({
     onOpenChange(false);
   });
 
-  const { handleSubmit, errors, state } = useCloneProject({
+  const { handleSubmit, errors, state } = useCloneProjectWithDialog({
     projectId: id,
     authToken,
     onCreate: handleOnCreate,

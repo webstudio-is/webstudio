@@ -1,5 +1,6 @@
-import { groupBreakpoints } from "./group-breakpoints";
-import { $selectedBreakpointId, $breakpoints } from "../nano-states";
+import { groupBreakpoints } from "@webstudio-is/project-build/runtime/breakpoints";
+import { $selectedBreakpointId } from "../nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 import { setCanvasWidth } from "~/builder/shared/calc-canvas-width";
 
 /**
@@ -8,9 +9,9 @@ import { setCanvasWidth } from "~/builder/shared/calc-canvas-width";
 export const selectBreakpointByOrder = (orderNumber: number) => {
   const breakpoints = $breakpoints.get();
   const index = orderNumber - 1;
-  const breakpoint = groupBreakpoints(Array.from(breakpoints.values())).at(
-    index
-  );
+  const grouped = groupBreakpoints(Array.from(breakpoints.values()));
+  const allBreakpoints = [...grouped.widthBased, ...grouped.custom];
+  const breakpoint = allBreakpoints.at(index);
   if (breakpoint) {
     $selectedBreakpointId.set(breakpoint.id);
     setCanvasWidth(breakpoint.id);

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import env from "~/env/env.server";
 
-const EntryResponse = z.object({
+const entryResponse = z.object({
   auth_token: z.string(),
 });
 
@@ -16,7 +16,7 @@ const getEntriToken = async () => {
     throw new Error(`ENTRI_SECRET is not defined`);
   }
 
-  const entryResponse = await fetch("https://api.goentri.com/token", {
+  const response = await fetch("https://api.goentri.com/token", {
     method: "POST",
     body: JSON.stringify({
       // These values come from the Entri dashboard
@@ -29,12 +29,12 @@ const getEntriToken = async () => {
     },
   });
 
-  if (entryResponse.ok === false) {
-    throw new Error(`Entri API error: ${await entryResponse.text()}`);
+  if (response.ok === false) {
+    throw new Error(`Entri API error: ${await response.text()}`);
   }
 
-  const entryJson = await entryResponse.json();
-  const responseData = EntryResponse.parse(entryJson);
+  const entryJson = await response.json();
+  const responseData = entryResponse.parse(entryJson);
 
   return {
     token: responseData.auth_token,

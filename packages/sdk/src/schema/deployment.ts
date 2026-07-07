@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const Templates = z.enum([
+export const templates = z.enum([
   "docker",
   "vercel",
   "netlify",
@@ -9,15 +9,15 @@ export const Templates = z.enum([
   "ssg-vercel",
 ]);
 
-export type Templates = z.infer<typeof Templates>;
+export type Templates = z.infer<typeof templates>;
 
-export const Deployment = z.union([
+export const deployment = z.union([
   z.object({
     destination: z.literal("static"),
     name: z.string(),
     assetsDomain: z.string(),
     // Must be validated very strictly
-    templates: z.array(Templates),
+    templates: z.array(templates),
   }),
   z.object({
     destination: z.literal("saas").optional(),
@@ -31,4 +31,4 @@ export const Deployment = z.union([
   }),
 ]);
 
-export type Deployment = z.infer<typeof Deployment>;
+export type Deployment = z.infer<typeof deployment>;

@@ -5,9 +5,9 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
-  useLocalValue,
   ResponsiveLayout,
   updateExpressionValue,
   $selectedInstanceScope,
@@ -27,7 +27,7 @@ export const NumberControl = ({
 
   const [isInvalid, setIsInvalid] = useState(false);
   const number = Number(computedValue);
-  const localValue = useLocalValue(
+  const localValue = useDraftValue(
     Number.isNaN(number) ? "" : number,
     (value) => {
       if (typeof value === "number") {

@@ -1,0 +1,82 @@
+import type { JSX } from "react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { StorySection } from "@webstudio-is/design-system";
+import { ProjectSettingsDialog } from "./project-settings";
+import { $pages, $project } from "~/shared/sync/data-stores";
+import type { Project } from "@webstudio-is/project";
+
+export default {
+  title: "Project settings",
+  component: ProjectSettingsDialog,
+};
+
+const createRouter = (element: JSX.Element) =>
+  createBrowserRouter([
+    {
+      path: "*",
+      element,
+      loader: () => null,
+    },
+  ]);
+
+$project.set({ id: "projectId" } as Project);
+
+export const General = () => {
+  const router = createRouter(
+    <ProjectSettingsDialog currentSection="general" />
+  );
+  return (
+    <StorySection title="General">
+      <RouterProvider router={router} />
+    </StorySection>
+  );
+};
+
+export const Redirects = () => {
+  $pages.set({
+    homePageId: "pageId",
+    rootFolderId: "root",
+    pages: new Map([
+      [
+        "pageId",
+        {
+          id: "pageId",
+          name: "My Name",
+          path: "",
+          title: `"My Title"`,
+          meta: {},
+          rootInstanceId: "body",
+        },
+      ],
+    ]),
+    folders: new Map([
+      [
+        "root",
+        {
+          id: "root",
+          name: "",
+          slug: "",
+          children: ["pageId"],
+        },
+      ],
+    ]),
+    redirects: [
+      { old: "/old", new: "/new" },
+      { old: "/old", new: "https://google.com" },
+      {
+        old: "/oldddddddddddd/ddddddddddd/dddddddd/dddddd",
+        new: "https://gooooooooooooooooooooooooooooooooooooogle.com",
+        status: "302",
+      },
+    ],
+  });
+
+  const router = createRouter(
+    <ProjectSettingsDialog currentSection="redirects" />
+  );
+  return (
+    <StorySection title="Redirects">
+      <RouterProvider router={router} />
+    </StorySection>
+  );
+};

@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Label } from "./label";
-import { Checkbox, CheckboxAndLabel } from "./checkbox";
+import { Checkbox as CheckboxComponent, CheckboxAndLabel } from "./checkbox";
 import { StorySection, StoryGrid } from "./storybook";
 import { Tooltip } from "./tooltip";
 
@@ -11,51 +12,70 @@ export default {
   },
 };
 
-export const Demo = () => {
+const ControlledCheckbox = () => {
+  const [checked, setChecked] = useState<boolean | "indeterminate">(false);
+  return (
+    <StoryGrid horizontal>
+      <CheckboxAndLabel>
+        <CheckboxComponent
+          checked={checked}
+          onCheckedChange={setChecked}
+          id="controlled"
+        />
+        <Label htmlFor="controlled">State: {String(checked)}</Label>
+      </CheckboxAndLabel>
+    </StoryGrid>
+  );
+};
+
+export const Checkbox = () => {
   return (
     <>
       <StorySection title="Enabled">
         <StoryGrid horizontal>
-          <Checkbox defaultChecked />
-          <Checkbox defaultChecked="indeterminate" />
-          <Checkbox />
+          <CheckboxComponent defaultChecked />
+          <CheckboxComponent defaultChecked="indeterminate" />
+          <CheckboxComponent />
         </StoryGrid>
       </StorySection>
 
       <StorySection title="Disabled">
         <StoryGrid horizontal>
-          <Checkbox defaultChecked disabled />
-          <Checkbox defaultChecked="indeterminate" disabled />
-          <Checkbox disabled />
+          <CheckboxComponent defaultChecked disabled />
+          <CheckboxComponent defaultChecked="indeterminate" disabled />
+          <CheckboxComponent disabled />
         </StoryGrid>
       </StorySection>
 
       <StorySection title="Focussed (initially)">
         <StoryGrid horizontal>
-          <Checkbox defaultChecked autoFocus />
+          <CheckboxComponent defaultChecked autoFocus />
         </StoryGrid>
       </StorySection>
 
       <StorySection title="With lables">
         <CheckboxAndLabel>
-          <Checkbox defaultChecked id="A" />
+          <CheckboxComponent defaultChecked id="A" />
           <Label htmlFor="A">Label A</Label>
         </CheckboxAndLabel>
         <CheckboxAndLabel>
-          <Checkbox id="B" />
+          <CheckboxComponent id="B" />
           <Label htmlFor="B">Label B</Label>
         </CheckboxAndLabel>
       </StorySection>
 
       <StorySection title="With Tooltip">
         <Tooltip content="Tooltip content">
-          <Checkbox defaultChecked />
+          <CheckboxComponent defaultChecked />
         </Tooltip>
         <Tooltip content="Tooltip content">
-          <Checkbox disabled />
+          <CheckboxComponent disabled />
         </Tooltip>
+      </StorySection>
+
+      <StorySection title="Controlled">
+        <ControlledCheckbox />
       </StorySection>
     </>
   );
 };
-Demo.storyName = "Checkbox";

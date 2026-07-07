@@ -1,16 +1,13 @@
 import { atom, computed, type ReadableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { useDebouncedCallback } from "use-debounce";
 import {
   type ComponentPropsWithoutRef,
   type ReactNode,
   useRef,
   useState,
-  useEffect,
   useMemo,
   type ComponentProps,
 } from "react";
-import equal from "fast-deep-equal";
 import {
   ariaAttributes,
   attributesByTag,
@@ -27,6 +24,7 @@ import {
   SYSTEM_VARIABLE_ID,
   systemParameter,
 } from "@webstudio-is/sdk";
+import { getContentModePropNamesByTag } from "@webstudio-is/project/content-mode-permissions";
 import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
@@ -42,16 +40,16 @@ import {
 } from "@webstudio-is/design-system";
 import {
   $dataSourceVariables,
-  $dataSources,
   $registeredComponentMetas,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
 import { humanizeString } from "~/shared/string-utils";
 import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
 import { $instanceTags } from "../style-panel/shared/model";
 
 export const showAttributeMeta: PropMeta = {
@@ -175,79 +173,6 @@ export const Label = ({
       )}
     </Flex>
   );
-};
-
-export const useLocalValue = <Type,>(
-  savedValue: Type,
-  onSave: (value: Type) => void,
-  { autoSave = true } = {}
-) => {
-  const isEditingRef = useRef(false);
-  const localValueRef = useRef(savedValue);
-
-  const [_, setRefresh] = useState(0);
-
-  const onSaveRef = useRef(onSave);
-  onSaveRef.current = onSave;
-
-  const save = () => {
-    isEditingRef.current = false;
-    if (equal(localValueRef.current, savedValue) === false) {
-      // To synchronize with setState immediately followed by save
-      onSaveRef.current(localValueRef.current);
-    }
-  };
-
-  const saveDebounced = useDebouncedCallback(save, 500);
-
-  const setLocalValue = (value: Type) => {
-    isEditingRef.current = true;
-    localValueRef.current = value;
-    setRefresh((refresh) => refresh + 1);
-    if (autoSave) {
-      saveDebounced();
-    }
-  };
-
-  // onBlur will not trigger if control is unmounted when props panel is closed or similar.
-  // So we're saving at the unmount
-  // store save in ref to access latest saved value from render
-  // instead of stale one
-  const saveRef = useRef(save);
-  saveRef.current = save;
-  useEffect(() => {
-    // access ref in the moment of unmount
-    return () => saveRef.current();
-  }, []);
-
-  useEffect(() => {
-    // Update local value if saved value changes and control is not in edit mode.
-    if (
-      isEditingRef.current === false &&
-      localValueRef.current !== savedValue
-    ) {
-      localValueRef.current = savedValue;
-      setRefresh((refresh) => refresh + 1);
-    }
-  }, [savedValue]);
-
-  return {
-    /**
-     * Contains:
-     *  - either the latest `savedValue`
-     *  - or the latest value set via `set()`
-     * (whichever changed most recently)
-     */
-    value: localValueRef.current,
-    /**
-     * Should be called on onChange or similar event
-     */
-    set: setLocalValue,
-    /**
-     * Should be called on onBlur or similar event
-     */
-    save,
-  };
 };
 
 type LayoutProps = {
@@ -458,31 +383,55 @@ const attributeToMeta = (attribute: Attribute): PropMeta => {
   throw Error("impossible case");
 };
 
+const $contentModePropNamesByTag = computed(
+  [$registeredComponentMetas],
+  getContentModePropNamesByTag
+);
+
 export const $selectedInstancePropsMetas = computed(
-  [$selectedInstance, $registeredComponentMetas, $instanceTags],
-  (instance, metas, instanceTags): Map<string, PropMeta> => {
+  [
+    $selectedInstance,
+    $registeredComponentMetas,
+    $instanceTags,
+    $contentModePropNamesByTag,
+  ],
+  (
+    instance,
+    metas,
+    instanceTags,
+    contentModePropNamesByTag
+  ): Map<string, PropMeta> => {
     if (instance === undefined) {
       return new Map();
     }
     const meta = metas.get(instance.component);
     const tag = instanceTags.get(instance.id);
     const propsMetas = new Map<Prop["name"], PropMeta>();
+    const contentModePropNames =
+      tag === undefined ? undefined : contentModePropNamesByTag.get(tag);
+    const toAttributeMeta = (attribute: Attribute): PropMeta => {
+      const propMeta = attributeToMeta(attribute);
+      if (contentModePropNames?.has(attribute.name)) {
+        return { ...propMeta, contentMode: true };
+      }
+      return propMeta;
+    };
     // add html attributes only when instance has tag
     if (tag) {
       if (elementsByTag[tag].categories.includes("html-element")) {
         for (const attribute of [...ariaAttributes].reverse()) {
-          propsMetas.set(attribute.name, attributeToMeta(attribute));
+          propsMetas.set(attribute.name, toAttributeMeta(attribute));
         }
         // include global attributes only for html elements
         if (attributesByTag["*"]) {
           for (const attribute of [...attributesByTag["*"]].reverse()) {
-            propsMetas.set(attribute.name, attributeToMeta(attribute));
+            propsMetas.set(attribute.name, toAttributeMeta(attribute));
           }
         }
       }
       if (attributesByTag[tag]) {
         for (const attribute of [...attributesByTag[tag]].reverse()) {
-          propsMetas.set(attribute.name, attributeToMeta(attribute));
+          propsMetas.set(attribute.name, toAttributeMeta(attribute));
         }
       }
     }

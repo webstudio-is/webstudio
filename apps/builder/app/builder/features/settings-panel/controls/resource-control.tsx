@@ -19,25 +19,31 @@ import {
   NestedInputButton,
   theme,
 } from "@webstudio-is/design-system";
-import { isLiteralExpression, Resource, type Prop } from "@webstudio-is/sdk";
+import {
+  isLiteralExpression,
+  type Resource,
+  type Prop,
+} from "@webstudio-is/sdk";
 import {
   BindingControl,
   BindingPopover,
+  validatePrimitiveValue,
   type BindingVariant,
 } from "~/builder/shared/binding-popover";
+import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
+import { $props, $resources } from "~/shared/sync/data-stores";
+import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import {
-  $dataSources,
-  $props,
-  $resources,
-  $variableValuesByInstanceSelector,
-} from "~/shared/nano-states";
-import { computeExpression } from "~/shared/data-variables";
-import { updateWebstudioData } from "~/shared/instance-utils";
+  applyBuilderPatchPayloadMutable,
+  updateWebstudioData,
+} from "~/shared/instance-utils/data";
+import { createPropUpsertPayload } from "@webstudio-is/project-build/runtime/props";
 import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
   $selectedPage,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
 import {
   UrlField,
   MethodField,
@@ -45,7 +51,8 @@ import {
   parseResource,
   getResourceScopeForInstance,
 } from "../resource-panel";
-import { type ControlProps, useLocalValue, VerticalLayout } from "../shared";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
+import { type ControlProps, VerticalLayout } from "../shared";
 import { PropertyLabel } from "../property-label";
 
 // dirty, dirty hack
@@ -277,7 +284,13 @@ export const ResourceControl = ({
           type: "resource",
           value: newResource.id,
         };
-        data.props.set(newProp.id, newProp);
+        applyBuilderPatchPayloadMutable(
+          data,
+          createPropUpsertPayload({
+            props: data.props.values(),
+            nextProps: [newProp],
+          }).payload
+        );
         data.resources.set(newResource.id, newResource);
       }
     });
@@ -290,7 +303,7 @@ export const ResourceControl = ({
     variant = "default";
     readOnly = false;
   }
-  const localValue = useLocalValue(
+  const localValue = useDraftValue(
     String(computeExpression(resource.url, variableValues) ?? ""),
     (value) => updateResource({ ...resource, url: JSON.stringify(value) })
   );
@@ -320,11 +333,7 @@ export const ResourceControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
-          validate={(value) => {
-            if (value !== undefined && typeof value !== "string") {
-              return `Expected URL string value`;
-            }
-          }}
+          validate={(value) => validatePrimitiveValue(value, "URL")}
           variant={variant}
           value={urlExpression}
           onChange={(newExpression) =>

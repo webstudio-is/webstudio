@@ -1,10 +1,15 @@
 import type { ReactNode } from "react";
 import type { Meta } from "@storybook/react";
+import { StorySection } from "@webstudio-is/design-system";
 import * as icons from "./index";
 
-export const Icons = ({ testColor }: { testColor: boolean }): ReactNode => {
+export const Icons = ({
+  testColor = false,
+}: {
+  testColor?: boolean;
+}): ReactNode => {
   return (
-    <>
+    <StorySection title="Icons">
       <div
         style={{
           display: "flex",
@@ -52,18 +57,12 @@ export const Icons = ({ testColor }: { testColor: boolean }): ReactNode => {
           }
         )}
       </div>
-    </>
+    </StorySection>
   );
 };
 
 const IconsMeta: Meta<typeof Icons> = {
   title: "Icons",
   component: Icons,
-  argTypes: {
-    testColor: { control: "boolean", name: "Test color" },
-  },
-  args: {
-    testColor: false,
-  },
 };
 export default IconsMeta;

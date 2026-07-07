@@ -31,7 +31,8 @@
         "me-dutour-mathieu.vscode-github-actions",
         "eamodio.gitlens",
         "bradymholt.pgformatter",
-        "YoavBls.pretty-ts-errors"
+        "YoavBls.pretty-ts-errors",
+        "typescriptteam.native-preview"
       ]
     }
   }

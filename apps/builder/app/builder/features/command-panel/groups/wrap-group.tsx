@@ -1,17 +1,22 @@
 import {
   CommandGroup,
-  CommandGroupFooter,
   CommandIcon,
   CommandInput,
   CommandItem,
   CommandList,
+  CommandBackButton,
+  CommandFooter,
   Flex,
   ScrollArea,
   Text,
 } from "@webstudio-is/design-system";
 import { matchSorter } from "match-sorter";
 import { computed } from "nanostores";
-import { elementComponent, tags } from "@webstudio-is/sdk";
+import {
+  elementComponent,
+  getHtmlTagsFromProps,
+  tags,
+} from "@webstudio-is/sdk";
 import type {
   Instance,
   Instances,
@@ -19,11 +24,13 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
-  $instances,
-  $props,
+  $propsIndex,
   $registeredComponentMetas,
+  $selectedInstancePath,
+  $selectedPage,
 } from "~/shared/nano-states";
-import { $selectedInstancePath } from "~/shared/awareness";
+import { $instances } from "~/shared/sync/data-stores";
+import { $props } from "~/shared/sync/data-stores";
 import {
   getInstanceLabel,
   InstanceIcon,
@@ -33,10 +40,11 @@ import {
   $commandContent,
   $isCommandPanelOpen,
   closeCommandPanel,
+  openCommandPanel,
 } from "../command-state";
 import { useState } from "react";
-import { BackButton } from "../shared/back-button";
-import { wrapIn } from "~/shared/instance-utils";
+import { wrapInstance } from "~/shared/instance-utils/mutation";
+import { allowsHtmlMutations } from "../shared/document-utils";
 
 type WrapOption = {
   component: string;
@@ -68,7 +76,10 @@ const canWrapInstance = (
   tag: string | undefined,
   instances: Instances,
   props: Props,
-  metas: Map<Instance["component"], WsComponentMeta>
+  metas: Map<Instance["component"], WsComponentMeta>,
+  htmlTagsByInstanceId: Map<Instance["id"], string> = getHtmlTagsFromProps(
+    props
+  )
 ): boolean => {
   const selectedInstance = instances.get(selectedInstanceId);
   const parentInstance = instances.get(parentInstanceId);
@@ -115,6 +126,7 @@ const canWrapInstance = (
     instances: newInstances,
     props,
     metas,
+    htmlTagsByInstanceId,
     instanceSelector: [
       wrapperInstance.id,
       ...selectedInstanceSelector.slice(1),
@@ -130,6 +142,7 @@ const canWrapInstance = (
     instances: newInstances,
     props,
     metas,
+    htmlTagsByInstanceId,
     instanceSelector: [
       selectedInstanceId,
       wrapperInstance.id,
@@ -146,14 +159,27 @@ const $wrapOptions = computed(
     $selectedInstancePath,
     $instances,
     $props,
+    $propsIndex,
     $registeredComponentMetas,
+    $selectedPage,
   ],
-  (isOpen, instancePath, instances, props, metas) => {
+  (
+    isCommandPanelOpen,
+    instancePath,
+    instances,
+    props,
+    propsIndex,
+    metas,
+    selectedPage
+  ) => {
     const wrapOptions: WrapOption[] = [];
-    if (!isOpen) {
+    if (isCommandPanelOpen === false) {
       return wrapOptions;
     }
     if (instancePath === undefined || instancePath.length === 1) {
+      return wrapOptions;
+    }
+    if (!allowsHtmlMutations(selectedPage)) {
       return wrapOptions;
     }
     const [selectedItem, parentItem] = instancePath;
@@ -188,7 +214,8 @@ const $wrapOptions = computed(
           undefined,
           instances,
           props,
-          metas
+          metas,
+          propsIndex.htmlTagsByInstanceId
         )
       ) {
         const meta = metas.get(component);
@@ -213,7 +240,8 @@ const $wrapOptions = computed(
           tag,
           instances,
           props,
-          metas
+          metas,
+          propsIndex.htmlTagsByInstanceId
         )
       ) {
         const label = getInstanceLabel({ component: elementComponent, tag });
@@ -242,19 +270,19 @@ const WrapComponentsList = () => {
     }
   }
 
+  const goBack = () => {
+    $commandContent.set(undefined);
+  };
+
   return (
     <>
       <CommandInput
-        action="wrap"
+        action={{ name: "wrap", label: "Wrap" }}
         placeholder="Search components to wrap with..."
         value={search}
         onValueChange={setSearch}
-        onKeyDown={(event) => {
-          if (event.key === "Backspace" && search === "") {
-            event.preventDefault();
-            $commandContent.set(undefined);
-          }
-        }}
+        prefix={<CommandBackButton onClick={goBack} />}
+        onBack={goBack}
       />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
@@ -266,7 +294,10 @@ const WrapComponentsList = () => {
                 </Text>
               </Flex>
             ) : (
-              <CommandGroup name="wrap-components" actions={["wrap"]}>
+              <CommandGroup
+                name="wrap-components"
+                actions={[{ name: "wrap", label: "Wrap" }]}
+              >
                 {matches.map(({ component, tag, label }) => {
                   const key = tag ? `${component}:${tag}` : component;
                   return (
@@ -274,7 +305,7 @@ const WrapComponentsList = () => {
                       key={key}
                       value={key}
                       onSelect={() => {
-                        wrapIn(component, tag);
+                        wrapInstance(component, tag);
                         closeCommandPanel();
                       }}
                     >
@@ -282,7 +313,7 @@ const WrapComponentsList = () => {
                         <CommandIcon>
                           <InstanceIcon instance={{ component, tag }} />
                         </CommandIcon>
-                        <Text variant="labelsSentenceCase">{label}</Text>
+                        <Text>{label}</Text>
                       </Flex>
                     </CommandItem>
                   );
@@ -292,16 +323,13 @@ const WrapComponentsList = () => {
           </CommandList>
         </ScrollArea>
       </Flex>
-      <CommandGroupFooter>
-        <Flex grow>
-          <BackButton />
-        </Flex>
-      </CommandGroupFooter>
+      <CommandFooter />
     </>
   );
 };
 
 export const showWrapComponentsList = () => {
+  openCommandPanel();
   $commandContent.set(<WrapComponentsList />);
 };
 

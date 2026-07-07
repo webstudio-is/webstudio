@@ -1,13 +1,18 @@
-import { $pages } from "~/shared/nano-states/pages";
-import { PageSettings } from "./page-settings";
-import { Grid, theme } from "@webstudio-is/design-system";
-import { $assets, $project } from "~/shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
+import { PageSettings as PageSettingsComponent } from "./page-settings/page-settings";
+import {
+  Grid,
+  theme,
+  Dialog,
+  DialogContent,
+  StorySection,
+} from "@webstudio-is/design-system";
+import { $assets, $project } from "~/shared/sync/data-stores";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { isRootFolder } from "@webstudio-is/sdk";
 
 export default {
   title: "Pages/Page Settings",
-  component: PageSettings,
+  component: PageSettingsComponent,
   parameters: {
     lostpixel: {
       // this is to fix cutting off the after scroll area in the screenshot
@@ -44,7 +49,7 @@ pages.meta = {
   faviconAssetId: "imageId",
   code: "code",
 };
-pages.pages.push({
+pages.pages.set("pageId", {
   id: "pageId",
   title: "Page title",
   path: "/page-path",
@@ -52,7 +57,7 @@ pages.pages.push({
   meta: {},
   rootInstanceId: "root-instance-id",
 });
-const rootFolder = pages.folders.find(isRootFolder);
+const rootFolder = pages.folders.get(pages.rootFolderId);
 rootFolder?.children.push("pageId");
 
 $pages.set(pages);
@@ -67,6 +72,7 @@ $project.set({
   tags: [],
 
   marketplaceApprovalStatus: "UNLISTED",
+  workspaceId: null,
 
   latestStaticBuild: null,
   previewImageAssetId: null,
@@ -81,24 +87,30 @@ $project.set({
   domainsVirtual: [],
 });
 
-export const PageSettingsEdit = () => {
+export const PageSettings = () => {
   return (
-    <Grid
-      css={{
-        width: theme.spacing[35],
-        margin: "auto",
-        border: `1px solid ${theme.colors.borderMain}`,
-        boxShadow: theme.shadows.menuDropShadow,
-        background: theme.colors.backgroundPanel,
-        borderRadius: theme.borderRadius[4],
-      }}
-    >
-      <PageSettings
-        onClose={() => {}}
-        onDuplicate={() => {}}
-        onDelete={() => {}}
-        pageId="pageId"
-      />
-    </Grid>
+    <StorySection title="Page Settings">
+      <Dialog open>
+        <DialogContent>
+          <Grid
+            css={{
+              width: theme.spacing[35],
+              margin: "auto",
+              border: `1px solid ${theme.colors.borderMain}`,
+              boxShadow: theme.shadows.menuDropShadow,
+              background: theme.colors.backgroundPanel,
+              borderRadius: theme.borderRadius[4],
+            }}
+          >
+            <PageSettingsComponent
+              onClose={() => {}}
+              onDuplicate={() => {}}
+              onDelete={() => {}}
+              pageId="pageId"
+            />
+          </Grid>
+        </DialogContent>
+      </Dialog>
+    </StorySection>
   );
 };

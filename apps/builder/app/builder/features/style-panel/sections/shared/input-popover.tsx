@@ -20,6 +20,7 @@ import { $availableUnitVariables } from "../../shared/model";
 import type { Modifiers } from "../../shared/modifier-keys";
 import { PropertyLabel } from "../../property-label";
 import { humanizeString } from "~/shared/string-utils";
+import { getChangeCompleteModifiers } from "./input-popover-utils";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
@@ -85,13 +86,10 @@ const Input = ({
         batch.setProperty(property)(styleValue);
         batch.publish({ isEphemeral: true });
       }}
-      onChangeComplete={({ value, close = true, altKey, shiftKey }) => {
-        const activeProperties = getActiveProperties({
-          altKey,
-          shiftKey,
-          ctrlKey: false,
-          metaKey: false,
-        });
+      onChangeComplete={({ value, close = true, type, altKey, shiftKey }) => {
+        const activeProperties = getActiveProperties(
+          getChangeCompleteModifiers({ type, altKey, shiftKey })
+        );
 
         setIntermediateValue(undefined);
         const batch = createBatchUpdate();

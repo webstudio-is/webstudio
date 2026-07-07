@@ -14,7 +14,10 @@ export const css = (
 ): TemplateStyleDecl[] => {
   const cssString = `.styles{ ${String.raw({ raw: strings }, ...values)} }`;
   const styles: TemplateStyleDecl[] = [];
-  for (const { breakpoint, state, property, value } of parseCss(cssString)) {
+  for (const { breakpoint, state, property, value } of parseCss(
+    cssString,
+    new Map()
+  ).styles) {
     styles.push({ breakpoint, state, property: property, value });
   }
   return styles;

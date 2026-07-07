@@ -5,7 +5,6 @@ import {
 } from "vite";
 
 export default defineConfig({
-  // resolve webstudio condition in tests
   resolve: {
     conditions: ["webstudio", ...defaultClientConditions],
   },

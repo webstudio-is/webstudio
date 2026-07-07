@@ -1,3 +1,11 @@
+import { findClosestInsertable } from "~/shared/instance-utils/insert";
+import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
+import {
+  detectFragmentTokenConflicts,
+  detectPageTokenConflicts,
+  extractWebstudioFragment,
+} from "@webstudio-is/project-build/runtime/fragment";
+import { updateWebstudioData } from "~/shared/instance-utils/data";
 import { useMemo } from "react";
 import {
   Button,
@@ -13,7 +21,8 @@ import {
 import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import {
   elementComponent,
-  Instance,
+  getAllPages,
+  type Instance,
   ROOT_FOLDER_ID,
   type Asset,
   type Page,
@@ -23,16 +32,13 @@ import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import { mapGroupBy } from "~/shared/shim";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { builderUrl } from "~/shared/router-utils";
-import {
-  extractWebstudioFragment,
-  findClosestInsertable,
-  insertWebstudioFragmentAt,
-  updateWebstudioData,
-} from "~/shared/instance-utils";
-import { insertPageCopyMutable } from "~/shared/page-utils";
+import { getWebstudioData } from "~/shared/instance-utils/data";
+import { builderApi } from "~/shared/builder-api";
+import { insertPageCopyMutable } from "@webstudio-is/project-build/runtime/page-copy";
+import { $project } from "~/shared/sync/data-stores";
 import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
-import { selectPage } from "~/shared/awareness";
+import { selectPage } from "~/shared/nano-states";
 
 const isBody = (instance: Instance) =>
   instance.component === "Body" ||
@@ -43,7 +49,7 @@ const isBody = (instance: Instance) =>
  * - Currently only supports inserting everything from the body
  * - Could be extended to support children of some other instance e.g. Marketplace Item
  */
-const insertSection = ({
+const insertSection = async ({
   data,
   instanceId,
 }: {
@@ -66,22 +72,45 @@ const insertSection = ({
     if (insertable.position === "end") {
       insertable.position = "after";
     }
-    insertWebstudioFragmentAt(fragment, insertable);
+    const conflicts = detectFragmentTokenConflicts({
+      fragment,
+      targetData: getWebstudioData(),
+    });
+    const conflictResolution =
+      conflicts.length > 0
+        ? await builderApi.showTokenConflictDialog(conflicts)
+        : "theirs";
+    insertWebstudioFragmentAt(fragment, insertable, conflictResolution);
   }
 };
 
-const insertPage = ({
+const insertPage = async ({
   data: sourceData,
   pageId,
 }: {
   data: WebstudioData;
   pageId: Page["id"];
 }) => {
+  const conflicts = detectPageTokenConflicts({
+    sourceData,
+    targetData: getWebstudioData(),
+    pageId,
+  });
+  const conflictResolution =
+    conflicts.length > 0
+      ? await builderApi.showTokenConflictDialog(conflicts)
+      : "theirs";
   let newPageId: undefined | Page["id"];
+  const projectId = $project.get()?.id;
+  if (projectId === undefined) {
+    return;
+  }
   updateWebstudioData((targetData) => {
     newPageId = insertPageCopyMutable({
       source: { data: sourceData, pageId },
       target: { data: targetData, folderId: ROOT_FOLDER_ID },
+      projectId,
+      conflictResolution,
     });
   });
   if (newPageId) {
@@ -102,7 +131,7 @@ const getTemplatesDataByCategory = (
   if (data === undefined) {
     return new Map();
   }
-  const pages = [data.pages.homePage, ...data.pages.pages]
+  const pages = getAllPages(data.pages)
     .filter((page) => page.marketplace?.include)
     .map((page) => {
       // category can be empty string
@@ -213,6 +242,8 @@ export const Templates = ({
                                 insertSection({
                                   data,
                                   instanceId: templateData.rootInstanceId,
+                                }).catch(() => {
+                                  // User cancelled conflict dialog
                                 });
                               }
                               if (
@@ -222,6 +253,8 @@ export const Templates = ({
                                 insertPage({
                                   data,
                                   pageId: templateData.pageId,
+                                }).catch(() => {
+                                  // User cancelled conflict dialog
                                 });
                               }
                             }}

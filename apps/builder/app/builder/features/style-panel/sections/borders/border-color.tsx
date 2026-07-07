@@ -8,6 +8,7 @@ import {
   useComputedStyles,
 } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
+import { useReadonly } from "../../shared/readonly";
 import { keywordValues } from "@webstudio-is/css-data";
 
 export const properties = [
@@ -18,6 +19,7 @@ export const properties = [
 ] satisfies [CssProperty, ...CssProperty[]];
 
 export const BorderColor = () => {
+  const readonly = useReadonly();
   const styles = useComputedStyles(properties);
   const serialized = styles.map((styleDecl) =>
     toValue(styleDecl.cascadedValue)
@@ -50,7 +52,7 @@ export const BorderColor = () => {
         >
           <div>
             <ColorPickerControl
-              disabled={isAdvanced}
+              disabled={isAdvanced || readonly}
               currentColor={currentColor}
               property={local.property}
               value={value}

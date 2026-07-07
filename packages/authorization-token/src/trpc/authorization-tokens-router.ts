@@ -1,13 +1,18 @@
 import { z } from "zod";
-import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
+import { TRPCError } from "@trpc/server";
+import {
+  PlanRequiredError,
+  router,
+  procedure,
+} from "@webstudio-is/trpc-interface/index.server";
 import { db } from "../db";
 import type { IsEqual } from "type-fest";
-import type { Database } from "@webstudio-is/postrest/index.server";
+import type { Database } from "@webstudio-is/postgrest/index.server";
 
 type Relation =
   Database["public"]["Tables"]["AuthorizationToken"]["Row"]["relation"];
 
-const TokenProjectRelation = z.enum([
+const tokenProjectRelation = z.enum([
   "viewers",
   "editors",
   "builders",
@@ -15,8 +20,19 @@ const TokenProjectRelation = z.enum([
 ]);
 
 // Check DB types are compatible with zod types
-type TokenRelation = z.infer<typeof TokenProjectRelation>;
+type TokenRelation = z.infer<typeof tokenProjectRelation>;
 true satisfies IsEqual<TokenRelation, Relation>;
+
+const toTrpcError = (error: unknown): never => {
+  if (error instanceof PlanRequiredError) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: error.message,
+      cause: error,
+    });
+  }
+  throw error;
+};
 
 export const authorizationTokenRouter = router({
   findMany: procedure
@@ -26,25 +42,23 @@ export const authorizationTokenRouter = router({
       })
     )
     .query(async ({ input, ctx }) => {
-      return await db.findMany({ projectId: input.projectId }, ctx);
+      return await db.findMany(input, ctx);
     }),
   create: procedure
     .input(
       z.object({
         projectId: z.string(),
-        relation: TokenProjectRelation,
+        relation: tokenProjectRelation,
         name: z.string(),
+        canUseApi: z.boolean().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await db.create(
-        {
-          projectId: input.projectId,
-          relation: input.relation,
-          name: input.name,
-        },
-        ctx
-      );
+      try {
+        return await db.create(input, ctx);
+      } catch (error) {
+        toTrpcError(error);
+      }
     }),
   remove: procedure
     .input(
@@ -54,10 +68,7 @@ export const authorizationTokenRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await db.remove(
-        { projectId: input.projectId, token: input.token },
-        ctx
-      );
+      return await db.remove(input, ctx);
     }),
   update: procedure
     .input(
@@ -65,25 +76,20 @@ export const authorizationTokenRouter = router({
         projectId: z.string(),
         token: z.string(),
         name: z.string(),
-        relation: TokenProjectRelation,
+        relation: tokenProjectRelation,
         canClone: z.boolean(),
         canCopy: z.boolean(),
         canPublish: z.boolean(),
+        canUseApi: z.boolean().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await db.update(
-        input.projectId,
-        {
-          token: input.token,
-          name: input.name,
-          relation: input.relation,
-          canPublish: input.canPublish,
-          canClone: input.canClone,
-          canCopy: input.canCopy,
-        },
-        ctx
-      );
+      const { projectId, ...token } = input;
+      try {
+        return await db.update(projectId, token, ctx);
+      } catch (error) {
+        toTrpcError(error);
+      }
     }),
 });
 

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import * as layout from "./layout/layout";
 import * as flexChild from "./flex-child/flex-child";
+import * as gridChild from "./grid-child/grid-child";
 import * as listItem from "./list-item";
 import * as space from "./space/space";
 import * as size from "./size/size";
@@ -27,6 +28,7 @@ export const sections = new Map<
 >([
   ["layout", layout],
   ["flexChild", flexChild],
+  ["gridChild", gridChild],
   ["listItem", listItem],
   ["space", space],
   ["size", size],

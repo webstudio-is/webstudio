@@ -2,11 +2,17 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+import {
+  renderText,
+  useResource,
+  useVariableState,
+} from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-router";
-import { Heading as Heading } from "@webstudio-is/sdk-components-react";
+import { Heading as Heading } from "@webstudio-is/sdk-components-react/components";
 
 export const projectId = "d845c167-ea07-4875-b08d-83e97c09dcce";
+
+export const projectDomain = "cli-basic-test-d0osr";
 
 export const lastPublished = "2025-01-04T11:01:50.091Z";
 

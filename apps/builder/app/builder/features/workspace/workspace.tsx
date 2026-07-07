@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { theme, Toaster, css } from "@webstudio-is/design-system";
+import { theme, css } from "@webstudio-is/design-system";
 import {
   $canvasWidth,
   $scale,
@@ -8,7 +8,7 @@ import {
 } from "~/builder/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
-import { selectInstance } from "~/shared/awareness";
+import { selectInstance } from "~/shared/nano-states";
 import { ResizeHandles } from "./canvas-tools/resize-handles";
 import { MediaBadge } from "./canvas-tools/media-badge";
 import { useSetCanvasWidth } from "~/builder/shared/calc-canvas-width";
@@ -131,15 +131,12 @@ export const CanvasToolsContainer = () => {
   const outlineStyle = useOutlineStyle();
 
   return (
-    <>
-      <div
-        data-name="canvas-tools-wrapper"
-        className={canvasContainerStyle()}
-        style={outlineStyle}
-      >
-        <CanvasTools />
-      </div>
-      <Toaster />
-    </>
+    <div
+      data-name="canvas-tools-wrapper"
+      className={canvasContainerStyle()}
+      style={outlineStyle}
+    >
+      <CanvasTools />
+    </div>
   );
 };

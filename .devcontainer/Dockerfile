@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/javascript-node:1-20-bookworm
+FROM mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm
 
 ENV PATH=/usr/local/bin:${PATH}
 # Install latest pnpm

@@ -10,7 +10,11 @@ const shortcutSymbolMap: Record<string, string> = {
   backspace: "⌫",
   enter: "↵",
   tab: isMac ? "tab" : "Tab",
-  click: isMac ? "+click" : "+ Click",
+  arrowup: "↑",
+  arrowright: "→",
+  arrowdown: "↓",
+  arrowleft: "←",
+  click: isMac ? "click" : "Click",
   "click[0]": isMac ? "click" : "Click",
 };
 
@@ -56,9 +60,10 @@ export const Kbd = ({
   color?: "subtle" | "moreSubtle" | "contrast";
   variant?: "regular";
 }) => {
+  const separator = isMac && value.includes("click") === false ? "" : " ";
   return (
     <Text color={color} variant={variant} as="kbd">
-      {format(value).join(isMac ? "" : " ")}
+      {format(value).join(separator)}
     </Text>
   );
 };

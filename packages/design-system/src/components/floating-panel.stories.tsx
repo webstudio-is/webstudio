@@ -1,12 +1,14 @@
 import { useRef, type ReactNode } from "react";
-import { FloatingPanel } from "./floating-panel";
+import { FloatingPanel as FloatingPanelComponent } from "./floating-panel";
 import { Box } from "./box";
+import { StorySection } from "./storybook";
 import { Button } from "./button";
 import { Text } from "./text";
+import { CopyIcon } from "@webstudio-is/icons";
 
 export default {
   title: "Floating Panel",
-  component: FloatingPanel,
+  component: FloatingPanelComponent,
 };
 
 const Container = ({ children }: { children: ReactNode }) => {
@@ -27,76 +29,110 @@ const Container = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const Left = () => {
-  return (
+export const LeftDefault = () => (
+  <StorySection title="Left (default)">
     <Container>
-      <FloatingPanel open title="Title" content={<Text>Content</Text>}>
+      <FloatingPanelComponent
+        open
+        title="Left (default)"
+        content={<Text>Content</Text>}
+      >
         <Button>Open on the left</Button>
-      </FloatingPanel>
+      </FloatingPanelComponent>
     </Container>
-  );
-};
+  </StorySection>
+);
 
-export const Right = () => {
-  return (
+export const RightStart = () => (
+  <StorySection title="Right start">
     <Container>
-      <FloatingPanel
+      <FloatingPanelComponent
         placement="right-start"
         open
-        title="Title"
+        title="Right"
         content={<Text>Content</Text>}
       >
         <Button>Open on the right</Button>
-      </FloatingPanel>
+      </FloatingPanelComponent>
     </Container>
-  );
-};
+  </StorySection>
+);
 
-export const Bottom = () => {
-  return (
+export const BottomWithin = () => (
+  <StorySection title="Bottom within">
     <Container>
-      <FloatingPanel
+      <FloatingPanelComponent
         placement="bottom-within"
         open
-        title="Title"
+        title="Bottom"
         content={<Text>Content</Text>}
       >
         <Button>Open below</Button>
-      </FloatingPanel>
+      </FloatingPanelComponent>
     </Container>
-  );
-};
+  </StorySection>
+);
 
-export const Center = () => {
-  return (
+export const Center = () => (
+  <StorySection title="Center">
     <Container>
-      <FloatingPanel
+      <FloatingPanelComponent
         placement="center"
         open
         maximizable
         resize="both"
-        title="Title"
+        title="Center"
         content={<Text>Content</Text>}
       >
         <Button>Open screen-centered</Button>
-      </FloatingPanel>
+      </FloatingPanelComponent>
     </Container>
-  );
-};
+  </StorySection>
+);
 
-export const CustomOffsetAndSize = () => {
-  return (
+export const CustomOffsetAndSize = () => (
+  <StorySection title="Custom offset and size">
     <Container>
-      <FloatingPanel
+      <FloatingPanelComponent
         offset={{ mainAxis: 20, alignmentAxis: -100 }}
         width={200}
         height={300}
         open
-        title="Title"
+        title="Custom Offset & Size"
         content={<Text>Content</Text>}
       >
         <Button>Open with custom offsets</Button>
-      </FloatingPanel>
+      </FloatingPanelComponent>
     </Container>
-  );
-};
+  </StorySection>
+);
+
+export const WithTitleSuffix = () => (
+  <StorySection title="With title suffix">
+    <Container>
+      <FloatingPanelComponent
+        open
+        title="With suffix"
+        titleSuffix={<Button color="ghost" prefix={<CopyIcon />} />}
+        content={<Text>Panel with a custom title suffix button</Text>}
+      >
+        <Button>Open with title suffix</Button>
+      </FloatingPanelComponent>
+    </Container>
+  </StorySection>
+);
+
+export const PersistentPanel = () => (
+  <StorySection title="Persistent panel">
+    <Container>
+      <FloatingPanelComponent
+        open
+        title="Persistent"
+        closeOnInteractOutside={false}
+        content={<Text>This panel stays open when clicking outside</Text>}
+      >
+        <Button>Open persistent</Button>
+      </FloatingPanelComponent>
+    </Container>
+  </StorySection>
+);

@@ -1,5 +1,6 @@
 import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance, Instances } from "./schema/instances";
+import type { Props } from "./schema/props";
 import { blockTemplateComponent } from "./core-metas";
 
 export const ROOT_INSTANCE_ID = ":root";
@@ -59,6 +60,48 @@ export const parseComponentName = (componentName: string) => {
     [namespace, name] = parts;
   }
   return [namespace, name] as const;
+};
+
+export const getHtmlTagsFromProps = (props: Props) => {
+  const tags = new Map<Instance["id"], string>();
+  for (const prop of props.values()) {
+    if (prop.type === "string" && prop.name === "tag") {
+      tags.set(prop.instanceId, prop.value);
+    }
+  }
+  return tags;
+};
+
+export const getHtmlTagFromInstance = ({
+  instance,
+  metas,
+  props,
+  htmlTagsByInstanceId,
+}: {
+  instance: Instance;
+  metas: Map<Instance["component"], WsComponentMeta>;
+  props?: Props;
+  htmlTagsByInstanceId?: Map<Instance["id"], string>;
+}) => {
+  // XmlNode's "tag" prop is an XML element name, not an HTML rendering tag.
+  if (instance.component === "XmlNode") {
+    return;
+  }
+  if (instance.tag !== undefined) {
+    return instance.tag;
+  }
+  const propTag =
+    htmlTagsByInstanceId === undefined
+      ? props === undefined
+        ? undefined
+        : getHtmlTagsFromProps(props).get(instance.id)
+      : htmlTagsByInstanceId.get(instance.id);
+  if (propTag !== undefined) {
+    return propTag;
+  }
+  const meta = metas.get(instance.component);
+  const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
+  return metaTag;
 };
 
 export type IndexesWithinAncestors = Map<Instance["id"], number>;

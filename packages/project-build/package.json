@@ -9,23 +9,176 @@
   "type": "module",
   "exports": {
     ".": {
-      "webstudio": "./src/index.ts"
+      "webstudio": "./src/index.ts",
+      "partykit": "./src/index.ts"
+    },
+    "./schema": {
+      "webstudio": "./src/schema.ts",
+      "import": "./src/schema.ts",
+      "default": "./src/schema.ts"
+    },
+    "./contracts/builder-runtime": {
+      "webstudio": "./src/contracts/builder-runtime.ts",
+      "import": "./src/contracts/builder-runtime.ts",
+      "default": "./src/contracts/builder-runtime.ts"
+    },
+    "./contracts/namespaces": {
+      "webstudio": "./src/contracts/namespaces.ts",
+      "import": "./src/contracts/namespaces.ts",
+      "default": "./src/contracts/namespaces.ts"
+    },
+    "./contracts/patch": {
+      "webstudio": "./src/contracts/patch.ts",
+      "import": "./src/contracts/patch.ts",
+      "default": "./src/contracts/patch.ts"
+    },
+    "./project-session": {
+      "webstudio": "./src/project-session.ts",
+      "import": "./src/project-session.ts",
+      "default": "./src/project-session.ts"
+    },
+    "./mcp": {
+      "webstudio": "./src/mcp.ts",
+      "import": "./src/mcp.ts",
+      "default": "./src/mcp.ts"
+    },
+    "./state/adapters": {
+      "webstudio": "./src/state/adapters.ts",
+      "import": "./src/state/adapters.ts",
+      "default": "./src/state/adapters.ts"
+    },
+    "./state/builder-state": {
+      "webstudio": "./src/state/builder-state.ts",
+      "import": "./src/state/builder-state.ts",
+      "default": "./src/state/builder-state.ts"
+    },
+    "./state/freshness": {
+      "webstudio": "./src/state/freshness.ts",
+      "import": "./src/state/freshness.ts",
+      "default": "./src/state/freshness.ts"
+    },
+    "./state/patch": {
+      "webstudio": "./src/state/patch.ts",
+      "import": "./src/state/patch.ts",
+      "default": "./src/state/patch.ts"
+    },
+    "./visual/screenshot-diff": {
+      "webstudio": "./src/visual/screenshot-diff.ts",
+      "import": "./src/visual/screenshot-diff.ts",
+      "default": "./src/visual/screenshot-diff.ts"
+    },
+    "./visual/screenshot-browser": {
+      "webstudio": "./src/visual/screenshot-browser.ts",
+      "import": "./src/visual/screenshot-browser.ts",
+      "default": "./src/visual/screenshot-browser.ts"
+    },
+    "./runtime/assets": {
+      "webstudio": "./src/runtime/assets.ts",
+      "import": "./src/runtime/assets.ts",
+      "default": "./src/runtime/assets.ts"
+    },
+    "./runtime/breakpoints": {
+      "webstudio": "./src/runtime/breakpoints.ts",
+      "import": "./src/runtime/breakpoints.ts",
+      "default": "./src/runtime/breakpoints.ts"
+    },
+    "./runtime/data": {
+      "webstudio": "./src/runtime/data.ts",
+      "import": "./src/runtime/data.ts",
+      "default": "./src/runtime/data.ts"
+    },
+    "./runtime/errors": {
+      "webstudio": "./src/runtime/errors.ts",
+      "import": "./src/runtime/errors.ts",
+      "default": "./src/runtime/errors.ts"
+    },
+    "./runtime/fragment": {
+      "webstudio": "./src/runtime/fragment.ts",
+      "import": "./src/runtime/fragment.ts",
+      "default": "./src/runtime/fragment.ts"
+    },
+    "./runtime/instances": {
+      "webstudio": "./src/runtime/instances.ts",
+      "import": "./src/runtime/instances.ts",
+      "default": "./src/runtime/instances.ts"
+    },
+    "./runtime/mutation": {
+      "webstudio": "./src/runtime/mutation.ts",
+      "import": "./src/runtime/mutation.ts",
+      "default": "./src/runtime/mutation.ts"
+    },
+    "./runtime/page-copy": {
+      "webstudio": "./src/runtime/page-copy.ts",
+      "import": "./src/runtime/page-copy.ts",
+      "default": "./src/runtime/page-copy.ts"
+    },
+    "./runtime/pages": {
+      "webstudio": "./src/runtime/pages.ts",
+      "import": "./src/runtime/pages.ts",
+      "default": "./src/runtime/pages.ts"
+    },
+    "./runtime/project-settings": {
+      "webstudio": "./src/runtime/project-settings.ts",
+      "import": "./src/runtime/project-settings.ts",
+      "default": "./src/runtime/project-settings.ts"
+    },
+    "./runtime/props": {
+      "webstudio": "./src/runtime/props.ts",
+      "import": "./src/runtime/props.ts",
+      "default": "./src/runtime/props.ts"
+    },
+    "./runtime/registry": {
+      "webstudio": "./src/runtime/registry.ts",
+      "import": "./src/runtime/registry.ts",
+      "default": "./src/runtime/registry.ts"
+    },
+    "./runtime/style-copy": {
+      "webstudio": "./src/runtime/style-copy.ts",
+      "import": "./src/runtime/style-copy.ts",
+      "default": "./src/runtime/style-copy.ts"
+    },
+    "./runtime/style-utils": {
+      "webstudio": "./src/runtime/style-utils.ts",
+      "import": "./src/runtime/style-utils.ts",
+      "default": "./src/runtime/style-utils.ts"
+    },
+    "./runtime/styles": {
+      "webstudio": "./src/runtime/styles.ts",
+      "import": "./src/runtime/styles.ts",
+      "default": "./src/runtime/styles.ts"
     },
     "./index.server": {
       "webstudio": "./src/index.server.ts"
+    },
+    "./build-parser.server": {
+      "webstudio": "./src/db/build-parser.ts"
+    },
+    "./style-source-selections.server": {
+      "webstudio": "./src/db/style-source-selections.ts"
+    },
+    "./styles.server": {
+      "webstudio": "./src/db/styles.ts"
     }
   },
   "sideEffects": false,
   "scripts": {
-    "typecheck": "tsc",
+    "generate-docs": "node scripts/generate-docs.mjs",
+    "typecheck": "tsgo --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.0",
     "@webstudio-is/authorization-token": "workspace:*",
-    "@webstudio-is/postrest": "workspace:*",
+    "@webstudio-is/css-data": "workspace:*",
+    "@webstudio-is/css-engine": "workspace:*",
+    "@webstudio-is/postgrest": "workspace:*",
+    "@webstudio-is/project-migrations": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
+    "fast-deep-equal": "^3.1.3",
+    "fast-png": "8.0.0",
+    "immer": "^10.1.1",
     "nanoid": "^5.1.5",
     "zod": "^3.24.2"
   },

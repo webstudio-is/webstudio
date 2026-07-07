@@ -5,7 +5,7 @@ import {
   SectionTitleButton,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { propertiesData } from "@webstudio-is/css-data";
+import { isPseudoElement, propertiesData } from "@webstudio-is/css-data";
 import {
   toValue,
   type CssProperty,
@@ -16,6 +16,7 @@ import {
   useOpenState,
 } from "~/builder/shared/collapsible-section";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
+import { useReadonly } from "../../shared/readonly";
 import { humanizeString } from "~/shared/string-utils";
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -40,6 +41,9 @@ const transitionLongHandProperties = [
 export { transitionLongHandProperties as properties };
 
 const label = "Transitions";
+
+const canAddTransitionToStyleState = (state: undefined | string): boolean =>
+  state === undefined || isPseudoElement(state);
 
 const getTransitionLayers = (
   styles: ComputedStyleDecl[],
@@ -86,14 +90,15 @@ const getLayerLabel = ({
 
 export const Section = () => {
   const [isOpen, setIsOpen] = useOpenState(label);
+  const readonly = useReadonly();
 
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector
   );
 
-  const isStyleInLocalState =
+  const canAddTransition =
     selectedOrLastStyleSourceSelector &&
-    selectedOrLastStyleSourceSelector.state === undefined;
+    canAddTransitionToStyleState(selectedOrLastStyleSourceSelector.state);
   const styles = useComputedStyles(transitionLongHandProperties);
   const dots = getDots(styles);
 
@@ -111,13 +116,13 @@ export const Section = () => {
           suffix={
             <Tooltip
               content={
-                isStyleInLocalState === false
-                  ? "Transitions can only be added in local state"
+                canAddTransition === false
+                  ? "Transitions can only be added in local state or pseudo-elements"
                   : "Add a transition"
               }
             >
               <SectionTitleButton
-                disabled={isStyleInLocalState === false}
+                disabled={readonly || canAddTransition === false}
                 prefix={<PlusIcon />}
                 onClick={() => {
                   setIsOpen(true);
@@ -125,7 +130,7 @@ export const Section = () => {
                     styles,
                     parseCssFragment("all 200ms ease 0ms normal", [
                       "transition",
-                    ])
+                    ]).styles
                   );
                 }}
               />
@@ -150,4 +155,8 @@ export const Section = () => {
       />
     </CollapsibleSectionRoot>
   );
+};
+
+export const __testing__ = {
+  canAddTransitionToStyleState,
 };

@@ -1,6 +1,7 @@
 {
   "extends": "@webstudio-is/tsconfig/base.json",
   "include": ["app", "**/*.ts", "**/*.tsx", "../../@types/**/*.d.ts"],
+  "exclude": ["node_modules", "party"],
 
   "compilerOptions": {
     "target": "ES2023",
@@ -13,9 +14,8 @@
     ],
 
     "paths": {
-      "~/*": ["app/*"]
+      "~/*": ["./app/*"]
     },
-    "baseUrl": ".",
     "declaration": false,
     "emitDeclarationOnly": false,
     "declarationDir": null,

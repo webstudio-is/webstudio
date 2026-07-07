@@ -21,7 +21,7 @@ export type UploadingAssetContainer = {
  */
 export type AssetContainer = UploadedAssetContainer | UploadingAssetContainer;
 
-export type ActionData = {
+export type AssetActionResponse = {
   uploadedAssets?: Array<Asset>;
   deletedAssets?: Array<Asset>;
   errors?: string;

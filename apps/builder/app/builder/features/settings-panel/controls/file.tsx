@@ -4,11 +4,12 @@ import { Flex, InputField, theme } from "@webstudio-is/design-system";
 import {
   BindingControl,
   BindingPopover,
+  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
+import { useDraftValue } from "~/builder/shared/use-draft-value";
 import {
   type ControlProps,
   VerticalLayout,
-  useLocalValue,
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
@@ -24,7 +25,7 @@ const UrlInput = ({
 }: {
   id: string;
   readOnly: boolean;
-  localValue: ReturnType<typeof useLocalValue<undefined | string>>;
+  localValue: ReturnType<typeof useDraftValue<undefined | string>>;
 }) => (
   <InputField
     id={id}
@@ -51,7 +52,7 @@ export const FileControl = ({
 }: ControlProps<"file">) => {
   const id = useId();
 
-  const localStringValue = useLocalValue(
+  const localStringValue = useDraftValue(
     // use undefined for asset type to not delete
     // when url is reset by asset selector
     prop?.type === "string" || prop?.type === "expression"
@@ -88,11 +89,7 @@ export const FileControl = ({
           <BindingPopover
             scope={scope}
             aliases={aliases}
-            validate={(value) => {
-              if (value !== undefined && typeof value !== "string") {
-                return `${label} expects a string value or file`;
-              }
-            }}
+            validate={(value) => validatePrimitiveValue(value, label)}
             variant={variant}
             value={expression}
             onChange={(newExpression) =>

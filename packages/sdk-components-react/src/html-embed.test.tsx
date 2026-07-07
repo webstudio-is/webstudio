@@ -9,7 +9,7 @@ import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { __testing__, HtmlEmbed } from "./html-embed";
 import { cartesian } from "./test-utils/cartesian";
 
-const scriptTestIdPrefix = __testing__.scriptTestIdPrefix;
+const { scriptTestIdPrefix } = __testing__;
 const SCRIPT_TEST_ID = "script-a";
 const SCRIPT_PROCESSED_TEST_ID = `${scriptTestIdPrefix}${SCRIPT_TEST_ID}`;
 
@@ -336,4 +336,58 @@ describe("Builder renderer= canvas | preview", () => {
       screen.queryByText(`Open the "Settings" panel to insert HTML code.`)
     ).toBeTruthy();
   });
+
+  /**
+   * Test safe mode: when isSafeMode is true, scripts should never execute
+   * regardless of executeScriptOnCanvas setting or renderer mode.
+   */
+  test.each(
+    cartesian(
+      [true, false, undefined], //clientOnly
+      [true, false, undefined], //executeScriptOnCanvas
+      ["canvas", "preview"] //renderer
+    )
+  )(
+    "Safe mode prevents script execution when clientOnly=%p executeScriptOnCanvas=%p and renderer=%p",
+    async (clientOnly, executeScriptOnCanvas, renderer) => {
+      const AppWithSafeMode = () => {
+        const code = `
+          <script data-testid="${SCRIPT_TEST_ID}">console.log('hello')</script>
+          <div data-testid="${FRAGMENT_DIV_ID}">hello</div>
+        `;
+
+        return (
+          <ReactSdkContext.Provider
+            value={{
+              assetBaseUrl: "",
+              imageLoader: () => "",
+              renderer: renderer as "canvas" | "preview",
+              isSafeMode: true,
+              resources: {},
+              breakpoints: [],
+              onError: console.error,
+            }}
+          >
+            <HtmlEmbed
+              code={code}
+              clientOnly={clientOnly}
+              executeScriptOnCanvas={executeScriptOnCanvas}
+            />
+          </ReactSdkContext.Provider>
+        );
+      };
+
+      const ui = <AppWithSafeMode />;
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+
+      render(ui, { container });
+      await Promise.resolve();
+
+      // In safe mode, scripts should not be processed (no SCRIPT_PROCESSED_TEST_ID)
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeTruthy();
+      expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).not.toBeTruthy();
+      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeTruthy();
+    }
+  );
 });

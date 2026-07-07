@@ -2,12 +2,12 @@ import * as csstree from "css-tree";
 import { cssTryParseValue } from "../parse-css-value";
 import { toValue, type KeywordValue } from "@webstudio-is/css-engine";
 import {
-  getColor,
-  isColorStop,
-  mapLengthPercentageOrVar,
   formatGradientStops,
   normalizeRepeatingGradient,
+  parseGradientHintFromParts,
+  parseGradientStopFromParts,
   forEachGradientParts,
+  withoutWhitespaceNodes,
 } from "./gradient-utils";
 import type { GradientStop, ParsedRadialGradient } from "./types";
 
@@ -64,22 +64,13 @@ export const parseRadialGradient = (
   const stops: GradientStop[] = [];
 
   forEachGradientParts(ast, "radial-gradient", (gradientParts) => {
-    const filtered = gradientParts.filter((node) => node.type !== "WhiteSpace");
+    const filtered = withoutWhitespaceNodes(gradientParts);
     if (filtered.length === 0) {
       return;
     }
 
-    const colorStopNode = filtered.find(isColorStop);
-    if (colorStopNode !== undefined) {
-      const color = getColor(colorStopNode);
-      const colorIndex = filtered.indexOf(colorStopNode);
-      const positionNode = filtered[colorIndex + 1];
-      const hintNode = filtered[colorIndex + 2];
-      const stop: GradientStop = {
-        color,
-        position: mapLengthPercentageOrVar(positionNode),
-        hint: mapLengthPercentageOrVar(hintNode),
-      };
+    const stop = parseGradientStopFromParts(filtered);
+    if (stop !== undefined) {
       stops.push(stop);
       return;
     }
@@ -120,7 +111,7 @@ export const parseRadialGradient = (
       return;
     }
 
-    const hint = mapLengthPercentageOrVar(directiveTokens[0]);
+    const hint = parseGradientHintFromParts(directiveTokens);
     if (hint !== undefined) {
       stops.push({ hint });
     }

@@ -1,3 +1,6 @@
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
+import { updateInstanceData } from "~/shared/instance-utils/data";
+import { color } from "@webstudio-is/css-engine";
 import {
   useState,
   useEffect,
@@ -28,8 +31,7 @@ import {
   KEY_ARROW_LEFT_COMMAND,
   $createRangeSelection,
   COMMAND_PRIORITY_CRITICAL,
-  $getNearestNodeFromDOMNode,
-  // eslint-disable-next-line camelcase
+  $getNearestNodeFromDOMNode, // eslint-disable-next-line camelcase
   $normalizeSelection__EXPERIMENTAL,
   type LexicalEditor,
   type SerializedEditorState,
@@ -53,45 +55,43 @@ import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import type { Instance, Instances, Props } from "@webstudio-is/sdk";
 import {
-  collapsedAttribute,
+  inflatedAttribute,
   idAttribute,
   selectorIdAttribute,
 } from "@webstudio-is/react-sdk";
-import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
+import {
+  isDescendantOrSelf,
+  type InstanceSelector,
+} from "~/shared/instance-utils/tree";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
-import Color from "colorjs.io";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import {
-  deleteInstanceMutable,
-  findAllEditableInstanceSelector,
-  updateWebstudioData,
-} from "~/shared/instance-utils";
+import { deleteInstanceMutable } from "~/shared/instance-utils/mutation";
 import {
   $blockChildOutline,
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
-  $instances,
   $registeredComponentMetas,
-  $selectedInstanceSelector,
   $textEditingInstanceSelector,
   $textEditorContextMenu,
   execTextEditorContextMenuCommand,
   findBlockChildSelector,
   findTemplates,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import {
   getElementByInstanceSelector,
   getVisibleElementsByInstanceSelector,
 } from "~/shared/dom-utils";
 import deepEqual from "fast-deep-equal";
-import { setDataCollapsed } from "~/canvas/collapsed";
+import { inflateInstance } from "~/canvas/inflator";
 import {
+  $selectedInstanceSelector,
   $selectedPage,
   addTemporaryInstance,
   getInstancePath,
-  selectInstance,
-} from "~/shared/awareness";
+} from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
 import { shallowEqual } from "shallow-equal";
 import {
   insertListItemAt,
@@ -146,8 +146,8 @@ const CaretColorPlugin = () => {
 
     let isLightBackground = false;
     try {
-      const color = new Color(elementColor);
-      const alpha = color.alpha ?? 1;
+      const parsed = color.parse(elementColor);
+      const alpha = parsed.alpha ?? 1;
       isLightBackground = alpha < 0.1;
     } catch {
       // If we can't parse the color, assume it's not light
@@ -229,7 +229,7 @@ const OnChangeOnBlurPlugin = ({
         handleChange(editor.getEditorState(), "unmount");
       });
     },
-    [editor, handleChange]
+    [editor]
   );
 
   useEffect(() => {
@@ -245,7 +245,7 @@ const OnChangeOnBlurPlugin = ({
       rootElement?.addEventListener("blur", handleBlur);
       prevRootElement?.removeEventListener("blur", handleBlur);
     });
-  }, [editor, handleChange]);
+  }, [editor]);
 
   return null;
 };
@@ -488,7 +488,7 @@ const isSelectionFirstNode = () => {
 const getDomSelectionRect = () => {
   const domSelection = window.getSelection();
   if (!domSelection || !domSelection.focusNode) {
-    return undefined;
+    return;
   }
 
   // Get current line position
@@ -1101,7 +1101,7 @@ const RichTextContentPluginInternal = ({
             findBlockChildSelector(rootInstanceSelector);
 
           if (blockChildSelector) {
-            updateWebstudioData((data) => {
+            updateInstanceData((data) => {
               deleteInstanceMutable(
                 data,
                 getInstancePath(rootInstanceSelector, data.instances)
@@ -1165,7 +1165,7 @@ const RichTextContentPluginInternal = ({
                 .get()
                 .get(parentInstanceSelector[0]);
               const isLastChild = parentInstance?.children.length === 1;
-              updateWebstudioData((data) => {
+              updateInstanceData((data) => {
                 deleteInstanceMutable(
                   data,
                   getInstancePath(
@@ -1184,7 +1184,7 @@ const RichTextContentPluginInternal = ({
             if (blockChildSelector) {
               onNext(editor.getEditorState(), { reason: "left" });
 
-              updateWebstudioData((data) => {
+              updateInstanceData((data) => {
                 deleteInstanceMutable(
                   data,
                   getInstancePath(blockChildSelector, data.instances)
@@ -1266,7 +1266,7 @@ const RichTextContentPluginInternal = ({
                 const isLastChild = parentInstance?.children.length === 1;
 
                 // Pressing Enter within an empty list item deletes the empty item
-                updateWebstudioData((data) => {
+                updateInstanceData((data) => {
                   deleteInstanceMutable(
                     data,
                     getInstancePath(
@@ -1426,14 +1426,7 @@ const RichTextContentPluginInternal = ({
       // Safari and FF support as no blur event is triggered in some cases
       closeMenuWithUpdate();
     };
-  }, [
-    editor,
-    handleOpen,
-    onNext,
-    preservedSelection,
-    rootInstanceSelector,
-    templates,
-  ]);
+  }, [editor, onNext, preservedSelection, rootInstanceSelector, templates]);
 
   return null;
 };
@@ -1466,7 +1459,7 @@ const InitialJSONStatePlugin = ({
 
   useEffect(() => {
     handleInitialState(editor.getEditorState().toJSON());
-  }, [editor, handleInitialState]);
+  }, [editor]);
 
   return null;
 };
@@ -1546,7 +1539,7 @@ export const TextEditor = ({
         if (treeRootInstance) {
           const jsonState = editorState.toJSON();
           if (deepEqual(jsonState, lastSavedStateJsonRef.current)) {
-            setDataCollapsed(rootInstanceSelector[0], false);
+            inflateInstance(rootInstanceSelector[0], false);
             return;
           }
 
@@ -1557,7 +1550,7 @@ export const TextEditor = ({
           lastSavedStateJsonRef.current = jsonState;
         }
 
-        setDataCollapsed(rootInstanceSelector[0], false);
+        inflateInstance(rootInstanceSelector[0], false);
       });
 
       const textEditingSelector = $textEditingInstanceSelector.get()?.selector;
@@ -1699,7 +1692,7 @@ export const TextEditor = ({
             continue;
           }
 
-          if (!elt.hasAttribute(collapsedAttribute)) {
+          if (!elt.hasAttribute(inflatedAttribute)) {
             continue;
           }
         }

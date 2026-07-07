@@ -41,22 +41,38 @@ const ensureValue = (css: string) => {
  * - Property and value: color: red
  * - Multiple properties: color: red; background: blue
  */
-export const parseStyleInput = (css: string): CssStyleMap => {
+export type ParseStyleInputResult = {
+  styleMap: CssStyleMap;
+  errors: string[];
+};
+
+export const parseStyleInput = (
+  css: string,
+  cssVars: Map<string, string>
+): ParseStyleInputResult => {
   css = ensureValue(css);
-  const styles = parseCss(`selector{${css}}`);
+  const { styles, errors } = parseCss(`selector{${css}}`, cssVars);
   const styleMap: CssStyleMap = new Map();
   for (const { property, value } of styles) {
+    const keepVendorLonghand = property.startsWith("-webkit-text-stroke-");
     if (property.startsWith("--")) {
       styleMap.set(property, value);
       continue;
     }
     // somethingunknown: red; -> --somethingunknown: red;
-    if (propertiesData[property] === undefined) {
+    // but keep known shorthands like -webkit-text-stroke as-is
+    if (
+      propertiesData[property] === undefined &&
+      keepVendorLonghand === false &&
+      shorthandProperties.includes(
+        property as (typeof shorthandProperties)[number]
+      ) === false
+    ) {
       styleMap.set(`--${property}`, value);
       continue;
     }
     // @todo This should be returning { type: "guaranteedInvalid" }
     styleMap.set(property, value);
   }
-  return styleMap;
+  return { styleMap, errors };
 };

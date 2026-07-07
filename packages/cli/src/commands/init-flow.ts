@@ -13,11 +13,15 @@ import {
 } from "@clack/prompts";
 import { createFolderIfNotExists, isFileExists } from "../fs-utils";
 import { PROJECT_TEMPLATES } from "../config";
-import { link, validateShareLink } from "./link";
+import { link, saveShareLink, validateShareLink } from "./link";
 import { sync } from "./sync";
 import { build, buildOptions } from "./build";
-import type { StrictYargsOptionsToInterface } from "./yargs-types";
+import type {
+  CommonYargsArgv,
+  StrictYargsOptionsToInterface,
+} from "./yargs-types";
 import { mapToTemplatesFromOptions } from "../build-utils";
+import { printJson } from "../json-output";
 
 type ProjectTemplates = (typeof PROJECT_TEMPLATES)[number]["value"];
 
@@ -29,9 +33,52 @@ const exitIfCancelled = <Value>(value: Value | symbol): Value => {
   return value;
 };
 
+export const initOptions = (yargs: CommonYargsArgv) =>
+  buildOptions(yargs)
+    .option("link", {
+      alias: "l",
+      type: "string",
+      describe: "Builder API share link",
+    })
+    .option("json", {
+      type: "boolean",
+      default: false,
+      describe: "Print JSON output",
+    });
+
+type InitOptions = StrictYargsOptionsToInterface<typeof initOptions>;
+
+type InitFlowDependencies = {
+  saveShareLink: typeof saveShareLink;
+};
+
+const defaultDependencies: InitFlowDependencies = {
+  saveShareLink,
+};
+
 export const initFlow = async (
-  options: StrictYargsOptionsToInterface<typeof buildOptions>
+  options: InitOptions,
+  dependencies = defaultDependencies
 ) => {
+  if (options.link !== undefined) {
+    const start = Date.now();
+    const { projectId } = await dependencies.saveShareLink(options.link);
+    if (options.json) {
+      printJson({
+        ok: true,
+        data: { projectId },
+        meta: {
+          command: "init",
+          projectId,
+          durationMs: Date.now() - start,
+        },
+      });
+    } else {
+      log.step("The project is linked successfully");
+    }
+    return;
+  }
+
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
   let shouldInstallDeps = false;
   let folderName: undefined | string;

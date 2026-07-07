@@ -10,13 +10,15 @@ export default defineConfig({
       },
     ],
     conditions: ["webstudio", "browser", "development|production"],
-    // conditions: ["webstudio", ...defaultClientConditions],
   },
-  // resolve webstudio condition in tests
   ssr: {
     resolve: {
       conditions: ["webstudio", "node", "development|production"],
-      // conditions: ["webstudio", ...defaultServerConditions],
     },
+  },
+  test: {
+    environment: "jsdom",
+    environmentMatchGlobs: [["**/*.server.test.*", "node"]],
+    setupFiles: ["@webstudio-is/design-system/test-setup"],
   },
 });

@@ -28,11 +28,11 @@ import { NavigatorTree } from "~/builder/features/navigator";
 import type { Settings } from "~/builder/shared/client-settings";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import {
+  $allSelectedInstanceSelectors,
   $selectedInstance,
   $selectedInstanceKey,
   $selectedPage,
-} from "~/shared/awareness";
-import { $styleSourceInputElement } from "./shared/commands";
+} from "~/shared/nano-states";
 import { InstanceIcon, getInstanceLabel } from "./shared/instance-label";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
@@ -41,7 +41,7 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
       <Flex shrink={false}>
         <InstanceIcon instance={instance} />
       </Flex>
-      <Text truncate variant="labelsSentenceCase">
+      <Text truncate variant="labels">
         {getInstanceLabel(instance)}
       </Text>
     </Flex>
@@ -60,9 +60,15 @@ const contentStyle = {
 
 const $isDragging = computed([$dragAndDropState], (state) => state.isDragging);
 
+const getInspectorEmptyStateMessage = (selectedInstanceCount: number) =>
+  selectedInstanceCount > 1
+    ? "Multiple instances selected"
+    : "Select an instance on the canvas";
+
 export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore($selectedInstance);
   const selectedInstanceKey = useStore($selectedInstanceKey);
+  const selectedInstanceSelectors = useStore($allSelectedInstanceSelectors);
   const tabsRef = useRef<HTMLDivElement>(null);
   const isDragging = useStore($isDragging);
   const metas = useStore($registeredComponentMetas);
@@ -79,7 +85,9 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
       <Flex css={{ p: theme.spacing[9] }}>
         {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate, maybe create an issue with a more specific proposal? */}
         <Card css={{ p: theme.spacing[9], width: "100%" }}>
-          <Text>Select an instance on the canvas</Text>
+          <Text>
+            {getInspectorEmptyStateMessage(selectedInstanceSelectors.length)}
+          </Text>
         </Card>
       </Flex>
     );
@@ -169,7 +177,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
               <InstanceInfo instance={selectedInstance} />
               <ModeMenu />
             </Flex>
-            <StylePanel $styleSourceInputElement={$styleSourceInputElement} />
+            <StylePanel />
           </PanelTabsContent>
           <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
             <ScrollArea>
@@ -196,4 +204,8 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
       </PanelTabs>
     </EnhancedTooltipProvider>
   );
+};
+
+export const __testing__ = {
+  getInspectorEmptyStateMessage,
 };

@@ -91,7 +91,7 @@ export const isDomainUsingCloudflareNameservers = async (domain: string) => {
     console.error(
       "RDAP Server for the given top level domain could not be found."
     );
-    return undefined;
+    return;
   }
 
   const data = await fetchRdap(rdapServer, domain);

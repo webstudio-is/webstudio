@@ -1,6 +1,6 @@
 import type { Instance } from "@webstudio-is/sdk";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
-import type { InstanceSelector } from "./tree-utils";
+import type { InstanceSelector } from "./instance-utils/tree";
 import { getIsVisuallyHidden } from "./visually-hidden";
 
 export const getInstanceIdFromElement = (
@@ -133,9 +133,14 @@ const sumRects = (first: Rect, second: Rect) => {
   };
 };
 
-export const getAllElementsBoundingBox = (
+type BoundingBoxOptions = {
+  fallbackToParent?: boolean;
+};
+
+const getElementsBoundingBox = (
   elements: Element[],
-  depth: number = 0
+  options: BoundingBoxOptions,
+  depth: number
 ): DOMRect => {
   const rects: Rect[] = [];
 
@@ -173,8 +178,9 @@ export const getAllElementsBoundingBox = (
     }
 
     if (element.children.length > 0) {
-      const childRect = getAllElementsBoundingBox(
+      const childRect = getElementsBoundingBox(
         [...element.children],
+        options,
         depth + 1
       );
       if (childRect.width !== 0 || childRect.height !== 0) {
@@ -184,7 +190,7 @@ export const getAllElementsBoundingBox = (
       }
     }
 
-    if (depth > 0) {
+    if (depth > 0 || options.fallbackToParent === false) {
       continue;
     }
 
@@ -193,7 +199,7 @@ export const getAllElementsBoundingBox = (
     if (parentElement === null) {
       continue;
     }
-    const parentRect = getAllElementsBoundingBox([parentElement]);
+    const parentRect = getElementsBoundingBox([parentElement], {}, 0);
 
     if (parentRect.width !== 0 || parentRect.height !== 0) {
       const { top, right, bottom, left } = parentRect;
@@ -215,6 +221,13 @@ export const getAllElementsBoundingBox = (
     height: bottom - top,
     width: right - left,
   });
+};
+
+export const getAllElementsBoundingBox = (
+  elements: Element[],
+  options: BoundingBoxOptions = {}
+): DOMRect => {
+  return getElementsBoundingBox(elements, options, 0);
 };
 
 const doNotTrackMutationAttribute = "data-ws-do-not-track-mutation";

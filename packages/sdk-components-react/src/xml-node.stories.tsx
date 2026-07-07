@@ -1,4 +1,5 @@
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import { StorySection } from "@webstudio-is/design-system";
 import { XmlNode } from "./xml-node";
 
 const Component = () => {
@@ -24,15 +25,15 @@ const Component = () => {
 };
 
 export default {
-  title: "XML Node",
+  title: "XML node",
 };
 
 const Story = {
   render() {
     return (
-      <>
+      <StorySection title="Xml Node">
         <Component />
-      </>
+      </StorySection>
     );
   },
 };

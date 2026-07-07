@@ -33,7 +33,13 @@ import {
   SelectSeparator,
   SelectGroup,
 } from "./select";
-import { MenuCheckedAndSetIcon, MenuCheckedIcon, MenuSetDotIcon } from "./menu";
+import {
+  MenuCheckedAndSetIcon,
+  MenuCheckedIcon,
+  MenuSetDotIcon,
+  MenuList,
+  MenuItemButton,
+} from "./menu";
 import { Button } from "./button";
 import {
   ChevronDownIcon,
@@ -262,7 +268,7 @@ const ComplexSelectDemo = () => {
   );
 };
 
-export const Demo = () => (
+export const MenuMenuItem = () => (
   <>
     <StorySection title="Dropdown menu">
       <div style={{ display: "flex", paddingBottom: 360 }}>
@@ -288,7 +294,16 @@ export const Demo = () => (
   </>
 );
 
-Demo.storyName = "Menu, Menu Item";
+export const StandaloneMenuItems = () => (
+  <StorySection title="Standalone menu list">
+    <MenuList width="regular">
+      <MenuItemButton>Create new</MenuItemButton>
+      <MenuItemButton destructive>Delete item</MenuItemButton>
+      <MenuItemButton disabled>Disabled item</MenuItemButton>
+      <MenuItemButton hint>Hint item</MenuItemButton>
+    </MenuList>
+  </StorySection>
+);
 
 export default {
   title: "Menu, Menu Item",

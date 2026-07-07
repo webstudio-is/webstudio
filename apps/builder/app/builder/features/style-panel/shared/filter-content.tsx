@@ -2,7 +2,7 @@ import {
   type InvalidValue,
   type TupleValue,
   toValue,
-  StyleValue,
+  type StyleValue,
 } from "@webstudio-is/css-engine";
 import {
   Flex,
@@ -13,6 +13,7 @@ import {
   Separator,
   Select,
   Grid,
+  toast,
 } from "@webstudio-is/design-system";
 import { useEffect, useState, type JSX } from "react";
 import {
@@ -23,6 +24,7 @@ import { parseCssValue } from "@webstudio-is/css-data";
 import type { StyleUpdateOptions } from "../shared/use-style-data";
 import { ShadowContent } from "./shadow-content";
 import { parseCssFragment } from "./css-fragment";
+import { useReadonly } from "./readonly";
 
 // filters can't be validated directly in the css-engine. Because, these are not properties
 // but functions that proeprties accept. So, we need to validate them manually using fake proeprties
@@ -98,6 +100,7 @@ export const FilterSectionContent = ({
   tooltip,
   layer,
 }: FilterContentProps) => {
+  const readonly = useReadonly();
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >();
@@ -152,7 +155,10 @@ export const FilterSectionContent = ({
     value: string,
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
-    const parsed = parseCssFragment(value, [property]);
+    const { styles: parsed, errors } = parseCssFragment(value, [property]);
+    for (const error of errors) {
+      toast.error(error);
+    }
     const parsedValue = parsed.get(property);
     const invalid = parsedValue === undefined || parsedValue.type === "invalid";
     setIntermediateValue({
@@ -178,6 +184,7 @@ export const FilterSectionContent = ({
             <Label>Function</Label>
           </Flex>
           <Select
+            disabled={readonly}
             name="filterFunction"
             placeholder="Select Filter"
             options={Object.keys(filterFunctions) as FilterFunction[]}
@@ -197,6 +204,7 @@ export const FilterSectionContent = ({
               <Label>Value</Label>
             </Flex>
             <CssValueInputContainer
+              disabled={readonly}
               key="functionValue"
               property={
                 filterFunction
@@ -250,6 +258,7 @@ export const FilterSectionContent = ({
           </Flex>
         </Label>
         <TextArea
+          disabled={readonly}
           rows={3}
           name="description"
           value={intermediateValue?.value ?? ""}

@@ -1,5 +1,6 @@
 import type { Meta } from "@storybook/react";
 import { type CSSProperties, useState, useRef } from "react";
+import { StorySection } from "../../storybook";
 import { Box } from "../../box";
 import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
@@ -81,7 +82,7 @@ const idToElement = (
       }
     }
   }
-  return undefined;
+  return;
 };
 
 const mapItems = (
@@ -111,7 +112,7 @@ const findItem = (data: ItemData[], id: string): ItemData | undefined => {
       return found;
     }
   }
-  return undefined;
+  return;
 };
 
 const findItemPath = (data: ItemData[], id: string): ItemData[] | undefined => {
@@ -124,7 +125,7 @@ const findItemPath = (data: ItemData[], id: string): ItemData[] | undefined => {
       return [...found, item];
     }
   }
-  return undefined;
+  return;
 };
 
 export const Canvas = () => {
@@ -324,7 +325,7 @@ export const Canvas = () => {
   });
 
   return (
-    <>
+    <StorySection title="Canvas">
       <Box
         css={{
           background: "white",
@@ -355,7 +356,7 @@ export const Canvas = () => {
       {placementIndicator && (
         <PlacementIndicator placement={placementIndicator} />
       )}
-    </>
+    </StorySection>
   );
 };
 

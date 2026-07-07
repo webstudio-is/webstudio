@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 import { $publisher, subscribe } from "~/shared/pubsub";
-import { clientSyncStore } from "~/shared/sync";
+import { clientSyncStore } from "~/shared/sync/sync-stores";
 
 export type CommandMeta<CommandName extends string> = {
   name: CommandName;
@@ -30,7 +30,7 @@ export type CommandMeta<CommandName extends string> = {
   keepCommandPanelOpen?: boolean;
 };
 
-type CommandHandler = () => void;
+type CommandHandler = (source: string) => void;
 
 /**
  * Command can be registered by builder, canvas or plugin
@@ -48,6 +48,12 @@ export type Command<CommandName extends string> = CommandMeta<CommandName> & {
  */
 export const $commandMetas = atom(new Map<string, CommandMeta<string>>());
 clientSyncStore.register("commandMetas", $commandMetas);
+
+const suppressedCommandEvents = new WeakSet<KeyboardEvent>();
+
+export const suppressCommandsForEvent = (event: KeyboardEvent) => {
+  suppressedCommandEvents.add(event);
+};
 
 // Copied from https://github.com/ai/keyux/blob/main/hotkey.js#L1C1-L2C1
 // eslint-disable-next-line no-control-regex
@@ -124,7 +130,7 @@ export const createCommandsEmitter = <CommandName extends string>({
         },
       });
     } else {
-      commandHandlers.get(name)?.();
+      commandHandlers.get(name)?.(source);
     }
   };
 
@@ -143,10 +149,13 @@ export const createCommandsEmitter = <CommandName extends string>({
       });
     }
 
-    const unsubscribePubsub = subscribe("command", ({ name }) => {
-      commandHandlers.get(name)?.();
+    const unsubscribePubsub = subscribe("command", ({ name, source }) => {
+      commandHandlers.get(name)?.(source);
     });
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (suppressedCommandEvents.has(event)) {
+        return;
+      }
       let emitted = false;
       let preventDefault = true;
       for (const commandMeta of findCommandsMatchingHotkeys(event)) {
@@ -160,14 +169,15 @@ export const createCommandsEmitter = <CommandName extends string>({
         const { disableOnInputLikeControls } = commandMeta;
 
         if (disableOnInputLikeControls) {
-          const element = event.target as HTMLElement;
+          const element = event.target;
           const isOnInputLikeControl =
-            ["input", "select", "textarea"].includes(
+            element instanceof HTMLElement &&
+            (["input", "select", "textarea", "color-input"].includes(
               element.tagName.toLowerCase()
             ) ||
-            element.isContentEditable ||
-            // Detect Radix select, dropdown and co.
-            element.getAttribute("role") === "option";
+              element.isContentEditable ||
+              // Detect Radix select, dropdown and co.
+              element.getAttribute("role") === "option");
 
           if (isOnInputLikeControl) {
             continue;

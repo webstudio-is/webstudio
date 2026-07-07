@@ -10,6 +10,7 @@ import {
   PlaceholderValue,
   renderTemplate,
   ResourceValue,
+  token,
   Variable,
   ws,
 } from "./jsx";
@@ -278,6 +279,196 @@ test("avoid generating style data without styles", () => {
   expect(styleSources).toEqual([]);
   expect(styleSourceSelections).toEqual([]);
   expect(styles).toEqual([]);
+});
+
+test("generate token styles", () => {
+  const { breakpoints, styleSources, styleSourceSelections, styles } =
+    renderTemplate(
+      <$.Body
+        ws:id="body"
+        ws:tokens={[
+          token(
+            "primary",
+            css`
+              color: red;
+            `
+          ),
+        ]}
+      ></$.Body>
+    );
+  expect(breakpoints).toEqual([{ id: "base", label: "" }]);
+  expect(styleSources).toEqual([{ id: "0", type: "token", name: "primary" }]);
+  expect(styleSourceSelections).toEqual([
+    { instanceId: "body", values: ["0"] },
+  ]);
+  expect(styles).toEqual([
+    {
+      breakpointId: "base",
+      styleSourceId: "0",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ]);
+});
+
+test("generate multiple tokens on single instance", () => {
+  const { styleSources, styleSourceSelections, styles } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      ws:tokens={[
+        token(
+          "primary",
+          css`
+            color: red;
+          `
+        ),
+        token(
+          "secondary",
+          css`
+            font-size: 16px;
+          `
+        ),
+      ]}
+    ></$.Body>
+  );
+  expect(styleSources).toEqual([
+    { id: "0", type: "token", name: "primary" },
+    { id: "1", type: "token", name: "secondary" },
+  ]);
+  expect(styleSourceSelections).toEqual([
+    { instanceId: "body", values: ["0", "1"] },
+  ]);
+  expect(styles).toHaveLength(2);
+});
+
+test("reuse same token across multiple instances", () => {
+  const primary = token(
+    "primary",
+    css`
+      color: red;
+    `
+  );
+  const { styleSources, styleSourceSelections, styles } = renderTemplate(
+    <$.Body ws:id="body" ws:tokens={[primary]}>
+      <$.Box ws:id="box" ws:tokens={[primary]}></$.Box>
+    </$.Body>
+  );
+  // Token should only be created once
+  expect(styleSources).toEqual([{ id: "0", type: "token", name: "primary" }]);
+  // Both instances should reference the same token
+  expect(styleSourceSelections).toEqual([
+    { instanceId: "body", values: ["0"] },
+    { instanceId: "box", values: ["0"] },
+  ]);
+  // Styles should only be created once
+  expect(styles).toEqual([
+    {
+      breakpointId: "base",
+      styleSourceId: "0",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ]);
+});
+
+test("combine local styles with tokens", () => {
+  const { styleSources, styleSourceSelections, styles } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      ws:style={css`
+        font-size: 16px;
+      `}
+      ws:tokens={[
+        token(
+          "primary",
+          css`
+            color: red;
+          `
+        ),
+      ]}
+    ></$.Body>
+  );
+  // Both local and token style sources
+  expect(styleSources).toEqual([
+    { id: "body:ws:style", type: "local" },
+    { id: "0", type: "token", name: "primary" },
+  ]);
+  // Selection should have both local style source and token
+  expect(styleSourceSelections).toEqual([
+    { instanceId: "body", values: ["body:ws:style", "0"] },
+  ]);
+  expect(styles).toHaveLength(2);
+});
+
+test("generate token with breakpoints", () => {
+  const { breakpoints, styles } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      ws:tokens={[
+        token(
+          "responsive",
+          css`
+            color: red;
+            @media (min-width: 1024px) {
+              color: blue;
+            }
+          `
+        ),
+      ]}
+    ></$.Body>
+  );
+  expect(breakpoints).toEqual([
+    { id: "base", label: "" },
+    { id: "0", label: "1024", minWidth: 1024 },
+  ]);
+  expect(styles).toEqual([
+    {
+      breakpointId: "base",
+      styleSourceId: "0",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpointId: "0",
+      styleSourceId: "0",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    },
+  ]);
+});
+
+test("generate token with state", () => {
+  const { styles } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      ws:tokens={[
+        token(
+          "interactive",
+          css`
+            color: red;
+            &:hover {
+              color: blue;
+            }
+          `
+        ),
+      ]}
+    ></$.Body>
+  );
+  expect(styles).toEqual([
+    {
+      breakpointId: "base",
+      styleSourceId: "0",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "0",
+      state: ":hover",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    },
+  ]);
 });
 
 test("generate breakpoints", () => {

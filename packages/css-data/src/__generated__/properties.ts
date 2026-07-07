@@ -239,6 +239,16 @@ export const properties: Properties = {
     mdnUrl:
       "https://developer.mozilla.org/docs/Web/CSS/animation-timing-function",
   },
+  "animation-trigger": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/Reference/Properties/animation-trigger",
+  },
   appearance: {
     unitGroups: [],
     inherited: false,
@@ -366,6 +376,15 @@ export const properties: Properties = {
       value: "auto",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/background-size",
+  },
+  "baseline-source": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/baseline-source",
   },
   "block-size": {
     unitGroups: ["length", "percentage"],
@@ -826,6 +845,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/caption-side",
   },
+  "caret-animation": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/caret-animation",
+  },
   "caret-color": {
     unitGroups: [],
     inherited: true,
@@ -918,6 +946,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-gap",
   },
+  "column-height": {
+    unitGroups: ["length"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-height",
+  },
   "column-rule-color": {
     unitGroups: [],
     inherited: false,
@@ -962,6 +999,15 @@ export const properties: Properties = {
       value: "auto",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-width",
+  },
+  "column-wrap": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/column-wrap",
   },
   contain: {
     unitGroups: [],
@@ -1047,6 +1093,81 @@ export const properties: Properties = {
       value: "visible",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/content-visibility",
+  },
+  "corner-bottom-left-shape": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "round",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/corner-bottom-left-shape",
+  },
+  "corner-bottom-right-shape": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "round",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/corner-bottom-right-shape",
+  },
+  "corner-end-end-shape": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "round",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/corner-end-end-shape",
+  },
+  "corner-end-start-shape": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "round",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/corner-end-start-shape",
+  },
+  "corner-start-start-shape": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "round",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/corner-start-start-shape",
+  },
+  "corner-start-end-shape": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "round",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/corner-start-end-shape",
+  },
+  "corner-top-left-shape": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "round",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/corner-top-left-shape",
+  },
+  "corner-top-right-shape": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "round",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/corner-top-right-shape",
   },
   "counter-increment": {
     unitGroups: ["number"],
@@ -1139,6 +1260,15 @@ export const properties: Properties = {
       value: "auto",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/dominant-baseline",
+  },
+  "dynamic-range-limit": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "no-limit",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/dynamic-range-limit",
   },
   "empty-cells": {
     unitGroups: [],
@@ -1686,6 +1816,33 @@ export const properties: Properties = {
       value: "auto",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/isolation",
+  },
+  interactivity: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/interactivity",
+  },
+  "interest-delay-end": {
+    unitGroups: ["time"],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/interest-delay-end",
+  },
+  "interest-delay-start": {
+    unitGroups: ["time"],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/interest-delay-start",
   },
   "justify-content": {
     unitGroups: [],
@@ -2578,6 +2735,25 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/r",
   },
+  "reading-flow": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/reading-flow",
+  },
+  "reading-order": {
+    unitGroups: ["number"],
+    inherited: false,
+    initial: {
+      type: "unit",
+      unit: "number",
+      value: 0,
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/reading-order",
+  },
   resize: {
     unitGroups: [],
     inherited: false,
@@ -2637,9 +2813,8 @@ export const properties: Properties = {
     unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
+      type: "keyword",
+      value: "auto",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/rx",
   },
@@ -2647,9 +2822,8 @@ export const properties: Properties = {
     unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
+      type: "keyword",
+      value: "auto",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/ry",
   },
@@ -2755,6 +2929,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-top",
   },
+  "scroll-marker-group": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-marker-group",
+  },
   "scroll-padding-block-end": {
     unitGroups: ["length", "percentage"],
     inherited: false,
@@ -2858,6 +3041,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type",
   },
+  "scroll-target-group": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/scroll-target-group",
+  },
   "scrollbar-color": {
     unitGroups: [],
     inherited: true,
@@ -2916,7 +3108,7 @@ export const properties: Properties = {
   },
   "shape-rendering": {
     unitGroups: [],
-    inherited: false,
+    inherited: true,
     initial: {
       type: "keyword",
       value: "auto",
@@ -3054,6 +3246,15 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-anchor",
   },
+  "text-autospace": {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-autospace",
+  },
   "text-combine-upright": {
     unitGroups: ["number"],
     inherited: true,
@@ -3071,6 +3272,16 @@ export const properties: Properties = {
       value: "currentColor",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-color",
+  },
+  "text-decoration-inset": {
+    unitGroups: ["length"],
+    inherited: false,
+    initial: {
+      type: "unit",
+      unit: "px",
+      value: 0,
+    },
+    mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-inset",
   },
   "text-decoration-line": {
     unitGroups: [],
@@ -3247,6 +3458,66 @@ export const properties: Properties = {
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/text-wrap-style",
   },
+  "timeline-trigger-activation-range-end": {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/Reference/Properties/timeline-trigger-activation-range-end",
+  },
+  "timeline-trigger-activation-range-start": {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/Reference/Properties/timeline-trigger-activation-range-start",
+  },
+  "timeline-trigger-active-range-end": {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/Reference/Properties/timeline-trigger-active-range-end",
+  },
+  "timeline-trigger-active-range-start": {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/Reference/Properties/timeline-trigger-active-range-start",
+  },
+  "timeline-trigger-name": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/Reference/Properties/timeline-trigger-name",
+  },
+  "timeline-trigger-source": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/Reference/Properties/timeline-trigger-source",
+  },
   top: {
     unitGroups: ["length", "percentage"],
     inherited: false,
@@ -3373,6 +3644,16 @@ export const properties: Properties = {
       value: "none",
     },
     mdnUrl: "https://developer.mozilla.org/docs/Web/CSS/translate",
+  },
+  "trigger-scope": {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/docs/Web/CSS/Reference/Properties/trigger-scope",
   },
   "unicode-bidi": {
     unitGroups: [],

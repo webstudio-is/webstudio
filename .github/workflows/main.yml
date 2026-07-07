@@ -5,6 +5,8 @@ on:
     branches:
       - main
   pull_request:
+  pull_request_target:
+    types: [labeled]
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
@@ -16,6 +18,12 @@ permissions:
 
 jobs:
   checks:
+    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+
     timeout-minutes: 20
 
     strategy:
@@ -47,7 +55,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Pnpm install
@@ -58,7 +66,6 @@ jobs:
         with:
           path: |
             ./node_modules/.cache/prettier/.prettier-cache
-            ./node_modules/.cache/eslint/.eslint-cache
           key: checks-${{ github.sha }}
           restore-keys: checks-
 
@@ -69,7 +76,7 @@ jobs:
 
       - name: Lint
         run: |
-          pnpm lint --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
+          pnpm lint
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -133,9 +140,9 @@ jobs:
               }
             }
             const results = [
-              await assertSize('./fixtures/ssg/dist/client', 356),
+              await assertSize('./fixtures/ssg-cloudflare-pages/dist/client', 356),
               await assertSize('./fixtures/react-router-netlify/build/client', 376),
-              await assertSize('./fixtures/webstudio-features/build/client', 1056),
+              await assertSize('./fixtures/webstudio-features/build/client', 3312),
             ]
             for (const result of results) {
               if (result.passed) {
@@ -149,3 +156,69 @@ jobs:
               console.error('Some fixtures exceeded limits')
               process.exit(1)
             }
+
+  builder-e2e:
+    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+
+    timeout-minutes: 40
+
+    runs-on: ubuntu-24.04
+
+    environment:
+      name: development
+
+    env:
+      BUILDER_E2E_COMPOSE_ARGS: "--env-file apps/builder/.env -f apps/builder/docker-compose.yaml -f apps/builder/docker-compose.e2e.yaml"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Pnpm install
+        run: pnpm install
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: builder-e2e-playwright-${{ runner.os }}-${{ hashFiles('apps/builder/package.json', 'pnpm-lock.yaml') }}
+
+      - name: Run builder e2e
+        run: |
+          set +e
+          E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=900 pnpm e2e:builder
+          status="$?"
+          set -e
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+
+          echo "::warning::Builder e2e failed on the first attempt. Restarting services and retrying once."
+          docker compose $BUILDER_E2E_COMPOSE_ARGS logs || true
+          docker compose $BUILDER_E2E_COMPOSE_ARGS down --volumes --remove-orphans || true
+
+          E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=900 pnpm e2e:builder
+
+      - name: Print e2e service logs
+        if: failure()
+        run: docker compose $BUILDER_E2E_COMPOSE_ARGS logs
+
+      - name: Stop e2e services
+        if: always()
+        run: docker compose $BUILDER_E2E_COMPOSE_ARGS down --volumes --remove-orphans

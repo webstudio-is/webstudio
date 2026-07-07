@@ -1,7 +1,7 @@
 export const createSizeLimiter = (maxSize: number, name: string) => {
-  return async function* (
-    data: AsyncIterable<ArrayBuffer>
-  ): AsyncGenerator<ArrayBuffer> {
+  return async function* <T extends ArrayBufferView | ArrayBuffer>(
+    data: AsyncIterable<T>
+  ): AsyncGenerator<T> {
     let size = 0;
     for await (const chunk of data) {
       size += chunk.byteLength;

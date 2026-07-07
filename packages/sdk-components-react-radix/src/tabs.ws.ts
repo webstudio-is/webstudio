@@ -45,7 +45,10 @@ export const metaTabsTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  states: [{ label: "Active", selector: "[data-state=active]" }],
+  states: [
+    { label: "Active", selector: '[data-state="active"]' },
+    { label: "Inactive", selector: '[data-state="inactive"]' },
+  ],
   presetStyle: {
     button: [button, buttonReset].flat(),
   },
@@ -60,6 +63,10 @@ export const metaTabsContent: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
+  states: [
+    { label: "Active", selector: '[data-state="active"]' },
+    { label: "Inactive", selector: '[data-state="inactive"]' },
+  ],
   presetStyle: { div },
   props: propsTabsContent,
 };

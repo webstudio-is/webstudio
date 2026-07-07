@@ -40,6 +40,10 @@ export const metaSelectTrigger: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.SelectValue],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: { button },
   props: propsSelectTrigger,
 };
@@ -63,6 +67,10 @@ export const metaSelectContent: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.SelectViewport],
   },
+  states: [
+    { label: "Open", selector: '[data-state="open"]' },
+    { label: "Closed", selector: '[data-state="closed"]' },
+  ],
   presetStyle: { div },
   props: propsSelectContent,
 };
@@ -85,6 +93,10 @@ export const metaSelectItem: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.SelectItemIndicator, radix.SelectItemText],
   },
+  states: [
+    { label: "Checked", selector: '[data-state="checked"]' },
+    { label: "Unchecked", selector: '[data-state="unchecked"]' },
+  ],
   presetStyle: { div },
   initialProps: ["value"],
   props: propsSelectItem,

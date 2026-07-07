@@ -2,6 +2,8 @@
   :root {
     display: grid;
     min-height: 100%;
+    grid-template-rows: auto;
+    grid-template-columns: 1fr;
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;

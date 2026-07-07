@@ -15,6 +15,7 @@ import {
   Tooltip,
   Text,
   Grid,
+  toast,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { propertiesData, propertyDescriptions } from "@webstudio-is/css-data";
@@ -32,11 +33,13 @@ import {
   editRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
+import { useReadonly } from "../../shared/readonly";
 
 const getLayer = (value: undefined | StyleValue, index: number) =>
   value?.type === "layers" ? value.value[index] : undefined;
 
 export const TransitionContent = ({ index }: { index: number }) => {
+  const readonly = useReadonly();
   const styles = useComputedStyles([
     "transition-property",
     "transition-duration",
@@ -84,11 +87,14 @@ export const TransitionContent = ({ index }: { index: number }) => {
     if (intermediateValue === undefined) {
       return;
     }
-    editRepeatedStyleItem(
-      styles,
-      index,
-      parseCssFragment(intermediateValue.value, ["transition"])
+    const { styles: parsed, errors } = parseCssFragment(
+      intermediateValue.value,
+      ["transition"]
     );
+    for (const error of errors) {
+      toast.error(error);
+    }
+    editRepeatedStyleItem(styles, index, parsed);
   };
 
   const updateIntermediateValue = (params: {
@@ -128,6 +134,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transition-property"]}
         />
         <TransitionProperty
+          disabled={readonly}
           value={property ?? propertiesData["transition-property"].initial}
           onChange={(value) => {
             updateIntermediateValue({ property: value });
@@ -141,6 +148,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transition-duration"]}
         />
         <CssValueInputContainer
+          disabled={readonly}
           property="transition-duration"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
@@ -166,6 +174,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transition-delay"]}
         />
         <CssValueInputContainer
+          disabled={readonly}
           property="transition-delay"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
@@ -191,6 +200,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transition-timing-function"]}
         />
         <CssValueInputContainer
+          disabled={readonly}
           property="transition-timing-function"
           styleSource="local"
           getOptions={() => [
@@ -215,7 +225,12 @@ export const TransitionContent = ({ index }: { index: number }) => {
             if (value.type === "layers") {
               [value] = value.value;
             }
-            if (value.type === "keyword" || value.type === "var") {
+            if (
+              value.type === "keyword" ||
+              value.type === "function" ||
+              value.type === "unparsed" ||
+              value.type === "var"
+            ) {
               updateIntermediateValue({ timing: value });
               setRepeatedStyleItem(
                 transitionTimingFunction,
@@ -257,6 +272,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           </Flex>
         </Label>
         <TextArea
+          disabled={readonly}
           rows={3}
           name="description"
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}

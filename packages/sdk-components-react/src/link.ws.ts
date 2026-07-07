@@ -23,6 +23,7 @@ export const meta: WsComponentMeta = {
       type: "string",
       control: "url",
       required: false,
+      contentMode: true,
     },
   },
 };

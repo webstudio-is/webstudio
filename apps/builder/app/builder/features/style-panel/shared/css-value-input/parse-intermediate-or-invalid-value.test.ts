@@ -1,0 +1,887 @@
+import { describe, test, expect } from "vitest";
+import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
+
+const properties = ["width", "line-height"] as const;
+
+test("forgive trailing semicolon", () => {
+  expect(
+    parseIntermediateOrInvalidValue("width", {
+      type: "intermediate",
+      value: "20px;",
+    })
+  ).toEqual({ type: "unit", value: 20, unit: "px" });
+  expect(
+    parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "red;",
+    })
+  ).toEqual({ type: "keyword", value: "red" });
+});
+
+describe("Parse intermediate or invalid value without math evaluation", () => {
+  test("not lost unit value", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "10",
+        unit: "em",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 10,
+        unit: "em",
+      });
+    }
+  });
+
+  test.each(properties)(`fallback to px for property = "%s"`, (propery) => {
+    const result = parseIntermediateOrInvalidValue(propery, {
+      type: "intermediate",
+      value: "10",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "px",
+    });
+  });
+
+  test("fallback to % if px is not supported", () => {
+    const result = parseIntermediateOrInvalidValue("opacity", {
+      type: "intermediate",
+      value: "10",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "%",
+    });
+  });
+
+  test("switch on new unit if previous not known", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "10rem",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 10,
+        unit: "rem",
+      });
+    }
+  });
+
+  test("switch on new unit if previous present", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "10rem",
+        unit: "em",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 10,
+        unit: "rem",
+      });
+    }
+  });
+
+  test("accept keywords", () => {
+    expect(
+      parseIntermediateOrInvalidValue("width", {
+        type: "intermediate",
+        value: "auto",
+        unit: "em",
+      })
+    ).toEqual({ type: "keyword", value: "auto" });
+    expect(
+      parseIntermediateOrInvalidValue("line-height", {
+        type: "intermediate",
+        value: "normal",
+        unit: "em",
+      })
+    ).toEqual({ type: "keyword", value: "normal" });
+  });
+
+  test("accept keywords written as pascal case", () => {
+    expect(
+      parseIntermediateOrInvalidValue("width", {
+        type: "intermediate",
+        value: "Auto",
+        unit: "em",
+      })
+    ).toEqual({ type: "keyword", value: "auto" });
+    expect(
+      parseIntermediateOrInvalidValue("line-height", {
+        type: "intermediate",
+        value: "Normal",
+        unit: "em",
+      })
+    ).toEqual({ type: "keyword", value: "normal" });
+  });
+
+  test("keyword with pascal case name", () => {
+    const result = parseIntermediateOrInvalidValue("box-sizing", {
+      type: "intermediate",
+      value: "Border Box",
+      unit: "em",
+    });
+
+    expect(result).toEqual({
+      type: "keyword",
+      value: "border-box",
+    });
+  });
+
+  test("tolerate comma instead of dot typo", () => {
+    const result = parseIntermediateOrInvalidValue("width", {
+      type: "intermediate",
+      value: "2,5",
+      unit: "rem",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 2.5,
+      unit: "rem",
+    });
+  });
+
+  test("tolerate comma instead of dot typo with unit input", () => {
+    const result = parseIntermediateOrInvalidValue("width", {
+      type: "intermediate",
+      value: "2,5rem",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 2.5,
+      unit: "rem",
+    });
+  });
+
+  test("tolerate comma instead of dot typo while correctly parsing legit comma inside value", () => {
+    const result = parseIntermediateOrInvalidValue("transition-duration", {
+      type: "intermediate",
+      value: "1s, 2s",
+    });
+    expect(result).toEqual({
+      type: "layers",
+      value: [
+        { type: "unit", unit: "s", value: 1 },
+        { type: "unit", unit: "s", value: 2 },
+      ],
+    });
+  });
+});
+
+describe("Parse intermediate or invalid value with math evaluation", () => {
+  test("not lost unit value", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "10+10",
+        unit: "em",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 20,
+        unit: "em",
+      });
+    }
+  });
+
+  test("fallback to px", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "10 + 10",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 20,
+        unit: "px",
+      });
+    }
+  });
+
+  test("tolerate comma instead of dot", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "1,1 + 1,2",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 2.3,
+        unit: "px",
+      });
+    }
+  });
+
+  test("tolerate comma instead of dot with unit", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "1,1px + 1,2rem",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 2.3,
+        unit: "px",
+      });
+    }
+  });
+
+  test("switch on new unit if previous not known", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "10rem + 15px",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 25,
+        unit: "rem",
+      });
+    }
+  });
+
+  test("switch on new unit if previous present", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "intermediate",
+        value: "10rem + 15",
+        unit: "em",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 25,
+        unit: "rem",
+      });
+    }
+  });
+});
+
+describe("Parse invalid", () => {
+  test("fallback to px", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "invalid",
+        value: "10",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 10,
+        unit: "px",
+      });
+    }
+  });
+
+  test("switch on new unit if previous not known", () => {
+    for (const propery of properties) {
+      const result = parseIntermediateOrInvalidValue(propery, {
+        type: "invalid",
+        value: "10rem + 15px",
+      });
+
+      expect(result).toEqual({
+        type: "unit",
+        value: 25,
+        unit: "rem",
+      });
+    }
+  });
+});
+
+describe("Returns invalid if can't parse", () => {
+  test("do not accept unknown units", () => {
+    const result = parseIntermediateOrInvalidValue("width", {
+      type: "intermediate",
+      value: "10ee",
+    });
+
+    expect(result).toEqual({
+      type: "invalid",
+      value: "10ee",
+    });
+  });
+
+  test("do not accept wrong keywords", () => {
+    const result = parseIntermediateOrInvalidValue("line-height", {
+      type: "intermediate",
+      value: "auto",
+    });
+
+    expect(result).toEqual({
+      type: "invalid",
+      value: "auto",
+    });
+  });
+});
+
+describe("Value ending with `-` should be considered unitless", () => {
+  test("Unitless intermediate transformed to unitless", () => {
+    const result = parseIntermediateOrInvalidValue("line-height", {
+      type: "intermediate",
+      value: "10-",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "number",
+    });
+  });
+
+  test("Unit intermediate transformed to unitless", () => {
+    const result = parseIntermediateOrInvalidValue("line-height", {
+      type: "intermediate",
+      value: "10-",
+      unit: "em",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "number",
+    });
+  });
+
+  test("Unit intermediate with space transformed to unitless", () => {
+    const result = parseIntermediateOrInvalidValue("line-height", {
+      type: "intermediate",
+      value: "10 -",
+      unit: "em",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "number",
+    });
+  });
+
+  test("Unit number intermediate transformed to unitless", () => {
+    const result = parseIntermediateOrInvalidValue("line-height", {
+      type: "intermediate",
+      value: "10",
+      unit: "number",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "number",
+    });
+  });
+
+  test("Decimal number intermediate for line-height is not rounded", () => {
+    const result = parseIntermediateOrInvalidValue("line-height", {
+      type: "intermediate",
+      value: "1.5",
+      unit: "number",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 1.5,
+      unit: "number",
+    });
+  });
+
+  test("Decimal number intermediate for z-index is rounded to integer", () => {
+    const result = parseIntermediateOrInvalidValue("z-index", {
+      type: "intermediate",
+      value: "1.5",
+      unit: "number",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 2,
+      unit: "number",
+    });
+  });
+
+  test("Decimal number intermediate for column-count is rounded to integer", () => {
+    const result = parseIntermediateOrInvalidValue("column-count", {
+      type: "intermediate",
+      value: "2.7",
+      unit: "number",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 3,
+      unit: "number",
+    });
+  });
+
+  test("Unitless expression transformed to unitless", () => {
+    const result = parseIntermediateOrInvalidValue("line-height", {
+      type: "intermediate",
+      value: "10 + 20 -",
+      unit: "px",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 30,
+      unit: "number",
+    });
+  });
+
+  test("Expression containing unit and unitless must be a unit", () => {
+    const result = parseIntermediateOrInvalidValue("line-height", {
+      type: "intermediate",
+      value: "10px + 20 -",
+      unit: "px",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 30,
+      unit: "px",
+    });
+  });
+
+  test("top with 0 should be unitless", () => {
+    const result = parseIntermediateOrInvalidValue("top", {
+      type: "intermediate",
+      value: "0-",
+      unit: "em",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 0,
+      unit: "number",
+    });
+  });
+
+  test("top with value 10 should have unit px", () => {
+    const result = parseIntermediateOrInvalidValue("top", {
+      type: "intermediate",
+      value: "10",
+      unit: "number",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "px",
+    });
+  });
+});
+
+describe("Colors", () => {
+  test("color with value rgba(0,0,0,0)", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "rgba(10,20,30,0.5)",
+    });
+
+    expect(result).toEqual({
+      type: "color",
+      alpha: 0.5,
+      colorSpace: "srgb",
+      components: [0.0392, 0.0784, 0.1176],
+    });
+  });
+
+  test("color with value hex", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "#f00",
+    });
+
+    expect(result).toEqual({
+      type: "color",
+      alpha: 1,
+      colorSpace: "hex",
+      components: [1, 0, 0],
+    });
+  });
+
+  test("color with value with long hex", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "#f0ee0f",
+    });
+
+    expect(result).toEqual({
+      type: "color",
+      alpha: 1,
+      colorSpace: "hex",
+      components: [0.9412, 0.9333, 0.0588],
+    });
+  });
+
+  test("color with value hex without #", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "f00",
+    });
+
+    expect(result).toEqual({
+      type: "color",
+      alpha: 1,
+      colorSpace: "hex",
+      components: [1, 0, 0],
+    });
+  });
+
+  test("color with value long hex without #", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "f0ee0f",
+    });
+
+    expect(result).toEqual({
+      type: "color",
+      alpha: 1,
+      colorSpace: "hex",
+      components: [0.9412, 0.9333, 0.0588],
+    });
+  });
+
+  test("color with value rgba(0,0,0,0)", () => {
+    const result = parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "rgba(10,20,30,0.5)",
+      unit: "px",
+    });
+
+    expect(result).toEqual({
+      type: "color",
+      alpha: 0.5,
+      colorSpace: "srgb",
+      components: [0.0392, 0.0784, 0.1176],
+    });
+  });
+
+  test("hsl color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "hsl(120 100% 50%)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "hsl",
+      alpha: 1,
+      components: [120, 100, 50],
+    });
+  });
+
+  test("hwb color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "hwb(120 0% 0%)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "hwb",
+      alpha: 1,
+      components: [120, 0, 0],
+    });
+  });
+
+  test("lab color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "lab(50 20 30)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "lab",
+      alpha: 1,
+      components: [50, 20, 30],
+    });
+  });
+
+  test("lch color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "lch(50 40 120)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "lch",
+      alpha: 1,
+      components: [50, 40, 120],
+    });
+  });
+
+  test("oklab color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "oklab(0.7 0.1 -0.1)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "oklab",
+      alpha: 1,
+      components: [0.7, 0.1, -0.1],
+    });
+  });
+
+  test("oklch color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "oklch(0.7 0.1 180)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "oklch",
+      alpha: 1,
+      components: [0.7, 0.1, 180],
+    });
+  });
+
+  test("srgb-linear color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(srgb-linear 1 0 0)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "srgb-linear",
+      alpha: 1,
+      components: [1, 0, 0],
+    });
+  });
+
+  test("display-p3 color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(display-p3 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "p3",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+
+  test("a98-rgb color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(a98-rgb 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "a98rgb",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+
+  test("prophoto-rgb color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(prophoto-rgb 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "prophoto",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+
+  test("rec2020 color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(rec2020 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "rec2020",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+
+  test("xyz-d65 color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(xyz-d65 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "xyz-d65",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+
+  test("xyz-d50 color", () => {
+    expect(
+      parseIntermediateOrInvalidValue("color", {
+        type: "intermediate",
+        value: "color(xyz-d50 0.4 0.6 0.3)",
+      })
+    ).toEqual({
+      type: "color",
+      colorSpace: "xyz-d50",
+      alpha: 1,
+      components: [0.4, 0.6, 0.3],
+    });
+  });
+});
+
+test("parse css variable reference", () => {
+  expect(
+    parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "var(--color)",
+    })
+  ).toEqual({
+    type: "var",
+    value: "color",
+  });
+});
+
+test("parse unit in css variable", () => {
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "10px",
+    })
+  ).toEqual({
+    type: "unit",
+    value: 10,
+    unit: "px",
+  });
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "10",
+      unit: "px",
+    })
+  ).toEqual({
+    type: "unit",
+    value: 10,
+    unit: "px",
+  });
+});
+
+test("prefer unitless css variable", () => {
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "1",
+      unit: undefined,
+    })
+  ).toEqual({ type: "unit", value: 1, unit: "number" });
+
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "1",
+      unit: "number",
+    })
+  ).toEqual({ type: "unit", value: 1, unit: "number" });
+});
+
+test("parse color in css variable", () => {
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "#0f0f0f",
+    })
+  ).toEqual({
+    type: "color",
+    colorSpace: "hex",
+    components: [0.0588, 0.0588, 0.0588],
+    alpha: 1,
+  });
+});
+
+test("parse css variables as unparsed", () => {
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "url(https://my-image.com)",
+    })
+  ).toEqual({
+    type: "unparsed",
+    value: "url(https://my-image.com)",
+  });
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "url(https://my-image.com)",
+      unit: "px",
+    })
+  ).toEqual({
+    type: "unparsed",
+    value: "url(https://my-image.com)",
+  });
+});
+
+test("does not coerce invalid css variable values", () => {
+  expect(
+    parseIntermediateOrInvalidValue("--size", {
+      type: "intermediate",
+      value: "#sd'",
+    })
+  ).toEqual({
+    type: "invalid",
+    value: "#sd'",
+  });
+});
+
+test("parse z-index", () => {
+  expect(
+    parseIntermediateOrInvalidValue("z-index", {
+      type: "intermediate",
+      value: "6.5",
+      unit: "number",
+    })
+  ).toEqual({
+    type: "unit",
+    value: 7,
+    unit: "number",
+  });
+});
+
+test("parse color", () => {
+  expect(
+    parseIntermediateOrInvalidValue("color", {
+      type: "intermediate",
+      value: "linear-gradient(red, blue)",
+      unit: undefined,
+    })
+  ).toEqual({
+    type: "invalid",
+    value: "linear-gradient(red, blue)",
+  });
+});

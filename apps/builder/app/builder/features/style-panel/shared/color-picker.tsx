@@ -6,7 +6,7 @@ import {
   type VarValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
-import { Box, ColorPickerPopover } from "@webstudio-is/design-system";
+import { Box, ColorPicker } from "@webstudio-is/design-system";
 import { CssValueInput } from "./css-value-input";
 import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
 
@@ -20,6 +20,7 @@ type ColorPickerProps = {
   getOptions?: () => Array<KeywordValue | VarValue>;
   property: CssProperty;
   disabled?: boolean;
+  "aria-disabled"?: boolean;
 };
 
 export const ColorPickerControl = ({
@@ -28,24 +29,32 @@ export const ColorPickerControl = ({
   getOptions,
   property,
   disabled,
+  ["aria-disabled"]: ariaDisabled,
   onChange,
   onChangeComplete,
   onAbort,
   onReset,
 }: ColorPickerProps) => {
+  const isDisabled = disabled || ariaDisabled;
+
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
 
   return (
     <CssValueInput
-      aria-disabled={disabled}
+      disabled={isDisabled}
+      aria-disabled={isDisabled}
       styleSource="default"
       prefix={
         <Box css={{ paddingLeft: 2 }}>
-          <ColorPickerPopover
+          <ColorPicker
+            disabled={isDisabled}
             value={currentColor}
             onChange={(styleValue) => {
+              if (isDisabled) {
+                return;
+              }
               setIntermediateValue(styleValue);
               if (styleValue) {
                 onChange(styleValue);
@@ -54,6 +63,9 @@ export const ColorPickerControl = ({
               }
             }}
             onChangeComplete={(value) => {
+              if (isDisabled) {
+                return;
+              }
               setIntermediateValue(undefined);
               onChangeComplete(value);
             }}
@@ -80,6 +92,7 @@ export const ColorPickerControl = ({
           styleValue.type === "color" ||
           styleValue.type === "keyword" ||
           styleValue.type === "var" ||
+          styleValue.type === "unparsed" ||
           styleValue.type === "invalid"
         ) {
           setIntermediateValue(styleValue);
@@ -104,7 +117,8 @@ export const ColorPickerControl = ({
           value.type === "rgb" ||
           value.type === "color" ||
           value.type === "keyword" ||
-          value.type === "var"
+          value.type === "var" ||
+          value.type === "unparsed"
         ) {
           setIntermediateValue(undefined);
           onChangeComplete(value);

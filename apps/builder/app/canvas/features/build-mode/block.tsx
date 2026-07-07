@@ -8,12 +8,9 @@ import {
 } from "@webstudio-is/react-sdk";
 
 import * as React from "react";
-import {
-  $instances,
-  $isDesignMode,
-  $isPreviewMode,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
+import { $isDesignMode, $isPreviewMode } from "~/shared/nano-states";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 
 export const Block = React.forwardRef<
   HTMLDivElement,

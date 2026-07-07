@@ -1,4 +1,4 @@
-import { Box as Box } from "@webstudio-is/sdk-components-react";
+import { Box as Box } from "@webstudio-is/sdk-components-react/components";
 import { Switch as Switch, SwitchThumb as SwitchThumb } from "../components";
 
 const Component = () => {

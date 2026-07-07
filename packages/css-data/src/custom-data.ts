@@ -80,6 +80,18 @@ propertiesData["view-timeline-inset"] = {
 };
 keywordValues["view-timeline-inset"] = [];
 
+// Add combined values for grid-auto-flow that mdn-data doesn't include
+keywordValues["grid-auto-flow"] = [
+  "row",
+  "column",
+  "dense",
+  "row dense",
+  "column dense",
+  "initial",
+  "inherit",
+  "unset",
+];
+
 keywordValues["list-style-type"] = [
   "disc",
   "circle",

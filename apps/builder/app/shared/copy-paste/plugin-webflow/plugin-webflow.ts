@@ -2,12 +2,13 @@ import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
 import {
   findClosestInsertable,
   insertInstanceChildrenMutable,
-  insertWebstudioFragmentCopy,
-  updateWebstudioData,
-} from "../../instance-utils";
-import { $project } from "../../nano-states";
+} from "../../instance-utils/insert";
+import { insertWebstudioFragmentCopy } from "@webstudio-is/project-build/runtime/fragment";
+import { updateWebstudioData } from "../../instance-utils/data";
+import { $project } from "~/shared/sync/data-stores";
 import {
-  WfData,
+  type WfData,
+  wfData,
   wfNodeTypes,
   type WfNode,
   type WfStyle,
@@ -18,8 +19,9 @@ import { addStyles } from "./styles";
 import { builderApi } from "~/shared/builder-api";
 import { denormalizeSrcProps } from "../asset-upload";
 import { nanoHash } from "~/shared/nano-hash";
-import { findAvailableVariables } from "~/shared/data-variables";
-import type { Plugin } from "../init-copy-paste";
+import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
+import type { Plugin } from "../copy-paste";
+import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
 
 const { toast } = builderApi;
 
@@ -128,7 +130,7 @@ const parse = (clipboardData: string) => {
     console.info(message);
   }
 
-  const result = WfData.safeParse(data);
+  const result = wfData.safeParse(data);
 
   if (result.success) {
     const unpasedTypes = new Set<string>();
@@ -164,7 +166,7 @@ const parse = (clipboardData: string) => {
   console.error(result.error.message);
 };
 
-const onPaste = async (clipboardData: string) => {
+const handlePasteWebflow = async (clipboardData: string) => {
   const project = $project.get();
   const wfData = parse(clipboardData);
   if (wfData === undefined || project === undefined) {
@@ -191,6 +193,9 @@ const onPaste = async (clipboardData: string) => {
         startingInstanceId: insertable.parentSelector[0],
       }),
       projectId: project.id,
+      onBreakpointLimitMerge: () => {
+        toast.warn(breakpointPasteLimitWarning);
+      },
     });
 
     const children = fragment.children
@@ -213,7 +218,7 @@ const onPaste = async (clipboardData: string) => {
 export const webflow: Plugin = {
   name: "webflow",
   mimeType: "application/json",
-  onPaste,
+  onPaste: handlePasteWebflow,
 };
 
 export const __testing__ = {

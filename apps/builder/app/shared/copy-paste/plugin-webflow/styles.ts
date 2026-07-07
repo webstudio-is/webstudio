@@ -12,7 +12,7 @@ import {
   pseudoElements,
   type ParsedStyleDecl,
 } from "@webstudio-is/css-data";
-import { $styleSources } from "~/shared/nano-states";
+import { $styleSources } from "~/shared/sync/data-stores";
 import { builderApi } from "~/shared/builder-api";
 import { mapGroupBy } from "~/shared/shim";
 import type { WfStylePresets } from "./style-presets-overrides";
@@ -139,7 +139,8 @@ const toParsedVariants = (variants: UnparsedVariants) => {
       try {
         const sanitizedStyles = styles.replaceAll(/@raw<\|([^@]+)\|>/g, "$1");
         const parsed = processStyles(
-          parseCss(`.styles${state} {${sanitizedStyles}}`) ?? []
+          parseCss(`.styles${state} {${sanitizedStyles}}`, new Map()).styles ??
+            []
         );
         const allBreakpointStyles = parsedVariants.get(breakpointName) ?? [];
         allBreakpointStyles.push(...parsed);

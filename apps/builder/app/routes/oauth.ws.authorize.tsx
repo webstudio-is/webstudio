@@ -20,6 +20,7 @@ import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import * as session from "~/services/session.server";
 import { redirect } from "~/services/no-store-redirect";
 import { allowedDestinations } from "~/services/destinations.server";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 
 const debug = createDebug(import.meta.url);
 
@@ -49,7 +50,7 @@ const createOauthError =
  *
  * https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1
  */
-const OAuthParams = z.object({
+const oAuthParams = z.object({
   // Ensure that the response_type is valid and supported by the authorization server (e.g., code for the authorization code grant type).
   response_type: z.literal("code"),
   redirect_uri: z.string().url(),
@@ -68,7 +69,7 @@ const OAuthParams = z.object({
   code_challenge_method: z.literal("S256"),
 });
 
-const OAuthRedirectUri = z.object({
+const oAuthRedirectUri = z.object({
   redirect_uri: z.string().url(),
 });
 
@@ -93,12 +94,10 @@ export const loader: LoaderFunction = async ({ request }) => {
   // or by allowedDestinations for iframe requests.
 
   try {
-    debug("Authorize request received", request.url);
-
     const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams);
 
-    const parsedRedirect = OAuthRedirectUri.safeParse(searchParams);
+    const parsedRedirect = oAuthRedirectUri.safeParse(searchParams);
 
     if (false === parsedRedirect.success) {
       debug("redirect_uri not provided in query params");
@@ -109,7 +108,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           error_description: "No redirect_uri provided",
           error_uri: "https://tools.ietf.org/html/rfc6749#section-3.1.2",
         },
-        { status: 400 }
+        { status: 400, headers: privateNoStoreResponseHeaders }
       );
     }
 
@@ -133,13 +132,13 @@ export const loader: LoaderFunction = async ({ request }) => {
             "The redirect_uri provided does not match the registered redirect URIs.",
           error_uri: "https://tools.ietf.org/html/rfc6749#section-3.1.2",
         },
-        { status: 400 }
+        { status: 400, headers: privateNoStoreResponseHeaders }
       );
     }
 
     let oauthError = createOauthError(redirect_uri, searchParams.state);
 
-    const parsedOAuthParams = OAuthParams.safeParse(searchParams);
+    const parsedOAuthParams = oAuthParams.safeParse(searchParams);
 
     if (false === parsedOAuthParams.success) {
       debug(fromError(parsedOAuthParams.error).toString());
@@ -160,23 +159,19 @@ export const loader: LoaderFunction = async ({ request }) => {
       return oauthError("unauthorized_client", "Client is not registered");
     }
 
-    const oAuthParams = parsedOAuthParams.data;
+    const oauthParamsData = parsedOAuthParams.data;
 
     const sessionData = await authenticator.isAuthenticated(request);
 
     if (sessionData) {
-      debug(`User id=${sessionData.userId} is authenticated`);
-
       const isAuthorized = await isUserAuthorizedForProject(
         sessionData.userId,
-        oAuthParams.scope.projectId
+        oauthParamsData.scope.projectId
       );
 
       // scope: Ensure the requested scope is valid, authorized, and within the permissions granted to the client.
       if (false === isAuthorized) {
-        debug(
-          `User ${sessionData.userId} is not the owner of ${oAuthParams.scope.projectId}, denying access`
-        );
+        debug("User does not have access to the project");
         return oauthError(
           "unauthorized_client",
           "User does not have access to the project"
@@ -189,7 +184,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         compareUrls(
           new URL(redirect_uri).origin,
           builderUrl({
-            projectId: oAuthParams.scope.projectId,
+            projectId: oauthParamsData.scope.projectId,
             origin: getAuthorizationServerOrigin(request.url),
           })
         )
@@ -203,40 +198,32 @@ export const loader: LoaderFunction = async ({ request }) => {
               "The redirect_uri provided does not match the registered redirect URIs.",
             error_uri: "https://tools.ietf.org/html/rfc6749#section-3.1.2",
           },
-          { status: 400 }
+          { status: 400, headers: privateNoStoreResponseHeaders }
         );
       }
-
-      debug(
-        `User ${sessionData.userId} is the owner of ${oAuthParams.scope.projectId}, creating token`
-      );
 
       // We do not use database now.
       // https://datatracker.ietf.org/doc/html/rfc7636#section-4.4
       const code = await createCodeToken(
         {
           userId: sessionData.userId,
-          projectId: oAuthParams.scope.projectId,
-          codeChallenge: oAuthParams.code_challenge,
+          projectId: oauthParamsData.scope.projectId,
+          codeChallenge: oauthParamsData.code_challenge,
         },
         env.AUTH_WS_CLIENT_SECRET,
         { maxAge: 1000 * 60 * 5 }
       );
 
-      const redirectUri = new URL(oAuthParams.redirect_uri);
+      const redirectUri = new URL(oauthParamsData.redirect_uri);
       redirectUri.search = "";
 
       redirectUri.searchParams.set("code", code);
       // state: If present, store the state parameter to return it unchanged in the response
-      redirectUri.searchParams.set("state", oAuthParams.state);
-
-      debug(
-        `Code ${code} created, redirecting to redirect_uri: ${redirectUri.href}`
-      );
+      redirectUri.searchParams.set("state", oauthParamsData.state);
 
       const bloomFilter = await session.readLoginSessionBloomFilter(request);
 
-      bloomFilter.add(oAuthParams.scope.projectId);
+      bloomFilter.add(oauthParamsData.scope.projectId);
 
       return session.writeLoginSessionBloomFilter(
         request,
@@ -246,10 +233,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     }
 
     sessionData satisfies null;
-
-    debug(
-      "User is not authenticated, saving current url to returnTo cookie and redirecting to login"
-    );
 
     return redirect(loginPath({ returnTo: request.url }));
   } catch (error) {
@@ -267,7 +250,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           error instanceof Error ? error.message : "Unknown error",
         error_uri: "",
       },
-      { status: 500 }
+      { status: 500, headers: privateNoStoreResponseHeaders }
     );
   }
 };

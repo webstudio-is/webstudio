@@ -3,6 +3,7 @@ import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   DialogClose,
@@ -13,21 +14,26 @@ import {
   InputField,
   toast,
 } from "@webstudio-is/design-system";
-import type {
-  Instance,
-  StyleDecl,
-  StyleSourceSelections,
-  Props,
-} from "@webstudio-is/sdk";
-import type {
-  StyleValue,
-  StyleProperty,
-  CustomProperty,
-} from "@webstudio-is/css-engine";
-import { toValue } from "@webstudio-is/css-engine";
-import { $styles, $styleSourceSelections, $props } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
-import { getStyleDeclKey } from "@webstudio-is/sdk";
+import type { CustomProperty } from "@webstudio-is/css-engine";
+import {
+  $styles,
+  $styleSourceSelections,
+  $props,
+} from "~/shared/sync/data-stores";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
+import {
+  findCssVariableUsagesByInstance,
+  getCssVariableDefinitionsByVariable,
+  getDefinedCssVariableNames,
+  getReferencedCssVariables,
+  performCssVariableRename,
+  renameCssVariableMutable,
+  updateVarReferencesInProps,
+  validateCssVariableNameWithStyles,
+} from "@webstudio-is/project-build/runtime/styles";
+import { type CssVariableNameError } from "@webstudio-is/project-build/runtime/styles";
+
+export { performCssVariableRename, updateVarReferencesInProps };
 
 const $isDeleteUnusedCssVariablesDialogOpen = atom(false);
 
@@ -35,126 +41,13 @@ export const openDeleteUnusedCssVariablesDialog = () => {
   $isDeleteUnusedCssVariablesDialogOpen.set(true);
 };
 
-// Utility: Escape regex special characters
-const escapeRegex = (str: string): string => {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-};
-
-// Utility: Create regex to match variable name with word boundary
-// This avoids matching --color inside --color-dark
-// Uses negative lookahead (?![\\w-]) to ensure variable name doesn't continue
-// with word characters or hyphens, preventing partial matches.
-const createVarNameRegex = (varName: string): RegExp => {
-  return new RegExp(`${escapeRegex(varName)}(?![\\w-])`, "g");
-};
-
-// Traverse a StyleValue to find all var() references
-const findVarReferences = (value: StyleValue, varName: string): boolean => {
-  const valueStr = toValue(value);
-  return createVarNameRegex(varName).test(valueStr);
-};
-
-// Find all CSS variable references in HTML Embed code props
-const findVarReferencesInProps = (props: Props, varName: string): boolean => {
-  const regex = createVarNameRegex(varName);
-  for (const prop of props.values()) {
-    if (prop.type === "string" && prop.name === "code" && prop.value) {
-      if (regex.test(prop.value)) {
-        return true;
-      }
-    }
-  }
-  return false;
-};
-
-// Find CSS variable usage counts (how many times each variable is referenced via var())
-export const findCssVariableUsagesByInstance = ({
-  styleSourceSelections,
-  styles,
-  props,
-}: {
-  styleSourceSelections: StyleSourceSelections;
-  styles: Map<string, StyleDecl>;
-  props: Props;
-}): {
-  counts: Map<string, number>;
-  instances: Map<string, Set<Instance["id"]>>;
-} => {
-  const usageCounts = new Map<string, number>();
-  const usageInstances = new Map<string, Set<Instance["id"]>>();
-
-  // Track which style sources belong to which instances
-  const instancesByStyleSource = new Map<string, Instance["id"]>();
-  for (const { instanceId, values } of styleSourceSelections.values()) {
-    for (const styleSourceId of values) {
-      instancesByStyleSource.set(styleSourceId, instanceId);
-    }
-  }
-
-  // Helper to add a var reference
-  const addVarReference = (varName: string, instanceId: Instance["id"]) => {
-    const count = usageCounts.get(varName) ?? 0;
-    usageCounts.set(varName, count + 1);
-
-    let instances = usageInstances.get(varName);
-    if (instances === undefined) {
-      instances = new Set();
-      usageInstances.set(varName, instances);
-    }
-    instances.add(instanceId);
-  };
-
-  // Collect all defined variables
-  // Performance optimization: Only check variables that are defined
-  // instead of searching for all possible var() patterns.
-  // This is O(defined_vars × styles) instead of O(all_patterns × styles).
-  const definedVariables = new Set<string>();
-  for (const styleDecl of styles.values()) {
-    if (styleDecl.property.startsWith("--")) {
-      definedVariables.add(styleDecl.property);
-    }
-  }
-
-  // Track CSS variable references in StyleDecl values
-  for (const styleDecl of styles.values()) {
-    const instanceId = instancesByStyleSource.get(styleDecl.styleSourceId);
-    if (!instanceId) {
-      continue;
-    }
-
-    // Check each defined variable if it's used in this style
-    for (const varName of definedVariables) {
-      if (findVarReferences(styleDecl.value, varName)) {
-        addVarReference(varName, instanceId);
-      }
-    }
-  }
-
-  // Track CSS variable references in HTML Embed code props
-  for (const varName of definedVariables) {
-    if (findVarReferencesInProps(props, varName)) {
-      // Find which instance this belongs to
-      for (const prop of props.values()) {
-        if (prop.type === "string" && prop.name === "code" && prop.value) {
-          const regex = createVarNameRegex(varName);
-          if (regex.test(prop.value)) {
-            addVarReference(varName, prop.instanceId);
-          }
-        }
-      }
-    }
-  }
-
-  return { counts: usageCounts, instances: usageInstances };
-};
-
 const $cssVariableUsageData = computed(
   [$styleSourceSelections, $styles, $props],
   (styleSourceSelections, styles, props) => {
     return findCssVariableUsagesByInstance({
-      styleSourceSelections,
-      styles,
-      props,
+      styleSourceSelections: styleSourceSelections.values(),
+      styles: styles.values(),
+      props: props.values(),
     });
   }
 );
@@ -171,45 +64,17 @@ export const $cssVariableInstancesByVariable = computed(
 
 // Get all defined CSS variables (unique properties that start with --)
 export const $definedCssVariables = computed($styles, (styles) => {
-  const definedVariables = new Set<CustomProperty>();
-  for (const styleDecl of styles.values()) {
-    if (styleDecl.property.startsWith("--")) {
-      definedVariables.add(styleDecl.property as CustomProperty);
-    }
-  }
-  return definedVariables;
+  return getDefinedCssVariableNames(styles.values()) as Set<CustomProperty>;
 });
 
 // Map CSS variables to the instances where they are defined
 export const $cssVariableDefinitionsByVariable = computed(
   [$styleSourceSelections, $styles],
   (styleSourceSelections, styles) => {
-    const definitionsByVariable = new Map<string, Set<Instance["id"]>>();
-
-    // Build map of styleSourceId to instanceId
-    const instancesByStyleSource = new Map<string, Instance["id"]>();
-    for (const { instanceId, values } of styleSourceSelections.values()) {
-      for (const styleSourceId of values) {
-        instancesByStyleSource.set(styleSourceId, instanceId);
-      }
-    }
-
-    // Find all CSS variable definitions
-    for (const styleDecl of styles.values()) {
-      if (styleDecl.property.startsWith("--")) {
-        const instanceId = instancesByStyleSource.get(styleDecl.styleSourceId);
-        if (instanceId) {
-          let instances = definitionsByVariable.get(styleDecl.property);
-          if (instances === undefined) {
-            instances = new Set();
-            definitionsByVariable.set(styleDecl.property, instances);
-          }
-          instances.add(instanceId);
-        }
-      }
-    }
-
-    return definitionsByVariable;
+    return getCssVariableDefinitionsByVariable({
+      styleSourceSelections: styleSourceSelections.values(),
+      styles: styles.values(),
+    });
   }
 );
 
@@ -217,38 +82,10 @@ export const $cssVariableDefinitionsByVariable = computed(
 export const $referencedCssVariables = computed(
   [$styles, $props],
   (styles, props) => {
-    const referencedVariables = new Set<string>();
-
-    // Collect all defined variables first
-    const definedVariables = new Set<string>();
-    for (const styleDecl of styles.values()) {
-      if (styleDecl.property.startsWith("--")) {
-        definedVariables.add(styleDecl.property);
-      }
-    }
-
-    // Check which defined variables are referenced
-    for (const varName of definedVariables) {
-      // Check in styles
-      // Performance optimization: We only need to know IF a variable is used (boolean),
-      // not HOW MANY times, so we break on first match.
-      for (const styleDecl of styles.values()) {
-        if (findVarReferences(styleDecl.value, varName)) {
-          referencedVariables.add(varName);
-          break;
-        }
-      }
-
-      // Check in props if not already found
-      if (
-        !referencedVariables.has(varName) &&
-        findVarReferencesInProps(props, varName)
-      ) {
-        referencedVariables.add(varName);
-      }
-    }
-
-    return referencedVariables;
+    return getReferencedCssVariables({
+      styles: styles.values(),
+      props: props.values(),
+    });
   }
 );
 
@@ -266,181 +103,35 @@ export const $unusedCssVariables = computed(
   }
 );
 
-export type CssVariableError =
-  | { type: "required"; message: string }
-  | { type: "invalid"; message: string }
-  | { type: "duplicate"; message: string };
-
 export const validateCssVariableName = (
   name: string,
   currentProperty?: string
-): CssVariableError | undefined => {
-  // Check if name is required
-  if (name.trim().length === 0) {
-    return {
-      type: "required",
-      message: "CSS variable name cannot be empty",
-    };
-  }
-
-  // Ensure name starts with --
-  if (!name.startsWith("--")) {
-    return {
-      type: "invalid",
-      message: 'CSS variable name must start with "--"',
-    };
-  }
-
-  // Check for duplicates within the same style source + breakpoint + state
-  const styles = $styles.get();
-  for (const styleDecl of styles.values()) {
-    if (
-      styleDecl.property === name &&
-      styleDecl.property !== currentProperty &&
-      styleDecl.property.startsWith("--")
-    ) {
-      return {
-        type: "duplicate",
-        message: `CSS variable "${name}" already exists`,
-      };
-    }
-  }
-};
-
-// Update all var() references in a StyleValue
-const updateVarReferences = (
-  value: StyleValue,
-  oldProperty: string,
-  newProperty: string
-): StyleValue => {
-  // For simple replacement, use JSON stringify/parse approach
-  // since toValue produces CSS string which is harder to parse back
-  let valueStr = JSON.stringify(value);
-
-  // Handle two patterns:
-  // 1. In var type objects: "value":"variable-name" (without --)
-  //    StyleValue stores var without -- prefix in "value" field
-  // 2. In literal strings: "--variable-name" (with --)
-  //    Unparsed strings contain full --variable-name syntax
-  // Both patterns are needed because StyleValue can contain both structured
-  // var types and unparsed CSS strings with var() references
-
-  // Strip -- prefix for var type replacement
-  const oldVarName = oldProperty.startsWith("--")
-    ? oldProperty.slice(2)
-    : oldProperty;
-  const newVarName = newProperty.startsWith("--")
-    ? newProperty.slice(2)
-    : newProperty;
-
-  // Replace in var type value fields: "value":"old-name" -> "value":"new-name"
-  // Use word boundary to avoid replacing "color" in "color-dark"
-  const varTypeRegex = new RegExp(
-    `("value":")${escapeRegex(oldVarName)}(?![\\w-])`,
-    "g"
-  );
-  valueStr = valueStr.replace(varTypeRegex, `$1${newVarName}`);
-
-  // Also replace literal --variable-name in unparsed strings
-  valueStr = valueStr.replace(createVarNameRegex(oldProperty), newProperty);
-
-  return JSON.parse(valueStr) as StyleValue;
-};
-
-// Core rename logic without transaction wrapper (for testing)
-export const performCssVariableRename = (
-  styles: Map<string, StyleDecl>,
-  oldProperty: string,
-  newProperty: string
-): Map<string, StyleDecl> => {
-  const updatedStyles = new Map(styles);
-
-  // Update all StyleDecl with the old property name
-  const styleDeclsToUpdate: Array<{ key: string; decl: StyleDecl }> = [];
-  for (const [key, styleDecl] of updatedStyles) {
-    if (styleDecl.property === oldProperty) {
-      styleDeclsToUpdate.push({ key, decl: styleDecl });
-    }
-  }
-
-  for (const { key, decl } of styleDeclsToUpdate) {
-    updatedStyles.delete(key);
-    const newDecl = { ...decl, property: newProperty as StyleProperty };
-    updatedStyles.set(getStyleDeclKey(newDecl), newDecl);
-  }
-
-  // Update all var() references in StyleValue
-  const styleDeclsToUpdateRefs: Array<{ key: string; decl: StyleDecl }> = [];
-  for (const [key, styleDecl] of updatedStyles) {
-    styleDeclsToUpdateRefs.push({ key, decl: styleDecl });
-  }
-
-  for (const { key, decl } of styleDeclsToUpdateRefs) {
-    const newValue = updateVarReferences(decl.value, oldProperty, newProperty);
-    if (newValue !== decl.value) {
-      updatedStyles.set(key, { ...decl, value: newValue });
-    }
-  }
-
-  return updatedStyles;
-};
-
-// Update var() references in HTML Embed code props (pure function for testing)
-export const updateVarReferencesInProps = (
-  props: Props,
-  oldProperty: string,
-  newProperty: string
-): Props => {
-  const updatedProps = new Map(props);
-  const regex = createVarNameRegex(oldProperty);
-
-  for (const [key, prop] of updatedProps) {
-    if (prop.type === "string" && prop.name === "code" && prop.value) {
-      const updatedValue = prop.value.replace(regex, newProperty);
-      if (updatedValue !== prop.value) {
-        updatedProps.set(key, { ...prop, value: updatedValue });
-      }
-    }
-  }
-
-  return updatedProps;
-};
+) =>
+  validateCssVariableNameWithStyles({
+    name,
+    currentProperty,
+    styles: $styles.get().values(),
+  });
 
 export const renameCssVariable = (
   oldProperty: string,
   newProperty: string
-): CssVariableError | undefined => {
+): CssVariableNameError | undefined => {
   const validationError = validateCssVariableName(newProperty, oldProperty);
   if (validationError) {
     return validationError;
   }
 
   serverSyncStore.createTransaction([$styles, $props], (styles, props) => {
-    const updatedStyles = performCssVariableRename(
+    renameCssVariableMutable({
       styles,
-      oldProperty,
-      newProperty
-    );
-
-    // Clear and repopulate the styles map
-    styles.clear();
-    for (const [key, value] of updatedStyles) {
-      styles.set(key, value);
-    }
-
-    // Update var() references in HTML Embed code props
-    const updatedProps = updateVarReferencesInProps(
       props,
       oldProperty,
-      newProperty
-    );
-    props.clear();
-    for (const [key, value] of updatedProps) {
-      props.set(key, value);
-    }
+      newProperty,
+    });
   });
 
-  return undefined;
+  return;
 };
 
 export const deleteUnusedCssVariables = () => {
@@ -497,21 +188,22 @@ export const DeleteCssVariableDialog = ({
         <DialogTitle>Delete confirmation</DialogTitle>
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Text>{`Delete CSS variable "${cssVariable?.property}" from the project?`}</Text>
-          <Flex direction="rowReverse" gap="2">
-            <Button
-              color="destructive"
-              onClick={() => {
-                onConfirm(cssVariable!.property);
-                onClose();
-              }}
-            >
-              Delete
-            </Button>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          <Button
+            autoFocus
+            color="destructive"
+            onClick={() => {
+              onConfirm(cssVariable!.property);
+              onClose();
+            }}
+          >
+            Delete
+          </Button>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );
@@ -584,15 +276,15 @@ export const RenameCssVariableDialog = ({
               </Text>
             )}
           </Flex>
-          <Flex direction="rowReverse" gap="2">
-            <Button color="primary" onClick={handleConfirm}>
-              Rename
-            </Button>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
         </Flex>
+        <DialogActions>
+          <Button color="primary" onClick={handleConfirm}>
+            Rename
+          </Button>
+          <DialogClose>
+            <Button color="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );
@@ -608,34 +300,37 @@ const DeleteUnusedCssVariablesDialogContent = ({
   const unusedVariablesArray = Array.from(unusedVariables);
 
   return (
-    <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
-      {unusedVariablesArray.length === 0 ? (
-        <Text>There are no unused CSS variables to delete.</Text>
-      ) : (
-        <>
-          <Text>
-            Delete {unusedVariablesArray.length} unused CSS{" "}
-            {unusedVariablesArray.length === 1 ? "variable" : "variables"} from
-            the project?
-          </Text>
-          <Text
-            variant="mono"
-            css={{
-              maxHeight: 200,
-              overflowY: "auto",
-              backgroundColor: theme.colors.backgroundPanel,
-              borderRadius: theme.borderRadius[4],
-              wordBreak: "break-word",
-            }}
-          >
-            {unusedVariablesArray.join(", ")}
-          </Text>
-        </>
-      )}
-      <Flex direction="rowReverse" gap="2">
+    <>
+      <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+        {unusedVariablesArray.length === 0 ? (
+          <Text>There are no unused CSS variables to delete.</Text>
+        ) : (
+          <>
+            <Text>
+              Delete {unusedVariablesArray.length} unused CSS{" "}
+              {unusedVariablesArray.length === 1 ? "variable" : "variables"}{" "}
+              from the project?
+            </Text>
+            <Text
+              variant="mono"
+              css={{
+                maxHeight: 200,
+                overflowY: "auto",
+                backgroundColor: theme.colors.backgroundPanel,
+                borderRadius: theme.borderRadius[4],
+                wordBreak: "break-word",
+              }}
+            >
+              {unusedVariablesArray.join(", ")}
+            </Text>
+          </>
+        )}
+      </Flex>
+      <DialogActions>
         {unusedVariablesArray.length > 0 && (
           <Button
             color="destructive"
+            autoFocus
             onClick={() => {
               const deletedCount = deleteUnusedCssVariables();
               onClose();
@@ -656,8 +351,8 @@ const DeleteUnusedCssVariablesDialogContent = ({
             {unusedVariablesArray.length > 0 ? "Cancel" : "Close"}
           </Button>
         </DialogClose>
-      </Flex>
-    </Flex>
+      </DialogActions>
+    </>
   );
 };
 

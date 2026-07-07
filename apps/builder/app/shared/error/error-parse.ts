@@ -3,7 +3,7 @@ import { z } from "zod";
 
 // Currently, we have multiple error formats, and not all of them are covered here.
 // We should consolidate these formats into a single, unified format for consistency.
-const PageError = z.union([
+const pageError = z.union([
   z.string().transform((message) => ({ message, description: undefined })),
   z
     .object({
@@ -38,7 +38,7 @@ export const parseError = (
   }
 
   if (isRouteErrorResponse(error)) {
-    const parsed = PageError.safeParse(error.data);
+    const parsed = pageError.safeParse(error.data);
 
     if (parsed.success) {
       return {
@@ -56,7 +56,7 @@ export const parseError = (
     };
   }
 
-  const parsed = PageError.safeParse(error);
+  const parsed = pageError.safeParse(error);
   if (parsed.success) {
     return {
       message: parsed.data.message,

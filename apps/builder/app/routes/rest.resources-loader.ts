@@ -1,12 +1,14 @@
 import { z } from "zod";
-import { type ActionFunctionArgs, data } from "@remix-run/server-runtime";
-import { ResourceRequest } from "@webstudio-is/sdk";
+import { type ActionFunctionArgs, data, json } from "@remix-run/server-runtime";
+import { type ResourceRequest, resourceRequest } from "@webstudio-is/sdk";
 import { isLocalResource, loadResource } from "@webstudio-is/sdk/runtime";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
 import { loader as currentDateLoader } from "../shared/$resources/current-date.server";
+import { loader as assetsLoader } from "../shared/$resources/assets.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { getResourceKey } from "~/shared/resources";
+import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
@@ -26,6 +28,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return currentDateLoader({ request });
     }
 
+    if (isLocalResource(input, "assets")) {
+      return assetsLoader({ request });
+    }
+
     return fetch(input, init);
   };
 
@@ -36,12 +42,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     console.error("data:", requestJson);
     throw data(requestList.error, {
       status: 400,
+      headers: privateNoStoreResponseHeaders,
     });
   }
 
   const output = await Promise.all(
     requestList.data.map(async (item) => {
-      const resource = ResourceRequest.safeParse(item);
+      const resource = resourceRequest.safeParse(item);
       if (resource.success === false) {
         return [
           getResourceKey(item as ResourceRequest),
@@ -60,5 +67,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     })
   );
 
-  return output;
+  return json(output, { headers: privateNoStoreResponseHeaders });
 };

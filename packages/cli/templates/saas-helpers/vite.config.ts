@@ -4,20 +4,21 @@ import {
 } from "@remix-run/dev";
 import { defineConfig } from "vite";
 
-import { existsSync } from "node:fs";
-// @ts-ignore
-import path from "node:path";
-// @ts-ignore
-import fg from "fast-glob";
+import { existsSync, readdirSync } from "node:fs";
 
-const rootDir = ["..", "../..", "../../.."]
-  .map((dir) => path.join(__dirname, dir))
-  .find((dir) => existsSync(path.join(dir, ".git")));
+const rootDir = ["..", "../..", "../../.."].find((dir) =>
+  existsSync(`${dir}/.git`)
+);
 
 const hasPrivateFolders =
-  fg.sync([path.join(rootDir ?? "", "packages/*/private-src/*")], {
-    ignore: ["**/node_modules/**"],
-  }).length > 0;
+  rootDir !== undefined &&
+  existsSync(`${rootDir}/packages`) &&
+  readdirSync(`${rootDir}/packages`, { withFileTypes: true }).some((entry) => {
+    return (
+      entry.isDirectory() &&
+      existsSync(`${rootDir}/packages/${entry.name}/private-src`)
+    );
+  });
 
 const conditions = hasPrivateFolders
   ? ["webstudio-private", "webstudio"]

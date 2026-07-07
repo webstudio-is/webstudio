@@ -9,10 +9,10 @@ import {
 import { generateStyleMap, mergeStyles } from "@webstudio-is/css-engine";
 import type { StyleMap } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import { highlightCss } from "~/builder/shared/code-highlight";
+import { highlightCss } from "~/shared/code-highlight";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { $computedStyleDeclarations } from "~/builder/features/style-panel/shared/model";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/nano-states";
 
 const preStyle = css(textVariants.mono, {
   margin: 0,
@@ -63,7 +63,7 @@ const getCssText = (
     result.push(generateStyleMap(mergeStyles(style)));
   };
 
-  add("Style Sources", sourceStyles);
+  add("Style sources", sourceStyles);
   add("Cascaded", cascadedStyles);
   add("Preset", presetStyles);
 
@@ -91,7 +91,7 @@ export const CssPreview = () => {
     return null;
   }
   return (
-    <CollapsibleSection label="CSS Preview" fullWidth>
+    <CollapsibleSection label="CSS preview" fullWidth>
       <ScrollArea css={{ padding: theme.panel.padding }}>
         <pre tabIndex={0} className={preStyle()}>
           <div

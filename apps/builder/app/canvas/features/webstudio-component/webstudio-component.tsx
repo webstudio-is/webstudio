@@ -38,32 +38,38 @@ import {
   type AnyComponent,
   textContentAttribute,
   standardAttributesToReactProps,
+  getCollectionEntries,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
-import { Input, Select, Textarea } from "@webstudio-is/sdk-components-react";
+import {
+  Input,
+  Link,
+  Select,
+  Textarea,
+} from "@webstudio-is/sdk-components-react/components";
+import { LinkCurrentUrlContext } from "@webstudio-is/sdk-components-react";
 import {
   $propValuesByInstanceSelectorWithMemoryProps,
   getIndexedInstanceId,
-  $instances,
   $registeredComponentMetas,
   $selectedInstanceRenderState,
   findBlockSelector,
-  $props,
+  $selectedPageHash,
 } from "~/shared/nano-states";
+import { $props } from "~/shared/sync/data-stores";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
-} from "~/shared/tree-utils";
-import { setDataCollapsed } from "~/canvas/collapsed";
+} from "~/shared/instance-utils/tree";
+import { inflateInstance } from "~/canvas/inflator";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { TextEditor } from "../text-editor";
-import {
-  $selectedPage,
-  getInstanceKey,
-  selectInstance,
-} from "~/shared/awareness";
+import { $selectedPage, getInstanceKey } from "~/shared/nano-states";
+import { selectInstance } from "~/shared/nano-states";
+import { $currentSystem } from "~/shared/system";
 import {
   createInstanceChildrenElements,
   type WebstudioComponentProps,
@@ -75,6 +81,57 @@ import {
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
 import { richTextPlaceholders } from "~/shared/content-model";
+
+const computeComponentKey = (props: Record<string, unknown>) => {
+  const assetId = props.$webstudio$canvasOnly$assetId;
+  const src = props.src;
+  const defaultValue = props.defaultValue;
+
+  return (
+    (typeof assetId === "string" ? assetId : undefined) ??
+    (defaultValue != null ? String(defaultValue) : undefined) ??
+    (src != null ? String(src) : undefined)
+  );
+};
+
+const getPreviewCurrentUrl = (
+  currentSystem: {
+    pathname: string;
+    search: Record<string, string | undefined>;
+  },
+  hash: string
+) => {
+  // Preview renders inside the builder canvas route, so window.location points
+  // at the builder shell, not the page being previewed. Recreate the page URL
+  // from the selected page system data so :local-link state matches preview
+  // navigation, including query params and hash-only links.
+  const currentUrl = new URL(currentSystem.pathname, "https://webstudio.local");
+  currentUrl.search = new URLSearchParams(
+    Object.entries(currentSystem.search).filter(
+      (entry): entry is [string, string] => entry[1] !== undefined
+    )
+  ).toString();
+  currentUrl.hash = hash;
+  return currentUrl;
+};
+
+export const __testing__ = { computeComponentKey, getPreviewCurrentUrl };
+
+const PreviewLinkCurrentUrlProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
+  const currentSystem = useStore($currentSystem);
+  const selectedPageHash = useStore($selectedPageHash);
+  const currentUrl = getPreviewCurrentUrl(currentSystem, selectedPageHash.hash);
+
+  return (
+    <LinkCurrentUrlContext.Provider value={currentUrl}>
+      {children}
+    </LinkCurrentUrlContext.Provider>
+  );
+};
 
 const ContentEditable = ({
   placeholder,
@@ -266,7 +323,7 @@ const getInstanceSelector = (
       return [...selector, ...rootInstanceSelector];
     }
   }
-  return undefined;
+  return;
 };
 
 const $indexesWithinAncestors = computed(
@@ -332,12 +389,12 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
 const existingElements = new Set<string>();
 
 /**
- * We are identifying newly created instances like Tooltips and ensuring the calculation of 'collapsed' elements.
+ * We are identifying newly created instances like Tooltips and ensuring the calculation of 'inflated' elements.
  */
-const useCollapsedOnNewElement = (instanceId: Instance["id"]) => {
+const useInflateOnNewElement = (instanceId: Instance["id"]) => {
   useEffect(() => {
     if (existingElements.has(instanceId) === false) {
-      setDataCollapsed(instanceId);
+      inflateInstance(instanceId);
     }
 
     existingElements.add(instanceId);
@@ -450,7 +507,7 @@ export const WebstudioComponentCanvas = forwardRef<
    */
   const initialContentEditableContent = useRef(children);
 
-  useCollapsedOnNewElement(instanceId);
+  useInflateOnNewElement(instanceId);
 
   // this assumes presence of `useStore($selectedInstanceSelector)` above
   // we rely on root re-rendering after selected instance changes
@@ -489,23 +546,16 @@ export const WebstudioComponentCanvas = forwardRef<
   }
 
   if (instance.component === collectionComponent) {
-    const data = instanceProps.data;
-    if (data && Array.isArray(data) === false) {
-      Component = InvalidCollectionDataStub as AnyComponent;
-    } else if (
-      // render stub component when no data or children
-      Array.isArray(data) &&
-      data.length > 0 &&
-      instance.children.length > 0
-    ) {
-      return data.map((_item, index) => {
-        return (
-          <Fragment key={index}>
+    const originalData = instanceProps.data;
+    if (originalData && instance.children.length > 0) {
+      const entries = getCollectionEntries(originalData);
+      if (entries.length > 0) {
+        return entries.map(([key]) => (
+          <Fragment key={key}>
             {createInstanceChildrenElements({
               instances,
-              // create fake indexed id to distinct items for select and hover
               instanceSelector: [
-                getIndexedInstanceId(instance.id, index),
+                getIndexedInstanceId(instance.id, key),
                 ...instanceSelector,
               ],
               children: instance.children,
@@ -513,11 +563,10 @@ export const WebstudioComponentCanvas = forwardRef<
               components,
             })}
           </Fragment>
-        );
-      });
-    } else {
-      Component = DroppableComponentStub as AnyComponent;
+        ));
+      }
     }
+    Component = DroppableComponentStub as AnyComponent;
   }
 
   if (instance.component === descendantComponent) {
@@ -557,8 +606,9 @@ export const WebstudioComponentCanvas = forwardRef<
 
   // React ignores defaultValue changes after first render.
   // Key prop forces re-creation to reflect updates on canvas.
-  const key =
-    props.defaultValue != null ? props.defaultValue.toString() : undefined;
+  // Also use assetId to recreate component when asset changes (e.g., deleted, replaced)
+  // For expressions that resolve to asset URLs (via assets resource), use the src value itself
+  const key = computeComponentKey(props);
 
   const instanceElement = (
     <>
@@ -633,7 +683,11 @@ export const WebstudioComponentPreview = forwardRef<
   const instances = useStore($instances);
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
-  const props = {
+  const props: {
+    [componentAttribute]: string;
+    [idAttribute]: string;
+    [selectorIdAttribute]: string;
+  } & Record<string, unknown> = {
     ...mergeProps(restProps, instanceProps, "merge"),
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
@@ -644,21 +698,16 @@ export const WebstudioComponentPreview = forwardRef<
   }
 
   if (instance.component === collectionComponent) {
-    const data = instanceProps.data;
-    // render nothing when no data or children
-    if (
-      Array.isArray(data) &&
-      data.length > 0 &&
-      instance.children.length > 0
-    ) {
-      return data.map((_item, index) => {
-        return (
-          <Fragment key={index}>
+    const originalData = instanceProps.data;
+    if (originalData && instance.children.length > 0) {
+      const entries = getCollectionEntries(originalData);
+      if (entries.length > 0) {
+        return entries.map(([key]) => (
+          <Fragment key={key}>
             {createInstanceChildrenElements({
               instances,
-              // create fake indexed id to distinct items for select and hover
               instanceSelector: [
-                getIndexedInstanceId(instance.id, index),
+                getIndexedInstanceId(instance.id, key),
                 ...instanceSelector,
               ],
               children: instance.children,
@@ -666,8 +715,8 @@ export const WebstudioComponentPreview = forwardRef<
               components,
             })}
           </Fragment>
-        );
-      });
+        ));
+      }
     }
   }
 
@@ -691,6 +740,9 @@ export const WebstudioComponentPreview = forwardRef<
     if (Component === "select") {
       Component = Select as AnyComponent;
     }
+    if (Component === "a") {
+      Component = Link as AnyComponent;
+    }
   }
 
   if (instance.component === blockComponent) {
@@ -704,7 +756,8 @@ export const WebstudioComponentPreview = forwardRef<
   if (Component === undefined) {
     return <></>;
   }
-  return (
+
+  const element = (
     <Component {...props} ref={ref}>
       {getTextContent(instanceProps) ??
         createInstanceChildrenElements({
@@ -716,4 +769,16 @@ export const WebstudioComponentPreview = forwardRef<
         })}
     </Component>
   );
+
+  if (
+    instance.component === "Link" ||
+    instance.component === "RichTextLink" ||
+    (instance.component === elementComponent && instance.tag === "a")
+  ) {
+    return (
+      <PreviewLinkCurrentUrlProvider>{element}</PreviewLinkCurrentUrlProvider>
+    );
+  }
+
+  return element;
 });

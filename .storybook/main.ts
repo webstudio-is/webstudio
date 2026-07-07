@@ -24,7 +24,7 @@ const visualTestingStories: StorybookConfig["stories"] = [
   },
   {
     directory: "../packages/design-system/src/components",
-    titlePrefix: "Design System",
+    titlePrefix: "Design system",
     files: "**/*.stories.tsx",
   },
 ];
@@ -36,7 +36,7 @@ export default {
         ...visualTestingStories,
         {
           directory: "../packages/css-engine/src",
-          titlePrefix: "CSS Engine",
+          titlePrefix: "CSS engine",
           files: "**/*.stories.tsx",
         },
         {
@@ -51,17 +51,17 @@ export default {
         },
         {
           directory: "../packages/sdk-components-react",
-          titlePrefix: "SDK Components React",
+          titlePrefix: "SDK components React",
           files: "**/*.stories.tsx",
         },
         {
           directory: "../packages/sdk-components-react-radix",
-          titlePrefix: "SDK Components React Radix",
+          titlePrefix: "SDK components React Radix",
           files: "**/*.stories.tsx",
         },
         {
           directory: "../packages/sdk-components-animation",
-          titlePrefix: "SDK Components Animation",
+          titlePrefix: "SDK components animation",
           files: "**/*.stories.tsx",
         },
       ],

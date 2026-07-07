@@ -1,12 +1,14 @@
 import { StorySection } from "./storybook";
-import { ScrollArea } from "./scroll-area";
+import { ScrollArea as ScrollAreaComponent } from "./scroll-area";
+import { Text } from "./text";
 import { theme } from "..";
+import { Flex } from "./flex";
 
 export default {
   title: "Scroll Area",
 };
 
-export const Story = () => {
+export const ScrollArea = () => {
   const content = (
     <div style={{ height: 1000, width: 1000 }}>
       {Array.from(new Array(100))
@@ -24,19 +26,29 @@ export const Story = () => {
   return (
     <>
       <StorySection title="Vertical">
-        <ScrollArea css={css}>{content}</ScrollArea>
+        <ScrollAreaComponent css={css}>{content}</ScrollAreaComponent>
       </StorySection>
       <StorySection title="Horizontal">
-        <ScrollArea css={css} direction="horizontal">
+        <ScrollAreaComponent css={css} direction="horizontal">
           {content}
-        </ScrollArea>
+        </ScrollAreaComponent>
       </StorySection>
       <StorySection title="Both">
-        <ScrollArea css={css} direction="both">
+        <ScrollAreaComponent css={css} direction="both">
           {content}
-        </ScrollArea>
+        </ScrollAreaComponent>
+      </StorySection>
+
+      <StorySection title="No overflow">
+        <div style={{ height: 200, width: 200 }}>
+          <ScrollAreaComponent>
+            <Flex direction="column" gap="2" style={{ padding: 8 }}>
+              <Text>Short content</Text>
+              <Text>No scrollbar needed</Text>
+            </Flex>
+          </ScrollAreaComponent>
+        </div>
       </StorySection>
     </>
   );
 };
-Story.storyName = "Scroll Area";

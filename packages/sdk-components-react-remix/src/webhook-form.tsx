@@ -6,7 +6,11 @@ import {
   useEffect,
 } from "react";
 import { useFetcher, type Fetcher, type FormProps } from "@remix-run/react";
-import { formIdFieldName, formBotFieldName } from "@webstudio-is/sdk/runtime";
+import {
+  formIdFieldName,
+  formBotFieldName,
+  isBraveBrowser,
+} from "@webstudio-is/sdk/runtime";
 
 export const defaultTag = "form";
 
@@ -100,6 +104,7 @@ export const WebhookForm = forwardRef<
     /**
      * Add hidden field generated using js with simple jsdom detector.
      * This is used to protect form submission against very simple bots.
+     * Skipped for Brave browser due to: https://github.com/brave/brave-browser/issues/46541
      */
     const handleSubmitAndAddHiddenJsField = (
       event: React.FormEvent<HTMLFormElement>
@@ -107,8 +112,13 @@ export const WebhookForm = forwardRef<
       const hiddenInput = document.createElement("input");
       hiddenInput.type = "hidden";
       hiddenInput.name = formBotFieldName;
-      // Non-numeric values are utilized for logging purposes.
-      hiddenInput.value = isJSDom() ? "jsdom" : Date.now().toString(16);
+      // Skip bot detection for Brave - Shields blocks matchMedia fingerprinting detection
+      if (isBraveBrowser()) {
+        hiddenInput.value = "brave";
+      } else {
+        // Non-numeric values are utilized for logging purposes.
+        hiddenInput.value = isJSDom() ? "jsdom" : Date.now().toString(16);
+      }
       event.currentTarget.appendChild(hiddenInput);
     };
 

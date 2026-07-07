@@ -10,7 +10,7 @@ import {
   getAuthorizationServerOrigin,
   getRequestOrigin,
 } from "~/shared/router-utils/origins";
-import { parseBuilderUrl } from "@webstudio-is/http-client";
+import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { createDebug } from "~/shared/debug";
 import { readAccessToken } from "./token.server";
 import { isUserAuthorizedForProject } from "./builder-access.server";
@@ -44,7 +44,7 @@ builderAuthenticator.use(
       );
 
       if (accessToken === undefined) {
-        debug("Invalid or expired access token", tokens.access_token);
+        debug("Invalid or expired access token");
 
         throw new AuthorizationError("Invalid or expired access token");
       }
@@ -68,8 +68,6 @@ builderAuthenticator.use(
           "User does not have access to this project"
         );
       }
-
-      debug("User authenticated", accessToken.userId);
 
       return await { userId: accessToken.userId, createdAt: Date.now() };
     },

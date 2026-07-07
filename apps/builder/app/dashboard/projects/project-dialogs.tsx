@@ -17,10 +17,30 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { Title } from "@webstudio-is/project";
+import { projectTitle } from "@webstudio-is/project";
 import { builderUrl } from "~/shared/router-utils";
 import { ShareProjectContainer } from "~/shared/share-project";
 import { trpcClient } from "~/shared/trpc/trpc-client";
+import type { DashboardProject } from "@webstudio-is/dashboard";
+import {
+  ProjectSettingsDialog,
+  type SectionName,
+} from "~/shared/project-settings";
+import type { User } from "~/shared/db/user.server";
+import { TagsDialog } from "./tags";
+import { TransferProjectDialog } from "~/dashboard/workspace/transfer-project-dialog";
+import {
+  destroyClientSync,
+  initializeClientSync,
+} from "~/shared/sync/sync-client";
+
+export type DialogType =
+  | "rename"
+  | "delete"
+  | "share"
+  | "tags"
+  | "settings"
+  | "transfer";
 
 type DialogProps = {
   title: string;
@@ -116,21 +136,19 @@ const DialogContent = ({
   );
 };
 
-const useCreateProject = () => {
+const useCreateProject = (workspaceId?: string) => {
   const { send, state } = trpcClient.dashboardProject.create.useMutation();
   const [errors, setErrors] = useState<string>();
 
   const handleSubmit = ({ title }: { title: string }) => {
-    const parsed = Title.safeParse(title);
+    const parsed = projectTitle.safeParse(title);
     const errors =
       "error" in parsed
         ? parsed.error?.issues.map((issue) => issue.message).join("\n")
         : undefined;
     setErrors(errors);
     if (parsed.success) {
-      send({ title }, (data) => {
-        console.info("data");
-
+      send({ title, workspaceId }, (data) => {
         if (data?.id) {
           window.location.href = builderUrl({
             origin: window.origin,
@@ -154,11 +172,14 @@ const useCreateProject = () => {
 };
 
 export const CreateProject = ({
-  buttonText = "New blank project",
+  buttonText = "New project",
+  workspaceId,
 }: {
   buttonText?: string;
+  workspaceId?: string;
 }) => {
-  const { handleSubmit, handleOpenChange, state, errors } = useCreateProject();
+  const { handleSubmit, handleOpenChange, state, errors } =
+    useCreateProject(workspaceId);
 
   return (
     <Dialog
@@ -196,7 +217,7 @@ const useRenameProject = ({
   const revalidator = useRevalidator();
 
   const handleSubmit = ({ title }: { title: string }) => {
-    const parsed = Title.safeParse(title);
+    const parsed = projectTitle.safeParse(title);
     const errors =
       "error" in parsed
         ? parsed.error?.issues.map((issue) => issue.message).join("\n")
@@ -204,9 +225,9 @@ const useRenameProject = ({
     setErrors(errors);
     if (parsed.success) {
       send({ projectId, title }, () => {
+        onOpenChange(false);
         revalidator.revalidate();
       });
-      onOpenChange(false);
     }
   };
 
@@ -336,7 +357,7 @@ export const DeleteProjectDialog = ({
             <Text
               as="span"
               color="destructive"
-              variant="labelsSentenceCase"
+              variant="labels"
               css={{ userSelect: "text" }}
             >
               {` ${title} `}
@@ -361,7 +382,7 @@ export const DeleteProjectDialog = ({
   );
 };
 
-export const useCloneProject = (projectId: string) => {
+export const useDuplicateProject = (projectId: string) => {
   const { send } = trpcClient.dashboardProject.clone.useMutation();
   const revalidator = useRevalidator();
 
@@ -376,16 +397,155 @@ export const ShareProjectDialog = ({
   isOpen,
   onOpenChange,
   projectId,
-  hasProPlan,
 }: {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   projectId: string;
-  hasProPlan: boolean;
 }) => {
   return (
     <Dialog title="Share Project" isOpen={isOpen} onOpenChange={onOpenChange}>
-      <ShareProjectContainer hasProPlan={hasProPlan} projectId={projectId} />
+      <ShareProjectContainer projectId={projectId} />
     </Dialog>
+  );
+};
+
+/**
+ * Container component that manages data loading for ProjectSettingsDialog.
+ * Handles sync initialization when the dialog is opened from the dashboard.
+ */
+const ProjectSettingsDialogContainer = ({
+  projectId,
+  onOpenChange,
+  isOpen,
+}: {
+  projectId: string;
+  onOpenChange: (isOpen: boolean) => void;
+  isOpen: boolean;
+}) => {
+  const [currentSection, setCurrentSection] = useState<
+    SectionName | undefined
+  >();
+  const [loadingState, setLoadingState] = useState<
+    "idle" | "loading" | "loaded"
+  >("idle");
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentSection("general");
+      setLoadingState("loading");
+    } else {
+      setCurrentSection(undefined);
+      setLoadingState("idle");
+      // Reset data stores and stop sync when dialog closes
+      destroyClientSync();
+    }
+  }, [isOpen]);
+
+  // Initialize sync when settings dialog is opened
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    // Initialize sync which will load data, start project sync, and start polling
+    const controller = new AbortController();
+
+    initializeClientSync({
+      projectId,
+      authPermit: "own", // Dashboard projects are always owned by the current user
+      signal: controller.signal,
+      onReady() {
+        setLoadingState("loaded");
+      },
+    });
+
+    return () => {
+      controller.abort("settings-closed");
+    };
+  }, [isOpen, projectId]);
+
+  return (
+    <ProjectSettingsDialog
+      projectId={projectId}
+      currentSection={currentSection}
+      onSectionChange={setCurrentSection}
+      onOpenChange={onOpenChange}
+      status={loadingState}
+    />
+  );
+};
+
+type ProjectDialogsProps = {
+  projectId: string;
+  title: string;
+  tags: DashboardProject["tags"];
+  openDialog: DialogType | undefined;
+  onOpenDialogChange: (dialog: DialogType | undefined) => void;
+  onHiddenChange: (isHidden: boolean) => void;
+  projectsTags: User["projectsTags"];
+};
+
+/**
+ * Shared component that handles all project dialogs.
+ */
+export const ProjectDialogs = ({
+  projectId,
+  title,
+  tags,
+  openDialog,
+  onOpenDialogChange,
+  onHiddenChange,
+  projectsTags,
+}: ProjectDialogsProps) => {
+  const projectTagsIds = (tags || [])
+    .map((tagId) => {
+      const tag = projectsTags.find((tag) => tag.id === tagId);
+      return tag ? tag.id : undefined;
+    })
+    .filter(Boolean) as string[];
+
+  return (
+    <>
+      <RenameProjectDialog
+        isOpen={openDialog === "rename"}
+        onOpenChange={(open) => onOpenDialogChange(open ? "rename" : undefined)}
+        title={title}
+        projectId={projectId}
+      />
+      <DeleteProjectDialog
+        isOpen={openDialog === "delete"}
+        onOpenChange={(open) => onOpenDialogChange(open ? "delete" : undefined)}
+        onHiddenChange={onHiddenChange}
+        title={title}
+        projectId={projectId}
+      />
+      <ShareProjectDialog
+        isOpen={openDialog === "share"}
+        onOpenChange={(open) => onOpenDialogChange(open ? "share" : undefined)}
+        projectId={projectId}
+      />
+      <TagsDialog
+        projectId={projectId}
+        projectsTags={projectsTags}
+        projectTagsIds={projectTagsIds}
+        isOpen={openDialog === "tags"}
+        onOpenChange={(open) => onOpenDialogChange(open ? "tags" : undefined)}
+      />
+      <ProjectSettingsDialogContainer
+        projectId={projectId}
+        onOpenChange={(open) =>
+          onOpenDialogChange(open ? "settings" : undefined)
+        }
+        isOpen={openDialog === "settings"}
+      />
+      <TransferProjectDialog
+        isOpen={openDialog === "transfer"}
+        onOpenChange={(open) =>
+          onOpenDialogChange(open ? "transfer" : undefined)
+        }
+        projectId={projectId}
+        title={title}
+      />
+    </>
   );
 };

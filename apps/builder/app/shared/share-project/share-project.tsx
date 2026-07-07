@@ -1,10 +1,15 @@
 import {
+  useEffect,
   Fragment,
   useId,
+  useRef,
   useState,
   type ComponentProps,
   type ReactNode,
 } from "react";
+import { shallowEqual } from "shallow-equal";
+import { type Role, roleLabels } from "@webstudio-is/project";
+import { roleDescriptions } from "~/shared/permissions";
 import {
   Box,
   Button,
@@ -24,18 +29,19 @@ import {
   Text,
   InputField,
   Link,
-  buttonStyle,
   IconButton,
   Checkbox,
   Grid,
+  PanelBanner,
 } from "@webstudio-is/design-system";
 import {
   CopyIcon,
   EllipsesIcon,
   PlusIcon,
   InfoCircleIcon,
+  UpgradeIcon,
 } from "@webstudio-is/icons";
-import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
+import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { useIds } from "../form-utils";
 import type { BuilderMode } from "../nano-states";
 
@@ -48,31 +54,105 @@ const Item = (props: ComponentProps<typeof Flex>) => (
   />
 );
 
+const UpgradeLink = () => (
+  <Flex align="center" gap={1}>
+    <UpgradeIcon />
+    <Link color="inherit" target="_blank" href="https://webstudio.is/pricing">
+      Upgrade
+    </Link>
+  </Flex>
+);
+
+export const ShareLinkSecurityNotice = () => (
+  <PanelBanner variant="warning">
+    <Text>
+      Sharing links over insecure channels can expose project access. Upgrade to
+      the Team plan for safer collaboration.
+    </Text>
+    <UpgradeLink />
+  </PanelBanner>
+);
+
+const PermissionTooltip = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) => (
+  <Tooltip
+    content={
+      <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
+        <Text variant="titles">{title}</Text>
+        <Text>{children}</Text>
+      </Flex>
+    }
+    variant="wrapped"
+  >
+    <InfoCircleIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+  </Tooltip>
+);
+
+const PermissionTooltipContent = ({
+  children,
+  upgrade = false,
+}: {
+  children: ReactNode;
+  upgrade?: boolean;
+}) => (
+  <Flex direction="column">
+    {children}
+    {upgrade && (
+      <Box css={{ mt: theme.spacing[2] }}>
+        <UpgradeLink />
+      </Box>
+    )}
+  </Flex>
+);
+
+const getApiPermissionDescription = ({
+  canPublish,
+  role,
+}: {
+  canPublish: boolean;
+  role: Role;
+}) => {
+  const descriptions: Record<Role, string> = {
+    viewers:
+      "Allows read-only API access: inspect permissions, project/build snapshots, pages, folders, instances, text, styles, variables, resources, assets, publish history, domains, and asset usage.",
+    editors: canPublish
+      ? "Allows viewer API access, content-mode text and prop changes, plus publishing and unpublishing project and custom domains. It cannot change pages, design data, assets, variables, resources, or domains."
+      : "Allows viewer API access and content-mode text and prop changes. Enable Can publish to allow publishing and unpublishing. It cannot change pages, design data, assets, variables, resources, or domains.",
+    builders:
+      "Allows read and build API access: pages, folders, instances, text, props, styles, design tokens, CSS variables, data variables, resources, assets, patches, and project-domain publish/unpublish.",
+    administrators:
+      "Allows full project API access: all read, content, build, asset, publish/unpublish, and domain management operations.",
+  };
+  return descriptions[role];
+};
+
+export const __testing__ = { getApiPermissionDescription };
+
 type PermissionProps = {
   title: string;
-  info: ReactNode;
+  description: ReactNode;
+  upgrade?: boolean;
   checked: boolean;
   disabled?: boolean;
   onCheckedChange: (checked: boolean) => void;
 };
 const Permission = ({
   title,
-  info,
+  description,
+  upgrade = false,
   checked,
   disabled = false,
   onCheckedChange,
 }: PermissionProps) => {
   const id = useId();
 
-  const tooltipContent = (
-    <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
-      <Text variant="titles">{title}</Text>
-      <Text>{info}</Text>
-    </Flex>
-  );
-
   return (
-    <Flex align="center" gap="1">
+    <Flex align="center" gap="1" css={{ whiteSpace: "nowrap" }}>
       <Switch
         disabled={disabled}
         checked={checked}
@@ -82,42 +162,163 @@ const Permission = ({
       <Label disabled={disabled} htmlFor={id}>
         {title}
       </Label>
-      <Tooltip content={tooltipContent} variant="wrapped">
-        <InfoCircleIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
-      </Tooltip>
+      <PermissionTooltip title={title}>
+        <PermissionTooltipContent upgrade={upgrade}>
+          {description}
+        </PermissionTooltipContent>
+      </PermissionTooltip>
     </Flex>
+  );
+};
+
+type CapabilityProps = {
+  id: string;
+  title: string;
+  description: ReactNode;
+  checked: boolean;
+  disabled?: boolean;
+  onCheckedChange: (checked: boolean) => void;
+};
+
+const Capability = ({
+  id,
+  title,
+  description,
+  checked,
+  disabled = false,
+  onCheckedChange,
+}: CapabilityProps) => {
+  return (
+    <Grid
+      gap={1}
+      flow="column"
+      css={{
+        alignItems: "center",
+        justifyContent: "start",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <Checkbox
+        disabled={disabled}
+        checked={checked}
+        onCheckedChange={(value) => {
+          if (disabled) {
+            return;
+          }
+          onCheckedChange(Boolean(value));
+        }}
+        id={id}
+      />
+      <Label htmlFor={id} disabled={disabled}>
+        {title}
+      </Label>
+      <PermissionTooltip title={title}>{description}</PermissionTooltip>
+    </Grid>
   );
 };
 
 type MenuProps = {
   name: string;
   value: LinkOptions;
-  hasProPlan: boolean;
-  onChange: (value: LinkOptions) => void;
+  allowAdditionalPermissions: boolean;
+  onChange: (value: LinkOptionsUpdate) => void;
   onDelete: () => void;
 };
 
-const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
-  const ids = useIds(["name", "canClone", "canCopy", "canPublish"]);
+const Menu = ({
+  name,
+  allowAdditionalPermissions,
+  value,
+  onChange,
+  onDelete,
+}: MenuProps) => {
+  const ids = useIds([
+    "name",
+    "canClone",
+    "canCopy",
+    "canPublish",
+    "canUseApi",
+  ]);
   const [isOpen, setIsOpen] = useState(false);
-  const [customLinkName, setCustomLinkName] = useState<string>(name);
+  const [draftLink, setDraftLink] = useState(value);
+  const draftLinkRef = useRef(value);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
-  const handleCheckedChange = (relation: Relation) => (checked: boolean) => {
+  const updateDraftLink = (update: LinkOptionsUpdate) => {
+    const nextDraftLink = { ...draftLinkRef.current, ...update };
+    draftLinkRef.current = nextDraftLink;
+    setDraftLink(nextDraftLink);
+  };
+
+  const handleCheckedChange = (role: Role) => (checked: boolean) => {
     if (checked) {
-      onChange({ ...value, relation });
+      updateDraftLink({ relation: role });
     }
   };
 
-  const saveCustomLinkName = () => {
-    if (customLinkName.length === 0) {
+  const renderAdvanced = (role: Role, children: ReactNode) =>
+    draftLink.relation === role ? (
+      <Grid gap={1} css={{ ml: theme.spacing[6] }}>
+        {children}
+      </Grid>
+    ) : undefined;
+
+  const renderApiCapability = (role: Role) => {
+    const canUseApi = draftLink.canUseApi === true;
+    const isApiForbidden = !allowAdditionalPermissions && canUseApi === false;
+    const description = (
+      <PermissionTooltipContent upgrade={!allowAdditionalPermissions}>
+        {getApiPermissionDescription({
+          canPublish: draftLink.canPublish,
+          role,
+        })}
+      </PermissionTooltipContent>
+    );
+
+    return (
+      <Capability
+        id={ids.canUseApi}
+        title="API"
+        checked={canUseApi}
+        disabled={isApiForbidden}
+        onCheckedChange={(canUseApi) => updateDraftLink({ canUseApi })}
+        description={description}
+      />
+    );
+  };
+
+  const saveDraftLink = (name = draftLinkRef.current.name) => {
+    const nextName = name.trim();
+    const nextLink = {
+      ...draftLinkRef.current,
+      name: nextName.length === 0 ? value.name : nextName,
+    };
+    draftLinkRef.current = nextLink;
+    if (
+      shallowEqual(
+        getComparableLinkOptions(nextLink),
+        getComparableLinkOptions(value)
+      )
+    ) {
       return;
     }
 
-    onChange({ ...value, name: customLinkName.trim() });
+    onChange(nextLink);
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (open === false) {
+          saveDraftLink(nameInputRef.current?.value);
+        } else {
+          draftLinkRef.current = value;
+          setDraftLink(value);
+        }
+        setIsOpen(open);
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           prefix={<EllipsesIcon />}
@@ -126,27 +327,29 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
         ></Button>
       </PopoverTrigger>
       <PopoverContent
+        aria-label={`Share link options ${name}`}
         css={{
-          //padding: 0,
-          width: theme.spacing[24],
+          width: theme.spacing[28],
         }}
         sideOffset={0}
-        onInteractOutside={saveCustomLinkName}
       >
         <Item>
           <Label htmlFor={ids.name}>Name</Label>
           <InputField
             id={ids.name}
-            color={customLinkName.length === 0 ? "error" : undefined}
-            value={customLinkName}
-            onChange={(event) => setCustomLinkName(event.target.value)}
+            inputRef={nameInputRef}
+            color={draftLink.name.length === 0 ? "error" : undefined}
+            value={draftLink.name}
+            onChange={(event) => updateDraftLink({ name: event.target.value })}
+            onInput={(event) =>
+              updateDraftLink({ name: event.currentTarget.value })
+            }
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                saveCustomLinkName();
+                saveDraftLink(event.currentTarget.value);
                 setIsOpen(false);
               }
             }}
-            onBlur={saveCustomLinkName}
             placeholder="Share Project"
             name="Name"
             autoFocus
@@ -156,194 +359,106 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
         <Item>
           <Label>Permissions</Label>
           <Permission
-            checked={value.relation === "viewers"}
+            checked={draftLink.relation === "viewers"}
             onCheckedChange={handleCheckedChange("viewers")}
-            title="View"
-            //info="Recipients can view, copy instances and clone the project"
-            info={
-              <Flex direction="column">
-                Recipients can view, copy instances and clone the project.
-                {hasProPlan !== true && (
-                  <>
-                    <br />
-                    <br />
-                    Upgrade to a Pro account to set additional permissions.
-                    <br /> <br />
-                    <Link
-                      className={buttonStyle({ color: "gradient" })}
-                      color="contrast"
-                      underline="none"
-                      href="https://webstudio.is/pricing"
-                      target="_blank"
-                    >
-                      Upgrade
-                    </Link>
-                  </>
-                )}
-              </Flex>
-            }
+            title={roleLabels.viewers}
+            description={roleDescriptions.viewers}
           />
-
-          <Grid
-            css={{
-              ml: theme.spacing[6],
-            }}
-          >
-            <Grid
-              gap={1}
-              flow={"column"}
-              css={{
-                alignItems: "center",
-                justifyContent: "start",
-              }}
-            >
-              <Checkbox
-                disabled={hasProPlan !== true || value.relation !== "viewers"}
-                checked={value.canClone}
-                onCheckedChange={(canClone) => {
-                  onChange({ ...value, canClone: Boolean(canClone) });
-                }}
+          {renderAdvanced(
+            "viewers",
+            <>
+              <Capability
                 id={ids.canClone}
+                title="Can clone"
+                checked={draftLink.canClone}
+                disabled={!allowAdditionalPermissions}
+                onCheckedChange={(canClone) => updateDraftLink({ canClone })}
+                description={
+                  <PermissionTooltipContent
+                    upgrade={!allowAdditionalPermissions}
+                  >
+                    Allows viewers to clone the project from this share link.
+                  </PermissionTooltipContent>
+                }
               />
-              <Label
-                htmlFor={ids.canClone}
-                disabled={hasProPlan !== true || value.relation !== "viewers"}
-              >
-                Can clone
-              </Label>
-            </Grid>
-            <Grid
-              gap={1}
-              flow={"column"}
-              css={{
-                alignItems: "center",
-                justifyContent: "start",
-              }}
-            >
-              <Checkbox
-                disabled={hasProPlan !== true || value.relation !== "viewers"}
-                checked={value.canCopy}
-                onCheckedChange={(canCopy) => {
-                  onChange({ ...value, canCopy: Boolean(canCopy) });
-                }}
+              <Capability
                 id={ids.canCopy}
+                title="Can copy"
+                checked={draftLink.canCopy}
+                disabled={!allowAdditionalPermissions}
+                onCheckedChange={(canCopy) => updateDraftLink({ canCopy })}
+                description={
+                  <PermissionTooltipContent
+                    upgrade={!allowAdditionalPermissions}
+                  >
+                    Allows viewers to copy project content from this share link.
+                  </PermissionTooltipContent>
+                }
               />
-              <Label
-                htmlFor={ids.canCopy}
-                disabled={hasProPlan !== true || value.relation !== "viewers"}
-              >
-                Can copy
-              </Label>
-            </Grid>
-          </Grid>
+              {renderApiCapability("viewers")}
+            </>
+          )}
 
           <Permission
-            disabled={hasProPlan !== true}
+            disabled={!allowAdditionalPermissions}
             onCheckedChange={handleCheckedChange("editors")}
-            checked={value.relation === "editors"}
-            title="Content"
-            info={
-              <Flex direction="column">
-                Recipients can edit content only, such as text, images, and
-                predefined components.
-                {hasProPlan !== true && (
-                  <>
-                    <br />
-                    <br />
-                    Upgrade to a Pro account to share with Content Edit
-                    permissions.
-                    <br /> <br />
-                    <Link
-                      className={buttonStyle({ color: "gradient" })}
-                      color="contrast"
-                      underline="none"
-                      href="https://webstudio.is/pricing"
-                      target="_blank"
-                    >
-                      Upgrade
-                    </Link>
-                  </>
-                )}
-              </Flex>
-            }
+            checked={draftLink.relation === "editors"}
+            title={roleLabels.editors}
+            description={roleDescriptions.editors}
+            upgrade={!allowAdditionalPermissions}
           />
-          <Grid
-            css={{
-              ml: theme.spacing[6],
-            }}
-          >
-            <Grid
-              gap={1}
-              flow={"column"}
-              css={{
-                alignItems: "center",
-                justifyContent: "start",
-              }}
-            >
-              <Checkbox
-                disabled={hasProPlan !== true || value.relation !== "editors"}
-                checked={value.canPublish}
-                onCheckedChange={(canPublish) => {
-                  onChange({ ...value, canPublish: Boolean(canPublish) });
-                }}
+          {renderAdvanced(
+            "editors",
+            <>
+              <Capability
                 id={ids.canPublish}
+                title="Can publish"
+                checked={draftLink.canPublish}
+                disabled={!allowAdditionalPermissions}
+                onCheckedChange={(canPublish) =>
+                  updateDraftLink({ canPublish })
+                }
+                description={
+                  <PermissionTooltipContent
+                    upgrade={!allowAdditionalPermissions}
+                  >
+                    Allows editors to publish from this share link.
+                  </PermissionTooltipContent>
+                }
               />
-              <Label
-                htmlFor={ids.canPublish}
-                disabled={hasProPlan !== true || value.relation !== "editors"}
-              >
-                Can publish
-              </Label>
-            </Grid>
-          </Grid>
-
+              {renderApiCapability("editors")}
+            </>
+          )}
           <Permission
             onCheckedChange={handleCheckedChange("builders")}
-            checked={value.relation === "builders"}
-            title="Build"
-            info="Recipients can make any changes but can not publish the project."
+            checked={draftLink.relation === "builders"}
+            title={roleLabels.builders}
+            description={roleDescriptions.builders}
           />
+          {renderAdvanced("builders", renderApiCapability("builders"))}
 
           <Permission
-            disabled={hasProPlan !== true}
+            disabled={!allowAdditionalPermissions}
             onCheckedChange={handleCheckedChange("administrators")}
-            checked={value.relation === "administrators"}
-            title="Admin"
-            info={
-              <Flex direction="column">
-                Recipients can make any changes and can also publish the
-                project.
-                {hasProPlan !== true && (
-                  <>
-                    <br />
-                    <br />
-                    Upgrade to a Pro account to share with Admin permissions.
-                    <br /> <br />
-                    <Link
-                      className={buttonStyle({ color: "gradient" })}
-                      color="contrast"
-                      underline="none"
-                      href="https://webstudio.is/pricing"
-                      target="_blank"
-                    >
-                      Upgrade
-                    </Link>
-                  </>
-                )}
-              </Flex>
-            }
+            checked={draftLink.relation === "administrators"}
+            title={roleLabels.administrators}
+            description={roleDescriptions.administrators}
+            upgrade={!allowAdditionalPermissions}
           />
+          {renderAdvanced(
+            "administrators",
+            renderApiCapability("administrators")
+          )}
         </Item>
         <Separator />
         <Item>
-          {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
           <Button
             color="neutral-destructive"
             onClick={() => {
               onDelete();
             }}
           >
-            Delete Link
+            Delete
           </Button>
         </Item>
       </PopoverContent>
@@ -359,15 +474,22 @@ const itemStyle = css({
   backgroundColor: theme.colors.backgroundPanel,
 });
 
-type Relation = "viewers" | "editors" | "builders" | "administrators";
-
 export type LinkOptions = {
   token: string;
   name: string;
-  relation: Relation;
+  relation: Role;
   canCopy: boolean;
   canClone: boolean;
   canPublish: boolean;
+  canUseApi: boolean;
+};
+
+type LinkOptionsUpdate = Partial<Omit<LinkOptions, "token">>;
+
+const getComparableLinkOptions = (link: LinkOptions): LinkOptionsUpdate => {
+  const { token, ...options } = link;
+  void token;
+  return options;
 };
 
 type SharedLinkItemType = {
@@ -375,10 +497,10 @@ type SharedLinkItemType = {
   onChange: (value: LinkOptions) => void;
   onDelete: () => void;
   builderUrl: (props: { authToken: string; mode: BuilderMode }) => string;
-  hasProPlan: boolean;
+  allowAdditionalPermissions: boolean;
 };
 
-const relationToMode: Record<Relation, BuilderMode> = {
+const relationToMode: Record<Role, BuilderMode> = {
   viewers: "preview",
   editors: "content",
   builders: "design",
@@ -390,17 +512,34 @@ const SharedLinkItem = ({
   onChange,
   onDelete,
   builderUrl,
-  hasProPlan,
+  allowAdditionalPermissions,
 }: SharedLinkItemType) => {
-  const [currentName, setCurrentName] = useState(value.name);
+  const [currentLink, setCurrentLink] = useState(value);
+  const currentLinkRef = useRef(value);
+
+  useEffect(() => {
+    currentLinkRef.current = value;
+    setCurrentLink(value);
+  }, [value]);
+
+  const updateCurrentLink = (update: LinkOptionsUpdate) => {
+    const nextLink = { ...currentLinkRef.current, ...update };
+    currentLinkRef.current = nextLink;
+    setCurrentLink(nextLink);
+    onChange(nextLink);
+  };
 
   return (
-    <Box className={itemStyle()}>
-      <Label css={{ flexGrow: 1 }}>{currentName}</Label>
+    <Box
+      className={itemStyle()}
+      role="group"
+      aria-label={`Share link ${currentLink.name}`}
+    >
+      <Label css={{ flexGrow: 1 }}>{currentLink.name}</Label>
       <CopyToClipboard
         text={builderUrl({
-          authToken: value.token,
-          mode: relationToMode[value.relation],
+          authToken: currentLink.token,
+          mode: relationToMode[currentLink.relation],
         })}
         copyText="Copy link"
       >
@@ -409,14 +548,11 @@ const SharedLinkItem = ({
         </IconButton>
       </CopyToClipboard>
       <Menu
-        name={currentName}
-        value={value}
-        onChange={(value) => {
-          setCurrentName(value.name);
-          onChange(value);
-        }}
+        name={currentLink.name}
+        value={currentLink}
+        onChange={updateCurrentLink}
         onDelete={onDelete}
-        hasProPlan={hasProPlan}
+        allowAdditionalPermissions={allowAdditionalPermissions}
       />
     </Box>
   );
@@ -429,7 +565,8 @@ type ShareProjectProps = {
   onCreate: () => void;
   builderUrl: SharedLinkItemType["builderUrl"];
   isPending: boolean;
-  hasProPlan: boolean;
+  allowAdditionalPermissions: boolean;
+  isFreePlan: boolean;
 };
 
 const animateCollapsibleHeight = keyframes({
@@ -456,7 +593,8 @@ export const ShareProject = ({
   onCreate,
   builderUrl,
   isPending,
-  hasProPlan,
+  allowAdditionalPermissions,
+  isFreePlan,
 }: ShareProjectProps) => {
   const items = links.map((link) => (
     <Fragment key={link.token}>
@@ -469,7 +607,7 @@ export const ShareProject = ({
         }}
         builderUrl={builderUrl}
         value={link}
-        hasProPlan={hasProPlan}
+        allowAdditionalPermissions={allowAdditionalPermissions}
       />
       <Separator />
     </Fragment>
@@ -493,7 +631,20 @@ export const ShareProject = ({
   );
 
   return (
-    <Flex direction="column" css={{ width: theme.spacing[33] }}>
+    <Flex
+      direction="column"
+      role="region"
+      aria-label="Share links"
+      aria-busy={isPending}
+      css={{ width: theme.spacing[33] }}
+    >
+      {isFreePlan && (
+        <>
+          <ShareLinkSecurityNotice />
+          <Separator />
+        </>
+      )}
+
       <Collapsible.Root open={items.length > 0}>
         <Collapsible.Content className={collapsibleStyle()}>
           {items}

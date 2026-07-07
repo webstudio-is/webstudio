@@ -1,45 +1,37 @@
 import { createGenerator } from "@unocss/core";
-import { presetLegacyCompat } from "@unocss/preset-legacy-compat";
-import { presetWind3 } from "@unocss/preset-wind3";
+import { presetWind4 } from "@unocss/preset-wind4";
 import {
   camelCaseProperty,
+  extractCssCustomProperties,
   parseCss,
   parseMediaQuery,
   type ParsedStyleDecl,
 } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
+  type Breakpoint,
   type Instance,
   type Prop,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
-import { isBaseBreakpoint } from "../nano-states";
+import { isBaseBreakpoint } from "@webstudio-is/project-build/runtime/breakpoints";
 import { preflight } from "./__generated__/preflight";
 
-const availableBreakpoints = [
-  { id: "1920", minWidth: 1920 },
-  { id: "1440", minWidth: 1440 },
-  { id: "1280", minWidth: 1280 },
-  { id: "base" },
-  { id: "991", maxWidth: 991 },
-  { id: "767", maxWidth: 767 },
-  { id: "479", maxWidth: 479 },
+// breakpoints used to map tailwind classes to webstudio breakpoints
+// includes both min-width (desktop-first) and max-width (mobile-first) breakpoints
+const tailwindBreakpoints: Breakpoint[] = [
+  { id: "1536", label: "1536", minWidth: 1536 },
+  { id: "1280", label: "1280", minWidth: 1280 },
+  { id: "base", label: "" },
+  { id: "1023", label: "1023", maxWidth: 1023 },
+  { id: "767", label: "767", maxWidth: 767 },
+  { id: "639", label: "639", maxWidth: 639 },
 ];
-
-const tailwindToWebstudioMappings: Record<number, undefined | number> = {
-  639.9: 479,
-  640: 480,
-  767.9: 767,
-  1023.9: 991,
-  1024: 992,
-  1279.9: 1279,
-  1535.9: 1439,
-  1536: 1440,
-};
 
 type StyleDecl = Omit<ParsedStyleDecl, "selector">;
 
-type Breakpoint = {
+type StyleBreakpoint = {
   styleDecl: StyleDecl;
   minWidth?: number;
   maxWidth?: number;
@@ -51,7 +43,7 @@ type Range = {
   end: number;
 };
 
-const serializeBreakpoint = (breakpoint: Breakpoint) => {
+const serializeStyleBreakpoint = (breakpoint: StyleBreakpoint) => {
   if (breakpoint?.minWidth !== undefined) {
     return `(min-width: ${breakpoint.minWidth}px)`;
   }
@@ -62,7 +54,7 @@ const serializeBreakpoint = (breakpoint: Breakpoint) => {
 
 const UPPER_BOUND = Number.MAX_SAFE_INTEGER;
 
-const breakpointsToRanges = (breakpoints: Breakpoint[]) => {
+const breakpointsToRanges = (breakpoints: StyleBreakpoint[]) => {
   // collect lower bounds and ids
   const values = new Set<number>([0]);
   const styles = new Map<undefined | number, StyleDecl>();
@@ -111,11 +103,14 @@ const breakpointsToRanges = (breakpoints: Breakpoint[]) => {
   return ranges;
 };
 
-const rangesToBreakpoints = (ranges: Range[]) => {
-  const breakpoints: Breakpoint[] = [];
+const rangesToBreakpoints = (
+  ranges: Range[],
+  userBreakpoints: Breakpoint[]
+) => {
+  const breakpoints: StyleBreakpoint[] = [];
   for (const { styleDecl, start, end } of ranges) {
     let matchedBreakpoint;
-    for (const breakpoint of availableBreakpoints) {
+    for (const breakpoint of userBreakpoints) {
       if (breakpoint.minWidth === start) {
         matchedBreakpoint = { styleDecl, minWidth: start };
       }
@@ -130,26 +125,49 @@ const rangesToBreakpoints = (ranges: Range[]) => {
       }
     }
     if (matchedBreakpoint) {
-      styleDecl.breakpoint = serializeBreakpoint(matchedBreakpoint);
+      styleDecl.breakpoint = serializeStyleBreakpoint(matchedBreakpoint);
       breakpoints.push(matchedBreakpoint);
     }
   }
   return breakpoints;
 };
 
-const adaptBreakpoints = (parsedStyles: StyleDecl[]) => {
-  const breakpointGroups = new Map<string, Breakpoint[]>();
+const normalizeMediaQueryWidth = (value: number, direction: "min" | "max") => {
+  return direction === "min" ? Math.ceil(value) : Math.floor(value);
+};
+
+const adaptBreakpoints = (
+  parsedStyles: StyleDecl[],
+  userBreakpoints: Breakpoint[]
+) => {
+  const breakpointGroups = new Map<string, StyleBreakpoint[]>();
   for (const styleDecl of parsedStyles) {
     const mediaQuery = styleDecl.breakpoint
       ? parseMediaQuery(styleDecl.breakpoint)
       : undefined;
-    if (mediaQuery?.minWidth) {
-      mediaQuery.minWidth =
-        tailwindToWebstudioMappings[mediaQuery.minWidth] ?? mediaQuery.minWidth;
+    // Skip condition-only breakpoints (e.g. dark mode prefers-color-scheme)
+    // and combined min+max width breakpoints (e.g. md:max-xl:)
+    // @todo support composite breakpoints by splitting into range-based breakpoints
+    if (mediaQuery?.condition !== undefined) {
+      continue;
     }
-    if (mediaQuery?.maxWidth) {
-      mediaQuery.maxWidth =
-        tailwindToWebstudioMappings[mediaQuery.maxWidth] ?? mediaQuery.maxWidth;
+    if (
+      mediaQuery?.minWidth !== undefined &&
+      mediaQuery?.maxWidth !== undefined
+    ) {
+      continue;
+    }
+    if (mediaQuery?.minWidth !== undefined) {
+      mediaQuery.minWidth = normalizeMediaQueryWidth(
+        mediaQuery.minWidth,
+        "min"
+      );
+    }
+    if (mediaQuery?.maxWidth !== undefined) {
+      mediaQuery.maxWidth = normalizeMediaQueryWidth(
+        mediaQuery.maxWidth,
+        "max"
+      );
     }
     const groupKey = `${styleDecl.property}:${styleDecl.state ?? ""}`;
     let group = breakpointGroups.get(groupKey);
@@ -162,7 +180,7 @@ const adaptBreakpoints = (parsedStyles: StyleDecl[]) => {
   const newStyles: typeof parsedStyles = [];
   for (const group of breakpointGroups.values()) {
     const ranges = breakpointsToRanges(group);
-    const newGroup = rangesToBreakpoints(ranges);
+    const newGroup = rangesToBreakpoints(ranges, userBreakpoints);
     for (const { styleDecl } of newGroup) {
       newStyles.push(styleDecl);
     }
@@ -173,19 +191,326 @@ const adaptBreakpoints = (parsedStyles: StyleDecl[]) => {
 const createUnoGenerator = async () => {
   return await createGenerator({
     presets: [
-      presetWind3({
-        // css variables are defined on the same element as style
-        preflight: "on-demand",
+      presetWind4({
+        // css variables are defined on the same element as styleDecl
+        preflights: { theme: "on-demand", reset: false, property: false },
         // dark mode will be ignored by parser
         dark: "media",
       }),
-      // until we support oklch natively
-      presetLegacyCompat({ legacyColorSpace: true }),
     ],
   });
 };
 
-const parseTailwindClasses = async (classes: string) => {
+const percentToNumber = (value: string) => {
+  const trimmed = value.trim();
+  if (trimmed.endsWith("%") === false) {
+    return trimmed;
+  }
+  const parsed = Number.parseFloat(trimmed.slice(0, -1));
+  if (Number.isNaN(parsed)) {
+    return trimmed;
+  }
+  return (parsed / 100).toString();
+};
+
+const appendAlphaToOklch = (oklch: string, alpha: string) => {
+  const match = oklch.match(/^oklch\((.*)\)$/i);
+  if (match === null) {
+    return oklch;
+  }
+  return `oklch(${match[1]} / ${alpha})`;
+};
+
+const hexToRgb = (hex: string) => {
+  const normalized =
+    hex.length === 4
+      ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
+      : hex;
+  const r = Number.parseInt(normalized.slice(1, 3), 16);
+  const g = Number.parseInt(normalized.slice(3, 5), 16);
+  const b = Number.parseInt(normalized.slice(5, 7), 16);
+  return `${r} ${g} ${b}`;
+};
+
+const extractPropertyInitialValues = (css: string) => {
+  const values = new Map<string, string>();
+  for (const match of css.matchAll(/@property\s+(--[\w-]+)\s*\{([^{}]*)\}/g)) {
+    const initialValue = match[2].match(/initial-value\s*:\s*([^;]+)\s*;?/);
+    if (initialValue) {
+      values.set(match[1], initialValue[1].trim());
+    }
+  }
+  return values;
+};
+
+const findMatchingParen = (text: string, openIndex: number) => {
+  let depth = 0;
+  for (let index = openIndex; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === "(") {
+      depth += 1;
+    } else if (char === ")") {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+};
+
+const splitCssVarArguments = (args: string) => {
+  let depth = 0;
+  for (let index = 0; index < args.length; index += 1) {
+    const char = args[index];
+    if (char === "(") {
+      depth += 1;
+    } else if (char === ")") {
+      depth -= 1;
+    } else if (char === "," && depth === 0) {
+      return [args.slice(0, index).trim(), args.slice(index + 1).trim()];
+    }
+  }
+  return [args.trim()];
+};
+
+const resolveCssVars = (
+  value: string,
+  vars: Map<string, string>,
+  seen = new Set<string>()
+): string => {
+  let result = "";
+  let index = 0;
+  while (index < value.length) {
+    const varIndex = value.indexOf("var(", index);
+    if (varIndex === -1) {
+      result += value.slice(index);
+      break;
+    }
+    result += value.slice(index, varIndex);
+    const openIndex = varIndex + "var".length;
+    const closeIndex = findMatchingParen(value, openIndex);
+    if (closeIndex === undefined) {
+      result += value.slice(varIndex);
+      break;
+    }
+    const args = value.slice(openIndex + 1, closeIndex);
+    const [name, fallback] = splitCssVarArguments(args);
+    const replacement = vars.get(name);
+    if (replacement !== undefined && seen.has(name) === false) {
+      seen.add(name);
+      result += resolveCssVars(replacement, vars, seen);
+      seen.delete(name);
+    } else if (fallback !== undefined) {
+      result += resolveCssVars(fallback, vars, seen);
+    } else {
+      result += value.slice(varIndex, closeIndex + 1);
+    }
+    index = closeIndex + 1;
+  }
+  return result;
+};
+
+const normalizeUnoCssValues = (css: string, finalVars: Map<string, string>) => {
+  // Wind4 emits rem media queries (e.g. 40rem). Convert to px so existing
+  // breakpoint mapping code can keep working unchanged.
+  let normalized = css.replace(
+    /(min|max)-width:\s*(-?\d*\.?\d+)rem/g,
+    (_match, range, rem) => {
+      const px = Number.parseFloat(rem) * 16;
+      return `${range}-width: ${px}px`;
+    }
+  );
+
+  normalized = normalized.replace(
+    /(min|max)-width:\s*calc\((-?\d*\.?\d+)rem\s*-\s*0\.1px\)/g,
+    (_match, range, rem) => {
+      const px = Number.parseFloat(rem) * 16 - 0.1;
+      return `${range}-width: ${px}px`;
+    }
+  );
+
+  // Inline tracked theme and utility variables so parseCss can resolve computed
+  // values like calc(var(--spacing) * 2), gradients, and shadow fallbacks.
+  normalized = resolveCssVars(normalized, finalVars);
+
+  // Wind4 uses a leading utility var fallback for typography.
+  normalized = normalized.replace(
+    /var\(--tw-leading,\s*([^\)]+)\)/g,
+    (_match, fallback) => fallback.trim()
+  );
+
+  normalized = normalized.replaceAll("calc(infinity * 1px)", "9999px");
+
+  // Resolve wind4's color-mix based opacity pipeline into concrete colors that
+  // parseCss can read as typed color values.
+  normalized = normalized.replace(
+    /color-mix\(in\s+(?:srgb|oklab),\s*var\((--colors-[\w-]+)\)\s+([^,]+),\s*transparent\)/g,
+    (_match, colorVar: string, opacityExpr: string) => {
+      const color = finalVars.get(colorVar);
+      if (color === undefined) {
+        return _match;
+      }
+
+      const trimmedOpacityExpr = opacityExpr.trim();
+      let alpha = trimmedOpacityExpr;
+      const varMatch = trimmedOpacityExpr.match(/^var\((--[\w-]+)\)$/);
+      if (varMatch) {
+        alpha = finalVars.get(varMatch[1]) ?? "1";
+      }
+      alpha = percentToNumber(alpha);
+
+      if (alpha === "1") {
+        return color;
+      }
+      if (color.startsWith("oklch(")) {
+        return appendAlphaToOklch(color, alpha);
+      }
+      if (color.startsWith("#")) {
+        return `rgb(from ${color} r g b / ${alpha})`;
+      }
+      return _match;
+    }
+  );
+
+  // After variable inlining, remaining color-mix declarations may already have
+  // concrete colors as the first argument (e.g. #fff or oklch(...)).
+  normalized = normalized.replace(
+    /color-mix\(in\s+(?:srgb|oklab),\s*(oklch\([^\)]+\)|#[0-9a-fA-F]{3,8})\s+([^,]+),\s*transparent\)/g,
+    (_match, color: string, opacityExpr: string) => {
+      const alpha = percentToNumber(opacityExpr.trim());
+      if (alpha === "1") {
+        return color;
+      }
+      if (color.startsWith("oklch(")) {
+        return appendAlphaToOklch(color, alpha);
+      }
+      if (color.startsWith("#")) {
+        return `rgb(from ${color} r g b / ${alpha})`;
+      }
+      return _match;
+    }
+  );
+
+  normalized = normalized.replace(
+    /rgb\(from\s+(#[0-9a-fA-F]{3,8})\s+r\s+g\s+b\s*\/\s*([^\)]+)\)/g,
+    (_match, hex: string, alpha: string) => {
+      const rgb = hexToRgb(hex);
+      return `rgb(${rgb} / ${alpha.trim()})`;
+    }
+  );
+
+  // Tailwind v4 emits gradients like `linear-gradient(to bottom right in oklab, ...)`.
+  // Keep imported gradients broadly renderable and parseable by dropping the
+  // interpolation color space from the direction argument.
+  normalized = normalized.replace(
+    /linear-gradient\((to\s+(?:top|bottom|left|right)(?:\s+(?:top|bottom|left|right))?|[-+]?\d*\.?\d+(?:deg|rad|grad|turn))\s+in\s+(?:srgb|srgb-linear|display-p3|a98-rgb|prophoto-rgb|rec2020|lab|oklab|lch|oklch|xyz(?:-d50|-d65)?),/gi,
+    "linear-gradient($1,"
+  );
+
+  return normalized;
+};
+
+const normalizeUnoCssForWebstudio = (generatedCss: string) => {
+  // UnoCSS uses the --un-* namespace. Keep generated CSS in Tailwind's
+  // namespace so custom properties match familiar Tailwind output and existing
+  // Webstudio styles.
+  const css = generatedCss.replaceAll("--un-", "--tw-");
+
+  // Normalize CSS custom property values: when the same var is declared in
+  // multiple utility-class rules, replace every occurrence with the value from
+  // the LAST declaration (the final cascaded value). This allows per-rule
+  // two-pass pre-collection to see the correct final value regardless of which
+  // rule a shorthand (e.g. border-color) lives in.
+  const finalVars = new Map([
+    ...extractPropertyInitialValues(css),
+    ...extractCssCustomProperties(css),
+  ]);
+
+  let normalizedCss = normalizeUnoCssValues(css, finalVars);
+  if (finalVars.size > 0) {
+    normalizedCss = normalizedCss.replace(/--[\w-]+\s*:[^;{}\n]*/g, (match) => {
+      const colonIdx = match.indexOf(":");
+      const propName = match.slice(0, colonIdx).trim();
+      const finalValue = finalVars.get(propName);
+      return finalValue !== undefined
+        ? `${propName}: ${resolveCssVars(finalValue, finalVars)}`
+        : match;
+    });
+  }
+
+  return { css: normalizedCss, vars: finalVars };
+};
+
+export const __testing__ = {
+  normalizeUnoCssForWebstudio,
+};
+
+const isTailwindDefaultBorderColorStyle = (styleDecl: StyleDecl): boolean => {
+  if (
+    styleDecl.property.startsWith("border-") === false ||
+    styleDecl.property.endsWith("-color") === false
+  ) {
+    return false;
+  }
+
+  const value = styleDecl.value as {
+    type?: string;
+    alpha?: number;
+    components?: number[];
+  };
+  if (
+    value?.type !== "color" ||
+    value.alpha !== 1 ||
+    Array.isArray(value.components) === false ||
+    value.components.length < 3
+  ) {
+    return false;
+  }
+
+  const [r, g, b] = value.components;
+  return (
+    Math.abs(r - 229 / 255) < 0.001 &&
+    Math.abs(g - 231 / 255) < 0.001 &&
+    Math.abs(b - 235 / 255) < 0.001
+  );
+};
+
+const stylePropertyGroups: Record<string, Set<StyleProperty>> = {
+  margin: new Set([
+    "marginTop",
+    "marginRight",
+    "marginBottom",
+    "marginLeft",
+    "marginBlockStart",
+    "marginBlockEnd",
+    "marginInlineStart",
+    "marginInlineEnd",
+  ]),
+  padding: new Set([
+    "paddingTop",
+    "paddingRight",
+    "paddingBottom",
+    "paddingLeft",
+    "paddingBlockStart",
+    "paddingBlockEnd",
+    "paddingInlineStart",
+    "paddingInlineEnd",
+  ]),
+};
+
+const getStylePropertyGroup = (property: StyleProperty) => {
+  for (const [groupName, properties] of Object.entries(stylePropertyGroups)) {
+    if (properties.has(property)) {
+      return groupName;
+    }
+  }
+};
+
+const parseTailwindClasses = async (
+  classes: string,
+  userBreakpoints: Breakpoint[],
+  fragmentBreakpoints: Breakpoint[]
+) => {
   // avoid caching uno generator instance
   // to prevent bloating css with preflights from previous calls
   const generator = await createUnoGenerator();
@@ -196,6 +521,22 @@ const parseTailwindClasses = async (classes: string) => {
   classes = classes
     .split(" ")
     .map((item) => {
+      // Tailwind v4 css variable shorthand: border-(--x)
+      // UnoCSS doesn't parse this alias directly, so normalize it to
+      // an explicit arbitrary property utility it understands.
+      // TODO: remove workaround once fixed https://github.com/unocss/unocss/issues/5188
+      if (/^border-\(--[\w-]+\)$/.test(item)) {
+        const varName = item.slice("border-(".length, -1);
+        return `[border-color:var(${varName})]`;
+      }
+      // Tailwind v4 typed arbitrary border color: border-[color:value]
+      // UnoCSS wind4 incorrectly maps this to border-width. Rewrite to the
+      // explicit arbitrary property form so it resolves to border-color.
+      // TODO: remove workaround once fixed https://github.com/unocss/unocss/issues/5188
+      const borderColorMatch = item.match(/^border-\[color:(.+)\]$/);
+      if (borderColorMatch) {
+        return `[border-color:${borderColorMatch[1]}]`;
+      }
       // styles data cannot express space-x and space-y selectors
       // with lobotomized owl so replace with gaps
       if (item.includes("space-x-")) {
@@ -212,11 +553,12 @@ const parseTailwindClasses = async (classes: string) => {
     })
     .join(" ");
   const generated = await generator.generate(classes);
-  // use tailwind prefix instead of unocss one
-  const css = generated.css.replaceAll("--un-", "--tw-");
+  const { css: normalizedCss, vars: finalVars } = normalizeUnoCssForWebstudio(
+    generated.css
+  );
   let parsedStyles: StyleDecl[] = [];
   // @todo probably builtin in v4
-  if (css.includes("border")) {
+  if (normalizedCss.includes("border")) {
     // Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
     // [UnoCSS]: allow to override the default border color with css var `--un-default-border-color`
     const reset = `.styles {
@@ -224,15 +566,84 @@ const parseTailwindClasses = async (classes: string) => {
       border-color: var(--tw-default-border-color, #e5e7eb);
       border-width: 0;
     }`;
-    parsedStyles.push(...parseCss(reset));
+    parsedStyles.push(...parseCss(reset, new Map()).styles);
   }
-  parsedStyles.push(...parseCss(css));
+  parsedStyles.push(...parseCss(normalizedCss, finalVars).styles);
+  parsedStyles = parsedStyles.map((styleDecl) => {
+    const value = styleDecl.value as {
+      type?: string;
+      unit?: string;
+      value?: number | string;
+      fallback?: { type?: string; value?: string };
+    };
+
+    const isOpacityProperty =
+      styleDecl.property === "opacity" ||
+      styleDecl.property.endsWith("opacity");
+    if (
+      isOpacityProperty &&
+      value.type === "unit" &&
+      value.unit === "%" &&
+      typeof value.value === "number"
+    ) {
+      return {
+        ...styleDecl,
+        value: {
+          type: "unit" as const,
+          unit: "number" as const,
+          value: value.value / 100,
+        },
+      };
+    }
+
+    if (value.type === "unparsed" && typeof value.value === "string") {
+      const calcMatch = value.value.match(
+        /^calc\((-?\d*\.?\d+)rem\*(-?\d*\.?\d+)\)$/
+      );
+      if (calcMatch) {
+        return {
+          ...styleDecl,
+          value: {
+            type: "unit",
+            unit: "rem",
+            value:
+              Number.parseFloat(calcMatch[1]) * Number.parseFloat(calcMatch[2]),
+          },
+        };
+      }
+    }
+
+    if (
+      value.type === "var" &&
+      value.value === "tw-leading" &&
+      value.fallback?.type === "unparsed" &&
+      typeof value.fallback.value === "string"
+    ) {
+      const fallbackMatch = value.fallback.value.match(/^(-?\d*\.?\d+)rem$/);
+      if (fallbackMatch) {
+        return {
+          ...styleDecl,
+          value: {
+            type: "unit",
+            unit: "rem",
+            value: Number.parseFloat(fallbackMatch[1]),
+          },
+        };
+      }
+    }
+
+    return styleDecl;
+  });
   // skip preflights with ::before, ::after and ::backdrop
   parsedStyles = parsedStyles.filter(
-    (styleDecl) => !styleDecl.state?.startsWith("::")
+    (styleDecl) =>
+      !styleDecl.state?.startsWith("::") &&
+      // Wind4 emits design-token variables in the theme layer. We inline them
+      // into declarations above, so they don't need to be persisted as styles.
+      (styleDecl.property.startsWith("--") === false ||
+        styleDecl.property.startsWith("--tw-"))
   );
-  // setup base breakpoint for container class
-  // to avoid hole in ranges
+  // setup base breakpoint for container class to avoid hole in ranges
   if (hasContainer) {
     parsedStyles.unshift({
       property: "max-width",
@@ -256,19 +667,27 @@ const parseTailwindClasses = async (classes: string) => {
       {
         property: "flex-direction",
         value: { type: "keyword", value: "column" },
-      },
-      {
-        property: "align-items",
-        value: { type: "keyword", value: "start" },
       }
     );
   }
-  parsedStyles = adaptBreakpoints(parsedStyles);
+  parsedStyles = adaptBreakpoints(parsedStyles, userBreakpoints);
+  // container class generates max-width styles for all Tailwind breakpoints
+  // filter out min-width ones only if user doesn't have min-width breakpoints
+  const hasUserMinWidthBreakpoints = fragmentBreakpoints.some(
+    (bp) => bp.minWidth !== undefined
+  );
+  if (hasContainer && !hasUserMinWidthBreakpoints) {
+    parsedStyles = parsedStyles.filter(
+      (styleDecl) =>
+        styleDecl.property !== "max-width" ||
+        !styleDecl.breakpoint?.includes("min-width")
+    );
+  }
   const newClasses = classes
     .split(" ")
     .filter((item) => !generated.matched.has(item))
     .join(" ");
-  return { newClasses: newClasses, parsedStyles };
+  return { newClasses, parsedStyles };
 };
 
 const getUniqueIdForList = <List extends Array<{ id: string }>>(list: List) => {
@@ -328,6 +747,7 @@ export const generateFragmentFromTailwind = async (
   const styles = new Map(
     fragment.styles.map((item) => [getStyleDeclKey(item), item])
   );
+  const preflightStyleDeclKeys = new Set<string>();
   const getLocalStyleSource = (instanceId: Instance["id"]) => {
     const styleSourceSelection = styleSourceSelections.get(instanceId);
     const lastStyleSourceId = styleSourceSelection?.values.at(-1);
@@ -343,7 +763,7 @@ export const generateFragmentFromTailwind = async (
       styleSourceSelections.get(instanceId)
     );
     if (styleSourceSelection === undefined) {
-      styleSourceSelection = { instanceId: instanceId, values: [] };
+      styleSourceSelection = { instanceId, values: [] };
       styleSourceSelections.set(instanceId, styleSourceSelection);
     }
     styleSources.set(localStyleSource.id, localStyleSource);
@@ -352,10 +772,12 @@ export const generateFragmentFromTailwind = async (
   };
   const createOrMergeLocalStyles = (
     instanceId: Instance["id"],
-    newStyles: StyleDecl[]
+    newStyles: StyleDecl[],
+    { skipExisting = false }: { skipExisting?: boolean } = {}
   ) => {
     const localStyleSource =
       getLocalStyleSource(instanceId) ?? createLocalStyleSource(instanceId);
+    const clearedPropertyGroups = new Set<string>();
     for (const parsedStyleDecl of newStyles) {
       const breakpointId = getBreakpointId(parsedStyleDecl.breakpoint);
       // ignore unknown breakpoints
@@ -369,16 +791,56 @@ export const generateFragmentFromTailwind = async (
         property: camelCaseProperty(parsedStyleDecl.property),
         value: parsedStyleDecl.value,
       };
-      const styleDeckKey = getStyleDeclKey(styleDecl);
-      styles.delete(styleDeckKey);
-      styles.set(styleDeckKey, styleDecl);
+      const styleDeclKey = getStyleDeclKey(styleDecl);
+      // preflight is a browser reset baseline and must not overwrite
+      // explicit styles already set from inline style attributes
+      if (skipExisting && styles.has(styleDeclKey)) {
+        continue;
+      }
+      if (skipExisting === false) {
+        const propertyGroup = getStylePropertyGroup(styleDecl.property);
+        const groupProperties =
+          propertyGroup === undefined
+            ? undefined
+            : stylePropertyGroups[propertyGroup];
+        const groupKey =
+          propertyGroup === undefined
+            ? undefined
+            : `${styleDecl.styleSourceId}:${styleDecl.breakpointId}:${
+                styleDecl.state ?? ""
+              }:${propertyGroup}`;
+        if (
+          groupProperties !== undefined &&
+          groupKey !== undefined &&
+          clearedPropertyGroups.has(groupKey) === false
+        ) {
+          clearedPropertyGroups.add(groupKey);
+          for (const property of groupProperties) {
+            const groupStyleDeclKey = getStyleDeclKey({
+              ...styleDecl,
+              property,
+            });
+            if (preflightStyleDeclKeys.has(groupStyleDeclKey)) {
+              styles.delete(groupStyleDeclKey);
+              preflightStyleDeclKeys.delete(groupStyleDeclKey);
+            }
+          }
+        }
+      }
+      styles.delete(styleDeclKey);
+      styles.set(styleDeclKey, styleDecl);
+      if (skipExisting) {
+        preflightStyleDeclKeys.add(styleDeclKey);
+      }
     }
   };
 
   for (const instance of fragment.instances) {
     const tag = instance.tag;
     if (tag && preflight[tag]) {
-      createOrMergeLocalStyles(instance.id, preflight[tag]);
+      createOrMergeLocalStyles(instance.id, preflight[tag], {
+        skipExisting: true,
+      });
     }
   }
 
@@ -386,11 +848,40 @@ export const generateFragmentFromTailwind = async (
   await Promise.all(
     fragment.props.map(async (prop) => {
       if (prop.name === "class" && prop.type === "string") {
+        // always use tailwindBreakpoints for parsing to support all Tailwind classes
+        // new breakpoints will be created as needed via getBreakpointId
         const { newClasses, parsedStyles } = await parseTailwindClasses(
-          prop.value
+          prop.value,
+          tailwindBreakpoints,
+          fragment.breakpoints
         );
         if (parsedStyles.length > 0) {
-          createOrMergeLocalStyles(prop.instanceId, parsedStyles);
+          const localStyleSource = getLocalStyleSource(prop.instanceId);
+          const filteredStyles = parsedStyles.filter((parsedStyleDecl) => {
+            if (
+              localStyleSource === undefined ||
+              isTailwindDefaultBorderColorStyle(parsedStyleDecl) === false
+            ) {
+              return true;
+            }
+
+            const breakpointId = getBreakpointId(parsedStyleDecl.breakpoint);
+            if (breakpointId === undefined) {
+              return true;
+            }
+
+            const existingStyleKey = getStyleDeclKey({
+              breakpointId,
+              styleSourceId: localStyleSource.id,
+              state: parsedStyleDecl.state,
+              property: camelCaseProperty(parsedStyleDecl.property),
+            });
+
+            // Keep authored inline border colors if present.
+            return styles.has(existingStyleKey) === false;
+          });
+
+          createOrMergeLocalStyles(prop.instanceId, filteredStyles);
           if (newClasses.length > 0) {
             props.push({ ...prop, value: newClasses });
           }

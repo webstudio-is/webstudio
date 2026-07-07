@@ -196,7 +196,7 @@ test("preserve spaces between strong and em", () => {
     renderTemplate(
       <>
         <ws.element ws:tag="p">
-          <ws.element ws:tag="strong">One</ws.element>{" "}
+          <ws.element ws:tag="strong">{"One "}</ws.element>
           <ws.element ws:tag="em">two</ws.element>
           {" text"}
         </ws.element>

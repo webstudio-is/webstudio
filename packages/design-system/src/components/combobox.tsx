@@ -26,6 +26,7 @@ import {
 } from "downshift";
 import { matchSorter } from "match-sorter";
 import { styled, theme } from "../stitches.config";
+import { focusFirstCollectionItem } from "../utilities";
 import {
   menuItemCss,
   menuCss,
@@ -330,7 +331,19 @@ export const useCombobox = <Item,>({
       }
     },
 
-    stateReducer,
+    stateReducer: (state, actionAndChanges) => {
+      // Apply user's state reducer first
+      const userChanges = stateReducer(state, actionAndChanges);
+      // When menu opens, set highlighted index to defaultHighlightedIndex
+      if (
+        userChanges.isOpen === true &&
+        state.isOpen === false &&
+        defaultHighlightedIndex >= 0
+      ) {
+        return { ...userChanges, highlightedIndex: defaultHighlightedIndex };
+      }
+      return userChanges;
+    },
     itemToString,
     inputValue: value ? itemToString(value) : "",
     onInputValueChange(state) {
@@ -451,6 +464,7 @@ type ComboboxProps<Item> = UseComboboxProps<Item> &
     | "suffix"
     | "onBlur"
     | "onInvalid"
+    | "disabled"
   >;
 
 export const Combobox = <Item,>({
@@ -464,6 +478,7 @@ export const Combobox = <Item,>({
   suffix,
   onBlur,
   onInvalid,
+  disabled,
   ...props
 }: ComboboxProps<Item>) => {
   const combobox = useCombobox<Item>(props);
@@ -487,6 +502,7 @@ export const Combobox = <Item,>({
             placeholder={placeholder}
             name={name}
             color={color}
+            disabled={disabled}
             suffix={
               suffix ??
               (props.getItems().length > 0 && (
@@ -499,7 +515,17 @@ export const Combobox = <Item,>({
             onInvalid={onInvalid}
           />
         </ComboboxAnchor>
-        <ComboboxContent>
+        <ComboboxContent
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            if ((props.defaultHighlightedIndex ?? 0) < 0) {
+              return;
+            }
+            if (event.currentTarget instanceof HTMLElement) {
+              focusFirstCollectionItem(event.currentTarget);
+            }
+          }}
+        >
           <ComboboxListbox {...combobox.getMenuProps()}>
             <ComboboxScrollArea>
               {combobox.isOpen &&
@@ -515,9 +541,9 @@ export const Combobox = <Item,>({
                   );
                 })}
             </ComboboxScrollArea>
-            {description && (
+            {descriptions.some(Boolean) && (
               <ComboboxItemDescription descriptions={descriptions}>
-                {description}
+                {description ?? " "}
               </ComboboxItemDescription>
             )}
           </ComboboxListbox>

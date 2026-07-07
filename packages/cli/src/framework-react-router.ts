@@ -18,19 +18,18 @@ export const createFramework = async (): Promise<Framework> => {
     join(routeTemplatesDir, "xml.tsx"),
     "utf8"
   );
+  const textTemplate = await readFile(
+    join(routeTemplatesDir, "text.tsx"),
+    "utf8"
+  );
   const defaultSitemapTemplate = await readFile(
     join(routeTemplatesDir, "default-sitemap.tsx"),
     "utf8"
   );
-  const redirectTemplate = await readFile(
-    join(routeTemplatesDir, "redirect.tsx"),
-    "utf8"
-  );
-
   // cleanup route templates after reading to not bloat generated code
   await rm(routeTemplatesDir, { recursive: true, force: true });
 
-  const base = "@webstudio-is/sdk-components-react";
+  const base = "@webstudio-is/sdk-components-react/components";
   const reactRouter = "@webstudio-is/sdk-components-react-router";
   const reactRadix = "@webstudio-is/sdk-components-react-radix";
   const animation = "@webstudio-is/sdk-components-animation";
@@ -75,10 +74,10 @@ export const createFramework = async (): Promise<Framework> => {
         template: xmlTemplate,
       },
     ],
-    redirect: ({ pagePath }: { pagePath: string }) => [
+    text: ({ pagePath }: { pagePath: string }) => [
       {
-        file: join("app", "routes", `${generateRemixRoute(pagePath)}.ts`),
-        template: redirectTemplate,
+        file: join("app", "routes", `${generateRemixRoute(pagePath)}.tsx`),
+        template: textTemplate,
       },
     ],
     defaultSitemap: () => [

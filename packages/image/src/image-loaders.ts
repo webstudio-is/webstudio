@@ -14,6 +14,16 @@ const encodePathFragment = (fragment: string) => {
   return encodeURIComponent(fragment).replace(/%2F/g, "/");
 };
 
+const getImageSource = (src: string) => {
+  if (src.startsWith("/cgi/asset")) {
+    return decodeURIComponent(src.slice("/cgi/asset".length).split("?")[0]);
+  }
+  if (src.startsWith("/cgi/image")) {
+    return decodeURIComponent(src.slice("/cgi/image".length).split("?")[0]);
+  }
+  return src;
+};
+
 /**
  * Default image loader in case of no loader provided
  * https://developers.cloudflare.com/images/image-resizing/url-format/
@@ -29,11 +39,8 @@ export const wsImageLoader: ImageLoader = (props) => {
     );
   }
 
-  // support both "/cgi/asset/name" and "name" as inputs
-  let src = props.src;
-  if (src.startsWith("/cgi/asset")) {
-    src = src.slice("/cgi/asset".length);
-  }
+  // support proxied asset/image urls and plain asset names as inputs
+  const src = getImageSource(props.src);
 
   const resultUrl = new URL("/cgi/image/", NON_EXISTING_DOMAIN);
 

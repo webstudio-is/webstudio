@@ -16,24 +16,22 @@ import {
   SYSTEM_VARIABLE_ID,
   findTreeInstanceIds,
 } from "@webstudio-is/sdk";
-import { normalizeProps, textContentAttribute } from "@webstudio-is/react-sdk";
-import { mapGroupBy } from "~/shared/shim";
-import { $instances } from "./instances";
 import {
-  $dataSources,
-  $props,
-  $assets,
-  $resources,
-  $uploadingFilesDataStore,
-  $memoryProps,
-  $isPreviewMode,
-} from "./misc";
-import { $pages } from "./pages";
-import type { InstanceSelector } from "../tree-utils";
+  normalizeProps,
+  textContentAttribute,
+  getCollectionEntries,
+} from "@webstudio-is/react-sdk";
+import { mapGroupBy } from "~/shared/shim";
+import { $instances } from "../sync/data-stores";
+import { $dataSources, $props, $assets, $resources } from "../sync/data-stores";
+import { $uploadingFilesDataStore, $memoryProps, $isPreviewMode } from "./misc";
+import { $pages } from "../sync/data-stores";
+import type { InstanceSelector } from "../instance-utils/tree";
 import { $dataSourceVariables } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
-import { $selectedPage, getInstanceKey } from "../awareness";
-import { computeExpression } from "../data-variables";
+import { $selectedPage } from "./pages";
+import { getInstanceKey } from "./instances";
+import { computeExpression } from "@webstudio-is/project-build/runtime/data";
 import { $currentSystem } from "../system";
 import {
   $resourcesCache,
@@ -46,7 +44,7 @@ export const assetBaseUrl = "/cgi/asset/";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],
-  index: number
+  index: number | string
 ) => `${instanceId}[${index}]`;
 
 /**
@@ -315,18 +313,24 @@ export const $propValuesByInstanceSelector = computed(
       );
 
       if (instance.component === collectionComponent) {
-        const data = propValues.get("data");
+        const originalData = propValues.get("data");
         const itemVariableId = parameters.get("item");
-        if (Array.isArray(data) && itemVariableId !== undefined) {
-          data.forEach((item, index) => {
-            variableValues.set(itemVariableId, item);
+        const itemKeyVariableId = parameters.get("itemKey");
+        if (originalData) {
+          for (const [key, value] of getCollectionEntries(originalData)) {
+            if (itemVariableId !== undefined) {
+              variableValues.set(itemVariableId, value);
+            }
+            if (itemKeyVariableId !== undefined) {
+              variableValues.set(itemKeyVariableId, key);
+            }
             for (const child of instance.children) {
               if (child.type === "id") {
-                const indexId = getIndexedInstanceId(instanceId, index);
+                const indexId = getIndexedInstanceId(instanceId, key);
                 traverseInstances([child.value, indexId, ...instanceSelector]);
               }
             }
-          });
+          }
         }
         return;
       }
@@ -515,27 +519,35 @@ export const $variableValuesByInstanceSelector = computed(
       }
 
       if (instance.component === collectionComponent) {
-        const data = propValues.get("data");
+        const originalData = propValues.get("data");
         const itemVariableId = parameters.get("item");
-        if (itemVariableId === undefined) {
-          return;
-        }
+        const itemKeyVariableId = parameters.get("itemKey");
         // prevent accessing item from collection
-        variableValues.delete(itemVariableId);
-        if (Array.isArray(data)) {
-          data.forEach((item, index) => {
+        if (itemVariableId !== undefined) {
+          variableValues.delete(itemVariableId);
+        }
+        if (itemKeyVariableId !== undefined) {
+          variableValues.delete(itemKeyVariableId);
+        }
+        if (originalData) {
+          for (const [key, value] of getCollectionEntries(originalData)) {
             const itemVariableValues = new Map(variableValues);
-            itemVariableValues.set(itemVariableId, item);
+            if (itemVariableId !== undefined) {
+              itemVariableValues.set(itemVariableId, value);
+            }
+            if (itemKeyVariableId !== undefined) {
+              itemVariableValues.set(itemKeyVariableId, key);
+            }
             for (const child of instance.children) {
               if (child.type === "id") {
-                const indexId = getIndexedInstanceId(instanceId, index);
+                const indexId = getIndexedInstanceId(instanceId, key);
                 traverseInstances(
                   [child.value, indexId, ...instanceSelector],
                   itemVariableValues
                 );
               }
             }
-          });
+          }
         }
         return;
       }

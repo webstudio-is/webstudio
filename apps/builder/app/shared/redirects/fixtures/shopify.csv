@@ -1,0 +1,13 @@
+Redirect from,Redirect to
+# Shopify URL Redirect Export Format
+# Columns: "Redirect from", "Redirect to"
+# Note: Shopify does not export status codes (all are 301)
+# Docs: https://help.shopify.com/en/manual/online-store/menus-and-links/url-redirect
+
+/products/old-product,/products/new-product
+/collections/summer-2024,/collections/summer-2025
+/pages/about-old,/pages/about
+/blogs/news/old-post,/blogs/news/new-post
+/products/discontinued-item,/collections/clearance
+/products/variant-123,/products/new-variant
+/collections/sale-2023,/collections/archive

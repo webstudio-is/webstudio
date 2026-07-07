@@ -1542,4 +1542,29 @@ test("does not fail on empty value", () => {
   expect(() => expandShorthands([["background", ""]])).not.toThrow();
   expect(() => expandShorthands([["overscroll-behavior", ""]])).not.toThrow();
   expect(() => expandShorthands([["position-try", ""]])).not.toThrow();
+  expect(() => expandShorthands([["marker", ""]])).not.toThrow();
+});
+
+test("expand marker", () => {
+  expect(expandShorthands([["marker", "none"]])).toEqual([
+    ["marker-start", "none"],
+    ["marker-mid", "none"],
+    ["marker-end", "none"],
+  ]);
+  expect(expandShorthands([["marker", "url(#arrow)"]])).toEqual([
+    ["marker-start", "url(#arrow)"],
+    ["marker-mid", "url(#arrow)"],
+    ["marker-end", "url(#arrow)"],
+  ]);
+});
+
+test("expand -webkit-text-stroke", () => {
+  expect(expandShorthands([["-webkit-text-stroke", "1px red"]])).toEqual([
+    ["-webkit-text-stroke-width", "1px"],
+    ["-webkit-text-stroke-color", "red"],
+  ]);
+  expect(expandShorthands([["-webkit-text-stroke", "red"]])).toEqual([
+    ["-webkit-text-stroke-width", "0"],
+    ["-webkit-text-stroke-color", "red"],
+  ]);
 });

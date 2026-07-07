@@ -2,7 +2,11 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
+import {
+  renderText,
+  useResource,
+  useVariableState,
+} from "@webstudio-is/react-sdk/runtime";
 import {
   Body as Body,
   Link as Link,
@@ -11,9 +15,11 @@ import {
   Heading as Heading,
   Text as Text,
   Image as Image,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/components";
 
 export const projectId = "d845c167-ea07-4875-b08d-83e97c09dcce";
+
+export const projectDomain = "cli-basic-test-d0osr";
 
 export const lastPublished = "2024-07-29T12:50:07.515Z";
 

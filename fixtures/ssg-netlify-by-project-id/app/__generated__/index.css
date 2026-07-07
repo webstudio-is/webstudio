@@ -2,11 +2,19 @@
   :root {
     display: grid;
     min-height: 100%;
+    grid-template-rows: auto;
+    grid-template-columns: 1fr;
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
     white-space: pre-wrap;
     white-space-collapse: preserve;
+  }
+  body.w-element {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
   }
   body.w-body {
     box-sizing: border-box;

@@ -1,6 +1,8 @@
 import { elementsByTag } from "@webstudio-is/html-data";
 import {
   elementComponent,
+  getHtmlTagFromInstance,
+  getHtmlTagsFromProps,
   parseComponentName,
   type ContentModel,
   type Instance,
@@ -8,43 +10,29 @@ import {
   type Props,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
-import type { InstanceSelector } from "./tree-utils";
+import type { InstanceSelector } from "./instance-utils/tree";
 import { setIsSubsetOf } from "./shim";
 
 type Metas = Map<Instance["component"], WsComponentMeta>;
-
-const tagByInstanceIdCache = new WeakMap<Props, Map<Instance["id"], string>>();
-
-const getTagByInstanceId = (props: Props) => {
-  let tagByInstanceId = tagByInstanceIdCache.get(props);
-  if (tagByInstanceId === undefined) {
-    tagByInstanceId = new Map<Instance["id"], string>();
-    for (const prop of props.values()) {
-      if (prop.type === "string" && prop.name === "tag") {
-        tagByInstanceId.set(prop.instanceId, prop.value);
-      }
-    }
-    tagByInstanceIdCache.set(props, tagByInstanceId);
-  }
-  return tagByInstanceId;
-};
+type HtmlTagsByInstanceId = Map<Instance["id"], string>;
 
 const getTag = ({
   instance,
   metas,
   props,
+  htmlTagsByInstanceId,
 }: {
   instance: Instance;
   metas: Metas;
   props: Props;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
 }) => {
-  // ignore tag property on xml nodes
-  if (instance.component === "XmlNode") {
-    return;
-  }
-  const meta = metas.get(instance.component);
-  const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
-  return instance.tag ?? getTagByInstanceId(props).get(instance.id) ?? metaTag;
+  return getHtmlTagFromInstance({
+    instance,
+    metas,
+    props,
+    htmlTagsByInstanceId: htmlTagsByInstanceId ?? getHtmlTagsFromProps(props),
+  });
 };
 
 const isIntersected = (arrayA: string[], arrayB: string[]) => {
@@ -160,11 +148,13 @@ const computeAllowedCategories = ({
   props,
   metas,
   instanceSelector,
+  htmlTagsByInstanceId,
 }: {
   instances: Instances;
   props: Props;
   metas: Metas;
   instanceSelector: InstanceSelector;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
 }) => {
   let instance: undefined | Instance;
   let allowedCategories: undefined | string[];
@@ -175,7 +165,7 @@ const computeAllowedCategories = ({
     if (instance === undefined) {
       continue;
     }
-    const tag = getTag({ instance, metas, props });
+    const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
     allowedCategories = getElementChildren(tag, allowedCategories);
   }
   return allowedCategories;
@@ -300,6 +290,7 @@ export const isTreeSatisfyingContentModel = ({
   props,
   metas,
   instanceSelector,
+  htmlTagsByInstanceId = getHtmlTagsFromProps(props),
   onError,
   _allowedCategories: allowedCategories,
   _allowedAncestorCategories: allowedAncestorCategories,
@@ -309,6 +300,7 @@ export const isTreeSatisfyingContentModel = ({
   props: Props;
   metas: Metas;
   instanceSelector: InstanceSelector;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
   onError?: (message: string) => void;
   _allowedCategories?: string[];
   _allowedAncestorCategories?: string[];
@@ -320,6 +312,7 @@ export const isTreeSatisfyingContentModel = ({
     instances,
     props,
     metas,
+    htmlTagsByInstanceId,
   });
   allowedParentCategories ??= getAllowedParentCategories({
     instanceSelector,
@@ -337,7 +330,7 @@ export const isTreeSatisfyingContentModel = ({
   if (instance === undefined) {
     return true;
   }
-  const tag = getTag({ instance, metas, props });
+  const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
   const isTagSatisfying = isTagSatisfyingContentModel({
     tag,
     allowedCategories,
@@ -346,7 +339,12 @@ export const isTreeSatisfyingContentModel = ({
     const parentInstance = instances.get(parentInstanceId);
     let parentTag: undefined | string;
     if (parentInstance) {
-      parentTag = getTag({ instance: parentInstance, metas, props });
+      parentTag = getTag({
+        instance: parentInstance,
+        metas,
+        props,
+        htmlTagsByInstanceId,
+      });
     }
     if (parentTag) {
       onError?.(
@@ -395,6 +393,7 @@ export const isTreeSatisfyingContentModel = ({
         instances,
         props,
         metas,
+        htmlTagsByInstanceId,
         instanceSelector: [child.value, ...instanceSelector],
         onError,
         _allowedCategories: allowedCategories,
@@ -450,12 +449,14 @@ const findContentTags = ({
   props,
   metas,
   instance,
+  htmlTagsByInstanceId,
   _tags: tags = new Set(),
 }: {
   instances: Instances;
   props: Props;
   metas: Metas;
   instance: Instance;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
   _tags?: Set<undefined | string>;
 }) => {
   for (const child of instance.children) {
@@ -466,13 +467,19 @@ const findContentTags = ({
         tags.add(undefined);
         continue;
       }
-      const tag = getTag({ instance: childInstance, metas, props });
+      const tag = getTag({
+        instance: childInstance,
+        metas,
+        props,
+        htmlTagsByInstanceId,
+      });
       tags.add(tag);
       findContentTags({
         instances,
         props,
         metas,
         instance: childInstance,
+        htmlTagsByInstanceId,
         _tags: tags,
       });
     }
@@ -513,18 +520,20 @@ export const isRichTextTree = ({
   instances,
   props,
   metas,
+  htmlTagsByInstanceId = getHtmlTagsFromProps(props),
 }: {
   instanceId: Instance["id"];
   instances: Instances;
   props: Props;
   metas: Metas;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
 }): boolean => {
   const instance = instances.get(instanceId);
   // collection item is not rich text
   if (instance === undefined) {
     return false;
   }
-  const tag = getTag({ instance, metas, props });
+  const tag = getTag({ instance, metas, props, htmlTagsByInstanceId });
   const elementContentModel = tag ? elementsByTag[tag] : undefined;
   const componentContentModel = getComponentContentModel(
     metas.get(instance.component)
@@ -547,6 +556,7 @@ export const isRichTextTree = ({
     props,
     metas,
     instance,
+    htmlTagsByInstanceId,
   });
   const contentComponents = findContentComponents({
     instances,
@@ -568,16 +578,26 @@ export const findClosestRichText = ({
   props,
   metas,
   instanceSelector,
+  htmlTagsByInstanceId = getHtmlTagsFromProps(props),
 }: {
   instances: Instances;
   props: Props;
   metas: Metas;
   instanceSelector: InstanceSelector;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
 }): undefined | InstanceSelector => {
   let foundRichText: undefined | InstanceSelector = undefined;
   for (let index = 0; index < instanceSelector.length; index += 1) {
     const instanceId = instanceSelector[index];
-    if (!isRichTextTree({ instanceId, instances, props, metas })) {
+    if (
+      !isRichTextTree({
+        instanceId,
+        instances,
+        props,
+        metas,
+        htmlTagsByInstanceId,
+      })
+    ) {
       break;
     }
     foundRichText = instanceSelector.slice(index);
@@ -590,17 +610,20 @@ export const isRichTextContent = ({
   props,
   metas,
   instanceSelector,
+  htmlTagsByInstanceId,
 }: {
   instances: Instances;
   props: Props;
   metas: Metas;
   instanceSelector: InstanceSelector;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
 }) => {
   const richTextSelector = findClosestRichText({
     instanceSelector,
     instances,
     props,
     metas,
+    htmlTagsByInstanceId,
   });
   return (
     richTextSelector && richTextSelector.join() !== instanceSelector.join()
@@ -612,17 +635,20 @@ export const isRichText = ({
   props,
   metas,
   instanceSelector,
+  htmlTagsByInstanceId,
 }: {
   instances: Instances;
   props: Props;
   metas: Metas;
   instanceSelector: InstanceSelector;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
 }) => {
   const richTextSelector = findClosestRichText({
     instanceSelector,
     instances,
     props,
     metas,
+    htmlTagsByInstanceId,
   });
   return (
     richTextSelector && richTextSelector.join() === instanceSelector.join()
@@ -634,11 +660,13 @@ export const findClosestContainer = ({
   props,
   metas,
   instanceSelector,
+  htmlTagsByInstanceId = getHtmlTagsFromProps(props),
 }: {
   instances: Instances;
   props: Props;
   metas: Metas;
   instanceSelector: InstanceSelector;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
 }) => {
   // page root with text can be used as container
   if (instanceSelector.length === 1) {
@@ -651,7 +679,7 @@ export const findClosestContainer = ({
     if (instance === undefined) {
       continue;
     }
-    const tag = getTag({ instance, props, metas });
+    const tag = getTag({ instance, props, metas, htmlTagsByInstanceId });
     const meta = metas.get(instance.component);
     const elementChildren = tag ? elementsByTag[tag].children : undefined;
     const componentChildren = getComponentContentModel(meta).children;
@@ -671,11 +699,13 @@ export const findClosestNonTextualContainer = ({
   props,
   metas,
   instanceSelector,
+  htmlTagsByInstanceId = getHtmlTagsFromProps(props),
 }: {
   instances: Instances;
   props: Props;
   metas: Metas;
   instanceSelector: InstanceSelector;
+  htmlTagsByInstanceId?: HtmlTagsByInstanceId;
 }) => {
   // page root with text can be used as container
   if (instanceSelector.length === 1) {
@@ -688,7 +718,7 @@ export const findClosestNonTextualContainer = ({
     if (instance === undefined) {
       continue;
     }
-    const tag = getTag({ instance, props, metas });
+    const tag = getTag({ instance, props, metas, htmlTagsByInstanceId });
     const meta = metas.get(instance.component);
     const elementChildren = tag ? elementsByTag[tag].children : undefined;
     const componentChildren = getComponentContentModel(meta).children;
@@ -717,6 +747,7 @@ export const findClosestNonTextualContainer = ({
       props,
       metas,
       instance,
+      htmlTagsByInstanceId,
     });
     const contentComponents = findContentComponents({
       instances,

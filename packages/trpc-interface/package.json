@@ -1,15 +1,16 @@
 {
   "name": "@webstudio-is/trpc-interface",
-  "version": "0.0.0",
+  "version": "0.0.0-webstudio-version",
   "description": "Webstudio TRPC Interface",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@webstudio-is/plans": "workspace:*",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "memoize": "^10.0.0",
@@ -17,16 +18,25 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@webstudio-is/postrest": "workspace:*",
+    "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "vitest": "^3.1.2"
   },
   "exports": {
+    "./api-compatibility": {
+      "webstudio": "./src/api-compatibility.ts",
+      "types": "./src/api-compatibility.ts",
+      "import": "./src/api-compatibility.ts"
+    },
     "./index.server": {
-      "webstudio": "./src/index.server.ts"
+      "webstudio": "./src/index.server.ts",
+      "import": "./src/index.server.ts"
+    },
+    "./authorize": {
+      "webstudio": "./src/authorize/role.ts",
+      "import": "./src/authorize/role.ts"
     }
   },
   "license": "AGPL-3.0-or-later",
-  "private": true,
   "sideEffects": false
 }

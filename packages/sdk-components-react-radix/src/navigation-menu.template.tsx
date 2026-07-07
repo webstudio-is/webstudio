@@ -220,7 +220,7 @@ const createMenuItem = (title: string, content: ReactNode) => {
         ws:style={css`
           left: 0;
           top: 0;
-          positon: absolute;
+          position: absolute;
           width: max-content;
           padding: ${spacing[4]};
         `}

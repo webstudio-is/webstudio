@@ -12,14 +12,8 @@ import {
 import { ChevronUpIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
-import {
-  RenameProjectDialog,
-  DeleteProjectDialog,
-  useCloneProject,
-  ShareProjectDialog,
-} from "./project-dialogs";
+import { ProjectDialogs, type DialogType } from "./project-dialogs";
 import type { User } from "~/shared/db/user.server";
-import { TagsDialog } from "./tags";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 import type { SortField, SortOrder } from "./sort";
@@ -74,7 +68,6 @@ const tableStyles = css({
 
 type ProjectsListItemProps = {
   project: DashboardProject;
-  hasProPlan: boolean;
   publisherHost: string;
   projectsTags: User["projectsTags"];
 };
@@ -90,7 +83,6 @@ export const ProjectsListItem = ({
     tags,
     domainsVirtual,
   },
-  hasProPlan,
   publisherHost,
   projectsTags,
 }: ProjectsListItemProps) => {
@@ -99,22 +91,12 @@ export const ProjectsListItem = ({
       d.status === "ACTIVE" && d.verified
   )?.domain;
   const displayDomain = customDomain ?? `${domain}.${publisherHost}`;
-  const [openDialog, setOpenDialog] = useState<
-    "rename" | "delete" | "share" | "tags" | undefined
-  >(undefined);
+  const [openDialog, setOpenDialog] = useState<DialogType | undefined>();
   const [isHidden, setIsHidden] = useState(false);
-  const handleCloneProject = useCloneProject(id);
 
   if (isHidden) {
     return;
   }
-
-  const projectTagsIds = (tags || [])
-    .map((tagId) => {
-      const tag = projectsTags.find((tag) => tag.id === tagId);
-      return tag ? tag.id : undefined;
-    })
-    .filter(Boolean) as string[];
 
   const linkPath = builderUrl({ origin: window.origin, projectId: id });
 
@@ -171,42 +153,19 @@ export const ProjectsListItem = ({
           </div>
 
           <div role="cell">
-            <ProjectMenu
-              onDelete={() => setOpenDialog("delete")}
-              onRename={() => setOpenDialog("rename")}
-              onShare={() => setOpenDialog("share")}
-              onDuplicate={handleCloneProject}
-              onUpdateTags={() => setOpenDialog("tags")}
-            />
+            <ProjectMenu projectId={id} onOpenChange={setOpenDialog} />
           </div>
         </div>
       </ListItem>
 
-      <RenameProjectDialog
-        isOpen={openDialog === "rename"}
-        onOpenChange={(open) => setOpenDialog(open ? "rename" : undefined)}
-        title={title}
+      <ProjectDialogs
         projectId={id}
-      />
-      <DeleteProjectDialog
-        isOpen={openDialog === "delete"}
-        onOpenChange={(open) => setOpenDialog(open ? "delete" : undefined)}
+        title={title}
+        tags={tags}
+        openDialog={openDialog}
+        onOpenDialogChange={setOpenDialog}
         onHiddenChange={setIsHidden}
-        title={title}
-        projectId={id}
-      />
-      <ShareProjectDialog
-        isOpen={openDialog === "share"}
-        onOpenChange={(open) => setOpenDialog(open ? "share" : undefined)}
-        projectId={id}
-        hasProPlan={hasProPlan}
-      />
-      <TagsDialog
-        projectId={id}
         projectsTags={projectsTags}
-        projectTagsIds={projectTagsIds}
-        isOpen={openDialog === "tags"}
-        onOpenChange={(open) => setOpenDialog(open ? "tags" : undefined)}
       />
     </>
   );
@@ -214,7 +173,6 @@ export const ProjectsListItem = ({
 
 type ProjectsListProps = {
   projects: Array<DashboardProject>;
-  hasProPlan: boolean;
   publisherHost: string;
   projectsTags: User["projectsTags"];
   sortBy?: SortField;
@@ -232,7 +190,6 @@ const columns: Array<{ field: SortField; label: string } | null> = [
 
 export const ProjectsList = ({
   projects,
-  hasProPlan,
   publisherHost,
   projectsTags,
   sortBy,
@@ -289,7 +246,6 @@ export const ProjectsList = ({
             <ProjectsListItem
               key={project.id}
               project={project}
-              hasProPlan={hasProPlan}
               publisherHost={publisherHost}
               projectsTags={projectsTags}
             />

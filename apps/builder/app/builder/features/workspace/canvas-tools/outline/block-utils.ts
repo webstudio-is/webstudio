@@ -1,25 +1,34 @@
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { Instance, Instances, WebstudioFragment } from "@webstudio-is/sdk";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils/lookup";
+import {
+  getWebstudioData,
+  updateWebstudioData,
+} from "~/shared/instance-utils/data";
+import { insertInstanceChildrenMutable } from "~/shared/instance-utils/insert";
+import {
+  detectFragmentTokenConflicts,
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
+} from "@webstudio-is/project-build/runtime/fragment";
 import { blockTemplateComponent } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
-import { selectInstance } from "~/shared/awareness";
-import { findAvailableVariables } from "~/shared/data-variables";
+import { selectInstance } from "~/shared/nano-states";
+import { builderApi } from "~/shared/builder-api";
+import { findAvailableVariables } from "@webstudio-is/project-build/runtime/data";
+import { isFragmentContentModeCopyableProp } from "~/shared/content-mode-copy-policy";
 import {
-  extractWebstudioFragment,
-  findAllEditableInstanceSelector,
-  getWebstudioData,
-  insertInstanceChildrenMutable,
-  insertWebstudioFragmentCopy,
-  updateWebstudioData,
-} from "~/shared/instance-utils";
-import {
-  $instances,
-  $project,
   $registeredComponentMetas,
+  $isContentMode,
   $textEditingInstanceSelector,
   findBlockChildSelector,
   findBlockSelector,
 } from "~/shared/nano-states";
-import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
+import { $instances } from "~/shared/sync/data-stores";
+import { $project } from "~/shared/sync/data-stores";
+import type {
+  DroppableTarget,
+  InstanceSelector,
+} from "~/shared/instance-utils/tree";
 
 const getInsertionIndex = (
   anchor: InstanceSelector,
@@ -69,6 +78,28 @@ const getInsertionIndex = (
   return insertBefore ? index : index + 1;
 };
 
+const getTemplateTokenConflicts = ({
+  fragment,
+  targetData,
+  contentMode,
+  detect = detectFragmentTokenConflicts,
+}: {
+  fragment: WebstudioFragment;
+  targetData: ReturnType<typeof getWebstudioData>;
+  contentMode: boolean;
+  detect?: typeof detectFragmentTokenConflicts;
+}) => {
+  if (contentMode) {
+    return [];
+  }
+  return detect({ fragment, targetData });
+};
+
+export const __testing__ = {
+  getInsertionIndex,
+  getTemplateTokenConflicts,
+};
+
 export const insertListItemAt = (listItemSelector: InstanceSelector) => {
   const project = $project.get();
   const instances = $instances.get();
@@ -104,9 +135,11 @@ export const insertListItemAt = (listItemSelector: InstanceSelector) => {
     listItemSelector[0]
   );
 
-  fragment.instances = structuredClone(fragment.instances);
-  fragment.instances.splice(1);
-  fragment.instances[0].children = [];
+  const [listItemInstance] = fragment.instances;
+  if (listItemInstance === undefined) {
+    return;
+  }
+  fragment.instances = [{ ...listItemInstance, children: [] }];
 
   updateWebstudioData((data) => {
     const { newInstanceIds } = insertWebstudioFragmentCopy({
@@ -142,7 +175,7 @@ export const insertListItemAt = (listItemSelector: InstanceSelector) => {
   });
 };
 
-export const insertTemplateAt = (
+export const insertTemplateAt = async (
   templateSelector: InstanceSelector,
   anchor: InstanceSelector,
   insertBefore: boolean
@@ -175,52 +208,72 @@ export const insertTemplateAt = (
     position,
   };
 
-  updateWebstudioData((data) => {
-    const { newInstanceIds } = insertWebstudioFragmentCopy({
-      data,
+  try {
+    const contentMode = $isContentMode.get();
+    const conflicts = getTemplateTokenConflicts({
       fragment,
-      availableVariables: findAvailableVariables({
-        ...data,
-        startingInstanceId: target.parentSelector[0],
-      }),
-      projectId: project.id,
+      targetData: getWebstudioData(),
+      contentMode,
     });
-    const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
-    if (newRootInstanceId === undefined) {
-      return;
-    }
-    const children: Instance["children"] = [
-      { type: "id", value: newRootInstanceId },
-    ];
+    const conflictResolution =
+      conflicts.length > 0
+        ? await builderApi.showTokenConflictDialog(conflicts)
+        : "theirs";
 
-    insertInstanceChildrenMutable(data, children, target);
-
-    const selectedInstanceSelector = [
-      newRootInstanceId,
-      ...target.parentSelector,
-    ];
-
-    const selectors: InstanceSelector[] = [];
-
-    findAllEditableInstanceSelector({
-      instanceSelector: selectedInstanceSelector,
-      instances: data.instances,
-      props: data.props,
-      metas: $registeredComponentMetas.get(),
-      results: selectors,
-    });
-
-    const editableInstanceSelector = selectors[0];
-
-    if (editableInstanceSelector) {
-      $textEditingInstanceSelector.set({
-        selector: editableInstanceSelector,
-        reason: "new",
+    updateWebstudioData((data) => {
+      const { newInstanceIds } = insertWebstudioFragmentCopy({
+        data,
+        fragment,
+        availableVariables: findAvailableVariables({
+          ...data,
+          startingInstanceId: target.parentSelector[0],
+        }),
+        projectId: project.id,
+        conflictResolution,
+        metas: $registeredComponentMetas.get(),
+        contentModeCopyableProp: isFragmentContentModeCopyableProp,
+        contentMode,
       });
-    } else {
-      $textEditingInstanceSelector.set(undefined);
-    }
+      const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
+      if (newRootInstanceId === undefined) {
+        return;
+      }
+      const children: Instance["children"] = [
+        { type: "id", value: newRootInstanceId },
+      ];
 
-    selectInstance([newRootInstanceId, ...target.parentSelector]);
-  });
+      insertInstanceChildrenMutable(data, children, target);
+
+      const selectedInstanceSelector = [
+        newRootInstanceId,
+        ...target.parentSelector,
+      ];
+
+      const selectors: InstanceSelector[] = [];
+
+      findAllEditableInstanceSelector({
+        instanceSelector: selectedInstanceSelector,
+        instances: data.instances,
+        props: data.props,
+        metas: $registeredComponentMetas.get(),
+        results: selectors,
+      });
+
+      const editableInstanceSelector = selectors[0];
+
+      if (editableInstanceSelector) {
+        $textEditingInstanceSelector.set({
+          selector: editableInstanceSelector,
+          reason: "new",
+        });
+      } else {
+        $textEditingInstanceSelector.set(undefined);
+      }
+
+      selectInstance([newRootInstanceId, ...target.parentSelector]);
+    });
+  } catch {
+    // User cancelled the operation
+    return;
+  }
 };

@@ -1,5 +1,6 @@
 import type { Meta } from "@storybook/react";
 import { useState, useRef } from "react";
+import { StorySection } from "../../storybook";
 import { Box } from "../../box";
 import { styled } from "../../../stitches.config";
 import { useDrop, type DropTarget } from "./use-drop";
@@ -43,11 +44,11 @@ const Item = ({
 };
 
 export const SortableList = ({
-  direction,
-  reversed,
+  direction = "vertical",
+  reversed = false,
 }: {
-  direction: "horizontal" | "vertical" | "wrap";
-  reversed: boolean;
+  direction?: "horizontal" | "vertical" | "wrap";
+  reversed?: boolean;
 }) => {
   const [data, setData] = useState([
     { id: "0", text: "First" },
@@ -153,7 +154,7 @@ export const SortableList = ({
   });
 
   return (
-    <>
+    <StorySection title="Sortable list">
       <Box
         css={{
           height: direction === "horizontal" ? "auto" : 500,
@@ -204,21 +205,11 @@ export const SortableList = ({
       {placementIndicator && (
         <PlacementIndicator placement={placementIndicator} />
       )}
-    </>
+    </StorySection>
   );
 };
 
 export default {
   title: "Primitives/DND/Sortable List",
   component: SortableList,
-  args: {
-    direction: "vertical",
-    reversed: false,
-  },
-  argTypes: {
-    direction: {
-      control: "select",
-      options: ["horizontal", "vertical", "wrap"],
-    },
-  },
 } satisfies Meta<typeof SortableList>;

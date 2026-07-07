@@ -3,11 +3,11 @@ import type { Assets } from "@webstudio-is/sdk";
 import { Image as WebstudioImage, wsImageLoader } from "@webstudio-is/image";
 import { styled, theme } from "@webstudio-is/design-system";
 import {
-  StyleValue,
+  type StyleValue,
   toValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
-import { $assets } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { humanizeString } from "~/shared/string-utils";
 import { useComputedStyles } from "../../shared/model";

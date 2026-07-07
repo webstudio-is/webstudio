@@ -5,10 +5,10 @@ import {
 } from "@webstudio-is/css-data";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import {
-  KeywordValue,
-  StyleValue,
-  TupleValue,
-  UnitValue,
+  type KeywordValue,
+  type StyleValue,
+  type TupleValue,
+  type UnitValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
@@ -55,8 +55,10 @@ export const calculatePositionFromOrigin = (value: StyleValue | undefined) => {
 
 export const TransformAndPerspectiveOrigin = ({
   property,
+  disabled,
 }: {
   property: CssProperty;
+  disabled?: boolean;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
   const value = styleDecl.cascadedValue;
@@ -164,6 +166,7 @@ export const TransformAndPerspectiveOrigin = ({
           <PositionGrid
             selectedPosition={{ x: xInfo, y: yInfo }}
             onSelect={handlePositionGridChange}
+            disabled={disabled}
           />
           <Flex gap="2" direction="column">
             <Grid
@@ -183,6 +186,7 @@ export const TransformAndPerspectiveOrigin = ({
                 }
               />
               <CssValueInputContainer
+                disabled={disabled}
                 value={origin.x}
                 getOptions={() => xOriginKeywords}
                 styleSource="local"
@@ -210,6 +214,7 @@ export const TransformAndPerspectiveOrigin = ({
                 }
               />
               <CssValueInputContainer
+                disabled={disabled}
                 value={origin.y}
                 getOptions={() => yOriginKeywords}
                 styleSource="local"
@@ -232,6 +237,7 @@ export const TransformAndPerspectiveOrigin = ({
                   description={propertySyntaxes.transformOriginZ}
                 />
                 <CssValueInputContainer
+                  disabled={disabled}
                   value={origin.z}
                   styleSource="local"
                   property={fakePropertyZ}

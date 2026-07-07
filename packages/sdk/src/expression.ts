@@ -1,6 +1,8 @@
 import {
   type Expression,
   type Identifier,
+  type MemberExpression,
+  type Pattern,
   parse,
   parseExpressionAt,
 } from "acorn";
@@ -29,37 +31,252 @@ type ExpressionVisitor = {
   [K in Expression["type"]]: (node: Extract<Expression, { type: K }>) => void;
 };
 
-export const allowedStringMethods = new Set([
-  "toLowerCase",
-  "replace",
-  "split",
-  "slice",
-  "at",
-  "endsWith",
-  "includes",
-  "startsWith",
-  "toUpperCase",
-  "toLocaleLowerCase",
-  "toLocaleUpperCase",
+type AssignmentTargetKind = "binding" | "memberObject";
+
+const walkAssignmentTarget = (
+  node: Pattern,
+  visitor: {
+    Identifier?: (node: Identifier, kind: AssignmentTargetKind) => void;
+    MemberExpression?: (node: MemberExpression) => void;
+    UnsupportedPattern?: (node: Pattern) => void;
+  }
+) => {
+  if (node.type === "Identifier") {
+    visitor.Identifier?.(node, "binding");
+    return;
+  }
+
+  if (node.type === "MemberExpression") {
+    visitor.MemberExpression?.(node);
+    const { object } = node;
+    if (object.type === "Identifier") {
+      visitor.Identifier?.(object, "memberObject");
+    } else if (object.type === "MemberExpression") {
+      walkAssignmentTarget(object, visitor);
+    }
+    return;
+  }
+
+  visitor.UnsupportedPattern?.(node);
+};
+
+export type VariableValues =
+  | ReadonlyMap<Identifier["name"], unknown>
+  | Readonly<Record<Identifier["name"], unknown>>;
+
+export type ExpressionValueKind =
+  | "array"
+  | "bigint"
+  | "boolean"
+  | "nullish"
+  | "number"
+  | "object"
+  | "string"
+  | "unknown";
+
+const stringMethodReturnKindByName = new Map<string, ExpressionValueKind>([
+  ["toLowerCase", "string"],
+  ["replace", "string"],
+  ["split", "array"],
+  ["slice", "string"],
+  ["at", "unknown"],
+  ["endsWith", "boolean"],
+  ["includes", "boolean"],
+  ["startsWith", "boolean"],
+  ["toString", "string"],
+  ["toUpperCase", "string"],
+  ["toLocaleLowerCase", "string"],
+  ["toLocaleUpperCase", "string"],
 ]);
 
-export const allowedArrayMethods = new Set(["at", "includes", "join", "slice"]);
+const arrayMethodReturnKindByName = new Map<string, ExpressionValueKind>([
+  ["at", "unknown"],
+  ["includes", "boolean"],
+  ["join", "string"],
+  ["slice", "array"],
+  ["toString", "string"],
+]);
+
+export const allowedStringMethods = new Set(
+  stringMethodReturnKindByName.keys()
+);
+
+export const allowedArrayMethods = new Set(arrayMethodReturnKindByName.keys());
+
+const getVariableValue = (
+  variableValues: undefined | VariableValues,
+  name: Identifier["name"]
+) => {
+  if (variableValues === undefined) {
+    return;
+  }
+  const maybeMap = variableValues as Partial<ReadonlyMap<string, unknown>>;
+  if (
+    typeof maybeMap.has === "function" &&
+    typeof maybeMap.get === "function"
+  ) {
+    if (maybeMap.has(name)) {
+      return { value: maybeMap.get(name) };
+    }
+    return;
+  }
+  const record = variableValues as Readonly<Record<string, unknown>>;
+  if (Object.hasOwn(record, name)) {
+    return { value: record[name] };
+  }
+};
+
+const getValueKind = (value: unknown): ExpressionValueKind => {
+  if (Array.isArray(value)) {
+    return "array";
+  }
+  if (value === undefined || value === null) {
+    return "nullish";
+  }
+  switch (typeof value) {
+    case "bigint":
+      return "bigint";
+    case "boolean":
+      return "boolean";
+    case "number":
+      return "number";
+    case "string":
+      return "string";
+    case "object":
+      return "object";
+    default:
+      return "unknown";
+  }
+};
+
+const getMethodReturnKind = (
+  receiverKind: ExpressionValueKind,
+  methodName: string
+): ExpressionValueKind => {
+  if (receiverKind === "array") {
+    return arrayMethodReturnKindByName.get(methodName) ?? "unknown";
+  }
+  if (receiverKind === "string") {
+    return stringMethodReturnKindByName.get(methodName) ?? "unknown";
+  }
+  if (receiverKind === "unknown") {
+    const stringReturnKind = stringMethodReturnKindByName.get(methodName);
+    const arrayReturnKind = arrayMethodReturnKindByName.get(methodName);
+    if (stringReturnKind && arrayReturnKind === undefined) {
+      return stringReturnKind;
+    }
+    if (arrayReturnKind && stringReturnKind === undefined) {
+      return arrayReturnKind;
+    }
+    if (stringReturnKind === arrayReturnKind) {
+      return stringReturnKind ?? "unknown";
+    }
+    return "unknown";
+  }
+  return methodName === "toString" ? "string" : "unknown";
+};
+
+const isMethodSupported = (
+  receiverKind: ExpressionValueKind,
+  methodName: string
+) => {
+  if (receiverKind === "unknown") {
+    return (
+      allowedStringMethods.has(methodName) ||
+      allowedArrayMethods.has(methodName)
+    );
+  }
+  if (receiverKind === "string") {
+    return stringMethodReturnKindByName.has(methodName);
+  }
+  if (receiverKind === "array") {
+    return arrayMethodReturnKindByName.has(methodName);
+  }
+  if (receiverKind === "nullish") {
+    return false;
+  }
+  return methodName === "toString";
+};
+
+const getExpressionNodeValueKind = (
+  node: Expression,
+  variableValues: undefined | VariableValues
+): ExpressionValueKind => {
+  if (node.type === "Identifier") {
+    if (node.name === "undefined") {
+      return "nullish";
+    }
+    const variable = getVariableValue(variableValues, node.name);
+    return variable ? getValueKind(variable.value) : "unknown";
+  }
+  if (node.type === "Literal") {
+    return getValueKind(node.value);
+  }
+  if (node.type === "ArrayExpression") {
+    return "array";
+  }
+  if (node.type === "ObjectExpression") {
+    return "object";
+  }
+  if (node.type === "TemplateLiteral") {
+    return "string";
+  }
+  if (
+    node.type === "ChainExpression" ||
+    node.type === "ParenthesizedExpression"
+  ) {
+    return getExpressionNodeValueKind(node.expression, variableValues);
+  }
+  if (
+    node.type === "CallExpression" &&
+    node.callee.type === "MemberExpression" &&
+    node.callee.object.type !== "Super" &&
+    node.callee.property.type === "Identifier"
+  ) {
+    const receiverKind = getExpressionNodeValueKind(
+      node.callee.object,
+      variableValues
+    );
+    const methodName = node.callee.property.name;
+    if (isMethodSupported(receiverKind, methodName)) {
+      return getMethodReturnKind(receiverKind, methodName);
+    }
+  }
+  return "unknown";
+};
+
+export const getExpressionValueKind = ({
+  expression,
+  variableValues,
+}: {
+  expression: string;
+  variableValues?: VariableValues;
+}): ExpressionValueKind => {
+  try {
+    const node = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+    return getExpressionNodeValueKind(node, variableValues);
+  } catch {
+    return "unknown";
+  }
+};
 
 export const lintExpression = ({
   expression,
   availableVariables = new Set(),
   allowAssignment = false,
+  variableValues,
 }: {
   expression: string;
   availableVariables?: Set<Identifier["name"]>;
   allowAssignment?: boolean;
+  variableValues?: VariableValues;
 }): Diagnostic[] => {
   const diagnostics: Diagnostic[] = [];
   const addMessage = (
     message: string,
     severity: "error" | "warning" = "error"
   ) => {
-    return (node: Expression) => {
+    return (node: { start: number; end: number }) => {
       diagnostics.push({
         // tune error position after wrapping expression with parentheses
         from: node.start - 1,
@@ -87,6 +304,7 @@ export const lintExpression = ({
       // support parsing import to forbid explicitly
       sourceType: "module",
     });
+
     simple(root, {
       Identifier(node) {
         if (availableVariables.has(node.name) === false) {
@@ -112,8 +330,11 @@ export const lintExpression = ({
           addMessage("Assignment is supported only inside actions")(node);
           return;
         }
-        simple(node.left, {
-          Identifier(node) {
+        walkAssignmentTarget(node.left, {
+          Identifier(node, kind) {
+            if (kind !== "binding") {
+              return;
+            }
             if (availableVariables.has(node.name) === false) {
               addMessage(
                 `"${node.name}" is not defined in the scope`,
@@ -121,6 +342,9 @@ export const lintExpression = ({
               )(node);
             }
           },
+          UnsupportedPattern: addMessage(
+            "Destructuring assignment is not supported"
+          ),
         });
       },
       // parser forbids to yield inside module
@@ -133,10 +357,14 @@ export const lintExpression = ({
         if (node.callee.type === "MemberExpression") {
           if (node.callee.property.type === "Identifier") {
             const methodName = node.callee.property.name;
-            if (
-              allowedStringMethods.has(methodName) ||
-              allowedArrayMethods.has(methodName)
-            ) {
+            const receiverKind =
+              node.callee.object.type === "Super"
+                ? "unknown"
+                : getExpressionNodeValueKind(
+                    node.callee.object,
+                    variableValues
+                  );
+            if (isMethodSupported(receiverKind, methodName)) {
               return;
             }
             calleeName = methodName;
@@ -226,7 +454,7 @@ export const getExpressionIdentifiers = (expression: string) => {
     simple(root, {
       Identifier: (node) => identifiers.add(node.name),
       AssignmentExpression(node) {
-        simple(node.left, {
+        walkAssignmentTarget(node.left, {
           Identifier: (node) => identifiers.add(node.name),
         });
       },
@@ -265,17 +493,49 @@ export const transpileExpression = ({
     // throw new error to trace error in our code instead of acorn
     throw Error(`${message} in ${JSON.stringify(expression)}`);
   }
+  const assignmentTargetMemberRanges: [start: number, end: number][] = [];
+  if (executable) {
+    simple(root, {
+      AssignmentExpression(node) {
+        walkAssignmentTarget(node.left, {
+          MemberExpression(node) {
+            assignmentTargetMemberRanges.push([node.start, node.end]);
+          },
+        });
+      },
+    });
+  }
   const replacements: [start: number, end: number, fragment: string][] = [];
+  const replacementIndexByRange = new Map<string, number>();
+  const addReplacement = (
+    start: number,
+    end: number,
+    fragment: string,
+    { replaceExisting = false }: { replaceExisting?: boolean } = {}
+  ) => {
+    const range = `${start}:${end}`;
+    const existingIndex = replacementIndexByRange.get(range);
+    if (existingIndex !== undefined) {
+      if (replaceExisting) {
+        replacements[existingIndex] = [start, end, fragment];
+      }
+      return;
+    }
+    replacementIndexByRange.set(range, replacements.length);
+    replacements.push([start, end, fragment]);
+  };
   const replaceIdentifier = (node: Identifier, assignee: boolean) => {
     const newName = replaceVariable?.(node.name, assignee);
     if (newName) {
-      replacements.push([node.start, node.end, newName]);
+      addReplacement(node.start, node.end, newName, {
+        replaceExisting: assignee,
+      });
     }
   };
   simple(root, {
     Identifier: (node) => replaceIdentifier(node, false),
     AssignmentExpression(node) {
-      simple(node.left, {
+      walkAssignmentTarget(node.left, {
         Identifier: (node) => replaceIdentifier(node, true),
       });
     },
@@ -283,15 +543,22 @@ export const transpileExpression = ({
       if (executable === false || node.optional) {
         return;
       }
+      if (
+        assignmentTargetMemberRanges.some(
+          ([start, end]) => start === node.start && end === node.end
+        )
+      ) {
+        return;
+      }
       // a . b -> a ?. b
       if (node.computed === false) {
         const dotIndex = expression.indexOf(".", node.object.end);
-        replacements.push([dotIndex, dotIndex, "?"]);
+        addReplacement(dotIndex, dotIndex, "?");
       }
       // a [b] -> a ?.[b]
       if (node.computed === true) {
         const dotIndex = expression.indexOf("[", node.object.end);
-        replacements.push([dotIndex, dotIndex, "?."]);
+        addReplacement(dotIndex, dotIndex, "?.");
       }
     },
     CallExpression(node) {
@@ -303,7 +570,7 @@ export const transpileExpression = ({
         // Find the opening parenthesis after the method name
         const openParenIndex = expression.indexOf("(", node.callee.end);
         if (openParenIndex !== -1) {
-          replacements.push([openParenIndex, openParenIndex, "?."]);
+          addReplacement(openParenIndex, openParenIndex, "?.");
         }
       }
     },

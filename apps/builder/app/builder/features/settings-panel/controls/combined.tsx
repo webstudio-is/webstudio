@@ -12,6 +12,7 @@ import { JsonControl } from "./json";
 import { TextContent } from "./text-content";
 import { ResourceControl } from "./resource-control";
 import { TagControl } from "./tag-control";
+import { TimeZoneControl } from "./time-zone";
 
 export const renderControl = ({
   meta,
@@ -96,6 +97,10 @@ export const renderControl = ({
 
   if (meta.control === "select") {
     return <SelectControl key={key} meta={meta} prop={prop} {...rest} />;
+  }
+
+  if (meta.control === "timeZone") {
+    return <TimeZoneControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
   if (meta.control === "file") {

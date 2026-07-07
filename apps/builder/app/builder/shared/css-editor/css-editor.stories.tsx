@@ -1,7 +1,8 @@
+import { StorySection } from "@webstudio-is/design-system";
 import { CssEditor as CssEditorComponent } from "./css-editor";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
-export const CssEditor = () => {
+export const CSSEditor = () => {
   const declarations = [
     [
       "background-image",
@@ -24,17 +25,19 @@ export const CssEditor = () => {
   });
 
   return (
-    <CssEditorComponent
-      declarations={declarations}
-      onDeleteProperty={() => undefined}
-      onSetProperty={() => () => undefined}
-      onAddDeclarations={() => undefined}
-      onDeleteAllDeclarations={() => undefined}
-    />
+    <StorySection title="CSS Editor">
+      <CssEditorComponent
+        declarations={declarations}
+        onDeleteProperty={() => undefined}
+        onSetProperty={() => () => undefined}
+        onAddDeclarations={() => undefined}
+        onDeleteAllDeclarations={() => undefined}
+      />
+    </StorySection>
   );
 };
 
 export default {
-  title: "Style Panel/CSS Editor",
-  component: CssEditor,
+  title: "Style panel/CSS Editor",
+  component: CSSEditor,
 };
