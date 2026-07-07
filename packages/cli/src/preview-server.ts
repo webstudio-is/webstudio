@@ -20,12 +20,14 @@ export type PreviewServerDependencies = {
   spawn: typeof spawn;
   fetch: typeof fetch;
   sleep: (ms: number) => Promise<void>;
+  platform: typeof process.platform;
 };
 
 export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   spawn,
   fetch,
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  platform: process.platform,
 };
 
 const processEnv = () => process.env;
@@ -90,7 +92,7 @@ export const runPreviewBuild = async (
   cwd?: string
 ) => {
   const buildProcess = dependencies.spawn(
-    getPreviewCommand(),
+    getPreviewCommand(dependencies.platform),
     getPreviewBuildArgs(),
     {
       cwd,
@@ -109,7 +111,7 @@ export const startPreviewServer = (
   dependencies = defaultPreviewServerDependencies
 ): PreviewServerResult => {
   const previewProcess = dependencies.spawn(
-    getPreviewCommand(),
+    getPreviewCommand(dependencies.platform),
     getPreviewStartArgs(options),
     {
       cwd: options.cwd,

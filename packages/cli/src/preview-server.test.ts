@@ -17,6 +17,7 @@ const createDependencies = (
   spawn: vi.fn(),
   fetch: vi.fn(async () => new Response("", { status: 200 })),
   sleep: vi.fn(async () => undefined),
+  platform: "linux",
   ...overrides,
 });
 
@@ -89,6 +90,23 @@ test("runs generated project production build", async () => {
   });
 });
 
+test("runs generated project production build with the windows npm executable", async () => {
+  const process = createPreviewProcess();
+  const spawn = vi.fn(() => process);
+  resolveProcessExit(process);
+
+  await runPreviewBuild(
+    createDependencies({ spawn: spawn as never, platform: "win32" }),
+    "C:/project/.webstudio/preview"
+  );
+
+  expect(spawn).toHaveBeenCalledWith("npm.cmd", ["run", "build"], {
+    cwd: "C:/project/.webstudio/preview",
+    stdio: "inherit",
+    env: expect.objectContaining({ NODE_ENV: "production" }),
+  });
+});
+
 test("starts generated project production server with inherited stdio", () => {
   const process = {} as ReturnType<typeof startPreviewServer>["process"];
   const spawn = vi.fn(() => process);
@@ -104,6 +122,34 @@ test("starts generated project production server with inherited stdio", () => {
   });
   expect(spawn).toHaveBeenCalledWith("npm", ["run", "start"], {
     cwd: "/tmp/preview",
+    stdio: "inherit",
+    env: expect.objectContaining({
+      HOST: "127.0.0.1",
+      PORT: "5173",
+      NODE_ENV: "production",
+    }),
+  });
+});
+
+test("starts generated project production server with the windows npm executable", () => {
+  const process = {} as ReturnType<typeof startPreviewServer>["process"];
+  const spawn = vi.fn(() => process);
+
+  expect(
+    startPreviewServer(
+      {
+        host: "127.0.0.1",
+        port: 5173,
+        cwd: "C:/project/.webstudio/preview",
+      },
+      createDependencies({ spawn: spawn as never, platform: "win32" })
+    )
+  ).toEqual({
+    url: "http://127.0.0.1:5173/",
+    process,
+  });
+  expect(spawn).toHaveBeenCalledWith("npm.cmd", ["run", "start"], {
+    cwd: "C:/project/.webstudio/preview",
     stdio: "inherit",
     env: expect.objectContaining({
       HOST: "127.0.0.1",
