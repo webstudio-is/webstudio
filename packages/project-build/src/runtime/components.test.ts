@@ -576,17 +576,26 @@ test("merges fragment token conflicts by replacing existing token styles", async
   );
 });
 
-test("coerces animation action props from webstudio jsx fragments", async () => {
+test("inserts animation action props parsed from webstudio jsx fragments", async () => {
   const parent = createParent();
   const state = createState(parent);
+  const fragment = await parseWebstudioJsxFragment(
+    `<animation.AnimateChildren action={{type:"view",animations:[{timing:{fill:"backwards",rangeStart:["entry",{type:"unit",value:0,unit:"%"}],rangeEnd:["entry",{type:"unit",value:100,unit:"%"}]},keyframes:[{styles:{opacity:{type:"unit",value:0,unit:"number"}}}]}]}}><ws.element ws:tag="h2">Reveal</ws.element></animation.AnimateChildren>`
+  );
+
+  expect(fragment.props).toContainEqual(
+    expect.objectContaining({
+      name: "action",
+      type: "animationAction",
+      value: expect.objectContaining({ type: "view" }),
+    })
+  );
 
   const mutation = await insertFragment(
     state,
     {
       parentInstanceId: parent.id,
-      fragment: await parseWebstudioJsxFragment(
-        `<animation.AnimateChildren action={{type:"view",animations:[{timing:{fill:"backwards",rangeStart:["entry",{type:"unit",value:0,unit:"%"}],rangeEnd:["entry",{type:"unit",value:100,unit:"%"}]},keyframes:[{styles:{opacity:{type:"unit",value:0,unit:"number"}}}]}]}}><ws.element ws:tag="h2">Reveal</ws.element></animation.AnimateChildren>`
-      ),
+      fragment,
       conflictResolution: "merge",
     },
     {

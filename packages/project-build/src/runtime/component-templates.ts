@@ -5,6 +5,7 @@ import {
   type TemplateMeta,
 } from "@webstudio-is/template";
 import { canvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 
 (
   globalThis as typeof globalThis & {
@@ -30,7 +31,7 @@ export const getComponentTemplates = () => {
       const { template, ...generatedMeta } = meta;
       templatesByComponent.set(`${prefix}${componentName}`, {
         ...generatedMeta,
-        template: renderTemplate(template),
+        template: renderTemplate(template, undefined, [], { componentMetas }),
       });
     }
   }

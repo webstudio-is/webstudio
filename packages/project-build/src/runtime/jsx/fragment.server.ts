@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { renderTemplate } from "@webstudio-is/template";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import {
   webstudioJsxFragmentBuiltInHelpers,
   webstudioJsxRuntimeBindings,
@@ -36,9 +37,10 @@ export const evaluateWebstudioJsxFragment = async (
   return evaluateJsx<WebstudioFragment>({
     source,
     createModule: (jsx) =>
-      `exports.default = __renderTemplate(<>${jsx}</>, __createWebstudioJsxFragmentId, [], { allowManualIds: false });`,
+      `exports.default = __renderTemplate(<>${jsx}</>, __createWebstudioJsxFragmentId, [], { allowManualIds: false, componentMetas: __componentMetas });`,
     globals: {
       __createWebstudioJsxFragmentId: createId,
+      __componentMetas: componentMetas,
       __renderTemplate: renderTemplate,
       ...webstudioJsxRuntimeBindings,
     },

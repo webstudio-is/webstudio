@@ -1,6 +1,10 @@
 import { Fragment, type JSX, type ReactNode } from "react";
 import { hyphenateProperty } from "@webstudio-is/css-engine";
-import { encodeDataSourceVariable, getStyleDeclKey } from "@webstudio-is/sdk";
+import {
+  animationAction,
+  encodeDataSourceVariable,
+  getStyleDeclKey,
+} from "@webstudio-is/sdk";
 import type {
   Breakpoint,
   DataSource,
@@ -12,6 +16,7 @@ import type {
   StyleSourceSelection,
   WebstudioData,
   WebstudioFragment,
+  WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { parseTemplateCss, type TemplateStyleDecl } from "./css";
@@ -334,7 +339,10 @@ export const renderTemplate = (
   root: JSX.Element,
   generateId?: () => string,
   initialBreakpoints: Breakpoint[] = [],
-  options: { allowManualIds?: boolean } = {}
+  options: {
+    allowManualIds?: boolean;
+    componentMetas?: Map<Instance["component"], WsComponentMeta>;
+  } = {}
 ): WebstudioFragment => {
   const instances: Instance[] = [];
   const props: Prop[] = [];
@@ -521,6 +529,12 @@ export const renderTemplate = (
         "Do not set ws:id in JSX fragments. Webstudio runtime generates system ids automatically."
       );
     }
+    const component = element.type.displayName;
+    if (typeof component !== "string") {
+      throw new Error(
+        "Invalid JSX component in Webstudio JSX. Use Webstudio component helpers such as <$.Box>...</$.Box>."
+      );
+    }
     const instanceId = element.props?.["ws:id"] ?? getIdByKey(element);
     let tag: string | undefined;
     for (const entry of Object.entries({ ...element.props })) {
@@ -613,6 +627,24 @@ export const renderTemplate = (
         props.push({ ...base, type: "page", value: value.value });
         continue;
       }
+      const propMeta = options.componentMetas?.get(component)?.props?.[name];
+      if (propMeta?.type === "animationAction") {
+        const result = animationAction.safeParse(value);
+        if (result.success === false) {
+          const details = result.error.issues
+            .map((issue) => {
+              const path =
+                issue.path.length === 0 ? "" : ` at "${issue.path.join(".")}"`;
+              return `${issue.message}${path}`;
+            })
+            .join("; ");
+          throw new Error(
+            `Invalid JSX prop "${name}". Expected animationAction for ${component}.${name}. ${details}`
+          );
+        }
+        props.push({ ...base, type: "animationAction", value: result.data });
+        continue;
+      }
       if (typeof value === "string") {
         props.push({ ...base, type: "string", value });
         continue;
@@ -628,12 +660,6 @@ export const renderTemplate = (
       }
       validateSerializablePropValue(name, value);
       props.push({ ...base, type: "json", value });
-    }
-    const component = element.type.displayName;
-    if (typeof component !== "string") {
-      throw new Error(
-        "Invalid JSX component in Webstudio JSX. Use Webstudio component helpers such as <$.Box>...</$.Box>."
-      );
     }
     const instance: Instance = {
       type: "instance",

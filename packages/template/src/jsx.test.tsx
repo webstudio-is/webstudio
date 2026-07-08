@@ -1,9 +1,11 @@
 import { expect, test } from "vitest";
 import { showAttribute } from "@webstudio-is/react-sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import {
   $,
   ActionValue,
   AssetValue,
+  createProxy,
   expression,
   PageValue,
   Parameter,
@@ -15,6 +17,34 @@ import {
   ws,
 } from "./jsx";
 import { css } from "./css";
+
+const animationActionPropMeta = {
+  required: false,
+  control: "animationAction",
+  type: "animationAction",
+} satisfies NonNullable<WsComponentMeta["props"]>[string];
+
+const viewAnimationAction = {
+  type: "view",
+  animations: [
+    {
+      timing: {
+        fill: "backwards",
+        rangeStart: ["entry", { type: "unit", value: 0, unit: "%" }],
+        rangeEnd: ["entry", { type: "unit", value: 100, unit: "%" }],
+      },
+      keyframes: [
+        {
+          styles: {
+            opacity: { type: "unit", value: 0, unit: "number" },
+          },
+        },
+      ],
+    },
+  ],
+} as const;
+
+const animation = createProxy("@webstudio-is/sdk-components-animation:");
 
 test("render jsx into instances with generated id", () => {
   const { instances } = renderTemplate(
@@ -46,6 +76,62 @@ test("render jsx into instances with generated id", () => {
       children: [],
     },
   ]);
+});
+
+test("uses component metas to convert animation action props", () => {
+  const { props } = renderTemplate(
+    <animation.AnimateChildren
+      action={viewAnimationAction}
+    ></animation.AnimateChildren>,
+    undefined,
+    [],
+    {
+      componentMetas: new Map([
+        [
+          "@webstudio-is/sdk-components-animation:AnimateChildren",
+          {
+            props: {
+              action: animationActionPropMeta,
+            },
+          },
+        ],
+      ]),
+    }
+  );
+
+  expect(props).toEqual([
+    {
+      id: "0:action",
+      instanceId: "0",
+      name: "action",
+      type: "animationAction",
+      value: viewAnimationAction,
+    },
+  ]);
+});
+
+test("reports invalid animation action props from component metas", () => {
+  expect(() =>
+    renderTemplate(
+      <animation.AnimateChildren action="fade"></animation.AnimateChildren>,
+      undefined,
+      [],
+      {
+        componentMetas: new Map([
+          [
+            "@webstudio-is/sdk-components-animation:AnimateChildren",
+            {
+              props: {
+                action: animationActionPropMeta,
+              },
+            },
+          ],
+        ]),
+      }
+    )
+  ).toThrow(
+    'Invalid JSX prop "action". Expected animationAction for @webstudio-is/sdk-components-animation:AnimateChildren.action.'
+  );
 });
 
 test("override generated ids with ws:id prop", () => {
