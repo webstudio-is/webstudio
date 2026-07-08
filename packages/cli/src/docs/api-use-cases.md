@@ -475,12 +475,27 @@ Commands:
 Commands:
 
 - MCP tool: list-variables {}
+- MCP tool: list-variables {"scopeInstanceId":"<instanceId>"}
+
+Notes:
+
+- Data variables live in the internal `dataSources` namespace.
+- Scope variables to the instance where they should become available. Descendants can use them in expressions, and nested variables with the same name mask outer variables.
 
 ## Create data variable
 
 Commands:
 
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"title","value":{"type":"string","value":"Hello"}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"count","value":{"type":"number","value":3}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"featured","value":{"type":"boolean","value":true}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"string[]","value":["news","product"]}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"filters","value":{"type":"json","value":{"tag":"news"}}}
+
+Notes:
+
+- Data variable values support `string`, `number`, `boolean`, `string[]`, and `json`.
+- Parameters are contextual values provided by collections, components, and the built-in `system` parameter. Do not create parameters with `create-variable`; read them from expressions only when they are in scope.
 
 ## Update data variable
 
@@ -499,12 +514,26 @@ Commands:
 Commands:
 
 - MCP tool: list-resources {}
+- MCP tool: list-resources {"scopeInstanceId":"<instanceId>"}
 
 ## Create resource
 
 Commands:
 
 - MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","headers":[]}}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts?tag=\" + filters.tag","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Filtered Posts","method":"get","url":"\"https://api.example.com/posts\"","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"page","value":"String(filters.page ?? 1)"}],"headers":[{"name":"Authorization","value":"\"Bearer \" + auth.token"}]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"\"https://api.example.com/graphql\"","headers":[{"name":"Content-Type","value":"\"application/json\""}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
+- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"\"/$resources/current-date\"","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
+
+Notes:
+
+- Resource `url`, header values, search parameter values, and body are expressions. Literal URLs are JSON strings such as `"https://api.example.com/posts"`.
+- Search parameter values, header values, and body expressions can read scoped variables and parameters available at the resource scope.
+- Add `scopeInstanceId` and `dataSourceName` when the resource result should be exposed as a scoped read data variable. Scoped resources are generated into the page resource `data` map and may be loaded during page rendering. Use this for read-oriented resources such as GET CMS/API data.
+- For submit/write/action resources, create the resource without `scopeInstanceId`, then bind a component prop such as a Form `action` with `bind-props` and `binding.type: "resource"`. Prop-bound resources are generated into the page resource `action` map instead of the read `data` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and other explicit action flows.
+- Resource `method` can be `get`, `post`, `put`, or `delete`. Use GET for read data, POST for creates/GraphQL/webhooks/form submissions, PUT for full updates or replacements, and DELETE for deletion actions.
+- Optional `control` values are `graphql` and `system`. Use `graphql` for GraphQL-style requests, usually POST with a query body. Use `system` for built-in resources such as `"/$resources/sitemap.xml"`, `"/$resources/current-date"`, and `"/$resources/assets"` and when the resource should use the built-in `system` parameter. System fields are `system.origin`, `system.pathname`, `system.params`, and `system.search`.
 
 ## Update resource
 
@@ -687,7 +716,11 @@ Notes:
 Commands:
 
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"title","value":{"type":"string","value":"Hello"}}
-- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","headers":[]}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"string[]","value":["news","product"]}}
+- MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"filters","value":{"type":"json","value":{"tag":"news"}}}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","searchParams":[{"name":"tag","value":"filters.tag"}],"headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"\"https://api.example.com/graphql\"","headers":[{"name":"Content-Type","value":"\"application/json\""}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
+- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"\"/$resources/current-date\"","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
 - MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.collection>{/_ collection content _/}</ws.collection>"}
@@ -695,6 +728,9 @@ Commands:
 Notes:
 
 - Use this for CMS sections, blog listings, Ghost/headless CMS pages, n8n-style integrations, and API URLs built from variables.
+- For read data, expose GET resources as scoped data variables with `scopeInstanceId`/`dataSourceName` and read the loaded result from the resource result wrapper, usually `.data`.
+- For writes, webhooks, GraphQL submissions, and deletes, prefer unscoped resources bound to Form `action` props so they become action resources instead of auto-loaded read resources.
+- Use direct props for fixed values and prop bindings only when a prop must read a data variable, parameter, resource, or action.
 
 ## Support dynamic runtime behavior
 

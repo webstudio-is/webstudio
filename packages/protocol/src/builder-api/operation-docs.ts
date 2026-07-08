@@ -432,15 +432,24 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "list-variables",
-    description: "List data variables",
-    examples: ["webstudio list-variables --json"],
+    description:
+      "List data variables. Data variables are stored in the dataSources namespace and can be scoped to an instance.",
+    examples: [
+      "webstudio list-variables --json",
+      "webstudio list-variables --scope-instance body-id --json",
+    ],
   },
   {
     command: "create-variable",
-    description: "Create a data variable scoped to an element instance",
+    description:
+      "Create a data variable scoped to an element instance. Use string, number, boolean, string[], or json values.",
     requiredOptions: ["scope-instance", "name", "value-type", "value", "json"],
     examples: [
       'webstudio create-variable --scope-instance body-id --name title --value-type string --value "Hello" --json',
+      "webstudio create-variable --scope-instance body-id --name count --value-type number --value 3 --json",
+      "webstudio create-variable --scope-instance body-id --name featured --value-type boolean --value true --json",
+      "webstudio create-variable --scope-instance body-id --name tags --value-type 'string[]' --value '[\"news\",\"product\"]' --json",
+      'webstudio create-variable --scope-instance body-id --name filters --value-type json --value \'{"tag":"news"}\' --json',
     ],
   },
   {
@@ -459,21 +468,29 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "list-resources",
-    description: "List data resources",
-    examples: ["webstudio list-resources --json"],
+    description:
+      "List read resources and their optional exposed data-source variables. Prop-bound action resources are stored in resources too, but are discovered through props/snapshot.",
+    examples: [
+      "webstudio list-resources --json",
+      "webstudio list-resources --scope-instance body-id --json",
+    ],
   },
   {
     command: "create-resource",
     description:
-      "Create a data resource and optionally expose it as a variable",
+      "Create a resource. Add --scope-instance and --data-source-name only when the resource should be exposed as read data; for form/action resources, create it unscoped and bind a prop with bind-props.",
     requiredOptions: ["name", "method", "url", "json"],
     examples: [
       'webstudio create-resource --name Posts --method get --url "\\"https://api.example.com/posts\\"" --json',
+      'webstudio create-resource --name Posts --method get --url "\\"https://api.example.com/posts?tag=\\" + filters.tag" --scope-instance body-id --data-source-name posts --json',
+      "webstudio create-resource --input resource-graphql.json --scope-instance body-id --data-source-name post --json",
+      "webstudio create-resource --input resource-system-current-date.json --scope-instance body-id --data-source-name currentDate --json",
     ],
   },
   {
     command: "update-resource",
-    description: "Update data resource request fields",
+    description:
+      "Update resource request fields such as method, url expression, headers, search params, body, or control.",
     requiredOptions: ["resource", "json"],
     examples: [
       'webstudio update-resource --resource resource-id --url "\\"https://api.example.com/posts\\"" --json',
@@ -481,7 +498,8 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "delete-resource",
-    description: "Delete a data resource and its exposed data variable",
+    description:
+      "Delete a resource and any exposed data variable or prop bindings that reference it",
     requiredOptions: ["resource", "json"],
     examples: ["webstudio delete-resource --resource resource-id --json"],
   },

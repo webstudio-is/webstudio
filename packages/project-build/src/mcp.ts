@@ -1098,11 +1098,84 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       ],
     },
   ],
+  "create-variable": [
+    {
+      scopeInstanceId: "body-id",
+      name: "title",
+      value: { type: "string", value: "Hello" },
+    },
+    {
+      scopeInstanceId: "body-id",
+      name: "count",
+      value: { type: "number", value: 3 },
+    },
+    {
+      scopeInstanceId: "body-id",
+      name: "featured",
+      value: { type: "boolean", value: true },
+    },
+    {
+      scopeInstanceId: "body-id",
+      name: "tags",
+      value: { type: "string[]", value: ["news", "product"] },
+    },
+    {
+      scopeInstanceId: "body-id",
+      name: "filters",
+      value: { type: "json", value: { tag: "news", page: 1 } },
+    },
+  ],
+  "update-variable": [
+    {
+      dataSourceId: "variable-id",
+      values: { value: { type: "string[]", value: ["news", "product"] } },
+    },
+  ],
   "create-resource": [
     {
-      name: "Posts",
-      method: "get",
-      url: '"https://api.example.com/posts"',
+      resource: {
+        name: "Posts",
+        method: "get",
+        url: '"https://api.example.com/posts"',
+        headers: [],
+      },
+    },
+    {
+      resource: {
+        name: "Filtered Posts",
+        method: "get",
+        url: '"https://api.example.com/posts"',
+        searchParams: [
+          { name: "tag", value: "filters.tag" },
+          { name: "page", value: "String(filters.page ?? 1)" },
+        ],
+        headers: [{ name: "Authorization", value: '"Bearer " + auth.token' }],
+      },
+      scopeInstanceId: "body-id",
+      dataSourceName: "posts",
+    },
+    {
+      resource: {
+        name: "Post GraphQL",
+        control: "graphql",
+        method: "post",
+        url: '"https://api.example.com/graphql"',
+        headers: [{ name: "Content-Type", value: '"application/json"' }],
+        body: '{ query: "query Post($slug: String!) { post(slug: $slug) { title } }", variables: { slug: system.params.slug } }',
+      },
+      scopeInstanceId: "body-id",
+      dataSourceName: "post",
+    },
+    {
+      resource: {
+        name: "Current Date",
+        control: "system",
+        method: "get",
+        url: '"/$resources/current-date"',
+        headers: [],
+      },
+      scopeInstanceId: "body-id",
+      dataSourceName: "currentDate",
     },
   ],
   "update-resource": [

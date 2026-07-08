@@ -28,6 +28,9 @@ export const generateResources = ({
     const resourceName = scope.getName(resource.id, resource.name);
     generatedRequest += `  const ${resourceName}: ResourceRequest = {\n`;
     generatedRequest += `    name: ${JSON.stringify(resource.name)},\n`;
+    if (resource.control !== undefined) {
+      generatedRequest += `    control: "${resource.control}",\n`;
+    }
     const url = generateExpression({
       expression: resource.url,
       dataSources,

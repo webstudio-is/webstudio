@@ -412,6 +412,12 @@ For responsive page work, use Builder breakpoints as the source of truth:
 - Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"\"Pricing | Acme\"","meta":{"description":"\"Plans for teams\""}}}`.
 - Resource URL, header, search-param, and body fields also store JavaScript expression source. For a fixed URL, use a string literal expression such as `"\"https://api.example.com/items\""`.
 - Resource update example: use `update-resource` with `{"resourceId":"resource-id","values":{"url":"\"https://api.example.com/items\""}}`.
+- Data variable values support `string`, `number`, `boolean`, `string[]`, and `json`. Use `string[]` only for arrays where every item is a string; use `json` for objects, mixed arrays, filters, and nested data.
+- Parameters are contextual values from collections/components and the built-in `system` parameter. Do not create parameters with `create-variable`; use them only in expressions where they are in scope.
+- Use scoped resources for read data. A resource created with `scopeInstanceId`/`dataSourceName` becomes a scoped resource data variable, is generated into the page resource `data` map, and may be loaded while rendering the page. Use this for GET CMS/API data and read the loaded resource result from its wrapper, usually `.data`.
+- Use prop-bound resources for actions. A resource created without `scopeInstanceId` and bound to a component prop such as Form `action` with `bind-props` and `binding.type: "resource"` becomes an action resource in the page resource `action` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and anything that should run only from an explicit form/action flow.
+- For dynamic resource query parameters prefer `searchParams`, for example `{"name":"tag","value":"filters.tag"}`. Header values can be expressions such as `"\"Bearer \" + auth.token"`. Body can be an object expression, including GraphQL payloads such as `{ query: "...", variables: { slug: system.params.slug } }`.
+- Resource methods are `get`, `post`, `put`, and `delete`. Optional resource controls are `graphql` and `system`. Use `control:"graphql"` for GraphQL POST resources with query bodies. Use `control:"system"` for built-in local resource URLs such as `"/$resources/current-date"` and for resources reading the built-in `system` parameter. The built-in system fields are `system.origin`, `system.pathname`, `system.params`, and `system.search`; do not use `system.path`.
 
 ## Pick Read Command
 

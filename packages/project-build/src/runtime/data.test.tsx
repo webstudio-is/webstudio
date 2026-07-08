@@ -228,6 +228,30 @@ test("creates data variable values from form input values", () => {
       value: '{ "enabled": true }',
     })
   ).toEqual({ type: "json", value: { enabled: true } });
+  expect(
+    createDataVariableValueFromInput({
+      type: "string[]",
+      value: '["Draft", "Connected", "Published"]',
+    })
+  ).toEqual({
+    type: "string[]",
+    value: ["Draft", "Connected", "Published"],
+  });
+  expect(() =>
+    createDataVariableValueFromInput({
+      type: "string[]",
+      value: '["Draft", 1]',
+    })
+  ).toThrow();
+  expect(() =>
+    createDataVariableValueFromInput({
+      type: "string[]",
+      value: "",
+    })
+  ).toThrow();
+  expect(
+    createDataVariableValueFromInput({ type: "string[]", value: null })
+  ).toEqual({ type: "string[]", value: [] });
 });
 
 test("validates data variable number values", () => {
@@ -408,6 +432,45 @@ test("update data variable payload validates renamed variables", () => {
   ).toEqual({
     type: "duplicate",
     message: "Name is already used by another variable on this instance",
+  });
+});
+
+test("update data variable payload preserves string array values", () => {
+  const variable: DataSource = {
+    id: "variable-1",
+    scopeInstanceId: "instance-1",
+    name: "stages",
+    type: "variable",
+    value: { type: "string[]", value: ["Draft"] },
+  };
+
+  expect(
+    createDataVariableUpdatePayload({
+      variable,
+      values: {
+        value: {
+          type: "string[]",
+          value: ["Draft", "Connected", "Published"],
+        },
+      },
+      dataSources: [variable],
+    })
+  ).toEqual({
+    payload: [
+      {
+        namespace: "dataSources",
+        patches: [
+          {
+            op: "replace",
+            path: ["variable-1", "value"],
+            value: {
+              type: "string[]",
+              value: ["Draft", "Connected", "Published"],
+            },
+          },
+        ],
+      },
+    ],
   });
 });
 
@@ -1910,6 +1973,22 @@ describe("createResourceValue", () => {
         headers: [],
       })
     ).toThrow("url: URL expects a string");
+  });
+
+  test("accept local resource urls", () => {
+    expect(
+      resourceFieldsInput.parse({
+        name: "Current Date",
+        method: "get",
+        url: '"/$resources/current-date"',
+        searchParams: [],
+        headers: [],
+        control: "system",
+      })
+    ).toMatchObject({
+      url: '"/$resources/current-date"',
+      control: "system",
+    });
   });
 
   test("creates resource values through the sdk schema", () => {

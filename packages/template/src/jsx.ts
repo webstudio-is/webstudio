@@ -67,10 +67,11 @@ export class Parameter {
 }
 
 type ResourceConfig = {
+  control?: Resource["control"];
   url: Expression;
   method: Resource["method"];
-  searchParams: Array<{ name: string; value: Expression }>;
-  headers: Array<{ name: string; value: Expression }>;
+  searchParams?: Array<{ name: string; value: Expression }>;
+  headers?: Array<{ name: string; value: Expression }>;
   body?: Expression;
 };
 
@@ -435,18 +436,20 @@ export const renderTemplate = (
     resources.set(resourceValue, {
       id,
       name: resourceValue.name,
+      control: resourceValue.config.control,
       url: compileExpression(instanceId, resourceValue.config.url),
       method: resourceValue.config.method,
-      searchParams: resourceValue.config.searchParams.map(
+      searchParams: resourceValue.config.searchParams?.map(
         ({ name, value }) => ({
           name,
           value: compileExpression(instanceId, value),
         })
       ),
-      headers: resourceValue.config.headers.map(({ name, value }) => ({
-        name,
-        value: compileExpression(instanceId, value),
-      })),
+      headers:
+        resourceValue.config.headers?.map(({ name, value }) => ({
+          name,
+          value: compileExpression(instanceId, value),
+        })) ?? [],
       body: resourceValue.config.body
         ? compileExpression(instanceId, resourceValue.config.body)
         : undefined,

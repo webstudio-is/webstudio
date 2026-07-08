@@ -1043,6 +1043,40 @@ test("render resource prop", () => {
   ]);
 });
 
+test("render resource with control and omitted search params", () => {
+  const myResource = new ResourceValue("graphqlResource", {
+    control: "graphql",
+    url: expression`"https://api.example.com/graphql"`,
+    method: "post",
+    headers: [{ name: "Content-Type", value: expression`"application/json"` }],
+    body: expression`({ query: "query { viewer { id } }" })`,
+  });
+  const { props, resources } = renderTemplate(
+    <$.Body ws:id="body" action={myResource}></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:action",
+      instanceId: "body",
+      name: "action",
+      type: "resource",
+      value: "resource:0",
+    },
+  ]);
+  expect(resources).toEqual([
+    {
+      id: "resource:0",
+      name: "graphqlResource",
+      control: "graphql",
+      url: `"https://api.example.com/graphql"`,
+      method: "post",
+      searchParams: undefined,
+      headers: [{ name: "Content-Type", value: `"application/json"` }],
+      body: `({ query: "query { viewer { id } }" })`,
+    },
+  ]);
+});
+
 test("render ws:show attribute", () => {
   const { props } = renderTemplate(
     <$.Body ws:id="body" ws:show={true}></$.Body>

@@ -32,6 +32,7 @@ import { z } from "zod";
 import deepEqual from "fast-deep-equal/es6/index.js";
 import {
   createJsonStringifyProxy,
+  isLocalResource,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
 import type { CompactBuild } from "../types";
@@ -272,6 +273,17 @@ export const parseDataVariableJsonExpression = (expression: string) => {
   }
 };
 
+export const validateDataVariableStringArrayValue = (expression: string) => {
+  const expressionError = validateDataVariableJsonValue(expression);
+  if (expressionError) {
+    return expressionError;
+  }
+  const value = parseDataVariableJsonExpression(expression);
+  return Array.isArray(value) && value.every((item) => typeof item === "string")
+    ? ""
+    : "Value expects a JSON array of strings";
+};
+
 export const createDataVariableValueFromInput = ({
   type,
   value,
@@ -287,6 +299,12 @@ export const createDataVariableValueFromInput = ({
   }
   if (type === "boolean") {
     return { type: "boolean", value: value !== null };
+  }
+  if (type === "string[]") {
+    return dataSourceVariableValue.parse({
+      type: "string[]",
+      value: value === null ? [] : parseDataVariableJsonExpression(value),
+    });
   }
   return {
     type: "json",
@@ -1788,6 +1806,9 @@ const getResourceLiteralUrlErrors = (
   }
   if (value.length === 0) {
     return ["url: URL is required"];
+  }
+  if (isLocalResource(value)) {
+    return [];
   }
   try {
     new URL(value);
