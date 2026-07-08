@@ -8,7 +8,7 @@ import {
   InputField,
   Label,
   Link,
-  ProBadge,
+  ProChip,
   Select,
   Text,
   Tooltip,
@@ -55,7 +55,7 @@ const PathField = ({
     <Grid gap={1}>
       <Flex align="center" gap={1}>
         <Label htmlFor={id}>Path</Label>
-        {allowDynamicData === false && <ProBadge>PRO</ProBadge>}
+        {allowDynamicData === false && <ProChip>PRO</ProChip>}
         <Tooltip
           content={
             <>
@@ -210,7 +210,7 @@ const RedirectField = ({
     <Grid gap={1}>
       <Flex align="center" gap={1}>
         <Label htmlFor={id}>Redirect </Label>
-        {allowDynamicData === false && <ProBadge>PRO</ProBadge>}
+        {allowDynamicData === false && <ProChip>PRO</ProChip>}
         <Tooltip
           content={
             <>

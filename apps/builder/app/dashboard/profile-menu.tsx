@@ -9,7 +9,7 @@ import {
   Avatar,
   theme,
   Button,
-  ProBadge,
+  ProChip,
   DropdownMenuSeparator,
   Text,
   Flex,
@@ -57,7 +57,7 @@ const ProfileButton = forwardRef<
         )}
       </Button>
       {hasPurchases === false && (
-        <ProBadge css={{ flexShrink: 0 }}>Free</ProBadge>
+        <ProChip css={{ flexShrink: 0 }}>Free</ProChip>
       )}
     </Flex>
   );

@@ -12,7 +12,7 @@ import {
   Flex,
   Tooltip,
   InputErrorsTooltip,
-  ProBadge,
+  ProChip,
   TextArea,
   IconButton,
 } from "@webstudio-is/design-system";
@@ -140,7 +140,7 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
           >
             <InfoCircleIcon tabIndex={0} />
           </Tooltip>
-          {allowContactEmail === false && <ProBadge>Pro</ProBadge>}
+          {allowContactEmail === false && <ProChip>Pro</ProChip>}
         </Flex>
         <InputErrorsTooltip
           errors={contactEmailError ? [contactEmailError] : undefined}

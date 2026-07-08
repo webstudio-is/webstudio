@@ -9,7 +9,7 @@ import {
   Link,
   List,
   ListItem,
-  ProBadge,
+  ProChip,
   rawTheme,
   ScrollArea,
   SearchField,
@@ -147,7 +147,7 @@ export const SectionAuth = () => {
     <Grid gap={3} css={sectionSpacing}>
       <Flex align="center" gap={1}>
         <Text variant="titles">Authentication</Text>
-        {allowAuth === false && <ProBadge>PRO</ProBadge>}
+        {allowAuth === false && <ProChip>PRO</ProChip>}
         <Tooltip
           content={
             <>

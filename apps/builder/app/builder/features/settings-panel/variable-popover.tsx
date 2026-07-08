@@ -32,7 +32,7 @@ import {
   Label,
   Link,
   PanelBanner,
-  ProBadge,
+  ProChip,
   ScrollArea,
   Select,
   Switch,
@@ -222,7 +222,7 @@ const TypeField = ({
       label: (
         <Flex direction="row" gap="2" align="center">
           Resource
-          {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+          {allowDynamicData === false && <ProChip>Pro</ProChip>}
         </Flex>
       ),
       description:
@@ -233,7 +233,7 @@ const TypeField = ({
       label: (
         <Flex direction="row" gap="2" align="center">
           GraphQL
-          {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+          {allowDynamicData === false && <ProChip>Pro</ProChip>}
         </Flex>
       ),
       description:
@@ -244,7 +244,7 @@ const TypeField = ({
       label: (
         <Flex direction="row" gap="2" align="center">
           System Resource
-          {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+          {allowDynamicData === false && <ProChip>Pro</ProChip>}
         </Flex>
       ),
       description: "A System Resource is a configuration for Webstudio data.",

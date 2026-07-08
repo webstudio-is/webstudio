@@ -3,6 +3,7 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Button,
+  Chip,
   css,
   CssValueListArrowFocus,
   CssValueListItem,
@@ -11,7 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Flex,
-  Label,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
@@ -123,6 +123,33 @@ const variableLabelStyle = css({
   maxWidth: "100%",
 });
 
+const getVariableBadge = (variable: DataSource) => {
+  if (variable.type === "variable") {
+    return {
+      label: "Static variable",
+      text: "S",
+    };
+  }
+  if (variable.type === "resource") {
+    return {
+      label: "Dynamic data variable",
+      text: "D",
+    };
+  }
+};
+
+const DataVariableBadge = ({ variable }: { variable: DataSource }) => {
+  const badge = getVariableBadge(variable);
+  if (badge === undefined) {
+    return null;
+  }
+  return (
+    <Chip title={badge.label} aria-label={badge.label}>
+      {badge.text}
+    </Chip>
+  );
+};
+
 const VariablesItem = ({
   variable,
   source,
@@ -150,9 +177,13 @@ const VariablesItem = ({
         index={index}
         label={
           <Flex align="center">
-            <Label tag="label" color={source}>
+            <Text
+              variant="labels"
+              color={source === "remote" ? "subtle" : "main"}
+              css={{ flexShrink: 0 }}
+            >
               {variable.name}
-            </Label>
+            </Text>
             {value !== undefined && (
               <span className={variableLabelStyle.toString()}>
                 &nbsp;
@@ -162,6 +193,7 @@ const VariablesItem = ({
           </Flex>
         }
         data-state={isMenuOpen ? "open" : undefined}
+        suffix={<DataVariableBadge variable={variable} />}
         buttons={
           <>
             {((source === "local" && variable.type !== "parameter") ||

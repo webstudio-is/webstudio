@@ -7,7 +7,7 @@ import {
   InputField,
   Label,
   Link,
-  ProBadge,
+  ProChip,
   Text,
   Tooltip,
   buttonStyle,
@@ -69,7 +69,7 @@ export const AuthSection = ({
             }}
           />
           <Label htmlFor={enableId}>Require login and password</Label>
-          {showUpgrade && <ProBadge>PRO</ProBadge>}
+          {showUpgrade && <ProChip>PRO</ProChip>}
           <Tooltip
             content={
               <>
