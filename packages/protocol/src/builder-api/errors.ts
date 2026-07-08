@@ -4,6 +4,7 @@ const publicApiRemoteErrorCodes = [
   "FORBIDDEN",
   "INTERNAL_SERVER_ERROR",
   "NOT_FOUND",
+  "PROJECT_NOT_PUBLISHED",
   "UNAUTHORIZED",
 ] as const;
 

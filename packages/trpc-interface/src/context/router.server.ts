@@ -5,6 +5,14 @@ import {
   getApiCompatibilityPayload,
 } from "../api-compatibility";
 
+const getWebstudioErrorCode = (cause: unknown) => {
+  if (typeof cause !== "object" || cause === null) {
+    return;
+  }
+  const code = (cause as { webstudioCode?: unknown }).webstudioCode;
+  return typeof code === "string" ? code : undefined;
+};
+
 export const {
   router,
   procedure,
@@ -22,8 +30,9 @@ export const {
             target,
           })
         : undefined);
+    const webstudioCode = getWebstudioErrorCode(error.cause);
 
-    if (payload === undefined) {
+    if (payload === undefined && webstudioCode === undefined) {
       return shape;
     }
 
@@ -31,7 +40,8 @@ export const {
       ...shape,
       data: {
         ...shape.data,
-        apiCompatibility: payload,
+        ...(payload === undefined ? {} : { apiCompatibility: payload }),
+        ...(webstudioCode === undefined ? {} : { webstudioCode }),
       },
     };
   },

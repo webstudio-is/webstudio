@@ -164,6 +164,60 @@ test("sends linked share token when synchronizing by build id", async () => {
   });
 });
 
+test("explains unpublished project bundle errors when synchronizing linked project", async () => {
+  loadProjectBundleByProjectId.mockRejectedValue(
+    Object.assign(new Error("Not published"), {
+      data: { code: "NOT_FOUND", webstudioCode: "PROJECT_NOT_PUBLISHED" },
+    })
+  );
+  const resolveApiConnection = vi.fn(async () => ({
+    authToken: "share-token",
+    origin: "https://example.com",
+    projectId: "project-id",
+  }));
+
+  await expect(
+    sync({}, { ...dependencies, resolveApiConnection })
+  ).rejects.toThrow("Handled CLI error");
+
+  expect(indicator.stop).toHaveBeenCalledWith(
+    [
+      "Unable to synchronize project bundle because the project is not published.",
+      "`webstudio sync` downloads the published project bundle.",
+      "For visual verification of current MCP/API edits, use `preview.start` or `webstudio preview --source session` instead.",
+    ].join("\n"),
+    2
+  );
+});
+
+test("explains unpublished project bundle errors when synchronizing by build id", async () => {
+  loadProjectBundleByBuildId.mockRejectedValue(
+    Object.assign(new Error("Not published"), {
+      data: { code: "NOT_FOUND", webstudioCode: "PROJECT_NOT_PUBLISHED" },
+    })
+  );
+
+  await expect(
+    sync(
+      {
+        authToken: "token-1",
+        buildId: "build-1",
+        origin: "https://example.com",
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expect(indicator.stop).toHaveBeenCalledWith(
+    [
+      "Unable to synchronize project bundle because the project is not published.",
+      "`webstudio sync` downloads the published project bundle.",
+      "For visual verification of current MCP/API edits, use `preview.start` or `webstudio preview --source session` instead.",
+    ].join("\n"),
+    2
+  );
+});
+
 test("does not write local data when synchronized asset download fails", async () => {
   const assets = [createImageAssetFixture()];
   loadProjectBundleByBuildId.mockResolvedValue(createProjectBundle({ assets }));

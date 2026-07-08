@@ -6,7 +6,7 @@ describe("getComponentTemplates", () => {
     const templates = getComponentTemplates();
 
     expect(getComponentTemplates()).toBe(templates);
-    expect(templates.get("Button")).toEqual(
+    expect(templates.get("Form")).toEqual(
       expect.objectContaining({
         template: expect.objectContaining({
           children: expect.any(Array),

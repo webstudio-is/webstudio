@@ -8,6 +8,7 @@ test("recognizes public API remote error codes", () => {
     "FORBIDDEN",
     "INTERNAL_SERVER_ERROR",
     "NOT_FOUND",
+    "PROJECT_NOT_PUBLISHED",
     "UNAUTHORIZED",
   ]) {
     expect(isPublicApiRemoteErrorCode(code)).toBe(true);

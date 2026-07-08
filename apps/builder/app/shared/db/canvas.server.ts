@@ -28,6 +28,10 @@ const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
 type Project = NonNullable<Awaited<ReturnType<typeof loadById>>>;
 type Build = Awaited<ReturnType<typeof loadBuildById>>;
 
+class ProjectNotPublishedError extends Error {
+  webstudioCode = "PROJECT_NOT_PUBLISHED" as const;
+}
+
 const serializeProjectBundle = ({
   build,
   assets,
@@ -95,13 +99,13 @@ const loadProductionCanvasDataAndProject = async (
   const build = await loadBuildById(context, buildId);
 
   if (build === undefined) {
-    throw new Error("The project is not published");
+    throw new ProjectNotPublishedError("The project is not published");
   }
 
   const { deployment } = build;
 
   if (deployment === undefined) {
-    throw new Error("The project is not published");
+    throw new ProjectNotPublishedError("The project is not published");
   }
 
   project = project ?? (await loadById(build.projectId, context));
@@ -181,7 +185,7 @@ export const loadPublishedProjectBundleByProjectId = async (
 
   const buildId = project.latestBuildVirtual?.buildId;
   if (buildId === undefined || buildId === null) {
-    throw new Error("The project is not published yet");
+    throw new ProjectNotPublishedError("The project is not published yet");
   }
 
   const { data } = await loadProductionCanvasDataAndProject(

@@ -154,7 +154,9 @@ export const getApiErrorCode = (error: unknown) => {
   if (typeof data !== "object" || data === null) {
     return;
   }
-  const code = (data as { code?: unknown }).code;
+  const code =
+    (data as { webstudioCode?: unknown }).webstudioCode ??
+    (data as { code?: unknown }).code;
   return typeof code === "string" && isPublicApiRemoteErrorCode(code)
     ? code
     : undefined;
