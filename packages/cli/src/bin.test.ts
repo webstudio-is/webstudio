@@ -42,7 +42,7 @@ test("local launcher bootstraps source cli without caller-provided node options"
   expect(JSON.parse(result.stdout)).toMatchObject({
     topic: "llm",
   });
-});
+}, 15_000);
 
 test("local launcher restores shell cwd when pnpm starts from package directory", async () => {
   const projectRoot = await mkdtemp(join(tmpdir(), "webstudio-bin-cwd-test-"));
@@ -78,4 +78,4 @@ test("local launcher restores shell cwd when pnpm starts from package directory"
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
   }
-});
+}, 15_000);

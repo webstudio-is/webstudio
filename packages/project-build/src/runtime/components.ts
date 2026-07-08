@@ -75,6 +75,7 @@ export const insertFragmentInput = z
     ),
     conflictResolution: conflictResolutionInput.optional(),
     contentMode: z.boolean().optional(),
+    allowExistingComponents: z.boolean().optional(),
     mode: instanceInsertModeInput.optional(),
     insertIndex: insertIndexInput.optional(),
   })
@@ -667,6 +668,7 @@ const createInsertFragmentMutation = ({
   conflictResolution,
   contentMode = false,
   allowTemplateInternalComponents = false,
+  allowExistingComponents = false,
   context,
 }: {
   state: ComponentInsertState;
@@ -678,6 +680,7 @@ const createInsertFragmentMutation = ({
   conflictResolution?: ConflictResolution;
   contentMode?: boolean;
   allowTemplateInternalComponents?: boolean;
+  allowExistingComponents?: boolean;
   context: BuilderRuntimeContext;
 }) => {
   const mutationState = getRequiredComponentInsertState(state);
@@ -696,7 +699,8 @@ const createInsertFragmentMutation = ({
       instancesById: fragmentInstancesById,
       templates,
       page,
-      allowTemplateInternalComponents,
+      allowTemplateInternalComponents:
+        allowTemplateInternalComponents || allowExistingComponents,
     });
   }
 
@@ -995,6 +999,7 @@ export const insertFragment = (
     insertIndex: input.insertIndex,
     conflictResolution: input.conflictResolution,
     contentMode: input.contentMode,
+    allowExistingComponents: input.allowExistingComponents,
     context,
   });
 };

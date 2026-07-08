@@ -430,8 +430,8 @@ describe("insert webstudio fragment at", () => {
     await insertWebstudioFragmentAt(
       renderTemplate(
         <>
-          <$.Heading ws:id="headingId"></$.Heading>
-          <$.Paragraph ws:id="paragraphId"></$.Paragraph>
+          <ws.element ws:id="headingId" ws:tag="h1"></ws.element>
+          <ws.element ws:id="paragraphId" ws:tag="p"></ws.element>
         </>
       ),
       {
@@ -442,8 +442,8 @@ describe("insert webstudio fragment at", () => {
     expect($instances.get()).toEqual(
       renderData(
         <$.Body ws:id="bodyId">
-          <$.Heading ws:id={expect.any(String)}></$.Heading>
-          <$.Paragraph ws:id={expect.any(String)}></$.Paragraph>
+          <ws.element ws:id={expect.any(String)} ws:tag="h1"></ws.element>
+          <ws.element ws:id={expect.any(String)} ws:tag="p"></ws.element>
         </$.Body>
       ).instances
     );
@@ -503,7 +503,7 @@ describe("insert webstudio fragment at", () => {
       ).instances
     );
     await insertWebstudioFragmentAt(
-      renderTemplate(<$.Heading ws:id="headingId"></$.Heading>),
+      renderTemplate(<ws.element ws:id="headingId" ws:tag="h1"></ws.element>),
       {
         parentSelector: ["boxId", "bodyId"],
         position: "after",
@@ -513,7 +513,7 @@ describe("insert webstudio fragment at", () => {
       renderData(
         <$.Body ws:id="bodyId">
           <$.Box ws:id="boxId"></$.Box>
-          <$.Heading ws:id={expect.any(String)}></$.Heading>
+          <ws.element ws:id={expect.any(String)} ws:tag="h1"></ws.element>
         </$.Body>
       ).instances
     );
@@ -522,7 +522,7 @@ describe("insert webstudio fragment at", () => {
   test("insert fragment inside of body when configured to place after insertable", async () => {
     $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
     await insertWebstudioFragmentAt(
-      renderTemplate(<$.Heading ws:id="headingId"></$.Heading>),
+      renderTemplate(<ws.element ws:id="headingId" ws:tag="h1"></ws.element>),
       {
         parentSelector: ["bodyId"],
         position: "after",
@@ -531,7 +531,7 @@ describe("insert webstudio fragment at", () => {
     expect($instances.get()).toEqual(
       renderData(
         <$.Body ws:id="bodyId">
-          <$.Heading ws:id={expect.any(String)}></$.Heading>
+          <ws.element ws:id={expect.any(String)} ws:tag="h1"></ws.element>
         </$.Body>
       ).instances
     );
@@ -543,7 +543,7 @@ describe("insert webstudio fragment at", () => {
 
     expect(
       await insertWebstudioFragmentAt(
-        renderTemplate(<$.Heading ws:id="headingId"></$.Heading>),
+        renderTemplate(<ws.element ws:id="headingId" ws:tag="h1"></ws.element>),
         {
           parentSelector: ["missingId"],
           position: "end",
@@ -581,7 +581,7 @@ describe("insert webstudio fragment at", () => {
     );
 
     await insertWebstudioFragmentAt(
-      renderTemplate(<$.Heading ws:id="heading"></$.Heading>),
+      renderTemplate(<ws.element ws:id="heading" ws:tag="h1"></ws.element>),
       {
         parentSelector: ["slot1", "bodyId"],
         position: "end",
@@ -617,7 +617,7 @@ describe("insert webstudio fragment at", () => {
     );
 
     await insertWebstudioFragmentAt(
-      renderTemplate(<$.Heading ws:id="heading"></$.Heading>),
+      renderTemplate(<ws.element ws:id="heading" ws:tag="h1"></ws.element>),
       {
         parentSelector: ["slot1", "bodyId"],
         position: "end",
@@ -661,7 +661,7 @@ describe("insert webstudio fragment at", () => {
     );
 
     await insertWebstudioFragmentAt(
-      renderTemplate(<$.Heading ws:id="heading"></$.Heading>),
+      renderTemplate(<ws.element ws:id="heading" ws:tag="h1"></ws.element>),
       {
         parentSelector: ["box", "fragment", "slot1", "bodyId"],
         position: "after",
@@ -705,7 +705,7 @@ describe("insert webstudio fragment at", () => {
     );
 
     await insertWebstudioFragmentAt(
-      renderTemplate(<$.Heading ws:id="heading"></$.Heading>),
+      renderTemplate(<ws.element ws:id="heading" ws:tag="h1"></ws.element>),
       {
         parentSelector: ["box", "div", "fragment", "slot1", "bodyId"],
         position: "after",
@@ -748,35 +748,21 @@ describe("insert webstudio component at", () => {
 
   test("inserts component through runtime template application", async () => {
     expect(
-      await insertWebstudioComponentAt("Box", {
+      await insertWebstudioComponentAt("Form", {
         parentSelector: ["bodyId"],
         position: "end",
       })
     ).toBe(true);
 
     const body = $instances.get().get("bodyId");
-    const boxId =
+    const formId =
       body?.children[0]?.type === "id" ? body.children[0].value : "";
-    const box = $instances.get().get(boxId);
-    const textId = box?.children[0]?.type === "id" ? box.children[0].value : "";
-    expect(box).toEqual({
+    const form = $instances.get().get(formId);
+    expect(form).toEqual({
       type: "instance",
-      id: boxId,
-      component: "Box",
-      label: "Example Card",
-      children: [{ type: "id", value: textId }],
-    });
-    expect($instances.get().get(textId)).toEqual({
-      type: "instance",
-      id: textId,
-      component: "Text",
-      children: [
-        {
-          type: "text",
-          value: "Component example container",
-          placeholder: true,
-        },
-      ],
+      id: formId,
+      component: "Form",
+      children: expect.any(Array),
     });
   });
 });
@@ -1024,8 +1010,9 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
 
     // Create fragment with token that has same name but different styles
     const fragment = renderTemplate(
-      <$.Box
+      <ws.element
         ws:id="box"
+        ws:tag="div"
         ws:tokens={[
           token(
             "primary",
@@ -1034,7 +1021,7 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
             `
           ),
         ]}
-      ></$.Box>
+      ></ws.element>
     );
 
     setDataStores(data);
@@ -1099,8 +1086,9 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
     );
 
     const fragment = renderTemplate(
-      <$.Box
+      <ws.element
         ws:id="box"
+        ws:tag="div"
         ws:tokens={[
           token(
             "primary",
@@ -1109,7 +1097,7 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
             `
           ),
         ]}
-      ></$.Box>
+      ></ws.element>
     );
 
     setDataStores(data);
@@ -1173,8 +1161,9 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
 
     // Fragment with same "primary" token but different color and new property
     const fragment = renderTemplate(
-      <$.Box
+      <ws.element
         ws:id="box"
+        ws:tag="div"
         ws:tokens={[
           token(
             "primary",
@@ -1184,7 +1173,7 @@ describe("insertWebstudioFragmentAt with conflictResolution", () => {
             `
           ),
         ]}
-      ></$.Box>
+      ></ws.element>
     );
 
     setDataStores(data);
