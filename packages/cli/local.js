@@ -3,7 +3,7 @@
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { chdir, cwd } from "node:process";
 
 const entrypointPath = fileURLToPath(import.meta.url);
@@ -37,7 +37,9 @@ if (process.env.WEBSTUDIO_LOCAL_CLI_BOOTSTRAPPED !== "1") {
   const execArgv = [
     ...process.execArgv,
     ...(hasWebstudioCondition ? [] : [conditionsArg]),
-    ...(hasTsxImport ? [] : [`--import=${require.resolve("tsx")}`]),
+    ...(hasTsxImport
+      ? []
+      : [`--import=${pathToFileURL(require.resolve("tsx")).href}`]),
   ];
   const result = spawnSync(
     process.execPath,
