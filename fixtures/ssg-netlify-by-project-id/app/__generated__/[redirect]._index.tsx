@@ -12,7 +12,7 @@ export const projectId = "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e";
 
 export const projectDomain = "fixture-client-do-not-touch-wsmel";
 
-export const lastPublished = "2026-01-04T10:46:48.415Z";
+export const lastPublished = "2024-09-03T04:31:42.776Z";
 
 export const siteName = undefined;
 
