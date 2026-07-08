@@ -308,7 +308,7 @@ test("prints llm manual with discovery rules", () => {
   );
   expect(output).toContain('workflow.next {"goal":"design-system-page"}');
   expect(output).toContain("one dry-run JSX section");
-  expect(output).toContain("one coverage batch");
+  expect(output).toContain("components.coverage-insert-next");
   expect(output).toContain("Phase commands do not include nextPhase");
   expect(output).toContain("`className` or `htmlFor`");
   expect(output).toContain(

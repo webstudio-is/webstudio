@@ -28,6 +28,11 @@ class FakeBrowserProcess {
 
 class FakeWebSocket {
   readonly sentMethods: string[] = [];
+  readonly sentMessages: Array<{
+    id: number;
+    method: string;
+    params?: Record<string, unknown>;
+  }> = [];
   readonly listeners = new Map<
     string,
     Array<(event: { data?: string }) => void>
@@ -54,6 +59,7 @@ class FakeWebSocket {
       method: string;
       params?: Record<string, unknown>;
     };
+    this.sentMessages.push(message);
     this.sentMethods.push(message.method);
     const respond = (result: unknown = {}) => {
       this.emit("message", {
@@ -73,6 +79,21 @@ class FakeWebSocket {
         () =>
           respond({
             data: Buffer.from("fake-png").toString("base64"),
+          }),
+        0
+      );
+      return;
+    }
+    if (message.method === "Page.getLayoutMetrics") {
+      setTimeout(
+        () =>
+          respond({
+            cssContentSize: {
+              x: 0,
+              y: 0,
+              width: 812.4,
+              height: 2345.6,
+            },
           }),
         0
       );
@@ -234,6 +255,47 @@ test("captures through DevTools with lifecycle and selector waits", async () => 
   expect(dependencies.rm).toHaveBeenCalledWith("/tmp/webstudio-browser-test", {
     recursive: true,
     force: true,
+  });
+});
+
+test("captures full page through DevTools layout metrics", async () => {
+  const browserProcess = new FakeBrowserProcess();
+  const socket = new FakeWebSocket();
+  const dependencies = createDependencies({ browserProcess, socket });
+
+  await captureBrowserScreenshot(
+    {
+      url: "https://example.com",
+      output: "/tmp/full-page.png",
+      width: 800,
+      height: 600,
+      fullPage: true,
+      browserPath: "/usr/bin/chromium",
+      uid: 1000,
+      waitUntil: "networkidle",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    dependencies
+  );
+
+  expect(socket.sentMethods).toEqual(
+    expect.arrayContaining(["Page.getLayoutMetrics", "Page.captureScreenshot"])
+  );
+  expect(
+    socket.sentMessages.find(
+      (message) => message.method === "Page.captureScreenshot"
+    )?.params
+  ).toEqual({
+    format: "png",
+    captureBeyondViewport: true,
+    clip: {
+      x: 0,
+      y: 0,
+      width: 813,
+      height: 2346,
+      scale: 1,
+    },
   });
 });
 

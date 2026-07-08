@@ -12,6 +12,7 @@ export type BrowserScreenshotOptions = {
   output: string;
   width: number;
   height: number;
+  fullPage?: boolean;
   url: string;
   uid?: number;
   waitUntil: ScreenshotWaitUntil;
@@ -336,6 +337,52 @@ const createBrowserLaunchArgs = ({
   "about:blank",
 ];
 
+const getScreenshotCaptureParams = async ({
+  send,
+  fullPage,
+}: {
+  send: <Result = unknown>(
+    method: string,
+    params?: Record<string, unknown>
+  ) => Promise<Result>;
+  fullPage?: boolean;
+}) => {
+  if (fullPage !== true) {
+    return {
+      format: "png",
+      captureBeyondViewport: false,
+    };
+  }
+  const metrics = await send<{
+    cssContentSize?: {
+      x?: number;
+      y?: number;
+      width?: number;
+      height?: number;
+    };
+  }>("Page.getLayoutMetrics");
+  const { x = 0, y = 0, width, height } = metrics.cssContentSize ?? {};
+  if (
+    typeof width !== "number" ||
+    typeof height !== "number" ||
+    width <= 0 ||
+    height <= 0
+  ) {
+    throw new Error("Browser did not report a valid full-page content size.");
+  }
+  return {
+    format: "png",
+    captureBeyondViewport: true,
+    clip: {
+      x,
+      y,
+      width: Math.ceil(width),
+      height: Math.ceil(height),
+      scale: 1,
+    },
+  };
+};
+
 export const captureBrowserScreenshot = async (
   options: BrowserScreenshotOptions,
   dependencies = defaultBrowserScreenshotDependencies
@@ -427,12 +474,13 @@ export const captureBrowserScreenshot = async (
         if (options.waitForTimeout > 0) {
           await delay(options.waitForTimeout);
         }
+        const captureParams = await getScreenshotCaptureParams({
+          send,
+          fullPage: options.fullPage,
+        });
         const screenshot = await send<{ data: string }>(
           "Page.captureScreenshot",
-          {
-            format: "png",
-            captureBeyondViewport: false,
-          }
+          captureParams
         );
         await dependencies.writeFile(
           options.output,

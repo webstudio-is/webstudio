@@ -58,10 +58,10 @@ Rules:
 - Prefer JSX for authored/styled content. Common `insert-fragment` inputs:
 
 ```jsonl
-{"parentInstanceId":"root-id","fragment":"<$.Box ws:style={css`padding: 32px; display: grid; gap: 16px;`}><$.Heading>Northstar Product OS</$.Heading><$.Paragraph>Reusable patterns for teams.</$.Paragraph></$.Box>"}
-{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\" style={{ padding: 32, borderRadius: 16 }}><$.Heading>Operations Console</$.Heading><$.Paragraph>React-style object styles become editable Webstudio styles.</$.Paragraph></ws.element>"}
-{"parentInstanceId":"root-id","fragment":"<$.Box ws:tokens={[token(\"accent\", css`color: #0f766e;`)]}><$.Button onClick={new ActionValue([\"event\"], expression`console.log(event)`)}>Track launch</$.Button></$.Box>"}
-{"parentInstanceId":"root-id","fragment":"<$.Box><radix.Switch><radix.SwitchThumb /></radix.Switch></$.Box>"}
+{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag="h2">Northstar Product OS</ws.element><ws.element ws:tag="p">Reusable patterns for teams.</ws.element></ws.element>"}
+{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\" style={{ padding: 32, borderRadius: 16 }}><ws.element ws:tag="h2">Operations Console</ws.element><ws.element ws:tag="p">React-style object styles become editable Webstudio styles.</ws.element></ws.element>"}
+{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\" ws:tokens={[token(\"accent\", css`color: #0f766e;`)]}><ws.element ws:tag="button" onClick={new ActionValue([\"event\"], expression`console.log(event)`)}>Track launch</ws.element></ws.element>"}
+{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\"section\"><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"}
 ```
 
 - Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`.
@@ -76,7 +76,7 @@ Rules:
 - The command writes sparse progress to stderr, including start, success/failure, elapsed time, and committed status when the tool returns session metadata.
 - Invalid argument types fail loudly with path-specific messages, for example `meta.guide input.brief must be a string when provided`.
 - Run one-shot shortcut or `mcp single-op-call` commands sequentially against the same linked `.webstudio` folder. If you receive `PROJECT_SESSION_BUSY`, another CLI/MCP process is updating the local session; wait a moment and retry sequentially.
-- If you are a delegated agent and your parent cannot see live stderr/stdout, do not run a long sequence of shortcut or `mcp single-op-call` commands silently and do not wrap many calls in a shell loop. Treat each parent-visible checkpoint as the unit of work. If the parent asks for status within 30 seconds, run exactly one `webstudio <tool>` or `webstudio mcp single-op-call` command, report that command/result, then wait before the next MCP command. For all-component design-system pages, checkpoint after discovery, checkpoint after page creation, then insert one root/template component before checkpointing again.
+- If you are a delegated agent and your parent cannot see live stderr/stdout, do not run a long sequence of shortcut or `mcp single-op-call` commands silently and do not wrap many calls in a shell loop. Treat each parent-visible checkpoint as the unit of work. If the parent asks for status within 30 seconds, run exactly one `webstudio <tool>` or `webstudio mcp single-op-call` command, report that command/result, then wait before the next MCP command. For all-component design-system pages, checkpoint after discovery, checkpoint after page creation, call `components.coverage-insert-next` once before checkpointing again, then finish with the `presentation-pass` workflow phase. Coverage alone is not completion; organize examples into styled sections/cards.
 
 ## Shared-Session Shell Runs
 
@@ -96,8 +96,8 @@ Input shape:
 Rules:
 
 - The command prints JSON to stdout for both success and failure. It stops at the first failed call and prints partial results in `{ "ok": false, "error": ..., "data": { "completedCalls": ..., "results": [...] }, "meta": ... }`, then exits nonzero.
-- If a call returns `checkpoint.required`, `mcp run` stops immediately before later calls and prints partial results with `CHECKPOINT_REQUIRED`. Report the checkpoint to the parent/user, then call `checkpoint.ack {"reported":true}` before continuing.
-- For `mcp single-op-call`, checkpoint requirements persist across later one-shot CLI processes until you call `checkpoint.ack {"reported":true}`.
+- If a call returns `checkpoint.required`, `mcp run` stops immediately before later calls and prints partial results with `CHECKPOINT_REQUIRED`. Stop now and report the checkpoint to the parent/user. Only after the parent/user continues, call `checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"}` before continuing.
+- For `mcp single-op-call`, checkpoint requirements persist across later one-shot CLI processes until you call `checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"}`.
 - Use this instead of manually sending JSON-RPC frames to `webstudio mcp` from a shell.
 
 ## Discovery

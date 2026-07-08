@@ -428,6 +428,7 @@ export const replaceDataSourcesInExpression = (
 ) => {
   return transpileExpression({
     expression,
+    executable: true,
     replaceVariable: (identifier) => {
       const dataSourceId = decodeDataSourceVariable(identifier);
       if (dataSourceId === undefined) {

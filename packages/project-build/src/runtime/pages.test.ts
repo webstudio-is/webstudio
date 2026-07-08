@@ -40,6 +40,7 @@ import {
   computePageSettingsPath,
   getParentFolderId,
   getPageExpressionErrors,
+  getPageByPath,
   getInitialPageSettingsMeta,
   getPageSettingsAuthFromValues,
   getPageSettingsUpdateData,
@@ -707,6 +708,29 @@ describe("serialized page helpers", () => {
         pagePath: "/missing",
       })?.id
     ).toBe("not-found");
+    expect(getPageByPath({ pages }, { path: "/pricing" })).toMatchObject({
+      id: "pricing",
+      requestedPath: "/pricing",
+      found: true,
+      exactMatch: true,
+      matchedPattern: false,
+      matchedFallback: false,
+    });
+    expect(getPageByPath({ pages }, { path: "/missing" })).toMatchObject({
+      requestedPath: "/missing",
+      found: false,
+      exactMatch: false,
+      matchedPattern: true,
+      matchedFallback: true,
+      fallbackPage: {
+        id: "not-found",
+        path: "/*",
+        meta: {
+          status: "404",
+        },
+      },
+      guidance: expect.stringContaining("No exact page exists"),
+    });
   });
 
   test("resolves dynamic page patterns by requested path", () => {
@@ -744,6 +768,16 @@ describe("serialized page helpers", () => {
         pagePath: "/blog/first-post/comments",
       })
     ).toBeUndefined();
+    expect(
+      getPageByPath({ pages }, { path: "/blog/first-post" })
+    ).toMatchObject({
+      id: "post",
+      requestedPath: "/blog/first-post",
+      found: true,
+      exactMatch: false,
+      matchedPattern: true,
+      matchedFallback: false,
+    });
   });
 
   test("serializes page summary and details with parent folder", () => {

@@ -16,6 +16,7 @@ const createDependencies = (
 ): PreviewServerDependencies => ({
   spawn: vi.fn(),
   fetch: vi.fn(async () => new Response("", { status: 200 })),
+  readdir: vi.fn(async () => []),
   sleep: vi.fn(async () => undefined),
   platform: "linux",
   ...overrides,
@@ -338,6 +339,58 @@ test("waits for preview server readiness", async () => {
 
   expect(fetch).toHaveBeenCalledTimes(2);
   expect(sleep).toHaveBeenCalledWith(5);
+});
+
+test("waits until the latest preview build asset is served", async () => {
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response('<link rel="stylesheet" href="/assets/index-old.css" />', {
+        status: 200,
+      })
+    )
+    .mockResolvedValueOnce(
+      new Response('<link rel="stylesheet" href="/assets/index-new.css" />', {
+        status: 200,
+      })
+    );
+  const sleep = vi.fn(async () => undefined);
+
+  await waitForPreviewReady(
+    "http://127.0.0.1:5173/",
+    {
+      timeoutMs: 1000,
+      intervalMs: 5,
+      requiredAssetNames: ["index-new.css"],
+    },
+    createDependencies({ fetch, sleep })
+  );
+
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(sleep).toHaveBeenCalledWith(5);
+});
+
+test("rejects stale preview servers that serve a previous build", async () => {
+  const fetch = vi.fn(
+    async () =>
+      new Response('<link rel="stylesheet" href="/assets/index-old.css" />', {
+        status: 200,
+      })
+  );
+
+  await expect(
+    waitForPreviewReady(
+      "http://127.0.0.1:5173/",
+      {
+        timeoutMs: 1,
+        intervalMs: 5,
+        requiredAssetNames: ["index-new.css"],
+      },
+      createDependencies({ fetch })
+    )
+  ).rejects.toThrow(
+    "Preview server at http://127.0.0.1:5173/ did not serve the latest build assets."
+  );
 });
 
 test("preview controller waits when starting through startAndWait", async () => {

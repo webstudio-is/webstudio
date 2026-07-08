@@ -212,6 +212,61 @@ test("inserts registered component template", async () => {
   });
 });
 
+test("remaps action data source references when inserting registered component template", async () => {
+  const parent = createParent();
+  const mutation = await insertComponent(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      component: "Form",
+    },
+    {
+      createId: createIdFactory(),
+      projectId: "project-id",
+    }
+  );
+
+  const [formDataSource] = getAddedValues<{ id: string; name: string }>(
+    mutation,
+    "dataSources"
+  );
+  expect(formDataSource).toMatchObject({
+    id: "generated-9",
+    name: "formState",
+  });
+  const formProps = getAddedValues<{
+    id: string;
+    instanceId: string;
+    name: string;
+    type: string;
+    value: unknown;
+  }>(mutation, "props").filter(
+    (prop) => prop.name === "state" || prop.name === "onStateChange"
+  );
+  expect(formProps).toEqual([
+    {
+      id: "generated-10",
+      instanceId: "generated-0",
+      name: "state",
+      type: "expression",
+      value: "$ws$dataSource$generated__DASH__9",
+    },
+    {
+      id: "generated-11",
+      instanceId: "generated-0",
+      name: "onStateChange",
+      type: "action",
+      value: [
+        {
+          type: "execute",
+          args: ["state"],
+          code: "$ws$dataSource$generated__DASH__9 = state",
+        },
+      ],
+    },
+  ]);
+});
+
 test("inserts webstudio jsx fragment with styles", async () => {
   const parent = createParent();
   const mutation = await insertFragment(
@@ -1236,6 +1291,29 @@ test("inserts core component templates with text content", async () => {
       children: [{ type: "text", value: "Button", placeholder: true }],
     })
   );
+});
+
+test("inserts component templates with hidden internal descendants", async () => {
+  const parent = createParent();
+  const mutation = await insertComponent(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      component: "@webstudio-is/sdk-components-react-radix:Accordion",
+    },
+    {
+      createId: createIdFactory(),
+    }
+  );
+
+  const addedComponents = getAddedValues<Instance>(mutation, "instances").map(
+    (instance) => instance.component
+  );
+
+  expect(addedComponents).toContain(
+    "@webstudio-is/sdk-components-react-radix:Accordion"
+  );
+  expect(addedComponents).toContain("Text");
 });
 
 test("inserts single instance for components without templates", async () => {

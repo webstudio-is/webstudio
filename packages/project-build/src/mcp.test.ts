@@ -469,6 +469,7 @@ describe("project session mcp adapter", () => {
       "components.list",
       "components.coverage-plan",
       "components.coverage-status",
+      "components.coverage-insert-next",
       "components.find",
       "components.search",
       "components.get",
@@ -894,7 +895,8 @@ describe("project session mcp adapter", () => {
       name: "insert-fragment",
       input: {
         parentInstanceId: "body",
-        fragment: "<$.Box><$.Heading>Title</$.Heading></$.Box>",
+        fragment:
+          '<ws.element ws:tag="section"><ws.element ws:tag="h2">Title</ws.element></ws.element>',
       },
     });
 
@@ -905,8 +907,8 @@ describe("project session mcp adapter", () => {
         parentInstanceId: "body",
         fragment: expect.objectContaining({
           instances: expect.arrayContaining([
-            expect.objectContaining({ component: "Box" }),
-            expect.objectContaining({ component: "Heading" }),
+            expect.objectContaining({ component: "ws:element" }),
+            expect.objectContaining({ component: "ws:element" }),
           ]),
         }),
         mode: undefined,
@@ -952,7 +954,7 @@ describe("project session mcp adapter", () => {
         name: "insert-fragment",
         input: {
           parentInstanceId: "body",
-          source: "<$.Box />",
+          source: '<ws.element ws:tag="section" />',
         },
       })
     ).rejects.toThrow(
@@ -974,7 +976,7 @@ describe("project session mcp adapter", () => {
         name: "insert-fragment",
         input: {
           parentInstanceId: "body",
-          jsx: "<$.Box />",
+          jsx: '<ws.element ws:tag="section" />',
         },
       })
     ).rejects.toThrow(
@@ -996,7 +998,7 @@ describe("project session mcp adapter", () => {
         name: "insert-fragment",
         input: {
           parentId: "body",
-          fragment: "<$.Box />",
+          fragment: '<ws.element ws:tag="section" />',
         },
       })
     ).rejects.toThrow(
@@ -1880,14 +1882,37 @@ describe("project session mcp adapter", () => {
       name: "workflow.next",
       input: { goal: "design-system-page" },
     });
+    await expect(
+      adapter.callTool({
+        name: "meta.get_more_tools",
+        input: { tools: ["publish"] },
+      })
+    ).rejects.toThrow("CHECKPOINT_REQUIRED");
+    const ackCheckpoint = () =>
+      adapter.callTool({
+        name: "checkpoint.ack",
+        input: {
+          reported: true,
+          continueAfterReport: true,
+          summary: "reported checkpoint",
+        },
+      });
+    await ackCheckpoint();
     const workflowPhase = await adapter.callTool({
       name: "workflow.next",
       input: { goal: "design-system-page", phase: "dry-run-section" },
     });
+    await ackCheckpoint();
     const workflowPagePhase = await adapter.callTool({
       name: "workflow.next",
       input: { goal: "design-system-page", phase: "page-creation" },
     });
+    await ackCheckpoint();
+    const workflowPresentationPhase = await adapter.callTool({
+      name: "workflow.next",
+      input: { goal: "design-system-page", phase: "presentation-pass" },
+    });
+    await ackCheckpoint();
     const details = await adapter.callTool({
       name: "meta.get_more_tools",
       input: { tools: ["publish"] },
@@ -1963,7 +1988,7 @@ describe("project session mcp adapter", () => {
       expect.stringContaining("one dry-run JSX section")
     );
     expect(indexData.readThisFirst).toEqual(
-      expect.stringContaining("one coverage batch")
+      expect.stringContaining("components.coverage-insert-next")
     );
     expect(indexData.readThisFirst).toEqual(
       expect.stringContaining("Phase commands do not include nextPhase")
@@ -2017,8 +2042,12 @@ describe("project session mcp adapter", () => {
         phase: "discovery",
         mustReturnAfter: true,
         parentVisibleCheckpoint: expect.stringContaining(
-          "Phase commands do not include nextPhase"
+          "acknowledge this checkpoint first"
         ),
+        checkpoint: expect.objectContaining({
+          required: true,
+          instruction: expect.stringContaining("Stop after this workflow.next"),
+        }),
         allowedTools: ["components.coverage-plan"],
         nextPhase: "page-creation",
       })
@@ -2028,7 +2057,13 @@ describe("project session mcp adapter", () => {
         goal: "design-system-page",
         phase: "dry-run-section",
         mustReturnAfter: true,
+        checkpoint: expect.objectContaining({ required: true }),
         allowedTools: expect.arrayContaining(["insert-fragment"]),
+        commandPattern: expect.stringContaining('ws:tag=\\"h2\\"'),
+        constraints: expect.arrayContaining([
+          expect.stringContaining("Keep the dry-run fragment tiny"),
+          expect.stringContaining("do not use deprecated $.Box"),
+        ]),
         nextPhase: "commit-section",
       })
     );
@@ -2045,6 +2080,18 @@ describe("project session mcp adapter", () => {
         expectedReturn: expect.arrayContaining([
           "whether /design-system already exists",
           "if missing, report that create-page is the next phase action",
+        ]),
+      })
+    );
+    expect(workflowPresentationPhase.structuredContent.data).toEqual(
+      expect.objectContaining({
+        goal: "design-system-page",
+        phase: "presentation-pass",
+        purpose: expect.stringContaining("real design-system page"),
+        allowedTools: expect.arrayContaining(["update-styles"]),
+        constraints: expect.arrayContaining([
+          expect.stringContaining("Do not treat coverage 72/72 as completion"),
+          expect.stringContaining("Keep every covered component"),
         ]),
       })
     );
@@ -2496,7 +2543,7 @@ describe("project session mcp adapter", () => {
         input: { goal: "design-system-page", phase: "everything" },
       })
     ).rejects.toThrow(
-      "workflow.next input.phase must be one of discovery, page-creation, dry-run-section, commit-section, coverage-batch."
+      "workflow.next input.phase must be one of discovery, page-creation, dry-run-section, commit-section, coverage-batch, presentation-pass."
     );
     expect(session.initialize).not.toHaveBeenCalled();
   });
@@ -2536,16 +2583,33 @@ describe("project session mcp adapter", () => {
         name: "checkpoint.ack",
         input: { reported: false },
       })
-    ).rejects.toThrow('checkpoint.ack requires {"reported":true}');
+    ).rejects.toThrow(
+      'checkpoint.ack requires {"reported":true,"continueAfterReport":true,"summary":"..."}'
+    );
     await expect(
       adapter.callTool({
         name: "checkpoint.ack",
         input: { reported: true },
       })
+    ).rejects.toThrow(
+      'checkpoint.ack requires {"reported":true,"continueAfterReport":true,"summary":"..."}'
+    );
+    await expect(
+      adapter.callTool({
+        name: "checkpoint.ack",
+        input: {
+          reported: true,
+          continueAfterReport: true,
+          summary: "reported checkpoint",
+        },
+      })
     ).resolves.toEqual(
       expect.objectContaining({
         structuredContent: expect.objectContaining({
-          data: { acknowledged: true },
+          data: expect.objectContaining({
+            acknowledged: true,
+            summary: "reported checkpoint",
+          }),
         }),
       })
     );
@@ -2554,7 +2618,11 @@ describe("project session mcp adapter", () => {
     });
     await adapter.callTool({
       name: "checkpoint.ack",
-      input: { reported: true },
+      input: {
+        reported: true,
+        continueAfterReport: true,
+        summary: "reported checkpoint",
+      },
     });
     const fullCoveragePlan = await adapter.callTool({
       name: "components.coverage-plan",
@@ -2562,7 +2630,11 @@ describe("project session mcp adapter", () => {
     });
     await adapter.callTool({
       name: "checkpoint.ack",
-      input: { reported: true },
+      input: {
+        reported: true,
+        continueAfterReport: true,
+        summary: "reported checkpoint",
+      },
     });
     const rootCoveragePlan = await adapter.callTool({
       name: "components.coverage-plan",
@@ -2570,7 +2642,11 @@ describe("project session mcp adapter", () => {
     });
     await adapter.callTool({
       name: "checkpoint.ack",
-      input: { reported: true },
+      input: {
+        reported: true,
+        continueAfterReport: true,
+        summary: "reported checkpoint",
+      },
     });
     const xmlCoveragePlan = await adapter.callTool({
       name: "components.coverage-plan",
@@ -2578,7 +2654,11 @@ describe("project session mcp adapter", () => {
     });
     await adapter.callTool({
       name: "checkpoint.ack",
-      input: { reported: true },
+      input: {
+        reported: true,
+        continueAfterReport: true,
+        summary: "reported checkpoint",
+      },
     });
     const find = await adapter.callTool({
       name: "components.find",
@@ -3189,6 +3269,226 @@ describe("project session mcp adapter", () => {
     );
   });
 
+  test("inserts one missing coverage component and returns before and after coverage", async () => {
+    const isTestRecord = (value: unknown): value is Record<string, unknown> =>
+      typeof value === "object" &&
+      value !== null &&
+      Array.isArray(value) === false;
+    const instances = [
+      { id: "body", component: "ws:element", depth: 0 },
+      {
+        id: "switch",
+        component: "@webstudio-is/sdk-components-react-radix:Switch",
+        depth: 1,
+      },
+    ];
+    const executeOperation = createExecuteOperation(
+      async ({ command, input }) => {
+        if (command === "list-instances") {
+          return createEnvelope({
+            operationId: "instances.list",
+            result: { instances },
+            namespaces: {
+              read: ["pages", "instances"],
+              write: [],
+              invalidated: [],
+              missing: [],
+            },
+          });
+        }
+        if (command === "insert-component") {
+          const component =
+            isTestRecord(input) && typeof input.component === "string"
+              ? input.component
+              : "";
+          instances.push({
+            id: "inserted",
+            component,
+            depth: 1,
+          });
+          return createEnvelope({
+            operationId: "components.insert",
+            result: {
+              rootInstanceIds: ["inserted"],
+              instanceIds: ["inserted"],
+              parentInstanceId:
+                isTestRecord(input) &&
+                typeof input.parentInstanceId === "string"
+                  ? input.parentInstanceId
+                  : undefined,
+            },
+            state: { committed: true, freshness: {} },
+            version: 2,
+          });
+        }
+        throw new Error(`Unexpected command ${command}`);
+      }
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    const result = await adapter.callTool({
+      name: "components.coverage-insert-next",
+      input: {
+        pagePath: "/design-system",
+        parentInstanceId: "root",
+        component: "@webstudio-is/sdk-components-react-radix:Select",
+      },
+    });
+
+    expect(executeOperation).toHaveBeenNthCalledWith(1, {
+      command: "list-instances",
+      input: {
+        pageId: undefined,
+        pagePath: "/design-system",
+      },
+      dryRun: false,
+    });
+    expect(executeOperation).toHaveBeenNthCalledWith(2, {
+      command: "insert-component",
+      input: {
+        parentInstanceId: "root",
+        component: "@webstudio-is/sdk-components-react-radix:Select",
+      },
+      dryRun: false,
+    });
+    expect(executeOperation).toHaveBeenNthCalledWith(3, {
+      command: "list-instances",
+      input: {
+        pageId: undefined,
+        pagePath: "/design-system",
+      },
+      dryRun: false,
+    });
+    expect(result.structuredContent.data).toEqual(
+      expect.objectContaining({
+        inserted: expect.objectContaining({
+          component: "@webstudio-is/sdk-components-react-radix:Select",
+        }),
+        before: expect.objectContaining({
+          coveredCount: expect.any(Number),
+          missingCount: expect.any(Number),
+        }),
+        after: expect.objectContaining({
+          coveredCount: expect.any(Number),
+          missingCount: expect.any(Number),
+        }),
+      })
+    );
+    await expect(
+      adapter.callTool({
+        name: "components.find",
+        input: { brief: "button" },
+      })
+    ).rejects.toThrow("CHECKPOINT_REQUIRED");
+  });
+
+  test("inserts uncovered non-standalone coverage parts under compatible parents", async () => {
+    const isTestRecord = (value: unknown): value is Record<string, unknown> =>
+      typeof value === "object" &&
+      value !== null &&
+      Array.isArray(value) === false;
+    const instances = [
+      { id: "body", component: "ws:element", depth: 0 },
+      {
+        id: "animation-group",
+        component: "@webstudio-is/sdk-components-animation:AnimateChildren",
+        depth: 1,
+      },
+    ];
+    const executeOperation = createExecuteOperation(
+      async ({ command, input }) => {
+        if (command === "list-instances") {
+          return createEnvelope({
+            operationId: "instances.list",
+            result: { instances },
+          });
+        }
+        if (command === "insert-fragment") {
+          const fragment =
+            isTestRecord(input) && isTestRecord(input.fragment)
+              ? input.fragment
+              : undefined;
+          expect(input).toEqual(
+            expect.objectContaining({
+              parentInstanceId: "animation-group",
+              fragment: expect.objectContaining({
+                instances: expect.arrayContaining([
+                  expect.objectContaining({
+                    component:
+                      "@webstudio-is/sdk-components-animation:AnimateText",
+                  }),
+                ]),
+              }),
+            })
+          );
+          instances.push({
+            id: "animate-text",
+            component: "@webstudio-is/sdk-components-animation:AnimateText",
+            depth: 2,
+          });
+          return createEnvelope({
+            operationId: "instances.insertFragment",
+            result: {
+              rootInstanceIds: ["animate-text"],
+              instanceIds: ["animate-text"],
+              parentInstanceId:
+                isTestRecord(input) &&
+                typeof input.parentInstanceId === "string"
+                  ? input.parentInstanceId
+                  : undefined,
+              fragment,
+            },
+            state: { committed: true, freshness: {} },
+            version: 2,
+          });
+        }
+        throw new Error(`Unexpected command ${command}`);
+      }
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    const result = await adapter.callTool({
+      name: "components.coverage-insert-next",
+      input: {
+        pagePath: "/design-system",
+        parentInstanceId: "body",
+        component: "@webstudio-is/sdk-components-animation:AnimateText",
+      },
+    });
+
+    expect(executeOperation).toHaveBeenNthCalledWith(2, {
+      command: "insert-fragment",
+      input: expect.objectContaining({
+        parentInstanceId: "animation-group",
+        fragment: expect.objectContaining({
+          instances: expect.arrayContaining([
+            expect.objectContaining({
+              component: "@webstudio-is/sdk-components-animation:AnimateText",
+            }),
+          ]),
+        }),
+      }),
+      dryRun: false,
+    });
+    expect(result.structuredContent.data).toEqual(
+      expect.objectContaining({
+        inserted: expect.objectContaining({
+          component: "@webstudio-is/sdk-components-animation:AnimateText",
+          mode: "fragment",
+        }),
+        parentInstanceId: "animation-group",
+      })
+    );
+  });
+
   test("exposes screenshot tools only when screenshot runners are injected", async () => {
     const session = createSession({
       initialize: vi.fn(),
@@ -3200,6 +3500,7 @@ describe("project session mcp adapter", () => {
       browserPath: "/usr/bin/chromium",
       browser: "chromium" as const,
       viewport: { width: 1440, height: 900 },
+      fullPage: true,
       elapsedMs: 12,
       warnings: [],
     }));
@@ -3243,6 +3544,7 @@ describe("project session mcp adapter", () => {
         url: "https://example.com",
         output: "current.png",
         viewport: { width: 1440, height: 900 },
+        fullPage: true,
         browser: "auto",
         waitUntil: "networkidle",
         waitForSelector: "#ready",
@@ -3261,6 +3563,7 @@ describe("project session mcp adapter", () => {
         port: undefined,
         source: undefined,
         viewport: { width: 1440, height: 900 },
+        fullPage: true,
         browser: "auto",
         browserPath: undefined,
         waitUntil: "networkidle",
@@ -3277,6 +3580,7 @@ describe("project session mcp adapter", () => {
         browserPath: "/usr/bin/chromium",
         browser: "chromium",
         viewport: { width: 1440, height: 900 },
+        fullPage: true,
         elapsedMs: 12,
         warnings: [],
       },
@@ -3294,6 +3598,7 @@ describe("project session mcp adapter", () => {
         browserPath: "/usr/bin/chromium",
         browser: "chromium" as const,
         viewport: { width: 1440, height: 900 },
+        fullPage: false,
         elapsedMs: 12,
         warnings: [],
       })),
@@ -3640,6 +3945,7 @@ describe("project session mcp adapter", () => {
       browserPath: "/usr/bin/chromium",
       browser: "chromium" as const,
       viewport: { width: 1440, height: 900 },
+      fullPage: false,
       elapsedMs: 12,
       warnings: [],
     }));
@@ -4259,6 +4565,7 @@ describe("project session mcp adapter", () => {
         browserPath: "/usr/bin/chromium",
         browser: "chromium" as const,
         viewport: { width: 1440, height: 900 },
+        fullPage: false,
         elapsedMs: 1,
         warnings: [],
       })),
@@ -4513,12 +4820,21 @@ describe("project session mcp adapter", () => {
       await expect(
         client.callTool({
           name: "checkpoint.ack",
-          arguments: { reported: true },
+          arguments: {
+            reported: true,
+            continueAfterReport: true,
+            summary: "reported checkpoint",
+          },
         })
       ).resolves.toEqual(
         expect.objectContaining({
           structuredContent: expect.objectContaining({
-            data: { acknowledged: true },
+            data: {
+              acknowledged: true,
+              summary: "reported checkpoint",
+              nextCommand:
+                'node packages/cli/local.js workflow.next \'{"goal":"design-system-page","phase":"page-creation"}\'',
+            },
           }),
         })
       );

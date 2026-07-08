@@ -247,6 +247,7 @@ describe("captureScreenshot", () => {
       output: expect.stringContaining("webstudio-screenshot-123.png"),
       browser: { path: "/usr/bin/chromium", browser: "chromium" },
       viewport: { width: 1440, height: 900 },
+      fullPage: false,
       elapsedMs: 0,
       warnings: [],
     });
@@ -255,6 +256,7 @@ describe("captureScreenshot", () => {
       output,
       width: 1440,
       height: 900,
+      fullPage: undefined,
       url: "https://example.com",
       uid: 1000,
       waitUntil: "load",
@@ -296,6 +298,37 @@ describe("captureScreenshot", () => {
         waitForSelector: "#ready",
         waitForTimeout: 500,
         timeout: 10_000,
+      })
+    );
+  });
+
+  test("passes full page option to browser capture", async () => {
+    const captureBrowserScreenshot = vi.fn(async () => undefined);
+    const dependencies = createDependencies({
+      which: vi.fn(async (command) =>
+        command === "chromium" ? "/usr/bin/chromium" : undefined
+      ),
+      captureBrowserScreenshot,
+    });
+
+    await expect(
+      captureScreenshot(
+        {
+          url: "https://example.com",
+          width: 1440,
+          height: 900,
+          fullPage: true,
+          browser: "auto",
+        },
+        dependencies
+      )
+    ).resolves.toMatchObject({
+      fullPage: true,
+    });
+
+    expect(captureBrowserScreenshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fullPage: true,
       })
     );
   });

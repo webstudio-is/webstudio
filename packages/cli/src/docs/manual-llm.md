@@ -2,6 +2,8 @@
 
 Use this order. Stop only when a command returns ok:false.
 
+For delegated design-system or “use every component” tasks, skip the generic warm-up sequence and start with exactly one MCP command: `webstudio workflow.next '{"goal":"design-system-page"}'`. Report that returned checkpoint to the parent/user and stop until continued.
+
 ## Always
 
 1. webstudio permissions --json
@@ -23,7 +25,7 @@ Monorepo quick path for a simple styled section:
 ```sh
 node packages/cli/local.js mcp single-op-call meta.index
 node packages/cli/local.js mcp single-op-call meta.get_more_tools '{"tools":["insert-fragment"]}'
-node packages/cli/local.js mcp single-op-call insert-fragment '{"parentInstanceId":"parent-id","fragment":"<$.Box ws:style={css`padding: 32px; display: grid; gap: 12px;`}><$.Heading>Launch Kit</$.Heading><$.Paragraph>A focused section created with Webstudio JSX.</$.Paragraph><$.Button>Get started</$.Button></$.Box>"}' --dry-run
+node packages/cli/local.js mcp single-op-call insert-fragment '{"parentInstanceId":"parent-id","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag="h2">Launch Kit</ws.element><ws.element ws:tag="p">A focused section created with Webstudio JSX.</ws.element><ws.element ws:tag="button">Get started</ws.element></ws.element>"}' --dry-run
 ```
 
 The same local shortcut form is shorter and preferred for simple shell steps:
@@ -31,7 +33,7 @@ The same local shortcut form is shorter and preferred for simple shell steps:
 ```sh
 node packages/cli/local.js meta.index
 node packages/cli/local.js meta.get_more_tools '{"tools":["insert-fragment"]}'
-node packages/cli/local.js insert-fragment '{"parentInstanceId":"parent-id","fragment":"<$.Box ws:style={css`padding: 32px; display: grid; gap: 12px;`}><$.Heading>Launch Kit</$.Heading><$.Paragraph>A focused section created with Webstudio JSX.</$.Paragraph><$.Button>Get started</$.Button></$.Box>"}' --dry-run
+node packages/cli/local.js insert-fragment '{"parentInstanceId":"parent-id","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag="h2">Launch Kit</ws.element><ws.element ws:tag="p">A focused section created with Webstudio JSX.</ws.element><ws.element ws:tag="button">Get started</ws.element></ws.element>"}' --dry-run
 ```
 
 For this simple path, do not grep source files, dump full MCP resources, or write parser scripts first. Use `list-pages`, `get-page-by-path`, or `list-instances` only to get the target `parentInstanceId`.
@@ -45,9 +47,12 @@ Use Webstudio prop names in JSX: `class`, `for`, `aria-label`, and other HTML/We
 Use Webstudio actions for event/action props. Do not pass JavaScript functions such as `onClick={() => ...}`; the runtime rejects them because functions cannot be persisted as Webstudio project data.
 
 ```tsx
-<$.Button onClick={new ActionValue(["event"], expression`console.log(event)`)}>
+<ws.element
+  ws:tag="button"
+  onClick={new ActionValue(["event"], expression`console.log(event)`)}
+>
   Open
-</$.Button>
+</ws.element>
 ```
 
 Plain JSX prop values must be JSON-compatible: `null`, strings, booleans, finite numbers, arrays, and plain objects. Do not pass `undefined`, `Symbol`, `BigInt`, `NaN`, `Infinity`, `Date`, `Map`, `Set`, class instances, or circular objects; omit the prop, use plain data, or use `expression`/`ActionValue` when the value is dynamic.
@@ -65,7 +70,7 @@ If a component has a registered template with required parts, JSX must include t
 - Use JSON strings for `brief` fields. Never pass boolean flags such as `{"brief":true}`.
 - Treat `webstudio mcp single-op-call` and `webstudio mcp run` stderr lines as progress checkpoints; stdout remains JSON on both success and failure. On failure, parse stdout for `{ "ok": false, "error": { "code": "...", "message": "..." } }` before deciding what to fix.
 - Run one-shot `webstudio mcp single-op-call` commands sequentially against a linked `.webstudio` folder. If a command returns `PROJECT_SESSION_BUSY`, another CLI/MCP process is updating the local session; wait a moment and retry sequentially.
-- In delegated or non-streaming agent environments, do not batch many MCP calls silently and do not wrap many shortcut or `webstudio mcp single-op-call` commands in a shell loop. Treat each parent-visible checkpoint as the unit of work. If the parent asks for status within 30 seconds, run exactly one shortcut command such as `webstudio meta.index` or one explicit `webstudio mcp single-op-call` command, report that command/result, then wait for the parent to continue. Do not take a broad task such as creating a full design-system page as one execution unit. Call `workflow.next {"goal":"design-system-page"}`, complete exactly the returned bounded phase, and return: discovery, page creation, one dry-run JSX section, one committed JSX section, or one coverage batch. Phase commands do not include nextPhase in their own output; call `workflow.next` again with the next phase after the parent continues. For all-component design-system pages, checkpoint after discovery, checkpoint after page creation, then insert one root/template component before checkpointing again.
+- In delegated or non-streaming agent environments, do not batch many MCP calls silently and do not wrap many shortcut or `webstudio mcp single-op-call` commands in a shell loop. Treat each parent-visible checkpoint as the unit of work. If the parent asks for status within 30 seconds, run exactly one shortcut command such as `webstudio meta.index` or one explicit `webstudio mcp single-op-call` command, report that command/result, then wait for the parent to continue. Do not take a broad task such as creating a full design-system page as one execution unit. Call `workflow.next {"goal":"design-system-page"}`, report the returned phase/checkpoint, wait until the parent continues, call `checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"}`, complete exactly that bounded phase, and return: discovery, page creation, one dry-run JSX section, one committed JSX section, one `components.coverage-insert-next` call, or one presentation pass. Phase commands do not include nextPhase in their own output. After the parent continues, acknowledge the previous checkpoint first, then call `workflow.next` with the next phase. For all-component design-system pages, checkpoint after workflow planning, discovery, page creation, call `components.coverage-insert-next` once before checkpointing again, then finish with `workflow.next {"goal":"design-system-page","phase":"presentation-pass"}`. Coverage 72/72 is necessary but not sufficient: the page must be organized into styled, real-world examples, not raw unstyled component dumps.
 - For design-system or “use every component” tasks, start with compact `webstudio components.coverage-plan`, checkpoint, then request component coverage details with `webstudio components.coverage-plan '{"detail":"roots","offset":20}'` or `{"detail":"parts"}` only when needed. Do not pass `detail` to `list-pages`; use `list-pages {}` or `get-page-by-path` for page lookup.
 - MCP tool shortcuts are only for MCP tools. If a shortcut is ambiguous with a real top-level command, the real top-level command wins; use `webstudio mcp single-op-call <tool> '<json>'` to force the MCP path.
 

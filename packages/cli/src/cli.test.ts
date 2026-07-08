@@ -118,6 +118,29 @@ describe("registerCommands", () => {
       '{"parentInstanceId":"parent-id","fragment":"<$.Box />"}',
       "--dry-run",
     ]);
+    expect(
+      getTopLevelMcpToolForwardArgs([
+        "workflow.next",
+        "goal",
+        "design-system-page",
+      ])
+    ).toEqual([
+      "mcp",
+      "single-op-call",
+      "workflow.next",
+      '{"goal":"design-system-page"}',
+    ]);
+    expect(
+      getTopLevelMcpToolForwardArgs([
+        "workflow.next",
+        "goal-design-system-page",
+      ])
+    ).toEqual([
+      "mcp",
+      "single-op-call",
+      "workflow.next",
+      '{"goal":"design-system-page"}',
+    ]);
     expect(getTopLevelMcpToolForwardArgs(["permissions"])).toBeUndefined();
     expect(getTopLevelMcpToolForwardArgs(["unknown-command"])).toBeUndefined();
   });

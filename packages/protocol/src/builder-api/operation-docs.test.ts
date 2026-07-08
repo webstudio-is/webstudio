@@ -73,7 +73,7 @@ test("documents JSX insertion through the fragment field", () => {
 
   expect(text).toContain("Webstudio JSX");
   expect(text).toContain("CLI converts the JSX string");
-  expect(text).toContain('"fragment":"<$.Box />"');
+  expect(text).toContain('"fragment":"<ws.element ws:tag=\\"section\\" />"');
   expect(text).not.toContain("Internal low-level");
   expect(text).not.toContain("structured Webstudio fragment");
   expect(text).not.toContain('"jsx"');

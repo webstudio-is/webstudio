@@ -3,6 +3,7 @@ import {
   type ChildProcess,
   type StdioOptions,
 } from "node:child_process";
+import { readdir } from "node:fs/promises";
 import { delimiter, dirname, join, parse } from "node:path";
 
 export type PreviewServerOptions = {
@@ -19,6 +20,7 @@ export type PreviewServerResult = {
 export type PreviewServerDependencies = {
   spawn: typeof spawn;
   fetch: typeof fetch;
+  readdir: typeof readdir;
   sleep: (ms: number) => Promise<void>;
   platform: typeof process.platform;
 };
@@ -26,6 +28,7 @@ export type PreviewServerDependencies = {
 export const defaultPreviewServerDependencies: PreviewServerDependencies = {
   spawn,
   fetch,
+  readdir,
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   platform: process.platform,
 };
@@ -156,14 +159,17 @@ export const waitForPreviewReady = async (
     timeoutMs = 30_000,
     intervalMs = 250,
     isRunning,
+    requiredAssetNames = [],
   }: {
     timeoutMs?: number;
     intervalMs?: number;
     isRunning?: () => boolean;
+    requiredAssetNames?: string[];
   } = {},
   dependencies = defaultPreviewServerDependencies
 ) => {
   const deadline = Date.now() + timeoutMs;
+  let sawStaleServer = false;
   while (Date.now() <= deadline) {
     if (isRunning?.() === false) {
       throw new Error(
@@ -180,14 +186,42 @@ export const waitForPreviewReady = async (
         signal: AbortSignal.timeout(attemptTimeoutMs),
       });
       if (response.status < 500) {
-        return;
+        if (requiredAssetNames.length === 0) {
+          return;
+        }
+        const html = await response.text();
+        if (requiredAssetNames.some((name) => html.includes(name))) {
+          return;
+        }
+        sawStaleServer = true;
       }
     } catch {
       // Server is still starting.
     }
     await dependencies.sleep(intervalMs);
   }
+  if (sawStaleServer) {
+    throw new Error(
+      `Preview server at ${url} did not serve the latest build assets. Stop the existing preview server on this port, then retry.`
+    );
+  }
   throw new Error(`Preview server did not become ready at ${url}.`);
+};
+
+const getPreviewCssAssetNames = async (
+  cwd: string | undefined,
+  dependencies = defaultPreviewServerDependencies
+) => {
+  if (cwd === undefined) {
+    return [];
+  }
+  try {
+    return (await dependencies.readdir(join(cwd, "build", "client", "assets")))
+      .filter((name) => name.endsWith(".css"))
+      .sort();
+  } catch {
+    return [];
+  }
 };
 
 const formatPreviewServerStartupError = ({
@@ -295,8 +329,16 @@ export const createPreviewController = (
       options: PreviewControllerStartOptions = {}
     ): Promise<PreviewControllerResult> {
       const result = await start(options);
+      const requiredAssetNames = await getPreviewCssAssetNames(
+        currentCwd,
+        dependencies
+      );
       try {
-        await waitForPreviewReady(result.url, { isRunning }, dependencies);
+        await waitForPreviewReady(
+          result.url,
+          { isRunning, requiredAssetNames },
+          dependencies
+        );
       } catch (error) {
         const output = serverOutput.trim();
         if (output !== "" && error instanceof Error) {

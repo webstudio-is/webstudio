@@ -56,6 +56,7 @@ const createMetadataOnlyMcpAdapter = () =>
       browserPath: "/browser",
       browser: "chromium",
       viewport: { width: 1440, height: 900 },
+      fullPage: false,
       elapsedMs: 0,
       url: "http://localhost",
       warnings: [],

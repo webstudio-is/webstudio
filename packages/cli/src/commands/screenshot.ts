@@ -46,6 +46,12 @@ export const screenshotOptions = (yargs: CommonYargsArgv) =>
       default: 900,
       describe: "Viewport height in CSS pixels",
     })
+    .option("full-page", {
+      type: "boolean",
+      default: false,
+      describe:
+        "Capture the full page height after layout instead of only the viewport.",
+    })
     .option("browser", {
       type: "string",
       choices: screenshotBrowserChoices,
@@ -182,6 +188,7 @@ export const screenshot = async (
       output: options.output,
       width: options.width,
       height: options.height,
+      fullPage: options.fullPage,
       browser: options.browser ?? "auto",
       browserPath: options.browserPath,
       waitUntil: options.waitUntil ?? defaultScreenshotWaitUntil,
@@ -213,6 +220,7 @@ export const screenshot = async (
           browserPath: result.browser.path,
           browser: result.browser.browser,
           viewport: result.viewport,
+          fullPage: result.fullPage,
           elapsedMs: result.elapsedMs,
           warnings: result.warnings,
         },

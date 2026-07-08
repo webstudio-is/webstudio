@@ -5,6 +5,23 @@ import { afterEach, expect, test, vi } from "vitest";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts/namespaces";
 import { __testing__, mcpOptions, prepareMcpProjectSession } from "./mcp";
 
+const {
+  assertPersistedMcpCheckpointAcknowledged,
+  assertSingleOpCallToolSupported,
+  createMcpPreviewHandlers,
+  createMcpRunCheckpointStopPayload,
+  createMcpRunErrorPayload,
+  createMcpSingleOpCallErrorPayload,
+  createMcpStatusReporter,
+  getLoadedProjectSessionSnapshot,
+  getMcpOperationInput,
+  parseMcpRunCalls,
+  parseMcpRunInput,
+  parseMcpSingleOpCallInput,
+  readPersistedMcpCheckpoint,
+  updatePersistedMcpCheckpoint,
+} = __testing__;
+
 const tempDirs: string[] = [];
 type CommandBuilder = (yargs: unknown) => unknown;
 type CommandCall = [readonly string[], string, CommandBuilder, unknown];
@@ -114,7 +131,7 @@ test("preview session materialization uses the loaded local snapshot", () => {
   const snapshot = { projectId: "project", version: 42 };
 
   expect(
-    __testing__.getLoadedProjectSessionSnapshot({
+    getLoadedProjectSessionSnapshot({
       snapshot: snapshot as never,
       initialize: vi.fn(),
       markStale: vi.fn(),
@@ -122,7 +139,7 @@ test("preview session materialization uses the loaded local snapshot", () => {
   ).toBe(snapshot);
 
   expect(() =>
-    __testing__.getLoadedProjectSessionSnapshot({
+    getLoadedProjectSessionSnapshot({
       snapshot: undefined,
       initialize: vi.fn(),
       markStale: vi.fn(),
@@ -132,7 +149,7 @@ test("preview session materialization uses the loaded local snapshot", () => {
 
 test("reports sparse MCP startup status lines for agents", () => {
   const lines: string[] = [];
-  const reporter = __testing__.createMcpStatusReporter((line) => {
+  const reporter = createMcpStatusReporter((line) => {
     lines.push(line);
   });
 
@@ -148,12 +165,12 @@ test("reports sparse MCP startup status lines for agents", () => {
 });
 
 test("parses empty MCP single-op-call input as an empty argument object", async () => {
-  await expect(__testing__.parseMcpSingleOpCallInput({})).resolves.toEqual({});
+  await expect(parseMcpSingleOpCallInput({})).resolves.toEqual({});
 });
 
 test("parses inline MCP single-op-call JSON input", async () => {
   await expect(
-    __testing__.parseMcpSingleOpCallInput({
+    parseMcpSingleOpCallInput({
       input: '{"brief":"radix select"}',
     })
   ).resolves.toEqual({ brief: "radix select" });
@@ -167,14 +184,14 @@ test("parses MCP single-op-call JSON input from a file", async () => {
   const file = path.join(dir, "input.json");
   await writeFile(file, '{"component":"Box"}');
 
-  await expect(
-    __testing__.parseMcpSingleOpCallInput({ inputFile: file })
-  ).resolves.toEqual({ component: "Box" });
+  await expect(parseMcpSingleOpCallInput({ inputFile: file })).resolves.toEqual(
+    { component: "Box" }
+  );
 });
 
 test("rejects ambiguous MCP single-op-call input sources", async () => {
   await expect(
-    __testing__.parseMcpSingleOpCallInput({
+    parseMcpSingleOpCallInput({
       input: "{}",
       inputFile: "input.json",
     })
@@ -183,7 +200,7 @@ test("rejects ambiguous MCP single-op-call input sources", async () => {
 
 test("reports invalid MCP single-op-call JSON with a stable error code", async () => {
   await expect(
-    __testing__.parseMcpSingleOpCallInput({
+    parseMcpSingleOpCallInput({
       input: "{bad-json",
     })
   ).rejects.toMatchObject({
@@ -195,47 +212,56 @@ test("reports invalid MCP single-op-call JSON with a stable error code", async (
 });
 
 test("rejects long-lived preview tools in MCP single-op-call", () => {
-  expect(() =>
-    __testing__.assertSingleOpCallToolSupported("preview.start")
-  ).toThrow("preview.start is long-lived");
+  expect(() => assertSingleOpCallToolSupported("preview.start")).toThrow(
+    "preview.start is long-lived"
+  );
   expect(() => {
     try {
-      __testing__.assertSingleOpCallToolSupported("preview.start");
+      assertSingleOpCallToolSupported("preview.start");
     } catch (error) {
       expect(error).toMatchObject({ code: "BAD_REQUEST" });
       throw error;
     }
   }).toThrow();
 
-  expect(() =>
-    __testing__.assertSingleOpCallToolSupported("preview.stop")
-  ).toThrow("preview.stop can only stop a preview owned by the same");
+  expect(() => assertSingleOpCallToolSupported("preview.stop")).toThrow(
+    "preview.stop can only stop a preview owned by the same"
+  );
   expect(() => {
     try {
-      __testing__.assertSingleOpCallToolSupported("preview.stop");
+      assertSingleOpCallToolSupported("preview.stop");
     } catch (error) {
       expect(error).toMatchObject({ code: "BAD_REQUEST" });
       throw error;
     }
   }).toThrow();
 
-  expect(() =>
-    __testing__.assertSingleOpCallToolSupported("preview.status")
-  ).not.toThrow();
+  expect(() => assertSingleOpCallToolSupported("preview.status")).not.toThrow();
 });
 
 test("parses MCP run call arrays", () => {
   expect(
-    __testing__.parseMcpRunCalls([
+    parseMcpRunCalls([
       { tool: "components.coverage-plan" },
-      { tool: "checkpoint.ack", input: { reported: true } },
+      {
+        tool: "checkpoint.ack",
+        input: {
+          reported: true,
+          continueAfterReport: true,
+          summary: "reported checkpoint",
+        },
+      },
       { tool: "components.find", input: { brief: "button" }, dryRun: true },
     ])
   ).toEqual([
     { tool: "components.coverage-plan", input: {}, dryRun: false },
     {
       tool: "checkpoint.ack",
-      input: { reported: true },
+      input: {
+        reported: true,
+        continueAfterReport: true,
+        summary: "reported checkpoint",
+      },
       dryRun: false,
     },
     {
@@ -248,7 +274,7 @@ test("parses MCP run call arrays", () => {
 
 test("parses MCP run call objects", () => {
   expect(
-    __testing__.parseMcpRunCalls({
+    parseMcpRunCalls({
       calls: [
         {
           tool: "insert-component",
@@ -270,7 +296,7 @@ test("persists MCP checkpoints across single-op-call processes", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "webstudio-mcp-checkpoint-"));
   tempDirs.push(dir);
 
-  await __testing__.updatePersistedMcpCheckpoint({
+  await updatePersistedMcpCheckpoint({
     tool: "components.coverage-plan",
     projectRoot: dir,
     structuredContent: {
@@ -279,39 +305,44 @@ test("persists MCP checkpoints across single-op-call processes", async () => {
           required: true,
           instruction:
             "Stop after this coverage-plan response and report before continuing.",
+          nextCommand:
+            'node packages/cli/local.js workflow.next \'{"goal":"design-system-page","phase":"page-creation"}\'',
         },
       },
     },
   });
 
-  await expect(__testing__.readPersistedMcpCheckpoint(dir)).resolves.toEqual({
+  await expect(readPersistedMcpCheckpoint(dir)).resolves.toEqual({
     tool: "components.coverage-plan",
     message:
       "Stop after this coverage-plan response and report before continuing.",
+    nextCommand:
+      'node packages/cli/local.js workflow.next \'{"goal":"design-system-page","phase":"page-creation"}\'',
   });
   await expect(
-    __testing__.assertPersistedMcpCheckpointAcknowledged("components.get", dir)
-  ).rejects.toThrow("CHECKPOINT_REQUIRED");
+    assertPersistedMcpCheckpointAcknowledged("components.get", dir)
+  ).rejects.toMatchObject({
+    code: "CHECKPOINT_REQUIRED",
+    message: expect.stringContaining("CHECKPOINT_REQUIRED"),
+  });
   await expect(
-    __testing__.assertPersistedMcpCheckpointAcknowledged("checkpoint.ack", dir)
+    assertPersistedMcpCheckpointAcknowledged("checkpoint.ack", dir)
   ).resolves.toBeUndefined();
 
-  await __testing__.updatePersistedMcpCheckpoint({
+  await updatePersistedMcpCheckpoint({
     tool: "checkpoint.ack",
     projectRoot: dir,
     structuredContent: { data: { acknowledged: true } },
   });
 
+  await expect(readPersistedMcpCheckpoint(dir)).resolves.toBeUndefined();
   await expect(
-    __testing__.readPersistedMcpCheckpoint(dir)
-  ).resolves.toBeUndefined();
-  await expect(
-    __testing__.assertPersistedMcpCheckpointAcknowledged("components.get", dir)
+    assertPersistedMcpCheckpointAcknowledged("components.get", dir)
   ).resolves.toBeUndefined();
 });
 
 test("formats MCP run checkpoint stops with partial results", () => {
-  const result = __testing__.createMcpRunCheckpointStopPayload({
+  const result = createMcpRunCheckpointStopPayload({
     checkpoint: {
       tool: "components.coverage-plan",
       message:
@@ -340,7 +371,7 @@ test("formats MCP run checkpoint stops with partial results", () => {
     error: {
       code: "CHECKPOINT_REQUIRED",
       message:
-        'Stop after this coverage-plan response and report before continuing. Report the checkpoint to the parent/user, then call checkpoint.ack {"reported":true} before continuing this run.',
+        'Stop after this coverage-plan response and report before continuing. Stop now and report the previous checkpoint to the parent/user. Only after the parent/user continues, call checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"} before continuing this run.',
     },
     data: {
       completedCalls: 1,
@@ -372,7 +403,7 @@ test("formats MCP single-op-call failures as structured JSON payloads", () => {
   });
 
   expect(
-    __testing__.createMcpSingleOpCallErrorPayload({
+    createMcpSingleOpCallErrorPayload({
       error,
       elapsedMs: 123,
     })
@@ -394,7 +425,7 @@ test("formats MCP run failures as structured JSON payloads", () => {
   });
 
   expect(
-    __testing__.createMcpRunErrorPayload({
+    createMcpRunErrorPayload({
       error,
       completedCalls: 0,
       totalCalls: 0,
@@ -420,7 +451,7 @@ test("formats MCP run failures as structured JSON payloads", () => {
 
 test("preserves already structured MCP run errors", () => {
   expect(
-    __testing__.createMcpRunErrorPayload({
+    createMcpRunErrorPayload({
       error: {
         code: "MCP_TOOL_FAILED",
         message:
@@ -455,7 +486,7 @@ test("persists checkpoint producer tool name", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "webstudio-mcp-checkpoint-"));
   tempDirs.push(dir);
 
-  await __testing__.updatePersistedMcpCheckpoint({
+  await updatePersistedMcpCheckpoint({
     tool: "future.checkpoint-tool",
     projectRoot: dir,
     structuredContent: {
@@ -468,18 +499,14 @@ test("persists checkpoint producer tool name", async () => {
     },
   });
 
-  await expect(
-    __testing__.readPersistedMcpCheckpoint(dir)
-  ).resolves.toMatchObject({
+  await expect(readPersistedMcpCheckpoint(dir)).resolves.toMatchObject({
     tool: "future.checkpoint-tool",
   });
 });
 
 test("parses inline MCP run JSON input", async () => {
   await expect(
-    __testing__.parseMcpRunInput(
-      '[{"tool":"components.find","input":{"brief":"button"}}]'
-    )
+    parseMcpRunInput('[{"tool":"components.find","input":{"brief":"button"}}]')
   ).resolves.toEqual([
     {
       tool: "components.find",
@@ -498,7 +525,7 @@ test("parses MCP run JSON input from a file", async () => {
     '{"calls":[{"tool":"components.find","input":{"brief":"button"}}]}'
   );
 
-  await expect(__testing__.parseMcpRunInput(file)).resolves.toEqual([
+  await expect(parseMcpRunInput(file)).resolves.toEqual([
     {
       tool: "components.find",
       input: { brief: "button" },
@@ -508,20 +535,20 @@ test("parses MCP run JSON input from a file", async () => {
 });
 
 test("rejects invalid MCP run inputs", () => {
-  expect(() => __testing__.parseMcpRunCalls({})).toThrow(
+  expect(() => parseMcpRunCalls({})).toThrow(
     'MCP run input must be an array of calls or an object with a "calls" array.'
   );
-  expect(() => __testing__.parseMcpRunCalls({ calls: [] })).toThrow(
+  expect(() => parseMcpRunCalls({ calls: [] })).toThrow(
     "MCP run input must include at least one call."
   );
-  expect(() => __testing__.parseMcpRunCalls({ calls: [{}] })).toThrow(
+  expect(() => parseMcpRunCalls({ calls: [{}] })).toThrow(
     "MCP run calls[0].tool must be a non-empty string."
   );
 });
 
 test("reports resolved path and cwd for missing MCP run files", async () => {
   await expect(
-    __testing__.parseMcpRunInput(".temp/missing-mcp-run-file.json")
+    parseMcpRunInput(".temp/missing-mcp-run-file.json")
   ).rejects.toThrow(
     `MCP run input file was not found. Resolved path: ${path.resolve(
       process.cwd(),
@@ -531,19 +558,15 @@ test("reports resolved path and cwd for missing MCP run files", async () => {
 });
 
 test("reports invalid MCP run JSON with a stable error code", async () => {
-  await expect(__testing__.parseMcpRunInput("{bad-json")).rejects.toMatchObject(
-    {
-      code: "INVALID_JSON",
-      message: expect.stringContaining(
-        "MCP run inline input must be valid JSON"
-      ),
-    }
-  );
+  await expect(parseMcpRunInput("{bad-json")).rejects.toMatchObject({
+    code: "INVALID_JSON",
+    message: expect.stringContaining("MCP run inline input must be valid JSON"),
+  });
 });
 
 test("reports explicit MCP startup root for agents", () => {
   const lines: string[] = [];
-  const reporter = __testing__.createMcpStatusReporter((line) => {
+  const reporter = createMcpStatusReporter((line) => {
     lines.push(line);
   }, "/workspace/webstudio-builder");
 
@@ -555,7 +578,7 @@ test("reports explicit MCP startup root for agents", () => {
 });
 
 test("adapts MCP upload asset input to public API upload input", () => {
-  const input = __testing__.getMcpOperationInput("upload-asset", {
+  const input = getMcpOperationInput("upload-asset", {
     asset: {
       name: "image.png",
       type: "image",
@@ -572,7 +595,7 @@ test("adapts MCP upload asset input to public API upload input", () => {
 });
 
 test("adapts MCP upload assets input to public API upload input", () => {
-  const input = __testing__.getMcpOperationInput("upload-assets", {
+  const input = getMcpOperationInput("upload-assets", {
     assets: [
       {
         name: "image.png",
@@ -601,6 +624,7 @@ const createCaptureScreenshotMock = (events: string[]) =>
         source: "path" as const,
       },
       viewport: { width: options.width, height: options.height },
+      fullPage: options.fullPage === true,
       elapsedMs: 1,
       warnings: [],
     };
@@ -625,7 +649,7 @@ test("captures stale path screenshots through the restarted preview server", asy
   const captureScreenshot = createCaptureScreenshotMock(events);
   const progress: string[] = [];
 
-  const handlers = __testing__.createMcpPreviewHandlers({
+  const handlers = createMcpPreviewHandlers({
     preview,
     isStale: () => true,
     preparePreview: async () => {
@@ -691,7 +715,7 @@ test("passes explicit preview source to preview preparation", async () => {
   });
   const progress: string[] = [];
 
-  const handlers = __testing__.createMcpPreviewHandlers({
+  const handlers = createMcpPreviewHandlers({
     preview,
     preparePreview,
     prepareSessionDataFile,
@@ -734,7 +758,7 @@ test("captures fresh path screenshots through the running preview server", async
   const captureScreenshot = createCaptureScreenshotMock(events);
   const progress: string[] = [];
 
-  const handlers = __testing__.createMcpPreviewHandlers({
+  const handlers = createMcpPreviewHandlers({
     preview,
     isStale: () => false,
     preparePreview: async () => {
@@ -748,6 +772,7 @@ test("captures fresh path screenshots through the running preview server", async
     {
       path: "/about",
       viewport: { width: 1440, height: 900 },
+      fullPage: true,
     },
     {
       report: (message) => {
@@ -761,6 +786,11 @@ test("captures fresh path screenshots through the running preview server", async
     "resolve:/about",
     "capture:http://127.0.0.1:3000/about",
   ]);
+  expect(captureScreenshot).toHaveBeenCalledWith(
+    expect.objectContaining({
+      fullPage: true,
+    })
+  );
   expect(progress).toEqual([
     "tool screenshot capturing http://127.0.0.1:3000/about",
   ]);
@@ -780,7 +810,7 @@ test("captures path screenshots through an existing base URL without preview", a
   });
   const progress: string[] = [];
 
-  const handlers = __testing__.createMcpPreviewHandlers({
+  const handlers = createMcpPreviewHandlers({
     preview,
     preparePreview,
     captureScreenshot,
@@ -830,7 +860,7 @@ test("captures path screenshots through an explicit preview target", async () =>
     return { cwd: "/tmp/generated-preview" };
   });
 
-  const handlers = __testing__.createMcpPreviewHandlers({
+  const handlers = createMcpPreviewHandlers({
     preview,
     isStale: () => false,
     preparePreview,

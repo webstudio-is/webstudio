@@ -711,6 +711,12 @@ test("replace data source ids in expression", () => {
       new Map([["oldId", "newId"]])
     )
   ).toEqual("$ws$dataSource$newId + missingVariable");
+  expect(
+    replaceDataSourcesInExpression(
+      `$ws$dataSource$oldId = state`,
+      new Map([["oldId", "newId"]])
+    )
+  ).toEqual("$ws$dataSource$newId = state");
 });
 
 test("compute expression with decoded ids", () => {

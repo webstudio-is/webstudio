@@ -232,6 +232,34 @@ export const findSerializedPageByInput = (
   }
 };
 
+const findExactSerializedPageByPath = (
+  pages: SerializedPages,
+  path: string
+) => {
+  const pagePath = normalizeSerializedPagePath(path);
+  return pages.pages.find(
+    (page) => getSerializedPagePath(pages, page) === pagePath
+  );
+};
+
+const findMatchingSerializedPageByPath = (
+  pages: SerializedPages,
+  path: string
+) => {
+  const pagePath = normalizeSerializedPagePath(path);
+  return pages.pages.find((page) =>
+    isSerializedPagePathMatch(getSerializedPagePath(pages, page), pagePath)
+  );
+};
+
+const isSerializedFallbackPage = (
+  pages: SerializedPages,
+  page: SerializedPage
+) => {
+  const path = getSerializedPagePath(pages, page);
+  return page.meta.status === "404" || path === "/*" || path === "*";
+};
+
 export const serializePageDetailsByInput = (
   state: Pick<BuilderState, "pages">,
   input: { pageId?: string; pagePath?: string }
@@ -331,13 +359,44 @@ export const getPageByPath = (
   state: Pick<BuilderState, "pages">,
   input: { path: string }
 ) => {
-  const page = serializePageDetailsByInput(state, {
-    pagePath: input.path,
-  });
-  if (page === undefined) {
+  const pages = getSerializedPages(state);
+  const exactPage = findExactSerializedPageByPath(pages, input.path);
+  if (exactPage !== undefined) {
+    return {
+      ...serializePageDetails(pages, exactPage),
+      requestedPath: input.path,
+      found: true,
+      exactMatch: true,
+      matchedPattern: false,
+      matchedFallback: false,
+    };
+  }
+
+  const matchingPage = findMatchingSerializedPageByPath(pages, input.path);
+  if (matchingPage === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Page not found");
   }
-  return page;
+  const matchingPageDetails = serializePageDetails(pages, matchingPage);
+  if (isSerializedFallbackPage(pages, matchingPage)) {
+    return {
+      requestedPath: input.path,
+      found: false,
+      exactMatch: false,
+      matchedPattern: true,
+      matchedFallback: true,
+      fallbackPage: matchingPageDetails,
+      guidance:
+        "No exact page exists for the requested path. The matched page is a fallback route; create a page for this path before editing it.",
+    };
+  }
+  return {
+    ...matchingPageDetails,
+    requestedPath: input.path,
+    found: true,
+    exactMatch: false,
+    matchedPattern: true,
+    matchedFallback: false,
+  };
 };
 
 export const listFolders = (

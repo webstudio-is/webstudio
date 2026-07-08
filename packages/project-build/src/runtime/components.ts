@@ -458,11 +458,13 @@ const validateFragmentComponent = ({
   instancesById,
   templates,
   page,
+  allowTemplateInternalComponents = false,
 }: {
   instance: Instance;
   instancesById: ReadonlyMap<Instance["id"], Instance>;
   templates: ComponentTemplateRegistry;
   page: Page;
+  allowTemplateInternalComponents?: boolean;
 }) => {
   const { component } = instance;
   const meta = componentMetas.get(component);
@@ -498,7 +500,9 @@ const validateFragmentComponent = ({
     return;
   }
   const unavailableReason =
-    meta?.contentModel?.category !== "none" && meta !== undefined
+    allowTemplateInternalComponents === false &&
+    meta?.contentModel?.category !== "none" &&
+    meta !== undefined
       ? getUnavailableComponentCatalogReason({
           component,
           meta,
@@ -662,6 +666,7 @@ const createInsertFragmentMutation = ({
   insertIndex: explicitInsertIndex,
   conflictResolution,
   contentMode = false,
+  allowTemplateInternalComponents = false,
   context,
 }: {
   state: ComponentInsertState;
@@ -672,6 +677,7 @@ const createInsertFragmentMutation = ({
   insertIndex?: z.infer<typeof insertIndexInput>;
   conflictResolution?: ConflictResolution;
   contentMode?: boolean;
+  allowTemplateInternalComponents?: boolean;
   context: BuilderRuntimeContext;
 }) => {
   const mutationState = getRequiredComponentInsertState(state);
@@ -690,6 +696,7 @@ const createInsertFragmentMutation = ({
       instancesById: fragmentInstancesById,
       templates,
       page,
+      allowTemplateInternalComponents,
     });
   }
 
@@ -916,6 +923,7 @@ export const insertComponent = (
     templates,
     mode: input.mode,
     insertIndex: input.insertIndex,
+    allowTemplateInternalComponents: template !== undefined,
     context,
   });
 };

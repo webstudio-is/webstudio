@@ -81,6 +81,7 @@ type McpScreenshotInput = {
   host?: string;
   port?: number;
   viewport: { width: number; height: number };
+  fullPage?: boolean;
   browser?: CaptureScreenshotInput["browser"];
   browserPath?: string;
   waitUntil?: CaptureScreenshotInput["waitUntil"];
@@ -183,6 +184,7 @@ const getMcpUploadAssetsInput = (input: unknown) => {
 type PersistedMcpCheckpoint = {
   tool: string;
   message: string;
+  nextCommand?: string;
 };
 
 const getMcpCheckpointPath = (projectRoot = cwd()) =>
@@ -225,8 +227,9 @@ const assertPersistedMcpCheckpointAcknowledged = async (
   if (checkpoint === undefined) {
     return;
   }
-  throw new Error(
-    `CHECKPOINT_REQUIRED: ${checkpoint.message} Report the checkpoint to the parent/user, then call checkpoint.ack {"reported":true} before calling "${tool}".`
+  throw createMcpInputError(
+    `CHECKPOINT_REQUIRED: ${checkpoint.message} Stop now and report the previous checkpoint to the parent/user. Only after the parent/user continues, call checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"} before calling "${tool}".`,
+    "CHECKPOINT_REQUIRED"
   );
 };
 
@@ -247,6 +250,10 @@ const getResultCheckpoint = (tool: string, structuredContent: unknown) => {
     return {
       tool,
       message: checkpoint.instruction,
+      nextCommand:
+        typeof checkpoint.nextCommand === "string"
+          ? checkpoint.nextCommand
+          : undefined,
     };
   }
 };
@@ -356,6 +363,7 @@ const createMcpPreviewHandlers = ({
         output: input.output,
         width: input.viewport.width,
         height: input.viewport.height,
+        fullPage: input.fullPage,
         browser: input.browser ?? "auto",
         browserPath: input.browserPath,
         waitUntil: input.waitUntil,
@@ -635,7 +643,7 @@ const createMcpRunCheckpointStopPayload = ({
 }) => {
   const error = {
     code: "CHECKPOINT_REQUIRED",
-    message: `${checkpoint.message} Report the checkpoint to the parent/user, then call checkpoint.ack {"reported":true} before continuing this run.`,
+    message: `${checkpoint.message} Stop now and report the previous checkpoint to the parent/user. Only after the parent/user continues, call checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"} before continuing this run.`,
   };
   return {
     ok: false,
@@ -871,6 +879,7 @@ const createCliMcpHost = async () => {
         browserPath: result.browser.path,
         browser: result.browser.browser,
         viewport: result.viewport,
+        fullPage: result.fullPage,
         elapsedMs: result.elapsedMs,
         warnings: result.warnings,
       };
@@ -915,12 +924,24 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
     const input = await parseMcpSingleOpCallInput(options);
     const { host } = await createCliMcpHost();
     const core = createProjectSessionMcpCore(host);
+    const persistedCheckpoint =
+      options.tool === "checkpoint.ack"
+        ? await readPersistedMcpCheckpoint()
+        : undefined;
     await assertPersistedMcpCheckpointAcknowledged(options.tool);
     const result = await core.callTool({
       name: options.tool,
       input,
       dryRun: options.dryRun,
     });
+    if (
+      options.tool === "checkpoint.ack" &&
+      persistedCheckpoint?.nextCommand !== undefined &&
+      isRecord(result.structuredContent.data)
+    ) {
+      result.structuredContent.data.nextCommand =
+        persistedCheckpoint.nextCommand;
+    }
     await updatePersistedMcpCheckpoint({
       tool: options.tool,
       structuredContent: result.structuredContent,

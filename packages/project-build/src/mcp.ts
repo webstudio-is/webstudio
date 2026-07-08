@@ -108,6 +108,7 @@ export type ProjectSessionScreenshotInput = {
     width: number;
     height: number;
   };
+  fullPage?: boolean;
   browser: ScreenshotBrowser;
   browserPath?: string;
   waitUntil?: ScreenshotWaitUntil;
@@ -124,6 +125,7 @@ export type ProjectSessionScreenshotResult = {
     width: number;
     height: number;
   };
+  fullPage: boolean;
   elapsedMs: number;
   warnings: readonly string[];
 };
@@ -357,6 +359,7 @@ const workflowPhaseNames = [
   "dry-run-section",
   "commit-section",
   "coverage-batch",
+  "presentation-pass",
 ] as const;
 
 type WorkflowPhaseName = (typeof workflowPhaseNames)[number];
@@ -442,6 +445,26 @@ const componentCoverageStatusInputSchema = {
     },
   },
   required: [],
+} as const satisfies ProjectSessionMcpInputSchema;
+
+const componentCoverageInsertNextInputSchema = {
+  ...componentCoverageStatusInputSchema,
+  description:
+    "Insert exactly one missing root/template component on a page and return coverage before and after in one checkpoint-safe call.",
+  properties: {
+    ...componentCoverageStatusInputSchema.properties,
+    parentInstanceId: {
+      type: "string",
+      description:
+        "Parent instance id where the missing root/template component should be inserted.",
+    },
+    component: {
+      type: "string",
+      description:
+        "Optional exact missing root/template component id to insert. When omitted, the first missing root/template component is inserted.",
+    },
+  },
+  required: ["parentInstanceId"],
 } as const satisfies ProjectSessionMcpInputSchema;
 
 const getOperationInputSchema = (
@@ -733,6 +756,12 @@ const screenshotInputSchema = {
         height: { type: "number", default: 900 },
       },
     },
+    fullPage: {
+      type: "boolean",
+      default: false,
+      description:
+        "Capture the full page height after layout instead of only the viewport. Use this for long pages and design-system audits.",
+    },
     browser: {
       type: "string",
       enum: screenshotBrowserChoices,
@@ -951,6 +980,12 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     { detail: "parts", namespace: "@webstudio-is/sdk-components-react-radix" },
   ],
   "components.coverage-status": [{ pagePath: "/design-system" }],
+  "components.coverage-insert-next": [
+    {
+      pagePath: "/design-system",
+      parentInstanceId: "root-instance-id",
+    },
+  ],
   "components.find": [{ brief: "radix tabs dialog select" }],
   "components.search": [{ brief: "radix tabs dialog select" }],
   "components.get": [
@@ -988,22 +1023,22 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     {
       parentInstanceId: "parent-id",
       fragment:
-        "<$.Box ws:style={css`padding: 32px; display: grid; gap: 16px;`}><$.Heading>Northstar Product OS</$.Heading><$.Paragraph>Reusable patterns for teams.</$.Paragraph></$.Box>",
+        '<ws.element ws:tag="section" ws:style={css`padding: 32px; display: grid; gap: 16px;`}><ws.element ws:tag="h2">Northstar Product OS</ws.element><ws.element ws:tag="p">Reusable patterns for teams.</ws.element></ws.element>',
     },
     {
       parentInstanceId: "parent-id",
       fragment:
-        '<ws.element ws:tag="section" style={{ padding: 32, borderRadius: 16 }}><$.Heading>Operations Console</$.Heading><$.Paragraph>Semantic section with React-style object styles converted into editable Webstudio styles.</$.Paragraph></ws.element>',
+        '<ws.element ws:tag="section" style={{ padding: 32, borderRadius: 16 }}><ws.element ws:tag="h2">Operations Console</ws.element><ws.element ws:tag="p">Semantic section with React-style object styles converted into editable Webstudio styles.</ws.element></ws.element>',
     },
     {
       parentInstanceId: "parent-id",
       fragment:
-        '<$.Box ws:tokens={[token("accent", css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><$.Heading>Token Example</$.Heading><$.Button onClick={new ActionValue(["event"], expression`console.log(event)`)}>Track launch</$.Button></$.Box>',
+        '<ws.element ws:tag="section" ws:tokens={[token("accent", css`color: #0f766e;`)]} ws:style={css`display: grid; gap: 12px;`}><ws.element ws:tag="h2">Token Example</ws.element><ws.element ws:tag="button" onClick={new ActionValue(["event"], expression`console.log(event)`)}>Track launch</ws.element></ws.element>',
     },
     {
       parentInstanceId: "parent-id",
       fragment:
-        "<$.Box><radix.Switch><radix.SwitchThumb /></radix.Switch></$.Box>",
+        '<ws.element ws:tag="section"><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>',
     },
   ],
   "update-text": [
@@ -1238,8 +1273,19 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
           description:
             "Must be true after the checkpoint was reported to the parent/user.",
         },
+        summary: {
+          type: "string",
+          minLength: 1,
+          description:
+            "Brief parent-visible checkpoint summary that was reported, including the phase, command/result, issue/workaround, and next intended action.",
+        },
+        continueAfterReport: {
+          type: "boolean",
+          description:
+            "Must be true only after the parent/user has seen the checkpoint summary and continued the task.",
+        },
       },
-      required: ["reported"],
+      required: ["reported", "summary", "continueAfterReport"],
     },
     annotations: {
       command: "checkpoint.ack",
@@ -1356,6 +1402,36 @@ const sessionTools: readonly ProjectSessionMcpTool[] = [
       writeNamespaces: [],
       invalidatesNamespaces: [],
       retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
+    name: "components.coverage-insert-next",
+    description:
+      "Checkpoint-safe design-system helper: inspect coverage, insert exactly one missing root/template component, then return coverage before and after.",
+    inputSchema: componentCoverageInsertNextInputSchema,
+    annotations: {
+      command: "components.coverage-insert-next",
+      operationId: "components.coverage-insert-next",
+      method: "session",
+      permit: "api",
+      localCapable: true,
+      serverOnly: false,
+      readNamespaces: ["pages", "instances"],
+      writeNamespaces: [
+        "instances",
+        "props",
+        "styles",
+        "styleSources",
+        "styleSourceSelections",
+      ],
+      invalidatesNamespaces: [
+        "instances",
+        "props",
+        "styles",
+        "styleSources",
+        "styleSourceSelections",
+      ],
+      retryOnConflict: true,
     },
   }),
   createProjectSessionMcpTool({
@@ -1664,6 +1740,12 @@ class ProjectSessionMcpCheckpointError extends Error {
   code = "CHECKPOINT_REQUIRED";
 }
 
+type ProjectSessionMcpCheckpoint = {
+  tool: string;
+  message: string;
+  nextCommand?: string;
+};
+
 export type ProjectSessionMcpToolResult = {
   content: [{ type: "text"; text: string }];
   structuredContent: ProjectSessionMcpStructuredContent;
@@ -1756,6 +1838,30 @@ const toMetaResult = (data: unknown): ProjectSessionMcpToolResult => {
   };
 };
 
+const getMcpCheckpoint = (
+  tool: string,
+  data: unknown
+): ProjectSessionMcpCheckpoint | undefined => {
+  if (isPlainRecord(data) === false) {
+    return;
+  }
+  const checkpoint = data.checkpoint;
+  if (
+    isPlainRecord(checkpoint) &&
+    checkpoint.required === true &&
+    typeof checkpoint.instruction === "string"
+  ) {
+    return {
+      tool,
+      message: checkpoint.instruction,
+      nextCommand:
+        typeof checkpoint.nextCommand === "string"
+          ? checkpoint.nextCommand
+          : undefined,
+    };
+  }
+};
+
 type McpCapabilityArea = {
   area: string;
   goal: string;
@@ -1786,6 +1892,7 @@ const capabilityAreas = [
       "components.summary",
       "components.coverage-plan",
       "components.coverage-status",
+      "components.coverage-insert-next",
       "components.find",
       "components.get",
       "status",
@@ -2031,7 +2138,7 @@ const getTemplateInput = (input: unknown) => {
 const getInsertFragmentInput = async (input: unknown) => {
   if (isPlainRecord(input) === false) {
     throw new Error(
-      'insert-fragment requires {"parentInstanceId":"...","fragment":"<$.Box />"}.'
+      'insert-fragment requires {"parentInstanceId":"...","fragment":"<ws.element ws:tag=\\"section\\" />"}.'
     );
   }
   if ("parentId" in input && "parentInstanceId" in input === false) {
@@ -2054,7 +2161,7 @@ const getInsertFragmentInput = async (input: unknown) => {
   }
   if (typeof input.fragment !== "string") {
     throw new Error(
-      'insert-fragment requires fragment as a Webstudio JSX string, for example {"fragment":"<$.Box />"}.'
+      'insert-fragment requires fragment as a Webstudio JSX string, for example {"fragment":"<ws.element ws:tag=\\"section\\" />"}.'
     );
   }
   const fragment = await parseWebstudioJsxFragment(input.fragment);
@@ -2184,6 +2291,24 @@ const getCoverageStatusInput = (input: unknown) => {
     pageId: pageId === "" ? undefined : pageId,
     pagePath: pagePath === "" ? undefined : pagePath,
     documentType: documentType as CoveragePlanDocumentType,
+  };
+};
+
+const getCoverageInsertNextInput = (input: unknown) => {
+  const statusInput = getCoverageStatusInput(input);
+  const component = getOptionalStringInput(
+    input,
+    "component",
+    "components.coverage-insert-next"
+  );
+  return {
+    ...statusInput,
+    parentInstanceId: getRequiredStringInput(
+      input,
+      "parentInstanceId",
+      "components.coverage-insert-next"
+    ),
+    component: component === "" ? undefined : component,
   };
 };
 
@@ -2556,6 +2681,22 @@ const startupGuidance = readProjectBuildDoc("mcp-startup-guidance").trim();
 const valuesVsBindingsRule =
   'Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, parameters, resources, or actions. Expression-backed fixed strings such as page metadata and resource URLs must be quoted JavaScript string literal expressions, for example "\\"Pricing\\"". Page and resource updates put changed fields under values.';
 
+const getComponentStateUsage = (
+  states:
+    | readonly {
+        label: string;
+        selector: string;
+      }[]
+    | undefined
+) => {
+  if (states === undefined || states.length === 0) {
+    return undefined;
+  }
+  return `Stateful component: style every exposed state selector when creating polished examples. Exposed states: ${states
+    .map((state) => `${state.label} (${state.selector})`)
+    .join(", ")}.`;
+};
+
 const getComponentCatalog = () => ({
   source: "@webstudio-is/sdk-components-registry/metas",
   usage:
@@ -2578,6 +2719,7 @@ const getComponentCatalog = () => ({
         initialProps: meta.initialProps ?? [],
         props: meta.props ?? {},
         states: meta.states ?? [],
+        stateUsage: getComponentStateUsage(meta.states),
         indexWithinAncestor: meta.indexWithinAncestor,
       };
     })
@@ -2942,9 +3084,13 @@ const getComponentCoveragePlan = async (input: unknown) => {
         "Design-system/all-component work is long-running and must be split into visible checkpoints.",
       instruction:
         "Stop after this coverage-plan response and report these counts plus the next planned action to the parent before calling more discovery or mutation tools.",
+      nextCommand:
+        detail === "summary"
+          ? 'node packages/cli/local.js workflow.next \'{"goal":"design-system-page","phase":"page-creation"}\''
+          : undefined,
       nextAllowedAfterReport:
         detail === "summary"
-          ? "After reporting, create the page, then insert one root/template component before the next checkpoint."
+          ? "After reporting, create the page, then call components.coverage-insert-next once per coverage checkpoint."
           : "After reporting, continue with the requested page of coverage details or one bounded insertion phase.",
     },
     total: documentEntries.length,
@@ -3085,6 +3231,19 @@ const getComponentCoverageStatus = async ({
         : []
     )
   );
+  const instanceIdsByComponent = new Map<string, string[]>();
+  for (const instance of instancesResult.instances) {
+    if (
+      isPlainRecord(instance) === false ||
+      typeof instance.component !== "string" ||
+      typeof instance.id !== "string"
+    ) {
+      continue;
+    }
+    const instanceIds = instanceIdsByComponent.get(instance.component) ?? [];
+    instanceIds.push(instance.id);
+    instanceIdsByComponent.set(instance.component, instanceIds);
+  }
   const availableEntries = await getAvailableComponentEntries({
     documentType,
   });
@@ -3109,6 +3268,7 @@ const getComponentCoverageStatus = async ({
     jsxElement,
     namespace,
     label,
+    instanceIds: instanceIdsByComponent.get(component),
   });
   return {
     usage:
@@ -3128,6 +3288,144 @@ const getComponentCoverageStatus = async ({
       .filter((entry) => entry.standaloneInsertable === false)
       .map(toCoverageEntry),
     session: getProjectSessionMeta(envelope),
+  };
+};
+
+const getComponentCoverageInsertNext = async ({
+  input,
+  executeOperation,
+  dryRun,
+}: {
+  input: unknown;
+  executeOperation: ExecuteMcpOperation;
+  dryRun: boolean;
+}) => {
+  const { parentInstanceId, component, ...statusInput } =
+    getCoverageInsertNextInput(input);
+  const definedStatusInput = Object.fromEntries(
+    Object.entries(statusInput).filter(([, value]) => value !== undefined)
+  );
+  const before = await getComponentCoverageStatus({
+    input: definedStatusInput,
+    executeOperation,
+    dryRun,
+  });
+  const missingRoots = before.missingRoots;
+  const missingParts = before.missingParts;
+  const selectedRoot =
+    component === undefined
+      ? missingRoots[0]
+      : missingRoots.find((entry) => entry.component === component);
+  const selectedPart =
+    selectedRoot === undefined && component !== undefined
+      ? missingParts.find((entry) => entry.component === component)
+      : selectedRoot === undefined && missingRoots.length === 0
+        ? missingParts[0]
+        : undefined;
+  const getCompatibleParent = (childComponent: string) => {
+    for (const coveredEntry of before.covered) {
+      const contentModel = componentMetas.get(
+        coveredEntry.component
+      )?.contentModel;
+      const childComponents = [
+        ...(contentModel?.children ?? []),
+        ...(contentModel?.descendants ?? []),
+      ];
+      if (childComponents.includes(childComponent) === false) {
+        continue;
+      }
+      const [parentInstanceId] = coveredEntry.instanceIds ?? [];
+      if (parentInstanceId !== undefined) {
+        return parentInstanceId;
+      }
+    }
+  };
+  const partParentInstanceId =
+    selectedPart === undefined
+      ? undefined
+      : getCompatibleParent(selectedPart.component);
+  if (selectedRoot === undefined && selectedPart === undefined) {
+    const available = [...missingRoots, ...missingParts]
+      .slice(0, 12)
+      .map((entry) => entry.component)
+      .join(", ");
+    throw new Error(
+      component === undefined
+        ? "components.coverage-insert-next found no missing components to insert."
+        : `components.coverage-insert-next input.component must be one of the missing components. Available examples: ${available}`
+    );
+  }
+  if (selectedPart !== undefined && partParentInstanceId === undefined) {
+    throw new Error(
+      `components.coverage-insert-next cannot insert non-standalone component "${selectedPart.component}" because no compatible parent instance is present on the page. Insert a root/template component that allows it first, or use insert-fragment with an explicit valid parent.`
+    );
+  }
+  const selected = selectedRoot ?? selectedPart;
+  if (selected === undefined) {
+    throw new Error("components.coverage-insert-next found no component.");
+  }
+  const insert = await executeOperation({
+    command:
+      selectedRoot === undefined ? "insert-fragment" : "insert-component",
+    input:
+      selectedRoot === undefined
+        ? {
+            parentInstanceId: partParentInstanceId,
+            fragment: await parseWebstudioJsxFragment(selected.jsxElement),
+          }
+        : {
+            parentInstanceId,
+            component: selected.component,
+          },
+    dryRun,
+  });
+  const after = await getComponentCoverageStatus({
+    input: definedStatusInput,
+    executeOperation,
+    dryRun,
+  });
+  return {
+    usage:
+      "Checkpoint-safe coverage mutation. Report this single inserted component and coverage before/after before continuing.",
+    checkpoint: {
+      required: true,
+      reason:
+        "Design-system/all-component work must report after each coverage insertion.",
+      instruction:
+        "Stop after this components.coverage-insert-next response and report the inserted component, committed version, and coverage before/after to the parent before calling more tools.",
+      nextCommand:
+        'node packages/cli/local.js components.coverage-insert-next \'{"pagePath":"' +
+        (statusInput.pagePath ?? "/design-system") +
+        '","parentInstanceId":"' +
+        parentInstanceId +
+        "\"}'",
+      nextAllowedAfterReport:
+        "After reporting and parent/user continuation, call checkpoint.ack before the next workflow.next or components.coverage-insert-next call.",
+    },
+    inserted: {
+      component: selected.component,
+      label: selected.label,
+      jsxElement: selected.jsxElement,
+      namespace: selected.namespace,
+      mode: selectedRoot === undefined ? "fragment" : "component",
+    },
+    parentInstanceId:
+      selectedRoot === undefined ? partParentInstanceId : parentInstanceId,
+    committed: insert.state.committed,
+    insertResult: insert.result,
+    before: {
+      total: before.total,
+      coveredCount: before.coveredCount,
+      missingCount: before.missingCount,
+    },
+    after: {
+      total: after.total,
+      coveredCount: after.coveredCount,
+      missingCount: after.missingCount,
+      nextMissingRoots: after.missingRoots.slice(0, 12),
+      remainingMissingRootCount: after.missingRoots.length,
+    },
+    session: getProjectSessionMeta(insert),
   };
 };
 
@@ -3251,6 +3549,7 @@ const getComponentDetails = (component: string) => {
   const templates = getComponentTemplates();
   const entry = getComponentSummaryEntry({ component, templates });
   const meta = componentMetas.get(component);
+  const stateUsage = getComponentStateUsage(meta?.states);
   if (entry === undefined || meta === undefined) {
     return {
       found: false,
@@ -3267,10 +3566,16 @@ const getComponentDetails = (component: string) => {
     initialProps: meta.initialProps ?? [],
     props: meta.props ?? {},
     states: meta.states ?? [],
+    stateUsage,
     indexWithinAncestor: meta.indexWithinAncestor,
-    usage: entry.standaloneInsertable
-      ? `Use insert-fragment when composing/styling a section, or insert-component with component "${component}" when inserting exactly this component template. A registered template is applied automatically by insert-component when available. For JSX, include templateRequiredParts and nest them according to templateRequiredEdges; templateRootComponents shows the roots produced by the template.`
-      : "Do not insert this component standalone. It is a child/part component and must be created by inserting a containing root/template component.",
+    usage: [
+      entry.standaloneInsertable
+        ? `Use insert-fragment when composing/styling a section, or insert-component with component "${component}" when inserting exactly this component template. A registered template is applied automatically by insert-component when available. For JSX, include templateRequiredParts and nest them according to templateRequiredEdges; templateRootComponents shows the roots produced by the template.`
+        : "Do not insert this component standalone. It is a child/part component and must be created by inserting a containing root/template component.",
+      stateUsage,
+    ]
+      .filter(Boolean)
+      .join(" "),
   };
 };
 
@@ -3310,11 +3615,11 @@ const getMetaIndex = (
       tools:
         'Use meta.get_more_tools({"tools":["insert-fragment"]}) for the primary authored/styled insertion tool. Use {"brief":"style updates"} only for search. Read webstudio://project/tools only when the full operation catalog is necessary.',
       insertFragment:
-        'Primary authored/styled insertion command shape: node packages/cli/local.js insert-fragment \'{"parentInstanceId":"parent-id","fragment":"<$.Box ws:style={css`padding: 32px; display: grid; gap: 12px;`}><$.Heading>Section title</$.Heading><$.Paragraph>Section copy.</$.Paragraph></$.Box>"}\' --dry-run. Use parentInstanceId, not parentId. Use Webstudio components/helpers such as $.Box, $.Heading, $.Paragraph, radix.*, css, token, expression, and ActionValue. Use ws:style={css`...`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.',
+        'Primary authored/styled insertion command shape: node packages/cli/local.js insert-fragment \'{"parentInstanceId":"parent-id","fragment":"<ws.element ws:tag=\\"section\\" ws:style={css`padding: 32px; display: grid; gap: 12px;`}><ws.element ws:tag="h2">Section title</ws.element><ws.element ws:tag="p">Section copy.</ws.element></ws.element>"}\' --dry-run. Use parentInstanceId, not parentId. Use Webstudio components/helpers such as ws.element, radix.*, css, token, expression, and ActionValue. Use ws:style={css`...`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.',
       resources:
         "Use MCP resources/list to discover overview and full resources.",
       components:
-        'Use components.list({"source":"all"}) for shadcn-compatible registry items, templates.list({}) for templates, components.summary for a compact catalog, components.coverage-plan for design-system/all-component tasks, components.coverage-status({"pagePath":"/design-system"}) to verify progress, components.search({"brief":"radix select"}) to search, and components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) or templates.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for one item. Do not dump or parse webstudio://project/components unless those focused tools are insufficient.',
+        'Use components.list({"source":"all"}) for shadcn-compatible registry items, templates.list({}) for templates, components.summary for a compact catalog, components.coverage-plan for design-system/all-component tasks, components.coverage-insert-next({"pagePath":"/design-system","parentInstanceId":"root-id"}) for one checkpoint-safe coverage insertion, components.coverage-status({"pagePath":"/design-system"}) to verify progress, components.search({"brief":"radix select"}) to search, and components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) or templates.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for one item. Do not dump or parse webstudio://project/components unless those focused tools are insufficient.',
       guide:
         'Use meta.guide({"brief":"Create a design system page using every component"}) for a goal-specific workflow.',
       workflow:
@@ -3415,6 +3720,7 @@ const designSystemWorkflowPhases: Record<
     allowedTools: readonly string[];
     commandPattern: string;
     fallbackCommandPattern?: string;
+    constraints?: readonly string[];
     expectedReturn: readonly string[];
     nextPhase?: WorkflowPhaseName;
   }
@@ -3450,10 +3756,17 @@ const designSystemWorkflowPhases: Record<
   },
   "dry-run-section": {
     purpose:
-      "Validate one representative authored/styled JSX section without committing.",
+      "Validate one tiny authored/styled JSX smoke fragment without committing.",
     allowedTools: ["meta.get_more_tools", "components.get", "insert-fragment"],
     commandPattern:
-      'node packages/cli/local.js insert-fragment \'{"parentInstanceId":"root-id","fragment":"<$.Box ws:style={css`padding: 24px;`}><$.Heading>Design System</$.Heading></$.Box>"}\' --dry-run',
+      'node packages/cli/local.js insert-fragment \'{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\\"section\\" ws:style={css`padding: 24px;`}><ws.element ws:tag=\\"h2\\">Design System</ws.element></ws.element>"}\' --dry-run',
+    constraints: [
+      "Use the commandPattern shape as-is, replacing only root-id.",
+      "Keep the dry-run fragment tiny, ideally under 500 characters.",
+      "Do not design the real page in this phase.",
+      "Use ws.element tags or components confirmed by components.get; do not use deprecated $.Box, $.Heading, $.Paragraph, or $.Button.",
+      "Return immediately after one dry-run result.",
+    ],
     expectedReturn: ["dry-run diagnostics", "whether the JSX is valid"],
     nextPhase: "commit-section",
   },
@@ -3462,26 +3775,46 @@ const designSystemWorkflowPhases: Record<
       "Commit exactly one previously validated authored/styled JSX section or one template root.",
     allowedTools: ["insert-fragment", "insert-component"],
     commandPattern:
-      'node packages/cli/local.js insert-fragment \'{"parentInstanceId":"root-id","fragment":"<$.Box>...</$.Box>"}\'',
+      'node packages/cli/local.js insert-fragment \'{"parentInstanceId":"root-id","fragment":"<ws.element ws:tag=\\"section\\">...</ws.element>"}\'',
     expectedReturn: ["committed version", "inserted root instance id"],
     nextPhase: "coverage-batch",
   },
   "coverage-batch": {
     purpose:
-      "Inspect coverage and insert one small bounded batch, then return before continuing.",
-    allowedTools: [
-      "components.coverage-status",
-      "components.coverage-plan",
-      "components.get",
-      "insert-fragment",
-      "insert-component",
-    ],
+      "Inspect coverage and insert exactly one missing root/template component, then return before continuing. This is only the mechanical coverage phase, not visual completion.",
+    allowedTools: ["components.coverage-insert-next"],
     commandPattern:
-      'node packages/cli/local.js components.coverage-status \'{"pagePath":"/design-system"}\'',
+      'node packages/cli/local.js components.coverage-insert-next \'{"pagePath":"/design-system","parentInstanceId":"root-id"}\'',
     expectedReturn: [
       "covered and missing counts",
-      "components attempted in this batch",
+      "the single component attempted in this checkpoint",
       "next missing components or next coverage offset",
+    ],
+    nextPhase: "presentation-pass",
+  },
+  "presentation-pass": {
+    purpose:
+      "Turn the mechanically covered component set into a real design-system page: group examples into styled sections/cards, apply spacing/background/type styles, and verify the page does not look like raw unstyled component dumps.",
+    allowedTools: [
+      "list-instances",
+      "inspect-instance",
+      "insert-fragment",
+      "move-instance",
+      "update-styles",
+      "components.coverage-status",
+    ],
+    commandPattern:
+      'node packages/cli/local.js list-instances \'{"pagePath":"/design-system","maxDepth":2}\'',
+    constraints: [
+      "Do not treat coverage 72/72 as completion by itself.",
+      "Keep every covered component on the page while improving layout and styling.",
+      "Use styled ws.element sections/cards, update-styles, and move-instance as needed.",
+      "Return a checkpoint with visual/presentation changes and final coverage.",
+    ],
+    expectedReturn: [
+      "presentation changes made",
+      "final coverage totals",
+      "remaining visual issues or explicit none",
     ],
   },
 };
@@ -3500,7 +3833,16 @@ const getWorkflowNext = (input: unknown) => {
     phase: phaseName,
     mustReturnAfter: true,
     parentVisibleCheckpoint:
-      "Run only this phase, then return the command/result to the parent before any next MCP command. Phase commands do not include nextPhase in their own output; call workflow.next again with the next phase after the parent continues.",
+      "Run only this phase, then return the command/result to the parent before any next MCP command. After the parent continues, acknowledge this checkpoint first, then call workflow.next with the next phase.",
+    checkpoint: {
+      required: true,
+      reason:
+        "workflow.next is a delegated-agent phase boundary and must be reported before more MCP calls.",
+      instruction:
+        "Stop after this workflow.next response and report the phase, allowed tools, command pattern, and planned next action to the parent before calling more MCP tools.",
+      nextCommand: phaseInfo.commandPattern,
+      nextAllowedAfterReport: `After reporting and parent/user continuation, call checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"}, run only the ${phaseName} phase, then return another checkpoint before continuing. To move to the next phase later, acknowledge that phase checkpoint before calling workflow.next again.`,
+    },
     ...phaseInfo,
     allPhases: workflowPhaseNames,
   };
@@ -3810,6 +4152,7 @@ const getScreenshotInput = (input: unknown): ProjectSessionScreenshotInput => {
     port,
     source,
     viewport: { width, height },
+    fullPage: input.fullPage === true,
     browser,
     browserPath:
       typeof input.browserPath === "string" ? input.browserPath : undefined,
@@ -3955,12 +4298,14 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   reportToolProgress?: (message: string) => void;
 }) => {
   let session: ReturnType<CreateProjectSession> | undefined;
-  let pendingCheckpoint:
-    | {
-        tool: string;
-        message: string;
-      }
-    | undefined;
+  let pendingCheckpoint: ProjectSessionMcpCheckpoint | undefined;
+  const toCheckpointedMetaResult = (
+    tool: string,
+    data: unknown
+  ): ProjectSessionMcpToolResult => {
+    pendingCheckpoint = getMcpCheckpoint(tool, data);
+    return toMetaResult(data);
+  };
   const operationByCommand = new Map(
     operations.map((operation) => [operation.command, operation])
   );
@@ -4063,17 +4408,28 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
     }): Promise<ProjectSessionMcpToolResult> {
       name = resolveToolName(name);
       if (name === "checkpoint.ack") {
-        if (isRecord(input) === false || input.reported !== true) {
+        if (
+          isRecord(input) === false ||
+          input.reported !== true ||
+          input.continueAfterReport !== true ||
+          typeof input.summary !== "string" ||
+          input.summary.trim().length === 0
+        ) {
           throw new Error(
-            'checkpoint.ack requires {"reported":true} after reporting the checkpoint to the parent/user.'
+            'checkpoint.ack requires {"reported":true,"continueAfterReport":true,"summary":"..."} after the parent/user has seen the checkpoint and continued the task.'
           );
         }
+        const nextCommand = pendingCheckpoint?.nextCommand;
         pendingCheckpoint = undefined;
-        return toMetaResult({ acknowledged: true });
+        return toMetaResult({
+          acknowledged: true,
+          summary: input.summary,
+          nextCommand,
+        });
       }
       if (pendingCheckpoint !== undefined) {
         throw new ProjectSessionMcpCheckpointError(
-          `CHECKPOINT_REQUIRED: ${pendingCheckpoint.message} Report the checkpoint to the parent/user, then call checkpoint.ack {"reported":true} before calling "${name}".`
+          `CHECKPOINT_REQUIRED: ${pendingCheckpoint.message} Stop now and report the checkpoint to the parent/user. Only after the parent/user continues, call checkpoint.ack {"reported":true,"continueAfterReport":true,"summary":"<what you reported>"} before calling "${name}".`
         );
       }
       if (name === "meta.index") {
@@ -4093,7 +4449,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         );
       }
       if (name === "workflow.next") {
-        return toMetaResult(getWorkflowNext(input));
+        return toCheckpointedMetaResult(name, getWorkflowNext(input));
       }
       if (name === "meta.get_more_tools") {
         return toMetaResult(
@@ -4118,16 +4474,21 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       }
       if (name === "components.coverage-plan") {
         const coveragePlan = await getComponentCoveragePlan(input);
-        pendingCheckpoint = {
-          tool: name,
-          message:
-            "components.coverage-plan returned checkpoint.required=true.",
-        };
-        return toMetaResult(coveragePlan);
+        return toCheckpointedMetaResult(name, coveragePlan);
       }
       if (name === "components.coverage-status") {
         return toMetaResult(
           await getComponentCoverageStatus({
+            input,
+            executeOperation: executeOperation as ExecuteMcpOperation,
+            dryRun,
+          })
+        );
+      }
+      if (name === "components.coverage-insert-next") {
+        return toCheckpointedMetaResult(
+          name,
+          await getComponentCoverageInsertNext({
             input,
             executeOperation: executeOperation as ExecuteMcpOperation,
             dryRun,

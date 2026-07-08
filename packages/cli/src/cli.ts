@@ -94,6 +94,41 @@ export const getTopLevelMcpToolHint = (args: readonly string[]) => {
   ].join("\n");
 };
 
+const normalizeMcpShortcutArgs = (tool: string, args: readonly string[]) => {
+  const optionIndex = args.findIndex((arg) => arg.startsWith("-"));
+  const inputArgs =
+    optionIndex === -1 ? args : args.slice(0, Math.max(0, optionIndex));
+  const optionArgs = optionIndex === -1 ? [] : args.slice(optionIndex);
+  if (
+    tool === "workflow.next" &&
+    inputArgs.length === 1 &&
+    inputArgs[0]?.startsWith("{") === false &&
+    inputArgs[0]?.startsWith("[") === false
+  ) {
+    const goal = inputArgs[0].replace(/^goal-/, "");
+    return [JSON.stringify({ goal }), ...optionArgs];
+  }
+  if (inputArgs.length <= 1 || inputArgs.length % 2 !== 0) {
+    return args;
+  }
+  const input: Record<string, string> = {};
+  for (let index = 0; index < inputArgs.length; index += 2) {
+    const key = inputArgs[index];
+    const value = inputArgs[index + 1];
+    if (
+      key === undefined ||
+      value === undefined ||
+      key.startsWith("-") ||
+      key.startsWith("{") ||
+      key.startsWith("[")
+    ) {
+      return args;
+    }
+    input[key] = value;
+  }
+  return [JSON.stringify(input), ...optionArgs];
+};
+
 export const getTopLevelMcpToolForwardArgs = (args: readonly string[]) => {
   const [tool, ...rest] = args;
   if (tool === undefined) {
@@ -103,7 +138,12 @@ export const getTopLevelMcpToolForwardArgs = (args: readonly string[]) => {
     /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/i.test(tool) ||
     mcpOnlyToolNames.has(tool)
   ) {
-    return ["mcp", "single-op-call", tool, ...rest];
+    return [
+      "mcp",
+      "single-op-call",
+      tool,
+      ...normalizeMcpShortcutArgs(tool, rest),
+    ];
   }
 };
 

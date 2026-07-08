@@ -273,7 +273,7 @@ Commands:
 
 Commands:
 
-- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<$.Box ws:style={css`padding: 32px;`}><$.Heading>Product OS</$.Heading><radix.Switch><radix.SwitchThumb /></radix.Switch></$.Box>"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag=\"section\" ws:style={css`padding: 32px;`}><ws.element ws:tag=\"h2\">Product OS</ws.element><radix.Switch><radix.SwitchThumb /></radix.Switch></ws.element>"}
 - MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"@webstudio-is/sdk-components-react-radix:Switch"}
 
 Notes:
@@ -702,7 +702,7 @@ Commands:
 - MCP tool: create-page {"name":"Landing","path":"/landing"}
 - MCP tool: create-design-token {"tokens":"tokens.json contents"}
 - MCP tool: define-css-variable {"vars":"vars.json contents"}
-- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<$.Box><$.Paragraph>Section copy</$.Paragraph></$.Box>"}
+- MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.element ws:tag=\"section\"><ws.element ws:tag=\"p\">Section copy</ws.element></ws.element>"}
 - MCP tool: update-styles {"updates":"styles.json contents"}
 - MCP tool: preview.start {"host":"127.0.0.1","port":5173}
 - MCP tool: screenshot {"path":"/","output":"current.png","viewport":{"width":1440,"height":900},"waitUntil":"load","waitForTimeout":250}
