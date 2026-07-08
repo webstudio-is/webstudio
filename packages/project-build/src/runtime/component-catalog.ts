@@ -2,11 +2,14 @@ import {
   collectionComponent,
   componentCategories,
   normalizeComponentCategory,
+  parseComponentName,
   type Instance,
   type Page,
+  type PropMeta,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import type { GeneratedTemplateMeta } from "@webstudio-is/template";
+import type { BuilderNamespace } from "../contracts/namespaces";
 
 export type ComponentCatalogDocumentType = NonNullable<
   Page["meta"]["documentType"]
@@ -19,8 +22,12 @@ export type ComponentCatalogMeta = Pick<
   | "deprecated"
   | "description"
   | "icon"
+  | "initialProps"
   | "label"
   | "order"
+  | "presetStyle"
+  | "props"
+  | "states"
 >;
 
 export type ComponentCatalogTemplate = Pick<
@@ -40,6 +47,25 @@ export type ComponentCatalogItem = {
   firstInstance: { component: string; tag?: string };
 };
 
+export type ComponentCatalogSourceInfo = {
+  namespace?: string;
+  exportName: string;
+  importSource?: string;
+  componentExport: boolean;
+  templateExport: boolean;
+  hooks: boolean;
+  provenance: "core" | "sdk";
+};
+
+/**
+ * Shadcn-compatible registry item with Webstudio-specific superset metadata.
+ *
+ * The top-level shape intentionally follows shadcn registry conventions
+ * (`name`, `title`, `type`, `dependencies`, `registryDependencies`, `files`,
+ * and `meta`). Webstudio authoring/runtime/insertion semantics live under
+ * `meta` so Builder, MCP, and future registry tooling can share one catalog
+ * without pretending Webstudio templates are plain installable React files.
+ */
 export type ComponentRegistryItem = {
   name: string;
   title: string;
@@ -67,6 +93,45 @@ export type ComponentRegistryItem = {
       template: boolean;
       firstInstance: { component: string; tag?: string };
     };
+    runtime: {
+      component: Instance["component"];
+      componentExport: string;
+      templateExport?: string;
+      hooks: boolean;
+      namespace?: string;
+      category: string;
+      contentModel?: WsComponentMeta["contentModel"];
+      props: Record<string, PropMeta>;
+      initialProps: readonly string[];
+      states: NonNullable<WsComponentMeta["states"]>;
+      presetStyle?: WsComponentMeta["presetStyle"];
+      source: {
+        importSource?: string;
+        exportName: string;
+        provenance: ComponentCatalogSourceInfo["provenance"];
+      };
+    };
+    authoring: {
+      compositionFamily?: string;
+      role?: string;
+      requiredAncestors: readonly string[];
+      allowedParents: readonly string[];
+      allowedChildren: readonly string[];
+      requiredDescendants: readonly string[];
+      preferredTree: readonly string[];
+      examples: readonly string[];
+      dos: readonly string[];
+      donts: readonly string[];
+      accessibilityNotes: readonly string[];
+      insertionStrategy: "insert-component" | "insert-fragment";
+    };
+    builder: {
+      insertTemplate: boolean;
+      componentPart: boolean;
+      requiredStructure: readonly string[];
+      editablePlaceholders: readonly string[];
+      expectedNamespaces: readonly BuilderNamespace[];
+    };
     examples: readonly {
       name: string;
       description: string;
@@ -75,6 +140,230 @@ export type ComponentRegistryItem = {
         component: Instance["component"];
       };
     }[];
+  };
+};
+
+const getComponentSourceInfo = (
+  component: Instance["component"],
+  sources?: ReadonlyMap<Instance["component"], ComponentCatalogSourceInfo>
+): ComponentCatalogSourceInfo => {
+  const source = sources?.get(component);
+  if (source !== undefined) {
+    return source;
+  }
+  const [namespace, exportName] = parseComponentName(component);
+  return {
+    namespace,
+    exportName,
+    componentExport: true,
+    templateExport: false,
+    hooks: false,
+    provenance: namespace === undefined ? "core" : "sdk",
+  };
+};
+
+const getTemplateComponentTree = (
+  template: ComponentCatalogTemplate | undefined
+) => template?.template.instances.map((instance) => instance.component) ?? [];
+
+const getTemplateEditablePlaceholders = (
+  template: ComponentCatalogTemplate | undefined
+) => {
+  const placeholders: string[] = [];
+  for (const instance of template?.template.instances ?? []) {
+    for (const [index, child] of instance.children.entries()) {
+      if (child.type === "text" && child.placeholder === true) {
+        placeholders.push(`${instance.id}.children.${index}`);
+      }
+    }
+  }
+  return placeholders;
+};
+
+const getTemplateExpectedNamespaces = (
+  template: ComponentCatalogTemplate | undefined
+): BuilderNamespace[] => {
+  const fragment = template?.template;
+  if (fragment === undefined) {
+    return ["instances"];
+  }
+  const namespaces: BuilderNamespace[] = [];
+  if (fragment.instances.length > 0 || fragment.children.length > 0) {
+    namespaces.push("instances");
+  }
+  if (fragment.props.length > 0) {
+    namespaces.push("props");
+  }
+  if (fragment.dataSources.length > 0) {
+    namespaces.push("dataSources");
+  }
+  if (fragment.resources.length > 0) {
+    namespaces.push("resources");
+  }
+  if (fragment.styleSources.length > 0) {
+    namespaces.push("styleSources");
+  }
+  if (fragment.styleSourceSelections.length > 0) {
+    namespaces.push("styleSourceSelections");
+  }
+  if (fragment.styles.length > 0) {
+    namespaces.push("styles");
+  }
+  if (fragment.breakpoints.length > 0) {
+    namespaces.push("breakpoints");
+  }
+  if (fragment.assets.length > 0) {
+    namespaces.push("assets");
+  }
+  return namespaces;
+};
+
+const findComponentsReferencing = ({
+  component,
+  metas,
+  relation,
+}: {
+  component: Instance["component"];
+  metas?: ReadonlyMap<string, ComponentCatalogMeta>;
+  relation: "children" | "descendants";
+}) => {
+  if (metas === undefined) {
+    return [];
+  }
+  const parents: string[] = [];
+  for (const [parentComponent, meta] of metas) {
+    const references = meta.contentModel?.[relation] ?? [];
+    if (references.includes(component)) {
+      parents.push(parentComponent);
+    }
+  }
+  return parents.sort();
+};
+
+const getAuthoringDos = ({
+  item,
+  meta,
+  template,
+}: {
+  item: ComponentCatalogItem;
+  meta?: ComponentCatalogMeta;
+  template?: ComponentCatalogTemplate;
+}) => {
+  const dos: string[] = [];
+  if (item.source === "template") {
+    dos.push(
+      "Use insert-component when you want Webstudio to create this registered template and required child structure."
+    );
+  } else {
+    dos.push(
+      "Use insert-fragment when composing this component into an authored, styled section."
+    );
+  }
+  if ((meta?.states?.length ?? 0) > 0) {
+    dos.push(
+      `Style exposed states when creating polished examples: ${meta?.states
+        ?.map((state) => `${state.label} (${state.selector})`)
+        .join(", ")}.`
+    );
+  }
+  if ((template?.template.instances.length ?? 0) > 1) {
+    dos.push(
+      "Preserve the template structure unless intentionally editing it."
+    );
+  }
+  return dos;
+};
+
+const getAuthoringDonts = ({
+  componentPart,
+  item,
+}: {
+  componentPart: boolean;
+  item: ComponentCatalogItem;
+}) => {
+  const donts: string[] = [];
+  if (componentPart) {
+    donts.push(
+      "Do not insert this part as a standalone component; create it through its containing root/template component."
+    );
+  }
+  if (item.source === "meta") {
+    donts.push(
+      "Do not assume Webstudio will add missing required child parts for raw JSX fragments."
+    );
+  }
+  return donts;
+};
+
+const getAccessibilityNotes = (meta?: ComponentCatalogMeta) => {
+  const notes: string[] = [];
+  const propNames = Object.keys(meta?.props ?? {});
+  const descendants = meta?.contentModel?.descendants ?? [];
+  if (propNames.includes("alt")) {
+    notes.push("Provide meaningful alt text for informative media.");
+  }
+  if (propNames.some((name) => name.startsWith("aria-"))) {
+    notes.push(
+      "Set required ARIA labels/descriptions when visible text is absent."
+    );
+  }
+  if (
+    descendants.some(
+      (component) =>
+        component.endsWith("Title") || component.endsWith("Description")
+    )
+  ) {
+    notes.push(
+      "Keep required title/description parts in the structure, visually hidden if necessary."
+    );
+  }
+  return notes;
+};
+
+const getComponentAuthoring = ({
+  item,
+  template,
+  meta,
+  metas,
+}: {
+  item: ComponentCatalogItem;
+  template?: ComponentCatalogTemplate;
+  meta?: ComponentCatalogMeta;
+  metas?: ReadonlyMap<string, ComponentCatalogMeta>;
+}): ComponentRegistryItem["meta"]["authoring"] => {
+  const contentModel = meta?.contentModel;
+  const componentPart = contentModel?.category === "none";
+  const preferredTree = getTemplateComponentTree(template);
+  const examples = [
+    item.source === "template"
+      ? "insert-registered-template"
+      : "insert-component-instance",
+  ];
+  return {
+    compositionFamily:
+      item.category === "radix" || item.category === "animations"
+        ? item.category
+        : undefined,
+    role: item.description,
+    requiredAncestors: findComponentsReferencing({
+      component: item.name,
+      metas,
+      relation: "descendants",
+    }),
+    allowedParents: findComponentsReferencing({
+      component: item.name,
+      metas,
+      relation: "children",
+    }),
+    allowedChildren: contentModel?.children ?? [],
+    requiredDescendants: contentModel?.descendants ?? [],
+    preferredTree,
+    examples,
+    dos: getAuthoringDos({ item, meta, template }),
+    donts: getAuthoringDonts({ componentPart, item }),
+    accessibilityNotes: getAccessibilityNotes(meta),
+    insertionStrategy:
+      item.source === "template" ? "insert-component" : "insert-fragment",
   };
 };
 
@@ -205,9 +494,16 @@ export const getComponentRegistryTemplateFilePath = (
 
 export const toComponentRegistryItem = (
   item: ComponentCatalogItem,
-  template?: ComponentCatalogTemplate
+  template?: ComponentCatalogTemplate,
+  meta?: ComponentCatalogMeta,
+  sourceInfo?: ComponentCatalogSourceInfo,
+  metas?: ReadonlyMap<string, ComponentCatalogMeta>
 ): ComponentRegistryItem => {
   const templateFilePath = getComponentRegistryTemplateFilePath(item.name);
+  const source = sourceInfo ?? getComponentSourceInfo(item.name);
+  const preferredTree = getTemplateComponentTree(template);
+  const contentModel = meta?.contentModel;
+  const componentPart = contentModel?.category === "none";
   return {
     name: getComponentRegistryItemName(item),
     title: item.label,
@@ -242,6 +538,32 @@ export const toComponentRegistryItem = (
         component: item.name,
         template: item.source === "template",
         firstInstance: item.firstInstance,
+      },
+      runtime: {
+        component: item.name,
+        componentExport: source.exportName,
+        templateExport: source.templateExport ? source.exportName : undefined,
+        hooks: source.hooks,
+        namespace: source.namespace,
+        category: item.category,
+        contentModel,
+        props: meta?.props ?? {},
+        initialProps: meta?.initialProps ?? [],
+        states: meta?.states ?? [],
+        presetStyle: meta?.presetStyle,
+        source: {
+          importSource: source.importSource,
+          exportName: source.exportName,
+          provenance: source.provenance,
+        },
+      },
+      authoring: getComponentAuthoring({ item, template, meta, metas }),
+      builder: {
+        insertTemplate: item.source === "template",
+        componentPart,
+        requiredStructure: preferredTree,
+        editablePlaceholders: getTemplateEditablePlaceholders(template),
+        expectedNamespaces: getTemplateExpectedNamespaces(template),
       },
       examples: [
         {
@@ -288,6 +610,7 @@ export const listComponentCatalogItems = ({
     template: ComponentCatalogTemplate,
     meta: ComponentCatalogMeta | undefined
   ) => string | undefined;
+  sources?: ReadonlyMap<Instance["component"], ComponentCatalogSourceInfo>;
 }) => {
   const items: ComponentCatalogItem[] = [];
 
@@ -368,7 +691,13 @@ export const listComponentRegistryItems = (
   options: Parameters<typeof listComponentCatalogItems>[0]
 ) =>
   listComponentCatalogItems(options).map((item) =>
-    toComponentRegistryItem(item, options.templates.get(item.name))
+    toComponentRegistryItem(
+      item,
+      options.templates.get(item.name),
+      options.metas.get(item.name),
+      options.sources?.get(item.name),
+      options.metas
+    )
   );
 
 export type ComponentRegistry = {

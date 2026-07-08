@@ -873,6 +873,86 @@ test("lists page templates", async () => {
   });
 });
 
+test("creates page template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "create-page-template",
+      name: "Landing Template",
+      title: '"Landing"',
+      description: '"Reusable landing layout"',
+    },
+    call: apiCalls.createPageTemplate,
+    connection: {
+      name: "Landing Template",
+      title: '"Landing"',
+      meta: { description: '"Reusable landing layout"' },
+    },
+  });
+});
+
+test("updates page template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "update-page-template",
+      template: "template-1",
+      name: "Article Template",
+      description: '"Reusable article layout"',
+    },
+    call: apiCalls.updatePageTemplate,
+    connection: {
+      templateId: "template-1",
+      values: {
+        name: "Article Template",
+        title: undefined,
+        meta: { description: '"Reusable article layout"' },
+      },
+    },
+  });
+});
+
+test("deletes page template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "delete-page-template",
+      template: "template-1",
+      confirm: true,
+    },
+    call: apiCalls.deletePageTemplate,
+    connection: { templateId: "template-1" },
+  });
+});
+
+test("duplicates page template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "duplicate-page-template",
+      template: "template-1",
+    },
+    call: apiCalls.duplicatePageTemplate,
+    connection: {
+      projectId: "project-1",
+      templateId: "template-1",
+    },
+  });
+});
+
+test("reorders page template", async () => {
+  await expectCommandCall({
+    options: {
+      command: "reorder-page-template",
+      sourceTemplate: "template-1",
+      targetTemplate: "template-2",
+      position: "before",
+    },
+    call: apiCalls.reorderPageTemplate,
+    connection: {
+      sourceTemplateId: "template-1",
+      targetTemplateId: "template-2",
+      position: "before",
+    },
+  });
+});
+
 test("creates page from template", async () => {
   await expectCommandCall({
     options: {
@@ -884,6 +964,7 @@ test("creates page from template", async () => {
     },
     call: apiCalls.createPageFromTemplate,
     connection: {
+      projectId: "project-1",
       templateId: "template-1",
       name: "Landing",
       path: "/landing",

@@ -221,6 +221,36 @@ Commands:
 
 - MCP tool: list-page-templates {}
 
+## Create page template
+
+Commands:
+
+- MCP tool: create-page-template {"name":"Landing Template","title":"\"Landing\""}
+
+## Update page template
+
+Commands:
+
+- MCP tool: update-page-template {"templateId":"<templateId>","values":{"name":"Article Template","meta":{"description":"\"Reusable article layout\""}}}
+
+## Delete page template
+
+Commands:
+
+- MCP tool: delete-page-template {"templateId":"<templateId>"}
+
+## Duplicate page template
+
+Commands:
+
+- MCP tool: duplicate-page-template {"templateId":"<templateId>"}
+
+## Reorder page template
+
+Commands:
+
+- MCP tool: reorder-page-template {"sourceTemplateId":"<sourceTemplateId>","targetTemplateId":"<targetTemplateId>","position":"before"}
+
 ## Create page from template
 
 Commands:
@@ -288,6 +318,7 @@ Notes:
 - Template-backed components used in JSX must include required child/part components explicitly under the same parent structure as the template, for example `<radix.Switch><radix.SwitchThumb /></radix.Switch>`.
 - Webstudio applies a registered template automatically when using `insert-component`, so composed components such as Switch include required child parts and styles.
 - Use `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get` to discover known registry items, component ids, props, templates, insertability, and content model. Read `webstudio://project/components` only when those focused tools are insufficient.
+- Component/template registry items use a shadcn-compatible top-level shape plus Webstudio-specific superset metadata in `meta`. They are for Builder/MCP discovery, not a published shadcn install registry yet.
 - Known components with `contentModel.category: "none"` are not standalone-insertable; insert their root component template instead so required providers/parents are included.
 - Unknown component ids fall back to a single-element instance when no template exists.
 
@@ -739,20 +770,6 @@ Suggested commands:
 - search-project
 - audit-accessibility
 - find-prop-usage
-
-## Save and manage page templates
-
-Missing:
-CLI can list page templates and create pages from existing templates, but cannot save a page as a template or update/delete templates semantically.
-
-Current fallback:
-Use MCP snapshot and apply-patch only when the template data model is understood.
-
-Suggested commands:
-
-- create-page-template
-- update-page-template
-- delete-page-template
 
 ## Semantic marketplace metadata
 

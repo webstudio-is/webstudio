@@ -170,6 +170,46 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio list-page-templates --json"],
   },
   {
+    command: "create-page-template",
+    description: "Create an empty reusable page template",
+    requiredOptions: ["name", "json"],
+    examples: [
+      'webstudio create-page-template --name "Landing Template" --title "\\"Landing\\"" --json',
+    ],
+  },
+  {
+    command: "update-page-template",
+    description: "Update reusable page template settings and metadata",
+    requiredOptions: ["template", "json"],
+    examples: [
+      'webstudio update-page-template --template template-id --name "Article Template" --description "\\"Reusable article layout\\"" --json',
+    ],
+  },
+  {
+    command: "delete-page-template",
+    description: "Delete a reusable page template and its content",
+    requiredOptions: ["template", "confirm", "json"],
+    examples: [
+      "webstudio delete-page-template --template template-id --confirm --json",
+    ],
+  },
+  {
+    command: "duplicate-page-template",
+    description: "Duplicate a reusable page template and its content",
+    requiredOptions: ["template", "json"],
+    examples: [
+      "webstudio duplicate-page-template --template template-id --json",
+    ],
+  },
+  {
+    command: "reorder-page-template",
+    description: "Reorder reusable page templates",
+    requiredOptions: ["source-template", "target-template", "position", "json"],
+    examples: [
+      "webstudio reorder-page-template --source-template template-a --target-template template-b --position before --json",
+    ],
+  },
+  {
     command: "create-page-from-template",
     description: "Create a page by copying a reusable page template",
     requiredOptions: ["template", "name", "path", "json"],

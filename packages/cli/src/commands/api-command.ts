@@ -372,6 +372,92 @@ export const duplicatePageCommandOptions = (yargs: CommonYargsArgv) =>
 export const listPageTemplatesCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs);
 
+const pageTemplateFieldsCommandOptions = (
+  yargs: CommonYargsArgv,
+  options: { requireName?: boolean } = {}
+) =>
+  yargs
+    .option("name", {
+      type: "string",
+      describe: "Page template name shown in Builder",
+      demandOption: options.requireName,
+    })
+    .option("title", {
+      type: "string",
+      describe:
+        'Page template title expression. For fixed text use a JavaScript string literal such as "\\"Landing\\""',
+    })
+    .option("description", {
+      type: "string",
+      describe:
+        'Page template meta description expression. For fixed text use a JavaScript string literal such as "\\"Plans for teams\\""',
+    })
+    .option("language", {
+      type: "string",
+      describe: 'Page template language expression, for example "\\"en\\""',
+    })
+    .option("social-image-url", {
+      type: "string",
+      describe: "Social image URL expression",
+    })
+    .option("social-image-asset", {
+      type: "string",
+      describe: "Social image asset id expression",
+    })
+    .option("exclude-page-from-search", {
+      type: "boolean",
+      describe: "Exclude pages created from this template from search",
+    });
+
+export const createPageTemplateCommandOptions = (yargs: CommonYargsArgv) =>
+  pageTemplateFieldsCommandOptions(apiCommandOptions(yargs), {
+    requireName: true,
+  });
+
+export const updatePageTemplateCommandOptions = (yargs: CommonYargsArgv) =>
+  pageTemplateFieldsCommandOptions(
+    apiCommandOptions(yargs).option("template", {
+      type: "string",
+      describe: "Required page template id to update",
+      demandOption: true,
+    })
+  );
+
+export const deletePageTemplateCommandOptions = (yargs: CommonYargsArgv) =>
+  confirmOption(
+    apiCommandOptions(yargs).option("template", {
+      type: "string",
+      describe: "Required page template id to delete",
+      demandOption: true,
+    }),
+    "Required. Confirm deleting this page template and its content"
+  );
+
+export const duplicatePageTemplateCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs).option("template", {
+    type: "string",
+    describe: "Required page template id to duplicate",
+    demandOption: true,
+  });
+
+export const reorderPageTemplateCommandOptions = (yargs: CommonYargsArgv) =>
+  apiCommandOptions(yargs)
+    .option("source-template", {
+      type: "string",
+      describe: "Required page template id to move",
+      demandOption: true,
+    })
+    .option("target-template", {
+      type: "string",
+      describe: "Required page template id to place before or after",
+      demandOption: true,
+    })
+    .option("position", {
+      choices: ["before", "after"] as const,
+      describe: "Place source template before or after target template",
+      demandOption: true,
+    });
+
 export const createPageFromTemplateCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs)
     .option("template", {
@@ -1150,6 +1236,8 @@ type ApiCommandOptions = {
   parentFolder?: string;
   includeFolders?: boolean;
   includePages?: boolean;
+  sourceTemplate?: string;
+  targetTemplate?: string;
   root?: string;
   maxDepth?: number;
   topLevel?: boolean;
@@ -1180,7 +1268,7 @@ type ApiCommandOptions = {
   property?: string;
   propertyFilter?: string;
   includeTokens?: boolean;
-  position?: "before-local" | "after-local";
+  position?: "before-local" | "after-local" | "before" | "after";
   filter?: string;
   withUsage?: boolean;
   scopeInstance?: string;
@@ -1871,8 +1959,86 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       connection,
       dependencies
     ),
+  "create-page-template": async (options, connection, dependencies) => {
+    const input = {
+      name: requireOption(options.name, "--name"),
+      title: options.title,
+      meta: getPageMetaOptions(options),
+    };
+    return runProjectSessionCommand(
+      "create-page-template",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "update-page-template": async (options, connection, dependencies) => {
+    const input = {
+      templateId: requireOption(options.template, "--template"),
+      values: {
+        name: options.name,
+        title: options.title,
+        meta: getPageMetaOptions(options),
+      },
+    };
+    return runProjectSessionCommand(
+      "update-page-template",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "delete-page-template": async (options, connection, dependencies) => {
+    requireTrueOption(options.confirm, "--confirm");
+    const input = {
+      templateId: requireOption(options.template, "--template"),
+    };
+    return runProjectSessionCommand(
+      "delete-page-template",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "duplicate-page-template": async (options, connection, dependencies) => {
+    const input = {
+      projectId: connection.projectId,
+      templateId: requireOption(options.template, "--template"),
+    };
+    return runProjectSessionCommand(
+      "duplicate-page-template",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "reorder-page-template": async (options, connection, dependencies) => {
+    const input = {
+      sourceTemplateId: requireOption(
+        options.sourceTemplate,
+        "--source-template"
+      ),
+      targetTemplateId: requireOption(
+        options.targetTemplate,
+        "--target-template"
+      ),
+      position: requireOption(
+        options.position === "before" || options.position === "after"
+          ? options.position
+          : undefined,
+        "--position"
+      ),
+    };
+    return runProjectSessionCommand(
+      "reorder-page-template",
+      input,
+      connection,
+      dependencies
+    );
+  },
   "create-page-from-template": async (options, connection, dependencies) => {
     const input = {
+      projectId: connection.projectId,
       templateId: requireOption(options.template, "--template"),
       parentFolderId: options.parentFolder,
       name: requireOption(options.name, "--name"),

@@ -40,7 +40,10 @@ import { parseComponentName } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { readProjectBuildDoc } from "./docs";
 import type { ComponentTemplateRegistry } from "./runtime/component-template";
-import { getComponentTemplates } from "./runtime/component-templates";
+import {
+  getComponentCatalogSources,
+  getComponentTemplates,
+} from "./runtime/component-templates";
 import {
   getTemplateRequiredStructure,
   parseComponentEdge,
@@ -1924,6 +1927,11 @@ const capabilityAreas = [
       "duplicate-page",
       "delete-page",
       "list-page-templates",
+      "create-page-template",
+      "update-page-template",
+      "delete-page-template",
+      "duplicate-page-template",
+      "reorder-page-template",
       "create-page-from-template",
       "list-folders",
       "create-folder",
@@ -2939,6 +2947,7 @@ const getComponentRegistryItems = () =>
   listComponentRegistryItems({
     metas: componentMetas,
     templates: getComponentTemplates(),
+    sources: getComponentCatalogSources(),
   });
 
 const filterRegistryItemsBySource = (

@@ -74,7 +74,9 @@ test("prints api manual with patch workflow and examples", () => {
   expect(output).toContain("## Use Case Index");
   expect(output).toContain("## CLI Capability Inventory");
   expect(output).toContain("## Known CLI Gaps");
-  expect(output).toContain("Save and manage page templates");
+  expect(output).toContain("Create page template");
+  expect(output).toContain("MCP tool: create-page-template");
+  expect(output).toContain("MCP tool: reorder-page-template");
   expect(output).toContain("Generate from design input");
   expect(output).toContain("### Top-Level Commands");
   expect(output).toContain("### High-Level API Commands By Area");
@@ -123,10 +125,14 @@ test("prints api manual as json", () => {
   expect(output.knownGaps).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
-        capability: "Save and manage page templates",
-      }),
-      expect.objectContaining({
         capability: "Generate from design input",
+      }),
+    ])
+  );
+  expect(output.knownGaps).not.toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        capability: "Save and manage page templates",
       }),
     ])
   );

@@ -119,6 +119,8 @@ Use MCP itself after startup, or call the same tools with `webstudio mcp single-
 - `templates.list`: shadcn-compatible registry items for template-backed insertions only
 - `templates.get`: full registry item and payload metadata for one template
 
+Component and template registry items use a shadcn-compatible top-level shape plus Webstudio-specific superset metadata in `meta`. Use `meta.runtime` for component ids, props, states, content model, and source identity; `meta.authoring` for composition and accessibility guidance; and `meta.builder` for template insertion details and expected project-data namespaces. These items are for Builder/MCP discovery and are not a published shadcn install registry yet.
+
 Prefer the focused `components.*` tools over dumping `webstudio://project/components`. Do not write local scripts to parse full MCP discovery JSON for common component lookup.
 For “use every component” or design-system pages, start with compact `components.coverage-plan`, checkpoint, then page through roots/parts instead of dumping the full catalog.
 

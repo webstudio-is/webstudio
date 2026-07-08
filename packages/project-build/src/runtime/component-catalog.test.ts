@@ -167,6 +167,32 @@ describe("component catalog", () => {
             label: "Button",
             description: "Clickable action",
             contentModel: { category: "instance", children: ["text"] },
+            props: {
+              "aria-label": {
+                type: "string",
+                control: "text",
+                required: false,
+              },
+              alt: {
+                type: "string",
+                control: "text",
+                required: false,
+              },
+            },
+            initialProps: ["aria-label"],
+            states: [{ selector: ":hover", label: "Hover" }],
+          },
+        ],
+        [
+          "Toolbar",
+          {
+            category: "hidden",
+            label: "Toolbar",
+            contentModel: {
+              category: "instance",
+              children: ["Button"],
+              descendants: ["Button"],
+            },
           },
         ],
       ]),
@@ -185,11 +211,37 @@ describe("component catalog", () => {
                   id: "section",
                   component: "ws:element",
                   tag: "section",
-                  children: [],
+                  children: [
+                    { type: "text", value: "Section", placeholder: true },
+                  ],
                 },
               ],
               children: [],
+              styleSources: [{ type: "local", id: "section:local" }],
             },
+          },
+        ],
+      ]),
+      sources: new Map([
+        [
+          "Button",
+          {
+            exportName: "Button",
+            importSource: "@webstudio-is/sdk-components-react/components",
+            componentExport: true,
+            templateExport: false,
+            hooks: false,
+            provenance: "sdk",
+          },
+        ],
+        [
+          "LocalTemplateOnly",
+          {
+            exportName: "LocalTemplateOnly",
+            componentExport: false,
+            templateExport: true,
+            hooks: false,
+            provenance: "core",
           },
         ],
       ]),
@@ -210,6 +262,57 @@ describe("component catalog", () => {
           insert: expect.objectContaining({
             component: "Button",
             template: false,
+          }),
+          runtime: expect.objectContaining({
+            componentExport: "Button",
+            hooks: false,
+            category: "general",
+            contentModel: { category: "instance", children: ["text"] },
+            props: {
+              "aria-label": {
+                type: "string",
+                control: "text",
+                required: false,
+              },
+              alt: {
+                type: "string",
+                control: "text",
+                required: false,
+              },
+            },
+            initialProps: ["aria-label"],
+            states: [{ selector: ":hover", label: "Hover" }],
+            source: {
+              importSource: "@webstudio-is/sdk-components-react/components",
+              exportName: "Button",
+              provenance: "sdk",
+            },
+          }),
+          authoring: expect.objectContaining({
+            role: "Clickable action",
+            requiredAncestors: ["Toolbar"],
+            allowedParents: ["Toolbar"],
+            allowedChildren: ["text"],
+            requiredDescendants: [],
+            preferredTree: [],
+            dos: [
+              "Use insert-fragment when composing this component into an authored, styled section.",
+              "Style exposed states when creating polished examples: Hover (:hover).",
+            ],
+            donts: [
+              "Do not assume Webstudio will add missing required child parts for raw JSX fragments.",
+            ],
+            accessibilityNotes: [
+              "Provide meaningful alt text for informative media.",
+              "Set required ARIA labels/descriptions when visible text is absent.",
+            ],
+            insertionStrategy: "insert-fragment",
+          }),
+          builder: expect.objectContaining({
+            insertTemplate: false,
+            componentPart: false,
+            requiredStructure: [],
+            expectedNamespaces: ["instances"],
           }),
           examples: [
             {
@@ -246,6 +349,28 @@ describe("component catalog", () => {
               component: "ws:element",
               tag: "section",
             }),
+          }),
+          runtime: expect.objectContaining({
+            componentExport: "LocalTemplateOnly",
+            templateExport: "LocalTemplateOnly",
+            source: expect.objectContaining({
+              exportName: "LocalTemplateOnly",
+            }),
+          }),
+          authoring: expect.objectContaining({
+            preferredTree: ["ws:element"],
+            examples: ["insert-registered-template"],
+            dos: [
+              "Use insert-component when you want Webstudio to create this registered template and required child structure.",
+            ],
+            donts: [],
+            insertionStrategy: "insert-component",
+          }),
+          builder: expect.objectContaining({
+            insertTemplate: true,
+            requiredStructure: ["ws:element"],
+            editablePlaceholders: ["section.children.0"],
+            expectedNamespaces: ["instances", "styleSources"],
           }),
           examples: [
             {
