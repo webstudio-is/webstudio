@@ -59,6 +59,27 @@ Plain JSX prop values must be JSON-compatible: `null`, strings, booleans, finite
 
 If a component has a registered template with required parts, JSX must include those parts explicitly under the same parent structure as the template, for example `<radix.Switch><radix.SwitchThumb /></radix.Switch>`. Use `insert-component` when you want Webstudio to apply one component template automatically.
 
+## Animation Components
+
+Before creating animation examples, inspect the exact components with focused discovery:
+
+```sh
+webstudio components.get '{"component":"@webstudio-is/sdk-components-animation:AnimateChildren"}'
+webstudio components.get '{"component":"@webstudio-is/sdk-components-animation:AnimateText"}'
+webstudio components.get '{"component":"@webstudio-is/sdk-components-animation:StaggerAnimation"}'
+webstudio components.get '{"component":"@webstudio-is/sdk-components-animation:VideoAnimation"}'
+```
+
+Use Animation Group (`AnimateChildren`) as the controller. Put normal instances directly inside it, or put Text Animation, Stagger Animation, or Video Animation directly inside it. Text, Stagger, and Video are helper components with `contentModel.category: "none"` and should not be used as standalone section roots.
+
+Define timing and CSS changes on the Animation Group `action` prop. Use `type:"view"` for viewport entry/exit progress and `type:"scroll"` for scroll-progress timelines. For in animations, keep the canvas styles as the final state and use `fill:"backwards"` with keyframes that describe the starting state. For out animations, use `fill:"forwards"` with keyframes that describe the ending state.
+
+Text Animation settings: `slidingWindow` defaults to `5`, `easing` defaults to `linear`, and `splitBy` defaults to `char`. Use `splitBy:"space"` for word-by-word animation. The parent Animation Group keyframes provide the actual opacity, translate, scale, or other styles.
+
+Stagger Animation settings: `slidingWindow` defaults to `1` and `easing` defaults to `linear`. It applies parent Animation Group progress across its direct children. Use `slidingWindow:0` for instant sequential steps, `1` for one child at a time, and values above `1` for overlapping waves.
+
+Video Animation settings: `timeline` is a boolean. Prefer `insert-component` for Video Animation so the Video child template is inserted, then configure the Video child asset/source. Use short, seek-friendly videos for smooth scroll-linked playback.
+
 ## Command Surface Boundary
 
 - Use top-level `webstudio ...` shell commands for setup, sync/import/build/preview/screenshot, permissions, publish/domains, schema, man, and starting MCP.

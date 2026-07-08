@@ -2697,6 +2697,55 @@ const getComponentStateUsage = (
     .join(", ")}.`;
 };
 
+const animationComponentGuidanceByComponent = new Map<string, string>([
+  [
+    "@webstudio-is/sdk-components-animation:AnimateChildren",
+    [
+      "Animation Group is the root animation controller. Put the instances to animate directly inside it, or put Text Animation, Stagger Animation, or Video Animation directly inside it.",
+      'Set the action prop to an animationAction. Use type:"view" for visibility-driven entry/exit animations and type:"scroll" for scroll-progress animations.',
+      "For view actions, common settings are axis, subject, insetStart, insetEnd, isPinned, debug, and animations. Use subject only when another element should drive progress.",
+      "For scroll actions, common settings are axis, source (nearest, root, or closest), isPinned, debug, and animations.",
+      "Each animation needs timing and keyframes. Timing can use rangeStart/rangeEnd, fill, easing, duration, delay, and iterations. Duration makes Range End unnecessary because duration defines when the animation ends.",
+      'Use fill:"backwards" for in animations from animation styles to canvas styles, and fill:"forwards" for out animations from canvas styles to animation styles.',
+      "Direct child animations expose --index and --total to support staggered formulas such as calc(var(--index) * 20%).",
+      "For polished pages, design the element's normal canvas styles as the final state, then set the Animation Group keyframes to the starting or ending animated state.",
+    ].join(" "),
+  ],
+  [
+    "@webstudio-is/sdk-components-animation:AnimateText",
+    [
+      "Text Animation must be a direct child of Animation Group. Do not use it as a standalone section root.",
+      "Put Heading, Paragraph, Text, or other text-containing instances inside Text Animation. It wraps non-empty descendant text nodes in inline spans and applies the parent Animation Group progress to each split part.",
+      'Settings: slidingWindow number, default 5; easing, default linear; splitBy, default char. splitBy options are char, space, symbol "#", and symbol "~".',
+      'Use splitBy:"char" for letter-by-letter effects and splitBy:"space" for word-by-word effects. Use larger slidingWindow values for overlapping waves and 0 for instant typewriter-like stepping.',
+      "The actual movement, opacity, scale, or other CSS changes belong on the parent Animation Group action keyframes.",
+    ].join(" "),
+  ],
+  [
+    "@webstudio-is/sdk-components-animation:StaggerAnimation",
+    [
+      "Stagger Animation must be a direct child of Animation Group. Do not use it as a standalone section root.",
+      "Put the repeated cards, list items, text rows, images, or other instances as direct children of Stagger Animation. It applies the parent Animation Group progress across those direct children.",
+      "Settings: slidingWindow number, default 1; easing, default linear.",
+      "slidingWindow 0 makes each child switch instantly in sequence, 1 animates one child at a time, and values above 1 overlap multiple children for a wave.",
+      "The actual fade, translate, scale, or other CSS changes belong on the parent Animation Group action keyframes.",
+    ].join(" "),
+  ],
+  [
+    "@webstudio-is/sdk-components-animation:VideoAnimation",
+    [
+      "Video Animation must be a direct child of Animation Group. Prefer insert-component for Video Animation so Webstudio inserts the required Video child template.",
+      "Put a Video component inside Video Animation and configure its video asset/source on that child.",
+      "Settings: timeline boolean. When enabled, the child Video receives timeline/progress data from the Animation Group; when disabled, visibility/progress still comes from the group.",
+      "Use an Animation Group view action such as rangeStart cover 0% and rangeEnd cover 100% for scroll-linked video progress examples.",
+      "Use short, seek-friendly videos for smooth scroll-linked playback.",
+    ].join(" "),
+  ],
+]);
+
+const getAnimationComponentGuidance = (component: string) =>
+  animationComponentGuidanceByComponent.get(component);
+
 const getComponentCatalog = () => ({
   source: "@webstudio-is/sdk-components-registry/metas",
   usage:
@@ -3550,6 +3599,7 @@ const getComponentDetails = (component: string) => {
   const entry = getComponentSummaryEntry({ component, templates });
   const meta = componentMetas.get(component);
   const stateUsage = getComponentStateUsage(meta?.states);
+  const animationUsage = getAnimationComponentGuidance(component);
   if (entry === undefined || meta === undefined) {
     return {
       found: false,
@@ -3567,12 +3617,14 @@ const getComponentDetails = (component: string) => {
     props: meta.props ?? {},
     states: meta.states ?? [],
     stateUsage,
+    animationUsage,
     indexWithinAncestor: meta.indexWithinAncestor,
     usage: [
       entry.standaloneInsertable
         ? `Use insert-fragment when composing/styling a section, or insert-component with component "${component}" when inserting exactly this component template. A registered template is applied automatically by insert-component when available. For JSX, include templateRequiredParts and nest them according to templateRequiredEdges; templateRootComponents shows the roots produced by the template.`
         : "Do not insert this component standalone. It is a child/part component and must be created by inserting a containing root/template component.",
       stateUsage,
+      animationUsage,
     ]
       .filter(Boolean)
       .join(" "),

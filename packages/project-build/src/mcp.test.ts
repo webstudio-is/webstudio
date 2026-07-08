@@ -2707,6 +2707,30 @@ describe("project session mcp adapter", () => {
       name: "components.get",
       input: { component: "Italic" },
     });
+    const animationGroupDetails = await adapter.callTool({
+      name: "components.get",
+      input: {
+        component: "@webstudio-is/sdk-components-animation:AnimateChildren",
+      },
+    });
+    const textAnimationDetails = await adapter.callTool({
+      name: "components.get",
+      input: {
+        component: "@webstudio-is/sdk-components-animation:AnimateText",
+      },
+    });
+    const staggerAnimationDetails = await adapter.callTool({
+      name: "components.get",
+      input: {
+        component: "@webstudio-is/sdk-components-animation:StaggerAnimation",
+      },
+    });
+    const videoAnimationDetails = await adapter.callTool({
+      name: "components.get",
+      input: {
+        component: "@webstudio-is/sdk-components-animation:VideoAnimation",
+      },
+    });
     const coveragePlanData = coveragePlan.structuredContent.data as {
       total: number;
       rootCount: number;
@@ -3075,6 +3099,52 @@ describe("project session mcp adapter", () => {
           "@webstudio-is/sdk-components-react-radix:Label",
         ],
         usage: expect.stringContaining("templateRootComponents"),
+      })
+    );
+    expect(animationGroupDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        component: "@webstudio-is/sdk-components-animation:AnimateChildren",
+        animationUsage: expect.stringContaining(
+          "Animation Group is the root animation controller"
+        ),
+        props: expect.objectContaining({
+          action: expect.objectContaining({ type: "animationAction" }),
+        }),
+        usage: expect.stringContaining('fill:"backwards"'),
+      })
+    );
+    expect(textAnimationDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        component: "@webstudio-is/sdk-components-animation:AnimateText",
+        animationUsage: expect.stringContaining("splitBy"),
+        props: expect.objectContaining({
+          slidingWindow: expect.objectContaining({ defaultValue: 5 }),
+          splitBy: expect.objectContaining({
+            options: expect.arrayContaining(["char", "space"]),
+          }),
+        }),
+        usage: expect.stringContaining("direct child of Animation Group"),
+      })
+    );
+    expect(staggerAnimationDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        component: "@webstudio-is/sdk-components-animation:StaggerAnimation",
+        animationUsage: expect.stringContaining("direct children"),
+        props: expect.objectContaining({
+          slidingWindow: expect.objectContaining({ defaultValue: 1 }),
+        }),
+        usage: expect.stringContaining("slidingWindow 0"),
+      })
+    );
+    expect(videoAnimationDetails.structuredContent.data).toEqual(
+      expect.objectContaining({
+        component: "@webstudio-is/sdk-components-animation:VideoAnimation",
+        hasTemplate: true,
+        animationUsage: expect.stringContaining("Video child template"),
+        props: expect.objectContaining({
+          timeline: expect.objectContaining({ type: "boolean" }),
+        }),
+        usage: expect.stringContaining("seek-friendly videos"),
       })
     );
     expect(selectDetails.structuredContent.data).toEqual(
