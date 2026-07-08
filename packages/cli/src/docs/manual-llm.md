@@ -80,6 +80,263 @@ Stagger Animation settings: `slidingWindow` defaults to `1` and `easing` default
 
 Video Animation settings: `timeline` is a boolean. Prefer `insert-component` for Video Animation so the Video child template is inserted, then configure the Video child asset/source. Use short, seek-friendly videos for smooth scroll-linked playback.
 
+Use JSX fragments for authored animation structures when you need styled, editable examples. Put the final visual state in `ws:style` and put the starting or ending animated state in the Animation Group `action` keyframes. Include an explicit `offset` on every keyframe: use `offset: 0` for starting-state keyframes with `fill:"backwards"` and `offset: 1` for ending-state keyframes with `fill:"forwards"`.
+
+```tsx
+<animation.AnimateChildren
+  action={{
+    type: "view",
+    axis: "block",
+    animations: [
+      {
+        name: "Fade up on entry",
+        timing: {
+          fill: "backwards",
+          rangeStart: ["entry", { type: "unit", value: 0, unit: "%" }],
+          rangeEnd: ["entry", { type: "unit", value: 100, unit: "%" }],
+        },
+        keyframes: [
+          {
+            offset: 0,
+            styles: {
+              opacity: { type: "unit", value: 0, unit: "number" },
+              translate: {
+                type: "tuple",
+                value: [
+                  { type: "unit", value: 0, unit: "number" },
+                  { type: "unit", value: 24, unit: "px" },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    ],
+  }}
+>
+  <ws.element
+    ws:tag="section"
+    ws:style={css`
+      display: grid;
+      gap: 16px;
+      padding: 48px;
+      border-radius: 24px;
+      background: #111827;
+      color: white;
+    `}
+  >
+    <ws.element ws:tag="h2">Launch metrics</ws.element>
+    <ws.element ws:tag="p">
+      A polished card that fades up as it enters the viewport.
+    </ws.element>
+  </ws.element>
+</animation.AnimateChildren>
+```
+
+For Text Animation, keep `animation.AnimateText` as the direct child of Animation Group and place the text-containing element inside it:
+
+```tsx
+<animation.AnimateChildren
+  action={{
+    type: "view",
+    animations: [
+      {
+        name: "Parallax In",
+        timing: {
+          fill: "backwards",
+          rangeStart: ["cover", { type: "unit", value: 0, unit: "%" }],
+          rangeEnd: ["cover", { type: "unit", value: 70, unit: "%" }],
+        },
+        keyframes: [
+          {
+            offset: 0,
+            styles: {
+              translate: {
+                type: "tuple",
+                value: [
+                  { type: "unit", value: 0, unit: "number" },
+                  { type: "unit", value: 100, unit: "px" },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      {
+        name: "Opacity In",
+        timing: {
+          fill: "backwards",
+          rangeStart: ["cover", { type: "unit", value: 0, unit: "%" }],
+          rangeEnd: ["cover", { type: "unit", value: 70, unit: "%" }],
+        },
+        keyframes: [
+          {
+            offset: 0,
+            styles: {
+              opacity: { type: "unit", value: 0, unit: "number" },
+            },
+          },
+        ],
+      },
+      {
+        name: "Scale In",
+        timing: {
+          fill: "backwards",
+          rangeStart: ["cover", { type: "unit", value: 0, unit: "%" }],
+          rangeEnd: ["cover", { type: "unit", value: 70, unit: "%" }],
+        },
+        keyframes: [
+          {
+            offset: 0,
+            styles: {
+              scale: {
+                type: "tuple",
+                value: [
+                  { type: "unit", value: 5, unit: "number" },
+                  { type: "unit", value: 5, unit: "number" },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      {
+        name: "Parallax Out",
+        timing: {
+          fill: "forwards",
+          rangeStart: ["cover", { type: "unit", value: 50, unit: "%" }],
+          rangeEnd: ["cover", { type: "unit", value: 100, unit: "%" }],
+        },
+        keyframes: [
+          {
+            offset: 1,
+            styles: {
+              translate: {
+                type: "tuple",
+                value: [
+                  { type: "unit", value: 0, unit: "number" },
+                  { type: "unit", value: -100, unit: "px" },
+                ],
+              },
+              scale: {
+                type: "tuple",
+                value: [
+                  { type: "unit", value: 5, unit: "number" },
+                  { type: "unit", value: 5, unit: "number" },
+                ],
+              },
+              opacity: { type: "unit", value: 0, unit: "number" },
+            },
+          },
+        ],
+      },
+    ],
+    insetStart: { type: "unit", value: 5, unit: "%" },
+    insetEnd: { type: "unit", value: 5, unit: "%" },
+    isPinned: true,
+  }}
+>
+  <animation.AnimateText
+    splitBy="space"
+    slidingWindow={5}
+    easing="easeOutQuart"
+  >
+    <ws.element ws:tag="h2">Animate words with controlled rhythm</ws.element>
+  </animation.AnimateText>
+</animation.AnimateChildren>
+```
+
+For Stagger Animation, put the repeated cards or rows directly inside `animation.StaggerAnimation`:
+
+```tsx
+<animation.AnimateChildren
+  action={{
+    type: "view",
+    animations: [
+      {
+        timing: {
+          fill: "backwards",
+          rangeStart: ["contain", { type: "unit", value: 0, unit: "%" }],
+          rangeEnd: ["contain", { type: "unit", value: 30, unit: "%" }],
+        },
+        keyframes: [
+          {
+            offset: 0,
+            styles: {
+              opacity: { type: "unit", value: 0, unit: "number" },
+            },
+          },
+        ],
+      },
+    ],
+  }}
+>
+  <animation.StaggerAnimation>
+    <ws.element
+      ws:tag="article"
+      ws:style={css`
+        padding: 20px;
+        border: 1px solid #d1d5db;
+        border-radius: 16px;
+      `}
+    >
+      Plan
+    </ws.element>
+    <ws.element
+      ws:tag="article"
+      ws:style={css`
+        padding: 20px;
+        border: 1px solid #d1d5db;
+        border-radius: 16px;
+      `}
+    >
+      Build
+    </ws.element>
+    <ws.element
+      ws:tag="article"
+      ws:style={css`
+        padding: 20px;
+        border: 1px solid #d1d5db;
+        border-radius: 16px;
+      `}
+    >
+      Launch
+    </ws.element>
+  </animation.StaggerAnimation>
+</animation.AnimateChildren>
+```
+
+For Video Animation, use the registered template via `insert-component` when possible. If you author JSX, include the Video child explicitly:
+
+```tsx
+<animation.AnimateChildren
+  action={{
+    type: "view",
+    animations: [
+      {
+        name: "Video progress",
+        timing: {
+          fill: "both",
+          rangeStart: ["cover", { type: "unit", value: 0, unit: "%" }],
+          rangeEnd: ["cover", { type: "unit", value: 100, unit: "%" }],
+        },
+        keyframes: [{ offset: 0, styles: {} }],
+      },
+    ],
+  }}
+>
+  <animation.VideoAnimation timeline={true}>
+    <$.Video
+      preload="auto"
+      autoPlay={true}
+      muted={true}
+      playsInline={true}
+      crossOrigin="anonymous"
+    />
+  </animation.VideoAnimation>
+</animation.AnimateChildren>
+```
+
 ## Command Surface Boundary
 
 - Use top-level `webstudio ...` shell commands for setup, sync/import/build/preview/screenshot, permissions, publish/domains, schema, man, and starting MCP.

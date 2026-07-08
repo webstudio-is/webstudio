@@ -576,6 +576,36 @@ test("merges fragment token conflicts by replacing existing token styles", async
   );
 });
 
+test("coerces animation action props from webstudio jsx fragments", async () => {
+  const parent = createParent();
+  const state = createState(parent);
+
+  const mutation = await insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: await parseWebstudioJsxFragment(
+        `<animation.AnimateChildren action={{type:"view",animations:[{timing:{fill:"backwards",rangeStart:["entry",{type:"unit",value:0,unit:"%"}],rangeEnd:["entry",{type:"unit",value:100,unit:"%"}]},keyframes:[{styles:{opacity:{type:"unit",value:0,unit:"number"}}}]}]}}><ws.element ws:tag="h2">Reveal</ws.element></animation.AnimateChildren>`
+      ),
+      conflictResolution: "merge",
+    },
+    {
+      createId: createIdFactory(),
+      projectId: "project-id",
+    }
+  );
+
+  expect(
+    getAddedValues<{ type: string; name: string }>(mutation, "props")
+  ).toContainEqual(
+    expect.objectContaining({
+      name: "action",
+      type: "animationAction",
+      value: expect.objectContaining({ type: "view" }),
+    })
+  );
+});
+
 test("detects likely Webstudio JSX fragments", () => {
   expect(isLikelyWebstudioJsxFragment("<$.Box />")).toBe(true);
   expect(isLikelyWebstudioJsxFragment("\n  < $ .Box />")).toBe(true);

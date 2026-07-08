@@ -1,5 +1,6 @@
 import equal from "fast-deep-equal";
 import {
+  animationAction,
   elementComponent,
   instanceComponent,
   ROOT_INSTANCE_ID,
@@ -54,6 +55,40 @@ import type { ConflictResolution } from "./style-copy";
 import { z } from "zod";
 
 const conflictResolutionInput = z.enum(["ours", "theirs", "merge"]);
+
+const normalizeFragmentPropsWithComponentMetas = (
+  fragment: WebstudioFragment
+): WebstudioFragment => {
+  let didChange = false;
+  const props = fragment.props.map((prop) => {
+    if (prop.type !== "json") {
+      return prop;
+    }
+    const instance = fragment.instances.find(
+      (instance) => instance.id === prop.instanceId
+    );
+    if (instance === undefined) {
+      return prop;
+    }
+    const propMeta = componentMetas.get(instance.component)?.props?.[prop.name];
+    if (propMeta?.type !== "animationAction") {
+      return prop;
+    }
+    const result = animationAction.safeParse(prop.value);
+    if (result.success === false) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        `Invalid animation action for "${instance.component}" prop "${prop.name}". ${z.prettifyError(result.error)}`
+      );
+    }
+    didChange = true;
+    return { ...prop, type: "animationAction" as const, value: result.data };
+  });
+  if (didChange === false) {
+    return fragment;
+  }
+  return { ...fragment, props };
+};
 
 export const insertComponentInput = z.object({
   parentInstanceId: z.string(),
@@ -986,10 +1021,11 @@ export const insertFragment = (
     );
   }
   const templates = getComponentTemplates();
+  const fragment = normalizeFragmentPropsWithComponentMetas(input.fragment);
   return createInsertFragmentMutation({
     state,
     parentInstanceId: input.parentInstanceId,
-    fragment: input.fragment,
+    fragment,
     templates,
     mode: input.mode,
     insertIndex: input.insertIndex,
