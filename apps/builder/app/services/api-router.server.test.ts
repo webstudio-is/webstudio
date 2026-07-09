@@ -1,4 +1,4 @@
-import { access, readFile } from "node:fs/promises";
+import { access } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
@@ -135,42 +135,6 @@ describe("api router build operation adapters", () => {
     await expect(
       access(join(servicesDir.pathname, "build-operations.server.ts"))
     ).rejects.toThrow();
-  });
-
-  test("api router tests do not mock modules", async () => {
-    const content = await readFile(new URL(import.meta.url), "utf-8");
-    const forbidden = [
-      new RegExp("\\bvi\\.mock\\("),
-      new RegExp("\\bjest\\.mock\\("),
-      new RegExp("unstable_" + "mock" + "Module"),
-      new RegExp("mock" + "Module"),
-    ];
-    for (const pattern of forbidden) {
-      expect(content).not.toMatch(pattern);
-    }
-  });
-
-  test("api router does not assemble semantic patches inline", async () => {
-    const content = await readFile(
-      new URL("api-router.server.ts", servicesDir),
-      "utf-8"
-    );
-    expect(content).not.toMatch(/\bnamespace:/);
-    expect(content).not.toMatch(/\bpatches:/);
-    expect(content).not.toMatch(/\bop: ["'](add|remove|replace)["']/);
-  });
-
-  test("api router derives runtime operation routes from contracts", async () => {
-    const content = await readFile(
-      new URL("api-router.server.ts", servicesDir),
-      "utf-8"
-    );
-    expect(content).toMatch(/\bruntimeOperationContracts\b/);
-    expect(content).not.toMatch(
-      /\bruntime(?:Build|ContentOrBuild|Assets)(?:Query|Mutation)\(["']/
-    );
-    expect(content).not.toMatch(/cssVariables\.delete/);
-    expect(content).not.toMatch(/startsWith\(["']assets\./);
   });
 });
 

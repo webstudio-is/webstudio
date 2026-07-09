@@ -1978,6 +1978,79 @@ describe("updatePageMarketplace", () => {
       },
     ]);
   });
+
+  test("adds marketplace fields missing from serialized page data", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page");
+    page!.marketplace = {
+      include: true,
+      category: "",
+      thumbnailAssetId: "",
+    };
+
+    expect(
+      updatePageMarketplace(
+        { pages },
+        {
+          pageId: "page",
+          marketplace: {
+            include: true,
+            category: "Runtime Examples",
+            thumbnailAssetId: "",
+          },
+        }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "add",
+            path: ["pages", "page", "marketplace", "category"],
+            value: "Runtime Examples",
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("removes cleared optional marketplace fields", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page");
+    page!.marketplace = {
+      include: true,
+      category: "Runtime Examples",
+      thumbnailAssetId: "asset-id",
+    };
+
+    expect(
+      updatePageMarketplace(
+        { pages },
+        {
+          pageId: "page",
+          marketplace: {
+            include: true,
+            category: "",
+            thumbnailAssetId: "",
+          },
+        }
+      ).payload
+    ).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "remove",
+            path: ["pages", "page", "marketplace", "category"],
+          },
+          {
+            op: "remove",
+            path: ["pages", "page", "marketplace", "thumbnailAssetId"],
+          },
+        ],
+      },
+    ]);
+  });
 });
 
 describe("savePagePathInHistory", () => {

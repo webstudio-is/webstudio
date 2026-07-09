@@ -804,9 +804,10 @@ export const getInstanceDeleteTargets = ({
   const dataSourceIds = new Set<DataSource["id"]>();
   const resourceIds = new Set<string>();
   const styleSourceSelectionInstanceIds = new Set<Instance["id"]>();
+  const styleSourceSelectionList = Array.from(styleSourceSelections);
   const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
     styleSources,
-    styleSourceSelections,
+    styleSourceSelectionList,
     instanceIds
   );
 
@@ -830,7 +831,7 @@ export const getInstanceDeleteTargets = ({
     }
   }
 
-  for (const styleSourceSelection of styleSourceSelections) {
+  for (const styleSourceSelection of styleSourceSelectionList) {
     if (instanceIds.has(styleSourceSelection.instanceId)) {
       styleSourceSelectionInstanceIds.add(styleSourceSelection.instanceId);
     }

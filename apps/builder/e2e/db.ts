@@ -84,6 +84,15 @@ export const updateBuild = async (
   );
 };
 
+export const updateProject = async (
+  id: string,
+  row: Tables["Project"]["Update"]
+) => {
+  return throwIfError(
+    await postgrest.from("Project").update(row).eq("id", id).select().single()
+  );
+};
+
 export const insertAuthorizationToken = async (
   row: Tables["AuthorizationToken"]["Insert"]
 ) => {

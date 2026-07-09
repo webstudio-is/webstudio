@@ -10,9 +10,13 @@ import {
 } from "./harness";
 import { resetDatabase } from "./db";
 import { logPerf, measure, printPerfSummary } from "./perf";
+import "./tests/animation-runtime.e2e";
 import "./tests/content-mode-editing.e2e";
+import "./tests/data-variables-runtime.e2e";
 import "./tests/pages-actions.e2e";
 import "./tests/preview-links.e2e";
+import "./tests/props-runtime.e2e";
+import "./tests/project-settings-runtime.e2e";
 import "./tests/share-link-permissions.e2e";
 import "./tests/slot-keyboard.e2e";
 import "./tests/style-panel-runtime.e2e";
@@ -198,12 +202,42 @@ const stopBuilder = async (child: ChildProcess | undefined) => {
   ]);
 };
 
+const getRunnableSuites = () => {
+  const suites = getSuites().map((suite) => ({
+    suite,
+    tests: suite.tests.filter(
+      (test) => testFilter === undefined || test.name.includes(testFilter)
+    ),
+  }));
+
+  const runnableSuites = suites.filter(({ tests }) => tests.length > 0);
+
+  if (testFilter !== undefined && runnableSuites.length === 0) {
+    const availableTests = suites.flatMap(({ suite }) =>
+      suite.tests.map((test) => `${suite.name} › ${test.name}`)
+    );
+    throw new Error(
+      [
+        `E2E_TEST_FILTER did not match any tests: ${JSON.stringify(testFilter)}`,
+        "Available tests:",
+        ...availableTests.map((name) => `- ${name}`),
+      ].join("\n")
+    );
+  }
+
+  return runnableSuites;
+};
+
 const run = async () => {
   const totalStartedAt = Date.now();
   const bootStartedAt = Date.now();
   let builder: ChildProcess | undefined;
 
   try {
+    const runnableSuites = getRunnableSuites();
+    if (process.env.E2E_VALIDATE_TEST_FILTER_ONLY === "true") {
+      return;
+    }
     const postgrestReady = measure("wait for postgrest", async () => {
       await waitForPostgrest();
     });
@@ -215,14 +249,6 @@ const run = async () => {
     await measure("warm login route", warmLoginRoute);
     logPerf("boot builder/browser", bootStartedAt);
     const testsStartedAt = Date.now();
-    const runnableSuites = getSuites()
-      .map((suite) => ({
-        suite,
-        tests: suite.tests.filter(
-          (test) => testFilter === undefined || test.name.includes(testFilter)
-        ),
-      }))
-      .filter(({ tests }) => tests.length > 0);
 
     await measure("reset database", resetDatabase);
 

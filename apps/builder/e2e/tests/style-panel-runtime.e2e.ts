@@ -70,9 +70,56 @@ const selectStyleSourceState = async ({
   await page.getByRole("menuitem", { name: state, exact: true }).click();
 };
 
+const openNavigatorPanel = async ({ page }: { page: Page }) => {
+  const tab = page.getByRole("tab", { name: "Navigator" });
+  if ((await tab.getAttribute("aria-selected")) !== "true") {
+    await tab.click();
+  }
+  await page.locator("[data-navigator-tree]").waitFor({
+    state: "visible",
+    timeout: 10_000,
+  });
+};
+
+const selectNavigatorItem = async ({
+  page,
+  itemName,
+}: {
+  page: Page;
+  itemName: string;
+}) => {
+  await openNavigatorPanel({ page });
+  const item = page
+    .locator("[data-navigator-tree] [data-tree-button]")
+    .filter({ hasText: itemName })
+    .last();
+  await item.waitFor({ state: "visible" });
+  await item.click();
+  await item.click();
+};
+
 const readBuildStylesText = async (fixture: SeededContentModeProject) => {
   const build = await loadDevBuild({ projectId: fixture.projectId });
   return JSON.stringify(JSON.parse(build.styles));
+};
+
+const getInstanceChildCount = async ({
+  fixture,
+  instanceId,
+}: {
+  fixture: SeededContentModeProject;
+  instanceId: string;
+}) => {
+  const build = await loadDevBuild({ projectId: fixture.projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    id: string;
+    children?: Array<{ type: string }>;
+  }>;
+  return (
+    instances
+      .find((instance) => instance.id === instanceId)
+      ?.children?.filter((child) => child.type === "id").length ?? 0
+  );
 };
 
 const expectBuildStylesToContain = async ({
@@ -246,6 +293,89 @@ test("Builder style panel edits representative styles and persists after reload"
       fixture,
       text: `"state":":hover"`,
     });
+  } finally {
+    await close();
+  }
+});
+
+test("Builder grid generator fills selected grid and persists after reload", async () => {
+  const fixture = await createStylePanelRuntimeProject("grid-generator");
+  const { page, close } = await newIsolatedPage();
+  const bodyInstanceId = "body";
+
+  try {
+    await measure(
+      "style panel runtime open builder for grid generator",
+      async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.builderToken,
+        });
+      }
+    );
+    await waitForCanvasText({ page, text: "Initial content" });
+
+    const initialBodyChildCount = await getInstanceChildCount({
+      fixture,
+      instanceId: bodyInstanceId,
+    });
+
+    await selectNavigatorItem({ page, itemName: "Body" });
+    await page.getByRole("tab", { name: "Style" }).click();
+
+    await measure("style panel runtime enable body grid", async () => {
+      await addCssDeclaration({ page, css: "display: grid" });
+    });
+    await page.getByRole("button", { name: /Grid layout:/ }).waitFor();
+
+    await measure("style panel runtime fill body grid", async () => {
+      await page.getByRole("button", { name: /Grid layout:/ }).click();
+      const save = waitForChangeToBeSaved({ page });
+      await page.getByRole("button", { name: "Fill grid" }).click();
+      await save;
+      await waitForSyncStatus({ page, status: "idle" });
+    });
+
+    const filledBodyChildCount = await getInstanceChildCount({
+      fixture,
+      instanceId: bodyInstanceId,
+    });
+    const expectedBodyChildCount = Math.max(initialBodyChildCount, 4);
+    if (filledBodyChildCount !== expectedBodyChildCount) {
+      throw new Error(
+        `Expected Fill grid to grow Body children to ${expectedBodyChildCount}. Before ${initialBodyChildCount}, after ${filledBodyChildCount}`
+      );
+    }
+    await expectBuildStylesToContain({ fixture, text: `"display"` });
+    await expectBuildStylesToContain({ fixture, text: `"grid"` });
+    await expectBuildStylesToContain({ fixture, text: `"flexDirection"` });
+    await expectBuildStylesToContain({ fixture, text: `"column"` });
+
+    await measure(
+      "style panel runtime reload grid generator result",
+      async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.builderToken,
+        });
+      }
+    );
+    await waitForCanvasText({ page, text: "Initial content" });
+    await selectNavigatorItem({ page, itemName: "Body" });
+    await page.getByRole("tab", { name: "Style" }).click();
+    await page.getByRole("button", { name: /Grid layout:/ }).waitFor();
+
+    const reloadedBodyChildCount = await getInstanceChildCount({
+      fixture,
+      instanceId: bodyInstanceId,
+    });
+    if (reloadedBodyChildCount !== expectedBodyChildCount) {
+      throw new Error(
+        `Expected reloaded Fill grid result to keep ${expectedBodyChildCount} Body children. Got ${reloadedBodyChildCount}`
+      );
+    }
   } finally {
     await close();
   }

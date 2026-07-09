@@ -13,6 +13,7 @@ export E2E_MIGRATIONS_TIMEOUT_SECONDS="${E2E_MIGRATIONS_TIMEOUT_SECONDS:-300}"
 export E2E_INSTALL_PLAYWRIGHT="${E2E_INSTALL_PLAYWRIGHT:-auto}"
 export E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS="${E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS:-300}"
 export E2E_RUN_TESTS="${E2E_RUN_TESTS:-true}"
+export E2E_START_POSTGREST="${E2E_START_POSTGREST:-$E2E_RUN_TESTS}"
 export E2E_BUILDER_BUILD_TIMEOUT_SECONDS="${E2E_BUILDER_BUILD_TIMEOUT_SECONDS:-600}"
 export E2E_TEST_COMMAND_TIMEOUT_SECONDS="${E2E_TEST_COMMAND_TIMEOUT_SECONDS:-900}"
 export E2E_WRITE_SCHEMA_SNAPSHOT="${E2E_WRITE_SCHEMA_SNAPSHOT:-false}"
@@ -57,7 +58,11 @@ run_step() {
 }
 
 bootstrap_database() {
-  builder_backend_bootstrap "$E2E_DB_BOOTSTRAP"
+  if [ "$E2E_DB_BOOTSTRAP" = "if-empty" ]; then
+    builder_backend_bootstrap_if_empty
+  else
+    builder_backend_bootstrap "$E2E_DB_BOOTSTRAP"
+  fi
 
   if [ "$E2E_WRITE_SCHEMA_SNAPSHOT" = "true" ]; then
     builder_backend_write_schema_snapshot
@@ -90,6 +95,21 @@ run_builder_e2e_tests() {
   )
 }
 
+validate_test_filter() {
+  if [ "${E2E_TEST_FILTER:-}" = "" ]; then
+    return
+  fi
+  (
+    cd "$ROOT_DIR/apps/builder"
+    E2E_VALIDATE_TEST_FILTER_ONLY=true pnpm exec tsx --env-file .env --env-file-if-exists .env.development --conditions=webstudio ./e2e/run.ts
+  )
+}
+
+if [ "$E2E_RUN_TESTS" = "true" ]; then
+  run_step "validate e2e test filter" "$E2E_TEST_COMMAND_TIMEOUT_SECONDS" \
+    validate_test_filter
+fi
+
 run_step "start e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
   builder_backend_start_db
 
@@ -102,12 +122,14 @@ run_step "wait for e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
 run_step "bootstrap database schema" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
   bootstrap_database
 
+if [ "$E2E_START_POSTGREST" = "true" ]; then
+  run_step "start e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
+    builder_backend_start_postgrest
+fi
+
 if [ "$E2E_RUN_TESTS" = "true" ]; then
   run_step "install playwright chromium" "$E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS" \
     install_playwright_chromium
-
-  run_step "start e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
-    builder_backend_start_postgrest
 
   if [ "${E2E_BUILDER_URL:-}" = "" ]; then
     run_step "build builder app" "$E2E_BUILDER_BUILD_TIMEOUT_SECONDS" \

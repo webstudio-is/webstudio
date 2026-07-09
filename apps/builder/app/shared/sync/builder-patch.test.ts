@@ -51,6 +51,9 @@ const createData = (): WebstudioData => ({
 });
 
 const setupStores = (data: WebstudioData) => {
+  serverSyncStore.transactionManager.currentStack = [];
+  serverSyncStore.transactionManager.undoneStack = [];
+  serverSyncStore.popAll();
   $pages.set(data.pages);
   $instances.set(data.instances);
   $props.set(data.props);
@@ -61,7 +64,6 @@ const setupStores = (data: WebstudioData) => {
   $styleSources.set(data.styleSources);
   $styles.set(data.styles);
   $assets.set(data.assets);
-  serverSyncStore.popAll();
 };
 
 describe("builder patch sync adapter", () => {
@@ -99,14 +101,19 @@ describe("builder patch sync adapter", () => {
     expect(change.namespace).toEqual("instances");
     expect(change.patches).toEqual([
       {
-        op: "replace",
-        path: ["existing", "children", 0, "value"],
-        value: "new",
+        op: "add",
+        path: ["added"],
+        value: createInstance("added"),
       },
       {
         op: "add",
-        path: ["added"],
-        value: createInstance("added", [{ type: "id", value: "child" }]),
+        path: ["added", "children", 0],
+        value: { type: "id", value: "child" },
+      },
+      {
+        op: "replace",
+        path: ["existing", "children", 0, "value"],
+        value: "new",
       },
       { op: "remove", path: ["removed"] },
     ]);
@@ -124,15 +131,103 @@ describe("builder patch sync adapter", () => {
 
     added.children.push({ type: "id", value: "mutated-after-conversion" });
     expect(change.patches[0]).toEqual({
-      op: "replace",
-      path: ["existing", "children", 0, "value"],
-      value: "new",
-    });
-    expect(change.patches[1]).toEqual({
       op: "add",
       path: ["added"],
-      value: createInstance("added", [{ type: "id", value: "child" }]),
+      value: createInstance("added"),
     });
+  });
+
+  test("compacts reverse patches for undo", () => {
+    const data = createData();
+    const added = createInstance("added");
+    const payload: BuilderPatchChange[] = [
+      {
+        namespace: "instances",
+        patches: [
+          { op: "add", path: ["added"], value: added },
+          {
+            op: "add",
+            path: ["added", "children", 0],
+            value: { type: "id", value: "child" },
+          },
+        ],
+      },
+    ];
+
+    const changes = createSyncChangesFromBuilderPatchPayload({
+      data,
+      payload,
+    });
+
+    expect(changes).toHaveLength(1);
+    const [change] = changes;
+    expect(change.revisePatches).toEqual([
+      {
+        op: "remove",
+        path: ["added"],
+      },
+    ]);
+    expect(change.patches).toEqual([
+      {
+        op: "add",
+        path: ["added"],
+        value: createInstance("added"),
+      },
+      {
+        op: "add",
+        path: ["added", "children", 0],
+        value: { type: "id", value: "child" },
+      },
+    ]);
+  });
+
+  test("preserves runtime add patches for undefined object fields", () => {
+    const data = createData();
+    const page = data.pages.pages.get(data.pages.homePageId);
+    if (page === undefined) {
+      throw Error("Expected fixture page");
+    }
+    page.marketplace = {
+      include: true,
+      category: undefined,
+      thumbnailAssetId: undefined,
+    };
+
+    const changes = createSyncChangesFromBuilderPatchPayload({
+      data,
+      payload: [
+        {
+          namespace: "pages",
+          patches: [
+            {
+              op: "add",
+              path: ["pages", data.pages.homePageId, "marketplace", "category"],
+              value: "Runtime Examples",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(changes).toEqual([
+      {
+        namespace: "pages",
+        patches: [
+          {
+            op: "add",
+            path: ["pages", data.pages.homePageId, "marketplace", "category"],
+            value: "Runtime Examples",
+          },
+        ],
+        revisePatches: [
+          {
+            op: "replace",
+            path: ["pages", data.pages.homePageId, "marketplace", "category"],
+            value: undefined,
+          },
+        ],
+      },
+    ]);
   });
 
   test("commits builder patch payloads through sync undo and redo", () => {
@@ -168,5 +263,34 @@ describe("builder patch sync adapter", () => {
     expect($instances.get().get("existing")?.children).toEqual([
       { type: "id", value: "new" },
     ]);
+  });
+
+  test("commits style source selection removals through sync undo and redo", () => {
+    const data = createData();
+    data.styleSourceSelections.set("card", {
+      instanceId: "card",
+      values: ["local"],
+    });
+    setupStores(data);
+
+    createTransactionFromBuilderPatchPayload({
+      data,
+      payload: [
+        {
+          namespace: "styleSourceSelections",
+          patches: [{ op: "remove", path: ["card"] }],
+        },
+      ],
+    });
+
+    expect($styleSourceSelections.get()).toEqual(new Map());
+
+    serverSyncStore.undo();
+    expect($styleSourceSelections.get()).toEqual(
+      new Map([["card", { instanceId: "card", values: ["local"] }]])
+    );
+
+    serverSyncStore.redo();
+    expect($styleSourceSelections.get()).toEqual(new Map());
   });
 });

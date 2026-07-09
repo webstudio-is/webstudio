@@ -193,6 +193,79 @@ type TemplateDropInfo = {
 };
 const $templateDropInfo = atom<TemplateDropInfo | undefined>(undefined);
 
+const getPagesTreeDropTarget = ({
+  item,
+  dropTarget,
+  pages,
+}: {
+  item: PagesTreeItem;
+  dropTarget: undefined | TreeDropTarget;
+  pages: NonNullable<ReturnType<typeof $pages.get>>;
+}) => {
+  if (dropTarget === undefined) {
+    return;
+  }
+  const storedDropTarget = getStoredPageDropTarget({
+    selector: item.selector,
+    dropTarget,
+    pages,
+  });
+  if (storedDropTarget && canDropPageTarget(storedDropTarget, pages)) {
+    return storedDropTarget;
+  }
+};
+
+const commitPagesTreeDrop = ({
+  item,
+  dropTarget,
+  executeMutation,
+}: {
+  item: PagesTreeItem;
+  dropTarget: undefined | DropTarget;
+  executeMutation: typeof executeRuntimeMutation;
+}) => {
+  if (dropTarget === undefined) {
+    return false;
+  }
+  executeMutation({
+    id: "pageTree.move",
+    input: {
+      childId: item.id,
+      parentFolderId: dropTarget.parentId,
+      position: dropTarget.indexWithinChildren,
+    },
+  });
+  return true;
+};
+
+const commitPageTemplateDrop = ({
+  draggedTemplate,
+  targetTemplate,
+  dropInfo,
+  canManageTemplates,
+  executeMutation,
+}: {
+  draggedTemplate: PageTemplate;
+  targetTemplate: PageTemplate;
+  dropInfo: undefined | TemplateDropInfo;
+  canManageTemplates: boolean;
+  executeMutation: typeof executeRuntimeMutation;
+}) => {
+  if (canManageTemplates === false || dropInfo === undefined) {
+    return false;
+  }
+  executeMutation({
+    id: "pageTemplates.reorder",
+    input: {
+      sourceTemplateId: draggedTemplate.id,
+      targetTemplateId: targetTemplate.id,
+      position:
+        dropInfo.treeDropTarget.beforeLevel !== undefined ? "before" : "after",
+    },
+  });
+  return true;
+};
+
 const $flatPagesTree = computed(
   [$pages, $expandedItems, $dropTarget],
   (pagesData, expandedItems, dropTarget) => {
@@ -346,35 +419,24 @@ const PagesTree = ({
               onExpand={(isExpanded) => handleExpand(isExpanded, false)}
               dropTarget={item.dropTarget}
               onDropTargetChange={(dropTarget) => {
-                if (dropTarget) {
-                  const storedDropTarget = getStoredPageDropTarget({
-                    selector: item.selector,
+                $dropTarget.set(
+                  getPagesTreeDropTarget({
+                    item,
                     dropTarget,
                     pages,
-                  });
-                  if (
-                    storedDropTarget &&
-                    canDropPageTarget(storedDropTarget, pages)
-                  ) {
-                    $dropTarget.set(storedDropTarget);
-                  }
-                } else {
-                  $dropTarget.set(undefined);
-                }
+                  })
+                );
               }}
               onDrop={(item) => {
-                if (dropTarget === undefined) {
-                  return;
+                if (
+                  commitPagesTreeDrop({
+                    item,
+                    dropTarget,
+                    executeMutation: executeRuntimeMutation,
+                  })
+                ) {
+                  $dropTarget.set(undefined);
                 }
-                executeRuntimeMutation({
-                  id: "pageTree.move",
-                  input: {
-                    childId: item.id,
-                    parentFolderId: dropTarget.parentId,
-                    position: dropTarget.indexWithinChildren,
-                  },
-                });
-                $dropTarget.set(undefined);
               }}
             >
               <TreeNode
@@ -506,6 +568,9 @@ const canEditPagesPanelItemSettings = ({
 export const __testing__ = {
   canEditPagesPanelItemSettings,
   canEditPagesTreeItemSettings,
+  commitPagesTreeDrop,
+  commitPageTemplateDrop,
+  getPagesTreeDropTarget,
 };
 
 const CreateItemMenu = ({
@@ -884,25 +949,17 @@ const TemplatesSection = ({
             }
           }}
           onDrop={(draggedTemplate) => {
-            if (canManageTemplates === false) {
-              return;
+            if (
+              commitPageTemplateDrop({
+                draggedTemplate,
+                targetTemplate: template,
+                dropInfo: $templateDropInfo.get(),
+                canManageTemplates,
+                executeMutation: executeRuntimeMutation,
+              })
+            ) {
+              $templateDropInfo.set(undefined);
             }
-            const info = $templateDropInfo.get();
-            if (info === undefined) {
-              return;
-            }
-            executeRuntimeMutation({
-              id: "pageTemplates.reorder",
-              input: {
-                sourceTemplateId: draggedTemplate.id,
-                targetTemplateId: template.id,
-                position:
-                  info.treeDropTarget.beforeLevel !== undefined
-                    ? "before"
-                    : "after",
-              },
-            });
-            $templateDropInfo.set(undefined);
           }}
           onExpand={() => {}}
         >

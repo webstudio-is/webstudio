@@ -16,6 +16,8 @@
     "dev:auth": "DEBUG=ws:* remix vite:dev",
     "e2e:ci": "tsx --env-file .env --env-file-if-exists .env.development --conditions=webstudio ./e2e/run.ts",
     "e2e:local": "bash ./e2e/run-local.sh",
+    "e2e:dev:backend": "E2E_SKIP_CLEANUP=true E2E_RUN_TESTS=false E2E_START_POSTGREST=true E2E_DB_BOOTSTRAP=if-empty E2E_INSTALL_PLAYWRIGHT=false bash ./e2e/run-local.sh",
+    "e2e:dev": "E2E_SKIP_CLEANUP=true E2E_DB_BOOTSTRAP=if-empty E2E_INSTALL_PLAYWRIGHT=false E2E_BUILDER_URL=${E2E_BUILDER_URL:-https://127.0.0.1:3000} bash ./e2e/run-local.sh",
     "typecheck": "tsgo --noEmit --emitDeclarationOnly false",
     "test": "vitest run"
   },

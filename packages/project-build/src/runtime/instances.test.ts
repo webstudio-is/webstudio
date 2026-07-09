@@ -43,6 +43,7 @@ import {
   getTextContentErrors,
   isTextContentChild,
   listInstances,
+  deleteInstances,
   moveInstances,
   serializeTextNodes,
   setInstanceLabel,
@@ -2509,6 +2510,81 @@ test("cleans local styles and scoped data when removing instances", () => {
       patches: [{ op: "remove", path: ["local-1:base:color:"] }],
     },
   ]);
+});
+
+test("deletes instances with local style selection cleanup", () => {
+  const styleDecl: StyleDecl = {
+    styleSourceId: "card-a-style-source",
+    breakpointId: "base",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  const result = deleteInstances(
+    {
+      pages: createDefaultPages({
+        homePageId: "page-id",
+        rootInstanceId: "body",
+      }),
+      instances: new Map([
+        [
+          "body",
+          createInstance("body", "Body", [
+            { type: "id", value: "card-a" },
+            { type: "id", value: "card-b" },
+          ]),
+        ],
+        [
+          "card-a",
+          createInstance("card-a", "Box", [
+            { type: "id", value: "card-a-text" },
+          ]),
+        ],
+        ["card-a-text", createInstance("card-a-text", "Text")],
+        ["card-b", createInstance("card-b", "Box")],
+      ]),
+      props: new Map([
+        [
+          "card-a-prop",
+          {
+            id: "card-a-prop",
+            instanceId: "card-a",
+            name: "data-state",
+            type: "string",
+            value: "featured",
+          },
+        ],
+      ]),
+      dataSources: new Map([
+        [
+          "card-data-source",
+          {
+            id: "card-data-source",
+            scopeInstanceId: "card-a",
+            name: "cardData",
+            type: "resource",
+            resourceId: "card-resource",
+          },
+        ],
+      ]),
+      styleSources: new Map([
+        ["card-a-style-source", { type: "local", id: "card-a-style-source" }],
+      ]),
+      styleSourceSelections: new Map([
+        ["card-a", { instanceId: "card-a", values: ["card-a-style-source"] }],
+      ]),
+      styles: new Map([["card-a-style", styleDecl]]),
+    },
+    { instanceIds: ["card-a", "card-b"] }
+  );
+
+  expect(result.payload).toEqual(
+    expect.arrayContaining([
+      {
+        namespace: "styleSourceSelections",
+        patches: [{ op: "remove", path: ["card-a"] }],
+      },
+    ])
+  );
 });
 
 test("gets instance depths from roots", () => {

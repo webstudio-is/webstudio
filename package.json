@@ -16,6 +16,8 @@
     "fixtures": "pnpm -r fixtures:link && pnpm -r fixtures:sync && pnpm -r fixtures:build",
     "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint && pnpm check:package-boundaries && pnpm check:generated-api && pnpm check:generated-docs && pnpm fixtures",
     "e2e:builder": "bash ./apps/builder/e2e/run-local.sh",
+    "e2e:builder:dev:backend": "E2E_SKIP_CLEANUP=true E2E_RUN_TESTS=false E2E_START_POSTGREST=true E2E_DB_BOOTSTRAP=if-empty E2E_INSTALL_PLAYWRIGHT=false bash ./apps/builder/e2e/run-local.sh",
+    "e2e:builder:dev": "E2E_SKIP_CLEANUP=true E2E_DB_BOOTSTRAP=if-empty E2E_INSTALL_PLAYWRIGHT=false E2E_BUILDER_URL=${E2E_BUILDER_URL:-https://127.0.0.1:3000} bash ./apps/builder/e2e/run-local.sh",
     "e2e:builder:update-schema": "E2E_DB_BOOTSTRAP=migrations E2E_WRITE_SCHEMA_SNAPSHOT=true E2E_RUN_TESTS=false bash ./apps/builder/e2e/run-local.sh",
     "playwright": "pnpm -r playwright-init",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",

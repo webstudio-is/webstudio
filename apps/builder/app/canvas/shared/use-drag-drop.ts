@@ -96,6 +96,31 @@ const initialState: {
   dragPayload: undefined,
 };
 
+export const commitCanvasDragDrop = ({
+  dropTarget,
+  dragPayload,
+}: {
+  dropTarget: ItemDropTarget | undefined;
+  dragPayload: DragStartPayload | undefined;
+}) => {
+  if (dropTarget === undefined || dragPayload === undefined) {
+    return false;
+  }
+
+  const insertable = {
+    parentSelector: dropTarget.itemSelector,
+    position: dropTarget.indexWithinChildren,
+  };
+  if (dragPayload.type === "insert") {
+    return insertWebstudioComponentAt(dragPayload.dragComponent, insertable);
+  }
+  if (dragPayload.type === "reparent") {
+    reparentInstance(dragPayload.dragInstanceSelector, insertable);
+    return true;
+  }
+  return false;
+};
+
 const sharedDropOptions = {
   getValidChildren: (parent: Element) => {
     return Array.from(parent.children).filter(
@@ -294,17 +319,8 @@ export const useDragAndDrop = () => {
     autoScrollHandlers.setEnabled(false);
     const { dropTarget, dragPayload } = state.current;
 
-    if (dropTarget && dragPayload && isCanceled === false) {
-      const insertable = {
-        parentSelector: dropTarget.itemSelector,
-        position: dropTarget.indexWithinChildren,
-      };
-      if (dragPayload.type === "insert") {
-        void insertWebstudioComponentAt(dragPayload.dragComponent, insertable);
-      }
-      if (dragPayload.type === "reparent") {
-        reparentInstance(dragPayload.dragInstanceSelector, insertable);
-      }
+    if (isCanceled === false) {
+      commitCanvasDragDrop({ dropTarget, dragPayload });
     }
 
     state.current = { ...initialState };

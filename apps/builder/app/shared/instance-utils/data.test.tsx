@@ -35,6 +35,9 @@ const createInstance = (
 registerContainers();
 
 const setBaseStores = () => {
+  serverSyncStore.transactionManager.currentStack = [];
+  serverSyncStore.transactionManager.undoneStack = [];
+  serverSyncStore.popAll();
   const pages = createDefaultPages({ rootInstanceId: "body" });
   $pages.set(pages);
   $selectedPageId.set(pages.homePageId);
@@ -262,6 +265,129 @@ describe("data store helpers", () => {
     expect(getSyncedPages()?.pages.has(pageId)).toEqual(false);
     serverSyncStore.redo();
     expect(getSyncedPages()?.pages.has(pageId)).toEqual(true);
+  });
+
+  test("runtime bridge moves page tree items with sync undo and redo support", () => {
+    const { pages } = setBaseStores();
+    const rootFolder = pages.folders.get(pages.rootFolderId);
+    if (rootFolder === undefined) {
+      throw new Error("Expected root folder");
+    }
+    pages.pages.set("page-a", {
+      id: "page-a",
+      name: "Page A",
+      path: "/page-a",
+      title: JSON.stringify("Page A"),
+      meta: {},
+      rootInstanceId: "body",
+    });
+    pages.pages.set("page-b", {
+      id: "page-b",
+      name: "Page B",
+      path: "/page-b",
+      title: JSON.stringify("Page B"),
+      meta: {},
+      rootInstanceId: "body",
+    });
+    pages.folders.set("folder", {
+      id: "folder",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    });
+    rootFolder.children.push("page-a", "page-b", "folder");
+    serverSyncStore.popAll();
+
+    executeRuntimeMutation({
+      id: "pageTree.move",
+      input: {
+        childId: "page-b",
+        parentFolderId: "folder",
+        position: 0,
+      },
+    });
+
+    expect($pages.get()?.folders.get(pages.rootFolderId)?.children).toEqual([
+      pages.homePageId,
+      "page-a",
+      "folder",
+    ]);
+    expect($pages.get()?.folders.get("folder")?.children).toEqual(["page-b"]);
+
+    const pageTreeChanges = serverSyncStore
+      .popAll()
+      .flatMap((item) => item.changes)
+      .filter((change) => change.namespace === "pages");
+    expect(pageTreeChanges).toHaveLength(1);
+
+    serverSyncStore.undo();
+    expect($pages.get()?.folders.get(pages.rootFolderId)?.children).toEqual([
+      pages.homePageId,
+      "page-a",
+      "page-b",
+      "folder",
+    ]);
+    expect($pages.get()?.folders.get("folder")?.children).toEqual([]);
+
+    serverSyncStore.redo();
+    expect($pages.get()?.folders.get(pages.rootFolderId)?.children).toEqual([
+      pages.homePageId,
+      "page-a",
+      "folder",
+    ]);
+    expect($pages.get()?.folders.get("folder")?.children).toEqual(["page-b"]);
+  });
+
+  test("runtime bridge reorders page templates with sync undo and redo support", () => {
+    const { pages } = setBaseStores();
+    pages.pageTemplates = new Map(
+      ["first", "second", "third"].map((id) => [
+        id,
+        {
+          id,
+          name: id,
+          title: JSON.stringify(id),
+          rootInstanceId: "body",
+          meta: {},
+        },
+      ])
+    );
+    serverSyncStore.popAll();
+
+    executeRuntimeMutation({
+      id: "pageTemplates.reorder",
+      input: {
+        sourceTemplateId: "third",
+        targetTemplateId: "first",
+        position: "before",
+      },
+    });
+
+    expect(Array.from($pages.get()?.pageTemplates?.keys() ?? [])).toEqual([
+      "third",
+      "first",
+      "second",
+    ]);
+
+    const templateChanges = serverSyncStore
+      .popAll()
+      .flatMap((item) => item.changes)
+      .filter((change) => change.namespace === "pages");
+    expect(templateChanges).toHaveLength(1);
+
+    serverSyncStore.undo();
+    expect(Array.from($pages.get()?.pageTemplates?.keys() ?? [])).toEqual([
+      "first",
+      "second",
+      "third",
+    ]);
+
+    serverSyncStore.redo();
+    expect(Array.from($pages.get()?.pageTemplates?.keys() ?? [])).toEqual([
+      "third",
+      "first",
+      "second",
+    ]);
   });
 
   test("uses runtime mutation input validation before updating stores", () => {

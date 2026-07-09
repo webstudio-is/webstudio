@@ -647,6 +647,60 @@ const canDrop = (
   });
 };
 
+const getNavigatorDragState = ({
+  item,
+  dropTarget,
+  draggingItem,
+  canDropTarget,
+}: {
+  item: TreeItem;
+  dropTarget: undefined | TreeDropTarget;
+  draggingItem: TreeItem;
+  canDropTarget: (
+    dragSelector: InstanceSelector,
+    dropTarget: ItemDropTarget
+  ) => boolean;
+}) => {
+  const builderDropTarget = getBuilderDropTarget(item, dropTarget);
+  if (
+    builderDropTarget &&
+    canDropTarget(draggingItem.selector, builderDropTarget)
+  ) {
+    return {
+      isDragging: true,
+      dragPayload: {
+        origin: "panel" as const,
+        type: "reparent" as const,
+        dragInstanceSelector: draggingItem.selector,
+      },
+      dropTarget: builderDropTarget,
+    };
+  }
+  return {
+    isDragging: false,
+    dropTarget: undefined,
+  };
+};
+
+const commitNavigatorDrop = ({
+  item,
+  dropTarget,
+  reparent,
+}: {
+  item: TreeItem;
+  dropTarget: undefined | ItemDropTarget;
+  reparent: typeof reparentInstance;
+}) => {
+  if (dropTarget === undefined) {
+    return false;
+  }
+  reparent(item.selector, {
+    parentSelector: dropTarget.itemSelector,
+    position: dropTarget.indexWithinChildren,
+  });
+  return true;
+};
+
 export const NavigatorTree = () => {
   const isContentMode = useStore($isContentMode);
   const flatTree = useStore($flatTree);
@@ -984,40 +1038,23 @@ export const NavigatorTree = () => {
                 canDrag={() => canDrag(item.instance, item.selector)}
                 dropTarget={item.dropTarget}
                 onDropTargetChange={(dropTarget, draggingItem) => {
-                  const builderDropTarget = getBuilderDropTarget(
-                    item,
-                    dropTarget
-                  );
-                  if (
-                    builderDropTarget &&
-                    canDrop(draggingItem.selector, builderDropTarget)
-                  ) {
-                    $dragAndDropState.set({
-                      ...$dragAndDropState.get(),
-                      isDragging: true,
-                      dragPayload: {
-                        origin: "panel",
-                        type: "reparent",
-                        dragInstanceSelector: draggingItem.selector,
-                      },
-                      dropTarget: builderDropTarget,
-                    });
-                  } else {
-                    $dragAndDropState.set({
-                      ...$dragAndDropState.get(),
-                      isDragging: false,
-                      dropTarget: undefined,
-                    });
-                  }
+                  $dragAndDropState.set({
+                    ...$dragAndDropState.get(),
+                    ...getNavigatorDragState({
+                      item,
+                      dropTarget,
+                      draggingItem,
+                      canDropTarget: canDrop,
+                    }),
+                  });
                 }}
                 onDrop={(data) => {
                   const builderDropTarget = $dragAndDropState.get().dropTarget;
-                  if (builderDropTarget) {
-                    reparentInstance(data.selector, {
-                      parentSelector: builderDropTarget.itemSelector,
-                      position: builderDropTarget.indexWithinChildren,
-                    });
-                  }
+                  commitNavigatorDrop({
+                    item: data,
+                    dropTarget: builderDropTarget,
+                    reparent: reparentInstance,
+                  });
                   $dragAndDropState.set({ isDragging: false });
                 }}
                 onExpand={(isExpanded) => handleExpand(item, isExpanded, false)}
@@ -1098,7 +1135,10 @@ export const NavigatorTree = () => {
 };
 
 export const __testing__ = {
+  commitNavigatorDrop,
   getFocusSelectionSkipCountAfterPointerDown,
+  getBuilderDropTarget,
+  getNavigatorDragState,
   getNavigatorKeyboardSelectionUpdate,
   getNavigatorSiblingSelectionUpdate,
   getNavigatorSelectionUpdate,

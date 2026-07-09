@@ -1,3 +1,4 @@
+import type { Page } from "playwright";
 import {
   deleteSelectedAsset,
   openAssetDetails,
@@ -28,7 +29,11 @@ import {
   waitForCanvasTextStyle,
   waitForCanvasTextStyleCount,
 } from "../flows/canvas-style";
-import { replaceCanvasText } from "../flows/content-editing";
+import {
+  replaceCanvasText,
+  replaceCanvasTextAndApplyInlineFormats,
+} from "../flows/content-editing";
+import { expectGeneratedAppBuild } from "../flows/generated-app";
 import {
   chooseSelectedAssetProperty,
   fillSelectedStringProperty,
@@ -56,6 +61,63 @@ import {
 } from "../fixtures/content-mode-suite";
 import { newIsolatedPage, test } from "../harness";
 import { measure } from "../perf";
+import { loadDevBuild } from "../db";
+
+const getElementTagWithTextCount = async ({
+  projectId,
+  tag,
+  text,
+}: {
+  projectId: string;
+  tag: string;
+  text: string;
+}) => {
+  const build = await loadDevBuild({ projectId });
+  const instances = JSON.parse(build.instances) as Array<{
+    id: string;
+    component: string;
+    tag?: string;
+    children?: Array<{ type: string; value?: string }>;
+  }>;
+  const instancesById = new Map(
+    instances.map((instance) => [instance.id, instance])
+  );
+
+  const instanceContainsText = (instanceId: string): boolean => {
+    const instance = instancesById.get(instanceId);
+    if (instance === undefined) {
+      return false;
+    }
+    return (
+      instance.children?.some((child) => {
+        if (child.type === "text") {
+          return child.value?.includes(text);
+        }
+        if (child.type === "id" && child.value !== undefined) {
+          return instanceContainsText(child.value);
+        }
+        return false;
+      }) ?? false
+    );
+  };
+
+  return instances.filter(
+    (instance) =>
+      instance.component === "ws:element" &&
+      instance.tag === tag &&
+      instanceContainsText(instance.id)
+  ).length;
+};
+
+const undoShortcut = async ({ page }: { page: Page }) => {
+  await page.keyboard.press("ControlOrMeta+Z");
+  await waitForSyncStatus({ page, status: "idle" });
+};
+
+const redoShortcut = async ({ page }: { page: Page }) => {
+  await page.keyboard.press("ControlOrMeta+Shift+Z");
+  await waitForSyncStatus({ page, status: "idle" });
+};
 
 test.beforeAll(async () => {
   await setupSharedContentModeProject();
@@ -618,6 +680,103 @@ test("Editor can edit text and content props but not design props", async () => 
     await close();
   }
 });
+
+test("Editor rich text formatting persists after reload and generated build", async () => {
+  const fixture = getSharedContentModeProject();
+  const formattedText = "Rich editor formatted copy";
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    await measure(
+      "content mode open editor for rich text formatting",
+      async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.editorToken,
+          mode: "content",
+        });
+      }
+    );
+    await waitForCanvasText({ page, text: fixture.shareLinkEditableText });
+    await waitForSyncStatus({ page, status: "idle" });
+
+    await measure("content mode apply rich text formatting", async () => {
+      await replaceCanvasTextAndApplyInlineFormats({
+        page,
+        currentText: fixture.shareLinkEditableText,
+        text: formattedText,
+        formats: ["Bold", "Italic"],
+      });
+    });
+    await waitForCanvasText({ page, text: formattedText });
+
+    const boldCount = await getElementTagWithTextCount({
+      projectId: fixture.projectId,
+      tag: "b",
+      text: formattedText,
+    });
+    const italicCount = await getElementTagWithTextCount({
+      projectId: fixture.projectId,
+      tag: "i",
+      text: formattedText,
+    });
+    if (boldCount !== 1 || italicCount !== 1) {
+      throw new Error(
+        `Expected rich text editor to persist one bold and one italic formatted subtree. bold=${boldCount}, italic=${italicCount}`
+      );
+    }
+
+    await measure("content mode undo rich text formatting", async () => {
+      await undoShortcut({ page });
+    });
+    await waitForCanvasTextHidden({ page, text: formattedText });
+
+    await measure("content mode redo rich text formatting", async () => {
+      await redoShortcut({ page });
+    });
+    await waitForCanvasText({ page, text: formattedText });
+
+    await measure("content mode reload rich text formatting", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.editorToken,
+        mode: "content",
+      });
+    });
+    await waitForCanvasText({ page, text: formattedText });
+
+    const reloadedBoldCount = await getElementTagWithTextCount({
+      projectId: fixture.projectId,
+      tag: "b",
+      text: formattedText,
+    });
+    const reloadedItalicCount = await getElementTagWithTextCount({
+      projectId: fixture.projectId,
+      tag: "i",
+      text: formattedText,
+    });
+    if (reloadedBoldCount !== 1 || reloadedItalicCount !== 1) {
+      throw new Error(
+        `Expected reloaded rich text formatting to persist. bold=${reloadedBoldCount}, italic=${reloadedItalicCount}`
+      );
+    }
+
+    await measure(
+      "content mode generated app after rich text formatting",
+      async () => {
+        await expectGeneratedAppBuild({
+          projectId: fixture.projectId,
+          expectedText: formattedText,
+        });
+      }
+    );
+  } finally {
+    await close();
+  }
+});
+
 test("Editor can create styled page from template in content mode", async () => {
   const fixture = getSharedContentModeProject();
   const { page, close } = await newIsolatedPage();

@@ -1,18 +1,91 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import { blockComponent } from "@webstudio-is/sdk";
 import { __testing__ } from "./navigator-tree";
 import {
   $allSelectedInstanceSelectors,
   selectInstances,
 } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 
 const {
+  commitNavigatorDrop,
   getFocusSelectionSkipCountAfterPointerDown,
+  getBuilderDropTarget,
+  getNavigatorDragState,
   getNavigatorKeyboardSelectionUpdate,
   getNavigatorSelectionUpdate,
   getNavigatorSiblingSelectionUpdate,
   shouldClearNavigatorMultiSelectionOnEscape,
   shouldSelectOnPointerDown,
 } = __testing__;
+
+const createTreeItem = ({
+  parentComponent = "Box",
+}: { parentComponent?: string } = {}): Parameters<
+  typeof getBuilderDropTarget
+>[0] => {
+  $instances.set(
+    new Map([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [],
+        },
+      ],
+      [
+        "parent",
+        {
+          type: "instance",
+          id: "parent",
+          component: parentComponent,
+          children: [],
+        },
+      ],
+      [
+        "child",
+        {
+          type: "instance",
+          id: "child",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ])
+  );
+  return {
+    selector: ["child", "parent", "body"],
+    visibleAncestors: [
+      {
+        selector: ["body"],
+        indexWithinChildren: 0,
+        component: "Body",
+      },
+      {
+        selector: ["parent", "body"],
+        indexWithinChildren: 2,
+        component: parentComponent,
+      },
+      {
+        selector: ["child", "parent", "body"],
+        indexWithinChildren: 4,
+        component: "Box",
+      },
+    ],
+    instance: {
+      type: "instance",
+      id: "child",
+      component: "Box",
+      children: [],
+    },
+    isExpanded: undefined,
+    isLastChild: false,
+    isHidden: false,
+    isReusable: false,
+  };
+};
 
 describe("getNavigatorSelectionUpdate", () => {
   beforeEach(() => {
@@ -301,5 +374,163 @@ describe("getNavigatorSelectionUpdate", () => {
         flatSelectors,
       })
     ).toBeUndefined();
+  });
+});
+
+describe("getBuilderDropTarget", () => {
+  test("maps before-level tree drop targets to Builder insert positions", () => {
+    expect(
+      getBuilderDropTarget(createTreeItem(), {
+        parentLevel: 1,
+        beforeLevel: 2,
+      })
+    ).toEqual({
+      itemSelector: ["parent", "body"],
+      indexWithinChildren: 4,
+      placement: {
+        closestChildIndex: 4,
+        indexAdjustment: 0,
+        childrenOrientation: { type: "vertical", reverse: false },
+      },
+    });
+  });
+
+  test("maps after-level tree drop targets to Builder insert positions", () => {
+    expect(
+      getBuilderDropTarget(createTreeItem(), {
+        parentLevel: 1,
+        afterLevel: 2,
+      })
+    ).toEqual({
+      itemSelector: ["parent", "body"],
+      indexWithinChildren: 5,
+      placement: {
+        closestChildIndex: 4,
+        indexAdjustment: 1,
+        childrenOrientation: { type: "vertical", reverse: false },
+      },
+    });
+  });
+
+  test("keeps block template slot reserved when dropping into block components", () => {
+    expect(
+      getBuilderDropTarget(
+        createTreeItem({ parentComponent: blockComponent }),
+        {
+          parentLevel: 1,
+          beforeLevel: 0,
+        }
+      )
+    ).toEqual({
+      itemSelector: ["parent", "body"],
+      indexWithinChildren: 1,
+      placement: {
+        closestChildIndex: 1,
+        indexAdjustment: 0,
+        childrenOrientation: { type: "vertical", reverse: false },
+      },
+    });
+  });
+
+  test("ignores incomplete tree drop targets", () => {
+    expect(getBuilderDropTarget(createTreeItem(), undefined)).toBeUndefined();
+    expect(
+      getBuilderDropTarget(createTreeItem(), {
+        parentLevel: 10,
+        beforeLevel: 2,
+      })
+    ).toBeUndefined();
+  });
+});
+
+describe("Navigator drag/drop helpers", () => {
+  test("builds drag state for valid drop targets", () => {
+    const item = createTreeItem();
+    const draggingItem = createTreeItem();
+
+    expect(
+      getNavigatorDragState({
+        item,
+        draggingItem,
+        dropTarget: {
+          parentLevel: 1,
+          afterLevel: 2,
+        },
+        canDropTarget: () => true,
+      })
+    ).toEqual({
+      isDragging: true,
+      dragPayload: {
+        origin: "panel",
+        type: "reparent",
+        dragInstanceSelector: ["child", "parent", "body"],
+      },
+      dropTarget: {
+        itemSelector: ["parent", "body"],
+        indexWithinChildren: 5,
+        placement: {
+          closestChildIndex: 4,
+          indexAdjustment: 1,
+          childrenOrientation: { type: "vertical", reverse: false },
+        },
+      },
+    });
+
+    expect(
+      getNavigatorDragState({
+        item,
+        draggingItem,
+        dropTarget: {
+          parentLevel: 1,
+          afterLevel: 2,
+        },
+        canDropTarget: () => false,
+      })
+    ).toEqual({
+      isDragging: false,
+      dropTarget: undefined,
+    });
+  });
+
+  test("commits Navigator drops through reparent mutation input", () => {
+    const calls: unknown[] = [];
+    const reparent = ((selector: unknown, input: unknown) => {
+      calls.push({ selector, input });
+    }) as Parameters<typeof commitNavigatorDrop>[0]["reparent"];
+
+    expect(
+      commitNavigatorDrop({
+        item: createTreeItem(),
+        dropTarget: {
+          itemSelector: ["parent", "body"],
+          indexWithinChildren: 3,
+          placement: {
+            closestChildIndex: 2,
+            indexAdjustment: 1,
+            childrenOrientation: { type: "vertical", reverse: false },
+          },
+        },
+        reparent,
+      })
+    ).toBe(true);
+
+    expect(calls).toEqual([
+      {
+        selector: ["child", "parent", "body"],
+        input: {
+          parentSelector: ["parent", "body"],
+          position: 3,
+        },
+      },
+    ]);
+
+    expect(
+      commitNavigatorDrop({
+        item: createTreeItem(),
+        dropTarget: undefined,
+        reparent,
+      })
+    ).toBe(false);
+    expect(calls).toHaveLength(1);
   });
 });

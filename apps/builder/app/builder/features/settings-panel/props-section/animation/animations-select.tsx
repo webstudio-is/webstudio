@@ -229,7 +229,11 @@ export const AnimationsSelect = ({
                 {action}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <SectionTitleButton prefix={<PlusIcon />} tabIndex={0} />
+                    <SectionTitleButton
+                      aria-label="Add animation"
+                      prefix={<PlusIcon />}
+                      tabIndex={0}
+                    />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     sideOffset={Number.parseFloat(rawTheme.spacing[5])}

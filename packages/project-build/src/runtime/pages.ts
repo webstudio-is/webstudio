@@ -2002,8 +2002,28 @@ export const updatePageMarketplace = (
     });
   } else {
     for (const [name, value] of Object.entries(marketplace)) {
+      const currentValue =
+        page.marketplace[name as keyof NonNullable<Page["marketplace"]>];
+      const isOptionalField =
+        name === "category" || name === "thumbnailAssetId";
+      const hasCurrentValue =
+        currentValue !== undefined &&
+        (isOptionalField === false || currentValue !== "");
+      if (
+        currentValue === value ||
+        (hasCurrentValue === false && value === undefined)
+      ) {
+        continue;
+      }
+      if (value === undefined) {
+        patches.push({
+          op: "remove",
+          path: ["pages", page.id, "marketplace", name],
+        });
+        continue;
+      }
       patches.push({
-        op: Object.hasOwn(page.marketplace, name) ? "replace" : "add",
+        op: hasCurrentValue ? "replace" : "add",
         path: ["pages", page.id, "marketplace", name],
         value,
       });

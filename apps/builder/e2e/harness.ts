@@ -141,10 +141,12 @@ export const getProjectBuilderUrl = ({
   projectId,
   authToken,
   mode,
+  features,
 }: {
   projectId: string;
   authToken?: string;
   mode?: "content" | "preview";
+  features?: string[];
 }) => {
   const url = new URL(dashboardUrl);
   url.hostname = `p-${projectId}.wstd.dev`;
@@ -153,6 +155,9 @@ export const getProjectBuilderUrl = ({
   }
   if (mode !== undefined) {
     url.searchParams.set("mode", mode);
+  }
+  if (features !== undefined && features.length > 0) {
+    url.searchParams.set("features", features.join(","));
   }
   return url.href;
 };
