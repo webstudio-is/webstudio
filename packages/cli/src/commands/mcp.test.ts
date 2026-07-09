@@ -8,6 +8,7 @@ import { __testing__, mcpOptions, prepareMcpProjectSession } from "./mcp";
 const {
   assertPersistedMcpCheckpointAcknowledged,
   assertSingleOpCallToolSupported,
+  applyMcpRunOptions,
   createMcpPreviewHandlers,
   createMcpRunCheckpointStopPayload,
   createMcpRunErrorPayload,
@@ -66,6 +67,20 @@ test("documents MCP stdio startup and discovery tools", () => {
     "tool",
     expect.objectContaining({
       describe: expect.stringContaining("insert-fragment"),
+    })
+  );
+  const runBuilder = commandCalls.find(
+    (call) => call[0][0] === "run <input>"
+  )?.[2];
+  const runYargs = {
+    positional: vi.fn(() => runYargs),
+    option: vi.fn(() => runYargs),
+  };
+  runBuilder?.(runYargs as never);
+  expect(runYargs.option).toHaveBeenCalledWith(
+    "dry-run",
+    expect.objectContaining({
+      describe: "Run local-capable mutation tools without committing",
     })
   );
   expect(yargs.command).toHaveBeenCalledWith(
@@ -287,6 +302,29 @@ test("parses MCP run call objects", () => {
     {
       tool: "insert-component",
       input: { parentInstanceId: "body", component: "Box" },
+      dryRun: true,
+    },
+  ]);
+});
+
+test("applies batch dry-run to every MCP run call", () => {
+  expect(
+    applyMcpRunOptions(
+      [
+        { tool: "components.find", input: { brief: "button" }, dryRun: false },
+        {
+          tool: "insert-fragment",
+          input: { parentInstanceId: "body", fragment: "<ws.element />" },
+          dryRun: false,
+        },
+      ],
+      { dryRun: true }
+    )
+  ).toEqual([
+    { tool: "components.find", input: { brief: "button" }, dryRun: true },
+    {
+      tool: "insert-fragment",
+      input: { parentInstanceId: "body", fragment: "<ws.element />" },
       dryRun: true,
     },
   ]);

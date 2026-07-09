@@ -525,6 +525,11 @@ const mcpRunOptions = (yargs: CommonYargsArgv) =>
         'Inline JSON or path to a JSON file containing { "calls": [{ "tool": "...", "input": {} }] }',
       demandOption: true,
     })
+    .option("dry-run", {
+      type: "boolean",
+      describe: "Run local-capable mutation tools without committing",
+      default: false,
+    })
     .option("json", {
       type: "boolean",
       describe: "Accepted for compatibility. MCP run output is always JSON",
@@ -630,6 +635,16 @@ const parseMcpRunInput = async (input: string | undefined) => {
     }
     throw error;
   }
+};
+
+const applyMcpRunOptions = (
+  calls: McpRunCall[],
+  options: Pick<McpRunOptions, "dryRun">
+) => {
+  if (options.dryRun !== true) {
+    return calls;
+  }
+  return calls.map((call) => ({ ...call, dryRun: true }));
 };
 
 const createMcpRunCheckpointStopPayload = ({
@@ -783,6 +798,7 @@ export const __testing__ = {
   getResultCheckpoint,
   getMcpOperationInput,
   parseMcpSingleOpCallInput,
+  applyMcpRunOptions,
   parseMcpRunCalls,
   parseMcpRunInput,
   readPersistedMcpCheckpoint,
@@ -993,6 +1009,7 @@ export const mcpRun = async (options: McpRunOptions) => {
     });
     throw new HandledCliError();
   }
+  calls = applyMcpRunOptions(calls, options);
   stderr.write(
     `${formatMcpStatusLine(
       `run started with ${calls.length} calls in one shared session`
