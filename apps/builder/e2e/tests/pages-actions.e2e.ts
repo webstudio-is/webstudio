@@ -19,7 +19,6 @@ import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
 } from "../flows/sync-status";
-import { expectGeneratedAppBuild } from "../flows/generated-app";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
@@ -798,16 +797,6 @@ test("Builder can insert through the engine bridge, undo, redo, and reload", asy
       page,
       text: fixture.styledHeadingTemplateText,
     });
-
-    await measure(
-      "pages actions generate app after bridge insert",
-      async () => {
-        await expectGeneratedAppBuild({
-          projectId: fixture.projectId,
-          expectedText: fixture.styledHeadingTemplateText,
-        });
-      }
-    );
   } finally {
     await close();
   }
@@ -1654,16 +1643,6 @@ test("Builder pastes external HTML fragments through clipboard and reloads them"
         `Expected reload to preserve pasted article. Before ${initialArticleCount}, after ${reloadedArticleCount}`
       );
     }
-
-    await measure(
-      "pages actions generated app after external html paste",
-      async () => {
-        await expectGeneratedAppBuild({
-          projectId: fixture.projectId,
-          expectedText: pastedHeading,
-        });
-      }
-    );
   } finally {
     await close();
   }

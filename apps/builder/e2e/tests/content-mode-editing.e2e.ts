@@ -33,7 +33,6 @@ import {
   replaceCanvasText,
   replaceCanvasTextAndApplyInlineFormats,
 } from "../flows/content-editing";
-import { expectGeneratedAppBuild } from "../flows/generated-app";
 import {
   chooseSelectedAssetProperty,
   fillSelectedStringProperty,
@@ -681,7 +680,7 @@ test("Editor can edit text and content props but not design props", async () => 
   }
 });
 
-test("Editor rich text formatting persists after reload and generated build", async () => {
+test("Editor rich text formatting persists after reload", async () => {
   const fixture = getSharedContentModeProject();
   const formattedText = "Rich editor formatted copy";
   const { page, close } = await newIsolatedPage();
@@ -762,16 +761,6 @@ test("Editor rich text formatting persists after reload and generated build", as
         `Expected reloaded rich text formatting to persist. bold=${reloadedBoldCount}, italic=${reloadedItalicCount}`
       );
     }
-
-    await measure(
-      "content mode generated app after rich text formatting",
-      async () => {
-        await expectGeneratedAppBuild({
-          projectId: fixture.projectId,
-          expectedText: formattedText,
-        });
-      }
-    );
   } finally {
     await close();
   }

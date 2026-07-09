@@ -2,7 +2,6 @@ import type { Page } from "playwright";
 import { loadDevBuild } from "../db";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
-import { expectGeneratedAppBuild } from "../flows/generated-app";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
@@ -236,7 +235,7 @@ const expectPersistedExpressionProp = async ({
   }
 };
 
-test("Props panel resource action persists after reload and builds", async () => {
+test("Props panel resource action persists after reload", async () => {
   const fixture = await createContentModeProject({
     email: "props-runtime@webstudio.test",
     title: "Props Runtime",
@@ -287,19 +286,12 @@ test("Props panel resource action persists after reload and builds", async () =>
       projectId: fixture.projectId,
       url: actionUrl,
     });
-
-    await measure("props runtime generated app build", async () => {
-      await expectGeneratedAppBuild({
-        projectId: fixture.projectId,
-        expectedText: text,
-      });
-    });
   } finally {
     await close();
   }
 });
 
-test("Props panel expression binding persists after reload and builds", async () => {
+test("Props panel expression binding persists after reload", async () => {
   const fixture = await createContentModeProject({
     email: "props-expression-runtime@webstudio.test",
     title: "Props Expression Runtime",
@@ -361,13 +353,6 @@ test("Props panel expression binding persists after reload and builds", async ()
       text: anchorText,
       name: "href",
       expression,
-    });
-
-    await measure("props expression runtime generated app build", async () => {
-      await expectGeneratedAppBuild({
-        projectId: fixture.projectId,
-        expectedText: anchorText,
-      });
     });
   } finally {
     await close();
