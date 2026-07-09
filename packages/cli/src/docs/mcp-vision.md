@@ -8,12 +8,12 @@
 
 ## Visual Verification Rule
 
-For visual/design work, use preview.start and screenshot after generated project files are current so vision can inspect the rendered result before finishing. When a baseline exists, use screenshot.diff to get pixel regions, OCR text changes, and diff PNG artifacts.
+For visual/design work, use preview.start and screenshot after generated project files are current so vision can inspect the rendered result before finishing. `preview.start` is long-lived and cannot be used through one-shot `mcp single-op-call`; from a shell, use `webstudio mcp run` for preview.start/screenshot/preview.stop in one shared process, or use a long-running MCP server. When a baseline exists, use screenshot.diff to get pixel regions, OCR text changes, and diff PNG artifacts.
 
 ## Vision Verification Loop
 
 - Make focused page/content/style changes with semantic MCP tools.
-- Make sure generated project files are current, then call preview.start to build the app and keep the production-like generated site running.
+- Make sure generated project files are current, then call preview.start to build the app and keep the production-like generated site running. In shell-driven workflows, run preview.start, screenshot, and preview.stop inside one `webstudio mcp run` call so they share the same preview owner.
 - {{dependency-notes}}
 - After MCP mutations, path-based screenshots regenerate/restart preview as needed before capture; when preview is fresh in the same long-running MCP server, repeated path screenshots reuse the running server. From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running preview without starting or restarting it. Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview; a separate one-shot `single-op-call` process does not own another process's preview controller.
 - For multi-page work, capture each changed page by path through the same preview server, for example screenshot({ path: "/" }), screenshot({ path: "/pricing" }), and screenshot({ path: "/about" }). The screenshot tool navigates directly to the requested route; no browser click navigation is required.

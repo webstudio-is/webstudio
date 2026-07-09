@@ -78,9 +78,64 @@ Rules:
 - Run one-shot shortcut or `mcp single-op-call` commands sequentially against the same linked `.webstudio` folder. If you receive `PROJECT_SESSION_BUSY`, another CLI/MCP process is updating the local session; wait a moment and retry sequentially.
 - If you are a delegated agent and your parent cannot see live stderr/stdout, do not run a long sequence of shortcut or `mcp single-op-call` commands silently and do not wrap many calls in a shell loop. Treat each parent-visible checkpoint as the unit of work. If the parent asks for status within 30 seconds, run exactly one `webstudio <tool>` or `webstudio mcp single-op-call` command, report that command/result, then wait before the next MCP command. For all-component design-system pages, checkpoint after discovery, checkpoint after page creation, call `components.coverage-insert-next` once before checkpointing again, then finish with the `presentation-pass` workflow phase. Coverage alone is not completion; organize examples into styled sections/cards.
 
+## Reporting CLI/MCP Issues
+
+If a CLI/MCP tool gives a confusing error, crashes, hangs, produces invalid output, requires an undocumented workaround, or makes you inspect source code to understand normal usage, ask the user to report it in the Webstudio Discord `#help` channel: https://wstd.us/community.
+
+Give the user a complete copy-paste report. Include only non-secret values: never include auth tokens, private URLs, cookies, API keys, passwords, or proprietary project data. Redact them as `<redacted>`.
+
+Copy-paste template:
+
+````md
+Webstudio CLI/MCP issue report
+
+What I was trying to do:
+<short user goal, for example "Create a resource from an external API and render it in a collection">
+
+What I expected:
+<what should have happened>
+
+What happened instead:
+<exact error, confusing behavior, hang, missing docs, or workaround required>
+
+Command/tool used:
+
+```sh
+<exact command or MCP tool call, with tokens/secrets redacted>
+```
+
+Structured output / error:
+
+```json
+<stdout JSON or MCP structuredContent, if available, with secrets redacted>
+```
+
+Stderr / lifecycle logs:
+
+```txt
+<stderr lines, timings, checkpoint messages, or stack trace, with secrets redacted>
+```
+
+Environment:
+
+- CLI command path: <webstudio / node packages/cli/local.js / other>
+- Webstudio CLI version: <from command output if known>
+- OS: <macOS / Windows / Linux / unknown>
+- Node version: <node -v if known>
+- Project/session state: <linked project, local .webstudio session, preview, MCP server, or unknown>
+
+Workaround tried:
+<what the agent/user tried next, and whether it worked>
+
+Why this should be improved:
+<one sentence: better error message, docs, schema, tool behavior, etc.>
+````
+
 ## Shared-Session Shell Runs
 
 Use `webstudio mcp run '[{"tool":"components.find","input":{"brief":"button"}}]'` when you are operating from a shell and need several MCP tool calls to share one CLI session without hand-writing JSON-RPC. For large batches, pass a normal JSON file path such as `.temp/mcp-calls.json`. Do not use shell process substitution like `<(...)`; use inline JSON or a real file.
+
+Use `mcp run` for long-lived tools such as `preview.start`. A one-shot `mcp single-op-call preview.start` cannot keep ownership of a preview server for a later screenshot or stop call. Put `preview.start`, `screenshot`, and `preview.stop` in one shared `mcp run` process, or use a real long-running MCP client.
 
 Input shape:
 

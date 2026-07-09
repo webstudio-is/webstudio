@@ -7,6 +7,7 @@ import {
 import {
   getTopLevelMcpToolForwardArgs,
   getTopLevelMcpToolHint,
+  handleOutputStreamError,
   registerCommands,
   rootCliEpilogue,
 } from "./cli";
@@ -99,6 +100,26 @@ const getHelpOutput = async (args: string[]) => {
 };
 
 describe("registerCommands", () => {
+  test("exits successfully on broken pipe output errors", () => {
+    const exitProcess = vi.fn((code?: number) => {
+      throw new Error(`exit ${code}`);
+    }) as never;
+    const error = Object.assign(new Error("write EPIPE"), { code: "EPIPE" });
+
+    expect(() => handleOutputStreamError(error, exitProcess)).toThrow("exit 0");
+
+    expect(exitProcess).toHaveBeenCalledWith(0);
+  });
+
+  test("rethrows non broken pipe output errors", () => {
+    const exitProcess = vi.fn() as never;
+    const error = Object.assign(new Error("write failed"), { code: "EIO" });
+
+    expect(() => handleOutputStreamError(error, exitProcess)).toThrow(error);
+
+    expect(exitProcess).not.toHaveBeenCalled();
+  });
+
   test("forwards top-level mcp tool shortcuts to single-op-call", () => {
     expect(getTopLevelMcpToolForwardArgs(["meta.index"])).toEqual([
       "mcp",

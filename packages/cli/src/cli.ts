@@ -1,4 +1,4 @@
-import { exit, argv } from "node:process";
+import { exit, argv, stdout } from "node:process";
 import { hideBin } from "yargs/helpers";
 import { listProjectSessionMcpTools } from "@webstudio-is/project-build/mcp";
 import { publicApiOperations } from "@webstudio-is/protocol";
@@ -234,7 +234,23 @@ export const registerCommands = (cmd: CommonYargsArgv) => {
   cmd.command(["$0", "init"], "Setup the project", initOptions, initFlow);
 };
 
+export const handleOutputStreamError = (
+  error: NodeJS.ErrnoException,
+  exitProcess: typeof exit = exit
+) => {
+  if (error.code === "EPIPE") {
+    exitProcess(0);
+    return;
+  }
+  throw error;
+};
+
+export const installOutputStreamErrorHandler = () => {
+  stdout.on("error", handleOutputStreamError);
+};
+
 export const main = async () => {
+  installOutputStreamErrorHandler();
   try {
     await createFileIfNotExists(GLOBAL_CONFIG_FILE, "{}");
 

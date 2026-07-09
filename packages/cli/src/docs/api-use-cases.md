@@ -94,6 +94,7 @@ Notes:
 - Use this after page/content/style mutations and after generated project files are current so a vision-capable AI can see the production-like generated site.
 - For multi-page work, capture every changed page by `path` through the same preview server; no click navigation is required.
 - After MCP mutations, path screenshots regenerate/restart preview as needed before capture; when preview is fresh, repeated path screenshots reuse the running server.
+- Do not call `preview.start` through one-shot `webstudio mcp single-op-call`: it is long-lived. From a shell, use `webstudio mcp run` with preview.start, screenshot, and preview.stop in one shared process, or use a real long-running MCP client.
 - From one-shot shell calls or another process, pass `baseUrl` with `path` to capture an already-running preview/site without generating, building, starting, or restarting preview.
 - Use preview.stop only in the same long-running MCP server or `webstudio mcp run` process that started preview. A separate one-shot `single-op-call` process does not own another process's preview controller.
 - Use waitForSelector when the rendered app has a reliable ready marker, waitUntil:"networkidle" for network-heavy pages, and waitForTimeout only for final visual settling.
@@ -498,6 +499,7 @@ Commands:
 Notes:
 
 - Data variables live in the internal `dataSources` namespace.
+- For raw `snapshot`, request the public `variables` namespace rather than the internal `dataSources` name. Raw patch payloads still use `dataSources` when applying direct changes.
 - Scope variables to the instance where they should become available. Descendants can use them in expressions, and nested variables with the same name mask outer variables.
 
 ## Create data variable

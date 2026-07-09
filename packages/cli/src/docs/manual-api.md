@@ -111,6 +111,10 @@ and MCP tools expose it through two user-facing groups:
 - data resources: `list-resources`, `create-resource`, `update-resource`, and
   `delete-resource`
 
+For raw `snapshot`, request the public `variables` namespace rather than the
+internal `dataSources` name. Raw patch payloads still use `dataSources` when
+applying direct changes.
+
 Variables can be scoped to an instance. Expressions under that instance can use
 the variable by name; nested variables with the same name mask outer variables.
 Variable values support `string`, `number`, `boolean`, `string[]`, and `json`.
