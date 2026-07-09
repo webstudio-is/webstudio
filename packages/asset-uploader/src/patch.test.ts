@@ -1,5 +1,4 @@
 import { describe, test, expect } from "vitest";
-import { enablePatches, enableMapSet } from "immer";
 import {
   createTestServer,
   db,
@@ -11,9 +10,6 @@ import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { patchAssetsWithClient } from "./asset-patch-core";
 import { patchAssets } from "./patch";
 import type { Patch } from "immer";
-
-enablePatches();
-enableMapSet();
 
 const server = createTestServer();
 
@@ -100,6 +96,33 @@ describe("patchAssets (msw)", () => {
 
     await patchAssets({ projectId }, patches, createContext());
     expect(updatedDescription).toBe("New description");
+  });
+
+  test("updates asset filename via patch", async () => {
+    const projectId = uid();
+    const localAssetRow = { ...assetRow, projectId };
+    let updatedFilename: string | undefined;
+
+    server.use(
+      ownershipHandler,
+      db.get("Asset", () => json([localAssetRow])),
+      db.patch("Asset", async ({ request }) => {
+        const body = (await request.json()) as { filename?: string };
+        updatedFilename = body.filename;
+        return json({ id: "asset-1" });
+      })
+    );
+
+    const patches: Patch[] = [
+      {
+        op: "replace",
+        path: ["asset-1", "filename"],
+        value: "renamed-photo.jpg",
+      },
+    ];
+
+    await patchAssets({ projectId }, patches, createContext());
+    expect(updatedFilename).toBe("renamed-photo.jpg");
   });
 
   test("adds new asset when patch inserts an entry", async () => {

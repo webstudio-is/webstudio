@@ -42,6 +42,7 @@ import {
   expectContentModeTemplateActionsUnavailable,
   expectCustomMetadataValue,
   fillAllowedPageSettings,
+  fillCustomMetadata,
   getPageSettingsPathInput,
   openPage,
   openPageSettings,
@@ -319,6 +320,7 @@ test("Editor can replace image source with asset in content mode", async () => {
       page,
       sourceName: "replacement-image_",
     });
+    await waitForSyncStatus({ page, status: "idle" });
 
     await measure(
       "content mode reload editor for image source asset replacement",
@@ -480,7 +482,7 @@ test("Editor can edit text and content props but not design props", async () => 
 
     await insertTemplateAfterCanvasText({
       page,
-      anchorText: "Initial content",
+      anchorText: fixture.editableTextTemplateText,
       templateName: fixture.contentPropsTemplateName,
     });
     await waitForCanvasText({
@@ -722,6 +724,13 @@ test("Editor can edit allowed page settings", async () => {
       page,
       filename: fixture.assetTemplateImageName,
       label: fixture.assetTemplateImageAlt,
+    });
+    await fillCustomMetadata({
+      page,
+      metadata: {
+        property: "content-mode",
+        content: "edited metadata",
+      },
     });
 
     await measure(

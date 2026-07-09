@@ -26960,9 +26960,6 @@ export const runtimeOperationContractData = [
         contentMode: {
           type: "boolean",
         },
-        allowExistingComponents: {
-          type: "boolean",
-        },
         mode: {
           type: "string",
           enum: ["append", "prepend", "replace"],

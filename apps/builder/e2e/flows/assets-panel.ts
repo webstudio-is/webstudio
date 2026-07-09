@@ -18,7 +18,10 @@ const getAssetTitleLocator = ({
 
 export const openAssetsPanel = async ({ page }: { page: Page }) => {
   await page.getByRole("tab", { name: "Assets" }).click();
-  await page.getByRole("button", { name: "Upload asset" }).waitFor();
+  await page
+    .getByRole("tabpanel", { name: "Assets" })
+    .getByRole("button", { name: "Upload asset" })
+    .waitFor();
 };
 
 export const uploadAsset = async ({
@@ -31,9 +34,10 @@ export const uploadAsset = async ({
   const fileChooserPromise = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: "Upload asset" }).click();
   const fileChooser = await fileChooserPromise;
+  const save = waitForChangeToBeSaved({ page });
   await fileChooser.setFiles(assetFixturePath(filename));
   const title = await waitForAsset({ page, filename });
-  await waitForChangeToBeSaved({ page });
+  await save;
   return title;
 };
 
@@ -60,9 +64,10 @@ export const replaceSelectedAsset = async ({
   const fileChooserPromise = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: "Replace asset" }).click();
   const fileChooser = await fileChooserPromise;
+  const save = waitForChangeToBeSaved({ page });
   await fileChooser.setFiles(assetFixturePath(filename));
   const title = await waitForAsset({ page, filename });
-  await waitForChangeToBeSaved({ page });
+  await save;
   return title;
 };
 
@@ -73,9 +78,10 @@ export const deleteSelectedAsset = async ({
   page: Page;
   filename: string;
 }) => {
+  const save = waitForChangeToBeSaved({ page });
   await page.getByRole("button", { name: "Delete" }).click();
   await page.getByTitle(filename).waitFor({ state: "hidden" });
-  await waitForChangeToBeSaved({ page });
+  await save;
 };
 
 export const waitForAsset = async ({

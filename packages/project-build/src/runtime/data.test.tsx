@@ -516,17 +516,8 @@ test("create data variable rebinds expressions through runtime operation", () =>
       patches: [
         {
           op: "replace",
-          path: ["body"],
-          value: {
-            ...body,
-            children: [
-              { type: "id", value: "box" },
-              {
-                type: "expression",
-                value: encodeDataVariableId("title-id"),
-              },
-            ],
-          },
+          path: ["body", "children", 1, "value"],
+          value: encodeDataVariableId("title-id"),
         },
       ],
     },
@@ -1343,31 +1334,38 @@ test("delete data variable payload reuses mutable cleanup semantics", () => {
   );
   const pageChange = payload.find((change) => change.namespace === "pages");
   expect(pageChange?.patches).toEqual([
-    { op: "replace", path: [], value: expect.any(Object) },
+    {
+      op: "remove",
+      path: ["pages", homePage.id, "systemDataSourceId"],
+    },
+    {
+      op: "replace",
+      path: ["pages", homePage.id, "title"],
+      value: "bodyVariable",
+    },
   ]);
-  if (pageChange?.patches[0]?.op !== "replace") {
-    throw new Error("Expected page replacement patch");
-  }
-  expect(getHomePage(pageChange.patches[0].value as typeof pages).title).toBe(
-    "bodyVariable"
-  );
-  expect(
-    getHomePage(pageChange.patches[0].value as typeof pages).systemDataSourceId
-  ).toBeUndefined();
   expect(payload).toEqual([
     expect.objectContaining({
       namespace: "pages",
-      patches: [{ op: "replace", path: [], value: expect.any(Object) }],
+      patches: [
+        {
+          op: "remove",
+          path: ["pages", homePage.id, "systemDataSourceId"],
+        },
+        {
+          op: "replace",
+          path: ["pages", homePage.id, "title"],
+          value: "bodyVariable",
+        },
+      ],
     }),
     {
       namespace: "instances",
       patches: [
         {
           op: "replace",
-          path: ["boxId"],
-          value: expect.objectContaining({
-            children: [{ type: "expression", value: "bodyVariable" }],
-          }),
+          path: ["boxId", "children", 0, "value"],
+          value: "bodyVariable",
         },
       ],
     },
@@ -1376,11 +1374,8 @@ test("delete data variable payload reuses mutable cleanup semantics", () => {
       patches: [
         {
           op: "replace",
-          path: expect.any(Array),
-          value: expect.objectContaining({
-            name: "data-body-vars",
-            value: "bodyVariable",
-          }),
+          path: expect.arrayContaining(["value"]),
+          value: "bodyVariable",
         },
       ],
     },
@@ -1390,16 +1385,18 @@ test("delete data variable payload reuses mutable cleanup semantics", () => {
     },
     {
       namespace: "resources",
-      patches: [
+      patches: expect.arrayContaining([
         {
           op: "replace",
-          path: expect.any(Array),
-          value: expect.objectContaining({
-            url: "bodyVariable",
-            headers: [{ name: "auth", value: "bodyVariable" }],
-          }),
+          path: expect.arrayContaining(["url"]),
+          value: "bodyVariable",
         },
-      ],
+        {
+          op: "replace",
+          path: expect.arrayContaining(["value"]),
+          value: "bodyVariable",
+        },
+      ]),
     },
   ]);
   expect(data.instances.get("boxId")?.children).toEqual([
@@ -2329,16 +2326,8 @@ describe("resource patch helpers", () => {
         patches: [
           {
             op: "replace",
-            path: ["box"],
-            value: {
-              ...box,
-              children: [
-                {
-                  type: "expression",
-                  value: encodeDataVariableId("resource-var"),
-                },
-              ],
-            },
+            path: ["box", "children", 0, "value"],
+            value: encodeDataVariableId("resource-var"),
           },
         ],
       },

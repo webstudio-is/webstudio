@@ -30,16 +30,10 @@ import {
   createComponentTemplateFragment,
   type ComponentTemplateRegistry,
 } from "./component-template";
-import {
-  getUnavailableComponentCatalogReason,
-  isComponentAvailableForDocumentType,
-} from "./component-catalog";
+import { isComponentAvailableForDocumentType } from "./component-catalog";
 import type { BuilderRuntimeContext } from "./context";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
-import {
-  createWebstudioDataPatchPayload,
-  findAvailableVariables,
-} from "./data";
+import { findAvailableVariables } from "./data";
 import { throwBuilderRuntimeError } from "./errors";
 import { insertWebstudioFragmentCopy } from "./fragment";
 import {
@@ -75,7 +69,6 @@ export const insertFragmentInput = z
     ),
     conflictResolution: conflictResolutionInput.optional(),
     contentMode: z.boolean().optional(),
-    allowExistingComponents: z.boolean().optional(),
     mode: instanceInsertModeInput.optional(),
     insertIndex: insertIndexInput.optional(),
   })
@@ -137,9 +130,6 @@ const canContainDescendant = (
 const getStandaloneInsertError = (component: Instance["component"]) => {
   const meta = componentMetas.get(component);
   if (meta?.contentModel?.category !== "none") {
-    if (meta !== undefined) {
-      return getUnavailableComponentCatalogReason({ component, meta });
-    }
     return;
   }
   const suggestions = Array.from(componentMetas.entries())
@@ -205,21 +195,6 @@ const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
   new Map(
     Array.from(map, ([key, value]) => [key, structuredClone(value)] as const)
   );
-
-const getWebstudioDataFromComponentInsertState = (
-  state: ReturnType<typeof getRequiredComponentInsertState>
-): WebstudioData => ({
-  pages: state.pages,
-  instances: state.instances,
-  props: state.props,
-  dataSources: state.dataSources,
-  resources: state.resources,
-  styleSources: state.styleSources,
-  styleSourceSelections: state.styleSourceSelections,
-  styles: state.styles,
-  breakpoints: state.breakpoints,
-  assets: state.assets,
-});
 
 const getPageByInstanceId = (
   pages: Pages,
@@ -318,22 +293,16 @@ const createRecordUpsertPatches = <Value>({
   return patches;
 };
 
-const createFragmentInsertPayload = ({
+const createFragmentPayload = ({
   before,
   after,
-  parent,
-  insertIndex,
-  insertedChildren,
+  instancePatches,
 }: {
   before: ReturnType<typeof getRequiredComponentInsertState>;
   after: Omit<WebstudioData, "pages">;
-  parent: Instance;
-  insertIndex: number;
-  insertedChildren: Instance["children"];
-}): BuilderPatchChange[] => {
-  const shouldSetChildrenArray =
-    (parent.children ?? []).length === 0 && insertIndex === 0;
-  return compactBuilderPatchPayload([
+  instancePatches: BuilderPatch[];
+}): BuilderPatchChange[] =>
+  compactBuilderPatchPayload([
     {
       namespace: "assets",
       patches: createRecordAddPatches({
@@ -385,26 +354,7 @@ const createFragmentInsertPayload = ({
     },
     {
       namespace: "instances",
-      patches: [
-        ...createRecordAddPatches({
-          before: before.instances,
-          after: after.instances,
-          skip: new Set([parent.id]),
-        }),
-        ...(shouldSetChildrenArray
-          ? [
-              {
-                op: "add" as const,
-                path: [parent.id, "children"],
-                value: insertedChildren,
-              },
-            ]
-          : insertedChildren.map((child, index) => ({
-              op: "add" as const,
-              path: [parent.id, "children", insertIndex + index],
-              value: child,
-            }))),
-      ],
+      patches: instancePatches,
     },
     {
       namespace: "props",
@@ -414,6 +364,46 @@ const createFragmentInsertPayload = ({
       }),
     },
   ]);
+
+const createFragmentInsertPayload = ({
+  before,
+  after,
+  parent,
+  insertIndex,
+  insertedChildren,
+}: {
+  before: ReturnType<typeof getRequiredComponentInsertState>;
+  after: Omit<WebstudioData, "pages">;
+  parent: Instance;
+  insertIndex: number;
+  insertedChildren: Instance["children"];
+}): BuilderPatchChange[] => {
+  const shouldSetChildrenArray =
+    (parent.children ?? []).length === 0 && insertIndex === 0;
+  return createFragmentPayload({
+    before,
+    after,
+    instancePatches: [
+      ...createRecordAddPatches({
+        before: before.instances,
+        after: after.instances,
+        skip: new Set([parent.id]),
+      }),
+      ...(shouldSetChildrenArray
+        ? [
+            {
+              op: "add" as const,
+              path: [parent.id, "children"],
+              value: insertedChildren,
+            },
+          ]
+        : insertedChildren.map((child, index) => ({
+            op: "add" as const,
+            path: [parent.id, "children", insertIndex + index],
+            value: child,
+          }))),
+    ],
+  });
 };
 
 const createTokenFragmentInsertPayload = ({
@@ -459,13 +449,11 @@ const validateFragmentComponent = ({
   instancesById,
   templates,
   page,
-  allowTemplateInternalComponents = false,
 }: {
   instance: Instance;
   instancesById: ReadonlyMap<Instance["id"], Instance>;
   templates: ComponentTemplateRegistry;
   page: Page;
-  allowTemplateInternalComponents?: boolean;
 }) => {
   const { component } = instance;
   const meta = componentMetas.get(component);
@@ -499,19 +487,6 @@ const validateFragmentComponent = ({
   }
   if (meta === undefined && insertCategory === undefined) {
     return;
-  }
-  const unavailableReason =
-    allowTemplateInternalComponents === false &&
-    meta?.contentModel?.category !== "none" &&
-    meta !== undefined
-      ? getUnavailableComponentCatalogReason({
-          component,
-          meta,
-          category: insertCategory,
-        })
-      : undefined;
-  if (unavailableReason !== undefined) {
-    return throwBuilderRuntimeError("BAD_REQUEST", unavailableReason);
   }
   const requiredStructure = getTemplateRequiredStructure(component, templates);
   if (requiredStructure.parts.length > 0) {
@@ -667,8 +642,6 @@ const createInsertFragmentMutation = ({
   insertIndex: explicitInsertIndex,
   conflictResolution,
   contentMode = false,
-  allowTemplateInternalComponents = false,
-  allowExistingComponents = false,
   context,
 }: {
   state: ComponentInsertState;
@@ -679,8 +652,6 @@ const createInsertFragmentMutation = ({
   insertIndex?: z.infer<typeof insertIndexInput>;
   conflictResolution?: ConflictResolution;
   contentMode?: boolean;
-  allowTemplateInternalComponents?: boolean;
-  allowExistingComponents?: boolean;
   context: BuilderRuntimeContext;
 }) => {
   const mutationState = getRequiredComponentInsertState(state);
@@ -699,8 +670,6 @@ const createInsertFragmentMutation = ({
       instancesById: fragmentInstancesById,
       templates,
       page,
-      allowTemplateInternalComponents:
-        allowTemplateInternalComponents || allowExistingComponents,
     });
   }
 
@@ -781,11 +750,16 @@ const createInsertFragmentMutation = ({
     } else {
       parent.children.splice(insertIndex, 0, ...insertedChildren);
     }
-    return createRuntimeMutation({
-      payload: createWebstudioDataPatchPayload({
-        before: getWebstudioDataFromComponentInsertState(mutationState),
-        after: { ...nextData, pages: mutationState.pages },
+    const insertPayload = createFragmentPayload({
+      before: mutationState,
+      after: nextData,
+      instancePatches: createRecordUpsertPatches({
+        before: mutationState.instances,
+        after: nextData.instances,
       }),
+    });
+    return createRuntimeMutation({
+      payload: insertPayload,
       result: {
         instanceIds: Array.from(newInstanceIds.values()).filter(
           (instanceId) =>
@@ -883,17 +857,6 @@ export const insertComponent = (
       `Component "${input.component}" is not available for pages with document type "${page.meta.documentType ?? "html"}". Change the page document type in page settings or choose an available component.`
     );
   }
-  const unavailableReason =
-    meta !== undefined && meta.contentModel?.category !== "none"
-      ? getUnavailableComponentCatalogReason({
-          component: input.component,
-          meta,
-          category: insertCategory,
-        })
-      : undefined;
-  if (unavailableReason !== undefined) {
-    return throwBuilderRuntimeError("BAD_REQUEST", unavailableReason);
-  }
   if (input.component === elementComponent && input.tag === undefined) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
@@ -927,7 +890,6 @@ export const insertComponent = (
     templates,
     mode: input.mode,
     insertIndex: input.insertIndex,
-    allowTemplateInternalComponents: template !== undefined,
     context,
   });
 };
@@ -999,7 +961,6 @@ export const insertFragment = (
     insertIndex: input.insertIndex,
     conflictResolution: input.conflictResolution,
     contentMode: input.contentMode,
-    allowExistingComponents: input.allowExistingComponents,
     context,
   });
 };

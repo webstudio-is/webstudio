@@ -1121,45 +1121,29 @@ test("rejects empty webstudio jsx fragments", async () => {
   );
 });
 
-test("rejects hidden components in webstudio jsx fragments", async () => {
-  const parent = createParent();
-  const fragment = await parseWebstudioJsxFragment(`<$.Body />`);
-
-  expect(() =>
-    insertFragment(
-      createState(parent),
-      {
-        parentInstanceId: parent.id,
-        fragment,
-      },
-      {
-        createId: createIdFactory(),
-      }
-    )
-  ).toThrow(
-    'Component "Body" is hidden/internal and cannot be inserted directly'
-  );
-});
-
-test("rejects deprecated components in webstudio jsx fragments", async () => {
+test("does not treat deprecated catalog status as fragment invalidity", async () => {
   const parent = createParent();
   const fragment = await parseWebstudioJsxFragment(`<$.Box />`);
 
-  expect(() =>
-    insertFragment(
-      createState(parent),
-      {
-        parentInstanceId: parent.id,
-        fragment,
-      },
-      {
-        createId: createIdFactory(),
-      }
-    )
-  ).toThrow('Component "Box" is deprecated and cannot be inserted directly');
+  const mutation = insertFragment(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      fragment,
+    },
+    {
+      createId: createIdFactory(),
+    }
+  );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toEqual([
+    expect.objectContaining({
+      component: "Box",
+    }),
+  ]);
 });
 
-test("rejects hidden components even when a visible template exists", async () => {
+test("does not treat hidden catalog status as component invalidity", async () => {
   const component = "test:ConcealedWidget";
   const previousMeta = componentMetas.get(component);
   const templates = getComponentTemplates();
@@ -1191,19 +1175,21 @@ test("rejects hidden components even when a visible template exists", async () =
 
   try {
     const parent = createParent();
-    expect(() =>
-      insertComponent(
-        createState(parent),
-        {
-          parentInstanceId: parent.id,
-          component,
-        },
-        {
-          createId: createIdFactory(),
-        }
-      )
-    ).toThrow(
-      `Component "${component}" is hidden/internal and cannot be inserted directly`
+    const mutation = insertComponent(
+      createState(parent),
+      {
+        parentInstanceId: parent.id,
+        component,
+      },
+      {
+        createId: createIdFactory(),
+      }
+    );
+
+    expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+      expect.objectContaining({
+        component,
+      })
     );
   } finally {
     if (previousMeta === undefined) {
@@ -1499,40 +1485,46 @@ test("inserts fallback instance for unknown custom components", async () => {
   });
 });
 
-test("rejects known hidden components", async () => {
+test("does not treat known hidden components as invalidity", async () => {
   const parent = createParent();
 
-  expect(() =>
-    insertComponent(
-      createState(parent),
-      {
-        parentInstanceId: parent.id,
-        component: "Body",
-      },
-      {
-        createId: createIdFactory(),
-      }
-    )
-  ).toThrow(
-    'Component "Body" is hidden/internal and cannot be inserted directly'
+  const mutation = insertComponent(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      component: "Body",
+    },
+    {
+      createId: createIdFactory(),
+    }
+  );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+    expect.objectContaining({
+      component: "Body",
+    })
   );
 });
 
-test("rejects known deprecated components", async () => {
+test("does not treat known deprecated components as invalidity", async () => {
   const parent = createParent();
 
-  expect(() =>
-    insertComponent(
-      createState(parent),
-      {
-        parentInstanceId: parent.id,
-        component: "Box",
-      },
-      {
-        createId: createIdFactory(),
-      }
-    )
-  ).toThrow('Component "Box" is deprecated and cannot be inserted directly');
+  const mutation = insertComponent(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      component: "Box",
+    },
+    {
+      createId: createIdFactory(),
+    }
+  );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+    expect.objectContaining({
+      component: "Box",
+    })
+  );
 });
 
 test("rejects xml components outside xml documents", async () => {

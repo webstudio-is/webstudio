@@ -236,11 +236,9 @@ describe("insert page copy", () => {
         }),
       },
       {
-        op: "replace",
-        path: ["folders", ROOT_FOLDER_ID],
-        value: expect.objectContaining({
-          children: ["pageId", result?.pageId],
-        }),
+        op: "add",
+        path: ["folders", ROOT_FOLDER_ID, "children", 1],
+        value: result?.pageId,
       },
     ]);
     expect(result?.payload).toContainEqual({
@@ -375,11 +373,9 @@ describe("insert page copy", () => {
           }),
         },
         {
-          op: "replace",
-          path: ["folders", "folderId"],
-          value: expect.objectContaining({
-            children: ["pageId", result.result.pageId],
-          }),
+          op: "add",
+          path: ["folders", "folderId", "children", 1],
+          value: result.result.pageId,
         },
       ]),
     });
@@ -495,11 +491,9 @@ describe("insert page copy", () => {
           }),
         },
         {
-          op: "replace",
-          path: ["folders", ROOT_FOLDER_ID],
-          value: expect.objectContaining({
-            children: ["homePageId", "folderId", result.result.folderId],
-          }),
+          op: "add",
+          path: ["folders", ROOT_FOLDER_ID, "children", 2],
+          value: result.result.folderId,
         },
       ]),
     });
@@ -1201,25 +1195,25 @@ describe("insert page copy", () => {
       templateId: "templateId",
       rootInstanceId: "templateBodyId",
     });
-    expect(result.payload).toContainEqual({
-      namespace: "pages",
-      patches: expect.arrayContaining([
-        {
-          op: "add",
-          path: ["pageTemplates"],
-          value: new Map([
-            [
-              "templateId",
-              expect.objectContaining({
-                id: "templateId",
-                name: "Template",
-                rootInstanceId: "templateBodyId",
-              }),
-            ],
-          ]),
-        },
-      ]),
-    });
+    const pagesChange = result.payload.find(
+      (change) => change.namespace === "pages"
+    );
+    const templatePatch = pagesChange?.patches.find(
+      (patch) => patch.op === "add" && patch.path[0] === "pageTemplates"
+    );
+    if (
+      templatePatch?.op !== "add" ||
+      templatePatch.value instanceof Map === false
+    ) {
+      throw new Error("Expected pageTemplates add patch");
+    }
+    expect(templatePatch.value.get("templateId")).toEqual(
+      expect.objectContaining({
+        id: "templateId",
+        name: "Template",
+        rootInstanceId: "templateBodyId",
+      })
+    );
     expect(result.payload).toContainEqual({
       namespace: "instances",
       patches: expect.arrayContaining([
@@ -1265,13 +1259,19 @@ describe("insert page copy", () => {
       namespace: "pages",
       patches: expect.arrayContaining([
         {
+          op: "add",
+          path: ["pageTemplates", "templateId", "meta", "description"],
+          value: `"Updated description"`,
+        },
+        {
           op: "replace",
-          path: ["pageTemplates", "templateId"],
-          value: expect.objectContaining({
-            name: "Updated",
-            title: `"Updated"`,
-            meta: { description: `"Updated description"` },
-          }),
+          path: ["pageTemplates", "templateId", "name"],
+          value: "Updated",
+        },
+        {
+          op: "replace",
+          path: ["pageTemplates", "templateId", "title"],
+          value: `"Updated"`,
         },
       ]),
     });

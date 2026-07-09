@@ -29,7 +29,7 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import { z } from "zod";
-import deepEqual from "fast-deep-equal/es6/index.js";
+import { produceWithPatches } from "immer";
 import {
   createJsonStringifyProxy,
   isLocalResource,
@@ -40,6 +40,7 @@ import {
   compactBuilderPatchPayload,
   type BuilderPatchChange,
 } from "../contracts/patch";
+import { createBuilderPatchPayloadFromImmerPatches } from "../state/patch";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { throwBuilderRuntimeError } from "./errors";
@@ -981,46 +982,10 @@ export const deleteVariableMutable = (
   });
 };
 
-const valuesEqual = (left: unknown, right: unknown) => deepEqual(left, right);
-
-const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
-  new Map<Key, Value>(
-    Array.from(map, ([key, value]) => [key, structuredClone(value)])
-  );
-
-const createMapPatchPayload = <
-  Namespace extends BuilderPatchChange["namespace"],
-  Key extends string,
-  Value,
->(
-  namespace: Namespace,
-  before: Map<Key, Value>,
-  after: Map<Key, Value>
-): BuilderPatchChange => {
-  const patches: BuilderPatchChange["patches"] = [];
-  for (const [key, value] of before) {
-    const nextValue = after.get(key);
-    if (nextValue === undefined) {
-      patches.push({ op: "remove", path: [key] });
-      continue;
-    }
-    if (valuesEqual(value, nextValue) === false) {
-      patches.push({ op: "replace", path: [key], value: nextValue });
-    }
-  }
-  for (const [key, value] of after) {
-    if (before.has(key) === false) {
-      patches.push({ op: "add", path: [key], value });
-    }
-  }
-  return { namespace, patches };
-};
-
 export const createTreeVariableRebindPayload = ({
   startingInstanceId,
   startingInstanceIds,
   pages,
-  beforeInstances,
   instances,
   props,
   dataSources,
@@ -1031,7 +996,6 @@ export const createTreeVariableRebindPayload = ({
 > & {
   startingInstanceId?: Instance["id"];
   startingInstanceIds?: Instance["id"][];
-  beforeInstances?: Instances;
 }) => {
   if (
     instances === undefined ||
@@ -1044,41 +1008,20 @@ export const createTreeVariableRebindPayload = ({
   if (dataSources.size === 0) {
     return [];
   }
-  const beforePages = pages === undefined ? undefined : structuredClone(pages);
-  const nextData = {
-    pages: beforePages === undefined ? undefined : structuredClone(beforePages),
-    instances: cloneMap(instances),
-    props: cloneMap(props),
-    dataSources: cloneMap(dataSources),
-    resources: cloneMap(resources),
-  };
   const instanceIds =
     startingInstanceIds ??
     (startingInstanceId === undefined ? [] : [startingInstanceId]);
-  for (const instanceId of instanceIds) {
-    rebindTreeVariablesMutable({
-      startingInstanceId: instanceId,
-      ...nextData,
-    });
-  }
-  return compactBuilderPatchPayload([
-    beforePages === undefined || valuesEqual(beforePages, nextData.pages)
-      ? { namespace: "pages" as const, patches: [] }
-      : {
-          namespace: "pages" as const,
-          patches: [
-            { op: "replace" as const, path: [], value: nextData.pages },
-          ],
-        },
-    createMapPatchPayload(
-      "instances",
-      beforeInstances ?? instances,
-      nextData.instances
-    ),
-    createMapPatchPayload("props", props, nextData.props),
-    createMapPatchPayload("dataSources", dataSources, nextData.dataSources),
-    createMapPatchPayload("resources", resources, nextData.resources),
-  ]);
+  return produceWebstudioDataMutation(
+    { pages, instances, props, dataSources, resources },
+    (draft) => {
+      for (const instanceId of instanceIds) {
+        rebindTreeVariablesMutable({
+          startingInstanceId: instanceId,
+          ...draft,
+        });
+      }
+    }
+  ).payload;
 };
 
 export const createDataVariableDeletePayload = ({
@@ -1108,29 +1051,12 @@ export const createDataVariableDeletePayload = ({
     return { payload: [] };
   }
 
-  const beforePages = pages === undefined ? undefined : structuredClone(pages);
-  const nextData = {
-    pages: beforePages === undefined ? undefined : structuredClone(beforePages),
-    instances: cloneMap(instances),
-    props: cloneMap(props),
-    dataSources: cloneMap(dataSources),
-    resources: cloneMap(resources),
-  };
-  deleteVariableMutable(nextData, variableId);
-  const payload = compactBuilderPatchPayload([
-    beforePages === undefined || valuesEqual(beforePages, nextData.pages)
-      ? { namespace: "pages" as const, patches: [] }
-      : {
-          namespace: "pages" as const,
-          patches: [
-            { op: "replace" as const, path: [], value: nextData.pages },
-          ],
-        },
-    createMapPatchPayload("instances", instances, nextData.instances),
-    createMapPatchPayload("props", props, nextData.props),
-    createMapPatchPayload("dataSources", dataSources, nextData.dataSources),
-    createMapPatchPayload("resources", resources, nextData.resources),
-  ]);
+  const { payload } = produceWebstudioDataMutation(
+    { pages, instances, props, dataSources, resources },
+    (draft) => {
+      deleteVariableMutable(draft, variableId);
+    }
+  );
   return { payload, deletedVariable };
 };
 
@@ -1199,32 +1125,16 @@ export const createUnusedDataVariablesDeletePayload = ({
     return { payload: [], deletedVariableIds };
   }
 
-  const beforePages = pages === undefined ? undefined : structuredClone(pages);
-  const nextData = {
-    pages: beforePages === undefined ? undefined : structuredClone(beforePages),
-    instances: cloneMap(instances),
-    props: cloneMap(props),
-    dataSources: cloneMap(dataSources),
-    resources: cloneMap(resources),
-  };
-  for (const variableId of deletedVariableIds) {
-    deleteVariableMutable(nextData, variableId);
-  }
+  const { payload } = produceWebstudioDataMutation(
+    { pages, instances, props, dataSources, resources },
+    (draft) => {
+      for (const variableId of deletedVariableIds) {
+        deleteVariableMutable(draft, variableId);
+      }
+    }
+  );
   return {
-    payload: compactBuilderPatchPayload([
-      beforePages === undefined || valuesEqual(beforePages, nextData.pages)
-        ? { namespace: "pages" as const, patches: [] }
-        : {
-            namespace: "pages" as const,
-            patches: [
-              { op: "replace" as const, path: [], value: nextData.pages },
-            ],
-          },
-      createMapPatchPayload("instances", instances, nextData.instances),
-      createMapPatchPayload("props", props, nextData.props),
-      createMapPatchPayload("dataSources", dataSources, nextData.dataSources),
-      createMapPatchPayload("resources", resources, nextData.resources),
-    ]),
+    payload,
     deletedVariableIds,
   };
 };
@@ -1323,42 +1233,26 @@ const createDataVariableUpsertPayload = ({
   ) {
     return [];
   }
-  const beforePages = pages === undefined ? undefined : structuredClone(pages);
-  const nextData = {
-    pages: beforePages === undefined ? undefined : structuredClone(beforePages),
-    instances: cloneMap(instances),
-    props: cloneMap(props),
-    dataSources: cloneMap(dataSources),
-    resources: cloneMap(resources),
-  };
-  if (variable.type === "variable") {
-    const previous = nextData.dataSources.get(variable.id);
-    if (previous?.type === "resource") {
-      nextData.resources.delete(previous.resourceId);
-    }
-  }
   if (variable.scopeInstanceId === undefined) {
     return [];
   }
-  nextData.dataSources.set(variable.id, variable);
-  rebindTreeVariablesMutable({
-    startingInstanceId: variable.scopeInstanceId,
-    ...nextData,
-  });
-  return compactBuilderPatchPayload([
-    beforePages === undefined || valuesEqual(beforePages, nextData.pages)
-      ? { namespace: "pages" as const, patches: [] }
-      : {
-          namespace: "pages" as const,
-          patches: [
-            { op: "replace" as const, path: [], value: nextData.pages },
-          ],
-        },
-    createMapPatchPayload("instances", instances, nextData.instances),
-    createMapPatchPayload("props", props, nextData.props),
-    createMapPatchPayload("dataSources", dataSources, nextData.dataSources),
-    createMapPatchPayload("resources", resources, nextData.resources),
-  ]);
+  const scopeInstanceId = variable.scopeInstanceId;
+  return produceWebstudioDataMutation(
+    { pages, instances, props, dataSources, resources },
+    (draft) => {
+      if (variable.type === "variable") {
+        const previous = draft.dataSources.get(variable.id);
+        if (previous?.type === "resource") {
+          draft.resources.delete(previous.resourceId);
+        }
+      }
+      draft.dataSources.set(variable.id, variable);
+      rebindTreeVariablesMutable({
+        startingInstanceId: scopeInstanceId,
+        ...draft,
+      });
+    }
+  ).payload;
 };
 
 export const createDataVariableUpdatePayload = ({
@@ -1894,148 +1788,15 @@ export const createWebstudioDataFromBuild = ({
   ),
 });
 
-const createMapPatches = <Value>({
-  before,
-  after,
-  getPath,
-}: {
-  before: Map<string, Value>;
-  after: Map<string, Value>;
-  getPath: (id: string) => string[];
-}) => {
-  const patches: BuilderPatchChange["patches"] = [];
-  for (const [id, value] of after) {
-    if (before.has(id) === false) {
-      patches.push({ op: "add", path: getPath(id), value });
-      continue;
-    }
-    if (deepEqual(before.get(id), value) === false) {
-      patches.push({ op: "replace", path: getPath(id), value });
-    }
-  }
-  for (const id of before.keys()) {
-    if (after.has(id) === false) {
-      patches.push({ op: "remove", path: getPath(id) });
-    }
-  }
-  return patches;
-};
-
-export const createWebstudioDataPatchPayload = ({
-  before,
-  after,
-}: {
-  before: WebstudioData;
-  after: WebstudioData;
-}): BuilderPatchChange[] => {
-  const pageTemplatePatches =
-    before.pages.pageTemplates === undefined
-      ? after.pages.pageTemplates === undefined
-        ? []
-        : [
-            {
-              op: "add" as const,
-              path: ["pageTemplates"],
-              value: after.pages.pageTemplates,
-            },
-          ]
-      : after.pages.pageTemplates === undefined
-        ? [{ op: "remove" as const, path: ["pageTemplates"] }]
-        : createMapPatches({
-            before: before.pages.pageTemplates,
-            after: after.pages.pageTemplates,
-            getPath: (id) => ["pageTemplates", id],
-          });
-  const pagesPatches = [
-    ...createMapPatches({
-      before: before.pages.pages,
-      after: after.pages.pages,
-      getPath: (id) => ["pages", id],
-    }),
-    ...pageTemplatePatches,
-    ...createMapPatches({
-      before: before.pages.folders,
-      after: after.pages.folders,
-      getPath: (id) => ["folders", id],
-    }),
-  ];
-
-  const payload: BuilderPatchChange[] = [
-    { namespace: "pages", patches: pagesPatches },
-    {
-      namespace: "assets",
-      patches: createMapPatches({
-        before: before.assets,
-        after: after.assets,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "instances",
-      patches: createMapPatches({
-        before: before.instances,
-        after: after.instances,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "props",
-      patches: createMapPatches({
-        before: before.props,
-        after: after.props,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "dataSources",
-      patches: createMapPatches({
-        before: before.dataSources,
-        after: after.dataSources,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "resources",
-      patches: createMapPatches({
-        before: before.resources,
-        after: after.resources,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "breakpoints",
-      patches: createMapPatches({
-        before: before.breakpoints,
-        after: after.breakpoints,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "styleSourceSelections",
-      patches: createMapPatches({
-        before: before.styleSourceSelections,
-        after: after.styleSourceSelections,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "styleSources",
-      patches: createMapPatches({
-        before: before.styleSources,
-        after: after.styleSources,
-        getPath: (id) => [id],
-      }),
-    },
-    {
-      namespace: "styles",
-      patches: createMapPatches({
-        before: before.styles,
-        after: after.styles,
-        getPath: (id) => [id],
-      }),
-    },
-  ];
-  return compactBuilderPatchPayload(payload);
+export const produceWebstudioDataMutation = <Data extends object>(
+  data: Data,
+  recipe: (draft: Data) => void
+) => {
+  const [nextData, patches] = produceWithPatches(data, recipe);
+  return {
+    data: nextData,
+    payload: createBuilderPatchPayloadFromImmerPatches(patches),
+  };
 };
 
 export const upsertResourceMutable = ({
@@ -2106,15 +1867,15 @@ export const createResourceUpsertPatchPayload = ({
   dataSourceName?: DataSource["name"];
 }) => {
   const before = createWebstudioDataFromBuild({ build });
-  const after = createWebstudioDataFromBuild({ build });
-  upsertResourceMutable({
-    data: after,
-    resource,
-    dataSourceId,
-    scopeInstanceId,
-    dataSourceName,
-  });
-  return createWebstudioDataPatchPayload({ before, after });
+  return produceWebstudioDataMutation(before, (draft) => {
+    upsertResourceMutable({
+      data: draft,
+      resource,
+      dataSourceId,
+      scopeInstanceId,
+      dataSourceName,
+    });
+  }).payload;
 };
 
 export const createResourceCreatePayload = ({

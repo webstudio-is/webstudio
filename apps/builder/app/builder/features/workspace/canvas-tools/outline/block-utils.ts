@@ -98,7 +98,6 @@ export const insertListItemAt = async (listItemSelector: InstanceSelector) => {
     input: {
       parentInstanceId: target.parentSelector[0],
       fragment,
-      allowExistingComponents: true,
       insertIndex: target.position === "end" ? undefined : target.position,
     },
   });

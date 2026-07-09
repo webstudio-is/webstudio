@@ -1127,11 +1127,13 @@ describe("convertInstance", () => {
         patches: [
           {
             op: "replace",
-            path: ["selected"],
-            value: {
-              ...createInstance("selected", elementComponent),
-              tag: "section",
-            },
+            path: ["selected", "component"],
+            value: elementComponent,
+          },
+          {
+            op: "add",
+            path: ["selected", "tag"],
+            value: "section",
           },
         ],
       },

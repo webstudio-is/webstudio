@@ -8,8 +8,8 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import {
   createWebstudioDataFromBuild,
-  createWebstudioDataPatchPayload,
   findAvailableVariables,
+  produceWebstudioDataMutation,
   replaceDataSourcesInExpression,
   restoreExpressionVariables,
   unsetExpressionVariables,
@@ -614,29 +614,35 @@ export const createPageDuplicatePayload = ({
   createId?: CreateId;
 }) => {
   const before = createWebstudioDataFromBuild({ build, assets });
-  const after = structuredClone(before);
-  const duplicatedPageId = insertPageCopyMutable({
-    source: { data: after, pageId },
-    target: { data: after, folderId: parentFolderId },
-    projectId,
-    createId,
+  let duplicatedPageId: Page["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    duplicatedPageId = insertPageCopyMutable({
+      source: { data: draft, pageId },
+      target: { data: draft, folderId: parentFolderId },
+      projectId,
+      createId,
+    });
+    if (duplicatedPageId === undefined) {
+      return;
+    }
+    const page = draft.pages.pages.get(duplicatedPageId);
+    if (page === undefined) {
+      duplicatedPageId = undefined;
+      return;
+    }
+    if (name !== undefined) {
+      page.name = name;
+    }
+    if (path !== undefined) {
+      page.path = path;
+    }
   });
   if (duplicatedPageId === undefined) {
     return;
   }
-  const page = after.pages.pages.get(duplicatedPageId);
-  if (page === undefined) {
-    return;
-  }
-  if (name !== undefined) {
-    page.name = name;
-  }
-  if (path !== undefined) {
-    page.path = path;
-  }
   return {
     pageId: duplicatedPageId,
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
   };
 };
 
@@ -708,19 +714,21 @@ export const copyPage = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
-  const after = structuredClone(before);
-  const pageId = insertPageCopyMutable({
-    source: { data: input.sourceData, pageId: input.pageId },
-    target: { data: after, folderId: parentFolderId },
-    projectId: input.projectId,
-    conflictResolution: input.conflictResolution,
-    createId: context.createId,
+  let pageId: Page["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    pageId = insertPageCopyMutable({
+      source: { data: input.sourceData, pageId: input.pageId },
+      target: { data: draft, folderId: parentFolderId },
+      projectId: input.projectId,
+      conflictResolution: input.conflictResolution,
+      createId: context.createId,
+    });
   });
   if (pageId === undefined) {
     return throwBuilderRuntimeError("BAD_REQUEST", "Page could not be copied");
   }
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
     result: { pageId },
     invalidatesNamespaces: pageCopyInvalidatesNamespaces,
   });
@@ -753,13 +761,15 @@ export const duplicateFolder = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
-  const after = structuredClone(before);
-  const folderId = insertFolderCopyFromDataMutable({
-    source: copyData,
-    target: { data: after, parentFolderId },
-    projectId: input.projectId,
-    forceFolderCopySuffix: true,
-    createId: context.createId,
+  let folderId: Folder["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    folderId = insertFolderCopyFromDataMutable({
+      source: copyData,
+      target: { data: draft, parentFolderId },
+      projectId: input.projectId,
+      forceFolderCopySuffix: true,
+      createId: context.createId,
+    });
   });
   if (folderId === undefined) {
     return throwBuilderRuntimeError(
@@ -768,7 +778,7 @@ export const duplicateFolder = (
     );
   }
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
     result: { folderId },
     invalidatesNamespaces: pageCopyInvalidatesNamespaces,
   });
@@ -789,29 +799,30 @@ export const createPageTemplate = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
-  const after = structuredClone(before);
   const templateId = context.createId();
   const rootInstanceId = context.createId();
-  after.pages.pageTemplates ??= new Map();
-  after.pages.pageTemplates.set(templateId, {
-    id: templateId,
-    name: input.name,
-    title: input.title ?? "",
-    rootInstanceId,
-    meta:
-      input.meta === undefined
-        ? {}
-        : (pageMetaToPatchValue(input.meta) as PageTemplate["meta"]),
-  });
-  after.instances.set(rootInstanceId, {
-    type: "instance",
-    id: rootInstanceId,
-    component: elementComponent,
-    tag: "body",
-    children: [],
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    draft.pages.pageTemplates ??= new Map();
+    draft.pages.pageTemplates.set(templateId, {
+      id: templateId,
+      name: input.name,
+      title: input.title ?? "",
+      rootInstanceId,
+      meta:
+        input.meta === undefined
+          ? {}
+          : (pageMetaToPatchValue(input.meta) as PageTemplate["meta"]),
+    });
+    draft.instances.set(rootInstanceId, {
+      type: "instance",
+      id: rootInstanceId,
+      component: elementComponent,
+      tag: "body",
+      children: [],
+    });
   });
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
     result: { templateId, rootInstanceId },
     invalidatesNamespaces: pageCopyInvalidatesNamespaces,
   });
@@ -835,30 +846,31 @@ export const updatePageTemplate = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
-  const after = structuredClone(before);
-  const nextTemplate = after.pages.pageTemplates?.get(input.templateId);
-  if (nextTemplate === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Page template not found");
-  }
-  if (input.values.name !== undefined) {
-    nextTemplate.name = input.values.name;
-  }
-  if (input.values.title !== undefined) {
-    nextTemplate.title = input.values.title;
-  }
-  if (input.values.meta !== undefined) {
-    for (const [name, value] of Object.entries(
-      pageMetaToPatchValue(input.values.meta)
-    )) {
-      if (value === undefined) {
-        delete nextTemplate.meta[name as keyof PageTemplate["meta"]];
-        continue;
-      }
-      nextTemplate.meta[name as keyof PageTemplate["meta"]] = value as never;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    const nextTemplate = draft.pages.pageTemplates?.get(input.templateId);
+    if (nextTemplate === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Page template not found");
     }
-  }
+    if (input.values.name !== undefined) {
+      nextTemplate.name = input.values.name;
+    }
+    if (input.values.title !== undefined) {
+      nextTemplate.title = input.values.title;
+    }
+    if (input.values.meta !== undefined) {
+      for (const [name, value] of Object.entries(
+        pageMetaToPatchValue(input.values.meta)
+      )) {
+        if (value === undefined) {
+          delete nextTemplate.meta[name as keyof PageTemplate["meta"]];
+          continue;
+        }
+        nextTemplate.meta[name as keyof PageTemplate["meta"]] = value as never;
+      }
+    }
+  });
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
     result: { templateId: input.templateId },
     invalidatesNamespaces: pageCopyInvalidatesNamespaces,
   });
@@ -909,20 +921,22 @@ export const duplicatePageTemplate = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
-  const after = structuredClone(before);
-  after.pages.pageTemplates ??= new Map();
-  const copyData = createTemplateCopyData({
-    data: after,
-    template,
-  });
-  const templateId = insertTemplateCopyFromFragmentsMutable({
-    source: {
-      template: copyData.template,
-      bodyFragment: copyData.bodyFragment,
-    },
-    target: { data: after },
-    projectId: input.projectId,
-    createId: context.createId,
+  let templateId: PageTemplate["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    draft.pages.pageTemplates ??= new Map();
+    const copyData = createTemplateCopyData({
+      data: draft,
+      template,
+    });
+    templateId = insertTemplateCopyFromFragmentsMutable({
+      source: {
+        template: copyData.template,
+        bodyFragment: copyData.bodyFragment,
+      },
+      target: { data: draft },
+      projectId: input.projectId,
+      createId: context.createId,
+    });
   });
   if (templateId === undefined) {
     return throwBuilderRuntimeError(
@@ -931,7 +945,7 @@ export const duplicatePageTemplate = (
     );
   }
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
     result: { templateId },
     invalidatesNamespaces: pageCopyInvalidatesNamespaces,
   });
@@ -1068,17 +1082,19 @@ export const createPageFromTemplate = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
-  const after = structuredClone(before);
-  const pageId = insertPageFromTemplateMutable({
-    templateId: input.templateId,
-    source: { data: after },
-    target: { data: after, folderId: parentFolderId },
-    overrides: { name: input.name, path: input.path },
-    projectId: input.projectId,
-    metas: componentMetas,
-    contentModeCopyableProp: isFragmentContentModeCopyableProp,
-    contentMode: input.contentMode,
-    createId: context.createId,
+  let pageId: Page["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    pageId = insertPageFromTemplateMutable({
+      templateId: input.templateId,
+      source: { data: draft },
+      target: { data: draft, folderId: parentFolderId },
+      overrides: { name: input.name, path: input.path },
+      projectId: input.projectId,
+      metas: componentMetas,
+      contentModeCopyableProp: isFragmentContentModeCopyableProp,
+      contentMode: input.contentMode,
+      createId: context.createId,
+    });
   });
   if (pageId === undefined) {
     return throwBuilderRuntimeError(
@@ -1087,7 +1103,7 @@ export const createPageFromTemplate = (
     );
   }
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
     result: { pageId },
     invalidatesNamespaces: pageCopyInvalidatesNamespaces,
   });
@@ -1417,40 +1433,41 @@ export const pastePageClipboardItem = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
-  const after = structuredClone(before);
   let didReachBreakpointLimit = false;
   const onBreakpointLimitMerge = () => {
     didReachBreakpointLimit = true;
   };
   let id: Page["id"] | Folder["id"] | undefined;
-  if (input.item.type === "page") {
-    id = insertPageCopyFromFragmentsMutable({
-      source: input.item,
-      target: { data: after, folderId: input.targetFolderId },
-      projectId: input.projectId,
-      conflictResolution: input.conflictResolution,
-      onBreakpointLimitMerge,
-      createId: context.createId,
-    });
-  } else if (input.item.type === "template") {
-    id = insertTemplateCopyFromFragmentsMutable({
-      source: input.item,
-      target: { data: after },
-      projectId: input.projectId,
-      conflictResolution: input.conflictResolution,
-      onBreakpointLimitMerge,
-      createId: context.createId,
-    });
-  } else {
-    id = insertFolderCopyFromDataMutable({
-      source: input.item,
-      target: { data: after, parentFolderId: input.targetFolderId },
-      projectId: input.projectId,
-      conflictResolution: input.conflictResolution,
-      onBreakpointLimitMerge,
-      createId: context.createId,
-    });
-  }
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    if (input.item.type === "page") {
+      id = insertPageCopyFromFragmentsMutable({
+        source: input.item,
+        target: { data: draft, folderId: input.targetFolderId },
+        projectId: input.projectId,
+        conflictResolution: input.conflictResolution,
+        onBreakpointLimitMerge,
+        createId: context.createId,
+      });
+    } else if (input.item.type === "template") {
+      id = insertTemplateCopyFromFragmentsMutable({
+        source: input.item,
+        target: { data: draft },
+        projectId: input.projectId,
+        conflictResolution: input.conflictResolution,
+        onBreakpointLimitMerge,
+        createId: context.createId,
+      });
+    } else {
+      id = insertFolderCopyFromDataMutable({
+        source: input.item,
+        target: { data: draft, parentFolderId: input.targetFolderId },
+        projectId: input.projectId,
+        conflictResolution: input.conflictResolution,
+        onBreakpointLimitMerge,
+        createId: context.createId,
+      });
+    }
+  });
   if (id === undefined) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
@@ -1458,7 +1475,7 @@ export const pastePageClipboardItem = (
     );
   }
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
     result: {
       id,
       type: input.item.type,

@@ -76,6 +76,56 @@ test("applies patch payloads mutably through namespace resolver", () => {
   });
 });
 
+test("applies patch payload namespace root replacements mutably", () => {
+  const props = new Map<string, unknown>(build.props);
+  applyBuilderPatchPayloadMutable(
+    (namespace) => {
+      if (namespace !== "props") {
+        throw new Error("Unexpected namespace");
+      }
+      return props;
+    },
+    [
+      {
+        namespace: "props",
+        patches: [
+          {
+            op: "replace",
+            path: [],
+            value: new Map([
+              [
+                "prop-subtitle",
+                {
+                  id: "prop-subtitle",
+                  instanceId: "instance-root",
+                  name: "Subtitle",
+                  type: "string",
+                  value: "Subtitle",
+                },
+              ],
+            ]),
+          },
+        ],
+      },
+    ]
+  );
+
+  expect(props).toEqual(
+    new Map([
+      [
+        "prop-subtitle",
+        {
+          id: "prop-subtitle",
+          instanceId: "instance-root",
+          name: "Subtitle",
+          type: "string",
+          value: "Subtitle",
+        },
+      ],
+    ])
+  );
+});
+
 test("fails when replacing a missing patch target", () => {
   expect(() =>
     applyBuilderNamespacePatches<Props>(new Map(build.props), [

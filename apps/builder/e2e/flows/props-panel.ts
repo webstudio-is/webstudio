@@ -63,6 +63,14 @@ export const chooseSelectedAssetProperty = async ({
   } else {
     throw new Error("Expected assetLabel or assetFilename");
   }
+  const imagesDialog = page.getByRole("dialog", { name: "Images" });
+  if (await imagesDialog.isVisible()) {
+    await page.keyboard.press("Escape");
+    await imagesDialog.waitFor({
+      state: "hidden",
+      timeout: 10_000,
+    });
+  }
   await save;
 };
 

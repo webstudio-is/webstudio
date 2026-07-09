@@ -340,7 +340,7 @@ describe("project session", () => {
     expect(transport.loadedNamespaces.at(-1)).toEqual(["pages"]);
   });
 
-  test("runs generated-record replacement mutations on the server", async () => {
+  test("commits generated-record field mutations locally", async () => {
     const variableId = "variable-title";
     const state = createBuilderStateFromSnapshot(build);
     const homePage = state.pages?.pages.get("page-home");
@@ -364,22 +364,28 @@ describe("project session", () => {
       dataSourceId: variableId,
     });
 
-    expect(result.source).toBe("server");
+    expect(result.source).toBe("remote");
     expect(result.state.committed).toBe(true);
-    expect(transport.commits).toEqual([]);
-    expect(transport.serverOperations).toEqual([
-      {
-        operationId: "variables.delete",
-        input: { dataSourceId: variableId },
-      },
-    ]);
-    expect(transport.loadedNamespaces.at(-1)).toEqual([
-      "pages",
-      "instances",
-      "props",
-      "dataSources",
-      "resources",
-    ]);
+    expect(transport.commits).toHaveLength(1);
+    expect(transport.serverOperations).toEqual([]);
+    expect(result.transaction?.payload).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          namespace: "pages",
+          patches: expect.arrayContaining([
+            {
+              op: "replace",
+              path: ["pages", "page-home", "title"],
+              value: "pageTitle",
+            },
+          ]),
+        }),
+        expect.objectContaining({
+          namespace: "dataSources",
+          patches: [{ op: "remove", path: [variableId] }],
+        }),
+      ])
+    );
   });
 
   test("refreshes required namespaces and returns conflict diagnostic", async () => {

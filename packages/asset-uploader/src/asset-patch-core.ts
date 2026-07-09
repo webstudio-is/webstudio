@@ -1,7 +1,12 @@
-import { type Patch, applyPatches } from "immer";
+import { applyPatches, enableMapSet, enablePatches, type Patch } from "immer";
 import { type Asset, assets } from "@webstudio-is/sdk";
 import type { Client } from "@webstudio-is/postgrest/index.server";
 import { formatAsset } from "./utils/format-asset";
+
+// This module applies Immer patches to Maps and can be imported directly,
+// so initialize the required Immer plugins next to the production patch use.
+enableMapSet();
+enablePatches();
 
 const assertPostgrestSuccess = (result: { error: unknown }) => {
   if (result.error) {

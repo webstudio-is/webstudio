@@ -33,7 +33,8 @@ import {
 } from "./props";
 import {
   createTreeVariableRebindPayload,
-  createWebstudioDataPatchPayload,
+  produceWebstudioDataMutation,
+  rebindTreeVariablesMutable,
 } from "./data";
 import { applyBuilderPatchPayloadMutable } from "../state/patch";
 import {
@@ -461,11 +462,6 @@ const cloneInstances = (instances: Instances) =>
     )
   );
 
-const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
-  new Map(
-    Array.from(map, ([key, value]) => [key, structuredClone(value)] as const)
-  );
-
 type FullInstanceMutationState = Pick<
   BuilderState,
   | "pages"
@@ -525,19 +521,6 @@ const getRequiredFullInstanceMutationData = (
     assets,
   };
 };
-
-const cloneWebstudioData = (data: WebstudioData): WebstudioData => ({
-  pages: data.pages,
-  instances: cloneMap(data.instances),
-  props: cloneMap(data.props),
-  dataSources: cloneMap(data.dataSources),
-  resources: cloneMap(data.resources),
-  styleSources: cloneMap(data.styleSources),
-  styleSourceSelections: cloneMap(data.styleSourceSelections),
-  styles: cloneMap(data.styles),
-  breakpoints: cloneMap(data.breakpoints),
-  assets: cloneMap(data.assets),
-});
 
 const getWebstudioDataNamespace = (
   data: WebstudioData,
@@ -1579,15 +1562,32 @@ export const moveInstances = (
     state.dataSources === undefined ||
     state.resources === undefined
       ? []
-      : createTreeVariableRebindPayload({
-          startingInstanceIds: input.moves.map((move) => move.instanceId),
-          pages: state.pages,
-          beforeInstances: instances,
-          instances: movedInstances,
-          props: state.props,
-          dataSources: state.dataSources,
-          resources: state.resources,
-        });
+      : produceWebstudioDataMutation(
+          {
+            pages: state.pages,
+            instances,
+            props: state.props,
+            dataSources: state.dataSources,
+            resources: state.resources,
+          },
+          (draft) => {
+            applyBuilderPatchPayloadMutable((namespace) => {
+              if (namespace === "instances") {
+                return draft.instances;
+              }
+              return throwBuilderRuntimeError(
+                "BAD_REQUEST",
+                `Unexpected move patch namespace "${namespace}"`
+              );
+            }, movePayload);
+            for (const move of input.moves) {
+              rebindTreeVariablesMutable({
+                startingInstanceId: move.instanceId,
+                ...draft,
+              });
+            }
+          }
+        ).payload;
   const payload = rebindPayload.length === 0 ? movePayload : rebindPayload;
   return createRuntimeMutation({
     payload,
@@ -1762,18 +1762,17 @@ export const reparentInstance = (
   context: BuilderRuntimeContext
 ) => {
   const beforeData = getRequiredFullInstanceMutationData(state);
-  const nextData = cloneWebstudioData(beforeData);
-  const instanceSelector = reparentInstanceMutable({
-    data: nextData,
-    sourceInstanceSelector: input.sourceInstanceSelector,
-    dropTarget: input.dropTarget,
-    createId: context.createId,
+  let instanceSelector: ReturnType<typeof reparentInstanceMutable>;
+  const { payload } = produceWebstudioDataMutation(beforeData, (draft) => {
+    instanceSelector = reparentInstanceMutable({
+      data: draft,
+      sourceInstanceSelector: input.sourceInstanceSelector,
+      dropTarget: input.dropTarget,
+      createId: context.createId,
+    });
   });
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({
-      before: beforeData,
-      after: nextData,
-    }),
+    payload,
     result: { instanceSelector },
     invalidatesNamespaces: [
       "instances",
@@ -2213,97 +2212,97 @@ export const convertInstance = (
   );
   if (hasSlotInPath) {
     const beforeData = getRequiredFullInstanceMutationData(state);
-    const nextData = cloneWebstudioData(beforeData);
-    const instancePath = getInstancePathFromSelector(
-      input.instanceSelector,
-      nextData.instances
-    );
-    if (instancePath === undefined) {
-      return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-    }
-    const [initialSelectedItem] = instancePath;
-    if (initialSelectedItem.instance.component === "Slot") {
-      getSlotFragmentDropTargetMutable(
-        nextData.instances,
-        {
-          parentSelector: initialSelectedItem.instanceSelector,
-          position: "end",
-        },
-        context.createId
+    let instanceId: Instance["id"] | undefined;
+    const { payload } = produceWebstudioDataMutation(beforeData, (draft) => {
+      const instancePath = getInstancePathFromSelector(
+        input.instanceSelector,
+        draft.instances
       );
-    }
-    const nextInstancePath = normalizeLegacySlotInstancePathMutable(
-      nextData.instances,
-      instancePath,
-      context.createId
-    );
-    const [selectedItem] = nextInstancePath;
-    const selectedInstance = selectedItem.instance;
-    if (selectedInstance.component === "Slot" && input.component !== "Slot") {
-      detachSharedSlotChildrenMutable({
-        data: nextData,
-        slotId: selectedInstance.id,
-        projectId: context.projectId ?? "",
-        createId: context.createId,
-      });
-    }
-    const nextInstance = nextData.instances.get(selectedInstance.id);
-    if (nextInstance === undefined) {
-      return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-    }
-    nextInstance.component = input.component;
-    if (input.tag !== undefined || input.component === elementComponent) {
-      nextInstance.tag = input.tag ?? input.currentTag ?? "div";
-      applyBuilderPatchPayloadMutable(
-        (namespace) => getWebstudioDataNamespace(nextData, namespace),
-        createPropDeletePayload({
-          deletions: [{ instanceId: selectedInstance.id, name: "tag" }],
-          instances: nextData.instances,
-          props: nextData.props.values(),
-        }).payload
-      );
-      const renames = Array.from(nextData.props.values()).flatMap((prop) => {
-        if (prop.instanceId !== selectedInstance.id) {
-          return [];
-        }
-        const name = reactPropsToStandardAttributes[prop.name];
-        return name === undefined
-          ? []
-          : [{ propId: prop.id, name, propIdPrefix: prop.instanceId }];
-      });
-      if (renames.length > 0) {
-        applyBuilderPatchPayloadMutable(
-          (namespace) => getWebstudioDataNamespace(nextData, namespace),
-          createPropRenamePayload({
-            props: nextData.props.values(),
-            renames,
-          }).payload
+      if (instancePath === undefined) {
+        return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+      }
+      const [initialSelectedItem] = instancePath;
+      if (initialSelectedItem.instance.component === "Slot") {
+        getSlotFragmentDropTargetMutable(
+          draft.instances,
+          {
+            parentSelector: initialSelectedItem.instanceSelector,
+            position: "end",
+          },
+          context.createId
         );
       }
-    } else {
-      const defaultTag = getPresetDefaultTag(input.component);
-      if (defaultTag !== undefined) {
-        nextInstance.tag = defaultTag;
-      }
-    }
-    const isSatisfying = isTreeSatisfyingContentModel({
-      instances: nextData.instances,
-      props: nextData.props,
-      metas: componentMetas,
-      instanceSelector: selectedItem.instanceSelector,
-    });
-    if (isSatisfying === false) {
-      return throwBuilderRuntimeError(
-        "BAD_REQUEST",
-        "Converted tree violates content model"
+      const nextInstancePath = normalizeLegacySlotInstancePathMutable(
+        draft.instances,
+        instancePath,
+        context.createId
       );
-    }
+      const [selectedItem] = nextInstancePath;
+      const selectedInstance = selectedItem.instance;
+      if (selectedInstance.component === "Slot" && input.component !== "Slot") {
+        detachSharedSlotChildrenMutable({
+          data: draft,
+          slotId: selectedInstance.id,
+          projectId: context.projectId ?? "",
+          createId: context.createId,
+        });
+      }
+      const nextInstance = draft.instances.get(selectedInstance.id);
+      if (nextInstance === undefined) {
+        return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+      }
+      instanceId = selectedInstance.id;
+      nextInstance.component = input.component;
+      if (input.tag !== undefined || input.component === elementComponent) {
+        nextInstance.tag = input.tag ?? input.currentTag ?? "div";
+        applyBuilderPatchPayloadMutable(
+          (namespace) => getWebstudioDataNamespace(draft, namespace),
+          createPropDeletePayload({
+            deletions: [{ instanceId: selectedInstance.id, name: "tag" }],
+            instances: draft.instances,
+            props: draft.props.values(),
+          }).payload
+        );
+        const renames = Array.from(draft.props.values()).flatMap((prop) => {
+          if (prop.instanceId !== selectedInstance.id) {
+            return [];
+          }
+          const name = reactPropsToStandardAttributes[prop.name];
+          return name === undefined
+            ? []
+            : [{ propId: prop.id, name, propIdPrefix: prop.instanceId }];
+        });
+        if (renames.length > 0) {
+          applyBuilderPatchPayloadMutable(
+            (namespace) => getWebstudioDataNamespace(draft, namespace),
+            createPropRenamePayload({
+              props: draft.props.values(),
+              renames,
+            }).payload
+          );
+        }
+      } else {
+        const defaultTag = getPresetDefaultTag(input.component);
+        if (defaultTag !== undefined) {
+          nextInstance.tag = defaultTag;
+        }
+      }
+      const isSatisfying = isTreeSatisfyingContentModel({
+        instances: draft.instances,
+        props: draft.props,
+        metas: componentMetas,
+        instanceSelector: selectedItem.instanceSelector,
+      });
+      if (isSatisfying === false) {
+        return throwBuilderRuntimeError(
+          "BAD_REQUEST",
+          "Converted tree violates content model"
+        );
+      }
+    });
     return createRuntimeMutation({
-      payload: createWebstudioDataPatchPayload({
-        before: beforeData,
-        after: nextData,
-      }),
-      result: { instanceId: selectedInstance.id },
+      payload,
+      result: { instanceId },
       invalidatesNamespaces: [
         "instances",
         "props",
@@ -2917,61 +2916,60 @@ export const deleteInstanceBySelector = (
   context: BuilderRuntimeContext
 ) => {
   const beforeData = getRequiredFullInstanceMutationData(state);
-  const nextData = cloneWebstudioData(beforeData);
-  const instancePath = getInstancePathFromSelector(
-    input.instanceSelector,
-    nextData.instances
-  );
-  if (instancePath === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-  }
-  const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
-    nextData.instances,
-    instancePath,
-    context.createId
-  );
-  const nextInstanceSelector = getNextSelectorAfterDelete(
-    normalizedInstancePath
-  );
-  const targetInstance = getDeleteTarget(
-    nextData.instances,
-    normalizedInstancePath
-  );
-  const pageRootIds = new Set(
-    Array.from(nextData.pages.pages.values()).map((page) => page.rootInstanceId)
-  );
-  const { errors, payload, instanceIds } = createInstanceDeletePayload({
-    instances: nextData.instances,
-    instanceIds: [targetInstance.id],
-    pageRootIds,
-    props: nextData.props.values(),
-    dataSources: nextData.dataSources.values(),
-    styleSources: nextData.styleSources.values(),
-    styleSourceSelections: nextData.styleSourceSelections.values(),
-    styles: nextData.styles.values(),
-  });
-  const error = errors.at(0);
-  if (error?.type === "page-root") {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Page root instance cannot be deleted"
+  let nextInstanceSelector: ReturnType<typeof getNextSelectorAfterDelete>;
+  let instanceIds: Instance["id"][] = [];
+  const { payload } = produceWebstudioDataMutation(beforeData, (draft) => {
+    const instancePath = getInstancePathFromSelector(
+      input.instanceSelector,
+      draft.instances
     );
-  }
-  if (error?.type === "instance-not-found") {
-    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-  }
-  if (error?.type === "parent-not-found") {
-    return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
-  }
-  applyBuilderPatchPayloadMutable(
-    (namespace) => getWebstudioDataNamespace(nextData, namespace),
-    payload
-  );
+    if (instancePath === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+    }
+    const normalizedInstancePath = normalizeLegacySlotInstancePathMutable(
+      draft.instances,
+      instancePath,
+      context.createId
+    );
+    nextInstanceSelector = getNextSelectorAfterDelete(normalizedInstancePath);
+    const targetInstance = getDeleteTarget(
+      draft.instances,
+      normalizedInstancePath
+    );
+    const pageRootIds = new Set(
+      Array.from(draft.pages.pages.values()).map((page) => page.rootInstanceId)
+    );
+    const deletePayload = createInstanceDeletePayload({
+      instances: draft.instances,
+      instanceIds: [targetInstance.id],
+      pageRootIds,
+      props: draft.props.values(),
+      dataSources: draft.dataSources.values(),
+      styleSources: draft.styleSources.values(),
+      styleSourceSelections: draft.styleSourceSelections.values(),
+      styles: draft.styles.values(),
+    });
+    const error = deletePayload.errors.at(0);
+    if (error?.type === "page-root") {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Page root instance cannot be deleted"
+      );
+    }
+    if (error?.type === "instance-not-found") {
+      return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+    }
+    if (error?.type === "parent-not-found") {
+      return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
+    }
+    instanceIds = deletePayload.instanceIds;
+    applyBuilderPatchPayloadMutable(
+      (namespace) => getWebstudioDataNamespace(draft, namespace),
+      deletePayload.payload
+    );
+  });
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({
-      before: beforeData,
-      after: nextData,
-    }),
+    payload,
     result: { instanceIds, instanceSelector: nextInstanceSelector },
     invalidatesNamespaces: [
       "instances",

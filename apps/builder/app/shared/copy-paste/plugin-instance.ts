@@ -265,7 +265,6 @@ const handlePasteInstance = async (clipboardData: string) => {
           parentInstanceId: pasteTarget.parentSelector[0],
           fragment,
           conflictResolution,
-          allowExistingComponents: true,
           insertIndex:
             typeof pasteTarget.position === "number"
               ? pasteTarget.position
@@ -309,7 +308,6 @@ const handlePasteInstance = async (clipboardData: string) => {
         parentInstanceId: pasteTarget.parentSelector[0],
         fragment,
         conflictResolution,
-        allowExistingComponents: true,
         insertIndex:
           typeof pasteTarget.position === "number"
             ? pasteTarget.position

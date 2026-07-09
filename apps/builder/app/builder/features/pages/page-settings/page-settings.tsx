@@ -58,6 +58,17 @@ import { PageItemActionsDropdown } from "../page-item-actions";
 
 const emptyUnsavedValues: Partial<PageSettingsValues> = {};
 
+const isEmptyCustomMetasPlaceholder = (
+  customMetas: PageSettingsValues["customMetas"]
+) => {
+  const [customMeta] = customMetas;
+  return (
+    customMetas.length === 1 &&
+    customMeta?.property === "" &&
+    customMeta.content === `""`
+  );
+};
+
 export const canEditPagePathInMode = ({
   isDesignMode,
   isContentMode,
@@ -430,6 +441,13 @@ export const PageSettings = ({
   );
 
   const handleChange: OnChange = (event) => {
+    if (
+      page?.meta.custom !== undefined &&
+      event.field === "customMetas" &&
+      isEmptyCustomMetasPlaceholder(event.value)
+    ) {
+      return;
+    }
     setUnsavedValues((values) => ({
       ...values,
       [event.field]: event.value,

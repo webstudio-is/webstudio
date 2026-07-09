@@ -1,10 +1,7 @@
 import type { Instance, WebstudioData } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
-import {
-  createWebstudioDataPatchPayload,
-  findAvailableVariables,
-} from "./data";
+import { findAvailableVariables, produceWebstudioDataMutation } from "./data";
 import { throwBuilderRuntimeError } from "./errors";
 import {
   extractWebstudioFragment,
@@ -50,32 +47,6 @@ const getRequiredInstanceDuplicateState = (state: InstanceDuplicateState) => {
   }
   return state as WebstudioData;
 };
-
-const cloneMap = <Key, Value>(map: Map<Key, Value>) =>
-  new Map(
-    Array.from(map, ([key, value]) => [key, structuredClone(value)] as const)
-  );
-
-const cloneDuplicateData = (state: WebstudioData): WebstudioData => ({
-  pages: {
-    ...state.pages,
-    pages: cloneMap(state.pages.pages),
-    folders: cloneMap(state.pages.folders),
-    pageTemplates:
-      state.pages.pageTemplates === undefined
-        ? undefined
-        : cloneMap(state.pages.pageTemplates),
-  },
-  instances: cloneMap(state.instances),
-  props: cloneMap(state.props),
-  dataSources: cloneMap(state.dataSources),
-  resources: cloneMap(state.resources),
-  styleSources: cloneMap(state.styleSources),
-  styleSourceSelections: cloneMap(state.styleSourceSelections),
-  styles: cloneMap(state.styles),
-  breakpoints: cloneMap(state.breakpoints),
-  assets: cloneMap(state.assets),
-});
 
 export const duplicateInstanceAfterItselfMutable = ({
   data,
@@ -152,19 +123,22 @@ export const duplicateInstanceAfterItself = (
   if (before.instances.has(input.parentInstanceId) === false) {
     return throwBuilderRuntimeError("NOT_FOUND", "Parent instance not found");
   }
-  const after = cloneDuplicateData(before);
-  const duplicateParentId =
-    getSlotFragmentDropTargetMutable(
-      after.instances,
-      { parentSelector: [input.parentInstanceId], position: "end" },
-      context.createId
-    )?.parentSelector[0] ?? input.parentInstanceId;
-  const instanceId = duplicateInstanceAfterItselfMutable({
-    data: after,
-    sourceInstanceId: input.sourceInstanceId,
-    parentInstanceId: duplicateParentId,
-    projectId: context.projectId ?? "",
-    createId: context.createId,
+  let duplicateParentId: Instance["id"] | undefined;
+  let instanceId: Instance["id"] | undefined;
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    duplicateParentId =
+      getSlotFragmentDropTargetMutable(
+        draft.instances,
+        { parentSelector: [input.parentInstanceId], position: "end" },
+        context.createId
+      )?.parentSelector[0] ?? input.parentInstanceId;
+    instanceId = duplicateInstanceAfterItselfMutable({
+      data: draft,
+      sourceInstanceId: input.sourceInstanceId,
+      parentInstanceId: duplicateParentId,
+      projectId: context.projectId ?? "",
+      createId: context.createId,
+    });
   });
   if (instanceId === undefined) {
     return throwBuilderRuntimeError(
@@ -173,7 +147,7 @@ export const duplicateInstanceAfterItself = (
     );
   }
   return createRuntimeMutation({
-    payload: createWebstudioDataPatchPayload({ before, after }),
+    payload,
     result: { instanceId, parentInstanceId: duplicateParentId },
     invalidatesNamespaces: instanceDuplicateNamespaces,
   });

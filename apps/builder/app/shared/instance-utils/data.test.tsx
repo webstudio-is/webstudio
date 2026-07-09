@@ -135,8 +135,8 @@ describe("data store helpers", () => {
     expect(violations).toEqual([]);
   });
 
-  test("keeps runtime bridge internals private to data utilities", () => {
-    const allowedFiles = new Set(["app/shared/instance-utils/data.ts"]);
+  test("keeps runtime bridge internals private to the sync adapter", () => {
+    const allowedFiles = new Set(["app/shared/sync/builder-patch.ts"]);
     const removedBridgePattern = /\bupdateWebstudioData\s*\(/;
     const directTransactionPattern =
       /\bserverSyncStore\.createTransaction\s*\(/;
@@ -474,6 +474,90 @@ describe("data store helpers", () => {
         .popAll()
         .flatMap((item) => item.changes.map((change) => change.namespace))
     ).toEqual(["instances"]);
+  });
+
+  test("runtime bridge preserves parent record add patches from runtime payloads", () => {
+    const { pages } = setBaseStores();
+    pages.pageTemplates = new Map([
+      [
+        "template",
+        {
+          id: "template",
+          name: "Template",
+          title: JSON.stringify("Template"),
+          rootInstanceId: "template-root",
+          meta: {
+            socialImageUrl: JSON.stringify(""),
+            custom: [
+              { property: "template", content: JSON.stringify("content") },
+            ],
+          },
+        },
+      ],
+    ]);
+    $instances.set(
+      new Map([
+        ["body", createInstance("body", "Body", [])],
+        [
+          "template-root",
+          {
+            type: "instance",
+            id: "template-root",
+            component: "ws:element",
+            tag: "body",
+            children: [],
+          },
+        ],
+      ])
+    );
+    serverSyncStore.popAll();
+
+    const result = executeRuntimeMutation({
+      id: "pageTemplates.createPage",
+      input: {
+        projectId: "project",
+        templateId: "template",
+        parentFolderId: pages.rootFolderId,
+        name: "Created from template",
+        path: "/created-from-template",
+        contentMode: true,
+      },
+    });
+    const pageId = expectGeneratedId(result?.result.pageId, "page id");
+
+    const pagesChange = serverSyncStore
+      .popAll()
+      .flatMap((item) => item.changes)
+      .find((change) => change.namespace === "pages");
+    expect(pagesChange).toBeDefined();
+    if (pagesChange === undefined) {
+      throw new Error("Expected pages change");
+    }
+    expect(pagesChange.patches).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ op: "add", path: ["pages", pageId] }),
+      ])
+    );
+    expect(pagesChange.revisePatches).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ op: "remove", path: ["pages", pageId] }),
+      ])
+    );
+
+    const getSyncedPages = () => {
+      const syncedPages = $pages.get();
+      expect(syncedPages).toBeDefined();
+      return syncedPages;
+    };
+    if (getSyncedPages() === undefined) {
+      throw new Error("Expected pages to be loaded");
+    }
+
+    expect(getSyncedPages()?.pages.has(pageId)).toEqual(true);
+    serverSyncStore.undo();
+    expect(getSyncedPages()?.pages.has(pageId)).toEqual(false);
+    serverSyncStore.redo();
+    expect(getSyncedPages()?.pages.has(pageId)).toEqual(true);
   });
 
   test("uses runtime mutation input validation before updating stores", () => {

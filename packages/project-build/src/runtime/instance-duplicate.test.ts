@@ -172,12 +172,13 @@ test("creates runtime mutation for duplicating an instance after itself", () => 
       patches: [
         {
           op: "replace",
-          path: ["parent"],
-          value: createInstance("parent", [
-            { type: "id", value: "source" },
-            { type: "id", value: "source-copy" },
-            { type: "id", value: "sibling" },
-          ]),
+          path: ["parent", "children", 1],
+          value: { type: "id", value: "source-copy" },
+        },
+        {
+          op: "add",
+          path: ["parent", "children", 2],
+          value: { type: "id", value: "sibling" },
         },
         {
           op: "add",
