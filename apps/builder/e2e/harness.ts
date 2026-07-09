@@ -26,6 +26,8 @@ export type Test = {
 
 export type Suite = {
   name: string;
+  fileName: string;
+  filePath: string;
   beforeAll?: () => Promise<void>;
   beforeEach?: () => Promise<void>;
   afterAll?: () => Promise<void>;
@@ -42,7 +44,9 @@ const suites: Suite[] = [];
 const suitesByFile = new Map<string, Suite>();
 
 const formatSuiteName = (filePath: string) => {
-  return basename(filePath, ".e2e.ts").replaceAll("-", " ");
+  return basename(filePath, ".e2e.ts")
+    .replace(/\.\[shard-\d+\]$/, "")
+    .replaceAll("-", " ");
 };
 
 const getCallerFile = () => {
@@ -69,7 +73,12 @@ const getFileSuite = () => {
     return suite;
   }
 
-  suite = { name: formatSuiteName(filePath), tests: [] };
+  suite = {
+    name: formatSuiteName(filePath),
+    fileName: basename(filePath),
+    filePath,
+    tests: [],
+  };
   suitesByFile.set(filePath, suite);
   suites.push(suite);
   return suite;

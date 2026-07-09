@@ -118,7 +118,7 @@ run_builder_e2e_tests() {
 }
 
 validate_test_filter() {
-  if [ "${E2E_TEST_FILTER:-}" = "" ]; then
+  if [ "${E2E_TEST_FILTER:-}" = "" ] && [ "${E2E_TEST_FILTERS:-}" = "" ] && [ "${E2E_TEST_SHARD:-}" = "" ]; then
     return
   fi
   (

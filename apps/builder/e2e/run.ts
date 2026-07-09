@@ -10,19 +10,26 @@ import {
 } from "./harness";
 import { resetDatabase } from "./db";
 import { logPerf, measure, printPerfSummary } from "./perf";
-import "./tests/animation-runtime.e2e";
-import "./tests/content-mode-editing.e2e";
-import "./tests/data-variables-runtime.e2e";
-import "./tests/pages-actions.e2e";
-import "./tests/preview-links.e2e";
-import "./tests/props-runtime.e2e";
-import "./tests/project-settings-runtime.e2e";
-import "./tests/share-link-permissions.e2e";
-import "./tests/slot-keyboard.e2e";
-import "./tests/style-panel-runtime.e2e";
+import "./tests/animation-runtime.[shard-1].e2e";
+import "./tests/content-mode-editing.[shard-1].e2e";
+import "./tests/content-mode-editing.[shard-2].e2e";
+import "./tests/content-mode-editing.[shard-3].e2e";
+import "./tests/data-variables-runtime.[shard-2].e2e";
+import "./tests/pages-actions.[shard-1].e2e";
+import "./tests/pages-actions.[shard-2].e2e";
+import "./tests/pages-actions.[shard-3].e2e";
+import "./tests/preview-links.[shard-1].e2e";
+import "./tests/project-settings-runtime.[shard-2].e2e";
+import "./tests/props-runtime.[shard-2].e2e";
+import "./tests/share-link-permissions.[shard-1].e2e";
+import "./tests/slot-keyboard.[shard-3].e2e";
+import "./tests/style-panel-runtime.[shard-1].e2e";
+import "./tests/style-panel-runtime.[shard-2].e2e";
+import "./tests/style-panel-runtime.[shard-3].e2e";
 
 const testTimeoutMs =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 120_000;
+const testShard = process.env.E2E_TEST_SHARD?.trim();
 const testFilters = [
   ...(process.env.E2E_TEST_FILTERS ?? "")
     .split("\n")
@@ -211,20 +218,38 @@ const stopBuilder = async (child: ChildProcess | undefined) => {
 };
 
 const getRunnableSuites = () => {
-  const suites = getSuites().map((suite) => ({
-    suite,
-    tests: suite.tests.filter((test) => {
-      if (testFilters.length === 0) {
+  const suites = getSuites()
+    .filter((suite) => {
+      if (testShard === undefined || testShard === "") {
         return true;
       }
-      const fullName = `${suite.name} › ${test.name}`;
-      return testFilters.some(
-        (filter) => test.name.includes(filter) || fullName.includes(filter)
-      );
-    }),
-  }));
+      return suite.fileName.includes(`[${testShard}]`);
+    })
+    .map((suite) => ({
+      suite,
+      tests: suite.tests.filter((test) => {
+        if (testFilters.length === 0) {
+          return true;
+        }
+        const fullName = `${suite.name} › ${test.name}`;
+        return testFilters.some(
+          (filter) => test.name.includes(filter) || fullName.includes(filter)
+        );
+      }),
+    }));
 
   const runnableSuites = suites.filter(({ tests }) => tests.length > 0);
+
+  if (testShard !== undefined && testShard !== "" && suites.length === 0) {
+    const availableFiles = getSuites().map((suite) => suite.fileName);
+    throw new Error(
+      [
+        `E2E_TEST_SHARD did not match any test files: ${JSON.stringify(testShard)}`,
+        "Available test files:",
+        ...availableFiles.map((file) => `- ${file}`),
+      ].join("\n")
+    );
+  }
 
   if (testFilters.length > 0 && runnableSuites.length === 0) {
     const availableTests = suites.flatMap(({ suite }) =>

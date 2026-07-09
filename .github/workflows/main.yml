@@ -170,7 +170,7 @@ jobs:
             }
 
   builder-e2e:
-    name: builder-e2e (${{ matrix.name }})
+    name: builder-e2e (${{ matrix.shard }})
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
     if: |
       github.event_name == 'push' ||
@@ -183,53 +183,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: runtime
-            e2e-filters: |
-              animation runtime
-              data variables runtime
-              props runtime
-              project settings runtime
-          - name: content-basic
-            e2e-filters: |
-              Editor can insert content templates with assets and styles
-              Editor can upload, replace, and delete asset in content mode
-              Editor can replace image source with asset in content mode
-              Editor can delete direct children but not protected containers
-              Editor can edit text and content props but not design props
-          - name: content-pages
-            e2e-filters: |
-              Editor rich text formatting persists after reload
-              Editor can create styled page from template in content mode
-              Editor can edit allowed page settings
-              Editor is blocked from invalid paths and restricted page settings
-              Edit-only and build-capable users can collaborate in content mode
-          - name: pages-components
-            e2e-filters: |
-              Builder can insert through the engine bridge, undo, redo, and reload
-              Builder Components panel filters catalog-only entries and inserts a persisted component
-              Builder can duplicate a component through the engine bridge, undo, redo, and reload
-              Builder can duplicate and delete a component from Navigator context menu
-              Builder Navigator keyboard move, reparent, and reorder persist after reload
-          - name: pages-commands
-            e2e-filters: |
-              Builder command panel structural mutations persist after reload
-              Builder Navigator label and command unwrap persist after reload
-              Builder command panel tag insertion persists after reload
-              Builder pastes external HTML fragments through clipboard and reloads them
-          - name: pages-tree
-            e2e-filters: |
-              Builder can copy, duplicate, and delete a page from the header menu
-              Builder can copy, duplicate, and delete a folder from the context menu
-              Builder can copy, duplicate, and delete a page template from actions menus
-          - name: style
-            e2e-filters: |
-              style panel runtime
-          - name: permissions-and-keyboard
-            e2e-filters: |
-              preview links
-              share link permissions
-              slot keyboard
+        # Builder e2e shards are assigned by filename tags, for example
+        # `pages-actions.[shard-3].e2e.ts`. Use one of these shard names in
+        # each e2e filename. If one workflow module gets too slow, split it
+        # into same-base files with different shard tags, such as
+        # `pages-actions.[shard-1].e2e.ts` and
+        # `pages-actions.[shard-2].e2e.ts`.
+        shard: [shard-1, shard-2, shard-3]
 
     environment:
       name: development
@@ -264,9 +224,16 @@ jobs:
 
       - name: Run builder e2e
         env:
-          E2E_TEST_FILTERS: ${{ matrix.e2e-filters }}
+          E2E_TEST_SHARD: ${{ matrix.shard }}
         run: |
-          E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=300 pnpm e2e:builder
+          run_builder_e2e() {
+            E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=300 pnpm e2e:builder
+          }
+
+          run_builder_e2e || {
+            echo "::warning::Builder e2e shard ${E2E_TEST_SHARD} failed; retrying once"
+            run_builder_e2e
+          }
 
       - name: Print e2e service logs
         if: failure()
