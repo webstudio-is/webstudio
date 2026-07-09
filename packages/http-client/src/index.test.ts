@@ -1218,7 +1218,7 @@ test("uploads project asset descriptors with local data readers", async () => {
 
 test("normalizes synced project bundles for local storage", () => {
   const bundle = createPublishedProjectBundleFixture({
-    bundleVersion: undefined,
+    bundleVersion: "bundle-old",
   });
 
   expect(toLocalProjectBundle(bundle)).toMatchObject({

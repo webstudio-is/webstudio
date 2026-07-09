@@ -58,7 +58,11 @@ afterEach(async () => {
   vi.clearAllMocks();
 });
 
-test("preserves synchronized data version from the API", async () => {
+test("writes current data version after synchronizing from the API", async () => {
+  loadProjectBundleByBuildId.mockResolvedValue(
+    createProjectBundle({ bundleVersion: "bundle-old" })
+  );
+
   await sync(
     {
       authToken: "token-1",

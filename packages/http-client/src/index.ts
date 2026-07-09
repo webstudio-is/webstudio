@@ -600,7 +600,6 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
   const {
     assets,
     build,
-    bundleVersion: synchronizedBundleVersion,
     origin,
     page,
     pages,
@@ -609,7 +608,7 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
     user,
   } = normalizedProject;
   return {
-    bundleVersion: synchronizedBundleVersion ?? currentBundleVersion,
+    bundleVersion: currentBundleVersion,
     build,
     page,
     pages,
