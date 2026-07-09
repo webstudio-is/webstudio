@@ -84,11 +84,18 @@ const pastePlainTextFromClipboardShortcut = async ({
   page: Page;
   text: string;
 }) => {
-  await page.evaluate(async (text) => {
-    await navigator.clipboard.writeText(text);
-  }, text);
   const save = waitForChangeToBeSaved({ page });
-  await page.keyboard.press("ControlOrMeta+V");
+  await page.evaluate((text) => {
+    const clipboardData = new DataTransfer();
+    clipboardData.setData("text/plain", text);
+    document.dispatchEvent(
+      new ClipboardEvent("paste", {
+        bubbles: true,
+        cancelable: true,
+        clipboardData,
+      })
+    );
+  }, text);
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 };

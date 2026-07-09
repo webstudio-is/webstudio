@@ -213,19 +213,7 @@ jobs:
 
       - name: Run builder e2e
         run: |
-          set +e
-          E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=900 pnpm e2e:builder
-          status="$?"
-          set -e
-          if [ "$status" -eq 0 ]; then
-            exit 0
-          fi
-
-          echo "::warning::Builder e2e failed on the first attempt. Restarting services and retrying once."
-          docker compose $BUILDER_E2E_COMPOSE_ARGS logs || true
-          docker compose $BUILDER_E2E_COMPOSE_ARGS down --volumes --remove-orphans || true
-
-          E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=900 pnpm e2e:builder
+          E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=300 pnpm e2e:builder
 
       - name: Print e2e service logs
         if: failure()

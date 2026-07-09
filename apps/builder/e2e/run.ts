@@ -260,7 +260,7 @@ const run = async () => {
       logPerf(`${suite.name} beforeAll`, beforeAllStartedAt);
     }
 
-    const results = await Promise.allSettled(
+    await Promise.all(
       runnableSuites.map(async ({ suite, tests }) => {
         const suiteStartedAt = Date.now();
         await runSuiteTests({ suite, tests });
@@ -268,11 +268,6 @@ const run = async () => {
         console.info(`✓ ${suite.name} completed (${suiteDuration}ms)`);
       })
     );
-
-    const failedSuite = results.find((result) => result.status === "rejected");
-    if (failedSuite?.status === "rejected") {
-      throw failedSuite.reason;
-    }
     logPerf("tests", testsStartedAt);
   } finally {
     await stopBrowser();

@@ -56,6 +56,7 @@ export const waitForCanvasTextStyle = async ({
   let lastValue = "";
 
   while (Date.now() - startedAt < 30_000) {
+    await page.mouse.move(0, 0).catch(() => undefined);
     const values = await getVisibleCanvasTextStyleValues({
       page,
       text,
