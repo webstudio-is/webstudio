@@ -3,10 +3,7 @@ import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixt
 import { buildRouter, __testing__ } from "./build-router.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 
-const {
-  createImportProjectBundleHandler,
-  createLoadProjectBundleByProjectIdHandler,
-} = __testing__;
+const { createImportProjectBundleHandler } = __testing__;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -58,26 +55,6 @@ describe("build router jsx fragment conversion", () => {
 });
 
 describe("build router project bundle import", () => {
-  test("loads project-id sync bundles from the published project bundle path", async () => {
-    const data = createPublishedProjectBundleFixture();
-    const loadPublishedProjectBundleByProjectId = vi
-      .fn()
-      .mockResolvedValue(data);
-    const handler = createLoadProjectBundleByProjectIdHandler({
-      loadPublishedProjectBundleByProjectId,
-    });
-    const ctx = { context: true } as never;
-
-    await expect(
-      handler({ ctx, input: { projectId: "project-id" } })
-    ).resolves.toBe(data);
-
-    expect(loadPublishedProjectBundleByProjectId).toHaveBeenCalledWith(
-      "project-id",
-      ctx
-    );
-  });
-
   test("imports staged project bundle data and removes the upload", async () => {
     const data = createPublishedProjectBundleFixture();
     const importPublishedProjectBundle = vi.fn().mockResolvedValue({

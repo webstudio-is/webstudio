@@ -1,14 +1,16 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import {
   createImageAssetFixture,
+  createPublishedProjectBundleFixture,
   createSerializedBuildFixture,
 } from "@webstudio-is/protocol/fixtures";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import { __testing__ } from "./canvas.server";
 
-const { serializeProjectBundle } = __testing__;
+const { createLoadPublishedProjectBundleByProjectId, serializeProjectBundle } =
+  __testing__;
 type BundleBuild = Parameters<typeof serializeProjectBundle>[0]["build"];
 
 const createBundleBuild = (
@@ -90,4 +92,52 @@ test("keeps font assets referenced from nested style values", () => {
   });
 
   expect(bundle.assets).toEqual([fontAsset]);
+});
+
+test("loads project-id bundles from the published build", async () => {
+  const data = createPublishedProjectBundleFixture();
+  const project = {
+    id: "project-id",
+    latestBuildVirtual: { buildId: "published-build-id" },
+  } as never;
+  const context = { context: true } as never;
+  const loadProductionCanvasDataAndProject = vi.fn().mockResolvedValue({
+    data,
+    project,
+  });
+  const addProjectMetadata = vi.fn().mockResolvedValue(data);
+  const loadProjectById = vi.fn().mockResolvedValue(project);
+  const loadPublishedProjectBundleByProjectId =
+    createLoadPublishedProjectBundleByProjectId({
+      addProjectMetadata,
+      loadProductionCanvasDataAndProject,
+      loadProjectById,
+    });
+
+  await expect(
+    loadPublishedProjectBundleByProjectId("project-id", context)
+  ).resolves.toBe(data);
+
+  expect(loadProjectById).toHaveBeenCalledWith("project-id", context);
+  expect(loadProductionCanvasDataAndProject).toHaveBeenCalledWith(
+    "published-build-id",
+    context,
+    project
+  );
+  expect(addProjectMetadata).toHaveBeenCalledWith(data, project, context);
+});
+
+test("rejects project-id bundle loads for unpublished projects", async () => {
+  const loadPublishedProjectBundleByProjectId =
+    createLoadPublishedProjectBundleByProjectId({
+      addProjectMetadata: vi.fn(),
+      loadProductionCanvasDataAndProject: vi.fn(),
+      loadProjectById: vi
+        .fn()
+        .mockResolvedValue({ latestBuildVirtual: null } as never),
+    });
+
+  await expect(
+    loadPublishedProjectBundleByProjectId("project-id", {} as never)
+  ).rejects.toThrow("The project is not published yet");
 });

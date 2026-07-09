@@ -47,18 +47,6 @@ type ImportProjectBundleDependencies = {
   removeStagedUpload: typeof removeStagedUpload;
 };
 
-type LoadProjectBundleByProjectIdDependencies = {
-  loadPublishedProjectBundleByProjectId: typeof loadPublishedProjectBundleByProjectId;
-};
-
-const createLoadProjectBundleByProjectIdHandler =
-  ({
-    loadPublishedProjectBundleByProjectId,
-  }: LoadProjectBundleByProjectIdDependencies) =>
-  async ({ ctx, input }: { ctx: AppContext; input: { projectId: string } }) => {
-    return await loadPublishedProjectBundleByProjectId(input.projectId, ctx);
-  };
-
 const createImportProjectBundleHandler =
   ({
     importPublishedProjectBundle,
@@ -226,11 +214,9 @@ export const buildRouter = router({
 
   loadProjectBundleByProjectId: procedure
     .input(z.object({ projectId: z.string() }))
-    .query(
-      createLoadProjectBundleByProjectIdHandler({
-        loadPublishedProjectBundleByProjectId,
-      })
-    ),
+    .query(async ({ ctx, input }) => {
+      return await loadPublishedProjectBundleByProjectId(input.projectId, ctx);
+    }),
 
   checkProjectBuildPermission: procedure
     .input(checkProjectBuildPermissionInput)
@@ -344,5 +330,4 @@ export const buildRouter = router({
 
 export const __testing__ = {
   createImportProjectBundleHandler,
-  createLoadProjectBundleByProjectIdHandler,
 };

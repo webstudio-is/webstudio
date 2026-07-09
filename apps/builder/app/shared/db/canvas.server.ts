@@ -155,6 +155,40 @@ const addProjectMetadata = async (
   };
 };
 
+type LoadPublishedProjectBundleByProjectIdDependencies = {
+  addProjectMetadata: typeof addProjectMetadata;
+  loadProductionCanvasDataAndProject: typeof loadProductionCanvasDataAndProject;
+  loadProjectById: typeof loadById;
+};
+
+const createLoadPublishedProjectBundleByProjectId =
+  ({
+    addProjectMetadata,
+    loadProductionCanvasDataAndProject,
+    loadProjectById,
+  }: LoadPublishedProjectBundleByProjectIdDependencies) =>
+  async (
+    projectId: string,
+    context: AppContext
+  ): Promise<PublishedProjectBundle> => {
+    const project = await loadProjectById(projectId, context);
+    if (project === null) {
+      throw new Error(`Project "${projectId}" not found`);
+    }
+
+    const buildId = project.latestBuildVirtual?.buildId;
+    if (buildId === undefined || buildId === null) {
+      throw new ProjectNotPublishedError("The project is not published yet");
+    }
+
+    const { data } = await loadProductionCanvasDataAndProject(
+      buildId,
+      context,
+      project
+    );
+    return await addProjectMetadata(data, project, context);
+  };
+
 export const loadProductionCanvasData = async (
   buildId: string,
   context: AppContext
@@ -174,27 +208,12 @@ export const loadPublishedProjectBundleByBuildId = async (
   return await addProjectMetadata(data, project, context);
 };
 
-export const loadPublishedProjectBundleByProjectId = async (
-  projectId: string,
-  context: AppContext
-): Promise<PublishedProjectBundle> => {
-  const project = await loadById(projectId, context);
-  if (project === null) {
-    throw new Error(`Project "${projectId}" not found`);
-  }
-
-  const buildId = project.latestBuildVirtual?.buildId;
-  if (buildId === undefined || buildId === null) {
-    throw new ProjectNotPublishedError("The project is not published yet");
-  }
-
-  const { data } = await loadProductionCanvasDataAndProject(
-    buildId,
-    context,
-    project
-  );
-  return await addProjectMetadata(data, project, context);
-};
+export const loadPublishedProjectBundleByProjectId =
+  createLoadPublishedProjectBundleByProjectId({
+    addProjectMetadata,
+    loadProductionCanvasDataAndProject,
+    loadProjectById: loadById,
+  });
 
 export const loadProjectBundleByBuildId = async (
   buildId: string,
@@ -231,5 +250,6 @@ export const loadProjectBundleByProjectId = async (
 };
 
 export const __testing__ = {
+  createLoadPublishedProjectBundleByProjectId,
   serializeProjectBundle,
 };
