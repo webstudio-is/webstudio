@@ -2760,7 +2760,7 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
 
 const startupGuidance = readProjectBuildDoc("mcp-startup-guidance").trim();
 const valuesVsBindingsRule =
-  'Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, parameters, resources, or actions. Expression-backed fixed strings such as page metadata and resource URLs must be quoted JavaScript string literal expressions, for example "\\"Pricing\\"". Page and resource updates put changed fields under values.';
+  'Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, resources, actions, or existing scoped runtime context such as system. Parameters are internal scoped runtime values, not a public create/update/delete surface. Expression-backed fixed strings such as page metadata and resource URLs must be quoted JavaScript string literal expressions, for example "\\"Pricing\\"". Page and resource updates put changed fields under values.';
 
 const getComponentStateUsage = (
   states:

@@ -377,7 +377,7 @@ Commands:
 
 Notes:
 
-- Use this only when the prop should remain dynamic: expression, parameter, resource, or action binding.
+- Use this only when the prop should remain dynamic: expression, resource, action, or an existing scoped runtime context value such as `system`.
 - For a fixed string value, use `update-props` with `type:"string"` and a direct `value` instead.
 
 ## Read styles
@@ -495,7 +495,7 @@ Commands:
 Notes:
 
 - Data variable values support `string`, `number`, `boolean`, `string[]`, and `json`.
-- Parameters are contextual values provided by collections, components, and the built-in `system` parameter. Do not create parameters with `create-variable`; read them from expressions only when they are in scope.
+- Parameters are internal scoped runtime values provided by pages, collections, or components. They are not a public authoring surface: do not create, update, or delete parameter records. Use data variables/resources for user-authored data, and reference documented context values such as `system` only where they are already in scope.
 
 ## Update data variable
 
@@ -529,7 +529,7 @@ Commands:
 Notes:
 
 - Resource `url`, header values, search parameter values, and body are expressions. Literal URLs are JSON strings such as `"https://api.example.com/posts"`.
-- Search parameter values, header values, and body expressions can read scoped variables and parameters available at the resource scope.
+- Search parameter values, header values, and body expressions can read scoped variables and documented runtime context values such as `system` when they are available at the resource scope.
 - Add `scopeInstanceId` and `dataSourceName` when the resource result should be exposed as a scoped read data variable. Scoped resources are generated into the page resource `data` map and may be loaded during page rendering. Use this for read-oriented resources such as GET CMS/API data.
 - For submit/write/action resources, create the resource without `scopeInstanceId`, then bind a component prop such as a Form `action` with `bind-props` and `binding.type: "resource"`. Prop-bound resources are generated into the page resource `action` map instead of the read `data` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and other explicit action flows.
 - Resource `method` can be `get`, `post`, `put`, or `delete`. Use GET for read data, POST for creates/GraphQL/webhooks/form submissions, PUT for full updates or replacements, and DELETE for deletion actions.
@@ -730,7 +730,7 @@ Notes:
 - Use this for CMS sections, blog listings, Ghost/headless CMS pages, n8n-style integrations, and API URLs built from variables.
 - For read data, expose GET resources as scoped data variables with `scopeInstanceId`/`dataSourceName` and read the loaded result from the resource result wrapper, usually `.data`.
 - For writes, webhooks, GraphQL submissions, and deletes, prefer unscoped resources bound to Form `action` props so they become action resources instead of auto-loaded read resources.
-- Use direct props for fixed values and prop bindings only when a prop must read a data variable, parameter, resource, or action.
+- Use direct props for fixed values and prop bindings only when a prop must read a data variable, resource, action, or documented runtime context value such as `system`.
 
 ## Support dynamic runtime behavior
 

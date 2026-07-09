@@ -298,7 +298,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "update-props",
     description:
-      'Create or update direct element prop values; match value to type, for example textarea placeholder uses { "name": "placeholder", "type": "string", "value": "..." }. Use this for fixed strings, numbers, booleans, JSON, assets, pages, parameters, and resources. Editor tokens are limited to content-mode props',
+      'Create or update direct element prop values; match value to type, for example textarea placeholder uses { "name": "placeholder", "type": "string", "value": "..." }. Use this for fixed strings, numbers, booleans, JSON, assets, and pages. Parameters are internal scoped runtime values, not a public authoring surface. Editor tokens are limited to content-mode props',
     requiredOptions: ["input", "json"],
     examples: ["webstudio update-props --input props.json --json"],
   },
@@ -312,7 +312,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "bind-props",
     description:
-      "Bind element props to dynamic expressions, parameters, resources, or actions. Do not use for fixed string values; use update-props instead",
+      "Bind element props to dynamic expressions, resources, actions, or existing scoped runtime context such as system. Do not create parameter records, and do not use bindings for fixed string values; use update-props instead",
     requiredOptions: ["input", "json"],
     examples: ["webstudio bind-props --input bindings.json --json"],
   },

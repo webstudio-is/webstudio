@@ -116,9 +116,11 @@ the variable by name; nested variables with the same name mask outer variables.
 Variable values support `string`, `number`, `boolean`, `string[]`, and `json`.
 Use `string[]` for lists of strings such as tags or selected categories; use
 `json` for objects, arrays with mixed shapes, or nested API filter state.
-Parameters are contextual values provided by collections, component scopes, and
-the built-in `system` parameter. Do not create parameters with
-`create-variable`; read them from expressions only when they are in scope.
+Parameters are internal scoped runtime values provided by pages, collections,
+or components. They are not a public authoring surface: do not create, update,
+or delete parameter records. Public tools should preserve existing parameter
+records and may reference documented context values such as `system` in
+expressions where they are already in scope.
 
 Resource request fields are expressions too. Literal URLs must be JSON strings,
 for example `"https://api.example.com/posts"`. Dynamic URLs can combine strings

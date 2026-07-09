@@ -491,8 +491,9 @@ export const getResourceScopeForInstance = ({
   const variableValues = new Map<DataSource["id"], unknown>();
   const hiddenDataSourceIds = new Set<DataSource["id"]>();
   for (const dataSource of dataSources.values()) {
-    // hide collection item and component parameters from resources
-    // to prevent waterfall and loop requests ans not complicate compiler
+    // Hide collection/component parameters from resource expressions. They are
+    // internal scoped runtime values, and exposing them here would invite
+    // request waterfalls/loops and complicate generated resource code.
     if (dataSource.type === "parameter") {
       hiddenDataSourceIds.add(dataSource.id);
     }
