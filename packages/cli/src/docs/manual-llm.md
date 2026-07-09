@@ -2,6 +2,13 @@
 
 Use this order. Stop only when a command returns ok:false.
 
+If you are inside the Webstudio monorepo, the first command discovery should use
+the local CLI exactly as `node packages/cli/local.js ...` from the repo root. Do
+not use `packages/cli/bin.js` for local source-tree work; it is the packaged
+build entry and may use stale built output. Do not use `pnpm exec webstudio`,
+`pnpm --filter webstudio exec webstudio`, or a global `webstudio`: they can
+resolve an older binary.
+
 For delegated design-system or “use every component” tasks, skip the generic warm-up sequence and start with exactly one MCP command: `webstudio workflow.next '{"goal":"design-system-page"}'`. Report that returned checkpoint to the parent/user and stop until continued.
 
 ## Always
@@ -17,8 +24,6 @@ For delegated design-system or “use every component” tasks, skip the generic
 Use `webstudio schema mcp` for a tiny MCP tool overview. Use `webstudio schema mcp --detail summary` for all tool descriptions, and `webstudio schema mcp --detail full` only when exact input schemas for all tools are truly needed; otherwise prefer focused `meta.get_more_tools` and `components.*` calls.
 
 Run these commands from the linked project root. Use the MCP startup status line's absolute root for local files; write temporary scripts and artifacts under `<project root>/.temp`, not under a parent workspace.
-
-When developing inside the Webstudio monorepo, run the local CLI exactly as `node packages/cli/local.js ...` from the repo root. Do not use `pnpm exec webstudio`, `pnpm --filter webstudio exec webstudio`, or a global `webstudio`: they can resolve an older binary.
 
 Monorepo quick path for a simple styled section:
 

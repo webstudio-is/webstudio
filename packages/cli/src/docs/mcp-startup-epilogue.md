@@ -1,6 +1,8 @@
+If you are inside the Webstudio monorepo, use the local CLI exactly as `node packages/cli/local.js ...` as your first command path. Do not use `packages/cli/bin.js` for local source-tree work; it is the packaged build entry and may use stale built output.
+
 Plain `webstudio mcp` starts the stdio MCP server for real MCP clients. Do not manually type or pipe raw JSON-RPC frames into it from an interactive shell or PTY. From a shell, use shortcut calls such as `webstudio meta.index` and `webstudio insert-fragment '<json>' --dry-run` for one bounded tool call. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `webstudio mcp run '[{"tool":"components.find","input":{"brief":"button"}}]'` for small multi-call batches in one shared CLI session. For large batches, pass a normal JSON file path such as `.temp/mcp-calls.json`. Do not use shell process substitution like `<(...)`; use inline JSON or a real file.
 
-If you are inside the Webstudio monorepo, use the local CLI exactly as `node packages/cli/local.js ...`. Put each local CLI call in its own shell command; do not chain helper commands with `&&`, `;`, command substitution, or shell wrappers around the CLI when reporting a CLI step. Do not use `pnpm exec webstudio`, `pnpm --filter webstudio exec webstudio`, or a global `webstudio`; those can resolve an older binary. For example:
+Put each local CLI call in its own shell command; do not chain helper commands with `&&`, `;`, command substitution, or shell wrappers around the CLI when reporting a CLI step. Do not use `pnpm exec webstudio`, `pnpm --filter webstudio exec webstudio`, or a global `webstudio`; those can resolve an older binary. For example:
 
 ```sh
 node packages/cli/local.js mcp single-op-call meta.index
