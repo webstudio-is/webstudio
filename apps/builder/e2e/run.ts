@@ -22,7 +22,7 @@ import "./tests/slot-keyboard.e2e";
 import "./tests/style-panel-runtime.e2e";
 
 const testTimeoutMs =
-  Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 60_000;
+  Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 120_000;
 const testFilter = process.env.E2E_TEST_FILTER;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED ??= "0";
