@@ -23,7 +23,15 @@ import "./tests/style-panel-runtime.e2e";
 
 const testTimeoutMs =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 120_000;
-const testFilter = process.env.E2E_TEST_FILTER;
+const testFilters = [
+  ...(process.env.E2E_TEST_FILTERS ?? "")
+    .split("\n")
+    .map((filter) => filter.trim())
+    .filter(Boolean),
+  ...(process.env.E2E_TEST_FILTER === undefined
+    ? []
+    : [process.env.E2E_TEST_FILTER]),
+];
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED ??= "0";
 
@@ -205,20 +213,26 @@ const stopBuilder = async (child: ChildProcess | undefined) => {
 const getRunnableSuites = () => {
   const suites = getSuites().map((suite) => ({
     suite,
-    tests: suite.tests.filter(
-      (test) => testFilter === undefined || test.name.includes(testFilter)
-    ),
+    tests: suite.tests.filter((test) => {
+      if (testFilters.length === 0) {
+        return true;
+      }
+      const fullName = `${suite.name} › ${test.name}`;
+      return testFilters.some(
+        (filter) => test.name.includes(filter) || fullName.includes(filter)
+      );
+    }),
   }));
 
   const runnableSuites = suites.filter(({ tests }) => tests.length > 0);
 
-  if (testFilter !== undefined && runnableSuites.length === 0) {
+  if (testFilters.length > 0 && runnableSuites.length === 0) {
     const availableTests = suites.flatMap(({ suite }) =>
       suite.tests.map((test) => `${suite.name} › ${test.name}`)
     );
     throw new Error(
       [
-        `E2E_TEST_FILTER did not match any tests: ${JSON.stringify(testFilter)}`,
+        `E2E_TEST_FILTERS did not match any tests: ${JSON.stringify(testFilters)}`,
         "Available tests:",
         ...availableTests.map((name) => `- ${name}`),
       ].join("\n")

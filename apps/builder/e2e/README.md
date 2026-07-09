@@ -34,6 +34,19 @@ E2E_TEST_FILTER="Builder can copy, duplicate, and delete a page" pnpm e2e:builde
 regular expression. If the filter matches no tests, the runner fails and prints
 the available test names before starting Docker or building Builder.
 
+Use `E2E_TEST_FILTERS` for a newline-separated list of exact or substring
+matches. Each entry is matched against both the test name and
+`<suite> › <test>`.
+
+```sh
+E2E_TEST_FILTERS='Builder can insert through the engine bridge
+Builder-created data variables and resources persist' pnpm e2e:builder
+```
+
+CI uses `E2E_TEST_FILTERS` to shard the full e2e suite across parallel matrix
+jobs. The goal is to keep all coverage while preventing one long serial e2e
+command from hitting the command timeout.
+
 `pnpm e2e:builder:dev` defaults to `E2E_BUILDER_URL=https://127.0.0.1:3000`,
 so it runs against the already-running Vite dev server instead of building and
 serving the production bundle. Override `E2E_BUILDER_URL` when the dev server is
