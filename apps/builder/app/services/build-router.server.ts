@@ -30,7 +30,7 @@ import {
 } from "@webstudio-is/protocol";
 import {
   loadProjectBundleByBuildId,
-  loadProjectBundleByProjectId,
+  loadPublishedProjectBundleByProjectId,
 } from "~/shared/db";
 import {
   assertProjectBuildPermit,
@@ -46,6 +46,18 @@ type ImportProjectBundleDependencies = {
   readStagedUploadText: typeof readStagedUploadText;
   removeStagedUpload: typeof removeStagedUpload;
 };
+
+type LoadProjectBundleByProjectIdDependencies = {
+  loadPublishedProjectBundleByProjectId: typeof loadPublishedProjectBundleByProjectId;
+};
+
+const createLoadProjectBundleByProjectIdHandler =
+  ({
+    loadPublishedProjectBundleByProjectId,
+  }: LoadProjectBundleByProjectIdDependencies) =>
+  async ({ ctx, input }: { ctx: AppContext; input: { projectId: string } }) => {
+    return await loadPublishedProjectBundleByProjectId(input.projectId, ctx);
+  };
 
 const createImportProjectBundleHandler =
   ({
@@ -214,9 +226,11 @@ export const buildRouter = router({
 
   loadProjectBundleByProjectId: procedure
     .input(z.object({ projectId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      return await loadProjectBundleByProjectId(input.projectId, ctx);
-    }),
+    .query(
+      createLoadProjectBundleByProjectIdHandler({
+        loadPublishedProjectBundleByProjectId,
+      })
+    ),
 
   checkProjectBuildPermission: procedure
     .input(checkProjectBuildPermissionInput)
@@ -330,4 +344,5 @@ export const buildRouter = router({
 
 export const __testing__ = {
   createImportProjectBundleHandler,
+  createLoadProjectBundleByProjectIdHandler,
 };
