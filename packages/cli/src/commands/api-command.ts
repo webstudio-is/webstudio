@@ -1,5 +1,7 @@
 import { readFile } from "node:fs/promises";
 import * as httpClient from "@webstudio-is/http-client";
+import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import type { PageRedirect } from "@webstudio-is/sdk";
 import { isFileExists } from "../fs-utils";
 import { HandledCliError } from "../errors";
 import {
@@ -231,6 +233,14 @@ export const updateProjectSettingsCommandOptions = (yargs: CommonYargsArgv) =>
     "Required JSON file with optional meta and compiler objects. Use null values to remove existing fields."
   );
 
+export const updateMarketplaceProductCommandOptions = (
+  yargs: CommonYargsArgv
+) =>
+  requiredInputOption(
+    apiCommandOptions(yargs),
+    "Required JSON file with marketplace product metadata."
+  );
+
 export const createRedirectCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs)
     .option("old", {
@@ -280,6 +290,12 @@ export const deleteRedirectCommandOptions = (yargs: CommonYargsArgv) =>
     describe: "Required source URL path to delete",
     demandOption: true,
   });
+
+export const setRedirectsCommandOptions = (yargs: CommonYargsArgv) =>
+  requiredInputOption(
+    apiCommandOptions(yargs),
+    "Required JSON file with { redirects: [{ old, new, status? }] }."
+  );
 
 export const breakpointCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs);
@@ -1295,6 +1311,8 @@ type ProjectSettingsInput = Pick<
   Parameters<typeof httpClient.updateProjectSettings>[0],
   "meta" | "compiler"
 >;
+type MarketplaceProductInput = MarketplaceProduct;
+type SetRedirectsInput = { redirects: PageRedirect[] };
 type BreakpointInput = Pick<
   Parameters<typeof httpClient.createBreakpoint>[0],
   "label" | "minWidth" | "maxWidth" | "condition"
@@ -1823,6 +1841,18 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
+  "update-marketplace-product": async (options, connection, dependencies) => {
+    const input = await readInputObject<MarketplaceProductInput>(
+      dependencies,
+      options
+    );
+    return runProjectSessionCommand(
+      "update-marketplace-product",
+      input,
+      connection,
+      dependencies
+    );
+  },
   "list-redirects": async (_options, connection, dependencies) =>
     runProjectSessionCommand("list-redirects", {}, connection, dependencies),
   "create-redirect": async (options, connection, dependencies) => {
@@ -1867,6 +1897,18 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = { old: requireOption(options.old, "--old") };
     return runProjectSessionCommand(
       "delete-redirect",
+      input,
+      connection,
+      dependencies
+    );
+  },
+  "set-redirects": async (options, connection, dependencies) => {
+    const input = await readInputObject<SetRedirectsInput>(
+      dependencies,
+      options
+    );
+    return runProjectSessionCommand(
+      "set-redirects",
       input,
       connection,
       dependencies

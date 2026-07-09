@@ -90,6 +90,15 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "update-marketplace-product",
+    description:
+      "Update marketplace product metadata from JSON for the configured project",
+    requiredOptions: ["input", "json"],
+    examples: [
+      "webstudio update-marketplace-product --input marketplace-product.json --json",
+    ],
+  },
+  {
     command: "list-redirects",
     description: "List project redirects",
     examples: ["webstudio list-redirects --json"],
@@ -116,6 +125,13 @@ const curatedPublicApiOperationDocumentation = [
     description: "Delete a project redirect selected by its old path",
     requiredOptions: ["old", "json"],
     examples: ["webstudio delete-redirect --old /old --json"],
+  },
+  {
+    command: "set-redirects",
+    description:
+      "Replace all project redirects from JSON. Prefer create/update/delete for single redirect edits.",
+    requiredOptions: ["input", "json"],
+    examples: ["webstudio set-redirects --input redirects.json --json"],
   },
   {
     command: "list-breakpoints",

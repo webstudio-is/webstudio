@@ -131,10 +131,13 @@ const apiCommandOptionsByCommand: Partial<
   "update-page": apiCommand.updatePageCommandOptions,
   "get-project-settings": apiCommand.projectSettingsCommandOptions,
   "update-project-settings": apiCommand.updateProjectSettingsCommandOptions,
+  "update-marketplace-product":
+    apiCommand.updateMarketplaceProductCommandOptions,
   "list-redirects": apiCommand.projectSettingsCommandOptions,
   "create-redirect": apiCommand.createRedirectCommandOptions,
   "update-redirect": apiCommand.updateRedirectCommandOptions,
   "delete-redirect": apiCommand.deleteRedirectCommandOptions,
+  "set-redirects": apiCommand.setRedirectsCommandOptions,
   "list-breakpoints": apiCommand.breakpointCommandOptions,
   "create-breakpoint": apiCommand.createBreakpointCommandOptions,
   "update-breakpoint": apiCommand.updateBreakpointCommandOptions,
@@ -217,6 +220,11 @@ export const apiCommandMetadata = publicApiOperations.map((operation) => ({
 
 export const highLevelCliCommands = [
   { command: "permissions", operation: "permissions" },
+  {
+    command: "update-marketplace-product",
+    operation: "update-marketplace-product",
+  },
+  { command: "set-redirects", operation: "set-redirects" },
   { command: "publish deploy", operation: "publish" },
   { command: "publish list", operation: "list-publishes" },
   { command: "publish status", operation: "get-publish-job" },

@@ -130,10 +130,12 @@ const taskRecipeUseCases = {
     "Update page settings/metadata",
     "Read project settings",
     "Update project settings",
+    "Update marketplace product",
     "List redirects",
     "Create redirect",
     "Update redirect",
     "Delete redirect",
+    "Set redirects",
     "List breakpoints",
     "Create breakpoint",
     "Update breakpoint",
@@ -290,6 +292,19 @@ const inputFileShapes = {
     },
     compiler: { atomicStyles: true },
   },
+  "marketplace-product.json": {
+    category: "pageTemplates",
+    name: "Acme Template",
+    thumbnailAssetId: "asset-id",
+    author: "Acme Studio",
+    email: "hello@example.com",
+    website: "https://example.com",
+    issues: "",
+    description: "Reusable template project for Acme landing pages.",
+  },
+  "redirects.json": {
+    redirects: [{ old: "/old", new: "/new", status: "301" }],
+  },
   "asset.json": {
     name: "hero.png",
     type: "image",
@@ -424,6 +439,11 @@ const apiCommandsByArea = {
     .filter(
       ({ cliCommand }) =>
         cliCommand.startsWith("publish ") || cliCommand.startsWith("domains ")
+    )
+    .map(({ cliCommand }) => cliCommand),
+  pagesAndSettings: cliCommandMetadata
+    .filter(({ cliCommand }) =>
+      ["update-marketplace-product", "set-redirects"].includes(cliCommand)
     )
     .map(({ cliCommand }) => cliCommand),
 };

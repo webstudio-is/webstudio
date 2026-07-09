@@ -718,6 +718,28 @@ test("updates project settings from input file", async () => {
   });
 });
 
+test("updates marketplace product from input file", async () => {
+  const input = {
+    category: "pageTemplates",
+    name: "Acme Template",
+    thumbnailAssetId: "asset-id",
+    author: "Acme Studio",
+    email: "hello@example.com",
+    website: "https://example.com",
+    issues: "",
+    description: "Reusable template project for Acme landing pages.",
+  };
+  await expectCommandCall({
+    options: {
+      command: "update-marketplace-product",
+      input: "marketplace-product.json",
+    },
+    inputJson: input,
+    call: apiCalls.updateMarketplaceProduct,
+    connection: input,
+  });
+});
+
 test("creates redirect", async () => {
   await expectCommandCall({
     options: {
@@ -776,6 +798,18 @@ test("deletes redirect", async () => {
     options: { command: "delete-redirect", old: "/old" },
     call: apiCalls.deleteRedirect,
     connection: { old: "/old" },
+  });
+});
+
+test("sets redirects from input file", async () => {
+  const input = {
+    redirects: [{ old: "/old", new: "/new", status: "301" }],
+  };
+  await expectCommandCall({
+    options: { command: "set-redirects", input: "redirects.json" },
+    inputJson: input,
+    call: apiCalls.setRedirects,
+    connection: input,
   });
 });
 

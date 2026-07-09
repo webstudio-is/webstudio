@@ -158,6 +158,12 @@ Commands:
 
 - MCP tool: update-project-settings {"meta":{"siteName":"Acme"}}
 
+## Update marketplace product
+
+Commands:
+
+- MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"asset-id","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
+
 ## List redirects
 
 Commands:
@@ -182,6 +188,12 @@ Commands:
 Commands:
 
 - MCP tool: delete-redirect {"old":"/old"}
+
+## Set redirects
+
+Commands:
+
+- MCP tool: set-redirects {"redirects":[{"old":"/old","new":"/new","status":"301"}]}
 
 ## List breakpoints
 
