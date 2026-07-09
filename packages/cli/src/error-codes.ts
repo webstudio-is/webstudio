@@ -1,5 +1,18 @@
 import { getApiErrorCode } from "@webstudio-is/http-client";
 
+const missingProjectOwnerForTokenPattern =
+  /^Project owner can't be found for token\b/;
+
+const getErrorMessage = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "message" in error &&
+  typeof error.message === "string"
+    ? error.message
+    : error instanceof Error
+      ? error.message
+      : String(error);
+
 export const getStableErrorCode = (error: unknown) => {
   const apiErrorCode = getApiErrorCode(error);
   if (apiErrorCode !== undefined) {
@@ -11,4 +24,17 @@ export const getStableErrorCode = (error: unknown) => {
       return code;
     }
   }
+};
+
+export const isMissingApiAccessError = (error: unknown) => {
+  const message = getErrorMessage(error);
+  return missingProjectOwnerForTokenPattern.test(message);
+};
+
+export const getCliErrorMessage = (error: unknown) => {
+  const message = getErrorMessage(error);
+  if (missingProjectOwnerForTokenPattern.test(message)) {
+    return "This project cannot be accessed through the Builder API with the current share link/token. Enable API access in the share-link settings, then relink the project with `webstudio init --link <share-link> --json`.";
+  }
+  return message;
 };

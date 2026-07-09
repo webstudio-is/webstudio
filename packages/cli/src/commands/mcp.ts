@@ -15,7 +15,11 @@ import { publicApiOperations } from "@webstudio-is/protocol";
 import { importProjectBundleWithAssets } from "@webstudio-is/http-client";
 import type { ProjectSessionSnapshot } from "@webstudio-is/project-build/project-session";
 import { resolveApiConnection } from "../api-connection";
-import { getStableErrorCode } from "../error-codes";
+import {
+  getCliErrorMessage,
+  getStableErrorCode,
+  isMissingApiAccessError,
+} from "../error-codes";
 import { HandledCliError, isHandledCliError } from "../errors";
 import { loadJSONFile } from "../fs-utils";
 import {
@@ -667,12 +671,16 @@ const getMcpRunError = (error: unknown) => {
     (error.code === undefined || typeof error.code === "string")
   ) {
     return {
-      code: error.code ?? "MCP_TOOL_FAILED",
-      message: error.message,
+      code: isMissingApiAccessError(error)
+        ? "UNAUTHORIZED"
+        : (error.code ?? "MCP_TOOL_FAILED"),
+      message: getCliErrorMessage(error),
     };
   }
-  const code = getStableErrorCode(error) ?? "MCP_TOOL_FAILED";
-  const message = error instanceof Error ? error.message : String(error);
+  const code = isMissingApiAccessError(error)
+    ? "UNAUTHORIZED"
+    : (getStableErrorCode(error) ?? "MCP_TOOL_FAILED");
+  const message = getCliErrorMessage(error);
   return { code, message };
 };
 

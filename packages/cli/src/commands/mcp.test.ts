@@ -419,6 +419,30 @@ test("formats MCP single-op-call failures as structured JSON payloads", () => {
   });
 });
 
+test("formats missing Builder API access in MCP single-op-call failures", () => {
+  const error = Object.assign(
+    new Error("Project owner can't be found for token token-1"),
+    { code: "INTERNAL_SERVER_ERROR" }
+  );
+
+  expect(
+    createMcpSingleOpCallErrorPayload({
+      error,
+      elapsedMs: 123,
+    })
+  ).toEqual({
+    ok: false,
+    error: {
+      code: "UNAUTHORIZED",
+      message:
+        "This project cannot be accessed through the Builder API with the current share link/token. Enable API access in the share-link settings, then relink the project with `webstudio init --link <share-link> --json`.",
+    },
+    meta: {
+      elapsedMs: 123,
+    },
+  });
+});
+
 test("formats MCP run failures as structured JSON payloads", () => {
   const error = Object.assign(new Error("Invalid JSON"), {
     code: "INVALID_JSON",

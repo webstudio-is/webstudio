@@ -8,7 +8,11 @@ import {
   LOCAL_ASSETS_DIR,
 } from "../asset-files";
 import { createCliProjectSession } from "../project-session";
-import { getStableErrorCode } from "../error-codes";
+import {
+  getCliErrorMessage,
+  getStableErrorCode,
+  isMissingApiAccessError,
+} from "../error-codes";
 import { printJson } from "../json-output";
 import {
   executeProjectSessionApiOperation,
@@ -1635,8 +1639,11 @@ const redirectStatusOption = (status: ApiCommandOptions["status"]) =>
   status === "301" || status === "302" ? status : undefined;
 
 const getErrorCode = (error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = getCliErrorMessage(error);
   const stableCode = getStableErrorCode(error);
+  if (isMissingApiAccessError(error)) {
+    return "UNAUTHORIZED";
+  }
   if (stableCode === "CONFLICT") {
     return "VERSION_CONFLICT";
   }
@@ -2764,7 +2771,7 @@ export const apiCommand = async (
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = getCliErrorMessage(error);
     if (options.json === true) {
       const code = getErrorCode(error);
       printJson({

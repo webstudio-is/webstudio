@@ -541,6 +541,41 @@ test("maps api not found errors to not found json", async () => {
   });
 });
 
+test("explains missing Builder API access instead of leaking token ownership errors", async () => {
+  mockConfig();
+  createCliProjectSession.mockImplementationOnce(() => ({
+    initialize: vi.fn(async () => {
+      throw Object.assign(
+        new Error("Project owner can't be found for token token-1"),
+        { data: { code: "INTERNAL_SERVER_ERROR" } }
+      );
+    }),
+    refresh: vi.fn(),
+    executeServerOperation: vi.fn(),
+    read: vi.fn(),
+    mutate: vi.fn(),
+    snapshot: undefined,
+    markStale: vi.fn(),
+  }));
+
+  await expect(
+    apiCommand(
+      {
+        command: "list-pages",
+        json: true,
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expectJsonErrorOutput({
+    command: "list-pages",
+    code: "UNAUTHORIZED",
+    message:
+      "This project cannot be accessed through the Builder API with the current share link/token. Enable API access in the share-link settings, then relink the project with `webstudio init --link <share-link> --json`.",
+  });
+});
+
 test("splits comma-separated include values", async () => {
   mockConfig();
 
