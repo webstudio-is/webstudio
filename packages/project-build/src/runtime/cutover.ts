@@ -47,6 +47,7 @@ export const builderRuntimeCutoverManifests = [
     family: "project-settings-operations",
     operationIds: [
       "projectSettings.get",
+      "projectSettings.getMarketplaceProduct",
       "projectSettings.update",
       "projectSettings.updateMarketplaceProduct",
     ] as const,
