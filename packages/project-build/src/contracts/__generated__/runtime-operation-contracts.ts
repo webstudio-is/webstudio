@@ -589,6 +589,22 @@ export const runtimeOperationContractData = [
     retryOnConflict: true,
   },
   {
+    id: "projectSettings.getMarketplaceProduct",
+    command: "get-marketplace-product",
+    client: "getMarketplaceProduct",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+      additionalProperties: true,
+    },
+    readNamespaces: ["marketplaceProduct"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+  {
     id: "projectSettings.updateMarketplaceProduct",
     command: "update-marketplace-product",
     client: "updateMarketplaceProduct",

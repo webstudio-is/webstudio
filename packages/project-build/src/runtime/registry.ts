@@ -345,6 +345,13 @@ export const builderRuntimeOperations = [
     ({ state, input }) => projectSettings.updateProjectSettings(state, input)
   ),
   runtimeOperation(
+    "projectSettings.getMarketplaceProduct",
+    api("get-marketplace-product", "getMarketplaceProduct"),
+    readContract(["marketplaceProduct"]),
+    emptyInput,
+    ({ state }) => projectSettings.getMarketplaceProduct(state)
+  ),
+  runtimeOperation(
     "projectSettings.updateMarketplaceProduct",
     api("update-marketplace-product", "updateMarketplaceProduct"),
     mutationContract({

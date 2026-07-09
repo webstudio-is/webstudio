@@ -1829,6 +1829,13 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       connection,
       dependencies
     ),
+  "get-marketplace-product": async (_options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "get-marketplace-product",
+      {},
+      connection,
+      dependencies
+    ),
   "update-project-settings": async (options, connection, dependencies) => {
     const input = await readInputObject<ProjectSettingsInput>(
       dependencies,

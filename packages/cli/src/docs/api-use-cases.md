@@ -158,6 +158,12 @@ Commands:
 
 - MCP tool: update-project-settings {"meta":{"siteName":"Acme"}}
 
+## Read marketplace product
+
+Commands:
+
+- MCP tool: get-marketplace-product {}
+
 ## Update marketplace product
 
 Commands:
@@ -665,8 +671,8 @@ Notes:
 
 Commands:
 
-- MCP tool: snapshot {"include":["marketplaceProduct"]}
-- MCP tool: apply-patch {"baseVersion":"<version>","transactions":"patch.json contents"}
+- MCP tool: get-marketplace-product {}
+- MCP tool: update-marketplace-product {"category":"pageTemplates","name":"Acme Template","thumbnailAssetId":"asset-id","author":"Acme Studio","email":"hello@example.com","website":"https://example.com","issues":"","description":"Reusable template project for Acme landing pages."}
 
 Patch namespaces:
 
@@ -818,19 +824,6 @@ Suggested commands:
 - search-project
 - audit-accessibility
 - find-prop-usage
-
-## Semantic marketplace metadata
-
-Missing:
-Marketplace metadata is only available through MCP snapshot/apply-patch, not dedicated semantic commands.
-
-Current fallback:
-Use MCP snapshot --include marketplaceProduct and apply-patch.
-
-Suggested commands:
-
-- get-marketplace
-- update-marketplace
 
 ## Provider-specific authenticated pages
 

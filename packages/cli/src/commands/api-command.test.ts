@@ -718,6 +718,14 @@ test("updates project settings from input file", async () => {
   });
 });
 
+test("gets marketplace product", async () => {
+  await expectCommandCall({
+    options: { command: "get-marketplace-product" },
+    call: apiCalls.getMarketplaceProduct,
+    connection: {},
+  });
+});
+
 test("updates marketplace product from input file", async () => {
   const input = {
     category: "pageTemplates",

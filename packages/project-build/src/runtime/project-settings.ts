@@ -291,6 +291,18 @@ export const updateMarketplaceProduct = (
   });
 };
 
+export const getMarketplaceProduct = (
+  state: Pick<BuilderState, "marketplaceProduct">
+) => {
+  if (state.marketplaceProduct === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Marketplace product namespace is missing"
+    );
+  }
+  return { marketplaceProduct: state.marketplaceProduct };
+};
+
 export const listRedirects = (state: Pick<BuilderState, "pages">) => ({
   redirects: getRequiredPages(state).redirects ?? [],
 });

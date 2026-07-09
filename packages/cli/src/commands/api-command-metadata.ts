@@ -131,6 +131,7 @@ const apiCommandOptionsByCommand: Partial<
   "update-page": apiCommand.updatePageCommandOptions,
   "get-project-settings": apiCommand.projectSettingsCommandOptions,
   "update-project-settings": apiCommand.updateProjectSettingsCommandOptions,
+  "get-marketplace-product": apiCommand.projectSettingsCommandOptions,
   "update-marketplace-product":
     apiCommand.updateMarketplaceProductCommandOptions,
   "list-redirects": apiCommand.projectSettingsCommandOptions,
@@ -220,6 +221,10 @@ export const apiCommandMetadata = publicApiOperations.map((operation) => ({
 
 export const highLevelCliCommands = [
   { command: "permissions", operation: "permissions" },
+  {
+    command: "get-marketplace-product",
+    operation: "get-marketplace-product",
+  },
   {
     command: "update-marketplace-product",
     operation: "update-marketplace-product",

@@ -90,6 +90,11 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "get-marketplace-product",
+    description: "Show marketplace product metadata for the configured project",
+    examples: ["webstudio get-marketplace-product --json"],
+  },
+  {
     command: "update-marketplace-product",
     description:
       "Update marketplace product metadata from JSON for the configured project",

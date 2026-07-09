@@ -8,6 +8,7 @@ import {
   createRedirect,
   deleteBreakpoint,
   deleteRedirect,
+  getMarketplaceProduct,
   getProjectSettings,
   listBreakpoints,
   listRedirects,
@@ -351,6 +352,13 @@ describe("project settings runtime", () => {
           patches: [{ op: "replace", path: [], value: nextMarketplaceProduct }],
         },
       ],
+    });
+  });
+
+  test("gets marketplace product", () => {
+    const state = createState();
+    expect(getMarketplaceProduct(state)).toEqual({
+      marketplaceProduct: state.marketplaceProduct,
     });
   });
 });

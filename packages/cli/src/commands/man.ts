@@ -443,7 +443,11 @@ const apiCommandsByArea = {
     .map(({ cliCommand }) => cliCommand),
   pagesAndSettings: cliCommandMetadata
     .filter(({ cliCommand }) =>
-      ["update-marketplace-product", "set-redirects"].includes(cliCommand)
+      [
+        "get-marketplace-product",
+        "update-marketplace-product",
+        "set-redirects",
+      ].includes(cliCommand)
     )
     .map(({ cliCommand }) => cliCommand),
 };
