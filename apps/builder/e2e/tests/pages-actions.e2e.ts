@@ -441,17 +441,30 @@ const selectAppMenuItem = async ({
 }) => {
   await page.bringToFront();
   await page.getByRole("button", { name: "Menu Button" }).click();
-  await page.getByRole("menuitem", { name }).click();
+  const menuItem = page.getByRole("menuitem", { name });
+  await menuItem.waitFor();
+  await menuItem.click();
 };
 
-const undoShortcut = async ({ page }: { page: Page }) => {
-  const save = waitForChangeToBeSaved({ page, timeout: 30_000 });
+const undoShortcut = async ({
+  page,
+  waitForSave = true,
+}: {
+  page: Page;
+  waitForSave?: boolean;
+}) => {
+  await waitForSyncStatus({ page, status: "idle" });
+  const save =
+    waitForSave === true
+      ? waitForChangeToBeSaved({ page, timeout: 30_000 })
+      : undefined;
   await selectAppMenuItem({ page, name: "Undo" });
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 };
 
 const redoShortcut = async ({ page }: { page: Page }) => {
+  await waitForSyncStatus({ page, status: "idle" });
   const save = waitForChangeToBeSaved({ page, timeout: 30_000 });
   await selectAppMenuItem({ page, name: "Redo" });
   await save;
@@ -758,7 +771,7 @@ test("Builder can insert through the engine bridge, undo, redo, and reload", asy
     });
 
     await measure("pages actions undo bridge insert", async () => {
-      await undoShortcut({ page });
+      await undoShortcut({ page, waitForSave: false });
     });
     await waitForCanvasTextHidden({
       page,
