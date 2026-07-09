@@ -114,16 +114,16 @@ test("Editor can insert content templates with assets and styles", async () => {
       await insertTemplateAfterCanvasText({
         page,
         anchorText: "Initial content",
-        templateName: fixture.tokenTemplateName,
+        templateName: fixture.tokenTemplateLabel,
       });
     });
     await waitForCanvasText({
       page,
-      text: fixture.tokenTemplateText,
+      text: fixture.tokenTemplateVisibleText,
     });
     await waitForCanvasTextStyle({
       page,
-      text: fixture.tokenTemplateText,
+      text: fixture.tokenTemplateVisibleText,
       property: "font-size",
       value: fixture.tokenTemplateFontSize,
     });
@@ -172,7 +172,7 @@ test("Editor can insert content templates with assets and styles", async () => {
     });
     await waitForCanvasTextStyle({
       page,
-      text: fixture.tokenTemplateText,
+      text: fixture.tokenTemplateVisibleText,
       property: "font-size",
       value: fixture.tokenTemplateFontSize,
     });
@@ -188,6 +188,7 @@ test("Editor can insert content templates with assets and styles", async () => {
     await close();
   }
 });
+
 test("Editor can upload, replace, and delete asset in content mode", async () => {
   const fixture = getSharedContentModeProject();
   const { page, close } = await newIsolatedPage();
@@ -651,6 +652,22 @@ test("Editor can create styled page from template in content mode", async () => 
       property: "font-size",
       value: fixture.pageTemplateFontSize,
     });
+    await waitForCanvasText({
+      page,
+      text: fixture.dataResourceStaticVariableVisibleValue,
+    });
+    await waitForCanvasText({
+      page,
+      text: "HTTP resource variable configured",
+    });
+    await waitForCanvasText({
+      page,
+      text: "GraphQL resource variable configured",
+    });
+    await waitForCanvasText({
+      page,
+      text: "2026",
+    });
 
     await measure(
       "content mode reload created page from template",
@@ -668,6 +685,22 @@ test("Editor can create styled page from template in content mode", async () => 
         });
       }
     );
+    await waitForCanvasText({
+      page,
+      text: fixture.dataResourceStaticVariableVisibleValue,
+    });
+    await waitForCanvasText({
+      page,
+      text: "HTTP resource variable configured",
+    });
+    await waitForCanvasText({
+      page,
+      text: "GraphQL resource variable configured",
+    });
+    await waitForCanvasText({
+      page,
+      text: "2026",
+    });
     await waitForSyncStatus({ page, status: "idle" });
   } finally {
     await close();

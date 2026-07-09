@@ -1,3 +1,4 @@
+import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import {
   insertAsset,
   insertAuthorizationToken,
@@ -37,9 +38,19 @@ export type SeededContentModeProject = {
   isolatedLocalTemplateName: string;
   isolatedLocalTemplateText: string;
   isolatedLocalTemplateFontSize: string;
-  tokenTemplateName: string;
-  tokenTemplateText: string;
+  tokenTemplateLabel: string;
+  tokenTemplateVisibleText: string;
   tokenTemplateFontSize: string;
+  dataResourceTemplateLabel: string;
+  dataResourceStaticTextLabel: string;
+  dataResourceStaticVariableName: string;
+  dataResourceStaticVariableVisibleValue: string;
+  dataResourceHttpVariableName: string;
+  dataResourceGraphqlVariableName: string;
+  dataResourceSystemVariableName: string;
+  dataResourceHttpResourceLabel: string;
+  dataResourceGraphqlResourceLabel: string;
+  dataResourceSystemResourceLabel: string;
   deletableTemplateName: string;
   deletableTemplateText: string;
   nestedTemplateName: string;
@@ -72,9 +83,19 @@ const styledHeadingTemplateFontSize = "32px";
 const isolatedLocalTemplateName = "Isolated Local Style Template";
 const isolatedLocalTemplateText = "Isolated local heading";
 const isolatedLocalTemplateFontSize = "34px";
-const tokenTemplateName = "Token Template";
-const tokenTemplateText = "Token styled heading";
+const tokenTemplateLabel = "Token Template";
+const tokenTemplateVisibleText = "Token styled heading";
 const tokenTemplateFontSize = "36px";
+const dataResourceTemplateLabel = "Data Resource Template";
+const dataResourceStaticTextLabel = "Data resource static value:";
+const dataResourceStaticVariableName = "staticLabel";
+const dataResourceStaticVariableVisibleValue = "Static variable copied";
+const dataResourceHttpVariableName = "posts";
+const dataResourceGraphqlVariableName = "postGraphql";
+const dataResourceSystemVariableName = "currentDate";
+const dataResourceHttpResourceLabel = "Posts Resource";
+const dataResourceGraphqlResourceLabel = "Post GraphQL Resource";
+const dataResourceSystemResourceLabel = "Current Date Resource";
 const deletableTemplateName = "Deletable Template";
 const deletableTemplateText = "Content block child to delete";
 const nestedTemplateName = "Nested Template";
@@ -142,6 +163,20 @@ const createContentModeBuildData = ({
     "isolated-local-template-style-source";
   const tokenTemplateId = "token-template";
   const tokenTemplateStyleSourceId = "content-mode-token-style-source";
+  const dataResourceTemplateId = "data-resource-template";
+  const dataResourceStaticTextId = "data-resource-static-text";
+  const dataResourceHttpFormId = "data-resource-http-form";
+  const dataResourceHttpFormTextId = "data-resource-http-form-text";
+  const dataResourceGraphqlFormId = "data-resource-graphql-form";
+  const dataResourceGraphqlFormTextId = "data-resource-graphql-form-text";
+  const dataResourceSystemTextId = "data-resource-system-text";
+  const dataResourceStaticVariableId = "data-resource-static-variable";
+  const dataResourceHttpDataSourceId = "data-resource-http-data-source";
+  const dataResourceGraphqlDataSourceId = "data-resource-graphql-data-source";
+  const dataResourceSystemDataSourceId = "data-resource-system-data-source";
+  const dataResourceHttpResourceId = "data-resource-http-resource";
+  const dataResourceGraphqlResourceId = "data-resource-graphql-resource";
+  const dataResourceSystemResourceId = "data-resource-system-resource";
   const deletableTemplateId = "deletable-template";
   const nestedTemplateId = "nested-template";
   const nestedTemplateTextId = "nested-template-text";
@@ -181,6 +216,7 @@ const createContentModeBuildData = ({
         { type: "id", value: styledHeadingTemplateId },
         { type: "id", value: isolatedLocalTemplateId },
         { type: "id", value: tokenTemplateId },
+        { type: "id", value: dataResourceTemplateId },
         { type: "id", value: imageReplacementTemplateId },
         { type: "id", value: contentPropsTemplateId },
         { type: "id", value: editableTextTemplateId },
@@ -338,8 +374,81 @@ const createContentModeBuildData = ({
       id: tokenTemplateId,
       component: "ws:element",
       tag: "h2",
-      label: tokenTemplateName,
-      children: [{ type: "text", value: tokenTemplateText }],
+      label: tokenTemplateLabel,
+      children: [{ type: "text", value: tokenTemplateVisibleText }],
+    },
+    {
+      type: "instance",
+      id: dataResourceTemplateId,
+      component: "ws:element",
+      tag: "section",
+      label: dataResourceTemplateLabel,
+      children: [
+        { type: "id", value: dataResourceStaticTextId },
+        { type: "id", value: dataResourceHttpFormId },
+        { type: "id", value: dataResourceGraphqlFormId },
+        { type: "id", value: dataResourceSystemTextId },
+      ],
+    },
+    {
+      type: "instance",
+      id: dataResourceStaticTextId,
+      component: "ws:element",
+      tag: "p",
+      label: "Static Variable Text",
+      children: [
+        { type: "text", value: `${dataResourceStaticTextLabel} ` },
+        {
+          type: "expression",
+          value: encodeDataSourceVariable(dataResourceStaticVariableId),
+        },
+      ],
+    },
+    {
+      type: "instance",
+      id: dataResourceHttpFormId,
+      component: "Form",
+      label: "HTTP Resource Form",
+      children: [{ type: "id", value: dataResourceHttpFormTextId }],
+    },
+    {
+      type: "instance",
+      id: dataResourceHttpFormTextId,
+      component: "ws:element",
+      tag: "p",
+      label: "HTTP Resource Variable Text",
+      children: [{ type: "text", value: "HTTP resource variable configured" }],
+    },
+    {
+      type: "instance",
+      id: dataResourceGraphqlFormId,
+      component: "Form",
+      label: "GraphQL Resource Form",
+      children: [{ type: "id", value: dataResourceGraphqlFormTextId }],
+    },
+    {
+      type: "instance",
+      id: dataResourceGraphqlFormTextId,
+      component: "ws:element",
+      tag: "p",
+      label: "GraphQL Resource Variable Text",
+      children: [
+        { type: "text", value: "GraphQL resource variable configured" },
+      ],
+    },
+    {
+      type: "instance",
+      id: dataResourceSystemTextId,
+      component: "ws:element",
+      tag: "p",
+      label: "System Resource Variable Text",
+      children: [
+        { type: "text", value: "System resource variable configured" },
+        {
+          type: "expression",
+          value: encodeDataSourceVariable(dataResourceSystemDataSourceId),
+        },
+      ],
     },
     {
       type: "instance",
@@ -370,7 +479,10 @@ const createContentModeBuildData = ({
       id: pageTemplateRootId,
       component: "ws:element",
       tag: "body",
-      children: [{ type: "id", value: pageTemplateHeadingId }],
+      children: [
+        { type: "id", value: pageTemplateHeadingId },
+        { type: "id", value: dataResourceTemplateId },
+      ],
     },
     {
       type: "instance",
@@ -439,6 +551,20 @@ const createContentModeBuildData = ({
       name: "height",
       type: "number",
       value: 80,
+    },
+    {
+      id: "data-resource-http-form-action-prop",
+      instanceId: dataResourceHttpFormId,
+      name: "action",
+      type: "resource",
+      value: dataResourceHttpResourceId,
+    },
+    {
+      id: "data-resource-graphql-form-action-prop",
+      instanceId: dataResourceGraphqlFormId,
+      name: "action",
+      type: "resource",
+      value: dataResourceGraphqlResourceId,
     },
     {
       id: "asset-template-image-src-prop",
@@ -681,8 +807,66 @@ const createContentModeBuildData = ({
       },
     ]),
     breakpoints,
-    dataSources: JSON.stringify([]),
-    resources: JSON.stringify([]),
+    dataSources: JSON.stringify([
+      {
+        type: "variable",
+        id: dataResourceStaticVariableId,
+        scopeInstanceId: dataResourceStaticTextId,
+        name: dataResourceStaticVariableName,
+        value: {
+          type: "string",
+          value: dataResourceStaticVariableVisibleValue,
+        },
+      },
+      {
+        type: "resource",
+        id: dataResourceHttpDataSourceId,
+        scopeInstanceId: dataResourceHttpFormId,
+        name: dataResourceHttpVariableName,
+        resourceId: dataResourceHttpResourceId,
+      },
+      {
+        type: "resource",
+        id: dataResourceGraphqlDataSourceId,
+        scopeInstanceId: dataResourceGraphqlFormId,
+        name: dataResourceGraphqlVariableName,
+        resourceId: dataResourceGraphqlResourceId,
+      },
+      {
+        type: "resource",
+        id: dataResourceSystemDataSourceId,
+        scopeInstanceId: dataResourceSystemTextId,
+        name: dataResourceSystemVariableName,
+        resourceId: dataResourceSystemResourceId,
+      },
+    ]),
+    resources: JSON.stringify([
+      {
+        id: dataResourceHttpResourceId,
+        name: dataResourceHttpResourceLabel,
+        method: "get",
+        url: '"/$resources/current-date"',
+        searchParams: [{ name: "tag", value: '"design-system"' }],
+        headers: [],
+      },
+      {
+        id: dataResourceGraphqlResourceId,
+        name: dataResourceGraphqlResourceLabel,
+        control: "graphql",
+        method: "post",
+        url: '"/$resources/current-date"',
+        headers: [{ name: "Content-Type", value: '"application/json"' }],
+        body: '{ query: "query Posts { posts { title } }" }',
+      },
+      {
+        id: dataResourceSystemResourceId,
+        name: dataResourceSystemResourceLabel,
+        control: "system",
+        method: "get",
+        url: '"/$resources/current-date"',
+        headers: [],
+      },
+    ]),
     marketplaceProduct: JSON.stringify({}),
   };
 };
@@ -805,9 +989,19 @@ export const prepareExistingContentModeProject = async ({
     isolatedLocalTemplateName,
     isolatedLocalTemplateText,
     isolatedLocalTemplateFontSize,
-    tokenTemplateName,
-    tokenTemplateText,
+    tokenTemplateLabel,
+    tokenTemplateVisibleText,
     tokenTemplateFontSize,
+    dataResourceTemplateLabel,
+    dataResourceStaticTextLabel,
+    dataResourceStaticVariableName,
+    dataResourceStaticVariableVisibleValue,
+    dataResourceHttpVariableName,
+    dataResourceGraphqlVariableName,
+    dataResourceSystemVariableName,
+    dataResourceHttpResourceLabel,
+    dataResourceGraphqlResourceLabel,
+    dataResourceSystemResourceLabel,
     deletableTemplateName,
     deletableTemplateText,
     nestedTemplateName,

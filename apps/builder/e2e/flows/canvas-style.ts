@@ -78,6 +78,49 @@ export const waitForCanvasTextStyle = async ({
   );
 };
 
+export const waitForHoveredCanvasTextStyle = async ({
+  page,
+  text,
+  property,
+  value,
+}: {
+  page: Page;
+  text: string;
+  property: string;
+  value: string;
+}) => {
+  const startedAt = Date.now();
+  let lastValue = "";
+
+  while (Date.now() - startedAt < 30_000) {
+    const canvas = await getCanvasFrame(page);
+    if (canvas === undefined) {
+      await delay(250);
+      continue;
+    }
+
+    const locator = canvas.getByText(text).first();
+    await locator.hover().catch(() => undefined);
+    lastValue = await locator
+      .evaluate(
+        (element, cssProperty) =>
+          element.ownerDocument.defaultView
+            ?.getComputedStyle(element)
+            .getPropertyValue(cssProperty) ?? "",
+        property
+      )
+      .catch(() => "");
+    if (lastValue === value) {
+      return;
+    }
+    await delay(250);
+  }
+
+  throw new Error(
+    `Expected hovered canvas text "${text}" to have ${property}: ${value}. Last value: ${lastValue}`
+  );
+};
+
 export const waitForCanvasTextStyleCount = async ({
   page,
   text,

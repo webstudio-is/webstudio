@@ -112,6 +112,7 @@ const BreakpointEditorItem = ({
           autoFocus={autoFocus}
         />
         <IconButton
+          aria-label={`Delete breakpoint ${localValue.value.label}`}
           data-breakpoint-delete
           disabled={hasName === false}
           css={{ visibility: "hidden" }}
@@ -150,6 +151,7 @@ const BreakpointEditorItem = ({
           />
           <Box css={{ flexShrink: 1 }}>
             <CssValueInput
+              aria-label="Breakpoint width"
               styleSource="local"
               property="width"
               value={{
@@ -291,6 +293,7 @@ export const BreakpointsEditor = ({
             css={{ paddingInline: theme.panel.paddingInline }}
             suffix={
               <IconButton
+                aria-label="Add breakpoint"
                 onClick={() => {
                   if (hasReachedBreakpointLimit(allBreakpoints.length)) {
                     toast.warn(breakpointLimitWarning);

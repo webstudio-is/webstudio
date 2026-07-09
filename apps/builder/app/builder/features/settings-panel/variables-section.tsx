@@ -96,25 +96,23 @@ const $usedVariables = computed(
   }
 );
 
-const EmptyVariables = () => {
-  return (
-    <Flex direction="column" gap="2">
-      <Flex justify="center" align="center">
-        <Text variant="labels" align="center">
-          No data variables created
-          <br /> on this instance
-        </Text>
-      </Flex>
-      <Flex justify="center" align="center">
-        <VariablePopoverTrigger>
-          <Button type="button" prefix={<PlusIcon />}>
-            Create data variable
-          </Button>
-        </VariablePopoverTrigger>
-      </Flex>
+const EmptyVariables = () => (
+  <Flex direction="column" gap="2">
+    <Flex justify="center" align="center">
+      <Text variant="labels" align="center">
+        No data variables created
+        <br /> on this instance
+      </Text>
     </Flex>
-  );
-};
+    <Flex justify="center" align="center">
+      <VariablePopoverTrigger>
+        <Button type="button" prefix={<PlusIcon />}>
+          Create data variable
+        </Button>
+      </VariablePopoverTrigger>
+    </Flex>
+  </Flex>
+);
 
 const variableLabelStyle = css({
   whiteSpace: "nowrap",
@@ -305,8 +303,12 @@ export const VariablesSection = () => {
             <VariablePopoverTrigger>
               <SectionTitleButton
                 type="button"
+                aria-label="Add data variable"
                 prefix={<PlusIcon />}
-                // open panel when add new varable
+                onPointerDown={(event) => {
+                  event.stopPropagation();
+                }}
+                // open panel when adding a new variable
                 onClick={() => {
                   if (isOpen === false) {
                     setIsOpen(true);

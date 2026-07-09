@@ -296,7 +296,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
   return (
     <DropdownMenu modal open={props.open} onOpenChange={props.onOpenChange}>
       <DropdownMenuTrigger asChild>
-        <MenuTrigger aria-label="Menu Button">
+        <MenuTrigger aria-label={`Style source menu ${props.item.label}`}>
           <MenuTriggerGradient />
           <ChevronDownIcon style={{ position: "relative" }} />
         </MenuTrigger>

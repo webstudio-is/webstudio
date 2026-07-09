@@ -317,6 +317,7 @@ type CssValueInputProps = Pick<
   | "autoFocus"
   | "disabled"
   | "aria-disabled"
+  | "aria-label"
   | "fieldSizing"
   | "prefix"
   | "inputRef"
@@ -920,6 +921,7 @@ export const CssValueInput = ({
             variant={variant}
             disabled={disabled}
             aria-disabled={ariaDisabled}
+            aria-label={props["aria-label"] ?? property}
             fieldSizing={fieldSizing}
             placeholder={placeholder}
             {...inputProps}

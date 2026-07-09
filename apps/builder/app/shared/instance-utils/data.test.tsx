@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, test } from "vitest";
-import type { Instance, PageTemplate } from "@webstudio-is/sdk";
+import type { Asset, Instance, PageTemplate } from "@webstudio-is/sdk";
 import { createDefaultPages, findCycles } from "@webstudio-is/project-build";
 import type { BuilderRuntimeOperationInput } from "@webstudio-is/project-build/runtime/registry";
 import {
@@ -98,6 +98,18 @@ const expectGeneratedId = (value: string | undefined, label: string) => {
   }
   return value;
 };
+
+const createImageAsset = (id: string): Asset => ({
+  id,
+  projectId: "project",
+  size: 1,
+  name: `${id}.png`,
+  type: "image",
+  format: "png",
+  createdAt: "2026-01-01T00:00:00.000Z",
+  description: null,
+  meta: { width: 100, height: 100 },
+});
 
 describe("data store helpers", () => {
   test("keeps build data writes inside sync initialization and runtime bridge", () => {
@@ -957,6 +969,170 @@ describe("data store helpers", () => {
     });
 
     expect($styles.get().has("local:base:--new:")).toEqual(false);
+  });
+
+  test("executes resource runtime mutations against builder stores", () => {
+    setBaseStores();
+
+    const upsertResult = executeRuntimeMutation({
+      id: "resources.upsertProp",
+      input: {
+        instanceId: "body",
+        propName: "action",
+        resource: {
+          name: "Submit lead",
+          method: "post",
+          url: `"https://example.com/leads"`,
+          headers: [{ name: `"content-type"`, value: `"application/json"` }],
+          body: `"email=hello@example.com"`,
+        },
+        dataSourceName: "leadResponse",
+      },
+    });
+    const resourceId = expectGeneratedId(
+      upsertResult?.result.resourceId,
+      "resource id"
+    );
+    const dataSourceId = expectGeneratedId(
+      upsertResult?.result.dataSourceId,
+      "resource data source id"
+    );
+    const propId = upsertResult?.result.propIds[0];
+    expectGeneratedId(propId, "resource prop id");
+
+    expect($resources.get().get(resourceId)).toEqual(
+      expect.objectContaining({
+        id: resourceId,
+        name: "Submit lead",
+        method: "post",
+        url: `"https://example.com/leads"`,
+      })
+    );
+    expect($dataSources.get().get(dataSourceId)).toEqual(
+      expect.objectContaining({
+        id: dataSourceId,
+        type: "resource",
+        resourceId,
+        name: "leadResponse",
+        scopeInstanceId: "body",
+      })
+    );
+    expect($props.get().get(propId ?? "")).toEqual(
+      expect.objectContaining({
+        instanceId: "body",
+        name: "action",
+        type: "resource",
+        value: resourceId,
+      })
+    );
+
+    executeRuntimeMutation({
+      id: "resources.update",
+      input: {
+        resourceId,
+        values: {
+          name: "Submit customer lead",
+          url: `"https://example.com/customers"`,
+        },
+        dataSourceName: "customerLeadResponse",
+      },
+    });
+
+    expect($resources.get().get(resourceId)).toEqual(
+      expect.objectContaining({
+        name: "Submit customer lead",
+        url: `"https://example.com/customers"`,
+      })
+    );
+    expect($dataSources.get().get(dataSourceId)).toEqual(
+      expect.objectContaining({
+        name: "customerLeadResponse",
+      })
+    );
+
+    executeRuntimeMutation({
+      id: "resources.delete",
+      input: {
+        resourceId,
+        force: true,
+      },
+    });
+
+    expect($resources.get().has(resourceId)).toEqual(false);
+    expect($dataSources.get().has(dataSourceId)).toEqual(false);
+    expect($props.get().has(propId ?? "")).toEqual(false);
+  });
+
+  test("executes asset runtime mutations against builder stores", () => {
+    setBaseStores();
+    const asset = createImageAsset("asset");
+    $assets.set(new Map([[asset.id, asset]]));
+
+    executeRuntimeMutation({
+      id: "assets.update",
+      input: {
+        assetId: asset.id,
+        values: {
+          filename: "hero",
+          description: "Hero image",
+        },
+      },
+    });
+
+    expect($assets.get().get(asset.id)).toEqual(
+      expect.objectContaining({
+        filename: "hero",
+        description: "Hero image",
+      })
+    );
+
+    executeRuntimeMutation({
+      id: "assets.delete",
+      input: {
+        assetIdsOrPrefixes: [asset.id],
+        force: true,
+      },
+    });
+
+    expect($assets.get().has(asset.id)).toEqual(false);
+  });
+
+  test("executes project settings runtime mutations against builder stores", () => {
+    setBaseStores();
+
+    executeRuntimeMutation({
+      id: "projectSettings.update",
+      input: {
+        meta: {
+          contactEmail: "hello@example.com",
+        },
+        compiler: {
+          atomicStyles: true,
+        },
+      },
+    });
+
+    expect($pages.get()?.meta).toEqual(
+      expect.objectContaining({
+        contactEmail: "hello@example.com",
+      })
+    );
+    expect($pages.get()?.compiler).toEqual(
+      expect.objectContaining({
+        atomicStyles: true,
+      })
+    );
+
+    executeRuntimeMutation({
+      id: "projectSettings.update",
+      input: {
+        meta: {
+          contactEmail: null,
+        },
+      },
+    });
+
+    expect($pages.get()?.meta).not.toHaveProperty("contactEmail");
   });
 
   test("runtime bridge skips page templates without build access", () => {

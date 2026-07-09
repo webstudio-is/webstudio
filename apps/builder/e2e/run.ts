@@ -15,6 +15,7 @@ import "./tests/pages-actions.e2e";
 import "./tests/preview-links.e2e";
 import "./tests/share-link-permissions.e2e";
 import "./tests/slot-keyboard.e2e";
+import "./tests/style-panel-runtime.e2e";
 
 const testTimeoutMs =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 60_000;
