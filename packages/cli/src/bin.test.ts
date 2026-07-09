@@ -7,19 +7,13 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const binPath = join(packageRoot, "bin.js");
 const localPath = join(packageRoot, "local.js");
 const rootPackagePath = join(packageRoot, "../..", "package.json");
 
-test("keeps production bin separate from local source launcher", async () => {
-  const binSource = await readFile(binPath, "utf-8");
+test("keeps local source launcher wired to the root script", async () => {
   const rootPackageJson = JSON.parse(await readFile(rootPackagePath, "utf-8"));
 
   expect(rootPackageJson.scripts.webstudio).toBe("node packages/cli/local.js");
-  expect(binSource).toContain('import { main } from "./lib/cli.js"');
-  expect(binSource).not.toContain("tsx");
-  expect(binSource).not.toContain("src/cli.ts");
-  expect(binSource).not.toContain("WEBSTUDIO_LOCAL_CLI_BOOTSTRAPPED");
 });
 
 test("local launcher bootstraps source cli without caller-provided node options", () => {

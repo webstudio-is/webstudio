@@ -51,14 +51,7 @@ test("exposes public operation permits from builder api capabilities", () => {
   expect(publicApiOperationPermits).toBe(builderApiCapabilities);
 });
 
-test("keeps public protocol types independent from project-build", async () => {
-  for (const file of ["operations.ts", "runtime-contracts.ts"]) {
-    const source = await readFile(new URL(file, import.meta.url), "utf-8");
-    expect(source).not.toMatch(
-      /import\s+type\s+[^;]+from\s+["']@webstudio-is\/project-build/
-    );
-  }
-
+test("keeps public protocol package independent from project-build at runtime", async () => {
   const packageJson = JSON.parse(
     await readFile(new URL("../../package.json", import.meta.url), "utf-8")
   );

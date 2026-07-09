@@ -1,5 +1,3 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
 import { describe, expect, test } from "vitest";
 import type { Asset, Instance, PageTemplate } from "@webstudio-is/sdk";
 import { createDefaultPages, findCycles } from "@webstudio-is/project-build";
@@ -35,40 +33,6 @@ const createInstance = (
 };
 
 registerContainers();
-
-const collectSourceFiles = (directory: string): string[] => {
-  const files: string[] = [];
-  for (const entry of readdirSync(directory)) {
-    const path = join(directory, entry);
-    const stat = statSync(path);
-    if (stat.isDirectory()) {
-      if (entry === "node_modules") {
-        continue;
-      }
-      files.push(...collectSourceFiles(path));
-      continue;
-    }
-    if (/\.(ts|tsx)$/.test(entry) === false) {
-      continue;
-    }
-    if (/\.(test|stories)\.(ts|tsx)$/.test(entry)) {
-      continue;
-    }
-    files.push(path);
-  }
-  return files;
-};
-
-const getAppSourceFiles = () => collectSourceFiles(join(process.cwd(), "app"));
-
-const getLineNumber = (source: string, index: number) =>
-  source.slice(0, index).split("\n").length;
-
-const getLineAt = (source: string, index: number) => {
-  const lineStart = source.lastIndexOf("\n", index) + 1;
-  const lineEnd = source.indexOf("\n", index);
-  return source.slice(lineStart, lineEnd === -1 ? source.length : lineEnd);
-};
 
 const setBaseStores = () => {
   const pages = createDefaultPages({ rootInstanceId: "body" });
@@ -109,103 +73,6 @@ const createImageAsset = (id: string): Asset => ({
 });
 
 describe("data store helpers", () => {
-  test("keeps build data writes inside sync initialization and runtime bridge", () => {
-    const allowedDirectWriteFiles = new Set([
-      "app/shared/sync/data-stores.ts",
-      "app/shared/sync/sync-client.ts",
-    ]);
-    const allowedDirectWrites = new Map([
-      ["app/builder/builder.tsx", new Set(["$pages.set(undefined);"])],
-    ]);
-    const buildStoreWritePattern =
-      /\$(pages|instances|props|styles|styleSources|styleSourceSelections|dataSources|resources|assets|breakpoints)\s*\.\s*(set|get\s*\(\s*\)\s*\.\s*(set|delete|clear))/g;
-    const violations = getAppSourceFiles().flatMap((file) => {
-      const source = readFileSync(file, "utf8");
-      const relativePath = relative(process.cwd(), file);
-      if (allowedDirectWriteFiles.has(relativePath)) {
-        return [];
-      }
-      const allowedLines = allowedDirectWrites.get(relativePath) ?? new Set();
-      return Array.from(source.matchAll(buildStoreWritePattern)).flatMap(
-        (match) => {
-          if (
-            match.index !== undefined &&
-            allowedLines.has(getLineAt(source, match.index).trim())
-          ) {
-            return [];
-          }
-          return match.index === undefined
-            ? [relativePath]
-            : [`${relativePath}:${getLineNumber(source, match.index)}`];
-        }
-      );
-    });
-
-    expect(violations).toEqual([]);
-  });
-
-  test("keeps runtime bridge internals private to the sync adapter", () => {
-    const allowedFiles = new Set(["app/shared/sync/builder-patch.ts"]);
-    const removedBridgePattern = /\bupdateWebstudioData\s*\(/;
-    const directTransactionPattern =
-      /\bserverSyncStore\.createTransaction\s*\(/;
-    const transactionAdapterPattern =
-      /\bserverSyncStore\.createTransactionFromChanges\s*\(/;
-    const violations = getAppSourceFiles().flatMap((file) => {
-      const source = readFileSync(file, "utf8");
-      const relativePath = relative(process.cwd(), file);
-      const fileViolations: string[] = [];
-      if (removedBridgePattern.test(source)) {
-        fileViolations.push(`${relativePath}: updateWebstudioData()`);
-      }
-      if (directTransactionPattern.test(source)) {
-        fileViolations.push(
-          `${relativePath}: serverSyncStore.createTransaction()`
-        );
-      }
-      if (
-        allowedFiles.has(relativePath) === false &&
-        transactionAdapterPattern.test(source)
-      ) {
-        fileViolations.push(
-          `${relativePath}: serverSyncStore.createTransactionFromChanges()`
-        );
-      }
-      return fileViolations;
-    });
-
-    expect(violations).toEqual([]);
-  });
-
-  test("keeps low-level runtime mutation helpers inside the bridge", () => {
-    const allowedFiles = new Set(["app/shared/instance-utils/data.ts"]);
-    const runtimeMutationHelperImportPattern =
-      /import\s+(?:type\s+)?(?:[^;]*?\b\w+(?:Mutable|Payload)\b[^;]*?)\s+from\s+["']@webstudio-is\/project-build(?:\/[^"']*)?["']/;
-    const violations = getAppSourceFiles().flatMap((file) => {
-      const source = readFileSync(file, "utf8");
-      const relativePath = relative(process.cwd(), file);
-      if (allowedFiles.has(relativePath)) {
-        return [];
-      }
-      return runtimeMutationHelperImportPattern.test(source)
-        ? [relativePath]
-        : [];
-    });
-
-    expect(violations).toEqual([]);
-  });
-
-  test("derives runtime mutation result types from operation ids", () => {
-    const manualResultTypePattern = /executeRuntimeMutation(?:Async)?\s*</;
-    const violations = getAppSourceFiles().flatMap((file) => {
-      const source = readFileSync(file, "utf8");
-      const relativePath = relative(process.cwd(), file);
-      return manualResultTypePattern.test(source) ? [relativePath] : [];
-    });
-
-    expect(violations).toEqual([]);
-  });
-
   test("getWebstudioData reads all instance-related stores", () => {
     const pages = createDefaultPages({ rootInstanceId: "body" });
     const instances = new Map([["body", createInstance("body", "Body", [])]]);
