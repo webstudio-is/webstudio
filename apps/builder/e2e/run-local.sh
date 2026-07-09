@@ -34,6 +34,8 @@ run_step() {
   shift 2
 
   echo "▶ $name"
+  local started_at
+  started_at="$(date +%s)"
   "$@" &
   local pid="$!"
   local timeout_at
@@ -52,9 +54,14 @@ run_step() {
   local status=0
   wait "$pid" || status="$?"
   if [ "$status" -ne 0 ]; then
+    local duration
+    duration="$(($(date +%s) - started_at))"
+    echo "✗ $name (${duration}s)" >&2
     return "$status"
   fi
-  echo "✓ $name"
+  local duration
+  duration="$(($(date +%s) - started_at))"
+  echo "✓ $name (${duration}s)"
 }
 
 bootstrap_database() {
@@ -70,9 +77,24 @@ bootstrap_database() {
 }
 
 install_playwright_chromium() {
+  chromium_executable_exists() {
+    pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder exec node -e '
+      const { chromium } = require("playwright");
+      const { existsSync } = require("node:fs");
+      process.exit(existsSync(chromium.executablePath()) ? 0 : 1);
+    ' >/dev/null 2>&1
+  }
+
   case "$E2E_INSTALL_PLAYWRIGHT" in
-    true | auto)
+    true)
       pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder exec playwright install --with-deps chromium
+      ;;
+    auto)
+      if chromium_executable_exists; then
+        echo "Skipping Playwright Chromium install; cached executable already exists"
+      else
+        pnpm --dir "$ROOT_DIR" --filter=@webstudio-is/builder exec playwright install --with-deps chromium
+      fi
       ;;
     false)
       echo "Skipping Playwright Chromium install"
