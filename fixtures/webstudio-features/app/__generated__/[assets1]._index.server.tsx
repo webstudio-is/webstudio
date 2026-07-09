@@ -6,6 +6,7 @@ import type { System, ResourceRequest } from "@webstudio-is/sdk";
 export const getResources = (_props: { system: System }) => {
   const assets_1: ResourceRequest = {
     name: "assets",
+    control: "system",
     url: "/$resources/assets",
     searchParams: [],
     method: "get",
