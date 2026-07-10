@@ -74,6 +74,41 @@ const projectHandler = db.get("Project", ({ request }) => {
   return json(projectResponse);
 });
 
+const devBuildRow = {
+  id: "build-dev",
+  projectId: "project-1",
+  version: 1,
+  createdAt: "2024-01-01T00:00:00.000Z",
+  updatedAt: "2024-01-01T00:00:00.000Z",
+  pages: JSON.stringify({
+    meta: {},
+    homePage: {
+      id: "page-1",
+      name: "Home",
+      path: "",
+      title: '"Home"',
+      meta: {},
+      rootInstanceId: "body-1",
+    },
+    pages: [],
+  }),
+  breakpoints: JSON.stringify([]),
+  styles: JSON.stringify([]),
+  styleSources: JSON.stringify([]),
+  styleSourceSelections: JSON.stringify([]),
+  props: JSON.stringify([]),
+  dataSources: JSON.stringify([]),
+  resources: JSON.stringify([]),
+  instances: JSON.stringify([
+    { id: "body-1", type: "instance", component: "Body", children: [] },
+  ]),
+  deployment: null,
+  marketplaceProduct: JSON.stringify({}),
+};
+
+const devBuildHandler = (row: typeof devBuildRow = devBuildRow) =>
+  db.get("Build", () => json([row]));
+
 const createPublishContext = (
   publish = vi.fn().mockResolvedValue({ success: true })
 ) =>
@@ -118,6 +153,7 @@ test("publishes saas project through shared domain service", async () => {
     | undefined;
   server.use(
     projectHandler,
+    devBuildHandler(),
     productionBuildHandler((body) => {
       productionBuildRequest = body;
     })
@@ -153,6 +189,7 @@ test("publishes saas project through shared domain service", async () => {
 test("reports local-dev publish when deployment publisher is unavailable", async () => {
   server.use(
     projectHandler,
+    devBuildHandler(),
     productionBuildHandler(() => {})
   );
 
@@ -176,6 +213,7 @@ test("publishes static project through shared domain service", async () => {
     | undefined;
   server.use(
     projectHandler,
+    devBuildHandler(),
     productionBuildHandler((body) => {
       productionBuildRequest = body;
     })
@@ -210,6 +248,40 @@ test("publishes static project through shared domain service", async () => {
     destination: "static",
     logProjectName: "Project One - project-1",
   });
+});
+
+test("rejects publishing when dev build has orphan resource references", async () => {
+  const publish = vi.fn().mockResolvedValue({ success: true });
+  let didCreateProductionBuild = false;
+  server.use(
+    projectHandler,
+    devBuildHandler({
+      ...devBuildRow,
+      dataSources: JSON.stringify([
+        {
+          type: "resource",
+          id: "dataSourceId",
+          name: "pinnedAnnouncementData_1",
+          resourceId: "missingResourceId",
+        },
+      ]),
+    }),
+    productionBuildHandler(() => {
+      didCreateProductionBuild = true;
+    })
+  );
+
+  await expect(
+    publishProject(
+      { project: loadedProject, domains: ["project.wstd.io"] },
+      createPublishContext(publish)
+    )
+  ).rejects.toThrow(
+    `Cannot publish: resource variable "pinnedAnnouncementData_1" (dataSourceId) references missing resource "missingResourceId".`
+  );
+
+  expect(didCreateProductionBuild).toBe(false);
+  expect(publish).not.toHaveBeenCalled();
 });
 
 test("clears publish records even when deployment unpublish fails", async () => {

@@ -52,6 +52,11 @@
       "import": "./src/mcp.ts",
       "default": "./src/mcp.ts"
     },
+    "./build-integrity": {
+      "webstudio": "./src/build-integrity.ts",
+      "import": "./src/build-integrity.ts",
+      "default": "./src/build-integrity.ts"
+    },
     "./state/adapters": {
       "webstudio": "./src/state/adapters.ts",
       "import": "./src/state/adapters.ts",
