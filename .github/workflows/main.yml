@@ -227,12 +227,16 @@ jobs:
           E2E_TEST_SHARD: ${{ matrix.shard }}
         run: |
           run_builder_e2e() {
+            E2E_TEST_COMMAND_TIMEOUT_SECONDS=300 pnpm e2e:builder
+          }
+
+          run_builder_e2e_keep_logs() {
             E2E_SKIP_CLEANUP=true E2E_TEST_COMMAND_TIMEOUT_SECONDS=300 pnpm e2e:builder
           }
 
           run_builder_e2e || {
             echo "::warning::Builder e2e shard ${E2E_TEST_SHARD} failed; retrying once"
-            run_builder_e2e
+            run_builder_e2e_keep_logs
           }
 
       - name: Print e2e service logs

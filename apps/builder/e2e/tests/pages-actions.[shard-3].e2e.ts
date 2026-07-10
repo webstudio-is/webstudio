@@ -448,7 +448,9 @@ test("Builder can copy, duplicate, and delete a page template from actions menus
       itemName: duplicatedTemplateName,
       action: "Delete",
     });
+    const deleteSave = waitForChangeToBeSaved({ page });
     await confirmDialogAction({ page, action: "Delete Template" });
+    await deleteSave;
     await expectTextHidden({ page, text: duplicatedTemplateName });
 
     await measure(
