@@ -390,7 +390,7 @@ export const renderTemplate = (
       } else if (typeof variable.initialValue === "boolean") {
         value = { type: "boolean", value: variable.initialValue };
       } else {
-        value = { type: "json", value: variable.initialValue };
+        value = { type: "json", value: variable.initialValue ?? null };
       }
       dataSources.set(variable, {
         type: "variable",

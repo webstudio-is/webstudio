@@ -307,9 +307,10 @@ export const createDataVariableValueFromInput = ({
       value: value === null ? [] : parseDataVariableJsonExpression(value),
     });
   }
+  const parsedValue = value ? parseDataVariableJsonExpression(value) : null;
   return {
     type: "json",
-    value: value ? parseDataVariableJsonExpression(value) : undefined,
+    value: parsedValue ?? null,
   };
 };
 
