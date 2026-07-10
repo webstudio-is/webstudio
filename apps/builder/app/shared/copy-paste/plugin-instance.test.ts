@@ -1,5 +1,6 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import { enableMapSet } from "immer";
+import { toast } from "@webstudio-is/design-system";
 import type {
   Instance,
   Instances,
@@ -20,6 +21,7 @@ import {
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { registerContainers } from "../sync/sync-stores";
 import { $registeredComponentMetas } from "../nano-states";
 import { $instances } from "~/shared/sync/data-stores";
@@ -40,6 +42,7 @@ import {
   expectSlotTreeIntegrity,
   expectSlotsShareFragment,
 } from "../slot-test-utils";
+import { pasteHandled } from "./copy-paste";
 
 const expectString = expect.any(String) as unknown as string;
 
@@ -182,7 +185,8 @@ describe("copy and cut guards", () => {
     const clipboardData = instanceText.onCopy?.() ?? "";
     selectInstance(["body0"]);
 
-    expect(await instanceText.onPaste?.(clipboardData)).toBe(true);
+    const result = await instanceText.onPaste?.(clipboardData);
+    expect(result).toEqual(pasteHandled);
 
     const bodyChildren = $instances.get().get("body0")?.children;
     const pastedRootIds = bodyChildren?.slice(2).map((child) => child.value);
@@ -224,8 +228,8 @@ describe("copy and cut guards", () => {
     ];
     selectInstance(["body0"]);
 
-    expect(await instanceText.onPaste?.(JSON.stringify(clipboardData))).toBe(
-      true
+    expect(await instanceText.onPaste?.(JSON.stringify(clipboardData))).toEqual(
+      pasteHandled
     );
 
     const bodyChildren = $instances.get().get("body0")?.children;
@@ -236,8 +240,8 @@ describe("copy and cut guards", () => {
     ]);
 
     clipboardData["@webstudio/instances/v0.1"].rootInstanceIds = ["missing"];
-    expect(await instanceText.onPaste?.(JSON.stringify(clipboardData))).toBe(
-      false
+    expect(await instanceText.onPaste?.(JSON.stringify(clipboardData))).toEqual(
+      pasteHandled
     );
     expect($instances.get().get("body0")?.children).toEqual(bodyChildren);
   });
@@ -371,6 +375,96 @@ describe("copy and cut guards", () => {
 });
 
 describe("paste target", () => {
+  test("pastes radix navigation menu fragment with viewport wrapper", async () => {
+    const previousMetas = $registeredComponentMetas.get();
+    $registeredComponentMetas.set(componentMetas);
+    $instances.set(toMap([createInstance("body0", "Body", [])]));
+    selectInstance(["body0"]);
+
+    const clipboardData = JSON.stringify({
+      "@webstudio/instance/v0.1": {
+        instanceSelector: ["nav", "source-parent"],
+        children: [{ type: "id", value: "nav" }],
+        instances: [
+          createInstance(
+            "nav",
+            "@webstudio-is/sdk-components-react-radix:NavigationMenu",
+            [
+              { type: "id", value: "list" },
+              { type: "id", value: "viewport-container" },
+            ]
+          ),
+          createInstance(
+            "list",
+            "@webstudio-is/sdk-components-react-radix:NavigationMenuList",
+            [{ type: "id", value: "item" }]
+          ),
+          createInstance(
+            "item",
+            "@webstudio-is/sdk-components-react-radix:NavigationMenuItem",
+            [
+              { type: "id", value: "trigger" },
+              { type: "id", value: "content" },
+            ]
+          ),
+          createInstance(
+            "trigger",
+            "@webstudio-is/sdk-components-react-radix:NavigationMenuTrigger",
+            [{ type: "id", value: "button" }]
+          ),
+          createInstance("button", "Button", [{ type: "id", value: "text" }]),
+          createInstance("text", "Text", [{ type: "text", value: "About" }]),
+          createInstance(
+            "content",
+            "@webstudio-is/sdk-components-react-radix:NavigationMenuContent",
+            [{ type: "id", value: "content-box" }]
+          ),
+          createInstance("content-box", "Box", [
+            { type: "id", value: "content-link" },
+          ]),
+          createInstance("content-link", "Link", [
+            { type: "text", value: "Documentation" },
+          ]),
+          {
+            ...createInstance("viewport-container", "Box", [
+              { type: "id", value: "viewport" },
+            ]),
+            label: "Viewport Container",
+          },
+          createInstance(
+            "viewport",
+            "@webstudio-is/sdk-components-react-radix:NavigationMenuViewport",
+            []
+          ),
+        ],
+        assets: [],
+        dataSources: [],
+        resources: [],
+        props: [],
+        breakpoints: [],
+        styleSourceSelections: [],
+        styleSources: [],
+        styles: [],
+      },
+    });
+
+    const warn = vi.spyOn(toast, "warn").mockImplementation(() => "");
+    const result = await instanceText.onPaste?.(clipboardData);
+    expect(result).toEqual(pasteHandled);
+    expect(warn).not.toHaveBeenCalled();
+
+    const [pastedNavId] =
+      $instances
+        .get()
+        .get("body0")
+        ?.children.map((child) => child.value) ?? [];
+    expect($instances.get().get(pastedNavId ?? "")?.component).toBe(
+      "@webstudio-is/sdk-components-react-radix:NavigationMenu"
+    );
+    warn.mockRestore();
+    $registeredComponentMetas.set(previousMetas);
+  });
+
   // body0
   //   box1
   //   box2

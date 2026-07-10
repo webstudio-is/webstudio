@@ -2,7 +2,6 @@ import {
   executeRuntimeMutation,
   getWebstudioData,
 } from "../instance-utils/data";
-import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
 import {
   type WebstudioFragment,
@@ -19,32 +18,25 @@ import {
   createFolderCopyData,
   createPageCopyData,
   createTemplateCopyData,
-  pageClipboardItemInput,
-  type FolderClipboardData,
-  type PageClipboardData,
-  type PageClipboardItem,
-  type TemplateClipboardData,
 } from "@webstudio-is/project-build/runtime/page-copy";
+import {
+  pageTransferDataVersion,
+  parsePageTransferData,
+  type FolderTransferData,
+  type PageTransferData,
+  type PageTransferItem,
+  type TemplateTransferData,
+} from "@webstudio-is/project-build/runtime/data-formats/page-transfer";
 import { $selectedPage } from "../nano-states";
 import { getPageActionTarget } from "../page-action-target";
-import type { Plugin } from "./copy-paste";
+import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
 
-const version = "@webstudio/page/v0.1";
+const invalidPasteDataMessage =
+  "Could not paste Webstudio page data. The clipboard data appears to be incomplete or invalid.";
 
-const clipboard = z.object({ [version]: pageClipboardItemInput });
-
-const stringify = (data: PageClipboardItem) => {
-  return JSON.stringify({ [version]: data });
-};
-
-const parse = (clipboardData: string): PageClipboardItem | undefined => {
-  try {
-    const data = clipboard.parse(JSON.parse(clipboardData));
-    return data[version];
-  } catch {
-    return;
-  }
+const stringify = (data: PageTransferItem) => {
+  return JSON.stringify({ [pageTransferDataVersion]: data });
 };
 
 const getDefaultTargetFolderId = () => {
@@ -83,21 +75,21 @@ const mergeWebstudioFragments = (
 
 const addPageType = (
   data: ReturnType<typeof createPageCopyData>
-): PageClipboardData => ({
+): PageTransferData => ({
   ...data,
   type: "page",
 });
 
 const addTemplateType = (
   data: ReturnType<typeof createTemplateCopyData>
-): TemplateClipboardData => ({
+): TemplateTransferData => ({
   ...data,
   type: "template",
 });
 
 const addFolderType = (
   data: NonNullable<ReturnType<typeof createFolderCopyData>>
-): FolderClipboardData => ({
+): FolderTransferData => ({
   type: "folder",
   folder: data.folder,
   children: data.children.map((child) =>
@@ -108,7 +100,7 @@ const addFolderType = (
 const getPageCopyData = (
   data: ReturnType<typeof getWebstudioData>,
   pageId: Page["id"]
-): PageClipboardData | undefined => {
+): PageTransferData | undefined => {
   const page = findPageByIdOrPath(pageId, data.pages);
   if (page === undefined) {
     return;
@@ -130,8 +122,8 @@ const handleCopyPage = () => {
 };
 
 const collectPageLikeItems = (
-  item: PageClipboardItem
-): Array<PageClipboardData | TemplateClipboardData> => {
+  item: PageTransferItem
+): Array<PageTransferData | TemplateTransferData> => {
   if (item.type === "page" || item.type === "template") {
     return [item];
   }
@@ -169,10 +161,14 @@ export const handlePastePage = async (
   clipboardData: string,
   targetFolderId?: Folder["id"]
 ) => {
-  const item = parse(clipboardData);
-  if (item === undefined) {
-    return false;
+  const transferData = parsePageTransferData(clipboardData);
+  if (transferData.owned === false) {
+    return pasteIgnored;
   }
+  if (transferData.valid === false) {
+    return { success: false, error: invalidPasteDataMessage } as const;
+  }
+  const item = transferData.data;
 
   const pages = $pages.get();
   const folderId = targetFolderId ?? getDefaultTargetFolderId();
@@ -181,14 +177,14 @@ export const handlePastePage = async (
     folderId === undefined ||
     pages.folders.has(folderId) === false
   ) {
-    return true;
+    return pasteHandled;
   }
 
   try {
     const targetData = getWebstudioData();
     const projectId = $project.get()?.id;
     if (projectId === undefined) {
-      return true;
+      return pasteHandled;
     }
     const conflicts = collectPageLikeItems(item).flatMap((item) =>
       detectFragmentTokenConflicts({
@@ -202,7 +198,7 @@ export const handlePastePage = async (
         : "theirs";
 
     const result = executeRuntimeMutation({
-      id: "pageClipboard.paste",
+      id: "pageTransfer.insert",
       input: {
         item,
         targetFolderId: folderId,
@@ -222,18 +218,18 @@ export const handlePastePage = async (
             ? "Template pasted"
             : "Folder pasted"
       );
-      return true;
+      return pasteHandled;
     }
   } catch {
-    return true;
+    return pasteHandled;
   }
 
-  return true;
+  return pasteHandled;
 };
 
 export const pageText: Plugin = {
   name: "page-text",
   mimeType: "text/plain",
   onCopy: handleCopyPage,
-  onPaste: handlePastePage,
+  onPaste: (clipboardData) => handlePastePage(clipboardData),
 };

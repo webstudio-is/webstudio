@@ -15,6 +15,7 @@ import {
   waitForCanvasVideoSource,
 } from "../flows/canvas-media";
 import {
+  pasteCanvasText,
   replaceCanvasText,
   replaceCanvasTextAndApplyInlineFormats,
 } from "../flows/content-editing";
@@ -365,6 +366,46 @@ test("Editor can edit text and content props but not design props", async () => 
       value: editedVideoSrc,
     });
     await waitForCanvasText({ page, text: editedContent });
+  } finally {
+    await close();
+  }
+});
+
+test("Editor can paste text while editing canvas content", async () => {
+  const fixture = getSharedContentModeProject();
+  const pastedContent = "Pasted editable content";
+  const { page, close } = await newIsolatedPage();
+
+  try {
+    await measure("content mode open editor for text paste", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.editorToken,
+        mode: "content",
+      });
+    });
+    await waitForCanvasText({ page, text: "Initial content" });
+    await waitForSyncStatus({ page, status: "idle" });
+
+    await insertTemplateAfterCanvasText({
+      page,
+      anchorText: "Initial content",
+      templateName: fixture.editableTextTemplateName,
+    });
+    await waitForCanvasText({
+      page,
+      text: fixture.editableTextTemplateText,
+    });
+
+    await measure("content mode native paste text", async () => {
+      await pasteCanvasText({
+        page,
+        currentText: fixture.editableTextTemplateText,
+        text: pastedContent,
+      });
+    });
+    await waitForCanvasText({ page, text: pastedContent });
   } finally {
     await close();
   }

@@ -14,6 +14,7 @@ import {
   selectInstance,
 } from "../nano-states";
 import { html } from "./plugin-html";
+import { pasteHandled, pasteIgnored } from "./copy-paste";
 
 setEnv("*");
 registerContainers();
@@ -40,7 +41,7 @@ test("paste html fragment", async () => {
         <h1>It works</h1>
       </section>
     `)
-  ).toEqual(true);
+  ).toEqual(pasteHandled);
   const [_bodyId, _divId, sectionId, headingId] = $instances.get().keys();
   expect(sectionId).toBeTruthy();
   expect(headingId).toBeTruthy();
@@ -72,7 +73,7 @@ test("ignore html without any tags", async () => {
   );
   $selectedPageId.set("pageId");
   selectInstance(["divId", "bodyId"]);
-  expect(await html.onPaste?.(`It works`)).toEqual(false);
+  expect(await html.onPaste?.(`It works`)).toEqual(pasteIgnored);
   expect($instances.get()).toEqual(data.instances);
 });
 
@@ -95,7 +96,7 @@ test("skip whitespace-only text nodes between element siblings", async () => {
   // This ensures the second span gets text-content control in settings panel
   expect(
     await html.onPaste?.(`<div><span>✓</span> <span>text</span></div>`)
-  ).toEqual(true);
+  ).toEqual(pasteHandled);
 
   const instances = Array.from($instances.get().values()).filter(
     (i) => i.id !== "bodyId" && i.id !== "divId"

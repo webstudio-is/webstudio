@@ -446,12 +446,10 @@ const createTokenFragmentInsertPayload = ({
 
 const validateFragmentComponent = ({
   instance,
-  instancesById,
   templates,
   page,
 }: {
   instance: Instance;
-  instancesById: ReadonlyMap<Instance["id"], Instance>;
   templates: ComponentTemplateRegistry;
   page: Page;
 }) => {
@@ -488,37 +486,6 @@ const validateFragmentComponent = ({
   if (meta === undefined && insertCategory === undefined) {
     return;
   }
-  const requiredStructure = getTemplateRequiredStructure(component, templates);
-  if (requiredStructure.parts.length > 0) {
-    const subtreeComponents = getSubtreeComponents(instance, instancesById);
-    const missingParts = requiredStructure.parts.filter(
-      (part) => subtreeComponents.has(part) === false
-    );
-    if (missingParts.length > 0) {
-      return throwBuilderRuntimeError(
-        "BAD_REQUEST",
-        `Component "${component}" has a registered template with required child/part components ${missingParts
-          .map((part) => `"${part}"`)
-          .join(
-            ", "
-          )}. In JSX fragments, include the required parts explicitly, or use insert-component with component "${component}" when you want Webstudio to apply the template automatically.`
-      );
-    }
-    const subtreeEdges = getSubtreeComponentEdges(instance, instancesById);
-    const missingEdges = requiredStructure.edges.filter(
-      (edge) => subtreeEdges.has(edge) === false
-    );
-    if (missingEdges.length > 0) {
-      return throwBuilderRuntimeError(
-        "BAD_REQUEST",
-        `Component "${component}" has a registered template with required child/part structure ${missingEdges
-          .map(formatComponentEdge)
-          .join(
-            ", "
-          )}. In JSX fragments, keep required parts under the same parent components as the template, or use insert-component with component "${component}" when you want Webstudio to apply the template automatically.`
-      );
-    }
-  }
 };
 
 const getSubtreeComponents = (
@@ -550,11 +517,6 @@ const createComponentEdge = (
 export const parseComponentEdge = (edge: string) => {
   const [parentComponent, childComponent] = edge.split("\0");
   return { parentComponent, childComponent };
-};
-
-const formatComponentEdge = (edge: string) => {
-  const [parentComponent, childComponent] = edge.split("\0");
-  return `"${parentComponent}" > "${childComponent}"`;
 };
 
 const getSubtreeComponentEdges = (
@@ -661,13 +623,9 @@ const createInsertFragmentMutation = ({
   }
 
   const page = getInsertionPage(mutationState, originalParent);
-  const fragmentInstancesById = new Map(
-    fragment.instances.map((instance) => [instance.id, instance])
-  );
   for (const instance of fragment.instances) {
     validateFragmentComponent({
       instance,
-      instancesById: fragmentInstancesById,
       templates,
       page,
     });

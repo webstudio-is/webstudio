@@ -816,8 +816,8 @@ export const reorderPageTemplate = runtimeProjectMutation(
 
 export const duplicateFolder = runtimeProjectMutation("duplicate-folder");
 
-export const pastePageClipboardItem = runtimeProjectMutation(
-  "paste-page-clipboard-item"
+export const insertPageTransferItem = runtimeProjectMutation(
+  "insert-page-transfer-item"
 );
 
 export const movePageTreeItem = runtimeProjectMutation("move-page-tree-item");

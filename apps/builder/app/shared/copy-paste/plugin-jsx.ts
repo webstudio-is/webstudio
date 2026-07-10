@@ -1,38 +1,34 @@
 import { nativeClient } from "../trpc/trpc-client";
-import { insertWebstudioFragmentAt } from "../instance-utils/insert";
-import { builderApi } from "../builder-api";
 import { $project } from "../sync/data-stores";
-import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
 import { isLikelyWebstudioJsxFragment } from "@webstudio-is/project-build/runtime/jsx/utils";
-import type { Plugin } from "./copy-paste";
+import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
+import { insertFragmentWithBreakpointWarning } from "./fragment-utils";
 
 export const isLikelyWebstudioJsx = isLikelyWebstudioJsxFragment;
 
 const handlePasteJsx = async (source: string) => {
   if (isLikelyWebstudioJsx(source) === false) {
-    return false;
+    return pasteIgnored;
   }
   const project = $project.get();
   if (project === undefined) {
-    return false;
+    return pasteIgnored;
   }
   try {
     const fragment = await nativeClient.build.createJsxFragment.query({
       projectId: project.id,
       source,
     });
-    return await insertWebstudioFragmentAt(fragment, undefined, undefined, {
-      onBreakpointLimitMerge: () => {
-        builderApi.toast.warn(breakpointPasteLimitWarning);
-      },
-    });
+    insertFragmentWithBreakpointWarning(fragment);
+    return pasteHandled;
   } catch (error) {
-    builderApi.toast.error(
-      error instanceof Error
-        ? error.message
-        : "Could not paste Webstudio JSX fragment."
-    );
-    return true;
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Could not paste Webstudio JSX fragment.",
+    } as const;
   }
 };
 

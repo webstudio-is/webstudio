@@ -267,10 +267,10 @@ export const builderRuntimeCutoverManifests = [
     callers: ["appRouter.api.variables"] as const,
   },
   {
-    family: "page-tree-and-clipboard-mutations",
+    family: "page-tree-and-transfer-mutations",
     operationIds: [
       "pages.copy",
-      "pageClipboard.paste",
+      "pageTransfer.insert",
       "pageTree.move",
       "pageTree.reparentOrphans",
     ] as const,
