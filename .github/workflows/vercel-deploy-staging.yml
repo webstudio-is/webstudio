@@ -123,11 +123,27 @@ jobs:
     outputs:
       builder-host: "${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
 
+  deployment-host:
+    runs-on: ubuntu-latest
+    outputs:
+      development-builder-host: ${{ steps.host.outputs.value }}
+    steps:
+      - id: host
+        shell: bash
+        env:
+          REF_NAME: ${{ github.event_name == 'pull_request_target' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
+        run: |
+          clean_name="${REF_NAME/.staging/}"
+          clean_name=$(echo "${clean_name}" | sed 's/[^a-zA-Z0-9_-]//g' | tr A-Z a-z | tr _ - | sed 's/-\{2,\}/-/g')
+          echo "value=${clean_name}.development.webstudio.is" >> "$GITHUB_OUTPUT"
+
   fixtures-test:
-    needs: deployment
+    needs:
+      - deployment
+      - deployment-host
     uses: ./.github/workflows/fixtures-test.yml
     with:
-      builder-host: ${{ needs.deployment.outputs.builder-host }}
+      builder-host: ${{ needs.deployment-host.outputs.development-builder-host }}
       environment: development
     secrets:
       # We are not passing the secret here (as it does not exist in the current environment).
