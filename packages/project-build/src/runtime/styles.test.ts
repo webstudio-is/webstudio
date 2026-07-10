@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   type Breakpoint,
   getStyleDeclKey,
+  ROOT_INSTANCE_ID,
   type Instance,
   type Prop,
   type StyleDecl,
@@ -1142,6 +1143,36 @@ describe("runtime style operations", () => {
         patches: [{ op: "add", path: ["box", "values", 0], value: "new-id" }],
       },
     ]);
+  });
+
+  test("creates and attaches design tokens to the virtual root instance", () => {
+    const mutation = createAttachedDesignTokens(
+      {
+        breakpoints: runtimeBreakpoints,
+        // The global root is virtual and is intentionally not persisted here.
+        instances: new Map(),
+        styles: new Map(),
+        styleSources: sources([local("local")]),
+        styleSourceSelections: new Map(),
+      },
+      {
+        tokens: [{ name: "Primary" }],
+        instanceIds: [ROOT_INSTANCE_ID],
+      },
+      { createId }
+    );
+
+    expect(mutation.result).toEqual({ tokenIds: ["new-id"] });
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSourceSelections",
+      patches: [
+        {
+          op: "add",
+          path: [ROOT_INSTANCE_ID],
+          value: { instanceId: ROOT_INSTANCE_ID, values: ["new-id"] },
+        },
+      ],
+    });
   });
 
   test("selected style source declarations use the project base breakpoint when omitted", () => {
