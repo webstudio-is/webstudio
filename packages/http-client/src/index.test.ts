@@ -49,6 +49,7 @@ import {
   getPage,
   getPageByPath,
   getBuildPatchSummary,
+  getMarketplaceProduct,
   getProjectPermissions,
   getProjectSettings,
   getStyleDeclarations,
@@ -425,6 +426,7 @@ test("wraps project api trpc calls in named functions", async () => {
       values: { title: "Pricing" },
     });
     await getProjectSettings(params);
+    await getMarketplaceProduct(params);
     await updateProjectSettings({
       ...params,
       meta: { siteName: "Acme", faviconAssetId: null },
@@ -801,6 +803,7 @@ test("wraps project api trpc calls in named functions", async () => {
     expectBodyRequest("/trpc/api.pages.create", '"name":"Pricing"'),
     expectBodyRequest("/trpc/api.pages.update", '"title":"Pricing"'),
     expectRequest("/trpc/api.projectSettings.get"),
+    expectRequest("/trpc/api.projectSettings.getMarketplaceProduct"),
     expectBodyRequest("/trpc/api.projectSettings.update", '"siteName":"Acme"'),
     expectRequest("/trpc/api.redirects.list"),
     expectBodyRequest("/trpc/api.redirects.create", '"old":"/old"'),

@@ -786,6 +786,10 @@ export const updateMarketplaceProduct = runtimeProjectMutation(
   "update-marketplace-product"
 );
 
+export const getMarketplaceProduct = projectQueryInput<AuthProjectParams>(
+  "get-marketplace-product"
+);
+
 export const setRedirects = runtimeProjectMutation("set-redirects");
 
 export const copyPage = runtimeProjectMutation("copy-page");
