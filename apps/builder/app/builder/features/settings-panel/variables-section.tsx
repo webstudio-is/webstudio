@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Flex,
+  Label,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
@@ -175,13 +176,9 @@ const VariablesItem = ({
         index={index}
         label={
           <Flex align="center">
-            <Text
-              variant="labels"
-              color={source === "remote" ? "subtle" : "main"}
-              css={{ flexShrink: 0 }}
-            >
+            <Label tag="label" color={source}>
               {variable.name}
-            </Text>
+            </Label>
             {value !== undefined && (
               <span className={variableLabelStyle.toString()}>
                 &nbsp;

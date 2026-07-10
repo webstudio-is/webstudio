@@ -33,6 +33,11 @@ The API commands operate on the single project configured by:
 
 ## CLI Capability Inventory
 
+For a short end-consumer summary of what MCP can do, see
+`manual mcp` / `webstudio man mcp`. The MCP inventory describes the same
+project, page, element, style, data, asset, publish, domain, and visual
+verification capabilities without internal command names.
+
 ### Top-Level Commands
 
 {{topLevelCapabilityIndex}}

@@ -438,6 +438,66 @@ test("generate action resource", () => {
   `);
 });
 
+test("skip missing resource referenced by data source", () => {
+  expect(
+    generateResources({
+      scope: createScope(),
+      page: { rootInstanceId: "body" } as Page,
+      dataSources: toMap([
+        {
+          id: "variableResourceId",
+          scopeInstanceId: "body",
+          type: "resource",
+          name: "missingResource",
+          resourceId: "missingResourceId",
+        },
+      ]),
+      resources: new Map(),
+      props: new Map(),
+    })
+  ).toMatchInlineSnapshot(`
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      const _data = new Map<string, ResourceRequest>([
+      ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
+    }
+    "
+  `);
+});
+
+test("skip missing resource referenced by action prop", () => {
+  expect(
+    generateResources({
+      scope: createScope(),
+      page: { rootInstanceId: "body" } as Page,
+      dataSources: new Map(),
+      resources: new Map(),
+      props: toMap([
+        {
+          id: "propId",
+          instanceId: "body",
+          name: "myProp",
+          type: "resource",
+          value: "missingResourceId",
+        },
+      ]),
+    })
+  ).toMatchInlineSnapshot(`
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      const _data = new Map<string, ResourceRequest>([
+      ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
+    }
+    "
+  `);
+});
+
 test("replace form action with resource", () => {
   const data = renderData(
     <$.Form ws:id="formId" action="https://my-url.com"></$.Form>
