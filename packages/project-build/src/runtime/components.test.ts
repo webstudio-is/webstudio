@@ -4,6 +4,7 @@ import {
   getStyleDeclKey,
   type Instance,
   type Page,
+  type PageTemplate,
   type Pages,
   type WsComponentMeta,
   type WebstudioData,
@@ -58,6 +59,41 @@ const createState = (
   breakpoints: new Map(),
   assets: new Map(),
 });
+
+const createTemplateState = ({
+  root,
+  parent,
+  documentType,
+}: {
+  root: Instance;
+  parent: Instance;
+  documentType?: PageTemplate["meta"]["documentType"];
+}): WebstudioData => {
+  const pageRoot = createParent();
+  return {
+    ...createState(pageRoot),
+    pages: {
+      ...createPages(pageRoot.id),
+      pageTemplates: new Map([
+        [
+          "template",
+          {
+            id: "template",
+            name: "Template",
+            title: "Template",
+            rootInstanceId: root.id,
+            meta: { documentType },
+          },
+        ],
+      ]),
+    },
+    instances: new Map([
+      [pageRoot.id, pageRoot],
+      [root.id, root],
+      [parent.id, parent],
+    ]),
+  };
+};
 
 const createParent = (): Instance => ({
   type: "instance",
@@ -147,6 +183,36 @@ test("inserts ws.element component with tag", async () => {
       id: "generated-0",
       component: elementComponent,
       tag: "section",
+    })
+  );
+});
+
+test("inserts fragment into page template", async () => {
+  const parent = createParent();
+  const root: Instance = {
+    type: "instance",
+    id: "template-root",
+    component: elementComponent,
+    children: [{ type: "id", value: parent.id }],
+  };
+  const fragment = await parseWebstudioJsxFragment("<$.Box />");
+
+  const mutation = insertFragment(
+    createTemplateState({ root, parent }),
+    {
+      parentInstanceId: parent.id,
+      fragment,
+    },
+    {
+      createId: createIdFactory(),
+    }
+  );
+
+  expect(mutation.result.rootInstanceIds).toEqual(["generated-0"]);
+  expect(getAddedValues<Instance>(mutation, "instances")).toContainEqual(
+    expect.objectContaining({
+      id: "generated-0",
+      component: "Box",
     })
   );
 });
