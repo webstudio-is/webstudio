@@ -9,6 +9,7 @@ import {
   type Instance,
   type Instances,
   type Page,
+  type PageTemplate,
   type Pages,
   type Props,
   type Resources,
@@ -200,7 +201,7 @@ const getPageByInstanceId = (
   pages: Pages,
   instances: Instances,
   instanceId: Instance["id"]
-): Page | undefined => {
+): Page | PageTemplate | undefined => {
   const parentByChildId = new Map<Instance["id"], Instance["id"]>();
   for (const instance of instances.values()) {
     for (const child of instance.children ?? []) {
@@ -209,9 +210,12 @@ const getPageByInstanceId = (
       }
     }
   }
-  const rootInstanceIds = new Map<Instance["id"], Page>();
+  const rootInstanceIds = new Map<Instance["id"], Page | PageTemplate>();
   for (const page of pages.pages.values()) {
     rootInstanceIds.set(page.rootInstanceId, page);
+  }
+  for (const template of pages.pageTemplates?.values() ?? []) {
+    rootInstanceIds.set(template.rootInstanceId, template);
   }
   const visited = new Set<Instance["id"]>();
   let currentId: Instance["id"] | undefined = instanceId;
@@ -451,7 +455,7 @@ const validateFragmentComponent = ({
 }: {
   instance: Instance;
   templates: ComponentTemplateRegistry;
-  page: Page;
+  page: Page | PageTemplate;
 }) => {
   const { component } = instance;
   const meta = componentMetas.get(component);

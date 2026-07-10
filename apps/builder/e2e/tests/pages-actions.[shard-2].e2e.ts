@@ -5,6 +5,7 @@ import {
   waitForCanvasTextHidden,
 } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
+import { openPage } from "../flows/pages-panel";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
@@ -30,6 +31,35 @@ type BuildInstance = {
   label?: string;
   children?: BuildInstanceChild[];
 };
+
+const fragmentArrays = {
+  assets: [],
+  dataSources: [],
+  resources: [],
+  props: [],
+  breakpoints: [],
+  styleSourceSelections: [],
+  styleSources: [],
+  styles: [],
+};
+
+const createInstanceTransfer = ({ id, text }: { id: string; text: string }) =>
+  JSON.stringify({
+    "@webstudio/instance/v0.1": {
+      instanceSelector: [id, "source-body"],
+      children: [{ type: "id", value: id }],
+      instances: [
+        {
+          type: "instance",
+          id,
+          component: "ws:element",
+          tag: "p",
+          children: [{ type: "text", value: text }],
+        },
+      ],
+      ...fragmentArrays,
+    },
+  });
 
 const loadBuildInstances = async (fixture: SeededContentModeProject) => {
   const build = await loadDevBuild({ projectId: fixture.projectId });
@@ -1141,6 +1171,51 @@ test("Builder copies, pastes, and cuts instances through browser shortcuts", asy
   }
 });
 
+test("Builder pastes instance data into page templates", async () => {
+  const { page, close } = await newIsolatedPage();
+  const templatePasteText = "Template instance paste heading";
+
+  try {
+    await measure("pages actions open builder for template paste", async () => {
+      await openProjectBuilder({
+        page,
+        projectId: fixture.projectId,
+        authToken: fixture.builderToken,
+      });
+    });
+    await openPage({
+      page,
+      pageName: fixture.pageTemplateName,
+      canvasText: fixture.pageTemplateText,
+    });
+
+    await selectBodyInNavigator({ page });
+    await pasteClipboardData({
+      page,
+      data: {
+        "application/json": createInstanceTransfer({
+          id: "template-instance-json-paste",
+          text: templatePasteText,
+        }),
+      },
+    });
+    await waitForCanvasText({ page, text: templatePasteText });
+
+    const pastedTextCount = await getElementTagWithTextCount({
+      fixture,
+      tag: "p",
+      text: templatePasteText,
+    });
+    if (pastedTextCount !== 1) {
+      throw new Error(
+        `Expected template paste to create one paragraph containing "${templatePasteText}", found ${pastedTextCount}`
+      );
+    }
+  } finally {
+    await close();
+  }
+});
+
 test("Builder does not insert malformed Webstudio paste data as text", async () => {
   const { page, close } = await newIsolatedPage();
   const malformedData =
@@ -1226,35 +1301,6 @@ test("Builder runs paste plugins through generic browser paste events", async ()
   const htmlText = "HTML paste heading";
   const markdownText = "Markdown paste heading";
   const webflowText = "Webflow paste heading";
-
-  const fragmentArrays = {
-    assets: [],
-    dataSources: [],
-    resources: [],
-    props: [],
-    breakpoints: [],
-    styleSourceSelections: [],
-    styleSources: [],
-    styles: [],
-  };
-
-  const createInstanceTransfer = ({ id, text }: { id: string; text: string }) =>
-    JSON.stringify({
-      "@webstudio/instance/v0.1": {
-        instanceSelector: [id, "source-body"],
-        children: [{ type: "id", value: id }],
-        instances: [
-          {
-            type: "instance",
-            id,
-            component: "ws:element",
-            tag: "p",
-            children: [{ type: "text", value: text }],
-          },
-        ],
-        ...fragmentArrays,
-      },
-    });
 
   const webflowData = JSON.stringify({
     type: "@webflow/XscpData",

@@ -74,7 +74,13 @@ import { type Templates } from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
-import { $dataSources, $instances, $pages } from "~/shared/sync/data-stores";
+import {
+  $dataSources,
+  $instances,
+  $pages,
+  $props,
+  $resources,
+} from "~/shared/sync/data-stores";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $currentSystem } from "~/shared/system";
@@ -83,6 +89,10 @@ import {
   getRestrictedFeatures,
   type RestrictedFeature,
 } from "./restricted-features";
+import {
+  formatBuildIntegrityError,
+  getBuildIntegrityIssues,
+} from "@webstudio-is/project-build/build-integrity";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -414,7 +424,20 @@ const Publish = ({
 
   const handlePublish = async (formData: FormData) => {
     setPublishError(undefined);
-    setIsPublishing(true);
+
+    const integrityIssues = getBuildIntegrityIssues({
+      dataSources: $dataSources.get().values(),
+      props: $props.get().values(),
+      resources: $resources.get().values(),
+    });
+    const integrityError =
+      integrityIssues[0] &&
+      formatBuildIntegrityError(integrityIssues[0], "Cannot publish");
+    if (integrityError !== undefined) {
+      toast.error(integrityError);
+      setPublishError(integrityError);
+      return;
+    }
 
     // Custom domain checkboxes are disabled on free plan so they are never
     // submitted — only the staging (wstd.io) domain can appear in formData.
@@ -426,6 +449,8 @@ const Publish = ({
       toast.error("Please select at least one domain to publish");
       return;
     }
+
+    setIsPublishing(true);
 
     const publishResult = await nativeClient.domain.publish.mutate({
       projectId: project.id,

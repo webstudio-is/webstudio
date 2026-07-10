@@ -179,6 +179,61 @@ Component and template registry items use a shadcn-compatible top-level shape pl
 Prefer the focused `components.*` tools over dumping `webstudio://project/components`. Do not write local scripts to parse full MCP discovery JSON for common component lookup.
 For “use every component” or design-system pages, start with compact `components.coverage-plan`, checkpoint, then page through roots/parts instead of dumping the full catalog.
 
+## Consumer Capabilities
+
+MCP lets agents work on one configured Webstudio project at a time. In consumer
+terms, agents can:
+
+- Check which project they are connected to.
+- Check what the share link is allowed to do.
+- Inspect project metadata and the latest editable build.
+- Read selected project data for audits and repair.
+- Apply precise project changes against a known version.
+- List, inspect, create, update, delete, duplicate, copy, and reorder pages.
+- Set the home page.
+- Preserve old page paths for redirects or history.
+- Read and update page titles, descriptions, metadata, auth settings, and SEO fields.
+- List, create, update, duplicate, move, and delete page folders.
+- List, create, update, delete, duplicate, reorder, and reuse page templates.
+- Create pages from reusable templates.
+- Read and update project site settings.
+- Read and update marketplace product metadata.
+- List, create, update, delete, and replace redirects.
+- List, create, update, and delete responsive breakpoints.
+- List and inspect page elements.
+- Insert registered components.
+- Insert styled JSX fragments.
+- Move, reparent, clone, duplicate, wrap, unwrap, convert, rename, retag, and delete elements.
+- Fill grid cells.
+- List and update text children.
+- Update plain text and expression text.
+- Update structured rich text.
+- Add, update, delete, and bind element props.
+- Bind props to expressions, resources, actions, and runtime system values.
+- Read, add, update, delete, and replace local styles.
+- Update selected style-source styles.
+- List, create, update, attach, detach, extract, duplicate, rename, lock, unlock, reorder, clear, and delete design tokens and style sources.
+- List, define, rename, delete, and rewrite CSS variables.
+- List, create, update, and delete static data variables.
+- Create string, number, boolean, string list, and JSON variables.
+- Delete unused data variables.
+- List, create, update, upsert, bind, and delete resources.
+- Create HTTP resources.
+- Create GraphQL resources.
+- Create system resources.
+- Use built-in system resources for sitemap, current date, and assets.
+- List, upload, add, update, find usage for, replace, and delete assets.
+- Publish to staging or production.
+- Publish to selected domains.
+- List publish builds.
+- Check publish job status.
+- Unpublish staging or production deployments.
+- List, create, update, delete, and verify custom domains.
+- Start and stop preview.
+- Capture screenshots of generated pages.
+- Compare screenshots against baselines.
+- Install OCR support for richer visual checks.
+
 Useful resources:
 
 - `webstudio://project/status`: current ProjectSession status

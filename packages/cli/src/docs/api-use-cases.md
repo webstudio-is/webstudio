@@ -61,6 +61,33 @@ Notes:
 - Use focused MCP tools for discovery first: `meta.index`, `meta.guide`, `meta.get_more_tools`, `components.list`, `components.summary`, `components.search`, `components.get`, `templates.list`, and `templates.get`. Use `resources/list` and `resources/read` for overview resources and read longer resources such as `webstudio://project/tools` and `webstudio://project/components` only when focused discovery is insufficient.
 - From a shell, call one MCP tool with the shortcut form `webstudio <tool> '<json>'`, for example `webstudio components.summary`. The explicit equivalent is `webstudio mcp single-op-call <tool> '<json>'`. Use `--input-file` for large payloads.
 
+## Understand what MCP can do
+
+Commands:
+
+- webstudio man mcp
+- MCP tool: meta.index {}
+- MCP tool: meta.guide {"brief":"What can Webstudio MCP do?"}
+
+MCP lets agents work on one configured Webstudio project. Agents can:
+
+- Inspect the linked project, token permissions, and latest editable build.
+- Read selected project data for audits, migrations, and repair.
+- Create and edit pages, folders, redirects, breakpoints, and page templates.
+- Create pages from reusable templates.
+- Update page metadata, SEO fields, auth settings, and marketplace metadata.
+- Insert components and styled JSX sections.
+- Move, copy, wrap, unwrap, convert, rename, retag, and delete elements.
+- Update text, rich text, props, bindings, and actions.
+- Create and update local styles, design tokens, style sources, and CSS variables.
+- Create static data variables and JSON variables.
+- Create HTTP, GraphQL, and system resources.
+- Use system resources for sitemap, current date, and assets.
+- Bind resources to rendered data or form/action props.
+- Upload, replace, delete, and inspect asset usage.
+- Publish, unpublish, inspect publish jobs, and manage custom domains.
+- Start preview, capture screenshots, compare screenshot diffs, and use OCR when installed.
+
 ## Inspect and refresh MCP session cache
 
 Commands:

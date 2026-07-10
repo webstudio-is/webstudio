@@ -28,6 +28,7 @@ import { createPages } from "../template";
 import { serializeStyles } from "./styles";
 import { serializeStyleSourceSelections } from "./style-source-selections";
 import { parseConfig, serializeData } from "./build-parser";
+import { assertBuildIntegrity } from "../build-integrity";
 
 export {
   parseConfig,
@@ -343,6 +344,9 @@ export const createProductionBuild = async (
       );
     }
   }
+
+  const devBuild = await loadDevBuildByProjectId(context, props.projectId);
+  assertBuildIntegrity(devBuild, { messagePrefix: "Cannot publish" });
 
   const build = await context.postgrest.client.rpc("create_production_build", {
     project_id: props.projectId,
