@@ -1658,7 +1658,14 @@ export const createPageUpdatePatches = ({
         continue;
       }
       patches.push({
-        op: Object.hasOwn(page.meta, name) ? "replace" : "add",
+        // Custom metadata is an optional array. Use `add` for the whole field
+        // even when the local page already has it: JSON Patch `add` replaces an
+        // object member when present, while also working for a just-created
+        // page whose server copy has not received the field yet.
+        op:
+          name === "custom" || Object.hasOwn(page.meta, name) === false
+            ? "add"
+            : "replace",
         path: ["pages", page.id, "meta", name],
         value,
       });
