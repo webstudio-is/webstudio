@@ -1173,6 +1173,9 @@ importers:
       acorn:
         specifier: ^8.14.1
         version: 8.14.1
+      acorn-jsx:
+        specifier: ^5.3.2
+        version: 5.3.2(acorn@8.14.1)
       acorn-walk:
         specifier: ^8.3.4
         version: 8.3.4
@@ -1182,6 +1185,9 @@ importers:
       chrome-launcher:
         specifier: ^1.2.1
         version: 1.2.1
+      decode-named-character-reference:
+        specifier: ^1.0.2
+        version: 1.0.2
       deepmerge:
         specifier: ^4.3.1
         version: 4.3.1
@@ -15297,6 +15303,10 @@ snapshots:
       acorn: 8.17.0
       acorn-walk: 8.3.5
     optional: true
+
+  acorn-jsx@5.3.2(acorn@8.14.1):
+    dependencies:
+      acorn: 8.14.1
 
   acorn-jsx@5.3.2(acorn@8.17.0):
     dependencies:
