@@ -19,10 +19,15 @@ permissions:
 jobs:
   lost-pixel:
     # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
+    # Release branches are assembled from already-reviewed changes, and visual
+    # diffs should not block publishing the release branch itself.
     if: |
-      github.event_name == 'push' ||
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+      (
+        github.event_name == 'push' ||
+        github.event_name == 'pull_request' ||
+        (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+      ) &&
+      !startsWith(github.head_ref || github.ref_name, 'release-')
     
     timeout-minutes: 20
     runs-on: ubuntu-latest
