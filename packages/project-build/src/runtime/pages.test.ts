@@ -1278,6 +1278,30 @@ describe("createPageUpdatePatches", () => {
       },
     ]);
   });
+
+  test("uses add when replacing custom metadata", () => {
+    const pages = createPages();
+    const page = pages.pages.get("page")!;
+    page.meta.custom = [{ property: "og:title", content: '"Previous"' }];
+
+    expect(
+      createPageUpdatePatches({
+        input: {
+          meta: {
+            custom: [{ property: "og:title", content: '"Updated"' }],
+          },
+        },
+        page,
+        pages,
+      })
+    ).toEqual([
+      {
+        op: "add",
+        path: ["pages", "page", "meta", "custom"],
+        value: [{ property: "og:title", content: '"Updated"' }],
+      },
+    ]);
+  });
 });
 
 describe("createPageUpdatePayload", () => {
