@@ -1,5 +1,9 @@
 import type { Page } from "playwright";
-import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
+import {
+  openProjectBuilder,
+  waitForCanvasText,
+  waitForCanvasTextHidden,
+} from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import {
   waitForChangeToBeSaved,
@@ -14,104 +18,30 @@ import { loadDevBuild } from "../db";
 let fixture: SeededContentModeProject;
 let navigatorStructuralFixture: SeededContentModeProject;
 
-const getInstanceComponentCount = async ({
-  fixture,
-  component,
-}: {
-  fixture: SeededContentModeProject;
-  component: string;
-}) => {
-  const build = await loadDevBuild({ projectId: fixture.projectId });
-  const instances = JSON.parse(build.instances) as Array<{
-    component: string;
-  }>;
-  return instances.filter((instance) => instance.component === component)
-    .length;
+type BuildInstanceChild = {
+  type: string;
+  value?: string;
 };
 
-const getElementTagCount = async ({
-  fixture,
-  tag,
-}: {
-  fixture: SeededContentModeProject;
-  tag: string;
-}) => {
-  const build = await loadDevBuild({ projectId: fixture.projectId });
-  const instances = JSON.parse(build.instances) as Array<{
-    component: string;
-    tag?: string;
-  }>;
-  return instances.filter(
-    (instance) => instance.component === "ws:element" && instance.tag === tag
-  ).length;
+type BuildInstance = {
+  id: string;
+  component?: string;
+  tag?: string;
+  label?: string;
+  children?: BuildInstanceChild[];
 };
 
-const getElementTagWithTextCount = async ({
-  fixture,
-  tag,
-  text,
-}: {
-  fixture: SeededContentModeProject;
-  tag: string;
-  text: string;
-}) => {
+const loadBuildInstances = async (fixture: SeededContentModeProject) => {
   const build = await loadDevBuild({ projectId: fixture.projectId });
-  const instances = JSON.parse(build.instances) as Array<{
-    id: string;
-    component: string;
-    tag?: string;
-    children?: Array<{ type: string; value?: string }>;
-  }>;
-  const instancesById = new Map(
-    instances.map((instance) => [instance.id, instance])
-  );
-
-  const instanceContainsText = (instanceId: string): boolean => {
-    const instance = instancesById.get(instanceId);
-    if (instance === undefined) {
-      return false;
-    }
-    return (
-      instance.children?.some((child) => {
-        if (child.type === "text") {
-          return child.value?.includes(text);
-        }
-        if (child.type === "id" && child.value !== undefined) {
-          return instanceContainsText(child.value);
-        }
-        return false;
-      }) ?? false
-    );
-  };
-
-  return instances.filter(
-    (instance) =>
-      instance.component === "ws:element" &&
-      instance.tag === tag &&
-      instanceContainsText(instance.id)
-  ).length;
+  return JSON.parse(build.instances) as BuildInstance[];
 };
 
-const getElementWithTextParentTag = async ({
-  fixture,
-  tag,
-  text,
-}: {
-  fixture: SeededContentModeProject;
-  tag: string;
-  text: string;
-}) => {
-  const build = await loadDevBuild({ projectId: fixture.projectId });
-  const instances = JSON.parse(build.instances) as Array<{
-    id: string;
-    component: string;
-    tag?: string;
-    children?: Array<{ type: string; value?: string }>;
-  }>;
+const createBuildInspector = (instances: BuildInstance[]) => {
   const instancesById = new Map(
     instances.map((instance) => [instance.id, instance])
   );
   const parentByChildId = new Map<string, string>();
+
   for (const instance of instances) {
     for (const child of instance.children ?? []) {
       if (child.type === "id" && child.value !== undefined) {
@@ -120,7 +50,7 @@ const getElementWithTextParentTag = async ({
     }
   }
 
-  const instanceContainsText = (instanceId: string): boolean => {
+  const instanceContainsText = (instanceId: string, text: string): boolean => {
     const instance = instancesById.get(instanceId);
     if (instance === undefined) {
       return false;
@@ -131,48 +61,12 @@ const getElementWithTextParentTag = async ({
           return child.value?.includes(text);
         }
         if (child.type === "id" && child.value !== undefined) {
-          return instanceContainsText(child.value);
+          return instanceContainsText(child.value, text);
         }
         return false;
       }) ?? false
     );
   };
-
-  const instance = instances.find(
-    (instance) =>
-      instance.component === "ws:element" &&
-      instance.tag === tag &&
-      instanceContainsText(instance.id)
-  );
-  if (instance === undefined) {
-    return;
-  }
-  const parentId = parentByChildId.get(instance.id);
-  if (parentId === undefined) {
-    return;
-  }
-  return instancesById.get(parentId)?.tag;
-};
-
-const getDirectChildTextOrder = async ({
-  fixture,
-  parentTag,
-  texts,
-}: {
-  fixture: SeededContentModeProject;
-  parentTag: string;
-  texts: string[];
-}) => {
-  const build = await loadDevBuild({ projectId: fixture.projectId });
-  const instances = JSON.parse(build.instances) as Array<{
-    id: string;
-    component: string;
-    tag?: string;
-    children?: Array<{ type: string; value?: string }>;
-  }>;
-  const instancesById = new Map(
-    instances.map((instance) => [instance.id, instance])
-  );
 
   const collectText = (instanceId: string): string => {
     const instance = instancesById.get(instanceId);
@@ -192,25 +86,167 @@ const getDirectChildTextOrder = async ({
       .join(" ");
   };
 
-  const parent = instances.find(
-    (instance) =>
-      instance.component === "ws:element" && instance.tag === parentTag
-  );
-  if (parent === undefined) {
-    return [];
-  }
-  return (parent.children ?? [])
-    .flatMap((child, index) => {
-      if (child.type !== "id" || child.value === undefined) {
+  return {
+    countComponent: (component: string) =>
+      instances.filter((instance) => instance.component === component).length,
+    countElementTag: (tag: string) =>
+      instances.filter(
+        (instance) =>
+          instance.component === "ws:element" && instance.tag === tag
+      ).length,
+    countElementTagWithText: ({ tag, text }: { tag: string; text: string }) =>
+      instances.filter(
+        (instance) =>
+          instance.component === "ws:element" &&
+          instance.tag === tag &&
+          instanceContainsText(instance.id, text)
+      ).length,
+    countInstancesWithText: (text: string) =>
+      instances.filter((instance) => instanceContainsText(instance.id, text))
+        .length,
+    countExactTextChildren: (text: string) =>
+      instances.reduce((count, instance) => {
+        return (
+          count +
+          (instance.children?.filter(
+            (child) => child.type === "text" && child.value === text
+          ).length ?? 0)
+        );
+      }, 0),
+    getElementWithTextParentTag: ({
+      tag,
+      text,
+    }: {
+      tag: string;
+      text: string;
+    }) => {
+      const instance = instances.find(
+        (instance) =>
+          instance.component === "ws:element" &&
+          instance.tag === tag &&
+          instanceContainsText(instance.id, text)
+      );
+      const parentId =
+        instance === undefined ? undefined : parentByChildId.get(instance.id);
+      return parentId === undefined
+        ? undefined
+        : instancesById.get(parentId)?.tag;
+    },
+    getDirectChildTextOrder: ({
+      parentTag,
+      texts,
+    }: {
+      parentTag: string;
+      texts: string[];
+    }) => {
+      const parent = instances.find(
+        (instance) =>
+          instance.component === "ws:element" && instance.tag === parentTag
+      );
+      if (parent === undefined) {
         return [];
       }
-      const content = collectText(child.value);
-      return texts
-        .filter((text) => content.includes(text))
-        .map((text) => ({ text, index }));
-    })
-    .sort((left, right) => left.index - right.index)
-    .map(({ text }) => text);
+      return (parent.children ?? [])
+        .flatMap((child, index) => {
+          if (child.type !== "id" || child.value === undefined) {
+            return [];
+          }
+          const content = collectText(child.value);
+          return texts
+            .filter((text) => content.includes(text))
+            .map((text) => ({ text, index }));
+        })
+        .sort((left, right) => left.index - right.index)
+        .map(({ text }) => text);
+    },
+    countLabel: (label: string) =>
+      instances.filter((instance) => instance.label === label).length,
+  };
+};
+
+const inspectBuild = async (fixture: SeededContentModeProject) =>
+  createBuildInspector(await loadBuildInstances(fixture));
+
+const getInstanceComponentCount = async ({
+  fixture,
+  component,
+}: {
+  fixture: SeededContentModeProject;
+  component: string;
+}) => {
+  return (await inspectBuild(fixture)).countComponent(component);
+};
+
+const getElementTagCount = async ({
+  fixture,
+  tag,
+}: {
+  fixture: SeededContentModeProject;
+  tag: string;
+}) => {
+  return (await inspectBuild(fixture)).countElementTag(tag);
+};
+
+const getElementTagWithTextCount = async ({
+  fixture,
+  tag,
+  text,
+}: {
+  fixture: SeededContentModeProject;
+  tag: string;
+  text: string;
+}) => {
+  return (await inspectBuild(fixture)).countElementTagWithText({ tag, text });
+};
+
+const getInstanceWithTextCount = async ({
+  fixture,
+  text,
+}: {
+  fixture: SeededContentModeProject;
+  text: string;
+}) => {
+  return (await inspectBuild(fixture)).countInstancesWithText(text);
+};
+
+const getExactTextChildCount = async ({
+  fixture,
+  text,
+}: {
+  fixture: SeededContentModeProject;
+  text: string;
+}) => {
+  return (await inspectBuild(fixture)).countExactTextChildren(text);
+};
+
+const getElementWithTextParentTag = async ({
+  fixture,
+  tag,
+  text,
+}: {
+  fixture: SeededContentModeProject;
+  tag: string;
+  text: string;
+}) => {
+  return (await inspectBuild(fixture)).getElementWithTextParentTag({
+    tag,
+    text,
+  });
+};
+
+const getDirectChildTextOrder = async ({
+  fixture,
+  parentTag,
+  texts,
+}: {
+  fixture: SeededContentModeProject;
+  parentTag: string;
+  texts: string[];
+}) => {
+  return (await inspectBuild(fixture)).getDirectChildTextOrder({
+    parentTag,
+    texts,
+  });
 };
 
 const getInstanceLabelCount = async ({
@@ -220,11 +256,7 @@ const getInstanceLabelCount = async ({
   fixture: SeededContentModeProject;
   label: string;
 }) => {
-  const build = await loadDevBuild({ projectId: fixture.projectId });
-  const instances = JSON.parse(build.instances) as Array<{
-    label?: string;
-  }>;
-  return instances.filter((instance) => instance.label === label).length;
+  return (await inspectBuild(fixture)).countLabel(label);
 };
 
 const pastePlainTextFromClipboardShortcut = async ({
@@ -239,6 +271,77 @@ const pastePlainTextFromClipboardShortcut = async ({
   }, text);
   const save = waitForChangeToBeSaved({ page });
   await page.keyboard.press("ControlOrMeta+V");
+  await save;
+  await waitForSyncStatus({ page, status: "idle" });
+};
+
+const pasteFromClipboardShortcut = async ({ page }: { page: Page }) => {
+  const save = waitForChangeToBeSaved({ page }).catch(() => undefined);
+  await page.keyboard.press("ControlOrMeta+V");
+  await save;
+  await waitForSyncStatus({ page, status: "idle" });
+};
+
+const cutSelectedInstanceShortcut = async ({ page }: { page: Page }) => {
+  const save = waitForChangeToBeSaved({ page });
+  await page.keyboard.press("ControlOrMeta+X");
+  await save;
+  await waitForSyncStatus({ page, status: "idle" });
+};
+
+const pasteTextFromClipboardShortcutWithoutSave = async ({
+  page,
+  text,
+}: {
+  page: Page;
+  text: string;
+}) => {
+  await page.evaluate(async (text) => {
+    await navigator.clipboard.writeText(text);
+  }, text);
+  await page.keyboard.press("ControlOrMeta+V");
+  await waitForSyncStatus({ page, status: "idle" });
+};
+
+const waitForClipboardTextIncludes = async ({
+  page,
+  text,
+}: {
+  page: Page;
+  text: string;
+}) => {
+  await page.waitForFunction(async (text) => {
+    try {
+      return (await navigator.clipboard.readText()).includes(text as string);
+    } catch {
+      return false;
+    }
+  }, text);
+};
+
+const pasteClipboardData = async ({
+  page,
+  data,
+  waitForSave = true,
+}: {
+  page: Page;
+  data: Record<string, string>;
+  waitForSave?: boolean;
+}) => {
+  const save = waitForSave ? waitForChangeToBeSaved({ page }) : undefined;
+  await page.evaluate((data) => {
+    const clipboardData = new DataTransfer();
+    for (const [mimeType, value] of Object.entries(data)) {
+      clipboardData.setData(mimeType, value);
+    }
+    document.dispatchEvent(
+      new ClipboardEvent("paste", {
+        bubbles: true,
+        cancelable: true,
+        clipboardData,
+      })
+    );
+  }, data);
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 };
@@ -393,6 +496,11 @@ const selectNavigatorItem = async ({
   await item.waitFor({ state: "visible" });
   await item.click();
   await item.click();
+};
+
+const selectBodyInNavigator = async ({ page }: { page: Page }) => {
+  await openNavigatorPanel({ page });
+  await selectNavigatorItem({ page, itemName: "Body" });
 };
 
 const editSelectedNavigatorLabel = async ({
@@ -977,6 +1085,294 @@ test("Builder pastes external HTML fragments through clipboard and reloads them"
     if (reloadedArticleCount !== initialArticleCount + 1) {
       throw new Error(
         `Expected reload to preserve pasted article. Before ${initialArticleCount}, after ${reloadedArticleCount}`
+      );
+    }
+  } finally {
+    await close();
+  }
+});
+
+test("Builder copies, pastes, and cuts instances through browser shortcuts", async () => {
+  const { page, close } = await newIsolatedPage();
+  const text = "Initial content";
+
+  try {
+    await measure(
+      "pages actions open builder for instance clipboard shortcuts",
+      async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.builderToken,
+        });
+      }
+    );
+    await waitForCanvasText({ page, text });
+    await waitForSyncStatus({ page, status: "idle" });
+
+    const initialTextCount = await getExactTextChildCount({ fixture, text });
+    await selectCanvasTextInstance({ page, text });
+    await page.keyboard.press("ControlOrMeta+C");
+    await waitForClipboardTextIncludes({
+      page,
+      text: "@webstudio/instance/v0.1",
+    });
+
+    await pasteFromClipboardShortcut({ page });
+    const pastedFromCanvasSelectionCount = await getExactTextChildCount({
+      fixture,
+      text,
+    });
+    if (pastedFromCanvasSelectionCount !== initialTextCount + 1) {
+      throw new Error(
+        `Expected paste from canvas selection to duplicate text. Before ${initialTextCount}, after ${pastedFromCanvasSelectionCount}`
+      );
+    }
+
+    await cutSelectedInstanceShortcut({ page });
+    const afterCutCount = await getExactTextChildCount({ fixture, text });
+    if (afterCutCount !== initialTextCount) {
+      throw new Error(
+        `Expected cut shortcut to remove selected pasted instance. Before ${initialTextCount}, after ${afterCutCount}`
+      );
+    }
+  } finally {
+    await close();
+  }
+});
+
+test("Builder does not insert malformed Webstudio paste data as text", async () => {
+  const { page, close } = await newIsolatedPage();
+  const malformedData =
+    '{"@webstudio/instance/v0.1":{"instanceSelector":["missing","body"]';
+
+  try {
+    await measure(
+      "pages actions open builder for malformed paste",
+      async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.builderToken,
+        });
+      }
+    );
+    await waitForCanvasText({ page, text: "Initial content" });
+    await selectBodyInNavigator({ page });
+
+    await pasteTextFromClipboardShortcutWithoutSave({
+      page,
+      text: malformedData,
+    });
+    await waitForCanvasTextHidden({ page, text: malformedData });
+    const malformedTextCount = await getExactTextChildCount({
+      fixture,
+      text: malformedData,
+    });
+    if (malformedTextCount !== 0) {
+      throw new Error(
+        `Expected malformed Webstudio data not to be inserted as text, found ${malformedTextCount}`
+      );
+    }
+  } finally {
+    await close();
+  }
+});
+
+test("Builder allows native paste inside focused builder inputs", async () => {
+  const { page, close } = await newIsolatedPage();
+  const pastedText = "<section>Native input paste</section>";
+
+  try {
+    await measure(
+      "pages actions open builder for native input paste",
+      async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.builderToken,
+        });
+      }
+    );
+    await waitForCanvasText({ page, text: "Initial content" });
+
+    await openCommandPanel({ page });
+    const commandInput = page.getByPlaceholder("Type a command or search...", {
+      exact: true,
+    });
+    await page.evaluate(async (text) => {
+      await navigator.clipboard.writeText(text);
+    }, pastedText);
+    await page.keyboard.press("ControlOrMeta+V");
+    await commandInput.waitFor();
+    const value = await commandInput.inputValue();
+    if (value !== pastedText) {
+      throw new Error(
+        `Expected native input paste to preserve text "${pastedText}", got "${value}"`
+      );
+    }
+    await page.keyboard.press("Escape");
+    await waitForCanvasTextHidden({ page, text: pastedText });
+  } finally {
+    await close();
+  }
+});
+
+test("Builder runs paste plugins through generic browser paste events", async () => {
+  const { page, close } = await newIsolatedPage();
+  const instanceJsonText = "Instance JSON paste heading";
+  const instanceTextText = "Instance text paste heading";
+  const jsxText = "JSX paste heading";
+  const htmlText = "HTML paste heading";
+  const markdownText = "Markdown paste heading";
+  const webflowText = "Webflow paste heading";
+
+  const fragmentArrays = {
+    assets: [],
+    dataSources: [],
+    resources: [],
+    props: [],
+    breakpoints: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+  };
+
+  const createInstanceTransfer = ({ id, text }: { id: string; text: string }) =>
+    JSON.stringify({
+      "@webstudio/instance/v0.1": {
+        instanceSelector: [id, "source-body"],
+        children: [{ type: "id", value: id }],
+        instances: [
+          {
+            type: "instance",
+            id,
+            component: "ws:element",
+            tag: "p",
+            children: [{ type: "text", value: text }],
+          },
+        ],
+        ...fragmentArrays,
+      },
+    });
+
+  const webflowData = JSON.stringify({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "webflow-heading",
+          type: "Heading",
+          tag: "h1",
+          children: ["webflow-heading-text"],
+          classes: [],
+        },
+        {
+          _id: "webflow-heading-text",
+          v: webflowText,
+          text: true,
+        },
+      ],
+      styles: [],
+      assets: [],
+    },
+  });
+
+  try {
+    await measure(
+      "pages actions open builder for generic paste plugins",
+      async () => {
+        await openProjectBuilder({
+          page,
+          projectId: fixture.projectId,
+          authToken: fixture.builderToken,
+        });
+      }
+    );
+    await waitForCanvasText({ page, text: "Initial content" });
+
+    await selectBodyInNavigator({ page });
+    await pasteClipboardData({
+      page,
+      data: {
+        "application/json": createInstanceTransfer({
+          id: "instance-json-paste",
+          text: instanceJsonText,
+        }),
+      },
+    });
+    await waitForCanvasText({ page, text: instanceJsonText });
+
+    await selectBodyInNavigator({ page });
+    await pasteClipboardData({
+      page,
+      data: {
+        "text/plain": createInstanceTransfer({
+          id: "instance-text-paste",
+          text: instanceTextText,
+        }),
+      },
+    });
+    await waitForCanvasText({ page, text: instanceTextText });
+
+    await selectBodyInNavigator({ page });
+    await pasteClipboardData({
+      page,
+      data: {
+        "text/plain": `<ws.element ws:tag="h2">${jsxText}</ws.element>`,
+      },
+    });
+    await waitForCanvasText({ page, text: jsxText });
+
+    await selectBodyInNavigator({ page });
+    await pasteClipboardData({
+      page,
+      data: {
+        "text/plain": `<section><h2>${htmlText}</h2></section>`,
+      },
+    });
+    await waitForCanvasText({ page, text: htmlText });
+
+    await selectBodyInNavigator({ page });
+    await pasteClipboardData({
+      page,
+      data: {
+        "text/plain": `## ${markdownText}`,
+      },
+    });
+    await waitForCanvasText({ page, text: markdownText });
+
+    await selectBodyInNavigator({ page });
+    await pasteClipboardData({
+      page,
+      data: {
+        "application/json": webflowData,
+      },
+    });
+    await waitForCanvasText({ page, text: webflowText });
+
+    const expectedPastes = [
+      ["p", instanceJsonText],
+      ["p", instanceTextText],
+      ["h2", jsxText],
+      ["h2", htmlText],
+      ["h2", markdownText],
+    ] as const;
+    for (const [tag, text] of expectedPastes) {
+      const count = await getElementTagWithTextCount({ fixture, tag, text });
+      if (count !== 1) {
+        throw new Error(
+          `Expected generic paste to create one ${tag} containing "${text}", found ${count}`
+        );
+      }
+    }
+    const webflowTextCount = await getInstanceWithTextCount({
+      fixture,
+      text: webflowText,
+    });
+    if (webflowTextCount === 0) {
+      throw new Error(
+        `Expected generic Webflow paste to persist text "${webflowText}"`
       );
     }
   } finally {

@@ -22,7 +22,7 @@ import { loadDevBuild } from "../db";
 
 let fixture: SeededContentModeProject;
 
-const copiedPageClipboardMarker = "@webstudio/page/v0.1";
+const copiedPageTransferMarker = "@webstudio/page/v0.1";
 
 const getPageRow = ({ page, pageName }: { page: Page; pageName: string }) =>
   page.getByRole("group", { name: `Page ${pageName}`, exact: true });
@@ -69,14 +69,14 @@ const waitForTemplate = async ({
   await page.getByText(templateName, { exact: true }).first().waitFor();
 };
 
-const waitForCopiedPageClipboard = async ({ page }: { page: Page }) => {
+const waitForCopiedPageTransferData = async ({ page }: { page: Page }) => {
   await page.waitForFunction(async (marker) => {
     try {
       return (await navigator.clipboard.readText()).includes(marker as string);
     } catch {
       return false;
     }
-  }, copiedPageClipboardMarker);
+  }, copiedPageTransferMarker);
 };
 
 const getDataResourceCounts = async (fixture: SeededContentModeProject) => {
@@ -253,7 +253,7 @@ test("Builder can copy, duplicate, and delete a page from the header menu", asyn
       menuLabel: "Page actions",
       action: "Copy",
     });
-    await waitForCopiedPageClipboard({ page });
+    await waitForCopiedPageTransferData({ page });
     await pasteFromClipboardShortcut({ page });
     await waitForPageRow({ page, pageName: copiedPageName });
 
@@ -355,7 +355,7 @@ test("Builder can copy, duplicate, and delete a folder from the context menu", a
       itemName: renamedFolderName,
       action: "Copy",
     });
-    await waitForCopiedPageClipboard({ page });
+    await waitForCopiedPageTransferData({ page });
     await selectContextAction({ page, itemName: "Home", action: "Paste" });
     await waitForSyncStatus({ page, status: "idle" });
     await waitForFolderRow({ page, folderName: copiedFolderName });
@@ -431,7 +431,7 @@ test("Builder can copy, duplicate, and delete a page template from actions menus
       menuLabel: "Template actions",
       action: "Copy",
     });
-    await waitForCopiedPageClipboard({ page });
+    await waitForCopiedPageTransferData({ page });
     await pasteFromClipboardShortcut({ page });
     await waitForTemplate({ page, templateName: copiedTemplateName });
 

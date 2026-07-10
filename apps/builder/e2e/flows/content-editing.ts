@@ -119,6 +119,36 @@ export const replaceCanvasText = async ({
   }
 };
 
+export const pasteCanvasText = async ({
+  page,
+  currentText,
+  text,
+}: {
+  page: Page;
+  currentText: string;
+  text: string;
+}) => {
+  const { canvas, editable } = await startCanvasTextEditingByText({
+    page,
+    currentText,
+  });
+  await page.evaluate(async (text) => {
+    await navigator.clipboard.writeText(text);
+  }, text);
+  await page.keyboard.press("ControlOrMeta+A");
+  const save = waitForChangeToBeSaved({ page });
+  try {
+    await page.keyboard.press("ControlOrMeta+V");
+    await canvas.locator("body").click({ position: { x: 1, y: 1 } });
+    await editable.waitFor({ state: "hidden", timeout: 1_000 });
+    await waitForCanvasText({ page, text });
+    await save;
+  } catch (error) {
+    await save.catch(() => undefined);
+    throw error;
+  }
+};
+
 export const replaceCanvasTextAndApplyInlineFormats = async ({
   page,
   currentText,
