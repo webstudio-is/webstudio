@@ -5,6 +5,7 @@ import { camelCaseProperty } from "@webstudio-is/css-data";
 import { styleValue, toValue, type StyleValue } from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
+  ROOT_INSTANCE_ID,
   styleDecl as styleDeclSchema,
   type Breakpoint,
   type Breakpoints,
@@ -3056,7 +3057,13 @@ const assertStyleInstances = (
   instanceIds: Iterable<Instance["id"]>
 ) => {
   for (const instanceId of instanceIds) {
-    if (instances.has(instanceId) === false) {
+    // The global root is virtual and therefore intentionally absent from the
+    // persisted instances namespace. Its style source selection is persisted
+    // and rendered as :root.
+    if (
+      instanceId !== ROOT_INSTANCE_ID &&
+      instances.has(instanceId) === false
+    ) {
       return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
     }
   }
