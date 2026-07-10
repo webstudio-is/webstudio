@@ -3,6 +3,7 @@ import { createEmptyWebstudioFragment } from "@webstudio-is/project-build/runtim
 import { inspectWebstudioJsxFragmentSyntax } from "@webstudio-is/project-build/runtime/jsx/syntax";
 import { isLikelyWebstudioJsx, jsx } from "./plugin-jsx";
 import { $project } from "../sync/data-stores";
+import { pasteHandled, pasteIgnored } from "./copy-paste";
 
 const mocks = vi.hoisted(() => ({
   createJsxFragment: vi.fn(),
@@ -65,7 +66,7 @@ describe("jsx paste plugin", () => {
     mocks.createJsxFragment.mockResolvedValue(fragment);
     mocks.insertWebstudioFragmentAt.mockReturnValue(true);
 
-    await expect(jsx.onPaste?.("<$.Box />")).resolves.toBe(true);
+    await expect(jsx.onPaste?.("<$.Box />")).resolves.toEqual(pasteHandled);
 
     expect(mocks.createJsxFragment).toHaveBeenCalledWith({
       projectId: "project-id",
@@ -82,7 +83,9 @@ describe("jsx paste plugin", () => {
   });
 
   test("does not claim non-Webstudio JSX text", async () => {
-    await expect(jsx.onPaste?.("<section>HTML</section>")).resolves.toBe(false);
+    await expect(jsx.onPaste?.("<section>HTML</section>")).resolves.toEqual(
+      pasteIgnored
+    );
 
     expect(mocks.createJsxFragment).not.toHaveBeenCalled();
     expect(mocks.insertWebstudioFragmentAt).not.toHaveBeenCalled();
@@ -91,7 +94,7 @@ describe("jsx paste plugin", () => {
   test("does not claim JSX without a current project", async () => {
     $project.set(undefined);
 
-    await expect(jsx.onPaste?.("<$.Box />")).resolves.toBe(false);
+    await expect(jsx.onPaste?.("<$.Box />")).resolves.toEqual(pasteIgnored);
 
     expect(mocks.createJsxFragment).not.toHaveBeenCalled();
     expect(mocks.insertWebstudioFragmentAt).not.toHaveBeenCalled();
@@ -100,9 +103,12 @@ describe("jsx paste plugin", () => {
   test("reports conversion errors and stops paste fallback", async () => {
     mocks.createJsxFragment.mockRejectedValue(new Error("Invalid JSX"));
 
-    await expect(jsx.onPaste?.('<$.Box ws:id="0" />')).resolves.toBe(true);
+    await expect(jsx.onPaste?.('<$.Box ws:id="0" />')).resolves.toEqual({
+      success: false,
+      error: "Invalid JSX",
+    });
 
-    expect(mocks.toastError).toHaveBeenCalledWith("Invalid JSX");
+    expect(mocks.toastError).not.toHaveBeenCalled();
     expect(mocks.insertWebstudioFragmentAt).not.toHaveBeenCalled();
   });
 });

@@ -29,7 +29,6 @@ import {
   type WsComponentMeta,
   type WebstudioFragment,
   type WebstudioData,
-  webstudioFragment,
   ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import type { ConflictResolution } from "./style-copy";
@@ -49,6 +48,12 @@ import {
 } from "./pages";
 import { unwrap } from "./unwrap";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import {
+  pageTransferItemInput,
+  type FolderCopyData,
+  type PageCopyData,
+  type TemplateCopyData,
+} from "./data-formats/page-transfer";
 
 type CreateId = () => string;
 
@@ -1195,73 +1200,10 @@ export const insertTemplateCopyFromFragmentsMutable = ({
   });
 };
 
-export type PageCopyData = {
-  page: Page;
-  rootFragment: WebstudioFragment;
-  bodyFragment: WebstudioFragment;
-};
-
-export type TemplateCopyData = {
-  template: PageTemplate;
-  rootFragment: WebstudioFragment;
-  bodyFragment: WebstudioFragment;
-};
-
-export type FolderCopyData = {
-  folder: Folder;
-  children: Array<PageCopyData | FolderCopyData>;
-};
-
-export type PageClipboardData = PageCopyData & { type: "page" };
-
-export type TemplateClipboardData = TemplateCopyData & { type: "template" };
-
-export type FolderClipboardData = Omit<FolderCopyData, "children"> & {
-  type: "folder";
-  children: Array<PageClipboardData | FolderClipboardData>;
-};
-
-export type PageClipboardItem =
-  | PageClipboardData
-  | TemplateClipboardData
-  | FolderClipboardData;
-
-export const pageClipboardPageInput: z.ZodType<PageClipboardData> = z.object({
-  type: z.literal("page"),
-  page: z.custom<Page>(),
-  rootFragment: webstudioFragment,
-  bodyFragment: webstudioFragment,
-});
-
-export const pageClipboardTemplateInput: z.ZodType<TemplateClipboardData> =
-  z.object({
-    type: z.literal("template"),
-    template: z.custom<PageTemplate>(),
-    rootFragment: webstudioFragment,
-    bodyFragment: webstudioFragment,
-  });
-
-export const pageClipboardFolderInput: z.ZodType<FolderClipboardData> = z.lazy(
-  () =>
-    z.object({
-      type: z.literal("folder"),
-      folder: z.custom<Folder>(),
-      children: z.array(
-        z.union([pageClipboardPageInput, pageClipboardFolderInput])
-      ),
-    })
-);
-
-export const pageClipboardItemInput = z.union([
-  pageClipboardPageInput,
-  pageClipboardTemplateInput,
-  pageClipboardFolderInput,
-]);
-
-export const pageClipboardPasteInput = z.object({
+export const pageTransferInsertInput = z.object({
   projectId: z.string(),
   targetFolderId: z.string(),
-  item: pageClipboardItemInput,
+  item: pageTransferItemInput,
   conflictResolution: z.enum(["ours", "theirs", "merge"]).optional(),
 });
 
@@ -1420,9 +1362,9 @@ export const insertFolderCopyFromDataMutable = ({
   });
 };
 
-export const pastePageClipboardItem = (
+export const insertPageTransferItem = (
   state: BuilderState,
-  input: z.infer<typeof pageClipboardPasteInput>,
+  input: z.infer<typeof pageTransferInsertInput>,
   context: { createId: CreateId }
 ) => {
   const data = getRequiredWebstudioData(state);
@@ -1471,7 +1413,7 @@ export const pastePageClipboardItem = (
   if (id === undefined) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
-      "Clipboard item was not pasted"
+      "Transfer item was not inserted"
     );
   }
   return createRuntimeMutation({

@@ -107,6 +107,21 @@
       "import": "./src/runtime/data.ts",
       "default": "./src/runtime/data.ts"
     },
+    "./runtime/data-formats/data-envelope": {
+      "webstudio": "./src/runtime/data-formats/data-envelope.ts",
+      "import": "./src/runtime/data-formats/data-envelope.ts",
+      "default": "./src/runtime/data-formats/data-envelope.ts"
+    },
+    "./runtime/data-formats/instance-transfer": {
+      "webstudio": "./src/runtime/data-formats/instance-transfer.ts",
+      "import": "./src/runtime/data-formats/instance-transfer.ts",
+      "default": "./src/runtime/data-formats/instance-transfer.ts"
+    },
+    "./runtime/data-formats/page-transfer": {
+      "webstudio": "./src/runtime/data-formats/page-transfer.ts",
+      "import": "./src/runtime/data-formats/page-transfer.ts",
+      "default": "./src/runtime/data-formats/page-transfer.ts"
+    },
     "./runtime/errors": {
       "webstudio": "./src/runtime/errors.ts",
       "import": "./src/runtime/errors.ts",

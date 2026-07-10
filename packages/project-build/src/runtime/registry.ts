@@ -606,15 +606,15 @@ export const builderRuntimeOperations = [
       pageCopy.duplicateFolder(state, input, context)
   ),
   runtimeOperation(
-    "pageClipboard.paste",
-    api("paste-page-clipboard-item", "pastePageClipboardItem"),
+    "pageTransfer.insert",
+    api("insert-page-transfer-item", "insertPageTransferItem"),
     mutationContract({
       readNamespaces: pageCopyNamespaces,
       writeNamespaces: pageCopyNamespaces,
     }),
-    pageCopy.pageClipboardPasteInput,
+    pageCopy.pageTransferInsertInput,
     ({ state, input, context }) =>
-      pageCopy.pastePageClipboardItem(state, input, context)
+      pageCopy.insertPageTransferItem(state, input, context)
   ),
   runtimeOperation(
     "pageTree.move",

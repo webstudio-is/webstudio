@@ -1,11 +1,13 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime/html";
-import { insertWebstudioFragmentAt } from "../instance-utils/insert";
 import { generateFragmentFromTailwind } from "../tailwind/tailwind";
 import { denormalizeSrcProps } from "./asset-upload";
-import type { Plugin } from "./copy-paste";
+import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
 import { builderApi } from "../builder-api";
-import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
+import {
+  hasFragmentData,
+  insertFragmentWithBreakpointWarning,
+} from "./fragment-utils";
 
 const inceptionMark = `<!-- @webstudio/inception/1 -->`;
 
@@ -13,26 +15,20 @@ const handlePasteHtml = async (html: string) => {
   const parseResult = generateFragmentFromHtml(html);
   const { skippedSelectors } = parseResult;
   let fragment: WebstudioFragment = parseResult;
+  if (hasFragmentData(fragment) === false) {
+    return pasteIgnored;
+  }
   fragment = await denormalizeSrcProps(fragment);
   if (html.includes(inceptionMark)) {
     fragment = await generateFragmentFromTailwind(fragment);
   }
-  const result = await insertWebstudioFragmentAt(
-    fragment,
-    undefined,
-    undefined,
-    {
-      onBreakpointLimitMerge: () => {
-        builderApi.toast.warn(breakpointPasteLimitWarning);
-      },
-    }
-  );
+  insertFragmentWithBreakpointWarning(fragment);
   if (skippedSelectors.length > 0) {
     builderApi.toast.info(
       `Skipped nested selectors (no matching elements): ${skippedSelectors.join(", ")}`
     );
   }
-  return result;
+  return pasteHandled;
 };
 
 export const html: Plugin = {

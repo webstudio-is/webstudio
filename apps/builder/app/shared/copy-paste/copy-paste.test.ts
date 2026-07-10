@@ -131,6 +131,13 @@ const setupToastInfo = () => {
   return toastInfo;
 };
 
+const setupToastError = () => {
+  initBuilderApi();
+  const toastError = vi.fn();
+  window.__webstudio__$__builderApi.toast.error = toastError;
+  return toastError;
+};
+
 const waitForClipboardEvent = () =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -456,6 +463,80 @@ test("pastes multi-selected instance clipboard data through clipboard event", as
   abortController.abort();
 });
 
+test("does not paste malformed webstudio instance json as plain text", async () => {
+  resetStores();
+  const abortController = new AbortController();
+  const toastError = setupToastError();
+  initCopyPaste({ signal: abortController.signal });
+  $project.set({ id: "project-id" } as Project);
+  setupPage();
+  selectInstance(["body-id"]);
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData(
+    "text/plain",
+    `{"@webstudio/instance/v0.1":{"instanceSelector":["missing-id","body-id"]`
+  );
+
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+
+  expect(event.defaultPrevented).toBe(true);
+  expect($instances.get().get("body-id")?.children).toEqual([]);
+  expect(toastError).toHaveBeenCalledWith(
+    "Could not paste Webstudio instance data. The clipboard data appears to be incomplete or invalid."
+  );
+  abortController.abort();
+});
+
+test("reports malformed Webflow json through generic paste", async () => {
+  resetStores();
+  const abortController = new AbortController();
+  const toastError = setupToastError();
+  initCopyPaste({ signal: abortController.signal });
+  setupPage();
+  selectInstance(["body-id"]);
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData(
+    "application/json",
+    JSON.stringify({ type: "@webflow/XscpData" })
+  );
+
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+
+  expect(event.defaultPrevented).toBe(true);
+  expect($instances.get().get("body-id")?.children).toEqual([]);
+  expect(toastError).toHaveBeenCalledWith(expect.any(String));
+  abortController.abort();
+});
+
+test("does not intercept native paste while editing text", async () => {
+  resetStores();
+  const abortController = new AbortController();
+  const toastError = setupToastError();
+  initCopyPaste({ signal: abortController.signal });
+  setupPage();
+  $textEditingInstanceSelector.set({
+    selector: ["text-id", "body-id"],
+    reason: "click",
+    mouseX: 0,
+    mouseY: 0,
+  });
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData(
+    "text/plain",
+    `{"@webstudio/instance/v0.1":{"instanceSelector":["missing-id","body-id"]`
+  );
+
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+
+  expect(event.defaultPrevented).toBe(false);
+  expect($instances.get().get("body-id")?.children).toEqual([]);
+  expect(toastError).not.toHaveBeenCalled();
+  abortController.abort();
+});
+
 test("cuts multi-selected instances through clipboard event", () => {
   resetStores();
   const abortController = new AbortController();
@@ -543,6 +624,31 @@ test("content mode reports unsupported paste clipboard data", async () => {
 
   expect(event.defaultPrevented).toBe(true);
   expect(toastInfo).toHaveBeenCalledWith(
+    "This clipboard data cannot be pasted here."
+  );
+  abortController.abort();
+});
+
+test("content mode reports malformed webstudio instance clipboard data", async () => {
+  resetStores();
+  const abortController = new AbortController();
+  const toastInfo = setupToastInfo();
+  const toastError = setupToastError();
+  initCopyPasteForContentEditMode({ signal: abortController.signal });
+  const { clipboardData, event } = createClipboardEvent("paste");
+  clipboardData.setData(
+    "text/plain",
+    `{"@webstudio/instance/v0.1":{"instanceSelector":["missing-id","body-id"]`
+  );
+
+  document.dispatchEvent(event);
+  await waitForClipboardEvent();
+
+  expect(event.defaultPrevented).toBe(true);
+  expect(toastError).toHaveBeenCalledWith(
+    "Could not paste Webstudio instance data. The clipboard data appears to be incomplete or invalid."
+  );
+  expect(toastInfo).not.toHaveBeenCalledWith(
     "This clipboard data cannot be pasted here."
   );
   abortController.abort();

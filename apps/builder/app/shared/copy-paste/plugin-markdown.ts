@@ -1,11 +1,12 @@
 import { gfm, gfmHtml } from "micromark-extension-gfm";
 import { micromark } from "micromark";
-import { insertWebstudioFragmentAt } from "../instance-utils/insert";
 import { denormalizeSrcProps } from "./asset-upload";
 import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime/html";
-import type { Plugin } from "./copy-paste";
-import { builderApi } from "../builder-api";
-import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
+import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
+import {
+  hasFragmentData,
+  insertFragmentWithBreakpointWarning,
+} from "./fragment-utils";
 
 const parse = (clipboardData: string) => {
   const html = micromark(clipboardData, "utf-8", {
@@ -27,15 +28,12 @@ const parse = (clipboardData: string) => {
 
 const handlePasteMarkdown = async (clipboardData: string) => {
   let fragment = parse(clipboardData);
-  if (fragment === undefined) {
-    return false;
+  if (hasFragmentData(fragment) === false) {
+    return pasteIgnored;
   }
   fragment = await denormalizeSrcProps(fragment);
-  return await insertWebstudioFragmentAt(fragment, undefined, undefined, {
-    onBreakpointLimitMerge: () => {
-      builderApi.toast.warn(breakpointPasteLimitWarning);
-    },
-  });
+  insertFragmentWithBreakpointWarning(fragment);
+  return pasteHandled;
 };
 
 export const markdown: Plugin = {

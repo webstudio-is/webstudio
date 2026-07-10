@@ -1865,9 +1865,9 @@ export const runtimeOperationContractData = [
     requiresAssets: true,
   },
   {
-    id: "pageClipboard.paste",
-    command: "paste-page-clipboard-item",
-    client: "pastePageClipboardItem",
+    id: "pageTransfer.insert",
+    command: "insert-page-transfer-item",
+    client: "insertPageTransferItem",
     kind: "mutation",
     inputSchema: {
       type: "object",

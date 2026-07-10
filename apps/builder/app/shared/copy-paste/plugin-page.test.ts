@@ -35,6 +35,7 @@ import {
   handlePastePage,
   pageText,
 } from "./plugin-page";
+import { pasteHandled, pasteIgnored } from "./copy-paste";
 
 enableMapSet();
 registerContainers();
@@ -261,13 +262,13 @@ test("handles page paste data without falling through when insertion cannot comp
 
   await expect(
     handlePastePage(clipboardData ?? "", ROOT_FOLDER_ID)
-  ).resolves.toBe(true);
+  ).resolves.toEqual(pasteHandled);
   expect($pages.get()?.pages.size).toBe(initialPageCount);
 });
 
 test("ignores non-page paste data", async () => {
-  await expect(handlePastePage("plain text", ROOT_FOLDER_ID)).resolves.toBe(
-    false
+  await expect(handlePastePage("plain text", ROOT_FOLDER_ID)).resolves.toEqual(
+    pasteIgnored
   );
 });
 

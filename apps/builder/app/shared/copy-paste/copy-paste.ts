@@ -80,7 +80,31 @@ export type Plugin = {
   mimeType: string;
   onCopy?: () => undefined | string;
   onCut?: () => undefined | string;
-  onPaste?: (data: string) => boolean | Promise<boolean>;
+  onPaste?: (data: string) => PasteResult | Promise<PasteResult>;
+};
+
+export type PasteResult =
+  | { success: true; data: { handled: false } }
+  | { success: true; data: { handled: true } }
+  | { success: false; error: string };
+
+export const pasteIgnored: PasteResult = {
+  success: true,
+  data: { handled: false },
+};
+
+export const pasteHandled: PasteResult = {
+  success: true,
+  data: { handled: true },
+};
+
+const isPasteHandled = (result: PasteResult) =>
+  result.success === false || result.data.handled;
+
+const reportPasteResult = (result: PasteResult) => {
+  if (result.success === false) {
+    builderApi.toast.error(result.error);
+  }
 };
 
 const initPlugins = ({
@@ -126,12 +150,19 @@ const initPlugins = ({
     if (validateClipboardEvent(event) === false) {
       return;
     }
+    event.preventDefault();
 
     for (const { mimeType, onPaste } of plugins) {
-      // this shouldn't matter, but just in case
-      event.preventDefault();
+      if (onPaste === undefined) {
+        continue;
+      }
       const data = event.clipboardData?.getData(mimeType).trim();
-      if (data && (await onPaste?.(data))) {
+      if (data === undefined || data === "") {
+        continue;
+      }
+      const result = await onPaste(data);
+      if (isPasteHandled(result)) {
+        reportPasteResult(result);
         break;
       }
     }
@@ -196,7 +227,9 @@ export const initCopyPasteForContentEditMode = ({
     const jsonData = event.clipboardData?.getData(instanceJson.mimeType).trim();
     if (jsonData) {
       event.preventDefault();
-      if (await instanceJson.onPaste?.(jsonData)) {
+      const result = await instanceJson.onPaste(jsonData);
+      if (isPasteHandled(result)) {
+        reportPasteResult(result);
         return;
       }
       showUnsupportedPasteMessage();
@@ -205,7 +238,9 @@ export const initCopyPasteForContentEditMode = ({
     const textData = event.clipboardData?.getData(instanceText.mimeType).trim();
     if (textData) {
       event.preventDefault();
-      if (await instanceText.onPaste?.(textData)) {
+      const result = await instanceText.onPaste(textData);
+      if (isPasteHandled(result)) {
+        reportPasteResult(result);
         return;
       }
       showUnsupportedPasteMessage();
@@ -257,7 +292,9 @@ export const copyTemplate = (templateId: string) => {
 
 export const pastePage = async (targetFolderId?: string) => {
   const text = await navigator.clipboard.readText();
-  return handlePastePage(text, targetFolderId);
+  const result = await handlePastePage(text, targetFolderId);
+  reportPasteResult(result);
+  return isPasteHandled(result);
 };
 
 export const emitPaste = async () => {
