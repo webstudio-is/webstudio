@@ -608,7 +608,7 @@ const createLlmManualJson = (
       readCommands,
       writeCommands,
       sessionBehavior: [
-        "Read meta.session.source and meta.session.namespaces to understand whether data came from local cache, remote refresh, dry-run, or server-only execution.",
+        "Read meta.session.source and meta.session.namespaceCounts to understand whether data came from local cache, remote refresh, dry-run, or server-only execution.",
         "Use --refresh before a local-capable command when the cached snapshot may be stale.",
         "A mutation is durable only when meta.session.committed is true.",
       ],
@@ -700,7 +700,7 @@ const topics = {
           refreshFlag:
             "Use --refresh to refresh required namespaces before local-capable commands.",
           metadata:
-            "Successful command JSON includes meta.session with operationId, buildId, version, source, committed, compatibility, namespace metadata, and diagnostics.",
+            "Successful command JSON includes compact meta.session with operationId, buildId, version, source, committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.",
         },
       },
       apiDocSections

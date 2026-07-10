@@ -416,10 +416,10 @@ For responsive page work, use Builder breakpoints as the source of truth:
 - Use `bind-props` only when the prop must stay dynamic: an expression, resource result, action, or existing scoped runtime context such as `system`. Do not use `bind-props` just to set a fixed string.
 - Direct prop string example: `{"updates":[{"instanceId":"button-id","name":"aria-label","type":"string","value":"Open menu"}]}`.
 - Expression binding example: `{"bindings":[{"instanceId":"link-id","name":"href","binding":{"type":"expression","value":"currentPost.url"}}]}`.
-- Page metadata fields such as `title`, `description`, `language`, `redirect`, `status`, and custom meta content store JavaScript expression source. For fixed text, pass a JavaScript string literal expression with JSON quoting, for example `JSON.stringify("Pricing | Acme")` in code or `"\"Pricing | Acme\""` in JSON. For computed values, pass JavaScript expression code such as `pageTitle ?? "Pricing | Acme"`.
-- Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"\"Pricing | Acme\"","meta":{"description":"\"Plans for teams\""}}}`.
-- Resource URL, header, search-param, and body fields also store JavaScript expression source. For a fixed URL, use a string literal expression such as `"\"https://api.example.com/items\""`.
-- Resource update example: use `update-resource` with `{"resourceId":"resource-id","values":{"url":"\"https://api.example.com/items\""}}`.
+- Page metadata fields such as `title`, `description`, `language`, `redirect`, `status`, and custom meta content accept plain fixed text. For computed values, pass JavaScript expression code such as `pageTitle ?? "Pricing | Acme"`.
+- Page metadata update example: use `update-page` with `{"pageId":"page-id","values":{"title":"Pricing | Acme","meta":{"description":"Plans for teams"}}}`.
+- Resource `url` accepts plain fixed URLs and paths. For computed URLs, pass JavaScript expression code such as `"https://api.example.com/items?tag=" + filters.tag`.
+- Resource update example: use `update-resource` with `{"resourceId":"resource-id","values":{"url":"https://api.example.com/items"}}`.
 - Data variable values support `string`, `number`, `boolean`, `string[]`, and `json`. Use `string[]` only for arrays where every item is a string; use `json` for objects, mixed arrays, filters, and nested data.
 - Parameters are internal scoped runtime values from pages, collections, or components. They are not a public authoring surface: do not create, update, or delete parameter records. Public tools should preserve existing parameter records and may reference documented context values such as `system` in expressions where they are already in scope.
 - Use scoped resources for read data. A resource created with `scopeInstanceId`/`dataSourceName` becomes a scoped resource data variable, is generated into the page resource `data` map, and may be loaded while rendering the page. Use this for GET CMS/API data and read the loaded resource result from its wrapper, usually `.data`.
@@ -460,7 +460,7 @@ MCP tools receive JSON argument objects, not CLI flags. Use these shapes:
 - For visual/design work, verify the rendered result with vision before finishing.
 - Do not edit generated files for normal Webstudio content/design requests.
 - Use direct values for static strings and bindings only for dynamic expressions/resources/actions.
-- For expression-backed fields that need fixed text, encode the fixed text as a quoted JavaScript string literal expression.
+- Use plain fixed text where documented. Only encode a quoted JavaScript string literal when a field is explicitly documented as an expression-only value.
 - Confirm destructive commands with --confirm only when user requested deletion/unpublish/replacement.
 - Use webstudio schema api for machine-readable top-level command metadata and webstudio schema mcp for MCP tool schemas.
 

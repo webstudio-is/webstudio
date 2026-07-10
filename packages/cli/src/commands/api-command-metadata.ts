@@ -1,5 +1,6 @@
 import {
   publicApiOperations,
+  type InputJsonSchema,
   type PublicApiOperationMethod,
   type PublicApiOperationPermit,
 } from "@webstudio-is/protocol";
@@ -17,6 +18,7 @@ type ApiCommandMetadata = {
   inputFields: readonly string[];
   requiredInputFields: readonly string[];
   inputFieldTypes: Partial<Record<string, "array">>;
+  inputSchema: InputJsonSchema;
   requiredOptions?: readonly string[];
   examples: readonly string[];
 };
@@ -215,6 +217,7 @@ export const apiCommandMetadata = publicApiOperations.map((operation) => ({
   inputFields: operation.inputFields,
   requiredInputFields: operation.requiredInputFields,
   inputFieldTypes: operation.inputFieldTypes,
+  inputSchema: operation.inputSchema,
   requiredOptions: operation.requiredOptions,
   examples: operation.examples,
 })) satisfies ApiCommandMetadata[];

@@ -850,9 +850,22 @@ describe("project session mcp adapter", () => {
         session: expect.objectContaining({
           operationId: "pages.list",
           source: "local",
+          namespaceCounts: {
+            read: 1,
+            write: 0,
+            invalidated: 0,
+            missing: 0,
+          },
+          diagnosticCount: 0,
         }),
       },
     });
+    expect(result.structuredContent.meta.session).not.toHaveProperty(
+      "namespaces"
+    );
+    expect(result.structuredContent.meta.session).not.toHaveProperty(
+      "diagnostics"
+    );
   });
 
   test("rejects unsupported operation input fields before execution", async () => {
@@ -4836,6 +4849,64 @@ describe("project session mcp adapter", () => {
             },
             meta: {},
           },
+        })
+      );
+    } finally {
+      await close();
+    }
+  });
+
+  test("returns expected input examples for SDK zod tool errors", async () => {
+    const inputSchema = z.object({
+      email: z.email(),
+      description: z.string().min(10),
+    });
+    const parseResult = inputSchema.safeParse({
+      email: "invalid",
+      description: "short",
+    });
+    if (parseResult.success) {
+      throw new Error("Expected invalid test input");
+    }
+    const server = await createProjectSessionMcpServer({
+      operations: [
+        ...publicMcpOperations,
+        {
+          ...publicMcpOperations[0]!,
+          command: "constrained-input",
+          inputSchema: getTestInputSchema(inputSchema),
+        },
+      ],
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(async () => {
+        throw parseResult.error;
+      }),
+    });
+    const { client, close } = await createConnectedClient(server);
+
+    try {
+      const result = await client.callTool({
+        name: "constrained-input",
+        arguments: { email: "invalid", description: "short" },
+      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          isError: true,
+          structuredContent: {
+            ok: false,
+            error: {
+              message: expect.stringContaining('"email":"user@example.com"'),
+              code: "MCP_TOOL_FAILED",
+            },
+            meta: {},
+          },
+        })
+      );
+      expect(result.structuredContent).toEqual(
+        expect.objectContaining({
+          error: expect.objectContaining({
+            message: expect.stringContaining('"description":"stringxxxx"'),
+          }),
         })
       );
     } finally {

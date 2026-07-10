@@ -1192,14 +1192,12 @@ describe("page input schemas", () => {
         },
       })
     ).toEqual([
+      expect.stringMatching(/^title: .*Plain fixed text is accepted/),
       expect.stringMatching(
-        /^title: .*For fixed text, pass a string literal expression/
+        /^meta.description: .*Plain fixed text is accepted/
       ),
       expect.stringMatching(
-        /^meta.description: .*For fixed text, pass a string literal expression/
-      ),
-      expect.stringMatching(
-        /^meta.custom.0.content: .*For fixed text, pass a string literal expression/
+        /^meta.custom.0.content: .*Plain fixed text is accepted/
       ),
     ]);
   });
@@ -1810,7 +1808,7 @@ describe("createPage", () => {
         },
         { createId: createIdFactory() }
       )
-    ).toThrow(/title: .*stores JavaScript expression source/);
+    ).toThrow(/title: .*Plain fixed text is accepted/);
   });
 });
 
@@ -1869,7 +1867,7 @@ describe("updatePage", () => {
           },
         }
       )
-    ).toThrow(/title: .*stores JavaScript expression source/);
+    ).toThrow(/title: .*Plain fixed text is accepted/);
   });
 
   test("rejects updated page paths with unsupported URL pattern syntax", () => {

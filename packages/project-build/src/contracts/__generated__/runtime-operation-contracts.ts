@@ -78,7 +78,7 @@ export const runtimeOperationContractData = [
         },
         title: {
           description:
-            'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
           type: "string",
         },
         parentFolderId: {
@@ -89,22 +89,22 @@ export const runtimeOperationContractData = [
           properties: {
             description: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             language: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             redirect: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             socialImageUrl: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             socialImageAssetId: {
@@ -117,7 +117,7 @@ export const runtimeOperationContractData = [
                 },
                 {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
               ],
@@ -128,12 +128,12 @@ export const runtimeOperationContractData = [
             },
             content: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             status: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             auth: {
@@ -182,7 +182,7 @@ export const runtimeOperationContractData = [
                   },
                   content: {
                     description:
-                      'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                     type: "string",
                   },
                 },
@@ -232,7 +232,7 @@ export const runtimeOperationContractData = [
             },
             title: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             parentFolderId: {
@@ -243,22 +243,22 @@ export const runtimeOperationContractData = [
               properties: {
                 description: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 language: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 redirect: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 socialImageUrl: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 socialImageAssetId: {
@@ -271,7 +271,7 @@ export const runtimeOperationContractData = [
                     },
                     {
                       description:
-                        'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                       type: "string",
                     },
                   ],
@@ -282,12 +282,12 @@ export const runtimeOperationContractData = [
                 },
                 content: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 status: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 auth: {
@@ -336,7 +336,7 @@ export const runtimeOperationContractData = [
                       },
                       content: {
                         description:
-                          'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                         type: "string",
                       },
                     },
@@ -1157,7 +1157,7 @@ export const runtimeOperationContractData = [
         },
         title: {
           description:
-            'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+            'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
           type: "string",
         },
         meta: {
@@ -1165,22 +1165,22 @@ export const runtimeOperationContractData = [
           properties: {
             description: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             language: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             redirect: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             socialImageUrl: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             socialImageAssetId: {
@@ -1193,7 +1193,7 @@ export const runtimeOperationContractData = [
                 },
                 {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
               ],
@@ -1204,12 +1204,12 @@ export const runtimeOperationContractData = [
             },
             content: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             status: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             auth: {
@@ -1258,7 +1258,7 @@ export const runtimeOperationContractData = [
                   },
                   content: {
                     description:
-                      'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                      'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                     type: "string",
                   },
                 },
@@ -1330,7 +1330,7 @@ export const runtimeOperationContractData = [
             },
             title: {
               description:
-                'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
               type: "string",
             },
             meta: {
@@ -1338,22 +1338,22 @@ export const runtimeOperationContractData = [
               properties: {
                 description: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 language: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 redirect: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 socialImageUrl: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 socialImageAssetId: {
@@ -1366,7 +1366,7 @@ export const runtimeOperationContractData = [
                     },
                     {
                       description:
-                        'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                        'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                       type: "string",
                     },
                   ],
@@ -1377,12 +1377,12 @@ export const runtimeOperationContractData = [
                 },
                 content: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 status: {
                   description:
-                    'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                    'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                   type: "string",
                 },
                 auth: {
@@ -1431,7 +1431,7 @@ export const runtimeOperationContractData = [
                       },
                       content: {
                         description:
-                          'This field stores JavaScript expression source. For fixed text, pass a string literal expression, for example "\\"Plans for teams\\"". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
+                          'Plain fixed text is accepted, for example "Plans for teams". For computed values, pass JavaScript expression code such as `pageTitle ?? "Plans for teams"`.',
                         type: "string",
                       },
                     },
@@ -23886,7 +23886,14 @@ export const runtimeOperationContractData = [
           type: "array",
           items: {
             type: "string",
-            enum: ["props", "styles", "bindings", "children", "sources"],
+            enum: [
+              "props",
+              "styles",
+              "bindings",
+              "children",
+              "sources",
+              "ancestors",
+            ],
           },
         },
         childDepth: {
@@ -31275,6 +31282,11 @@ export const runtimeOperationContractData = [
           type: "string",
         },
         withUsage: {
+          description: "Include usage counts. Defaults to true.",
+          type: "boolean",
+        },
+        includeStyles: {
+          description: "Include full inline style declarations for each token.",
           type: "boolean",
         },
         sort: {

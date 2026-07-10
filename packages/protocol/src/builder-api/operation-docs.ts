@@ -268,15 +268,17 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "list-instances",
-    description: "List element instances in the build tree",
+    description:
+      "List element instances in the build tree, including parent id and index when known",
     examples: ["webstudio list-instances --path / --max-depth 2 --json"],
   },
   {
     command: "inspect-instance",
-    description: "Show details for one element instance",
+    description:
+      "Show details for one element instance, optionally including ancestors",
     requiredOptions: ["instance", "json"],
     examples: [
-      "webstudio inspect-instance --instance instance-id --include props,styles,children --json",
+      "webstudio inspect-instance --instance instance-id --include props,styles,children,ancestors --json",
     ],
   },
   {
@@ -377,8 +379,12 @@ const curatedPublicApiOperationDocumentation = [
   },
   {
     command: "list-design-tokens",
-    description: "List reusable style tokens",
-    examples: ["webstudio list-design-tokens --with-usage --json"],
+    description:
+      "List compact reusable style token summaries; include full styles only when explicitly requested",
+    examples: [
+      "webstudio list-design-tokens --with-usage --json",
+      "webstudio list-design-tokens --include-styles --json",
+    ],
   },
   {
     command: "create-design-token",

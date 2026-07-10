@@ -196,7 +196,16 @@ const instanceListInput = instanceFilterInput.extend({
 const instanceInspectInput = z.object({
   instanceId: z.string(),
   include: z
-    .array(z.enum(["props", "styles", "bindings", "children", "sources"]))
+    .array(
+      z.enum([
+        "props",
+        "styles",
+        "bindings",
+        "children",
+        "sources",
+        "ancestors",
+      ])
+    )
     .optional(),
   childDepth: z.number().int().optional(),
 });
@@ -220,7 +229,14 @@ const styleDeclarationsListInput = z.object({
 });
 const designTokenListInput = z.object({
   filter: z.string().optional(),
-  withUsage: z.boolean().optional(),
+  withUsage: z
+    .boolean()
+    .optional()
+    .describe("Include usage counts. Defaults to true."),
+  includeStyles: z
+    .boolean()
+    .optional()
+    .describe("Include full inline style declarations for each token."),
   sort: z.enum(["name", "usage"]).optional(),
 });
 const cssVariableListInput = z.object({

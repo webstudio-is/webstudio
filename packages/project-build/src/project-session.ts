@@ -148,6 +148,44 @@ export type ProjectSessionEnvelope<Result = unknown> = {
   transaction?: BuilderPatchTransaction;
 };
 
+const getNamespaceCounts = (envelope: ProjectSessionEnvelope) =>
+  Object.fromEntries(
+    Object.entries(envelope.namespaces).map(([name, values]) => [
+      name,
+      values.length,
+    ])
+  ) as Record<keyof ProjectSessionEnvelope["namespaces"], number>;
+
+export const serializeProjectSessionMeta = (
+  envelope: ProjectSessionEnvelope
+) => {
+  const diagnostics = envelope.diagnostics.map(({ level, code, message }) => ({
+    level,
+    code,
+    message,
+  }));
+  const diagnosticErrorCount = diagnostics.filter(
+    (diagnostic) => diagnostic.level === "error"
+  ).length;
+  return {
+    operationId: envelope.operationId,
+    projectId: envelope.projectId,
+    ...(envelope.buildId === undefined ? {} : { buildId: envelope.buildId }),
+    ...(envelope.version === undefined ? {} : { version: envelope.version }),
+    source: envelope.source,
+    committed: envelope.state.committed,
+    namespaceCounts: getNamespaceCounts(envelope),
+    diagnosticCount: diagnostics.length,
+    ...(diagnosticErrorCount === 0 ? {} : { diagnosticErrorCount }),
+    ...(diagnostics.length === 0 ? {} : { diagnostics }),
+    ...(envelope.state.compatibility === undefined
+      ? {}
+      : {
+          compatibilityVersion: envelope.state.compatibility.sessionVersion,
+        }),
+  };
+};
+
 export type ProjectSessionMutationOptions = {
   dryRun?: boolean;
   permit?: BuilderApiCapability;

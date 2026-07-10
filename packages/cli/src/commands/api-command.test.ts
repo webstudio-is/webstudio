@@ -112,8 +112,8 @@ const expectJsonOutput = (command: string) => {
         version: 1,
         source: expect.any(String),
         committed: expect.any(Boolean),
-        namespaces: { read: [], write: [], invalidated: [], missing: [] },
-        diagnostics: [],
+        namespaceCounts: { read: 0, write: 0, invalidated: 0, missing: 0 },
+        diagnosticCount: 0,
       },
     },
   });
@@ -1678,11 +1678,17 @@ test("lists design tokens with filters", async () => {
     options: {
       command: "list-design-tokens",
       filter: "brand",
+      includeStyles: true,
       withUsage: true,
       sort: "usage",
     },
     call: apiCalls.listDesignTokens,
-    connection: { filter: "brand", withUsage: true, sort: "usage" },
+    connection: {
+      filter: "brand",
+      includeStyles: true,
+      withUsage: true,
+      sort: "usage",
+    },
   });
 });
 

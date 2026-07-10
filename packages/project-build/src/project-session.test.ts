@@ -8,6 +8,7 @@ import {
   hasProjectSessionPermit,
   projectSessionBusyMessage,
   redactProjectSessionValue,
+  serializeProjectSessionMeta,
 } from "./project-session";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import type {
@@ -291,6 +292,16 @@ describe("project session", () => {
     expect(result.source).toBe("dry-run");
     expect(result.state.committed).toBe(false);
     expect(result.transaction?.payload).toHaveLength(1);
+    expect(serializeProjectSessionMeta(result)).toMatchObject({
+      diagnosticCount: 1,
+      diagnostics: [
+        {
+          level: "info",
+          code: "DRY_RUN",
+          message: "Mutation was planned locally and was not committed.",
+        },
+      ],
+    });
     expect(transport.commits).toEqual([]);
     expect(storage.saved).toHaveLength(0);
   });

@@ -13,6 +13,7 @@ import type { BuilderApiCapability } from "./contracts/permissions";
 import path from "node:path";
 import {
   projectSessionBusyMessage,
+  serializeProjectSessionMeta,
   type ProjectSessionEnvelope,
 } from "./project-session";
 import {
@@ -57,6 +58,7 @@ import {
 } from "./runtime/component-catalog";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import { webstudioJsxFragmentInputDescription } from "./runtime/jsx/bindings";
+import { z } from "zod";
 
 type PublicMcpOperationMethod = "query" | "mutation";
 type PublicMcpOperationPermit = BuilderApiCapability;
@@ -219,18 +221,6 @@ const isScreenshotBrowser = (value: unknown): value is ScreenshotBrowser =>
 
 const getRequestParams = (request: unknown) =>
   isRecord(request) && isRecord(request.params) ? request.params : {};
-
-const getProjectSessionMeta = (envelope: ProjectSessionEnvelope) => ({
-  operationId: envelope.operationId,
-  projectId: envelope.projectId,
-  buildId: envelope.buildId,
-  version: envelope.version,
-  source: envelope.source,
-  committed: envelope.state.committed,
-  compatibility: envelope.state.compatibility,
-  namespaces: envelope.namespaces,
-  diagnostics: envelope.diagnostics,
-});
 
 type ProjectSessionMcpInputSchema = InputJsonSchema & {
   type: "object";
@@ -1062,9 +1052,9 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
     {
       pageId: "page-id",
       values: {
-        title: '"Pricing"',
+        title: "Pricing",
         meta: {
-          description: '"Pricing plans"',
+          description: "Pricing plans",
         },
       },
     },
@@ -1136,7 +1126,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       resource: {
         name: "Posts",
         method: "get",
-        url: '"https://api.example.com/posts"',
+        url: "https://api.example.com/posts",
         headers: [],
       },
     },
@@ -1144,7 +1134,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
       resource: {
         name: "Filtered Posts",
         method: "get",
-        url: '"https://api.example.com/posts"',
+        url: "https://api.example.com/posts",
         searchParams: [
           { name: "tag", value: "filters.tag" },
           { name: "page", value: "String(filters.page ?? 1)" },
@@ -1159,7 +1149,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
         name: "Post GraphQL",
         control: "graphql",
         method: "post",
-        url: '"https://api.example.com/graphql"',
+        url: "https://api.example.com/graphql",
         headers: [{ name: "Content-Type", value: '"application/json"' }],
         body: '{ query: "query Post($slug: String!) { post(slug: $slug) { title } }", variables: { slug: system.params.slug } }',
       },
@@ -1171,7 +1161,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
         name: "Current Date",
         control: "system",
         method: "get",
-        url: '"/$resources/current-date"',
+        url: "/$resources/current-date",
         headers: [],
       },
       scopeInstanceId: "body-id",
@@ -1181,7 +1171,7 @@ export const mcpArgumentExamples: Record<string, readonly unknown[]> = {
   "update-resource": [
     {
       resourceId: "resource-id",
-      values: { url: '"https://api.example.com/posts"' },
+      values: { url: "https://api.example.com/posts" },
     },
   ],
   "update-styles": [
@@ -1808,7 +1798,7 @@ type ProjectSessionMcpStructuredContent = {
   ok: true;
   data: unknown;
   meta: {
-    session?: ReturnType<typeof getProjectSessionMeta>;
+    session?: ReturnType<typeof serializeProjectSessionMeta>;
   };
 };
 
@@ -2760,7 +2750,7 @@ const filterCapabilities = (tools: readonly ProjectSessionMcpTool[]) => {
 
 const startupGuidance = readProjectBuildDoc("mcp-startup-guidance").trim();
 const valuesVsBindingsRule =
-  'Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, resources, actions, or existing scoped runtime context such as system. Parameters are internal scoped runtime values, not a public create/update/delete surface. Expression-backed fixed strings such as page metadata and resource URLs must be quoted JavaScript string literal expressions, for example "\\"Pricing\\"". Page and resource updates put changed fields under values.';
+  "Use direct value tools for fixed text/props. Use bindings only for dynamic expressions, resources, actions, or existing scoped runtime context such as system. Parameters are internal scoped runtime values, not a public create/update/delete surface. Page metadata and fixed resource URLs accept plain strings; use JavaScript expression code only when values are computed. Page and resource updates put changed fields under values.";
 
 const getComponentStateUsage = (
   states:
@@ -3418,7 +3408,7 @@ const getComponentCoverageStatus = async ({
     missingParts: missing
       .filter((entry) => entry.standaloneInsertable === false)
       .map(toCoverageEntry),
-    session: getProjectSessionMeta(envelope),
+    session: serializeProjectSessionMeta(envelope),
   };
 };
 
@@ -3556,7 +3546,7 @@ const getComponentCoverageInsertNext = async ({
       nextMissingRoots: after.missingRoots.slice(0, 12),
       remainingMissingRootCount: after.missingRoots.length,
     },
-    session: getProjectSessionMeta(insert),
+    session: serializeProjectSessionMeta(insert),
   };
 };
 
@@ -4120,13 +4110,13 @@ export const listProjectSessionMcpResources =
   ];
 
 const toCallResult = (
-  envelope: Parameters<typeof getProjectSessionMeta>[0]
+  envelope: Parameters<typeof serializeProjectSessionMeta>[0]
 ): ProjectSessionMcpToolResult => {
   const structuredContent = {
     ok: true as const,
     data: envelope.result,
     meta: {
-      session: getProjectSessionMeta(envelope),
+      session: serializeProjectSessionMeta(envelope),
     },
   };
   return {
@@ -4141,11 +4131,11 @@ const toCallResult = (
 };
 
 const toResourceContent = (
-  envelope: Parameters<typeof getProjectSessionMeta>[0]
+  envelope: Parameters<typeof serializeProjectSessionMeta>[0]
 ) => ({
   data: envelope.result,
   meta: {
-    session: getProjectSessionMeta(envelope),
+    session: serializeProjectSessionMeta(envelope),
   },
 });
 
@@ -4744,17 +4734,127 @@ type ProjectSessionMcpErrorResult = {
   };
 };
 
+const getJsonSchemaExample = (
+  schema: InputJsonSchema | undefined,
+  depth = 0
+): unknown => {
+  if (
+    schema === undefined ||
+    typeof schema !== "object" ||
+    schema === null ||
+    depth > 4
+  ) {
+    return {};
+  }
+  if ("default" in schema && schema.default !== undefined) {
+    return schema.default;
+  }
+  if (
+    "examples" in schema &&
+    Array.isArray(schema.examples) &&
+    schema.examples.length > 0
+  ) {
+    return schema.examples[0];
+  }
+  if ("const" in schema) {
+    return schema.const;
+  }
+  if ("enum" in schema && Array.isArray(schema.enum)) {
+    return schema.enum[0];
+  }
+  if ("anyOf" in schema && Array.isArray(schema.anyOf)) {
+    return getJsonSchemaExample(schema.anyOf[0] as InputJsonSchema, depth + 1);
+  }
+  if ("oneOf" in schema && Array.isArray(schema.oneOf)) {
+    return getJsonSchemaExample(schema.oneOf[0] as InputJsonSchema, depth + 1);
+  }
+  if ("allOf" in schema && Array.isArray(schema.allOf)) {
+    const examples = schema.allOf.map((item) =>
+      getJsonSchemaExample(item as InputJsonSchema, depth + 1)
+    );
+    return examples.every(
+      (example) =>
+        typeof example === "object" &&
+        example !== null &&
+        Array.isArray(example) === false
+    )
+      ? Object.assign({}, ...examples)
+      : examples[0];
+  }
+  if (schema.type === "object") {
+    const properties = getInputJsonSchemaProperties(schema) ?? {};
+    const required = new Set(schema.required ?? []);
+    const entries = Object.entries(properties).filter(([name]) =>
+      required.has(name)
+    );
+    return Object.fromEntries(
+      entries.map(([name, property]) => [
+        name,
+        getJsonSchemaExample(property as InputJsonSchema, depth + 1),
+      ])
+    );
+  }
+  if (schema.type === "array") {
+    const minItems = schema.minItems ?? 0;
+    return Array.from({ length: minItems }, () =>
+      getJsonSchemaExample(schema.items as InputJsonSchema, depth + 1)
+    );
+  }
+  if (schema.type === "number" || schema.type === "integer") {
+    if (typeof schema.exclusiveMinimum === "number") {
+      return schema.exclusiveMinimum + 1;
+    }
+    return schema.minimum ?? 0;
+  }
+  if (schema.type === "boolean") {
+    return true;
+  }
+  if (schema.type === "string") {
+    const formatExamples: Record<string, string> = {
+      email: "user@example.com",
+      uri: "https://example.com",
+      url: "https://example.com",
+      uuid: "00000000-0000-4000-8000-000000000000",
+      date: "2026-01-01",
+      "date-time": "2026-01-01T00:00:00.000Z",
+    };
+    const base =
+      typeof schema.format === "string"
+        ? (formatExamples[schema.format] ?? "string")
+        : "string";
+    return base.padEnd(schema.minLength ?? 0, "x");
+  }
+  return {};
+};
+
+const getZodErrorMessage = (
+  error: z.ZodError,
+  inputSchema: InputJsonSchema | undefined
+) => {
+  const issues = error.issues
+    .map((issue) => {
+      const path = issue.path.join(".");
+      return path === "" ? issue.message : `${path}: ${issue.message}`;
+    })
+    .join(", ");
+  const example = getJsonSchemaExample(inputSchema);
+  return `${issues}. Expected input shape example: ${JSON.stringify(example)}`;
+};
+
 const toToolErrorResult = (
   error: unknown,
-  getErrorCode: McpErrorCodeResolver | undefined
+  getErrorCode: McpErrorCodeResolver | undefined,
+  inputSchema?: InputJsonSchema
 ): ProjectSessionMcpErrorResult => {
   const code = getErrorCode?.(error) ?? "MCP_TOOL_FAILED";
   const message =
     code === "PROJECT_SESSION_BUSY"
       ? projectSessionBusyMessage
-      : error instanceof Error
-        ? error.message
-        : String(error);
+      : error instanceof z.ZodError
+        ? getZodErrorMessage(error, inputSchema)
+        : error instanceof Error
+          ? error.message
+          : String(error);
   const structuredContent = {
     ok: false as const,
     error: {
@@ -4918,7 +5018,11 @@ export const createProjectSessionMcpServer = async <
           error instanceof Error ? error.message : String(error)
         }`
       );
-      return toToolErrorResult(error, getErrorCode);
+      return toToolErrorResult(
+        error,
+        getErrorCode,
+        core.listTools().find((tool) => tool.name === name)?.inputSchema
+      );
     } finally {
       if (heartbeat !== undefined) {
         clearInterval(heartbeat);

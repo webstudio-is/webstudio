@@ -326,12 +326,11 @@ test("prints llm manual with discovery rules", () => {
   expect(output).toContain(
     "Use `bind-props` only when the prop must stay dynamic"
   );
-  expect(output).toContain('"\\"Pricing | Acme\\""');
   expect(output).toContain(
-    '{"pageId":"page-id","values":{"title":"\\"Pricing | Acme\\"","meta":{"description":"\\"Plans for teams\\""}}}'
+    '{"pageId":"page-id","values":{"title":"Pricing | Acme","meta":{"description":"Plans for teams"}}}'
   );
   expect(output).toContain(
-    '{"resourceId":"resource-id","values":{"url":"\\"https://api.example.com/items\\""}}'
+    '{"resourceId":"resource-id","values":{"url":"https://api.example.com/items"}}'
   );
   expect(output).toContain(
     "Make edits through Webstudio semantic commands/MCP tools"
@@ -427,7 +426,7 @@ test("prints llm manual as json with implementation process", () => {
     "Use direct values for static strings and bindings only for dynamic expressions/resources/actions."
   );
   expect(output.rules).toContain(
-    "For expression-backed fields that need fixed text, encode the fixed text as a quoted JavaScript string literal expression."
+    "Use plain fixed text where documented. Only encode a quoted JavaScript string literal when a field is explicitly documented as an expression-only value."
   );
   expect(output.visionVerificationLoop).toContain(
     getVisionVerificationLoop({ includeDiff: true })[1]

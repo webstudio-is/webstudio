@@ -1950,7 +1950,7 @@ describe("createResourceValue", () => {
       resourceFieldsInput.parse({
         name: "Users",
         method: "get",
-        url: "https://example.com/users",
+        url: '"https://example.com/users" +',
         searchParams: [],
         headers: [],
       })

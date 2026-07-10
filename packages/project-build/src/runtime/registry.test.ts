@@ -436,16 +436,25 @@ describe("builder runtime read families", () => {
     ).toMatchObject({
       instances: [
         { id: "body", depth: 0 },
-        { id: "heading", depth: 1, label: "Hero" },
+        {
+          id: "heading",
+          depth: 1,
+          label: "Hero",
+          parentId: "body",
+          indexWithinParent: 0,
+        },
       ],
     });
 
     const inspectedInstance = inspectInstance(state, {
       instanceId: "heading",
-      include: ["props", "styles", "sources"],
+      include: ["props", "styles", "sources", "ancestors"],
     });
     expect(inspectedInstance).toMatchObject({
       id: "heading",
+      parentId: "body",
+      indexWithinParent: 0,
+      ancestors: [{ id: "body", childIndex: 0 }],
       sources: ["token", "local"],
     });
     expect(inspectedInstance.styles).toEqual(
@@ -589,7 +598,12 @@ describe("builder runtime read families", () => {
       ])
     );
     expect(listDesignTokens(state, { withUsage: true })).toMatchObject({
-      tokens: [{ id: "token", usageCount: 1 }],
+      tokens: [{ id: "token", declarationCount: 1, usageCount: 1 }],
+    });
+    expect(
+      listDesignTokens(state, { withUsage: true, includeStyles: true })
+    ).toMatchObject({
+      tokens: [{ id: "token", styles: { color: expect.any(Object) } }],
     });
     expect(listCssVariables(state, { withUsage: true })).toMatchObject({
       vars: [{ name: "--brand-color", scope: "heading", usageCount: 1 }],
@@ -820,6 +834,42 @@ describe("builder runtime read families", () => {
         context,
       })
     ).toThrow("url: URL is required");
+
+    const fixedUrlResult = executeBuilderRuntimeOperation({
+      id: "resources.create",
+      state,
+      input: {
+        scopeInstanceId: "heading",
+        resource: {
+          name: "Users",
+          method: "get",
+          url: "https://api.example.com/users",
+          headers: [],
+        },
+      },
+      context: {
+        ...context,
+        createId: (() => {
+          const ids = ["fixed-resource-id", "fixed-data-source-id"];
+          return () => ids.shift() ?? "id";
+        })(),
+      },
+    });
+
+    expect(fixedUrlResult).toMatchObject({
+      payload: expect.arrayContaining([
+        {
+          namespace: "resources",
+          patches: expect.arrayContaining([
+            expect.objectContaining({
+              value: expect.objectContaining({
+                url: `"https://api.example.com/users"`,
+              }),
+            }),
+          ]),
+        },
+      ]),
+    });
 
     const dynamicUrlResult = executeBuilderRuntimeOperation({
       id: "resources.upsert",

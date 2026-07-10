@@ -149,7 +149,7 @@ export const createPageCommandOptions = (yargs: CommonYargsArgv) =>
     })
     .option("title", {
       type: "string",
-      describe: "Page title expression; defaults to --name",
+      describe: "Page title text or expression; defaults to --name",
     })
     .option("parent-folder", {
       type: "string",
@@ -173,15 +173,15 @@ export const updatePageCommandOptions = (yargs: CommonYargsArgv) =>
     })
     .option("title", {
       type: "string",
-      describe: "Update page title expression",
+      describe: "Update page title text or expression",
     })
     .option("description", {
       type: "string",
-      describe: "Update page meta description expression",
+      describe: "Update page meta description text or expression",
     })
     .option("language", {
       type: "string",
-      describe: "Update page language expression",
+      describe: "Update page language text or expression",
     })
     .option("redirect", {
       type: "string",
@@ -404,17 +404,15 @@ const pageTemplateFieldsCommandOptions = (
     })
     .option("title", {
       type: "string",
-      describe:
-        'Page template title expression. For fixed text use a JavaScript string literal such as "\\"Landing\\""',
+      describe: "Page template title text or expression",
     })
     .option("description", {
       type: "string",
-      describe:
-        'Page template meta description expression. For fixed text use a JavaScript string literal such as "\\"Plans for teams\\""',
+      describe: "Page template meta description text or expression",
     })
     .option("language", {
       type: "string",
-      describe: 'Page template language expression, for example "\\"en\\""',
+      describe: "Page template language text or expression",
     })
     .option("social-image-url", {
       type: "string",
@@ -789,8 +787,13 @@ export const designTokensCommandOptions = (yargs: CommonYargsArgv) =>
       type: "string",
       describe: "Only return design tokens whose name contains this text",
     })
+    .option("include-styles", {
+      type: "boolean",
+      describe: "Include full inline style declarations for each design token",
+    })
     .option("with-usage", {
       type: "boolean",
+      default: true,
       describe: "Include how many instances use each design token",
     })
     .option("sort", {
@@ -1291,6 +1294,7 @@ type ApiCommandOptions = {
   position?: "before-local" | "after-local" | "before" | "after";
   filter?: string;
   withUsage?: boolean;
+  includeStyles?: boolean;
   scopeInstance?: string;
   type?: "image" | "font" | "file";
   sort?: "name" | "usage" | "size" | "createdAt";
@@ -2361,6 +2365,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = {
       filter: options.filter,
       withUsage: options.withUsage,
+      includeStyles: options.includeStyles,
       sort: designTokenSortOption(options.sort),
     };
     return runProjectSessionCommand(

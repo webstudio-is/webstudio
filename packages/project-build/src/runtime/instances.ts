@@ -3102,7 +3102,8 @@ export const cloneInstance = (
 
 export const serializeInstanceSummary = (
   instance: Instance,
-  depth: number
+  depth: number,
+  parent?: { id: Instance["id"]; index: number }
 ) => ({
   id: instance.id,
   component: instance.component,
@@ -3110,7 +3111,50 @@ export const serializeInstanceSummary = (
   label: instance.label,
   childCount: instance.children.length,
   depth,
+  parentId: parent?.id,
+  indexWithinParent: parent?.index,
 });
+
+const getInstanceParents = (instances: Instances) => {
+  const parents = new Map<
+    Instance["id"],
+    { id: Instance["id"]; index: number }
+  >();
+  for (const instance of instances.values()) {
+    for (const [index, child] of instance.children.entries()) {
+      if (child.type === "id") {
+        parents.set(child.value, { id: instance.id, index });
+      }
+    }
+  }
+  return parents;
+};
+
+const getInstanceAncestors = (
+  instances: Instances,
+  instanceId: Instance["id"]
+) => {
+  const parents = getInstanceParents(instances);
+  const ancestorPath = [];
+  const visited = new Set<Instance["id"]>();
+  let parent = parents.get(instanceId);
+  while (parent !== undefined) {
+    if (visited.has(parent.id)) {
+      break;
+    }
+    visited.add(parent.id);
+    const instance = instances.get(parent.id);
+    if (instance === undefined) {
+      break;
+    }
+    ancestorPath.push({ instance, childIndex: parent.index });
+    parent = parents.get(parent.id);
+  }
+  return ancestorPath.reverse().map(({ instance, childIndex }, depth) => ({
+    ...serializeInstanceSummary(instance, depth, parents.get(instance.id)),
+    childIndex,
+  }));
+};
 
 export const isTextContentChild = (
   child: Instance["children"][number] | undefined
@@ -3325,6 +3369,7 @@ export const listInstances = (
       ? getPageFilteredRootInstanceIds(state, input)
       : [input.rootInstanceId];
   const depths = getInstanceDepths(instances, rootInstanceIds);
+  const parents = getInstanceParents(instances);
   const results = [];
   for (const [instanceId, depth] of depths) {
     const instance = instances.get(instanceId);
@@ -3352,7 +3397,9 @@ export const listInstances = (
     ) {
       continue;
     }
-    results.push(serializeInstanceSummary(instance, depth));
+    results.push(
+      serializeInstanceSummary(instance, depth, parents.get(instance.id))
+    );
   }
   return { instances: results };
 };
@@ -3394,7 +3441,9 @@ export const inspectInstance = (
   >,
   input: {
     instanceId: string;
-    include?: Array<"props" | "styles" | "children" | "bindings" | "sources">;
+    include?: Array<
+      "props" | "styles" | "children" | "bindings" | "sources" | "ancestors"
+    >;
     childDepth?: number;
   }
 ) => {
@@ -3404,11 +3453,16 @@ export const inspectInstance = (
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
   const depths = getInstanceDepths(instances, [input.instanceId]);
+  const parents = getInstanceParents(instances);
   const include = new Set(input.include ?? []);
   const details: Record<string, unknown> = serializeInstanceSummary(
     instance,
-    depths.get(instance.id) ?? 0
+    depths.get(instance.id) ?? 0,
+    parents.get(instance.id)
   );
+  if (include.has("ancestors")) {
+    details.ancestors = getInstanceAncestors(instances, instance.id);
+  }
   if (include.has("props")) {
     details.props = Array.from(state.props?.values() ?? []).filter(
       (prop) => prop.instanceId === instance.id
@@ -3430,7 +3484,11 @@ export const inspectInstance = (
         return depth !== undefined && depth > 0 && depth <= maxDepth;
       })
       .map((child) =>
-        serializeInstanceSummary(child, depths.get(child.id) ?? 0)
+        serializeInstanceSummary(
+          child,
+          depths.get(child.id) ?? 0,
+          parents.get(child.id)
+        )
       );
   }
   if (include.has("bindings")) {

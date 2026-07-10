@@ -156,23 +156,24 @@ Commands:
 Commands:
 
 - MCP tool: create-page {"name":"Pricing","path":"/pricing"}
-- MCP tool: create-page {"name":"Pricing","path":"/pricing","title":"\"Pricing\"","meta":{"description":"\"Plans for teams\""}}
+- MCP tool: create-page {"name":"Pricing","path":"/pricing","title":"Pricing","meta":{"description":"Plans for teams"}}
 
 Notes:
 
-- `name` and `path` are plain values.
-- Page `title` and metadata text fields store JavaScript expression source. For fixed text, send a string literal expression such as `"\"Pricing\""`. For computed values, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
+- `name`, `path`, page `title`, and metadata text fields accept plain fixed values.
+- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
 
 ## Update page settings/metadata
 
 Commands:
 
-- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\"","status":"200"}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans","status":"200"}}}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"login":"<login>","password":"<password>"}}}}
 
 Notes:
 
-- Page `title` and metadata text fields store JavaScript expression source. For fixed text, send a string literal expression such as `"\"Pricing\""`. For computed values, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
+- Page `title` and metadata text fields accept plain fixed values.
+- For computed page titles or metadata, send JavaScript expression code such as `pageTitle ?? "Pricing"`.
 
 ## Read project settings
 
@@ -271,13 +272,13 @@ Commands:
 
 Commands:
 
-- MCP tool: create-page-template {"name":"Landing Template","title":"\"Landing\""}
+- MCP tool: create-page-template {"name":"Landing Template","title":"Landing"}
 
 ## Update page template
 
 Commands:
 
-- MCP tool: update-page-template {"templateId":"<templateId>","values":{"name":"Article Template","meta":{"description":"\"Reusable article layout\""}}}
+- MCP tool: update-page-template {"templateId":"<templateId>","values":{"name":"Article Template","meta":{"description":"Reusable article layout"}}}
 
 ## Delete page template
 
@@ -467,7 +468,14 @@ Commands:
 
 Commands:
 
+- MCP tool: list-design-tokens {}
 - MCP tool: list-design-tokens {"withUsage":true}
+- MCP tool: list-design-tokens {"includeStyles":true}
+
+Notes:
+
+- The default response is compact and includes token id, name, declaration count, and optional usage count.
+- Use `includeStyles:true` only when you need the full inline style declarations.
 
 ## Create design tokens
 
@@ -580,15 +588,17 @@ Commands:
 
 Commands:
 
-- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","headers":[]}}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"https://api.example.com/posts","headers":[]}}
 - MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts?tag=\" + filters.tag","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
-- MCP tool: create-resource {"resource":{"name":"Filtered Posts","method":"get","url":"\"https://api.example.com/posts\"","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"page","value":"String(filters.page ?? 1)"}],"headers":[{"name":"Authorization","value":"\"Bearer \" + auth.token"}]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
-- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"\"https://api.example.com/graphql\"","headers":[{"name":"Content-Type","value":"\"application/json\""}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
-- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"\"/$resources/current-date\"","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
+- MCP tool: create-resource {"resource":{"name":"Filtered Posts","method":"get","url":"https://api.example.com/posts","searchParams":[{"name":"tag","value":"filters.tag"},{"name":"page","value":"String(filters.page ?? 1)"}],"headers":[{"name":"Authorization","value":"\"Bearer \" + auth.token"}]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"https://api.example.com/graphql","headers":[{"name":"Content-Type","value":"\"application/json\""}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
+- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"/$resources/current-date","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
 
 Notes:
 
-- Resource `url`, header values, search parameter values, and body are expressions. Literal URLs are JSON strings such as `"https://api.example.com/posts"`.
+- Resource `url` accepts plain fixed URLs and paths such as `https://api.example.com/posts` and `/$resources/current-date`.
+- Resource `url` can also be a JavaScript expression when it is computed, such as `"https://api.example.com/posts?tag=" + filters.tag`.
+- Header values, search parameter values, and body are expressions. For fixed text there, send string literal expressions such as `"application/json"`.
 - Search parameter values, header values, and body expressions can read scoped variables and documented runtime context values such as `system` when they are available at the resource scope.
 - Add `scopeInstanceId` and `dataSourceName` when the resource result should be exposed as a scoped read data variable. Scoped resources are generated into the page resource `data` map and may be loaded during page rendering. Use this for read-oriented resources such as GET CMS/API data.
 - For submit/write/action resources, create the resource without `scopeInstanceId`, then bind a component prop such as a Form `action` with `bind-props` and `binding.type: "resource"`. Prop-bound resources are generated into the page resource `action` map instead of the read `data` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and other explicit action flows.
@@ -599,7 +609,7 @@ Notes:
 
 Commands:
 
-- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
+- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 
 ## Delete resource
 
@@ -743,8 +753,8 @@ Commands:
 - MCP tool: list-texts {"pagePath":"/"}
 - MCP tool: update-text {"instanceId":"<instanceId>","childIndex":0,"text":"Launch faster"}
 - MCP tool: update-props {"updates":"props.json contents"}
-- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
-- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans"}}}
+- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: replace-asset {"fromAssetId":"<oldAssetId>","toAssetId":"<newAssetId>"}
 - MCP tool: replace-styles {"property":"color","fromValue":{"type":"keyword","value":"red"},"toValue":{"type":"keyword","value":"blue"}}
 - MCP tool: rewrite-css-variable-refs {"map":"variables.json contents"}
@@ -758,7 +768,7 @@ Notes:
 Commands:
 
 - MCP tool: list-pages {"includeFolders":true}
-- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"\"Pricing\"","meta":{"description":"\"Plans\""}}}
+- MCP tool: update-page {"pageId":"<pageId>","values":{"title":"Pricing","meta":{"description":"Plans"}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: list-breakpoints {}
 - MCP tool: update-breakpoint {"breakpointId":"tablet","values":{"maxWidth":1023}}
@@ -778,10 +788,10 @@ Commands:
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"title","value":{"type":"string","value":"Hello"}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"tags","value":{"type":"string[]","value":["news","product"]}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"filters","value":{"type":"json","value":{"tag":"news"}}}
-- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"\"https://api.example.com/posts\"","searchParams":[{"name":"tag","value":"filters.tag"}],"headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
-- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"\"https://api.example.com/graphql\"","headers":[{"name":"Content-Type","value":"\"application/json\""}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
-- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"\"/$resources/current-date\"","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
-- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"\"https://api.example.com/posts\""}}
+- MCP tool: create-resource {"resource":{"name":"Posts","method":"get","url":"https://api.example.com/posts","searchParams":[{"name":"tag","value":"filters.tag"}],"headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"posts"}
+- MCP tool: create-resource {"resource":{"name":"Post GraphQL","control":"graphql","method":"post","url":"https://api.example.com/graphql","headers":[{"name":"Content-Type","value":"\"application/json\""}],"body":"{ query: \"query Post($slug: String!) { post(slug: $slug) { title } }\", variables: { slug: system.params.slug } }"},"scopeInstanceId":"<instanceId>","dataSourceName":"post"}
+- MCP tool: create-resource {"resource":{"name":"Current Date","control":"system","method":"get","url":"/$resources/current-date","headers":[]},"scopeInstanceId":"<instanceId>","dataSourceName":"currentDate"}
+- MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
 - MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<ws.collection>{/_ collection content _/}</ws.collection>"}
 
@@ -798,7 +808,7 @@ Commands:
 
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}
-- MCP tool: create-resource {"resource":{"name":"Seats","method":"get","url":"\"https://api.example.com/seats\"","headers":[]}}
+- MCP tool: create-resource {"resource":{"name":"Seats","method":"get","url":"https://api.example.com/seats","headers":[]}}
 - MCP tool: snapshot {"include":["instances","props","resources"]}
 - MCP tool: apply-patch {"baseVersion":"<version>","transactions":"patch.json contents"}
 
@@ -813,7 +823,7 @@ Commands:
 
 - MCP tool: create-page {"name":"Account","path":"/account"}
 - MCP tool: update-page {"pageId":"<pageId>","values":{"meta":{"auth":{"login":"<login>","password":"<password>"}}}}
-- MCP tool: create-resource {"resource":{"name":"Session","method":"get","url":"\"https://api.example.com/session\"","headers":[]}}
+- MCP tool: create-resource {"resource":{"name":"Session","method":"get","url":"https://api.example.com/session","headers":[]}}
 - MCP tool: create-variable {"scopeInstanceId":"<instanceId>","name":"user","value":{"type":"json","value":{}}}
 - MCP tool: update-props {"updates":"props.json contents"}
 - MCP tool: bind-props {"bindings":"bindings.json contents"}

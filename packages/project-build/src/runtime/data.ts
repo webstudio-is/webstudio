@@ -1482,9 +1482,27 @@ const addExpressionIssues = (
   }
 };
 
-const resourceFieldsInputBase = resource
-  .omit({ id: true })
-  .extend({ control: z.enum(["system", "graphql"]).optional() });
+const resourceUrlLiteralPattern = /^(?:[A-Za-z][A-Za-z0-9+.-]*:\/\/|\/)/;
+const resourceExpressionStartPattern = /^\s*(?:["'`[{(]|(?:await|new)\b)/;
+
+const normalizeResourceUrlInput = (value: string) => {
+  if (
+    resourceUrlLiteralPattern.test(value) &&
+    resourceExpressionStartPattern.test(value) === false
+  ) {
+    return JSON.stringify(value);
+  }
+  return value;
+};
+
+const resourceFieldsInputBase = resource.omit({ id: true }).extend({
+  control: z.enum(["system", "graphql"]).optional(),
+  url: z.preprocess(
+    (value) =>
+      typeof value === "string" ? normalizeResourceUrlInput(value) : value,
+    z.string()
+  ),
+});
 
 export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
   (fields, context) => {

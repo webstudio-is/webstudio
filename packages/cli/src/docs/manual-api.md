@@ -29,7 +29,7 @@ The API commands operate on the single project configured by:
 - Successful mutation commits update the local snapshot only after the remote commit succeeds.
 - Server-only commands run remotely and invalidate/refetch namespaces declared by the operation catalog.
 - Use --refresh on local-capable commands to refresh required namespaces before running.
-- Successful JSON responses include meta.session with operationId, buildId, version, source, committed, compatibility, namespace freshness, and diagnostics.
+- Successful JSON responses include compact meta.session with operationId, buildId, version, source, committed, namespaceCounts, diagnosticCount, non-empty diagnostic summaries, and optional compatibilityVersion.
 
 ## CLI Capability Inventory
 
@@ -131,11 +131,12 @@ or delete parameter records. Public tools should preserve existing parameter
 records and may reference documented context values such as `system` in
 expressions where they are already in scope.
 
-Resource request fields are expressions too. Literal URLs must be JSON strings,
-for example `"https://api.example.com/posts"`. Dynamic URLs can combine strings
-and variables, for example `"https://api.example.com/posts?tag=" + filters.tag`.
-Prefer `searchParams` for query parameters that should be encoded separately:
-`[{ "name": "tag", "value": "filters.tag" }]`. Header values and body are also
+Resource `url` accepts plain fixed URLs and paths, for example
+`https://api.example.com/posts` or `/$resources/current-date`. Dynamic URLs can
+combine strings and variables, for example
+`"https://api.example.com/posts?tag=" + filters.tag`. Prefer `searchParams` for
+query parameters that should be encoded separately:
+`[{ "name": "tag", "value": "filters.tag" }]`. Header values and body are
 expressions, so headers can read variables such as `"Bearer " + auth.token`, and
 GraphQL bodies can return objects such as
 `{ query: "...", variables: { slug: system.params.slug } }`.

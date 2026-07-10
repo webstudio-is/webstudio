@@ -54,6 +54,16 @@ test("prints api command schema as json", () => {
         name: "publish deploy",
         operation: "publish",
         method: "mutation",
+        inputSchema: expect.objectContaining({
+          type: "object",
+          properties: expect.objectContaining({
+            target: expect.objectContaining({
+              enum: expect.arrayContaining(["staging", "production"]),
+            }),
+            domains: expect.objectContaining({ type: "array" }),
+            message: expect.objectContaining({ type: "string" }),
+          }),
+        }),
       }),
       expect.objectContaining({
         name: "domains list",
