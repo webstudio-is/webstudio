@@ -1170,6 +1170,9 @@ importers:
       '@webstudio-is/sdk-components-registry':
         specifier: workspace:*
         version: link:../sdk-components-registry
+      '@webstudio-is/sync-client':
+        specifier: workspace:*
+        version: link:../sync-client
       acorn:
         specifier: ^8.14.1
         version: 8.14.1

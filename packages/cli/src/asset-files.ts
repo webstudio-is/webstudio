@@ -2,14 +2,20 @@ import { constants, createWriteStream } from "node:fs";
 import { copyFile, rename, rm } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import { pipeline } from "node:stream/promises";
+import { setTimeout } from "node:timers/promises";
 import pLimit from "p-limit";
 import { getAssetUrl, type Asset } from "@webstudio-is/sdk";
+import { createBackoff } from "@webstudio-is/sync-client/backoff";
 import { createFolderIfNotExists, isFileExists } from "./fs-utils";
 import { isAssetFileName } from "@webstudio-is/protocol";
 
 export const LOCAL_ASSETS_DIR = ".webstudio/assets";
 
 const limit = pLimit(10);
+const assetDownloadMaxAttempts = 2;
+
+const isRetryableStatus = (status: number) =>
+  status === 408 || status === 429 || status >= 500;
 
 const runAssetTasks = async ({
   assets,
@@ -87,20 +93,19 @@ export const createLocalUploadAssetsInput = <Asset extends { name: string }>({
   readAssetData: createLocalAssetDataReader(readFile, assetsDir),
 });
 
-const downloadUrlToFile = async (url: string, filePath: string) => {
+const downloadUrlToFileOnce = async (url: string, filePath: string) => {
   const tempFilePath = `${filePath}.tmp`;
   let writableStream: ReturnType<typeof createWriteStream> | undefined;
-
-  if (await isFileExists(filePath)) {
-    return;
-  }
-
-  await createFolderIfNotExists(dirname(filePath));
 
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+      throw Object.assign(
+        new Error(
+          `Failed to fetch ${url}: ${response.status} ${response.statusText}`
+        ),
+        { status: response.status }
+      );
     }
     if (response.body === null) {
       throw new Error(`Failed to fetch ${url}: response body is empty`);
@@ -123,6 +128,41 @@ const downloadUrlToFile = async (url: string, filePath: string) => {
     await rm(tempFilePath, { force: true });
     throw error;
   }
+};
+
+const downloadUrlToFile = async (url: string, filePath: string) => {
+  if (await isFileExists(filePath)) {
+    return;
+  }
+
+  await createFolderIfNotExists(dirname(filePath));
+
+  let lastError: unknown;
+  const backoff = createBackoff({
+    baseDelay: 500,
+    jitter: false,
+    maxDelay: 500,
+    multiplier: 1,
+  });
+  for (let attempt = 1; attempt <= assetDownloadMaxAttempts; attempt += 1) {
+    try {
+      await downloadUrlToFileOnce(url, filePath);
+      return;
+    } catch (error) {
+      lastError = error;
+      const status =
+        typeof error === "object" && error !== null && "status" in error
+          ? error.status
+          : undefined;
+      const isRetryable =
+        typeof status === "number" ? isRetryableStatus(status) : true;
+      if (attempt === assetDownloadMaxAttempts || isRetryable === false) {
+        throw error;
+      }
+      await setTimeout(backoff.next());
+    }
+  }
+  throw lastError;
 };
 
 export const downloadAssetFile = async ({

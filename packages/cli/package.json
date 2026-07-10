@@ -33,6 +33,7 @@
     "@webstudio-is/project-migrations": "workspace:*",
     "@webstudio-is/protocol": "workspace:*",
     "@webstudio-is/sdk-components-registry": "workspace:*",
+    "@webstudio-is/sync-client": "workspace:*",
     "acorn": "^8.14.1",
     "acorn-jsx": "^5.3.2",
     "acorn-walk": "^8.3.4",
