@@ -655,48 +655,59 @@ test("inspects webstudio jsx fragment syntax without evaluation", () => {
   ).not.toThrow();
 });
 
-test("rejects bare template-backed components in webstudio jsx fragments", async () => {
+test("inserts bare template-backed components from webstudio jsx fragments", async () => {
   const parent = createParent();
   const fragment = await parseWebstudioJsxFragment(`<radix.Switch />`);
 
-  expect(() =>
-    insertFragment(
-      createState(parent),
-      {
-        parentInstanceId: parent.id,
-        fragment,
-      },
-      {
-        createId: createIdFactory(),
-        projectId: "project-id",
-      }
-    )
-  ).toThrow(
-    'use insert-component with component "@webstudio-is/sdk-components-react-radix:Switch"'
+  const mutation = insertFragment(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      fragment,
+    },
+    {
+      createId: createIdFactory(),
+      projectId: "project-id",
+    }
   );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toEqual([
+    expect.objectContaining({
+      component: "@webstudio-is/sdk-components-react-radix:Switch",
+    }),
+  ]);
 });
 
-test("rejects misplaced required template parts in webstudio jsx fragments", async () => {
+test("inserts authored template part structure from webstudio jsx fragments", async () => {
   const parent = createParent();
   const fragment = await parseWebstudioJsxFragment(
     `<radix.Switch><ws.element ws:tag="div"><radix.SwitchThumb /></ws.element></radix.Switch>`
   );
 
-  expect(() =>
-    insertFragment(
-      createState(parent),
-      {
-        parentInstanceId: parent.id,
-        fragment,
-      },
-      {
-        createId: createIdFactory(),
-        projectId: "project-id",
-      }
-    )
-  ).toThrow(
-    '"@webstudio-is/sdk-components-react-radix:Switch" > "@webstudio-is/sdk-components-react-radix:SwitchThumb"'
+  const mutation = insertFragment(
+    createState(parent),
+    {
+      parentInstanceId: parent.id,
+      fragment,
+    },
+    {
+      createId: createIdFactory(),
+      projectId: "project-id",
+    }
   );
+
+  expect(getAddedValues<Instance>(mutation, "instances")).toEqual([
+    expect.objectContaining({
+      component: "@webstudio-is/sdk-components-react-radix:Switch",
+    }),
+    expect.objectContaining({
+      component: elementComponent,
+      tag: "div",
+    }),
+    expect.objectContaining({
+      component: "@webstudio-is/sdk-components-react-radix:SwitchThumb",
+    }),
+  ]);
 });
 
 test("supports react style props in webstudio jsx fragments", async () => {

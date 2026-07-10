@@ -1,8 +1,5 @@
 import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
-import {
-  findClosestInsertable,
-  insertWebstudioFragmentAt,
-} from "../../instance-utils/insert";
+import { findClosestInsertable } from "../../instance-utils/insert";
 import { $project, $styleSources } from "~/shared/sync/data-stores";
 import {
   type WfData,
@@ -17,9 +14,12 @@ import { addStyles } from "@webstudio-is/project-build/runtime/webflow/styles";
 import { builderApi } from "~/shared/builder-api";
 import { denormalizeSrcProps } from "../asset-upload";
 import { nanoHash } from "~/shared/nano-hash";
-import type { Plugin } from "../copy-paste";
-import { breakpointPasteLimitWarning } from "@webstudio-is/project-build/runtime/breakpoints";
+import { pasteHandled, pasteIgnored, type Plugin } from "../copy-paste";
 import { builderRuntimeContext } from "@webstudio-is/project-build/runtime/context";
+import {
+  hasFragmentData,
+  insertFragmentWithBreakpointWarning,
+} from "../fragment-utils";
 
 const { toast } = builderApi;
 
@@ -106,20 +106,28 @@ const toWebstudioFragment = async (
   return fragment;
 };
 
-const parse = (clipboardData: string) => {
+type WebflowParseResult =
+  | { owned: false }
+  | { owned: true; success: false; error: string }
+  | { owned: true; success: true; data: WfData };
+
+const parse = (clipboardData: string): WebflowParseResult => {
   let data;
   try {
     data = JSON.parse(clipboardData);
   } catch {
-    return;
+    return { owned: false };
   }
 
   if (data.type !== "@webflow/XscpData") {
-    return;
+    return { owned: false };
   }
 
+  const payloadNodes = Array.isArray(data.payload?.nodes)
+    ? data.payload.nodes
+    : [];
   const unsupportedNodeTypes: Set<string> = new Set(
-    data.payload.nodes
+    payloadNodes
       .filter((node: { type: string }) => {
         return (
           node.type !== undefined &&
@@ -139,7 +147,7 @@ const parse = (clipboardData: string) => {
   const result = wfData.safeParse(data);
 
   if (result.success) {
-    const unpasedTypes = new Set<string>();
+    const unparsedTypes = new Set<string>();
 
     for (let i = 0; i !== result.data.payload.nodes.length; ++i) {
       if ("type" in result.data.payload.nodes[i]) {
@@ -156,45 +164,47 @@ const parse = (clipboardData: string) => {
         continue;
       }
 
-      unpasedTypes.add(probablyUnparsedType);
+      unparsedTypes.add(probablyUnparsedType);
     }
 
-    if (unpasedTypes.size !== 0) {
-      const message = `The following types were skipped due to a parsing error: ${[...unpasedTypes.values()].join(", ")}`;
+    if (unparsedTypes.size !== 0) {
+      const message = `The following types were skipped due to a parsing error: ${[...unparsedTypes.values()].join(", ")}`;
       toast.info(message);
       console.info(message);
     }
 
-    return result.data;
+    return { owned: true, success: true, data: result.data };
   }
 
-  toast.error(result.error.message);
-  console.error(result.error.message);
+  return { owned: true, success: false, error: result.error.message };
 };
 
 const handlePasteWebflow = async (clipboardData: string) => {
   const project = $project.get();
-  const wfData = parse(clipboardData);
-  if (wfData === undefined || project === undefined) {
-    return false;
+  const result = parse(clipboardData);
+  if (result.owned === false) {
+    return pasteIgnored;
+  }
+  if (result.success === false) {
+    return { success: false, error: result.error } as const;
+  }
+  if (project === undefined) {
+    return pasteHandled;
   }
 
-  let fragment = await toWebstudioFragment(wfData);
-  if (fragment === undefined) {
-    return false;
+  let fragment = await toWebstudioFragment(result.data);
+  if (hasFragmentData(fragment) === false) {
+    return pasteHandled;
   }
   fragment = await denormalizeSrcProps(fragment);
 
   const insertable = findClosestInsertable(fragment);
   if (insertable === undefined) {
-    return false;
+    return pasteHandled;
   }
 
-  return insertWebstudioFragmentAt(fragment, insertable, undefined, {
-    onBreakpointLimitMerge: () => {
-      toast.warn(breakpointPasteLimitWarning);
-    },
-  });
+  insertFragmentWithBreakpointWarning(fragment, insertable);
+  return pasteHandled;
 };
 
 export const webflow: Plugin = {

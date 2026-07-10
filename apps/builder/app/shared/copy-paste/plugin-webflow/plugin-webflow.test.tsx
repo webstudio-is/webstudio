@@ -12,12 +12,13 @@ import {
 } from "@webstudio-is/sdk";
 import { $, renderData } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
-import { __testing__ } from "./plugin-webflow";
+import { __testing__, webflow } from "./plugin-webflow";
 import { $registeredComponentMetas } from "../../nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $project, $styleSources, $styles } from "~/shared/sync/data-stores";
 import invariant from "tiny-invariant";
 import { wfData } from "@webstudio-is/project-build/runtime/webflow/schema";
+import { pasteIgnored } from "../copy-paste";
 
 const { toWebstudioFragment } = __testing__;
 
@@ -113,6 +114,21 @@ beforeEach(() => {
       })
     )
   );
+});
+
+test("ignores non-Webflow paste data", async () => {
+  await expect(webflow.onPaste?.(`{"type":"other"}`)).resolves.toEqual(
+    pasteIgnored
+  );
+});
+
+test("reports malformed Webflow-owned paste data", async () => {
+  await expect(
+    webflow.onPaste?.(JSON.stringify({ type: "@webflow/XscpData" }))
+  ).resolves.toMatchObject({
+    success: false,
+    error: expect.any(String),
+  });
 });
 
 test("Heading", async () => {

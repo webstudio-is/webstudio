@@ -98,6 +98,25 @@ test("downloads asset files when they are missing from the synced asset cache", 
   );
 });
 
+test("retries asset download once after a server error", async () => {
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(new Response("failed", { status: 500 }))
+    .mockResolvedValueOnce(new Response("downloaded"));
+  globalThis.fetch = fetch;
+
+  await materializeAssetFile({
+    asset,
+    origin: "https://example.com",
+    targetAssetsDirectory: "public/assets",
+  });
+
+  await expect(readFile("public/assets/image.png", "utf8")).resolves.toBe(
+    "downloaded"
+  );
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
 test("removes temporary files when asset download fails", async () => {
   const fetch = vi.fn(
     async () =>

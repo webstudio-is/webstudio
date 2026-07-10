@@ -1125,7 +1125,7 @@ describe("builder runtime registry", () => {
       ["folders.update", {}],
       ["folders.delete", {}],
       ["folders.duplicate", {}],
-      ["pageClipboard.paste", {}],
+      ["pageTransfer.insert", {}],
       ["pageTree.move", {}],
       ["pageTree.reparentOrphans", "invalid"],
       ["instances.insertComponent", { parentInstanceId: "body" }],

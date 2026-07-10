@@ -230,6 +230,22 @@ test("creates data variable values from form input values", () => {
   ).toEqual({ type: "json", value: { enabled: true } });
   expect(
     createDataVariableValueFromInput({
+      type: "json",
+      value: null,
+    })
+  ).toEqual({ type: "json", value: null });
+  expect(
+    JSON.parse(
+      JSON.stringify(
+        createDataVariableValueFromInput({
+          type: "json",
+          value: null,
+        })
+      )
+    )
+  ).toEqual({ type: "json", value: null });
+  expect(
+    createDataVariableValueFromInput({
       type: "string[]",
       value: '["Draft", "Connected", "Published"]',
     })

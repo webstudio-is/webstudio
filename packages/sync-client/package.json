@@ -11,6 +11,11 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./backoff": {
+      "webstudio": "./src/backoff.ts",
+      "import": "./src/backoff.ts",
+      "default": "./src/backoff.ts"
+    },
     "./websocket": {
       "webstudio": "./src/multiplayer/websocket-emitter.ts",
       "import": "./src/multiplayer/websocket-emitter.ts",

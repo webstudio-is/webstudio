@@ -20,10 +20,12 @@ export const dataSourceVariableValue = z.union([
     type: z.literal("string[]"),
     value: z.array(z.string()),
   }),
-  z.object({
-    type: z.literal("json"),
-    value: z.unknown(),
-  }),
+  z
+    .object({
+      type: z.literal("json"),
+      value: z.unknown().optional(),
+    })
+    .transform((value) => ({ ...value, value: value.value ?? null })),
 ]);
 
 export const dataSource = z.union([
