@@ -368,6 +368,22 @@ Notes:
 - Known components with `contentModel.category: "none"` are not standalone-insertable; insert their root component template instead so required providers/parents are included.
 - Unknown component ids fall back to a single-element instance when no template exists.
 
+## Make a region editable in Content mode
+
+When a page will be handed to a Content-mode editor, wrap every region they
+should be able to edit in a Content Block (`ws:block`). Content-mode editors can
+edit text and supported props only in Content Block descendants. Content outside
+those blocks remains read-only, even when it looks like ordinary editable text.
+
+Put reusable insertable options inside the Content Block's `ws:block-template`
+child. A template is source material, not editor content: editors cannot edit or
+delete it directly. When an editor inserts a template, its copy becomes a direct
+child of the Content Block and is editable.
+
+Before handing off a page, verify the intended text, images, and links are
+inside a Content Block, and that templates include all required styling because
+Content-mode editors cannot use the Style panel.
+
 ## Move elements
 
 Commands:
